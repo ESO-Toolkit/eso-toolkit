@@ -1,7 +1,7 @@
 import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
 import React from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 
 interface MapsPanelProps {
   fight: FightFragment;

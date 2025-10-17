@@ -1,4 +1,4 @@
-import { FightFragment } from '../graphql/generated';
+import { FightFragment } from '../graphql/gql/graphql';
 import { DamageEvent } from '../types/combatlogEvents';
 
 /**

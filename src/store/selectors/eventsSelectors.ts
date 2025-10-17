@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { FightFragment } from '../../graphql/generated';
+import { FightFragment } from '../../graphql/gql/graphql';
 import {
   UnifiedCastEvent,
   DamageEvent,

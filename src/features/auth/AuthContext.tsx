@@ -8,8 +8,7 @@ import React, {
 } from 'react';
 
 import { useEsoLogsClientContext } from '../../EsoLogsClientContext';
-import { GetCurrentUserQuery } from '../../graphql/generated';
-import { GetCurrentUserDocument } from '../../graphql/reports.generated';
+import { GetCurrentUserQuery, GetCurrentUserDocument } from '../../graphql/gql/graphql';
 import { Logger, LogLevel } from '../../utils/logger';
 
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './auth';

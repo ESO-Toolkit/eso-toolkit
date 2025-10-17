@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { PenetrationSourceWithActiveState } from '../../../utils/PenetrationUtils';
 

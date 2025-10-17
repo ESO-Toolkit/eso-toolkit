@@ -6,7 +6,7 @@ import {
   GetReportMasterDataDocument,
   ReportAbilityFragment,
   ReportActorFragment,
-} from '../../graphql/generated';
+} from '../../graphql/gql/graphql';
 import { cleanArray } from '../../utils/cleanArray';
 
 interface MasterDataState {

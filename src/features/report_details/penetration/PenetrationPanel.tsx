@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePlayerData, useSelectedTargetIds } from '../../../hooks';
 import { usePenetrationDataTask } from '../../../hooks/workerTasks/usePenetrationDataTask';
 import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';

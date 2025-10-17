@@ -2,7 +2,8 @@ import { Grid, OrbitControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import React, { Suspense, useMemo } from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '@/graphql/gql/graphql';
+
 import { getMapScaleData } from '../../../types/zoneScaleData';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';

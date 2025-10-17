@@ -8,7 +8,7 @@ import {
   getDamageEventsByPlayer,
   CHARGED_ATRONACH_GAME_ID,
 } from './damageEventUtils';
-import { ReportActor } from '../graphql/generated';
+import { ReportActor } from '../graphql/gql/graphql';
 import { DamageEvent } from '../types/combatlogEvents';
 
 // Mock data helpers

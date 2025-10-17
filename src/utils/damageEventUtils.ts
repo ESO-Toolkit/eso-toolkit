@@ -1,4 +1,4 @@
-import { ReportActor } from '../graphql/generated';
+import { ReportActor } from '../graphql/gql/graphql';
 import { DamageEvent } from '../types/combatlogEvents';
 
 export const CHARGED_ATRONACH_GAME_ID = 32829;

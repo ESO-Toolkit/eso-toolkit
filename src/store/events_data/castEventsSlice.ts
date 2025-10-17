@@ -7,7 +7,7 @@ import {
   GetCastEventsDocument,
   GetCastEventsQuery,
   HostilityType,
-} from '../../graphql/generated';
+} from '../../graphql/gql/graphql';
 import { BeginCastEvent, CastEvent, UnifiedCastEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
 

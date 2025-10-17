@@ -38,7 +38,7 @@ const getScribingSkillByAbilityId = (
 const GRIMOIRE_NAME_PATTERNS: Record<string, RegExp> = {};
 const getAllGrimoires = (): unknown[] => [];
 const SCRIBING_BLACKLIST = new Set<string>();
-import { ReportAbility } from '../graphql/generated';
+import { ReportAbility } from '../graphql/gql/graphql';
 import {
   DamageEvent,
   HealEvent,

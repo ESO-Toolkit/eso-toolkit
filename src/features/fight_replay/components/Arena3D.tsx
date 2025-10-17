@@ -3,7 +3,7 @@ import { Box, IconButton, Tooltip, Typography, Collapse } from '@mui/material';
 import { Canvas } from '@react-three/fiber';
 import React, { useMemo, useState, useEffect } from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import { useActorPositionsTask } from '../../../hooks/workerTasks/useActorPositionsTask';
 import { getMapScaleData } from '../../../types/zoneScaleData';
 import { Logger, LogLevel } from '../../../utils/logger';

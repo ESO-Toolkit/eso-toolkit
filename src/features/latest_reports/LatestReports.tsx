@@ -23,8 +23,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
-import { GetLatestReportsQuery, UserReportSummaryFragment } from '../../graphql/generated';
-import { GetLatestReportsDocument } from '../../graphql/reports.generated';
+import {
+  GetLatestReportsQuery,
+  UserReportSummaryFragment,
+  GetLatestReportsDocument,
+} from '../../graphql/gql/graphql';
 import { ReportListMobile } from '../reports/components/ReportListMobile';
 import {
   formatReportDateTime,

@@ -4,7 +4,7 @@
  */
 
 import { resolveActorName } from './resolveActorName';
-import { ReportActor, ReportActorFragment } from '../graphql/generated';
+import { ReportActor, ReportActorFragment } from '../graphql/gql/graphql';
 
 // Create mock actors for testing
 const createMockActor = (

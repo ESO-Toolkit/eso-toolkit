@@ -4,7 +4,7 @@ import { createColumnHelper, ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
 import { DataGrid } from '../../../components/LazyDataGrid';
-import { ReportActorFragment } from '../../../graphql/generated';
+import { ReportActorFragment } from '../../../graphql/gql/graphql';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { CombatantInfoEvent } from '../../../types/combatlogEvents';
 

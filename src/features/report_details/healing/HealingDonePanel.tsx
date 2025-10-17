@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 
 import { HealingDoneTableSkeleton } from '../../../components/HealingDoneTableSkeleton';
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import {
   useCastEvents,
   useHealingEvents,

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePlayerData } from '../../../hooks';
 import { CriticalDamageValues } from '../../../types/abilities';
 import { CriticalDamageSourceWithActiveState } from '../../../utils/CritDamageUtils';

@@ -15,7 +15,7 @@ import {
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import type { ReportActorFragment } from '../../../graphql/generated';
+import type { ReportActorFragment } from '../../../graphql/gql/graphql';
 import { useReportMasterData } from '../../../hooks';
 import { useSelectedFight } from '../../../hooks/useSelectedFight';
 import { ALL_TARGETS_SENTINEL, ALL_ENEMIES_SENTINEL } from '../../../hooks/useSelectedTargetIds';

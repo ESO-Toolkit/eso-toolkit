@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
-import { ReportActorFragment } from '../../graphql/generated';
+import { ReportActorFragment } from '../../graphql/gql/graphql';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
 import { fetchDamageEvents } from '../../store/events_data/damageEventsSlice';
 import { selectReportFights } from '../../store/report/reportSelectors';

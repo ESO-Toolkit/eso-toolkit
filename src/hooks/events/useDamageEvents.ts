@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { selectDamageEventsByPlayer } from '@/store/events_data/damageEventsSelectors';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
-import { FightFragment } from '../../graphql/generated';
+import { FightFragment } from '../../graphql/gql/graphql';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
 import { fetchDamageEvents } from '../../store/events_data/damageEventsSlice';
 import { selectReportFights } from '../../store/report/reportSelectors';

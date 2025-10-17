@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react';
 import { usePhaseBasedMap } from './usePhaseBasedMap';
 import { createMapTimeline, getMapAtTimestamp } from '../utils/mapTimelineUtils';
 
-import type { FightFragment } from '../graphql/generated';
+import type { FightFragment } from '../graphql/gql/graphql';
 
 // Mock fight data for testing
 const createMockFight = (

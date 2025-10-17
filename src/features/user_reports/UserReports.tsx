@@ -26,8 +26,11 @@ import { useNavigate } from 'react-router-dom';
 import { MemoizedLoadingSpinner } from '../../components/CustomLoadingSpinner';
 import { useLogger } from '../../contexts/LoggerContext';
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
-import { GetUserReportsQuery, UserReportSummaryFragment } from '../../graphql/generated';
-import { GetUserReportsDocument } from '../../graphql/reports.generated';
+import {
+  GetUserReportsQuery,
+  UserReportSummaryFragment,
+  GetUserReportsDocument,
+} from '../../graphql/gql/graphql';
 import { useAuth } from '../auth/AuthContext';
 import { ReportListMobile } from '../reports/components/ReportListMobile';
 import {

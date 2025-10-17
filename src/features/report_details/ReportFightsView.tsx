@@ -15,7 +15,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { ReportFightsSkeleton } from '../../components/ReportFightsSkeleton';
-import { FightFragment, ReportFragment } from '../../graphql/generated';
+import { FightFragment, ReportFragment } from '../../graphql/gql/graphql';
 import { RootState } from '../../store/storeWithHistory';
 
 import { BossAvatar } from './BossAvatar';

@@ -7,7 +7,7 @@ import {
   GetCombatantInfoEventsDocument,
   GetCombatantInfoEventsQuery,
   HostilityType,
-} from '../../graphql/generated';
+} from '../../graphql/gql/graphql';
 import { CombatantInfoEvent, LogEvent } from '../../types/combatlogEvents';
 import type { RootState } from '../storeWithHistory';
 

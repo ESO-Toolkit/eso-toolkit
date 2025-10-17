@@ -37,8 +37,8 @@ import {
   GetResourceEventsDocument,
   GetCastEventsDocument,
   GetPlayersForReportDocument,
-} from '../src/graphql/generated';
-import { GetEncounterInfoDocument } from '../src/graphql/world-data.generated';
+  GetEncounterInfoDocument,
+} from '../src/graphql/gql/graphql';
 
 // Import types separately (these work with ES modules)
 import type {
@@ -46,7 +46,7 @@ import type {
   GetReportMasterDataQuery,
   GetPlayersForReportQuery,
   GetEncounterInfoQuery,
-} from '../src/graphql/generated.js';
+} from '../src/graphql/gql/graphql.js';
 
 // Suppress Apollo Client deprecation warnings for canonizeResults
 const originalConsoleWarn = console.warn;

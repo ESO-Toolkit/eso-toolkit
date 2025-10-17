@@ -2,8 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
-import { UserReportSummaryFragment, GetUserReportsQuery } from '../graphql/generated';
-import { GetUserReportsDocument } from '../graphql/reports.generated';
+import {
+  UserReportSummaryFragment,
+  GetUserReportsQuery,
+  GetUserReportsDocument,
+} from '../graphql/gql/graphql';
 
 interface LatestReportState {
   report: UserReportSummaryFragment | null;

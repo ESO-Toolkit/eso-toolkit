@@ -6,7 +6,7 @@ import { createTheme } from '@mui/material/styles';
 
 import { KnownAbilities } from '../../../types/abilities';
 import { DamageEvent, DeathEvent } from '../../../types/combatlogEvents';
-import { FightFragment, ReportActorFragment } from '../../../graphql/generated';
+import { FightFragment, ReportActorFragment } from '../../../graphql/gql/graphql';
 import { BuffLookupData } from '../../../utils/BuffLookupUtils';
 import {
   createMockDamageEvent,

@@ -2,20 +2,18 @@ import {
   ApolloClient,
   InMemoryCache,
   createHttpLink,
-  NormalizedCacheObject,
   QueryOptions,
   MutationOptions,
   SubscriptionOptions,
   WatchQueryOptions,
   ObservableQuery,
-  ApolloQueryResult,
   FetchResult,
   OperationVariables,
   Observable,
   from,
 } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-import { getOperationName } from '@apollo/client/utilities';
+import { getOperationAST } from 'graphql';
 
 import { Logger, LogLevel } from './utils/logger';
 
@@ -48,7 +46,7 @@ export class EsoLogsClient {
   });
 
   private accessToken: string;
-  private client: ApolloClient<NormalizedCacheObject>;
+  private client: ApolloClient;
 
   constructor(accessToken: string) {
     this.accessToken = accessToken;
@@ -80,7 +78,7 @@ export class EsoLogsClient {
     return userOperations.includes(operationName);
   }
 
-  private createApolloClient(accessToken: string): ApolloClient<NormalizedCacheObject> {
+  private createApolloClient(accessToken: string): ApolloClient {
     // Custom link to append query name to URL
     const customHttpLink = createHttpLink({
       uri: (operation) => {
@@ -135,7 +133,7 @@ export class EsoLogsClient {
   /**
    * Gets the underlying Apollo client instance
    */
-  public getClient(): ApolloClient<NormalizedCacheObject> {
+  public getClient(): ApolloClient {
     return this.client;
   }
 
@@ -147,13 +145,15 @@ export class EsoLogsClient {
 
     // Check for GraphQL errors and reject if they exist
     if (result.error) {
+      const operationAST = getOperationAST(options.query);
+      const operationName = operationAST?.name?.value;
       logger.error('GraphQL query error', result.error, {
-        query: getOperationName(options.query),
+        query: operationName,
       });
       throw new Error(`GraphQL error: ${result.error.message}`);
     }
 
-    return result.data;
+    return result.data as TData;
   }
 
   public mutate<T = unknown, TVariables extends OperationVariables = OperationVariables>(
@@ -174,7 +174,7 @@ export class EsoLogsClient {
     return this.client.subscribe(options);
   }
 
-  public resetStore(): Promise<ApolloQueryResult<unknown>[] | null> {
+  public resetStore(): Promise<unknown[] | null> {
     return this.client.resetStore();
   }
 

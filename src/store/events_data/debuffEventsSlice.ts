@@ -7,7 +7,7 @@ import {
   GetDebuffEventsDocument,
   GetDebuffEventsQuery,
   HostilityType,
-} from '../../graphql/generated';
+} from '../../graphql/gql/graphql';
 import { DebuffEvent, LogEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
 

@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useAppDispatch } from '@/store/useAppDispatch';
 import { executePenetrationDataTask, penetrationDataActions } from '@/store/worker_results';
 
-import { FightFragment } from '../../graphql/generated';
+import { FightFragment } from '../../graphql/gql/graphql';
 import {
   selectPenetrationDataResult,
   selectWorkerTaskLoading,

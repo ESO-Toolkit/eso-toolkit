@@ -7,7 +7,7 @@ import { Canvas } from '@react-three/fiber';
 import { render } from '@testing-library/react';
 import React from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 
 import { MapMarkers } from './MapMarkers';
 

@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 
 import { executeDamageReductionTask, damageReductionActions } from '@/store/worker_results';
 
-import { FightFragment } from '../../graphql/generated';
+import { FightFragment } from '../../graphql/gql/graphql';
 import {
   selectDamageReductionResult,
   selectWorkerTaskLoading,

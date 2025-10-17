@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useSelector } from 'react-redux';
 
-import type { ReportActorFragment } from '../graphql/generated';
+import type { ReportActorFragment } from '../graphql/gql/graphql';
 import { selectSelectedTargetIds } from '../store/ui/uiSelectors';
 
 import { useCurrentFight } from './useCurrentFight';

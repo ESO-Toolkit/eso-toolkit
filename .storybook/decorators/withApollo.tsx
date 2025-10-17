@@ -1,5 +1,5 @@
 import type { Decorator } from '@storybook/react';
-import { MockedProvider } from '@apollo/client/testing';
+import { MockedProvider } from '@apollo/client/testing/react';
 import { defaultApolloMocks } from '../mocks/graphql';
 
 export const withApollo: Decorator = (Story, context) => {

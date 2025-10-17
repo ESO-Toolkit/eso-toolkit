@@ -2,7 +2,7 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
-import { FightFragment, HostilityType } from '../../graphql/generated';
+import { FightFragment, HostilityType } from '../../graphql/gql/graphql';
 import { CastEvent } from '../../types/combatlogEvents';
 
 import castEventsReducer, {

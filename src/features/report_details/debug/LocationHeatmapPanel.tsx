@@ -2,7 +2,7 @@ import { SelectChangeEvent } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePlayerData } from '../../../hooks';
 import { LogEvent, ResourceChangeEvent } from '../../../types/combatlogEvents';
 import { resolveActorName } from '../../../utils/resolveActorName';

@@ -7,7 +7,7 @@ import {
   GetDeathEventsDocument,
   GetDeathEventsQuery,
   HostilityType,
-} from '../../graphql/generated';
+} from '../../graphql/gql/graphql';
 import { DeathEvent, LogEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
 

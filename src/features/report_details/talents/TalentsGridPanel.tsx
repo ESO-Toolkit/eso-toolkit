@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 
 import { DataGrid } from '../../../components/LazyDataGrid';
 import { useLogger } from '../../../contexts/LoggerContext';
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePlayerData } from '../../../hooks';
 import { PlayerTalent } from '../../../types/playerDetails';
 import { resolveActorName } from '../../../utils/resolveActorName';

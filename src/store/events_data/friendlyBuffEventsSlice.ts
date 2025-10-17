@@ -7,7 +7,7 @@ import {
   GetBuffEventsDocument,
   GetBuffEventsQuery,
   HostilityType,
-} from '../../graphql/generated';
+} from '../../graphql/gql/graphql';
 import { BuffEvent, LogEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
 

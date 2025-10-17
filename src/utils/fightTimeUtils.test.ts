@@ -10,7 +10,7 @@ import {
   isTimestampInFight,
   clampFightTime,
 } from './fightTimeUtils';
-import { FightFragment } from '../graphql/generated';
+import { FightFragment } from '../graphql/gql/graphql';
 
 // Mock fight data helper
 const createMockFight = (startTime: number, endTime: number): FightFragment => ({

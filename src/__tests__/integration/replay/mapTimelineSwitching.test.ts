@@ -22,7 +22,7 @@ import {
   type MapTimeline,
   type MapTimelineEntry,
 } from '../../../utils/mapTimelineUtils';
-import type { FightFragment } from '../../../graphql/generated';
+import type { FightFragment } from '../../../graphql/gql/graphql';
 import type { BuffEvent } from '../../../types/combatlogEvents';
 
 describe('ESO-398: Map Timeline Switching Flow', () => {

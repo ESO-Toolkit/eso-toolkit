@@ -1,4 +1,4 @@
-import { ApolloProvider } from '@apollo/client';
+import { ApolloProvider } from '@apollo/client/react';
 import React, { createContext, useContext, useMemo, ReactNode, useState, useCallback } from 'react';
 
 import { useLogger } from './contexts/LoggerContext';

@@ -15,7 +15,7 @@ import { Link } from 'react-router-dom';
 
 import { timestampToFightTime } from '@/utils/fightTimeUtils';
 
-import { FightFragment, ReportActorFragment } from '../../../graphql/generated';
+import { FightFragment, ReportActorFragment } from '../../../graphql/gql/graphql';
 import { useRoleColors } from '../../../hooks';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
