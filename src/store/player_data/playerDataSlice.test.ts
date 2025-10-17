@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 
 import { EsoLogsClient } from '../../esologsClient';
-import { GetPlayersForReportDocument } from '../../graphql/generated';
+import { GetPlayersForReportDocument } from '../../graphql/gql/graphql';
 import { PlayerDetails, PlayerDetailsEntry } from '../../types/playerDetails';
 
 import playerDataReducer, {

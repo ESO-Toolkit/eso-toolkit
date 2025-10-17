@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
-import { ReportFragment, GetReportByCodeDocument } from '../../graphql/generated';
+import { ReportFragment, GetReportByCodeDocument } from '../../graphql/gql/graphql';
 import { RootState } from '../storeWithHistory';
 
 export interface ReportState {

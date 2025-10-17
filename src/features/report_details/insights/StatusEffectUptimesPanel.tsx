@@ -8,7 +8,7 @@ import {
   useSelectedTargetIds,
 } from '@/hooks';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import { ALL_TARGETS_SENTINEL } from '../../../hooks/useSelectedTargetIds';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 

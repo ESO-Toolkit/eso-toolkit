@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { FightFragment } from '../graphql/generated';
+import { FightFragment } from '../graphql/gql/graphql';
 import { BuffEvent } from '../types/combatlogEvents';
 import { createMapTimeline, MapTimeline } from '../utils/mapTimelineUtils';
 

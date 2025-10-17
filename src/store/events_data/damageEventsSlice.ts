@@ -7,7 +7,7 @@ import {
   GetDamageEventsDocument,
   GetDamageEventsQuery,
   HostilityType,
-} from '../../graphql/generated';
+} from '../../graphql/gql/graphql';
 import { DamageEvent, LogEvent } from '../../types/combatlogEvents';
 
 // Local interface to avoid circular dependency with RootState

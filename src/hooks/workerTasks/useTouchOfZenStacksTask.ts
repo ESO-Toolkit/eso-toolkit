@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { FightFragment } from '../../graphql/generated';
+import { FightFragment } from '../../graphql/gql/graphql';
 import { executeTouchOfZenStacksTask, touchOfZenStacksActions } from '../../store/worker_results';
 import {
   selectTouchOfZenStacksResult,

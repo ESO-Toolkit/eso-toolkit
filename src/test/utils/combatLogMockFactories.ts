@@ -1,4 +1,4 @@
-import { FightFragment } from '../../graphql/generated';
+import { FightFragment } from '../../graphql/gql/graphql';
 import { KnownAbilities } from '../../types/abilities';
 import {
   ApplyBuffEvent,

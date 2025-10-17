@@ -6,7 +6,7 @@ import { useAnimationTimeRef } from '@/hooks/useAnimationTimeRef';
 import { usePlaybackAnimation } from '@/hooks/usePlaybackAnimation';
 import { useScrubbingMode } from '@/hooks/useScrubbingMode';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePhaseBasedMap } from '../../../hooks/usePhaseBasedMap';
 import { BuffEvent } from '../../../types/combatlogEvents';
 

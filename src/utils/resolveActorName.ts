@@ -1,4 +1,4 @@
-import { ReportActor, ReportActorFragment } from '../graphql/generated';
+import { ReportActor, ReportActorFragment } from '../graphql/gql/graphql';
 
 export function resolveActorName(
   actor: ReportActor | ReportActorFragment | undefined,

@@ -3,7 +3,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { createStore, combineReducers, Store } from 'redux';
 
-import { FightFragment, ReportFragment } from '../graphql/generated';
+import { FightFragment, ReportFragment } from '../graphql/gql/graphql';
 import { ReportFightContext } from '../ReportFightContext';
 
 import { useReportData } from './useReportData';

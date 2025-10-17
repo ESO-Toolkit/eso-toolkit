@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { executeCriticalDamageTask, criticalDamageActions } from '@/store/worker_results';
 import { SharedWorkerResultType } from '@/workers/SharedWorker';
 
-import { FightFragment } from '../../graphql/generated';
+import { FightFragment } from '../../graphql/gql/graphql';
 import {
   selectCriticalDamageResult,
   selectWorkerTaskLoading,

@@ -1,4 +1,4 @@
-import { ReportAbilityFragment } from '../graphql/generated';
+import { ReportAbilityFragment } from '../graphql/gql/graphql';
 import { selectAbilitiesById } from '../store/master_data/masterDataSelectors';
 import store, { RootState } from '../store/storeWithHistory';
 

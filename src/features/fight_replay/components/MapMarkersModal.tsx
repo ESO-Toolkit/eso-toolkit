@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import React, { useCallback, useState } from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import { useMarkerStats } from '../../../hooks/useMarkerStats';
 
 interface MapMarkersModalProps {

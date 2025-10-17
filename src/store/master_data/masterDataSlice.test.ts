@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 
 import { EsoLogsClient } from '../../esologsClient';
-import { ReportAbilityFragment, ReportActorFragment } from '../../graphql/generated';
+import { ReportAbilityFragment, ReportActorFragment } from '../../graphql/gql/graphql';
 
 import masterDataReducer, {
   clearMasterData,

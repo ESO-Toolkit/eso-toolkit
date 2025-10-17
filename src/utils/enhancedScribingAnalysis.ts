@@ -5,7 +5,7 @@
  */
 
 import { ScribedSkillData, ScribedSkillEffect } from '@/components/SkillTooltip';
-import { ReportAbility } from '@/graphql/generated';
+import { ReportAbility } from '@/graphql/gql/graphql';
 import {
   BuffEvent,
   UnifiedCastEvent,

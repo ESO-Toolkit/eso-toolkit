@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name */
-import { ApolloProvider } from '@apollo/client';
+import { ApolloProvider } from '@apollo/client/react';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
 import { Decorator } from '@storybook/react';

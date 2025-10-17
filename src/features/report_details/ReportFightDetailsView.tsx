@@ -1,7 +1,7 @@
 import { Paper, Typography, Box, Stack, Skeleton } from '@mui/material';
 import React from 'react';
 
-import { FightFragment } from '../../graphql/generated';
+import { FightFragment } from '../../graphql/gql/graphql';
 import { useReportData } from '../../hooks';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
 import { TabId, getSkeletonForTab } from '../../utils/getSkeletonForTab';

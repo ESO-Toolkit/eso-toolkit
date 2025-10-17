@@ -18,7 +18,7 @@ import { sorcererData } from '../data/skillsets/sorcerer';
 import { templarData } from '../data/skillsets/templar';
 import { wardenData } from '../data/skillsets/warden';
 // Import types
-import { ReportAbilityFragment } from '../graphql/generated';
+import { ReportAbilityFragment } from '../graphql/gql/graphql';
 import {
   CombatantInfoEvent,
   UnifiedCastEvent,

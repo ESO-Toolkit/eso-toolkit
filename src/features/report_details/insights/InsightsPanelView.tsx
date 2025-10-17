@@ -3,7 +3,7 @@ import React from 'react';
 
 import { AbilityIcon } from '../../../components/AbilityIcon';
 import { InsightsSkeletonLayout } from '../../../components/InsightsSkeletonLayout';
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import { KnownAbilities } from '../../../types/abilities';
 
 import { BuffUptimesPanel } from './BuffUptimesPanel';

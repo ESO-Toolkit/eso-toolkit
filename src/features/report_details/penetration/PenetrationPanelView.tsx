@@ -1,7 +1,7 @@
 import { Box, Typography, Alert } from '@mui/material';
 import React from 'react';
 
-import { FightFragment as Fight } from '../../../graphql/generated';
+import { FightFragment as Fight } from '../../../graphql/gql/graphql';
 import { PlayerDetailsWithRole as Player } from '../../../store/player_data/playerDataSlice';
 import { PlayerPenetrationData } from '../../../workers/calculations/CalculatePenetration';
 

@@ -35,7 +35,7 @@ import { useTheme } from '@mui/material/styles';
 import React, { Suspense } from 'react';
 
 import { AnimatedTabContent } from '../../components/AnimatedTabContent';
-import { FightFragment } from '../../graphql/generated';
+import { FightFragment } from '../../graphql/gql/graphql';
 import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';

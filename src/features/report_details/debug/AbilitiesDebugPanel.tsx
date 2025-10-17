@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import { useReportMasterData } from '../../../hooks';
 import { parseDamageTypeFlags } from '../../../types/abilities';
 

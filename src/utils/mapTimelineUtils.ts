@@ -1,4 +1,4 @@
-import { FightFragment, ReportFragment } from '../graphql/generated';
+import { FightFragment, ReportFragment } from '../graphql/gql/graphql';
 import { BuffEvent } from '../types/combatlogEvents';
 
 import { Logger, LogLevel } from './logger';

@@ -2,7 +2,7 @@ import { Box, Chip, Paper, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React from 'react';
 
-import type { UserReportSummaryFragment } from '../../../graphql/generated';
+import type { UserReportSummaryFragment } from '../../../graphql/gql/graphql';
 import {
   formatReportDateTime,
   formatReportDuration,

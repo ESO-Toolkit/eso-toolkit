@@ -2,7 +2,7 @@
  * Utility functions for working with Map Markers (M0R and Elms formats) and multi-map zones
  */
 
-import { FightFragment } from '../graphql/generated';
+import { FightFragment } from '../graphql/gql/graphql';
 import { ZONE_SCALE_DATA, ZoneScaleData } from '../types/zoneScaleData';
 
 /**

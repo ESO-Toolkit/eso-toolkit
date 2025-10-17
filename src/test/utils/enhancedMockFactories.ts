@@ -3,7 +3,7 @@
  * Consolidates commonly used mock data creation patterns
  */
 
-import { FightFragment, ReportActorFragment } from '../../graphql/generated';
+import { FightFragment, ReportActorFragment } from '../../graphql/gql/graphql';
 import { PlayerDetailsWithRole } from '../../store/player_data/playerDataSlice';
 import { Resources, DamageEvent } from '../../types/combatlogEvents';
 import { TEST_CONSTANTS } from '../constants/testConstants';

@@ -7,7 +7,7 @@ import {
   GetResourceEventsDocument,
   GetResourceEventsQuery,
   HostilityType,
-} from '../../graphql/generated';
+} from '../../graphql/gql/graphql';
 import { ResourceChangeEvent, LogEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
 

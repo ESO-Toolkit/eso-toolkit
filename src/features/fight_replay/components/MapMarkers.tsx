@@ -3,7 +3,7 @@
  */
 import React, { useMemo } from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import { ZONE_SCALE_DATA, ZoneScaleData } from '../../../types/zoneScaleData';
 import { decodeElmsMarkersString, isElmsMarkersFormat } from '../../../utils/elmsMarkersDecoder';
 import { Logger, LogLevel } from '../../../utils/logger';

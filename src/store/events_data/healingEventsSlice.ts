@@ -7,7 +7,7 @@ import {
   GetHealingEventsDocument,
   GetHealingEventsQuery,
   HostilityType,
-} from '../../graphql/generated';
+} from '../../graphql/gql/graphql';
 import { HealEvent, LogEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
 

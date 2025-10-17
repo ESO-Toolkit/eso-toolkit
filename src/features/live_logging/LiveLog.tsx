@@ -8,7 +8,7 @@ import { setSelectedTargetIds } from '@/store/ui/uiSlice';
 import { useAppDispatch } from '@/store/useAppDispatch';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
-import { GetReportByCodeDocument } from '../../graphql/generated';
+import { GetReportByCodeDocument } from '../../graphql/gql/graphql';
 import { ReportFightContext } from '../../ReportFightContext';
 import { TabId } from '../../utils/getSkeletonForTab';
 

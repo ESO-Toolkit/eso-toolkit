@@ -3,30 +3,15 @@ schema:
   https://www.esologs.com/api/v2/client:
     headers:
       Authorization: 'Bearer ${ESOLOGS_TOKEN}'
-documents: src/graphql/**/*.graphql
+documents: 'src/graphql/**/*.graphql'
+ignoreNoDocuments: true
 generates:
-  src/graphql/generated.ts:
-    plugins:
-      - add:
-          content: '/* eslint-disable */'
-      - typescript
-      - typescript-operations
-      - typed-document-node
-    config:
-      documentMode: documentNode
-  src/graphql/:
-    preset: near-operation-file
+  src/graphql/gql/:
+    preset: client
     presetConfig:
-      extension: .generated.ts
-      baseTypesPath: generated.ts
-    documentMode: external
-    plugins:
-      - add:
-          content: '/* eslint-disable */'
-      - typescript-react-apollo
+      fragmentMasking: false
+      gqlTagName: gql
     config:
-      withHooks: true
-      withComponent: false
-      withHOC: false
-      reactApolloVersion: 3
-      importOperationTypesFrom: Types
+      scalars:
+        JSON: any
+      useTypeImports: true

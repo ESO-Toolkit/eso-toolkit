@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/gql/graphql';
 import { useReportMasterData } from '../../../hooks';
 import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';

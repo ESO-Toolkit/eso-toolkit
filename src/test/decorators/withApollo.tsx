@@ -1,4 +1,4 @@
-import { MockedProvider } from '@apollo/client/testing';
+import { MockedProvider } from '@apollo/client/testing/react';
 import type { Decorator } from '@storybook/react';
 import React from 'react';
 
@@ -7,7 +7,7 @@ export const withApollo: Decorator = (Story, _context) => {
   const mocks = _context.parameters.apolloMocks || [];
 
   return (
-    <MockedProvider mocks={mocks} addTypename={false} showWarnings={true}>
+    <MockedProvider mocks={mocks} showWarnings={true}>
       <Story />
     </MockedProvider>
   );

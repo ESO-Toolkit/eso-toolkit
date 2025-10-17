@@ -1,4 +1,4 @@
-import { FightFragment, ReportActorFragment } from '../../graphql/generated';
+import { FightFragment, ReportActorFragment } from '../../graphql/gql/graphql';
 import { PlayerDetailsWithRole } from '../../store/player_data/playerDataSlice';
 import { KnownAbilities } from '../../types/abilities';
 import {

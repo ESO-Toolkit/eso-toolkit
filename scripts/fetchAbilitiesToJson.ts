@@ -5,7 +5,7 @@ import fetch from 'cross-fetch';
 import dotenv from 'dotenv';
 
 import { createEsoLogsClient } from '../src/esologsClient';
-import { GetAbilitiesDocument } from '../src/graphql/generated';
+import { GetAbilitiesDocument } from '../src/graphql/gql/graphql';
 
 dotenv.config();
 

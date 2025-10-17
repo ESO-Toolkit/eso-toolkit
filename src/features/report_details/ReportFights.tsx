@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { DynamicMetaTags } from '../../components/DynamicMetaTags';
-import { FightFragment } from '../../graphql/generated';
+import { FightFragment } from '../../graphql/gql/graphql';
 import { useReportData } from '../../hooks';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
 import { cleanArray } from '../../utils/cleanArray';

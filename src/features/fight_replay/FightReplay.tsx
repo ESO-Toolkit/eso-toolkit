@@ -3,7 +3,7 @@ import { Alert, Box, Button, Chip, Typography } from '@mui/material';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import type { FightFragment } from '@/graphql/generated';
+import type { FightFragment } from '@/graphql/gql/graphql';
 import { useCurrentFight, useReportFightParams } from '@/hooks';
 
 import { useFriendlyBuffEvents } from '../../hooks/events/useFriendlyBuffEvents';

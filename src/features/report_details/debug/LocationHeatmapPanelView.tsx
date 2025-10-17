@@ -29,7 +29,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-import { ReportActorFragment } from '../../../graphql/generated';
+import { ReportActorFragment } from '../../../graphql/gql/graphql';
 
 interface LocationPoint {
   x: number;

@@ -2,7 +2,7 @@
  * Utility functions for converting between fight frame time and absolute timestamps
  */
 
-import { FightFragment } from '../graphql/generated';
+import { FightFragment } from '../graphql/gql/graphql';
 
 /**
  * Converts a relative fight time (in milliseconds since fight start) to absolute timestamp

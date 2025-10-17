@@ -98,7 +98,7 @@ jest.mock('date-fns', () => ({
 }));
 
 // Mock GraphQL documents
-jest.mock('../../graphql/reports.generated', () => ({
+jest.mock('../../graphql/gql/graphql', () => ({
   GetCurrentUserDocument: { __mock: 'GetCurrentUserDocument' },
   GetUserReportsDocument: { __mock: 'GetUserReportsDocument' },
 }));

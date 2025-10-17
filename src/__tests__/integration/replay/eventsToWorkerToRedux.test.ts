@@ -16,7 +16,7 @@
  * since the actual worker runs in a separate thread and cannot be directly imported.
  */
 
-import type { FightFragment } from '../../../graphql/generated';
+import type { FightFragment } from '../../../graphql/gql/graphql';
 import type {
   TimestampPositionLookup,
   FightEvents,
