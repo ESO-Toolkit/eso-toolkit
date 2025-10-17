@@ -172,7 +172,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   const logger = useLogger();
 
   // Always use automatic scribing detection when fight and player context available
-  const { scribedSkillData: detectedScribingData, loading: scribingLoading } = useSkillScribingData(
+  const { scribedSkillData: detectedScribingData } = useSkillScribingData(
     fightId,
     playerId,
     abilityId,
@@ -513,23 +513,6 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                 >
                   📖 Grimoire: {finalScribedData.grimoireName}
                 </Typography>
-
-                {/* Enhanced Detection Badge */}
-                <Chip
-                  size="small"
-                  label={scribingLoading ? 'Analyzing...' : 'Enhanced AI'}
-                  variant="outlined"
-                  sx={{
-                    fontSize: '0.6rem',
-                    height: '18px',
-                    color: scribingLoading ? 'warning.main' : 'success.main',
-                    borderColor: scribingLoading ? 'warning.main' : 'success.main',
-                    '& .MuiChip-label': {
-                      px: 0.5,
-                      fontSize: '0.6rem',
-                    },
-                  }}
-                />
               </Stack>
 
               {/* Show message when skill wasn't cast */}
