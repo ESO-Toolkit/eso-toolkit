@@ -489,6 +489,137 @@ export const PlayersPanel: React.FC = () => {
     return result;
   }, [playerData?.playersById]);
 
+  // Calculate max resources (health, stamina, magicka) per player using all resource events throughout the fight
+  const maxResourcesByPlayer = React.useMemo(() => {
+    const result: Record<string, { health: number; stamina: number; magicka: number }> = {};
+
+    if (!playerData?.playersById || !fight) return result;
+
+    // Initialize with 0 for each player
+    Object.values(playerData.playersById).forEach((player) => {
+      if (player?.id) {
+        result[String(player.id)] = { health: 0, stamina: 0, magicka: 0 };
+      }
+    });
+
+    const updatePlayerResources = (
+      playerId: string,
+      resources: { maxHitPoints?: number; maxStamina?: number; maxMagicka?: number },
+    ): void => {
+      if (result[playerId] !== undefined && resources) {
+        if (resources.maxHitPoints) {
+          result[playerId].health = Math.max(result[playerId].health, resources.maxHitPoints);
+        }
+        if (resources.maxStamina) {
+          result[playerId].stamina = Math.max(result[playerId].stamina, resources.maxStamina);
+        }
+        if (resources.maxMagicka) {
+          result[playerId].magicka = Math.max(result[playerId].magicka, resources.maxMagicka);
+        }
+      }
+    };
+
+    // Look for max resources across all resource events within the fight timeframe
+    if (resourceEvents) {
+      resourceEvents.forEach((event) => {
+        if (event.type === 'resourcechange') {
+          // Only consider events within the current fight timeframe
+          const isInFightTimeframe =
+            event.timestamp >= fight.startTime && event.timestamp <= fight.endTime;
+
+          if (isInFightTimeframe) {
+            // Check source resources
+            if (event.sourceID && event.sourceResources) {
+              const playerId = String(event.sourceID);
+              updatePlayerResources(playerId, event.sourceResources);
+            }
+
+            // Check target resources
+            if (event.targetID && event.targetResources) {
+              const playerId = String(event.targetID);
+              updatePlayerResources(playerId, event.targetResources);
+            }
+          }
+        }
+      });
+    }
+
+    // Also check damage and healing events for additional resource data
+    if (damageEvents) {
+      damageEvents.forEach((event) => {
+        if (event.type === 'damage') {
+          const isInFightTimeframe =
+            event.timestamp >= fight.startTime && event.timestamp <= fight.endTime;
+
+          if (isInFightTimeframe) {
+            // Check source resources in damage events
+            if (event.sourceID && event.sourceResources) {
+              const playerId = String(event.sourceID);
+              updatePlayerResources(playerId, event.sourceResources);
+            }
+
+            // Check target resources in damage events
+            if (event.targetID && event.targetResources) {
+              const playerId = String(event.targetID);
+              updatePlayerResources(playerId, event.targetResources);
+            }
+          }
+        }
+      });
+    }
+
+    // Also check healing events for additional resource data
+    if (healingEvents) {
+      healingEvents.forEach((event) => {
+        if (event.type === 'heal') {
+          const isInFightTimeframe =
+            event.timestamp >= fight.startTime && event.timestamp <= fight.endTime;
+
+          if (isInFightTimeframe) {
+            // Check source resources in healing events
+            if (event.sourceID && event.sourceResources) {
+              const playerId = String(event.sourceID);
+              updatePlayerResources(playerId, event.sourceResources);
+            }
+
+            // Check target resources in healing events
+            if (event.targetID && event.targetResources) {
+              const playerId = String(event.targetID);
+              updatePlayerResources(playerId, event.targetResources);
+            }
+          }
+        }
+      });
+    }
+
+    return result;
+  }, [playerData?.playersById, resourceEvents, damageEvents, healingEvents, fight]);
+
+  // Extract individual max resources for backward compatibility
+  const maxHealthByPlayer = React.useMemo(() => {
+    const result: Record<string, number> = {};
+    Object.entries(maxResourcesByPlayer).forEach(([playerId, resources]) => {
+      result[playerId] = resources.health;
+    });
+    return result;
+  }, [maxResourcesByPlayer]);
+
+  const maxStaminaByPlayer = React.useMemo(() => {
+    const result: Record<string, number> = {};
+    Object.entries(maxResourcesByPlayer).forEach(([playerId, resources]) => {
+      result[playerId] = resources.stamina;
+    });
+    return result;
+  }, [maxResourcesByPlayer]);
+
+  const maxMagickaByPlayer = React.useMemo(() => {
+    const result: Record<string, number> = {};
+    Object.entries(maxResourcesByPlayer).forEach(([playerId, resources]) => {
+      result[playerId] = resources.magicka;
+    });
+    return result;
+  }, [maxResourcesByPlayer]);
+
   // Calculate build issues per player
   const buildIssuesByPlayer = React.useMemo(() => {
     const result: Record<string, BuildIssue[]> = {};
@@ -502,6 +633,10 @@ export const PlayersPanel: React.FC = () => {
 
       const playerId = String(player.id);
       const gear = player?.combatantInfo?.gear ?? [];
+      const resourceSnapshot = maxResourcesByPlayer[playerId];
+      const playerResourceProfile = resourceSnapshot
+        ? { stamina: resourceSnapshot.stamina, magicka: resourceSnapshot.magicka }
+        : undefined;
 
       // Extract auras for this player from combatant info events
       const playerAuras: CombatantAura[] = [];
@@ -525,6 +660,7 @@ export const PlayersPanel: React.FC = () => {
         player.role,
         damageEvents,
         player.id,
+        playerResourceProfile,
       );
 
       result[playerId] = buildIssues;
@@ -538,6 +674,7 @@ export const PlayersPanel: React.FC = () => {
     fight?.endTime,
     damageEvents,
     combatantInfoEvents,
+    maxResourcesByPlayer,
   ]);
 
   // Calculate scribing skills per player using the utility function
@@ -752,137 +889,6 @@ export const PlayersPanel: React.FC = () => {
     friendlyBuffEvents,
     debuffEvents,
   ]);
-
-  // Calculate max resources (health, stamina, magicka) per player using all resource events throughout the fight
-  const maxResourcesByPlayer = React.useMemo(() => {
-    const result: Record<string, { health: number; stamina: number; magicka: number }> = {};
-
-    if (!playerData?.playersById || !fight) return result;
-
-    // Initialize with 0 for each player
-    Object.values(playerData.playersById).forEach((player) => {
-      if (player?.id) {
-        result[String(player.id)] = { health: 0, stamina: 0, magicka: 0 };
-      }
-    });
-
-    const updatePlayerResources = (
-      playerId: string,
-      resources: { maxHitPoints?: number; maxStamina?: number; maxMagicka?: number },
-    ): void => {
-      if (result[playerId] !== undefined && resources) {
-        if (resources.maxHitPoints) {
-          result[playerId].health = Math.max(result[playerId].health, resources.maxHitPoints);
-        }
-        if (resources.maxStamina) {
-          result[playerId].stamina = Math.max(result[playerId].stamina, resources.maxStamina);
-        }
-        if (resources.maxMagicka) {
-          result[playerId].magicka = Math.max(result[playerId].magicka, resources.maxMagicka);
-        }
-      }
-    };
-
-    // Look for max resources across all resource events within the fight timeframe
-    if (resourceEvents) {
-      resourceEvents.forEach((event) => {
-        if (event.type === 'resourcechange') {
-          // Only consider events within the current fight timeframe
-          const isInFightTimeframe =
-            event.timestamp >= fight.startTime && event.timestamp <= fight.endTime;
-
-          if (isInFightTimeframe) {
-            // Check source resources
-            if (event.sourceID && event.sourceResources) {
-              const playerId = String(event.sourceID);
-              updatePlayerResources(playerId, event.sourceResources);
-            }
-
-            // Check target resources
-            if (event.targetID && event.targetResources) {
-              const playerId = String(event.targetID);
-              updatePlayerResources(playerId, event.targetResources);
-            }
-          }
-        }
-      });
-    }
-
-    // Also check damage and healing events for additional resource data
-    if (damageEvents) {
-      damageEvents.forEach((event) => {
-        if (event.type === 'damage') {
-          const isInFightTimeframe =
-            event.timestamp >= fight.startTime && event.timestamp <= fight.endTime;
-
-          if (isInFightTimeframe) {
-            // Check source resources in damage events
-            if (event.sourceID && event.sourceResources) {
-              const playerId = String(event.sourceID);
-              updatePlayerResources(playerId, event.sourceResources);
-            }
-
-            // Check target resources in damage events
-            if (event.targetID && event.targetResources) {
-              const playerId = String(event.targetID);
-              updatePlayerResources(playerId, event.targetResources);
-            }
-          }
-        }
-      });
-    }
-
-    // Also check healing events for additional resource data
-    if (healingEvents) {
-      healingEvents.forEach((event) => {
-        if (event.type === 'heal') {
-          const isInFightTimeframe =
-            event.timestamp >= fight.startTime && event.timestamp <= fight.endTime;
-
-          if (isInFightTimeframe) {
-            // Check source resources in healing events
-            if (event.sourceID && event.sourceResources) {
-              const playerId = String(event.sourceID);
-              updatePlayerResources(playerId, event.sourceResources);
-            }
-
-            // Check target resources in healing events
-            if (event.targetID && event.targetResources) {
-              const playerId = String(event.targetID);
-              updatePlayerResources(playerId, event.targetResources);
-            }
-          }
-        }
-      });
-    }
-
-    return result;
-  }, [playerData?.playersById, resourceEvents, damageEvents, healingEvents, fight]);
-
-  // Extract individual max resources for backward compatibility
-  const maxHealthByPlayer = React.useMemo(() => {
-    const result: Record<string, number> = {};
-    Object.entries(maxResourcesByPlayer).forEach(([playerId, resources]) => {
-      result[playerId] = resources.health;
-    });
-    return result;
-  }, [maxResourcesByPlayer]);
-
-  const maxStaminaByPlayer = React.useMemo(() => {
-    const result: Record<string, number> = {};
-    Object.entries(maxResourcesByPlayer).forEach(([playerId, resources]) => {
-      result[playerId] = resources.stamina;
-    });
-    return result;
-  }, [maxResourcesByPlayer]);
-
-  const maxMagickaByPlayer = React.useMemo(() => {
-    const result: Record<string, number> = {};
-    Object.entries(maxResourcesByPlayer).forEach(([playerId, resources]) => {
-      result[playerId] = resources.magicka;
-    });
-    return result;
-  }, [maxResourcesByPlayer]);
 
   // Effect to lookup scribing recipes for detected skills
   React.useEffect(() => {
