@@ -12,7 +12,8 @@ interface DamageRow {
   total: number;
   dps: number;
   activePercentage: number;
-  criticalDamage: number;
+  criticalDamagePercent: number;
+  criticalDamageTotal: number;
   iconUrl?: string;
   role?: 'dps' | 'tank' | 'healer';
   deaths: number;
@@ -28,7 +29,7 @@ interface DamageDonePanelViewProps {
   availableTargets?: Array<{ id: number; name: string }>;
 }
 
-type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamage';
+type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamagePercent';
 type SortDirection = 'asc' | 'desc';
 
 /**
@@ -69,9 +70,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           aValue = a.activePercentage > 0 ? a.dps / (a.activePercentage / 100) : 0;
           bValue = b.activePercentage > 0 ? b.dps / (b.activePercentage / 100) : 0;
           break;
-        case 'criticalDamage':
-          aValue = a.criticalDamage;
-          bValue = b.criticalDamage;
+        case 'criticalDamagePercent':
+          aValue = a.criticalDamagePercent;
+          bValue = b.criticalDamagePercent;
           break;
         default:
           return 0;
@@ -121,6 +122,12 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
       return `${(rounded / 1000).toFixed(1)}k`;
     }
     return rounded.toString();
+  };
+
+  const formatPercent = (num: number): string => {
+    if (!Number.isFinite(num)) return '0%';
+    const precision = Math.abs(num) >= 10 ? 0 : 1;
+    return `${num.toFixed(precision)}%`;
   };
 
   // Get color based on player role using theme-aware colors
@@ -318,13 +325,13 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           Active{getSortIcon('activeDps')}
         </Box>
         <Box
-          onClick={() => handleSort('criticalDamage')}
+          onClick={() => handleSort('criticalDamagePercent')}
           sx={{
             px: 2,
             py: 0.5,
             borderRadius: '12px',
             backgroundColor:
-              sortField === 'criticalDamage'
+              sortField === 'criticalDamagePercent'
                 ? roleColors.isDarkMode
                   ? 'rgba(251, 191, 36, 0.2)'
                   : 'rgba(245, 158, 11, 0.1)'
@@ -338,7 +345,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             userSelect: 'none',
             fontSize: '0.75rem',
             color:
-              sortField === 'criticalDamage'
+              sortField === 'criticalDamagePercent'
                 ? roleColors.isDarkMode
                   ? '#fbbf24'
                   : '#f59e0b'
@@ -354,7 +361,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             },
           }}
         >
-          Crit{getSortIcon('criticalDamage')}
+          Crit %{getSortIcon('criticalDamagePercent')}
         </Box>
       </Box>
       {damageRows.length > 0 ? (
@@ -539,9 +546,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   color: roleColors.isDarkMode ? '#fbbf24' : '#f59e0b',
                 },
               }}
-              onClick={() => handleSort('criticalDamage')}
+              onClick={() => handleSort('criticalDamagePercent')}
             >
-              Crit{getSortIcon('criticalDamage')}
+              Crit %{getSortIcon('criticalDamagePercent')}
             </Box>
             <Box
               sx={{
@@ -562,6 +569,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           {/* Data Rows */}
           {sortedRows.map((row, index) => {
             const percentage = ((row.total / maxDamage) * 100).toFixed(2);
+            const percentageValue = parseFloat(percentage);
             const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
             const playerColor = getPlayerColor(row.role);
 
@@ -641,7 +649,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     {/* Total Damage Progress Bar (Background) - Yellow/Amber */}
                     <LinearProgress
                       variant="determinate"
-                      value={parseFloat(percentage)}
+                      value={percentageValue}
                       sx={{
                         height: 8,
                         borderRadius: 1,
@@ -659,7 +667,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     {/* Critical Damage Progress Bar (Overlay) - Role Colors */}
                     <LinearProgress
                       variant="determinate"
-                      value={(row.criticalDamage / maxDamage) * 100}
+                      value={(percentageValue * row.criticalDamagePercent) / 100}
                       sx={{
                         position: 'absolute',
                         top: 0,
@@ -762,7 +770,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     textAlign: 'right',
                   }}
                 >
-                  <Tooltip title={formatNumber(row.criticalDamage)} arrow>
+                  <Tooltip
+                    title={`${formatPercent(row.criticalDamagePercent)} crit (${formatNumber(row.criticalDamageTotal)} dmg)`}
+                    arrow
+                  >
                     <Typography
                       sx={{
                         color: playerColor,
@@ -774,7 +785,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         cursor: 'help',
                       }}
                     >
-                      {formatNumberShort(row.criticalDamage)}
+                      {formatPercent(row.criticalDamagePercent)}
                     </Typography>
                   </Tooltip>
                 </Box>
@@ -857,6 +868,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           {/* Mobile Card Layout */}
           {sortedRows.map((row, index) => {
             const percentage = ((row.total / maxDamage) * 100).toFixed(2);
+            const percentageValue = parseFloat(percentage);
             const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
             const playerColor = getPlayerColor(row.role);
 
@@ -988,7 +1000,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     {/* Total Damage Progress Bar (Background) - Yellow/Amber */}
                     <LinearProgress
                       variant="determinate"
-                      value={parseFloat(percentage)}
+                      value={percentageValue}
                       sx={{
                         height: 6, // Slightly smaller for mobile
                         borderRadius: 1,
@@ -1006,7 +1018,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     {/* Critical Damage Progress Bar (Overlay) - Role Colors */}
                     <LinearProgress
                       variant="determinate"
-                      value={(row.criticalDamage / maxDamage) * 100}
+                      value={(percentageValue * row.criticalDamagePercent) / 100}
                       sx={{
                         position: 'absolute',
                         top: 0,
@@ -1051,7 +1063,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   >
                     Crit:
                   </Typography>
-                  <Tooltip title={formatNumber(row.criticalDamage)} arrow>
+                  <Tooltip
+                    title={`${formatPercent(row.criticalDamagePercent)} crit (${formatNumber(row.criticalDamageTotal)} dmg)`}
+                    arrow
+                  >
                     <Typography
                       sx={{
                         color: playerColor,
@@ -1063,7 +1078,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         cursor: 'help',
                       }}
                     >
-                      {formatNumberShort(row.criticalDamage)}
+                      {formatPercent(row.criticalDamagePercent)}
                     </Typography>
                   </Tooltip>
                 </Box>
