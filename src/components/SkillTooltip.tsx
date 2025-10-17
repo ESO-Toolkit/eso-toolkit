@@ -101,25 +101,6 @@ export interface SkillTooltipProps {
 
 type PaletteKey = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
 
-// Utility functions for scribed skill effects
-const getEffectTypeColor = (type: string, theme: Theme): string => {
-  switch (type) {
-    case 'buff':
-      return theme.palette.success.main;
-    case 'debuff':
-      return theme.palette.error.main;
-    case 'damage':
-      return theme.palette.warning.main;
-    case 'heal':
-      return theme.palette.info.main;
-    case 'aura':
-      return theme.palette.secondary.main;
-    case 'resource':
-      return theme.palette.primary.main;
-    default:
-      return theme.palette.text.secondary;
-  }
-};
 
 const getEffectTypeIndicator = (type: string, theme: Theme): { color: string } => {
   switch (type) {
@@ -736,7 +717,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                             size="small"
                             label={`${effect.abilityName} (${effect.count})`}
                             variant="outlined"
-                            sx={(theme) => ({
+                            sx={(_theme) => ({
                               fontSize: '0.62rem',
                               height: '20px',
                               color: indicator.color,
