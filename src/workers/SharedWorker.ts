@@ -11,10 +11,10 @@ import { calculateDamageOverTimeData } from './calculations/CalculateDamageOverT
 import { calculateDamageReductionData } from './calculations/CalculateDamageReduction';
 import { calculateElementalWeaknessStacks } from './calculations/CalculateElementalWeaknessStacks';
 import { calculatePenetrationData } from './calculations/CalculatePenetration';
+import { calculatePlayerTravelDistances } from './calculations/CalculatePlayerTravelDistances';
 import { calculateStaggerStacks } from './calculations/CalculateStaggerStacks';
 import { calculateStatusEffectUptimes } from './calculations/CalculateStatusEffectUptimes';
 import { calculateTouchOfZenStacks } from './calculations/CalculateTouchOfZenStacks';
-import { calculatePlayerTravelDistances } from './calculations/CalculatePlayerTravelDistances';
 
 const SHARED_WORKER = {
   calculateBuffLookup,

@@ -9,10 +9,10 @@ import { DamageOverTimeCalculationTask } from './calculations/CalculateDamageOve
 import { DamageReductionCalculationTask } from './calculations/CalculateDamageReduction';
 import { ElementalWeaknessStacksCalculationTask } from './calculations/CalculateElementalWeaknessStacks';
 import { PenetrationCalculationTask } from './calculations/CalculatePenetration';
+import { PlayerTravelDistanceTaskInput } from './calculations/CalculatePlayerTravelDistances';
 import { StaggerStacksCalculationTask } from './calculations/CalculateStaggerStacks';
 import { StatusEffectUptimesCalculationTask } from './calculations/CalculateStatusEffectUptimes';
 import { TouchOfZenStacksCalculationTask } from './calculations/CalculateTouchOfZenStacks';
-import { PlayerTravelDistanceTaskInput } from './calculations/CalculatePlayerTravelDistances';
 import { SharedComputationWorkerTaskType } from './SharedWorker';
 import type { WorkerPoolConfig, WorkerTask, WorkerInfo, WorkerStats } from './types';
 import { OnProgressCallback } from './Utils';

@@ -90,16 +90,18 @@ export function usePlayerTravelDistanceTask(): UsePlayerTravelDistanceTaskResult
     );
   }, [dispatch, fight, events, playerIds, isAnyDependencyLoading]);
 
-  const taskResult = useSelector(selectPlayerTravelDistancesResult) as PlayerTravelDistanceResult | null;
+  const taskResult = useSelector(
+    selectPlayerTravelDistancesResult,
+  ) as PlayerTravelDistanceResult | null;
   const isTaskLoading = useSelector(
     selectWorkerTaskLoading('calculatePlayerTravelDistances'),
   ) as boolean;
-  const taskError = useSelector(
-    selectWorkerTaskError('calculatePlayerTravelDistances'),
-  ) as string | null;
-  const taskProgress = useSelector(
-    selectWorkerTaskProgress('calculatePlayerTravelDistances'),
-  ) as number | null;
+  const taskError = useSelector(selectWorkerTaskError('calculatePlayerTravelDistances')) as
+    | string
+    | null;
+  const taskProgress = useSelector(selectWorkerTaskProgress('calculatePlayerTravelDistances')) as
+    | number
+    | null;
 
   const isPlayerTravelDistancesLoading = isTaskLoading || isAnyDependencyLoading;
 

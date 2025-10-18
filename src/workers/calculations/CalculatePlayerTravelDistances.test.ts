@@ -57,7 +57,7 @@ describe('calculatePlayerTravelDistances', () => {
       sourceID: playerId,
       sourceIsFriendly: true,
       targetID: 99,
-  targetIsFriendly: false,
+      targetIsFriendly: false,
       abilityGameID: 123,
       fight: baseFight.id,
       hitType: HitType.Normal,
@@ -73,7 +73,7 @@ describe('calculatePlayerTravelDistances', () => {
       sourceID: playerId,
       sourceIsFriendly: true,
       targetID: playerId,
-  targetIsFriendly: false,
+      targetIsFriendly: false,
       abilityGameID: 456,
       fight: baseFight.id,
       resourceChange: 0,
@@ -103,7 +103,7 @@ describe('calculatePlayerTravelDistances', () => {
 
     expect(summary).toBeDefined();
     expect(summary.samples).toBe(2);
-  // Converted coordinates flip X and divide by 100, resulting in a 1-unit change along X.
+    // Converted coordinates flip X and divide by 100, resulting in a 1-unit change along X.
     expect(summary.totalDistance).toBeCloseTo(1, 5);
     expect(summary.averageSpeed).toBeGreaterThan(0);
   });
@@ -118,7 +118,7 @@ describe('calculatePlayerTravelDistances', () => {
       sourceID: playerOne,
       sourceIsFriendly: true,
       targetID: playerTwo,
-  targetIsFriendly: false,
+      targetIsFriendly: false,
       abilityGameID: 321,
       fight: baseFight.id,
       hitType: HitType.Critical,

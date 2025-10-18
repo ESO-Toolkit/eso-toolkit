@@ -1,5 +1,6 @@
 import { convertCoordinatesWithBottomLeft } from '../../utils/coordinateUtils';
 import { OnProgressCallback } from '../Utils';
+
 import { FightEvents } from './CalculateActorPositions';
 
 const POSITION_EPSILON = 0.05; // Ignore tiny jitter between samples (~5 cm)
@@ -121,7 +122,10 @@ export function calculatePlayerTravelDistances(
   eventsWithPositions.forEach((event, index) => {
     processedEventCount += 1;
 
-    const handleActor = (actorId: number | undefined, resources?: { x: number; y: number }) => {
+    const handleActor = (
+      actorId: number | undefined,
+      resources?: { x: number; y: number },
+    ): void => {
       if (actorId == null || !playerSet.has(actorId)) {
         return;
       }
@@ -134,8 +138,14 @@ export function calculatePlayerTravelDistances(
       processSample(actorId, event.timestamp, position, trackingStates);
     };
 
-    handleActor(event.sourceID, (event as { sourceResources?: { x: number; y: number } }).sourceResources);
-    handleActor(event.targetID, (event as { targetResources?: { x: number; y: number } }).targetResources);
+    handleActor(
+      event.sourceID,
+      (event as { sourceResources?: { x: number; y: number } }).sourceResources,
+    );
+    handleActor(
+      event.targetID,
+      (event as { targetResources?: { x: number; y: number } }).targetResources,
+    );
     if ((index + 1) % 250 === 0 || index === eventsWithPositions.length - 1) {
       onProgress?.((index + 1) / totalEventCount);
     }
@@ -146,11 +156,13 @@ export function calculatePlayerTravelDistances(
 
   for (const playerId of playerSet) {
     const state = trackingStates.get(playerId) ?? createInitialTrackingState();
-    const activeDurationMs = state.firstTimestamp && state.lastTimestamp
-      ? Math.max(0, state.lastTimestamp - state.firstTimestamp)
-      : 0;
+    const activeDurationMs =
+      state.firstTimestamp && state.lastTimestamp
+        ? Math.max(0, state.lastTimestamp - state.firstTimestamp)
+        : 0;
 
-    const averageSpeed = activeDurationMs > 0 ? state.totalDistance / (activeDurationMs / 1000) : null;
+    const averageSpeed =
+      activeDurationMs > 0 ? state.totalDistance / (activeDurationMs / 1000) : null;
 
     distancesByPlayerId[playerId] = {
       playerId,

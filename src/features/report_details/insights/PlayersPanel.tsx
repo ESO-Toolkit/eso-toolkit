@@ -142,7 +142,7 @@ export const PlayersPanel: React.FC = () => {
     isHealingEventsLoading ||
     isResourceEventsLoading ||
     isBuffLookupLoading ||
-  isPlayerTravelDistancesLoading ||
+    isPlayerTravelDistancesLoading ||
     isFightLoading;
   // Calculate unique mundus buffs per player using MundusStones enum from combatantinfo auras
   const mundusBuffsByPlayer = React.useMemo(() => {
@@ -1031,7 +1031,7 @@ export const PlayersPanel: React.FC = () => {
         maxHealthByPlayer={maxHealthByPlayer}
         maxStaminaByPlayer={maxStaminaByPlayer}
         maxMagickaByPlayer={maxMagickaByPlayer}
-  distanceByPlayer={distanceByPlayer}
+        distanceByPlayer={distanceByPlayer}
         reportId={reportId}
         fightId={fightId}
         isLoading={isLoading}

@@ -74,7 +74,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     maxHealthByPlayer,
     maxStaminaByPlayer,
     maxMagickaByPlayer,
-  distanceByPlayer,
+    distanceByPlayer,
     reportId,
     fightId,
     isLoading,

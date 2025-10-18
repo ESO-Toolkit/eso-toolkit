@@ -1038,7 +1038,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           <Box
                             component="span"
                             data-testid={`food-drink-${player.id}`}
-                            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, fontWeight: 600 }}
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              fontWeight: 600,
+                            }}
                           >
                             <span role="img" aria-label="food">
                               🍲
@@ -1067,7 +1072,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           enterTouchDelay={0}
                           leaveTouchDelay={3000}
                         >
-                          <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="span"
+                            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+                          >
                             <span role="img" aria-label="deaths">
                               💀
                             </span>
@@ -1084,7 +1092,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           enterTouchDelay={0}
                           leaveTouchDelay={3000}
                         >
-                          <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="span"
+                            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+                          >
                             <span role="img" aria-label="resurrects">
                               ❤️
                             </span>
@@ -1102,8 +1113,15 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           justifyContent: 'flex-end',
                         }}
                       >
-                        <Tooltip title="Casts per Minute" enterTouchDelay={0} leaveTouchDelay={3000}>
-                          <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                        <Tooltip
+                          title="Casts per Minute"
+                          enterTouchDelay={0}
+                          leaveTouchDelay={3000}
+                        >
+                          <Box
+                            component="span"
+                            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+                          >
                             <span role="img" aria-label="cpm">
                               🐭
                             </span>
@@ -1132,7 +1150,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               enterTouchDelay={0}
                               leaveTouchDelay={3000}
                             >
-                              <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                              <Box
+                                component="span"
+                                sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+                              >
                                 <span role="img" aria-label="distance">
                                   🛤️
                                 </span>
