@@ -13,7 +13,8 @@ interface DamageRow {
   total: number;
   dps: number;
   activePercentage: number;
-  criticalDamage: number;
+  criticalDamagePercent: number;
+  criticalDamageTotal: number;
   iconUrl?: string;
   role?: 'dps' | 'tank' | 'healer';
   deaths: number;
@@ -30,7 +31,7 @@ interface DamageDonePanelViewProps {
   availableTargets?: Array<{ id: number; name: string }>;
 }
 
-type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamage';
+type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamagePercent';
 type SortDirection = 'asc' | 'desc';
 
 /**
@@ -71,9 +72,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           aValue = a.activePercentage > 0 ? a.dps / (a.activePercentage / 100) : 0;
           bValue = b.activePercentage > 0 ? b.dps / (b.activePercentage / 100) : 0;
           break;
-        case 'criticalDamage':
-          aValue = a.criticalDamage;
-          bValue = b.criticalDamage;
+        case 'criticalDamagePercent':
+          aValue = a.criticalDamagePercent;
+          bValue = b.criticalDamagePercent;
           break;
         default:
           return 0;
@@ -123,6 +124,12 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
       return `${(rounded / 1000).toFixed(1)}k`;
     }
     return rounded.toString();
+  };
+
+  const formatPercent = (num: number): string => {
+    if (!Number.isFinite(num)) return '0%';
+    const precision = Math.abs(num) >= 10 ? 0 : 1;
+    return `${num.toFixed(precision)}%`;
   };
 
   // Get color based on player role using theme-aware colors
@@ -429,9 +436,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   color: roleColors.isDarkMode ? '#fbbf24' : '#f59e0b',
                 },
               }}
-              onClick={() => handleSort('criticalDamage')}
+              onClick={() => handleSort('criticalDamagePercent')}
             >
-              Crit{getSortIcon('criticalDamage')}
+              Crit %{getSortIcon('criticalDamagePercent')}
             </Box>
             <Tooltip title="Deaths" arrow>
               <Box
@@ -465,6 +472,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           {/* Data Rows */}
           {sortedRows.map((row, index) => {
             const percentage = ((row.total / maxDamage) * 100).toFixed(2);
+            const percentageValue = parseFloat(percentage);
             const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
             const playerColor = getPlayerColor(row.role);
 
@@ -654,7 +662,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     textAlign: 'right',
                   }}
                 >
-                  <Tooltip title={formatNumber(row.criticalDamage)} arrow>
+                  <Tooltip
+                    title={`${formatPercent(row.criticalDamagePercent)} crit (${formatNumber(row.criticalDamageTotal)} dmg)`}
+                    arrow
+                  >
                     <Typography
                       sx={{
                         color: playerColor,
@@ -666,7 +677,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         cursor: 'help',
                       }}
                     >
-                      {formatNumberShort(row.criticalDamage)}
+                      {formatPercent(row.criticalDamagePercent)}
                     </Typography>
                   </Tooltip>
                 </Box>
@@ -772,6 +783,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           {/* Premium Mobile Card Layout */}
           {sortedRows.map((row, _index) => {
             const percentage = ((row.total / maxDamage) * 100).toFixed(2);
+            const percentageValue = parseFloat(percentage);
             const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
             const playerColor = getPlayerColor(row.role);
             const isActive = row.activePercentage > 0;

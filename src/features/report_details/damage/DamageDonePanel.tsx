@@ -316,8 +316,10 @@ export const DamageDonePanel: React.FC = () => {
         const activeData = activePercentages[playerId];
         const activePercentage = activeData?.activePercentage ?? 0;
 
-        // Get critical damage for this player
-        const criticalDamage = damageStatistics.criticalDamageByPlayer[playerId] || 0;
+        // Get critical damage metrics for this player
+        const criticalDamageTotal = damageStatistics.criticalDamageByPlayer[playerId] || 0;
+        const criticalDamagePercent =
+          totalDamage > 0 ? (criticalDamageTotal / totalDamage) * 100 : 0;
 
         return {
           id,
@@ -325,7 +327,8 @@ export const DamageDonePanel: React.FC = () => {
           total: totalDamage,
           dps: fightDuration > 0 ? totalDamage / fightDuration : 0,
           activePercentage,
-          criticalDamage,
+          criticalDamagePercent,
+          criticalDamageTotal,
           iconUrl,
           role,
           deaths,
