@@ -1062,7 +1062,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           <span role="img" aria-label="deaths">
                             💀
                           </span>
-                          <span style={{ margin: '0 1px' }}></span>{deaths}
+                          <span style={{ margin: '0 1px' }}></span>
+                          {deaths}
                         </span>
                       </Tooltip>{' '}
                       ·{' '}
@@ -1075,7 +1076,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           <span role="img" aria-label="resurrects">
                             ❤️
                           </span>
-                          <span style={{ margin: '0 1px' }}></span>{resurrects}
+                          <span style={{ margin: '0 1px' }}></span>
+                          {resurrects}
                         </span>
                       </Tooltip>{' '}
                       ·{' '}
@@ -1101,7 +1103,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       </Tooltip>
                       {distanceDisplay && (
                         <>
-                          {' '}·{' '}
+                          {' '}
+                          ·{' '}
                           <Tooltip
                             title="Distance traveled during this fight"
                             enterTouchDelay={0}

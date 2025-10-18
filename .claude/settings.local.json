@@ -100,7 +100,8 @@
       "Bash(npm run build-storybook:*)",
       "Bash(DISABLE_ESLINT_PLUGIN=true npm run build-storybook:*)",
       "Bash(git merge-base:*)",
-      "Bash(npm search:*)"
+      "Bash(npm search:*)",
+      "Bash(npm run lint:fix:*)"
     ],
     "deny": [],
     "ask": []
