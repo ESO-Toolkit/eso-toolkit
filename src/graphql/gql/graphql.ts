@@ -3214,6 +3214,27 @@ export type GetEncounterInfoQuery = {
   } | null;
 };
 
+export type GetTrialZonesMetadataQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetTrialZonesMetadataQuery = {
+  __typename?: 'Query';
+  worldData?: {
+    __typename?: 'WorldData';
+    zones?: Array<{
+      __typename?: 'Zone';
+      id: number;
+      name: string;
+      encounters?: Array<{ __typename?: 'Encounter'; id: number; name: string } | null> | null;
+      difficulties?: Array<{
+        __typename?: 'Difficulty';
+        id: number;
+        name: string;
+        sizes?: Array<number | null> | null;
+      } | null> | null;
+    } | null> | null;
+  } | null;
+};
+
 export const ReportAbilityFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -7053,3 +7074,61 @@ export const GetEncounterInfoDocument = {
     },
   ],
 } as unknown as DocumentNode<GetEncounterInfoQuery, GetEncounterInfoQueryVariables>;
+export const GetTrialZonesMetadataDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getTrialZonesMetadata' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'worldData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'zones' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'encounters' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'difficulties' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'sizes' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetTrialZonesMetadataQuery, GetTrialZonesMetadataQueryVariables>;

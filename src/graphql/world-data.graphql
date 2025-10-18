@@ -22,3 +22,21 @@ query getEncounterInfo($encounterId: Int!) {
     }
   }
 }
+
+query getTrialZonesMetadata {
+  worldData {
+    zones {
+      id
+      name
+      encounters {
+        id
+        name
+      }
+      difficulties {
+        id
+        name
+        sizes
+      }
+    }
+  }
+}
