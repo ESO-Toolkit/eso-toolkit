@@ -17,6 +17,7 @@ import {
 } from '../../../hooks';
 import { useDebuffEvents } from '../../../hooks/events/useDebuffEvents';
 import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
+import { usePlayerTravelDistanceTask } from '../../../hooks/workerTasks/usePlayerTravelDistanceTask';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import {
   KnownAbilities,
@@ -112,6 +113,19 @@ export const PlayersPanel: React.FC = () => {
 
   // Get friendly buff lookup data for build issues detection
   const { buffLookupData: friendlyBuffLookup, isBuffLookupLoading } = useBuffLookupTask();
+  const { playerTravelDistances, isPlayerTravelDistancesLoading } = usePlayerTravelDistanceTask();
+  const distanceByPlayer = React.useMemo(() => {
+    if (!playerTravelDistances?.distancesByPlayerId) {
+      return {} as Record<string, number>;
+    }
+
+    const byPlayer: Record<string, number> = {};
+    Object.entries(playerTravelDistances.distancesByPlayerId).forEach(([playerId, summary]) => {
+      byPlayer[String(playerId)] = summary?.totalDistance ?? 0;
+    });
+
+    return byPlayer;
+  }, [playerTravelDistances]);
 
   const { abilitiesById } = reportMasterData;
 
@@ -128,6 +142,7 @@ export const PlayersPanel: React.FC = () => {
     isHealingEventsLoading ||
     isResourceEventsLoading ||
     isBuffLookupLoading ||
+    isPlayerTravelDistancesLoading ||
     isFightLoading;
   // Calculate unique mundus buffs per player using MundusStones enum from combatantinfo auras
   const mundusBuffsByPlayer = React.useMemo(() => {
@@ -1016,6 +1031,7 @@ export const PlayersPanel: React.FC = () => {
         maxHealthByPlayer={maxHealthByPlayer}
         maxStaminaByPlayer={maxStaminaByPlayer}
         maxMagickaByPlayer={maxMagickaByPlayer}
+        distanceByPlayer={distanceByPlayer}
         reportId={reportId}
         fightId={fightId}
         isLoading={isLoading}

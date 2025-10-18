@@ -40,6 +40,7 @@ interface PlayersPanelViewProps {
   maxHealthByPlayer: Record<string, number>;
   maxStaminaByPlayer: Record<string, number>;
   maxMagickaByPlayer: Record<string, number>;
+  distanceByPlayer: Record<string, number>;
   reportId?: string | null;
   fightId?: string | null;
   isLoading: boolean;
@@ -73,6 +74,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     maxHealthByPlayer,
     maxStaminaByPlayer,
     maxMagickaByPlayer,
+    distanceByPlayer,
     reportId,
     fightId,
     isLoading,
@@ -101,6 +103,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         const maxHealth = maxHealthByPlayer?.[String(player.id)] ?? 0;
         const maxStamina = maxStaminaByPlayer?.[String(player.id)] ?? 0;
         const maxMagicka = maxMagickaByPlayer?.[String(player.id)] ?? 0;
+        const distanceTraveled = distanceByPlayer?.[String(player.id)] ?? null;
         const playerGearSets = (playerDataSet ?? [])
           .sort((a, b) => b.count - a.count)
           .filter((s) => s.count > 0);
@@ -120,6 +123,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           maxHealth,
           maxStamina,
           maxMagicka,
+          distanceTraveled,
           playerGear: playerGearSets,
         };
       });
@@ -138,6 +142,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       maxHealthByPlayer,
       maxStaminaByPlayer,
       maxMagickaByPlayer,
+      distanceByPlayer,
     ]);
 
     // Filter, search, and sort players
@@ -439,6 +444,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 maxHealth={playerData.maxHealth}
                 maxStamina={playerData.maxStamina}
                 maxMagicka={playerData.maxMagicka}
+                distanceTraveled={playerData.distanceTraveled}
                 reportId={reportId}
                 fightId={fightId}
                 playerGear={playerData.playerGear}

@@ -13,6 +13,7 @@ import {
   touchOfZenStacksReducer,
   staggerStacksReducer,
   elementalWeaknessStacksReducer,
+  playerTravelDistancesReducer,
 } from './taskSlices';
 
 // Combine all worker task reducers
@@ -29,6 +30,7 @@ const workerResultsReducer = combineReducers({
   calculateDamageReductionData: damageReductionReducer,
   calculateDebuffLookup: debuffLookupReducer,
   calculateHostileBuffLookup: hostileBuffLookupReducer,
+  calculatePlayerTravelDistances: playerTravelDistancesReducer,
 });
 
 export default workerResultsReducer;
@@ -44,6 +46,7 @@ export {
   touchOfZenStacksActions,
   staggerStacksActions,
   elementalWeaknessStacksActions,
+  playerTravelDistancesActions,
   damageReductionActions,
   debuffLookupActions,
   hostileBuffLookupActions,
@@ -57,6 +60,7 @@ export {
   executeTouchOfZenStacksTask,
   executeStaggerStacksTask,
   executeElementalWeaknessStacksTask,
+  executePlayerTravelDistancesTask,
   executeDamageReductionTask,
   executeDebuffLookupTask,
   executeHostileBuffLookupTask,

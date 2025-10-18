@@ -26,6 +26,8 @@ import {
   executeStaggerStacksTask,
   elementalWeaknessStacksActions,
   executeElementalWeaknessStacksTask,
+  playerTravelDistancesActions,
+  executePlayerTravelDistancesTask,
 } from './workerResultsSlice';
 
 // Map task names to their corresponding actions - requires all task types as keys
@@ -42,6 +44,7 @@ const taskActionsMap = {
   calculateTouchOfZenStacks: touchOfZenStacksActions,
   calculateStaggerStacks: staggerStacksActions,
   calculateElementalWeaknessStacks: elementalWeaknessStacksActions,
+  calculatePlayerTravelDistances: playerTravelDistancesActions,
 } as const;
 
 // Map task names to their corresponding thunk actions
@@ -61,6 +64,7 @@ const taskThunkMap: Record<
   calculateTouchOfZenStacks: executeTouchOfZenStacksTask,
   calculateStaggerStacks: executeStaggerStacksTask,
   calculateElementalWeaknessStacks: executeElementalWeaknessStacksTask,
+  calculatePlayerTravelDistances: executePlayerTravelDistancesTask,
 } as const;
 
 // Utility functions to get actions for a specific task

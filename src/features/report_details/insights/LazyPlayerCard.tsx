@@ -119,6 +119,7 @@ export interface PlayerCardProps {
   maxHealth: number;
   maxStamina: number;
   maxMagicka: number;
+  distanceTraveled: number | null;
   reportId?: string | null;
   fightId?: string | null;
   playerGear: PlayerGearSetRecord[];
