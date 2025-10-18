@@ -3214,6 +3214,49 @@ export type GetEncounterInfoQuery = {
   } | null;
 };
 
+export type GetTrialZonesQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetTrialZonesQuery = {
+  __typename?: 'Query';
+  worldData?: {
+    __typename?: 'WorldData';
+    zones?: Array<{
+      __typename?: 'Zone';
+      id: number;
+      name: string;
+      encounters?: Array<{ __typename?: 'Encounter'; id: number; name: string } | null> | null;
+      difficulties?: Array<{
+        __typename?: 'Difficulty';
+        id: number;
+        name: string;
+        sizes?: Array<number | null> | null;
+      } | null> | null;
+    } | null> | null;
+  } | null;
+};
+
+export type GetEncounterFightRankingsQueryVariables = Exact<{
+  encounterId: Scalars['Int']['input'];
+  difficulty?: InputMaybe<Scalars['Int']['input']>;
+  metric?: InputMaybe<FightRankingMetricType>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  size?: InputMaybe<Scalars['Int']['input']>;
+  partition?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+export type GetEncounterFightRankingsQuery = {
+  __typename?: 'Query';
+  worldData?: {
+    __typename?: 'WorldData';
+    encounter?: {
+      __typename?: 'Encounter';
+      id: number;
+      name: string;
+      fightRankings?: any | null;
+    } | null;
+  } | null;
+};
+
 export const ReportAbilityFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -7053,3 +7096,175 @@ export const GetEncounterInfoDocument = {
     },
   ],
 } as unknown as DocumentNode<GetEncounterInfoQuery, GetEncounterInfoQueryVariables>;
+export const GetTrialZonesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetTrialZones' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'worldData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'zones' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'encounters' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'difficulties' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'sizes' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetTrialZonesQuery, GetTrialZonesQueryVariables>;
+export const GetEncounterFightRankingsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetEncounterFightRankings' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'encounterId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'difficulty' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'metric' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'FightRankingMetricType' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'size' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'partition' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'worldData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'encounter' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'id' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'encounterId' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'fightRankings' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'difficulty' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'difficulty' },
+                            },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'metric' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'metric' } },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'page' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'size' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'size' } },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'partition' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'partition' } },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  GetEncounterFightRankingsQuery,
+  GetEncounterFightRankingsQueryVariables
+>;
