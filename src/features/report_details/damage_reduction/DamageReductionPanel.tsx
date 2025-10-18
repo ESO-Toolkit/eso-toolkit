@@ -2,6 +2,7 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePlayerData } from '../../../hooks';
+import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { useDamageReductionTask } from '../../../hooks/workerTasks/useDamageReductionTask';
 import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 import { PlayerDamageReductionData } from '../../../workers/calculations/CalculateDamageReduction';
@@ -10,12 +11,16 @@ import { DamageReductionPanelView } from './DamageReductionPanelView';
 
 interface DamageReductionPanelProps {
   fight: FightFragment;
+  phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
 /**
  * Smart component that handles data processing and state management for damage reduction panel
  */
-export const DamageReductionPanel: React.FC<DamageReductionPanelProps> = ({ fight }) => {
+export const DamageReductionPanel: React.FC<DamageReductionPanelProps> = ({
+  fight,
+  phaseTransitionInfo,
+}) => {
   const { playerData, isPlayerDataLoading } = usePlayerData();
 
   // Use the worker-based damage reduction calculation
@@ -68,6 +73,7 @@ export const DamageReductionPanel: React.FC<DamageReductionPanelProps> = ({ figh
         allPlayersDamageReductionData as Record<number, PlayerDamageReductionData> | null
       }
       isLoading={false}
+      phaseTransitionInfo={phaseTransitionInfo}
     />
   );
 };

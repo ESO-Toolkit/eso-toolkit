@@ -2,6 +2,7 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePlayerData, useSelectedTargetIds } from '../../../hooks';
+import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { usePenetrationDataTask } from '../../../hooks/workerTasks/usePenetrationDataTask';
 import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 import { PlayerPenetrationData } from '../../../workers/calculations/CalculatePenetration';
@@ -10,12 +11,16 @@ import { PenetrationPanelView } from './PenetrationPanelView';
 
 interface PenetrationPanelProps {
   fight: FightFragment;
+  phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
 /**
  * Smart component that handles data processing and state management for penetration panel
  */
-export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight }) => {
+export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({
+  fight,
+  phaseTransitionInfo,
+}) => {
   // Use hooks to get data
   const { playerData, isPlayerDataLoading } = usePlayerData();
   const selectedTargetIds = useSelectedTargetIds();
@@ -68,6 +73,7 @@ export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight }) => 
       onPlayerExpandChange={handlePlayerExpandChange}
       penetrationData={allPlayersPenetrationData as Record<string, PlayerPenetrationData> | null}
       isLoading={false}
+      phaseTransitionInfo={phaseTransitionInfo}
     />
   );
 };

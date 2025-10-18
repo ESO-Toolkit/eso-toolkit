@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
+import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { PenetrationSourceWithActiveState } from '../../../utils/PenetrationUtils';
 
@@ -32,6 +33,7 @@ interface PlayerPenetrationDetailsProps {
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   penetrationData: PlayerPenetrationData | null;
   isLoading: boolean;
+  phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
 export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> = ({
@@ -43,6 +45,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
   onExpandChange,
   penetrationData,
   isLoading,
+  phaseTransitionInfo,
 }) => {
   return (
     <PlayerPenetrationDetailsView
@@ -56,6 +59,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
       playerBasePenetration={penetrationData?.playerBasePenetration || 0}
       fightDurationSeconds={(fight.endTime - fight.startTime) / 1000}
       onExpandChange={onExpandChange}
+      phaseTransitionInfo={phaseTransitionInfo}
     />
   );
 };

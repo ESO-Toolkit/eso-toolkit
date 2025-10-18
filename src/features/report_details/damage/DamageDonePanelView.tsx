@@ -29,6 +29,7 @@ interface DamageDonePanelViewProps {
   isDamageOverTimeLoading?: boolean;
   selectedTargetIds?: Set<number>;
   availableTargets?: Array<{ id: number; name: string }>;
+  phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
 type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamagePercent';
@@ -44,6 +45,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   isDamageOverTimeLoading = false,
   selectedTargetIds = new Set(),
   availableTargets = [],
+  phaseTransitionInfo,
 }) => {
   const roleColors = useRoleColors();
   const [sortField, setSortField] = useState<SortField>('total');
@@ -1227,6 +1229,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           availableTargets={availableTargets}
           isLoading={isDamageOverTimeLoading}
           height={400}
+          phaseTransitionInfo={phaseTransitionInfo}
         />
       </Box>
     </Box>

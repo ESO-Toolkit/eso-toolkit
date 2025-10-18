@@ -2,6 +2,7 @@ import { Box, Typography, Alert } from '@mui/material';
 import React from 'react';
 
 import { FightFragment as Fight } from '../../../graphql/gql/graphql';
+import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole as Player } from '../../../store/player_data/playerDataSlice';
 import { PlayerPenetrationData } from '../../../workers/calculations/CalculatePenetration';
 
@@ -17,6 +18,7 @@ export interface PenetrationPanelViewProps {
   readonly onPlayerExpandChange: (
     playerId: string,
   ) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
+  readonly phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
 /**
@@ -30,6 +32,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
   onPlayerExpandChange,
   penetrationData,
   isLoading,
+  phaseTransitionInfo,
 }) => {
   // Show info when no targets are available
   if (selectedTargetIds.size === 0) {
@@ -119,6 +122,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
                 onExpandChange={onPlayerExpandChange(player.id.toString())}
                 penetrationData={playerPenetrationData || null}
                 isLoading={isLoading}
+                phaseTransitionInfo={phaseTransitionInfo}
               />
             );
           })}
