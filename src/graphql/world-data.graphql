@@ -23,7 +23,7 @@ query getEncounterInfo($encounterId: Int!) {
   }
 }
 
-query GetTrialZones {
+query getTrialZonesMetadata {
   worldData {
     zones {
       id
@@ -37,29 +37,6 @@ query GetTrialZones {
         name
         sizes
       }
-    }
-  }
-}
-
-query GetEncounterFightRankings(
-  $encounterId: Int!
-  $difficulty: Int
-  $metric: FightRankingMetricType
-  $page: Int
-  $size: Int
-  $partition: Int
-) {
-  worldData {
-    encounter(id: $encounterId) {
-      id
-      name
-      fightRankings(
-        difficulty: $difficulty
-        metric: $metric
-        page: $page
-        size: $size
-        partition: $partition
-      )
     }
   }
 }
