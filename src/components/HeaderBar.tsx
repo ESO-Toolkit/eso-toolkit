@@ -582,6 +582,11 @@ export const HeaderBar: React.FC = () => {
       icon: '📋',
       path: '/logs',
     },
+    {
+      text: 'Leaderboards',
+      icon: '🏆',
+      path: '/leaderboards',
+    },
   ];
 
   const accountItems = React.useMemo(() => {

@@ -1,6 +1,6 @@
 import { chromium, FullConfig } from '@playwright/test';
+import axios from 'axios';
 import * as dotenv from 'dotenv';
-import fetch from 'cross-fetch';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getBaseUrl } from './selectors';
@@ -167,33 +167,46 @@ async function getClientCredentialsToken(clientId: string, clientSecret: string)
 
   console.log('🔑 Getting OAuth access token...');
 
-  const response = await fetch(tokenUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'client_credentials',
-      client_id: clientId,
-      client_secret: clientSecret,
-    }),
+  const params = new URLSearchParams({
+    grant_type: 'client_credentials',
+    client_id: clientId,
+    client_secret: clientSecret,
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Token request failed: ${response.status} ${response.statusText}\nResponse: ${errorText}`,
-    );
+  try {
+    const response = await axios.post(tokenUrl, params, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+
+    const data = response.data as { access_token?: string };
+
+    if (!data.access_token) {
+      throw new Error('No access token in response');
+    }
+
+    console.log('✅ OAuth access token obtained successfully');
+    return data.access_token;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status ?? 'unknown';
+      const statusText = error.response?.statusText ?? 'Unknown';
+      const responseBody = error.response?.data;
+      const serializedBody =
+        typeof responseBody === 'string'
+          ? responseBody
+          : responseBody
+          ? JSON.stringify(responseBody)
+          : 'No response body';
+
+      throw new Error(
+        `Token request failed: ${status} ${statusText}\nResponse: ${serializedBody}`,
+      );
+    }
+
+    throw error;
   }
-
-  const data = await response.json();
-
-  if (!data.access_token) {
-    throw new Error('No access token in response');
-  }
-
-  console.log('✅ OAuth access token obtained successfully');
-  return data.access_token;
 }
 
 /**

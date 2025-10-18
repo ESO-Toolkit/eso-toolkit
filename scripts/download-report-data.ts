@@ -1,30 +1,14 @@
-#!/usr/bin/env node
-
 /**
  * ESO Logs Report Data Downloader
  *
  * This script downloads comprehensive data from ESO logs reports for testing and debugging purposes.
  * It organizes the data into a structured folder hierarchy for easy analysis and issue reproduction.
- *
- * Usage:
- *   node --loader ts-node/esm scripts/download-report-data.mts <report-code> [fight-id]
- *
- * Examples:
- *   node --loader ts-node/esm scripts/download-report-data.mts ABC123DEF
- *   node --loader ts-node/esm scripts/download-report-data.mts ABC123DEF 1
- *
- * Environment Variables:
- *   OAUTH_CLIENT_ID     - ESO Logs OAuth client ID
- *   OAUTH_CLIENT_SECRET - ESO Logs OAuth client secret
- *   ESOLOGS_TOKEN_URL   - OAuth token endpoint (optional)
  */
 
-import fs from 'fs';
-import path from 'path';
-import fetch from 'cross-fetch';
-import dotenv from 'dotenv';
+import fs from 'node:fs';
+import path from 'node:path';
 
-import { createEsoLogsClient } from '../src/esologsClient';
+import type { EsoLogsClient } from '@/esologsClient';
 import {
   GetReportByCodeDocument,
   GetReportMasterDataDocument,
@@ -38,48 +22,36 @@ import {
   GetCastEventsDocument,
   GetPlayersForReportDocument,
   GetEncounterInfoDocument,
-} from '../src/graphql/gql/graphql';
+  type GetReportByCodeQuery,
+  type GetReportMasterDataQuery,
+  type GetPlayersForReportQuery,
+  type GetEncounterInfoQuery,
+} from '@graphql/gql/graphql';
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core';
 
-// Import types separately (these work with ES modules)
-import type {
-  GetReportByCodeQuery,
-  GetReportMasterDataQuery,
-  GetPlayersForReportQuery,
-  GetEncounterInfoQuery,
-} from '../src/graphql/gql/graphql.js';
+import { runScript } from './_runner/bootstrap';
+import type { ScriptLogger } from './_runner/bootstrap';
+
+const SCRIPT_NAME = 'download-report-data';
 
 // Suppress Apollo Client deprecation warnings for canonizeResults
 const originalConsoleWarn = console.warn;
-console.warn = (message: any, ...args: any[]) => {
+console.warn = (message: unknown, ...args: unknown[]) => {
   if (
     typeof message === 'string' &&
     message.includes('canonizeResults is deprecated and will be removed in Apollo Client 4.0')
   ) {
-    // Suppress this specific deprecation warning
     return;
   }
   originalConsoleWarn(message, ...args);
 };
 
-// Load environment variables
-dotenv.config();
-
-console.log('🚀 Download script started');
-console.log('📁 Current directory:', process.cwd());
-console.log('🔧 Arguments:', process.argv);
-console.log('🔑 CLIENT_ID available:', !!process.env.OAUTH_CLIENT_ID);
-console.log('🔑 CLIENT_SECRET available:', !!process.env.OAUTH_CLIENT_SECRET);
-
-// Configuration
-const TOKEN_URL = process.env.ESOLOGS_TOKEN_URL || 'https://www.esologs.com/oauth/token';
-const CLIENT_ID = process.env.OAUTH_CLIENT_ID;
-const CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
-
-// Data storage configuration
-const SAMPLE_DATA_DIR = path.resolve(__dirname, '../data-downloads');
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1000;
-const EVENT_LIMIT = 100000; // Reasonable limit to avoid massive downloads
+interface EventTypeConfig {
+  name: string;
+  document: TypedDocumentNode<unknown, Record<string, unknown>>;
+  filename: string;
+  description: string;
+}
 
 interface DownloadOptions {
   reportCode: string;
@@ -87,12 +59,26 @@ interface DownloadOptions {
   outputDir: string;
 }
 
-interface EventTypeConfig {
-  name: string;
-  document: any;
-  filename: string;
-  description: string;
-}
+type Nullable<T> = T | null | undefined;
+
+type ReportNode = NonNullable<GetReportByCodeQuery['reportData']>;
+type ReportDetails = NonNullable<ReportNode['report']>;
+type ReportFights = NonNullable<ReportDetails['fights']>;
+type ReportFight = NonNullable<ReportFights[number]>;
+
+type MasterDataNode = NonNullable<
+  NonNullable<
+    NonNullable<GetReportMasterDataQuery['reportData']>['report']
+  >['masterData']
+>;
+type MasterDataActor = NonNullable<NonNullable<MasterDataNode['actors']>[number]>;
+type MasterDataAbility = NonNullable<NonNullable<MasterDataNode['abilities']>[number]>;
+
+// Data storage configuration
+const SAMPLE_DATA_DIR = path.resolve(__dirname, '../data-downloads');
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+const EVENT_LIMIT = 100000;
 
 // Define all event types we want to download
 const EVENT_TYPES: EventTypeConfig[] = [
@@ -175,37 +161,6 @@ function writeJsonSafe(filePath: string, data: any): void {
 }
 
 /**
- * Get OAuth access token from ESO Logs
- */
-async function getAccessToken(): Promise<string> {
-  if (!CLIENT_ID || !CLIENT_SECRET) {
-    throw new Error('Missing OAUTH_CLIENT_ID or OAUTH_CLIENT_SECRET environment variables');
-  }
-
-  console.log('🔑 Getting access token...');
-
-  const response = await fetch(TOKEN_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'client_credentials',
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to get access token: ${response.status} ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  console.log('✅ Access token obtained');
-  return data.access_token;
-}
-
-/**
  * Retry wrapper for API calls
  */
 async function retryOperation<T>(
@@ -234,18 +189,17 @@ async function retryOperation<T>(
  * Download report metadata (basic info + fights)
  */
 async function downloadReportMetadata(
-  client: any,
+  client: EsoLogsClient,
   reportCode: string,
   outputDir: string,
 ): Promise<GetReportByCodeQuery> {
   console.log('📊 Downloading report metadata...');
 
   const reportData = await retryOperation(async () => {
-    const result = await client.query({
+    return client.query<GetReportByCodeQuery>({
       query: GetReportByCodeDocument,
       variables: { code: reportCode },
     });
-    return result as GetReportByCodeQuery;
   }, 'Download report metadata');
 
   // Save report data
@@ -254,6 +208,9 @@ async function downloadReportMetadata(
   // Create a summary file for quick reference
   const report = reportData.reportData?.report;
   if (report) {
+    const fights: ReportFight[] = ((report.fights ?? []) as Array<Nullable<ReportFight>>).filter(
+      (fight): fight is ReportFight => Boolean(fight),
+    );
     const summary = {
       code: report.code,
       title: report.title,
@@ -262,19 +219,16 @@ async function downloadReportMetadata(
       duration: ((report.endTime - report.startTime) / 1000 / 60).toFixed(1) + ' minutes',
       zone: report.zone?.name,
       visibility: report.visibility,
-      fights: report.fights?.map((fight) => ({
-        id: fight?.id,
-        name: fight?.name,
-        difficulty: fight?.difficulty,
-        startTime: fight?.startTime,
-        endTime: fight?.endTime,
-        duration:
-          fight?.startTime && fight?.endTime
-            ? ((fight.endTime - fight.startTime) / 1000).toFixed(1) + ' seconds'
-            : 'Unknown',
-        friendlyPlayers: fight?.friendlyPlayers,
-        enemyPlayers: fight?.enemyPlayers,
-        bossPercentage: fight?.bossPercentage,
+      fights: fights.map((fight) => ({
+        id: fight.id,
+        name: fight.name,
+        difficulty: fight.difficulty,
+        startTime: fight.startTime,
+        endTime: fight.endTime,
+        duration: ((fight.endTime - fight.startTime) / 1000).toFixed(1) + ' seconds',
+        friendlyPlayers: fight.friendlyPlayers,
+        enemyPlayers: fight.enemyPlayers,
+        bossPercentage: fight.bossPercentage,
       })),
     };
 
@@ -288,43 +242,54 @@ async function downloadReportMetadata(
  * Download master data (actors and abilities)
  */
 async function downloadMasterData(
-  client: any,
+  client: EsoLogsClient,
   reportCode: string,
   outputDir: string,
 ): Promise<GetReportMasterDataQuery> {
   console.log('👥 Downloading master data (actors & abilities)...');
 
   const masterData = await retryOperation(async () => {
-    const result = await client.query({
+    return client.query<GetReportMasterDataQuery>({
       query: GetReportMasterDataDocument,
       variables: { code: reportCode },
     });
-    return result as GetReportMasterDataQuery;
   }, 'Download master data');
 
   // Save full master data
   writeJsonSafe(path.join(outputDir, 'master-data.json'), masterData);
 
   // Create organized views
-  const actors = masterData.reportData?.report?.masterData?.actors || [];
-  const abilities = masterData.reportData?.report?.masterData?.abilities || [];
+  const actorsRaw = (masterData.reportData?.report?.masterData?.actors ?? []) as Array<
+    Nullable<MasterDataActor>
+  >;
+  const abilitiesRaw = (masterData.reportData?.report?.masterData?.abilities ?? []) as Array<
+    Nullable<MasterDataAbility>
+  >;
+
+  const actors = actorsRaw.filter((actor): actor is MasterDataActor => Boolean(actor));
+  const abilities = abilitiesRaw.filter((ability): ability is MasterDataAbility => Boolean(ability));
 
   // Save organized actor data
   const actorsByType = {
-    players: actors.filter((actor) => actor?.type === 'Player'),
-    npcs: actors.filter((actor) => actor?.type === 'NPC'),
-    pets: actors.filter((actor) => actor?.type === 'Pet'),
+    players: actors.filter((actor) => actor.type === 'Player'),
+    npcs: actors.filter((actor) => actor.type === 'NPC'),
+    pets: actors.filter((actor) => actor.type === 'Pet'),
   };
 
   writeJsonSafe(path.join(outputDir, 'actors-by-type.json'), actorsByType);
 
   // Save ability data with additional organization
-  const abilitiesByType = abilities.reduce((acc: any, ability) => {
-    const type = ability?.type || 'Unknown';
-    if (!acc[type]) acc[type] = [];
-    acc[type].push(ability);
-    return acc;
-  }, {});
+  const abilitiesByType = abilities.reduce<Record<string, MasterDataAbility[]>>(
+    (acc, ability) => {
+      const type = ability.type ?? 'Unknown';
+      if (!acc[type]) {
+        acc[type] = [];
+      }
+      acc[type].push(ability);
+      return acc;
+    },
+    {},
+  );
 
   writeJsonSafe(path.join(outputDir, 'abilities-by-type.json'), abilitiesByType);
 
@@ -335,7 +300,7 @@ async function downloadMasterData(
  * Download player data (player details and ranked characters)
  */
 async function downloadPlayerData(
-  client: any,
+  client: EsoLogsClient,
   reportCode: string,
   fightIds: number[],
   outputDir: string,
@@ -343,14 +308,13 @@ async function downloadPlayerData(
   console.log('👤 Downloading player data...');
 
   const playerData = await retryOperation(async () => {
-    const result = await client.query({
+    return client.query<GetPlayersForReportQuery>({
       query: GetPlayersForReportDocument,
       variables: {
         code: reportCode,
         fightIDs: fightIds.length > 0 ? fightIds : undefined,
       },
     });
-    return result as GetPlayersForReportQuery;
   }, 'Download player data');
 
   // Save full player data
@@ -372,7 +336,7 @@ async function downloadPlayerData(
  * Download events for a specific type
  */
 async function downloadEventType(
-  client: any,
+  client: EsoLogsClient,
   reportCode: string,
   eventConfig: EventTypeConfig,
   fightIds: number[],
@@ -496,7 +460,7 @@ async function downloadEventType(
  * Downloads all event types for a fight and combines them into a single file
  */
 async function downloadAllEvents(
-  client: any,
+  client: EsoLogsClient,
   reportCode: string,
   fightIds: number[],
   startTime?: number,
@@ -606,7 +570,7 @@ async function downloadAllEvents(
  * Download encounter information for a specific encounter ID
  */
 async function downloadEncounterInfo(
-  client: any,
+  client: EsoLogsClient,
   encounterId: number,
   outputDir: string,
 ): Promise<GetEncounterInfoQuery | null> {
@@ -652,24 +616,26 @@ async function downloadEncounterInfo(
 /**
  * Main download function
  */
-async function downloadReportData(options: DownloadOptions): Promise<void> {
+async function downloadReportData(
+  client: EsoLogsClient,
+  options: DownloadOptions,
+  logger: ScriptLogger,
+): Promise<void> {
   const { reportCode, fightId, outputDir } = options;
 
-  console.log(`🚀 Starting download for report: ${reportCode}`);
-  console.log(`📁 Output directory: ${outputDir}`);
+  logger.info(`Starting download for report ${reportCode}`);
+  logger.info(`Output directory: ${outputDir}`);
 
   // Ensure output directory exists
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  // Get access token and create client
-  const accessToken = await getAccessToken();
-  const client = createEsoLogsClient(accessToken);
-
   // Download report metadata first
   const reportData = await downloadReportMetadata(client, reportCode, outputDir);
-  const fights = reportData.reportData?.report?.fights || [];
+  const fights = ((reportData.reportData?.report?.fights ?? []) as Array<Nullable<ReportFight>>).filter(
+    (fight): fight is ReportFight => Boolean(fight),
+  );
 
   if (fights.length === 0) {
     console.warn('⚠️  No fights found in report');
@@ -677,7 +643,7 @@ async function downloadReportData(options: DownloadOptions): Promise<void> {
   }
 
   // Determine which fights to download
-  const targetFights = fightId ? fights.filter((fight) => fight?.id === fightId) : fights;
+  const targetFights = fightId ? fights.filter((fight) => fight.id === fightId) : fights;
 
   if (targetFights.length === 0) {
     console.error(`❌ Fight ${fightId} not found in report`);
@@ -686,22 +652,18 @@ async function downloadReportData(options: DownloadOptions): Promise<void> {
 
   console.log(`🎯 Downloading data for ${targetFights.length} fight(s):`);
   targetFights.forEach((fight) => {
-    console.log(`  - Fight ${fight?.id}: ${fight?.name} (${fight?.difficulty})`);
+    console.log(`  - Fight ${fight.id}: ${fight.name} (${fight.difficulty})`);
   });
 
   // Download master data
   await downloadMasterData(client, reportCode, outputDir);
 
   // Download player data
-  const fightIds = targetFights
-    .map((fight) => fight?.id)
-    .filter((id): id is number => id !== undefined);
+  const fightIds = targetFights.map((fight) => fight.id);
   await downloadPlayerData(client, reportCode, fightIds, outputDir);
 
   // Download events for each fight
   for (const fight of targetFights) {
-    if (!fight?.id) continue;
-
     const fightDir = path.join(outputDir, `fight-${fight.id}`);
     console.log(`\n📂 Processing Fight ${fight.id}: ${fight.name}`);
 
@@ -717,10 +679,7 @@ async function downloadReportData(options: DownloadOptions): Promise<void> {
       difficulty: fight.difficulty,
       startTime: fight.startTime,
       endTime: fight.endTime,
-      duration:
-        fight.startTime && fight.endTime
-          ? ((fight.endTime - fight.startTime) / 1000).toFixed(1) + ' seconds'
-          : 'Unknown',
+      duration: ((fight.endTime - fight.startTime) / 1000).toFixed(1) + ' seconds',
       friendlyPlayers: fight.friendlyPlayers,
       enemyPlayers: fight.enemyPlayers,
       bossPercentage: fight.bossPercentage,
@@ -778,9 +737,9 @@ async function downloadReportData(options: DownloadOptions): Promise<void> {
         }
       : null,
     fights: targetFights.map((fight) => ({
-      id: fight?.id,
-      name: fight?.name,
-      directory: `fight-${fight?.id}`,
+      id: fight.id,
+      name: fight.name,
+      directory: `fight-${fight.id}`,
     })),
     eventTypes: EVENT_TYPES.map((config) => ({
       name: config.name,
@@ -820,7 +779,7 @@ async function downloadReportData(options: DownloadOptions): Promise<void> {
   console.log('  - actors-by-type.json (organized actor data)');
   console.log('  - abilities-by-type.json (organized ability data)');
   targetFights.forEach((fight) => {
-    console.log(`  - fight-${fight?.id}/ (fight-specific data)`);
+    console.log(`  - fight-${fight.id}/ (fight-specific data)`);
     console.log(`    - fight-info.json (fight metadata)`);
     console.log(`    - events/ (event data folder)`);
     console.log(`      - all-events.json (all event types combined chronologically)`);
@@ -830,88 +789,59 @@ async function downloadReportData(options: DownloadOptions): Promise<void> {
   });
 }
 
-/**
- * Parse command line arguments and run
- */
-async function main(): Promise<void> {
-  console.log('📋 Main function called');
+runScript(async ({ getGraphqlHarness, logger }) => {
   const args = process.argv.slice(2);
-  console.log('📝 Arguments:', args);
 
   if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
-    console.log(`
+    const helpMessage = `
 ESO Logs Report Data Downloader
 
-Downloads comprehensive data from ESO logs reports for testing and debugging.
+Downloads comprehensive data from ESO Logs reports for testing and debugging.
 For buffs and debuffs, downloads data for both friendly and hostile targets.
 
 Usage:
-  node --loader ts-node/esm scripts/download-report-data.mts <report-code> [fight-id]
+  npm run script -- scripts/download-report-data.ts <report-code> [fight-id]
 
 Arguments:
-  report-code    ESO logs report code (e.g., ABC123DEF)
+  report-code    ESO Logs report code (e.g., ABC123DEF)
   fight-id       Optional: specific fight ID to download (downloads all fights if omitted)
 
 Examples:
-  node --loader ts-node/esm scripts/download-report-data.mts ABC123DEF
-  node --loader ts-node/esm scripts/download-report-data.mts ABC123DEF 1
-
-After downloading, you can analyze the data:
-  node --loader ts-node/esm scripts/examples/analyze-scribing-skills.mts ABC123DEF
-
-Environment Variables:
-  OAUTH_CLIENT_ID     - ESO Logs OAuth client ID (required)
-  OAUTH_CLIENT_SECRET - ESO Logs OAuth client secret (required)
-  ESOLOGS_TOKEN_URL   - OAuth token endpoint (optional)
+  npm run script -- scripts/download-report-data.ts ABC123DEF
+  npm run script -- scripts/download-report-data.ts ABC123DEF 1
 
 Output:
-  Data is saved to ./sample-data/<report-code>/ with organized folder structure.
+  Data is saved to ./data-downloads/<report-code>/ with organized folder structure.
   Buff and debuff events are downloaded for both friendly and hostile targets.
   The folder is added to .gitignore to prevent accidental commits.
-`);
+`;
+    logger.info(helpMessage);
     return;
   }
 
   const reportCode = args[0];
-  const fightId = args[1] ? parseInt(args[1], 10) : undefined;
+  const fightId = args[1] ? Number.parseInt(args[1], 10) : undefined;
 
   if (!reportCode) {
-    console.error('❌ Report code is required');
-    process.exit(1);
+    throw new Error('Report code is required.');
   }
 
-  if (fightId !== undefined && (isNaN(fightId) || fightId < 1)) {
-    console.error('❌ Fight ID must be a positive number');
-    process.exit(1);
+  if (fightId !== undefined && (Number.isNaN(fightId) || fightId < 1)) {
+    throw new Error('Fight ID must be a positive number when provided.');
   }
 
   const outputDir = path.join(SAMPLE_DATA_DIR, reportCode);
 
-  try {
-    await downloadReportData({
+  const harness = await getGraphqlHarness({ defaultFetchPolicy: 'network-only' });
+  const client = harness.getClient();
+
+  await downloadReportData(
+    client,
+    {
       reportCode,
       fightId,
       outputDir,
-    });
-  } catch (error) {
-    console.error('❌ Download failed:', error);
-    process.exit(1);
-  }
-}
-
-// Run the script if executed directly
-console.log('🔍 Checking if this is main module...');
-console.log('📍 process.argv[1]:', process.argv[1]);
-
-if (
-  require.main === module ||
-  process.argv[1].includes('download-report-data')
-) {
-  console.log('✅ Running as main module, calling main()...');
-  main().catch((error) => {
-    console.error('❌ Unexpected error:', error);
-    process.exit(1);
-  });
-} else {
-  console.log('❌ Not running as main module');
-}
+    },
+    logger,
+  );
+}, { name: SCRIPT_NAME });

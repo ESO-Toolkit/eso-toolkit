@@ -2574,6 +2574,53 @@ export type GetGuildMembersQuery = {
   } | null;
 };
 
+export type GetTrialZonesQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetTrialZonesQuery = {
+  __typename?: 'Query';
+  worldData?: {
+    __typename?: 'WorldData';
+    zones?: Array<{
+      __typename?: 'Zone';
+      id: number;
+      name: string;
+      encounters?: Array<{ __typename?: 'Encounter'; id: number; name: string } | null> | null;
+      difficulties?: Array<{
+        __typename?: 'Difficulty';
+        id: number;
+        name: string;
+        sizes?: Array<number | null> | null;
+      } | null> | null;
+    } | null> | null;
+  } | null;
+};
+
+export type GetEncounterFightRankingsQueryVariables = Exact<{
+  encounterId: Scalars['Int']['input'];
+  difficulty?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  metric?: InputMaybe<FightRankingMetricType>;
+  partition?: InputMaybe<Scalars['Int']['input']>;
+  size?: InputMaybe<Scalars['Int']['input']>;
+  serverRegion?: InputMaybe<Scalars['String']['input']>;
+  serverSlug?: InputMaybe<Scalars['String']['input']>;
+  hardModeLevel?: InputMaybe<HardModeLevelRankFilter>;
+}>;
+
+export type GetEncounterFightRankingsQuery = {
+  __typename?: 'Query';
+  worldData?: {
+    __typename?: 'WorldData';
+    encounter?: {
+      __typename?: 'Encounter';
+      id: number;
+      name: string;
+      fightRankings?: any | null;
+      zone: { __typename?: 'Zone'; id: number; name: string };
+    } | null;
+  } | null;
+};
+
 export type GetReportMasterDataQueryVariables = Exact<{
   code: Scalars['String']['input'];
 }>;
@@ -5865,6 +5912,229 @@ export const GetGuildMembersDocument = {
     },
   ],
 } as unknown as DocumentNode<GetGuildMembersQuery, GetGuildMembersQueryVariables>;
+export const GetTrialZonesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getTrialZones' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'worldData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'zones' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'encounters' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'difficulties' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'sizes' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetTrialZonesQuery, GetTrialZonesQueryVariables>;
+export const GetEncounterFightRankingsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getEncounterFightRankings' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'encounterId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'difficulty' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'metric' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'FightRankingMetricType' } },
+          defaultValue: { kind: 'EnumValue', value: 'score' },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'partition' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'size' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'serverRegion' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'serverSlug' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'hardModeLevel' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'HardModeLevelRankFilter' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'worldData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'encounter' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'id' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'encounterId' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'zone' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'fightRankings' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'difficulty' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'difficulty' },
+                            },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'metric' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'metric' } },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'page' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'partition' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'partition' } },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'size' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'size' } },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'serverRegion' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'serverRegion' },
+                            },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'serverSlug' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'serverSlug' },
+                            },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'hardModeLevel' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'hardModeLevel' },
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  GetEncounterFightRankingsQuery,
+  GetEncounterFightRankingsQueryVariables
+>;
 export const GetReportMasterDataDocument = {
   kind: 'Document',
   definitions: [
