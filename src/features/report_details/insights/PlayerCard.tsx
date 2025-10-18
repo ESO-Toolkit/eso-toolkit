@@ -1022,7 +1022,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         minWidth: 0,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        fontSize: { xs: '0.7rem', sm: 'body2.fontSize' },
+                        fontSize: { xs: '0.7rem', sm: '0.75rem', md: 'body2.fontSize' },
                       }}
                     >
                       <Tooltip
@@ -1043,7 +1043,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             sx={{
                               display: 'inline',
                               fontWeight: 700,
-                              fontSize: { xs: 8, sm: 10 },
+                              fontSize: { xs: 8, sm: 9, md: 10 },
                               letterSpacing: '.01em',
                               color: foodInfo.color,
                             }}
