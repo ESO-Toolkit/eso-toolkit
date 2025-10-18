@@ -29,7 +29,7 @@ interface DamageDonePanelViewProps {
   isDamageOverTimeLoading?: boolean;
   selectedTargetIds?: Set<number>;
   availableTargets?: Array<{ id: number; name: string }>;
-  }
+}
 
 type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamage';
 type SortDirection = 'asc' | 'desc';
@@ -44,7 +44,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   isDamageOverTimeLoading = false,
   selectedTargetIds = new Set(),
   availableTargets = [],
-  }) => {
+}) => {
   const roleColors = useRoleColors();
   const [sortField, setSortField] = useState<SortField>('total');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -472,7 +472,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           {/* Data Rows */}
           {sortedRows.map((row, index) => {
             const percentage = ((row.total / maxDamage) * 100).toFixed(2);
-                const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
+            const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
             const playerColor = getPlayerColor(row.role);
 
             return (
@@ -782,7 +782,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           {/* Premium Mobile Card Layout */}
           {sortedRows.map((row, _index) => {
             const percentage = ((row.total / maxDamage) * 100).toFixed(2);
-                const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
+            const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
             const playerColor = getPlayerColor(row.role);
             const isActive = row.activePercentage > 0;
 
@@ -1225,7 +1225,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           availableTargets={availableTargets}
           isLoading={isDamageOverTimeLoading}
           height={400}
-          />
+        />
       </Box>
     </Box>
   );

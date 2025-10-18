@@ -379,7 +379,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = () => {
         isDamageOverTimeLoading={isDamageOverTimeLoading}
         selectedTargetIds={selectedTargetIds}
         availableTargets={availableTargets}
-        />
+      />
     </Box>
   );
 };
