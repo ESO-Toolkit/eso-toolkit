@@ -27,7 +27,9 @@ import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
 import { useRoleColors } from '../../../hooks';
+import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import { buildPhaseBoundaryAnnotations } from '../../../utils/chartPhaseAnnotationUtils';
 import {
   CriticalDamageSource,
   CriticalDamageSourceWithActiveState,
@@ -119,6 +121,7 @@ interface PlayerCriticalDamageDetailsViewProps {
   criticalMultiplier: CriticalMultiplierInfo | null;
   fightDurationSeconds: number;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
+  phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
 export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetailsViewProps> = ({
@@ -134,6 +137,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   fightDurationSeconds,
   player,
   onExpandChange,
+  phaseTransitionInfo,
 }) => {
   const roleColors = useRoleColors();
 
@@ -172,6 +176,21 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
       })) || []
     );
   }, [criticalDamageData?.dataPoints]);
+
+  const phaseAnnotations = React.useMemo(() => {
+    if (
+      !phaseTransitionInfo?.phaseTransitions ||
+      phaseTransitionInfo.phaseTransitions.length === 0
+    ) {
+      return null;
+    }
+
+    return buildPhaseBoundaryAnnotations(phaseTransitionInfo.phaseTransitions, {
+      fightStartTime: phaseTransitionInfo.fightStartTime,
+      fightEndTime: phaseTransitionInfo.fightEndTime,
+      xValueFormatter: (relativeSeconds: number) => Number(relativeSeconds.toFixed(1)),
+    });
+  }, [phaseTransitionInfo]);
 
   if (!criticalDamageData) {
     return (
@@ -541,6 +560,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                               padding: 4,
                             },
                           },
+                          ...(phaseAnnotations ?? {}),
                         },
                       },
                     },

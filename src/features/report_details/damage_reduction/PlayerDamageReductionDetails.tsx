@@ -29,7 +29,9 @@ import { LineChart } from '../../../components/LazyCharts';
 import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { useRoleColors } from '../../../hooks';
+import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import { buildPhaseBoundaryAnnotations } from '../../../utils/chartPhaseAnnotationUtils';
 import { resistanceToDamageReduction } from '../../../utils/damageReductionUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
@@ -78,6 +80,7 @@ interface PlayerDamageReductionDetailsProps {
   onExpandChange: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   damageReductionData?: PlayerDamageReductionData;
   isLoading?: boolean;
+  phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
 /**
@@ -91,6 +94,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
   onExpandChange,
   damageReductionData,
   isLoading,
+  phaseTransitionInfo,
 }) => {
   const theme = useTheme();
   const roleColors = useRoleColors();
@@ -133,6 +137,22 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
       y: staticDR,
     }));
   }, [shouldRenderChart, damageReductionData?.dataPoints, damageReductionData?.staticResistance]);
+
+  const phaseAnnotations = React.useMemo(() => {
+    if (
+      !shouldRenderChart ||
+      !phaseTransitionInfo?.phaseTransitions ||
+      phaseTransitionInfo.phaseTransitions.length === 0
+    ) {
+      return null;
+    }
+
+    return buildPhaseBoundaryAnnotations(phaseTransitionInfo.phaseTransitions, {
+      fightStartTime: phaseTransitionInfo.fightStartTime,
+      fightEndTime: phaseTransitionInfo.fightEndTime,
+      xValueFormatter: (relativeSeconds: number) => Number(relativeSeconds.toFixed(1)),
+    });
+  }, [phaseTransitionInfo, shouldRenderChart]);
 
   if (isLoading || !damageReductionData) {
     return (
@@ -640,6 +660,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                                   padding: 4,
                                 },
                               },
+                              ...(phaseAnnotations ?? {}),
                             },
                           },
                         },
