@@ -67,7 +67,7 @@ describe('analytics', () => {
 
     it('should handle initialization errors gracefully', () => {
       getEnvVarSpy.mockReturnValue(mockMeasurementId);
-      
+
       // Mock initialize to throw error
       (ReactGA.initialize as jest.Mock).mockImplementation(() => {
         throw new Error('Initialization failed');
@@ -116,7 +116,7 @@ describe('analytics', () => {
 
     it('should handle tracking errors gracefully', () => {
       getEnvVarSpy.mockReturnValue(mockMeasurementId);
-      
+
       // Mock send to throw error
       (ReactGA.send as jest.Mock).mockImplementation(() => {
         throw new Error('Tracking failed');
@@ -167,7 +167,7 @@ describe('analytics', () => {
 
     it('should handle tracking errors gracefully', () => {
       getEnvVarSpy.mockReturnValue(mockMeasurementId);
-      
+
       // Mock event to throw error
       (ReactGA.event as jest.Mock).mockImplementation(() => {
         throw new Error('Event tracking failed');
@@ -180,7 +180,3 @@ describe('analytics', () => {
     });
   });
 });
-
-
-
-
