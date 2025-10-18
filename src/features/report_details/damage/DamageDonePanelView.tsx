@@ -2,6 +2,7 @@ import { Box, Typography, Avatar, LinearProgress, Tooltip } from '@mui/material'
 import React, { useState, useMemo } from 'react';
 
 import { useRoleColors } from '../../../hooks';
+import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import type { DamageOverTimeResult } from '../../../workers/calculations/CalculateDamageOverTime';
 
 import { DamageTimelineChart } from './DamageTimelineChart';
@@ -27,6 +28,7 @@ interface DamageDonePanelViewProps {
   isDamageOverTimeLoading?: boolean;
   selectedTargetIds?: Set<number>;
   availableTargets?: Array<{ id: number; name: string }>;
+  phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
 type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamagePercent';
@@ -42,6 +44,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   isDamageOverTimeLoading = false,
   selectedTargetIds = new Set(),
   availableTargets = [],
+  phaseTransitionInfo,
 }) => {
   const roleColors = useRoleColors();
   const [sortField, setSortField] = useState<SortField>('total');
@@ -1155,6 +1158,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           availableTargets={availableTargets}
           isLoading={isDamageOverTimeLoading}
           height={400}
+          phaseTransitionInfo={phaseTransitionInfo}
         />
       </Box>
     </Box>

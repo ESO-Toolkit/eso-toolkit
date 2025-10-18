@@ -21,3 +21,4 @@ export { useSelectedTargetIds } from './useSelectedTargetIds';
 
 // URL parameter sync hooks
 export { useUrlParamSync, useUrlParams } from './useUrlParamSync';
+export { usePhaseTransitions } from './usePhaseTransitions';

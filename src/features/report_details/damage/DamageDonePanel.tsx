@@ -14,6 +14,7 @@ import {
   useCastEvents,
   useDamageOverTimeTask,
 } from '../../../hooks';
+import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
 import { KnownAbilities } from '../../../types/abilities';
 import { calculateActivePercentages } from '../../../utils/activePercentageUtils';
@@ -22,10 +23,14 @@ import type { DamageOverTimeResult } from '../../../workers/calculations/Calcula
 
 import { DamageDonePanelView } from './DamageDonePanelView';
 
+interface DamageDonePanelProps {
+  phaseTransitionInfo?: PhaseTransitionInfo;
+}
+
 /**
  * Smart component that handles data processing and state management for damage done panel
  */
-export const DamageDonePanel: React.FC = () => {
+export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ phaseTransitionInfo }) => {
   // Use hooks to get data
   const { damageEventsByPlayer, isDamageEventsLookupLoading } = useDamageEventsLookup();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
@@ -341,6 +346,7 @@ export const DamageDonePanel: React.FC = () => {
         isDamageOverTimeLoading={isDamageOverTimeLoading}
         selectedTargetIds={selectedTargetIds}
         availableTargets={availableTargets}
+        phaseTransitionInfo={phaseTransitionInfo}
       />
     </Box>
   );

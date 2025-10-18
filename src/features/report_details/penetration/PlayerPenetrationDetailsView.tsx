@@ -26,7 +26,9 @@ import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
 import { useRoleColors } from '../../../hooks';
+import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import { buildPhaseBoundaryAnnotations } from '../../../utils/chartPhaseAnnotationUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 // Register Chart.js components
@@ -80,6 +82,7 @@ interface PlayerPenetrationDetailsViewProps {
   playerBasePenetration: number;
   fightDurationSeconds: number;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
+  phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
 export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsViewProps> = ({
@@ -93,6 +96,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
   playerBasePenetration,
   fightDurationSeconds,
   onExpandChange,
+  phaseTransitionInfo,
 }) => {
   const roleColors = useRoleColors();
 
@@ -121,6 +125,21 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
       })) || []
     );
   }, [penetrationData?.dataPoints]);
+
+  const phaseAnnotations = React.useMemo(() => {
+    if (
+      !phaseTransitionInfo?.phaseTransitions ||
+      phaseTransitionInfo.phaseTransitions.length === 0
+    ) {
+      return null;
+    }
+
+    return buildPhaseBoundaryAnnotations(phaseTransitionInfo.phaseTransitions, {
+      fightStartTime: phaseTransitionInfo.fightStartTime,
+      fightEndTime: phaseTransitionInfo.fightEndTime,
+      xValueFormatter: (relativeSeconds: number) => Number(relativeSeconds.toFixed(1)),
+    });
+  }, [phaseTransitionInfo]);
 
   if (!penetrationData) {
     return (
@@ -407,6 +426,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                               padding: 4,
                             },
                           },
+                          ...(phaseAnnotations ?? {}),
                         },
                       },
                     },
