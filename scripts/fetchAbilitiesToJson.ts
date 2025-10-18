@@ -1,90 +1,76 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
-import fetch from 'cross-fetch';
-import dotenv from 'dotenv';
+import { GetAbilitiesDocument, type GetAbilitiesQuery } from '@graphql/gql/graphql';
+import type { GraphqlTestHarness } from '@graphql/testing/graphqlTestHarness';
 
-import { createEsoLogsClient } from '../src/esologsClient';
-import { GetAbilitiesDocument } from '../src/graphql/gql/graphql';
-
-dotenv.config();
-
-const TOKEN_URL = process.env.ESOLOGS_TOKEN_URL || 'https://www.esologs.com/oauth/token';
-const CLIENT_ID = process.env.OAUTH_CLIENT_ID;
-const CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
+import { runScript } from './_runner/bootstrap';
+import type { ScriptLogger } from './_runner/bootstrap';
 
 const DATA_DIR = path.resolve(__dirname, '../data');
 const OUT_FILE = path.join(DATA_DIR, 'abilities.json');
 const ICONS_OUT_FILE = path.join(DATA_DIR, 'abilityIcons.json');
-const PAGE_SIZE = 100;
 const CHECKPOINT_FILE = path.join(DATA_DIR, 'abilities.fetch.checkpoint.json');
+
+const PAGE_SIZE = 100;
 const MAX_RETRIES = Number(process.env.FETCH_MAX_RETRIES || 5);
 const RETRY_BASE_MS = Number(process.env.FETCH_RETRY_BASE_MS || 500);
+const SCRIPT_NAME = 'fetch-abilities';
 
-function sleep(ms: number) {
+type AbilitiesConnection = NonNullable<NonNullable<GetAbilitiesQuery['gameData']>['abilities']>;
+type AbilityNode = NonNullable<NonNullable<AbilitiesConnection['data']>[number]>;
+type AbilityLookup = Record<string, AbilityNode>;
+
+
+async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function readJsonIfExists<T>(file: string, fallback: T): T {
+function isNonNull<T>(value: T | null | undefined): value is T {
+  return value != null;
+}
+
+function readJsonIfExists<T>(file: string, fallback: T, logger: ScriptLogger): T {
   try {
     if (fs.existsSync(file)) {
-      return JSON.parse(fs.readFileSync(file, 'utf-8')) as T;
+      const content = fs.readFileSync(file, 'utf-8');
+      return JSON.parse(content) as T;
     }
-  } catch (e) {
-    console.warn(`Failed to read ${file}:`, e);
+  } catch (error) {
+    logger.warn(`Failed to read ${file}`, error instanceof Error ? error.message : error);
   }
   return fallback;
 }
 
-function writeJsonSafe(file: string, data: unknown) {
-  const tmp = file + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf-8');
-  fs.renameSync(tmp, file);
+function writeJsonSafe(file: string, data: unknown, logger: ScriptLogger): void {
+  try {
+    const directory = path.dirname(file);
+    if (!fs.existsSync(directory)) {
+      fs.mkdirSync(directory, { recursive: true });
+    }
+
+    const tempPath = `${file}.tmp`;
+    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf-8');
+    fs.renameSync(tempPath, file);
+  } catch (error) {
+    logger.error(`Failed to write ${file}`, error instanceof Error ? error.message : error);
+    throw error;
+  }
 }
 
-async function getAccessToken() {
-  if (!CLIENT_ID) {
-    throw new Error('Missing OAUTH_CLIENT_ID in environment variables');
-  }
-  if (!CLIENT_SECRET) {
-    throw new Error('Missing OAUTH_CLIENT_SECRET in environment variables');
-  }
+async function fetchAllAbilities(
+  harness: GraphqlTestHarness,
+  logger: ScriptLogger,
+): Promise<AbilityLookup> {
+  const abilityLookup = readJsonIfExists<AbilityLookup>(OUT_FILE, {}, logger);
 
-  console.log('Fetching access token...');
-  const res = await fetch(TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=client_credentials&client_id=${encodeURIComponent(CLIENT_ID)}&client_secret=${encodeURIComponent(CLIENT_SECRET)}`,
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to fetch access token: ${res.status} ${await res.text()}`);
-  }
-  const json = await res.json();
-  console.log('Access token fetched.');
-  return json.access_token;
-}
-
-async function fetchAllAbilities(accessToken: string) {
-  const esoLogsClient = createEsoLogsClient(accessToken);
-  type Ability = {
-    id: number;
-    name?: string | null;
-    icon?: string | null;
-    [key: string]: unknown;
-  };
-
-  // Load any previously saved abilities to allow true resume
-  const existing = readJsonIfExists<Record<string, Ability>>(OUT_FILE, {});
-  const abilityLookup: Record<string, Ability> = { ...existing };
-
-  // Load checkpoint if present
   let checkpoint = readJsonIfExists<{
     lastFetchedPage?: number;
     lastKnownTotalPages?: number;
     skippedPages?: number[];
     done?: boolean;
     timestamp?: string;
-  }>(CHECKPOINT_FILE, {});
+  }>(CHECKPOINT_FILE, {}, logger);
 
   let page = Math.max(1, (checkpoint.lastFetchedPage ?? 0) + 1);
   let lastPage = checkpoint.lastKnownTotalPages ?? 1;
@@ -94,34 +80,38 @@ async function fetchAllAbilities(accessToken: string) {
 
   const updateCheckpoint = (partial: Partial<typeof checkpoint>) => {
     checkpoint = { ...checkpoint, ...partial, timestamp: new Date().toISOString() };
-    writeJsonSafe(CHECKPOINT_FILE, checkpoint);
+    writeJsonSafe(CHECKPOINT_FILE, checkpoint, logger);
   };
 
-  const fetchPage = async (p: number) => {
+  const fetchPage = async (currentPage: number): Promise<AbilitiesConnection | null> => {
     let attempt = 0;
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+
+    while (attempt < MAX_RETRIES) {
+      attempt += 1;
       try {
-        const { data } = await esoLogsClient.query({
-          query: GetAbilitiesDocument,
-          variables: { limit: PAGE_SIZE, page: p },
+        const data = await harness.execute(GetAbilitiesDocument, {
           fetchPolicy: 'network-only',
+          variables: { limit: PAGE_SIZE, page: currentPage },
+          logLabel: `${SCRIPT_NAME}:page-${currentPage}`,
         });
-        return data?.gameData?.abilities;
-      } catch (err: any) {
-        attempt++;
-        const wait = RETRY_BASE_MS * Math.pow(2, attempt - 1);
-        console.warn(
-          `Error fetching page ${p} (attempt ${attempt}/${MAX_RETRIES}):`,
-          err?.message ?? err
+
+        return data.gameData?.abilities ?? null;
+      } catch (error) {
+        const waitMs = RETRY_BASE_MS * Math.pow(2, attempt - 1);
+        logger.warn(
+          `Failed to fetch abilities page ${currentPage} (attempt ${attempt}/${MAX_RETRIES})`,
+          error instanceof Error ? error.message : error,
         );
-        if (attempt >= MAX_RETRIES) throw err;
-        await sleep(wait);
+        if (attempt >= MAX_RETRIES) {
+          throw error;
+        }
+        await sleep(waitMs);
       }
     }
+
+    return null;
   };
 
-  // If resuming but page is past last known total, start new pass
   if (page > lastPage) {
     page = 1;
     lastPage = 1;
@@ -129,144 +119,147 @@ async function fetchAllAbilities(accessToken: string) {
     updateCheckpoint({ lastFetchedPage: 0, lastKnownTotalPages: undefined, skippedPages });
   }
 
-  // Primary pass over pages
   do {
-    console.log(`Fetching abilities page ${page}...`);
+    logger.info(`Fetching abilities page ${page}...`);
     try {
-      const abilitiesData = await fetchPage(page);
-      if (abilitiesData?.data) {
-        console.log(`Fetched ${abilitiesData.data.length} abilities on page ${page}.`);
-        for (const ability of abilitiesData.data as Ability[]) {
-          if (ability && ability.id != null) {
-            abilityLookup[String(ability.id)] = ability;
-          }
+      const abilitiesConnection = await fetchPage(page);
+      if (abilitiesConnection?.data) {
+        const abilityNodes = abilitiesConnection.data.filter(isNonNull);
+        logger.info(`Fetched ${abilityNodes.length} abilities on page ${page}.`);
+        for (const ability of abilityNodes) {
+          abilityLookup[String(ability.id)] = ability;
         }
-        writeJsonSafe(OUT_FILE, abilityLookup);
-        if (skippedPages.includes(page)) {
-          skippedPages = skippedPages.filter((x) => x !== page);
-        }
+        writeJsonSafe(OUT_FILE, abilityLookup, logger);
       }
-      lastPage = abilitiesData?.last_page || page;
+
+      lastPage = abilitiesConnection?.last_page ?? page;
       updateCheckpoint({ lastFetchedPage: page, lastKnownTotalPages: lastPage, skippedPages });
-    } catch (_err) {
-      console.error(
-        `Failed to fetch page ${page} after ${MAX_RETRIES} retries; will skip for now.`
-      );
-      if (!skippedPages.includes(page)) skippedPages.push(page);
+    } catch (error) {
+      logger.error(`Failed to fetch page ${page} after ${MAX_RETRIES} retries`, error);
+      if (!skippedPages.includes(page)) {
+        skippedPages.push(page);
+      }
       updateCheckpoint({ lastFetchedPage: page, lastKnownTotalPages: lastPage, skippedPages });
     }
-    page++;
+
+    page += 1;
   } while (page <= lastPage);
 
-  // Retry skipped pages with a couple of additional passes
   let passes = 0;
   while (skippedPages.length > 0 && passes < 2) {
-    passes++;
-    console.log(`Retry pass ${passes} for ${skippedPages.length} skipped pages...`);
+    passes += 1;
+    logger.info(`Retry pass ${passes} for ${skippedPages.length} skipped pages...`);
     const remaining: number[] = [];
-    for (const p of skippedPages) {
-      console.log(`Re-fetching skipped page ${p}...`);
+
+    for (const skippedPage of skippedPages) {
+      logger.info(`Re-fetching skipped page ${skippedPage}...`);
       try {
-        const abilitiesData = await fetchPage(p);
-        if (abilitiesData?.data) {
-          for (const ability of abilitiesData.data as Ability[]) {
-            if (ability && ability.id != null) {
-              abilityLookup[String(ability.id)] = ability;
-            }
+        const abilitiesConnection = await fetchPage(skippedPage);
+        const abilityNodes = abilitiesConnection?.data?.filter(isNonNull) ?? [];
+        if (abilityNodes.length > 0) {
+          for (const ability of abilityNodes) {
+            abilityLookup[String(ability.id)] = ability;
           }
-          writeJsonSafe(OUT_FILE, abilityLookup);
+          writeJsonSafe(OUT_FILE, abilityLookup, logger);
         }
-        lastPage = abilitiesData?.last_page || lastPage;
-      } catch (_e) {
-        console.error(`Still failed on page ${p}.`);
-        remaining.push(p);
+        lastPage = abilitiesConnection?.last_page ?? lastPage;
+      } catch (error) {
+        logger.error(`Still failed on page ${skippedPage}`, error);
+        remaining.push(skippedPage);
       }
     }
+
     skippedPages = remaining;
     updateCheckpoint({ skippedPages, lastKnownTotalPages: lastPage });
   }
 
   if (skippedPages.length > 0) {
-    console.warn(
-      `Completed with ${skippedPages.length} pages still failing: [${skippedPages.join(', ')}]. See ${CHECKPOINT_FILE}.`
+    logger.warn(
+      `Completed with ${skippedPages.length} pages still failing. See ${CHECKPOINT_FILE} for details.`,
     );
   } else {
-    console.log('Completed all pages successfully.');
+    logger.info('Completed all pages successfully.');
   }
 
   updateCheckpoint({ done: skippedPages.length === 0 });
 
-  console.log(
-    `Total abilities collected (including previous): ${Object.keys(abilityLookup).length}`
+  logger.info(
+    `Total abilities collected (including previous): ${Object.keys(abilityLookup).length}`,
   );
+
   return abilityLookup;
 }
 
-function buildIconMap(abilities: Record<string, any>) {
+function buildIconMap(abilities: AbilityLookup): Record<number, string> {
   const icons: Record<number, string> = {};
-  for (const [idStr, ability] of Object.entries(abilities)) {
-    const icon = (ability as any)?.icon as string | undefined;
-    if (icon) icons[Number(idStr)] = icon;
+
+  for (const [id, ability] of Object.entries(abilities)) {
+    if (ability.icon) {
+      icons[Number(id)] = ability.icon;
+    }
   }
+
   return icons;
 }
 
-async function main() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR);
-  }
-  // Optional reset controls
+function resetIfRequested(logger: ScriptLogger): void {
   try {
-    if (process.env.RESET_ABILITIES_FETCH === '1' || process.env.RESET_ABILITIES_ALL === '1') {
-      if (fs.existsSync(CHECKPOINT_FILE)) {
-        try {
-          fs.unlinkSync(CHECKPOINT_FILE);
-          console.log(`Removed checkpoint ${CHECKPOINT_FILE}`);
-        } catch (e) {
-          console.warn(`Failed to remove checkpoint ${CHECKPOINT_FILE}:`, e);
-        }
-      }
-      if (process.env.RESET_ABILITIES_ALL === '1' && fs.existsSync(OUT_FILE)) {
-        try {
-          fs.unlinkSync(OUT_FILE);
-          console.log(`Removed ${OUT_FILE}`);
-        } catch (e) {
-          console.warn(`Failed to remove ${OUT_FILE}:`, e);
-        }
-      }
-    }
-  } catch (e) {
-    console.warn('Reset pre-step encountered an issue:', e);
-  }
-  if (CLIENT_ID && CLIENT_SECRET) {
-    // Online mode: fetch everything fresh
-    const accessToken = await getAccessToken();
-    const abilities = await fetchAllAbilities(accessToken);
-    fs.writeFileSync(OUT_FILE, JSON.stringify(abilities, null, 2), 'utf-8');
-    console.log(`Fetched ${Object.keys(abilities).length} abilities and saved to ${OUT_FILE}`);
+    const resetFetch = process.env.RESET_ABILITIES_FETCH === '1' || process.env.RESET_ABILITIES_ALL === '1';
+    const resetAll = process.env.RESET_ABILITIES_ALL === '1';
 
-    const icons = buildIconMap(abilities);
-    fs.writeFileSync(ICONS_OUT_FILE, JSON.stringify(icons, null, 2), 'utf-8');
-    console.log(`Wrote icon map for ${Object.keys(icons).length} abilities to ${ICONS_OUT_FILE}`);
-  } else {
-    // Offline mode: derive icon map from an existing abilities.json
-    if (!fs.existsSync(OUT_FILE)) {
-      console.error(
-        `Missing OAuth credentials and no existing abilities.json at ${OUT_FILE}.\n` +
-          `Ask the repo owner for abilities.json or provide OAUTH_CLIENT_ID/OAUTH_CLIENT_SECRET to fetch it.`
-      );
-      process.exit(1);
+    if (!resetFetch && !resetAll) {
+      return;
     }
-    const abilities = JSON.parse(fs.readFileSync(OUT_FILE, 'utf-8')) as Record<string, any>;
-    const icons = buildIconMap(abilities);
-    fs.writeFileSync(ICONS_OUT_FILE, JSON.stringify(icons, null, 2), 'utf-8');
-    console.log(
-      `Offline mode: wrote icon map for ${Object.keys(icons).length} abilities to ${ICONS_OUT_FILE}`
-    );
+
+    if (fs.existsSync(CHECKPOINT_FILE)) {
+      fs.unlinkSync(CHECKPOINT_FILE);
+      logger.info(`Removed checkpoint ${CHECKPOINT_FILE}`);
+    }
+
+    if (resetAll && fs.existsSync(OUT_FILE)) {
+      fs.unlinkSync(OUT_FILE);
+      logger.info(`Removed ${OUT_FILE}`);
+    }
+  } catch (error) {
+    logger.warn('Reset pre-step encountered an issue', error instanceof Error ? error.message : error);
   }
 }
 
-main().catch((err) => {
-  console.error('Error fetching abilities:', err);
-  process.exit(1);
-});
+runScript(async ({ getGraphqlHarness, logger }) => {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+
+  resetIfRequested(logger);
+
+  const hasAccessToken = Boolean(
+    process.env.ESOLOGS_TOKEN || (process.env.OAUTH_CLIENT_ID && process.env.OAUTH_CLIENT_SECRET),
+  );
+
+  if (!hasAccessToken) {
+    if (!fs.existsSync(OUT_FILE)) {
+      throw new Error(
+        `Missing OAuth credentials and no existing abilities.json at ${OUT_FILE}. Provide ESOLOGS_TOKEN or OAUTH_CLIENT_ID/OAUTH_CLIENT_SECRET to fetch fresh data.`,
+      );
+    }
+
+    logger.info('Offline mode: deriving icon map from existing abilities.json');
+    const abilitiesContent = fs.readFileSync(OUT_FILE, 'utf-8');
+    const abilities = JSON.parse(abilitiesContent) as AbilityLookup;
+    const icons = buildIconMap(abilities);
+    writeJsonSafe(ICONS_OUT_FILE, icons, logger);
+    logger.info(
+      `Offline mode: wrote icon map for ${Object.keys(icons).length} abilities to ${ICONS_OUT_FILE}`,
+    );
+    return;
+  }
+
+  const harness = await getGraphqlHarness({ defaultFetchPolicy: 'network-only' });
+  const abilities = await fetchAllAbilities(harness, logger);
+  writeJsonSafe(OUT_FILE, abilities, logger);
+  logger.info(`Fetched ${Object.keys(abilities).length} abilities and saved to ${OUT_FILE}`);
+
+  const icons = buildIconMap(abilities);
+  writeJsonSafe(ICONS_OUT_FILE, icons, logger);
+  logger.info(`Wrote icon map for ${Object.keys(icons).length} abilities to ${ICONS_OUT_FILE}`);
+}, { name: SCRIPT_NAME });

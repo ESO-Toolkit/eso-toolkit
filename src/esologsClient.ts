@@ -17,6 +17,11 @@ import { getOperationAST } from 'graphql';
 
 import { Logger, LogLevel } from './utils/logger';
 
+type ErrorWithGraphQLErrors = {
+  graphQLErrors?: Array<{ message?: string }>;
+  message?: string;
+};
+
 // Create a logger instance for GraphQL client
 const logger = new Logger({
   level: LogLevel.ERROR,
@@ -147,10 +152,25 @@ export class EsoLogsClient {
     if (result.error) {
       const operationAST = getOperationAST(options.query);
       const operationName = operationAST?.name?.value;
-      logger.error('GraphQL query error', result.error, {
-        query: operationName,
-      });
-      throw new Error(`GraphQL error: ${result.error.message}`);
+      const hasData = typeof result.data !== 'undefined' && result.data !== null;
+      const errorPolicy = options.errorPolicy ?? 'none';
+
+      if (errorPolicy === 'all' && hasData) {
+        const graphErrors = (result.error as ErrorWithGraphQLErrors | undefined)?.graphQLErrors;
+        const errorMessages =
+          Array.isArray(graphErrors) && graphErrors.length > 0
+            ? graphErrors.map((graphError) => graphError?.message ?? 'Unknown GraphQL error')
+            : [result.error.message ?? 'Unknown GraphQL error'];
+        logger.warn('GraphQL query completed with errors', {
+          query: operationName,
+          messages: errorMessages,
+        });
+      } else {
+        logger.error('GraphQL query error', result.error, {
+          query: operationName,
+        });
+        throw new Error(`GraphQL error: ${result.error.message}`);
+      }
     }
 
     return result.data as TData;

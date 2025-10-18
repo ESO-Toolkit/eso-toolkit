@@ -62,6 +62,11 @@ const TextEditor = React.lazy(() =>
 const Logs = React.lazy(() =>
   import('./components/Logs').then((module) => ({ default: module.Logs })),
 );
+const LeaderboardLogsPage = React.lazy(() =>
+  import('./features/leaderboard/LeaderboardLogsPage').then((module) => ({
+    default: module.LeaderboardLogsPage,
+  })),
+);
 const FightReplay = React.lazy(() =>
   import('./features/fight_replay/FightReplay').then((module) => ({ default: module.FightReplay })),
 );
@@ -295,6 +300,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <Logs />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/leaderboards"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <LeaderboardLogsPage />
                   </Suspense>
                 </ErrorBoundary>
               }

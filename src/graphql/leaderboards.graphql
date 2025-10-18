@@ -1,0 +1,52 @@
+# Leaderboard queries for leaderboard logs page
+
+query getTrialZones {
+  worldData {
+    zones {
+      id
+      name
+      encounters {
+        id
+        name
+      }
+      difficulties {
+        id
+        name
+        sizes
+      }
+    }
+  }
+}
+
+query getEncounterFightRankings(
+  $encounterId: Int!
+  $difficulty: Int
+  $page: Int
+  $metric: FightRankingMetricType = score
+  $partition: Int
+  $size: Int
+  $serverRegion: String
+  $serverSlug: String
+  $hardModeLevel: HardModeLevelRankFilter
+) {
+  worldData {
+    encounter(id: $encounterId) {
+      id
+      name
+      zone {
+        id
+        name
+      }
+      fightRankings(
+        difficulty: $difficulty
+        metric: $metric
+        page: $page
+        partition: $partition
+        size: $size
+        serverRegion: $serverRegion
+        serverSlug: $serverSlug
+        hardModeLevel: $hardModeLevel
+      )
+    }
+  }
+}
