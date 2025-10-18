@@ -93,7 +93,10 @@
       "Bash(powershell:*)",
       "Bash(for:*)",
       "Bash(do npx kill-port:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(more:*)",
+      "Bash(git diff:*)",
+      "Bash(git rev-parse:*)"
     ],
     "deny": [],
     "ask": []
