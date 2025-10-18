@@ -175,7 +175,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
         <Box
           sx={{
             display: 'flex',
-          backgroundColor: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+            backgroundColor: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
             borderRadius: '12px',
             padding: '4px',
             border: roleColors.isDarkMode ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(0, 0, 0, 0.1)',
@@ -199,7 +199,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 cursor: 'pointer',
                 userSelect: 'none',
                 minWidth: '48px', // Touch target minimum
-              height: '40px',   // Touch target minimum
+                height: '40px',   // Touch target minimum
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -207,43 +207,43 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 fontWeight: sortField === field ? 600 : 500,
                 fontSize: '0.75rem',
                 whiteSpace: 'nowrap',
-            backgroundColor: sortField === field
-                ? accent
-                  ? roleColors.isDarkMode
-                    ? 'rgba(255, 139, 97, 0.9)'
-                    : 'rgba(255, 139, 97, 0.95)'
-                  : roleColors.isDarkMode
-                    ? 'rgba(255, 255, 255, 0.15)'
-                    : 'rgba(0, 0, 0, 0.12)'
-                : 'transparent',
-              color: sortField === field
-                ? accent
-                  ? '#ffffff'
-                  : roleColors.isDarkMode
-                    ? '#ffffff'
-                    : '#000000'
-                : roleColors.isDarkMode
-                  ? 'rgba(255, 255, 255, 0.7)'
-                  : 'rgba(0, 0, 0, 0.6)',
-              '&:hover': {
                 backgroundColor: sortField === field
                   ? accent
                     ? roleColors.isDarkMode
-                      ? 'rgba(255, 139, 97, 0.95)'
-                      : 'rgba(255, 139, 97, 1)'
+                      ? 'rgba(255, 139, 97, 0.9)'
+                      : 'rgba(255, 139, 97, 0.95)'
                     : roleColors.isDarkMode
-                      ? 'rgba(255, 255, 255, 0.2)'
-                      : 'rgba(0, 0, 0, 0.16)'
+                      ? 'rgba(255, 255, 255, 0.15)'
+                      : 'rgba(0, 0, 0, 0.12)'
+                  : 'transparent',
+                color: sortField === field
+                  ? accent
+                    ? '#ffffff'
+                    : roleColors.isDarkMode
+                      ? '#ffffff'
+                      : '#000000'
                   : roleColors.isDarkMode
-                    ? 'rgba(255, 255, 255, 0.05)'
-                    : 'rgba(0, 0, 0, 0.03)',
+                    ? 'rgba(255, 255, 255, 0.7)'
+                    : 'rgba(0, 0, 0, 0.6)',
+                '&:hover': {
+                  backgroundColor: sortField === field
+                    ? accent
+                      ? roleColors.isDarkMode
+                        ? 'rgba(255, 139, 97, 0.95)'
+                        : 'rgba(255, 139, 97, 1)'
+                      : roleColors.isDarkMode
+                        ? 'rgba(255, 255, 255, 0.2)'
+                        : 'rgba(0, 0, 0, 0.16)'
+                    : roleColors.isDarkMode
+                      ? 'rgba(255, 255, 255, 0.05)'
+                      : 'rgba(0, 0, 0, 0.03)',
                 },
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Typography sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>
-                {label}
-              </Typography>
+                <Typography sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>
+                  {label}
+                </Typography>
                 <Typography
                   sx={{
                     fontSize: '0.7rem',
@@ -256,8 +256,6 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
               </Box>
             </Box>
           ))}
-        </Box>
-      </Box>
         </Box>
       </Box>
       {damageRows.length > 0 ? (
@@ -309,7 +307,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           <Box
             sx={{
               display: { xs: 'none', sm: 'grid' },
-              gridTemplateColumns: '1.5fr 2fr 80px 80px 80px 60px 60px',
+              gridTemplateColumns: '1.5fr 80px 80px 80px 60px 60px 60px',
               gap: 1,
               p: 1.5,
               backgroundColor: 'transparent',
@@ -387,18 +385,6 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             </Box>
             <Box
               sx={{
-                cursor: 'pointer',
-                userSelect: 'none',
-                '&:hover': {
-                  color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
-                },
-              }}
-              onClick={() => handleSort('total')}
-            >
-              Amount{getSortIcon('total')}
-            </Box>
-            <Box
-              sx={{
                 textAlign: 'right',
                 cursor: 'pointer',
                 userSelect: 'none',
@@ -446,20 +432,33 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             >
               Crit %{getSortIcon('criticalDamagePercent')}
             </Box>
-            <Box
-              sx={{
-                textAlign: 'center',
-              }}
-            >
-              💀
-            </Box>
-            <Box
-              sx={{
-                textAlign: 'center',
-              }}
-            >
-              ❤️
-            </Box>
+            <Tooltip title="Deaths" arrow>
+              <Box
+                sx={{
+                  textAlign: 'center',
+                }}
+              >
+                💀
+              </Box>
+            </Tooltip>
+            <Tooltip title="Resurrects" arrow>
+              <Box
+                sx={{
+                  textAlign: 'center',
+                }}
+              >
+                ❤️
+              </Box>
+            </Tooltip>
+            <Tooltip title="Casts Per Minute" arrow>
+              <Box
+                sx={{
+                  textAlign: 'center',
+                }}
+              >
+                🐭
+              </Box>
+            </Tooltip>
           </Box>
 
           {/* Data Rows */}
@@ -476,7 +475,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 sx={{
                   // Desktop grid layout
                   display: { xs: 'none', sm: 'grid' },
-                  gridTemplateColumns: '1.5fr 2fr 80px 80px 80px 60px 60px',
+                  gridTemplateColumns: '1.5fr 80px 80px 80px 60px 60px 60px',
                   gap: 1,
                   p: 1.5,
                   backgroundColor: 'transparent',
@@ -491,110 +490,99 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   },
                 }}
               >
-                {/* Name with Icon */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
-                  {row.iconUrl && (
-                    <Avatar
-                      src={row.iconUrl}
-                      alt="icon"
-                      sx={{ width: 32, height: 32, flexShrink: 0 }}
-                    />
-                  )}
-                  <Typography
-                    sx={{
-                      fontWeight: 500,
-                      fontSize: '0.875rem',
-                      fontFamily: '"Space Grotesk", "Inter", system-ui',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      ...(roleColors.isDarkMode
-                        ? {
-                            color: roleColors.getPlayerColor(row.role),
-                            textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                          }
-                        : {
-                            background: roleColors.getGradientColor(row.role),
-                            backgroundClip: 'text',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: row.role === 'dps' ? '#ffbd7d00' : 'transparent',
-                            textShadow: '0 1px 1px rgba(0,0,0,0.2)',
-                          }),
-                    }}
-                  >
-                    {row.name}
-                  </Typography>
-                </Box>
-
-                {/* Amount with Progress Bars */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
-                  <Typography
-                    sx={{
-                      color: roleColors.isDarkMode ? '#ecf0f1' : '#475569',
-                      fontWeight: 500,
-                      fontSize: '0.875rem',
-                      minWidth: '60px',
-                      textShadow: roleColors.isDarkMode
-                        ? '0 1px 3px rgba(0,0,0,0.5)'
-                        : '0 1px 1px rgba(0,0,0,0.15)',
-                    }}
-                  >
-                    {percentageOfTotal}%
-                  </Typography>
-                  <Box sx={{ flex: 1, minWidth: '100px', position: 'relative' }}>
-                    {/* Total Damage Progress Bar (Background) - Muted Orange */}
-                    <LinearProgress
-                      variant="determinate"
-                      value={percentageValue}
+                {/* Name with Icon and Progress Bar */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                  {/* Name Row */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                    {row.iconUrl && (
+                      <Avatar
+                        src={row.iconUrl}
+                        alt="icon"
+                        sx={{ width: 32, height: 32, flexShrink: 0 }}
+                      />
+                    )}
+                    <Typography
                       sx={{
-                        height: 8,
-                        borderRadius: 1,
-                        backgroundColor: roleColors.isDarkMode
-                          ? MUTED_ORANGE_PROGRESS_DARK.background
-                          : MUTED_ORANGE_PROGRESS_LIGHT.background,
-                        '& .MuiLinearProgress-bar': {
-                          borderRadius: 1,
-                          background: roleColors.isDarkMode
-                            ? MUTED_ORANGE_PROGRESS_DARK.bar
-                            : MUTED_ORANGE_PROGRESS_LIGHT.bar,
-                        },
+                        fontWeight: 500,
+                        fontSize: '0.875rem',
+                        fontFamily: '"Space Grotesk", "Inter", system-ui',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        ...(roleColors.isDarkMode
+                          ? {
+                              color: roleColors.getPlayerColor(row.role),
+                              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                            }
+                          : {
+                              background: roleColors.getGradientColor(row.role),
+                              backgroundClip: 'text',
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: row.role === 'dps' ? '#ffbd7d00' : 'transparent',
+                              textShadow: '0 1px 1px rgba(0,0,0,0.2)',
+                            }),
                       }}
-                    />
-                    {/* Critical Damage Progress Bar (Overlay) - Role Colors */}
-                    <LinearProgress
-                      variant="determinate"
-                      value={(percentageValue * row.criticalDamagePercent) / 100}
-                      sx={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: '100%',
-                        backgroundColor: 'transparent',
-                        '& .MuiLinearProgress-bar': {
-                          borderRadius: 1,
-                          background: playerColor,
-                          opacity: 0.85,
-                        },
-                      }}
-                    />
+                    >
+                      {row.name}
+                    </Typography>
                   </Box>
-                  <Tooltip title={formatNumber(row.total)} arrow>
+
+                  {/* Progress Bar Row */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
                     <Typography
                       sx={{
                         color: roleColors.isDarkMode ? '#ecf0f1' : '#475569',
-                        fontSize: '0.875rem',
-                        minWidth: '60px',
-                        textAlign: 'right',
+                        fontWeight: 500,
+                        fontSize: '0.75rem',
+                        minWidth: '40px',
                         textShadow: roleColors.isDarkMode
                           ? '0 1px 3px rgba(0,0,0,0.5)'
                           : '0 1px 1px rgba(0,0,0,0.15)',
-                        cursor: 'help',
                       }}
                     >
-                      {formatNumberShort(row.total)}
+                      {percentageOfTotal}%
                     </Typography>
-                  </Tooltip>
+                    <Tooltip title={`${formatNumber(row.total)} total damage`} arrow>
+                      <Box sx={{ flex: 1, minWidth: '80px', position: 'relative', cursor: 'help' }}>
+                        {/* Total Damage Progress Bar (Background) - Muted Orange */}
+                        <LinearProgress
+                          variant="determinate"
+                          value={percentageValue}
+                          sx={{
+                            height: 6,
+                            borderRadius: 1,
+                            backgroundColor: roleColors.isDarkMode
+                              ? MUTED_ORANGE_PROGRESS_DARK.background
+                              : MUTED_ORANGE_PROGRESS_LIGHT.background,
+                            '& .MuiLinearProgress-bar': {
+                              borderRadius: 1,
+                              background: roleColors.isDarkMode
+                                ? MUTED_ORANGE_PROGRESS_DARK.bar
+                                : MUTED_ORANGE_PROGRESS_LIGHT.bar,
+                            },
+                          }}
+                        />
+                        {/* Critical Damage Progress Bar (Overlay) - Role Colors */}
+                        <LinearProgress
+                          variant="determinate"
+                          value={(percentageValue * row.criticalDamagePercent) / 100}
+                          sx={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: '100%',
+                            backgroundColor: 'transparent',
+                            '& .MuiLinearProgress-bar': {
+                              borderRadius: 1,
+                              background: playerColor,
+                              opacity: 0.85,
+                            },
+                          }}
+                        />
+                      </Box>
+                    </Tooltip>
+                  </Box>
                 </Box>
 
                 {/* DPS */}
@@ -757,6 +745,29 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     —
                   </Typography>
                 )}
+
+                {/* CPM */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 0.5,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontWeight: 700,
+                      color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
+                      textShadow: roleColors.isDarkMode
+                        ? '0 1px 3px rgba(0,0,0,0.5)'
+                        : '0 1px 0 rgba(14,165,233,0.25)',
+                    }}
+                  >
+                    {row.cpm.toFixed(1)}
+                  </Typography>
+                </Box>
               </Box>
             );
           })}
@@ -764,7 +775,6 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           {/* Premium Mobile Card Layout */}
           {sortedRows.map((row, index) => {
             const percentage = ((row.total / maxDamage) * 100).toFixed(2);
-            const percentageValue = parseFloat(percentage);
             const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
             const playerColor = getPlayerColor(row.role);
             const isActive = row.activePercentage > 0;
@@ -924,6 +934,26 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                               ? MUTED_ORANGE_PROGRESS_DARK.bar
                               : MUTED_ORANGE_PROGRESS_LIGHT.bar,
                           },
+                        }}
+                      />
+                      {/* Critical Damage Progress Bar (Overlay) - Role Colors */}
+                      <LinearProgress
+                        variant="determinate"
+                        value={(percentageValue * row.criticalDamagePercent) / 100}
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '100%',
+                          backgroundColor: 'transparent',
+                          '& .MuiLinearProgress-bar': {
+                            borderRadius: 4,
+                            background: playerColor,
+                            opacity: 0.85,
+                          },
+                        }}
+                      />
                     </Box>
                     <Tooltip title={formatNumber(row.total)} arrow>
                       <Typography
@@ -952,42 +982,69 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     borderTop: `1px solid ${roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)'}`,
                   }}
                 >
-                  {/* Left Side: Critical Damage */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Box
-                      sx={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: playerColor,
-                        opacity: 0.8,
-                      }}
-                    />
-                    <Typography
-                      sx={{
-                        fontSize: '0.75rem',
-                        color: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)',
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Crit
-                    </Typography>
-                    <Tooltip title={formatNumber(row.criticalDamageTotal)} arrow>
+                  {/* Left Side: Critical Damage & CPM */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {/* Critical Damage */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Box
+                        sx={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: playerColor,
+                          opacity: 0.8,
+                        }}
+                      />
                       <Typography
                         sx={{
                           fontSize: '0.75rem',
-                          color: playerColor,
-                          fontWeight: 700,
-                          cursor: 'help',
+                          color: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
                         }}
                       >
-                        {formatNumberShort(row.criticalDamageTotal)}
+                        Crit
                       </Typography>
+                      <Tooltip title={formatNumber(row.criticalDamageTotal)} arrow>
+                        <Typography
+                          sx={{
+                            fontSize: '0.75rem',
+                            color: playerColor,
+                            fontWeight: 700,
+                            cursor: 'help',
+                          }}
+                        >
+                          {formatNumberShort(row.criticalDamageTotal)}
+                        </Typography>
+                      </Tooltip>
+                    </Box>
+
+                    {/* CPM */}
+                    <Tooltip title="Casts Per Minute" arrow>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          px: '8px',
+                          py: '4px',
+                          borderRadius: '6px',
+                          backgroundColor: roleColors.isDarkMode
+                            ? 'rgba(56, 189, 248, 0.15)'
+                            : 'rgba(14, 165, 233, 0.08)',
+                        }}
+                      >
+                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9', fontWeight: 700 }}>
+                          🐭
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9', fontWeight: 700 }}>
+                          {row.cpm.toFixed(1)}
+                        </Typography>
+                      </Box>
                     </Tooltip>
                   </Box>
 
-                {/* Right Side: Death & Resurrect Indicators */}
+                  {/* Right Side: Death & Resurrect Indicators */}
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {row.deaths > 0 ? (
                       <Box
