@@ -14,7 +14,6 @@ import {
   useCastEvents,
   useDamageOverTimeTask,
 } from '../../../hooks';
-import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
 import { KnownAbilities } from '../../../types/abilities';
 import { calculateActivePercentages } from '../../../utils/activePercentageUtils';
@@ -24,13 +23,13 @@ import type { DamageOverTimeResult } from '../../../workers/calculations/Calcula
 import { DamageDonePanelView } from './DamageDonePanelView';
 
 interface DamageDonePanelProps {
-  phaseTransitionInfo?: PhaseTransitionInfo;
+  children?: React.ReactNode;
 }
 
 /**
  * Smart component that handles data processing and state management for damage done panel
  */
-export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ phaseTransitionInfo }) => {
+export const DamageDonePanel: React.FC<DamageDonePanelProps> = () => {
   // Use hooks to get data
   const { damageEventsByPlayer, isDamageEventsLookupLoading } = useDamageEventsLookup();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
@@ -233,6 +232,37 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ phaseTransitio
     return result;
   }, [castEvents]);
 
+  // Calculate CPM (casts per minute) per player
+  const cpmByPlayer = useMemo(() => {
+    const result: Record<string, number> = {};
+    if (!fight) return result;
+
+    // Count cast events per player (excluding fake casts)
+    for (const event of castEvents) {
+      if (event.type === 'cast' && !event.fake) {
+        const sourceId = event.sourceID;
+        result[sourceId] = (result[sourceId] || 0) + 1;
+      }
+    }
+
+    // Calculate fight duration in minutes
+    const durationMs = fight.endTime - fight.startTime;
+    const minutes = durationMs > 0 ? durationMs / 60000 : 0;
+
+    if (minutes > 0) {
+      for (const playerId of Object.keys(result)) {
+        result[playerId] = Number((result[playerId] / minutes).toFixed(1));
+      }
+    } else {
+      // No duration; set CPM to 0
+      for (const playerId of Object.keys(result)) {
+        result[playerId] = 0;
+      }
+    }
+
+    return result;
+  }, [castEvents, fight]);
+
   const isPlayerActor = useMemo(() => {
     return (id: string) => {
       const actor = masterData.actorsById[id];
@@ -284,6 +314,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ phaseTransitio
         const role = getPlayerRole(id);
         const deaths = deathsByPlayer[id] || 0;
         const resurrects = resByPlayer[id] || 0;
+        const cpm = cpmByPlayer[id] || 0;
 
         // Get active percentage for this player
         const activeData = activePercentages[playerId];
@@ -306,6 +337,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ phaseTransitio
           role,
           deaths,
           resurrects,
+          cpm,
         };
       })
       .sort((a, b) => b.dps - a.dps);
@@ -319,6 +351,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ phaseTransitio
     activePercentages,
     deathsByPlayer,
     resByPlayer,
+    cpmByPlayer,
   ]);
 
   // Show table skeleton while data is being fetched
@@ -346,7 +379,6 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ phaseTransitio
         isDamageOverTimeLoading={isDamageOverTimeLoading}
         selectedTargetIds={selectedTargetIds}
         availableTargets={availableTargets}
-        phaseTransitionInfo={phaseTransitionInfo}
       />
     </Box>
   );

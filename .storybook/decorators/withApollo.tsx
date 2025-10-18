@@ -1,4 +1,5 @@
 import type { Decorator } from '@storybook/react';
+import React from 'react';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { defaultApolloMocks } from '../mocks/graphql';
 

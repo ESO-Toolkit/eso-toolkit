@@ -662,7 +662,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           )}
           {validSelectedTabId === TabId.DAMAGE_DONE && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_DONE} />}>
-              <DamageDonePanel phaseTransitionInfo={phaseTransitionInfo} />
+              <DamageDonePanel />
             </Suspense>
           )}
           {validSelectedTabId === TabId.HEALING_DONE && (

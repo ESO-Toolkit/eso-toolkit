@@ -93,7 +93,14 @@
       "Bash(powershell:*)",
       "Bash(for:*)",
       "Bash(do npx kill-port:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(more:*)",
+      "Bash(git diff:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(npm run build-storybook:*)",
+      "Bash(DISABLE_ESLINT_PLUGIN=true npm run build-storybook:*)",
+      "Bash(git merge-base:*)",
+      "Bash(npm search:*)"
     ],
     "deny": [],
     "ask": []
