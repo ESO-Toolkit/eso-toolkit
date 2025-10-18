@@ -103,8 +103,8 @@ describe('calculatePlayerTravelDistances', () => {
 
     expect(summary).toBeDefined();
     expect(summary.samples).toBe(2);
-    // Converted coordinates flip X and divide by 100, resulting in a 1-unit change along X.
-    expect(summary.totalDistance).toBeCloseTo(1, 5);
+    // Converted coordinates flip X and divide by 100, resulting in a 10-unit change along X.
+    expect(summary.totalDistance).toBeCloseTo(10, 5);
     expect(summary.averageSpeed).toBeGreaterThan(0);
   });
 

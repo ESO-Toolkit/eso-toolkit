@@ -120,6 +120,7 @@ export function calculatePlayerTravelDistances(
   onProgress?.(0);
 
   eventsWithPositions.forEach((event, index) => {
+    const processedActorsForEvent = new Map<number, [number, number]>();
     processedEventCount += 1;
 
     const handleActor = (
@@ -134,6 +135,17 @@ export function calculatePlayerTravelDistances(
       if (!position) {
         return;
       }
+
+      const previousPosition = processedActorsForEvent.get(actorId);
+      if (previousPosition) {
+        const dx = position[0] - previousPosition[0];
+        const dz = position[1] - previousPosition[1];
+        if (Math.hypot(dx, dz) <= POSITION_EPSILON) {
+          return;
+        }
+      }
+
+      processedActorsForEvent.set(actorId, position);
 
       processSample(actorId, event.timestamp, position, trackingStates);
     };
