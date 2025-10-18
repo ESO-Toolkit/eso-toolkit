@@ -96,7 +96,8 @@
       "Bash(done)",
       "Bash(more:*)",
       "Bash(git diff:*)",
-      "Bash(git rev-parse:*)"
+      "Bash(git rev-parse:*)",
+      "Bash(npm run build-storybook:*)"
     ],
     "deny": [],
     "ask": []

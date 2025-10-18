@@ -29,8 +29,7 @@ interface DamageDonePanelViewProps {
   isDamageOverTimeLoading?: boolean;
   selectedTargetIds?: Set<number>;
   availableTargets?: Array<{ id: number; name: string }>;
-  phaseTransitionInfo?: PhaseTransitionInfo;
-}
+  }
 
 type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamage';
 type SortDirection = 'asc' | 'desc';
@@ -45,8 +44,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   isDamageOverTimeLoading = false,
   selectedTargetIds = new Set(),
   availableTargets = [],
-  phaseTransitionInfo,
-}) => {
+  }) => {
   const roleColors = useRoleColors();
   const [sortField, setSortField] = useState<SortField>('total');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -474,8 +472,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           {/* Data Rows */}
           {sortedRows.map((row, index) => {
             const percentage = ((row.total / maxDamage) * 100).toFixed(2);
-            const percentageValue = parseFloat(percentage);
-            const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
+                const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
             const playerColor = getPlayerColor(row.role);
 
             return (
@@ -575,7 +572,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         {/* Critical Damage Progress Bar (Overlay) - Role Colors */}
                         <LinearProgress
                           variant="determinate"
-                          value={(row.criticalDamage / maxDamage) * 100}
+                          value={(row.criticalDamageTotal / maxDamage) * 100}
                           sx={{
                             position: 'absolute',
                             top: 0,
@@ -785,8 +782,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           {/* Premium Mobile Card Layout */}
           {sortedRows.map((row, _index) => {
             const percentage = ((row.total / maxDamage) * 100).toFixed(2);
-            const percentageValue = parseFloat(percentage);
-            const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
+                const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
             const playerColor = getPlayerColor(row.role);
             const isActive = row.activePercentage > 0;
 
@@ -974,7 +970,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                       {/* Critical Damage Progress Bar (Overlay) - Role Colors */}
                       <LinearProgress
                         variant="determinate"
-                        value={(row.criticalDamage / maxDamage) * 100}
+                        value={(row.criticalDamageTotal / maxDamage) * 100}
                         sx={{
                           position: 'absolute',
                           top: 0,
@@ -1043,7 +1039,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                       >
                         Crit
                       </Typography>
-                      <Tooltip title={formatNumber(row.criticalDamage)} arrow>
+                      <Tooltip title={formatNumber(row.criticalDamageTotal)} arrow>
                         <Typography
                           sx={{
                             fontSize: '0.75rem',
@@ -1052,7 +1048,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                             cursor: 'help',
                           }}
                         >
-                          {formatNumberShort(row.criticalDamage)}
+                          {formatNumberShort(row.criticalDamageTotal)}
                         </Typography>
                       </Tooltip>
                     </Box>
@@ -1229,8 +1225,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           availableTargets={availableTargets}
           isLoading={isDamageOverTimeLoading}
           height={400}
-          phaseTransitionInfo={phaseTransitionInfo}
-        />
+          />
       </Box>
     </Box>
   );
