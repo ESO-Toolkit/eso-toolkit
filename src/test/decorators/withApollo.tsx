@@ -1,4 +1,4 @@
-import { MockedProvider } from '@apollo/client/testing';
+import { MockedProvider } from '@apollo/client/testing/react';
 import type { Decorator } from '@storybook/react';
 import React from 'react';
 
