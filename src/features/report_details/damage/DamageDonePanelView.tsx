@@ -971,9 +971,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     borderTop: `1px solid ${roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)'}`,
                   }}
                 >
-                  {/* Left Side: Critical Damage & CPM */}
+                  {/* Left Side: Critical Damage */}
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {/* Critical Damage */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Box
                         sx={{
@@ -1007,33 +1006,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         </Typography>
                       </Tooltip>
                     </Box>
-
-                    {/* CPM */}
-                    <Tooltip title="Casts Per Minute" arrow>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          px: '8px',
-                          py: '4px',
-                          borderRadius: '6px',
-                          backgroundColor: roleColors.isDarkMode
-                            ? 'rgba(56, 189, 248, 0.15)'
-                            : 'rgba(14, 165, 233, 0.08)',
-                        }}
-                      >
-                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9', fontWeight: 700 }}>
-                          🐭
-                        </Typography>
-                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9', fontWeight: 700 }}>
-                          {row.cpm.toFixed(1)}
-                        </Typography>
-                      </Box>
-                    </Tooltip>
                   </Box>
 
-                  {/* Right Side: Death & Resurrect Indicators */}
+                  {/* Right Side: Death, Resurrect & CPM Indicators */}
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {row.deaths > 0 ? (
                       <Box
@@ -1115,6 +1090,29 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         </Typography>
                       </Box>
                     )}
+                    {/* CPM */}
+                    <Tooltip title="Casts Per Minute" arrow>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          px: '8px',
+                          py: '4px',
+                          borderRadius: '6px',
+                          backgroundColor: roleColors.isDarkMode
+                            ? 'rgba(56, 189, 248, 0.15)'
+                            : 'rgba(14, 165, 233, 0.08)',
+                        }}
+                      >
+                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9', fontWeight: 700 }}>
+                          🐭
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9', fontWeight: 700 }}>
+                          {row.cpm.toFixed(1)}
+                        </Typography>
+                      </Box>
+                    </Tooltip>
                   </Box>
                 </Box>
               </Box>
