@@ -748,10 +748,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     sx={{
                       fontSize: '0.875rem',
                       fontWeight: 700,
-                      color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
+                      color: roleColors.isDarkMode ? '#ffffff' : '#000000',
                       textShadow: roleColors.isDarkMode
-                        ? '0 1px 3px rgba(0,0,0,0.5)'
-                        : '0 1px 0 rgba(14,165,233,0.25)',
+                        ? '0 1px 2px rgba(0,0,0,0.5)'
+                        : '0 1px 1px rgba(0,0,0,0.2)',
                     }}
                   >
                     {row.cpm.toFixed(1)}
@@ -1105,10 +1105,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                             : 'rgba(14, 165, 233, 0.08)',
                         }}
                       >
-                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9', fontWeight: 700 }}>
+                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#ffffff' : '#000000', fontWeight: 700 }}>
                           🐭
                         </Typography>
-                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9', fontWeight: 700 }}>
+                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#ffffff' : '#000000', fontWeight: 700 }}>
                           {row.cpm.toFixed(1)}
                         </Typography>
                       </Box>
