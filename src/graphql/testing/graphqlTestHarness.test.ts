@@ -1,25 +1,8 @@
 import { gql } from '@apollo/client';
 import type { DocumentNode } from 'graphql';
 
-import type { EsoLogsClient } from '../../esologsClient';
+import { EsoLogsClient } from '../../esologsClient';
 import { GraphqlTestHarness } from './graphqlTestHarness';
-
-const globalAny = global as typeof globalThis & { __GRAPHQL_CLIENT__?: EsoLogsClient };
-
-jest.mock('../../esologsClient', () => {
-  const actual = jest.requireActual('../../esologsClient');
-
-  return {
-    __esModule: true,
-    ...actual,
-    createEsoLogsClient: jest.fn(() => {
-      if (!globalAny.__GRAPHQL_CLIENT__) {
-        throw new Error('Test harness expected a stub client.');
-      }
-      return globalAny.__GRAPHQL_CLIENT__;
-    }),
-  };
-});
 
 const createStubClient = () => {
   const apolloQuery = jest.fn();
@@ -56,8 +39,11 @@ describe('GraphqlTestHarness', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    delete globalAny.__GRAPHQL_CLIENT__;
     delete process.env.ESOLOGS_TOKEN;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('executes queries against a provided client', async () => {
@@ -143,15 +129,16 @@ describe('GraphqlTestHarness', () => {
   });
 
   it('supports owning the client via environment token', async () => {
-    const { client, clearStore, stop } = createStubClient();
-    globalAny.__GRAPHQL_CLIENT__ = client;
+    const clearStoreSpy = jest.spyOn(EsoLogsClient.prototype, 'clearStore').mockResolvedValue([]);
+    const stopSpy = jest.spyOn(EsoLogsClient.prototype, 'stop').mockImplementation(() => {});
+
     process.env.ESOLOGS_TOKEN = 'token';
 
     const harness = new GraphqlTestHarness();
     await harness.dispose();
 
-    expect(clearStore).toHaveBeenCalled();
-    expect(stop).toHaveBeenCalled();
+    expect(clearStoreSpy).toHaveBeenCalled();
+    expect(stopSpy).toHaveBeenCalled();
   });
 
   it('does not dispose provided clients', async () => {
