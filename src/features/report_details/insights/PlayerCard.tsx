@@ -948,12 +948,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       sx={{
                         display: 'flex',
                         flexWrap: 'nowrap',
-                        gap: 1,
+                        gap: 0.5,
                         minHeight: 24,
                         flex: '1 1 auto',
                         minWidth: 0,
                         overflow: 'hidden',
-                        mr: 1,
+                        mr: 0.5,
                       }}
                     >
                       {mundusBuffs.length > 0 && (
@@ -1009,161 +1009,114 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         </div>
                       )}
                     </Box>
-                    <Box
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
                       sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-end',
-                        gap: 0.5,
+                        whiteSpace: 'nowrap',
+                        flex: '0 1 auto',
+                        flexShrink: 1,
                         ml: 'auto',
-                        pr: 1,
-                        fontSize: 12,
-                        color: 'text.secondary',
+                        pr: 0.5,
+                        maxWidth: '100%',
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                       }}
                     >
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          alignItems: 'center',
-                          gap: 1,
-                          justifyContent: 'flex-end',
-                        }}
+                      <Tooltip
+                        title={`Food/Drink: ${foodAura ? foodAura.name : 'None'}`}
+                        enterTouchDelay={0}
+                        leaveTouchDelay={3000}
                       >
-                        <Tooltip
-                          title={`Food/Drink: ${foodAura ? foodAura.name : 'None'}`}
-                          enterTouchDelay={0}
-                          leaveTouchDelay={3000}
+                        <span
+                          style={{ display: 'inline-flex', alignItems: 'center' }}
+                          data-testid={`food-drink-${player.id}`}
                         >
+                          <span role="img" aria-label="food">
+                            🍲
+                          </span>
+                          <span style={{ margin: '0 2px' }}></span>
                           <Box
                             component="span"
-                            data-testid={`food-drink-${player.id}`}
                             sx={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 0.5,
-                              fontWeight: 600,
+                              display: 'inline',
+                              fontWeight: 700,
+                              fontSize: 10,
+                              letterSpacing: '.01em',
+                              color: foodInfo.color,
                             }}
                           >
-                            <span role="img" aria-label="food">
-                              🍲
-                            </span>
-                            <Box
-                              component="span"
-                              sx={{
-                                display: 'inline',
-                                fontWeight: 700,
-                                fontSize: 11,
-                                letterSpacing: '.02em',
-                                color: foodInfo.color,
-                              }}
-                            >
-                              {foodInfo.display}
-                            </Box>
+                            {foodInfo.display}
                           </Box>
-                        </Tooltip>
-
-                        <Box component="span" sx={{ opacity: 0.6 }}>
-                          •
-                        </Box>
-
-                        <Tooltip
-                          title="Deaths in this fight"
-                          enterTouchDelay={0}
-                          leaveTouchDelay={3000}
-                        >
-                          <Box
-                            component="span"
-                            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
-                          >
-                            <span role="img" aria-label="deaths">
-                              💀
-                            </span>
-                            {deaths}
-                          </Box>
-                        </Tooltip>
-
-                        <Box component="span" sx={{ opacity: 0.6 }}>
-                          •
-                        </Box>
-
-                        <Tooltip
-                          title="Successful resurrects performed"
-                          enterTouchDelay={0}
-                          leaveTouchDelay={3000}
-                        >
-                          <Box
-                            component="span"
-                            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
-                          >
-                            <span role="img" aria-label="resurrects">
-                              ❤️
-                            </span>
-                            {resurrects}
-                          </Box>
-                        </Tooltip>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          alignItems: 'center',
-                          gap: 1,
-                          justifyContent: 'flex-end',
-                        }}
+                        </span>
+                      </Tooltip>{' '}
+                      ·{' '}
+                      <Tooltip
+                        title="Deaths in this fight"
+                        enterTouchDelay={0}
+                        leaveTouchDelay={3000}
                       >
-                        <Tooltip
-                          title="Casts per Minute"
-                          enterTouchDelay={0}
-                          leaveTouchDelay={3000}
-                        >
-                          <Box
-                            component="span"
-                            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
-                          >
-                            <span role="img" aria-label="cpm">
-                              🐭
-                            </span>
-                            {reportId ? (
-                              <a
-                                href={castsUrl(reportId, fightId)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ color: 'inherit', textDecoration: 'underline' }}
-                              >
-                                {cpm}
-                              </a>
-                            ) : (
-                              cpm
-                            )}
-                          </Box>
-                        </Tooltip>
-
-                        {distanceDisplay && (
-                          <>
-                            <Box component="span" sx={{ opacity: 0.6 }}>
-                              •
-                            </Box>
-                            <Tooltip
-                              title="Distance traveled during this fight"
-                              enterTouchDelay={0}
-                              leaveTouchDelay={3000}
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          <span role="img" aria-label="deaths">
+                            💀
+                          </span>
+                          <span style={{ margin: '0 2px' }}></span>{deaths}
+                        </span>
+                      </Tooltip>{' '}
+                      ·{' '}
+                      <Tooltip
+                        title="Successful resurrects performed"
+                        enterTouchDelay={0}
+                        leaveTouchDelay={3000}
+                      >
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          <span role="img" aria-label="resurrects">
+                            ❤️
+                          </span>
+                          <span style={{ margin: '0 2px' }}></span>{resurrects}
+                        </span>
+                      </Tooltip>{' '}
+                      ·{' '}
+                      <Tooltip title="Casts per Minute" enterTouchDelay={0} leaveTouchDelay={3000}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          <span role="img" aria-label="cpm">
+                            🐭
+                          </span>
+                          <span style={{ margin: '0 2px' }}></span>
+                          {reportId ? (
+                            <a
+                              href={castsUrl(reportId, fightId)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ color: 'inherit', textDecoration: 'underline' }}
                             >
-                              <Box
-                                component="span"
-                                sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
-                              >
-                                <span role="img" aria-label="distance">
-                                  🛤️
-                                </span>
-                                {distanceDisplay}
-                              </Box>
-                            </Tooltip>
-                          </>
-                        )}
-                      </Box>
-                    </Box>
+                              {cpm}
+                            </a>
+                          ) : (
+                            <>{cpm}</>
+                          )}
+                        </span>
+                      </Tooltip>
+                      {distanceDisplay && (
+                        <>
+                          {' '}·{' '}
+                          <Tooltip
+                            title="Distance traveled during this fight"
+                            enterTouchDelay={0}
+                            leaveTouchDelay={3000}
+                          >
+                            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                              <span role="img" aria-label="distance">
+                                🛤️
+                              </span>
+                              <span style={{ margin: '0 2px' }}></span>
+                              {distanceDisplay}
+                            </span>
+                          </Tooltip>
+                        </>
+                      )}
+                    </Typography>
                   </Box>
 
                   {(maxHealth > 0 || maxStamina > 0 || maxMagicka > 0) && (
