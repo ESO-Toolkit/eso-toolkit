@@ -1307,32 +1307,32 @@ export const HeaderBar: React.FC = () => {
                 animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
                 background: mobileToolsOpen
                   ? theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(126, 34, 206, 0.1) 100%)'
-                    : 'linear-gradient(135deg, rgba(126, 34, 206, 0.15) 0%, rgba(107, 33, 168, 0.08) 100%)'
+                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(14, 165, 233, 0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.08) 100%)'
                   : theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(126, 34, 206, 0.05) 100%)'
-                    : 'linear-gradient(135deg, rgba(126, 34, 206, 0.08) 0%, rgba(107, 33, 168, 0.04) 100%)',
+                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%)'
+                    : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.04) 100%)',
                 borderColor: mobileToolsOpen
                   ? theme.palette.mode === 'dark'
-                    ? 'rgba(147, 51, 234, 0.4)'
-                    : 'rgba(126, 34, 206, 0.3)'
+                    ? 'rgba(56, 189, 248, 0.4)'
+                    : 'rgba(59, 130, 246, 0.3)'
                   : theme.palette.mode === 'dark'
-                    ? 'rgba(147, 51, 234, 0.2)'
-                    : 'rgba(126, 34, 206, 0.15)',
+                    ? 'rgba(56, 189, 248, 0.2)'
+                    : 'rgba(59, 130, 246, 0.15)',
                 borderRadius: mobileToolsOpen ? '16px 16px 0 0' : '16px',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
                   background: mobileToolsOpen
                     ? theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.25) 0%, rgba(126, 34, 206, 0.15) 100%)'
-                      : 'linear-gradient(135deg, rgba(126, 34, 206, 0.2) 0%, rgba(107, 33, 168, 0.12) 100%)'
+                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(14, 165, 233, 0.15) 100%)'
+                      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.12) 100%)'
                     : theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(126, 34, 206, 0.1) 100%)'
-                      : 'linear-gradient(135deg, rgba(126, 34, 206, 0.12) 0%, rgba(107, 33, 168, 0.08) 100%)',
+                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(14, 165, 233, 0.1) 100%)'
+                      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(37, 99, 235, 0.08) 100%)',
                   borderColor:
                     theme.palette.mode === 'dark'
-                      ? 'rgba(147, 51, 234, 0.4)'
-                      : 'rgba(126, 34, 206, 0.25)',
+                      ? 'rgba(56, 189, 248, 0.4)'
+                      : 'rgba(59, 130, 246, 0.25)',
                 },
                 '@keyframes slideInUp': {
                   '0%': { opacity: 0, transform: 'translateY(30px)' },
