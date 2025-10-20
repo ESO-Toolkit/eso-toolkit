@@ -396,32 +396,6 @@ const Calculator = ({ size }: CalculatorProps): React.JSX.Element => (
   </svg>
 );
 
-// Reports SVG icon component
-type ReportsProps = {
-  size: string;
-};
-
-const Reports = ({ size }: ReportsProps): React.JSX.Element => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={size}
-    height={size}
-    viewBox="0 0 48 48"
-    aria-hidden="true"
-    focusable="false"
-  >
-    <path
-      fill="#1976D2"
-      d="M40 12H8c-2.2 0-4 1.8-4 4v24c0 2.2 1.8 4 4 4h32c2.2 0 4-1.8 4-4V16c0-2.2-1.8-4-4-4z"
-    />
-    <path fill="#FFF" d="M38 8H10c-1.1 0-2 .9-2 2v4h32v-4c0-1.1-.9-2-2-2z" />
-    <path fill="#1976D2" d="M38 10H10c-.6 0-1 .4-1 1s.4 1 1 1h28c.6 0 1-.4 1-1s-.4-1-1-1z" />
-    <path fill="#E3F2FD" d="M12 20h24v2H12zm0 4h24v2H12zm0 4h16v2H12zm0 4h20v2H12z" />
-    <circle fill="#FF5722" cx="38" cy="10" r="6" />
-    <path fill="#FFF" d="M36 7h4v2h-4zm0 2h4v2h-4z" />
-  </svg>
-);
-
 // Function to determine logo text based on current path
 const getLogoText = (pathname: string): string => {
   // Landing page
@@ -667,11 +641,6 @@ export const HeaderBar: React.FC = () => {
   }, [isLoggedIn, handleMobileAuthAction, handleMobileViewReports]);
 
   const navItems = [
-    {
-      text: 'Latest Reports',
-      icon: <Reports size="18" />,
-      href: '#/latest-reports',
-    },
     {
       text: 'Discord',
       icon: <img src={discordIcon} alt="Discord" style={{ width: 18, height: 18 }} />,
