@@ -7,7 +7,6 @@ import { useAuth } from '../features/auth/AuthContext';
 
 import { AuthenticatedLandingSection } from './AuthenticatedLandingSection';
 import { Footer } from './Footer';
-import { SampleReportButton } from './SampleReportButton';
 import { UnauthenticatedLandingSection } from './UnauthenticatedLandingSection';
 // Import icon components directly
 const CalculatorIcon = ({ size }: { size: string }): JSX.Element => (
@@ -1274,7 +1273,6 @@ export const LandingPage: React.FC = () => {
           ) : (
             <UnauthenticatedLandingSection />
           )}
-          <SampleReportButton />
         </HeroContent>
       </HeroSection>
 
