@@ -1,4 +1,12 @@
-import { Login, Logout, Person, ExpandMore, Build, ExpandLess, Assessment } from '@mui/icons-material';
+import {
+  Login,
+  Logout,
+  Person,
+  ExpandMore,
+  Build,
+  ExpandLess,
+  Assessment,
+} from '@mui/icons-material';
 import {
   AppBar,
   Toolbar,
