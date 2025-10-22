@@ -194,7 +194,7 @@ export const ReportFightHeader: React.FC = () => {
       if (fight) {
         const isBossFight = fight.difficulty != null;
         let statusIndicator: string;
-        
+
         if (isBossFight) {
           // Boss fight logic
           const bossWasKilled =
@@ -211,7 +211,7 @@ export const ReportFightHeader: React.FC = () => {
           const wasKilled = fight.kill === true || fight.kill === null;
           statusIndicator = wasKilled ? '✓' : 'Wipe';
         }
-        
+
         titleElement.innerHTML = `${fight.name} (<span style="font-weight: 300;">${statusIndicator}</span>)`;
       }
     }
@@ -380,7 +380,7 @@ export const ReportFightHeader: React.FC = () => {
             ? (() => {
                 const isBossFight = fight.difficulty != null;
                 let statusIndicator: string;
-                
+
                 if (isBossFight) {
                   // Boss fight logic
                   const bossWasKilled =
@@ -397,7 +397,7 @@ export const ReportFightHeader: React.FC = () => {
                   const wasKilled = fight.kill === true || fight.kill === null;
                   statusIndicator = wasKilled ? '✓' : 'Wipe';
                 }
-                
+
                 return (
                   <>
                     {fight.name} (<span style={{ fontWeight: 300 }}>{statusIndicator}</span>)
