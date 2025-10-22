@@ -18,6 +18,7 @@ const IMPORTANT_BUFF_ABILITIES = new Set([
   KnownAbilities.MINOR_SAVAGERY,
   KnownAbilities.MAJOR_SAVAGERY,
   KnownAbilities.MINOR_SORCERY,
+  KnownAbilities.MAJOR_SORCERY,
   KnownAbilities.PEARLESCENT_WARD,
   KnownAbilities.LUCENT_ECHOES_RECIPIENT,
   KnownAbilities.LUCENT_ECHOES_WEARER,
@@ -32,7 +33,9 @@ const IMPORTANT_BUFF_ABILITIES = new Set([
   KnownAbilities.MINOR_HEROISM,
   KnownAbilities.POWERFUL_ASSAULT,
   KnownAbilities.MINOR_BRUTALITY,
+  KnownAbilities.MAJOR_BRUTALITY,
   KnownAbilities.MINOR_FORCE,
+  KnownAbilities.MINOR_SLAYER,
   KnownAbilities.MAJOR_SLAYER,
 
   KnownAbilities.GRAND_REJUVENATION,

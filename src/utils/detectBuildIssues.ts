@@ -55,14 +55,62 @@ const ROLE_SPECIFIC_BUFFS = {
   ],
 } as const;
 
+// Comprehensive list of all Major Sorcery ability IDs from abilities.json
+// These represent Major Sorcery from various sources (potions, abilities, sets, etc.)
+const ALL_MAJOR_SORCERY_IDS = [
+  33317, 45227, 45391, 61687, 62062, 62064, 62066, 62068, 62240, 62241, 62242, 62243, 63223, 63224,
+  63225, 63226, 63227, 63228, 63229, 63230, 63231, 63232, 63233, 63234, 63774, 64558, 64561, 72933,
+  85623, 86685, 87929, 89107, 90457, 92503, 92504, 92505, 92506, 92507, 92509, 92510, 92511, 92512,
+  92516, 92517, 92518, 93350, 93658, 93662, 93666, 93676, 93681, 93686, 95125, 95126, 95127, 95128,
+  131310, 131311, 131344, 156103, 163655, 167853, 168214, 168215, 168220, 168270, 168272, 168274,
+  168275, 168281, 176702, 183050, 201089, 207427, 215504, 216948, 217254, 228042, 228044, 228046,
+  237973, 238024,
+];
+
+// Comprehensive list of all Major Brutality ability IDs from abilities.json
+// These represent Major Brutality from various sources (potions, abilities, sets, etc.)
+const ALL_MAJOR_BRUTALITY_IDS = [
+  23673, 36894, 36903, 37924, 37927, 37930, 37933, 37936, 37939, 37942, 37947, 37952, 45228, 45393,
+  45866, 45870, 45874, 58318, 61665, 61670, 62057, 62058, 62059, 62060, 62063, 62065, 62067, 62147,
+  62150, 62153, 62156, 62344, 62347, 62350, 62387, 62392, 62396, 62400, 62415, 62425, 62441, 62448,
+  63768, 64554, 64555, 68804, 68805, 68806, 68807, 68814, 68815, 68816, 68817, 68843, 68845, 68852,
+  68859, 72936, 76518, 76519, 76520, 76521, 81516, 81517, 82777, 82792, 86695, 89110, 93705, 93710,
+  93715, 95419, 104013, 116371, 126647, 126670, 131340, 131341, 131342, 131343, 131346, 131350,
+  137193, 163656, 168273, 168282, 168447, 176701, 183049, 207429, 215505, 217255, 217790, 228041,
+  228043, 228045, 238025,
+];
+
+// Comprehensive list of all Major Savagery ability IDs from abilities.json
+// These represent Major Savagery from various sources (potions, abilities, sets, etc.)
+const ALL_MAJOR_SAVAGERY_IDS = [
+  27190, 27194, 27198, 45241, 45466, 61667, 63242, 63770, 64509, 64568, 64569, 76426, 85605, 86694,
+  87061, 93920, 93922, 93924, 137007, 138072, 163664, 167936, 167937, 167939, 168107, 168111,
+  168444, 168445, 168446, 176152, 203341, 203343, 214995, 217360, 217671, 217885, 218004, 218015,
+  226783, 227121, 228048, 228049, 228051, 238069, 240058,
+];
+
+// Comprehensive list of all Major Prophecy ability IDs from abilities.json
+// These represent Major Prophecy from various sources (potions, abilities, sets, etc.)
+const ALL_MAJOR_PROPHECY_IDS = [
+  47193, 47195, 61689, 62747, 62748, 62749, 62750, 62751, 62752, 62753, 62754, 62755, 62756, 62757,
+  62758, 63776, 64570, 64572, 75088, 76420, 76433, 77928, 77945, 77949, 77952, 77955, 77958, 85613,
+  86303, 86684, 93927, 93929, 93931, 137006, 163663, 168108, 168109, 168425, 168440, 176151, 203342,
+  214994, 217341, 217670, 217673, 217886, 218001, 218016, 226614, 226784, 227122, 228047, 228050,
+  228052, 238068, 238421,
+];
+
 const MAGICKA_MAJOR_BUFF_REQUIREMENTS: BuffRequirement[] = [
-  { abilityId: 61687, name: 'Major Sorcery', aliasIds: [219246] },
-  { abilityId: 61689, name: 'Major Prophecy', aliasIds: [217672] },
+  // Note: In modern ESO, Major Sorcery and Major Brutality are the same buff
+  { abilityId: 61687, name: 'Major Sorcery', aliasIds: [219246, ...ALL_MAJOR_SORCERY_IDS] },
+  // Note: In modern ESO, Major Prophecy and Major Savagery are the same buff
+  { abilityId: 61689, name: 'Major Prophecy', aliasIds: [217672, ...ALL_MAJOR_PROPHECY_IDS] },
 ];
 
 const STAMINA_MAJOR_BUFF_REQUIREMENTS: BuffRequirement[] = [
-  { abilityId: 183049, name: 'Major Brutality', aliasIds: [219246] },
-  { abilityId: 61667, name: 'Major Savagery', aliasIds: [217672] },
+  // Note: In modern ESO, Major Brutality and Major Sorcery are the same buff
+  { abilityId: 183049, name: 'Major Brutality', aliasIds: [219246, ...ALL_MAJOR_BRUTALITY_IDS] },
+  // Note: In modern ESO, Major Savagery and Major Prophecy are the same buff
+  { abilityId: 61667, name: 'Major Savagery', aliasIds: [217672, ...ALL_MAJOR_SAVAGERY_IDS] },
 ];
 
 /**
@@ -243,25 +291,51 @@ export function detectBuildIssues(
             ? STAMINA_MAJOR_BUFF_REQUIREMENTS
             : [];
 
-      majorBuffsToCheck.forEach((buff) => {
-        const abilityIds = [buff.abilityId, ...(buff.aliasIds ?? [])];
-        const isDetected = wasBuffDetected({
+      // In modern ESO, Major Brutality/Sorcery are combined, and Major Savagery/Prophecy are combined
+      // Check for the damage buff (Brutality/Sorcery)
+      if (majorBuffsToCheck.length > 0) {
+        // Check for Major Brutality/Sorcery (combined buff)
+        const brutalityIds = [183049, ...ALL_MAJOR_BRUTALITY_IDS];
+        const sorceryIds = [61687, 219246, ...ALL_MAJOR_SORCERY_IDS];
+        const hasDamageBuff = wasBuffDetected({
           buffLookup,
           auras,
           damageEvents,
           playerId,
-          abilityIds,
+          abilityIds: [...brutalityIds, ...sorceryIds], // Check for EITHER Brutality OR Sorcery
         });
 
-        if (!isDetected) {
+        if (!hasDamageBuff) {
           const orientationDescriptor = resourceFocus === 'magicka' ? 'Magicka' : 'Stamina';
+          const buffName = resourceFocus === 'magicka' ? 'Major Sorcery' : 'Major Brutality';
           issues.push({
-            buffName: buff.name,
-            abilityId: buff.abilityId,
-            message: `Missing ${buff.name} - players with higher ${orientationDescriptor} should maintain this buff`,
+            buffName: buffName,
+            abilityId: resourceFocus === 'magicka' ? 61687 : 183049,
+            message: `Missing ${buffName} (also provides Major ${resourceFocus === 'magicka' ? 'Brutality' : 'Sorcery'}) - players with higher ${orientationDescriptor} should maintain this buff`,
           });
         }
-      });
+
+        // Check for Major Savagery/Prophecy (combined buff)
+        const savageryIds = [61667, ...ALL_MAJOR_SAVAGERY_IDS];
+        const prophecyIds = [61689, 217672, ...ALL_MAJOR_PROPHECY_IDS];
+        const hasCritBuff = wasBuffDetected({
+          buffLookup,
+          auras,
+          damageEvents,
+          playerId,
+          abilityIds: [...savageryIds, ...prophecyIds], // Check for EITHER Savagery OR Prophecy
+        });
+
+        if (!hasCritBuff) {
+          const orientationDescriptor = resourceFocus === 'magicka' ? 'Magicka' : 'Stamina';
+          const buffName = resourceFocus === 'magicka' ? 'Major Prophecy' : 'Major Savagery';
+          issues.push({
+            buffName: buffName,
+            abilityId: resourceFocus === 'magicka' ? 61689 : 61667,
+            message: `Missing ${buffName} (also provides Major ${resourceFocus === 'magicka' ? 'Savagery' : 'Prophecy'}) - players with higher ${orientationDescriptor} should maintain this buff`,
+          });
+        }
+      }
     }
   }
 

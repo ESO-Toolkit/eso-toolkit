@@ -226,7 +226,6 @@
     "test:nightly:shard2": "cross-env SHARD_INDEX=2 SHARD_TOTAL=3 playwright test --config=playwright.nightly.config.ts",
     "test:nightly:shard3": "cross-env SHARD_INDEX=3 SHARD_TOTAL=3 playwright test --config=playwright.nightly.config.ts",
     "test:nightly:sharded": "npm-run-all --parallel test:nightly:shard1 test:nightly:shard2 test:nightly:shard3",
-    "test:nightly:sharded:advanced": "node scripts/run-sharded-tests.cjs",
     "test:nightly:sharded:chromium": "npm-run-all --parallel \"test:nightly:shard* -- --project=chromium-desktop\"",
     "test:nightly:sharded:firefox": "npm-run-all --parallel \"test:nightly:shard* -- --project=firefox-desktop\"",
     "test:screen-sizes": "playwright test --config=playwright.screen-sizes.config.ts",

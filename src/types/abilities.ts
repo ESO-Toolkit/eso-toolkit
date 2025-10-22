@@ -114,7 +114,7 @@ export enum KnownAbilities {
   WIND_WALKER = 45565,
 
   // Class Passives
-  ADVANCED_SPECIES = 184809,
+  ADVANCED_SPECIES = 86068, // Warden: Animal Companions passive (was incorrectly 184809 which is "Ritual")
   AEGIS_OF_THE_UNSEEN = 184923,
   BATTLE_ROAR = 44984,
   CATALYST = 45135,
@@ -150,11 +150,11 @@ export enum KnownAbilities {
   TOUGH = 50907,
 
   // Class Passives and Abilities
-  DISMEMBER_PASSIVE = 61697, // Grave Lord passive providing 3271 penetration
+  DISMEMBER = 116192, // Necromancer: Grave Lord passive providing 3271 penetration
 
   // Computed penetration passives
   PIERCING_PASSIVE = 45233, // Provides 700 penetration
-  FORCE_OF_NATURE_PASSIVE = 126597, // TODO: find correct ID - provides 660 per status effect
+  FORCE_OF_NATURE_PASSIVE = 174250, // Force of Nature - provides 660 per status effect
   HEAVY_WEAPONS_PASSIVE = 45265, // Two-handed passive providing 2974 with maul
   TWIN_BLADE_AND_BLUNT_PASSIVE = 45477, // Dual wield passive providing 1487 per mace
   CRYSTAL_WEAPON_BUFF = 126045, // Crystal Weapon buff providing 1000 penetration
@@ -162,21 +162,20 @@ export enum KnownAbilities {
   // Scribed Skills - Grimoires
   BANNER_BEARER = 217699, // Banner Bearer
   ELEMENTAL_EXPLOSION = 217228, // Elemental Explosion
-  MENDER_S_BOND = 217275, // Mender's Bond
+  MENDERS_BOND = 217275, // Mender's Bond
   SHIELD_THROW = 217061, // Shield Throw
   SMASH = 217186, // Smash
   SOUL_BURST = 217472, // Soul Burst
   TORCHBEARER = 217646, // Torchbearer
   TRAMPLE = 217667, // Trample
   TRAVELING_KNIFE = 217342, // Traveling Knife
-  ULFSILD_S_CONTINGENCY = 217528, // Ulfsild's Contingency
+  ULFSILD_CONTINGENCY = 217528, // Ulfsild's Contingency
   VAULT = 216672, // Vault
   WIELD_SOUL = 216803, // Wield Soul
 
   // Legacy Scribed Skills (kept for compatibility)
   SHOCKING_BANNER = 217706,
-  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
-  SHATTERING_KNIFE = 217699, // Same ID as BANNER_BEARER (legacy compatibility)
+  SHATTERING_KNIFE = 217340, // Traveling Knife morph (different from BANNER_BEARER)
 
   // Status Effects
   BURNING = 18084,
@@ -193,8 +192,8 @@ export enum KnownAbilities {
   FROST_WEAKNESS = 142652,
   SHOCK_WEAKNESS = 142653,
 
-  // Crusher enchant - weapon enchant that reduces target resistance
-  CRUSHER_ENCHANT = 17906,
+  // Crusher - weapon enchant that reduces target resistance
+  CRUSHER = 17906,
 
   // Runic Sunder - Two-Handed weapon skill that reduces target resistance
   RUNIC_SUNDER_DEBUFF = 187742,
@@ -251,7 +250,7 @@ export enum KnownAbilities {
   BLOCKADE_OF_FIRE = 80172,
   BLOCKADE_OF_FROST = 108936,
   BLOCKADE_OF_STORMS = 61502,
-  BOUNDLESS_STORM = 62547,
+  BOUNDLESS_STORM = 23231, // Sorcerer: Storm Calling ability (Hurricane morph)
   CALTROPS = 20252,
   CRUSHING_SHOCK = 23214,
   CUTTING_DIVE = 117854,
@@ -263,9 +262,9 @@ export enum KnownAbilities {
   DESTRUCTIVE_REACH_2 = 77186,
   DESTRUCTIVE_TOUCH = 23208,
   DIVE = 118011,
-  ELEMENTAL_BLOCKADE = 75752,
-  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
-  ELEMENTAL_DRAIN = 183006, // Same ID as CEPHALIARCHS_FLAIL
+  DEADLY_CLOAK = 62547, // Dual Wield: Blade Cloak morph
+  ELEMENTAL_BLOCKADE = 39011, // Destruction Staff: Wall of Elements morph
+  ELEMENTAL_DRAIN = 39095, // Destruction Staff: Weakness to Elements morph
   ELEMENTAL_DRAIN_2 = 29806,
   ELEMENTAL_RAGE = 181331,
   ELEMENTAL_RING = 126633,
@@ -281,28 +280,30 @@ export enum KnownAbilities {
   EYE_OF_THE_STORM = 88802,
   FETCHER_INFECTION = 118766,
   FLAME_REACH = 185407,
-  FORCE_PULSE = 23232,
+  FORCE_PULSE = 46356, // Destruction Staff: Force Shock morph
   FORCE_SHOCK = 23196,
   FROST_REACH = 189869,
   FROZEN_GATE = 85127,
   GLACIAL_PRESENCE = 62951,
   GROWING_SWARM = 123082,
   HEALING_COMBUSTION = 63471,
-  HURRICANE = 62529,
+  HURRICANE = 23232, // Sorcerer: Storm Calling ability (Hurricane morph)
   ICY_ESCAPE = 62990,
-  IMPULSE = 23202,
+  IMPULSE = 28800, // Destruction Staff: Impulse
   INFECTIOUS_CLAWS = 122392,
   LIGHTNING_FLOOD = 38792,
   LIGHTNING_SPLASH = 126474,
   LIGHTWEIGHT_BEAST_TRAP = 115572,
-  LIQUID_LIGHTNING = 38891,
+  LIQUID_LIGHTNING = 23202, // Sorcerer: Storm Calling ability (Lightning Splash morph)
   LUMINOUS_SHARDS = 85432,
   MYSTIC_ORB = 38690,
   NECROTIC_ORB = 40161,
   NOVA = 41839,
   PULSAR = 29809,
+  QUICK_CLOAK = 62529, // Dual Wield: Blade Cloak morph
   RAZOR_CALTROPS = 20930,
   REARMING_TRAP = 32794,
+  ROAR_OF_ALKOSH_AOE = 75752, // AOE ability version (different from debuff ID 102094)
   SCALDING_RUNE = 40469,
   SCORCH = 118314,
   SCREAMING_CLIFF_RACER = 117715,
@@ -324,12 +325,12 @@ export enum KnownAbilities {
   WALL_OF_FIRE = 26869,
   WALL_OF_FROST = 26879,
   WALL_OF_STORMS = 40267,
+  WHIRLING_BLADES = 38891, // Dual Wield: Steel Tornado morph
   ENGULFING_FLAMES_SKILL = 44432,
   WINTERS_REVENGE = 62912,
 
   // Specific Named Buffs and Debuffs
-  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
-  CRUSHER = 17906, // Same ID as CRUSHER_ENCHANT
+  // Note: CRUSHER_ENCHANT = 17906 is defined above
   EMPOWER = 61737,
   ENGULFING_FLAMES_BUFF = 31104,
   ENLIVENING_OVERFLOW_BUFF = 156011,
@@ -339,19 +340,23 @@ export enum KnownAbilities {
   POWERFUL_ASSAULT = 61771,
   STAGGER = 134336,
   STONE_GIANT = 133027,
-  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
-  TOUCH_OF_ZEN = 126597, // Same ID as FORCE_OF_NATURE_PASSIVE (TODO: verify correct IDs)
+  TOUCH_OF_ZEN = 126597, // Touch of Z'en set buff
 
   // Major Buffs and Debuffs
   MAJOR_BERSERK = 61745,
   MAJOR_BREACH = 61743,
   MAJOR_BRITTLE = 145977,
+  MAJOR_BRUTALITY = 61665,
+  MAJOR_BRUTALITY_AND_SORCERY = 219246, // Combined Major Brutality & Sorcery buff
   MAJOR_COURAGE = 109966,
   MAJOR_COWARDICE = 147643,
   MAJOR_FORCE = 61747,
+  MAJOR_PROPHECY = 61689,
+  MAJOR_PROPHECY_AND_SAVAGERY = 217672, // Combined Major Prophecy and Savagery buff
   MAJOR_RESOLVE = 61694,
-  MAJOR_SAVAGERY = 61898,
+  MAJOR_SAVAGERY = 61667, // Fixed: was incorrectly 61898 (which is Minor Savagery)
   MAJOR_SLAYER = 93109,
+  MAJOR_SORCERY = 61687, // Major Sorcery buff (was incorrectly 61685 which is "Minor Sorcery")
   MAJOR_VULNERABILITY = 106754,
 
   // Minor Buffs and Debuffs
@@ -364,9 +369,9 @@ export enum KnownAbilities {
   MINOR_HEROISM = 61708,
   MINOR_LIFESTEAL = 86304,
   MINOR_RESOLVE = 61693,
-  MINOR_SAVAGERY = 61666,
+  MINOR_SAVAGERY = 61666, // Multiple IDs exist for Minor Savagery (61666, 61898, etc.)
   MINOR_SLAYER = 147226,
-  MINOR_SORCERY = 62800,
+  MINOR_SORCERY = 61685, // Was previously incorrectly labeled as MAJOR_SORCERY
   MINOR_VULNERABILITY = 79717,
 
   GLACIAL_COLOSSUS = 122388,
@@ -374,11 +379,6 @@ export enum KnownAbilities {
   AGGRESSIVE_HORN = 40223,
   REPLENISHING_BARRIER = 40239,
   REVIVING_BARRIER = 40237,
-
-  // TODO: Add more penetration-related abilities
-  // Examples:
-  // NIGHT_MOTHERS_GAZE = <id>,
-  // etc.
 }
 
 /**

@@ -297,13 +297,19 @@ describe('detectBuildIssues', () => {
         (issue) =>
           issue.message.includes('Major Sorcery') || issue.message.includes('Major Prophecy'),
       );
-      const staminaMajorIssues = magickaFocusedIssues.filter(
-        (issue) =>
-          issue.message.includes('Major Brutality') || issue.message.includes('Major Savagery'),
-      );
-
+      // In modern ESO, Major Brutality/Sorcery are combined, so the message mentions both
+      // Similarly, Major Savagery/Prophecy are combined
       expect(magickaMajorIssues).toHaveLength(2);
-      expect(staminaMajorIssues).toHaveLength(0);
+      expect(
+        magickaMajorIssues.some(
+          (issue) => 'buffName' in issue && issue.buffName === 'Major Sorcery',
+        ),
+      ).toBe(true);
+      expect(
+        magickaMajorIssues.some(
+          (issue) => 'buffName' in issue && issue.buffName === 'Major Prophecy',
+        ),
+      ).toBe(true);
     });
 
     it('requires stamina-focused players to maintain Major Brutality and Major Savagery', () => {
@@ -323,13 +329,19 @@ describe('detectBuildIssues', () => {
         (issue) =>
           issue.message.includes('Major Brutality') || issue.message.includes('Major Savagery'),
       );
-      const magickaMajorIssues = staminaFocusedIssues.filter(
-        (issue) =>
-          issue.message.includes('Major Sorcery') || issue.message.includes('Major Prophecy'),
-      );
-
+      // In modern ESO, Major Brutality/Sorcery are combined, so the message mentions both
+      // Similarly, Major Savagery/Prophecy are combined
       expect(staminaMajorIssues).toHaveLength(2);
-      expect(magickaMajorIssues).toHaveLength(0);
+      expect(
+        staminaMajorIssues.some(
+          (issue) => 'buffName' in issue && issue.buffName === 'Major Brutality',
+        ),
+      ).toBe(true);
+      expect(
+        staminaMajorIssues.some(
+          (issue) => 'buffName' in issue && issue.buffName === 'Major Savagery',
+        ),
+      ).toBe(true);
     });
 
     it('does not enforce major buff requirements for non-DPS roles', () => {
