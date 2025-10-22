@@ -67,10 +67,15 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     setLocalFightingFinesseEnabled((prev) => (prev === defaultActive ? prev : defaultActive));
   }, [fightingFinesseSource?.wasActive]);
 
-  // Use global state if provided, otherwise fall back to local state
-  const fightingFinesseEnabled = globalFightingFinesseEnabledProp !== undefined
-    ? globalFightingFinesseEnabledProp
-    : localFightingFinesseEnabled;
+  // Sync local state with global state when global changes
+  React.useEffect(() => {
+    if (globalFightingFinesseEnabledProp !== undefined) {
+      setLocalFightingFinesseEnabled(globalFightingFinesseEnabledProp);
+    }
+  }, [globalFightingFinesseEnabledProp]);
+
+  // Individual state always takes priority (local state)
+  const fightingFinesseEnabled = localFightingFinesseEnabled;
 
   const adjustedCriticalDamageData = React.useMemo(() => {
     if (!criticalDamageData) {
@@ -125,24 +130,18 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
   }, [criticalDamageData?.criticalDamageSources, fightingFinesseEnabled]);
 
   const toggleableSourceNames = React.useMemo(() => {
-    // Only allow individual toggles when global state is not provided
-    if (globalFightingFinesseEnabledProp !== undefined) {
-      return undefined; // No individual toggles when global control is active
-    }
-
     return adjustedCriticalDamageSources.some(
       (source) => source.source === 'always_on' && source.name === FIGHTING_FINESSE_SOURCE_NAME,
     )
       ? new Set<string>([FIGHTING_FINESSE_SOURCE_NAME])
       : undefined;
-  }, [adjustedCriticalDamageSources, globalFightingFinesseEnabledProp]);
+  }, [adjustedCriticalDamageSources]);
 
   const handleSourceToggle = React.useCallback((sourceName: string, nextValue: boolean) => {
-    // Only allow individual toggles when global state is not provided
-    if (globalFightingFinesseEnabledProp === undefined && sourceName === FIGHTING_FINESSE_SOURCE_NAME) {
+    if (sourceName === FIGHTING_FINESSE_SOURCE_NAME) {
       setLocalFightingFinesseEnabled(nextValue);
     }
-  }, [globalFightingFinesseEnabledProp]);
+  }, []);
 
   if (!player) {
     return null;
