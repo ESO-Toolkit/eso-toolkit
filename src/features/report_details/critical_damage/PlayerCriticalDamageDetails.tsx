@@ -58,9 +58,11 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     );
   }, [criticalDamageData?.criticalDamageSources]);
 
-  const [localFightingFinesseEnabled, setLocalFightingFinesseEnabled] = React.useState<boolean>(() => {
-    return fightingFinesseSource?.wasActive ?? true;
-  });
+  const [localFightingFinesseEnabled, setLocalFightingFinesseEnabled] = React.useState<boolean>(
+    () => {
+      return fightingFinesseSource?.wasActive ?? true;
+    },
+  );
 
   React.useEffect(() => {
     const defaultActive = fightingFinesseSource?.wasActive ?? true;

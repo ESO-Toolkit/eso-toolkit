@@ -66,8 +66,8 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
 
         {/* Global Fighting Finesse Toggle */}
         <Button
-          variant={globalFightingFinesseEnabled ? "contained" : "outlined"}
-          color={globalFightingFinesseEnabled ? "success" : "primary"}
+          variant={globalFightingFinesseEnabled ? 'contained' : 'outlined'}
+          color={globalFightingFinesseEnabled ? 'success' : 'primary'}
           size="small"
           onClick={() => onGlobalFightingFinesseToggle(!globalFightingFinesseEnabled)}
           sx={{

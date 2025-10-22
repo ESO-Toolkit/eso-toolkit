@@ -174,11 +174,13 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
                           </Tooltip>
                         )}
                         {showAlwaysOnLabel && (
-                          <Tooltip title={
-                            isFightingFinesse
-                              ? "This source requires manual toggle (cannot be auto-detected)"
-                              : "This source is treated as always being active"
-                          }>
+                          <Tooltip
+                            title={
+                              isFightingFinesse
+                                ? 'This source requires manual toggle (cannot be auto-detected)'
+                                : 'This source is treated as always being active'
+                            }
+                          >
                             <Typography
                               variant="caption"
                               sx={{
@@ -227,7 +229,8 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
           </List>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
             ✓ = Source was active during this fight | ✗ = Source was not used | ⚠ = Not fully
-            implemented | ALWAYS ON = Always active when conditions are met | MANUAL TOGGLE = Requires manual toggle (cannot be auto-detected)
+            implemented | ALWAYS ON = Always active when conditions are met | MANUAL TOGGLE =
+            Requires manual toggle (cannot be auto-detected)
           </Typography>
         </CardContent>
       </Card>
