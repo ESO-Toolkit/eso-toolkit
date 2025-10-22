@@ -24,6 +24,7 @@ function Show-Help {
     Write-Host "  all           - Run clean, install, lint, test, and build"
     Write-Host "  check         - Run lint and test (quick pre-commit check)"
     Write-Host "  setup         - Setup project for new developers"
+    Write-Host "  pr            - Create a pull request using twig"
     Write-Host ""
     Write-Host "Screen Size Testing Commands:" -ForegroundColor Magenta
     Write-Host "  test-screen-sizes         - Run all screen size validation tests"
@@ -147,6 +148,11 @@ function Setup-Project {
     Write-Host "✅ Project setup complete! Run './build.ps1 dev' to start development server." -ForegroundColor Green
 }
 
+function Create-PullRequest {
+    Write-Host "Creating pull request..." -ForegroundColor Yellow
+    twig github pr create-pr
+}
+
 # Screen Size Testing Functions
 function Run-ScreenSizeTests {
     Write-Host "Running screen size validation tests..." -ForegroundColor Yellow
@@ -196,6 +202,7 @@ switch ($Command.ToLower()) {
     "all" { Run-All }
     "check" { Run-Check }
     "setup" { Setup-Project }
+    "pr" { Create-PullRequest }
     "test-screen-sizes" { Run-ScreenSizeTests }
     "test-screen-sizes-mobile" { Run-ScreenSizeTestsMobile }
     "test-screen-sizes-tablet" { Run-ScreenSizeTestsTablet }
