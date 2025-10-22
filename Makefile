@@ -18,7 +18,7 @@ else
 	RM_ESLINT := rm -rf .eslintcache
 endif
 
-.PHONY: help install build test lint lint-fix format fmt clean dev codegen fetch-abilities all os-info clean-cache clear-cache clean-modules clean-all reinstall pre-commit pc check prod-build setup test-watch typecheck
+.PHONY: help install build test lint lint-fix format fmt clean dev codegen fetch-abilities all os-info clean-cache clear-cache clean-modules clean-all reinstall pre-commit pc check prod-build setup test-watch typecheck pr
 
 # Default target
 help:
@@ -53,6 +53,7 @@ help:
 	@$(COLOR) info "Workflow Commands:"
 	@$(COLOR) color brightMagenta "  setup         - Initial project setup for new developers"
 	@$(COLOR) color brightMagenta "  all           - Run clean, install, lint, test, and build"
+	@$(COLOR) color brightMagenta "  pr            - Create a pull request using twig"
 	@$(COLOR) info "Affix Script Analysis Commands:"
 	@$(COLOR) color brightCyan "  analyze-affix-scripts     - Analyze affix scripts in combat logs"
 	@$(COLOR) color brightCyan "  analyze-affix-scripts-all - Analyze all downloaded combat logs"
@@ -181,6 +182,12 @@ endif
 setup: install codegen fetch-abilities
 	@$(COLOR) header "Project Setup Complete"
 	@$(COLOR) success "Setup complete! Run 'make dev' to start development server."
+
+# Create a pull request using twig
+pr:
+	@$(COLOR) subheader "Creating Pull Request"
+	@$(COLOR) info "Running twig github pr create-pr..."
+	twig github pr create-pr
 
 # Affix script detection commands  
 analyze-affix-scripts:
