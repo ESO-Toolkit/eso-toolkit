@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+
 import { calculateOptimalWorkers } from './tests/utils/worker-config';
 
 // Set fast mode environment variable for test utilities
@@ -23,7 +24,7 @@ export default defineConfig({
   workers: calculateOptimalWorkers({ 
     maxWorkers: process.env.CI ? 3 : 4, // Conservative CI parallelization
     memoryPerWorker: 1200, // Increased memory per worker for stability
-    minWorkers: 1
+    minWorkers: 1,
   }),
   /* Extended timeout settings for heavy client-side processing */
   timeout: 120000, // Increased to 120s for complex client-side data processing + screenshot

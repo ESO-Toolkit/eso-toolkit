@@ -27,6 +27,7 @@ interface PlayerCriticalDamageDetailsProps {
   criticalDamageData: PlayerCriticalDamageDataExtended | null;
   isLoading: boolean;
   phaseTransitionInfo?: PhaseTransitionInfo;
+  globalFightingFinesseEnabled?: boolean;
 }
 
 export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = ({
@@ -38,6 +39,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
   criticalDamageData,
   isLoading,
   phaseTransitionInfo,
+  globalFightingFinesseEnabled: globalFightingFinesseEnabledProp,
 }) => {
   const { playerData } = usePlayerData();
 
@@ -56,14 +58,26 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     );
   }, [criticalDamageData?.criticalDamageSources]);
 
-  const [fightingFinesseEnabled, setFightingFinesseEnabled] = React.useState<boolean>(() => {
-    return fightingFinesseSource?.wasActive ?? true;
-  });
+  const [localFightingFinesseEnabled, setLocalFightingFinesseEnabled] = React.useState<boolean>(
+    () => {
+      return fightingFinesseSource?.wasActive ?? true;
+    },
+  );
 
   React.useEffect(() => {
     const defaultActive = fightingFinesseSource?.wasActive ?? true;
-    setFightingFinesseEnabled((prev) => (prev === defaultActive ? prev : defaultActive));
+    setLocalFightingFinesseEnabled((prev) => (prev === defaultActive ? prev : defaultActive));
   }, [fightingFinesseSource?.wasActive]);
+
+  // Sync local state with global state when global changes
+  React.useEffect(() => {
+    if (globalFightingFinesseEnabledProp !== undefined) {
+      setLocalFightingFinesseEnabled(globalFightingFinesseEnabledProp);
+    }
+  }, [globalFightingFinesseEnabledProp]);
+
+  // Individual state always takes priority (local state)
+  const fightingFinesseEnabled = localFightingFinesseEnabled;
 
   const adjustedCriticalDamageData = React.useMemo(() => {
     if (!criticalDamageData) {
@@ -127,7 +141,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
 
   const handleSourceToggle = React.useCallback((sourceName: string, nextValue: boolean) => {
     if (sourceName === FIGHTING_FINESSE_SOURCE_NAME) {
-      setFightingFinesseEnabled(nextValue);
+      setLocalFightingFinesseEnabled(nextValue);
     }
   }, []);
 

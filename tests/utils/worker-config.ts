@@ -34,7 +34,7 @@ export function calculateOptimalWorkers(options: {
     minWorkers = parseInt(process.env.PLAYWRIGHT_MIN_WORKERS || '1', 10),
     memoryPerWorker = parseInt(process.env.PLAYWRIGHT_MEMORY_PER_WORKER || '1000', 10),
     availableMemory,
-    cpuCores
+    cpuCores,
   } = options;
 
   // In development, let Playwright auto-detect
@@ -79,6 +79,6 @@ export const GITHUB_ACTIONS_WORKERS = {
     cpuCores: 2, 
     availableMemory: 7000, // 7GB GitHub Actions
     memoryPerWorker: 800,   // More aggressive memory usage
-    maxWorkers: 3 
+    maxWorkers: 3, 
   }),
 } as const;
