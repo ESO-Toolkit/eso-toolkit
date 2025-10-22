@@ -46,6 +46,29 @@ export default defineConfig(({ command, mode }) => {
       }),
       // ESLint plugin disabled due to ESLint 9 compatibility issues
       // Use 'npm run lint' for linting during development
+      // Custom plugin to inject Google Analytics script
+      {
+        name: 'html-transform',
+        transformIndexHtml(html) {
+          const measurementId = env.VITE_GA_MEASUREMENT_ID;
+          if (measurementId) {
+            // Inject Google Analytics script into the head
+            return html.replace(
+              '</head>',
+              `  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=${measurementId}"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '${measurementId}');
+  </script>
+</head>`,
+            );
+          }
+          return html;
+        },
+      },
     ],
 
     // Path aliases (backup to tsconfigPaths plugin)
