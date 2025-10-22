@@ -42,19 +42,29 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
 }) => {
   return (
     <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
-      <Typography
-        variant="h6"
+      {/* Header with title and toggle button */}
+      <Box
         sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           mb: 2,
-          fontFamily: 'Space Grotesk, sans-serif',
-          textShadow: '0 1px 3px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.1)',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 1, sm: 0 },
         }}
       >
-        ✨Critical Damage Analysis
-      </Typography>
+        <Typography
+          variant="h6"
+          sx={{
+            fontFamily: 'Space Grotesk, sans-serif',
+            textShadow: '0 1px 3px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.1)',
+            mb: { xs: 0, sm: 0 },
+          }}
+        >
+          ✨Critical Damage Analysis
+        </Typography>
 
-      {/* Global Fighting Finesse Toggle */}
-      <Box sx={{ mb: 2 }}>
+        {/* Global Fighting Finesse Toggle */}
         <Button
           variant={globalFightingFinesseEnabled ? "contained" : "outlined"}
           color={globalFightingFinesseEnabled ? "success" : "primary"}
@@ -65,6 +75,7 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
             fontFamily: 'Space Grotesk, sans-serif',
             fontWeight: 600,
             textTransform: 'none',
+            flexShrink: 0, // Prevent button from shrinking on smaller screens
           }}
         >
           FF: {globalFightingFinesseEnabled ? 'ON' : 'OFF'}
