@@ -42,6 +42,9 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
   // Track which panels are expanded
   const [expandedPanels, setExpandedPanels] = React.useState<Record<string, boolean>>({});
 
+  // Global fighting finesse toggle state (default to true - enabled)
+  const [globalFightingFinesseEnabled, setGlobalFightingFinesseEnabled] = React.useState<boolean>(true);
+
   const handleExpandChange = React.useCallback(
     (playerId: number) => (event: React.SyntheticEvent, isExpanded: boolean) => {
       setExpandedPanels((prev) => ({
@@ -51,6 +54,10 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
     },
     [],
   );
+
+  const handleGlobalFightingFinesseToggle = React.useCallback((enabled: boolean) => {
+    setGlobalFightingFinesseEnabled(enabled);
+  }, []);
 
   // Show loading state while fetching data OR if data is not complete
   if (!hasCompleteData) {
@@ -77,6 +84,8 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
       criticalDamageData={criticalDamageData?.playerDataMap || null}
       isLoading={false}
       phaseTransitionInfo={phaseTransitionInfo}
+      globalFightingFinesseEnabled={globalFightingFinesseEnabled}
+      onGlobalFightingFinesseToggle={handleGlobalFightingFinesseToggle}
     />
   );
 };

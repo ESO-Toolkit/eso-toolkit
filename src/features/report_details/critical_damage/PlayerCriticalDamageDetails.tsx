@@ -27,6 +27,7 @@ interface PlayerCriticalDamageDetailsProps {
   criticalDamageData: PlayerCriticalDamageDataExtended | null;
   isLoading: boolean;
   phaseTransitionInfo?: PhaseTransitionInfo;
+  globalFightingFinesseEnabled?: boolean;
 }
 
 export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = ({
@@ -38,6 +39,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
   criticalDamageData,
   isLoading,
   phaseTransitionInfo,
+  globalFightingFinesseEnabled: globalFightingFinesseEnabledProp,
 }) => {
   const { playerData } = usePlayerData();
 
@@ -56,14 +58,19 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     );
   }, [criticalDamageData?.criticalDamageSources]);
 
-  const [fightingFinesseEnabled, setFightingFinesseEnabled] = React.useState<boolean>(() => {
+  const [localFightingFinesseEnabled, setLocalFightingFinesseEnabled] = React.useState<boolean>(() => {
     return fightingFinesseSource?.wasActive ?? true;
   });
 
   React.useEffect(() => {
     const defaultActive = fightingFinesseSource?.wasActive ?? true;
-    setFightingFinesseEnabled((prev) => (prev === defaultActive ? prev : defaultActive));
+    setLocalFightingFinesseEnabled((prev) => (prev === defaultActive ? prev : defaultActive));
   }, [fightingFinesseSource?.wasActive]);
+
+  // Use global state if provided, otherwise fall back to local state
+  const fightingFinesseEnabled = globalFightingFinesseEnabledProp !== undefined
+    ? globalFightingFinesseEnabledProp
+    : localFightingFinesseEnabled;
 
   const adjustedCriticalDamageData = React.useMemo(() => {
     if (!criticalDamageData) {
@@ -118,18 +125,24 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
   }, [criticalDamageData?.criticalDamageSources, fightingFinesseEnabled]);
 
   const toggleableSourceNames = React.useMemo(() => {
+    // Only allow individual toggles when global state is not provided
+    if (globalFightingFinesseEnabledProp !== undefined) {
+      return undefined; // No individual toggles when global control is active
+    }
+
     return adjustedCriticalDamageSources.some(
       (source) => source.source === 'always_on' && source.name === FIGHTING_FINESSE_SOURCE_NAME,
     )
       ? new Set<string>([FIGHTING_FINESSE_SOURCE_NAME])
       : undefined;
-  }, [adjustedCriticalDamageSources]);
+  }, [adjustedCriticalDamageSources, globalFightingFinesseEnabledProp]);
 
   const handleSourceToggle = React.useCallback((sourceName: string, nextValue: boolean) => {
-    if (sourceName === FIGHTING_FINESSE_SOURCE_NAME) {
-      setFightingFinesseEnabled(nextValue);
+    // Only allow individual toggles when global state is not provided
+    if (globalFightingFinesseEnabledProp === undefined && sourceName === FIGHTING_FINESSE_SOURCE_NAME) {
+      setLocalFightingFinesseEnabled(nextValue);
     }
-  }, []);
+  }, [globalFightingFinesseEnabledProp]);
 
   if (!player) {
     return null;

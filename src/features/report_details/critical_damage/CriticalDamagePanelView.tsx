@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Switch, FormControlLabel, Typography } from '@mui/material';
 import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
@@ -22,6 +22,8 @@ interface CriticalDamagePanelProps {
   criticalDamageData: Record<number, PlayerCriticalDamageDataExtended> | null;
   isLoading: boolean;
   phaseTransitionInfo?: PhaseTransitionInfo;
+  globalFightingFinesseEnabled: boolean;
+  onGlobalFightingFinesseToggle: (enabled: boolean) => void;
 }
 
 /**
@@ -35,6 +37,8 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
   criticalDamageData,
   isLoading,
   phaseTransitionInfo,
+  globalFightingFinesseEnabled,
+  onGlobalFightingFinesseToggle,
 }) => {
   return (
     <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
@@ -48,6 +52,44 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
       >
         ✨Critical Damage Analysis
       </Typography>
+
+      {/* Global Fighting Finesse Toggle */}
+      <Box
+        sx={{
+          mb: 2,
+          p: 2,
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: 1,
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(10px)',
+        }}
+      >
+        <FormControlLabel
+          control={
+            <Switch
+              checked={globalFightingFinesseEnabled}
+              onChange={(event) => onGlobalFightingFinesseToggle(event.target.checked)}
+              color="primary"
+            />
+          }
+          label={
+            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+              Enable Fighting Finesse for All Players
+            </Typography>
+          }
+          sx={{
+            alignItems: 'center',
+            '& .MuiFormControlLabel-label': {
+              color: 'text.primary',
+            },
+          }}
+        />
+        <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+          {globalFightingFinesseEnabled
+            ? 'Fighting Finesse (8% critical damage) is enabled for all players.'
+            : 'Fighting Finesse (8% critical damage) is disabled for all players.'}
+        </Typography>
+      </Box>
 
       <Box
         sx={{
@@ -70,6 +112,7 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
               criticalDamageData={playerCriticalDamageData || null}
               isLoading={isLoading}
               phaseTransitionInfo={phaseTransitionInfo}
+              globalFightingFinesseEnabled={globalFightingFinesseEnabled}
             />
           );
         })}
