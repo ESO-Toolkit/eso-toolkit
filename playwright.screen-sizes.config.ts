@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+
 import { calculateOptimalWorkers } from './tests/utils/worker-config';
 
 /**
@@ -20,7 +21,7 @@ export default defineConfig({
   workers: calculateOptimalWorkers({ 
     maxWorkers: process.env.CI ? 3 : 3, // Conservative CI workers to prevent API rate limiting
     memoryPerWorker: 1500, // Increase memory per worker for stability
-    minWorkers: 1
+    minWorkers: 1,
   }),
   /* Timeout settings - increased for heavy client-side processing */
   timeout: process.env.CI ? 120000 : 90000, // Extended for complex client-side data processing
@@ -42,7 +43,7 @@ export default defineConfig({
       outputFolder: 'screen-size-report',
       open: process.env.CI ? 'never' : 'on-failure',
       host: '0.0.0.0',
-      port: 9323
+      port: 9323,
     }],
     ['json', { outputFile: 'screen-size-report/results.json' }],
     ...(process.env.CI ? [['github'] as const] : []),

@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+
 import { calculateOptimalWorkers } from './tests/utils/worker-config';
 
 const rawSmokePort = process.env.SMOKE_PORT || process.env.PORT || '3000';
@@ -35,7 +36,7 @@ export default defineConfig({
   workers: process.env.CI ? calculateOptimalWorkers({ 
     maxWorkers: 2, 
     minWorkers: 1,
-    memoryPerWorker: 800 // Lower since smoke tests are lighter
+    memoryPerWorker: 800, // Lower since smoke tests are lighter
   }) : 1,
 
   /* Increased timeout for smoke tests to handle slower CI environments */

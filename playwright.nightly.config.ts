@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+
 import { calculateOptimalWorkers } from './tests/utils/worker-config';
 
 /**
@@ -40,7 +41,7 @@ export default defineConfig({
   workers: process.env.CI ? calculateOptimalWorkers({ 
     maxWorkers: 3, // Slightly more aggressive for nightly tests
     memoryPerWorker: 900, // Lower memory per worker since tests are optimized
-    minWorkers: 2 // Ensure reasonable parallelization
+    minWorkers: 2, // Ensure reasonable parallelization
   }) : 4, // Fewer workers to be respectful to APIs
 
   /* Enable sharding for faster parallel execution */
