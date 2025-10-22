@@ -1,7 +1,19 @@
-import { Box, Typography, List, ListItem, Avatar, Skeleton } from '@mui/material';
-import React from 'react';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import {
+  Box,
+  Typography,
+  List,
+  ListItem,
+  Avatar,
+  Skeleton,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
+import React, { useState } from 'react';
 
 import { DamageTypeFlags } from '../../../types/abilities';
+
+import { DamageTypeHelpModal } from './DamageTypeHelpModal';
 
 interface DamageTypeBreakdown {
   damageType: DamageTypeFlags;
@@ -74,12 +86,34 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
   totalDamage,
   isLoading,
 }) => {
+  const [helpModalOpen, setHelpModalOpen] = useState(false);
+
+  const handleOpenHelp = (): void => {
+    setHelpModalOpen(true);
+  };
+
+  const handleCloseHelp = (): void => {
+    setHelpModalOpen(false);
+  };
+
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Damage by Type
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Typography variant="h6">Damage by Type</Typography>
+          <Tooltip title="Learn how damage types are calculated" arrow>
+            <IconButton
+              size="small"
+              onClick={handleOpenHelp}
+              sx={{
+                color: 'text.secondary',
+                '&:hover': { color: 'primary.main' },
+              }}
+            >
+              <HelpOutlineIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Damage breakdown by damage type from friendly players:{' '}
           <Skeleton variant="text" width="60px" sx={{ display: 'inline-block' }} />
@@ -127,6 +161,9 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
             </Box>
           ))}
         </Box>
+
+        {/* Help Modal */}
+        <DamageTypeHelpModal open={helpModalOpen} onClose={handleCloseHelp} />
       </Box>
     );
   }
@@ -142,9 +179,21 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Damage by Type
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+        <Typography variant="h6">Damage by Type</Typography>
+        <Tooltip title="Learn how damage types are calculated" arrow>
+          <IconButton
+            size="small"
+            onClick={handleOpenHelp}
+            sx={{
+              color: 'text.secondary',
+              '&:hover': { color: 'primary.main' },
+            }}
+          >
+            <HelpOutlineIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         Damage breakdown by damage type from friendly players: {formatNumber(totalDamage)}
       </Typography>
@@ -294,6 +343,9 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
           No damage events found for friendly players.
         </Typography>
       )}
+
+      {/* Help Modal */}
+      <DamageTypeHelpModal open={helpModalOpen} onClose={handleCloseHelp} />
     </Box>
   );
 };

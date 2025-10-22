@@ -215,7 +215,7 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
   },
   {
     value: PenetrationValues.DISMEMBER,
-    ability: KnownAbilities.DISMEMBER_PASSIVE,
+    ability: KnownAbilities.DISMEMBER,
     name: 'Dismember (Grave Lord Passive)',
     description:
       'Grave Lord passive providing 3271 penetration when a grave lord ability is active',
@@ -303,7 +303,7 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
   },
   {
     value: PenetrationValues.CRUSHER_ENCHANT,
-    ability: KnownAbilities.CRUSHER_ENCHANT,
+    ability: KnownAbilities.CRUSHER,
     name: 'Crusher',
     description: 'Enchant reducing target resistance by 2108 penetration',
     source: 'debuff',

@@ -31,90 +31,91 @@ const MAGIC_DAMAGE_TYPES = Object.freeze(
   ]),
 );
 
-// AOE Damage
+// AOE Damage - Updated with correct ability IDs from database query
+// ability.id IN (126633,75752,133494,227072,172672,102136,183123,186370,189869,185407,191078,183006,32711,32714,32948,20252,20930,98438,32792,32794,115572,117809,117854,117715,118011,123082,118766,122392,118314,143944,143946,118720,23202,23667,29809,29806,23232,23214,23196,23208,24329,77186,94424,181331,88802,100218,26869,80172,26794,44432,26879,26871,108936,62912,62951,62990,85127,40267,40252,40252,61502,62547,62529,38891,38792,126474,38745,42029,85432,41990,80107,126720,41839,217348,217459,222678,40161,38690,63474,63471,40469,215779)
 const AOE_ABILITY_IDS = Object.freeze(
   new Set([
-    KnownAbilities.ELEMENTAL_RING, // 126633
-    KnownAbilities.ELEMENTAL_BLOCKADE, // 75752
-    KnownAbilities.ELEMENTAL_STORM, // 133494
-    KnownAbilities.ELEMENTAL_STORM_TICK, // 227072
-    KnownAbilities.ELEMENTAL_SUSCEPTIBILITY, // 172672
-    KnownAbilities.WALL_OF_ELEMENTS, // 102136
-    KnownAbilities.DESTRUCTIVE_REACH, // 183123
-    KnownAbilities.DESTRUCTIVE_CLENCH, // 186370
-    KnownAbilities.FROST_REACH, // 189869
-    KnownAbilities.FLAME_REACH, // 185407
-    KnownAbilities.SHOCK_REACH, // 191078
-    KnownAbilities.ELEMENTAL_DRAIN, // 183006
-    KnownAbilities.VOLLEY, // 32711
-    KnownAbilities.ENDLESS_HAIL, // 32714
-    KnownAbilities.ARROW_BARRAGE, // 32948
-    KnownAbilities.CALTROPS, // 20252
-    KnownAbilities.RAZOR_CALTROPS, // 20930
-    KnownAbilities.ANTI_CAVALRY_CALTROPS, // 98438
-    KnownAbilities.TRAP_BEAST, // 32792
-    KnownAbilities.REARMING_TRAP, // 32794
-    KnownAbilities.LIGHTWEIGHT_BEAST_TRAP, // 115572
-    KnownAbilities.BARBED_TRAP, // 117809
-    KnownAbilities.CUTTING_DIVE, // 117854
-    KnownAbilities.SCREAMING_CLIFF_RACER, // 117715
-    KnownAbilities.DIVE, // 118011
-    KnownAbilities.GROWING_SWARM, // 123082
-    KnownAbilities.FETCHER_INFECTION, // 118766
-    KnownAbilities.INFECTIOUS_CLAWS, // 122392
-    KnownAbilities.SCORCH, // 118314
-    KnownAbilities.SUBTERRANEAN_ASSAULT, // 143944
-    KnownAbilities.DEEP_FISSURE, // 143946
-    KnownAbilities.ERUPTION, // 118720
-    KnownAbilities.IMPULSE, // 23202
-    KnownAbilities.ELEMENTAL_RING_2, // 23667
-    KnownAbilities.PULSAR, // 29809
-    KnownAbilities.ELEMENTAL_DRAIN_2, // 29806
-    KnownAbilities.FORCE_PULSE, // 23232
-    KnownAbilities.CRUSHING_SHOCK, // 23214
-    KnownAbilities.FORCE_SHOCK, // 23196
-    KnownAbilities.DESTRUCTIVE_TOUCH, // 23208
-    KnownAbilities.DESTRUCTIVE_CLENCH_2, // 24329
-    KnownAbilities.DESTRUCTIVE_REACH_2, // 77186
-    KnownAbilities.ELEMENTAL_STORM_2, // 94424
-    KnownAbilities.ELEMENTAL_RAGE, // 181331
-    KnownAbilities.EYE_OF_THE_STORM, // 88802
-    KnownAbilities.ELEMENTAL_STORM_3, // 100218
-    KnownAbilities.WALL_OF_FIRE, // 26869
-    KnownAbilities.BLOCKADE_OF_FIRE, // 80172
-    KnownAbilities.UNSTABLE_WALL_OF_FIRE, // 26794
-    KnownAbilities.ENGULFING_FLAMES_SKILL, // ENGULFING_FLAMES (different from the named buff version)
-    KnownAbilities.WALL_OF_FROST, // 26879
-    KnownAbilities.UNSTABLE_WALL_OF_FROST, // 26871
-    KnownAbilities.BLOCKADE_OF_FROST, // 108936
-    KnownAbilities.WINTERS_REVENGE, // 62912
-    KnownAbilities.GLACIAL_PRESENCE, // 62951
-    KnownAbilities.ICY_ESCAPE, // 62990
-    KnownAbilities.FROZEN_GATE, // 85127
-    KnownAbilities.WALL_OF_STORMS, // 40267
-    KnownAbilities.UNSTABLE_WALL_OF_STORMS, // 40252
-    KnownAbilities.BLOCKADE_OF_STORMS, // 61502
-    KnownAbilities.BOUNDLESS_STORM, // 62547
-    KnownAbilities.HURRICANE, // 62529
-    KnownAbilities.LIQUID_LIGHTNING, // 38891
-    KnownAbilities.LIGHTNING_FLOOD, // 38792
-    KnownAbilities.LIGHTNING_SPLASH, // 126474
-    KnownAbilities.BLAZING_SPEAR, // 38745
-    KnownAbilities.SPEAR_SHARDS, // 42029
-    KnownAbilities.LUMINOUS_SHARDS, // 85432
-    KnownAbilities.SOLAR_BARRAGE, // 41990
-    KnownAbilities.SOLAR_DISTURBANCE, // 80107
-    KnownAbilities.DARK_FLARE, // 126720
-    KnownAbilities.NOVA, // 41839
-    KnownAbilities.SOLAR_PRISON, // 217348
-    KnownAbilities.SOLAR_DISTURBANCE_2, // 217459
-    KnownAbilities.SUPERNOVA, // 222678
-    KnownAbilities.NECROTIC_ORB, // 40161
-    KnownAbilities.MYSTIC_ORB, // 38690
-    KnownAbilities.ENERGY_ORB, // 63474
-    KnownAbilities.HEALING_COMBUSTION, // 63471
-    KnownAbilities.SCALDING_RUNE, // 40469
-    KnownAbilities.VOLCANIC_RUNE, // 215779
+    126633, // Elemental Ring
+    75752, // Elemental Blockade
+    133494, // Elemental Storm
+    227072, // Elemental Storm Tick
+    172672, // Elemental Susceptibility
+    102136, // Wall of Elements
+    183123, // Destructive Reach
+    186370, // Destructive Clench
+    189869, // Frost Reach
+    185407, // Flame Reach
+    191078, // Shock Reach
+    183006, // Elemental Drain / Cephaliarch's Flail
+    32711, // Volley
+    32714, // Endless Hail
+    32948, // Arrow Barrage
+    20252, // Caltrops
+    20930, // Razor Caltrops
+    98438, // Anti-Cavalry Caltrops
+    32792, // Trap Beast
+    32794, // Rearming Trap
+    115572, // Lightweight Beast Trap
+    117809, // Barbed Trap
+    117854, // Cutting Dive
+    117715, // Screaming Cliff Racer
+    118011, // Dive
+    123082, // Growing Swarm
+    118766, // Fetcher Infection
+    122392, // Infectious Claws
+    118314, // Scorch
+    143944, // Subterranean Assault
+    143946, // Deep Fissure
+    118720, // Eruption
+    23202, // Impulse / Liquid Lightning
+    23667, // Elemental Ring 2
+    29809, // Pulsar
+    29806, // Elemental Drain 2
+    23232, // Force Pulse / Hurricane
+    23214, // Crushing Shock
+    23196, // Force Shock
+    23208, // Destructive Touch
+    24329, // Destructive Clench 2
+    77186, // Destructive Reach 2
+    94424, // Elemental Storm 2
+    181331, // Elemental Rage
+    88802, // Eye of the Storm
+    100218, // Elemental Storm 3
+    26869, // Wall of Fire
+    80172, // Blockade of Fire
+    26794, // Unstable Wall of Fire
+    44432, // Engulfing Flames Skill
+    26879, // Wall of Frost
+    26871, // Unstable Wall of Frost
+    108936, // Blockade of Frost
+    62912, // Winter's Revenge
+    62951, // Glacial Presence
+    62990, // Icy Escape
+    85127, // Frozen Gate
+    40267, // Wall of Storms
+    40252, // Unstable Wall of Storms (appears twice in source list)
+    61502, // Blockade of Storms
+    62547, // Boundless Storm
+    62529, // Additional ability
+    38891, // Additional ability
+    38792, // Lightning Flood
+    126474, // Lightning Splash
+    38745, // Blazing Spear
+    42029, // Spear Shards
+    85432, // Luminous Shards
+    41990, // Solar Barrage
+    80107, // Solar Disturbance
+    126720, // Dark Flare
+    41839, // Nova
+    217348, // Solar Prison
+    217459, // Solar Disturbance 2
+    222678, // Supernova
+    40161, // Necrotic Orb
+    38690, // Mystic Orb
+    63474, // Energy Orb
+    63471, // Healing Combustion
+    40469, // Scalding Rune
+    215779, // Volcanic Rune
   ]),
 );
 

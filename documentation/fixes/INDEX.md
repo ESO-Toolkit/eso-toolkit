@@ -39,6 +39,7 @@ This directory contains documentation for bug fixes, issue resolutions, and prob
 
 ### 🎯 Scribing & Detection
 
+- **ABILITY_ENUM_ID_CORRECTIONS.md** - Fixed 8 ability enum IDs causing data analysis errors (55K+ log occurrences)
 - **AFFIX_DETECTION_FIX.md** - Affix detection improvements
 - **AFFIX_THRESHOLD_REMOVAL.md** - Threshold removal for better detection
 - **AFFIX_SINGLE_BEST_MATCH.md** - Single best match algorithm
