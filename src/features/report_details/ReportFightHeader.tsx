@@ -192,15 +192,26 @@ export const ReportFightHeader: React.FC = () => {
 
       // Upgrade to real content when available
       if (fight) {
-        const bossWasKilled =
-          fight.bossPercentage !== null &&
-          fight.bossPercentage !== undefined &&
-          fight.bossPercentage <= 1.0;
-        const statusIndicator = bossWasKilled
-          ? '✓'
-          : fight.bossPercentage
-            ? `${Math.round(fight.bossPercentage)}%`
-            : 'Wipe';
+        const isBossFight = fight.difficulty != null;
+        let statusIndicator: string;
+        
+        if (isBossFight) {
+          // Boss fight logic
+          const bossWasKilled =
+            fight.bossPercentage !== null &&
+            fight.bossPercentage !== undefined &&
+            fight.bossPercentage <= 1.0;
+          statusIndicator = bossWasKilled
+            ? '✓'
+            : fight.bossPercentage
+              ? `${Math.round(fight.bossPercentage)}%`
+              : 'Wipe';
+        } else {
+          // Trash fight logic - use kill field
+          const wasKilled = fight.kill === true || fight.kill === null;
+          statusIndicator = wasKilled ? '✓' : 'Wipe';
+        }
+        
         titleElement.innerHTML = `${fight.name} (<span style="font-weight: 300;">${statusIndicator}</span>)`;
       }
     }
@@ -367,15 +378,26 @@ export const ReportFightHeader: React.FC = () => {
           {/* Fallback content for SSR/initial render */}
           {fight
             ? (() => {
-                const bossWasKilled =
-                  fight.bossPercentage !== null &&
-                  fight.bossPercentage !== undefined &&
-                  fight.bossPercentage <= 1.0;
-                const statusIndicator = bossWasKilled
-                  ? '✓'
-                  : fight.bossPercentage
-                    ? `${Math.round(fight.bossPercentage)}%`
-                    : 'Wipe';
+                const isBossFight = fight.difficulty != null;
+                let statusIndicator: string;
+                
+                if (isBossFight) {
+                  // Boss fight logic
+                  const bossWasKilled =
+                    fight.bossPercentage !== null &&
+                    fight.bossPercentage !== undefined &&
+                    fight.bossPercentage <= 1.0;
+                  statusIndicator = bossWasKilled
+                    ? '✓'
+                    : fight.bossPercentage
+                      ? `${Math.round(fight.bossPercentage)}%`
+                      : 'Wipe';
+                } else {
+                  // Trash fight logic - use kill field
+                  const wasKilled = fight.kill === true || fight.kill === null;
+                  statusIndicator = wasKilled ? '✓' : 'Wipe';
+                }
+                
                 return (
                   <>
                     {fight.name} (<span style={{ fontWeight: 300 }}>{statusIndicator}</span>)

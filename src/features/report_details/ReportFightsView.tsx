@@ -769,13 +769,15 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       // If boss was killed, show full green bar, otherwise show health percentage for wipes
       backgroundFillPercent = bossWasKilled ? 100 : isWipe ? bossHealthPercent : 100;
     } else {
-      // Trash fight logic - assume successful completion
-      bossWasKilled = false;
-      rawIsWipe = false;
-      isFalsePositive = false;
-      isWipe = false;
+      // Trash fight logic - use the kill field to determine success/wipe
+      // kill === true means success, kill === false means wipe, kill === null means unknown (treat as successful)
+      const wasKilled = fight.kill === true || fight.kill === null;
+      bossWasKilled = false; // Trash fights don't have a "boss"
+      rawIsWipe = fight.kill === false;
+      isFalsePositive = false; // No false positive detection for trash
+      isWipe = rawIsWipe;
       bossHealthPercent = 0;
-      backgroundFillPercent = 100; // Always show as completed for trash
+      backgroundFillPercent = wasKilled ? 100 : 0; // Full bar if successful, empty if wipe
     }
 
     return (
@@ -1097,8 +1099,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                           const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
                           return bossWasKilled || isFalsePositive; // Kill if boss was killed or false positive wipe
                         } else {
-                          // For trash fights, assume successful completion
-                          return true;
+                          // For trash fights, use the kill field to determine success
+                          // kill === true means success, kill === null means unknown (treat as successful)
+                          return fight.kill === true || fight.kill === null;
                         }
                       });
                       return count + (hasKill ? 1 : 0);
