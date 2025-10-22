@@ -1,4 +1,4 @@
-import { Box, Switch, FormControlLabel, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
@@ -54,41 +54,21 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
       </Typography>
 
       {/* Global Fighting Finesse Toggle */}
-      <Box
-        sx={{
-          mb: 2,
-          p: 2,
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          borderRadius: 1,
-          backgroundColor: 'rgba(255, 255, 255, 0.05)',
-          backdropFilter: 'blur(10px)',
-        }}
-      >
-        <FormControlLabel
-          control={
-            <Switch
-              checked={globalFightingFinesseEnabled}
-              onChange={(event) => onGlobalFightingFinesseToggle(event.target.checked)}
-              color="primary"
-            />
-          }
-          label={
-            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-              Enable Fighting Finesse for All Players
-            </Typography>
-          }
+      <Box sx={{ mb: 2 }}>
+        <Button
+          variant={globalFightingFinesseEnabled ? "contained" : "outlined"}
+          color={globalFightingFinesseEnabled ? "success" : "primary"}
+          size="small"
+          onClick={() => onGlobalFightingFinesseToggle(!globalFightingFinesseEnabled)}
           sx={{
-            alignItems: 'center',
-            '& .MuiFormControlLabel-label': {
-              color: 'text.primary',
-            },
+            minWidth: '100px',
+            fontFamily: 'Space Grotesk, sans-serif',
+            fontWeight: 600,
+            textTransform: 'none',
           }}
-        />
-        <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
-          {globalFightingFinesseEnabled
-            ? 'Fighting Finesse (8% critical damage) is enabled for all players.'
-            : 'Fighting Finesse (8% critical damage) is disabled for all players.'}
-        </Typography>
+        >
+          FF: {globalFightingFinesseEnabled ? 'ON' : 'OFF'}
+        </Button>
       </Box>
 
       <Box
