@@ -181,12 +181,16 @@ const renderWithProviders = (
 
   // Setup auth mock based on token and userData
   const mockAuthValue = {
+    accessToken: token,
     isLoggedIn: !!token,
+    isBanned: false,
+    banReason: null,
     currentUser: token && userData?.userData?.currentUser ? userData.userData.currentUser : null,
     userLoading: false,
     userError: null,
-    login: jest.fn(),
-    logout: jest.fn(),
+    setAccessToken: jest.fn(),
+    rebindAccessToken: jest.fn(),
+    refetchUser: jest.fn(),
   };
 
   (useAuth as jest.Mock).mockReturnValue(mockAuthValue);
@@ -222,12 +226,16 @@ describe('UserReports Component', () => {
     it('should show loading state initially when logged in', () => {
       // Setup auth mock with userLoading true
       const mockAuthValue = {
+        accessToken: 'token',
         isLoggedIn: true,
+        isBanned: false,
+        banReason: null,
         currentUser: null,
         userLoading: true,
         userError: null,
-        login: jest.fn(),
-        logout: jest.fn(),
+        setAccessToken: jest.fn(),
+        rebindAccessToken: jest.fn(),
+        refetchUser: jest.fn(),
       };
 
       (useAuth as jest.Mock).mockReturnValue(mockAuthValue);
@@ -408,12 +416,16 @@ describe('UserReports Component', () => {
     it('should display error message when fetching user data fails', async () => {
       // Mock auth to return userError state
       const mockAuthValue = {
+        accessToken: validToken,
         isLoggedIn: true,
+        isBanned: false,
+        banReason: null,
         currentUser: null,
         userLoading: false,
         userError: 'Failed to fetch user information',
-        login: jest.fn(),
-        logout: jest.fn(),
+        setAccessToken: jest.fn(),
+        rebindAccessToken: jest.fn(),
+        refetchUser: jest.fn(),
       };
 
       (useAuth as jest.Mock).mockReturnValue(mockAuthValue);
@@ -442,12 +454,16 @@ describe('UserReports Component', () => {
       mockLocalStorage.getItem.mockReturnValue(validToken);
 
       const mockAuthValue = {
+        accessToken: validToken,
         isLoggedIn: true,
+        isBanned: false,
+        banReason: null,
         currentUser: mockUserData.userData.currentUser,
         userLoading: false,
         userError: null,
-        login: jest.fn(),
-        logout: jest.fn(),
+        setAccessToken: jest.fn(),
+        rebindAccessToken: jest.fn(),
+        refetchUser: jest.fn(),
       };
 
       (useAuth as jest.Mock).mockReturnValue(mockAuthValue);

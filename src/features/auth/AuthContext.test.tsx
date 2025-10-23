@@ -12,6 +12,10 @@ const mockEsoLogsClient = {
 const mockSetAuthToken = jest.fn();
 const mockClearAuthToken = jest.fn();
 
+jest.mock('../../utils/banlist', () => ({
+  checkUserBan: jest.fn(),
+}));
+
 // Mock the EsoLogsClientContext module BEFORE importing
 jest.mock('../../EsoLogsClientContext', () => ({
   EsoLogsClientProvider: ({ children }: { children: React.ReactNode }) => (
@@ -27,6 +31,7 @@ jest.mock('../../EsoLogsClientContext', () => ({
 
 // Now import after mocking
 import { AuthProvider, useAuth } from './AuthContext';
+import { checkUserBan } from '../../utils/banlist';
 
 // Mock localStorage
 const mockLocalStorage = {
@@ -55,6 +60,8 @@ const TestComponent: React.FC = () => {
   const {
     accessToken,
     isLoggedIn,
+    isBanned,
+    banReason,
     currentUser,
     userLoading,
     userError,
@@ -66,6 +73,8 @@ const TestComponent: React.FC = () => {
     <div>
       <div data-testid="access-token">{accessToken}</div>
       <div data-testid="is-logged-in">{isLoggedIn.toString()}</div>
+      <div data-testid="is-banned">{isBanned.toString()}</div>
+      <div data-testid="ban-reason">{banReason || 'no-ban'}</div>
       <div data-testid="user-loading">{userLoading.toString()}</div>
       <div data-testid="user-error">{userError || 'no-error'}</div>
       <div data-testid="current-user">{currentUser ? currentUser.name : 'no-user'}</div>
@@ -84,11 +93,14 @@ const renderWithAuthProvider = (component: React.ReactElement) => {
 };
 
 describe('AuthContext', () => {
+  const mockCheckUserBan = checkUserBan as jest.MockedFunction<typeof checkUserBan>;
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockLocalStorage.getItem.mockReturnValue('');
     mockSetAuthToken.mockClear();
     mockClearAuthToken.mockClear();
+    mockCheckUserBan.mockResolvedValue({ isBanned: false });
     mockEsoLogsClient.query.mockResolvedValue({
       userData: {
         currentUser: {
@@ -108,6 +120,8 @@ describe('AuthContext', () => {
 
     expect(screen.getByTestId('access-token')).toHaveTextContent('');
     expect(screen.getByTestId('is-logged-in')).toHaveTextContent('false');
+    expect(screen.getByTestId('is-banned')).toHaveTextContent('false');
+    expect(screen.getByTestId('ban-reason')).toHaveTextContent('no-ban');
     expect(screen.getByTestId('user-loading')).toHaveTextContent('false');
     expect(screen.getByTestId('user-error')).toHaveTextContent('no-error');
     expect(screen.getByTestId('current-user')).toHaveTextContent('no-user');
@@ -123,6 +137,7 @@ describe('AuthContext', () => {
 
     expect(screen.getByTestId('access-token')).toHaveTextContent(mockToken);
     expect(screen.getByTestId('is-logged-in')).toHaveTextContent('true');
+    expect(screen.getByTestId('is-banned')).toHaveTextContent('false');
   });
 
   it('should detect expired token', () => {
@@ -187,6 +202,7 @@ describe('AuthContext', () => {
     await waitFor(() => {
       expect(screen.getByTestId('user-error')).toHaveTextContent('No user data received');
       expect(screen.getByTestId('current-user')).toHaveTextContent('no-user');
+      expect(screen.getByTestId('is-banned')).toHaveTextContent('false');
     });
   });
 
@@ -224,6 +240,31 @@ describe('AuthContext', () => {
     });
   });
 
+  it('should mark user as banned and clear authentication', async () => {
+    const futureExp = Math.floor(Date.now() / 1000) + 3600;
+    const mockToken = `header.${btoa(JSON.stringify({ exp: futureExp }))}.signature`;
+    mockLocalStorage.getItem.mockReturnValue(mockToken);
+
+    mockCheckUserBan.mockResolvedValueOnce({
+      isBanned: true,
+      reason: 'Access revoked',
+    });
+
+    renderWithAuthProvider(<TestComponent />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('is-banned')).toHaveTextContent('true');
+      expect(screen.getByTestId('ban-reason')).toHaveTextContent('Access revoked');
+      expect(screen.getByTestId('user-error')).toHaveTextContent('Access revoked');
+      expect(screen.getByTestId('current-user')).toHaveTextContent('no-user');
+      expect(screen.getByTestId('is-logged-in')).toHaveTextContent('false');
+    });
+
+    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('access_token');
+    expect(mockSetAuthToken.mock.calls).toContainEqual(['']);
+    expect(mockClearAuthToken).toHaveBeenCalled();
+  });
+
   it('should clear user data when token is removed', async () => {
     const futureExp = Math.floor(Date.now() / 1000) + 3600;
     const mockToken = `header.${btoa(JSON.stringify({ exp: futureExp }))}.signature`;
@@ -247,6 +288,7 @@ describe('AuthContext', () => {
     await waitFor(() => {
       expect(screen.getByTestId('current-user')).toHaveTextContent('no-user');
       expect(screen.getByTestId('is-logged-in')).toHaveTextContent('false');
+      expect(screen.getByTestId('is-banned')).toHaveTextContent('false');
     });
   });
 });
