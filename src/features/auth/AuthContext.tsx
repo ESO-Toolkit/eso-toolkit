@@ -9,6 +9,8 @@ import React, {
 
 import { useEsoLogsClientContext } from '../../EsoLogsClientContext';
 import { GetCurrentUserQuery, GetCurrentUserDocument } from '../../graphql/gql/graphql';
+import { checkUserBan, DEFAULT_BAN_REASON } from '../../utils/banlist';
+import { isDevelopment } from '../../utils/envUtils';
 import { Logger, LogLevel } from '../../utils/logger';
 
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './auth';
@@ -23,6 +25,8 @@ type CurrentUser = NonNullable<NonNullable<GetCurrentUserQuery['userData']>['cur
 interface AuthContextType {
   accessToken: string;
   isLoggedIn: boolean;
+  isBanned: boolean;
+  banReason: string | null;
   currentUser: CurrentUser | null;
   userLoading: boolean;
   userError: string | null;
@@ -37,17 +41,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [accessToken, setAccessToken] = useState<string>(
     () => localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '',
   );
+  const [isBanned, setIsBanned] = useState<boolean>(false);
+  const [banReason, setBanReason] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [userLoading, setUserLoading] = useState<boolean>(false);
   const [userError, setUserError] = useState<string | null>(null);
 
-  const { client: esoLogsClient, setAuthToken } = useEsoLogsClientContext();
+  const { client: esoLogsClient, setAuthToken, clearAuthToken } = useEsoLogsClientContext();
+
+  if (isDevelopment()) {
+    // eslint-disable-next-line no-console
+    console.log('[AuthContext] render', {
+      hasToken: !!accessToken,
+      isLoggedInSnapshot: !!accessToken && !isBanned,
+      isBannedSnapshot: isBanned,
+      currentUser,
+      userLoading,
+      userError,
+    });
+  }
 
   // Re-bind access token from localStorage
   const rebindAccessToken = useCallback(() => {
     const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
     setAccessToken(token);
     setAuthToken(token);
+    if (token) {
+      setIsBanned(false);
+      setBanReason(null);
+    }
   }, [setAuthToken]);
 
   // Update access token and notify EsoLogsClient
@@ -64,6 +86,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!esoLogsClient || !accessToken) {
       setCurrentUser(null);
       setUserError(null);
+      setIsBanned(false);
+      setBanReason(null);
       return;
     }
 
@@ -75,21 +99,50 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         query: GetCurrentUserDocument,
       });
 
-      if (result?.userData?.currentUser) {
-        setCurrentUser(result.userData.currentUser);
+      const fetchedUser = result?.userData?.currentUser ?? null;
+
+      if (isDevelopment()) {
+        // eslint-disable-next-line no-console
+        console.log('[AuthContext] Fetched current user', {
+          hasUser: !!fetchedUser,
+          result,
+        });
+      }
+
+      if (fetchedUser) {
+        const banCheck = await checkUserBan(fetchedUser);
+        if (banCheck.isBanned) {
+          const reason = banCheck.reason || DEFAULT_BAN_REASON;
+          setIsBanned(true);
+          setBanReason(reason);
+          setUserError(reason);
+          setCurrentUser(null);
+          localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+          updateAccessToken('');
+          clearAuthToken();
+          return;
+        }
+
+        setIsBanned(false);
+        setBanReason(null);
+        setCurrentUser(fetchedUser);
         setUserError(null);
       } else {
+        setIsBanned(false);
+        setBanReason(null);
         setUserError('No user data received');
         setCurrentUser(null);
       }
     } catch (error) {
       logger.error('Failed to fetch current user', error instanceof Error ? error : undefined);
       setUserError(error instanceof Error ? error.message : 'Failed to fetch user data');
+      setIsBanned(false);
+      setBanReason(null);
       setCurrentUser(null);
     } finally {
       setUserLoading(false);
     }
-  }, [esoLogsClient, accessToken]);
+  }, [esoLogsClient, accessToken, clearAuthToken, updateAccessToken]);
 
   useEffect(() => {
     // Listen for changes to localStorage (e.g., from OAuthRedirect)
@@ -121,24 +174,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }
 
-  const isLoggedIn = !!accessToken && !isTokenExpired(accessToken);
+  const isLoggedIn = !!accessToken && !isTokenExpired(accessToken) && !isBanned;
+
+  useEffect(() => {
+    if (isDevelopment()) {
+      // eslint-disable-next-line no-console
+      console.log('[AuthContext] state changed', {
+        hasToken: !!accessToken,
+        isLoggedIn,
+        isBanned,
+        userLoading,
+        userError,
+      });
+    }
+  }, [accessToken, isLoggedIn, isBanned, userLoading, userError]);
 
   // Fetch user data when logged in state changes
   useEffect(() => {
     if (isLoggedIn && esoLogsClient) {
       refetchUser();
-    } else {
+    } else if (!isBanned) {
       setCurrentUser(null);
       setUserError(null);
       setUserLoading(false);
+    } else {
+      setUserLoading(false);
     }
-  }, [isLoggedIn, esoLogsClient, refetchUser]);
+  }, [isLoggedIn, esoLogsClient, refetchUser, isBanned]);
 
   const contextValue = React.useMemo(
     () => ({
       accessToken,
       isLoggedIn,
       currentUser,
+      isBanned,
+      banReason,
       userLoading,
       userError,
       setAccessToken: updateAccessToken,
@@ -149,6 +219,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       accessToken,
       isLoggedIn,
       currentUser,
+      isBanned,
+      banReason,
       userLoading,
       userError,
       updateAccessToken,

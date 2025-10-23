@@ -15,9 +15,12 @@ import {
 import React from 'react';
 
 import { startPKCEAuth } from './auth';
+import { useAuth } from './AuthContext';
 
 export const Login: React.FC = () => {
   const theme = useTheme();
+  const { isBanned, banReason, userError } = useAuth();
+  const banMessage = banReason || userError;
 
   const handleLogin = (): boolean => {
     startPKCEAuth();
@@ -46,6 +49,11 @@ export const Login: React.FC = () => {
           }}
         >
           <CardContent sx={{ p: 4 }}>
+            {isBanned && banMessage && (
+              <Alert severity="error" sx={{ mb: 3 }}>
+                {banMessage}
+              </Alert>
+            )}
             <Box sx={{ textAlign: 'center', mb: 4 }}>
               {/* Logo/Icon */}
               <Box

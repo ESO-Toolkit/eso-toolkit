@@ -16,12 +16,14 @@ import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
 import { AuthenticatedRoute } from './features/auth/AuthenticatedRoute';
+import { BanRedirect } from './features/auth/BanRedirect';
 import { Login } from './features/auth/Login';
 import { ReportFightDetails } from './features/report_details/ReportFightDetails';
 import { UserReports } from './features/user_reports/UserReports';
 import { useAbilitiesPreloader } from './hooks/useAbilitiesPreloader';
 import { useWorkerManagerLogger } from './hooks/useWorkerManagerLogger';
 import { AppLayout } from './layouts/AppLayout';
+import { Banned } from './pages/Banned';
 import { ReduxThemeProvider } from './ReduxThemeProvider';
 import store, { persistor } from './store/storeWithHistory';
 import { initializeSentry, addBreadcrumb } from './utils/sentryUtils';
@@ -185,6 +187,7 @@ const AppRoutes: React.FC = () => {
 
   return (
     <HashRouter>
+      <BanRedirect />
       <ErrorBoundary>
         <Routes>
           <Route
@@ -206,6 +209,17 @@ const AppRoutes: React.FC = () => {
               <ErrorBoundary>
                 <Suspense fallback={<LoadingFallback />}>
                   <Login />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          {/* Banned page */}
+          <Route
+            path="/banned"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<LoadingFallback />}>
+                  <Banned />
                 </Suspense>
               </ErrorBoundary>
             }
