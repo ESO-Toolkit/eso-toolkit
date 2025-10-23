@@ -436,14 +436,8 @@ const getLogoText = (pathname: string): string => {
 };
 
 export const HeaderBar: React.FC = () => {
-  const {
-    isLoggedIn,
-    currentUser,
-    userLoading,
-    userError,
-    refetchUser,
-    rebindAccessToken,
-  } = useAuth();
+  const { isLoggedIn, currentUser, userLoading, userError, refetchUser, rebindAccessToken } =
+    useAuth();
   const hasRequestedUser = React.useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -462,9 +456,7 @@ export const HeaderBar: React.FC = () => {
 
   const userDisplayName = React.useMemo(() => {
     if (!currentUser) return '';
-    return (
-      currentUser.naDisplayName || currentUser.euDisplayName || currentUser.name || ''
-    );
+    return currentUser.naDisplayName || currentUser.euDisplayName || currentUser.name || '';
   }, [currentUser]);
 
   React.useEffect(() => {

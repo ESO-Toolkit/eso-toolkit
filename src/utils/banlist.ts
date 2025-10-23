@@ -64,7 +64,9 @@ const normalizeStringArray = (value: unknown, toLowerCase = true): string[] => {
   if (value === null || value === undefined) return [];
   const values = Array.isArray(value) ? value : [value];
   return values
-    .filter((entry): entry is string | number => typeof entry === 'string' || typeof entry === 'number')
+    .filter(
+      (entry): entry is string | number => typeof entry === 'string' || typeof entry === 'number',
+    )
     .map((entry) => String(entry).trim())
     .filter(Boolean)
     .map((entry) => (toLowerCase ? entry.toLowerCase() : entry));
@@ -125,10 +127,10 @@ const parseBanlistContent = (content: string): NormalizedBanEntry[] => {
     const sourceEntries = Array.isArray(parsed)
       ? parsed
       : Array.isArray((parsed as { bannedUsers?: unknown[] }).bannedUsers)
-      ? (parsed as { bannedUsers: unknown[] }).bannedUsers
-      : Array.isArray((parsed as { banned?: unknown[] }).banned)
-      ? (parsed as { banned: unknown[] }).banned
-      : [];
+        ? (parsed as { bannedUsers: unknown[] }).bannedUsers
+        : Array.isArray((parsed as { banned?: unknown[] }).banned)
+          ? (parsed as { banned: unknown[] }).banned
+          : [];
 
     if (!Array.isArray(sourceEntries)) {
       return [];
@@ -140,7 +142,10 @@ const parseBanlistContent = (content: string): NormalizedBanEntry[] => {
 
     return normalized;
   } catch (error) {
-    logger.error('Failed to parse banlist gist content', error instanceof Error ? error : undefined);
+    logger.error(
+      'Failed to parse banlist gist content',
+      error instanceof Error ? error : undefined,
+    );
     return [];
   }
 };
@@ -151,9 +156,7 @@ const selectGistFile = (files?: Record<string, GistFile>): GistFile | undefined 
   const fileEntries = Object.values(files);
   if (!fileEntries.length) return undefined;
 
-  const preferred = fileEntries.find(
-    (file) => file.filename.toLowerCase() === BANLIST_FILE_NAME,
-  );
+  const preferred = fileEntries.find((file) => file.filename.toLowerCase() === BANLIST_FILE_NAME);
   if (preferred) return preferred;
 
   const jsonFile = fileEntries.find((file) => file.filename.toLowerCase().endsWith('.json'));

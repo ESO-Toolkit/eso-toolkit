@@ -14,13 +14,13 @@ const createJsonResponse = (data: unknown): Response =>
   ({
     ok: true,
     json: async () => data,
-  } as MockResponse as Response);
+  }) as MockResponse as Response;
 
 const createTextResponse = (data: string): Response =>
   ({
     ok: true,
     text: async () => data,
-  } as MockResponse as Response);
+  }) as MockResponse as Response;
 
 const originalFetch = globalThis.fetch;
 const mockGetEnvVar = getEnvVar as jest.MockedFunction<typeof getEnvVar>;
@@ -62,10 +62,7 @@ describe('banlist utility', () => {
             raw_url: 'https://gist.githubusercontent.com/example/raw/banlist.json',
             truncated: false,
             content: JSON.stringify({
-              bannedUsers: [
-                { id: 12345, reason: 'Manual ban' },
-                { name: 'otherUser' },
-              ],
+              bannedUsers: [{ id: 12345, reason: 'Manual ban' }, { name: 'otherUser' }],
             }),
           },
         },
