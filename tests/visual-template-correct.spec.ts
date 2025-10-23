@@ -12,6 +12,9 @@ import { createSkeletonDetector } from './utils/skeleton-detector';
  * 2. Always wait for skeletons to disappear before screenshots
  * 3. Use generous timeouts (45s) for complex pages
  * 4. Add safety waits for animations to settle
+ * 
+ * For detailed documentation including anti-patterns to avoid, see:
+ * @see ./VISUAL_TEST_PATTERNS.md
  */
 
 test.describe('Visual Regression - Correct Pattern Template', () => {
@@ -143,45 +146,5 @@ test.describe('Visual Regression - Correct Pattern Template', () => {
     
     await page.waitForTimeout(1000);
     await expect(page).toHaveScreenshot('calculator-loaded.png');
-  });
-});
-
-/**
- * ❌ ANTI-PATTERNS - What NOT to do
- * 
- * These are examples of incorrect patterns that will cause flaky tests.
- * DO NOT use these patterns in your tests.
- */
-
-test.describe('❌ Anti-Patterns (DO NOT USE)', () => {
-  
-  test.skip('WRONG: Using arbitrary timeout without skeleton detection', async ({ page }) => {
-    await page.goto('/report/abc123/fight/117/players');
-    
-    // ❌ BAD: Just waiting arbitrary time
-    await page.waitForTimeout(5000); // Could be too short or too long
-    
-    // ❌ This screenshot may contain loading skeletons
-    await expect(page).toHaveScreenshot('bad-example.png');
-  });
-  
-  test.skip('WRONG: Only waiting for network idle', async ({ page }) => {
-    await page.goto('/report/abc123/fight/117/players');
-    
-    // ❌ BAD: Network idle doesn't mean React has finished rendering
-    await page.waitForLoadState('networkidle');
-    
-    // ❌ This screenshot may contain loading skeletons  
-    await expect(page).toHaveScreenshot('bad-example-2.png');
-  });
-  
-  test.skip('WRONG: Using DOM content loaded as ready indicator', async ({ page }) => {
-    await page.goto('/report/abc123/fight/117/players');
-    
-    // ❌ BAD: DOM loaded but data is still loading
-    await page.waitForLoadState('domcontentloaded');
-    
-    // ❌ This screenshot will definitely contain loading skeletons
-    await expect(page).toHaveScreenshot('bad-example-3.png');
   });
 });

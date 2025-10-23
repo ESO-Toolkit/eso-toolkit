@@ -2,6 +2,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
+import { LoggerProvider } from '../../contexts/LoggerContext';
 
 import { UserReports } from './UserReports';
 
@@ -39,27 +40,9 @@ jest.mock('../auth/AuthContext', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-const mockLogger = {
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  setLevel: jest.fn(),
-  getLevel: jest.fn(() => 0),
-  getEntries: jest.fn(() => []),
-  clearEntries: jest.fn(),
-  exportLogs: jest.fn(() => []),
-};
-
-jest.mock('../../contexts/LoggerContext', () => ({
-  LoggerProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  useLogger: jest.fn(() => mockLogger),
-}));
-
 // Import mocked components after mocks are defined
 const { EsoLogsClientProvider } = jest.requireMock('../../EsoLogsClientContext');
 const { AuthProvider, useAuth } = jest.requireMock('../auth/AuthContext');
-const { LoggerProvider } = jest.requireMock('../../contexts/LoggerContext');
 
 const mockLocalStorage = {
   getItem: jest.fn(),
@@ -71,21 +54,6 @@ Object.defineProperty(window, 'localStorage', {
   value: mockLocalStorage,
   writable: true,
 });
-
-// Mock Logger
-jest.mock('../../contexts/LoggerContext', () => ({
-  Logger: jest.fn().mockImplementation(() => ({
-    error: jest.fn(),
-  })),
-  LogLevel: {
-    ERROR: 'error',
-  },
-  useLogger: jest.fn(() => ({
-    info: jest.fn(),
-    debug: jest.fn(),
-    error: jest.fn(),
-  })),
-}));
 
 // Mock date-fns
 jest.mock('date-fns', () => ({
@@ -162,10 +130,12 @@ const renderWithProviders = (
     token = '',
     userData = mockUserData,
     reportsData = mockReportsData,
+    reportsError,
   }: {
     token?: string;
     userData?: any;
     reportsData?: any;
+    reportsError?: Error | string;
   } = {},
 ) => {
   // Setup localStorage mock
@@ -175,6 +145,11 @@ const renderWithProviders = (
   mockClient.query.mockImplementation((params) => {
     if (params.query === mockGetCurrentUserDocument) {
       return Promise.resolve(userData);
+    }
+    if (reportsError) {
+      const errorInstance =
+        reportsError instanceof Error ? reportsError : new Error(String(reportsError));
+      return Promise.reject(errorInstance);
     }
     return Promise.resolve(reportsData);
   });
@@ -198,9 +173,11 @@ const renderWithProviders = (
   return render(
     <MemoryRouter>
       <ThemeProvider theme={defaultTheme}>
-        <EsoLogsClientProvider>
-          <AuthProvider>{component}</AuthProvider>
-        </EsoLogsClientProvider>
+        <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
+          <EsoLogsClientProvider>
+            <AuthProvider>{component}</AuthProvider>
+          </EsoLogsClientProvider>
+        </LoggerProvider>
       </ThemeProvider>
     </MemoryRouter>,
   );
@@ -243,11 +220,13 @@ describe('UserReports Component', () => {
       render(
         <MemoryRouter>
           <ThemeProvider theme={defaultTheme}>
-            <EsoLogsClientProvider>
-              <AuthProvider>
-                <UserReports />
-              </AuthProvider>
-            </EsoLogsClientProvider>
+            <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
+              <EsoLogsClientProvider>
+                <AuthProvider>
+                  <UserReports />
+                </AuthProvider>
+              </EsoLogsClientProvider>
+            </LoggerProvider>
           </ThemeProvider>
         </MemoryRouter>,
       );
@@ -433,11 +412,13 @@ describe('UserReports Component', () => {
       render(
         <MemoryRouter>
           <ThemeProvider theme={defaultTheme}>
-            <EsoLogsClientProvider>
-              <AuthProvider>
-                <UserReports />
-              </AuthProvider>
-            </EsoLogsClientProvider>
+            <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
+              <EsoLogsClientProvider>
+                <AuthProvider>
+                  <UserReports />
+                </AuthProvider>
+              </EsoLogsClientProvider>
+            </LoggerProvider>
           </ThemeProvider>
         </MemoryRouter>,
       );
@@ -447,50 +428,15 @@ describe('UserReports Component', () => {
       });
     });
 
-    it.skip('should display error message when fetching reports fails', async () => {
-      // TODO: Fix this test - mock setup needs investigation
-      // The error is being thrown but not being displayed in the component
-      // Don't use renderWithProviders for this one since we need custom error behavior
-      mockLocalStorage.getItem.mockReturnValue(validToken);
-
-      const mockAuthValue = {
-        accessToken: validToken,
-        isLoggedIn: true,
-        isBanned: false,
-        banReason: null,
-        currentUser: mockUserData.userData.currentUser,
-        userLoading: false,
-        userError: null,
-        setAccessToken: jest.fn(),
-        rebindAccessToken: jest.fn(),
-        refetchUser: jest.fn(),
-      };
-
-      (useAuth as jest.Mock).mockReturnValue(mockAuthValue);
-
-      // Setup the mock to reject for reports but succeed for user data
-      mockClient.query.mockImplementation((params) => {
-        if (params.query === mockGetCurrentUserDocument) {
-          return Promise.resolve(mockUserData);
-        }
-        return Promise.reject(new Error('Reports API Error'));
+    it('should display error message when fetching reports fails', async () => {
+      renderWithProviders(<UserReports />, {
+        token: validToken,
+        reportsError: new Error('Reports API Error'),
       });
 
-      render(
-        <MemoryRouter>
-          <ThemeProvider theme={defaultTheme}>
-            <EsoLogsClientProvider>
-              <AuthProvider>
-                <UserReports />
-              </AuthProvider>
-            </EsoLogsClientProvider>
-          </ThemeProvider>
-        </MemoryRouter>,
-      );
-
-      expect(
-        await screen.findByText(/Failed to fetch reports/, {}, { timeout: 3000 }),
-      ).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText(/Failed to fetch reports/)).toBeInTheDocument();
+      });
     });
   });
 
