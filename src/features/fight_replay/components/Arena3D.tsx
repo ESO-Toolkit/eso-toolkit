@@ -1,7 +1,17 @@
 import { LockOpen } from '@mui/icons-material';
-import { Box, IconButton, Tooltip, Typography, Collapse } from '@mui/material';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import {
+  Box,
+  ClickAwayListener,
+  IconButton,
+  Tooltip,
+  Typography,
+  Collapse,
+  Menu,
+  MenuItem,
+} from '@mui/material';
 import { Canvas } from '@react-three/fiber';
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { useActorPositionsTask } from '../../../hooks/workerTasks/useActorPositionsTask';
@@ -9,9 +19,13 @@ import { getMapScaleData } from '../../../types/zoneScaleData';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
+import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
+import { COMMON_MARKER_GROUPS, MarkerGroup, MarkerGroupKey } from '../utils/mapMarkerConverters';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 
-import { Arena3DScene } from './Arena3DScene';
+import { Arena3DScene, GroundContextMenuPayload } from './Arena3DScene';
+import { MarkerContextMenuPayload } from './Marker3D';
+import { MarkerSpritePreview } from './MarkerSpritePreview';
 import { PerformanceMonitorExternal } from './PerformanceMonitor/PerformanceMonitorExternal';
 import { ReplayErrorBoundary } from './ReplayErrorBoundary';
 
@@ -20,6 +34,18 @@ const logger = new Logger({
   level: LogLevel.WARN,
   contextPrefix: 'Arena3D',
 });
+
+type ContextMenuState =
+  | {
+      type: 'ground';
+      anchor: { left: number; top: number };
+      arenaPoint: { x: number; y: number; z: number };
+    }
+  | {
+      type: 'marker';
+      anchor: { left: number; top: number };
+      markerId: string;
+    };
 
 interface Arena3DProps {
   timeRef: React.RefObject<number> | { current: number };
@@ -34,8 +60,9 @@ interface Arena3DProps {
   followingActorIdRef: React.RefObject<number | null>;
   onCameraUnlock?: () => void;
   onActorClick?: (actorId: number) => void;
-  /** Optional encoded map markers string to render markers in the arena (M0R or Elms format) */
-  mapMarkersString?: string;
+  markersState?: MapMarkersState | null;
+  onAddMarker?: (iconKey: number, arenaPoint: { x: number; y: number; z: number }) => void;
+  onRemoveMarker?: (markerId: string) => void;
   /** Fight data for zone/map information (required for map markers coordinate transformation) */
   fight: FightFragment;
 }
@@ -48,11 +75,163 @@ export const Arena3D: React.FC<Arena3DProps> = ({
   followingActorIdRef,
   onCameraUnlock,
   onActorClick,
-  mapMarkersString,
+  markersState,
+  onAddMarker,
+  onRemoveMarker,
   fight,
 }) => {
   const { lookup, isActorPositionsLoading } = useActorPositionsTask();
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [submenuState, setSubmenuState] = useState<{
+    key: MarkerGroupKey;
+    anchorEl: HTMLElement | null;
+  } | null>(null);
+
+  const markerLookup = useMemo(() => {
+    if (!markersState) {
+      return new Map<string, ReplayMarker>();
+    }
+
+    return new Map<string, ReplayMarker>(
+      markersState.markers.map((marker) => [marker.id, marker] as [string, ReplayMarker]),
+    );
+  }, [markersState]);
+
+  const handleGroundContextMenu = useCallback(
+    (payload: GroundContextMenuPayload) => {
+      if (!onAddMarker) {
+        return;
+      }
+
+      setSubmenuState(null);
+      setContextMenu({
+        type: 'ground',
+        anchor: payload.screenPosition,
+        arenaPoint: payload.arenaPoint,
+      });
+    },
+    [onAddMarker],
+  );
+
+  const handleMarkerContextMenu = useCallback(
+    (payload: MarkerContextMenuPayload) => {
+      if (!onRemoveMarker) {
+        return;
+      }
+
+      setSubmenuState(null);
+      setContextMenu({
+        type: 'marker',
+        anchor: payload.screenPosition,
+        markerId: payload.markerId,
+      });
+    },
+    [onRemoveMarker],
+  );
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null);
+    setSubmenuState(null);
+  }, []);
+
+  const handleAddMarkerOption = useCallback(
+    (iconKey: number) => {
+      if (!contextMenu || contextMenu.type !== 'ground' || !onAddMarker) {
+        return;
+      }
+
+      onAddMarker(iconKey, contextMenu.arenaPoint);
+      setContextMenu(null);
+      setSubmenuState(null);
+    },
+    [contextMenu, onAddMarker],
+  );
+
+  const handleOpenSubmenu = useCallback(
+    (event: React.MouseEvent<HTMLElement>, groupKey: MarkerGroupKey) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      setSubmenuState({ key: groupKey, anchorEl: event.currentTarget });
+    },
+    [],
+  );
+
+  const handleGroupMouseLeave = useCallback(() => {
+    // Don't close submenu on mouse leave - let it stay open
+    // It will close when clicking outside or when another group is hovered
+  }, []);
+
+  const handleGroupKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLElement>, groupKey: MarkerGroupKey) => {
+      if (event.key !== 'ArrowRight' && event.key !== 'Enter' && event.key !== ' ') {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const target = event.currentTarget as HTMLElement;
+      setSubmenuState({ key: groupKey, anchorEl: target });
+    },
+    [],
+  );
+
+  const handleCloseSubmenu = useCallback(() => {
+    setSubmenuState(null);
+  }, []);
+
+  const handleRemoveMarkerClick = useCallback(() => {
+    if (!contextMenu || contextMenu.type !== 'marker' || !onRemoveMarker) {
+      return;
+    }
+
+    onRemoveMarker(contextMenu.markerId);
+    setContextMenu(null);
+  }, [contextMenu, onRemoveMarker]);
+
+  const markerForMenu =
+    contextMenu?.type === 'marker' ? (markerLookup.get(contextMenu.markerId) ?? null) : null;
+  const markerRemoveLabel =
+    markerForMenu && markerForMenu.text && markerForMenu.text.trim().length > 0
+      ? `Remove "${markerForMenu.text.trim()}"`
+      : 'Remove marker';
+
+  const activeSubmenuGroup: MarkerGroup | null = useMemo(() => {
+    if (!submenuState) {
+      return null;
+    }
+
+    const group = COMMON_MARKER_GROUPS.find((candidate) => candidate.key === submenuState.key);
+    return group && group.options.length > 0 ? group : null;
+  }, [submenuState]);
+
+  const handleCanvasContextMenu = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  }, []);
+
+  useEffect(() => {
+    if (!contextMenu) {
+      return;
+    }
+
+    const suppressNativeContextMenu = (event: MouseEvent): void => {
+      event.preventDefault();
+    };
+
+    document.addEventListener('contextmenu', suppressNativeContextMenu);
+    return () => {
+      document.removeEventListener('contextmenu', suppressNativeContextMenu);
+    };
+  }, [contextMenu]);
+
+  useEffect(() => {
+    if (!contextMenu) {
+      setSubmenuState(null);
+    }
+  }, [contextMenu]);
 
   // Show keyboard help on initial mount for 5 seconds
   useEffect(() => {
@@ -398,6 +577,7 @@ export const Arena3D: React.FC<Arena3DProps> = ({
             // Fail if context cannot be created
             failIfMajorPerformanceCaveat: false,
           }}
+          onContextMenu={handleCanvasContextMenu}
           onCreated={({ gl }) => {
             // Handle WebGL context loss and restoration
             const canvas = gl.domElement;
@@ -422,11 +602,120 @@ export const Arena3D: React.FC<Arena3DProps> = ({
             scrubbingMode={scrubbingMode}
             followingActorIdRef={followingActorIdRef}
             onActorClick={onActorClick}
-            mapMarkersString={mapMarkersString}
+            markersState={markersState}
+            onGroundContextMenu={handleGroundContextMenu}
+            onMarkerContextMenu={handleMarkerContextMenu}
             fight={fight}
             initialTarget={initialCameraTarget}
           />
         </Canvas>
+        {contextMenu && (
+          <ClickAwayListener onClickAway={handleCloseContextMenu}>
+            <div>
+              <Menu
+                open={Boolean(contextMenu)}
+                onClose={handleCloseContextMenu}
+                anchorReference="anchorPosition"
+                anchorPosition={
+                  contextMenu
+                    ? { top: contextMenu.anchor.top, left: contextMenu.anchor.left }
+                    : undefined
+                }
+                disableScrollLock
+                MenuListProps={{
+                  dense: true,
+                  onContextMenu: (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  },
+                }}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
+              >
+                {contextMenu?.type === 'ground' &&
+                  COMMON_MARKER_GROUPS.filter((group) => group.options.length > 0).map((group) => (
+                    <MenuItem
+                      key={group.key}
+                      onMouseEnter={(event) => handleOpenSubmenu(event, group.key)}
+                      onMouseLeave={handleGroupMouseLeave}
+                      onClick={(event) => handleOpenSubmenu(event, group.key)}
+                      onContextMenu={(event) => handleOpenSubmenu(event, group.key)}
+                      onKeyDown={(event) => handleGroupKeyDown(event, group.key)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 1,
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {group.label}
+                      </Typography>
+                      <ChevronRightIcon fontSize="small" />
+                    </MenuItem>
+                  ))}
+                {contextMenu?.type === 'marker' && (
+                  <MenuItem onClick={handleRemoveMarkerClick} disabled={!onRemoveMarker}>
+                    {markerRemoveLabel}
+                  </MenuItem>
+                )}
+              </Menu>
+              <Menu
+                open={Boolean(activeSubmenuGroup && submenuState?.anchorEl)}
+                anchorEl={submenuState?.anchorEl ?? null}
+                onClose={handleCloseSubmenu}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+                disableScrollLock
+                disableAutoFocus
+                disableEnforceFocus
+                disableRestoreFocus
+                MenuListProps={{
+                  dense: true,
+                  onContextMenu: (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  },
+                  onMouseLeave: handleGroupMouseLeave,
+                  sx: { pointerEvents: 'auto' },
+                }}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
+                slotProps={{
+                  paper: {
+                    onMouseLeave: handleGroupMouseLeave,
+                    sx: { pointerEvents: 'auto' },
+                  },
+                  root: {
+                    sx: { pointerEvents: 'none' },
+                  },
+                }}
+              >
+                {activeSubmenuGroup?.options.map((option) => (
+                  <MenuItem
+                    key={option.iconKey}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      handleAddMarkerOption(option.iconKey);
+                    }}
+                    disabled={!onAddMarker}
+                    sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}
+                  >
+                    <MarkerSpritePreview iconKey={option.iconKey} label={option.label} />
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {option.label}
+                    </Typography>
+                  </MenuItem>
+                ))}
+              </Menu>
+            </div>
+          </ClickAwayListener>
+        )}
       </ReplayErrorBoundary>
 
       {/* Performance Monitor Overlay - rendered outside Canvas for proper screen-space positioning */}

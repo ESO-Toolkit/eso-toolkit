@@ -8,6 +8,7 @@ import { getMapScaleData } from '../../../types/zoneScaleData';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
+import { MapMarkersState } from '../types/mapMarkers';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 
 import { AnimationFrameActor3D } from './AnimationFrameActor3D';
@@ -16,6 +17,7 @@ import { CameraFollower } from './CameraFollower';
 import { DynamicMapTexture } from './DynamicMapTexture';
 import { KeyboardCameraControls } from './KeyboardCameraControls';
 import { MapMarkers } from './MapMarkers';
+import { MarkerContextMenuPayload } from './Marker3D';
 import { PerformanceMonitorCanvas } from './PerformanceMonitor';
 
 // Create logger instance for Arena3DScene
@@ -41,6 +43,11 @@ interface AnimationFrameSceneActorsProps {
   };
   followingActorIdRef: React.RefObject<number | null>;
   onActorClick?: (actorId: number) => void;
+}
+
+export interface GroundContextMenuPayload {
+  arenaPoint: { x: number; y: number; z: number };
+  screenPosition: { left: number; top: number };
 }
 
 /**
@@ -126,7 +133,9 @@ export interface Arena3DSceneProps {
   };
   followingActorIdRef: React.RefObject<number | null>;
   onActorClick?: (actorId: number) => void;
-  mapMarkersString?: string;
+  markersState?: MapMarkersState | null;
+  onGroundContextMenu?: (payload: GroundContextMenuPayload) => void;
+  onMarkerContextMenu?: (payload: MarkerContextMenuPayload) => void;
   fight: FightFragment;
   initialTarget?: [number, number, number];
 }
@@ -144,7 +153,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   scrubbingMode,
   followingActorIdRef,
   onActorClick,
-  mapMarkersString,
+  markersState,
+  onGroundContextMenu,
+  onMarkerContextMenu,
   fight,
   initialTarget,
 }) => {
@@ -369,7 +380,36 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       <BossHealthHUD lookup={lookup} timeRef={timeRef} />
 
       {/* Map Markers - Render raid/dungeon markers if provided (M0R or Elms format) */}
-      {mapMarkersString && <MapMarkers encodedString={mapMarkersString} fight={fight} />}
+      {markersState && (
+        <MapMarkers
+          markersState={markersState}
+          fight={fight}
+          onMarkerContextMenu={onMarkerContextMenu}
+        />
+      )}
+
+      {/* Interaction plane for context menu support (Alt + Right Click) */}
+      <mesh
+        position={[arenaDimensions.centerX, -0.019, arenaDimensions.centerZ]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        onPointerDown={(event) => {
+          if (event.button === 2 && event.nativeEvent.altKey && onGroundContextMenu) {
+            event.stopPropagation();
+            event.nativeEvent.preventDefault();
+
+            onGroundContextMenu({
+              arenaPoint: { x: event.point.x, y: event.point.y, z: event.point.z },
+              screenPosition: {
+                left: event.nativeEvent.clientX,
+                top: event.nativeEvent.clientY,
+              },
+            });
+          }
+        }}
+      >
+        <planeGeometry args={[arenaDimensions.size, arenaDimensions.size]} />
+        <meshBasicMaterial visible={false} transparent opacity={0} />
+      </mesh>
 
       {/* Controls - dynamically positioned based on fight area */}
       <OrbitControls

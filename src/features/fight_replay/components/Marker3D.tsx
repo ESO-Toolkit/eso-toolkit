@@ -44,9 +44,17 @@ function createTextTexture(text: string, fontSize: number): THREE.CanvasTexture 
   return texture;
 }
 
+export interface MarkerContextMenuPayload {
+  markerId: string;
+  screenPosition: { left: number; top: number };
+  arenaPoint: { x: number; y: number; z: number };
+}
+
 interface Marker3DProps {
   marker: MorMarker;
   scale?: number;
+  markerId: string;
+  onContextMenu?: (payload: MarkerContextMenuPayload) => void;
 }
 
 /**
@@ -56,7 +64,12 @@ interface Marker3DProps {
  *
  * NOTE: Expects coordinates in meters (already converted from centimeters by MapMarkers parent)
  */
-export const Marker3D: React.FC<Marker3DProps> = ({ marker, scale = 1 }) => {
+export const Marker3D: React.FC<Marker3DProps> = ({
+  marker,
+  scale = 1,
+  markerId,
+  onContextMenu,
+}) => {
   // Coordinates are already in meters and normalized to arena space
   const position: [number, number, number] = useMemo(
     () => [marker.x, marker.y, marker.z],
@@ -85,7 +98,27 @@ export const Marker3D: React.FC<Marker3DProps> = ({ marker, scale = 1 }) => {
   if (isFloating) {
     // Floating marker - always faces camera
     return (
-      <group position={position}>
+      <group
+        position={position}
+        onPointerDown={(event) => {
+          if (event.button === 2) {
+            if (!onContextMenu || !event.nativeEvent.altKey) {
+              return;
+            }
+
+            event.stopPropagation();
+            event.nativeEvent.preventDefault();
+
+            const { clientX, clientY } = event.nativeEvent;
+
+            onContextMenu({
+              markerId,
+              screenPosition: { left: clientX, top: clientY },
+              arenaPoint: { x: event.point.x, y: event.point.y, z: event.point.z },
+            });
+          }
+        }}
+      >
         <Billboard follow={true} lockX={false} lockY={false} lockZ={false}>
           {/* Shape based on bgTexture (only if provided) */}
           {marker.bgTexture && (
@@ -117,7 +150,27 @@ export const Marker3D: React.FC<Marker3DProps> = ({ marker, scale = 1 }) => {
     const [pitch, yaw] = marker.orientation as [number, number];
 
     return (
-      <group position={position}>
+      <group
+        position={position}
+        onPointerDown={(event) => {
+          if (event.button === 2) {
+            if (!onContextMenu || !event.nativeEvent.altKey) {
+              return;
+            }
+
+            event.stopPropagation();
+            event.nativeEvent.preventDefault();
+
+            const { clientX, clientY } = event.nativeEvent;
+
+            onContextMenu({
+              markerId,
+              screenPosition: { left: clientX, top: clientY },
+              arenaPoint: { x: event.point.x, y: event.point.y, z: event.point.z },
+            });
+          }
+        }}
+      >
         <group rotation={[pitch, yaw, 0]}>
           {/* Shape based on bgTexture (only if provided) */}
           {marker.bgTexture && (
