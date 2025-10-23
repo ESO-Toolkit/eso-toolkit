@@ -13,7 +13,7 @@ export const Banned: React.FC = () => {
   const { banReason, setAccessToken } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = (): void => {
     localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
     setAccessToken('');
     navigate('/');

@@ -9,8 +9,8 @@ import React, {
 
 import { useEsoLogsClientContext } from '../../EsoLogsClientContext';
 import { GetCurrentUserQuery, GetCurrentUserDocument } from '../../graphql/gql/graphql';
-import { Logger, LogLevel } from '../../utils/logger';
 import { checkUserBan, DEFAULT_BAN_REASON } from '../../utils/banlist';
+import { Logger, LogLevel } from '../../utils/logger';
 
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './auth';
 
