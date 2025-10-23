@@ -10,6 +10,7 @@ import React, {
 import { useEsoLogsClientContext } from '../../EsoLogsClientContext';
 import { GetCurrentUserQuery, GetCurrentUserDocument } from '../../graphql/gql/graphql';
 import { checkUserBan, DEFAULT_BAN_REASON } from '../../utils/banlist';
+import { isDevelopment } from '../../utils/envUtils';
 import { Logger, LogLevel } from '../../utils/logger';
 
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './auth';
@@ -48,7 +49,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const { client: esoLogsClient, setAuthToken, clearAuthToken } = useEsoLogsClientContext();
 
-  if (import.meta.env.DEV) {
+  if (isDevelopment()) {
     // eslint-disable-next-line no-console
     console.log('[AuthContext] render', {
       hasToken: !!accessToken,
@@ -100,7 +101,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       const fetchedUser = result?.userData?.currentUser ?? null;
 
-      if (import.meta.env.DEV) {
+      if (isDevelopment()) {
         // eslint-disable-next-line no-console
         console.log('[AuthContext] Fetched current user', {
           hasUser: !!fetchedUser,
@@ -176,7 +177,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const isLoggedIn = !!accessToken && !isTokenExpired(accessToken) && !isBanned;
 
   useEffect(() => {
-    if (import.meta.env.DEV) {
+    if (isDevelopment()) {
       // eslint-disable-next-line no-console
       console.log('[AuthContext] state changed', {
         hasToken: !!accessToken,
