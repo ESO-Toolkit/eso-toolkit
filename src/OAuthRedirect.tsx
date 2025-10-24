@@ -65,6 +65,10 @@ export const OAuthRedirect: React.FC = () => {
         if (!response.ok) throw new Error('Token exchange failed');
         const data = await response.json();
         localStorage.setItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token);
+        // Store refresh token if provided
+        if (data.refresh_token) {
+          localStorage.setItem('refresh_token', data.refresh_token);
+        }
         rebindAccessToken();
 
         // Redirect to the intended destination, or home if none was stored

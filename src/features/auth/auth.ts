@@ -1,4 +1,11 @@
 import { getBaseUrl } from '../../utils/envUtils';
+import { Logger, LogLevel } from '../../utils/logger';
+
+// Create a logger instance for auth operations
+const logger = new Logger({
+  level: LogLevel.ERROR,
+  contextPrefix: 'Auth',
+});
 
 // Compose redirect URI using Vite's BASE_URL
 export const getRedirectUri = (): string => {
@@ -14,6 +21,7 @@ export const PKCE_CODE_VERIFIER_KEY = 'eso_code_verifier';
 export const INTENDED_DESTINATION_KEY = 'eso_intended_destination';
 
 export const LOCAL_STORAGE_ACCESS_TOKEN_KEY = 'access_token';
+export const LOCAL_STORAGE_REFRESH_TOKEN_KEY = 'refresh_token';
 
 export function setPkceCodeVerifier(verifier: string): void {
   localStorage.setItem(PKCE_CODE_VERIFIER_KEY, verifier);
@@ -74,4 +82,58 @@ export async function startPKCEAuth(): Promise<void> {
 
   const authUrl = await buildAuthUrl(verifier);
   window.location.href = authUrl;
+}
+
+const OAUTH_TOKEN_URL = 'https://www.esologs.com/oauth/token';
+
+/**
+ * Refreshes the access token using the stored refresh token
+ * @returns The new access token, or null if refresh failed
+ */
+export async function refreshAccessToken(): Promise<string | null> {
+  const refreshToken = localStorage.getItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+
+  if (!refreshToken) {
+    logger.warn('No refresh token available');
+    return null;
+  }
+
+  try {
+    const body = new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+      client_id: CLIENT_ID,
+    });
+
+    const response = await fetch(OAUTH_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+
+    if (!response.ok) {
+      logger.error('Token refresh failed', undefined, { status: response.status });
+      // Clear invalid tokens
+      localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+      localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+      return null;
+    }
+
+    const data = await response.json();
+
+    // Store new tokens
+    localStorage.setItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token);
+    if (data.refresh_token) {
+      localStorage.setItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY, data.refresh_token);
+    }
+
+    logger.info('Token refreshed successfully');
+    return data.access_token;
+  } catch (error) {
+    logger.error('Token refresh error', error instanceof Error ? error : undefined);
+    // Clear invalid tokens
+    localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+    localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+    return null;
+  }
 }
