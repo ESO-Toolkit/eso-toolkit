@@ -9,6 +9,9 @@ import {
   HostilityType,
 } from '../../graphql/gql/graphql';
 import { DamageEvent, LogEvent } from '../../types/combatlogEvents';
+import { Logger, LogLevel } from '../../utils/logger';
+
+const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'DamageEvents' });
 
 // Local interface to avoid circular dependency with RootState
 interface LocalRootState {
@@ -50,14 +53,18 @@ export const fetchDamageEvents = createAsyncThunk(
     }: { reportCode: string; fight: FightFragment; client: EsoLogsClient },
     { getState: _getState, rejectWithValue: _rejectWithValue },
   ) => {
+    logger.info('Fetching damage events', { reportCode, fightId: fight.id });
+    
     // Fetch both friendly and enemy damage events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
     let allEvents: LogEvent[] = [];
 
     for (const hostilityType of hostilityTypes) {
       let nextPageTimestamp: number | null = null;
+      let pageCount = 0;
 
       do {
+        pageCount++;
         const response: GetDamageEventsQuery = await client.query({
           query: GetDamageEventsDocument,
           fetchPolicy: 'no-cache',
@@ -73,10 +80,24 @@ export const fetchDamageEvents = createAsyncThunk(
         const page = response.reportData?.report?.events;
         if (page?.data) {
           allEvents = allEvents.concat(page.data);
+          logger.info(`Fetched damage events page ${pageCount} for ${hostilityType}`, {
+            reportCode,
+            fightId: fight.id,
+            hostilityType,
+            pageCount,
+            eventsInPage: page.data.length,
+            totalEvents: allEvents.length,
+          });
         }
         nextPageTimestamp = page?.nextPageTimestamp ?? null;
       } while (nextPageTimestamp);
     }
+
+    logger.info('Damage events fetch completed', {
+      reportCode,
+      fightId: fight.id,
+      totalEvents: allEvents.length,
+    });
 
     return allEvents as DamageEvent[];
   },
@@ -95,10 +116,21 @@ export const fetchDamageEvents = createAsyncThunk(
         Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
       if (isCached && isFresh) {
+        logger.info('Using cached damage events', {
+          reportCode: requestedReportId,
+          fightId: requestedFightId,
+          cacheAge: state.cacheMetadata.lastFetchedTimestamp
+            ? Date.now() - state.cacheMetadata.lastFetchedTimestamp
+            : 0,
+        });
         return false; // Prevent thunk execution
       }
 
       if (state.loading) {
+        logger.info('Damage events fetch already in progress, skipping', {
+          reportCode: requestedReportId,
+          fightId: requestedFightId,
+        });
         return false;
       }
 

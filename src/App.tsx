@@ -83,6 +83,11 @@ const ScribingSimulatorPage = React.lazy(() =>
     default: module.ScribingSimulatorPage,
   })),
 );
+const ParseAnalysisPage = React.lazy(() =>
+  import('./pages/ParseAnalysisPage').then((module) => ({
+    default: module.ParseAnalysisPage,
+  })),
+);
 
 // Lazy load the feedback FAB to improve initial page load performance
 const LazyModernFeedbackFab = React.lazy(() =>
@@ -365,6 +370,18 @@ const AppRoutes: React.FC = () => {
                     <ScribingSimulatorPage />
                   </Suspense>
                 </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/parse-analysis/:reportId?/:fightId?"
+              element={
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ParseAnalysisPage />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
               }
             />
           </Route>

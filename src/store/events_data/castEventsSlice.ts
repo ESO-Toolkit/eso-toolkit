@@ -9,7 +9,10 @@ import {
   HostilityType,
 } from '../../graphql/gql/graphql';
 import { BeginCastEvent, CastEvent, UnifiedCastEvent } from '../../types/combatlogEvents';
+import { Logger, LogLevel } from '../../utils/logger';
 import { RootState } from '../storeWithHistory';
+
+const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'CastEvents' });
 
 export interface CastEventsState {
   events: UnifiedCastEvent[];
@@ -41,14 +44,18 @@ export const fetchCastEvents = createAsyncThunk<
 >(
   'castEvents/fetchCastEvents',
   async ({ reportCode, fight, client }) => {
+    logger.info('Fetching cast events', { reportCode, fightId: fight.id });
+    
     // Fetch both friendly and enemy cast events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
     let allEvents: (CastEvent | BeginCastEvent)[] = [];
 
     for (const hostilityType of hostilityTypes) {
       let nextPageTimestamp: number | null = null;
+      let pageCount = 0;
 
       do {
+        pageCount++;
         const response: GetCastEventsQuery = await client.query({
           query: GetCastEventsDocument,
           fetchPolicy: 'no-cache',
@@ -64,6 +71,14 @@ export const fetchCastEvents = createAsyncThunk<
         const page = response.reportData?.report?.events;
         if (page?.data) {
           allEvents = allEvents.concat(page.data);
+          logger.info(`Fetched cast events page ${pageCount} for ${hostilityType}`, {
+            reportCode,
+            fightId: fight.id,
+            hostilityType,
+            pageCount,
+            eventsInPage: page.data.length,
+            totalEvents: allEvents.length,
+          });
         }
         nextPageTimestamp = page?.nextPageTimestamp ?? null;
       } while (nextPageTimestamp);
@@ -73,6 +88,14 @@ export const fetchCastEvents = createAsyncThunk<
     const castEvents = allEvents.filter(
       (event) => !event.fake && (event.type === 'begincast' || event.type === 'cast'),
     ) as CastEvent[];
+    
+    logger.info('Cast events fetch completed', {
+      reportCode,
+      fightId: fight.id,
+      totalEvents: allEvents.length,
+      filteredEvents: castEvents.length,
+    });
+    
     return castEvents;
   },
   {
@@ -90,10 +113,21 @@ export const fetchCastEvents = createAsyncThunk<
         Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
       if (isCached && isFresh) {
+        logger.info('Using cached cast events', {
+          reportCode: requestedReportId,
+          fightId: requestedFightId,
+          cacheAge: state.cacheMetadata.lastFetchedTimestamp
+            ? Date.now() - state.cacheMetadata.lastFetchedTimestamp
+            : 0,
+        });
         return false; // Prevent thunk execution
       }
 
       if (state.loading) {
+        logger.info('Cast events fetch already in progress, skipping', {
+          reportCode: requestedReportId,
+          fightId: requestedFightId,
+        });
         return false; // Prevent duplicate execution
       }
 

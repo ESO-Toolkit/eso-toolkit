@@ -23,6 +23,7 @@ import type { EsoLogsClient } from '@/esologsClient';
 
 import { eventsReducer } from './events_data';
 import masterDataReducer from './master_data/masterDataSlice';
+import parseAnalysisReducer from './parse_analysis/parseAnalysisSlice';
 import playerDataReducer from './player_data/playerDataSlice';
 import reportReducer from './report/reportSlice';
 import uiReducer from './ui/uiSlice';
@@ -41,6 +42,7 @@ const rootReducer = combineReducers({
   report: reportReducer,
   masterData: masterDataReducer,
   playerData: playerDataReducer,
+  parseAnalysis: parseAnalysisReducer,
   events: eventsReducer,
   workerResults: workerResultsReducer,
 });

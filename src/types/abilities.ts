@@ -717,10 +717,13 @@ export const GREEN_CHAMPION_POINTS = Object.freeze(
 );
 
 // Food Buffs
-export const TRI_STAT_FOOD = Object.freeze(new Set([68411, 68411, 61218, 127596]));
-export const HEALTH_AND_REGEN_FOOD = Object.freeze(new Set([89971, 72824]));
-export const HEALTH_FOOD = Object.freeze(new Set([84732, 84733, 89973]));
-export const MAGICKA_FOOD = Object.freeze(new Set([89972, 84720]));
-export const STAMINA_FOOD = Object.freeze(new Set([61255, 86673]));
-export const INCREASE_MAX_HEALTH_AND_STAMINA = Object.freeze(new Set([89957, 107789]));
+export const TRI_STAT_FOOD = Object.freeze(new Set([68411, 68411, 61218, 127596, 89955])); // Added: Candied Jester's Coins
+export const HEALTH_AND_REGEN_FOOD = Object.freeze(new Set([89971, 72824, 61322, 66132, 66137, 66586, 66590, 66594, 89953, 89954, 89939])); // Added: Jester foods with regen
+export const HEALTH_FOOD = Object.freeze(new Set([84732, 84733, 89973, 17407, 61259, 66125, 66551, 72957, 72960, 72962]));
+export const MAGICKA_FOOD = Object.freeze(new Set([89972, 84720, 61260, 66128, 66568, 84678, 85486, 89956, 61325, 61326, 89919])); // Added: Jesters Food Max M
+export const STAMINA_FOOD = Object.freeze(new Set([61255, 86673, 61261, 66130, 66576, 68412, 85485, 61328]));
+export const INCREASE_MAX_HEALTH_AND_STAMINA = Object.freeze(new Set([89957, 107789, 61255]));
 export const INCREASE_MAX_HEALTH_AND_MAGICKA = Object.freeze(new Set([84731, 61257]));
+export const INCREASE_MAX_MAGICKA_AND_STAMINA = Object.freeze(new Set([17577, 61294, 93376]));
+export const WITCHES_BREW = Object.freeze(new Set([146563, 146725, 153013, 158543, 158548, 158549, 160169, 160170, 160171, 160172, 160174, 160175, 160176, 160312, 160494, 161213, 161215])); // Witches' Brew event items
+export const EXPERIENCE_BOOST_FOOD = Object.freeze(new Set([91368, 91369])); // Jester's Experience Boost Pie

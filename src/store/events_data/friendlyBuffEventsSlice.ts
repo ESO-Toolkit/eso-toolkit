@@ -9,7 +9,10 @@ import {
   HostilityType,
 } from '../../graphql/gql/graphql';
 import { BuffEvent, LogEvent } from '../../types/combatlogEvents';
+import { Logger, LogLevel } from '../../utils/logger';
 import { RootState } from '../storeWithHistory';
+
+const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'FriendlyBuffEvents' });
 
 // Interface for tracking interval fetching state
 interface IntervalFetchResult {
@@ -102,10 +105,17 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
 >(
   'friendlyBuffEvents/fetchFriendlyBuffEvents',
   async ({ reportCode, fight, client, intervalSize = 30000 }) => {
+    logger.info('Fetching friendly buff events', { reportCode, fightId: fight.id, intervalSize });
+    
     const intervals = createTimeIntervals(fight.startTime, fight.endTime, intervalSize);
+    logger.info(`Created ${intervals.length} time intervals`, {
+      reportCode,
+      fightId: fight.id,
+      intervalCount: intervals.length,
+    });
 
     // Create promises for all interval combinations (only friendlies)
-    const fetchPromises = intervals.map(async (interval): Promise<IntervalFetchResult> => {
+    const fetchPromises = intervals.map(async (interval, index): Promise<IntervalFetchResult> => {
       try {
         const events = await fetchEventsForInterval(
           client,
@@ -116,12 +126,26 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
           HostilityType.Friendlies,
         );
 
+        logger.info(`Fetched interval ${index + 1}/${intervals.length}`, {
+          reportCode,
+          fightId: fight.id,
+          intervalIndex: index + 1,
+          totalIntervals: intervals.length,
+          eventsInInterval: events.length,
+        });
+
         return {
           startTime: interval.startTime,
           endTime: interval.endTime,
           events,
         };
       } catch (error) {
+        logger.error('Failed to fetch interval', error as Error, {
+          reportCode,
+          fightId: fight.id,
+          intervalIndex: index + 1,
+        });
+        
         return {
           startTime: interval.startTime,
           endTime: interval.endTime,
@@ -138,6 +162,14 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
     const allEvents = intervalResults
       .flatMap((result) => result.events)
       .sort((a, b) => a.timestamp - b.timestamp);
+
+    logger.info('Friendly buff events fetch completed', {
+      reportCode,
+      fightId: fight.id,
+      totalEvents: allEvents.length,
+      successfulIntervals: intervalResults.filter((r) => !r.error).length,
+      failedIntervals: intervalResults.filter((r) => r.error).length,
+    });
 
     return { events: allEvents, intervalResults };
   },
@@ -156,10 +188,21 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
         Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
       if (isCached && isFresh) {
+        logger.info('Using cached friendly buff events', {
+          reportCode: requestedReportId,
+          fightId: requestedFightId,
+          cacheAge: state.cacheMetadata.lastFetchedTimestamp
+            ? Date.now() - state.cacheMetadata.lastFetchedTimestamp
+            : 0,
+        });
         return false; // Prevent thunk execution
       }
 
       if (state.loading) {
+        logger.info('Friendly buff events fetch already in progress, skipping', {
+          reportCode: requestedReportId,
+          fightId: requestedFightId,
+        });
         return false; // Prevent duplicate execution
       }
 
