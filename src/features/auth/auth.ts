@@ -92,7 +92,7 @@ const OAUTH_TOKEN_URL = 'https://www.esologs.com/oauth/token';
  */
 export async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = localStorage.getItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
-  
+
   if (!refreshToken) {
     logger.warn('No refresh token available');
     return null;
@@ -120,7 +120,7 @@ export async function refreshAccessToken(): Promise<string | null> {
     }
 
     const data = await response.json();
-    
+
     // Store new tokens
     localStorage.setItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token);
     if (data.refresh_token) {
