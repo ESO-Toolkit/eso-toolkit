@@ -12,9 +12,12 @@ import {
   Observable,
   from,
 } from '@apollo/client';
+import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { setContext } from '@apollo/client/link/context';
+import { onError, ErrorLink } from '@apollo/client/link/error';
 import { getOperationAST } from 'graphql';
 
+import { refreshAccessToken } from './features/auth/auth';
 import { Logger, LogLevel } from './utils/logger';
 
 type ErrorWithGraphQLErrors = {
@@ -84,6 +87,69 @@ export class EsoLogsClient {
   }
 
   private createApolloClient(accessToken: string): ApolloClient {
+    // Error handling link for 401 responses
+    const errorLink: ErrorLink = onError(({ error, operation, forward }) => {
+      // Check if this is a GraphQL error with authentication issues
+      let hasAuthError = false;
+
+      if (CombinedGraphQLErrors.is(error)) {
+        hasAuthError = error.errors.some(
+          (err) =>
+            err.message?.includes('Unauthenticated') ||
+            err.message?.includes('Unauthorized') ||
+            err.extensions?.code === 'UNAUTHENTICATED' ||
+            err.extensions?.code === 'UNAUTHORIZED',
+        );
+      }
+
+      if (hasAuthError) {
+        logger.warn('Authentication error detected - attempting to refresh token');
+
+        // Create a new observable that will retry the request after refreshing the token
+        return new Observable((observer) => {
+          refreshAccessToken()
+            .then((newToken) => {
+              if (newToken) {
+                // Update the operation context with the new token
+                operation.setContext({
+                  headers: {
+                    ...operation.getContext().headers,
+                    Authorization: `Bearer ${newToken}`,
+                  },
+                });
+
+                // Update our internal token
+                this.accessToken = newToken;
+
+                // Retry the request
+                const subscriber = {
+                  next: observer.next.bind(observer),
+                  error: observer.error.bind(observer),
+                  complete: observer.complete.bind(observer),
+                };
+
+                forward(operation).subscribe(subscriber);
+              } else {
+                // Refresh failed, clear tokens and notify user
+                logger.error('Token refresh failed - user needs to re-authenticate');
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                observer.error(new Error('Authentication failed. Please log in again.'));
+              }
+            })
+            .catch((err) => {
+              logger.error('Error during token refresh', err);
+              observer.error(err);
+            });
+        });
+      }
+
+      // Log the error for debugging
+      logger.error('GraphQL operation error', error, {
+        operation: operation.operationName,
+      });
+    });
+
     // Custom link to append query name to URL
     const customHttpLink = createHttpLink({
       uri: (operation) => {
@@ -115,7 +181,7 @@ export class EsoLogsClient {
     });
 
     return new ApolloClient({
-      link: from([authLink, customHttpLink]),
+      link: from([errorLink, authLink, customHttpLink]),
       cache: EsoLogsClient.CACHE,
     });
   }
