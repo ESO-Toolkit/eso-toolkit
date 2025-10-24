@@ -274,23 +274,3 @@ export const AuthEnv = {
     return !!process.env.CI;
   },
 };
-
-/**
- * Skip test if authentication is not available
- */
-export function skipIfNoAuth(test: any): void {
-  test.skip(
-    !AuthEnv.hasAuthCredentials(),
-    'Skipping test - no authentication credentials available',
-  );
-}
-
-/**
- * Skip test if running in CI without proper auth setup
- */
-export function skipInCIWithoutAuth(test: any): void {
-  test.skip(
-    AuthEnv.isCI() && !AuthEnv.hasClientCredentials(),
-    'Skipping test in CI - client credentials required for authentication',
-  );
-}

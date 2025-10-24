@@ -1,4 +1,5 @@
 import { gql } from '@apollo/client';
+import { print } from 'graphql';
 
 import {
   GetCurrentUserDocument,
@@ -13,10 +14,8 @@ describe('GraphQL Query Documents', () => {
       expect(GetCurrentUserDocument.kind).toBe('Document');
     });
 
-    // Note: With Apollo Client v4 and client-preset, documents are plain objects
-    // without .loc property. These tests checked internal structure details.
-    it.skip('should query for current user data', () => {
-      const queryString = GetCurrentUserDocument.loc?.source.body;
+    it('should query for current user data', () => {
+      const queryString = print(GetCurrentUserDocument);
       expect(queryString).toContain('query getCurrentUser');
       expect(queryString).toContain('userData');
       expect(queryString).toContain('currentUser');
@@ -33,10 +32,8 @@ describe('GraphQL Query Documents', () => {
       expect(GetUserReportsDocument.kind).toBe('Document');
     });
 
-    // Note: With Apollo Client v4 and client-preset, documents are plain objects
-    // without .loc property. These tests checked internal structure details.
-    it.skip('should query for user reports with pagination and filtering', () => {
-      const queryString = GetUserReportsDocument.loc?.source.body;
+    it('should query for user reports with pagination and filtering', () => {
+      const queryString = print(GetUserReportsDocument);
       expect(queryString).toContain('query getUserReports');
       expect(queryString).toContain('$limit: Int');
       expect(queryString).toContain('$page: Int');
@@ -45,8 +42,8 @@ describe('GraphQL Query Documents', () => {
       expect(queryString).toContain('reports(limit: $limit, page: $page, userID: $userID)');
     });
 
-    it.skip('should include pagination fields', () => {
-      const queryString = GetUserReportsDocument.loc?.source.body;
+    it('should include pagination fields', () => {
+      const queryString = print(GetUserReportsDocument);
       expect(queryString).toContain('total');
       expect(queryString).toContain('current_page');
       expect(queryString).toContain('per_page');
@@ -54,8 +51,8 @@ describe('GraphQL Query Documents', () => {
       expect(queryString).toContain('has_more_pages');
     });
 
-    it.skip('should include UserReportSummary fragment fields', () => {
-      const queryString = GetUserReportsDocument.loc?.source.body;
+    it('should include UserReportSummary fragment fields', () => {
+      const queryString = print(GetUserReportsDocument);
       expect(queryString).toContain('...UserReportSummary');
       expect(queryString).toContain('code');
       expect(queryString).toContain('startTime');
@@ -73,24 +70,24 @@ describe('GraphQL Query Documents', () => {
       expect(GetReportByCodeDocument.kind).toBe('Document');
     });
 
-    it.skip('should query for specific report by code', () => {
-      const queryString = GetReportByCodeDocument.loc?.source.body;
+    it('should query for specific report by code', () => {
+      const queryString = print(GetReportByCodeDocument);
       expect(queryString).toContain('query getReportByCode');
       expect(queryString).toContain('$code: String!');
       expect(queryString).toContain('reportData');
       expect(queryString).toContain('report(code: $code)');
     });
 
-    it.skip('should include Report fragment with fights', () => {
-      const queryString = GetReportByCodeDocument.loc?.source.body;
+    it('should include Report fragment with fights', () => {
+      const queryString = print(GetReportByCodeDocument);
       expect(queryString).toContain('...Report');
       expect(queryString).toContain('fights');
     });
   });
 
   describe('Fragment consistency', () => {
-    it.skip('should have consistent UserReportSummary fragment structure', () => {
-      const queryString = GetUserReportsDocument.loc?.source.body;
+    it('should have consistent UserReportSummary fragment structure', () => {
+      const queryString = print(GetUserReportsDocument);
 
       // Should include all necessary fields for the reports table
       expect(queryString).toContain('code');
@@ -107,8 +104,8 @@ describe('GraphQL Query Documents', () => {
       expect(queryString).toContain('owner');
     });
 
-    it.skip('should have Report fragment that includes fights', () => {
-      const queryString = GetReportByCodeDocument.loc?.source.body;
+    it('should have Report fragment that includes fights', () => {
+      const queryString = print(GetReportByCodeDocument);
 
       // Should include basic report fields
       expect(queryString).toContain('code');

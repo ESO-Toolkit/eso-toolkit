@@ -8,6 +8,15 @@ import React from 'react';
 
 import * as webglDetection from '../../../utils/webglDetection';
 
+jest.mock('../../../utils/webglDetection', () => {
+  const actual = jest.requireActual('../../../utils/webglDetection');
+  return {
+    ...actual,
+    detectWebGLCapabilities: jest.fn(),
+    getWebGLDescription: jest.fn(),
+  };
+});
+
 import { ReplayErrorBoundary } from './ReplayErrorBoundary';
 
 // Mock Sentry
@@ -57,10 +66,40 @@ describe('ReplayErrorBoundary', () => {
   const originalConsoleError = console.error;
   const originalConsoleWarn = console.warn;
 
+  const detectWebGLCapabilitiesMock = webglDetection.detectWebGLCapabilities as jest.MockedFunction<
+    typeof webglDetection.detectWebGLCapabilities
+  >;
+  const getWebGLDescriptionMock = webglDetection.getWebGLDescription as jest.MockedFunction<
+    typeof webglDetection.getWebGLDescription
+  >;
+
+  const createCapabilities = (
+    overrides: Partial<webglDetection.WebGLCapabilities> = {},
+  ): webglDetection.WebGLCapabilities => ({
+    hasWebGL1: false,
+    hasWebGL2: true,
+    recommendedVersion: 2,
+    performanceTier: webglDetection.WebGLPerformanceTier.HIGH,
+    extensions: ['WEBGL_depth_texture', 'OES_element_index_uint'],
+    maxTextureSize: 4096,
+    maxViewportDims: [4096, 4096],
+    renderer: 'Test Renderer',
+    vendor: 'Test Vendor',
+    isSufficient: true,
+    insufficientReason: null,
+    likelySwoftware: false,
+    ...overrides,
+  });
+
   beforeEach(() => {
     // Suppress console errors in tests (React error boundary logs are noisy)
     console.error = jest.fn();
     console.warn = jest.fn();
+
+    detectWebGLCapabilitiesMock.mockReset();
+    getWebGLDescriptionMock.mockReset();
+    detectWebGLCapabilitiesMock.mockReturnValue(createCapabilities());
+    getWebGLDescriptionMock.mockReturnValue('WebGL 2.0 (High Performance) - Test Renderer');
   });
 
   afterEach(() => {
@@ -72,22 +111,6 @@ describe('ReplayErrorBoundary', () => {
 
   describe('Normal Rendering', () => {
     it('should render children when no error occurs', () => {
-      // Mock sufficient WebGL
-      jest.spyOn(webglDetection, 'detectWebGLCapabilities').mockReturnValue({
-        hasWebGL1: false,
-        hasWebGL2: true,
-        recommendedVersion: 2,
-        performanceTier: webglDetection.WebGLPerformanceTier.HIGH,
-        extensions: ['WEBGL_depth_texture', 'OES_element_index_uint'],
-        maxTextureSize: 4096,
-        maxViewportDims: [4096, 4096],
-        renderer: 'Test Renderer',
-        vendor: 'Test Vendor',
-        isSufficient: true,
-        insufficientReason: null,
-        likelySwoftware: false,
-      });
-
       render(
         <ReplayErrorBoundary>
           <div data-testid="test-child">Test Child</div>
@@ -99,39 +122,38 @@ describe('ReplayErrorBoundary', () => {
     });
 
     it('should not check WebGL when checkWebGL is false', () => {
-      const detectSpy = jest.spyOn(webglDetection, 'detectWebGLCapabilities');
-
       render(
         <ReplayErrorBoundary checkWebGL={false}>
           <div data-testid="test-child">Test Child</div>
         </ReplayErrorBoundary>,
       );
 
-      expect(detectSpy).not.toHaveBeenCalled();
+      expect(detectWebGLCapabilitiesMock).not.toHaveBeenCalled();
       expect(screen.getByTestId('test-child')).toBeInTheDocument();
     });
   });
 
   describe('WebGL Detection and Fallback', () => {
     it('should show WebGL fallback when WebGL is not supported', () => {
-      jest.spyOn(webglDetection, 'detectWebGLCapabilities').mockReturnValue({
-        hasWebGL1: false,
-        hasWebGL2: false,
-        recommendedVersion: null,
-        performanceTier: webglDetection.WebGLPerformanceTier.NONE,
-        extensions: [],
-        maxTextureSize: null,
-        maxViewportDims: null,
-        renderer: null,
-        vendor: null,
-        isSufficient: false,
-        insufficientReason: 'WebGL is not supported in this browser',
-        likelySwoftware: false,
-      });
+      detectWebGLCapabilitiesMock.mockReturnValue(
+        createCapabilities({
+          hasWebGL1: false,
+          hasWebGL2: false,
+          recommendedVersion: null,
+          performanceTier: webglDetection.WebGLPerformanceTier.NONE,
+          extensions: [],
+          maxTextureSize: null,
+          maxViewportDims: null,
+          renderer: null,
+          vendor: null,
+          isSufficient: false,
+          insufficientReason: 'WebGL is not supported in this browser',
+        }),
+      );
 
-      jest
-        .spyOn(webglDetection, 'getWebGLDescription')
-        .mockReturnValue('WebGL Not Available: WebGL is not supported in this browser');
+      getWebGLDescriptionMock.mockReturnValue(
+        'WebGL Not Available: WebGL is not supported in this browser',
+      );
 
       render(
         <ReplayErrorBoundary>
@@ -147,27 +169,19 @@ describe('ReplayErrorBoundary', () => {
     });
 
     it('should show WebGL fallback when required extensions are missing', () => {
-      jest.spyOn(webglDetection, 'detectWebGLCapabilities').mockReturnValue({
-        hasWebGL1: false,
-        hasWebGL2: true,
-        recommendedVersion: 2,
-        performanceTier: webglDetection.WebGLPerformanceTier.LOW,
-        extensions: ['EXT_texture_filter_anisotropic'],
-        maxTextureSize: 4096,
-        maxViewportDims: [4096, 4096],
-        renderer: 'Test Renderer',
-        vendor: 'Test Vendor',
-        isSufficient: false,
-        insufficientReason:
-          'Missing required WebGL extensions: WEBGL_depth_texture, OES_element_index_uint',
-        likelySwoftware: false,
-      });
+      detectWebGLCapabilitiesMock.mockReturnValue(
+        createCapabilities({
+          performanceTier: webglDetection.WebGLPerformanceTier.LOW,
+          extensions: ['EXT_texture_filter_anisotropic'],
+          isSufficient: false,
+          insufficientReason:
+            'Missing required WebGL extensions: WEBGL_depth_texture, OES_element_index_uint',
+        }),
+      );
 
-      jest
-        .spyOn(webglDetection, 'getWebGLDescription')
-        .mockReturnValue(
-          'WebGL Not Available: Missing required WebGL extensions: WEBGL_depth_texture, OES_element_index_uint',
-        );
+      getWebGLDescriptionMock.mockReturnValue(
+        'WebGL Not Available: Missing required WebGL extensions: WEBGL_depth_texture, OES_element_index_uint',
+      );
 
       render(
         <ReplayErrorBoundary>
@@ -180,24 +194,21 @@ describe('ReplayErrorBoundary', () => {
     });
 
     it('should show software rendering warning when detected', () => {
-      jest.spyOn(webglDetection, 'detectWebGLCapabilities').mockReturnValue({
-        hasWebGL1: false,
-        hasWebGL2: true,
-        recommendedVersion: 2,
-        performanceTier: webglDetection.WebGLPerformanceTier.LOW,
-        extensions: [],
-        maxTextureSize: 4096,
-        maxViewportDims: [4096, 4096],
-        renderer: 'SwiftShader Renderer',
-        vendor: 'Google Inc.',
-        isSufficient: false,
-        insufficientReason: 'Missing required WebGL extensions',
-        likelySwoftware: true,
-      });
+      detectWebGLCapabilitiesMock.mockReturnValue(
+        createCapabilities({
+          performanceTier: webglDetection.WebGLPerformanceTier.LOW,
+          extensions: [],
+          renderer: 'SwiftShader Renderer',
+          vendor: 'Google Inc.',
+          isSufficient: false,
+          insufficientReason: 'Missing required WebGL extensions',
+          likelySwoftware: true,
+        }),
+      );
 
-      jest
-        .spyOn(webglDetection, 'getWebGLDescription')
-        .mockReturnValue('WebGL Not Available: Missing required WebGL extensions');
+      getWebGLDescriptionMock.mockReturnValue(
+        'WebGL Not Available: Missing required WebGL extensions',
+      );
 
       render(
         <ReplayErrorBoundary>
@@ -210,40 +221,26 @@ describe('ReplayErrorBoundary', () => {
     });
 
     it('should allow user to retry WebGL detection', async () => {
-      const detectSpy = jest
-        .spyOn(webglDetection, 'detectWebGLCapabilities')
-        .mockReturnValueOnce({
-          hasWebGL1: false,
-          hasWebGL2: false,
-          recommendedVersion: null,
-          performanceTier: webglDetection.WebGLPerformanceTier.NONE,
-          extensions: [],
-          maxTextureSize: null,
-          maxViewportDims: null,
-          renderer: null,
-          vendor: null,
-          isSufficient: false,
-          insufficientReason: 'WebGL is not supported in this browser',
-          likelySwoftware: false,
-        })
-        .mockReturnValueOnce({
-          hasWebGL1: false,
-          hasWebGL2: true,
-          recommendedVersion: 2,
-          performanceTier: webglDetection.WebGLPerformanceTier.HIGH,
-          extensions: ['WEBGL_depth_texture', 'OES_element_index_uint'],
-          maxTextureSize: 4096,
-          maxViewportDims: [4096, 4096],
-          renderer: 'Test Renderer',
-          vendor: 'Test Vendor',
-          isSufficient: true,
-          insufficientReason: null,
-          likelySwoftware: false,
-        });
+      detectWebGLCapabilitiesMock
+        .mockReturnValueOnce(
+          createCapabilities({
+            hasWebGL2: false,
+            recommendedVersion: null,
+            performanceTier: webglDetection.WebGLPerformanceTier.NONE,
+            extensions: [],
+            maxTextureSize: null,
+            maxViewportDims: null,
+            renderer: null,
+            vendor: null,
+            isSufficient: false,
+            insufficientReason: 'WebGL is not supported in this browser',
+          }),
+        )
+        .mockReturnValueOnce(createCapabilities());
 
-      jest
-        .spyOn(webglDetection, 'getWebGLDescription')
-        .mockReturnValue('WebGL Not Available: WebGL is not supported in this browser');
+      getWebGLDescriptionMock.mockReturnValue(
+        'WebGL Not Available: WebGL is not supported in this browser',
+      );
 
       const { rerender } = render(
         <ReplayErrorBoundary>
@@ -264,29 +261,20 @@ describe('ReplayErrorBoundary', () => {
       );
 
       await waitFor(() => {
-        expect(detectSpy).toHaveBeenCalledTimes(2);
+        expect(detectWebGLCapabilitiesMock).toHaveBeenCalledTimes(2);
       });
     });
 
     it('should toggle technical details visibility', () => {
-      jest.spyOn(webglDetection, 'detectWebGLCapabilities').mockReturnValue({
-        hasWebGL1: false,
-        hasWebGL2: true,
-        recommendedVersion: 2,
-        performanceTier: webglDetection.WebGLPerformanceTier.MEDIUM,
-        extensions: ['WEBGL_depth_texture', 'OES_element_index_uint'],
-        maxTextureSize: 4096,
-        maxViewportDims: [4096, 4096],
-        renderer: 'Test Renderer',
-        vendor: 'Test Vendor',
-        isSufficient: false,
-        insufficientReason: 'Test reason',
-        likelySwoftware: false,
-      });
+      detectWebGLCapabilitiesMock.mockReturnValue(
+        createCapabilities({
+          performanceTier: webglDetection.WebGLPerformanceTier.MEDIUM,
+          isSufficient: false,
+          insufficientReason: 'Test reason',
+        }),
+      );
 
-      jest
-        .spyOn(webglDetection, 'getWebGLDescription')
-        .mockReturnValue('WebGL Not Available: Test reason');
+      getWebGLDescriptionMock.mockReturnValue('WebGL Not Available: Test reason');
 
       render(
         <ReplayErrorBoundary>
@@ -317,22 +305,6 @@ describe('ReplayErrorBoundary', () => {
 
   describe('Error Catching and Rendering', () => {
     it('should catch and display runtime errors', () => {
-      // Mock sufficient WebGL
-      jest.spyOn(webglDetection, 'detectWebGLCapabilities').mockReturnValue({
-        hasWebGL1: false,
-        hasWebGL2: true,
-        recommendedVersion: 2,
-        performanceTier: webglDetection.WebGLPerformanceTier.HIGH,
-        extensions: ['WEBGL_depth_texture', 'OES_element_index_uint'],
-        maxTextureSize: 4096,
-        maxViewportDims: [4096, 4096],
-        renderer: 'Test Renderer',
-        vendor: 'Test Vendor',
-        isSufficient: true,
-        insufficientReason: null,
-        likelySwoftware: false,
-      });
-
       render(
         <ReplayErrorBoundary>
           <ThrowError shouldThrow={true} />
@@ -349,22 +321,6 @@ describe('ReplayErrorBoundary', () => {
     it('should call onError callback when error occurs', () => {
       const onErrorMock = jest.fn();
 
-      // Mock sufficient WebGL
-      jest.spyOn(webglDetection, 'detectWebGLCapabilities').mockReturnValue({
-        hasWebGL1: false,
-        hasWebGL2: true,
-        recommendedVersion: 2,
-        performanceTier: webglDetection.WebGLPerformanceTier.HIGH,
-        extensions: ['WEBGL_depth_texture', 'OES_element_index_uint'],
-        maxTextureSize: 4096,
-        maxViewportDims: [4096, 4096],
-        renderer: 'Test Renderer',
-        vendor: 'Test Vendor',
-        isSufficient: true,
-        insufficientReason: null,
-        likelySwoftware: false,
-      });
-
       render(
         <ReplayErrorBoundary onError={onErrorMock}>
           <ThrowError shouldThrow={true} />
@@ -379,22 +335,6 @@ describe('ReplayErrorBoundary', () => {
     });
 
     it('should reset error state after retry', () => {
-      // Mock sufficient WebGL
-      jest.spyOn(webglDetection, 'detectWebGLCapabilities').mockReturnValue({
-        hasWebGL1: false,
-        hasWebGL2: true,
-        recommendedVersion: 2,
-        performanceTier: webglDetection.WebGLPerformanceTier.HIGH,
-        extensions: ['WEBGL_depth_texture', 'OES_element_index_uint'],
-        maxTextureSize: 4096,
-        maxViewportDims: [4096, 4096],
-        renderer: 'Test Renderer',
-        vendor: 'Test Vendor',
-        isSufficient: true,
-        insufficientReason: null,
-        likelySwoftware: false,
-      });
-
       render(
         <ReplayErrorBoundary>
           <ThrowError shouldThrow={true} />
@@ -418,22 +358,6 @@ describe('ReplayErrorBoundary', () => {
     });
 
     it('should toggle error details visibility', () => {
-      // Mock sufficient WebGL
-      jest.spyOn(webglDetection, 'detectWebGLCapabilities').mockReturnValue({
-        hasWebGL1: false,
-        hasWebGL2: true,
-        recommendedVersion: 2,
-        performanceTier: webglDetection.WebGLPerformanceTier.HIGH,
-        extensions: ['WEBGL_depth_texture', 'OES_element_index_uint'],
-        maxTextureSize: 4096,
-        maxViewportDims: [4096, 4096],
-        renderer: 'Test Renderer',
-        vendor: 'Test Vendor',
-        isSufficient: true,
-        insufficientReason: null,
-        likelySwoftware: false,
-      });
-
       render(
         <ReplayErrorBoundary>
           <ThrowError shouldThrow={true} />
