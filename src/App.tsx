@@ -24,6 +24,7 @@ import { useAbilitiesPreloader } from './hooks/useAbilitiesPreloader';
 import { useWorkerManagerLogger } from './hooks/useWorkerManagerLogger';
 import { AppLayout } from './layouts/AppLayout';
 import { Banned } from './pages/Banned';
+import { NotFound } from './pages/NotFound';
 import { ReduxThemeProvider } from './ReduxThemeProvider';
 import store, { persistor } from './store/storeWithHistory';
 import { initializeSentry, addBreadcrumb } from './utils/sentryUtils';
@@ -361,6 +362,15 @@ const AppRoutes: React.FC = () => {
               }
             />
           </Route>
+          {/* Catch-all route for 404 - must be last */}
+          <Route
+            path="*"
+            element={
+              <ErrorBoundary>
+                <NotFound />
+              </ErrorBoundary>
+            }
+          />
         </Routes>
       </ErrorBoundary>
     </HashRouter>
