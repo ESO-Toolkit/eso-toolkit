@@ -42,7 +42,7 @@ export const DynamicMetaTags: React.FC<DynamicMetaTagsProps> = ({
 
     // Update document title
     if (title) {
-      document.title = `${title} | ESO Log Insights by NotaGuild`;
+      document.title = `${title} | ESO Toolkit`;
     }
 
     // Update meta description

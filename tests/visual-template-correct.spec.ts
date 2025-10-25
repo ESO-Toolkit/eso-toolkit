@@ -26,7 +26,7 @@ test.describe('Visual Regression - Correct Pattern Template', () => {
     await page.goto('/report/98b3845e3c1ed2a6191e-67039068743d5eeb2855/fight/117/players');
     
     // Step 2: Wait for basic page load (title check)
-    await expect(page).toHaveTitle(/ESO Log Insights/, { timeout: 30000 });
+    await expect(page).toHaveTitle(/ESO Toolkit/, { timeout: 30000 });
     
     // Step 3: CRITICAL - Create skeleton detector and wait for skeletons to disappear
     console.log('⏳ Waiting for loading skeletons to disappear...');

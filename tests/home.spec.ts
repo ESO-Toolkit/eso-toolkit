@@ -10,7 +10,7 @@ test.describe('Home Page', () => {
 
   test('should load the home page successfully', async ({ page }) => {
     // Check that the page title is set correctly
-    await expect(page).toHaveTitle(/ESO Log Insights by NotaGuild/);
+    await expect(page).toHaveTitle(/ESO Toolkit/);
 
     // Check that the main content is visible
     // Looking for elements that should be present on the landing page

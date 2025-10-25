@@ -152,7 +152,7 @@ test.describe('Skeleton Detection Examples', () => {
     });
     
     // Verify the page loaded correctly
-    await expect(page).toHaveTitle(/ESO Log Insights/);
+    await expect(page).toHaveTitle(/ESO Toolkit/);
     
     // Check if there are any skeletons anyway (shouldn't be)
     const hasSkeletons = await skeletonHelpers.hasAny(page);

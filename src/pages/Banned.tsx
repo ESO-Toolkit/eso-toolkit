@@ -52,8 +52,7 @@ export const Banned: React.FC = () => {
         </Typography>
 
         <Typography variant="body1" sx={{ mt: 2, mb: 3 }} color="text.secondary">
-          {banReason ||
-            'Access denied: this ESO Logs account has been banned from ESO Log Aggregator.'}
+          {banReason || 'Access denied: this ESO Logs account has been banned from ESO Toolkit.'}
         </Typography>
 
         <Typography variant="body2" sx={{ mb: 4 }} color="text.secondary">

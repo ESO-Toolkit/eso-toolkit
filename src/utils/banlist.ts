@@ -11,7 +11,7 @@ const BANLIST_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 const BANLIST_FILE_NAME = 'banlist.json';
 
 export const DEFAULT_BAN_REASON =
-  'Access denied: this ESO Logs account has been banned from ESO Log Aggregator.';
+  'Access denied: this ESO Logs account has been banned from ESO Toolkit.';
 
 export interface BanCheckUser {
   id?: number | string | null;

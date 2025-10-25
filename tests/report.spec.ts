@@ -14,7 +14,7 @@ test.describe('Report Page', () => {
     await page.goto(`/#/report/${testReportId}`);
 
     // Wait for the page title to be set
-    await expect(page).toHaveTitle(/ESO Log Insights by NotaGuild/);
+    await expect(page).toHaveTitle(/ESO Toolkit/);
 
     // Wait for the page to load and network requests to complete
     await page.waitForLoadState('domcontentloaded');

@@ -166,7 +166,7 @@ const AppRoutes: React.FC = () => {
   useAbilitiesPreloader(isReportPage);
 
   React.useEffect(() => {
-    document.title = 'ESO Log Insights by NotaGuild';
+    document.title = 'ESO Toolkit';
     // Add breadcrumb for page load
     addBreadcrumb('App routes initialized', 'navigation', {
       title: document.title,

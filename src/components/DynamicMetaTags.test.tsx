@@ -23,7 +23,7 @@ describe('DynamicMetaTags', () => {
   it('should update document title', () => {
     render(<DynamicMetaTags title="Test Fight - Report Analysis" />);
 
-    expect(document.title).toBe('Test Fight - Report Analysis | ESO Log Insights by NotaGuild');
+    expect(document.title).toBe('Test Fight - Report Analysis | ESO Toolkit');
   });
 
   it('should add Open Graph meta tags', () => {

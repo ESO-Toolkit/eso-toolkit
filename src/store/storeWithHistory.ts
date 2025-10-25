@@ -93,7 +93,7 @@ const createStoreWithClient = (esoLogsClient: EsoLogsClient): AppStore => {
         },
       }).concat(routerMiddleware), // Add router middleware
     devTools: process.env.NODE_ENV !== 'production' && {
-      name: 'ESO Log Aggregator',
+      name: 'ESO Toolkit',
       trace: false,
       maxAge: 25,
     },

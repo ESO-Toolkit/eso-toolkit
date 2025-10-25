@@ -31,7 +31,7 @@ test.describe('Skeleton Detection Smoke Tests', () => {
     expect(finalSkeletonInfo.hasSkeletons).toBeFalsy();
     
     // Verify the calculator page loaded
-    await expect(page).toHaveTitle(/ESO Log Insights/);
+    await expect(page).toHaveTitle(/ESO Toolkit/);
   });
 
   test('can use skeleton helper functions', async ({ page }) => {
@@ -62,7 +62,7 @@ test.describe('Skeleton Detection Smoke Tests', () => {
     expect(finalHasSkeletons).toBeFalsy();
     
     // Verify page loaded
-    await expect(page).toHaveTitle(/ESO Log Insights/);
+    await expect(page).toHaveTitle(/ESO Toolkit/);
   });
 
   test('can detect specific skeleton types', async ({ page }) => {
