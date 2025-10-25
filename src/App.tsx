@@ -28,10 +28,14 @@ import { Banned } from './pages/Banned';
 import { NotFound } from './pages/NotFound';
 import { ReduxThemeProvider } from './ReduxThemeProvider';
 import store, { persistor } from './store/storeWithHistory';
+import { initializeAnalytics } from './utils/analytics';
 import { initializeSentry, addBreadcrumb } from './utils/sentryUtils';
 
 // Initialize Sentry before the app starts
 initializeSentry();
+
+// Initialize Google Analytics
+initializeAnalytics();
 
 // Expose Redux store to window for debugging and testing (dev/test only)
 if (process.env.NODE_ENV !== 'production') {

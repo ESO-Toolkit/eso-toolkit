@@ -37,6 +37,7 @@ runs:
         npm run build
       env:
         VITE_BASE_URL: '${{steps.setup.outputs.base_url}}'
+        VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
 
     - name: Build Storybook
       shell: bash
