@@ -35,7 +35,7 @@ export const HelpSupportButton: React.FC = () => {
   const handleFeedback = (): void => {
     trackFeatureUsage('help-support', 'feedback');
     // Open feedback form or external link
-    window.open('mailto:support@notaguild.com?subject=ESO Log Insights Feedback', '_blank');
+    window.open('mailto:support@notaguild.com?subject=ESO Toolkit Feedback', '_blank');
     handleClose();
   };
 

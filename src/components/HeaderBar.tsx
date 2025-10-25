@@ -408,17 +408,17 @@ const Calculator = ({ size }: CalculatorProps): React.JSX.Element => (
 const getLogoText = (pathname: string): string => {
   // Landing page
   if (pathname === '/' || pathname === '' || pathname === '#/') {
-    return 'ESO HELPER TOOLS';
+    return 'ESO Toolkit';
   }
 
   // Calculator page
   if (pathname.includes('/calculator')) {
-    return 'ESO Calculator';
+    return 'ESO Toolkit';
   }
 
   // Text editor page
   if (pathname.includes('/text-editor')) {
-    return 'ESO Text-Editor';
+    return 'ESO Toolkit';
   }
 
   // Log analyzer related pages (reports, logs, etc.)
@@ -428,11 +428,11 @@ const getLogoText = (pathname: string): string => {
     pathname.includes('/latest-reports') ||
     pathname.includes('/my-reports')
   ) {
-    return 'ESO Log Analyzer';
+    return 'ESO Toolkit';
   }
 
   // Default for other pages
-  return 'ESO Log Analyzer';
+  return 'ESO Toolkit';
 };
 
 export const HeaderBar: React.FC = () => {

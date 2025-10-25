@@ -80,7 +80,7 @@ export const Login: React.FC = () => {
                 data-testid="login-title"
                 sx={{ fontWeight: 600, mb: 1 }}
               >
-                ESO Log Aggregator
+                ESO Toolkit
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                 Connect with ESO Logs to analyze your combat data
