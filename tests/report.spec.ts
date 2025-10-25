@@ -166,10 +166,13 @@ test.describe('Report Page', () => {
         // Check for horizontal overflow
         const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
         const viewportWidth = await page.evaluate(() => window.innerWidth);
-        expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1).catch(() => {
+        try {
+          expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1);
+        } catch (error) {
           // Log which viewport failed if this assertion fails
           console.error(`Horizontal overflow detected on ${viewport.name} viewport`);
-        });
+          throw error;
+        }
 
         // Give a brief moment between viewport changes
         await page.waitForTimeout(100);

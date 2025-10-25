@@ -55,6 +55,7 @@ describe('castEventsSlice', () => {
         events: [],
         loading: false,
         error: null,
+        currentRequest: null,
         cacheMetadata: {
           lastFetchedReportId: null,
           lastFetchedFightId: null,
@@ -88,6 +89,7 @@ describe('castEventsSlice', () => {
         events: [],
         loading: false,
         error: null,
+        currentRequest: null,
         cacheMetadata: {
           lastFetchedReportId: null,
           lastFetchedFightId: null,
@@ -115,13 +117,35 @@ describe('castEventsSlice', () => {
 
     describe('pending', () => {
       it('should set loading to true and clear error', () => {
+        const mockFight: FightFragment = {
+          id: 1,
+          name: 'Test Fight',
+          startTime: 1000,
+          endTime: 2000,
+          encounterID: 100,
+        };
+
         store.dispatch({
           type: 'castEvents/fetchCastEvents/pending',
+          meta: {
+            arg: {
+              reportCode: 'ABC123',
+              fight: mockFight,
+              restrictToFightWindow: true,
+            },
+            requestId: 'test-request-1',
+          },
         });
 
         const state = store.getState() as { events: { casts: CastEventsState } };
         expect(state.events.casts.loading).toBe(true);
         expect(state.events.casts.error).toBeNull();
+        expect(state.events.casts.currentRequest).toEqual({
+          reportId: 'ABC123',
+          fightId: 1,
+          requestId: 'test-request-1',
+          restrictToFightWindow: true,
+        });
       });
     });
 
@@ -236,23 +260,31 @@ describe('castEventsSlice', () => {
     describe('cache condition behavior', () => {
       it('should not fetch if data is cached and fresh', async () => {
         const reportCode = 'ABC123';
-        const recentTimestamp = Date.now() - 1000; // 1 second ago
+        const requestId = 'test-request-cache';
+        
+        // First, dispatch pending to set currentRequest
+        store.dispatch({
+          type: 'castEvents/fetchCastEvents/pending',
+          meta: {
+            arg: { reportCode, fight: mockFight, client: mockClient, restrictToFightWindow: true },
+            requestId,
+          },
+        });
 
-        // Set up initial state manually by creating a custom action
+        // Then dispatch fulfilled to populate cache
         store.dispatch({
           type: 'castEvents/fetchCastEvents/fulfilled',
           payload: [mockCastEvent()],
           meta: {
-            arg: { reportCode, fight: mockFight, client: mockClient },
+            arg: { reportCode, fight: mockFight, client: mockClient, restrictToFightWindow: true },
+            requestId,
           },
         });
 
-        // Update timestamp by dispatching another action that updates the cache
-        store.dispatch({
-          type: 'TEST_UPDATE_CACHE_TIMESTAMP',
-          payload: { timestamp: recentTimestamp },
-        });
+        // Reset the mock to track new calls
+        mockClient.query.mockClear();
 
+        // Try to fetch again - should be cached
         await store.dispatch(
           fetchCastEvents({ reportCode, fight: mockFight, client: mockClient }) as any,
         );

@@ -7,6 +7,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import { FightFragment } from '../graphql/gql/graphql';
 import { ReportFightProvider } from '../ReportFightContext';
+import { LoggerProvider } from '../contexts/LoggerContext';
 import masterDataReducer from '../store/master_data/masterDataSlice';
 
 // Mock GraphQL client
@@ -178,9 +179,11 @@ describe('ParseAnalysisPage', () => {
     const testStore = createTestStore();
     return render(
       <Provider store={testStore}>
-        <MemoryRouter initialEntries={['/parse-analysis']}>
-          <ReportFightProvider>{component}</ReportFightProvider>
-        </MemoryRouter>
+        <LoggerProvider>
+          <MemoryRouter initialEntries={['/parse-analysis']}>
+            <ReportFightProvider>{component}</ReportFightProvider>
+          </MemoryRouter>
+        </LoggerProvider>
       </Provider>,
     );
   };
