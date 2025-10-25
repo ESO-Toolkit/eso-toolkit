@@ -47,7 +47,7 @@ export const Footer: React.FC = React.memo(() => {
 
       { label: 'Join Discord', href: 'https://discord.gg/mMjwcQYFdc', external: true },
 
-      { label: 'GitHub', href: 'https://github.com/esohelper', external: true },
+      { label: 'GitHub', href: 'https://github.com/bkrupa/eso-log-aggregator', external: true },
     ],
 
     [],
@@ -761,7 +761,7 @@ export const Footer: React.FC = React.memo(() => {
 
             <Button
               component="a"
-              href="https://github.com/esohelper/ESO-Log-Aggregator"
+              href="https://github.com/bkrupa/eso-log-aggregator"
               target="_blank"
               rel="noopener noreferrer"
               sx={secondaryButtonSx}
