@@ -18,7 +18,12 @@ const logger = new Logger({
  * Icon mapping from Elms to M0RMarkers style
  * Based on M0RMarkers/elmsConvert.lua
  */
-const ELMS_ICON_MAP: Record<number, Partial<MorMarker>> = {
+export interface ElmsIconDefinition extends Partial<MorMarker> {
+  iconKey: number;
+  label?: string;
+}
+
+export const ELMS_ICON_MAP: Record<number, Partial<MorMarker>> = {
   // Numbers 1-12
   1: { bgTexture: 'M0RMarkers/textures/blank.dds', text: '1', size: 1.5 },
   2: { bgTexture: 'M0RMarkers/textures/blank.dds', text: '2', size: 1.5 },
@@ -202,6 +207,7 @@ export function decodeElmsMarkersString(elmsString: string): DecodedElmsMarkers 
       colour: iconTemplate?.colour || [1, 1, 1, 1],
       text: iconTemplate?.text || undefined, // Ensure undefined instead of any falsy value
       orientation: undefined, // Elms markers are floating (no orientation)
+      elmsIconKey: iconKey,
     };
 
     markers.push(marker);

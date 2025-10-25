@@ -25,6 +25,8 @@ export interface MorMarker {
   text?: string;
   /** Optional orientation [pitch, yaw] in radians. If undefined, marker is "floating" (always faces camera) */
   orientation?: [number, number];
+  /** Optional Elms icon key when marker originated from Elms marker set */
+  elmsIconKey?: number;
 }
 
 /**

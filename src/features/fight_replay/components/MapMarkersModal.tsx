@@ -17,6 +17,7 @@ import React, { useCallback, useState } from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { useMarkerStats } from '../../../hooks/useMarkerStats';
+import { MapMarkersState } from '../types/mapMarkers';
 
 interface MapMarkersModalProps {
   /** Whether the modal is open */
@@ -25,8 +26,8 @@ interface MapMarkersModalProps {
   onClose: () => void;
   /** Current fight data */
   fight: FightFragment;
-  /** Current map markers string (M0R or Elms format) */
-  mapMarkersString: string | null;
+  /** Current markers state */
+  markersState: MapMarkersState | null;
   /** Callback when markers are loaded */
   onLoadMarkers: (markersString: string) => void;
   /** Callback when markers are cleared */
@@ -40,14 +41,15 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
   open,
   onClose,
   fight,
-  mapMarkersString,
+  markersState,
   onLoadMarkers,
   onClearMarkers,
 }) => {
   const [mapMarkersInput, setMapMarkersInput] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Calculate marker statistics
-  const markerStats = useMarkerStats(mapMarkersString || undefined, fight);
+  const markerStats = useMarkerStats(markersState ?? undefined, fight);
 
   const handleLoadMarkers = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -59,8 +61,15 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
         return;
       }
 
-      onLoadMarkers(trimmedInput);
-      setMapMarkersInput(''); // Clear input after successful load
+      try {
+        onLoadMarkers(trimmedInput);
+        setLoadError(null);
+        setMapMarkersInput('');
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Failed to load markers. Please try again.';
+        setLoadError(message);
+      }
     },
     [mapMarkersInput, onLoadMarkers],
   );
@@ -71,6 +80,7 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
       event.stopPropagation();
 
       onClearMarkers();
+      setLoadError(null);
       setMapMarkersInput('');
     },
     [onClearMarkers],
@@ -145,7 +155,7 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
           />
 
           {/* Current Markers Status */}
-          {mapMarkersString && markerStats.success && (
+          {markersState && markersState.markers.length > 0 && markerStats.success && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Typography variant="subtitle2" color="text.secondary">
                 Currently Loaded:
@@ -173,17 +183,22 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
           )}
 
           {/* Error State */}
-          {mapMarkersString && !markerStats.success && (
+          {markersState && !markerStats.success && (
             <Alert severity="error">{markerStats.error}</Alert>
           )}
 
           {/* No Matches Warning */}
-          {mapMarkersString && markerStats.success && markerStats.filtered === 0 && (
-            <Alert severity="warning">
-              No markers match the current map ({markerStats.mapName}).
-              {markerStats.totalDecoded > 0 && ' All markers were filtered out by bounding box.'}
-            </Alert>
-          )}
+          {markersState &&
+            markersState.markers.length > 0 &&
+            markerStats.success &&
+            markerStats.filtered === 0 && (
+              <Alert severity="warning">
+                No markers match the current map ({markerStats.mapName}).
+                {markerStats.totalDecoded > 0 && ' All markers were filtered out by bounding box.'}
+              </Alert>
+            )}
+
+          {loadError && <Alert severity="error">{loadError}</Alert>}
         </Box>
       </DialogContent>
 
@@ -191,7 +206,7 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
         <Button onClick={handleClose} color="inherit" type="button">
           Close
         </Button>
-        {mapMarkersString && (
+        {markersState && markersState.markers.length > 0 && (
           <Button onClick={handleClearMarkers} color="secondary" variant="outlined" type="button">
             Clear Markers
           </Button>

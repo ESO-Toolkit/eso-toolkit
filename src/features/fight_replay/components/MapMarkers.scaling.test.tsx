@@ -6,6 +6,7 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 import { ZONE_SCALE_DATA } from '../../../types/zoneScaleData';
+import { parseMarkersInput } from '../utils/mapMarkerConverters';
 
 import { MapMarkers } from './MapMarkers';
 
@@ -65,7 +66,10 @@ describe('MapMarkers scaling', () => {
     const fight = buildFight(zoneId, mapId);
     const encodedString = '<1000]1609459200]f780:f00a:12692]2:1]]]ffffff:1]^1:1]0:0:0:>';
 
-    render(<MapMarkers encodedString={encodedString} fight={fight} scale={0.5} />);
+    // Parse the encoded string to get the markers state
+    const markersState = parseMarkersInput(encodedString);
+
+    render(<MapMarkers markersState={markersState} fight={fight} scale={0.5} />);
 
     expect(markerRenderMock).toHaveBeenCalledTimes(1);
 
@@ -95,7 +99,10 @@ describe('MapMarkers scaling', () => {
     const fight = buildFight(zoneId, mapId);
     const encodedString = '<1196]1609459200]4b1c:54f6:10f1]2:1]]]ffffff:1]^1:1]0:0:0:>';
 
-    render(<MapMarkers encodedString={encodedString} fight={fight} scale={0.5} />);
+    // Parse the encoded string to get the markers state
+    const markersState = parseMarkersInput(encodedString);
+
+    render(<MapMarkers markersState={markersState} fight={fight} scale={0.5} />);
 
     expect(markerRenderMock).toHaveBeenCalledTimes(1);
 

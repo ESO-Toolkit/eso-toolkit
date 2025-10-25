@@ -3,6 +3,8 @@
  */
 import { useMemo } from 'react';
 
+import { MapMarkersState } from '@/features/fight_replay/types/mapMarkers';
+
 import { FightFragment } from '../graphql/gql/graphql';
 import { ZONE_SCALE_DATA } from '../types/zoneScaleData';
 import { decodeElmsMarkersString, isElmsMarkersFormat } from '../utils/elmsMarkersDecoder';
@@ -29,13 +31,12 @@ export interface MarkerStats {
   error: string | null;
 }
 
-export function useMarkerStats(
-  encodedString: string | undefined,
-  fight: FightFragment,
-): MarkerStats {
+type MarkerInput = string | MapMarkersState | undefined;
+
+export function useMarkerStats(markersInput: MarkerInput, fight: FightFragment): MarkerStats {
   return useMemo(() => {
     // Default stats for no markers
-    if (!encodedString || encodedString.trim() === '') {
+    if (!markersInput || (typeof markersInput === 'string' && markersInput.trim() === '')) {
       return {
         totalDecoded: 0,
         filtered: 0,
@@ -51,11 +52,20 @@ export function useMarkerStats(
 
     // Try to decode markers (auto-detect format)
     let decoded;
+    let zoneIdFromState: number | null = null;
     try {
-      const isElms = isElmsMarkersFormat(encodedString);
-      decoded = isElms
-        ? decodeElmsMarkersString(encodedString)
-        : decodeMorMarkersString(encodedString);
+      if (typeof markersInput === 'string') {
+        const isElms = isElmsMarkersFormat(markersInput);
+        decoded = isElms
+          ? decodeElmsMarkersString(markersInput)
+          : decodeMorMarkersString(markersInput);
+      } else {
+        decoded =
+          markersInput && markersInput.markers
+            ? { markers: markersInput.markers, zone: markersInput.zoneId }
+            : null;
+        zoneIdFromState = markersInput?.zoneId ?? null;
+      }
     } catch (error) {
       return {
         totalDecoded: 0,
@@ -85,7 +95,7 @@ export function useMarkerStats(
     }
 
     const totalDecoded = decoded.markers.length;
-    const zoneId = decoded.zone;
+    const zoneId = zoneIdFromState ?? decoded.zone;
 
     // Check if we have fight zone data
     if (!fight.gameZone || !fight.maps || fight.maps.length === 0) {
@@ -192,5 +202,5 @@ export function useMarkerStats(
       success: true,
       error: null,
     };
-  }, [encodedString, fight]);
+  }, [markersInput, fight]);
 }

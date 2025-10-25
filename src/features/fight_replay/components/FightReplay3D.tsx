@@ -9,6 +9,7 @@ import { useScrubbingMode } from '@/hooks/useScrubbingMode';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePhaseBasedMap } from '../../../hooks/usePhaseBasedMap';
 import { BuffEvent } from '../../../types/combatlogEvents';
+import { MapMarkersState } from '../types/mapMarkers';
 
 import { Arena3D } from './Arena3D';
 import { PlaybackControls } from './PlaybackControls';
@@ -17,15 +18,18 @@ interface FightReplay3DProps {
   selectedFight: FightFragment;
   allBuffEvents: BuffEvent[];
   showActorNames?: boolean;
-  /** Optional map markers encoded string to display markers in the arena (M0R or Elms format) */
-  mapMarkersString?: string;
+  markersState?: MapMarkersState | null;
+  onAddMarker?: (iconKey: number, arenaPoint: { x: number; y: number; z: number }) => void;
+  onRemoveMarker?: (markerId: string) => void;
 }
 
 export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   selectedFight,
   allBuffEvents,
   showActorNames = true,
-  mapMarkersString,
+  markersState,
+  onAddMarker,
+  onRemoveMarker,
 }) => {
   // Parse URL parameters for actor initialization
   const [searchParams] = useSearchParams();
@@ -168,7 +172,9 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           followingActorIdRef={followingActorIdRef}
           onCameraUnlock={handleCameraUnlock}
           onActorClick={handleActorClick}
-          mapMarkersString={mapMarkersString}
+          markersState={markersState}
+          onAddMarker={onAddMarker}
+          onRemoveMarker={onRemoveMarker}
           fight={selectedFight}
         />
       </Paper>

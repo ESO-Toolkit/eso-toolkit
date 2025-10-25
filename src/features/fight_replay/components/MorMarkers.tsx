@@ -311,6 +311,7 @@ export const MorMarkers: React.FC<MorMarkersProps> = ({ encodedString, fight, sc
       {markersToRender.map((marker, index) => (
         <Marker3D
           key={`marker-${index}-${marker.x}-${marker.y}-${marker.z}`}
+          markerId={`mor-marker-${index}`}
           marker={marker}
           scale={effectiveScale}
         />
