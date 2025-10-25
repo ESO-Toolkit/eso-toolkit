@@ -14,6 +14,8 @@ import { RootState } from '../storeWithHistory';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'CastEvents' });
 
+const EVENT_PAGE_LIMIT = 100000;
+
 export interface CastEventsState {
   events: UnifiedCastEvent[];
   loading: boolean;
@@ -23,7 +25,14 @@ export interface CastEventsState {
     lastFetchedReportId: string | null;
     lastFetchedFightId: number | null;
     lastFetchedTimestamp: number | null;
+    lastRestrictToFightWindow: boolean | null;
   };
+  currentRequest: {
+    reportId: string;
+    fightId: number;
+    requestId: string;
+    restrictToFightWindow: boolean;
+  } | null;
 }
 
 const initialState: CastEventsState = {
@@ -34,21 +43,35 @@ const initialState: CastEventsState = {
     lastFetchedReportId: null,
     lastFetchedFightId: null,
     lastFetchedTimestamp: null,
+    lastRestrictToFightWindow: null,
   },
+  currentRequest: null,
 };
 
 export const fetchCastEvents = createAsyncThunk<
   CastEvent[],
-  { reportCode: string; fight: FightFragment; client: EsoLogsClient },
+  {
+    reportCode: string;
+    fight: FightFragment;
+    client: EsoLogsClient;
+    restrictToFightWindow?: boolean;
+  },
   { state: RootState; rejectValue: string }
 >(
   'castEvents/fetchCastEvents',
-  async ({ reportCode, fight, client }) => {
-    logger.info('Fetching cast events', { reportCode, fightId: fight.id });
-    
+  async ({ reportCode, fight, client, restrictToFightWindow = true }) => {
+    logger.info('Fetching cast events', {
+      reportCode,
+      fightId: fight.id,
+      restrictToFightWindow,
+    });
+
     // Fetch both friendly and enemy cast events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
     let allEvents: (CastEvent | BeginCastEvent)[] = [];
+
+    const initialStartTime = restrictToFightWindow ? fight.startTime : undefined;
+    const finalEndTime = restrictToFightWindow ? (fight.endTime ?? undefined) : undefined;
 
     for (const hostilityType of hostilityTypes) {
       let nextPageTimestamp: number | null = null;
@@ -62,9 +85,10 @@ export const fetchCastEvents = createAsyncThunk<
           variables: {
             code: reportCode,
             fightIds: [Number(fight.id)],
-            startTime: nextPageTimestamp ?? fight.startTime,
-            endTime: fight.endTime,
+            startTime: nextPageTimestamp ?? initialStartTime,
+            endTime: finalEndTime,
             hostilityType: hostilityType,
+            limit: EVENT_PAGE_LIMIT,
           },
         });
 
@@ -88,21 +112,25 @@ export const fetchCastEvents = createAsyncThunk<
     const castEvents = allEvents.filter(
       (event) => !event.fake && (event.type === 'begincast' || event.type === 'cast'),
     ) as CastEvent[];
-    
+
     logger.info('Cast events fetch completed', {
       reportCode,
       fightId: fight.id,
       totalEvents: allEvents.length,
       filteredEvents: castEvents.length,
+      restrictToFightWindow,
     });
-    
+
     return castEvents;
   },
   {
-    condition: ({ reportCode, fight }, { getState }) => {
+    condition: ({ reportCode, fight, restrictToFightWindow = true }, { getState }) => {
       const state = getState().events.casts;
       const requestedReportId = reportCode;
       const requestedFightId = Number(fight.id);
+
+      const cachedRestrict = state.cacheMetadata.lastRestrictToFightWindow ?? true;
+      const restrictMatches = cachedRestrict === restrictToFightWindow;
 
       // Check if cast events are already cached for this fight
       const isCached =
@@ -112,23 +140,31 @@ export const fetchCastEvents = createAsyncThunk<
         state.cacheMetadata.lastFetchedTimestamp &&
         Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
-      if (isCached && isFresh) {
+      if (isCached && isFresh && restrictMatches) {
         logger.info('Using cached cast events', {
           reportCode: requestedReportId,
           fightId: requestedFightId,
           cacheAge: state.cacheMetadata.lastFetchedTimestamp
             ? Date.now() - state.cacheMetadata.lastFetchedTimestamp
             : 0,
+          restrictToFightWindow,
         });
         return false; // Prevent thunk execution
       }
 
-      if (state.loading) {
-        logger.info('Cast events fetch already in progress, skipping', {
+      const inFlight = state.currentRequest;
+      if (
+        inFlight &&
+        inFlight.reportId === requestedReportId &&
+        inFlight.fightId === requestedFightId &&
+        inFlight.restrictToFightWindow === restrictToFightWindow
+      ) {
+        logger.info('Cast events fetch already in progress for requested fight, skipping', {
           reportCode: requestedReportId,
           fightId: requestedFightId,
+          restrictToFightWindow,
         });
-        return false; // Prevent duplicate execution
+        return false; // Prevent duplicate execution for same fight
       }
 
       return true; // Allow thunk execution
@@ -148,16 +184,31 @@ const castEventsSlice = createSlice({
         lastFetchedReportId: null,
         lastFetchedFightId: null,
         lastFetchedTimestamp: null,
+        lastRestrictToFightWindow: null,
       };
+      state.currentRequest = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchCastEvents.pending, (state) => {
+      .addCase(fetchCastEvents.pending, (state, action) => {
         state.loading = true;
         state.error = null;
+        state.currentRequest = {
+          reportId: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+          requestId: action.meta.requestId,
+          restrictToFightWindow: action.meta.arg.restrictToFightWindow ?? true,
+        };
       })
       .addCase(fetchCastEvents.fulfilled, (state, action) => {
+        if (!state.currentRequest || state.currentRequest.requestId !== action.meta.requestId) {
+          logger.info('Ignoring stale cast events response', {
+            reportCode: action.meta.arg.reportCode,
+            fightId: Number(action.meta.arg.fight.id),
+          });
+          return;
+        }
         state.events = action.payload;
         state.loading = false;
         state.error = null;
@@ -166,11 +217,21 @@ const castEventsSlice = createSlice({
           lastFetchedReportId: action.meta.arg.reportCode,
           lastFetchedFightId: Number(action.meta.arg.fight.id),
           lastFetchedTimestamp: Date.now(),
+          lastRestrictToFightWindow: action.meta.arg.restrictToFightWindow ?? true,
         };
+        state.currentRequest = null;
       })
       .addCase(fetchCastEvents.rejected, (state, action) => {
+        if (state.currentRequest && state.currentRequest.requestId !== action.meta.requestId) {
+          logger.info('Ignoring stale cast events error response', {
+            reportCode: action.meta.arg.reportCode,
+            fightId: Number(action.meta.arg.fight.id),
+          });
+          return;
+        }
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch cast events';
+        state.currentRequest = null;
       });
   },
 });

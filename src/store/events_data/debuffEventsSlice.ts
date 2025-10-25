@@ -20,7 +20,14 @@ export interface DebuffEventsState {
     lastFetchedReportId: string | null;
     lastFetchedFightId: number | null;
     lastFetchedTimestamp: number | null;
+    lastRestrictToFightWindow: boolean | null;
   };
+  currentRequest: {
+    reportId: string;
+    fightId: number;
+    requestId: string;
+    restrictToFightWindow: boolean;
+  } | null;
 }
 
 const initialState: DebuffEventsState = {
@@ -31,19 +38,31 @@ const initialState: DebuffEventsState = {
     lastFetchedReportId: null,
     lastFetchedFightId: null,
     lastFetchedTimestamp: null,
+    lastRestrictToFightWindow: null,
   },
+  currentRequest: null,
 };
+
+const EVENT_PAGE_LIMIT = 100000;
 
 export const fetchDebuffEvents = createAsyncThunk<
   DebuffEvent[],
-  { reportCode: string; fight: FightFragment; client: EsoLogsClient },
+  {
+    reportCode: string;
+    fight: FightFragment;
+    client: EsoLogsClient;
+    restrictToFightWindow?: boolean;
+  },
   { state: RootState; rejectValue: string }
 >(
   'debuffEvents/fetchDebuffEvents',
-  async ({ reportCode, fight, client }) => {
+  async ({ reportCode, fight, client, restrictToFightWindow = true }) => {
     // Fetch both friendly and enemy debuff events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
     let allEvents: LogEvent[] = [];
+
+    const initialStartTime = restrictToFightWindow ? fight.startTime : undefined;
+    const finalEndTime = restrictToFightWindow ? (fight.endTime ?? undefined) : undefined;
 
     for (const hostilityType of hostilityTypes) {
       let nextPageTimestamp: number | null = null;
@@ -55,9 +74,10 @@ export const fetchDebuffEvents = createAsyncThunk<
           variables: {
             code: reportCode,
             fightIds: [Number(fight.id)],
-            startTime: nextPageTimestamp ?? fight.startTime,
-            endTime: fight.endTime,
+            startTime: nextPageTimestamp ?? initialStartTime,
+            endTime: finalEndTime,
             hostilityType: hostilityType,
+            limit: EVENT_PAGE_LIMIT,
           },
         });
 
@@ -80,10 +100,13 @@ export const fetchDebuffEvents = createAsyncThunk<
     return debuffEvents;
   },
   {
-    condition: ({ reportCode, fight }, { getState }) => {
+    condition: ({ reportCode, fight, restrictToFightWindow = true }, { getState }) => {
       const state = getState().events.debuffs;
       const requestedReportId = reportCode;
       const requestedFightId = Number(fight.id);
+
+      const cachedRestrict = state.cacheMetadata.lastRestrictToFightWindow ?? true;
+      const restrictMatches = cachedRestrict === restrictToFightWindow;
 
       // Check if debuff events are already cached for this fight
       const isCached =
@@ -93,12 +116,18 @@ export const fetchDebuffEvents = createAsyncThunk<
         state.cacheMetadata.lastFetchedTimestamp &&
         Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
-      if (isCached && isFresh) {
+      if (isCached && isFresh && restrictMatches) {
         return false; // Prevent thunk execution
       }
 
-      if (state.loading) {
-        return false; // Prevent duplicate execution
+      const inFlight = state.currentRequest;
+      if (
+        inFlight &&
+        inFlight.reportId === requestedReportId &&
+        inFlight.fightId === requestedFightId &&
+        inFlight.restrictToFightWindow === restrictToFightWindow
+      ) {
+        return false; // Prevent duplicate execution for same fight
       }
 
       return true; // Allow thunk execution
@@ -118,16 +147,27 @@ const debuffEventsSlice = createSlice({
         lastFetchedReportId: null,
         lastFetchedFightId: null,
         lastFetchedTimestamp: null,
+        lastRestrictToFightWindow: null,
       };
+      state.currentRequest = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchDebuffEvents.pending, (state) => {
+      .addCase(fetchDebuffEvents.pending, (state, action) => {
         state.loading = true;
         state.error = null;
+        state.currentRequest = {
+          reportId: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+          requestId: action.meta.requestId,
+          restrictToFightWindow: action.meta.arg.restrictToFightWindow ?? true,
+        };
       })
       .addCase(fetchDebuffEvents.fulfilled, (state, action) => {
+        if (!state.currentRequest || state.currentRequest.requestId !== action.meta.requestId) {
+          return;
+        }
         state.events = action.payload;
         state.loading = false;
         state.error = null;
@@ -136,11 +176,17 @@ const debuffEventsSlice = createSlice({
           lastFetchedReportId: action.meta.arg.reportCode,
           lastFetchedFightId: Number(action.meta.arg.fight.id),
           lastFetchedTimestamp: Date.now(),
+          lastRestrictToFightWindow: action.meta.arg.restrictToFightWindow ?? true,
         };
+        state.currentRequest = null;
       })
       .addCase(fetchDebuffEvents.rejected, (state, action) => {
+        if (state.currentRequest && state.currentRequest.requestId !== action.meta.requestId) {
+          return;
+        }
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch debuff events';
+        state.currentRequest = null;
       });
   },
 });

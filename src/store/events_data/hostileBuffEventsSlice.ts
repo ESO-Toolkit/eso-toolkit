@@ -11,6 +11,8 @@ import {
 import { BuffEvent, LogEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
 
+const EVENT_PAGE_LIMIT = 100000;
+
 // Interface for tracking interval fetching state
 interface IntervalFetchResult {
   startTime: number;
@@ -81,6 +83,7 @@ const fetchEventsForInterval = async (
         startTime: nextPageTimestamp ?? intervalStart,
         endTime: intervalEnd,
         hostilityType: HostilityType.Enemies,
+        limit: EVENT_PAGE_LIMIT,
       },
     });
 

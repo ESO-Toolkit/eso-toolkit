@@ -41,7 +41,7 @@ describe('castEventsSlice', () => {
       friendlyPlayers: [1, 2, 3],
       enemyPlayers: [4, 5, 6],
       bossPercentage: 0,
-    };
+    } as unknown as FightFragment;
   });
 
   afterEach(() => {
@@ -59,6 +59,7 @@ describe('castEventsSlice', () => {
           lastFetchedReportId: null,
           lastFetchedFightId: null,
           lastFetchedTimestamp: null,
+          lastRestrictToFightWindow: null,
         },
       });
     });
@@ -91,6 +92,7 @@ describe('castEventsSlice', () => {
           lastFetchedReportId: null,
           lastFetchedFightId: null,
           lastFetchedTimestamp: null,
+          lastRestrictToFightWindow: null,
         },
       });
     });
@@ -179,6 +181,7 @@ describe('castEventsSlice', () => {
           lastFetchedReportId: reportCode,
           lastFetchedFightId: Number(mockFight.id),
           lastFetchedTimestamp: mockTimestamp,
+          lastRestrictToFightWindow: true,
         });
 
         // Should call query twice (for friendlies and enemies)

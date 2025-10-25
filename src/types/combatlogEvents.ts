@@ -128,6 +128,9 @@ export interface CastEvent {
   abilityGameID: number;
   fight: number;
   fake?: boolean;
+  castTrackID?: number;
+  sourceResources?: Resources;
+  targetResources?: Resources;
 }
 
 export interface BeginCastEvent {

@@ -3,8 +3,7 @@ import { RootState } from '../storeWithHistory';
 export const selectParseReportId = (state: RootState): string | null =>
   state.parseAnalysis.reportId;
 
-export const selectParseFightId = (state: RootState): number | null =>
-  state.parseAnalysis.fightId;
+export const selectParseFightId = (state: RootState): number | null => state.parseAnalysis.fightId;
 
 export const selectParseReportUrl = (state: RootState): string | null =>
   state.parseAnalysis.reportUrl;

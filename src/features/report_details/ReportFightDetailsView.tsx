@@ -3,7 +3,7 @@ import React from 'react';
 
 import { FightFragment } from '../../graphql/gql/graphql';
 import { useReportData } from '../../hooks';
-import { useSelectedReportAndFight } from '../../ReportFightContext';
+import { useReportFightDetailsNavigation } from '../../ReportFightContext';
 import { TabId, getSkeletonForTab } from '../../utils/getSkeletonForTab';
 
 import { FightDetails } from './FightDetails';
@@ -22,7 +22,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   fightsLoading,
   fightId,
 }) => {
-  const { selectedTabId } = useSelectedReportAndFight();
+  const { selectedTabId } = useReportFightDetailsNavigation();
   const { reportData } = useReportData();
 
   // Immediate render strategy: show layout immediately for better LCP

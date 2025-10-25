@@ -4,13 +4,13 @@ import { APPLICATION_NAME } from '@/Constants';
 
 import { DynamicMetaTags, generateReportMetaTags } from '../../components/DynamicMetaTags';
 import { useReportData } from '../../hooks';
-import { useSelectedReportAndFight } from '../../ReportFightContext';
+import { useReportFightDetailsNavigation } from '../../ReportFightContext';
 
 import { ReportFightDetailsView } from './ReportFightDetailsView';
 
 export const ReportFightDetails: React.FC = () => {
-  // Get current selected report and fight from context
-  const { reportId, fightId, tabId } = useSelectedReportAndFight();
+  // Get current selected report and fight from context (with tab navigation)
+  const { reportId, fightId, tabId } = useReportFightDetailsNavigation();
 
   // OPTIMIZED: Single selector instead of multiple useSelector calls
   const { reportData, isReportLoading } = useReportData();

@@ -13,7 +13,11 @@ import {
 import { useAppDispatch } from '../../store/useAppDispatch';
 import { CombatantInfoEvent } from '../../types/combatlogEvents';
 
-export function useCombatantInfoEvents(): {
+interface UseCombatantInfoEventsOptions {
+  restrictToFightWindow?: boolean;
+}
+
+export function useCombatantInfoEvents(options?: UseCombatantInfoEventsOptions): {
   combatantInfoEvents: CombatantInfoEvent[];
   isCombatantInfoEventsLoading: boolean;
   selectedFight: FightFragment | null;
@@ -34,6 +38,8 @@ export function useCombatantInfoEvents(): {
     return fights.find((fight) => fight?.id === fightIdNumber) || null;
   }, [fightId, fights]);
 
+  const restrictToFightWindow = options?.restrictToFightWindow ?? true;
+
   React.useEffect(() => {
     if (reportId && selectedFight) {
       dispatch(
@@ -41,10 +47,11 @@ export function useCombatantInfoEvents(): {
           reportCode: reportId,
           fight: selectedFight,
           client,
+          restrictToFightWindow,
         }),
       );
     }
-  }, [dispatch, reportId, selectedFight, client]);
+  }, [dispatch, reportId, selectedFight, client, restrictToFightWindow]);
 
   return React.useMemo(
     () => ({

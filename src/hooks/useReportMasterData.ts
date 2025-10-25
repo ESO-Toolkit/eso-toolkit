@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
+import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import {
   selectMasterData,
@@ -15,7 +15,7 @@ export function useReportMasterData(): {
   reportMasterData: RootState['masterData'];
   isMasterDataLoading: boolean;
 } {
-  const client = useEsoLogsClientInstance();
+  const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
   const dispatch = useAppDispatch();
   const { reportId } = useSelectedReportAndFight();
 
@@ -24,10 +24,11 @@ export function useReportMasterData(): {
   const isMasterDataLoading = useSelector(selectMasterDataLoadingState);
 
   React.useEffect(() => {
-    if (reportId) {
+    // Only fetch if client is ready, user is logged in, and we have a reportId
+    if (reportId && isReady && isLoggedIn && client) {
       dispatch(fetchReportMasterData({ reportCode: reportId, client }));
     }
-  }, [dispatch, reportId, client]);
+  }, [dispatch, reportId, client, isReady, isLoggedIn]);
 
   return React.useMemo(
     () => ({ reportMasterData, isMasterDataLoading }),
