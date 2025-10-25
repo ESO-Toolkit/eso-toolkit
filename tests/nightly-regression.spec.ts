@@ -62,7 +62,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
         });
 
         // Wait for page title to update
-        await expect(page).toHaveTitle(/ESO Log Insights/, {
+        await expect(page).toHaveTitle(/ESO Toolkit/, {
           timeout: TEST_TIMEOUTS.dataLoad,
         });
 

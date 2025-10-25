@@ -107,7 +107,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
       });
 
       // Verify page title
-      await expect(page).toHaveTitle(/ESO Log Insights/);
+      await expect(page).toHaveTitle(/ESO Toolkit/);
     });
 
     test('should maintain authentication state', async ({ page }) => {
