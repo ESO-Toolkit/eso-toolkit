@@ -9,6 +9,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
+import { ScrollRestoration } from './components/ScrollRestoration';
 import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
 import { TextEditorSkeleton } from './components/TextEditorSkeleton';
 import { UpdateNotification } from './components/UpdateNotification';
@@ -187,6 +188,7 @@ const AppRoutes: React.FC = () => {
 
   return (
     <HashRouter>
+      <ScrollRestoration />
       <BanRedirect />
       <ErrorBoundary>
         <Routes>
