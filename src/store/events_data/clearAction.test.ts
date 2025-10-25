@@ -46,7 +46,7 @@ describe('clearAction', () => {
       const castRequestId = 'cast-req-1';
       const damageRequestId = 'damage-req-1';
       const testFight = { id: 1, startTime: 0, endTime: 5000 };
-      
+
       // Dispatch pending actions first
       store.dispatch({
         type: 'castEvents/fetchCastEvents/pending',
@@ -214,7 +214,7 @@ describe('clearAction', () => {
 
     it('should reset loading states in all slices', () => {
       const testFight = { id: 1, startTime: 0, endTime: 5000 };
-      
+
       // Set loading states in various slices
       store.dispatch({
         type: 'castEvents/fetchCastEvents/pending',
@@ -260,7 +260,7 @@ describe('clearAction', () => {
       const testFight = { id: 1, startTime: 0, endTime: 5000 };
       const castReqId = 'cast-err-req';
       const damageReqId = 'damage-err-req';
-      
+
       // First set pending states to establish currentRequest
       store.dispatch({
         type: 'castEvents/fetchCastEvents/pending',
@@ -334,7 +334,7 @@ describe('clearAction', () => {
     it('should reset cache metadata in all slices', () => {
       const testFight = { id: 123, startTime: 0, endTime: 5000 };
       const requestId = 'cache-req';
-      
+
       // First dispatch pending
       store.dispatch({
         type: 'castEvents/fetchCastEvents/pending',
@@ -387,7 +387,7 @@ describe('clearAction', () => {
       const testFight = { id: 1, startTime: 0, endTime: 5000 };
       const castReqId = 'cast-individual';
       const damageReqId = 'damage-individual';
-      
+
       // First dispatch pending actions
       store.dispatch({
         type: 'castEvents/fetchCastEvents/pending',
@@ -523,7 +523,7 @@ describe('clearAction', () => {
   describe('eventsReducer behavior', () => {
     it('should delegate to combinedEventsReducer for non-clearAllEvents actions', () => {
       const testFight = { id: 1, startTime: 0, endTime: 5000 };
-      
+
       // Any regular action should be processed normally
       store.dispatch({
         type: 'castEvents/fetchCastEvents/pending',

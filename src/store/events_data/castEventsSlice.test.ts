@@ -261,7 +261,7 @@ describe('castEventsSlice', () => {
       it('should not fetch if data is cached and fresh', async () => {
         const reportCode = 'ABC123';
         const requestId = 'test-request-cache';
-        
+
         // First, dispatch pending to set currentRequest
         store.dispatch({
           type: 'castEvents/fetchCastEvents/pending',
