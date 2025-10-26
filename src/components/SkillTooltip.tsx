@@ -15,62 +15,12 @@ import React from 'react';
 import { useLogger } from '@/hooks/useLogger';
 
 import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
+import type { ScribedSkillAffixInfo, ScribedSkillData, ScribedSkillEffect } from '../features/scribing/types';
 
 export interface SkillStat {
   label: string;
   value: string;
   color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'inherit';
-}
-
-export interface ScribedSkillEffect {
-  /** The ability ID of the effect */
-  abilityId: number;
-  /** The name of the effect */
-  abilityName: string;
-  /** Type of effect: buff, debuff, damage, heal, aura, or resource */
-  type: 'buff' | 'debuff' | 'damage' | 'heal' | 'aura' | 'resource';
-  /** Number of times this effect was applied/triggered */
-  count: number;
-}
-
-export interface ScribedSkillData {
-  /** The grimoire this scribed skill belongs to */
-  grimoireName: string;
-  /** List of effects this scribed skill produces */
-  effects: ScribedSkillEffect[];
-  /** Whether this skill was actually cast in the current fight */
-  wasCastInFight?: boolean;
-  /** Enhanced recipe information with focus script details */
-  recipe?: {
-    grimoire: string;
-    transformation: string;
-    transformationType: string;
-    confidence: number;
-    matchMethod: string;
-    recipeSummary: string;
-    tooltipInfo: string;
-  };
-  /** Detected signature script information */
-  signatureScript?: {
-    name: string;
-    confidence: number;
-    detectionMethod: string;
-    evidence: string[];
-  };
-  /** Detected affix scripts information */
-  affixScripts?: Array<{
-    id: string;
-    name: string;
-    description: string;
-    confidence: number;
-    detectionMethod: string;
-    evidence: {
-      buffIds: number[];
-      debuffIds: number[];
-      abilityNames: string[];
-      occurrenceCount: number;
-    };
-  }>;
 }
 
 export interface SkillTooltipProps {
@@ -573,7 +523,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
               )}
 
               {/* Signature Script Section */}
-              {finalScribedData.wasCastInFight !== false && (
+              {finalScribedData.signatureScript && (
                 <Box sx={{ mb: 1 }}>
                   <Typography
                     variant="caption"
@@ -589,52 +539,38 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                     Signature Script
                   </Typography>
                   <Stack spacing={0.3} sx={{ mb: 1 }}>
-                    {finalScribedData.signatureScript ? (
-                      <>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: 'text.primary',
-                            fontSize: '0.7rem',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {finalScribedData.signatureScript.name}
-                        </Typography>
-                        {finalScribedData.signatureScript.evidence &&
-                          finalScribedData.signatureScript.evidence.length > 0 && (
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: 'text.secondary',
-                                fontSize: '0.65rem',
-                                fontStyle: 'italic',
-                              }}
-                            >
-                              Evidence: {finalScribedData.signatureScript.evidence.join(', ')}
-                            </Typography>
-                          )}
-                      </>
-                    ) : (
+                    <>
                       <Typography
                         variant="caption"
                         sx={{
-                          color: 'text.secondary',
+                          color: 'text.primary',
                           fontSize: '0.7rem',
-                          fontStyle: 'italic',
+                          fontWeight: 600,
                         }}
                       >
-                        No signature script detected
+                        {finalScribedData.signatureScript.name}
                       </Typography>
-                    )}
+                      {finalScribedData.signatureScript.evidence &&
+                        finalScribedData.signatureScript.evidence.length > 0 && (
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'text.secondary',
+                              fontSize: '0.65rem',
+                              fontStyle: 'italic',
+                            }}
+                          >
+                            Evidence: {finalScribedData.signatureScript.evidence.join(', ')}
+                          </Typography>
+                        )}
+                    </>
                   </Stack>
                 </Box>
               )}
 
               {/* Affix Scripts Section */}
-              {finalScribedData.wasCastInFight !== false &&
-                finalScribedData.affixScripts &&
-                finalScribedData.affixScripts.length > 0 && (
+              {(finalScribedData.affixScripts && finalScribedData.affixScripts.length > 0) ||
+              finalScribedData.wasCastInFight === false ? (
                   <Box sx={{ mb: 1 }}>
                     <Typography
                       variant="caption"
@@ -649,38 +585,63 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                     >
                       Affix Scripts
                     </Typography>
-                    <Stack spacing={0.3} sx={{ mb: 1 }}>
-                      {finalScribedData.affixScripts.map(
-                        (affixScript: { name: string; confidence?: number }, index: number) => (
-                          <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: 'text.primary',
-                                fontSize: '0.7rem',
-                                fontWeight: 600,
-                              }}
-                            >
-                              {affixScript.name}
-                            </Typography>
-                            {affixScript.confidence && affixScript.confidence < 1.0 && (
+                    {finalScribedData.wasCastInFight === false ? (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: '0.7rem',
+                          fontStyle: 'italic',
+                        }}
+                      >
+                        Skill was never cast in this fight, so affix scripts could not be detected.
+                      </Typography>
+                    ) : finalScribedData.affixScripts &&
+                      finalScribedData.affixScripts.length > 0 ? (
+                      <Stack spacing={0.3} sx={{ mb: 1 }}>
+                        {finalScribedData.affixScripts.map(
+                          (affixScript: ScribedSkillAffixInfo, index: number) => (
+                            <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                               <Typography
                                 variant="caption"
                                 sx={{
-                                  color: 'text.secondary',
-                                  fontSize: '0.6rem',
-                                  fontStyle: 'italic',
+                                  color: 'text.primary',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 600,
                                 }}
                               >
-                                ({Math.round(affixScript.confidence * 100)}%)
+                                {affixScript.name}
                               </Typography>
-                            )}
-                          </Box>
-                        ),
-                      )}
-                    </Stack>
+                              {affixScript.confidence && affixScript.confidence < 1.0 && (
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: 'text.secondary',
+                                    fontSize: '0.6rem',
+                                    fontStyle: 'italic',
+                                  }}
+                                >
+                                  ({Math.round(affixScript.confidence * 100)}%)
+                                </Typography>
+                              )}
+                            </Box>
+                          ),
+                        )}
+                      </Stack>
+                    ) : (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: '0.7rem',
+                          fontStyle: 'italic',
+                        }}
+                      >
+                        No affix script detected
+                      </Typography>
+                    )}
                   </Box>
-                )}
+                ) : null}
 
               {/* Effects List - only show if skill was cast */}
               {finalScribedData.wasCastInFight !== false && (

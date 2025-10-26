@@ -10,6 +10,7 @@ import { DamageReductionCalculationTask } from './calculations/CalculateDamageRe
 import { ElementalWeaknessStacksCalculationTask } from './calculations/CalculateElementalWeaknessStacks';
 import { PenetrationCalculationTask } from './calculations/CalculatePenetration';
 import { PlayerTravelDistanceTaskInput } from './calculations/CalculatePlayerTravelDistances';
+import { ScribingDetectionsTaskInput } from './calculations/CalculateScribingDetections';
 import { StaggerStacksCalculationTask } from './calculations/CalculateStaggerStacks';
 import { StatusEffectUptimesCalculationTask } from './calculations/CalculateStatusEffectUptimes';
 import { TouchOfZenStacksCalculationTask } from './calculations/CalculateTouchOfZenStacks';
@@ -321,6 +322,12 @@ export class WorkerPool {
         case 'calculatePlayerTravelDistances':
           result = await workerInfo.worker.calculatePlayerTravelDistances(
             task.data as PlayerTravelDistanceTaskInput,
+            onProgress,
+          );
+          break;
+        case 'calculateScribingDetections':
+          result = await workerInfo.worker.calculateScribingDetections(
+            task.data as ScribingDetectionsTaskInput,
             onProgress,
           );
           break;

@@ -34,6 +34,7 @@ export const selectHostileBuffLookupTask = selectWorkerTask('calculateHostileBuf
 export const selectTouchOfZenStacksTask = selectWorkerTask('calculateTouchOfZenStacks');
 export const selectStaggerStacksTask = selectWorkerTask('calculateStaggerStacks');
 export const selectPlayerTravelDistancesTask = selectWorkerTask('calculatePlayerTravelDistances');
+export const selectScribingDetectionsTask = selectWorkerTask('calculateScribingDetections');
 
 // Selectors for specific task properties
 export const selectWorkerTaskResult = <T extends SharedComputationWorkerTaskType>(
@@ -82,6 +83,7 @@ export const selectPlayerTravelDistancesResult = selectWorkerTaskResult(
 export const selectDamageReductionResult = selectWorkerTaskResult('calculateDamageReductionData');
 export const selectDebuffLookupResult = selectWorkerTaskResult('calculateDebuffLookup');
 export const selectHostileBuffLookupResult = selectWorkerTaskResult('calculateHostileBuffLookup');
+export const selectScribingDetectionsResult = selectWorkerTaskResult('calculateScribingDetections');
 
 // Aggregate selectors
 export const selectAnyWorkerTaskLoading = createSelector([selectWorkerResults], (workerResults) =>

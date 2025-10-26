@@ -4,12 +4,20 @@
  * and integrates with existing detection algorithms for signature and affix scripts
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
+import { useSelector } from 'react-redux';
 
-import { useLogger, Logger, LogLevel } from '@/contexts/LoggerContext';
+import { Logger, LogLevel } from '@/contexts/LoggerContext';
+import { useAppDispatch } from '@/store/useAppDispatch';
+import { selectPlayerData } from '@/store/player_data/playerDataSelectors';
+import {
+  executeScribingDetectionsTask,
+  selectScribingDetectionsResult,
+  selectScribingDetectionsTask,
+} from '@/store/worker_results';
 
 import scribingData from '../../../../data/scribing-complete.json';
-import { ScribedSkillData } from '../../../components/SkillTooltip';
+import type { ScribedSkillData } from '../types';
 // Import event hooks instead of selectors to ensure data is fetched
 import { useCastEvents } from '../../../hooks/events/useCastEvents';
 import { useDamageEvents } from '../../../hooks/events/useDamageEvents';
@@ -26,7 +34,14 @@ import type {
   HealEvent,
   ResourceChangeEvent,
 } from '../../../types/combatlogEvents';
-import { getScribingSkillByAbilityId } from '../utils/Scribing';
+import {
+  getScribingSkillByAbilityId,
+  isScribingAbility,
+  type ScribingSkillInfo,
+} from '../utils/Scribing';
+import type { PlayerAbilityList } from '../analysis/scribingDetectionAnalysis';
+import { computeScribingDetection } from '../analysis/scribingDetectionAnalysis';
+import type { ResolvedScribingDetection } from '../types';
 
 // Module-level logger for standalone functions
 const moduleLogger = new Logger({ level: LogLevel.INFO, contextPrefix: 'ScribingDetection' });
@@ -65,6 +80,20 @@ Object.values(scribingData.signatureScripts).forEach(
           }
         },
       );
+
+      // ESO combat logs surface the Arcanist Class Mastery signature via ability 252143 (Crux/Ultimate
+      // tick) instead of the class-specific banner IDs that live in the scribing database. Manually map
+      // that ability so our detectors can positively identify Class Mastery from resource events.
+      const CLASS_MASTERY_EXTRA_EFFECT_IDS = [252143];
+      const classMasteryScript = (scribingData.signatureScripts as Record<string, { name: string }>)[
+        'class-mastery'
+      ];
+      if (classMasteryScript) {
+        CLASS_MASTERY_EXTRA_EFFECT_IDS.forEach((id) => {
+          VALID_SIGNATURE_SCRIPT_IDS.add(id);
+          SIGNATURE_SCRIPT_ID_TO_NAME.set(id, classMasteryScript.name ?? 'Class Mastery');
+        });
+      }
     }
   },
 );
@@ -87,6 +116,144 @@ Object.values(scribingData.affixScripts).forEach(
 // until the next resource-costing skill is used.
 const DEFERRED_AFFIX_TRIGGER_ABILITIES = new Set<number>([240150]);
 
+const BANNER_GRIMOIRE_KEY = 'banner-bearer';
+const BANNER_PSEUDO_CAST_WINDOW_MS = 1000;
+
+const bannerGrimoire = (scribingData as any).grimoires?.[BANNER_GRIMOIRE_KEY];
+const BANNER_PRIMARY_ABILITY_IDS = new Set<number>();
+
+if (bannerGrimoire?.nameTransformations) {
+  Object.entries(
+    bannerGrimoire.nameTransformations as Record<string, { name: string; abilityIds?: number[] }>,
+  ).forEach(([, config]) => {
+    const primaryAbilityId = config.abilityIds?.[0];
+    if (typeof primaryAbilityId === 'number') {
+      BANNER_PRIMARY_ABILITY_IDS.add(primaryAbilityId);
+    }
+  });
+}
+
+const SCRIBING_INFO_CACHE = new Map<number, ScribingSkillInfo | null>();
+
+function lookupScribingSkill(abilityId: number): ScribingSkillInfo | null {
+  if (!SCRIBING_INFO_CACHE.has(abilityId)) {
+    SCRIBING_INFO_CACHE.set(abilityId, getScribingSkillByAbilityId(abilityId));
+  }
+  return SCRIBING_INFO_CACHE.get(abilityId) ?? null;
+}
+
+// ESO Logs omit explicit cast events for Banner Bearer; derive them from buff applications instead.
+function synthesizeBannerCasts(
+  casts: UnifiedCastEvent[],
+  buffs: BuffEvent[],
+  abilityId: number,
+  playerId: number,
+  baseInfo: ScribingSkillInfo,
+): UnifiedCastEvent[] {
+  const syntheticCasts: UnifiedCastEvent[] = [];
+  const lastSyntheticTimestampByPlayer = new Map<number, number>();
+
+  for (const buff of buffs) {
+    if (buff.sourceID !== playerId) {
+      continue;
+    }
+    if (buff.type !== 'applybuff' && buff.type !== 'applybuffstack') {
+      continue;
+    }
+
+    const buffScribingInfo = lookupScribingSkill(buff.abilityGameID);
+    if (!buffScribingInfo) {
+      continue;
+    }
+    if (buffScribingInfo.grimoireKey !== baseInfo.grimoireKey) {
+      continue;
+    }
+    if (buffScribingInfo.transformation !== baseInfo.transformation) {
+      continue;
+    }
+
+    const lastTimestamp = lastSyntheticTimestampByPlayer.get(playerId);
+    if (
+      lastTimestamp !== undefined &&
+      buff.timestamp - lastTimestamp < BANNER_PSEUDO_CAST_WINDOW_MS
+    ) {
+      continue;
+    }
+
+    lastSyntheticTimestampByPlayer.set(playerId, buff.timestamp);
+
+    syntheticCasts.push({
+      timestamp: buff.timestamp,
+      type: 'cast',
+      sourceID: buff.sourceID,
+      sourceIsFriendly: buff.sourceIsFriendly,
+      targetID: buff.targetID,
+      targetIsFriendly: buff.targetIsFriendly,
+      abilityGameID: abilityId,
+      fight: buff.fight,
+      fake: true,
+    });
+  }
+
+  if (syntheticCasts.length === 0) {
+    return casts;
+  }
+
+  return [...casts, ...syntheticCasts].sort((a, b) => a.timestamp - b.timestamp);
+}
+
+function resolveBannerPrimaryAbilityId(
+  abilityId: number,
+  playerId: number,
+  buffs: BuffEvent[],
+): ScribingSkillInfo | null {
+  if (!playerId) {
+    return null;
+  }
+
+  const counts = new Map<number, number>();
+
+  buffs.forEach((buff) => {
+    if (buff.sourceID !== playerId) {
+      return;
+    }
+    if (buff.type !== 'applybuff' && buff.type !== 'applybuffstack') {
+      return;
+    }
+    if (!BANNER_PRIMARY_ABILITY_IDS.has(buff.abilityGameID)) {
+      return;
+    }
+
+    const current = counts.get(buff.abilityGameID) ?? 0;
+    counts.set(buff.abilityGameID, current + 1);
+  });
+
+  if (counts.size === 0) {
+    return null;
+  }
+
+  let topAbilityId = abilityId;
+  let topCount = counts.get(abilityId) ?? 0;
+
+  counts.forEach((count, candidateId) => {
+    if (count > topCount) {
+      topAbilityId = candidateId;
+      topCount = count;
+    }
+  });
+
+  if (topAbilityId === abilityId) {
+    return null;
+  }
+
+  const info = lookupScribingSkill(topAbilityId);
+  if (!info || info.grimoireKey !== BANNER_GRIMOIRE_KEY) {
+    return null;
+  }
+
+  return info;
+}
+
 export interface CombatEventData {
   buffs: BuffEvent[];
   debuffs: DebuffEvent[];
@@ -97,15 +264,14 @@ export interface CombatEventData {
 }
 
 export interface UseScribingDetectionOptions {
-  fightId?: string;
+  fightId?: string | null;
   playerId?: number;
   abilityId?: number;
   enabled?: boolean;
-  // combatEvents parameter removed - hook fetches from Redux internally
 }
 
 export interface UseScribingDetectionResult {
-  data: unknown; // Placeholder for future ScribingDetectionResult
+  data: ResolvedScribingDetection | null;
   scribedSkillData: ScribedSkillData | null;
   loading: boolean;
   error: string | null;
@@ -575,58 +741,147 @@ async function detectAffixScripts(
       });
     });
 
-    // Sort by consistency to find the single best match
-    allCandidates.sort((a, b) => b.consistency - a.consistency);
+    const preferTypeOrder: Array<'buff' | 'debuff' | 'damage' | 'heal'> = [
+      'buff',
+      'debuff',
+      'damage',
+      'heal',
+    ];
 
-    // Create detection for the single highest-correlated affix (only one affix supported per ability)
-    if (allCandidates.length > 0) {
-      const topAffix = allCandidates[0];
-      const confidence = topAffix.consistency;
+    type AggregatedCandidate = {
+      key: string;
+      scriptName?: string;
+      abilityIds: Set<number>;
+      castSet: Set<number>;
+      typeCounts: Record<'buff' | 'debuff' | 'damage' | 'heal', number>;
+    };
 
-      // Look up the affix script name from the database
-      const scriptName = AFFIX_SCRIPT_ID_TO_NAME.get(topAffix.id);
+    const aggregated = new Map<string, AggregatedCandidate>();
 
-      // Determine detection method and description based on event type
+    allCandidates.forEach((candidate) => {
+      const scriptName = AFFIX_SCRIPT_ID_TO_NAME.get(candidate.id);
+      const key = scriptName ?? `ability-${candidate.id}`;
+      if (!aggregated.has(key)) {
+        aggregated.set(key, {
+          key,
+          scriptName,
+          abilityIds: new Set<number>(),
+          castSet: new Set<number>(),
+          typeCounts: {
+            buff: 0,
+            debuff: 0,
+            damage: 0,
+            heal: 0,
+          },
+        });
+      }
+
+      const entry = aggregated.get(key)!;
+      entry.abilityIds.add(candidate.id);
+      candidate.castSet.forEach((index) => entry.castSet.add(index));
+      entry.typeCounts[candidate.type] += 1;
+    });
+
+    const aggregatedCandidates = Array.from(aggregated.values()).map((entry) => {
+      const dominantType = preferTypeOrder.reduce<'buff' | 'debuff' | 'damage' | 'heal'>((acc, type) => {
+        if (entry.typeCounts[type] > entry.typeCounts[acc]) {
+          return type;
+        }
+        return acc;
+      }, 'buff');
+
+      const totalCasts = casts.length;
+      const consistency = totalCasts > 0 ? entry.castSet.size / totalCasts : 0;
+
+      return {
+        key: entry.key,
+        scriptName: entry.scriptName,
+        abilityIds: entry.abilityIds,
+        castSet: entry.castSet,
+        dominantType,
+        consistency,
+      };
+    });
+
+    aggregatedCandidates.sort((a, b) => {
+      if (b.consistency !== a.consistency) {
+        return b.consistency - a.consistency;
+      }
+      if (b.castSet.size !== a.castSet.size) {
+        return b.castSet.size - a.castSet.size;
+      }
+      if (a.scriptName && b.scriptName) {
+        return a.scriptName.localeCompare(b.scriptName);
+      }
+      if (a.scriptName) {
+        return -1;
+      }
+      if (b.scriptName) {
+        return 1;
+      }
+      const aMin = Math.min(...a.abilityIds);
+      const bMin = Math.min(...b.abilityIds);
+      return aMin - bMin;
+    });
+
+    const topAggregate = aggregatedCandidates[0];
+
+    if (topAggregate) {
+      const confidence = topAggregate.consistency;
+      const scriptName = topAggregate.scriptName;
+      const primaryAbilityId = Math.min(...topAggregate.abilityIds);
+
       let detectionMethod = '';
       let description = '';
 
-      switch (topAffix.type) {
+      switch (topAggregate.dominantType) {
         case 'buff':
           detectionMethod = 'Buff Pattern Analysis (No extraAbilityGameID)';
-          description = `Applies buff effect (ID: ${topAffix.id}) in ${Math.round(confidence * 100)}% of casts`;
+          description = `Applies buff effects in ${Math.round(confidence * 100)}% of casts`;
           break;
         case 'debuff':
           detectionMethod = 'Debuff Pattern Analysis (No extraAbilityGameID)';
-          description = `Applies debuff effect (ID: ${topAffix.id}) in ${Math.round(confidence * 100)}% of casts`;
+          description = `Applies debuff effects in ${Math.round(confidence * 100)}% of casts`;
           break;
         case 'damage':
           detectionMethod = 'Damage Pattern Analysis';
-          description = `Adds additional damage (Ability ID: ${topAffix.id}) in ${Math.round(confidence * 100)}% of casts`;
+          description = `Adds additional damage effects in ${Math.round(confidence * 100)}% of casts`;
           break;
         case 'heal':
           detectionMethod = 'Healing Pattern Analysis';
-          description = `Adds additional healing (Ability ID: ${topAffix.id}) in ${Math.round(confidence * 100)}% of casts`;
+          description = `Adds additional healing effects in ${Math.round(confidence * 100)}% of casts`;
           break;
       }
 
+      const buffIds: number[] = [];
+      const debuffIds: number[] = [];
+      const abilityNames: string[] = [];
+
+      topAggregate.abilityIds.forEach((id) => {
+        if (topAggregate.dominantType === 'buff') {
+          buffIds.push(id);
+        } else if (topAggregate.dominantType === 'debuff') {
+          debuffIds.push(id);
+        } else if (topAggregate.dominantType === 'damage' || topAggregate.dominantType === 'heal') {
+          abilityNames.push(
+            `${topAggregate.dominantType.charAt(0).toUpperCase() + topAggregate.dominantType.slice(1)} Ability ${id}`,
+          );
+        }
+      });
+
       detections.push({
-        id: `${topAffix.type}-affix-${topAffix.id}`,
+        id: `affix-${scriptName ?? primaryAbilityId}`,
         name:
-          scriptName ||
-          `${topAffix.type.charAt(0).toUpperCase() + topAffix.type.slice(1)} Affix Script`,
+          scriptName ??
+          `${topAggregate.dominantType.charAt(0).toUpperCase() + topAggregate.dominantType.slice(1)} Affix Script`,
         description,
         confidence,
         detectionMethod,
         evidence: {
-          buffIds: topAffix.type === 'buff' ? [topAffix.id] : [],
-          debuffIds: topAffix.type === 'debuff' ? [topAffix.id] : [],
-          abilityNames:
-            topAffix.type === 'damage' || topAffix.type === 'heal'
-              ? [
-                  `${topAffix.type.charAt(0).toUpperCase() + topAffix.type.slice(1)} Ability ${topAffix.id}`,
-                ]
-              : [],
-          occurrenceCount: topAffix.castSet.size,
+          buffIds,
+          debuffIds,
+          abilityNames,
+          occurrenceCount: topAggregate.castSet.size,
         },
       });
     }
@@ -651,143 +906,247 @@ export function useScribingDetection(
   options: UseScribingDetectionOptions,
 ): UseScribingDetectionResult {
   const { fightId, playerId, abilityId, enabled = true } = options;
-  const logger = useLogger('useScribingDetection');
+  const dispatch = useAppDispatch();
 
-  const [data, setData] = useState<unknown>(null);
-  const [scribedSkillData, setScribedSkillData] = useState<ScribedSkillData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const playerData = useSelector(selectPlayerData);
+  const workerTaskState = useSelector(selectScribingDetectionsTask);
+  const workerResult = useSelector(selectScribingDetectionsResult);
 
-  // Use event hooks instead of selectors to ensure all data is fetched
-  // Critical: Some signature scripts appear in different event types (e.g., Anchorite's Potency in resources)
   const { damageEvents: damage } = useDamageEvents();
   const { healingEvents: heals } = useHealingEvents();
-  const { friendlyBuffEvents: friendlyBuffs } = useFriendlyBuffEvents();
-  const { hostileBuffEvents: hostileBuffs } = useHostileBuffEvents();
+  const { friendlyBuffEvents } = useFriendlyBuffEvents();
+  const { hostileBuffEvents } = useHostileBuffEvents();
   const { debuffEvents: debuffs } = useDebuffEvents();
   const { castEvents: casts } = useCastEvents();
   const { resourceEvents: resources } = useResourceEvents();
 
-  // Combine friendly and hostile buffs
-  const allBuffs = [...friendlyBuffs, ...hostileBuffs];
+  const allBuffs = useMemo(
+    () => [...friendlyBuffEvents, ...hostileBuffEvents],
+    [friendlyBuffEvents, hostileBuffEvents],
+  );
 
-  const fetchScribingData = useCallback(async () => {
-    if (!enabled || !playerId || !abilityId) {
+  const combatEvents = useMemo<CombatEventData>(
+    () => ({
+      buffs: allBuffs,
+      debuffs,
+      damage,
+      casts,
+      heals,
+      resources,
+    }),
+    [allBuffs, debuffs, damage, casts, heals, resources],
+  );
+
+  const fightIdNumber = useMemo(() => {
+    if (!fightId) {
+      return null;
+    }
+    const parsed = Number(fightId);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [fightId]);
+
+  const isTestMode =
+    typeof process !== 'undefined' &&
+    typeof process.env !== 'undefined' &&
+    process.env.NODE_ENV === 'test';
+
+  const shouldAttemptDetection =
+    enabled &&
+    fightIdNumber !== null &&
+    typeof playerId === 'number' &&
+    typeof abilityId === 'number' &&
+    abilityId > 0 &&
+    isScribingAbility(abilityId);
+
+  const basePlayerAbilities = useMemo<PlayerAbilityList[]>(() => {
+    if (!playerData?.playersById) {
+      return [];
+    }
+
+    return Object.values(playerData.playersById)
+      .map((player) => {
+        const talents = player.combatantInfo?.talents ?? [];
+        const abilityIds = Array.from(
+          new Set(talents.map((talent) => talent.guid).filter((guid) => isScribingAbility(guid))),
+        );
+
+        return {
+          playerId: player.id,
+          abilityIds,
+        };
+      })
+      .filter((entry) => entry.abilityIds.length > 0);
+  }, [playerData]);
+
+  const requestedPlayerAbilities = useMemo<PlayerAbilityList[]>(() => {
+    if (!shouldAttemptDetection || typeof playerId !== 'number' || typeof abilityId !== 'number') {
+      return basePlayerAbilities;
+    }
+
+    const merged = new Map<number, Set<number>>();
+    basePlayerAbilities.forEach((entry) => {
+      merged.set(entry.playerId, new Set(entry.abilityIds));
+    });
+
+    if (!merged.has(playerId)) {
+      merged.set(playerId, new Set());
+    }
+    merged.get(playerId)!.add(abilityId);
+
+    return Array.from(merged.entries()).map(([id, set]) => ({
+      playerId: id,
+      abilityIds: Array.from(set),
+    }));
+  }, [basePlayerAbilities, shouldAttemptDetection, playerId, abilityId]);
+
+  const existingAbilitySets = useMemo(() => {
+    if (!workerResult || fightIdNumber === null || workerResult.fightId !== fightIdNumber) {
+      return new Map<number, Set<number>>();
+    }
+
+    const map = new Map<number, Set<number>>();
+    Object.entries(workerResult.players).forEach(([playerKey, abilityMap]) => {
+      map.set(Number(playerKey), new Set(Object.keys(abilityMap).map(Number)));
+    });
+    return map;
+  }, [workerResult, fightIdNumber]);
+
+  const combinedPlayerAbilities = useMemo<PlayerAbilityList[]>(() => {
+    if (!shouldAttemptDetection) {
+      return [];
+    }
+
+    const merged = new Map<number, Set<number>>();
+
+    existingAbilitySets.forEach((set, id) => {
+      merged.set(id, new Set(set));
+    });
+
+    requestedPlayerAbilities.forEach((entry) => {
+      if (!merged.has(entry.playerId)) {
+        merged.set(entry.playerId, new Set());
+      }
+      const set = merged.get(entry.playerId)!;
+      entry.abilityIds.forEach((value) => set.add(value));
+    });
+
+    return Array.from(merged.entries())
+      .map(([id, set]) => ({ playerId: id, abilityIds: Array.from(set) }))
+      .filter((entry) => entry.abilityIds.length > 0);
+  }, [existingAbilitySets, requestedPlayerAbilities, shouldAttemptDetection]);
+
+  const currentDetection: ResolvedScribingDetection | null = useMemo(() => {
+    if (
+      !shouldAttemptDetection ||
+      !workerResult ||
+      fightIdNumber === null ||
+      workerResult.fightId !== fightIdNumber ||
+      typeof playerId !== 'number' ||
+      typeof abilityId !== 'number'
+    ) {
+      return null;
+    }
+
+    return workerResult.players[playerId]?.[abilityId] ?? null;
+  }, [shouldAttemptDetection, workerResult, fightIdNumber, playerId, abilityId]);
+
+  const shouldUseWorker =
+    shouldAttemptDetection &&
+    typeof window !== 'undefined' &&
+    !isTestMode &&
+    combinedPlayerAbilities.length > 0;
+
+  useEffect(() => {
+    if (!shouldUseWorker) {
+      return;
+    }
+    if (!fightIdNumber || typeof playerId !== 'number' || typeof abilityId !== 'number') {
+      return;
+    }
+    if (combinedPlayerAbilities.length === 0) {
+      return;
+    }
+    if (currentDetection) {
+      return;
+    }
+    if (workerTaskState.isLoading) {
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    dispatch(
+      executeScribingDetectionsTask({
+        fightId: fightIdNumber,
+        combatEvents,
+        playerAbilities: combinedPlayerAbilities,
+      }),
+    );
+  }, [
+    shouldUseWorker,
+    fightIdNumber,
+    playerId,
+    abilityId,
+    currentDetection,
+    combinedPlayerAbilities,
+    combatEvents,
+    dispatch,
+    workerTaskState.isLoading,
+  ]);
 
-    try {
-      // Look up the ability in the complete scribing database
-      const scribingInfo = getScribingSkillByAbilityId(abilityId);
-
-      if (scribingInfo) {
-        // Create combat event data structure from Redux state
-        const combatEvents: CombatEventData = {
-          buffs: allBuffs,
-          debuffs,
-          damage,
-          casts,
-          heals,
-          resources,
-        };
-
-        // Detect signature and affix scripts from combat events
-        const signatureResult = await detectSignatureScript(abilityId, playerId, combatEvents);
-
-        const affixResults = await detectAffixScripts(
-          abilityId,
-          playerId,
-          combatEvents,
-          scribingInfo.grimoireKey,
-        );
-
-        // Debug logging for affix detection
-        logger.info('Affix detection results', {
-          grimoire: scribingInfo.grimoire,
-          abilityId,
-          grimoireKey: scribingInfo.grimoireKey,
-          affixResultsCount: affixResults.length,
-          affixResults,
-        });
-
-        // Found a scribing ability! Create proper ScribedSkillData with real detection
-        const scribedData: ScribedSkillData = {
-          grimoireName: scribingInfo.grimoire,
-          effects: [], // Would be populated from actual effect data
-          wasCastInFight: true, // Assume true if we're asking about it
-          recipe: {
-            grimoire: scribingInfo.grimoire,
-            transformation: scribingInfo.transformation,
-            transformationType: scribingInfo.transformationType,
-            confidence: 1.0, // High confidence from direct database lookup
-            matchMethod: 'Database Lookup',
-            recipeSummary: `📖 ${scribingInfo.grimoire} + 🔄 ${scribingInfo.transformation}`,
-            tooltipInfo: `Detected from scribing database with 100% confidence`,
-          },
-          signatureScript: signatureResult || {
-            name: 'Unknown Signature',
-            confidence: 0.5,
-            detectionMethod: 'No combat data',
-            evidence: ['Database lookup confirmed scribing ability'],
-          },
-          affixScripts:
-            affixResults.length > 0
-              ? affixResults
-              : [
-                  {
-                    id: 'affix-1',
-                    name: 'Unknown Affix',
-                    description: 'Scribing affix script',
-                    confidence: 0.5,
-                    detectionMethod: 'No combat data',
-                    evidence: {
-                      buffIds: [],
-                      debuffIds: [],
-                      abilityNames: [],
-                      occurrenceCount: 1,
-                    },
-                  },
-                ],
-        };
-
-        setScribedSkillData(scribedData);
-        setData({
-          detected: true,
-          source: 'database',
-          abilityId,
-          scribingInfo,
-          signatureResult,
-          affixResults,
-        });
-      } else {
-        // Not a scribing ability or not in database
-        setScribedSkillData(null);
-        setData({ detected: false, source: 'database', abilityId });
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(errorMessage);
-      setScribedSkillData(null);
-      setData(null);
-    } finally {
-      setLoading(false);
+  const fallbackDetection = useMemo(() => {
+    if (!shouldAttemptDetection || shouldUseWorker) {
+      return null;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fightId, playerId, abilityId, enabled, allBuffs, debuffs, damage, casts, heals, resources]);
+    if (typeof playerId !== 'number' || typeof abilityId !== 'number') {
+      return null;
+    }
+
+    return computeScribingDetection({
+      abilityId,
+      playerId,
+      combatEvents,
+    });
+  }, [shouldAttemptDetection, shouldUseWorker, playerId, abilityId, combatEvents]);
+  const resolvedDetection = currentDetection ?? fallbackDetection ?? null;
+  const loading = shouldUseWorker ? !currentDetection && workerTaskState.isLoading : false;
+  const error = shouldUseWorker ? workerTaskState.error : null;
+  const scribedSkillData = resolvedDetection?.scribedSkillData ?? null;
 
   const refetch = useCallback(async () => {
-    await fetchScribingData();
-  }, [fetchScribingData]);
+    if (!shouldAttemptDetection) {
+      return;
+    }
 
-  useEffect(() => {
-    fetchScribingData();
-  }, [fetchScribingData]);
+    if (shouldUseWorker) {
+      if (!fightIdNumber) {
+        return;
+      }
+      await dispatch(
+        executeScribingDetectionsTask({
+          fightId: fightIdNumber,
+          combatEvents,
+          playerAbilities: combinedPlayerAbilities,
+        }),
+      );
+      return;
+    }
+
+    if (typeof playerId !== 'number' || typeof abilityId !== 'number') {
+      return;
+    }
+
+  }, [
+    shouldAttemptDetection,
+    shouldUseWorker,
+    fightIdNumber,
+    playerId,
+    abilityId,
+    combatEvents,
+    combinedPlayerAbilities,
+    dispatch,
+  ]);
 
   return {
-    data,
+    data: resolvedDetection,
     scribedSkillData,
     loading,
     error,
@@ -813,7 +1172,7 @@ export function useSkillScribingData(
   error: string | null;
 } {
   const { scribedSkillData, loading, error } = useScribingDetection({
-    fightId,
+    fightId: fightId ?? null,
     playerId,
     abilityId,
     enabled: Boolean(fightId && playerId && abilityId),

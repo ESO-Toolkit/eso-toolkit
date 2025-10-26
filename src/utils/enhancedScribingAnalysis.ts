@@ -4,7 +4,7 @@
  * Integrates signature script detection with existing scribing skill analysis
  */
 
-import { ScribedSkillData, ScribedSkillEffect } from '@/components/SkillTooltip';
+import { ScribedSkillData, ScribedSkillEffect } from '@/features/scribing/types';
 import { ReportAbility } from '@/graphql/gql/graphql';
 import {
   BuffEvent,

@@ -65,17 +65,36 @@ jest.mock('../../../../hooks/events/useResourceEvents', () => ({
   }),
 }));
 
-// Mock Redux store with sample events
+// Mock Redux store with minimal slices required by the hook
+const mockWorkerTaskState = {
+  result: null,
+  isLoading: false,
+  progress: null,
+  error: null,
+  lastUpdated: null,
+  cacheMetadata: {
+    lastInputHash: null,
+    lastExecutedTimestamp: null,
+  },
+  latestRequestId: null,
+};
+
 const mockStore = configureStore({
   reducer: {
-    filters: () => ({
-      friendlyBuffEvents: [],
-      hostileBuffEvents: [],
-      debuffEvents: [],
-      damageEvents: [],
-      healingEvents: [],
-      castEvents: [],
-      resourceEvents: [],
+    playerData: () => ({
+      playersById: {},
+      loading: false,
+      loaded: true,
+      error: null,
+      cacheMetadata: {
+        lastFetchedReportId: null,
+        lastFetchedFightId: null,
+        lastFetchedTimestamp: null,
+        playerCount: 0,
+      },
+    }),
+    workerResults: () => ({
+      calculateScribingDetections: mockWorkerTaskState,
     }),
   },
 });

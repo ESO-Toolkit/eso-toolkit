@@ -1,6 +1,15 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 import { useLogger } from '@/contexts/LoggerContext';
+import type { CombatEventData, PlayerAbilityList } from '@/features/scribing/analysis/scribingDetectionAnalysis';
+import { isScribingAbility } from '@/features/scribing/utils/Scribing';
+import { useAppDispatch } from '@/store/useAppDispatch';
+import {
+  executeScribingDetectionsTask,
+  selectScribingDetectionsResult,
+  selectScribingDetectionsTask,
+} from '@/store/worker_results';
 
 import type { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import {
@@ -10,6 +19,7 @@ import {
   useDamageEvents,
   useDeathEvents,
   useFriendlyBuffEvents,
+  useHostileBuffEvents,
   useHealingEvents,
   usePlayerData,
   useReportMasterData,
@@ -75,6 +85,9 @@ import { PlayersPanelView } from './PlayersPanelView';
 
 export const PlayersPanel: React.FC = () => {
   const logger = useLogger('PlayersPanel');
+  const dispatch = useAppDispatch();
+  const scribingTaskState = useSelector(selectScribingDetectionsTask);
+  const scribingResult = useSelector(selectScribingDetectionsResult);
 
   // State for storing scribing recipe information
   const [scribingRecipes, setScribingRecipes] = React.useState<
@@ -105,11 +118,92 @@ export const PlayersPanel: React.FC = () => {
   const { castEvents, isCastEventsLoading } = useCastEvents();
   const { deathEvents, isDeathEventsLoading } = useDeathEvents();
   const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
+  const { hostileBuffEvents, isHostileBuffEventsLoading } = useHostileBuffEvents();
   const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents();
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { healingEvents, isHealingEventsLoading } = useHealingEvents();
   const { resourceEvents, isResourceEventsLoading } = useResourceEvents();
   const { fight, isFightLoading } = useCurrentFight();
+
+  const fightIdNumber = React.useMemo(() => {
+    if (!fightId) {
+      return null;
+    }
+    const parsed = Number(fightId);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [fightId]);
+
+  const allBuffEvents = React.useMemo(
+    () => [...friendlyBuffEvents, ...hostileBuffEvents],
+    [friendlyBuffEvents, hostileBuffEvents],
+  );
+
+  const combatEvents: CombatEventData = React.useMemo(
+    () => ({
+      buffs: allBuffEvents,
+      debuffs: debuffEvents,
+      damage: damageEvents,
+      casts: castEvents,
+      heals: healingEvents,
+      resources: resourceEvents,
+    }),
+    [allBuffEvents, debuffEvents, damageEvents, castEvents, healingEvents, resourceEvents],
+  );
+
+  const scribingPlayerAbilities = React.useMemo<PlayerAbilityList[]>(() => {
+    if (!playerData?.playersById) {
+      return [];
+    }
+
+    return Object.values(playerData.playersById)
+      .map((player) => {
+        const talents = player.combatantInfo?.talents ?? [];
+        const abilityIds = Array.from(
+          new Set(
+            talents
+              .map((talent) => talent.guid)
+              .filter((guid) => typeof guid === 'number' && isScribingAbility(guid)),
+          ),
+        );
+
+        return {
+          playerId: player.id,
+          abilityIds,
+        };
+      })
+      .filter((entry) => entry.abilityIds.length > 0);
+  }, [playerData]);
+
+  const existingScribingAbilities = React.useMemo(() => {
+    if (!scribingResult || fightIdNumber === null || scribingResult.fightId !== fightIdNumber) {
+      return new Map<number, Set<number>>();
+    }
+
+    const map = new Map<number, Set<number>>();
+    Object.entries(scribingResult.players).forEach(([playerKey, abilityMap]) => {
+      map.set(Number(playerKey), new Set(Object.keys(abilityMap).map(Number)));
+    });
+    return map;
+  }, [scribingResult, fightIdNumber]);
+
+  const pendingScribingAbilities = React.useMemo<PlayerAbilityList[]>(() => {
+    if (scribingPlayerAbilities.length === 0) {
+      return [];
+    }
+
+    const pending: PlayerAbilityList[] = [];
+
+    scribingPlayerAbilities.forEach(({ playerId, abilityIds }) => {
+      const existing = existingScribingAbilities.get(playerId);
+      const missing = abilityIds.filter((id) => !existing?.has(id));
+
+      if (missing.length > 0) {
+        pending.push({ playerId, abilityIds: missing });
+      }
+    });
+
+    return pending;
+  }, [scribingPlayerAbilities, existingScribingAbilities]);
 
   // Get friendly buff lookup data for build issues detection
   const { buffLookupData: friendlyBuffLookup, isBuffLookupLoading } = useBuffLookupTask();
@@ -137,6 +231,7 @@ export const PlayersPanel: React.FC = () => {
     isCastEventsLoading ||
     isDeathEventsLoading ||
     isFriendlyBuffEventsLoading ||
+    isHostileBuffEventsLoading ||
     isDebuffEventsLoading ||
     isDamageEventsLoading ||
     isHealingEventsLoading ||
@@ -144,6 +239,39 @@ export const PlayersPanel: React.FC = () => {
     isBuffLookupLoading ||
     isPlayerTravelDistancesLoading ||
     isFightLoading;
+
+  React.useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+    if (typeof window === 'undefined') {
+      return;
+    }
+    if (fightIdNumber === null) {
+      return;
+    }
+    if (pendingScribingAbilities.length === 0) {
+      return;
+    }
+    if (scribingTaskState.isLoading) {
+      return;
+    }
+
+    dispatch(
+      executeScribingDetectionsTask({
+        fightId: fightIdNumber,
+        combatEvents,
+        playerAbilities: pendingScribingAbilities,
+      }),
+    );
+  }, [
+    isLoading,
+    fightIdNumber,
+    pendingScribingAbilities,
+    scribingTaskState.isLoading,
+    combatEvents,
+    dispatch,
+  ]);
   // Calculate unique mundus buffs per player using MundusStones enum from combatantinfo auras
   const mundusBuffsByPlayer = React.useMemo(() => {
     const result: Record<string, Array<{ name: string; id: number }>> = {};

@@ -89,3 +89,10 @@ export {
   executePlayerTravelDistancesTask,
   playerTravelDistancesReducer,
 } from './playerTravelDistancesSlice';
+
+export {
+  scribingDetectionsSlice,
+  scribingDetectionsActions,
+  executeScribingDetectionsTask,
+  scribingDetectionsReducer,
+} from './scribingDetectionsSlice';
