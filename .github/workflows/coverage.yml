@@ -55,7 +55,7 @@ jobs:
           COVERAGE_GIST_ID: ${{ secrets.COVERAGE_GIST_ID }}
 
       - name: Upload Coverage Badges
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: coverage-badges-${{ github.run_number }}
@@ -63,7 +63,7 @@ jobs:
           retention-days: 90
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: coverage-report-${{ github.run_number }}
