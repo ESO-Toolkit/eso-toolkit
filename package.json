@@ -66,7 +66,7 @@
     "react-sticky": "^6.0.3",
     "react-sticky-box": "^2.0.5",
     "react-text-gradients": "^1.0.2",
-    "react-window": "^2.2.1",
+    "react-window": "^2.2.2",
     "react-window-infinite-loader": "^1.0.10",
     "redux-first-history": "^5.2.0",
     "redux-persist": "^6.0.0",
