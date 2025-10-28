@@ -1,4 +1,15 @@
-import { Box, Typography, List, ListItem, Skeleton, Button, Stack } from '@mui/material';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import {
+  Box,
+  Typography,
+  List,
+  ListItem,
+  Skeleton,
+  Button,
+  Stack,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
 import React from 'react';
 
 import { BuffUptimeProgressBar, BuffUptime } from './BuffUptimeProgressBar';
@@ -11,6 +22,8 @@ interface BuffUptimesViewProps {
   reportId: string | null;
   fightId: string | null;
   selectedTargetId: number | null;
+  onOpenTimeline?: () => void;
+  canOpenTimeline?: boolean;
 }
 
 export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
@@ -21,13 +34,20 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
   reportId,
   fightId,
   selectedTargetId,
+  onOpenTimeline,
+  canOpenTimeline = false,
 }) => {
+  const descriptionId = React.useId();
+
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
           <Typography variant="h6">Buff Uptimes</Typography>
-          <Skeleton variant="rounded" width={120} height={32} />
+          <Stack direction="row" spacing={1}>
+            <Skeleton variant="rounded" width={120} height={32} />
+            <Skeleton variant="circular" width={36} height={36} />
+          </Stack>
         </Stack>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Shows average buff uptimes across friendly players
@@ -94,12 +114,28 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
     <Box sx={{ mt: 2 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
         <Typography variant="h6">Buff Uptimes</Typography>
-        <Button variant="outlined" size="small" onClick={() => onToggleShowAll(!showAllBuffs)}>
-          {showAllBuffs ? 'Show Important Only' : 'Show All Buffs'}
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <Button variant="outlined" size="small" onClick={() => onToggleShowAll(!showAllBuffs)}>
+            {showAllBuffs ? 'Show Important Only' : 'Show All Buffs'}
+          </Button>
+          <Tooltip title="View buff uptimes timeline">
+            <span>
+              <IconButton
+                aria-label="Open buff uptimes timeline"
+                aria-describedby={descriptionId}
+                size="small"
+                color="primary"
+                onClick={onOpenTimeline}
+                disabled={!canOpenTimeline}
+              >
+                <TimelineIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Stack>
       </Stack>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} id={descriptionId}>
         Shows average buff uptimes across friendly players
         {!showAllBuffs && ' (filtered to important buffs only)'}. Click on a buff to view in ESO
         Logs.

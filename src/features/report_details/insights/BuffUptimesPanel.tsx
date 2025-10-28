@@ -8,6 +8,8 @@ import { KnownAbilities } from '../../../types/abilities';
 import { computeBuffUptimes } from '../../../utils/buffUptimeCalculator';
 
 import { BuffUptimesView } from './BuffUptimesView';
+import { EffectUptimeTimelineModal } from './EffectUptimeTimelineModal';
+import { buildUptimeTimelineSeries } from './utils/buildUptimeTimeline';
 
 interface BuffUptimesPanelProps {
   fight: FightFragment;
@@ -50,23 +52,24 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
 
   // State for toggling between important buffs only and all buffs
   const [showAllBuffs, setShowAllBuffs] = React.useState(false);
+  const [isTimelineOpen, setIsTimelineOpen] = React.useState(false);
 
   // Extract stable fight properties
   const fightStartTime = fight?.startTime;
   const fightEndTime = fight?.endTime;
   const fightDuration = fightEndTime && fightStartTime ? fightEndTime - fightStartTime : 0;
 
-  // Calculate buff uptimes for friendly players using the utility function
-  const allBuffUptimes = React.useMemo(() => {
-    if (!friendlyBuffsLookup || !fight?.friendlyPlayers || !fightDuration) {
-      return [];
+  const friendlyPlayerIds = React.useMemo(() => {
+    if (!fight?.friendlyPlayers) {
+      return new Set<number>();
     }
 
-    const friendlyPlayerIds = new Set(
-      fight.friendlyPlayers.filter((id): id is number => id !== null),
-    );
+    return new Set(fight.friendlyPlayers.filter((id): id is number => id !== null));
+  }, [fight?.friendlyPlayers]);
 
-    if (friendlyPlayerIds.size === 0) {
+  // Calculate buff uptimes for friendly players using the utility function
+  const allBuffUptimes = React.useMemo(() => {
+    if (!friendlyBuffsLookup || friendlyPlayerIds.size === 0 || !fightDuration) {
       return [];
     }
 
@@ -125,7 +128,7 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
     fightStartTime,
     fightEndTime,
     reportMasterData?.abilitiesById,
-    fight?.friendlyPlayers,
+    friendlyPlayerIds,
   ]);
 
   // Filter buff uptimes based on showAllBuffs state
@@ -154,7 +157,7 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
     }
 
     // Still loading if fight data is not available
-    if (!fight?.friendlyPlayers || !fightDuration) {
+    if (friendlyPlayerIds.size === 0 || !fightDuration) {
       return true;
     }
 
@@ -167,9 +170,25 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
     isMasterDataLoading,
     isFriendlyBuffEventsLoading,
     friendlyBuffsLookup,
-    fight?.friendlyPlayers,
+    friendlyPlayerIds,
     fightDuration,
   ]);
+
+  const prefetchedSeries = React.useMemo(() => {
+    if (!friendlyBuffsLookup || !fightStartTime || !fightEndTime) {
+      return [];
+    }
+
+    return buildUptimeTimelineSeries({
+      uptimes: buffUptimes,
+      lookup: friendlyBuffsLookup,
+      fightStartTime,
+      fightEndTime,
+      targetFilter: friendlyPlayerIds.size > 0 ? friendlyPlayerIds : null,
+    });
+  }, [buffUptimes, friendlyBuffsLookup, fightStartTime, fightEndTime, friendlyPlayerIds]);
+
+  const canOpenTimeline = prefetchedSeries.length > 0;
 
   if (isDataLoading) {
     return (
@@ -181,19 +200,37 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
         reportId={reportId}
         fightId={fightId}
         selectedTargetId={null}
+        canOpenTimeline={false}
       />
     );
   }
 
   return (
-    <BuffUptimesView
-      buffUptimes={buffUptimes}
-      isLoading={false}
-      showAllBuffs={showAllBuffs}
-      onToggleShowAll={setShowAllBuffs}
-      reportId={reportId}
-      fightId={fightId}
-      selectedTargetId={null}
-    />
+    <React.Fragment>
+      <BuffUptimesView
+        buffUptimes={buffUptimes}
+        isLoading={false}
+        showAllBuffs={showAllBuffs}
+        onToggleShowAll={setShowAllBuffs}
+        reportId={reportId}
+        fightId={fightId}
+        selectedTargetId={null}
+        onOpenTimeline={canOpenTimeline ? () => setIsTimelineOpen(true) : undefined}
+        canOpenTimeline={canOpenTimeline}
+      />
+      <EffectUptimeTimelineModal
+        open={isTimelineOpen}
+        onClose={() => setIsTimelineOpen(false)}
+        title="Buff Uptimes Timeline"
+        subtitle="Toggle legend entries to focus on specific buffs."
+        category="buff"
+        uptimes={buffUptimes}
+        lookup={friendlyBuffsLookup}
+        fightStartTime={fightStartTime}
+        fightEndTime={fightEndTime}
+        targetFilter={friendlyPlayerIds.size > 0 ? friendlyPlayerIds : null}
+        prefetchedSeries={prefetchedSeries}
+      />
+    </React.Fragment>
   );
 };

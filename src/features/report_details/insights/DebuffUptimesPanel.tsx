@@ -14,6 +14,8 @@ import { KnownAbilities } from '../../../types/abilities';
 import { computeBuffUptimes } from '../../../utils/buffUptimeCalculator';
 
 import { DebuffUptimesView } from './DebuffUptimesView';
+import { EffectUptimeTimelineModal } from './EffectUptimeTimelineModal';
+import { buildUptimeTimelineSeries } from './utils/buildUptimeTimeline';
 
 interface DebuffUptimesPanelProps {
   fight: FightFragment;
@@ -59,6 +61,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
 
   // State for toggling between important debuffs only and all debuffs
   const [showAllDebuffs, setShowAllDebuffs] = React.useState(false);
+  const [isTimelineOpen, setIsTimelineOpen] = React.useState(false);
 
   // Extract stable fight properties
   const fightStartTime = fight?.startTime;
@@ -309,6 +312,22 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
     realTargetIds,
   ]);
 
+  const prefetchedSeries = React.useMemo(() => {
+    if (!debuffsLookup || !fightStartTime || !fightEndTime) {
+      return [];
+    }
+
+    return buildUptimeTimelineSeries({
+      uptimes: debuffUptimes,
+      lookup: debuffsLookup,
+      fightStartTime,
+      fightEndTime,
+      targetFilter: realTargetIds.size > 0 ? realTargetIds : null,
+    });
+  }, [debuffUptimes, debuffsLookup, fightStartTime, fightEndTime, realTargetIds]);
+
+  const canOpenTimeline = prefetchedSeries.length > 0;
+
   if (isDataLoading) {
     return (
       <DebuffUptimesView
@@ -319,19 +338,37 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
         onToggleShowAll={setShowAllDebuffs}
         reportId={reportId}
         fightId={fightId}
+        canOpenTimeline={false}
       />
     );
   }
 
   return (
-    <DebuffUptimesView
-      selectedTargetId={selectedTargetId}
-      debuffUptimes={debuffUptimes}
-      isLoading={false}
-      showAllDebuffs={showAllDebuffs}
-      onToggleShowAll={setShowAllDebuffs}
-      reportId={reportId}
-      fightId={fightId}
-    />
+    <React.Fragment>
+      <DebuffUptimesView
+        selectedTargetId={selectedTargetId}
+        debuffUptimes={debuffUptimes}
+        isLoading={false}
+        showAllDebuffs={showAllDebuffs}
+        onToggleShowAll={setShowAllDebuffs}
+        reportId={reportId}
+        fightId={fightId}
+        onOpenTimeline={canOpenTimeline ? () => setIsTimelineOpen(true) : undefined}
+        canOpenTimeline={canOpenTimeline}
+      />
+      <EffectUptimeTimelineModal
+        open={isTimelineOpen}
+        onClose={() => setIsTimelineOpen(false)}
+        title="Debuff Uptimes Timeline"
+        subtitle="Use the legend to toggle specific debuffs."
+        category="debuff"
+        uptimes={debuffUptimes}
+        lookup={debuffsLookup}
+        fightStartTime={fightStartTime}
+        fightEndTime={fightEndTime}
+        targetFilter={realTargetIds.size > 0 ? realTargetIds : null}
+        prefetchedSeries={prefetchedSeries}
+      />
+    </React.Fragment>
   );
 };

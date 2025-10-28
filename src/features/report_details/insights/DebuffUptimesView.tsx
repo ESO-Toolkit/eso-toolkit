@@ -1,4 +1,15 @@
-import { Box, Typography, List, ListItem, Skeleton, Button, Stack } from '@mui/material';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import {
+  Box,
+  Typography,
+  List,
+  ListItem,
+  Skeleton,
+  Button,
+  Stack,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
 import React from 'react';
 
 import { BuffUptimeProgressBar, BuffUptime } from './BuffUptimeProgressBar';
@@ -11,6 +22,8 @@ interface DebuffUptimesViewProps {
   onToggleShowAll: (showAll: boolean) => void;
   reportId: string | null;
   fightId: string | null;
+  onOpenTimeline?: () => void;
+  canOpenTimeline?: boolean;
 }
 
 export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
@@ -21,13 +34,20 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
   onToggleShowAll,
   reportId,
   fightId,
+  onOpenTimeline,
+  canOpenTimeline = false,
 }) => {
+  const descriptionId = React.useId();
+
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
           <Typography variant="h6">Debuff Uptimes</Typography>
-          <Skeleton variant="rounded" width={120} height={32} />
+          <Stack direction="row" spacing={1}>
+            <Skeleton variant="rounded" width={120} height={32} />
+            <Skeleton variant="circular" width={36} height={36} />
+          </Stack>
         </Stack>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Shows average debuff uptimes against hostile targets
@@ -94,12 +114,28 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
     <Box sx={{ mt: 2 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
         <Typography variant="h6">Debuff Uptimes</Typography>
-        <Button variant="outlined" size="small" onClick={() => onToggleShowAll(!showAllDebuffs)}>
-          {showAllDebuffs ? 'Show Important Only' : 'Show All Debuffs'}
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <Button variant="outlined" size="small" onClick={() => onToggleShowAll(!showAllDebuffs)}>
+            {showAllDebuffs ? 'Show Important Only' : 'Show All Debuffs'}
+          </Button>
+          <Tooltip title="View debuff uptimes timeline">
+            <span>
+              <IconButton
+                aria-label="Open debuff uptimes timeline"
+                aria-describedby={descriptionId}
+                size="small"
+                color="primary"
+                onClick={onOpenTimeline}
+                disabled={!canOpenTimeline}
+              >
+                <TimelineIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Stack>
       </Stack>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} id={descriptionId}>
         {selectedTargetId
           ? 'Shows debuffs applied by friendly players to the selected target'
           : 'Shows debuffs applied by friendly players to all targets'}
