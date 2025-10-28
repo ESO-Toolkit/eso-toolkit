@@ -32,3 +32,4 @@ jobs:
         uses: ./.github/actions/build-and-deploy
         with:
           enable_sourcemaps: 'false'
+          vite_ga_measurement_id: ${{ secrets.VITE_GA_MEASUREMENT_ID }}

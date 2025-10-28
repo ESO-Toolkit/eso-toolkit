@@ -9,6 +9,10 @@ inputs:
     description: 'Release version to set in environment'
     required: false
     default: ''
+  vite_ga_measurement_id:
+    description: 'Google Analytics measurement identifier for the build'
+    required: false
+    default: ''
 outputs:
   deployment-url:
     description: 'URL where the site was deployed'
@@ -37,7 +41,7 @@ runs:
         npm run build
       env:
         VITE_BASE_URL: '${{steps.setup.outputs.base_url}}'
-        VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
+        VITE_GA_MEASUREMENT_ID: ${{ inputs.vite_ga_measurement_id }}
 
     - name: Build Storybook
       shell: bash
