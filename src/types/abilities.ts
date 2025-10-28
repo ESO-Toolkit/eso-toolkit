@@ -207,7 +207,7 @@ export enum KnownAbilities {
   RUNIC_SUNDER_BUFF = 187741,
 
   // Tremorscale - Monster set that reduces target resistance
-  TREMORSCALE = 142023,
+  TREMORSCALE = 80866,
 
   // Crimson Oath - Monster set that reduces target resistance
   CRIMSON_OATH = 155150,

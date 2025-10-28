@@ -8,6 +8,24 @@ import {
   calculateDynamicPenetrationAtTimestamp,
   calculatePenetrationAtTimestamp,
 } from './PenetrationUtils';
+import { ArmorType, GearTrait, PlayerGear } from '../types/playerDetails';
+import { ItemQuality } from './gearUtilities';
+
+function createArmorPiece(type: ArmorType, slot: number): PlayerGear {
+  return {
+    id: 1000 + slot,
+    slot,
+    quality: ItemQuality.LEGENDARY,
+    icon: 'icon',
+    name: `Armor ${slot}`,
+    championPoints: 160,
+    trait: GearTrait.REINFORCED,
+    enchantType: 0,
+    enchantQuality: 0,
+    setID: 0,
+    type,
+  };
+}
 
 describe('PenetrationUtils', () => {
   describe('getAllPenetrationSourcesWithActiveState', () => {
@@ -60,6 +78,82 @@ describe('PenetrationUtils', () => {
       expect(velothiSource?.wasActive).toBe(true);
       expect(velothiSource?.value).toBe(PenetrationValues.VELOTHI_UR_MAGE_AMULET);
     });
+
+    it('should not mark Concentration active without light armor pieces', () => {
+      const mockCombatantInfo: CombatantInfoEvent = {
+        timestamp: 2000,
+        type: 'combatantinfo',
+        sourceID: 2,
+        fight: 1,
+        gear: [createArmorPiece(ArmorType.MEDIUM, 0), createArmorPiece(ArmorType.HEAVY, 1)],
+        auras: [
+          {
+            source: 2,
+            ability: KnownAbilities.CONCENTRATION,
+            name: 'Concentration',
+            icon: 'icon',
+            stacks: 1,
+          } as CombatantAura,
+        ],
+      };
+
+      const sources = getAllPenetrationSourcesWithActiveState(null, null, mockCombatantInfo);
+      const concentrationSource = sources.find(
+        (source) => source.name === 'Concentration (Light Armor)',
+      );
+      expect(concentrationSource).toBeDefined();
+      expect(concentrationSource?.wasActive).toBe(false);
+      expect(concentrationSource?.value).toBe(0);
+    });
+
+    it('should scope debuff sources to provided target IDs', () => {
+      const runicTargetId = 1;
+      const debuffLookup = createDebuffLookup([
+        {
+          timestamp: 1000,
+          type: 'applydebuff',
+          sourceID: 5,
+          sourceIsFriendly: true,
+          targetID: runicTargetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.RUNIC_SUNDER_DEBUFF,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+        {
+          timestamp: 2000,
+          type: 'removedebuff',
+          sourceID: 5,
+          sourceIsFriendly: true,
+          targetID: runicTargetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.RUNIC_SUNDER_DEBUFF,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+      ] satisfies DebuffEvent[]);
+
+      const filteredSources = getAllPenetrationSourcesWithActiveState(
+        null,
+        debuffLookup,
+        null,
+        undefined,
+        { targetIds: [999] },
+      );
+      const runicFiltered = filteredSources.find((source) => source.name === 'Runic Sunder');
+      expect(runicFiltered?.wasActive).toBe(false);
+
+      const matchingSources = getAllPenetrationSourcesWithActiveState(
+        null,
+        debuffLookup,
+        null,
+        undefined,
+        { targetIds: [runicTargetId] },
+      );
+      const runicMatching = matchingSources.find((source) => source.name === 'Runic Sunder');
+      expect(runicMatching?.wasActive).toBe(true);
+      expect(runicMatching?.value).toBe(PenetrationValues.RUNIC_SUNDER);
+    });
   });
 
   describe('calculateStaticPenetration', () => {
@@ -100,7 +194,7 @@ describe('PenetrationUtils', () => {
     });
 
     it('should calculate penetration from active debuffs', () => {
-      const debuffEvents: DebuffEvent[] = [
+      const debuffEvents = [
         {
           timestamp: 500,
           type: 'applydebuff',
@@ -122,13 +216,14 @@ describe('PenetrationUtils', () => {
           fight: 1,
         },
       ];
+      const typedDebuffEvents = debuffEvents as unknown as DebuffEvent[];
 
-      const debuffLookup = createDebuffLookup(debuffEvents);
+      const debuffLookup = createDebuffLookup(typedDebuffEvents);
 
       // Test timestamp during debuff
       const resultDuringDebuff = calculateDynamicPenetrationAtTimestamp(
         null,
-        debuffLookup,
+        typedDebuffEvents ? debuffLookup : debuffLookup,
         1000,
         null,
         null,
@@ -154,6 +249,66 @@ describe('PenetrationUtils', () => {
         null,
       );
       expect(resultAfterDebuff).toBe(0);
+    });
+
+    it('should detect penetration from alternate Tremorscale ability IDs', () => {
+      const targetId = 54;
+      const debuffEvents = [
+        {
+          timestamp: 1000,
+          type: 'applydebuff',
+          sourceID: 3,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.TREMORSCALE,
+          fight: 53,
+          extraAbilityGameID: 0,
+        },
+        {
+          timestamp: 4000,
+          type: 'removedebuff',
+          sourceID: 3,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.TREMORSCALE,
+          fight: 53,
+          extraAbilityGameID: 0,
+        },
+      ] as unknown as DebuffEvent[];
+
+      const debuffLookup = createDebuffLookup(debuffEvents);
+
+      const resultDuringDebuff = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        2000,
+        null,
+        targetId,
+      );
+
+      expect(resultDuringDebuff).toBe(PenetrationValues.TREMORSCALE);
+
+      const resultBeforeDebuff = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        900,
+        null,
+        targetId,
+      );
+
+      expect(resultBeforeDebuff).toBe(0);
+
+      const resultAfterRemoval = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        5000,
+        null,
+        targetId,
+      );
+
+      expect(resultAfterRemoval).toBe(0);
     });
   });
 
@@ -187,6 +342,7 @@ describe('PenetrationUtils', () => {
           targetIsFriendly: false,
           abilityGameID: KnownAbilities.MAJOR_BREACH,
           fight: 1,
+          extraAbilityGameID: 0,
         },
       ];
 
@@ -231,6 +387,7 @@ describe('PenetrationUtils', () => {
           targetIsFriendly: false,
           abilityGameID: KnownAbilities.MAJOR_BREACH,
           fight: 1,
+          extraAbilityGameID: 0,
         },
         {
           timestamp: 500,
@@ -241,6 +398,7 @@ describe('PenetrationUtils', () => {
           targetIsFriendly: false,
           abilityGameID: KnownAbilities.MAJOR_BREACH,
           fight: 1,
+          extraAbilityGameID: 0,
         },
         {
           timestamp: 1500,
@@ -251,6 +409,7 @@ describe('PenetrationUtils', () => {
           targetIsFriendly: false,
           abilityGameID: KnownAbilities.MAJOR_BREACH,
           fight: 1,
+          extraAbilityGameID: 0,
         },
         // Target 3 keeps the debuff
       ];
@@ -334,6 +493,7 @@ describe('PenetrationUtils', () => {
           targetIsFriendly: false,
           abilityGameID: KnownAbilities.MAJOR_BREACH,
           fight: 1,
+          extraAbilityGameID: 0,
         },
         {
           timestamp: 1500,
@@ -344,6 +504,7 @@ describe('PenetrationUtils', () => {
           targetIsFriendly: false,
           abilityGameID: KnownAbilities.MAJOR_BREACH,
           fight: 1,
+          extraAbilityGameID: 0,
         },
       ];
 
