@@ -79,6 +79,8 @@ jobs:
       - name: Test
         run: npm run test:coverage:ci
         env:
+          # Increase Node.js memory limit to prevent OOM errors
+          NODE_OPTIONS: '--max-old-space-size=8192'
           # Prevent external network requests during testing
           NO_PROXY: '*'
           HTTP_PROXY: 'http://127.0.0.1:9999'
