@@ -7,16 +7,19 @@ import type {
   ResourceChangeEvent,
   UnifiedCastEvent,
 } from '../../../types/combatlogEvents';
-import {
-  getScribingSkillByAbilityId,
-  type ScribingSkillInfo,
-} from '../utils/Scribing';
 import type {
   ResolvedScribingDetection,
   ScribedSkillAffixInfo,
   ScribedSkillData,
   ScribedSkillSignatureInfo,
 } from '../types';
+import {
+  getScribingSkillByAbilityId,
+  isScribingAbility,
+  type ScribingSkillInfo,
+} from '../utils/Scribing';
+
+export const SCRIBING_DETECTION_SCHEMA_VERSION = 2;
 
 export interface CombatEventData {
   buffs: BuffEvent[];
@@ -44,16 +47,48 @@ const BANNER_GRIMOIRE_KEY = 'banner-bearer';
 const BANNER_PSEUDO_CAST_WINDOW_MS = 1000;
 
 const bannerGrimoire = (scribingData as any).grimoires?.[BANNER_GRIMOIRE_KEY];
+const BANNER_BASE_ABILITY_ID =
+  typeof bannerGrimoire?.id === 'number' ? (bannerGrimoire.id as number) : null;
 const BANNER_PRIMARY_ABILITY_IDS = new Set<number>();
+const BANNER_ABILITY_TO_TRANSFORMATION = new Map<
+  number,
+  { transformation: string; primaryAbilityId: number }
+>();
 
 if (bannerGrimoire?.nameTransformations) {
-  Object.entries(
-    bannerGrimoire.nameTransformations as Record<string, { name: string; abilityIds?: number[] }>,
-  ).forEach(([, config]) => {
-    const primaryAbilityId = config.abilityIds?.[0];
+  Object.values(
+    bannerGrimoire.nameTransformations as Record<string, { name: string; abilityIds?: number[] }> ,
+  ).forEach((config) => {
+    if (!config?.name) {
+      return;
+    }
+
+    const abilityIds = Array.isArray(config.abilityIds) ? config.abilityIds : [];
+    const primaryAbilityId = abilityIds[0];
+
     if (typeof primaryAbilityId === 'number') {
       BANNER_PRIMARY_ABILITY_IDS.add(primaryAbilityId);
     }
+
+    abilityIds.forEach((id) => {
+      if (typeof id !== 'number') {
+        return;
+      }
+
+      if (BANNER_BASE_ABILITY_ID !== null && id === BANNER_BASE_ABILITY_ID) {
+        return;
+      }
+
+      const resolvedPrimaryAbilityId =
+        typeof primaryAbilityId === 'number' && primaryAbilityId !== BANNER_BASE_ABILITY_ID
+          ? primaryAbilityId
+          : id;
+
+      BANNER_ABILITY_TO_TRANSFORMATION.set(id, {
+        transformation: config.name,
+        primaryAbilityId: resolvedPrimaryAbilityId,
+      });
+    });
   });
 }
 
@@ -179,7 +214,12 @@ function resolveBannerPrimaryAbilityId(
     return null;
   }
 
-  const counts = new Map<number, number>();
+  const baseInfo = lookupScribingSkill(abilityId);
+  if (!baseInfo || baseInfo.grimoireKey !== BANNER_GRIMOIRE_KEY) {
+    return null;
+  }
+
+  const transformationCounts = new Map<string, { count: number; primaryAbilityId: number }>();
 
   buffs.forEach((buff) => {
     if (buff.sourceID !== playerId) {
@@ -188,33 +228,48 @@ function resolveBannerPrimaryAbilityId(
     if (buff.type !== 'applybuff' && buff.type !== 'applybuffstack') {
       return;
     }
-    if (!BANNER_PRIMARY_ABILITY_IDS.has(buff.abilityGameID)) {
+
+    const mapping = BANNER_ABILITY_TO_TRANSFORMATION.get(buff.abilityGameID);
+    if (!mapping) {
       return;
     }
 
-    const current = counts.get(buff.abilityGameID) ?? 0;
-    counts.set(buff.abilityGameID, current + 1);
+    const existing = transformationCounts.get(mapping.transformation) ?? {
+      count: 0,
+      primaryAbilityId: mapping.primaryAbilityId,
+    };
+
+    existing.count += 1;
+    transformationCounts.set(mapping.transformation, existing);
   });
 
-  if (counts.size === 0) {
+  if (transformationCounts.size === 0) {
     return null;
   }
 
-  let topAbilityId = abilityId;
-  let topCount = counts.get(abilityId) ?? 0;
+  const baseCount = transformationCounts.get(baseInfo.transformation)?.count ?? 0;
 
-  counts.forEach((count, candidateId) => {
-    if (count > topCount) {
-      topAbilityId = candidateId;
-      topCount = count;
+  let topTransformation = baseInfo.transformation;
+  let topPrimaryAbilityId = abilityId;
+  let topCount = baseCount;
+
+  transformationCounts.forEach((data, transformation) => {
+    if (data.count > topCount) {
+      topTransformation = transformation;
+      topPrimaryAbilityId = data.primaryAbilityId;
+      topCount = data.count;
     }
   });
 
-  if (topAbilityId === abilityId) {
+  if (topTransformation === baseInfo.transformation) {
     return null;
   }
 
-  const info = lookupScribingSkill(topAbilityId);
+  if (topCount <= baseCount) {
+    return null;
+  }
+
+  const info = lookupScribingSkill(topPrimaryAbilityId);
   if (!info || info.grimoireKey !== BANNER_GRIMOIRE_KEY) {
     return null;
   }
@@ -228,7 +283,7 @@ function detectSignatureScript(
   combatEvents: CombatEventData,
 ): ScribedSkillSignatureInfo | null {
   const abilityCasts = combatEvents.casts.filter(
-    (event) => event.sourceID === playerId && event.abilityGameID === abilityId,
+    (event) => event.type === 'cast' && event.sourceID === playerId && event.abilityGameID === abilityId,
   );
 
   if (abilityCasts.length === 0) {
@@ -355,12 +410,19 @@ function detectAffixScripts(
   playerId: number,
   combatEvents: CombatEventData,
   grimoireKey?: string,
+  logger?: DetectionLogger,
 ): ScribedSkillAffixInfo[] {
-  const casts = combatEvents.casts.filter(
+  const castEvents = combatEvents.casts.filter((event) => event.type === 'cast');
+  const casts = castEvents.filter(
     (event) => event.sourceID === playerId && event.abilityGameID === abilityId,
   );
 
   if (casts.length === 0) {
+    logger?.debug?.('Affix detection skipped: no casts for ability', {
+      abilityId,
+      playerId,
+      grimoireKey,
+    });
     return [];
   }
 
@@ -378,19 +440,31 @@ function detectAffixScripts(
     VALID_AFFIX_SCRIPT_IDS.forEach((id) => GRIMOIRE_COMPATIBLE_AFFIX_IDS.add(id));
   }
 
+  logger?.debug?.('Affix detection window initialization', {
+    abilityId,
+    playerId,
+    grimoireKey,
+    castsAnalyzed: casts.length,
+    compatibleAffixIds: Array.from(GRIMOIRE_COMPATIBLE_AFFIX_IDS).sort(),
+  });
+
   const AFFIX_WINDOW_MS = 1000;
   const BUFF_WINDOW_MS = 1200;
+  const IMMEDIATE_TRIGGER_THRESHOLD_MS = 10; // Buffs applied within 10ms are likely scribing affixes
 
   const buffCandidates = new Map<number, Set<number>>();
   const debuffCandidates = new Map<number, Set<number>>();
   const damageCandidates = new Map<number, Set<number>>();
   const healCandidates = new Map<number, Set<number>>();
+  const resourceCandidates = new Map<number, Set<number>>();
+  
+  // Track timing information for buff candidates to identify immediate triggers
+  const buffTimings = new Map<number, { immediateCasts: Set<number>; totalCasts: Set<number> }>();
 
   const getAffixTriggerStartTime = (
     cast: UnifiedCastEvent,
     ability: number,
     player: number,
-    events: CombatEventData,
   ): number => {
     if (!DEFERRED_AFFIX_TRIGGER_ABILITIES.has(ability)) {
       return cast.timestamp;
@@ -410,11 +484,11 @@ function detectAffixScripts(
       }
     };
 
-    recordNext(events.casts, (event) => event.abilityGameID !== ability);
-    recordNext(events.damage);
-    recordNext(events.heals);
+    recordNext(castEvents, (event) => event.abilityGameID !== ability);
+    recordNext(combatEvents.damage);
+    recordNext(combatEvents.heals);
 
-    const resourceCost = events.resources.find(
+    const resourceCost = combatEvents.resources.find(
       (event) =>
         event.sourceID === player &&
         event.timestamp > cast.timestamp &&
@@ -425,7 +499,7 @@ function detectAffixScripts(
     }
 
     if (candidates.length === 0) {
-      const nextCast = events.casts.find(
+      const nextCast = castEvents.find(
         (event) => event.sourceID === player && event.timestamp > cast.timestamp,
       );
       if (nextCast) {
@@ -441,7 +515,7 @@ function detectAffixScripts(
   };
 
   casts.forEach((cast, castIndex) => {
-    const triggerStart = getAffixTriggerStartTime(cast, abilityId, playerId, combatEvents);
+    const triggerStart = getAffixTriggerStartTime(cast, abilityId, playerId);
     const windowStart = triggerStart;
     const windowEnd = triggerStart + AFFIX_WINDOW_MS;
     const buffWindowEnd = triggerStart + BUFF_WINDOW_MS;
@@ -449,6 +523,7 @@ function detectAffixScripts(
     const windowBuffs = combatEvents.buffs.filter(
       (buff) =>
         buff.sourceID === playerId &&
+        buff.targetID === playerId &&
         buff.timestamp >= windowStart &&
         buff.timestamp <= buffWindowEnd &&
         !('extraAbilityGameID' in buff && buff.extraAbilityGameID),
@@ -478,12 +553,31 @@ function detectAffixScripts(
         heal.abilityGameID !== abilityId,
     );
 
+    const windowResources = combatEvents.resources.filter(
+      (resource) =>
+        resource.sourceID === playerId &&
+        resource.timestamp > windowStart &&
+        resource.timestamp <= windowEnd &&
+        resource.abilityGameID !== abilityId,
+    );
+
     windowBuffs.forEach((buff) => {
       if (buff.abilityGameID !== abilityId && GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(buff.abilityGameID)) {
         if (!buffCandidates.has(buff.abilityGameID)) {
           buffCandidates.set(buff.abilityGameID, new Set());
         }
         buffCandidates.get(buff.abilityGameID)!.add(castIndex);
+        
+        // Track timing information for immediate trigger detection
+        const offsetFromCast = buff.timestamp - cast.timestamp;
+        if (!buffTimings.has(buff.abilityGameID)) {
+          buffTimings.set(buff.abilityGameID, { immediateCasts: new Set(), totalCasts: new Set() });
+        }
+        const timing = buffTimings.get(buff.abilityGameID)!;
+        timing.totalCasts.add(castIndex);
+        if (offsetFromCast <= IMMEDIATE_TRIGGER_THRESHOLD_MS) {
+          timing.immediateCasts.add(castIndex);
+        }
       }
     });
 
@@ -513,13 +607,80 @@ function detectAffixScripts(
         healCandidates.get(heal.abilityGameID)!.add(castIndex);
       }
     });
+
+    windowResources.forEach((resource) => {
+      if (GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(resource.abilityGameID)) {
+        if (!resourceCandidates.has(resource.abilityGameID)) {
+          resourceCandidates.set(resource.abilityGameID, new Set());
+        }
+        resourceCandidates.get(resource.abilityGameID)!.add(castIndex);
+      }
+    });
+
+    if (logger?.debug) {
+      logger.debug('Affix detection cast window results', {
+        abilityId,
+        playerId,
+        castIndex,
+        triggerStart,
+        buffs: windowBuffs.map((buff) => buff.abilityGameID),
+        debuffs: windowDebuffs.map((debuff) => debuff.abilityGameID),
+        damage: windowDamage.map((damage) => damage.abilityGameID),
+        heals: windowHeals.map((heal) => heal.abilityGameID),
+        resources: windowResources.map((resource) => resource.abilityGameID),
+      });
+    } else {
+      // Fallback to console.log for debugging in workers
+      // eslint-disable-next-line no-console
+      console.log('[ScribingDetection] Affix detection cast window results', {
+        abilityId,
+        playerId,
+        castIndex,
+        triggerStart,
+        buffs: windowBuffs.map((buff) => buff.abilityGameID),
+        debuffs: windowDebuffs.map((debuff) => debuff.abilityGameID),
+        damage: windowDamage.map((damage) => damage.abilityGameID),
+        heals: windowHeals.map((heal) => heal.abilityGameID),
+        resources: windowResources.map((resource) => resource.abilityGameID),
+      });
+    }
+  });
+
+  const serializeCandidateMap = (
+    map: Map<number, Set<number>>,
+  ): Array<{ abilityId: number; casts: number[] }> =>
+    Array.from(map.entries()).map(([candidateId, castSet]) => ({
+      abilityId: candidateId,
+      casts: Array.from(castSet).sort((a, b) => a - b),
+    }));
+
+  logger?.debug?.('Affix detection candidate summary', {
+    abilityId,
+    playerId,
+    buffCandidates: serializeCandidateMap(buffCandidates),
+    debuffCandidates: serializeCandidateMap(debuffCandidates),
+    damageCandidates: serializeCandidateMap(damageCandidates),
+    healCandidates: serializeCandidateMap(healCandidates),
+    resourceCandidates: serializeCandidateMap(resourceCandidates),
+  });
+
+  // Fallback console.log for debugging in workers
+  // eslint-disable-next-line no-console
+  console.log('[ScribingDetection] Affix detection candidate summary', {
+    abilityId,
+    playerId,
+    buffCandidates: serializeCandidateMap(buffCandidates),
+    debuffCandidates: serializeCandidateMap(debuffCandidates),
+    damageCandidates: serializeCandidateMap(damageCandidates),
+    healCandidates: serializeCandidateMap(healCandidates),
+    resourceCandidates: serializeCandidateMap(resourceCandidates),
   });
 
   const allCandidates: Array<{
     id: number;
     castSet: Set<number>;
     consistency: number;
-    type: 'buff' | 'debuff' | 'damage' | 'heal';
+    type: 'buff' | 'debuff' | 'damage' | 'heal' | 'resource';
   }> = [];
 
   buffCandidates.forEach((castSet, id) => {
@@ -558,7 +719,20 @@ function detectAffixScripts(
     });
   });
 
+  resourceCandidates.forEach((castSet, id) => {
+    allCandidates.push({
+      id,
+      castSet,
+      consistency: castSet.size / casts.length,
+      type: 'resource',
+    });
+  });
+
   if (allCandidates.length === 0) {
+    logger?.debug?.('Affix detection found no viable candidates', {
+      abilityId,
+      playerId,
+    });
     return [];
   }
 
@@ -569,7 +743,7 @@ function detectAffixScripts(
     scriptName?: string;
     abilityIds: Set<number>;
     castSet: Set<number>;
-    typeCounts: Record<'buff' | 'debuff' | 'damage' | 'heal', number>;
+    typeCounts: Record<'buff' | 'debuff' | 'damage' | 'heal' | 'resource', number>;
   };
 
   const aggregated = new Map<string, AggregatedCandidate>();
@@ -589,6 +763,7 @@ function detectAffixScripts(
           debuff: 0,
           damage: 0,
           heal: 0,
+          resource: 0,
         },
       });
     }
@@ -609,6 +784,19 @@ function detectAffixScripts(
 
     const totalCasts = casts.length;
     const consistency = totalCasts > 0 ? entry.castSet.size / totalCasts : 0;
+    
+    // Calculate immediate trigger ratio for buff-type candidates
+    let immediateTriggerRatio = 0;
+    if (dominantType === 'buff') {
+      // Check if any of the ability IDs have timing information
+      for (const abilityId of entry.abilityIds) {
+        const timing = buffTimings.get(abilityId);
+        if (timing && timing.totalCasts.size > 0) {
+          const ratio = timing.immediateCasts.size / timing.totalCasts.size;
+          immediateTriggerRatio = Math.max(immediateTriggerRatio, ratio);
+        }
+      }
+    }
 
     return {
       key: entry.key,
@@ -617,10 +805,50 @@ function detectAffixScripts(
       castSet: entry.castSet,
       dominantType,
       consistency,
+      immediateTriggerRatio,
     };
   });
 
+  logger?.debug?.('Affix detection aggregated candidates', {
+    abilityId,
+    playerId,
+    aggregatedCandidates: aggregatedCandidates.map((candidate) => ({
+      key: candidate.key,
+      scriptName: candidate.scriptName,
+      dominantType: candidate.dominantType,
+      consistency: candidate.consistency,
+      immediateTriggerRatio: candidate.immediateTriggerRatio,
+      abilityIds: Array.from(candidate.abilityIds).sort((a, b) => a - b),
+      castIndexes: Array.from(candidate.castSet).sort((a, b) => a - b),
+    })),
+  });
+
+  // Fallback console.log for debugging in workers
+  // eslint-disable-next-line no-console
+  console.log('[ScribingDetection] Affix detection aggregated candidates', {
+    abilityId,
+    playerId,
+    aggregatedCandidates: aggregatedCandidates.map((candidate) => ({
+      key: candidate.key,
+      scriptName: candidate.scriptName,
+      dominantType: candidate.dominantType,
+      consistency: candidate.consistency,
+      immediateTriggerRatio: candidate.immediateTriggerRatio,
+      abilityIds: Array.from(candidate.abilityIds).sort((a, b) => a - b),
+      castIndexes: Array.from(candidate.castSet).sort((a, b) => a - b),
+    })),
+  });
+
   aggregatedCandidates.sort((a, b) => {
+    // Prioritize candidates with high immediate trigger ratios (>= 0.5 means at least 50% immediate)
+    const aHasImmediateTrigger = a.immediateTriggerRatio >= 0.5;
+    const bHasImmediateTrigger = b.immediateTriggerRatio >= 0.5;
+    
+    if (aHasImmediateTrigger !== bHasImmediateTrigger) {
+      return bHasImmediateTrigger ? 1 : -1; // Prefer immediate triggers
+    }
+    
+    // If both have or both don't have immediate triggers, sort by consistency
     if (b.consistency !== a.consistency) {
       return b.consistency - a.consistency;
     }
@@ -645,6 +873,30 @@ function detectAffixScripts(
   if (!topAggregate) {
     return [];
   }
+
+  logger?.info?.('Affix detection selected top candidate', {
+    abilityId,
+    playerId,
+    grimoireKey,
+    scriptName: topAggregate.scriptName,
+    dominantType: topAggregate.dominantType,
+    consistency: topAggregate.consistency,
+    abilityIds: Array.from(topAggregate.abilityIds).sort((a, b) => a - b),
+    castIndexes: Array.from(topAggregate.castSet).sort((a, b) => a - b),
+  });
+
+  // Fallback console.log for debugging in workers
+  // eslint-disable-next-line no-console
+  console.log('[ScribingDetection] ✅ SELECTED TOP CANDIDATE (FINAL RESULT)', {
+    abilityId,
+    playerId,
+    grimoireKey,
+    scriptName: topAggregate.scriptName,
+    dominantType: topAggregate.dominantType,
+    consistency: topAggregate.consistency,
+    abilityIds: Array.from(topAggregate.abilityIds).sort((a, b) => a - b),
+    castIndexes: Array.from(topAggregate.castSet).sort((a, b) => a - b),
+  });
 
   const confidence = topAggregate.consistency;
   const scriptName = topAggregate.scriptName;
@@ -792,7 +1044,13 @@ export function computeScribingDetection(
     : null;
 
   const detectedAffixes = wasCastInFight
-    ? detectAffixScripts(effectiveAbilityId, playerId, normalizedEvents, scribingInfo.grimoireKey)
+    ? detectAffixScripts(
+        effectiveAbilityId,
+        playerId,
+        normalizedEvents,
+        scribingInfo.grimoireKey,
+        logger,
+      )
     : [];
 
   const signatureScript: ScribedSkillSignatureInfo = detectedSignature
@@ -841,6 +1099,7 @@ export function computeScribingDetection(
   };
 
   return {
+    schemaVersion: SCRIBING_DETECTION_SCHEMA_VERSION,
     abilityId,
     effectiveAbilityId,
     scribingInfo,
@@ -899,6 +1158,19 @@ export function computeScribingDetectionsForFight(
       }
 
       players[playerId][abilityId] = result;
+
+      // DEBUG LOGGING: Track what we're storing in the result
+      if (isScribingAbility(abilityId)) {
+        // eslint-disable-next-line no-console
+        console.log('[computeScribingDetectionsForFight] Storing detection result', {
+          fightId,
+          playerId,
+          abilityId,
+          grimoireName: result.scribedSkillData?.grimoireName,
+          affixScripts: result.scribedSkillData?.affixScripts?.map((a) => a.name),
+          signatureScript: result.scribedSkillData?.signatureScript?.name,
+        });
+      }
 
       processedAbilities += 1;
       if (totalAbilities > 0) {
