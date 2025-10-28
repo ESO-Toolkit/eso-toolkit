@@ -1,9 +1,20 @@
-import { createHash } from 'crypto';
 import memoizeOne from 'memoize-one';
 
 import type { ScribingDetectionsTaskInput } from '@/workers/calculations/CalculateScribingDetections';
 
 import { createWorkerTaskSlice } from './workerTaskSliceFactory';
+
+/**
+ * Simple string hash function for browser compatibility
+ * Uses a variant of the djb2 hash algorithm
+ */
+function simpleHash(str: string): string {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 33) ^ str.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(36);
+}
 
 const computeScribingDetectionsHash = memoizeOne(
   (fightId: number, playerAbilities: unknown, castsCount: number, buffsCount: number) => {
@@ -13,7 +24,7 @@ const computeScribingDetectionsHash = memoizeOne(
       castsCount,
       buffsCount,
     });
-    return createHash('sha256').update(hashInput).digest('hex');
+    return simpleHash(hashInput);
   },
 );
 
