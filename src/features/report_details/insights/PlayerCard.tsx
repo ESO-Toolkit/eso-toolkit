@@ -349,6 +349,15 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       };
     }, [foodAura]);
 
+    const resolvedPlayerName = resolveActorName(player);
+    const normalizedDisplayName = resolvedPlayerName.trim();
+    const trimmedCharacterName = player.name?.trim() ?? '';
+    const shouldShowCharacterName =
+      trimmedCharacterName.length > 0 &&
+      normalizedDisplayName.localeCompare(trimmedCharacterName, undefined, {
+        sensitivity: 'base',
+      }) !== 0;
+
     return (
       <Box sx={{ minWidth: 0, display: 'flex', height: '100%' }}>
         <Card
@@ -379,21 +388,48 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     minWidth={0}
                     gap={1}
                   >
-                    {/* Player Name */}
-                    <OneLineAutoFit minScale={0.8}>
-                      <Typography
-                        variant="subtitle1"
-                        sx={{
-                          fontFamily: 'space grotesk',
-                          fontSize: '1.15rem',
-                          fontWeight: 100,
-                          lineHeight: 1.2,
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {resolveActorName(player)}
-                      </Typography>
-                    </OneLineAutoFit>
+                    {/* Player Name and Character */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flex: '1 1 auto',
+                        minWidth: 0,
+                        gap: shouldShowCharacterName ? 0.25 : 0,
+                      }}
+                    >
+                      <OneLineAutoFit minScale={0.8}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{
+                            fontFamily: 'space grotesk',
+                            fontSize: '1.15rem',
+                            fontWeight: 100,
+                            lineHeight: 1.2,
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {normalizedDisplayName || resolvedPlayerName}
+                        </Typography>
+                      </OneLineAutoFit>
+                      {shouldShowCharacterName && (
+                        <OneLineAutoFit minScale={0.9}>
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary"
+                            sx={{
+                              fontFamily: 'space grotesk',
+                              fontSize: '0.85rem',
+                              fontWeight: 400,
+                              lineHeight: 1.1,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {trimmedCharacterName}
+                          </Typography>
+                        </OneLineAutoFit>
+                      )}
+                    </Box>
 
                     {/* Gear Weights */}
                     <Box
