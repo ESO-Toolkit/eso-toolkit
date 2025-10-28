@@ -58,12 +58,13 @@ export interface FoodDetectionResult {
 
 /**
  * Light attack ability IDs - different weapons have different light attack IDs
+ * TODO: This list is incomplete. Add more light attack ability IDs as they are discovered
+ * from combat logs. Known weapons include: bow, staff, sword & board, etc.
  */
 export const LIGHT_ATTACK_ABILITY_IDS = new Set([
   15279, // Generic/melee light attack
   16037, // Two-handed light attack
   16499, // Dual wield light attack
-  // Add more as discovered
 ]);
 
 /**
@@ -237,8 +238,18 @@ function filterPlayerCasts(
     .sort((a, b) => a.timestamp - b.timestamp);
 }
 
+// ESO's global cooldown is 1 second (1000ms), as per game mechanics.
+// This is the minimum time between most ability casts in ESO.
 const GLOBAL_COOLDOWN_MS = 1000;
+
+// Channel gap threshold of 600ms is used to distinguish between consecutive channel casts
+// and interruptions, based on empirical log analysis. If two channel events are within
+// 600ms, they're considered part of the same channeled ability cast.
 const CHANNEL_GAP_THRESHOLD_MS = 600;
+
+// Maximum channel duration of 5000ms (5 seconds) is set to filter out abnormally long
+// channels, which are likely logging artifacts or errors. Most channeled abilities in
+// ESO complete within a few seconds.
 const MAX_CHANNEL_DURATION_MS = 5000;
 
 /**
@@ -353,6 +364,9 @@ export function detectFood(
   });
 
   if (foodAbilityIds.size === 0) {
+    // Explicitly set empty arrays for consistency
+    result.foodAbilityIds = [];
+    result.foodNames = [];
     return result;
   }
 

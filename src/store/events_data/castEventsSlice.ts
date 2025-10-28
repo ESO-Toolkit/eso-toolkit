@@ -12,6 +12,8 @@ import { BeginCastEvent, CastEvent, UnifiedCastEvent } from '../../types/combatl
 import { Logger, LogLevel } from '../../utils/logger';
 import { RootState } from '../storeWithHistory';
 
+import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
+
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'CastEvents' });
 
 const EVENT_PAGE_LIMIT = 100000;
@@ -54,6 +56,11 @@ export const fetchCastEvents = createAsyncThunk<
     reportCode: string;
     fight: FightFragment;
     client: EsoLogsClient;
+    /**
+     * Whether to restrict events to the fight time window.
+     * - true (default): Only fetch events within the fight's start/end time (typical use case)
+     * - false: Fetch all events for the entire report (used by ParseAnalysisPage for pre-fight buffs)
+     */
     restrictToFightWindow?: boolean;
   },
   { state: RootState; rejectValue: string }
@@ -194,15 +201,22 @@ const castEventsSlice = createSlice({
       .addCase(fetchCastEvents.pending, (state, action) => {
         state.loading = true;
         state.error = null;
-        state.currentRequest = {
-          reportId: action.meta.arg.reportCode,
-          fightId: Number(action.meta.arg.fight.id),
-          requestId: action.meta.requestId,
-          restrictToFightWindow: action.meta.arg.restrictToFightWindow ?? true,
-        };
+        state.currentRequest = createCurrentRequest(
+          action.meta.arg.reportCode,
+          Number(action.meta.arg.fight.id),
+          action.meta.requestId,
+          action.meta.arg.restrictToFightWindow ?? true,
+        );
       })
       .addCase(fetchCastEvents.fulfilled, (state, action) => {
-        if (!state.currentRequest || state.currentRequest.requestId !== action.meta.requestId) {
+        if (
+          isStaleResponse(
+            state.currentRequest,
+            action.meta.requestId,
+            action.meta.arg.reportCode,
+            Number(action.meta.arg.fight.id),
+          )
+        ) {
           logger.info('Ignoring stale cast events response', {
             reportCode: action.meta.arg.reportCode,
             fightId: Number(action.meta.arg.fight.id),
@@ -222,7 +236,14 @@ const castEventsSlice = createSlice({
         state.currentRequest = null;
       })
       .addCase(fetchCastEvents.rejected, (state, action) => {
-        if (state.currentRequest && state.currentRequest.requestId !== action.meta.requestId) {
+        if (
+          isStaleResponse(
+            state.currentRequest,
+            action.meta.requestId,
+            action.meta.arg.reportCode,
+            Number(action.meta.arg.fight.id),
+          )
+        ) {
           logger.info('Ignoring stale cast events error response', {
             reportCode: action.meta.arg.reportCode,
             fightId: Number(action.meta.arg.fight.id),

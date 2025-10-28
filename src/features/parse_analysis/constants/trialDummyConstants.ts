@@ -136,3 +136,12 @@ export const CRITICAL_TRIAL_DUMMY_BUFFS = new Set<number>([
   61744, // Minor Berserk - Damage increase
   120008, // Minor Berserk (alternate)
 ]);
+
+/**
+ * Valid trial dummy target names.
+ * These are the only enemy targets that qualify as trial dummies for parse analysis.
+ */
+export const TRIAL_DUMMY_TARGET_NAMES = [
+  'Target Iron Atronach',
+  'Target Harrowing Reaper, Raid',
+] as const;

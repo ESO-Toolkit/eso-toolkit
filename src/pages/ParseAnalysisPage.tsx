@@ -53,6 +53,7 @@ import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { BuffChecklist } from '../features/parse_analysis/components/BuffChecklist';
 import { BuildIssuesPanel } from '../features/parse_analysis/components/BuildIssuesPanel';
 import { DebuffChecklist } from '../features/parse_analysis/components/DebuffChecklist';
+import { TRIAL_DUMMY_TARGET_NAMES } from '../features/parse_analysis/constants/trialDummyConstants';
 import { BuffChecklistResult } from '../features/parse_analysis/types/buffChecklist';
 import { DebuffChecklistResult } from '../features/parse_analysis/types/debuffChecklist';
 import { analyzeBuffChecklist } from '../features/parse_analysis/utils/buffChecklistUtils';
@@ -376,10 +377,8 @@ const ParseAnalysisPageContent: React.FC = () => {
         return;
       }
 
-      const ACCEPTABLE_TARGET_NAMES = ['Target Iron Atronach', 'Target Harrowing Reaper, Raid'];
-
       // Validate that the target is one of the supported trial dummies
-      const isSupportedTarget = ACCEPTABLE_TARGET_NAMES.some((name) =>
+      const isSupportedTarget = TRIAL_DUMMY_TARGET_NAMES.some((name) =>
         selectedFight.name?.includes(name),
       );
 
@@ -387,7 +386,7 @@ const ParseAnalysisPageContent: React.FC = () => {
         setState((prev) => ({
           ...prev,
           loading: false,
-          error: `This parse analysis tool requires fights against a supported trial dummy (Target Iron Atronach or Target Harrowing Reaper, Raid). Found: "${selectedFight.name || 'Unknown target'}"`,
+          error: `This parse analysis tool requires fights against a supported trial dummy (${TRIAL_DUMMY_TARGET_NAMES.join(' or ')}). Found: "${selectedFight.name || 'Unknown target'}"`,
         }));
         return;
       }
