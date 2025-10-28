@@ -279,6 +279,100 @@ describe('calculateActorPositions', () => {
         expect(typeof positionAfter.isDead).toBe('boolean');
       }
     });
+
+    it('removes boss positions after a short grace period when they die', () => {
+      const fight = createEnhancedMockFight({ startTime: 0, endTime: 10000 });
+      const events = createMockEvents();
+
+      const bossId = 201;
+      const playerId = 101;
+      const deathTimestamp = 4000;
+
+      events.damage = [
+        createMockPositionalDamageEvent(
+          1000,
+          playerId,
+          bossId,
+          createEnhancedMockResources(),
+          createEnhancedMockResources(),
+        ),
+      ];
+
+      events.death = [
+        createMockDeathEvent({
+          timestamp: deathTimestamp,
+          targetID: bossId,
+        }),
+      ];
+
+      const task: ActorPositionsCalculationTask = {
+        fight,
+        events,
+        playersById: createMockPlayersById(),
+        actorsById: createMockActorsById(),
+      };
+
+      const result = calculateActorPositions(task);
+
+      const relativeDeathTime = deathTimestamp - fight.startTime;
+      const withinGrace = getActorPositionAtClosestTimestamp(
+        result,
+        bossId,
+        relativeDeathTime + 1000,
+      );
+      const afterGrace = getActorPositionAtClosestTimestamp(
+        result,
+        bossId,
+        relativeDeathTime + 2500,
+      );
+
+      expect(withinGrace).not.toBeNull();
+      expect(withinGrace?.isDead).toBe(true);
+      expect(afterGrace).toBeNull();
+    });
+
+    it('removes boss positions after inactivity when no death event is recorded', () => {
+      const fight = createEnhancedMockFight({ startTime: 0, endTime: 12000 });
+      const events = createMockEvents();
+
+      const bossId = 201;
+      const playerId = 101;
+      const lastInteractionTimestamp = 4000;
+
+      events.damage = [
+        createMockPositionalDamageEvent(
+          lastInteractionTimestamp,
+          playerId,
+          bossId,
+          createEnhancedMockResources(5235, 5410, 100),
+          createEnhancedMockResources(5260, 5425, 100),
+        ),
+      ];
+
+      const task: ActorPositionsCalculationTask = {
+        fight,
+        events,
+        playersById: createMockPlayersById(),
+        actorsById: createMockActorsById(),
+      };
+
+      const result = calculateActorPositions(task);
+
+      const withinWindow = getActorPositionAtClosestTimestamp(
+        result,
+        bossId,
+        lastInteractionTimestamp + 500,
+      );
+      const afterWindow = getActorPositionAtClosestTimestamp(
+        result,
+        bossId,
+        lastInteractionTimestamp + 2500,
+      );
+
+      expect(withinWindow).not.toBeNull();
+      expect(withinWindow?.isDead).toBe(false);
+      expect(afterWindow).toBeNull();
+    });
   });
 
   describe('edge cases', () => {
