@@ -123,11 +123,10 @@ export function calculateTouchOfZenStacks(
   const results: TouchOfZenStackResult[] = [];
 
   for (let stackLevel = 1; stackLevel <= 5; stackLevel++) {
-    let totalUptime = 0;
-    let applications = 0;
+    const targetUptimes = new Map<number, { totalDuration: number; applications: number }>();
 
     // Calculate uptime for this specific stack level across all targets
-    stackTimelines.forEach((timeline) => {
+    stackTimelines.forEach((timeline, targetId) => {
       const stackIntervals = calculateStackIntervals(timeline, stackLevel);
 
       stackIntervals.forEach((stackInterval) => {
@@ -136,24 +135,40 @@ export function calculateTouchOfZenStacks(
         const clippedEnd = Math.min(stackInterval.end, fightEndTime);
 
         if (clippedEnd > clippedStart) {
-          totalUptime += clippedEnd - clippedStart;
-          applications += 1;
+          const existing = targetUptimes.get(targetId) ?? { totalDuration: 0, applications: 0 };
+          targetUptimes.set(targetId, {
+            totalDuration: existing.totalDuration + (clippedEnd - clippedStart),
+            applications: existing.applications + 1,
+          });
         }
       });
     });
 
-    if (totalUptime > 0) {
-      results.push({
-        abilityGameID: KnownAbilities.TOUCH_OF_ZEN.toString(), // Use the actual Touch of Z'en ability ID for icon
-        abilityName: `Touch of Z'en (${stackLevel} Stack${stackLevel > 1 ? 's' : ''})`,
-        totalDuration: totalUptime,
-        uptime: totalUptime / 1000, // Convert to seconds
-        uptimePercentage: (totalUptime / fightDuration) * 100,
-        applications,
-        isDebuff: true,
-        hostilityType: 1,
-        stackLevel,
+    if (targetUptimes.size > 0) {
+      let cumulativeDuration = 0;
+      let cumulativeApplications = 0;
+
+      targetUptimes.forEach(({ totalDuration, applications }) => {
+        cumulativeDuration += totalDuration;
+        cumulativeApplications += applications;
       });
+
+      const averageDuration = cumulativeDuration / targetUptimes.size;
+
+      if (averageDuration > 0) {
+        const uptimePercentage = (averageDuration / fightDuration) * 100;
+        results.push({
+          abilityGameID: KnownAbilities.TOUCH_OF_ZEN.toString(), // Use the actual Touch of Z'en ability ID for icon
+          abilityName: `Touch of Z'en (${stackLevel} Stack${stackLevel > 1 ? 's' : ''})`,
+          totalDuration: averageDuration,
+          uptime: averageDuration / 1000, // Convert to seconds
+          uptimePercentage: Math.min(uptimePercentage, 100),
+          applications: cumulativeApplications,
+          isDebuff: true,
+          hostilityType: 1,
+          stackLevel,
+        });
+      }
     }
   }
 
