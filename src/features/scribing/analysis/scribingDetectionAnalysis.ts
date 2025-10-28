@@ -13,11 +13,7 @@ import type {
   ScribedSkillData,
   ScribedSkillSignatureInfo,
 } from '../types';
-import {
-  getScribingSkillByAbilityId,
-  isScribingAbility,
-  type ScribingSkillInfo,
-} from '../utils/Scribing';
+import { getScribingSkillByAbilityId, type ScribingSkillInfo } from '../utils/Scribing';
 
 export const SCRIBING_DETECTION_SCHEMA_VERSION = 2;
 
