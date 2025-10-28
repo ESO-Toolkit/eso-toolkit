@@ -4,8 +4,8 @@ import type {
   ComputeScribingDetectionsForFightOptions,
   PlayerAbilityList,
   ScribingDetectionsMap,
- DetectionLogger } from '@/features/scribing/analysis/scribingDetectionAnalysis';
-
+  DetectionLogger,
+} from '@/features/scribing/analysis/scribingDetectionAnalysis';
 
 import type { OnProgressCallback, OnLogCallback } from '../Utils';
 

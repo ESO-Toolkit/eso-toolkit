@@ -1,10 +1,10 @@
 /**
  * Unit tests for immediate trigger prioritization in scribing affix detection
- * 
+ *
  * These tests verify that the detection algorithm correctly prioritizes
  * scribing affixes that trigger immediately (0-10ms) over passive buffs
  * that trigger with a delay (>10ms).
- * 
+ *
  * Background:
  * - Scribing affixes trigger at 0ms offset from cast
  * - Passive buffs (e.g., from class skills) trigger at 273-617ms offset
@@ -84,7 +84,7 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
       const castTimestamp = 2097945;
       const buffTimestamp = 2097945;
       const offset = buffTimestamp - castTimestamp;
-      
+
       expect(offset).toBe(0);
       expect(offset <= 10).toBe(true);
     });
@@ -93,7 +93,7 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
       const castTimestamp = 2107587;
       const buffTimestamp = 2107860;
       const offset = buffTimestamp - castTimestamp;
-      
+
       expect(offset).toBe(273);
       expect(offset > 10).toBe(true);
     });
@@ -102,7 +102,7 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
       const castTimestamp = 2097945;
       const buffTimestamp = 2098562;
       const offset = buffTimestamp - castTimestamp;
-      
+
       expect(offset).toBe(617);
       expect(offset > 10).toBe(true);
     });
@@ -115,7 +115,7 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
         playerId: 7,
         playerName: '@Mobitor',
         abilityId: 220542, // Magical Trample
-        
+
         // Heroism (scribing affix)
         heroism: {
           abilityId: 61709,
@@ -123,7 +123,7 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
           immediateTriggerRatio: 1.0, // 100% immediate (0ms offset)
           source: 'scribing affix',
         },
-        
+
         // Protection (passive buffs)
         protection: {
           abilityIds: [61721, 103570, 61722, 161716], // Major + Minor Protection
@@ -131,7 +131,7 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
           immediateTriggerRatio: 0.0, // 0% immediate (273-617ms offset)
           sources: ['Temporal Guard passive', 'Revealing Flare passive'],
         },
-        
+
         expectedResult: 'Heroism', // Should select Heroism despite lower consistency
       };
 
@@ -146,7 +146,7 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
         playerId: 6,
         playerName: '@Syoni',
         abilityId: 240150, // Ulfsild's Contingency
-        
+
         candidates: [
           {
             name: 'Protection',
@@ -159,14 +159,14 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
             immediateTriggerRatio: 0.0,
           },
         ],
-        
+
         expectedResult: 'Protection', // Fallback to consistency when both have 0%
       };
 
       // Both have 0% immediate ratio, so consistency wins
       const protectionCandidate = player6Scenario.candidates[0];
       const otherCandidate = player6Scenario.candidates[1];
-      
+
       expect(protectionCandidate.immediateTriggerRatio).toBe(0.0);
       expect(otherCandidate.immediateTriggerRatio).toBe(0.0);
       expect(protectionCandidate.consistency).toBeGreaterThan(otherCandidate.consistency);
@@ -177,9 +177,9 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
     it('should calculate 100% immediate ratio for all immediate triggers', () => {
       const immediateCasts = new Set([0, 1, 3, 4]); // Cast indexes with immediate triggers
       const totalCasts = new Set([0, 1, 3, 4]); // All casts
-      
+
       const ratio = immediateCasts.size / totalCasts.size;
-      
+
       expect(ratio).toBe(1.0);
       expect(ratio >= 0.5).toBe(true);
     });
@@ -187,9 +187,9 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
     it('should calculate 0% immediate ratio for all delayed triggers', () => {
       const immediateCasts = new Set<number>([]); // No immediate triggers
       const totalCasts = new Set([0, 1, 2, 3, 4]); // All casts
-      
+
       const ratio = totalCasts.size > 0 ? immediateCasts.size / totalCasts.size : 0;
-      
+
       expect(ratio).toBe(0.0);
       expect(ratio < 0.5).toBe(true);
     });
@@ -197,9 +197,9 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
     it('should calculate 60% immediate ratio for mixed triggers', () => {
       const immediateCasts = new Set([0, 1, 3]); // 3 immediate
       const totalCasts = new Set([0, 1, 2, 3, 4]); // 5 total
-      
+
       const ratio = immediateCasts.size / totalCasts.size;
-      
+
       expect(ratio).toBe(0.6);
       expect(ratio >= 0.5).toBe(true);
     });
@@ -207,9 +207,9 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
     it('should calculate 40% immediate ratio below threshold', () => {
       const immediateCasts = new Set([0, 1]); // 2 immediate
       const totalCasts = new Set([0, 1, 2, 3, 4]); // 5 total
-      
+
       const ratio = immediateCasts.size / totalCasts.size;
-      
+
       expect(ratio).toBe(0.4);
       expect(ratio < 0.5).toBe(true);
     });
@@ -222,20 +222,20 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
         consistency: 0.8,
         immediateTriggerRatio: 1.0,
       };
-      
+
       const candidateB = {
         name: 'Protection',
         consistency: 1.0,
         immediateTriggerRatio: 0.0,
       };
-      
+
       // Check immediate trigger priority
       const aHasImmediateTrigger = candidateA.immediateTriggerRatio >= 0.5;
       const bHasImmediateTrigger = candidateB.immediateTriggerRatio >= 0.5;
-      
+
       expect(aHasImmediateTrigger).toBe(true);
       expect(bHasImmediateTrigger).toBe(false);
-      
+
       // A should be selected despite lower consistency
       const aWins = aHasImmediateTrigger && !bHasImmediateTrigger;
       expect(aWins).toBe(true);
@@ -247,20 +247,20 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
         consistency: 0.9,
         immediateTriggerRatio: 1.0,
       };
-      
+
       const candidateB = {
         name: 'Script B',
         consistency: 0.7,
         immediateTriggerRatio: 0.8,
       };
-      
+
       // Both have immediate triggers
       const aHasImmediateTrigger = candidateA.immediateTriggerRatio >= 0.5;
       const bHasImmediateTrigger = candidateB.immediateTriggerRatio >= 0.5;
-      
+
       expect(aHasImmediateTrigger).toBe(true);
       expect(bHasImmediateTrigger).toBe(true);
-      
+
       // Fallback to consistency
       const aWins = candidateA.consistency > candidateB.consistency;
       expect(aWins).toBe(true);
@@ -272,20 +272,20 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
         consistency: 0.8,
         immediateTriggerRatio: 0.2,
       };
-      
+
       const candidateB = {
         name: 'Script B',
         consistency: 0.6,
         immediateTriggerRatio: 0.1,
       };
-      
+
       // Neither has immediate triggers
       const aHasImmediateTrigger = candidateA.immediateTriggerRatio >= 0.5;
       const bHasImmediateTrigger = candidateB.immediateTriggerRatio >= 0.5;
-      
+
       expect(aHasImmediateTrigger).toBe(false);
       expect(bHasImmediateTrigger).toBe(false);
-      
+
       // Fallback to consistency
       const aWins = candidateA.consistency > candidateB.consistency;
       expect(aWins).toBe(true);
@@ -296,9 +296,9 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
     it('should handle exactly 50% immediate ratio (at threshold)', () => {
       const immediateCasts = new Set([0, 1]); // 2 immediate
       const totalCasts = new Set([0, 1, 2, 3]); // 4 total
-      
+
       const ratio = immediateCasts.size / totalCasts.size;
-      
+
       expect(ratio).toBe(0.5);
       expect(ratio >= 0.5).toBe(true); // Should qualify
     });
@@ -306,9 +306,9 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
     it('should handle single cast with immediate trigger', () => {
       const immediateCasts = new Set([0]);
       const totalCasts = new Set([0]);
-      
+
       const ratio = immediateCasts.size / totalCasts.size;
-      
+
       expect(ratio).toBe(1.0);
       expect(ratio >= 0.5).toBe(true);
     });
@@ -316,9 +316,9 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
     it('should handle no casts gracefully', () => {
       const immediateCasts = new Set<number>([]);
       const totalCasts = new Set<number>([]);
-      
+
       const ratio = totalCasts.size > 0 ? immediateCasts.size / totalCasts.size : 0;
-      
+
       expect(ratio).toBe(0);
       expect(ratio < 0.5).toBe(true);
     });
@@ -331,19 +331,19 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
         number,
         { immediateCasts: Set<number>; totalCasts: Set<number> }
       >();
-      
+
       // Add timing data for Heroism
       buffTimings.set(61709, {
         immediateCasts: new Set([0, 1, 3, 4]),
         totalCasts: new Set([0, 1, 3, 4]),
       });
-      
+
       // Add timing data for Protection
       buffTimings.set(61721, {
         immediateCasts: new Set([]),
         totalCasts: new Set([0, 1, 2, 3, 4]),
       });
-      
+
       expect(buffTimings.size).toBe(2);
       expect(buffTimings.get(61709)?.immediateCasts.size).toBe(4);
       expect(buffTimings.get(61721)?.immediateCasts.size).toBe(0);
@@ -351,12 +351,12 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
 
     it('should track cast indexes in Sets for uniqueness', () => {
       const immediateCasts = new Set<number>();
-      
+
       // Add same cast index multiple times (shouldn't duplicate)
       immediateCasts.add(0);
       immediateCasts.add(0);
       immediateCasts.add(1);
-      
+
       expect(immediateCasts.size).toBe(2);
       expect(Array.from(immediateCasts).sort()).toEqual([0, 1]);
     });
@@ -370,10 +370,10 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
         { name: 'B', consistency: 0.9, immediateTriggerRatio: 0.0 },
         { name: 'C', consistency: 0.5, immediateTriggerRatio: 0.0 },
       ];
-      
+
       // Sort by consistency descending (original behavior)
       const sorted = [...candidates].sort((a, b) => b.consistency - a.consistency);
-      
+
       expect(sorted[0].name).toBe('B');
       expect(sorted[1].name).toBe('A');
       expect(sorted[2].name).toBe('C');
@@ -387,7 +387,7 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
         consistency: 0.8,
         immediateTriggerRatio: 0, // Default value for non-buff
       };
-      
+
       expect(damageCandidate.immediateTriggerRatio).toBe(0);
       // Should still be considered based on consistency
     });
@@ -404,7 +404,7 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
         reportId: '3gjVGWB2dxCL8XAw',
         fightId: 32,
       };
-      
+
       expect(ticketInfo.jiraTicket).toBe('ESO-473');
       expect(ticketInfo.solution).toContain('Immediate trigger prioritization');
     });
@@ -417,7 +417,7 @@ describe('Scribing Detection - Immediate Trigger Prioritization', () => {
         generalizable: true,
         futureProof: 'Handles any passive buff conflicts automatically',
       };
-      
+
       expect(discovery.generalizable).toBe(true);
       expect(discovery.futureProof).toContain('automatically');
     });

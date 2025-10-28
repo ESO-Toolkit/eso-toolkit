@@ -587,77 +587,76 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
               {/* Affix Scripts Section */}
               {(finalScribedData.affixScripts && finalScribedData.affixScripts.length > 0) ||
               finalScribedData.wasCastInFight === false ? (
-                  <Box sx={{ mb: 1 }}>
+                <Box sx={{ mb: 1 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'secondary.main',
+                      fontWeight: 700,
+                      letterSpacing: '.02em',
+                      fontSize: '0.75rem',
+                      mb: 0.5,
+                      display: 'block',
+                    }}
+                  >
+                    Affix Scripts
+                  </Typography>
+                  {finalScribedData.wasCastInFight === false ? (
                     <Typography
                       variant="caption"
                       sx={{
-                        color: 'secondary.main',
-                        fontWeight: 700,
-                        letterSpacing: '.02em',
-                        fontSize: '0.75rem',
-                        mb: 0.5,
-                        display: 'block',
+                        color: 'text.secondary',
+                        fontSize: '0.7rem',
+                        fontStyle: 'italic',
                       }}
                     >
-                      Affix Scripts
+                      Skill was never cast in this fight, so affix scripts could not be detected.
                     </Typography>
-                    {finalScribedData.wasCastInFight === false ? (
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: 'text.secondary',
-                          fontSize: '0.7rem',
-                          fontStyle: 'italic',
-                        }}
-                      >
-                        Skill was never cast in this fight, so affix scripts could not be detected.
-                      </Typography>
-                    ) : finalScribedData.affixScripts &&
-                      finalScribedData.affixScripts.length > 0 ? (
-                      <Stack spacing={0.3} sx={{ mb: 1 }}>
-                        {finalScribedData.affixScripts.map(
-                          (affixScript: ScribedSkillAffixInfo, index: number) => (
-                            <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  ) : finalScribedData.affixScripts && finalScribedData.affixScripts.length > 0 ? (
+                    <Stack spacing={0.3} sx={{ mb: 1 }}>
+                      {finalScribedData.affixScripts.map(
+                        (affixScript: ScribedSkillAffixInfo, index: number) => (
+                          <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.primary',
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {affixScript.name}
+                            </Typography>
+                            {affixScript.confidence && affixScript.confidence < 1.0 && (
                               <Typography
                                 variant="caption"
                                 sx={{
-                                  color: 'text.primary',
-                                  fontSize: '0.7rem',
-                                  fontWeight: 600,
+                                  color: 'text.secondary',
+                                  fontSize: '0.6rem',
+                                  fontStyle: 'italic',
                                 }}
                               >
-                                {affixScript.name}
+                                ({Math.round(affixScript.confidence * 100)}%)
                               </Typography>
-                              {affixScript.confidence && affixScript.confidence < 1.0 && (
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: 'text.secondary',
-                                    fontSize: '0.6rem',
-                                    fontStyle: 'italic',
-                                  }}
-                                >
-                                  ({Math.round(affixScript.confidence * 100)}%)
-                                </Typography>
-                              )}
-                            </Box>
-                          ),
-                        )}
-                      </Stack>
-                    ) : (
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: 'text.secondary',
-                          fontSize: '0.7rem',
-                          fontStyle: 'italic',
-                        }}
-                      >
-                        No affix script detected
-                      </Typography>
-                    )}
-                  </Box>
-                ) : null}
+                            )}
+                          </Box>
+                        ),
+                      )}
+                    </Stack>
+                  ) : (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: '0.7rem',
+                        fontStyle: 'italic',
+                      }}
+                    >
+                      No affix script detected
+                    </Typography>
+                  )}
+                </Box>
+              ) : null}
 
               {/* Effects List - only show if skill was cast */}
               {finalScribedData.wasCastInFight !== false && (

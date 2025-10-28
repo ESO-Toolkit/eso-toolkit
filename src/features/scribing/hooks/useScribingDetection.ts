@@ -38,7 +38,7 @@ import {
   SCRIBING_DETECTION_SCHEMA_VERSION,
   type PlayerAbilityList,
 } from '../analysis/scribingDetectionAnalysis';
-import type { ScribedSkillData , ResolvedScribingDetection } from '../types';
+import type { ScribedSkillData, ResolvedScribingDetection } from '../types';
 import {
   getScribingSkillByAbilityId,
   isScribingAbility,
@@ -47,8 +47,14 @@ import {
 
 interface ScribingDataStructure {
   grimoires?: Record<string, { id?: number; nameTransformations?: Record<string, unknown> }>;
-  signatureScripts?: Record<string, { name?: string; abilityIds?: number[]; compatibleGrimoires?: string[] }>;
-  affixScripts?: Record<string, { name: string; abilityIds?: number[]; compatibleGrimoires?: string[] }>;
+  signatureScripts?: Record<
+    string,
+    { name?: string; abilityIds?: number[]; compatibleGrimoires?: string[] }
+  >;
+  affixScripts?: Record<
+    string,
+    { name: string; abilityIds?: number[]; compatibleGrimoires?: string[] }
+  >;
 }
 
 // Module-level logger for standalone functions
@@ -93,9 +99,9 @@ Object.values(scribingData.signatureScripts).forEach(
       // tick) instead of the class-specific banner IDs that live in the scribing database. Manually map
       // that ability so our detectors can positively identify Class Mastery from resource events.
       const CLASS_MASTERY_EXTRA_EFFECT_IDS = [252143];
-      const classMasteryScript = (scribingData.signatureScripts as Record<string, { name: string }>)[
-        'class-mastery'
-      ];
+      const classMasteryScript = (
+        scribingData.signatureScripts as Record<string, { name: string }>
+      )['class-mastery'];
       if (classMasteryScript) {
         CLASS_MASTERY_EXTRA_EFFECT_IDS.forEach((id) => {
           VALID_SIGNATURE_SCRIPT_IDS.add(id);
@@ -793,12 +799,15 @@ async function _detectAffixScripts(
     });
 
     const aggregatedCandidates = Array.from(aggregated.values()).map((entry) => {
-      const dominantType = preferTypeOrder.reduce<'buff' | 'debuff' | 'damage' | 'heal'>((acc, type) => {
-        if (entry.typeCounts[type] > entry.typeCounts[acc]) {
-          return type;
-        }
-        return acc;
-      }, 'buff');
+      const dominantType = preferTypeOrder.reduce<'buff' | 'debuff' | 'damage' | 'heal'>(
+        (acc, type) => {
+          if (entry.typeCounts[type] > entry.typeCounts[acc]) {
+            return type;
+          }
+          return acc;
+        },
+        'buff',
+      );
 
       const totalCasts = casts.length;
       const consistency = totalCasts > 0 ? entry.castSet.size / totalCasts : 0;
@@ -1146,7 +1155,10 @@ export function useScribingDetection(
       fightId: fightIdNumber,
       playerId,
       abilityId,
-      abilityCount: combinedPlayerAbilities.reduce((sum, entry) => sum + entry.abilityIds.length, 0),
+      abilityCount: combinedPlayerAbilities.reduce(
+        (sum, entry) => sum + entry.abilityIds.length,
+        0,
+      ),
     });
 
     dispatch(
@@ -1263,7 +1275,6 @@ export function useScribingDetection(
     if (typeof playerId !== 'number' || typeof abilityId !== 'number') {
       return;
     }
-
   }, [
     shouldAttemptDetection,
     shouldUseWorker,

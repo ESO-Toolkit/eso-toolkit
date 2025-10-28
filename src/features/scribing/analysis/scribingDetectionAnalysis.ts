@@ -39,8 +39,14 @@ export interface DetectionLogger {
 
 interface ScribingDataStructure {
   grimoires?: Record<string, { id?: number; nameTransformations?: Record<string, unknown> }>;
-  signatureScripts?: Record<string, { name?: string; abilityIds?: number[]; compatibleGrimoires?: string[] }>;
-  affixScripts?: Record<string, { name: string; abilityIds?: number[]; compatibleGrimoires?: string[] }>;
+  signatureScripts?: Record<
+    string,
+    { name?: string; abilityIds?: number[]; compatibleGrimoires?: string[] }
+  >;
+  affixScripts?: Record<
+    string,
+    { name: string; abilityIds?: number[]; compatibleGrimoires?: string[] }
+  >;
 }
 
 const VALID_SIGNATURE_SCRIPT_IDS = new Set<number>();
@@ -63,7 +69,7 @@ const BANNER_ABILITY_TO_TRANSFORMATION = new Map<
 
 if (bannerGrimoire?.nameTransformations) {
   Object.values(
-    bannerGrimoire.nameTransformations as Record<string, { name: string; abilityIds?: number[] }> ,
+    bannerGrimoire.nameTransformations as Record<string, { name: string; abilityIds?: number[] }>,
   ).forEach((config) => {
     if (!config?.name) {
       return;
@@ -110,30 +116,32 @@ type AffixScriptEntry = {
   compatibleGrimoires?: string[];
 };
 
-Object.values((scribingData as ScribingDataStructure).signatureScripts as Record<string, SignatureScriptEntry>).forEach(
-  (script) => {
-    script.abilityIds?.forEach((id) => {
-      VALID_SIGNATURE_SCRIPT_IDS.add(id);
-      SIGNATURE_SCRIPT_ID_TO_NAME.set(id, script.name);
-    });
+Object.values(
+  (scribingData as ScribingDataStructure).signatureScripts as Record<string, SignatureScriptEntry>,
+).forEach((script) => {
+  script.abilityIds?.forEach((id) => {
+    VALID_SIGNATURE_SCRIPT_IDS.add(id);
+    SIGNATURE_SCRIPT_ID_TO_NAME.set(id, script.name);
+  });
 
-    if (script.grimoireSpecificEffects) {
-      Object.values(script.grimoireSpecificEffects).forEach((config) => {
-        if (config.mainAbilityId) {
-          VALID_SIGNATURE_SCRIPT_IDS.add(config.mainAbilityId);
-          SIGNATURE_SCRIPT_ID_TO_NAME.set(config.mainAbilityId, script.name);
-        }
-        config.statusEffects?.forEach((id) => {
-          VALID_SIGNATURE_SCRIPT_IDS.add(id);
-          SIGNATURE_SCRIPT_ID_TO_NAME.set(id, script.name);
-        });
+  if (script.grimoireSpecificEffects) {
+    Object.values(script.grimoireSpecificEffects).forEach((config) => {
+      if (config.mainAbilityId) {
+        VALID_SIGNATURE_SCRIPT_IDS.add(config.mainAbilityId);
+        SIGNATURE_SCRIPT_ID_TO_NAME.set(config.mainAbilityId, script.name);
+      }
+      config.statusEffects?.forEach((id) => {
+        VALID_SIGNATURE_SCRIPT_IDS.add(id);
+        SIGNATURE_SCRIPT_ID_TO_NAME.set(id, script.name);
       });
-    }
-  },
-);
+    });
+  }
+});
 
 const CLASS_MASTERY_EXTRA_EFFECT_IDS = [252143];
-const classMasteryScript = (scribingData as ScribingDataStructure).signatureScripts?.['class-mastery'];
+const classMasteryScript = (scribingData as ScribingDataStructure).signatureScripts?.[
+  'class-mastery'
+];
 if (classMasteryScript) {
   CLASS_MASTERY_EXTRA_EFFECT_IDS.forEach((id) => {
     VALID_SIGNATURE_SCRIPT_IDS.add(id);
@@ -141,14 +149,14 @@ if (classMasteryScript) {
   });
 }
 
-Object.values((scribingData as ScribingDataStructure).affixScripts as Record<string, AffixScriptEntry>).forEach(
-  (script) => {
-    script.abilityIds?.forEach((id) => {
-      VALID_AFFIX_SCRIPT_IDS.add(id);
-      AFFIX_SCRIPT_ID_TO_NAME.set(id, script.name);
-    });
-  },
-);
+Object.values(
+  (scribingData as ScribingDataStructure).affixScripts as Record<string, AffixScriptEntry>,
+).forEach((script) => {
+  script.abilityIds?.forEach((id) => {
+    VALID_AFFIX_SCRIPT_IDS.add(id);
+    AFFIX_SCRIPT_ID_TO_NAME.set(id, script.name);
+  });
+});
 
 const SCRIBING_INFO_CACHE = new Map<number, ScribingSkillInfo | null>();
 
@@ -289,7 +297,8 @@ function detectSignatureScript(
   combatEvents: CombatEventData,
 ): ScribedSkillSignatureInfo | null {
   const abilityCasts = combatEvents.casts.filter(
-    (event) => event.type === 'cast' && event.sourceID === playerId && event.abilityGameID === abilityId,
+    (event) =>
+      event.type === 'cast' && event.sourceID === playerId && event.abilityGameID === abilityId,
   );
 
   if (abilityCasts.length === 0) {
@@ -303,10 +312,7 @@ function detectSignatureScript(
     event: { abilityGameID: number; extraAbilityGameID?: number | null },
     eventType: string,
   ): void => {
-    if (
-      event.abilityGameID !== abilityId &&
-      VALID_SIGNATURE_SCRIPT_IDS.has(event.abilityGameID)
-    ) {
+    if (event.abilityGameID !== abilityId && VALID_SIGNATURE_SCRIPT_IDS.has(event.abilityGameID)) {
       const existing =
         signatureEffects.get(event.abilityGameID) ||
         ({ name: `${eventType} ${event.abilityGameID}`, count: 0, type: eventType } as const);
@@ -339,36 +345,47 @@ function detectSignatureScript(
     const windowEnd = cast.timestamp + SIGNATURE_WINDOW_MS;
 
     combatEvents.buffs
-      .filter((buff) => buff.sourceID === playerId && buff.timestamp > cast.timestamp && buff.timestamp <= windowEnd)
+      .filter(
+        (buff) =>
+          buff.sourceID === playerId &&
+          buff.timestamp > cast.timestamp &&
+          buff.timestamp <= windowEnd,
+      )
       .forEach((buff) => checkAndCountSignature(buff, 'buff'));
 
     combatEvents.debuffs
-      .filter((debuff) =>
-        debuff.sourceID === playerId &&
-        debuff.timestamp > cast.timestamp &&
-        debuff.timestamp <= windowEnd,
+      .filter(
+        (debuff) =>
+          debuff.sourceID === playerId &&
+          debuff.timestamp > cast.timestamp &&
+          debuff.timestamp <= windowEnd,
       )
       .forEach((debuff) => checkAndCountSignature(debuff, 'debuff'));
 
     combatEvents.damage
-      .filter((damage) =>
-        damage.sourceID === playerId &&
-        damage.timestamp > cast.timestamp &&
-        damage.timestamp <= windowEnd,
+      .filter(
+        (damage) =>
+          damage.sourceID === playerId &&
+          damage.timestamp > cast.timestamp &&
+          damage.timestamp <= windowEnd,
       )
       .forEach((damage) => checkAndCountSignature(damage, 'damage'));
 
     combatEvents.heals
-      .filter((heal) =>
-        heal.sourceID === playerId && heal.timestamp > cast.timestamp && heal.timestamp <= windowEnd,
+      .filter(
+        (heal) =>
+          heal.sourceID === playerId &&
+          heal.timestamp > cast.timestamp &&
+          heal.timestamp <= windowEnd,
       )
       .forEach((heal) => checkAndCountSignature(heal, 'healing'));
 
     combatEvents.resources
-      .filter((resource) =>
-        resource.sourceID === playerId &&
-        resource.timestamp > cast.timestamp &&
-        resource.timestamp <= windowEnd,
+      .filter(
+        (resource) =>
+          resource.sourceID === playerId &&
+          resource.timestamp > cast.timestamp &&
+          resource.timestamp <= windowEnd,
       )
       .forEach((resource) => checkAndCountSignature(resource, 'resource'));
 
@@ -435,13 +452,13 @@ function detectAffixScripts(
   const GRIMOIRE_COMPATIBLE_AFFIX_IDS = new Set<number>();
 
   if (grimoireKey) {
-    Object.values((scribingData as ScribingDataStructure).affixScripts as Record<string, AffixScriptEntry>).forEach(
-      (script) => {
-        if (script.compatibleGrimoires?.includes(grimoireKey)) {
-          script.abilityIds?.forEach((id) => GRIMOIRE_COMPATIBLE_AFFIX_IDS.add(id));
-        }
-      },
-    );
+    Object.values(
+      (scribingData as ScribingDataStructure).affixScripts as Record<string, AffixScriptEntry>,
+    ).forEach((script) => {
+      if (script.compatibleGrimoires?.includes(grimoireKey)) {
+        script.abilityIds?.forEach((id) => GRIMOIRE_COMPATIBLE_AFFIX_IDS.add(id));
+      }
+    });
   } else {
     VALID_AFFIX_SCRIPT_IDS.forEach((id) => GRIMOIRE_COMPATIBLE_AFFIX_IDS.add(id));
   }
@@ -463,7 +480,7 @@ function detectAffixScripts(
   const damageCandidates = new Map<number, Set<number>>();
   const healCandidates = new Map<number, Set<number>>();
   const resourceCandidates = new Map<number, Set<number>>();
-  
+
   // Track timing information for buff candidates to identify immediate triggers
   const buffTimings = new Map<number, { immediateCasts: Set<number>; totalCasts: Set<number> }>();
 
@@ -568,12 +585,15 @@ function detectAffixScripts(
     );
 
     windowBuffs.forEach((buff) => {
-      if (buff.abilityGameID !== abilityId && GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(buff.abilityGameID)) {
+      if (
+        buff.abilityGameID !== abilityId &&
+        GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(buff.abilityGameID)
+      ) {
         if (!buffCandidates.has(buff.abilityGameID)) {
           buffCandidates.set(buff.abilityGameID, new Set());
         }
         buffCandidates.get(buff.abilityGameID)!.add(castIndex);
-        
+
         // Track timing information for immediate trigger detection
         const offsetFromCast = buff.timestamp - cast.timestamp;
         if (!buffTimings.has(buff.abilityGameID)) {
@@ -588,7 +608,10 @@ function detectAffixScripts(
     });
 
     windowDebuffs.forEach((debuff) => {
-      if (debuff.abilityGameID !== abilityId && GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(debuff.abilityGameID)) {
+      if (
+        debuff.abilityGameID !== abilityId &&
+        GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(debuff.abilityGameID)
+      ) {
         if (!debuffCandidates.has(debuff.abilityGameID)) {
           debuffCandidates.set(debuff.abilityGameID, new Set());
         }
@@ -742,7 +765,12 @@ function detectAffixScripts(
     return [];
   }
 
-  const preferTypeOrder: Array<'buff' | 'debuff' | 'damage' | 'heal'> = ['buff', 'debuff', 'damage', 'heal'];
+  const preferTypeOrder: Array<'buff' | 'debuff' | 'damage' | 'heal'> = [
+    'buff',
+    'debuff',
+    'damage',
+    'heal',
+  ];
 
   type AggregatedCandidate = {
     key: string;
@@ -781,16 +809,19 @@ function detectAffixScripts(
   });
 
   const aggregatedCandidates = Array.from(aggregated.values()).map((entry) => {
-    const dominantType = preferTypeOrder.reduce<'buff' | 'debuff' | 'damage' | 'heal'>((acc, type) => {
-      if (entry.typeCounts[type] > entry.typeCounts[acc]) {
-        return type;
-      }
-      return acc;
-    }, 'buff');
+    const dominantType = preferTypeOrder.reduce<'buff' | 'debuff' | 'damage' | 'heal'>(
+      (acc, type) => {
+        if (entry.typeCounts[type] > entry.typeCounts[acc]) {
+          return type;
+        }
+        return acc;
+      },
+      'buff',
+    );
 
     const totalCasts = casts.length;
     const consistency = totalCasts > 0 ? entry.castSet.size / totalCasts : 0;
-    
+
     // Calculate immediate trigger ratio for buff-type candidates
     let immediateTriggerRatio = 0;
     if (dominantType === 'buff') {
@@ -849,11 +880,11 @@ function detectAffixScripts(
     // Prioritize candidates with high immediate trigger ratios (>= 0.5 means at least 50% immediate)
     const aHasImmediateTrigger = a.immediateTriggerRatio >= 0.5;
     const bHasImmediateTrigger = b.immediateTriggerRatio >= 0.5;
-    
+
     if (aHasImmediateTrigger !== bHasImmediateTrigger) {
       return bHasImmediateTrigger ? 1 : -1; // Prefer immediate triggers
     }
-    
+
     // If both have or both don't have immediate triggers, sort by consistency
     if (b.consistency !== a.consistency) {
       return b.consistency - a.consistency;
@@ -1001,7 +1032,11 @@ export function computeScribingDetection(
     BANNER_PRIMARY_ABILITY_IDS.has(effectiveAbilityId);
 
   if (baseLooksLikeBanner) {
-    const resolved = resolveBannerPrimaryAbilityId(effectiveAbilityId, playerId, combatEvents.buffs);
+    const resolved = resolveBannerPrimaryAbilityId(
+      effectiveAbilityId,
+      playerId,
+      combatEvents.buffs,
+    );
     if (resolved && resolved.abilityId !== effectiveAbilityId) {
       logger?.info?.('Resolved banner focus from combat data', {
         originalAbilityId: effectiveAbilityId,
@@ -1016,11 +1051,19 @@ export function computeScribingDetection(
 
   let normalizedCasts = combatEvents.casts;
   const loggedCastCount = combatEvents.casts.filter(
-    (event) => event.type === 'cast' && event.sourceID === playerId && event.abilityGameID === effectiveAbilityId,
+    (event) =>
+      event.type === 'cast' &&
+      event.sourceID === playerId &&
+      event.abilityGameID === effectiveAbilityId,
   ).length;
 
   if (scribingInfo.grimoireKey === BANNER_GRIMOIRE_KEY && loggedCastCount === 0) {
-    const extended = synthesizeBannerCasts(combatEvents.casts, combatEvents.buffs, effectiveAbilityId, playerId);
+    const extended = synthesizeBannerCasts(
+      combatEvents.casts,
+      combatEvents.buffs,
+      effectiveAbilityId,
+      playerId,
+    );
     if (extended !== combatEvents.casts) {
       logger?.debug?.('Synthesized banner casts from buff events', {
         abilityId: effectiveAbilityId,
@@ -1041,7 +1084,10 @@ export function computeScribingDetection(
   };
 
   const abilityCastCount = normalizedCasts.filter(
-    (event) => event.type === 'cast' && event.sourceID === playerId && event.abilityGameID === effectiveAbilityId,
+    (event) =>
+      event.type === 'cast' &&
+      event.sourceID === playerId &&
+      event.abilityGameID === effectiveAbilityId,
   ).length;
   const wasCastInFight = abilityCastCount > 0;
 
@@ -1140,10 +1186,7 @@ export function computeScribingDetectionsForFight(
   const { fightId, combatEvents, playerAbilities, logger, onProgress } = options;
   const players: Record<number, Record<number, ResolvedScribingDetection>> = {};
 
-  const totalAbilities = playerAbilities.reduce(
-    (sum, entry) => sum + entry.abilityIds.length,
-    0,
-  );
+  const totalAbilities = playerAbilities.reduce((sum, entry) => sum + entry.abilityIds.length, 0);
   let processedAbilities = 0;
 
   playerAbilities.forEach(({ playerId, abilityIds }) => {
