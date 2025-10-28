@@ -91,6 +91,17 @@ jobs:
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
           SENTRY_DSN: ''
 
+      - name: Scribing E2E Tests
+        run: npm run test:scribing
+        env:
+          NODE_OPTIONS: '--max-old-space-size=6144'
+          NO_PROXY: '*'
+          HTTP_PROXY: 'http://127.0.0.1:9999'
+          HTTPS_PROXY: 'http://127.0.0.1:9999'
+          BLOCK_EXTERNAL_REQUESTS: 'true'
+          ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
+          SENTRY_DSN: ''
+
   typecheck:
     runs-on: ubuntu-latest
     steps:

@@ -66,52 +66,14 @@ const DEFERRED_AFFIX_TRIGGER_ABILITIES = new Set<number>([240150]);
 
 const BANNER_GRIMOIRE_KEY = 'banner-bearer';
 const BANNER_PSEUDO_CAST_WINDOW_MS = 1000;
-
-const bannerGrimoire = (scribingData as ScribingDataStructure).grimoires?.[BANNER_GRIMOIRE_KEY];
-const BANNER_BASE_ABILITY_ID =
-  typeof bannerGrimoire?.id === 'number' ? (bannerGrimoire.id as number) : null;
+let BANNER_BASE_ABILITY_ID: number | null = null;
 const BANNER_PRIMARY_ABILITY_IDS = new Set<number>();
 const BANNER_ABILITY_TO_TRANSFORMATION = new Map<
   number,
   { transformation: string; primaryAbilityId: number }
 >();
 
-if (bannerGrimoire?.nameTransformations) {
-  Object.values(
-    bannerGrimoire.nameTransformations as Record<string, { name: string; abilityIds?: number[] }>,
-  ).forEach((config) => {
-    if (!config?.name) {
-      return;
-    }
-
-    const abilityIds = Array.isArray(config.abilityIds) ? config.abilityIds : [];
-    const primaryAbilityId = abilityIds[0];
-
-    if (typeof primaryAbilityId === 'number') {
-      BANNER_PRIMARY_ABILITY_IDS.add(primaryAbilityId);
-    }
-
-    abilityIds.forEach((id) => {
-      if (typeof id !== 'number') {
-        return;
-      }
-
-      if (BANNER_BASE_ABILITY_ID !== null && id === BANNER_BASE_ABILITY_ID) {
-        return;
-      }
-
-      const resolvedPrimaryAbilityId =
-        typeof primaryAbilityId === 'number' && primaryAbilityId !== BANNER_BASE_ABILITY_ID
-          ? primaryAbilityId
-          : id;
-
-      BANNER_ABILITY_TO_TRANSFORMATION.set(id, {
-        transformation: config.name,
-        primaryAbilityId: resolvedPrimaryAbilityId,
-      });
-    });
-  });
-}
+let isScribingDatasetInitialized = false;
 
 type SignatureScriptEntry = {
   name: string;
@@ -125,51 +87,112 @@ type AffixScriptEntry = {
   compatibleGrimoires?: string[];
 };
 
-Object.values(
-  (scribingData as ScribingDataStructure).signatureScripts as Record<string, SignatureScriptEntry>,
-).forEach((script) => {
-  script.abilityIds?.forEach((id) => {
-    VALID_SIGNATURE_SCRIPT_IDS.add(id);
-    SIGNATURE_SCRIPT_ID_TO_NAME.set(id, script.name);
-  });
+const CLASS_MASTERY_EXTRA_EFFECT_IDS = [252143];
 
-  if (script.grimoireSpecificEffects) {
-    Object.values(script.grimoireSpecificEffects).forEach((config) => {
-      if (config.mainAbilityId) {
-        VALID_SIGNATURE_SCRIPT_IDS.add(config.mainAbilityId);
-        SIGNATURE_SCRIPT_ID_TO_NAME.set(config.mainAbilityId, script.name);
+function initializeScribingDataset(): void {
+  if (isScribingDatasetInitialized) {
+    return;
+  }
+
+  VALID_SIGNATURE_SCRIPT_IDS.clear();
+  SIGNATURE_SCRIPT_ID_TO_NAME.clear();
+  VALID_AFFIX_SCRIPT_IDS.clear();
+  AFFIX_SCRIPT_ID_TO_NAME.clear();
+  BANNER_PRIMARY_ABILITY_IDS.clear();
+  BANNER_ABILITY_TO_TRANSFORMATION.clear();
+  BANNER_BASE_ABILITY_ID = null;
+
+  const data = scribingData as ScribingDataStructure;
+
+  const bannerGrimoire = data.grimoires?.[BANNER_GRIMOIRE_KEY];
+  if (bannerGrimoire && typeof bannerGrimoire.id === 'number') {
+    BANNER_BASE_ABILITY_ID = bannerGrimoire.id;
+  }
+
+  if (bannerGrimoire?.nameTransformations) {
+    Object.values(
+      bannerGrimoire.nameTransformations as Record<string, { name: string; abilityIds?: number[] }>,
+    ).forEach((config) => {
+      if (!config?.name) {
+        return;
       }
-      config.statusEffects?.forEach((id) => {
-        VALID_SIGNATURE_SCRIPT_IDS.add(id);
-        SIGNATURE_SCRIPT_ID_TO_NAME.set(id, script.name);
+
+      const abilityIds = Array.isArray(config.abilityIds) ? config.abilityIds : [];
+      const primaryAbilityId = abilityIds[0];
+
+      if (typeof primaryAbilityId === 'number') {
+        BANNER_PRIMARY_ABILITY_IDS.add(primaryAbilityId);
+      }
+
+      abilityIds.forEach((id) => {
+        if (typeof id !== 'number') {
+          return;
+        }
+
+        if (BANNER_BASE_ABILITY_ID !== null && id === BANNER_BASE_ABILITY_ID) {
+          return;
+        }
+
+        const resolvedPrimaryAbilityId =
+          typeof primaryAbilityId === 'number' && primaryAbilityId !== BANNER_BASE_ABILITY_ID
+            ? primaryAbilityId
+            : id;
+
+        BANNER_ABILITY_TO_TRANSFORMATION.set(id, {
+          transformation: config.name,
+          primaryAbilityId: resolvedPrimaryAbilityId,
+        });
       });
     });
   }
-});
 
-const CLASS_MASTERY_EXTRA_EFFECT_IDS = [252143];
-const classMasteryScript = (scribingData as ScribingDataStructure).signatureScripts?.[
-  'class-mastery'
-];
-if (classMasteryScript) {
-  CLASS_MASTERY_EXTRA_EFFECT_IDS.forEach((id) => {
-    VALID_SIGNATURE_SCRIPT_IDS.add(id);
-    SIGNATURE_SCRIPT_ID_TO_NAME.set(id, classMasteryScript.name ?? 'Class Mastery');
-  });
+  if (data.signatureScripts) {
+    Object.values(data.signatureScripts as Record<string, SignatureScriptEntry>).forEach((script) => {
+      script.abilityIds?.forEach((id) => {
+        VALID_SIGNATURE_SCRIPT_IDS.add(id);
+        SIGNATURE_SCRIPT_ID_TO_NAME.set(id, script.name);
+      });
+
+      if (script.grimoireSpecificEffects) {
+        Object.values(script.grimoireSpecificEffects).forEach((config) => {
+          if (config.mainAbilityId) {
+            VALID_SIGNATURE_SCRIPT_IDS.add(config.mainAbilityId);
+            SIGNATURE_SCRIPT_ID_TO_NAME.set(config.mainAbilityId, script.name);
+          }
+          config.statusEffects?.forEach((id) => {
+            VALID_SIGNATURE_SCRIPT_IDS.add(id);
+            SIGNATURE_SCRIPT_ID_TO_NAME.set(id, script.name);
+          });
+        });
+      }
+    });
+  }
+
+  const classMasteryScript = data.signatureScripts?.['class-mastery'];
+  if (classMasteryScript) {
+    CLASS_MASTERY_EXTRA_EFFECT_IDS.forEach((id) => {
+      VALID_SIGNATURE_SCRIPT_IDS.add(id);
+      SIGNATURE_SCRIPT_ID_TO_NAME.set(id, classMasteryScript.name ?? 'Class Mastery');
+    });
+  }
+
+  if (data.affixScripts) {
+    Object.values(data.affixScripts as Record<string, AffixScriptEntry>).forEach((script) => {
+      script.abilityIds?.forEach((id) => {
+        VALID_AFFIX_SCRIPT_IDS.add(id);
+        AFFIX_SCRIPT_ID_TO_NAME.set(id, script.name);
+      });
+    });
+  }
+
+  isScribingDatasetInitialized = true;
 }
-
-Object.values(
-  (scribingData as ScribingDataStructure).affixScripts as Record<string, AffixScriptEntry>,
-).forEach((script) => {
-  script.abilityIds?.forEach((id) => {
-    VALID_AFFIX_SCRIPT_IDS.add(id);
-    AFFIX_SCRIPT_ID_TO_NAME.set(id, script.name);
-  });
-});
 
 const SCRIBING_INFO_CACHE = new Map<number, ScribingSkillInfo | null>();
 
 function lookupScribingSkill(abilityId: number): ScribingSkillInfo | null {
+  initializeScribingDataset();
+
   if (!SCRIBING_INFO_CACHE.has(abilityId)) {
     SCRIBING_INFO_CACHE.set(abilityId, getScribingSkillByAbilityId(abilityId));
   }
@@ -305,6 +328,8 @@ function detectSignatureScript(
   playerId: number,
   combatEvents: CombatEventData,
 ): ScribedSkillSignatureInfo | null {
+  initializeScribingDataset();
+
   const abilityCasts = combatEvents.casts.filter(
     (event) =>
       event.type === 'cast' && event.sourceID === playerId && event.abilityGameID === abilityId,
@@ -444,6 +469,8 @@ function detectAffixScripts(
   grimoireKey?: string,
   logger?: DetectionLogger,
 ): ScribedSkillAffixInfo[] {
+  initializeScribingDataset();
+
   const castEvents = combatEvents.casts.filter((event) => event.type === 'cast');
   const casts = castEvents.filter(
     (event) => event.sourceID === playerId && event.abilityGameID === abilityId,
@@ -1019,6 +1046,8 @@ export interface ComputeScribingDetectionOptions {
 export function computeScribingDetection(
   options: ComputeScribingDetectionOptions,
 ): ResolvedScribingDetection | null {
+  initializeScribingDataset();
+
   const { abilityId, playerId, combatEvents, logger } = options;
 
   let effectiveAbilityId = abilityId;
