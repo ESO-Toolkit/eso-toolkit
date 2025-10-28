@@ -137,6 +137,7 @@ export function isScribingAbility(abilityId: number): boolean {
 /**
  * Get all scribing ability IDs in the database
  * Useful for bulk operations or validation
+ * Returns unique ability IDs (deduplicated)
  */
 export function getAllScribingAbilityIds(): number[] {
   const abilityIds: number[] = [];
@@ -149,5 +150,6 @@ export function getAllScribingAbilityIds(): number[] {
     }
   }
 
-  return abilityIds;
+  // Return unique IDs only
+  return Array.from(new Set(abilityIds));
 }

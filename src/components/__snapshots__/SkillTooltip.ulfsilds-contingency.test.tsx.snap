@@ -95,24 +95,6 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Edge Cases fo
         </div>
       </div>
       <div
-        class="MuiBox-root css-19idom"
-      >
-        <span
-          class="MuiTypography-root MuiTypography-caption css-1g9mk0o-MuiTypography-root"
-        >
-          Signature Script
-        </span>
-        <div
-          class="MuiStack-root css-yzxa55-MuiStack-root"
-        >
-          <span
-            class="MuiTypography-root MuiTypography-caption css-1xrncdp-MuiTypography-root"
-          >
-            No signature script detected
-          </span>
-        </div>
-      </div>
-      <div
         class="MuiBox-root css-0"
       >
         <span
