@@ -1,4 +1,14 @@
-import { Box, Typography, List, ListItem, Skeleton } from '@mui/material';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import {
+  Box,
+  Typography,
+  List,
+  ListItem,
+  Skeleton,
+  Stack,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
 import React from 'react';
 
 import { BuffUptime, BuffUptimeProgressBar } from './BuffUptimeProgressBar';
@@ -9,6 +19,8 @@ interface StatusEffectUptimesViewProps {
   isLoading: boolean;
   reportId: string | null;
   fightId: string | null;
+  onOpenTimeline?: () => void;
+  canOpenTimeline?: boolean;
 }
 
 export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = ({
@@ -17,13 +29,18 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
   isLoading,
   reportId,
   fightId,
+  onOpenTimeline,
+  canOpenTimeline = false,
 }) => {
+  const descriptionId = React.useId();
+
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Status Effect Uptimes
-        </Typography>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+          <Typography variant="h6">Status Effect Uptimes</Typography>
+          <Skeleton variant="circular" width={36} height={36} />
+        </Stack>
         <Box sx={{ height: '100%', overflowY: 'auto' }}>
           {[...Array(7)].map((_, index) => (
             <Box
@@ -84,11 +101,25 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Status Effect Uptimes
-      </Typography>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+        <Typography variant="h6">Status Effect Uptimes</Typography>
+        <Tooltip title="View status effect uptimes timeline">
+          <span>
+            <IconButton
+              aria-label="Open status effect uptimes timeline"
+              aria-describedby={descriptionId}
+              size="small"
+              color="primary"
+              onClick={onOpenTimeline}
+              disabled={!canOpenTimeline}
+            >
+              <TimelineIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Stack>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} id={descriptionId}>
         {selectedTargetId
           ? 'Shows status effects applied to the selected target'
           : 'Shows status effects applied to all targets'}
