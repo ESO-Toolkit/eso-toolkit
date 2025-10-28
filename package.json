@@ -32,7 +32,7 @@
     "@testing-library/user-event": "^13.5.0",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3",
+    "@types/express": "^5.0.4",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/react": "^19.2.2",
