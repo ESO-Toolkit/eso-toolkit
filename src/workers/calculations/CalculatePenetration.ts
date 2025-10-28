@@ -83,6 +83,10 @@ export function calculatePenetrationData(
         deserializedDebuffsLookup,
         playerCombatantInfo,
         player,
+        {
+          playerId: player.id,
+          targetIds: selectedTargetIds,
+        },
       );
 
       const playerBasePenetration = calculateStaticPenetration(playerCombatantInfo, player);

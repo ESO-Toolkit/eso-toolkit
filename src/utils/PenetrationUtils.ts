@@ -6,8 +6,8 @@ import {
   PenetrationComputedSourceKey,
 } from '../types/abilities';
 import { CombatantInfoEvent, CombatantAura } from '../types/combatlogEvents';
-import { PlayerGear } from '../types/playerDetails';
 
+import { getArmorWeightCounts } from './armorUtils';
 import {
   BuffLookupData,
   isBuffActive as isBuffActiveAtTimestamp,
@@ -147,6 +147,11 @@ export interface PenetrationSourceWithActiveState {
   description: string;
   value: number;
   wasActive: boolean;
+}
+
+export interface PenetrationSourceActiveStateOptions {
+  playerId?: number;
+  targetIds?: number[];
 }
 
 export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
@@ -376,12 +381,16 @@ function isComputedSourceActive(
     // ========================================
     // INDIVIDUAL COMPUTED SOURCES
     // ========================================
-    case PenetrationComputedSourceKey.CONCENTRATION:
+    case PenetrationComputedSourceKey.CONCENTRATION: {
       if (!combatantInfo || !combatantInfo.auras || !combatantInfo.gear) return false;
-      return combatantInfo.auras.some(
+      const hasConcentrationAura = combatantInfo.auras.some(
         (aura: CombatantAura) =>
           aura.ability === KnownAbilities.CONCENTRATION || aura.name?.includes('Concentration'),
       );
+      if (!hasConcentrationAura) return false;
+      const { light: lightArmorPieces } = getArmorWeightCounts(combatantInfo.gear);
+      return lightArmorPieces > 0;
+    }
     case PenetrationComputedSourceKey.SPLINTERED_SECRETS: {
       if (!combatantInfo || !combatantInfo.auras || !playerData) return false;
       const splinteredSecretsAuras = combatantInfo.auras.filter(
@@ -469,8 +478,8 @@ function getPenetrationFromComputedSource(
           aura.ability === KnownAbilities.CONCENTRATION || aura.name?.includes('Concentration'),
       );
       if (!hasConcentration) return 0;
-      const lightArmorCount =
-        combatantInfo.gear?.filter((gear: PlayerGear) => gear.type === 1).length || 0;
+      const { light: lightArmorCount } = getArmorWeightCounts(combatantInfo.gear);
+      if (lightArmorCount <= 0) return 0;
       return lightArmorCount * PenetrationValues.CONCENTRATION_PER_PIECE;
     }
 
@@ -567,8 +576,10 @@ export function getAllPenetrationSourcesWithActiveState(
   debuffLookup: BuffLookupData | null,
   combatantInfo: CombatantInfoEvent | null,
   playerData?: PlayerDetailsWithRole,
+  options: PenetrationSourceActiveStateOptions = {},
 ): PenetrationSourceWithActiveState[] {
   const result: PenetrationSourceWithActiveState[] = [];
+  const { playerId, targetIds } = options;
 
   for (const source of PENETRATION_SOURCES) {
     let wasActive = false;
@@ -580,11 +591,25 @@ export function getAllPenetrationSourcesWithActiveState(
         value = source.value;
         break;
       case 'buff':
-        wasActive = buffLookup ? isBuffActiveAtTimestamp(buffLookup, source.ability) : false;
+        if (buffLookup) {
+          if (typeof playerId === 'number') {
+            wasActive = isBuffActiveOnTarget(buffLookup, source.ability, undefined, playerId);
+          } else {
+            wasActive = isBuffActiveAtTimestamp(buffLookup, source.ability);
+          }
+        }
         value = source.value;
         break;
       case 'debuff':
-        wasActive = debuffLookup ? isBuffActiveAtTimestamp(debuffLookup, source.ability) : false;
+        if (debuffLookup) {
+          if (targetIds && targetIds.length > 0) {
+            wasActive = targetIds.some((targetId) =>
+              isBuffActiveOnTarget(debuffLookup, source.ability, undefined, targetId),
+            );
+          } else {
+            wasActive = isBuffActiveAtTimestamp(debuffLookup, source.ability);
+          }
+        }
         value = source.value;
         break;
       case 'gear':
@@ -667,22 +692,28 @@ export function calculateDynamicPenetrationAtTimestamp(
     switch (source.source) {
       case 'buff':
         // Buffs: Check if active on the selected player (who benefits from penetration)
-        isActive = buffLookup
-          ? playerId !== null
-            ? isBuffActiveOnTarget(buffLookup, source.ability, timestamp, playerId)
-            : isBuffActiveAtTimestamp(buffLookup, source.ability, timestamp)
-          : false;
+        if (buffLookup) {
+          isActive = isBuffActiveOnTarget(
+            buffLookup,
+            source.ability,
+            timestamp,
+            playerId !== null ? playerId : undefined,
+          );
+        }
         if (isActive) {
           buffPenetration += source.value;
         }
         break;
       case 'debuff':
         // Debuffs: Check if active on the selected target (enemy who has reduced resistances)
-        isActive = debuffLookup
-          ? targetId !== null
-            ? isBuffActiveOnTarget(debuffLookup, source.ability, timestamp, targetId)
-            : isBuffActiveAtTimestamp(debuffLookup, source.ability, timestamp)
-          : false;
+        if (debuffLookup) {
+          isActive = isBuffActiveOnTarget(
+            debuffLookup,
+            source.ability,
+            timestamp,
+            targetId !== null ? targetId : undefined,
+          );
+        }
         if (isActive) {
           debuffPenetration += source.value;
         }

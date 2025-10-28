@@ -58,7 +58,12 @@ const createEsoLogsUrl = (
   }
 
   if (selectedTargetId) {
-    url += `&target=${selectedTargetId}`;
+    if (isDebuff) {
+      // ESO Logs expects debuff recipients as the "source" query param, so swap the ids here.
+      url += `&source=${selectedTargetId}`;
+    } else {
+      url += `&target=${selectedTargetId}`;
+    }
   } else if (hostility === 1) {
     url += '&sourceclass=Boss';
   }
