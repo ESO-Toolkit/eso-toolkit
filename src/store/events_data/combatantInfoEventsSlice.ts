@@ -12,6 +12,7 @@ import { CombatantInfoEvent, LogEvent } from '../../types/combatlogEvents';
 import { Logger, LogLevel } from '../../utils/logger';
 import type { RootState } from '../storeWithHistory';
 
+import { EVENT_PAGE_LIMIT } from './constants';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'CombatantInfoEvents' });
@@ -50,7 +51,6 @@ const initialState: CombatantInfoEventsState = {
   currentRequest: null,
 };
 
-const EVENT_PAGE_LIMIT = 100000;
 
 export const fetchCombatantInfoEvents = createAsyncThunk<
   CombatantInfoEvent[],
