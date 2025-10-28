@@ -173,6 +173,7 @@ export function getAllActorPositionsAtTimestamp(
 const GAP_THRESHOLD_MS = 5000;
 const INTERPOLATION_TOLERANCE_MS = 1;
 const MIN_VISIBILITY_MS = 1000;
+const BOSS_DEATH_VISIBILITY_WINDOW_MS = 2000;
 const SAMPLE_INTERVAL_MS = 4.7; // 240Hz sampling rate (better performance vs quality balance)
 const MAX_TIMESTAMPS = 72000; // Cap at 5 minutes worth of 240Hz data to prevent excessive computation
 
@@ -749,6 +750,9 @@ export function calculateActorPositions(
           }
         }
 
+        const lastEventTimestamp = actorLastEventTime.get(actorId);
+        const hasRecordedDeath = actorEvents.some((event) => event.type === 'death');
+
         // If actor is dead, handle based on actor type
         if (isDead) {
           // For NPCs (enemies, pets, friendly NPCs), stop giving positions after death
@@ -758,10 +762,18 @@ export function calculateActorPositions(
 
           // For players and bosses, continue giving positions at their last known location
           // Find the last position before the most recent death time
-          const currentDeathTimestamp = sortedEvents
+          const currentDeathEvent = sortedEvents
             .slice()
             .reverse()
-            .find((e) => e.type === 'death' && currentTimestamp >= e.timestamp)?.timestamp;
+            .find((e) => e.type === 'death' && currentTimestamp >= e.timestamp);
+          const currentDeathTimestamp = currentDeathEvent?.timestamp;
+
+          if (type === 'boss' && currentDeathTimestamp) {
+            const timeSinceDeath = currentTimestamp - currentDeathTimestamp;
+            if (timeSinceDeath > BOSS_DEATH_VISIBILITY_WINDOW_MS) {
+              continue;
+            }
+          }
 
           const lastPositionBeforeDeath = history
             .slice()
@@ -813,10 +825,24 @@ export function calculateActorPositions(
           continue;
         }
 
-        // For NPCs (including pets), skip positions if no recent event within 5 seconds
+        // For bosses with no explicit death event, remove them shortly after their final interaction
+        if (
+          type === 'boss' &&
+          !hasRecordedDeath &&
+          lastEventTimestamp !== undefined &&
+          currentTimestamp > lastEventTimestamp + BOSS_DEATH_VISIBILITY_WINDOW_MS
+        ) {
+          continue;
+        }
+
+        // For NPCs (including pets) or bosses without death records, skip positions if no recent event within 5 seconds
         // Use pre-sorted event times for better performance
         const sortedEventTimes = sortedEventTimesCache.get(actorId) || [];
-        if (isNPC && !hasRecentEvent(actorId, currentTimestamp, sortedEventTimes)) {
+        const enforceRecentEventVisibility = isNPC || (type === 'boss' && !hasRecordedDeath);
+        if (
+          enforceRecentEventVisibility &&
+          !hasRecentEvent(actorId, currentTimestamp, sortedEventTimes)
+        ) {
           continue;
         }
 
