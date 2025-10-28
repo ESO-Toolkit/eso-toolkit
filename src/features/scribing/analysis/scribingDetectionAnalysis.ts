@@ -37,6 +37,12 @@ export interface DetectionLogger {
   error?: (message: string, data?: unknown) => void;
 }
 
+interface ScribingDataStructure {
+  grimoires?: Record<string, { id?: number; nameTransformations?: Record<string, unknown> }>;
+  signatureScripts?: Record<string, { name?: string; abilityIds?: number[]; compatibleGrimoires?: string[] }>;
+  affixScripts?: Record<string, { name: string; abilityIds?: number[]; compatibleGrimoires?: string[] }>;
+}
+
 const VALID_SIGNATURE_SCRIPT_IDS = new Set<number>();
 const SIGNATURE_SCRIPT_ID_TO_NAME = new Map<number, string>();
 const VALID_AFFIX_SCRIPT_IDS = new Set<number>();
@@ -46,7 +52,7 @@ const DEFERRED_AFFIX_TRIGGER_ABILITIES = new Set<number>([240150]);
 const BANNER_GRIMOIRE_KEY = 'banner-bearer';
 const BANNER_PSEUDO_CAST_WINDOW_MS = 1000;
 
-const bannerGrimoire = (scribingData as any).grimoires?.[BANNER_GRIMOIRE_KEY];
+const bannerGrimoire = (scribingData as ScribingDataStructure).grimoires?.[BANNER_GRIMOIRE_KEY];
 const BANNER_BASE_ABILITY_ID =
   typeof bannerGrimoire?.id === 'number' ? (bannerGrimoire.id as number) : null;
 const BANNER_PRIMARY_ABILITY_IDS = new Set<number>();
@@ -104,7 +110,7 @@ type AffixScriptEntry = {
   compatibleGrimoires?: string[];
 };
 
-Object.values((scribingData as any).signatureScripts as Record<string, SignatureScriptEntry>).forEach(
+Object.values((scribingData as ScribingDataStructure).signatureScripts as Record<string, SignatureScriptEntry>).forEach(
   (script) => {
     script.abilityIds?.forEach((id) => {
       VALID_SIGNATURE_SCRIPT_IDS.add(id);
@@ -127,7 +133,7 @@ Object.values((scribingData as any).signatureScripts as Record<string, Signature
 );
 
 const CLASS_MASTERY_EXTRA_EFFECT_IDS = [252143];
-const classMasteryScript = (scribingData as any).signatureScripts?.['class-mastery'];
+const classMasteryScript = (scribingData as ScribingDataStructure).signatureScripts?.['class-mastery'];
 if (classMasteryScript) {
   CLASS_MASTERY_EXTRA_EFFECT_IDS.forEach((id) => {
     VALID_SIGNATURE_SCRIPT_IDS.add(id);
@@ -135,7 +141,7 @@ if (classMasteryScript) {
   });
 }
 
-Object.values((scribingData as any).affixScripts as Record<string, AffixScriptEntry>).forEach(
+Object.values((scribingData as ScribingDataStructure).affixScripts as Record<string, AffixScriptEntry>).forEach(
   (script) => {
     script.abilityIds?.forEach((id) => {
       VALID_AFFIX_SCRIPT_IDS.add(id);
@@ -429,7 +435,7 @@ function detectAffixScripts(
   const GRIMOIRE_COMPATIBLE_AFFIX_IDS = new Set<number>();
 
   if (grimoireKey) {
-    Object.values((scribingData as any).affixScripts as Record<string, AffixScriptEntry>).forEach(
+    Object.values((scribingData as ScribingDataStructure).affixScripts as Record<string, AffixScriptEntry>).forEach(
       (script) => {
         if (script.compatibleGrimoires?.includes(grimoireKey)) {
           script.abilityIds?.forEach((id) => GRIMOIRE_COMPATIBLE_AFFIX_IDS.add(id));

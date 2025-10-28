@@ -45,6 +45,12 @@ import {
   type ScribingSkillInfo,
 } from '../utils/Scribing';
 
+interface ScribingDataStructure {
+  grimoires?: Record<string, { id?: number; nameTransformations?: Record<string, unknown> }>;
+  signatureScripts?: Record<string, { name?: string; abilityIds?: number[]; compatibleGrimoires?: string[] }>;
+  affixScripts?: Record<string, { name: string; abilityIds?: number[]; compatibleGrimoires?: string[] }>;
+}
+
 // Module-level logger for standalone functions
 const moduleLogger = new Logger({ level: LogLevel.INFO, contextPrefix: 'ScribingDetection' });
 
@@ -121,7 +127,7 @@ const DEFERRED_AFFIX_TRIGGER_ABILITIES = new Set<number>([240150]);
 const BANNER_GRIMOIRE_KEY = 'banner-bearer';
 const BANNER_PSEUDO_CAST_WINDOW_MS = 1000;
 
-const bannerGrimoire = (scribingData as any).grimoires?.[BANNER_GRIMOIRE_KEY];
+const bannerGrimoire = (scribingData as ScribingDataStructure).grimoires?.[BANNER_GRIMOIRE_KEY];
 const BANNER_PRIMARY_ABILITY_IDS = new Set<number>();
 
 if (bannerGrimoire?.nameTransformations) {
