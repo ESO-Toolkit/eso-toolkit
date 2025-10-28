@@ -94,7 +94,11 @@ module.exports = {
   },
 
   // Ignore patterns
-  testPathIgnorePatterns: ['/node_modules/', '/build/'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/build/',
+    'scribing-e2e\\.(test|spec)\\.(ts|tsx)$',
+  ],
   transformIgnorePatterns: [
     'node_modules/(?!(.*\\.mjs$|@?react-three-fiber|three))',
   ],

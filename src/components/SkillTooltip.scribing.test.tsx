@@ -158,6 +158,12 @@ describe('SkillTooltip - Scribing Skills Snapshots', () => {
           recipeSummary: 'Traveling Knife + Shattering Knife',
           tooltipInfo: 'Basic detection via database lookup',
         },
+        signatureScript: {
+          name: 'No signature script detected',
+          confidence: 0,
+          detectionMethod: 'fallback',
+          evidence: [],
+        },
       };
 
       mockUseSkillScribingData.mockReturnValue({

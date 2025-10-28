@@ -79,6 +79,8 @@ jobs:
       - name: Test
         run: npm run test:coverage:ci
         env:
+          # Increase Node.js memory limit to prevent OOM errors
+          NODE_OPTIONS: '--max-old-space-size=8192'
           # Prevent external network requests during testing
           NO_PROXY: '*'
           HTTP_PROXY: 'http://127.0.0.1:9999'
@@ -86,6 +88,17 @@ jobs:
           # Block known external services
           BLOCK_EXTERNAL_REQUESTS: 'true'
           # Override external service URLs to localhost (will fail if not mocked)
+          ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
+          SENTRY_DSN: ''
+
+      - name: Scribing E2E Tests
+        run: npm run test:scribing
+        env:
+          NODE_OPTIONS: '--max-old-space-size=6144'
+          NO_PROXY: '*'
+          HTTP_PROXY: 'http://127.0.0.1:9999'
+          HTTPS_PROXY: 'http://127.0.0.1:9999'
+          BLOCK_EXTERNAL_REQUESTS: 'true'
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
           SENTRY_DSN: ''
 
