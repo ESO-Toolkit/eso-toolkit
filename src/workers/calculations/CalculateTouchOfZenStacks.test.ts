@@ -526,5 +526,58 @@ describe('CalculateTouchOfZenStacks', () => {
 
       expect(result.allDotAbilityIds).toEqual(expect.arrayContaining([12345]));
     });
+
+    it("keeps Touch of Z'en uptime percentages within fight duration across multiple targets", () => {
+      const TARGET_ID_2 = 201;
+      const debuffsLookup = createMockBuffLookupData({
+        [KnownAbilities.TOUCH_OF_ZEN.toString()]: [
+          {
+            start: FIGHT_START,
+            end: FIGHT_END,
+            targetID: TARGET_ID,
+            sourceID: SOURCE_ID,
+          },
+          {
+            start: FIGHT_START,
+            end: FIGHT_END,
+            targetID: TARGET_ID_2,
+            sourceID: SOURCE_ID + 1,
+          },
+        ],
+      });
+
+      const targetOneTicks = Array.from(
+        { length: (FIGHT_END - FIGHT_START) / 1000 + 1 },
+        (_, idx) => ({
+          time: FIGHT_START + idx * 1000,
+          abilityID: 12345,
+        }),
+      );
+
+      const targetTwoTicks = Array.from(
+        { length: (FIGHT_END - FIGHT_START) / 1000 + 1 },
+        (_, idx) => ({
+          time: FIGHT_START + idx * 1000,
+          abilityID: 22345,
+        }),
+      );
+
+      const dotEvents = [
+        ...createDotTickEvents(SOURCE_ID, TARGET_ID, targetOneTicks),
+        ...createDotTickEvents(SOURCE_ID + 1, TARGET_ID_2, targetTwoTicks),
+      ];
+
+      const result = calculateTouchOfZenStacks({
+        debuffsLookup,
+        damageEvents: [...createMockDamageEvents(), ...dotEvents],
+        fightStartTime: FIGHT_START,
+        fightEndTime: FIGHT_END,
+      });
+
+      const stackLevelOne = result.stackResults.find((stack) => stack.stackLevel === 1);
+      expect(stackLevelOne).toBeDefined();
+      expect(stackLevelOne?.uptimePercentage).toBeLessThanOrEqual(100);
+      expect(stackLevelOne?.uptime).toBeCloseTo((FIGHT_END - FIGHT_START) / 1000, 1);
+    });
   });
 });
