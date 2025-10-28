@@ -448,7 +448,7 @@ jobs:
         if: always()
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ secrets.GIST_TOKEN }}
+          personal_token: ${{ secrets.MERGE_QUEUE_TOKEN }}
           external_repository: bkrupa/eso-log-aggregator-reports
           publish_dir: screen-size-reports
           destination_dir: screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}
