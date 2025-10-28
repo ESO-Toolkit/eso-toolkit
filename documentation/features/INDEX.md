@@ -140,6 +140,28 @@ Performance monitoring system with architecture improvements and screen lock fix
 
 ---
 
+## 📐 Calculation Knowledge Base
+
+**Directory**: [`calculations/`](./calculations/)  
+**Status**: Active  
+**Related Jira**: ESO-480 and replay analytics workstream
+
+### Description
+Central reference for every worker-based calculation (penetration, mitigation, actor positioning, stacks, uptimes) with formulas, sampling cadence, and data source notes.
+
+### Key Files
+- `CALCULATION_KNOWLEDGE_BASE.md`
+- Worker source files under `src/workers/calculations/`
+- Utility helpers under `src/utils/*`
+
+### Key Features
+- Explains input data contracts and shared utilities
+- Documents formulas, caps, and heuristics per calculation
+- Highlights cross-cutting limitations and TODO items
+- Links to validation suites and integration tests
+
+---
+
 ## 🎨 Other Features
 
 ### Arena 3D Visualization

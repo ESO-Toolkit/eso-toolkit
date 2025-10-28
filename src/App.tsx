@@ -87,6 +87,11 @@ const ParseAnalysisPage = React.lazy(() =>
     default: module.ParseAnalysisPage,
   })),
 );
+const CalculationKnowledgeBasePage = React.lazy(() =>
+  import('./pages/CalculationKnowledgeBasePage').then((module) => ({
+    default: module.CalculationKnowledgeBasePage,
+  })),
+);
 
 // Lazy load the feedback FAB to improve initial page load performance
 const LazyModernFeedbackFab = React.lazy(() =>
@@ -377,6 +382,16 @@ const AppRoutes: React.FC = () => {
                     </Suspense>
                   </ErrorBoundary>
                 </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/docs/calculations"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <CalculationKnowledgeBasePage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
           </Route>

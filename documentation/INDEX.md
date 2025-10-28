@@ -60,6 +60,7 @@ Feature-specific implementation documentation:
 - **[Grimoire & Affixes](./features/grimoire/)** - Grimoire filtering and affix detection
 - **[Logger System](./features/logger/)** - Logging infrastructure
 - **[Performance Monitoring](./features/performance/)** - Performance tracking and optimization
+- **[Calculation Knowledge Base](./features/calculations/CALCULATION_KNOWLEDGE_BASE.md)** - Worker formulas and data provenance
 
 [View Feature Index →](./features/INDEX.md)
 

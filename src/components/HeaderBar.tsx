@@ -630,6 +630,11 @@ export const HeaderBar: React.FC = () => {
       icon: '📈',
       path: '/parse-analysis',
     },
+    {
+      text: 'Calculation Knowledge Base',
+      icon: '📚',
+      path: '/docs/calculations',
+    },
   ];
 
   const reportsItems = [
