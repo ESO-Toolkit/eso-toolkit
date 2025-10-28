@@ -21,7 +21,6 @@ import { BanRedirect } from './features/auth/BanRedirect';
 import { Login } from './features/auth/Login';
 import { ReportFightDetails } from './features/report_details/ReportFightDetails';
 import { UserReports } from './features/user_reports/UserReports';
-import { useAbilitiesPreloader } from './hooks/useAbilitiesPreloader';
 import { useWorkerManagerLogger } from './hooks/useWorkerManagerLogger';
 import { AppLayout } from './layouts/AppLayout';
 import { Banned } from './pages/Banned';
@@ -81,6 +80,11 @@ const FightReplay = React.lazy(() =>
 const ScribingSimulatorPage = React.lazy(() =>
   import('./pages/ScribingSimulatorPage').then((module) => ({
     default: module.ScribingSimulatorPage,
+  })),
+);
+const ParseAnalysisPage = React.lazy(() =>
+  import('./pages/ParseAnalysisPage').then((module) => ({
+    default: module.ParseAnalysisPage,
   })),
 );
 
@@ -162,14 +166,6 @@ const AppRoutes: React.FC = () => {
   // Initialize worker manager with logger
   useWorkerManagerLogger();
 
-  // Check current path for abilities preloading and OAuth redirect
-  const publicUrl = process.env.PUBLIC_URL || '';
-  const currentPath = window.location.pathname.replace(publicUrl, '');
-
-  // Preload abilities data when navigating to report pages
-  const isReportPage = /\/report\//.test(currentPath);
-  useAbilitiesPreloader(isReportPage);
-
   React.useEffect(() => {
     document.title = 'ESO Toolkit';
     // Add breadcrumb for page load
@@ -181,6 +177,10 @@ const AppRoutes: React.FC = () => {
 
   // Support non-hash OAuth redirect: /oauth-redirect?code=...
   // HashRouter won't match a path without a hash, so we short-circuit here.
+  // Check current path for OAuth redirect
+  const publicUrl = process.env.PUBLIC_URL || '';
+  const currentPath = window.location.pathname.replace(publicUrl, '');
+
   if (currentPath === '/oauth-redirect') {
     return (
       <ErrorBoundary>
@@ -365,6 +365,18 @@ const AppRoutes: React.FC = () => {
                     <ScribingSimulatorPage />
                   </Suspense>
                 </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/parse-analysis/:reportId?/:fightId?"
+              element={
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ParseAnalysisPage />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
               }
             />
           </Route>

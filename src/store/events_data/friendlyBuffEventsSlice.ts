@@ -9,7 +9,14 @@ import {
   HostilityType,
 } from '../../graphql/gql/graphql';
 import { BuffEvent, LogEvent } from '../../types/combatlogEvents';
+import { Logger, LogLevel } from '../../utils/logger';
 import { RootState } from '../storeWithHistory';
+
+import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
+
+const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'FriendlyBuffEvents' });
+
+const EVENT_PAGE_LIMIT = 100000;
 
 // Interface for tracking interval fetching state
 interface IntervalFetchResult {
@@ -28,7 +35,14 @@ export interface FriendlyBuffEventsState {
     lastFetchedReportId: string | null;
     lastFetchedFightId: number | null;
     lastFetchedTimestamp: number | null;
+    lastRestrictToFightWindow: boolean | null;
   };
+  currentRequest: {
+    reportId: string;
+    fightId: number;
+    requestId: string;
+    restrictToFightWindow: boolean;
+  } | null;
 }
 
 const initialState: FriendlyBuffEventsState = {
@@ -39,7 +53,9 @@ const initialState: FriendlyBuffEventsState = {
     lastFetchedReportId: null,
     lastFetchedFightId: null,
     lastFetchedTimestamp: null,
+    lastRestrictToFightWindow: null,
   },
+  currentRequest: null,
 };
 
 // Helper function to create time intervals
@@ -68,9 +84,13 @@ const fetchEventsForInterval = async (
   intervalStart: number,
   intervalEnd: number,
   hostilityType: HostilityType,
+  restrictToFightWindow: boolean,
 ): Promise<BuffEvent[]> => {
   let allEvents: LogEvent[] = [];
   let nextPageTimestamp: number | null = null;
+
+  const initialStartTime = restrictToFightWindow ? intervalStart : undefined;
+  const finalEndTime = restrictToFightWindow ? intervalEnd : undefined;
 
   do {
     const response: GetBuffEventsQuery = await client.query({
@@ -79,9 +99,10 @@ const fetchEventsForInterval = async (
       variables: {
         code: reportCode,
         fightIds: [Number(fight.id)],
-        startTime: nextPageTimestamp ?? intervalStart,
-        endTime: intervalEnd,
+        startTime: nextPageTimestamp ?? initialStartTime,
+        endTime: finalEndTime,
         hostilityType: hostilityType,
+        limit: EVENT_PAGE_LIMIT,
       },
     });
 
@@ -90,22 +111,47 @@ const fetchEventsForInterval = async (
       allEvents = allEvents.concat(page.data);
     }
     nextPageTimestamp = page?.nextPageTimestamp ?? null;
-  } while (nextPageTimestamp && nextPageTimestamp < intervalEnd);
+  } while (nextPageTimestamp && (restrictToFightWindow ? nextPageTimestamp < intervalEnd : true));
 
   return allEvents as BuffEvent[];
 };
 
 export const fetchFriendlyBuffEvents = createAsyncThunk<
   { events: BuffEvent[]; intervalResults: IntervalFetchResult[] },
-  { reportCode: string; fight: FightFragment; client: EsoLogsClient; intervalSize?: number },
+  {
+    reportCode: string;
+    fight: FightFragment;
+    client: EsoLogsClient;
+    intervalSize?: number;
+    /**
+     * Whether to restrict events to the fight time window.
+     * - true (default): Only fetch events within the fight's start/end time (typical use case)
+     * - false: Fetch all events for the entire report (used by ParseAnalysisPage for pre-fight buffs)
+     */
+    restrictToFightWindow?: boolean;
+  },
   { state: RootState; rejectValue: string }
 >(
   'friendlyBuffEvents/fetchFriendlyBuffEvents',
-  async ({ reportCode, fight, client, intervalSize = 30000 }) => {
-    const intervals = createTimeIntervals(fight.startTime, fight.endTime, intervalSize);
+  async ({ reportCode, fight, client, intervalSize = 30000, restrictToFightWindow = true }) => {
+    logger.info('Fetching friendly buff events', {
+      reportCode,
+      fightId: fight.id,
+      intervalSize,
+      restrictToFightWindow,
+    });
+
+    const intervals = restrictToFightWindow
+      ? createTimeIntervals(fight.startTime, fight.endTime, intervalSize)
+      : [{ startTime: fight.startTime, endTime: fight.endTime }];
+    logger.info(`Created ${intervals.length} time intervals`, {
+      reportCode,
+      fightId: fight.id,
+      intervalCount: intervals.length,
+    });
 
     // Create promises for all interval combinations (only friendlies)
-    const fetchPromises = intervals.map(async (interval): Promise<IntervalFetchResult> => {
+    const fetchPromises = intervals.map(async (interval, index): Promise<IntervalFetchResult> => {
       try {
         const events = await fetchEventsForInterval(
           client,
@@ -114,7 +160,16 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
           interval.startTime,
           interval.endTime,
           HostilityType.Friendlies,
+          restrictToFightWindow,
         );
+
+        logger.info(`Fetched interval ${index + 1}/${intervals.length}`, {
+          reportCode,
+          fightId: fight.id,
+          intervalIndex: index + 1,
+          totalIntervals: intervals.length,
+          eventsInInterval: events.length,
+        });
 
         return {
           startTime: interval.startTime,
@@ -122,6 +177,12 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
           events,
         };
       } catch (error) {
+        logger.error('Failed to fetch interval', error as Error, {
+          reportCode,
+          fightId: fight.id,
+          intervalIndex: index + 1,
+        });
+
         return {
           startTime: interval.startTime,
           endTime: interval.endTime,
@@ -139,13 +200,24 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
       .flatMap((result) => result.events)
       .sort((a, b) => a.timestamp - b.timestamp);
 
+    logger.info('Friendly buff events fetch completed', {
+      reportCode,
+      fightId: fight.id,
+      totalEvents: allEvents.length,
+      successfulIntervals: intervalResults.filter((r) => !r.error).length,
+      failedIntervals: intervalResults.filter((r) => r.error).length,
+    });
+
     return { events: allEvents, intervalResults };
   },
   {
-    condition: ({ reportCode, fight }, { getState }) => {
+    condition: ({ reportCode, fight, restrictToFightWindow = true }, { getState }) => {
       const state = getState().events.friendlyBuffs;
       const requestedReportId = reportCode;
       const requestedFightId = Number(fight.id);
+
+      const cachedRestrict = state.cacheMetadata.lastRestrictToFightWindow ?? true;
+      const restrictMatches = cachedRestrict === restrictToFightWindow;
 
       // Check if friendly buff events are already cached for this fight
       const isCached =
@@ -155,12 +227,34 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
         state.cacheMetadata.lastFetchedTimestamp &&
         Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
-      if (isCached && isFresh) {
+      if (isCached && isFresh && restrictMatches) {
+        logger.info('Using cached friendly buff events', {
+          reportCode: requestedReportId,
+          fightId: requestedFightId,
+          cacheAge: state.cacheMetadata.lastFetchedTimestamp
+            ? Date.now() - state.cacheMetadata.lastFetchedTimestamp
+            : 0,
+          restrictToFightWindow,
+        });
         return false; // Prevent thunk execution
       }
 
-      if (state.loading) {
-        return false; // Prevent duplicate execution
+      const inFlight = state.currentRequest;
+      if (
+        inFlight &&
+        inFlight.reportId === requestedReportId &&
+        inFlight.fightId === requestedFightId &&
+        inFlight.restrictToFightWindow === restrictToFightWindow
+      ) {
+        logger.info(
+          'Friendly buff events fetch already in progress for requested fight, skipping',
+          {
+            reportCode: requestedReportId,
+            fightId: requestedFightId,
+            restrictToFightWindow,
+          },
+        );
+        return false; // Prevent duplicate execution for same fight
       }
 
       return true; // Allow thunk execution
@@ -180,16 +274,38 @@ const friendlyBuffEventsSlice = createSlice({
         lastFetchedReportId: null,
         lastFetchedFightId: null,
         lastFetchedTimestamp: null,
+        lastRestrictToFightWindow: null,
       };
+      state.currentRequest = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchFriendlyBuffEvents.pending, (state) => {
+      .addCase(fetchFriendlyBuffEvents.pending, (state, action) => {
         state.loading = true;
         state.error = null;
+        state.currentRequest = createCurrentRequest(
+          action.meta.arg.reportCode,
+          Number(action.meta.arg.fight.id),
+          action.meta.requestId,
+          action.meta.arg.restrictToFightWindow ?? true,
+        );
       })
       .addCase(fetchFriendlyBuffEvents.fulfilled, (state, action) => {
+        if (
+          isStaleResponse(
+            state.currentRequest,
+            action.meta.requestId,
+            action.meta.arg.reportCode,
+            Number(action.meta.arg.fight.id),
+          )
+        ) {
+          logger.info('Ignoring stale friendly buff events response', {
+            reportCode: action.meta.arg.reportCode,
+            fightId: Number(action.meta.arg.fight.id),
+          });
+          return;
+        }
         state.events = action.payload.events;
         state.loading = false;
         state.error = null;
@@ -198,11 +314,28 @@ const friendlyBuffEventsSlice = createSlice({
           lastFetchedReportId: action.meta.arg.reportCode,
           lastFetchedFightId: Number(action.meta.arg.fight.id),
           lastFetchedTimestamp: Date.now(),
+          lastRestrictToFightWindow: action.meta.arg.restrictToFightWindow ?? true,
         };
+        state.currentRequest = null;
       })
       .addCase(fetchFriendlyBuffEvents.rejected, (state, action) => {
+        if (
+          isStaleResponse(
+            state.currentRequest,
+            action.meta.requestId,
+            action.meta.arg.reportCode,
+            Number(action.meta.arg.fight.id),
+          )
+        ) {
+          logger.info('Ignoring stale friendly buff events error response', {
+            reportCode: action.meta.arg.reportCode,
+            fightId: Number(action.meta.arg.fight.id),
+          });
+          return;
+        }
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch friendly buff events';
+        state.currentRequest = null;
       });
   },
 });

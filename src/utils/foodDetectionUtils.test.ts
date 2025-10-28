@@ -35,6 +35,18 @@ describe('foodDetectionUtils', () => {
         expect(result).toEqual({ name: 'Bewitched Sugar Skulls', id: 9998 });
       });
 
+      it("should detect Candied Jester's Coins", () => {
+        const auras = [{ name: "Candied Jester's Coins", id: 89955 }];
+        const result = detectFoodFromAuras(auras);
+        expect(result).toEqual({ name: "Candied Jester's Coins", id: 89955 });
+      });
+
+      it('should detect Candied Jester Coins (without apostrophe)', () => {
+        const auras = [{ name: 'Candied Jester Coins', id: 89955 }];
+        const result = detectFoodFromAuras(auras);
+        expect(result).toEqual({ name: 'Candied Jester Coins', id: 89955 });
+      });
+
       it('should detect Clockwork Citrus Filet', () => {
         const auras = [{ name: 'Clockwork Citrus Filet', id: 9997 }];
         const result = detectFoodFromAuras(auras);
@@ -265,6 +277,16 @@ describe('foodDetectionUtils', () => {
       // Based on the actual function logic, it checks keywords in order
       expect(abbreviateFood('Health and Regen Magicka Food')).toBe('H+R');
       expect(abbreviateFood('Health and Stamina Regen')).toBe('H+R'); // "Regen" comes before "Stamina" in checks
+    });
+
+    it('should abbreviate specific named foods', () => {
+      expect(abbreviateFood('Lava Foot Soup-and-Saltrice')).toBe('LFSS');
+      expect(abbreviateFood('Bewitched Sugar Skulls')).toBe('BSS');
+      expect(abbreviateFood("Candied Jester's Coins")).toBe('CJC');
+      expect(abbreviateFood('Clockwork Citrus Filet')).toBe('CCF');
+      expect(abbreviateFood('Crown Fortifying Meal')).toBe('CFM');
+      expect(abbreviateFood('Dubious Camoran Throne')).toBe('DCT');
+      expect(abbreviateFood("Witchmother's Potent Brew")).toBe('WPB');
     });
 
     it('should truncate unknown food names', () => {

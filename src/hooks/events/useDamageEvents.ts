@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 
 import { selectDamageEventsByPlayer } from '@/store/events_data/damageEventsSelectors';
 
-import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
+import { useEsoLogsClientContext } from '../../EsoLogsClientContext';
 import { FightFragment } from '../../graphql/gql/graphql';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
 import { fetchDamageEvents } from '../../store/events_data/damageEventsSlice';
@@ -16,12 +16,16 @@ import { useAppDispatch } from '../../store/useAppDispatch';
 import { DamageEvent } from '../../types/combatlogEvents';
 import { useReportMasterData } from '../useReportMasterData';
 
-export function useDamageEvents(): {
+interface UseDamageEventsOptions {
+  restrictToFightWindow?: boolean;
+}
+
+export function useDamageEvents(options?: UseDamageEventsOptions): {
   damageEvents: DamageEvent[];
   isDamageEventsLoading: boolean;
   selectedFight: FightFragment | null;
 } {
-  const client = useEsoLogsClientInstance();
+  const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
   const dispatch = useAppDispatch();
   const { reportId, fightId } = useSelectedReportAndFight();
   const fights = useSelector(selectReportFights);
@@ -37,17 +41,30 @@ export function useDamageEvents(): {
     return fights.find((fight) => fight && fight.id === fightIdNumber) || null;
   }, [fightId, fights]);
 
+  const restrictToFightWindow = options?.restrictToFightWindow ?? true;
+
   React.useEffect(() => {
-    if (reportId && selectedFight) {
+    // Only fetch if client is ready, user is logged in, and we have required data
+    if (reportId && selectedFight && isReady && isLoggedIn && client) {
       dispatch(
         fetchDamageEvents({
           reportCode: reportId,
           fight: selectedFight,
           client,
+          restrictToFightWindow,
         }),
       );
     }
-  }, [dispatch, reportId, selectedFight, client, fightId]);
+  }, [
+    dispatch,
+    reportId,
+    selectedFight,
+    client,
+    fightId,
+    isReady,
+    isLoggedIn,
+    restrictToFightWindow,
+  ]);
 
   return React.useMemo(
     () => ({ damageEvents, isDamageEventsLoading, selectedFight }),

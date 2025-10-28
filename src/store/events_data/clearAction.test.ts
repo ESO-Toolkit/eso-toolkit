@@ -43,6 +43,38 @@ describe('clearAction', () => {
   describe('eventsReducer with clearAllEvents', () => {
     it('should reset all event slices to initial state when clearAllEvents is dispatched', () => {
       // First, set up some data in different event slices
+      const castRequestId = 'cast-req-1';
+      const damageRequestId = 'damage-req-1';
+      const testFight = { id: 1, startTime: 0, endTime: 5000 };
+
+      // Dispatch pending actions first
+      store.dispatch({
+        type: 'castEvents/fetchCastEvents/pending',
+        meta: {
+          arg: {
+            reportCode: 'test123',
+            fight: testFight,
+            client: {},
+            restrictToFightWindow: true,
+          },
+          requestId: castRequestId,
+        },
+      });
+
+      store.dispatch({
+        type: 'damageEvents/fetchDamageEvents/pending',
+        meta: {
+          arg: {
+            reportCode: 'test123',
+            fight: testFight,
+            client: {},
+            restrictToFightWindow: true,
+          },
+          requestId: damageRequestId,
+        },
+      });
+
+      // Now dispatch fulfilled actions
       store.dispatch({
         type: 'castEvents/fetchCastEvents/fulfilled',
         payload: [
@@ -61,9 +93,11 @@ describe('clearAction', () => {
         meta: {
           arg: {
             reportCode: 'test123',
-            fight: { id: 1 },
+            fight: testFight,
             client: {},
+            restrictToFightWindow: true,
           },
+          requestId: castRequestId,
         },
       });
 
@@ -121,9 +155,11 @@ describe('clearAction', () => {
         meta: {
           arg: {
             reportCode: 'test123',
-            fight: { id: 1 },
+            fight: testFight,
             client: {},
+            restrictToFightWindow: true,
           },
+          requestId: damageRequestId,
         },
       });
 
@@ -143,10 +179,12 @@ describe('clearAction', () => {
         events: [],
         loading: false,
         error: null,
+        currentRequest: null,
         cacheMetadata: {
           lastFetchedReportId: null,
           lastFetchedFightId: null,
           lastFetchedTimestamp: null,
+          lastRestrictToFightWindow: null,
         },
       });
 
@@ -155,10 +193,12 @@ describe('clearAction', () => {
         events: [],
         loading: false,
         error: null,
+        currentRequest: null,
         cacheMetadata: {
           lastFetchedReportId: null,
           lastFetchedFightId: null,
           lastFetchedTimestamp: null,
+          lastRestrictToFightWindow: null,
         },
       });
 
@@ -173,13 +213,33 @@ describe('clearAction', () => {
     });
 
     it('should reset loading states in all slices', () => {
+      const testFight = { id: 1, startTime: 0, endTime: 5000 };
+
       // Set loading states in various slices
       store.dispatch({
         type: 'castEvents/fetchCastEvents/pending',
+        meta: {
+          arg: {
+            reportCode: 'test123',
+            fight: testFight,
+            client: {},
+            restrictToFightWindow: true,
+          },
+          requestId: 'req-1',
+        },
       });
 
       store.dispatch({
         type: 'damageEvents/fetchDamageEvents/pending',
+        meta: {
+          arg: {
+            reportCode: 'test123',
+            fight: testFight,
+            client: {},
+            restrictToFightWindow: true,
+          },
+          requestId: 'req-2',
+        },
       });
 
       // Verify loading states are set
@@ -197,15 +257,64 @@ describe('clearAction', () => {
     });
 
     it('should reset error states in all slices', () => {
+      const testFight = { id: 1, startTime: 0, endTime: 5000 };
+      const castReqId = 'cast-err-req';
+      const damageReqId = 'damage-err-req';
+
+      // First set pending states to establish currentRequest
+      store.dispatch({
+        type: 'castEvents/fetchCastEvents/pending',
+        meta: {
+          arg: {
+            reportCode: 'test123',
+            fight: testFight,
+            client: {},
+            restrictToFightWindow: true,
+          },
+          requestId: castReqId,
+        },
+      });
+
+      store.dispatch({
+        type: 'damageEvents/fetchDamageEvents/pending',
+        meta: {
+          arg: {
+            reportCode: 'test123',
+            fight: testFight,
+            client: {},
+            restrictToFightWindow: true,
+          },
+          requestId: damageReqId,
+        },
+      });
+
       // Set error states in various slices
       store.dispatch({
         type: 'castEvents/fetchCastEvents/rejected',
         error: { message: 'Cast events error' },
+        meta: {
+          arg: {
+            reportCode: 'test123',
+            fight: testFight,
+            client: {},
+            restrictToFightWindow: true,
+          },
+          requestId: castReqId,
+        },
       });
 
       store.dispatch({
         type: 'damageEvents/fetchDamageEvents/rejected',
         error: { message: 'Damage events error' },
+        meta: {
+          arg: {
+            reportCode: 'test123',
+            fight: testFight,
+            client: {},
+            restrictToFightWindow: true,
+          },
+          requestId: damageReqId,
+        },
       });
 
       // Verify error states are set
@@ -223,6 +332,23 @@ describe('clearAction', () => {
     });
 
     it('should reset cache metadata in all slices', () => {
+      const testFight = { id: 123, startTime: 0, endTime: 5000 };
+      const requestId = 'cache-req';
+
+      // First dispatch pending
+      store.dispatch({
+        type: 'castEvents/fetchCastEvents/pending',
+        meta: {
+          arg: {
+            reportCode: 'cached-report',
+            fight: testFight,
+            client: {},
+            restrictToFightWindow: true,
+          },
+          requestId,
+        },
+      });
+
       // Set up cache metadata
       store.dispatch({
         type: 'castEvents/fetchCastEvents/fulfilled',
@@ -230,9 +356,11 @@ describe('clearAction', () => {
         meta: {
           arg: {
             reportCode: 'cached-report',
-            fight: { id: 123 },
+            fight: testFight,
             client: {},
+            restrictToFightWindow: true,
           },
+          requestId,
         },
       });
 
@@ -251,10 +379,42 @@ describe('clearAction', () => {
         lastFetchedReportId: null,
         lastFetchedFightId: null,
         lastFetchedTimestamp: null,
+        lastRestrictToFightWindow: null,
       });
     });
 
     it('should not affect individual slice clear actions', () => {
+      const testFight = { id: 1, startTime: 0, endTime: 5000 };
+      const castReqId = 'cast-individual';
+      const damageReqId = 'damage-individual';
+
+      // First dispatch pending actions
+      store.dispatch({
+        type: 'castEvents/fetchCastEvents/pending',
+        meta: {
+          arg: {
+            reportCode: 'test123',
+            fight: testFight,
+            client: {},
+            restrictToFightWindow: true,
+          },
+          requestId: castReqId,
+        },
+      });
+
+      store.dispatch({
+        type: 'damageEvents/fetchDamageEvents/pending',
+        meta: {
+          arg: {
+            reportCode: 'test123',
+            fight: testFight,
+            client: {},
+            restrictToFightWindow: true,
+          },
+          requestId: damageReqId,
+        },
+      });
+
       // Set up data in cast events
       store.dispatch({
         type: 'castEvents/fetchCastEvents/fulfilled',
@@ -274,9 +434,11 @@ describe('clearAction', () => {
         meta: {
           arg: {
             reportCode: 'test123',
-            fight: { id: 1 },
+            fight: testFight,
             client: {},
+            restrictToFightWindow: true,
           },
+          requestId: castReqId,
         },
       });
 
@@ -335,9 +497,11 @@ describe('clearAction', () => {
         meta: {
           arg: {
             reportCode: 'test123',
-            fight: { id: 1 },
+            fight: testFight,
             client: {},
+            restrictToFightWindow: true,
           },
+          requestId: damageReqId,
         },
       });
 
@@ -358,9 +522,20 @@ describe('clearAction', () => {
 
   describe('eventsReducer behavior', () => {
     it('should delegate to combinedEventsReducer for non-clearAllEvents actions', () => {
+      const testFight = { id: 1, startTime: 0, endTime: 5000 };
+
       // Any regular action should be processed normally
       store.dispatch({
         type: 'castEvents/fetchCastEvents/pending',
+        meta: {
+          arg: {
+            reportCode: 'test123',
+            fight: testFight,
+            client: {},
+            restrictToFightWindow: true,
+          },
+          requestId: 'delegate-req',
+        },
       });
 
       const state = store.getState() as TestRootState;

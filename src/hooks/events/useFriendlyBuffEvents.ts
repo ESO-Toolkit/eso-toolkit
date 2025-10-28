@@ -13,7 +13,12 @@ import {
 import { useAppDispatch } from '../../store/useAppDispatch';
 import { BuffEvent } from '../../types/combatlogEvents';
 
-export function useFriendlyBuffEvents(): {
+interface UseFriendlyBuffEventsOptions {
+  restrictToFightWindow?: boolean;
+  intervalSize?: number;
+}
+
+export function useFriendlyBuffEvents(options?: UseFriendlyBuffEventsOptions): {
   friendlyBuffEvents: BuffEvent[];
   isFriendlyBuffEventsLoading: boolean;
   selectedFight: FightFragment | null;
@@ -30,6 +35,9 @@ export function useFriendlyBuffEvents(): {
     return fights.find((fight) => fight && fight.id === fightIdNumber) || null;
   }, [fightId, fights]);
 
+  const restrictToFightWindow = options?.restrictToFightWindow ?? true;
+  const intervalSize = options?.intervalSize;
+
   React.useEffect(() => {
     if (reportId && selectedFight && client) {
       dispatch(
@@ -37,12 +45,12 @@ export function useFriendlyBuffEvents(): {
           reportCode: reportId,
           fight: selectedFight,
           client,
-          // Optional: you can customize the interval size
-          // intervalSize: 60000, // 60 seconds
+          intervalSize,
+          restrictToFightWindow,
         }),
       );
     }
-  }, [dispatch, reportId, selectedFight, client]);
+  }, [dispatch, reportId, selectedFight, client, intervalSize, restrictToFightWindow]);
 
   const friendlyBuffEvents = useSelector(selectFriendlyBuffEvents);
   const isFriendlyBuffEventsLoading = useSelector(selectFriendlyBuffEventsLoading);

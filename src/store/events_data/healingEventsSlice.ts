@@ -11,6 +11,8 @@ import {
 import { HealEvent, LogEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
 
+const EVENT_PAGE_LIMIT = 100000;
+
 export interface HealingEventsState {
   events: HealEvent[];
   loading: boolean;
@@ -58,6 +60,7 @@ export const fetchHealingEvents = createAsyncThunk<
             startTime: nextPageTimestamp ?? fight.startTime,
             endTime: fight.endTime,
             hostilityType: hostilityType,
+            limit: EVENT_PAGE_LIMIT,
           },
         });
 

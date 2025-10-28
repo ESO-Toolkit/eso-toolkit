@@ -1,6 +1,7 @@
 import React, { createContext, useContext, ReactNode, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { AbilityIdMapperProvider } from './contexts/AbilityIdMapperContext';
 import { setSelectedTargetIds } from './store/ui/uiSlice';
 import { useAppDispatch } from './store/useAppDispatch';
 import { TabId } from './utils/getSkeletonForTab';
@@ -182,7 +183,11 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
     ],
   );
 
-  return <ReportFightContext.Provider value={contextValue}>{children}</ReportFightContext.Provider>;
+  return (
+    <ReportFightContext.Provider value={contextValue}>
+      <AbilityIdMapperProvider>{children}</AbilityIdMapperProvider>
+    </ReportFightContext.Provider>
+  );
 };
 
 export const useReportFightContext = (): ReportFightContextType => {
@@ -193,7 +198,29 @@ export const useReportFightContext = (): ReportFightContextType => {
   return context;
 };
 
+/**
+ * Basic hook to get the selected report and fight IDs from URL context.
+ * Use this for simple components that just need the report/fight identifiers.
+ * Does NOT include tab navigation functionality.
+ */
 export const useSelectedReportAndFight = (): {
+  reportId: string | null;
+  fightId: string | null;
+} => {
+  const { reportId, fightId } = useReportFightContext();
+
+  return {
+    reportId: reportId || null,
+    fightId: fightId || null,
+  };
+};
+
+/**
+ * Full hook with tab navigation for Report Fight Details page.
+ * Includes tab selection, experimental tabs toggle, and navigation methods.
+ * Use this ONLY in components that need tab navigation (FightDetails, ReportFightHeader, etc.)
+ */
+export const useReportFightDetailsNavigation = (): {
   reportId: string | null;
   fightId: string | null;
   tabId: string | null;

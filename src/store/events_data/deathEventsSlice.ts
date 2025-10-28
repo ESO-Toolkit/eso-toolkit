@@ -11,6 +11,8 @@ import {
 import { DeathEvent, LogEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
 
+const EVENT_PAGE_LIMIT = 100000;
+
 export interface DeathEventsState {
   events: DeathEvent[];
   loading: boolean;
@@ -58,6 +60,7 @@ export const fetchDeathEvents = createAsyncThunk<
             startTime: nextPageTimestamp ?? fight.startTime,
             endTime: fight.endTime,
             hostilityType: hostilityType,
+            limit: EVENT_PAGE_LIMIT,
           },
         });
 

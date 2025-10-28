@@ -15,7 +15,11 @@ import { DebuffEvent } from '../../types/combatlogEvents';
 import { BuffLookupData } from '../../utils/BuffLookupUtils';
 import { useDebuffLookupTask } from '../workerTasks/useDebuffLookupTask';
 
-export function useDebuffEvents(): {
+interface UseDebuffEventsOptions {
+  restrictToFightWindow?: boolean;
+}
+
+export function useDebuffEvents(options?: UseDebuffEventsOptions): {
   debuffEvents: DebuffEvent[];
   isDebuffEventsLoading: boolean;
   selectedFight: FightFragment | null;
@@ -32,6 +36,8 @@ export function useDebuffEvents(): {
     return fights.find((fight) => fight && fight.id === fightIdNumber) || null;
   }, [fightId, fights]);
 
+  const restrictToFightWindow = options?.restrictToFightWindow ?? true;
+
   React.useEffect(() => {
     if (reportId && selectedFight) {
       dispatch(
@@ -39,10 +45,11 @@ export function useDebuffEvents(): {
           reportCode: reportId,
           fight: selectedFight,
           client,
+          restrictToFightWindow,
         }),
       );
     }
-  }, [dispatch, reportId, selectedFight, client]);
+  }, [dispatch, reportId, selectedFight, client, restrictToFightWindow]);
 
   const debuffEvents = useSelector(selectDebuffEvents);
   const isDebuffEventsLoading = useSelector(selectDebuffEventsLoading);

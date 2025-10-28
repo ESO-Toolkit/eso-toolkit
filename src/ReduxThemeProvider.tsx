@@ -257,8 +257,10 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           MuiChip: {
             styleOverrides: {
               root: {
-                background: darkMode ? 'rgba(2,6,23,0.45)' : 'rgba(241,245,249,0.8)',
                 border: `1px solid ${tokens.border}`,
+              },
+              colorDefault: {
+                background: darkMode ? 'rgba(2,6,23,0.45)' : 'rgba(241,245,249,0.8)',
               },
             },
           },

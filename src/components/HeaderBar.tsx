@@ -625,6 +625,11 @@ export const HeaderBar: React.FC = () => {
       icon: '📋',
       path: '/logs',
     },
+    {
+      text: 'Parse Analysis',
+      icon: '📈',
+      path: '/parse-analysis',
+    },
   ];
 
   const reportsItems = [

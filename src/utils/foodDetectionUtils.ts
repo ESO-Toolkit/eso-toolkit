@@ -16,6 +16,7 @@ import {
 const NAMED_FOOD_REGEXPS: RegExp[] = [
   /Artaeum\s+Takeaway\s+Broth/i,
   /Bewitched\s+Sugar\s+Skulls/i,
+  /Candied\s+Jester.?s?\s+Coins/i,
   /Clockwork\s+Citrus\s+Filet/i,
   /Crown\s+Fortifying\s+Meal/i,
   /Crown\s+Vigorous\s+Tincture/i,
@@ -90,6 +91,7 @@ export function abbreviateFood(name: string): string {
   // Special named food abbreviations
   if (name.includes('Lava Foot Soup')) return 'LFSS';
   if (name.includes('Bewitched Sugar Skulls')) return 'BSS';
+  if (name.includes('Candied Jester')) return 'CJC';
   if (name.includes('Clockwork Citrus Filet')) return 'CCF';
   if (name.includes('Crown Fortifying Meal')) return 'CFM';
   if (name.includes('Crown Vigorous Tincture')) return 'CVT';

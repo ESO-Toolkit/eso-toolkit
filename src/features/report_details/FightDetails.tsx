@@ -1,13 +1,13 @@
 import React from 'react';
 
 import { useCurrentFight } from '../../hooks';
-import { useSelectedReportAndFight } from '../../ReportFightContext';
+import { useReportFightDetailsNavigation } from '../../ReportFightContext';
 
 import { FightDetailsView } from './FightDetailsView';
 
 export const FightDetails: React.FC = () => {
   const { selectedTabId, showExperimentalTabs, setSelectedTab, setShowExperimentalTabs } =
-    useSelectedReportAndFight();
+    useReportFightDetailsNavigation();
   const { fight, isFightLoading } = useCurrentFight();
 
   // Show loading state while fight is loading
