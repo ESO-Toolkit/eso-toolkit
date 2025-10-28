@@ -27,6 +27,12 @@ import { calculateOptimalWorkers } from './tests/utils/worker-config';
  * - ESO_LOGS_TEST_PASSWORD: Test user password for browser-based auth (optional)
  * - NIGHTLY_BASE_URL: Override base URL (defaults to production: https://bkrupa.github.io/eso-log-aggregator/)
  */
+
+const nightlyBaseUrl = process.env.NIGHTLY_BASE_URL || process.env.BASE_URL || 'https://esotk.com/';
+const nightlyExtraHeaders = (process.env.PLAYWRIGHT_SEND_NIGHTLY_HEADER ?? '').toLowerCase() === 'true' || nightlyBaseUrl.includes('localhost')
+  ? { 'X-Playwright-Nightly': 'true' }
+  : undefined;
+
 export default defineConfig({
   testDir: './tests',
 
@@ -76,7 +82,7 @@ export default defineConfig({
   /* Base URL - use environment variable or default to production */
   use: {
     /* Base URL - now points to production website */
-    baseURL: process.env.NIGHTLY_BASE_URL || process.env.BASE_URL || 'https://esotk.com/',
+    baseURL: nightlyBaseUrl,
 
     /* Extended navigation timeout for real API calls */
     navigationTimeout: 60000,
@@ -91,9 +97,7 @@ export default defineConfig({
     storageState: process.env.CI ? undefined : 'tests/auth-state.json',
 
     /* Real network requests - MSW service worker removed from public folder to prevent interference */
-    extraHTTPHeaders: {
-      'X-Playwright-Nightly': 'true',
-    },
+    extraHTTPHeaders: nightlyExtraHeaders,
   },
 
   /* No web server needed - testing against production website */

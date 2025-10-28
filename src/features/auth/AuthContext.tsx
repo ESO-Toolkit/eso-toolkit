@@ -14,6 +14,7 @@ import { isDevelopment } from '../../utils/envUtils';
 import { Logger, LogLevel } from '../../utils/logger';
 
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './auth';
+import { getAccessTokenExpiry, isAccessTokenExpired, tokenHasUserSubject } from './tokenUtils';
 
 const logger = new Logger({
   level: LogLevel.ERROR,
@@ -49,11 +50,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const { client: esoLogsClient, setAuthToken, clearAuthToken } = useEsoLogsClientContext();
 
+  const accessTokenHasUser = React.useMemo(() => tokenHasUserSubject(accessToken), [accessToken]);
+  const accessTokenExpiry = React.useMemo(() => getAccessTokenExpiry(accessToken), [accessToken]);
+  const accessTokenExpired = React.useMemo(() => isAccessTokenExpired(accessToken), [accessToken]);
+
   if (isDevelopment()) {
     // eslint-disable-next-line no-console
     console.log('[AuthContext] render', {
       hasToken: !!accessToken,
-      isLoggedInSnapshot: !!accessToken && !isBanned,
+      tokenHasUserSubject: accessTokenHasUser,
+      tokenExpiresAt: accessTokenExpiry,
+      isLoggedInSnapshot: !!accessToken && accessTokenHasUser && !accessTokenExpired && !isBanned,
       isBannedSnapshot: isBanned,
       currentUser,
       userLoading,
@@ -83,11 +90,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Fetch current user data
   const refetchUser = useCallback(async () => {
-    if (!esoLogsClient || !accessToken) {
+    if (!esoLogsClient || !accessToken || !accessTokenHasUser || accessTokenExpired) {
       setCurrentUser(null);
       setUserError(null);
       setIsBanned(false);
       setBanReason(null);
+      setUserLoading(false);
       return;
     }
 
@@ -142,7 +150,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setUserLoading(false);
     }
-  }, [esoLogsClient, accessToken, clearAuthToken, updateAccessToken]);
+  }, [
+    esoLogsClient,
+    accessToken,
+    accessTokenHasUser,
+    accessTokenExpired,
+    clearAuthToken,
+    updateAccessToken,
+  ]);
 
   useEffect(() => {
     // Listen for changes to localStorage (e.g., from OAuthRedirect)
@@ -161,33 +176,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => window.removeEventListener('storage', handler);
   }, [setAuthToken]);
 
-  function isTokenExpired(token: string): boolean {
-    if (!token) return true;
-    try {
-      const [, payload] = token.split('.');
-      if (!payload) return false;
-      const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-      if (!decoded.exp) return false;
-      return Date.now() / 1000 > decoded.exp;
-    } catch {
-      return false;
-    }
-  }
-
-  const isLoggedIn = !!accessToken && !isTokenExpired(accessToken) && !isBanned;
+  const isLoggedIn = !!accessToken && accessTokenHasUser && !accessTokenExpired && !isBanned;
 
   useEffect(() => {
     if (isDevelopment()) {
       // eslint-disable-next-line no-console
       console.log('[AuthContext] state changed', {
         hasToken: !!accessToken,
+        tokenHasUserSubject: accessTokenHasUser,
+        tokenExpiresAt: accessTokenExpiry,
         isLoggedIn,
         isBanned,
         userLoading,
         userError,
       });
     }
-  }, [accessToken, isLoggedIn, isBanned, userLoading, userError]);
+  }, [
+    accessToken,
+    accessTokenHasUser,
+    accessTokenExpiry,
+    isLoggedIn,
+    isBanned,
+    userLoading,
+    userError,
+  ]);
 
   // Fetch user data when logged in state changes
   useEffect(() => {
