@@ -55,7 +55,7 @@ export interface ScribingSkillInfo {
 export function getScribingSkillByAbilityId(abilityId: number): ScribingSkillInfo | null {
   // Search through all grimoires and their transformations
   for (const [grimoireKey, grimoire] of Object.entries(database.grimoires)) {
-    // Skip if the abilityId matches the base grimoire ID - handle this in the second loop
+    // Skip if the abilityId matches the base grimoire ID - will be handled in the base ability loop below
     if (typeof grimoire.id === 'number' && grimoire.id === abilityId) {
       continue;
     }

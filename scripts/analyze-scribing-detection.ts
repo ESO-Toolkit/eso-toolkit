@@ -86,7 +86,10 @@ function loadAbilityNameLookup(): Map<number, string> {
       }
     }
   } catch (error) {
-    console.warn('Failed to load abilities.json lookup:', error instanceof Error ? error.message : error);
+    console.warn(
+      'Warning: Could not load abilities.json lookup (continuing with limited ability name resolution):',
+      error instanceof Error ? error.message : error,
+    );
   }
 
   return lookup;

@@ -37,6 +37,19 @@ export interface DetectionLogger {
   error?: (message: string, data?: unknown) => void;
 }
 
+/**
+ * Helper function to log debug information with fallback to console.log for workers
+ */
+function logDebug(logger: DetectionLogger | undefined, message: string, data?: unknown): void {
+  if (logger?.debug) {
+    logger.debug(message, data);
+  } else {
+    // Fallback to console.log for debugging in workers
+    // eslint-disable-next-line no-console
+    console.log(message, data);
+  }
+}
+
 interface ScribingDataStructure {
   grimoires?: Record<string, { id?: number; nameTransformations?: Record<string, unknown> }>;
   signatureScripts?: Record<
@@ -659,9 +672,7 @@ function detectAffixScripts(
         resources: windowResources.map((resource) => resource.abilityGameID),
       });
     } else {
-      // Fallback to console.log for debugging in workers
-      // eslint-disable-next-line no-console
-      console.log('[ScribingDetection] Affix detection cast window results', {
+      logDebug(logger, '[ScribingDetection] Affix detection cast window results', {
         abilityId,
         playerId,
         castIndex,
@@ -693,9 +704,7 @@ function detectAffixScripts(
     resourceCandidates: serializeCandidateMap(resourceCandidates),
   });
 
-  // Fallback console.log for debugging in workers
-  // eslint-disable-next-line no-console
-  console.log('[ScribingDetection] Affix detection candidate summary', {
+  logDebug(logger, '[ScribingDetection] Affix detection candidate summary', {
     abilityId,
     playerId,
     buffCandidates: serializeCandidateMap(buffCandidates),
@@ -860,9 +869,7 @@ function detectAffixScripts(
     })),
   });
 
-  // Fallback console.log for debugging in workers
-  // eslint-disable-next-line no-console
-  console.log('[ScribingDetection] Affix detection aggregated candidates', {
+  logDebug(logger, '[ScribingDetection] Affix detection aggregated candidates', {
     abilityId,
     playerId,
     aggregatedCandidates: aggregatedCandidates.map((candidate) => ({
@@ -922,9 +929,7 @@ function detectAffixScripts(
     castIndexes: Array.from(topAggregate.castSet).sort((a, b) => a - b),
   });
 
-  // Fallback console.log for debugging in workers
-  // eslint-disable-next-line no-console
-  console.log('[ScribingDetection] ✅ SELECTED TOP CANDIDATE (FINAL RESULT)', {
+  logDebug(logger, '[ScribingDetection] ✅ SELECTED TOP CANDIDATE (FINAL RESULT)', {
     abilityId,
     playerId,
     grimoireKey,
@@ -1207,19 +1212,6 @@ export function computeScribingDetectionsForFight(
       }
 
       players[playerId][abilityId] = result;
-
-      // DEBUG LOGGING: Track what we're storing in the result
-      if (isScribingAbility(abilityId)) {
-        // eslint-disable-next-line no-console
-        console.log('[computeScribingDetectionsForFight] Storing detection result', {
-          fightId,
-          playerId,
-          abilityId,
-          grimoireName: result.scribedSkillData?.grimoireName,
-          affixScripts: result.scribedSkillData?.affixScripts?.map((a) => a.name),
-          signatureScript: result.scribedSkillData?.signatureScript?.name,
-        });
-      }
 
       processedAbilities += 1;
       if (totalAbilities > 0) {

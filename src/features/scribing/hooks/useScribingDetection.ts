@@ -1089,23 +1089,6 @@ export function useScribingDetection(
 
     const detection = workerResult.players[playerId]?.[abilityId] ?? null;
 
-    // DEBUG LOGGING: Track what detection we're returning
-    if (detection && isScribingAbility(abilityId)) {
-      // eslint-disable-next-line no-console
-      console.log('[useScribingDetection] Returning detection from worker', {
-        fightId: fightIdNumber,
-        playerId,
-        abilityId,
-        grimoireName: detection.scribedSkillData?.grimoireName,
-        affixScripts: detection.scribedSkillData?.affixScripts?.map((a) => a.name),
-        signatureScript: detection.scribedSkillData?.signatureScript?.name,
-        availablePlayers: Object.keys(workerResult.players),
-        availableAbilitiesForPlayer: workerResult.players[playerId]
-          ? Object.keys(workerResult.players[playerId])
-          : [],
-      });
-    }
-
     return detection;
   }, [shouldAttemptDetection, workerResult, fightIdNumber, playerId, abilityId]);
 

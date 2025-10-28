@@ -108,22 +108,6 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
     abilityId,
   );
 
-  // DEBUG LOGGING: Track what data we're receiving
-  React.useEffect(() => {
-    if (detectedScribingData && fightId && playerId && abilityId) {
-      // eslint-disable-next-line no-console
-      console.log('[SkillTooltip] Rendering tooltip with scribing data', {
-        fightId,
-        playerId,
-        abilityId,
-        abilityName: name,
-        grimoireName: detectedScribingData.grimoireName,
-        affixScripts: detectedScribingData.affixScripts?.map((a) => a.name),
-        signatureScript: detectedScribingData.signatureScript?.name,
-      });
-    }
-  }, [detectedScribingData, fightId, playerId, abilityId, name]);
-
   // Use detected scribing data
   const finalScribedData = detectedScribingData;
 
