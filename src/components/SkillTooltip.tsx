@@ -15,7 +15,7 @@ import React from 'react';
 import { useLogger } from '@/hooks/useLogger';
 
 import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
-import type { ScribedSkillAffixInfo, ScribedSkillData, ScribedSkillEffect } from '../features/scribing/types';
+import type { ScribedSkillAffixInfo } from '../features/scribing/types';
 
 export interface SkillStat {
   label: string;

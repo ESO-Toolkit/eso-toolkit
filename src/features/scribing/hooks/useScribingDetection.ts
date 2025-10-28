@@ -145,7 +145,7 @@ function lookupScribingSkill(abilityId: number): ScribingSkillInfo | null {
 }
 
 // ESO Logs omit explicit cast events for Banner Bearer; derive them from buff applications instead.
-function synthesizeBannerCasts(
+function _synthesizeBannerCasts(
   casts: UnifiedCastEvent[],
   buffs: BuffEvent[],
   abilityId: number,
@@ -206,7 +206,7 @@ function synthesizeBannerCasts(
   return [...casts, ...syntheticCasts].sort((a, b) => a.timestamp - b.timestamp);
 }
 
-function resolveBannerPrimaryAbilityId(
+function _resolveBannerPrimaryAbilityId(
   abilityId: number,
   playerId: number,
   buffs: BuffEvent[],
@@ -294,7 +294,7 @@ export interface UseScribingDetectionResult {
  * - Anchorite's Potency: Grants ultimate (resource events with ability ID 216940 "Potent Soul")
  * - Anchorite's Cruelty: Enhances soul magic effects (buff/debuff events)
  */
-async function detectSignatureScript(
+async function _detectSignatureScript(
   abilityId: number,
   playerId: number,
   combatEvents: CombatEventData,
@@ -469,7 +469,7 @@ async function detectSignatureScript(
  * Affix scripts add ADDITIONAL effects to the ability (e.g., applying Off Balance, granting buffs, etc.)
  * They create persistent effects or modify combat outcomes in specific ways.
  */
-async function detectAffixScripts(
+async function _detectAffixScripts(
   abilityId: number,
   playerId: number,
   combatEvents: CombatEventData,
@@ -1111,7 +1111,7 @@ export function useScribingDetection(
     }
 
     return currentDetection;
-  }, [currentDetection]);
+  }, [currentDetection, fightIdNumber, playerId, abilityId]);
 
   const shouldUseWorker =
     shouldAttemptDetection &&
@@ -1184,7 +1184,7 @@ export function useScribingDetection(
       });
     }
     return detection;
-  }, [shouldAttemptDetection, shouldUseWorker, playerId, abilityId, combatEvents]);
+  }, [shouldAttemptDetection, shouldUseWorker, playerId, abilityId, combatEvents, fightIdNumber]);
   const resolvedDetection = usableWorkerDetection ?? fallbackDetection ?? null;
   const loading = shouldUseWorker ? !usableWorkerDetection && workerTaskState.isLoading : false;
   const error = shouldUseWorker ? workerTaskState.error : null;
