@@ -1,13 +1,21 @@
+import { createHash } from 'crypto';
 import memoizeOne from 'memoize-one';
-import { v4 as uuidV4 } from 'uuid';
 
 import type { ScribingDetectionsTaskInput } from '@/workers/calculations/CalculateScribingDetections';
 
 import { createWorkerTaskSlice } from './workerTaskSliceFactory';
 
-const computeScribingDetectionsHash = memoizeOne((..._args: unknown[]) => {
-  return `${uuidV4()}-${Date.now().toLocaleString()}`;
-});
+const computeScribingDetectionsHash = memoizeOne(
+  (fightId: number, playerAbilities: unknown, castsCount: number, buffsCount: number) => {
+    const hashInput = JSON.stringify({
+      fightId,
+      playerAbilities,
+      castsCount,
+      buffsCount,
+    });
+    return createHash('sha256').update(hashInput).digest('hex');
+  },
+);
 
 export const scribingDetectionsSlice = createWorkerTaskSlice(
   'calculateScribingDetections',
