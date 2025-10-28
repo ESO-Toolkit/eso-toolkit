@@ -35,3 +35,4 @@ jobs:
         with:
           enable_sourcemaps: 'true'
           release_version: ${{ github.sha }}
+          vite_ga_measurement_id: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
