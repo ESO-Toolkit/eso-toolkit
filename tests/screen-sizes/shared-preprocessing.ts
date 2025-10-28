@@ -6,10 +6,16 @@
 import { Page } from '@playwright/test';
 import { enableApiCaching } from './utils';
 import { isOfflineDataAvailable, enableOfflineMode } from './offline-data';
+import { getBaseUrl } from '../selectors';
 
 // Test configuration constants
 const TEST_REPORT_CODE = 'nbKdDtT4NcZyVrvX';
 const TEST_FIGHT_ID = '117';
+const DEFAULT_LOCAL_BASE_URL = 'http://localhost:3000';
+const RAW_BASE_URL = getBaseUrl();
+const NORMALIZED_BASE_URL = (RAW_BASE_URL || DEFAULT_LOCAL_BASE_URL).replace(/\/+$/, '');
+const APP_BASE_URL = NORMALIZED_BASE_URL || DEFAULT_LOCAL_BASE_URL;
+const REPORT_BASE_URL = `${APP_BASE_URL}/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`;
 
 // Log levels
 type LogLevel = 'silent' | 'error' | 'warn' | 'info' | 'verbose';
@@ -49,7 +55,7 @@ async function prefetchReportData(page: Page, accessToken?: string): Promise<voi
   if (!token) {
     try {
       // Navigate to the app first to establish the domain context
-      await page.goto('http://localhost:3000', { timeout: 30000 });
+      await page.goto(APP_BASE_URL, { timeout: 30000 });
       const storageToken = await page.evaluate(() => localStorage.getItem('access_token'));
       token = storageToken || undefined;
     } catch (error) {
@@ -150,7 +156,7 @@ async function prefetchReportData(page: Page, accessToken?: string): Promise<voi
  * Trigger comprehensive data loading by navigating to different panels
  * This ensures all data types that screen size tests might need are cached
  */
-async function triggerComprehensiveDataLoading(page: Page, baseUrl: string): Promise<void> {
+async function triggerComprehensiveDataLoading(page: Page, reportBaseUrl: string): Promise<void> {
   log('verbose', '🔄 Triggering comprehensive data loading across all panels...');
   
   const panels = [
@@ -163,8 +169,8 @@ async function triggerComprehensiveDataLoading(page: Page, baseUrl: string): Pro
   for (const panel of panels) {
     try {
       log('verbose', `📊 Loading ${panel.name}...`);
-      
-      await page.goto(`${baseUrl}${panel.path}`, { 
+
+      await page.goto(`${reportBaseUrl}${panel.path}`, {
         waitUntil: 'networkidle',
         timeout: 30000 
       });
@@ -212,8 +218,7 @@ export async function preprocessWorkerComputations(page: Page): Promise<Preproce
 
   // Phase 2: Navigate to main report page to trigger comprehensive data loading
   log('verbose', '📊 Phase 2: Loading main report page with all data...');
-  const baseUrl = `http://localhost:3000/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`;
-  await page.goto(baseUrl, { 
+  await page.goto(REPORT_BASE_URL, { 
     waitUntil: 'networkidle',
     timeout: 60000
   });
@@ -225,14 +230,14 @@ export async function preprocessWorkerComputations(page: Page): Promise<Preproce
 
   // Phase 3: Navigate to insights to trigger heavy worker computations
   log('verbose', '🔬 Phase 3: Loading insights panel to trigger worker computations...');
-  await page.goto(`${baseUrl}/insights`, { 
+  await page.goto(`${REPORT_BASE_URL}/insights`, { 
     waitUntil: 'networkidle',
     timeout: 60000 
   });
 
   // Phase 4: Ensure comprehensive data loading
   log('verbose', '💾 Phase 4: Triggering comprehensive data loading...');
-  await triggerComprehensiveDataLoading(page, baseUrl);
+  await triggerComprehensiveDataLoading(page, REPORT_BASE_URL);
 
   // Give workers a moment to start processing after data loading
   log('verbose', '⏳ Allowing workers to start processing after data load...');
