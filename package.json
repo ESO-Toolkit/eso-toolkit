@@ -21,7 +21,7 @@
     "@react-three/drei": "^10.7.6",
     "@react-three/fiber": "^9.4.0",
     "@reduxjs/toolkit": "^2.9.2",
-    "@sentry/node": "^10.19.0",
+    "@sentry/node": "^10.22.0",
     "@sentry/react": "^10.19.0",
     "@sentry/tracing": "^7.120.4",
     "@simonwep/pickr": "^1.9.1",
