@@ -8,8 +8,8 @@ import { useEffect, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
 import { Logger, LogLevel } from '@/contexts/LoggerContext';
-import { useAppDispatch } from '@/store/useAppDispatch';
 import { selectPlayerData } from '@/store/player_data/playerDataSelectors';
+import { useAppDispatch } from '@/store/useAppDispatch';
 import {
   executeScribingDetectionsTask,
   selectScribingDetectionsResult,
@@ -17,7 +17,6 @@ import {
 } from '@/store/worker_results';
 
 import scribingData from '../../../../data/scribing-complete.json';
-import type { ScribedSkillData } from '../types';
 // Import event hooks instead of selectors to ensure data is fetched
 import { useCastEvents } from '../../../hooks/events/useCastEvents';
 import { useDamageEvents } from '../../../hooks/events/useDamageEvents';
@@ -35,13 +34,16 @@ import type {
   ResourceChangeEvent,
 } from '../../../types/combatlogEvents';
 import {
+  computeScribingDetection,
+  SCRIBING_DETECTION_SCHEMA_VERSION,
+  type PlayerAbilityList,
+} from '../analysis/scribingDetectionAnalysis';
+import type { ScribedSkillData , ResolvedScribingDetection } from '../types';
+import {
   getScribingSkillByAbilityId,
   isScribingAbility,
   type ScribingSkillInfo,
 } from '../utils/Scribing';
-import type { PlayerAbilityList } from '../analysis/scribingDetectionAnalysis';
-import { computeScribingDetection } from '../analysis/scribingDetectionAnalysis';
-import type { ResolvedScribingDetection } from '../types';
 
 // Module-level logger for standalone functions
 const moduleLogger = new Logger({ level: LogLevel.INFO, contextPrefix: 'ScribingDetection' });
@@ -168,7 +170,9 @@ function synthesizeBannerCasts(
     if (buffScribingInfo.grimoireKey !== baseInfo.grimoireKey) {
       continue;
     }
-    if (buffScribingInfo.transformation !== baseInfo.transformation) {
+    const baseIsBannerBaseAbility =
+      baseInfo.grimoireKey === BANNER_GRIMOIRE_KEY && baseInfo.grimoireId === baseInfo.abilityId;
+    if (!baseIsBannerBaseAbility && buffScribingInfo.transformation !== baseInfo.transformation) {
       continue;
     }
 
@@ -1006,7 +1010,28 @@ export function useScribingDetection(
 
     const map = new Map<number, Set<number>>();
     Object.entries(workerResult.players).forEach(([playerKey, abilityMap]) => {
-      map.set(Number(playerKey), new Set(Object.keys(abilityMap).map(Number)));
+      const validAbilities = new Set<number>();
+      const staleAbilities: number[] = [];
+      Object.entries(abilityMap).forEach(([abilityKey, detection]) => {
+        if (detection?.schemaVersion === SCRIBING_DETECTION_SCHEMA_VERSION) {
+          validAbilities.add(Number(abilityKey));
+        } else {
+          staleAbilities.push(Number(abilityKey));
+        }
+      });
+
+      if (staleAbilities.length > 0) {
+        moduleLogger.info('Ignoring stale scribing detection results', {
+          fightId: fightIdNumber,
+          playerId: Number(playerKey),
+          staleAbilities,
+          expectedSchemaVersion: SCRIBING_DETECTION_SCHEMA_VERSION,
+        });
+      }
+
+      if (validAbilities.size > 0) {
+        map.set(Number(playerKey), validAbilities);
+      }
     });
     return map;
   }, [workerResult, fightIdNumber]);
@@ -1047,8 +1072,46 @@ export function useScribingDetection(
       return null;
     }
 
-    return workerResult.players[playerId]?.[abilityId] ?? null;
+    const detection = workerResult.players[playerId]?.[abilityId] ?? null;
+
+    // DEBUG LOGGING: Track what detection we're returning
+    if (detection && isScribingAbility(abilityId)) {
+      // eslint-disable-next-line no-console
+      console.log('[useScribingDetection] Returning detection from worker', {
+        fightId: fightIdNumber,
+        playerId,
+        abilityId,
+        grimoireName: detection.scribedSkillData?.grimoireName,
+        affixScripts: detection.scribedSkillData?.affixScripts?.map((a) => a.name),
+        signatureScript: detection.scribedSkillData?.signatureScript?.name,
+        availablePlayers: Object.keys(workerResult.players),
+        availableAbilitiesForPlayer: workerResult.players[playerId]
+          ? Object.keys(workerResult.players[playerId])
+          : [],
+      });
+    }
+
+    return detection;
   }, [shouldAttemptDetection, workerResult, fightIdNumber, playerId, abilityId]);
+
+  const usableWorkerDetection = useMemo(() => {
+    if (!currentDetection) {
+      return null;
+    }
+
+    if (currentDetection.schemaVersion !== SCRIBING_DETECTION_SCHEMA_VERSION) {
+      moduleLogger.info('Discarding worker detection with outdated schema', {
+        fightId: fightIdNumber,
+        playerId,
+        abilityId,
+        schemaVersion: currentDetection.schemaVersion,
+        expectedSchemaVersion: SCRIBING_DETECTION_SCHEMA_VERSION,
+      });
+      return null;
+    }
+
+    return currentDetection;
+  }, [currentDetection]);
 
   const shouldUseWorker =
     shouldAttemptDetection &&
@@ -1066,12 +1129,19 @@ export function useScribingDetection(
     if (combinedPlayerAbilities.length === 0) {
       return;
     }
-    if (currentDetection) {
+    if (usableWorkerDetection) {
       return;
     }
     if (workerTaskState.isLoading) {
       return;
     }
+
+    moduleLogger.info('Requesting scribing detection via worker', {
+      fightId: fightIdNumber,
+      playerId,
+      abilityId,
+      abilityCount: combinedPlayerAbilities.reduce((sum, entry) => sum + entry.abilityIds.length, 0),
+    });
 
     dispatch(
       executeScribingDetectionsTask({
@@ -1085,7 +1155,7 @@ export function useScribingDetection(
     fightIdNumber,
     playerId,
     abilityId,
-    currentDetection,
+    usableWorkerDetection,
     combinedPlayerAbilities,
     combatEvents,
     dispatch,
@@ -1100,16 +1170,65 @@ export function useScribingDetection(
       return null;
     }
 
-    return computeScribingDetection({
+    const detection = computeScribingDetection({
       abilityId,
       playerId,
       combatEvents,
     });
+    if (detection) {
+      moduleLogger.debug('Computed fallback scribing detection', {
+        fightId: fightIdNumber,
+        playerId,
+        abilityId,
+        schemaVersion: detection.schemaVersion,
+      });
+    }
+    return detection;
   }, [shouldAttemptDetection, shouldUseWorker, playerId, abilityId, combatEvents]);
-  const resolvedDetection = currentDetection ?? fallbackDetection ?? null;
-  const loading = shouldUseWorker ? !currentDetection && workerTaskState.isLoading : false;
+  const resolvedDetection = usableWorkerDetection ?? fallbackDetection ?? null;
+  const loading = shouldUseWorker ? !usableWorkerDetection && workerTaskState.isLoading : false;
   const error = shouldUseWorker ? workerTaskState.error : null;
   const scribedSkillData = resolvedDetection?.scribedSkillData ?? null;
+
+  useEffect(() => {
+    if (usableWorkerDetection) {
+      moduleLogger.info('Using worker-provided scribing detection result', {
+        fightId: fightIdNumber,
+        playerId,
+        abilityId,
+        schemaVersion: usableWorkerDetection.schemaVersion,
+      });
+      return;
+    }
+
+    if (fallbackDetection) {
+      moduleLogger.info('Using fallback scribing detection result', {
+        fightId: fightIdNumber,
+        playerId,
+        abilityId,
+        schemaVersion: fallbackDetection.schemaVersion,
+      });
+      return;
+    }
+
+    if (!loading && shouldAttemptDetection) {
+      moduleLogger.debug('Scribing detection not yet available', {
+        fightId: fightIdNumber,
+        playerId,
+        abilityId,
+        shouldUseWorker,
+      });
+    }
+  }, [
+    usableWorkerDetection,
+    fallbackDetection,
+    fightIdNumber,
+    playerId,
+    abilityId,
+    loading,
+    shouldAttemptDetection,
+    shouldUseWorker,
+  ]);
 
   const refetch = useCallback(async () => {
     if (!shouldAttemptDetection) {
@@ -1120,6 +1239,11 @@ export function useScribingDetection(
       if (!fightIdNumber) {
         return;
       }
+      moduleLogger.info('Manually refetching scribing detection via worker', {
+        fightId: fightIdNumber,
+        playerId,
+        abilityId,
+      });
       await dispatch(
         executeScribingDetectionsTask({
           fightId: fightIdNumber,

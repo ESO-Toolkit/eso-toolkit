@@ -56,17 +56,39 @@ export function getScribingSkillByAbilityId(abilityId: number): ScribingSkillInf
   // Search through all grimoires and their transformations
   for (const [grimoireKey, grimoire] of Object.entries(database.grimoires)) {
     for (const [transformKey, transformation] of Object.entries(grimoire.nameTransformations)) {
-      // Check if this transformation has the ability ID we're looking for
-      if (transformation.abilityIds && transformation.abilityIds.includes(abilityId)) {
-        return {
-          grimoire: grimoire.name,
-          grimoireKey: grimoireKey,
-          transformation: transformation.name,
-          transformationType: formatTransformationKey(transformKey),
-          abilityId: abilityId,
-          grimoireId: grimoire.id,
-        };
+      if (!transformation.abilityIds) {
+        continue;
       }
+
+      if (!transformation.abilityIds.includes(abilityId)) {
+        continue;
+      }
+
+      if (typeof grimoire.id === 'number' && grimoire.id === abilityId) {
+        continue;
+      }
+
+      return {
+        grimoire: grimoire.name,
+        grimoireKey,
+        transformation: transformation.name,
+        transformationType: formatTransformationKey(transformKey),
+        abilityId,
+        grimoireId: grimoire.id,
+      };
+    }
+  }
+
+  for (const [grimoireKey, grimoire] of Object.entries(database.grimoires)) {
+    if (typeof grimoire.id === 'number' && grimoire.id === abilityId) {
+      return {
+        grimoire: grimoire.name,
+        grimoireKey,
+        transformation: 'Base Ability',
+        transformationType: 'Base Skill',
+        abilityId,
+        grimoireId: grimoire.id,
+      };
     }
   }
 

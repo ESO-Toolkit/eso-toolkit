@@ -1,7 +1,8 @@
 import React from 'react';
 
-import { SkillStat, SkillTooltipProps } from '../components/SkillTooltip';
 import type { ScribedSkillData } from '@/features/scribing/types';
+
+import { SkillStat, SkillTooltipProps } from '../components/SkillTooltip';
 // TODO: Implement proper scribing detection services
 // Temporary stubs to prevent compilation errors
 const analyzeScribingSkillWithSignature = (..._args: unknown[]): null => null;

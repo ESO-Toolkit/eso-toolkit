@@ -2,7 +2,11 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useLogger } from '@/contexts/LoggerContext';
-import type { CombatEventData, PlayerAbilityList } from '@/features/scribing/analysis/scribingDetectionAnalysis';
+import {
+  SCRIBING_DETECTION_SCHEMA_VERSION,
+  type CombatEventData,
+  type PlayerAbilityList,
+} from '@/features/scribing/analysis/scribingDetectionAnalysis';
 import { isScribingAbility } from '@/features/scribing/utils/Scribing';
 import { useAppDispatch } from '@/store/useAppDispatch';
 import {
@@ -181,7 +185,16 @@ export const PlayersPanel: React.FC = () => {
 
     const map = new Map<number, Set<number>>();
     Object.entries(scribingResult.players).forEach(([playerKey, abilityMap]) => {
-      map.set(Number(playerKey), new Set(Object.keys(abilityMap).map(Number)));
+      const validAbilities = new Set<number>();
+      Object.entries(abilityMap).forEach(([abilityKey, detection]) => {
+        if (detection?.schemaVersion === SCRIBING_DETECTION_SCHEMA_VERSION) {
+          validAbilities.add(Number(abilityKey));
+        }
+      });
+
+      if (validAbilities.size > 0) {
+        map.set(Number(playerKey), validAbilities);
+      }
     });
     return map;
   }, [scribingResult, fightIdNumber]);

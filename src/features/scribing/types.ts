@@ -50,6 +50,7 @@ export interface ScribedSkillData {
 }
 
 export interface ResolvedScribingDetection {
+  schemaVersion: number;
   abilityId: number;
   effectiveAbilityId: number;
   scribingInfo: ScribingSkillInfo;
