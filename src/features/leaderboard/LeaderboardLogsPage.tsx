@@ -30,7 +30,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useLogger } from '../../contexts/LoggerContext';
-import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
+import { useEsoLogsClientContext } from '../../EsoLogsClientContext';
 import {
   FightRankingMetricType,
   GetEncounterFightRankingsDocument,
@@ -104,7 +104,19 @@ export const LeaderboardLogsPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const logger = useLogger('LeaderboardLogsPage');
-  const client = useEsoLogsClientInstance();
+  const { client } = useEsoLogsClientContext();
+
+  if (!client) {
+    logger.error('EsoLogsClient is unavailable for leaderboard data');
+    return (
+      <Container maxWidth="md" sx={{ py: 6 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
+          Leaderboard data is temporarily unavailable. Please refresh the page or try again
+          later.
+        </Alert>
+      </Container>
+    );
+  }
 
   const [zones, setZones] = React.useState<TrialZone[]>([]);
   const [zonesLoading, setZonesLoading] = React.useState<boolean>(true);
