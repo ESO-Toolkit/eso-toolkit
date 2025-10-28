@@ -57,7 +57,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.MERGE_QUEUE_TOKEN }}
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -66,7 +66,7 @@ jobs:
       - name: Process Merge Queue
         uses: actions/github-script@v8
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.MERGE_QUEUE_TOKEN }}
           script: |
             const { execSync } = require('child_process');
             const fs = require('fs');
