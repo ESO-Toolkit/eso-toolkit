@@ -147,25 +147,27 @@ function initializeScribingDataset(): void {
   }
 
   if (data.signatureScripts) {
-    Object.values(data.signatureScripts as Record<string, SignatureScriptEntry>).forEach((script) => {
-      script.abilityIds?.forEach((id) => {
-        VALID_SIGNATURE_SCRIPT_IDS.add(id);
-        SIGNATURE_SCRIPT_ID_TO_NAME.set(id, script.name);
-      });
-
-      if (script.grimoireSpecificEffects) {
-        Object.values(script.grimoireSpecificEffects).forEach((config) => {
-          if (config.mainAbilityId) {
-            VALID_SIGNATURE_SCRIPT_IDS.add(config.mainAbilityId);
-            SIGNATURE_SCRIPT_ID_TO_NAME.set(config.mainAbilityId, script.name);
-          }
-          config.statusEffects?.forEach((id) => {
-            VALID_SIGNATURE_SCRIPT_IDS.add(id);
-            SIGNATURE_SCRIPT_ID_TO_NAME.set(id, script.name);
-          });
+    Object.values(data.signatureScripts as Record<string, SignatureScriptEntry>).forEach(
+      (script) => {
+        script.abilityIds?.forEach((id) => {
+          VALID_SIGNATURE_SCRIPT_IDS.add(id);
+          SIGNATURE_SCRIPT_ID_TO_NAME.set(id, script.name);
         });
-      }
-    });
+
+        if (script.grimoireSpecificEffects) {
+          Object.values(script.grimoireSpecificEffects).forEach((config) => {
+            if (config.mainAbilityId) {
+              VALID_SIGNATURE_SCRIPT_IDS.add(config.mainAbilityId);
+              SIGNATURE_SCRIPT_ID_TO_NAME.set(config.mainAbilityId, script.name);
+            }
+            config.statusEffects?.forEach((id) => {
+              VALID_SIGNATURE_SCRIPT_IDS.add(id);
+              SIGNATURE_SCRIPT_ID_TO_NAME.set(id, script.name);
+            });
+          });
+        }
+      },
+    );
   }
 
   const classMasteryScript = data.signatureScripts?.['class-mastery'];
