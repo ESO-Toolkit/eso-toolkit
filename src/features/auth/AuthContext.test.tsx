@@ -45,6 +45,38 @@ Object.defineProperty(window, 'localStorage', {
   writable: true,
 });
 
+const encodeBase64 = (value: string): string => {
+  if (typeof globalThis !== 'undefined') {
+    const browserBtoa = (globalThis as { btoa?: typeof btoa }).btoa;
+    if (browserBtoa) {
+      return browserBtoa(value);
+    }
+
+    const bufferCtor = (
+      globalThis as {
+        Buffer?: {
+          from(input: string, encoding: string): { toString(encoding: string): string };
+        };
+      }
+    ).Buffer;
+    if (bufferCtor) {
+      return bufferCtor.from(value, 'utf-8').toString('base64');
+    }
+  }
+
+  // Jest's JSDOM environment should provide btoa, but add a final fallback for safety.
+  throw new Error('Base64 encoding is not supported in the current test environment.');
+};
+
+const createMockToken = (expiresAtSeconds: number): string => {
+  const payload = JSON.stringify({
+    exp: expiresAtSeconds,
+    sub: 'eso-user-123',
+  });
+
+  return `header.${encodeBase64(payload)}.signature`;
+};
+
 // Mock Logger
 jest.mock('../../contexts/LoggerContext', () => ({
   Logger: jest.fn().mockImplementation(() => ({
@@ -130,7 +162,7 @@ describe('AuthContext', () => {
   it('should detect logged in state with valid token', () => {
     // Create a mock valid JWT token (expires in future)
     const futureExp = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
-    const mockToken = `header.${btoa(JSON.stringify({ exp: futureExp }))}.signature`;
+    const mockToken = createMockToken(futureExp);
     mockLocalStorage.getItem.mockReturnValue(mockToken);
 
     renderWithAuthProvider(<TestComponent />);
@@ -143,7 +175,7 @@ describe('AuthContext', () => {
   it('should detect expired token', () => {
     // Create a mock expired JWT token
     const pastExp = Math.floor(Date.now() / 1000) - 3600; // 1 hour ago
-    const mockToken = `header.${btoa(JSON.stringify({ exp: pastExp }))}.signature`;
+    const mockToken = createMockToken(pastExp);
     mockLocalStorage.getItem.mockReturnValue(mockToken);
 
     renderWithAuthProvider(<TestComponent />);
@@ -154,7 +186,7 @@ describe('AuthContext', () => {
 
   it('should fetch user data when logged in', async () => {
     const futureExp = Math.floor(Date.now() / 1000) + 3600;
-    const mockToken = `header.${btoa(JSON.stringify({ exp: futureExp }))}.signature`;
+    const mockToken = createMockToken(futureExp);
     mockLocalStorage.getItem.mockReturnValue(mockToken);
 
     renderWithAuthProvider(<TestComponent />);
@@ -174,7 +206,7 @@ describe('AuthContext', () => {
 
   it('should handle user fetch error', async () => {
     const futureExp = Math.floor(Date.now() / 1000) + 3600;
-    const mockToken = `header.${btoa(JSON.stringify({ exp: futureExp }))}.signature`;
+    const mockToken = createMockToken(futureExp);
     mockLocalStorage.getItem.mockReturnValue(mockToken);
 
     mockEsoLogsClient.query.mockRejectedValue(new Error('Network error'));
@@ -190,7 +222,7 @@ describe('AuthContext', () => {
 
   it('should handle empty user data response', async () => {
     const futureExp = Math.floor(Date.now() / 1000) + 3600;
-    const mockToken = `header.${btoa(JSON.stringify({ exp: futureExp }))}.signature`;
+    const mockToken = createMockToken(futureExp);
     mockLocalStorage.getItem.mockReturnValue(mockToken);
 
     mockEsoLogsClient.query.mockResolvedValue({
@@ -208,7 +240,7 @@ describe('AuthContext', () => {
 
   it('should allow manual user refetch', async () => {
     const futureExp = Math.floor(Date.now() / 1000) + 3600;
-    const mockToken = `header.${btoa(JSON.stringify({ exp: futureExp }))}.signature`;
+    const mockToken = createMockToken(futureExp);
     mockLocalStorage.getItem.mockReturnValue(mockToken);
 
     renderWithAuthProvider(<TestComponent />);
@@ -242,7 +274,7 @@ describe('AuthContext', () => {
 
   it('should mark user as banned and clear authentication', async () => {
     const futureExp = Math.floor(Date.now() / 1000) + 3600;
-    const mockToken = `header.${btoa(JSON.stringify({ exp: futureExp }))}.signature`;
+    const mockToken = createMockToken(futureExp);
     mockLocalStorage.getItem.mockReturnValue(mockToken);
 
     mockCheckUserBan.mockResolvedValueOnce({
@@ -267,7 +299,7 @@ describe('AuthContext', () => {
 
   it('should clear user data when token is removed', async () => {
     const futureExp = Math.floor(Date.now() / 1000) + 3600;
-    const mockToken = `header.${btoa(JSON.stringify({ exp: futureExp }))}.signature`;
+    const mockToken = createMockToken(futureExp);
 
     // Start with valid token
     mockLocalStorage.getItem.mockReturnValue(mockToken);
