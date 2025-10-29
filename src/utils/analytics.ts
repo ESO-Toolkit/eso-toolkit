@@ -19,7 +19,11 @@ export const initializeAnalytics = (): void => {
 
   if (measurementId && typeof measurementId === 'string') {
     try {
-      ReactGA.initialize(measurementId);
+      ReactGA.initialize(measurementId, {
+        gtagOptions: {
+          send_page_view: false,
+        },
+      });
     } catch (error) {
       logger.error('Failed to initialize Google Analytics', error as Error);
     }
@@ -68,6 +72,65 @@ export const trackEvent = (
       });
     } catch (error) {
       logger.error('Failed to track event', error as Error);
+    }
+  }
+};
+
+/**
+ * Track a GA4 conversion-style event using the recommended name/params signature
+ * @param name - Event name (e.g., 'report_export')
+ * @param params - Additional GA4 parameters to attach to the event
+ */
+export const trackConversion = (name: string, params?: Record<string, unknown>): void => {
+  const measurementId = getEnvVar('VITE_GA_MEASUREMENT_ID');
+
+  if (measurementId && typeof measurementId === 'string') {
+    try {
+      ReactGA.event(name, params ?? {});
+    } catch (error) {
+      logger.error('Failed to track conversion event', error as Error);
+    }
+  }
+};
+
+/**
+ * Set the GA4 user_id field for authenticated sessions
+ */
+export const setAnalyticsUserId = (userId: string | null): void => {
+  const measurementId = getEnvVar('VITE_GA_MEASUREMENT_ID');
+
+  if (measurementId && typeof measurementId === 'string') {
+    try {
+      if (userId) {
+        ReactGA.gtag('set', { user_id: userId });
+      } else {
+        ReactGA.gtag('set', { user_id: undefined });
+      }
+    } catch (error) {
+      logger.error('Failed to set analytics user id', error as Error);
+    }
+  }
+};
+
+/**
+ * Set GA4 user properties (custom dimensions) for cohort analysis
+ */
+export const setUserProperties = (
+  properties: Record<string, string | number | boolean | undefined | null>,
+): void => {
+  const measurementId = getEnvVar('VITE_GA_MEASUREMENT_ID');
+
+  if (measurementId && typeof measurementId === 'string') {
+    try {
+      const sanitizedEntries = Object.entries(properties).filter(([, value]) => value != null);
+      if (sanitizedEntries.length === 0) {
+        return;
+      }
+
+      const sanitizedProperties = Object.fromEntries(sanitizedEntries);
+      ReactGA.gtag('set', 'user_properties', sanitizedProperties);
+    } catch (error) {
+      logger.error('Failed to set analytics user properties', error as Error);
     }
   }
 };

@@ -3,6 +3,7 @@ import React, { createContext, useContext, useMemo, ReactNode, useState, useCall
 
 import { useLogger } from './contexts/LoggerContext';
 import { EsoLogsClient } from './esologsClient';
+import { addBreadcrumb } from './utils/sentryUtils';
 
 interface EsoLogsClientContextType {
   client: EsoLogsClient | null;
@@ -35,7 +36,14 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
         if (client.getAccessToken() !== token) {
           logger.info('Updating EsoLogsClient access token');
           client.updateAccessToken(token);
+          addBreadcrumb('Auth: EsoLogsClient token updated', 'auth', {
+            tokenPresent: true,
+          });
         }
+      } else {
+        addBreadcrumb('Auth: EsoLogsClient token cleared via setAuthToken', 'auth', {
+          tokenPresent: false,
+        });
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -47,6 +55,7 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
     logger.info('Clearing EsoLogsClient access token');
     setIsLoggedIn(false);
     client.updateAccessToken('');
+    addBreadcrumb('Auth: EsoLogsClient token cleared', 'auth');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client]); // logger intentionally omitted - it's a stable singleton, not a reactive dependency
 

@@ -12,6 +12,7 @@ import { GetCurrentUserQuery, GetCurrentUserDocument } from '../../graphql/gql/g
 import { checkUserBan, DEFAULT_BAN_REASON } from '../../utils/banlist';
 import { isDevelopment } from '../../utils/envUtils';
 import { Logger, LogLevel } from '../../utils/logger';
+import { addBreadcrumb, setUserContext } from '../../utils/sentryUtils';
 
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './auth';
 import { getAccessTokenExpiry, isAccessTokenExpired, tokenHasUserSubject } from './tokenUtils';
@@ -73,6 +74,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
     setAccessToken(token);
     setAuthToken(token);
+    addBreadcrumb('Auth: Rebound access token from storage', 'auth', {
+      tokenPresent: Boolean(token),
+    });
     if (token) {
       setIsBanned(false);
       setBanReason(null);
@@ -84,6 +88,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     (token: string) => {
       setAccessToken(token);
       setAuthToken(token);
+      addBreadcrumb('Auth: Access token updated', 'auth', {
+        tokenPresent: Boolean(token),
+      });
     },
     [setAuthToken],
   );
@@ -96,11 +103,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsBanned(false);
       setBanReason(null);
       setUserLoading(false);
+      addBreadcrumb('Auth: Skipping user fetch', 'auth', {
+        hasClient: Boolean(esoLogsClient),
+        tokenPresent: Boolean(accessToken),
+        tokenHasUser: accessTokenHasUser,
+        tokenExpired: accessTokenExpired,
+      });
       return;
     }
 
     setUserLoading(true);
     setUserError(null);
+    addBreadcrumb('Auth: Fetching current user', 'auth', {
+      tokenHasUser: accessTokenHasUser,
+      tokenExpired: accessTokenExpired,
+    });
 
     try {
       const result = await esoLogsClient.query<GetCurrentUserQuery>({
@@ -127,6 +144,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setCurrentUser(null);
           localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
           updateAccessToken('');
+          addBreadcrumb('Auth: Banned user detected', 'auth', {
+            userId: fetchedUser.id,
+            reason,
+          });
           clearAuthToken();
           return;
         }
@@ -135,11 +156,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setBanReason(null);
         setCurrentUser(fetchedUser);
         setUserError(null);
+        if (fetchedUser.id) {
+          setUserContext(String(fetchedUser.id), undefined, fetchedUser.name || undefined);
+        }
+        addBreadcrumb('Auth: User data loaded', 'auth', {
+          userId: fetchedUser.id,
+          displayNameNA: fetchedUser.naDisplayName || undefined,
+          displayNameEU: fetchedUser.euDisplayName || undefined,
+        });
       } else {
         setIsBanned(false);
         setBanReason(null);
         setUserError('No user data received');
         setCurrentUser(null);
+        addBreadcrumb('Auth: No user data returned', 'auth');
       }
     } catch (error) {
       logger.error('Failed to fetch current user', error instanceof Error ? error : undefined);
@@ -147,6 +177,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsBanned(false);
       setBanReason(null);
       setCurrentUser(null);
+      addBreadcrumb('Auth: Failed to fetch current user', 'error', {
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setUserLoading(false);
     }
@@ -165,6 +198,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
       setAccessToken(token);
       setAuthToken(token);
+      addBreadcrumb('Auth: Access token updated via storage event', 'auth', {
+        tokenPresent: Boolean(token),
+      });
     };
     window.addEventListener('storage', handler);
 

@@ -4,6 +4,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AbilityIdMapperProvider } from './contexts/AbilityIdMapperContext';
 import { setSelectedTargetIds } from './store/ui/uiSlice';
 import { useAppDispatch } from './store/useAppDispatch';
+import { trackEvent } from './utils/analytics';
 import { TabId } from './utils/getSkeletonForTab';
 
 interface ReportFightContextType {
@@ -127,6 +128,12 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
       const shouldShowExperimental = isExperimentalTab || showExperimentalTabs;
 
       const experimentalParam = shouldShowExperimental ? '?experimental=true' : '';
+
+      trackEvent('Report Detail', 'Select Tab', newTabId);
+      if (isExperimentalTab && !showExperimentalTabs) {
+        trackEvent('Report Detail', 'Enable Experimental Tabs', newTabId);
+      }
+
       navigate(`/report/${reportId}/fight/${fightId}/${newTabId}${experimentalParam}`);
     },
     [navigate, reportId, fightId, showExperimentalTabs],
@@ -157,6 +164,8 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
       }
 
       const experimentalParam = enabled ? '?experimental=true' : '';
+      trackEvent('Report Detail', 'Toggle Experimental Tabs', enabled ? 'enable' : 'disable');
+
       navigate(`/report/${reportId}/fight/${fightId}/${targetTab}${experimentalParam}`);
     },
     [navigate, reportId, fightId, selectedTabId],

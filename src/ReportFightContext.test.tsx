@@ -1,10 +1,23 @@
 import React, { useEffect, useRef } from 'react';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { createStore, combineReducers, Store } from 'redux';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import { setSelectedTargetIds } from './store/ui/uiSlice';
 import { useAppDispatch } from './store/useAppDispatch';
+
+jest.mock('./contexts/AbilityIdMapperContext', () => ({
+  AbilityIdMapperProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+jest.mock('./utils/analytics', () => ({
+  trackEvent: jest.fn(),
+}));
+
+import { ReportFightProvider, useReportFightDetailsNavigation } from './ReportFightContext';
+import { TabId } from './utils/getSkeletonForTab';
+import { trackEvent } from './utils/analytics';
 
 // Create a test hook that mimics the ReportFightProvider's target clearing behavior
 function useTestFightTargetClearer(fightId: string | null | undefined) {
@@ -93,5 +106,66 @@ describe('ReportFightContext target clearing logic', () => {
 
     // Targets should remain on initial render (no previous fight to compare against)
     expect((store.getState() as any).ui.selectedTargetIds).toEqual([100, 200]);
+  });
+});
+
+describe('ReportFightContext analytics tracking', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const renderNavigationHook = (initialEntry = '/report/abc/fight/1/insights') => {
+    const store = createMockStore();
+
+    const wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+      <Provider store={store}>
+        <MemoryRouter initialEntries={[initialEntry]}>
+          <Routes>
+            <Route
+              path="/report/:reportId/fight/:fightId/:tabId"
+              element={<ReportFightProvider>{children}</ReportFightProvider>}
+            />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
+
+    return renderHook(() => useReportFightDetailsNavigation(), { wrapper });
+  };
+
+  it('tracks tab selection events', () => {
+    const { result } = renderNavigationHook();
+
+    act(() => {
+      result.current.setSelectedTab(TabId.DAMAGE_DONE);
+    });
+
+    expect(trackEvent).toHaveBeenCalledWith('Report Detail', 'Select Tab', TabId.DAMAGE_DONE);
+  });
+
+  it('tracks experimental tab enablement when selecting experimental tab', () => {
+    const { result } = renderNavigationHook();
+
+    act(() => {
+      result.current.setSelectedTab(TabId.RAW_EVENTS);
+    });
+
+    expect(trackEvent).toHaveBeenNthCalledWith(1, 'Report Detail', 'Select Tab', TabId.RAW_EVENTS);
+    expect(trackEvent).toHaveBeenNthCalledWith(
+      2,
+      'Report Detail',
+      'Enable Experimental Tabs',
+      TabId.RAW_EVENTS,
+    );
+  });
+
+  it('tracks experimental tab toggles', () => {
+    const { result } = renderNavigationHook();
+
+    act(() => {
+      result.current.setShowExperimentalTabs(true);
+    });
+
+    expect(trackEvent).toHaveBeenCalledWith('Report Detail', 'Toggle Experimental Tabs', 'enable');
   });
 });

@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { useEsoLogsClientContext } from '@/EsoLogsClientContext';
+import { addBreadcrumb } from '@/utils/sentryUtils';
 
 import { setIntendedDestination } from './auth';
 import { useAuth } from './AuthContext';
@@ -34,6 +35,11 @@ export const AuthenticatedRoute: React.FC<AuthenticatedRouteProps> = ({
   // If not logged in, store the intended destination and redirect to login page
   if (!isLoggedIn) {
     setIntendedDestination(location.pathname + location.search + location.hash);
+    addBreadcrumb('Auth: Redirecting unauthenticated user', 'navigation', {
+      path: location.pathname,
+      search: location.search,
+      hash: location.hash,
+    });
     return <Navigate to={redirectTo} replace />;
   }
 
