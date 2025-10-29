@@ -48,12 +48,25 @@ For simple changes, use:
 
 See: [jira/AI_JIRA_ACLI_INSTRUCTIONS.md](jira/AI_JIRA_ACLI_INSTRUCTIONS.md)
 
+## Branch Management (Twig)
+
+- Always confirm branch stacking with `twig tree` before and after creating feature branches.
+- If a branch appears under *Orphaned branches*, fix it immediately with `twig branch depend <child> <parent>` (or the appropriate `twig branch` command).
+- Keep replay-system work aligned: `ESO-449` → `ESO-488` → `ESO-463` unless instructed otherwise.
+- Document any intentional deviations in the relevant Jira ticket/comment so reviewers understand the stack layout.
+
 ## Testing Requirements
 
 - Run tests before committing: `npm test`
 - Run linting: `npm run lint`
 - For UI changes, verify in browser
 - Update tests if behavior changed
+
+## TypeScript Practices
+
+- Trust the existing TypeScript types—avoid redundant runtime type checks for properties that are already strongly typed.
+- Prefer refining or extending type definitions when you need different guarantees, instead of sprinkling `typeof` or defensive checks.
+- Use narrow type guards only when interacting with truly unknown input (e.g., external APIs) and document the rationale in code comments.
 
 ## Communication Style
 
