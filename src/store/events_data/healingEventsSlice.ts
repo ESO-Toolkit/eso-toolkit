@@ -11,7 +11,7 @@ import {
 import { HealEvent, LogEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
 
-const EVENT_PAGE_LIMIT = 100000;
+import { EVENT_PAGE_LIMIT } from './constants';
 
 export interface HealingEventsState {
   events: HealEvent[];

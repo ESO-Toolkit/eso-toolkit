@@ -12,11 +12,10 @@ import { BuffEvent, LogEvent } from '../../types/combatlogEvents';
 import { Logger, LogLevel } from '../../utils/logger';
 import { RootState } from '../storeWithHistory';
 
+import { EVENT_PAGE_LIMIT } from './constants';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'FriendlyBuffEvents' });
-
-const EVENT_PAGE_LIMIT = 100000;
 
 // Interface for tracking interval fetching state
 interface IntervalFetchResult {

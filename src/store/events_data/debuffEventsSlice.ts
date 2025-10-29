@@ -12,6 +12,7 @@ import { DebuffEvent, LogEvent } from '../../types/combatlogEvents';
 import { Logger, LogLevel } from '../../utils/logger';
 import { RootState } from '../storeWithHistory';
 
+import { EVENT_PAGE_LIMIT } from './constants';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'DebuffEvents' });
@@ -47,8 +48,6 @@ const initialState: DebuffEventsState = {
   },
   currentRequest: null,
 };
-
-const EVENT_PAGE_LIMIT = 100000;
 
 export const fetchDebuffEvents = createAsyncThunk<
   DebuffEvent[],

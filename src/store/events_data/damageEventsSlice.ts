@@ -11,11 +11,10 @@ import {
 import { DamageEvent, LogEvent } from '../../types/combatlogEvents';
 import { Logger, LogLevel } from '../../utils/logger';
 
+import { EVENT_PAGE_LIMIT } from './constants';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'DamageEvents' });
-
-const EVENT_PAGE_LIMIT = 100000;
 
 // Local interface to avoid circular dependency with RootState
 interface LocalRootState {
