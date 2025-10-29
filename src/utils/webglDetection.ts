@@ -131,7 +131,9 @@ function releaseContext(gl: WebGLRenderingContext | WebGL2RenderingContext | nul
   }
 
   try {
-    const loseContext = gl.getExtension('WEBGL_lose_context') as { loseContext?: () => void } | null;
+    const loseContext = gl.getExtension('WEBGL_lose_context') as {
+      loseContext?: () => void;
+    } | null;
     loseContext?.loseContext?.();
   } catch {
     // Ignore failures when releasing detection contexts

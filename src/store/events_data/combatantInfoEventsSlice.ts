@@ -51,7 +51,6 @@ const initialState: CombatantInfoEventsState = {
   currentRequest: null,
 };
 
-
 export const fetchCombatantInfoEvents = createAsyncThunk<
   CombatantInfoEvent[],
   {
