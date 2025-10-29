@@ -2,7 +2,12 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 
-import reportSlice, { clearReport, ReportRegistryEntry, ReportState } from './reportSlice';
+import reportSlice, {
+  clearReport,
+  ReportRegistryEntry,
+  ReportState,
+  setActiveReportContext,
+} from './reportSlice';
 
 describe('reportSlice caching logic', () => {
   let store: ReturnType<typeof configureStore>;
@@ -120,6 +125,41 @@ describe('reportSlice caching logic', () => {
       // Stale cache logic
       const isStale = staleTimestamp && now - staleTimestamp >= DATA_FETCH_CACHE_TIMEOUT;
       expect(isStale).toBe(true);
+    });
+  });
+
+  describe('setActiveReportContext', () => {
+    it('sets active context using normalized payload and ensures registry entry', () => {
+      store.dispatch(
+        setActiveReportContext({
+          reportCode: 'TEST-123',
+          fightId: '45',
+        }),
+      );
+
+      const state = store.getState() as { report: ReportState };
+      expect(state.report.activeContext).toEqual({ reportId: 'TEST-123', fightId: 45 });
+      expect(state.report.reportId).toBe('TEST-123');
+      expect(Object.keys(state.report.reportsById)).toContain('TEST-123');
+    });
+
+    it('clears context when payload is empty', () => {
+      store.dispatch(
+        setActiveReportContext({
+          reportCode: 'TEST-123',
+          fightId: '45',
+        }),
+      );
+
+      store.dispatch(
+        setActiveReportContext({
+          reportCode: null,
+          fightId: null,
+        }),
+      );
+
+      const state = store.getState() as { report: ReportState };
+      expect(state.report.activeContext).toEqual({ reportId: null, fightId: null });
     });
   });
 });
