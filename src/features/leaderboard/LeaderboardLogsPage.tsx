@@ -30,7 +30,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useLogger } from '../../contexts/LoggerContext';
-import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
+import { useEsoLogsClientContext } from '../../EsoLogsClientContext';
 import {
   FightRankingMetricType,
   GetEncounterFightRankingsDocument,
@@ -104,7 +104,7 @@ export const LeaderboardLogsPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const logger = useLogger('LeaderboardLogsPage');
-  const client = useEsoLogsClientInstance();
+  const { client } = useEsoLogsClientContext();
 
   const [zones, setZones] = React.useState<TrialZone[]>([]);
   const [zonesLoading, setZonesLoading] = React.useState<boolean>(true);
@@ -119,6 +119,13 @@ export const LeaderboardLogsPage: React.FC = () => {
   const [rankingsLoading, setRankingsLoading] = React.useState<boolean>(false);
   const [rankingsError, setRankingsError] = React.useState<string | null>(null);
   const partitionPreferenceRef = React.useRef<Map<string, number>>(new Map());
+  const clientUnavailable = !client;
+
+  React.useEffect(() => {
+    if (clientUnavailable) {
+      logger.error('EsoLogsClient is unavailable for leaderboard data');
+    }
+  }, [clientUnavailable, logger]);
 
   const currentZone = React.useMemo(() => {
     if (!selectedZoneId) {
@@ -135,6 +142,9 @@ export const LeaderboardLogsPage: React.FC = () => {
   }, [currentZone, selectedEncounterId]);
 
   const loadZones = React.useCallback(async (): Promise<void> => {
+    if (!client) {
+      return;
+    }
     setZonesLoading(true);
     setZonesError(null);
     try {
@@ -170,6 +180,9 @@ export const LeaderboardLogsPage: React.FC = () => {
       page?: number;
       size?: number;
     }): Promise<void> => {
+      if (!client) {
+        return;
+      }
       setRankingsLoading(true);
       setRankingsError(null);
 
@@ -427,6 +440,16 @@ export const LeaderboardLogsPage: React.FC = () => {
       navigate(`/report/${row.reportCode}`);
     }
   };
+
+  if (clientUnavailable) {
+    return (
+      <Container maxWidth="md" sx={{ py: 6 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
+          Leaderboard data is temporarily unavailable. Please refresh the page or try again later.
+        </Alert>
+      </Container>
+    );
+  }
 
   const isInitialLoading = zonesLoading && zones.length === 0;
 
