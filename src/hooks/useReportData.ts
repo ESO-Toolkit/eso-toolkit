@@ -4,7 +4,10 @@ import { useSelector } from 'react-redux';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { ReportFragment } from '../graphql/gql/graphql';
 import { useSelectedReportAndFight } from '../ReportFightContext';
-import { selectReportLoadingState } from '../store/report/reportSelectors';
+import {
+  selectCombinedReportData,
+  selectReportLoadingState,
+} from '../store/report/reportSelectors';
 import { fetchReportData } from '../store/report/reportSlice';
 import { RootState } from '../store/storeWithHistory';
 import { useAppDispatch } from '../store/useAppDispatch';
@@ -24,8 +27,11 @@ export function useReportData(): {
     }
   }, [dispatch, reportId, client, isReady, isLoggedIn]);
 
-  const reportData = useSelector((state: RootState) => state.report.data);
+  const combinedReportData = useSelector(selectCombinedReportData);
   const isReportLoading = useSelector(selectReportLoadingState);
 
-  return React.useMemo(() => ({ reportData, isReportLoading }), [reportData, isReportLoading]);
+  return React.useMemo(
+    () => ({ reportData: combinedReportData.data, isReportLoading }),
+    [combinedReportData.data, isReportLoading],
+  );
 }

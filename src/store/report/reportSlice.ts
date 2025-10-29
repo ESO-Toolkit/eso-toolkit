@@ -2,20 +2,55 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
-import { ReportFragment, GetReportByCodeDocument } from '../../graphql/gql/graphql';
+import { FightFragment, ReportFragment, GetReportByCodeDocument } from '../../graphql/gql/graphql';
 import { RootState } from '../storeWithHistory';
+
+export type ReportLoadStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
+
+export interface ReportCacheMetadata {
+  lastFetchedTimestamp: number | null;
+}
+
+export interface ReportRegistryEntry {
+  reportId: string;
+  data: ReportFragment | null;
+  status: ReportLoadStatus;
+  error: string | null;
+  fightsById: Record<number, FightFragment | null>;
+  fightIds: number[];
+  cacheMetadata: ReportCacheMetadata;
+}
+
+export interface ActiveReportContext {
+  reportId: string | null;
+  fightId: number | null;
+}
 
 export interface ReportState {
   reportId: string;
   data: ReportFragment | null;
   loading: boolean;
   error: string | null;
-  // Cache metadata for better cache management
   cacheMetadata: {
     lastFetchedReportId: string | null;
     lastFetchedTimestamp: number | null;
   };
+  activeContext: ActiveReportContext;
+  reportsById: Record<string, ReportRegistryEntry>;
+  fightIndexByReport: Record<string, number[]>;
 }
+
+const createEmptyRegistryEntry = (reportId: string): ReportRegistryEntry => ({
+  reportId,
+  data: null,
+  status: 'idle',
+  error: null,
+  fightsById: {},
+  fightIds: [],
+  cacheMetadata: {
+    lastFetchedTimestamp: null,
+  },
+});
 
 const initialState: ReportState = {
   reportId: '',
@@ -26,6 +61,42 @@ const initialState: ReportState = {
     lastFetchedReportId: null,
     lastFetchedTimestamp: null,
   },
+  activeContext: {
+    reportId: null,
+    fightId: null,
+  },
+  reportsById: {},
+  fightIndexByReport: {},
+};
+
+const ensureRegistryEntry = (state: ReportState, reportId: string): ReportRegistryEntry => {
+  if (!state.reportsById[reportId]) {
+    state.reportsById[reportId] = createEmptyRegistryEntry(reportId);
+  }
+  return state.reportsById[reportId];
+};
+
+const mapFights = (
+  fights: Array<FightFragment | null> | null | undefined,
+): {
+  fightIds: number[];
+  fightsById: Record<number, FightFragment | null>;
+} => {
+  const fightIds: number[] = [];
+  const fightsById: Record<number, FightFragment | null> = {};
+
+  if (!fights) {
+    return { fightIds, fightsById };
+  }
+
+  fights.forEach((fight) => {
+    if (fight) {
+      fightIds.push(fight.id);
+      fightsById[fight.id] = fight;
+    }
+  });
+
+  return { fightIds, fightsById };
 };
 
 export const fetchReportData = createAsyncThunk<
@@ -59,25 +130,26 @@ export const fetchReportData = createAsyncThunk<
   },
   {
     condition: ({ reportId }, { getState }) => {
-      const state = getState().report;
-      const requestedReportId = reportId;
+      const state = getState().report as ReportState;
+      const entry = state.reportsById[reportId];
 
-      // Check if report data is already cached for this report
-      const isCached =
-        state.cacheMetadata.lastFetchedReportId === requestedReportId && state.data !== null;
+      const lastFetchedTimestamp =
+        entry?.cacheMetadata.lastFetchedTimestamp ?? state.cacheMetadata.lastFetchedTimestamp;
+
+      const isCached = Boolean(entry?.data);
       const isFresh =
-        state.cacheMetadata.lastFetchedTimestamp &&
-        Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
+        typeof lastFetchedTimestamp === 'number' &&
+        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
       if (isCached && isFresh) {
-        return false; // Prevent thunk execution - use cached data
+        return false;
       }
 
-      if (state.loading) {
-        return false; // Prevent duplicate execution while already loading
+      if (entry?.status === 'loading' || state.loading) {
+        return false;
       }
 
-      return true; // Allow thunk execution
+      return true;
     },
   },
 );
@@ -88,13 +160,35 @@ const reportSlice = createSlice({
   reducers: {
     setReportId(state, action: PayloadAction<string>) {
       state.reportId = action.payload;
+      state.activeContext.reportId = action.payload;
     },
     setReportData(state, action: PayloadAction<ReportFragment | null>) {
       state.data = action.payload;
+      const activeReportId = state.activeContext.reportId || state.reportId || action.payload?.code;
+      if (!activeReportId) {
+        return;
+      }
+
+      if (action.payload?.code && action.payload.code !== activeReportId) {
+        state.reportId = action.payload.code;
+        state.activeContext.reportId = action.payload.code;
+      }
+
+      const registryEntry = ensureRegistryEntry(state, activeReportId);
+  registryEntry.data = action.payload;
+  registryEntry.error = null;
+  registryEntry.status = action.payload ? 'succeeded' : 'idle';
+
+      const { fightIds, fightsById } = mapFights(action.payload?.fights);
+      registryEntry.fightIds = fightIds;
+      registryEntry.fightsById = fightsById;
+      state.fightIndexByReport[activeReportId] = fightIds;
+
       state.cacheMetadata = {
-        lastFetchedReportId: state.reportId,
+        lastFetchedReportId: activeReportId,
         lastFetchedTimestamp: Date.now(),
       };
+      registryEntry.cacheMetadata.lastFetchedTimestamp = state.cacheMetadata.lastFetchedTimestamp;
     },
     setReportCacheMetadata(state, action: PayloadAction<{ lastFetchedReportId: string }>) {
       state.loading = false;
@@ -104,6 +198,11 @@ const reportSlice = createSlice({
         lastFetchedReportId: action.payload.lastFetchedReportId,
         lastFetchedTimestamp: Date.now(),
       };
+      state.reportId = action.payload.lastFetchedReportId;
+      state.activeContext.reportId = action.payload.lastFetchedReportId;
+
+      const registryEntry = ensureRegistryEntry(state, action.payload.lastFetchedReportId);
+      registryEntry.cacheMetadata.lastFetchedTimestamp = state.cacheMetadata.lastFetchedTimestamp;
     },
     clearReport(state) {
       state.reportId = '';
@@ -114,6 +213,12 @@ const reportSlice = createSlice({
         lastFetchedReportId: null,
         lastFetchedTimestamp: null,
       };
+      state.activeContext = {
+        reportId: null,
+        fightId: null,
+      };
+      state.reportsById = {};
+      state.fightIndexByReport = {};
     },
   },
   extraReducers: (builder) => {
@@ -123,17 +228,37 @@ const reportSlice = createSlice({
         state.error = null;
         // Latch the attempted report id to avoid infinite retry loops in components
         state.reportId = action.meta.arg.reportId;
+        state.activeContext.reportId = action.meta.arg.reportId;
+
+        const entry = ensureRegistryEntry(state, action.meta.arg.reportId);
+        entry.status = 'loading';
+        entry.error = null;
       })
       .addCase(fetchReportData.fulfilled, (state, action) => {
-        state.reportId = action.payload.reportId;
-        state.data = action.payload.data;
+        const { reportId, data } = action.payload;
+        const now = Date.now();
+
+        state.reportId = reportId;
+        state.data = data;
         state.loading = false;
         state.error = null;
         // Update cache metadata
         state.cacheMetadata = {
-          lastFetchedReportId: action.payload.reportId,
-          lastFetchedTimestamp: Date.now(),
+          lastFetchedReportId: reportId,
+          lastFetchedTimestamp: now,
         };
+        state.activeContext.reportId = reportId;
+
+        const entry = ensureRegistryEntry(state, reportId);
+        entry.data = data;
+  entry.status = 'succeeded';
+        entry.error = null;
+        entry.cacheMetadata.lastFetchedTimestamp = now;
+
+        const { fightIds, fightsById } = mapFights(data.fights);
+        entry.fightIds = fightIds;
+        entry.fightsById = fightsById;
+        state.fightIndexByReport[reportId] = fightIds;
       })
       .addCase(fetchReportData.rejected, (state, action) => {
         state.loading = false;
@@ -142,6 +267,11 @@ const reportSlice = createSlice({
         // so UI effects see the same report and do not re-dispatch endlessly
         if (action.meta && action.meta.arg) {
           state.reportId = action.meta.arg.reportId;
+          state.activeContext.reportId = action.meta.arg.reportId;
+
+          const entry = ensureRegistryEntry(state, action.meta.arg.reportId);
+          entry.status = 'failed';
+          entry.error = (action.payload as string) || 'Failed to fetch report data';
         }
       });
   },

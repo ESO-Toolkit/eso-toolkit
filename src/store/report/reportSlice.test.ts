@@ -2,7 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 
-import reportSlice, { clearReport, ReportState } from './reportSlice';
+import reportSlice, { clearReport, ReportRegistryEntry, ReportState } from './reportSlice';
 
 describe('reportSlice caching logic', () => {
   let store: ReturnType<typeof configureStore>;
@@ -19,6 +19,8 @@ describe('reportSlice caching logic', () => {
     const state = store.getState() as { report: ReportState };
     expect(state.report.cacheMetadata.lastFetchedReportId).toBeNull();
     expect(state.report.cacheMetadata.lastFetchedTimestamp).toBeNull();
+    expect(state.report.reportsById).toEqual({});
+    expect(state.report.activeContext).toEqual({ reportId: null, fightId: null });
   });
 
   it('should clear cache metadata when clearReport is dispatched', () => {
@@ -44,6 +46,26 @@ describe('reportSlice caching logic', () => {
         lastFetchedReportId: 'test-report',
         lastFetchedTimestamp: Date.now(),
       },
+      activeContext: {
+        reportId: 'test-report',
+        fightId: null,
+      },
+      reportsById: {
+        'test-report': {
+          reportId: 'test-report',
+          data: mockData,
+          status: 'succeeded',
+          error: null,
+          fightsById: {},
+          fightIds: [],
+          cacheMetadata: {
+            lastFetchedTimestamp: Date.now(),
+          },
+        } satisfies ReportRegistryEntry,
+      },
+      fightIndexByReport: {
+        'test-report': [],
+      },
     };
 
     store = configureStore({
@@ -65,6 +87,9 @@ describe('reportSlice caching logic', () => {
     expect(state.report.error).toBeNull();
     expect(state.report.cacheMetadata.lastFetchedReportId).toBeNull();
     expect(state.report.cacheMetadata.lastFetchedTimestamp).toBeNull();
+    expect(state.report.reportsById).toEqual({});
+    expect(state.report.fightIndexByReport).toEqual({});
+    expect(state.report.activeContext).toEqual({ reportId: null, fightId: null });
   });
 
   it('should preserve cache structure in initial state', () => {
@@ -72,6 +97,9 @@ describe('reportSlice caching logic', () => {
     expect(state.report.cacheMetadata).toBeDefined();
     expect(typeof state.report.cacheMetadata.lastFetchedReportId).toBe('object'); // null is object
     expect(typeof state.report.cacheMetadata.lastFetchedTimestamp).toBe('object'); // null is object
+    expect(state.report.activeContext).toEqual({ reportId: null, fightId: null });
+    expect(state.report.reportsById).toEqual({});
+    expect(state.report.fightIndexByReport).toEqual({});
   });
 
   describe('Cache timeout validation', () => {
