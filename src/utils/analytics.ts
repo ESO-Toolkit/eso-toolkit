@@ -40,7 +40,38 @@ export const trackPageView = (path: string, title?: string): void => {
 
   if (measurementId && typeof measurementId === 'string') {
     try {
-      ReactGA.send({ hitType: 'pageview', page: path, title });
+      const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+      let locationOverride: string | undefined;
+
+      if (typeof window !== 'undefined') {
+        const { origin, pathname } = window.location;
+        const basePath = pathname.endsWith('/') ? pathname : `${pathname}/`;
+        const baseUrl = `${origin}${basePath}`;
+
+        try {
+          const virtualPath = normalizedPath.replace(/^\//, '');
+          locationOverride = new URL(virtualPath, baseUrl).toString();
+        } catch {
+          locationOverride = `${baseUrl}${normalizedPath.replace(/^\//, '')}`;
+        }
+      }
+
+      const payload: {
+        hitType: 'pageview';
+        page: string;
+        title?: string;
+        location?: string;
+      } = {
+        hitType: 'pageview',
+        page: normalizedPath,
+        title,
+      };
+
+      if (locationOverride) {
+        payload.location = locationOverride;
+      }
+
+      ReactGA.send(payload);
     } catch (error) {
       logger.error('Failed to track page view', error as Error);
     }
