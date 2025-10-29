@@ -76,21 +76,89 @@ const MIN_TEXTURE_SIZE = 2048;
 const MIN_VIEWPORT_SIZE = [1024, 768] as const;
 
 /**
+ * WebGL context attributes required by the fight replay renderer.
+ * These mirror the options passed to the react-three-fiber Canvas component.
+ */
+const REQUIRED_CONTEXT_ATTRIBUTES: WebGLContextAttributes = {
+  antialias: true,
+  preserveDrawingBuffer: true,
+  powerPreference: 'high-performance',
+  failIfMajorPerformanceCaveat: false,
+};
+
+/**
  * Attempts to create a WebGL context and returns it
  * @param version - The WebGL version to try (1 or 2)
  * @returns WebGL context or null if creation fails
  */
-function getWebGLContext(version: 1 | 2): WebGLRenderingContext | WebGL2RenderingContext | null {
+function getWebGLContext(
+  version: 1 | 2,
+  attributes?: WebGLContextAttributes,
+): WebGLRenderingContext | WebGL2RenderingContext | null {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
   try {
     const canvas = document.createElement('canvas');
-    const contextName = version === 2 ? 'webgl2' : 'webgl';
-    const context = canvas.getContext(contextName, {
-      failIfMajorPerformanceCaveat: false, // Allow software rendering
-    });
-    return context as WebGLRenderingContext | WebGL2RenderingContext | null;
+
+    if (version === 2) {
+      const context = canvas.getContext('webgl2', attributes ?? undefined);
+      return (context as WebGL2RenderingContext | null) ?? null;
+    }
+
+    const contextTypes: Array<'webgl' | 'experimental-webgl'> = ['webgl', 'experimental-webgl'];
+
+    for (const type of contextTypes) {
+      const context = canvas.getContext(type, attributes ?? undefined);
+      if (context) {
+        return context as WebGLRenderingContext;
+      }
+    }
+
+    return null;
   } catch {
     return null;
   }
+}
+
+/**
+ * Releases a WebGL context to avoid holding onto GPU resources during detection.
+ */
+function releaseContext(gl: WebGLRenderingContext | WebGL2RenderingContext | null): void {
+  if (!gl) {
+    return;
+  }
+
+  try {
+    const loseContext = gl.getExtension('WEBGL_lose_context') as {
+      loseContext?: () => void;
+    } | null;
+    loseContext?.loseContext?.();
+  } catch {
+    // Ignore failures when releasing detection contexts
+  }
+}
+
+interface ContextResult {
+  context: WebGLRenderingContext | WebGL2RenderingContext | null;
+  supportsRequiredAttributes: boolean;
+}
+
+function createContextResult(version: 1 | 2): ContextResult {
+  const requiredContext = getWebGLContext(version, REQUIRED_CONTEXT_ATTRIBUTES);
+  if (requiredContext) {
+    return {
+      context: requiredContext,
+      supportsRequiredAttributes: true,
+    };
+  }
+
+  const fallbackContext = getWebGLContext(version);
+  return {
+    context: fallbackContext,
+    supportsRequiredAttributes: false,
+  };
 }
 
 /**
@@ -228,19 +296,37 @@ function determinePerformanceTier(
  * ```
  */
 export function detectWebGLCapabilities(): WebGLCapabilities {
-  // Try WebGL 2.0 first (preferred)
-  const gl2 = getWebGLContext(2);
-  const hasWebGL2 = gl2 !== null;
+  const webgl2Result = createContextResult(2);
+  const webgl1Result = createContextResult(1);
 
-  // Try WebGL 1.0 as fallback
-  const gl1 = !hasWebGL2 ? getWebGLContext(1) : null;
-  const hasWebGL1 = gl1 !== null;
+  const hasWebGL2 = webgl2Result.context !== null;
+  const hasWebGL1 = webgl1Result.context !== null;
 
-  // Use the best available context
-  const gl = gl2 || gl1;
+  const supportsRequiredAttributes = Boolean(
+    (webgl2Result.context && webgl2Result.supportsRequiredAttributes) ||
+      (webgl1Result.context && webgl1Result.supportsRequiredAttributes),
+  );
 
-  // If no WebGL at all, return minimal capabilities
+  let recommendedVersion: 1 | 2 | null = null;
+  let gl: WebGLRenderingContext | WebGL2RenderingContext | null = null;
+
+  if (webgl2Result.context && webgl2Result.supportsRequiredAttributes) {
+    gl = webgl2Result.context;
+    recommendedVersion = 2;
+  } else if (webgl1Result.context && webgl1Result.supportsRequiredAttributes) {
+    gl = webgl1Result.context;
+    recommendedVersion = 1;
+  } else if (webgl2Result.context) {
+    gl = webgl2Result.context;
+    recommendedVersion = 2;
+  } else if (webgl1Result.context) {
+    gl = webgl1Result.context;
+    recommendedVersion = 1;
+  }
+
   if (!gl) {
+    releaseContext(webgl2Result.context);
+    releaseContext(webgl1Result.context);
     return {
       hasWebGL1: false,
       hasWebGL2: false,
@@ -292,16 +378,19 @@ export function detectWebGLCapabilities(): WebGLCapabilities {
   );
 
   // Determine if capabilities are sufficient
-  let isSufficient = true;
-  let insufficientReason: string | null = null;
+  let isSufficient = supportsRequiredAttributes;
+  let insufficientReason: string | null = supportsRequiredAttributes
+    ? null
+    : 'Unable to create WebGL context with required attributes (antialiasing and preserved drawing buffer).';
 
-  if (!extensionCheck.hasRequired) {
+  if (isSufficient && !extensionCheck.hasRequired) {
     isSufficient = false;
     insufficientReason = `Missing required WebGL extensions: ${extensionCheck.missingRequired.join(', ')}`;
-  } else if (maxTextureSize && maxTextureSize < MIN_TEXTURE_SIZE) {
+  } else if (isSufficient && maxTextureSize && maxTextureSize < MIN_TEXTURE_SIZE) {
     isSufficient = false;
     insufficientReason = `Maximum texture size (${maxTextureSize}) is below minimum requirement (${MIN_TEXTURE_SIZE})`;
   } else if (
+    isSufficient &&
     maxViewportDims &&
     (maxViewportDims[0] < MIN_VIEWPORT_SIZE[0] || maxViewportDims[1] < MIN_VIEWPORT_SIZE[1])
   ) {
@@ -309,10 +398,14 @@ export function detectWebGLCapabilities(): WebGLCapabilities {
     insufficientReason = `Maximum viewport dimensions (${maxViewportDims[0]}x${maxViewportDims[1]}) are below minimum requirement (${MIN_VIEWPORT_SIZE[0]}x${MIN_VIEWPORT_SIZE[1]})`;
   }
 
+  // Release contexts after gathering capability information
+  releaseContext(webgl2Result.context);
+  releaseContext(webgl1Result.context);
+
   return {
     hasWebGL1,
     hasWebGL2,
-    recommendedVersion: hasWebGL2 ? 2 : hasWebGL1 ? 1 : null,
+    recommendedVersion,
     performanceTier,
     extensions,
     maxTextureSize,

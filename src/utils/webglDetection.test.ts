@@ -61,6 +61,11 @@ class MockWebGLContext {
         UNMASKED_RENDERER_WEBGL: 37446,
       };
     }
+    if (name === 'WEBGL_lose_context') {
+      return {
+        loseContext: () => undefined,
+      };
+    }
     return null;
   }
 
@@ -94,20 +99,30 @@ describe('webglDetection', () => {
       renderer?: string;
       vendor?: string;
     },
+    options?: {
+      shouldFail?: (contextType: string, attributes?: Record<string, unknown>) => boolean;
+    },
   ) => {
     document.createElement = ((tagName: string) => {
       if (tagName === 'canvas') {
         const canvas = originalCreateElement('canvas') as HTMLCanvasElement;
-        canvas.getContext = ((contextType: string) => {
-          if (version === 2 && contextType === 'webgl2') {
-            return new MockWebGLContext(2, capabilities || {});
+        canvas.getContext = ((contextType: string, attributes?: Record<string, unknown>) => {
+          if (options?.shouldFail?.(contextType, attributes)) {
+            return null;
           }
-          if (version === 1 && contextType === 'webgl') {
-            return new MockWebGLContext(1, capabilities || {});
-          }
+
           if (version === null) {
             return null;
           }
+
+          if (version === 2 && contextType === 'webgl2') {
+            return new MockWebGLContext(2, capabilities || {});
+          }
+
+          if (version === 1 && (contextType === 'webgl' || contextType === 'experimental-webgl')) {
+            return new MockWebGLContext(1, capabilities || {});
+          }
+
           return null;
         }) as any;
         return canvas;
@@ -297,6 +312,52 @@ describe('webglDetection', () => {
       expect(capabilities.renderer).toBeNull();
       expect(capabilities.vendor).toBeNull();
       expect(capabilities.likelySwoftware).toBe(false);
+    });
+
+    it('should mark insufficient when required context attributes cannot be created', () => {
+      mockCanvasWithWebGL(
+        2,
+        {
+          extensions: [
+            'WEBGL_depth_texture',
+            'OES_element_index_uint',
+            'EXT_texture_filter_anisotropic',
+          ],
+          maxTextureSize: 4096,
+          maxViewportDims: [4096, 4096],
+        },
+        {
+          shouldFail: (_contextType, attributes) => Boolean(attributes?.preserveDrawingBuffer),
+        },
+      );
+
+      const capabilities = detectWebGLCapabilities();
+
+      expect(capabilities.hasWebGL2).toBe(true);
+      expect(capabilities.isSufficient).toBe(false);
+      expect(capabilities.insufficientReason).toContain(
+        'Unable to create WebGL context with required attributes',
+      );
+    });
+
+    it('should attempt experimental-webgl fallback when standard context fails', () => {
+      mockCanvasWithWebGL(
+        1,
+        {
+          extensions: ['WEBGL_depth_texture', 'OES_element_index_uint'],
+          maxTextureSize: 4096,
+          maxViewportDims: [4096, 4096],
+        },
+        {
+          shouldFail: (contextType) => contextType === 'webgl',
+        },
+      );
+
+      const capabilities = detectWebGLCapabilities();
+
+      expect(capabilities.hasWebGL1).toBe(true);
+      expect(capabilities.isSufficient).toBe(true);
+      expect(capabilities.insufficientReason).toBeNull();
     });
   });
 
