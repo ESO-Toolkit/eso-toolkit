@@ -3,7 +3,11 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 
 import { fetchReportMasterData, forceMasterDataRefresh } from '@/store/master_data/masterDataSlice';
-import { setActiveReportContext, setReportCacheMetadata, setReportData } from '@/store/report/reportSlice';
+import {
+  setActiveReportContext,
+  setReportCacheMetadata,
+  setReportData,
+} from '@/store/report/reportSlice';
 import { setSelectedTargetIds } from '@/store/ui/uiSlice';
 import { useAppDispatch } from '@/store/useAppDispatch';
 

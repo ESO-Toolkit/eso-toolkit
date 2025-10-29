@@ -3,8 +3,8 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
 import { FightFragment, ReportFragment, GetReportByCodeDocument } from '../../graphql/gql/graphql';
-import { RootState } from '../storeWithHistory';
 import type { ReportFightContextInput } from '../contextTypes';
+import { RootState } from '../storeWithHistory';
 import { normalizeReportFightContext } from '../utils/cacheKeys';
 
 export type ReportLoadStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
@@ -188,9 +188,9 @@ const reportSlice = createSlice({
       }
 
       const registryEntry = ensureRegistryEntry(state, activeReportId);
-  registryEntry.data = action.payload;
-  registryEntry.error = null;
-  registryEntry.status = action.payload ? 'succeeded' : 'idle';
+      registryEntry.data = action.payload;
+      registryEntry.error = null;
+      registryEntry.status = action.payload ? 'succeeded' : 'idle';
 
       const { fightIds, fightsById } = mapFights(action.payload?.fights);
       registryEntry.fightIds = fightIds;
@@ -264,7 +264,7 @@ const reportSlice = createSlice({
 
         const entry = ensureRegistryEntry(state, reportId);
         entry.data = data;
-  entry.status = 'succeeded';
+        entry.status = 'succeeded';
         entry.error = null;
         entry.cacheMetadata.lastFetchedTimestamp = now;
 
@@ -290,6 +290,11 @@ const reportSlice = createSlice({
   },
 });
 
-export const { setReportId, setActiveReportContext, clearReport, setReportData, setReportCacheMetadata } =
-  reportSlice.actions;
+export const {
+  setReportId,
+  setActiveReportContext,
+  clearReport,
+  setReportData,
+  setReportCacheMetadata,
+} = reportSlice.actions;
 export default reportSlice.reducer;

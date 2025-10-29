@@ -7,10 +7,11 @@ import {
 import type { ReportRegistryEntry, ReportState } from './reportSlice';
 import type { RootState } from '../types';
 
-const createFight = (id: number): FightFragment => ({
-  __typename: 'Fight',
-  id,
-} as unknown as FightFragment);
+const createFight = (id: number): FightFragment =>
+  ({
+    __typename: 'Fight',
+    id,
+  }) as unknown as FightFragment;
 
 const createRegistryEntry = (reportId: string): ReportRegistryEntry => ({
   reportId,
@@ -60,7 +61,7 @@ const createReportState = (): ReportState => {
 const createRootState = (reportState: ReportState): RootState =>
   ({
     report: reportState,
-  } as unknown as RootState);
+  }) as unknown as RootState;
 
 describe('report selectors with context helpers', () => {
   it('returns the registry entry for the provided report code', () => {

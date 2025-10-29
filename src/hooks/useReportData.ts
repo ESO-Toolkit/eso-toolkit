@@ -9,7 +9,6 @@ import {
   selectReportLoadingState,
 } from '../store/report/reportSelectors';
 import { fetchReportData } from '../store/report/reportSlice';
-import { RootState } from '../store/storeWithHistory';
 import { useAppDispatch } from '../store/useAppDispatch';
 
 export function useReportData(): {

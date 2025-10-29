@@ -1,7 +1,4 @@
-import type {
-  ReportFightContext,
-  ReportFightContextInput,
-} from '../contextTypes';
+import type { ReportFightContext, ReportFightContextInput } from '../contextTypes';
 
 const REPORT_FIGHT_CACHE_KEY_SEPARATOR = '::';
 const REPORT_SCOPE_ACTIVE = '__active__';
