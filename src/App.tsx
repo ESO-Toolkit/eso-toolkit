@@ -4,6 +4,7 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, HashRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
+import { AnalyticsListener } from './components/AnalyticsListener';
 import { MemoizedLoadingSpinner } from './components/CustomLoadingSpinner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HeaderBar } from './components/HeaderBar';
@@ -198,6 +199,7 @@ const AppRoutes: React.FC = () => {
 
   return (
     <HashRouter>
+      <AnalyticsListener />
       <ScrollRestoration />
       <BanRedirect />
       <ErrorBoundary>

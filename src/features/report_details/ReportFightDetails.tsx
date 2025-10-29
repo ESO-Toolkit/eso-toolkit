@@ -5,6 +5,7 @@ import { APPLICATION_NAME } from '@/Constants';
 import { DynamicMetaTags, generateReportMetaTags } from '../../components/DynamicMetaTags';
 import { useReportData } from '../../hooks';
 import { useReportFightDetailsNavigation } from '../../ReportFightContext';
+import { addBreadcrumb } from '../../utils/sentryUtils';
 
 import { ReportFightDetailsView } from './ReportFightDetailsView';
 
@@ -41,6 +42,20 @@ export const ReportFightDetails: React.FC = () => {
       document.title = `Untitled Report - ${APPLICATION_NAME}`;
     }
   }, [reportData?.title]);
+
+  React.useEffect(() => {
+    if (!reportId) {
+      return;
+    }
+
+    addBreadcrumb('Report fight view updated', 'navigation', {
+      reportId,
+      fightId,
+      tabId,
+      fightName: fight?.name,
+      loading: isReportLoading,
+    });
+  }, [reportId, fightId, tabId, fight?.name, isReportLoading]);
 
   return (
     <>

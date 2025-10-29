@@ -5,7 +5,14 @@
 
 import ReactGA from 'react-ga4';
 
-import { initializeAnalytics, trackEvent, trackPageView } from './analytics';
+import {
+  initializeAnalytics,
+  setAnalyticsUserId,
+  setUserProperties,
+  trackConversion,
+  trackEvent,
+  trackPageView,
+} from './analytics';
 import * as envUtils from './envUtils';
 
 // Mock react-ga4
@@ -31,6 +38,7 @@ describe('analytics', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (ReactGA as unknown as { gtag: jest.Mock }).gtag = jest.fn();
     // Spy on getEnvVar
     getEnvVarSpy = jest.spyOn(envUtils, 'getEnvVar');
   });
@@ -46,7 +54,11 @@ describe('analytics', () => {
       initializeAnalytics();
 
       expect(getEnvVarSpy).toHaveBeenCalledWith('VITE_GA_MEASUREMENT_ID');
-      expect(ReactGA.initialize).toHaveBeenCalledWith(mockMeasurementId);
+      expect(ReactGA.initialize).toHaveBeenCalledWith(mockMeasurementId, {
+        gtagOptions: {
+          send_page_view: false,
+        },
+      });
     });
 
     it('should not initialize GA when measurement ID is not set', () => {
@@ -177,6 +189,81 @@ describe('analytics', () => {
 
       // We can't easily verify the logger.error call due to mock limitations
       // But the function should complete without throwing
+    });
+  });
+
+  describe('trackConversion', () => {
+    it('should track conversion event when measurement ID is set', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      trackConversion('report_export', { reportId: 'ABC123' });
+
+      expect(ReactGA.event).toHaveBeenCalledWith('report_export', { reportId: 'ABC123' });
+    });
+
+    it('should not track conversion when measurement ID is not set', () => {
+      getEnvVarSpy.mockReturnValue(undefined);
+
+      trackConversion('report_export', { reportId: 'ABC123' });
+
+      expect(ReactGA.event).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('setAnalyticsUserId', () => {
+    it('should set user id when measurement ID is set', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      setAnalyticsUserId('42');
+
+      expect(ReactGA.gtag).toHaveBeenCalledWith('set', { user_id: '42' });
+    });
+
+    it('should clear user id when null provided', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      setAnalyticsUserId(null);
+
+      expect(ReactGA.gtag).toHaveBeenCalledWith('set', { user_id: undefined });
+    });
+
+    it('should not set user id when measurement ID is missing', () => {
+      getEnvVarSpy.mockReturnValue(undefined);
+
+      setAnalyticsUserId('42');
+
+      expect(ReactGA.gtag).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('setUserProperties', () => {
+    it('should set user properties when measurement ID is set', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      setUserProperties({ cohort_role: 'authenticated', ban_status: 'active' });
+
+      expect(ReactGA.gtag).toHaveBeenCalledWith('set', 'user_properties', {
+        cohort_role: 'authenticated',
+        ban_status: 'active',
+      });
+    });
+
+    it('should filter out nullish properties', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      setUserProperties({ cohort_role: 'guest', ban_status: null });
+
+      expect(ReactGA.gtag).toHaveBeenCalledWith('set', 'user_properties', {
+        cohort_role: 'guest',
+      });
+    });
+
+    it('should not set user properties when measurement ID is missing', () => {
+      getEnvVarSpy.mockReturnValue(undefined);
+
+      setUserProperties({ cohort_role: 'guest' });
+
+      expect(ReactGA.gtag).not.toHaveBeenCalled();
     });
   });
 });
