@@ -12,10 +12,45 @@ import {
   ResourceChangeEvent,
 } from '../../types/combatlogEvents';
 import { createBuffLookup, createDebuffLookup, BuffLookupData } from '../../utils/BuffLookupUtils';
+import { selectCastEvents as selectCastEventsFromCache } from '../events_data/castEventsSelectors';
 import { selectDamageEvents } from '../events_data/damageEventsSelectors';
 import { selectHealingEvents } from '../events_data/healingEventsSelectors';
+import {
+  selectFriendlyBuffEvents as selectFriendlyBuffEventsFromSlice,
+  selectFriendlyBuffEventsEntryForContext,
+  selectFriendlyBuffEventsForContext,
+  selectFriendlyBuffEventsLoading as selectFriendlyBuffEventsLoadingFromSlice,
+} from '../events_data/friendlyBuffEventsSelectors';
+import {
+  selectHostileBuffEvents as selectHostileBuffEventsFromSlice,
+  selectHostileBuffEventsEntryForContext,
+  selectHostileBuffEventsForContext,
+  selectHostileBuffEventsLoading as selectHostileBuffEventsLoadingFromSlice,
+} from '../events_data/hostileBuffEventsSelectors';
+import {
+  selectDebuffEvents as selectDebuffEventsFromSlice,
+  selectDebuffEventsEntryForContext,
+  selectDebuffEventsForContext,
+  selectDebuffEventsLoading as selectDebuffEventsLoadingFromSlice,
+} from '../events_data/debuffEventsSelectors';
+import {
+  selectDeathEvents as selectDeathEventsFromSlice,
+  selectDeathEventsEntryForContext,
+  selectDeathEventsForContext,
+  selectDeathEventsLoading as selectDeathEventsLoadingFromSlice,
+} from '../events_data/deathEventsSelectors';
+import {
+  selectCombatantInfoEvents as selectCombatantInfoEventsFromSlice,
+  selectCombatantInfoEventsEntryForContext,
+  selectCombatantInfoEventsForContext,
+  selectCombatantInfoEventsLoading as selectCombatantInfoEventsLoadingFromSlice,
+} from '../events_data/combatantInfoEventsSelectors';
+import { resolveCacheKey } from '../events_data/cacheStateHelpers';
+import type { ResourceEventsEntry, ResourceEventsState } from '../events_data/resourceEventsSlice';
 import { selectActorsById } from '../master_data/masterDataSelectors';
-import { selectReportFights } from '../report/reportSelectors';
+import { selectActiveReportContext, selectReportFights } from '../report/reportSelectors';
+import type { ReportFightContextInput } from '../contextTypes';
+import { createReportFightContextSelector } from '../utils/contextSelectors';
 import { RootState } from '../storeWithHistory';
 
 export {
@@ -30,33 +65,116 @@ export {
   selectHealingEventsForContext,
   selectHealingEventsLoading,
 } from '../events_data/healingEventsSelectors';
+export {
+  selectCastEventsEntryForContext,
+  selectCastEventsForContext,
+  selectCastEventsLoading,
+} from '../events_data/castEventsSelectors';
 
-// Basic event selectors for the new modular structure
-export const selectFriendlyBuffEvents = (state: RootState): BuffEvent[] =>
-  state.events.friendlyBuffs.events;
-export const selectHostileBuffEvents = (state: RootState): BuffEvent[] =>
-  state.events.hostileBuffs.events;
-export const selectDeathEvents = (state: RootState): DeathEvent[] => state.events.deaths.events;
-export const selectCombatantInfoEvents = (state: RootState): CombatantInfoEvent[] =>
-  state.events.combatantInfo.events;
-export const selectDebuffEvents = (state: RootState): DebuffEvent[] => state.events.debuffs.events;
-export const selectCastEvents = (state: RootState): UnifiedCastEvent[] => state.events.casts.events;
-export const selectResourceEvents = (state: RootState): ResourceChangeEvent[] =>
-  state.events.resources.events;
+export {
+  selectFriendlyBuffEventsEntryForContext,
+  selectFriendlyBuffEventsForContext,
+} from '../events_data/friendlyBuffEventsSelectors';
+
+export {
+  selectHostileBuffEventsEntryForContext,
+  selectHostileBuffEventsForContext,
+} from '../events_data/hostileBuffEventsSelectors';
+
+export {
+  selectDebuffEventsEntryForContext,
+  selectDebuffEventsForContext,
+} from '../events_data/debuffEventsSelectors';
+
+export {
+  selectDeathEventsEntryForContext,
+  selectDeathEventsForContext,
+} from '../events_data/deathEventsSelectors';
+
+export {
+  selectCombatantInfoEventsEntryForContext,
+  selectCombatantInfoEventsForContext,
+} from '../events_data/combatantInfoEventsSelectors';
+
+export const selectCastEvents = selectCastEventsFromCache;
+export const selectFriendlyBuffEvents = selectFriendlyBuffEventsFromSlice;
+export const selectHostileBuffEvents = selectHostileBuffEventsFromSlice;
+export const selectDebuffEvents = selectDebuffEventsFromSlice;
+export const selectDeathEvents = selectDeathEventsFromSlice;
+export const selectCombatantInfoEvents = selectCombatantInfoEventsFromSlice;
+
+const createActiveContextInput = (
+  state: RootState,
+  fightId: number | string | null,
+): ReportFightContextInput => ({
+  reportCode: state.report.activeContext.reportId ?? state.report.reportId,
+  fightId,
+});
+
+export const selectResourceEventsState = (state: RootState): ResourceEventsState =>
+  state.events.resources;
+
+export const selectResourceEventsEntryForContext = createReportFightContextSelector<
+  RootState,
+  [typeof selectResourceEventsState],
+  ResourceEventsEntry | null
+>([selectResourceEventsState], (resourceState, context) => {
+  if (!context.reportCode) {
+    return null;
+  }
+  const { key } = resolveCacheKey(context);
+  return resourceState.entries[key] ?? null;
+});
+
+export const selectResourceEventsForContext = createReportFightContextSelector<
+  RootState,
+  [typeof selectResourceEventsState],
+  ResourceChangeEvent[]
+>([selectResourceEventsState], (resourceState, context) => {
+  if (!context.reportCode) {
+    return [];
+  }
+  const { key } = resolveCacheKey(context);
+  return resourceState.entries[key]?.events ?? [];
+});
+
+export const selectResourceEvents = createSelector(
+  [(state: RootState) => state, selectActiveReportContext],
+  (state, activeContext) =>
+    selectResourceEventsForContext(
+      state,
+      createActiveContextInput(state, activeContext.fightId),
+    ),
+);
 
 // Loading state selectors
-export const selectFriendlyBuffEventsLoading = (state: RootState): boolean =>
-  state.events.friendlyBuffs.loading;
-export const selectHostileBuffEventsLoading = (state: RootState): boolean =>
-  state.events.hostileBuffs.loading;
-export const selectDeathEventsLoading = (state: RootState): boolean => state.events.deaths.loading;
-export const selectCombatantInfoEventsLoading = (state: RootState): boolean =>
-  state.events.combatantInfo.loading;
-export const selectDebuffEventsLoading = (state: RootState): boolean =>
-  state.events.debuffs.loading;
-export const selectCastEventsLoading = (state: RootState): boolean => state.events.casts.loading;
-export const selectResourceEventsLoading = (state: RootState): boolean =>
-  state.events.resources.loading;
+export const selectFriendlyBuffEventsLoading = selectFriendlyBuffEventsLoadingFromSlice;
+export const selectHostileBuffEventsLoading = selectHostileBuffEventsLoadingFromSlice;
+export const selectDebuffEventsLoading = selectDebuffEventsLoadingFromSlice;
+export const selectDeathEventsLoading = selectDeathEventsLoadingFromSlice;
+export const selectCombatantInfoEventsLoading = selectCombatantInfoEventsLoadingFromSlice;
+
+export const selectResourceEventsLoading = createSelector(
+  [(state: RootState) => state, selectActiveReportContext],
+  (state, activeContext) => {
+    const entry = selectResourceEventsEntryForContext(
+      state,
+      createActiveContextInput(state, activeContext.fightId),
+    );
+    return entry?.status === 'loading';
+  },
+);
+
+export const selectResourceEventsError = createSelector(
+  [(state: RootState) => state, selectActiveReportContext],
+  (state, activeContext) => {
+    const entry = selectResourceEventsEntryForContext(
+      state,
+      createActiveContextInput(state, activeContext.fightId),
+    );
+    return entry?.error ?? null;
+  },
+);
 
 // Selector to get the currently selected fight ID from router state
 export const selectSelectedFightId = (state: RootState): string | null => {

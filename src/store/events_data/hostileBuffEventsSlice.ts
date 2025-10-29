@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
@@ -9,9 +9,16 @@ import {
   HostilityType,
 } from '../../graphql/gql/graphql';
 import { BuffEvent, LogEvent } from '../../types/combatlogEvents';
-import { RootState } from '../storeWithHistory';
-
-import { EVENT_PAGE_LIMIT } from './constants';
+import {
+  KeyedCacheState,
+  removeFromCache,
+  resolveCacheKey,
+  resetCacheState,
+  touchAccessOrder,
+  trimCache,
+} from './cacheStateHelpers';
+import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
+import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
 // Interface for tracking interval fetching state
 interface IntervalFetchResult {
@@ -21,27 +28,50 @@ interface IntervalFetchResult {
   error?: string;
 }
 
-export interface HostileBuffEventsState {
+type HostileBuffEventsRequest = ReturnType<typeof createCurrentRequest> | null;
+
+export interface HostileBuffEventsEntry {
   events: BuffEvent[];
-  loading: boolean;
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
-  // Cache metadata for better cache management
   cacheMetadata: {
-    lastFetchedReportId: string | null;
-    lastFetchedFightId: number | null;
     lastFetchedTimestamp: number | null;
+    intervalCount: number;
+    failedIntervals: number;
+  };
+  currentRequest: HostileBuffEventsRequest;
+}
+
+export type HostileBuffEventsState = KeyedCacheState<HostileBuffEventsEntry>;
+
+interface LocalRootState {
+  events: {
+    hostileBuffs: HostileBuffEventsState;
   };
 }
 
-const initialState: HostileBuffEventsState = {
+const createEmptyEntry = (): HostileBuffEventsEntry => ({
   events: [],
-  loading: false,
+  status: 'idle',
   error: null,
   cacheMetadata: {
-    lastFetchedReportId: null,
-    lastFetchedFightId: null,
     lastFetchedTimestamp: null,
+    intervalCount: 0,
+    failedIntervals: 0,
   },
+  currentRequest: null,
+});
+
+const ensureEntry = (state: HostileBuffEventsState, key: string): HostileBuffEventsEntry => {
+  if (!state.entries[key]) {
+    state.entries[key] = createEmptyEntry();
+  }
+  return state.entries[key];
+};
+
+const initialState: HostileBuffEventsState = {
+  entries: {},
+  accessOrder: [],
 };
 
 // Helper function to create time intervals
@@ -100,7 +130,7 @@ const fetchEventsForInterval = async (
 export const fetchHostileBuffEvents = createAsyncThunk<
   { events: BuffEvent[]; intervalResults: IntervalFetchResult[] },
   { reportCode: string; fight: FightFragment; client: EsoLogsClient; intervalSize?: number },
-  { state: RootState; rejectValue: string }
+  { state: LocalRootState; rejectValue: string }
 >(
   'hostileBuffEvents/fetchHostileBuffEvents',
   async ({ reportCode, fight, client, intervalSize = 30000 }) => {
@@ -145,22 +175,25 @@ export const fetchHostileBuffEvents = createAsyncThunk<
   {
     condition: ({ reportCode, fight }, { getState }) => {
       const state = getState().events.hostileBuffs;
-      const requestedReportId = reportCode;
-      const requestedFightId = Number(fight.id);
+      const { key } = resolveCacheKey({ reportCode, fightId: Number(fight.id) });
+      const entry = state.entries[key];
 
-      // Check if hostile buff events are already cached for this fight
-      const isCached =
-        state.cacheMetadata.lastFetchedReportId === requestedReportId &&
-        state.cacheMetadata.lastFetchedFightId === requestedFightId;
+      const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
+      const isCached = Boolean(entry?.events.length);
       const isFresh =
-        state.cacheMetadata.lastFetchedTimestamp &&
-        Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
+        typeof lastFetchedTimestamp === 'number' &&
+        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
       if (isCached && isFresh) {
         return false; // Prevent thunk execution
       }
 
-      if (state.loading) {
+      const inFlight = entry?.currentRequest;
+      if (
+        inFlight &&
+        inFlight.reportId === reportCode &&
+        inFlight.fightId === Number(fight.id)
+      ) {
         return false; // Prevent duplicate execution
       }
 
@@ -174,39 +207,106 @@ const hostileBuffEventsSlice = createSlice({
   initialState,
   reducers: {
     clearHostileBuffEvents(state) {
-      state.events = [];
-      state.loading = false;
-      state.error = null;
-      state.cacheMetadata = {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-      };
+      resetCacheState(state);
+    },
+    resetHostileBuffEventsLoading(state) {
+      Object.values(state.entries).forEach((entry) => {
+        if (entry.status === 'loading') {
+          entry.status = 'idle';
+        }
+        entry.error = null;
+        entry.currentRequest = null;
+      });
+    },
+    clearHostileBuffEventsForContext(
+      state,
+      action: PayloadAction<{ reportCode?: string | null; fightId?: number | string | null }>,
+    ) {
+      const { context, key } = resolveCacheKey(action.payload);
+      if (!context.reportCode) {
+        resetCacheState(state);
+        return;
+      }
+      removeFromCache(state, key);
+    },
+    trimHostileBuffEventsCache(state, action: PayloadAction<{ maxEntries?: number } | undefined>) {
+      const limit = action?.payload?.maxEntries ?? EVENT_CACHE_MAX_ENTRIES;
+      trimCache(state, limit);
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchHostileBuffEvents.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+      .addCase(fetchHostileBuffEvents.pending, (state, action) => {
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
+        entry.status = 'loading';
+        entry.error = null;
+        entry.currentRequest = createCurrentRequest(
+          action.meta.arg.reportCode,
+          Number(action.meta.arg.fight.id),
+          action.meta.requestId,
+          true,
+        );
+        touchAccessOrder(state, key);
       })
       .addCase(fetchHostileBuffEvents.fulfilled, (state, action) => {
-        state.events = action.payload.events;
-        state.loading = false;
-        state.error = null;
-        // Update cache metadata
-        state.cacheMetadata = {
-          lastFetchedReportId: action.meta.arg.reportCode,
-          lastFetchedFightId: Number(action.meta.arg.fight.id),
-          lastFetchedTimestamp: Date.now(),
-        };
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
+        if (
+          isStaleResponse(
+            entry.currentRequest,
+            action.meta.requestId,
+            action.meta.arg.reportCode,
+            Number(action.meta.arg.fight.id),
+          )
+        ) {
+          return;
+        }
+        entry.events = action.payload.events;
+        entry.status = 'succeeded';
+        entry.error = null;
+        entry.cacheMetadata.lastFetchedTimestamp = Date.now();
+        entry.cacheMetadata.intervalCount = action.payload.intervalResults.length;
+        entry.cacheMetadata.failedIntervals = action.payload.intervalResults.filter((r) => r.error)
+          .length;
+        entry.currentRequest = null;
+        touchAccessOrder(state, key);
+        trimCache(state, EVENT_CACHE_MAX_ENTRIES);
       })
       .addCase(fetchHostileBuffEvents.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to fetch hostile buff events';
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
+        if (
+          isStaleResponse(
+            entry.currentRequest,
+            action.meta.requestId,
+            action.meta.arg.reportCode,
+            Number(action.meta.arg.fight.id),
+          )
+        ) {
+          return;
+        }
+        entry.status = 'failed';
+        entry.error = action.error.message || 'Failed to fetch hostile buff events';
+        entry.currentRequest = null;
+        touchAccessOrder(state, key);
       });
   },
 });
 
-export const { clearHostileBuffEvents } = hostileBuffEventsSlice.actions;
+export const {
+  clearHostileBuffEvents,
+  resetHostileBuffEventsLoading,
+  clearHostileBuffEventsForContext,
+  trimHostileBuffEventsCache,
+} = hostileBuffEventsSlice.actions;
 export default hostileBuffEventsSlice.reducer;

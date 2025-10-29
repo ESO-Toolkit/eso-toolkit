@@ -12,12 +12,8 @@ export const createMockState = (overrides: Partial<RootState> = {}): RootState =
   const baseState = {
     events: {
       combatantInfo: {
-        events: [],
-        loading: false,
-        error: null,
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
+        entries: {},
+        accessOrder: [],
       },
       damage: {
         entries: {},
@@ -27,37 +23,29 @@ export const createMockState = (overrides: Partial<RootState> = {}): RootState =
         entries: {},
         accessOrder: [],
       },
+      deaths: {
+        entries: {},
+        accessOrder: [],
+      },
       friendlyBuffs: {
-        events: [],
-        loading: false,
-        error: null,
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
+        entries: {},
+        accessOrder: [],
       },
       hostileBuffs: {
-        events: [],
-        loading: false,
-        error: null,
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
+        entries: {},
+        accessOrder: [],
       },
       debuffs: {
-        events: [],
-        loading: false,
-        error: null,
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
+        entries: {},
+        accessOrder: [],
       },
       casts: {
-        events: [],
-        loading: false,
-        error: null,
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
+        entries: {},
+        accessOrder: [],
+      },
+      resources: {
+        entries: {},
+        accessOrder: [],
       },
     },
     ui: {
