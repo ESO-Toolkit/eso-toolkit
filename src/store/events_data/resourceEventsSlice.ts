@@ -8,10 +8,10 @@ import {
   GetResourceEventsQuery,
   HostilityType,
 } from '../../graphql/gql/graphql';
-import { EVENT_PAGE_LIMIT } from './constants';
 import { ResourceChangeEvent, LogEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
 
+import { EVENT_PAGE_LIMIT } from './constants';
 
 export interface ResourceEventsState {
   events: ResourceChangeEvent[];

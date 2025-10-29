@@ -10,8 +10,8 @@ import {
 } from '../../graphql/gql/graphql';
 import { HealEvent, LogEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
-import { EVENT_PAGE_LIMIT } from './constants';
 
+import { EVENT_PAGE_LIMIT } from './constants';
 
 export interface HealingEventsState {
   events: HealEvent[];
