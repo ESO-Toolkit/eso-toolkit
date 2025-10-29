@@ -99,11 +99,14 @@ describe('analytics', () => {
       trackPageView('/test-path');
 
       expect(getEnvVarSpy).toHaveBeenCalledWith('VITE_GA_MEASUREMENT_ID');
-      expect(ReactGA.send).toHaveBeenCalledWith({
-        hitType: 'pageview',
-        page: '/test-path',
-        title: undefined,
-      });
+      expect(ReactGA.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hitType: 'pageview',
+          page: '/test-path',
+          title: undefined,
+          location: expect.stringContaining('/test-path'),
+        }),
+      );
     });
 
     it('should track page view with title when provided', () => {
@@ -111,11 +114,14 @@ describe('analytics', () => {
 
       trackPageView('/test-path', 'Test Title');
 
-      expect(ReactGA.send).toHaveBeenCalledWith({
-        hitType: 'pageview',
-        page: '/test-path',
-        title: 'Test Title',
-      });
+      expect(ReactGA.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hitType: 'pageview',
+          page: '/test-path',
+          title: 'Test Title',
+          location: expect.stringContaining('/test-path'),
+        }),
+      );
     });
 
     it('should not track page view when measurement ID is not set', () => {
