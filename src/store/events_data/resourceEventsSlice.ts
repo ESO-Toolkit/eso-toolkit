@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
@@ -9,41 +9,76 @@ import {
   HostilityType,
 } from '../../graphql/gql/graphql';
 import { ResourceChangeEvent, LogEvent } from '../../types/combatlogEvents';
-import { RootState } from '../storeWithHistory';
+import { Logger, LogLevel } from '../../utils/logger';
 
-import { EVENT_PAGE_LIMIT } from './constants';
+import {
+  KeyedCacheState,
+  removeFromCache,
+  resolveCacheKey,
+  resetCacheState,
+  touchAccessOrder,
+  trimCache,
+} from './cacheStateHelpers';
+import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
+import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
-export interface ResourceEventsState {
+const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'ResourceEvents' });
+
+type ResourceEventsRequest = ReturnType<typeof createCurrentRequest> | null;
+
+export interface ResourceEventsEntry {
   events: ResourceChangeEvent[];
-  loading: boolean;
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
-  // Cache metadata for better cache management
   cacheMetadata: {
-    lastFetchedReportId: string | null;
-    lastFetchedFightId: number | null;
     lastFetchedTimestamp: number | null;
+  };
+  currentRequest: ResourceEventsRequest;
+}
+
+export type ResourceEventsState = KeyedCacheState<ResourceEventsEntry>;
+
+// Local interface to avoid importing the full RootState and creating circular dependencies
+interface LocalRootState {
+  events: {
+    resources: ResourceEventsState;
   };
 }
 
-const initialState: ResourceEventsState = {
+const createEmptyEntry = (): ResourceEventsEntry => ({
   events: [],
-  loading: false,
+  status: 'idle',
   error: null,
   cacheMetadata: {
-    lastFetchedReportId: null,
-    lastFetchedFightId: null,
     lastFetchedTimestamp: null,
   },
+  currentRequest: null,
+});
+
+const ensureEntry = (state: ResourceEventsState, key: string): ResourceEventsEntry => {
+  if (!state.entries[key]) {
+    state.entries[key] = createEmptyEntry();
+  }
+  return state.entries[key];
+};
+
+const initialState: ResourceEventsState = {
+  entries: {},
+  accessOrder: [],
 };
 
 export const fetchResourceEvents = createAsyncThunk<
   ResourceChangeEvent[],
   { reportCode: string; fight: FightFragment; client: EsoLogsClient },
-  { state: RootState; rejectValue: string }
+  { state: LocalRootState; rejectValue: string }
 >(
   'resourceEvents/fetchResourceEvents',
   async ({ reportCode, fight, client }) => {
-    // Fetch both friendly and enemy resource events
+    logger.info('Fetching resource events', {
+      reportCode,
+      fightId: Number(fight.id),
+    });
+
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
     let allEvents: LogEvent[] = [];
 
@@ -59,7 +94,7 @@ export const fetchResourceEvents = createAsyncThunk<
             fightIds: [Number(fight.id)],
             startTime: nextPageTimestamp ?? fight.startTime,
             endTime: fight.endTime,
-            hostilityType: hostilityType,
+            hostilityType,
             limit: EVENT_PAGE_LIMIT,
           },
         });
@@ -72,31 +107,45 @@ export const fetchResourceEvents = createAsyncThunk<
       } while (nextPageTimestamp);
     }
 
+    logger.info('Resource events fetch completed', {
+      reportCode,
+      fightId: Number(fight.id),
+      totalEvents: allEvents.length,
+    });
+
     return allEvents as ResourceChangeEvent[];
   },
   {
     condition: ({ reportCode, fight }, { getState }) => {
       const state = getState().events.resources;
-      const requestedReportId = reportCode;
-      const requestedFightId = Number(fight.id);
+      const { key } = resolveCacheKey({ reportCode, fightId: Number(fight.id) });
+      const entry = state.entries[key];
 
-      // Check if resource events are already cached for this fight
-      const isCached =
-        state.cacheMetadata.lastFetchedReportId === requestedReportId &&
-        state.cacheMetadata.lastFetchedFightId === requestedFightId;
+      const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
+      const isCached = Boolean(entry?.events.length);
       const isFresh =
-        state.cacheMetadata.lastFetchedTimestamp &&
-        Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
+        typeof lastFetchedTimestamp === 'number' &&
+        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
       if (isCached && isFresh) {
-        return false; // Prevent thunk execution
+        logger.info('Using cached resource events', {
+          reportCode,
+          fightId: Number(fight.id),
+          cacheAge: lastFetchedTimestamp ? Date.now() - lastFetchedTimestamp : null,
+        });
+        return false;
       }
 
-      if (state.loading) {
-        return false; // Prevent duplicate execution
+      const inFlight = entry?.currentRequest;
+      if (inFlight && inFlight.reportId === reportCode && inFlight.fightId === Number(fight.id)) {
+        logger.info('Resource events fetch already in progress, skipping', {
+          reportCode,
+          fightId: Number(fight.id),
+        });
+        return false;
       }
 
-      return true; // Allow thunk execution
+      return true;
     },
   },
 );
@@ -105,42 +154,113 @@ const resourceEventsSlice = createSlice({
   name: 'resourceEvents',
   initialState,
   reducers: {
-    clearResourceEvents: (state) => {
-      state.events = [];
-      state.loading = false;
-      state.error = null;
-      state.cacheMetadata = {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-      };
+    clearResourceEvents(state) {
+      resetCacheState(state);
+    },
+    resetResourceEventsLoading(state) {
+      Object.values(state.entries).forEach((entry) => {
+        if (entry.status === 'loading') {
+          entry.status = 'idle';
+        }
+        entry.error = null;
+        entry.currentRequest = null;
+      });
+    },
+    clearResourceEventsForContext(
+      state,
+      action: PayloadAction<{ reportCode?: string | null; fightId?: number | string | null }>,
+    ) {
+      const { context, key } = resolveCacheKey(action.payload);
+      if (!context.reportCode) {
+        resetCacheState(state);
+        return;
+      }
+      removeFromCache(state, key);
+    },
+    trimResourceEventsCache(state, action: PayloadAction<{ maxEntries?: number } | undefined>) {
+      const limit = action?.payload?.maxEntries ?? EVENT_CACHE_MAX_ENTRIES;
+      trimCache(state, limit);
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchResourceEvents.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+      .addCase(fetchResourceEvents.pending, (state, action) => {
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
+        entry.status = 'loading';
+        entry.error = null;
+        entry.currentRequest = createCurrentRequest(
+          action.meta.arg.reportCode,
+          Number(action.meta.arg.fight.id),
+          action.meta.requestId,
+          true,
+        );
+        touchAccessOrder(state, key);
       })
       .addCase(fetchResourceEvents.fulfilled, (state, action) => {
-        state.loading = false;
-        state.events = action.payload;
-        state.error = null;
-        // Update cache metadata
-        const { reportCode, fight } = action.meta.arg;
-        state.cacheMetadata = {
-          lastFetchedReportId: reportCode,
-          lastFetchedFightId: Number(fight.id),
-          lastFetchedTimestamp: Date.now(),
-        };
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
+        if (
+          isStaleResponse(
+            entry.currentRequest,
+            action.meta.requestId,
+            action.meta.arg.reportCode,
+            Number(action.meta.arg.fight.id),
+          )
+        ) {
+          logger.info('Ignoring stale resource events response', {
+            reportCode: action.meta.arg.reportCode,
+            fightId: Number(action.meta.arg.fight.id),
+          });
+          return;
+        }
+        entry.events = action.payload;
+        entry.status = 'succeeded';
+        entry.error = null;
+        entry.cacheMetadata.lastFetchedTimestamp = Date.now();
+        entry.currentRequest = null;
+        touchAccessOrder(state, key);
+        trimCache(state, EVENT_CACHE_MAX_ENTRIES);
       })
       .addCase(fetchResourceEvents.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || 'Failed to fetch resource events';
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
+        if (
+          isStaleResponse(
+            entry.currentRequest,
+            action.meta.requestId,
+            action.meta.arg.reportCode,
+            Number(action.meta.arg.fight.id),
+          )
+        ) {
+          logger.info('Ignoring stale resource events error response', {
+            reportCode: action.meta.arg.reportCode,
+            fightId: Number(action.meta.arg.fight.id),
+          });
+          return;
+        }
+        entry.status = 'failed';
+        entry.error = action.payload || action.error.message || 'Failed to fetch resource events';
+        entry.currentRequest = null;
+        touchAccessOrder(state, key);
       });
   },
 });
 
-export const { clearResourceEvents } = resourceEventsSlice.actions;
+export const {
+  clearResourceEvents,
+  resetResourceEventsLoading,
+  clearResourceEventsForContext,
+  trimResourceEventsCache,
+} = resourceEventsSlice.actions;
 
 export default resourceEventsSlice.reducer;

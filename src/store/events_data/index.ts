@@ -41,3 +41,8 @@ export { eventsReducer };
 
 // Export damage events selectors
 export * from './damageEventsSelectors';
+export * from './friendlyBuffEventsSelectors';
+export * from './hostileBuffEventsSelectors';
+export * from './debuffEventsSelectors';
+export * from './deathEventsSelectors';
+export * from './combatantInfoEventsSelectors';

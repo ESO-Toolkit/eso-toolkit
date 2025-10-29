@@ -10,6 +10,7 @@ import castEventsReducer, {
   clearCastEvents,
   fetchCastEvents,
 } from './castEventsSlice';
+import { resolveCacheKey } from './cacheStateHelpers';
 
 // Mock the esologsClient
 jest.mock('../../esologsClient');
@@ -51,18 +52,7 @@ describe('castEventsSlice', () => {
   describe('initial state', () => {
     it('should initialize with correct default values', () => {
       const state = store.getState() as { events: { casts: CastEventsState } };
-      expect(state.events.casts).toEqual({
-        events: [],
-        loading: false,
-        error: null,
-        currentRequest: null,
-        cacheMetadata: {
-          lastFetchedReportId: null,
-          lastFetchedFightId: null,
-          lastFetchedTimestamp: null,
-          lastRestrictToFightWindow: null,
-        },
-      });
+      expect(state.events.casts).toEqual({ entries: {}, accessOrder: [] });
     });
   });
 
@@ -85,18 +75,7 @@ describe('castEventsSlice', () => {
       store.dispatch(clearCastEvents());
 
       const state = store.getState() as { events: { casts: CastEventsState } };
-      expect(state.events.casts).toEqual({
-        events: [],
-        loading: false,
-        error: null,
-        currentRequest: null,
-        cacheMetadata: {
-          lastFetchedReportId: null,
-          lastFetchedFightId: null,
-          lastFetchedTimestamp: null,
-          lastRestrictToFightWindow: null,
-        },
-      });
+      expect(state.events.casts).toEqual({ entries: {}, accessOrder: [] });
     });
   });
 
@@ -138,14 +117,20 @@ describe('castEventsSlice', () => {
         });
 
         const state = store.getState() as { events: { casts: CastEventsState } };
-        expect(state.events.casts.loading).toBe(true);
-        expect(state.events.casts.error).toBeNull();
-        expect(state.events.casts.currentRequest).toEqual({
+        const { key } = resolveCacheKey({ reportCode: 'ABC123', fightId: 1 });
+        const entry = state.events.casts.entries[key];
+
+        expect(entry).toBeDefined();
+        expect(entry?.status).toBe('loading');
+        expect(entry?.error).toBeNull();
+        expect(entry?.currentRequest).toEqual({
           reportId: 'ABC123',
           fightId: 1,
           requestId: 'test-request-1',
           restrictToFightWindow: true,
         });
+        expect(entry?.cacheMetadata.restrictToFightWindow).toBe(true);
+        expect(state.events.casts.accessOrder).toEqual([key]);
       });
     });
 
@@ -195,18 +180,18 @@ describe('castEventsSlice', () => {
         );
 
         const state = store.getState() as { events: { casts: CastEventsState } };
+        const { key } = resolveCacheKey({ reportCode, fightId: Number(mockFight.id) });
+        const entry = state.events.casts.entries[key];
 
-        expect(state.events.casts.loading).toBe(false);
-        expect(state.events.casts.error).toBeNull();
-        expect(state.events.casts.events).toEqual(mockCastEvents);
-
-        // Check cache metadata
-        expect(state.events.casts.cacheMetadata).toEqual({
-          lastFetchedReportId: reportCode,
-          lastFetchedFightId: Number(mockFight.id),
+        expect(entry?.status).toBe('succeeded');
+        expect(entry?.error).toBeNull();
+        expect(entry?.events).toEqual(mockCastEvents);
+        expect(entry?.cacheMetadata).toEqual({
           lastFetchedTimestamp: mockTimestamp,
-          lastRestrictToFightWindow: true,
+          restrictToFightWindow: true,
         });
+        expect(entry?.currentRequest).toBeNull();
+        expect(state.events.casts.accessOrder).toEqual([key]);
 
         // Should call query twice (for friendlies and enemies)
         expect(mockClient.query).toHaveBeenCalledTimes(2);
@@ -241,8 +226,12 @@ describe('castEventsSlice', () => {
         );
 
         const state = store.getState() as { events: { casts: CastEventsState } };
-        expect(state.events.casts.loading).toBe(false);
-        expect(state.events.casts.error).toBe(errorMessage);
+        const { key } = resolveCacheKey({ reportCode: 'ABC123', fightId: Number(mockFight.id) });
+        const entry = state.events.casts.entries[key];
+
+        expect(entry?.status).toBe('failed');
+        expect(entry?.error).toBe(errorMessage);
+        expect(entry?.currentRequest).toBeNull();
       });
 
       it('should handle undefined error with default message', async () => {
@@ -253,7 +242,9 @@ describe('castEventsSlice', () => {
         );
 
         const state = store.getState() as { events: { casts: CastEventsState } };
-        expect(state.events.casts.error).toBe('Failed to fetch cast events');
+        const { key } = resolveCacheKey({ reportCode: 'ABC123', fightId: Number(mockFight.id) });
+        const entry = state.events.casts.entries[key];
+        expect(entry?.error).toBe('Failed to fetch cast events');
       });
     });
 

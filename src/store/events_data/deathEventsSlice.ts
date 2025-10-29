@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
@@ -9,37 +9,67 @@ import {
   HostilityType,
 } from '../../graphql/gql/graphql';
 import { DeathEvent, LogEvent } from '../../types/combatlogEvents';
-import { RootState } from '../storeWithHistory';
+import {
+  KeyedCacheState,
+  removeFromCache,
+  resolveCacheKey,
+  resetCacheState,
+  touchAccessOrder,
+  trimCache,
+} from './cacheStateHelpers';
+import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
+import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
-import { EVENT_PAGE_LIMIT } from './constants';
+type DeathEventsRequest = ReturnType<typeof createCurrentRequest> | null;
 
-export interface DeathEventsState {
+export interface DeathEventsEntry {
   events: DeathEvent[];
-  loading: boolean;
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
-  // Cache metadata for better cache management
   cacheMetadata: {
-    lastFetchedReportId: string | null;
-    lastFetchedFightId: number | null;
     lastFetchedTimestamp: number | null;
+    intervalCount: number;
+    failedIntervals: number;
+  };
+  currentRequest: DeathEventsRequest;
+}
+
+export type DeathEventsState = KeyedCacheState<DeathEventsEntry>;
+
+interface LocalRootState {
+  events: {
+    deaths: DeathEventsState;
   };
 }
 
-const initialState: DeathEventsState = {
+const createEmptyEntry = (): DeathEventsEntry => ({
   events: [],
-  loading: false,
+  status: 'idle',
   error: null,
   cacheMetadata: {
-    lastFetchedReportId: null,
-    lastFetchedFightId: null,
     lastFetchedTimestamp: null,
+    intervalCount: 0,
+    failedIntervals: 0,
   },
+  currentRequest: null,
+});
+
+const ensureEntry = (state: DeathEventsState, key: string): DeathEventsEntry => {
+  if (!state.entries[key]) {
+    state.entries[key] = createEmptyEntry();
+  }
+  return state.entries[key];
+};
+
+const initialState: DeathEventsState = {
+  entries: {},
+  accessOrder: [],
 };
 
 export const fetchDeathEvents = createAsyncThunk<
   DeathEvent[],
   { reportCode: string; fight: FightFragment; client: EsoLogsClient },
-  { state: RootState; rejectValue: string }
+  { state: LocalRootState; rejectValue: string }
 >(
   'deathEvents/fetchDeathEvents',
   async ({ reportCode, fight, client }) => {
@@ -79,22 +109,21 @@ export const fetchDeathEvents = createAsyncThunk<
   {
     condition: ({ reportCode, fight }, { getState }) => {
       const state = getState().events.deaths;
-      const requestedReportId = reportCode;
-      const requestedFightId = Number(fight.id);
+      const { key } = resolveCacheKey({ reportCode, fightId: Number(fight.id) });
+      const entry = state.entries[key];
 
-      // Check if death events are already cached for this fight
-      const isCached =
-        state.cacheMetadata.lastFetchedReportId === requestedReportId &&
-        state.cacheMetadata.lastFetchedFightId === requestedFightId;
+      const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
+      const isCached = Boolean(entry?.events.length);
       const isFresh =
-        state.cacheMetadata.lastFetchedTimestamp &&
-        Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
+        typeof lastFetchedTimestamp === 'number' &&
+        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
       if (isCached && isFresh) {
         return false; // Prevent thunk execution
       }
 
-      if (state.loading) {
+      const inFlight = entry?.currentRequest;
+      if (inFlight && inFlight.reportId === reportCode && inFlight.fightId === Number(fight.id)) {
         return false; // Prevent duplicate execution
       }
 
@@ -108,39 +137,105 @@ const deathEventsSlice = createSlice({
   initialState,
   reducers: {
     clearDeathEvents(state) {
-      state.events = [];
-      state.loading = false;
-      state.error = null;
-      state.cacheMetadata = {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-      };
+      resetCacheState(state);
+    },
+    resetDeathEventsLoading(state) {
+      Object.values(state.entries).forEach((entry) => {
+        if (entry.status === 'loading') {
+          entry.status = 'idle';
+        }
+        entry.error = null;
+        entry.currentRequest = null;
+      });
+    },
+    clearDeathEventsForContext(
+      state,
+      action: PayloadAction<{ reportCode?: string | null; fightId?: number | string | null }>,
+    ) {
+      const { context, key } = resolveCacheKey(action.payload);
+      if (!context.reportCode) {
+        resetCacheState(state);
+        return;
+      }
+      removeFromCache(state, key);
+    },
+    trimDeathEventsCache(state, action: PayloadAction<{ maxEntries?: number } | undefined>) {
+      const limit = action?.payload?.maxEntries ?? EVENT_CACHE_MAX_ENTRIES;
+      trimCache(state, limit);
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchDeathEvents.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+      .addCase(fetchDeathEvents.pending, (state, action) => {
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
+        entry.status = 'loading';
+        entry.error = null;
+        entry.currentRequest = createCurrentRequest(
+          action.meta.arg.reportCode,
+          Number(action.meta.arg.fight.id),
+          action.meta.requestId,
+          true,
+        );
+        touchAccessOrder(state, key);
       })
       .addCase(fetchDeathEvents.fulfilled, (state, action) => {
-        state.events = action.payload;
-        state.loading = false;
-        state.error = null;
-        // Update cache metadata
-        state.cacheMetadata = {
-          lastFetchedReportId: action.meta.arg.reportCode,
-          lastFetchedFightId: Number(action.meta.arg.fight.id),
-          lastFetchedTimestamp: Date.now(),
-        };
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
+        if (
+          isStaleResponse(
+            entry.currentRequest,
+            action.meta.requestId,
+            action.meta.arg.reportCode,
+            Number(action.meta.arg.fight.id),
+          )
+        ) {
+          return;
+        }
+        entry.events = action.payload;
+        entry.status = 'succeeded';
+        entry.error = null;
+        entry.cacheMetadata.lastFetchedTimestamp = Date.now();
+        entry.cacheMetadata.intervalCount = 1;
+        entry.cacheMetadata.failedIntervals = 0;
+        entry.currentRequest = null;
+        touchAccessOrder(state, key);
+        trimCache(state, EVENT_CACHE_MAX_ENTRIES);
       })
       .addCase(fetchDeathEvents.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to fetch death events';
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
+        if (
+          isStaleResponse(
+            entry.currentRequest,
+            action.meta.requestId,
+            action.meta.arg.reportCode,
+            Number(action.meta.arg.fight.id),
+          )
+        ) {
+          return;
+        }
+        entry.status = 'failed';
+        entry.error = action.error.message || 'Failed to fetch death events';
+        entry.currentRequest = null;
+        touchAccessOrder(state, key);
       });
   },
 });
 
-export const { clearDeathEvents } = deathEventsSlice.actions;
+export const {
+  clearDeathEvents,
+  resetDeathEventsLoading,
+  clearDeathEventsForContext,
+  trimDeathEventsCache,
+} = deathEventsSlice.actions;
 export default deathEventsSlice.reducer;

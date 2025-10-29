@@ -9,6 +9,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 import { SkillTooltip } from './SkillTooltip';
+import { resolveCacheKey } from '../store/events_data/cacheStateHelpers';
 
 // Mock the logger to avoid context issues
 jest.mock('../hooks/useLogger', () => ({
@@ -258,19 +259,118 @@ const createMockStore = () => {
     },
   ];
 
+  const reportCode = 'm2Y9FqdpMjcaZh4R';
+  const fightId = 11;
+  const { key: contextKey } = resolveCacheKey({ reportCode, fightId });
+  const mockTimestamp = 1_700_000_000_000;
+
   return configureStore({
     reducer: {
       events: (
         state = {
-          damage: { events: mockDamage, loading: false, error: null },
-          healing: { events: [], loading: false, error: null },
-          friendlyBuffs: { events: mockBuffs, loading: false, error: null },
-          hostileBuffs: { events: [], loading: false, error: null },
-          debuffs: { events: mockDebuffs, loading: false, error: null },
-          deaths: { events: [], loading: false, error: null },
-          combatantInfo: { events: [], loading: false, error: null },
-          casts: { events: mockCasts, loading: false, error: null },
-          resources: { events: [], loading: false, error: null },
+          damage: {
+            entries: {
+              [contextKey]: {
+                events: mockDamage,
+                status: 'succeeded',
+                error: null,
+                cacheMetadata: {
+                  lastFetchedTimestamp: mockTimestamp,
+                  restrictToFightWindow: true,
+                },
+                currentRequest: null,
+              },
+            },
+            accessOrder: [contextKey],
+          },
+          healing: { entries: {}, accessOrder: [] },
+          friendlyBuffs: {
+            entries: {
+              [contextKey]: {
+                events: mockBuffs,
+                status: 'succeeded',
+                error: null,
+                cacheMetadata: {
+                  lastFetchedTimestamp: mockTimestamp,
+                  restrictToFightWindow: true,
+                  intervalCount: 1,
+                  failedIntervals: 0,
+                },
+                currentRequest: null,
+              },
+            },
+            accessOrder: [contextKey],
+          },
+          hostileBuffs: { entries: {}, accessOrder: [] },
+          debuffs: {
+            entries: {
+              [contextKey]: {
+                events: mockDebuffs,
+                status: 'succeeded',
+                error: null,
+                cacheMetadata: {
+                  lastFetchedTimestamp: mockTimestamp,
+                  restrictToFightWindow: true,
+                },
+                currentRequest: null,
+              },
+            },
+            accessOrder: [contextKey],
+          },
+          deaths: { entries: {}, accessOrder: [] },
+          combatantInfo: { entries: {}, accessOrder: [] },
+          casts: {
+            entries: {
+              [contextKey]: {
+                events: mockCasts,
+                status: 'succeeded',
+                error: null,
+                cacheMetadata: {
+                  lastFetchedTimestamp: mockTimestamp,
+                  restrictToFightWindow: true,
+                },
+                currentRequest: null,
+              },
+            },
+            accessOrder: [contextKey],
+          },
+          resources: { entries: {}, accessOrder: [] },
+        },
+      ) => state,
+      report: (
+        state = {
+          reportId: reportCode,
+          data: {
+            fights: [
+              {
+                id: fightId,
+                startTime: 0,
+                endTime: 1,
+                name: 'Shattering Knife Fight',
+                friendlyPlayers: [1],
+                enemyNPCs: [],
+                enemyPlayers: [],
+                maps: [],
+              },
+            ],
+            masterData: {
+              actors: [],
+              abilities: [],
+              gameZones: [],
+            },
+          },
+          loading: false,
+          error: null,
+          cacheMetadata: {
+            lastFetchedReportId: null,
+            lastFetchedTimestamp: null,
+          },
+          activeContext: {
+            reportId: reportCode,
+            fightId,
+          },
+          reportsById: {},
+          fightIndexByReport: {},
         },
       ) => state,
       ui: (state = {}) => state,
