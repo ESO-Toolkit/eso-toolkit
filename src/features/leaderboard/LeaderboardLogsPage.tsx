@@ -181,8 +181,12 @@ export const LeaderboardLogsPage: React.FC = () => {
       size?: number;
     }): Promise<void> => {
       if (!client) {
+        setRankingsError('Leaderboard data is temporarily unavailable. Please try again later.');
+        setRankingsState(createEmptyRankings(page ?? 1));
+        setRankingsLoading(false);
         return;
       }
+
       setRankingsLoading(true);
       setRankingsError(null);
 
@@ -319,8 +323,11 @@ export const LeaderboardLogsPage: React.FC = () => {
   );
 
   React.useEffect(() => {
+    if (!client) {
+      return;
+    }
     void loadZones();
-  }, [loadZones]);
+  }, [client, loadZones]);
 
   React.useEffect(() => {
     if (!currentZone) {
@@ -353,7 +360,7 @@ export const LeaderboardLogsPage: React.FC = () => {
   );
 
   React.useEffect(() => {
-    if (!selectedEncounterId) {
+    if (!client || !selectedEncounterId) {
       return;
     }
 
@@ -364,7 +371,13 @@ export const LeaderboardLogsPage: React.FC = () => {
       page: 1,
       size: sizeForDifficulty,
     });
-  }, [fetchRankings, resolveSizeForDifficulty, selectedEncounterId, selectedDifficultyId]);
+  }, [client, fetchRankings, resolveSizeForDifficulty, selectedEncounterId, selectedDifficultyId]);
+
+  React.useEffect(() => {
+    if (!client) {
+      logger.error('EsoLogsClient is unavailable for leaderboard data');
+    }
+  }, [client, logger]);
 
   const handleZoneChange = (event: SelectChangeEvent<number>): void => {
     const nextZoneId = Number(event.target.value);
