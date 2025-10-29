@@ -1,7 +1,10 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { FightFragment } from '../../graphql/gql/graphql';
-import { RootState } from '../storeWithHistory';
+import type { ReportRegistryEntry } from './reportSlice';
+import type { ReportFightContext } from '../contextTypes';
+import type { RootState } from '../storeWithHistory';
+import { createReportFightContextSelector } from '../utils/contextSelectors';
 
 // REPORT SELECTORS - Read from report slice
 
@@ -12,25 +15,66 @@ export const selectActiveReportContext = (state: RootState) => state.report.acti
 export const selectReportEntryById = (state: RootState, reportId: string) =>
   state.report.reportsById[reportId] ?? null;
 
+const selectReportRegistryEntryByContext = (
+  state: RootState,
+  context: ReportFightContext,
+): ReportRegistryEntry | null => {
+  const reportId =
+    context.reportCode ?? state.report.activeContext.reportId ?? state.report.reportId ?? null;
+
+  if (!reportId) {
+    return null;
+  }
+
+  return state.report.reportsById[reportId] ?? null;
+};
+
+export const selectReportRegistryEntryForContext = createReportFightContextSelector<
+  RootState,
+  [typeof selectReportRegistryEntryByContext],
+  ReportRegistryEntry | null
+>(
+  [selectReportRegistryEntryByContext],
+  (entry, _context) => entry,
+);
+
 export const selectActiveReportEntry = createSelector(
-  [selectReport, selectActiveReportContext],
-  (report, context) => {
-    if (!context.reportId) {
-      return null;
+  [(state: RootState) => state, selectActiveReportContext],
+  (state, context) =>
+    selectReportRegistryEntryForContext(state, {
+      reportCode: context.reportId ?? state.report.reportId,
+      fightId: context.fightId,
+    }),
+);
+
+export const selectReportFightsForContext = createReportFightContextSelector<
+  RootState,
+  [typeof selectReport, typeof selectReportRegistryEntryByContext],
+  Array<FightFragment | null> | null
+>(
+  [selectReport, selectReportRegistryEntryByContext],
+  (report, registryEntry, context) => {
+    if (registryEntry) {
+      return registryEntry.fightIds.map(
+        (fightId: number) => registryEntry.fightsById[fightId] ?? null,
+      );
     }
-    return report.reportsById[context.reportId] ?? null;
+
+    if (!context.reportCode) {
+      return report.data?.fights ?? null;
+    }
+
+    return null;
   },
 );
 
 export const selectReportFights = createSelector(
-  [selectReport, selectActiveReportEntry],
-  (report, registryEntry): Array<FightFragment | null> | null => {
-    if (registryEntry) {
-      return registryEntry.fightIds.map((fightId) => registryEntry.fightsById[fightId] ?? null);
-    }
-
-    return report.data?.fights ?? null;
-  },
+  [(state: RootState) => state, selectActiveReportContext],
+  (state, activeContext) =>
+    selectReportFightsForContext(state, {
+      reportCode: activeContext.reportId ?? state.report.reportId,
+      fightId: activeContext.fightId,
+    }),
 );
 
 export const selectReportId = (state: RootState): string =>

@@ -3,7 +3,7 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 
 import { fetchReportMasterData, forceMasterDataRefresh } from '@/store/master_data/masterDataSlice';
-import { setReportCacheMetadata, setReportData, setReportId } from '@/store/report/reportSlice';
+import { setActiveReportContext, setReportCacheMetadata, setReportData } from '@/store/report/reportSlice';
 import { setSelectedTargetIds } from '@/store/ui/uiSlice';
 import { useAppDispatch } from '@/store/useAppDispatch';
 
@@ -26,12 +26,19 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
   const [selectedTabId, setSelectedTabId] = React.useState<TabId>(TabId.INSIGHTS);
   const [showExperimentalTabs, setShowExperimentalTabs] = React.useState<boolean>(false);
 
+  React.useEffect(() => {
+    dispatch(
+      setActiveReportContext({
+        reportCode: reportId ?? null,
+        fightId: latestFightId ?? null,
+      }),
+    );
+  }, [dispatch, reportId, latestFightId]);
+
   const fetchLatestFightId = React.useCallback(async (): Promise<void> => {
     if (!reportId) {
       return;
     }
-
-    dispatch(setReportId(reportId));
 
     const response = await client.query({
       query: GetReportByCodeDocument,

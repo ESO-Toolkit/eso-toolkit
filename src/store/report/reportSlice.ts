@@ -4,6 +4,8 @@ import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
 import { FightFragment, ReportFragment, GetReportByCodeDocument } from '../../graphql/gql/graphql';
 import { RootState } from '../storeWithHistory';
+import type { ReportFightContextInput } from '../contextTypes';
+import { normalizeReportFightContext } from '../utils/cacheKeys';
 
 export type ReportLoadStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 
@@ -162,6 +164,17 @@ const reportSlice = createSlice({
       state.reportId = action.payload;
       state.activeContext.reportId = action.payload;
     },
+    setActiveReportContext(state, action: PayloadAction<ReportFightContextInput>) {
+      const normalized = normalizeReportFightContext(action.payload);
+
+      state.activeContext.reportId = normalized.reportCode;
+      state.activeContext.fightId = normalized.fightId;
+
+      if (normalized.reportCode) {
+        state.reportId = normalized.reportCode;
+        ensureRegistryEntry(state, normalized.reportCode);
+      }
+    },
     setReportData(state, action: PayloadAction<ReportFragment | null>) {
       state.data = action.payload;
       const activeReportId = state.activeContext.reportId || state.reportId || action.payload?.code;
@@ -277,6 +290,6 @@ const reportSlice = createSlice({
   },
 });
 
-export const { setReportId, clearReport, setReportData, setReportCacheMetadata } =
+export const { setReportId, setActiveReportContext, clearReport, setReportData, setReportCacheMetadata } =
   reportSlice.actions;
 export default reportSlice.reducer;
