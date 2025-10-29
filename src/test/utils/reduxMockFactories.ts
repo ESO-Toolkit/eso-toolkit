@@ -8,8 +8,8 @@ import { BuffEvent, DebuffEvent } from '../../types/combatlogEvents';
 /**
  * Creates a mock RootState for testing selectors and components
  */
-export const createMockState = (overrides: Partial<RootState> = {}): RootState =>
-  ({
+export const createMockState = (overrides: Partial<RootState> = {}): RootState => {
+  const baseState = {
     events: {
       combatantInfo: {
         events: [],
@@ -20,12 +20,12 @@ export const createMockState = (overrides: Partial<RootState> = {}): RootState =
         lastFetchedTimestamp: null,
       },
       damage: {
-        events: [],
-        loading: false,
-        error: null,
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
+        entries: {},
+        accessOrder: [],
+      },
+      healing: {
+        entries: {},
+        accessOrder: [],
       },
       friendlyBuffs: {
         events: [],
@@ -61,22 +61,19 @@ export const createMockState = (overrides: Partial<RootState> = {}): RootState =
       },
     },
     ui: {
-      checkedStats: new Set(),
-      selectedTargetIds: new Set(),
-      selectedPlayerName: null,
+      darkMode: true,
       selectedPlayerId: null,
-      selectedPlayerGuid: null,
-      filterSettings: {
-        abilities: [],
-        gameZones: [],
-      },
+      selectedTabId: null,
+      selectedTargetIds: [],
+      showExperimentalTabs: false,
+      sidebarOpen: false,
     },
     report: {
       reportId: 'test-report',
       data: {
         fights: [
           {
-            id: '1',
+            id: 1,
             startTime: 1000,
             endTime: 2000,
             name: 'Test Fight',
@@ -94,6 +91,16 @@ export const createMockState = (overrides: Partial<RootState> = {}): RootState =
       },
       loading: false,
       error: null,
+      cacheMetadata: {
+        lastFetchedReportId: null,
+        lastFetchedTimestamp: null,
+      },
+      activeContext: {
+        reportId: 'test-report',
+        fightId: 1,
+      },
+      reportsById: {},
+      fightIndexByReport: {},
     },
     masterData: {
       actorsById: {},
@@ -103,8 +110,16 @@ export const createMockState = (overrides: Partial<RootState> = {}): RootState =
     playerData: {
       playersById: {},
     },
+    parseAnalysis: {} as unknown,
+    workerResults: {} as unknown,
+    router: undefined,
+  } as unknown as RootState;
+
+  return {
+    ...baseState,
     ...overrides,
-  }) as RootState;
+  } as RootState;
+};
 
 /**
  * Helper to create a mock buff event for testing Redux selectors

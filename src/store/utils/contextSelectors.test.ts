@@ -42,10 +42,7 @@ describe('createReportFightContextSelector', () => {
       TestState,
       [typeof selectValue, typeof selectLabel],
       { value: number; label: string }
-    >(
-      [selectValue, selectLabel],
-      (value, label) => ({ value, label }),
-    );
+    >([selectValue, selectLabel], (value, label) => ({ value, label }));
 
     const context = { reportCode: 'R-1', fightId: 1 };
     const first = selector(baseState, context);

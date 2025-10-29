@@ -12,14 +12,26 @@ import {
   ResourceChangeEvent,
 } from '../../types/combatlogEvents';
 import { createBuffLookup, createDebuffLookup, BuffLookupData } from '../../utils/BuffLookupUtils';
+import { selectDamageEvents } from '../events_data/damageEventsSelectors';
+import { selectHealingEvents } from '../events_data/healingEventsSelectors';
 import { selectActorsById } from '../master_data/masterDataSelectors';
 import { selectReportFights } from '../report/reportSelectors';
 import { RootState } from '../storeWithHistory';
 
-// Basic event selectors for the new modular structure
+export {
+  selectDamageEvents,
+  selectDamageEventsEntryForContext,
+  selectDamageEventsForContext,
+  selectDamageEventsLoading,
+} from '../events_data/damageEventsSelectors';
+export {
+  selectHealingEvents,
+  selectHealingEventsEntryForContext,
+  selectHealingEventsForContext,
+  selectHealingEventsLoading,
+} from '../events_data/healingEventsSelectors';
 
-export const selectDamageEvents = (state: RootState): DamageEvent[] => state.events.damage.events;
-export const selectHealingEvents = (state: RootState): HealEvent[] => state.events.healing.events;
+// Basic event selectors for the new modular structure
 export const selectFriendlyBuffEvents = (state: RootState): BuffEvent[] =>
   state.events.friendlyBuffs.events;
 export const selectHostileBuffEvents = (state: RootState): BuffEvent[] =>
@@ -33,9 +45,6 @@ export const selectResourceEvents = (state: RootState): ResourceChangeEvent[] =>
   state.events.resources.events;
 
 // Loading state selectors
-export const selectDamageEventsLoading = (state: RootState): boolean => state.events.damage.loading;
-export const selectHealingEventsLoading = (state: RootState): boolean =>
-  state.events.healing.loading;
 export const selectFriendlyBuffEventsLoading = (state: RootState): boolean =>
   state.events.friendlyBuffs.loading;
 export const selectHostileBuffEventsLoading = (state: RootState): boolean =>
@@ -103,8 +112,8 @@ export const selectAllEvents = createSelector(
     selectResourceEvents,
   ],
   (
-    damageEvents,
-    healingEvents,
+    damageEvents: DamageEvent[],
+    healingEvents: HealEvent[],
     deathEvents,
     combatantInfoEvents,
     debuffEvents,

@@ -4,12 +4,24 @@ import { ExtendedPlayerInfo } from '../../types/playerTypes';
 export type PlayerInfo = ExtendedPlayerInfo;
 
 // Re-export all actions and types from individual event slices
-export { fetchDamageEvents, clearDamageEvents, type DamageEventsState } from './damageEventsSlice';
+export {
+  fetchDamageEvents,
+  clearDamageEvents,
+  clearDamageEventsForContext,
+  trimDamageEventsCache,
+  resetDamageEventsLoading,
+  type DamageEventsState,
+  type DamageEventsEntry,
+} from './damageEventsSlice';
 
 export {
   fetchHealingEvents,
   clearHealingEvents,
+  clearHealingEventsForContext,
+  trimHealingEventsCache,
+  resetHealingEventsLoading,
   type HealingEventsState,
+  type HealingEventsEntry,
 } from './healingEventsSlice';
 
 export {

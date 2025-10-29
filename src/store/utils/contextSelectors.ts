@@ -17,10 +17,7 @@ type ReportFightInputSelector<State, Result> = (
   context: ReportFightContext,
 ) => Result;
 
-type SelectorResults<
-  State,
-  Selectors extends Array<ReportFightInputSelector<State, unknown>>,
-> = {
+type SelectorResults<State, Selectors extends Array<ReportFightInputSelector<State, unknown>>> = {
   [Index in keyof Selectors]: Selectors[Index] extends ReportFightInputSelector<State, infer Result>
     ? Result
     : never;
@@ -36,15 +33,10 @@ export const createReportFightContextSelector = <
   Result,
 >(
   inputSelectors: [...Selectors],
-  combiner: (
-    ...args: [...SelectorResults<State, Selectors>, ReportFightContext]
-  ) => Result,
+  combiner: (...args: [...SelectorResults<State, Selectors>, ReportFightContext]) => Result,
   options: SelectorCacheOptions = {},
 ): ((state: State, context: ReportFightContextInput) => Result) => {
-  const cacheLimit = Math.max(
-    1,
-    options.cacheLimit ?? DEFAULT_REPORT_FIGHT_SELECTOR_CACHE_LIMIT,
-  );
+  const cacheLimit = Math.max(1, options.cacheLimit ?? DEFAULT_REPORT_FIGHT_SELECTOR_CACHE_LIMIT);
   const selectorCache = new Map<string, (state: State) => Result>();
   const cacheOrder: string[] = [];
 

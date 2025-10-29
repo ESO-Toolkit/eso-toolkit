@@ -6,6 +6,7 @@ import { eventsReducer } from './index';
 // Import individual slice actions to set up test data
 import { clearCastEvents } from './castEventsSlice';
 import damageEventsReducer from './damageEventsSlice';
+import healingEventsReducer from './healingEventsSlice';
 import castEventsReducer from './castEventsSlice';
 
 // Define store type
@@ -18,6 +19,8 @@ const createTestStore = () =>
 
 type TestStore = ReturnType<typeof createTestStore>;
 type TestRootState = ReturnType<TestStore['getState']>;
+
+const DEFAULT_CONTEXT_KEY = 'test123::1';
 
 describe('clearAction', () => {
   let store: TestStore;
@@ -166,7 +169,8 @@ describe('clearAction', () => {
       // Verify that data exists
       let state = store.getState() as TestRootState;
       expect(state.events.casts.events.length).toBeGreaterThan(0);
-      expect(state.events.damage.events.length).toBeGreaterThan(0);
+      expect(Object.keys(state.events.damage.entries)).toContain(DEFAULT_CONTEXT_KEY);
+      expect(state.events.damage.entries[DEFAULT_CONTEXT_KEY].events.length).toBeGreaterThan(0);
 
       // Dispatch clearAllEvents
       store.dispatch(clearAllEvents());
@@ -189,25 +193,14 @@ describe('clearAction', () => {
       });
 
       // Check damage events slice
-      expect(state.events.damage).toEqual({
-        events: [],
-        loading: false,
-        error: null,
-        currentRequest: null,
-        cacheMetadata: {
-          lastFetchedReportId: null,
-          lastFetchedFightId: null,
-          lastFetchedTimestamp: null,
-          lastRestrictToFightWindow: null,
-        },
-      });
+      expect(state.events.damage).toEqual(damageEventsReducer(undefined, { type: 'init' }));
 
       // Check other slices have initial state structure
       expect(state.events.combatantInfo.events).toEqual([]);
       expect(state.events.deaths.events).toEqual([]);
       expect(state.events.debuffs.events).toEqual([]);
       expect(state.events.friendlyBuffs.events).toEqual([]);
-      expect(state.events.healing.events).toEqual([]);
+      expect(state.events.healing).toEqual(healingEventsReducer(undefined, { type: 'init' }));
       expect(state.events.hostileBuffs.events).toEqual([]);
       expect(state.events.resources.events).toEqual([]);
     });
@@ -245,7 +238,7 @@ describe('clearAction', () => {
       // Verify loading states are set
       let state = store.getState() as TestRootState;
       expect(state.events.casts.loading).toBe(true);
-      expect(state.events.damage.loading).toBe(true);
+      expect(state.events.damage.entries[DEFAULT_CONTEXT_KEY].status).toBe('loading');
 
       // Dispatch clearAllEvents
       store.dispatch(clearAllEvents());
@@ -253,7 +246,7 @@ describe('clearAction', () => {
       // Verify loading states are reset
       state = store.getState() as TestRootState;
       expect(state.events.casts.loading).toBe(false);
-      expect(state.events.damage.loading).toBe(false);
+      expect(state.events.damage.entries[DEFAULT_CONTEXT_KEY]).toBeUndefined();
     });
 
     it('should reset error states in all slices', () => {
@@ -320,7 +313,7 @@ describe('clearAction', () => {
       // Verify error states are set
       let state = store.getState() as TestRootState;
       expect(state.events.casts.error).toBe('Cast events error');
-      expect(state.events.damage.error).toBe('Damage events error');
+      expect(state.events.damage.entries[DEFAULT_CONTEXT_KEY].error).toBe('Damage events error');
 
       // Dispatch clearAllEvents
       store.dispatch(clearAllEvents());
@@ -328,7 +321,7 @@ describe('clearAction', () => {
       // Verify error states are reset
       state = store.getState() as TestRootState;
       expect(state.events.casts.error).toBeNull();
-      expect(state.events.damage.error).toBeNull();
+      expect(state.events.damage.entries[DEFAULT_CONTEXT_KEY]).toBeUndefined();
     });
 
     it('should reset cache metadata in all slices', () => {
@@ -514,9 +507,11 @@ describe('clearAction', () => {
       expect(state.events.casts.events).toEqual([]);
       expect(state.events.casts.cacheMetadata.lastFetchedReportId).toBeNull();
 
-      // Damage events should still have data
-      expect(state.events.damage.events.length).toBeGreaterThan(0);
-      expect(state.events.damage.cacheMetadata.lastFetchedReportId).toBe('test123');
+      // Damage events should still have data for the cached context
+      expect(state.events.damage.entries[DEFAULT_CONTEXT_KEY].events.length).toBeGreaterThan(0);
+      expect(
+        state.events.damage.entries[DEFAULT_CONTEXT_KEY].cacheMetadata.lastFetchedTimestamp,
+      ).not.toBeNull();
     });
   });
 
@@ -561,7 +556,7 @@ describe('clearAction', () => {
 
       // Each slice should have its initial state
       expect(state.events.casts.events).toEqual([]);
-      expect(state.events.damage.events).toEqual([]);
+      expect(state.events.damage).toEqual(damageEventsReducer(undefined, { type: 'init' }));
     });
   });
 });
