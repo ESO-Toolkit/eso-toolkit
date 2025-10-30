@@ -1,35 +1,42 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { FightFragment } from '../../graphql/gql/graphql';
-import { DamageEvent, HealEvent, ResourceChangeEvent } from '../../types/combatlogEvents';
+import { FightFragment, ReportActorFragment } from '../../graphql/gql/graphql';
+import type { LogEvent } from '../../types/combatlogEvents';
+import { ResourceChangeEvent } from '../../types/combatlogEvents';
 import { createBuffLookup, createDebuffLookup, BuffLookupData } from '../../utils/BuffLookupUtils';
-import type { ReportFightContextInput } from '../contextTypes';
-import { selectCastEvents as selectCastEventsFromCache } from '../events_data/castEventsSelectors';
+import type { ReportFightContext, ReportFightContextInput } from '../contextTypes';
+import {
+  selectCastEvents as selectCastEventsFromCache,
+  selectCastEventsForContext,
+} from '../events_data/castEventsSelectors';
 import {
   selectCombatantInfoEvents as selectCombatantInfoEventsFromSlice,
   selectCombatantInfoEventsLoading as selectCombatantInfoEventsLoadingFromSlice,
+  selectCombatantInfoEventsForContext,
 } from '../events_data/combatantInfoEventsSelectors';
-import { selectDamageEvents } from '../events_data/damageEventsSelectors';
+import { selectDamageEventsForContext } from '../events_data/damageEventsSelectors';
 import {
   selectDeathEvents as selectDeathEventsFromSlice,
   selectDeathEventsLoading as selectDeathEventsLoadingFromSlice,
+  selectDeathEventsForContext,
 } from '../events_data/deathEventsSelectors';
 import {
   selectDebuffEvents as selectDebuffEventsFromSlice,
   selectDebuffEventsLoading as selectDebuffEventsLoadingFromSlice,
+  selectDebuffEventsForContext,
 } from '../events_data/debuffEventsSelectors';
 import {
   selectFriendlyBuffEvents as selectFriendlyBuffEventsFromSlice,
   selectFriendlyBuffEventsLoading as selectFriendlyBuffEventsLoadingFromSlice,
 } from '../events_data/friendlyBuffEventsSelectors';
-import { selectHealingEvents } from '../events_data/healingEventsSelectors';
+import { selectHealingEventsForContext } from '../events_data/healingEventsSelectors';
 import {
   selectHostileBuffEvents as selectHostileBuffEventsFromSlice,
   selectHostileBuffEventsLoading as selectHostileBuffEventsLoadingFromSlice,
 } from '../events_data/hostileBuffEventsSelectors';
 import type { ResourceEventsEntry, ResourceEventsState } from '../events_data/resourceEventsSlice';
-import { selectActorsById } from '../master_data/masterDataSelectors';
-import { selectActiveReportContext, selectReportFights } from '../report/reportSelectors';
+import { selectActorsByIdForContext } from '../master_data/masterDataSelectors';
+import { selectActiveReportContext, selectReportFights, selectReportFightsForContext } from '../report/reportSelectors';
 import { RootState } from '../storeWithHistory';
 import { createReportFightContextSelector } from '../utils/contextSelectors';
 import { resolveCacheKey } from '../utils/keyedCacheState';
@@ -186,14 +193,83 @@ export const selectCurrentFight = createSelector(
 
 // Player/combatant selectors
 // Updated to use the currently selected fight from Redux state
+export const selectEventPlayersForContext = createReportFightContextSelector<
+  RootState,
+  [typeof selectActorsByIdForContext, typeof selectReportFightsForContext],
+  ReportActorFragment[]
+>([selectActorsByIdForContext, selectReportFightsForContext], (actorsById, fights, context) => {
+  const normalizedFightId =
+    typeof context.fightId === 'string' ? Number.parseInt(context.fightId, 10) : context.fightId;
+
+  if (typeof normalizedFightId !== 'number' || Number.isNaN(normalizedFightId)) {
+    return [];
+  }
+
+  const fight = fights?.find((fightItem) => fightItem?.id === normalizedFightId) ?? null;
+
+  if (!fight) {
+    return [];
+  }
+
+  const friendlyPlayers = fight.friendlyPlayers ?? [];
+
+  return friendlyPlayers
+    .filter((id): id is number => typeof id === 'number' && id !== null)
+    .map((id) => actorsById[id])
+    .filter((actor): actor is ReportActorFragment => Boolean(actor));
+});
+
 export const selectEventPlayers = createSelector(
-  [selectActorsById, selectCurrentFight],
-  (actorsById, fight) => {
-    const friendlyPlayers = fight?.friendlyPlayers ?? [];
-    return friendlyPlayers
-      .filter((id): id is number => typeof id === 'number' && id !== null)
-      .map((id) => actorsById[id])
-      .filter(Boolean);
+  [(state: RootState) => state, selectActiveReportContext],
+  (state, activeContext) =>
+    selectEventPlayersForContext(state, {
+      reportCode: activeContext.reportId ?? state.report.reportId ?? null,
+      fightId: activeContext.fightId,
+    }),
+);
+
+export const selectAllEventsForContext = createReportFightContextSelector<
+  RootState,
+  [
+    typeof selectDamageEventsForContext,
+    typeof selectHealingEventsForContext,
+    typeof selectDeathEventsForContext,
+    typeof selectCombatantInfoEventsForContext,
+    typeof selectDebuffEventsForContext,
+    typeof selectCastEventsForContext,
+    typeof selectResourceEventsForContext,
+  ],
+  LogEvent[]
+>(
+  [
+    selectDamageEventsForContext,
+    selectHealingEventsForContext,
+    selectDeathEventsForContext,
+    selectCombatantInfoEventsForContext,
+    selectDebuffEventsForContext,
+    selectCastEventsForContext,
+    selectResourceEventsForContext,
+  ],
+  (
+    damageEvents,
+    healingEvents,
+    deathEvents,
+    combatantInfoEvents,
+    debuffEvents,
+    castEvents,
+    resourceEvents,
+  ) => {
+    const events: LogEvent[] = [
+      ...damageEvents,
+      ...healingEvents,
+      ...deathEvents,
+      ...combatantInfoEvents,
+      ...debuffEvents,
+      ...castEvents,
+      ...resourceEvents,
+    ];
+
+    return events;
   },
 );
 
@@ -201,33 +277,16 @@ export const selectEventPlayers = createSelector(
 
 // Combined selectors
 export const selectAllEvents = createSelector(
-  [
-    selectDamageEvents,
-    selectHealingEvents,
-    selectDeathEvents,
-    selectCombatantInfoEvents,
-    selectDebuffEvents,
-    selectCastEvents,
-    selectResourceEvents,
-  ],
-  (
-    damageEvents: DamageEvent[],
-    healingEvents: HealEvent[],
-    deathEvents,
-    combatantInfoEvents,
-    debuffEvents,
-    castEvents,
-    resourceEvents,
-  ) => [
-    ...damageEvents,
-    ...healingEvents,
-    ...deathEvents,
-    ...combatantInfoEvents,
-    ...debuffEvents,
-    ...castEvents,
-    ...resourceEvents,
-  ],
+  [(state: RootState) => state, selectActiveReportContext],
+  (state, activeContext) =>
+    selectAllEventsForContext(state, {
+      reportCode: activeContext.reportId ?? state.report.reportId ?? null,
+      fightId: activeContext.fightId,
+    }),
 );
+
+export const selectAllEventsSelector = (context: ReportFightContext) =>
+  (state: RootState) => selectAllEventsForContext(state, context);
 
 // Loading state selectors
 

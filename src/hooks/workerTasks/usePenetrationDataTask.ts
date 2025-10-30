@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useAppDispatch } from '@/store/useAppDispatch';
 import { executePenetrationDataTask, penetrationDataActions } from '@/store/worker_results';
 
-import { FightFragment } from '../../graphql/gql/graphql';
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
   selectPenetrationDataResult,
   selectWorkerTaskLoading,
@@ -19,14 +19,19 @@ import { useSelectedTargetIds } from '../useSelectedTargetIds';
 
 import { useBuffLookupTask } from './useBuffLookupTask';
 import { useDebuffLookupTask } from './useDebuffLookupTask';
+import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
 // Hook for penetration data calculation
-export function usePenetrationDataTask(): {
+interface UsePenetrationDataTaskOptions {
+  context?: ReportFightContextInput;
+}
+
+export function usePenetrationDataTask(options?: UsePenetrationDataTaskOptions): {
   penetrationData: unknown;
   isPenetrationDataLoading: boolean;
   penetrationDataError: string | null;
   penetrationDataProgress: number | null;
-  selectedFight: FightFragment | null;
+  selectedFight: ReturnType<typeof useWorkerTaskDependencies>['selectedFight'];
 } {
   const dispatch = useAppDispatch();
   const { fight: selectedFight, isFightLoading } = useCurrentFight();
@@ -42,7 +47,8 @@ export function usePenetrationDataTask(): {
     dispatch(penetrationDataActions.clearResult());
   }, [
     dispatch,
-    selectedFight,
+  selectedFight,
+  fightId,
     playerData,
     combatantInfoRecord,
     buffLookupData,
@@ -56,7 +62,6 @@ export function usePenetrationDataTask(): {
     // Check that all dependencies are completely loaded with data available
     const allDependenciesReady =
       selectedFight &&
-      !isFightLoading &&
       !isPlayerDataLoading &&
       playerData?.playersById &&
       !isCombatantInfoEventsLoading &&
@@ -84,7 +89,6 @@ export function usePenetrationDataTask(): {
   }, [
     dispatch,
     selectedFight,
-    isFightLoading,
     playerData,
     combatantInfoRecord,
     isCombatantInfoEventsLoading,
@@ -123,7 +127,7 @@ export function usePenetrationDataTask(): {
       isPenetrationDataLoading,
       penetrationDataError,
       penetrationDataProgress,
-      selectedFight: selectedFight || null,
+      selectedFight,
     }),
     [
       penetrationData,

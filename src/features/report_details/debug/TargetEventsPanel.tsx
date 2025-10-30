@@ -2,19 +2,29 @@ import { Box, Typography } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useCurrentFight } from '../../../hooks/useCurrentFight';
-import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
-import { selectAllEvents } from '../../../store/selectors/eventsSelectors';
+import { useFightForContext, useReportMasterData, useResolvedReportFightContext } from '../../../hooks';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
+import { selectAllEventsSelector } from '../../../store/events_data/actions';
 import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
-import { LogEvent } from '../../../types/combatlogEvents';
+import type { LogEvent } from '../../../types/combatlogEvents';
 
 import { EventsGrid } from './EventsGrid';
 
-export const TargetEventsPanel: React.FC = () => {
+interface TargetEventsPanelProps {
+  context?: ReportFightContextInput;
+}
+
+export const TargetEventsPanel: React.FC<TargetEventsPanelProps> = ({ context }) => {
+  const resolvedContext = useResolvedReportFightContext(context);
+  const fight = useFightForContext(resolvedContext);
+  const { reportMasterData } = useReportMasterData({ context: resolvedContext });
+  const actorsById = reportMasterData.actorsById;
   const selectedTargetId = useSelector(selectSelectedTargetId);
-  const { fight } = useCurrentFight();
-  const actorsById = useSelector(selectActorsById);
-  const allEvents = useSelector(selectAllEvents);
+  const allEventsSelector = React.useMemo(
+    () => selectAllEventsSelector(resolvedContext),
+    [resolvedContext],
+  );
+  const allEvents = useSelector(allEventsSelector);
 
   // Get all available targets (enemies + NPCs) from the current fight
   const targets = React.useMemo(() => {

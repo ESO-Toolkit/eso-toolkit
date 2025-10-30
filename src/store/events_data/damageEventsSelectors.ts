@@ -3,7 +3,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { DamageEvent } from '../../types/combatlogEvents';
 import { getDamageEventsByPlayer } from '../../utils/damageEventUtils';
 import type { ReportFightContextInput } from '../contextTypes';
-import { selectActorsById } from '../master_data/masterDataSelectors';
+import { selectActorsByIdForContext } from '../master_data/masterDataSelectors';
 import { selectActiveReportContext } from '../report/reportSelectors';
 import type { RootState } from '../storeWithHistory';
 import { createReportFightContextSelector } from '../utils/contextSelectors';
@@ -85,11 +85,22 @@ export const selectDamageEventsError = createSelector(
  * // Result: { "123": [damageEvent1, damageEvent2], "456": [damageEvent3] }
  * ```
  */
+export const selectDamageEventsByPlayerForContext = createReportFightContextSelector<
+  RootState,
+  [typeof selectDamageEventsForContext, typeof selectActorsByIdForContext],
+  Record<string, DamageEvent[]>
+>(
+  [selectDamageEventsForContext, selectActorsByIdForContext],
+  (damageEvents, actorsById) => getDamageEventsByPlayer(damageEvents, actorsById),
+);
+
 export const selectDamageEventsByPlayer = createSelector(
-  [selectDamageEvents, selectActorsById],
-  (damageEvents, actorsById): Record<string, DamageEvent[]> => {
-    return getDamageEventsByPlayer(damageEvents, actorsById);
-  },
+  [(state: RootState) => state, selectActiveReportContext],
+  (state, activeContext) =>
+    selectDamageEventsByPlayerForContext(state, {
+      reportCode: activeContext.reportId ?? state.report.reportId ?? null,
+      fightId: activeContext.fightId,
+    }),
 );
 
 /**

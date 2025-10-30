@@ -32,18 +32,16 @@ import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillT
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
-import { selectActiveReportContext } from '../../../store/report/reportSelectors';
+import { useCastEvents } from '../../../hooks/events/useCastEvents';
+import { useDamageEvents } from '../../../hooks/events/useDamageEvents';
+import { useDebuffEvents } from '../../../hooks/events/useDebuffEvents';
+import { useFriendlyBuffEvents } from '../../../hooks/events/useFriendlyBuffEvents';
+import { useHealingEvents } from '../../../hooks/events/useHealingEvents';
+import { useHostileBuffEvents } from '../../../hooks/events/useHostileBuffEvents';
+import { useResourceEvents } from '../../../hooks/events/useResourceEvents';
 import { selectPlayersByIdForContext } from '../../../store/player_data/playerDataSelectors';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import {
-  selectFriendlyBuffEventsForContext,
-  selectHostileBuffEventsForContext,
-  selectCastEventsForContext,
-  selectDamageEventsForContext,
-  selectDebuffEventsForContext,
-  selectHealingEventsForContext,
-  selectResourceEventsForContext,
-} from '../../../store/selectors/eventsSelectors';
+import { selectActiveReportContext } from '../../../store/report/reportSelectors';
 import type { RootState } from '../../../store/storeWithHistory';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
@@ -219,33 +217,17 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     const allPlayers = React.useMemo(() => Object.values(playersById), [playersById]);
 
     // Get combat event data for affix script detection
-    const friendlyBuffEvents = useSelector((state: RootState) =>
-      selectFriendlyBuffEventsForContext(state, selectorContext),
-    );
-    const hostileBuffEvents = useSelector((state: RootState) =>
-      selectHostileBuffEventsForContext(state, selectorContext),
-    );
-    const debuffEvents = useSelector((state: RootState) =>
-      selectDebuffEventsForContext(state, selectorContext),
-    );
-    const damageEvents = useSelector((state: RootState) =>
-      selectDamageEventsForContext(state, selectorContext),
-    );
-    const healingEvents = useSelector((state: RootState) =>
-      selectHealingEventsForContext(state, selectorContext),
-    );
-    const castEvents = useSelector((state: RootState) =>
-      selectCastEventsForContext(state, selectorContext),
-    );
-    const resourceEvents = useSelector((state: RootState) =>
-      selectResourceEventsForContext(state, selectorContext),
-    );
-
-    // Combine combat event data
-    const combatEventData: CombatEventData = React.useMemo(
+    const { friendlyBuffEvents } = useFriendlyBuffEvents({ context: selectorContext });
+    const { hostileBuffEvents } = useHostileBuffEvents({ context: selectorContext });
+    const { debuffEvents } = useDebuffEvents({ context: selectorContext });
+    const { damageEvents } = useDamageEvents({ context: selectorContext });
+    const { healingEvents } = useHealingEvents({ context: selectorContext });
+    const { castEvents } = useCastEvents({ context: selectorContext });
+    const { resourceEvents } = useResourceEvents({ context: selectorContext });
+    const combatEventData = React.useMemo(
       () => ({
-        castEvents: castEvents,
-        damageEvents: damageEvents,
+        castEvents,
+        damageEvents,
         allReportAbilities: [], // This would need to come from abilities data if available
         allDebuffEvents: debuffEvents,
         allBuffEvents: [...friendlyBuffEvents, ...hostileBuffEvents],

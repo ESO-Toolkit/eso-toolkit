@@ -2,8 +2,6 @@ import { Box, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
-import { useSelectedFight } from '@/hooks/useSelectedFight';
-
 import { DamageDoneTableSkeleton } from '../../../components/DamageDoneTableSkeleton';
 import {
   useDamageEventsLookup,
@@ -13,7 +11,10 @@ import {
   useDeathEvents,
   useCastEvents,
   useDamageOverTimeTask,
+  useFightForContext,
+  useResolvedReportFightContext,
 } from '../../../hooks';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
 import { KnownAbilities } from '../../../types/abilities';
 import { calculateActivePercentages } from '../../../utils/activePercentageUtils';
@@ -23,25 +24,32 @@ import type { DamageOverTimeResult } from '../../../workers/calculations/Calcula
 import { DamageDonePanelView } from './DamageDonePanelView';
 
 interface DamageDonePanelProps {
+  context?: ReportFightContextInput;
   children?: React.ReactNode;
 }
 
 /**
  * Smart component that handles data processing and state management for damage done panel
  */
-export const DamageDonePanel: React.FC<DamageDonePanelProps> = () => {
+export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => {
   // Use hooks to get data
-  const { damageEventsByPlayer, isDamageEventsLookupLoading } = useDamageEventsLookup();
-  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
-  const { castEvents, isCastEventsLoading } = useCastEvents();
-  const fight = useSelectedFight();
+  const resolvedContext = useResolvedReportFightContext(context);
+  const fight = useFightForContext(resolvedContext);
+
+  const { damageEventsByPlayer, isDamageEventsLookupLoading } = useDamageEventsLookup({
+    context: resolvedContext,
+  });
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData({ context: resolvedContext });
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
+  const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context: resolvedContext });
+  const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
   const selectedTargetIds = useSelectedTargetIds();
   const actorsById = useSelector(selectActorsById);
 
   // Get damage over time data
-  const { damageOverTimeData, isDamageOverTimeLoading } = useDamageOverTimeTask();
+  const { damageOverTimeData, isDamageOverTimeLoading } = useDamageOverTimeTask({
+    context: resolvedContext,
+  });
 
   // Resolve selected target names for display
   const selectedTargetNames = useMemo(() => {

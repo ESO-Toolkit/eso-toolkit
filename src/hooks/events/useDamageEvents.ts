@@ -1,23 +1,27 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { selectDamageEventsByPlayer } from '@/store/events_data/damageEventsSelectors';
+import {
+  selectDamageEventsByPlayerForContext,
+  selectDamageEventsEntryForContext,
+  selectDamageEventsForContext,
+} from '@/store/events_data/damageEventsSelectors';
+
 
 import { useEsoLogsClientContext } from '../../EsoLogsClientContext';
 import { FightFragment } from '../../graphql/gql/graphql';
-import { useSelectedReportAndFight } from '../../ReportFightContext';
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import { fetchDamageEvents } from '../../store/events_data/damageEventsSlice';
-import { selectReportFights } from '../../store/report/reportSelectors';
-import {
-  selectDamageEvents,
-  selectDamageEventsLoading,
-} from '../../store/selectors/eventsSelectors';
+import type { RootState } from '../../store/storeWithHistory';
 import { useAppDispatch } from '../../store/useAppDispatch';
 import { DamageEvent } from '../../types/combatlogEvents';
+import { useFightForContext } from '../useFightForContext';
 import { useReportMasterData } from '../useReportMasterData';
+import { useResolvedReportFightContext } from '../useResolvedReportFightContext';
 
 interface UseDamageEventsOptions {
   restrictToFightWindow?: boolean;
+  context?: ReportFightContextInput;
 }
 
 export function useDamageEvents(options?: UseDamageEventsOptions): {
@@ -27,28 +31,25 @@ export function useDamageEvents(options?: UseDamageEventsOptions): {
 } {
   const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
   const dispatch = useAppDispatch();
-  const { reportId, fightId } = useSelectedReportAndFight();
-  const fights = useSelector(selectReportFights);
+  const context = useResolvedReportFightContext(options?.context);
+  const selectedFight = useFightForContext(context);
 
-  // Move selectors BEFORE the effects that use them
-  const damageEvents = useSelector(selectDamageEvents);
-  const isDamageEventsLoading = useSelector(selectDamageEventsLoading);
-
-  // Get the specific fight from the report data
-  const selectedFight = React.useMemo(() => {
-    if (!fightId || !fights) return null;
-    const fightIdNumber = parseInt(fightId, 10);
-    return fights.find((fight) => fight && fight.id === fightIdNumber) || null;
-  }, [fightId, fights]);
+  const damageEvents = useSelector((state: RootState) =>
+    selectDamageEventsForContext(state, context),
+  );
+  const damageEntry = useSelector((state: RootState) =>
+    selectDamageEventsEntryForContext(state, context),
+  );
+  const isDamageEventsLoading = damageEntry?.status === 'loading';
 
   const restrictToFightWindow = options?.restrictToFightWindow ?? true;
 
   React.useEffect(() => {
     // Only fetch if client is ready, user is logged in, and we have required data
-    if (reportId && selectedFight && isReady && isLoggedIn && client) {
+    if (context.reportCode && selectedFight && isReady && isLoggedIn && client) {
       dispatch(
         fetchDamageEvents({
-          reportCode: reportId,
+          reportCode: context.reportCode,
           fight: selectedFight,
           client,
           restrictToFightWindow,
@@ -57,10 +58,10 @@ export function useDamageEvents(options?: UseDamageEventsOptions): {
     }
   }, [
     dispatch,
-    reportId,
+    context.reportCode,
+    context.fightId,
     selectedFight,
     client,
-    fightId,
     isReady,
     isLoggedIn,
     restrictToFightWindow,
@@ -72,13 +73,20 @@ export function useDamageEvents(options?: UseDamageEventsOptions): {
   );
 }
 
-export function useDamageEventsLookup(): {
+interface UseDamageEventsLookupOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useDamageEventsLookup(options?: UseDamageEventsLookupOptions): {
   damageEventsByPlayer: Record<string, DamageEvent[]>;
   isDamageEventsLookupLoading: boolean;
 } {
-  const { isDamageEventsLoading } = useDamageEvents();
-  const { isMasterDataLoading } = useReportMasterData();
-  const damageEventsByPlayer = useSelector(selectDamageEventsByPlayer);
+  const { isDamageEventsLoading } = useDamageEvents(options);
+  const { isMasterDataLoading } = useReportMasterData({ context: options?.context });
+  const resolvedContext = useResolvedReportFightContext(options?.context);
+  const damageEventsByPlayer = useSelector((state: RootState) =>
+    selectDamageEventsByPlayerForContext(state, resolvedContext),
+  );
 
   return React.useMemo(
     () => ({

@@ -2,6 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../graphql/gql/graphql';
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
   selectDebuffLookupResult,
   selectWorkerTaskLoading,
@@ -14,16 +15,20 @@ import { useDebuffEvents } from '../events/useDebuffEvents';
 
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
+interface UseDebuffLookupTaskOptions {
+  context?: ReportFightContextInput;
+}
+
 // Hook for debuff lookup data
-export function useDebuffLookupTask(): {
+export function useDebuffLookupTask(options?: UseDebuffLookupTaskOptions): {
   debuffLookupData: BuffLookupData | null;
   isDebuffLookupLoading: boolean;
   debuffLookupError: string | null;
   debuffLookupProgress: number | null;
   selectedFight: FightFragment | null;
 } {
-  const { dispatch, selectedFight } = useWorkerTaskDependencies();
-  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents();
+  const { dispatch, selectedFight } = useWorkerTaskDependencies(options);
+  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents({ context: options?.context });
 
   React.useEffect(() => {
     if (selectedFight && debuffEvents.length > 0 && !isDebuffEventsLoading) {
