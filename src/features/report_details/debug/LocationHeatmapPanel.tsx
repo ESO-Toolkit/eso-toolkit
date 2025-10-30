@@ -2,12 +2,16 @@ import { SelectChangeEvent } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { FightFragment } from '../../../graphql/gql/graphql';
-import { usePlayerData } from '../../../hooks';
+import {
+  usePlayerData,
+  useResolvedReportFightContext,
+  useFightForContext,
+} from '../../../hooks';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { LogEvent, ResourceChangeEvent } from '../../../types/combatlogEvents';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
-import { selectLocationHeatmapData } from './debugSelectors';
+import { selectLocationHeatmapDataSelector } from './debugSelectors';
 import { LocationHeatmapPanelView } from './LocationHeatmapPanelView';
 
 interface LocationPoint {
@@ -45,7 +49,7 @@ interface FightPhase {
 }
 
 interface LocationHeatmapPanelProps {
-  fight: FightFragment;
+  context?: ReportFightContextInput;
 }
 
 // Constants
@@ -57,12 +61,19 @@ const TOP_POSITIONS_PER_TANK = 3; // Number of top positions to track per tank
 const DEFAULT_MAP_SIZE = 1000; // Default map bounds when no data is available
 const MAP_BOUNDS_PADDING = 100; // Padding around actual data bounds
 
-export const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ fight }) => {
+export const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ context }) => {
+  const resolvedContext = useResolvedReportFightContext(context);
+  const fight = useFightForContext(resolvedContext);
+
   // Use hooks to get player data
-  const { playerData } = usePlayerData();
+  const { playerData } = usePlayerData({ context: resolvedContext });
 
   // OPTIMIZED: Single selector instead of multiple useSelector calls
-  const { events, actorsById } = useSelector(selectLocationHeatmapData);
+  const heatmapSelector = React.useMemo(
+    () => selectLocationHeatmapDataSelector(resolvedContext),
+    [resolvedContext],
+  );
+  const { events, actorsById } = useSelector(heatmapSelector);
 
   const [selectedPlayer, setSelectedPlayer] = React.useState<string>('all');
   const [showHeatmap, setShowHeatmap] = React.useState<boolean>(true);

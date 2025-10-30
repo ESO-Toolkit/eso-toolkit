@@ -2,36 +2,60 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
-import { useSelectedReportAndFight } from '../ReportFightContext';
+import type { ReportFightContextInput } from '../store/contextTypes';
 import {
-  CombinedMasterData,
-  selectCombinedMasterData,
-  selectMasterDataLoadingState,
+  selectAbilitiesByIdForContext,
+  selectActorsByIdForContext,
+  selectIsMasterDataLoadingForContext,
+  selectMasterDataEntryForContext,
 } from '../store/master_data/masterDataSelectors';
 import { fetchReportMasterData } from '../store/master_data/masterDataSlice';
+import type { RootState } from '../store/storeWithHistory';
 import { useAppDispatch } from '../store/useAppDispatch';
 
-export function useReportMasterData(): {
-  reportMasterData: CombinedMasterData;
+import { useResolvedReportFightContext } from './useResolvedReportFightContext';
+
+export interface UseReportMasterDataResult {
+  reportMasterData: {
+    actorsById: ReturnType<typeof selectActorsByIdForContext>;
+    abilitiesById: ReturnType<typeof selectAbilitiesByIdForContext>;
+    loaded: boolean;
+  };
   isMasterDataLoading: boolean;
-} {
+}
+
+interface UseReportMasterDataOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useReportMasterData(options?: UseReportMasterDataOptions): UseReportMasterDataResult {
   const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
   const dispatch = useAppDispatch();
-  const { reportId } = useSelectedReportAndFight();
+  const context = useResolvedReportFightContext(options?.context);
 
-  // Move selectors BEFORE the effects that use them
-  const reportMasterData = useSelector(selectCombinedMasterData);
-  const isMasterDataLoading = useSelector(selectMasterDataLoadingState);
+  const actorsById = useSelector((state: RootState) => selectActorsByIdForContext(state, context));
+  const abilitiesById = useSelector((state: RootState) =>
+    selectAbilitiesByIdForContext(state, context),
+  );
+  const isMasterDataLoading = useSelector((state: RootState) =>
+    selectIsMasterDataLoadingForContext(state, context),
+  );
+  const masterDataEntry = useSelector((state: RootState) =>
+    selectMasterDataEntryForContext(state, context),
+  );
+  const isLoaded = masterDataEntry?.status === 'succeeded';
 
   React.useEffect(() => {
-    // Only fetch if client is ready, user is logged in, and we have a reportId
-    if (reportId && isReady && isLoggedIn && client) {
-      dispatch(fetchReportMasterData({ reportCode: reportId, client }));
+    if (context.reportCode && isReady && isLoggedIn && client) {
+      dispatch(fetchReportMasterData({ reportCode: context.reportCode, client }));
     }
-  }, [dispatch, reportId, client, isReady, isLoggedIn]);
+  }, [dispatch, context.reportCode, client, isReady, isLoggedIn]);
 
   return React.useMemo(
-    () => ({ reportMasterData, isMasterDataLoading }),
-    [reportMasterData, isMasterDataLoading],
+    () => ({
+      reportMasterData: { actorsById, abilitiesById, loaded: Boolean(isLoaded) },
+      isMasterDataLoading,
+    }),
+    [actorsById, abilitiesById, isLoaded, isMasterDataLoading],
   );
 }

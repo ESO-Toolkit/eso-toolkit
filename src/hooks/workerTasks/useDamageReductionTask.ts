@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 
 import { executeDamageReductionTask, damageReductionActions } from '@/store/worker_results';
 
-import { FightFragment } from '../../graphql/gql/graphql';
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
   selectDamageReductionResult,
   selectWorkerTaskLoading,
@@ -18,19 +18,25 @@ import { useDebuffLookupTask } from './useDebuffLookupTask';
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
 // Hook for damage reduction calculation
-export function useDamageReductionTask(): {
+interface UseDamageReductionTaskOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useDamageReductionTask(options?: UseDamageReductionTaskOptions): {
   damageReductionData: unknown;
   isDamageReductionLoading: boolean;
   damageReductionError: string | null;
   damageReductionProgress: number | null;
-  selectedFight: FightFragment | null;
+  selectedFight: ReturnType<typeof useWorkerTaskDependencies>['selectedFight'];
 } {
-  const { dispatch, selectedFight } = useWorkerTaskDependencies();
+  const { dispatch, selectedFight } = useWorkerTaskDependencies(options);
 
-  const { combatantInfoRecord, isCombatantInfoEventsLoading } = useCombatantInfoRecord();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-  const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask();
-  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
+  const { combatantInfoRecord, isCombatantInfoEventsLoading } = useCombatantInfoRecord({
+    context: options?.context,
+  });
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: options?.context });
+  const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask(options);
+  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask(options);
 
   // Clear any existing result when dependencies change to force fresh calculation
   React.useEffect(() => {

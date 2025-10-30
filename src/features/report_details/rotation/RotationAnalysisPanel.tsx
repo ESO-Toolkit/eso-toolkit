@@ -1,13 +1,13 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
+import { ReportActorFragment } from '../../../graphql/gql/graphql';
 import {
   selectCastEvents,
   selectResourceEvents,
   selectEventPlayers,
 } from '../../../store/events_data/actions';
 import { selectCombinedMasterData } from '../../../store/master_data/masterDataSelectors';
-import { ReportActorFragment } from '../../../graphql/gql/graphql';
 import { ResourceChangeEvent, UnifiedCastEvent } from '../../../types/combatlogEvents';
 
 import { RotationAnalysisPanelView } from './RotationAnalysisPanelView';

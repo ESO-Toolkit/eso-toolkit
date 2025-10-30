@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { executeDamageOverTimeTask, damageOverTimeActions } from '@/store/worker_results';
 
 import { FightFragment } from '../../graphql/gql/graphql';
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
   selectDamageOverTimeResult,
   selectWorkerTaskLoading,
@@ -16,17 +17,21 @@ import { usePlayerData } from '../usePlayerData';
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
 // Hook for damage over time calculation
-export function useDamageOverTimeTask(): {
+interface UseDamageOverTimeTaskOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useDamageOverTimeTask(options?: UseDamageOverTimeTaskOptions): {
   damageOverTimeData: unknown;
   isDamageOverTimeLoading: boolean;
   damageOverTimeError: string | null;
   damageOverTimeProgress: number | null;
   selectedFight: FightFragment | null;
 } {
-  const { dispatch, selectedFight } = useWorkerTaskDependencies();
+  const { dispatch, selectedFight } = useWorkerTaskDependencies(options);
 
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: options?.context });
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: options?.context });
 
   // Clear any existing result when dependencies change to force fresh calculation
   React.useEffect(() => {

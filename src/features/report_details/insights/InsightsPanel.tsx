@@ -1,7 +1,13 @@
 import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
-import { useDamageEvents, usePlayerData, useCombatantInfoEvents } from '../../../hooks';
+import {
+  useCombatantInfoEvents,
+  useDamageEvents,
+  usePlayerData,
+  useResolvedReportFightContext,
+} from '../../../hooks';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { KnownAbilities } from '../../../types/abilities';
 import { PlayerTalent } from '../../../types/playerDetails';
 
@@ -9,6 +15,7 @@ import { InsightsPanelView } from './InsightsPanelView';
 
 interface InsightsPanelProps {
   fight: FightFragment;
+  context?: ReportFightContextInput;
 }
 
 const ULTIMATE_ABILITY_MAPPINGS: Record<number, KnownAbilities> = {
@@ -26,12 +33,15 @@ const CHAMPION_POINT_MAPPINGS: Record<number, KnownAbilities> = {
   [KnownAbilities.FROM_THE_BRINK]: KnownAbilities.FROM_THE_BRINK,
 };
 
-export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
+export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) => {
   const durationSeconds = (fight.endTime - fight.startTime) / 1000;
 
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
+  const resolvedContext = useResolvedReportFightContext(context);
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: resolvedContext });
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
+  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents({
+    context: resolvedContext,
+  });
 
   const abilityEquipped = React.useMemo(() => {
     const result: Partial<Record<KnownAbilities, string[]>> = {};

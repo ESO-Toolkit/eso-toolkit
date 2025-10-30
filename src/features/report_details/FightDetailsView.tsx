@@ -667,12 +667,12 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           )}
           {validSelectedTabId === TabId.HEALING_DONE && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.HEALING_DONE} />}>
-              <HealingDonePanel fight={fight} />
+              <HealingDonePanel />
             </Suspense>
           )}
           {validSelectedTabId === TabId.DEATHS && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEATHS} />}>
-              <DeathEventPanel fight={fight} />
+              <DeathEventPanel />
             </Suspense>
           )}
           {validSelectedTabId === TabId.CRITICAL_DAMAGE && (
@@ -682,17 +682,17 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           )}
           {validSelectedTabId === TabId.PENETRATION && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.PENETRATION} />}>
-              <PenetrationPanel fight={fight} phaseTransitionInfo={phaseTransitionInfo} />
+              <PenetrationPanel phaseTransitionInfo={phaseTransitionInfo} />
             </Suspense>
           )}
           {validSelectedTabId === TabId.DAMAGE_REDUCTION && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_REDUCTION} />}>
-              <DamageReductionPanel fight={fight} phaseTransitionInfo={phaseTransitionInfo} />
+              <DamageReductionPanel phaseTransitionInfo={phaseTransitionInfo} />
             </Suspense>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.LOCATION_HEATMAP && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.LOCATION_HEATMAP} />}>
-              <LocationHeatmapPanel fight={fight} />
+              <LocationHeatmapPanel />
             </Suspense>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.RAW_EVENTS && (

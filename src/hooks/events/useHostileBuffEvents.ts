@@ -2,39 +2,45 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
-import { useSelectedReportAndFight } from '../../ReportFightContext';
-import { fetchHostileBuffEvents } from '../../store/events_data/hostileBuffEventsSlice';
-import { selectReportFights } from '../../store/report/reportSelectors';
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
-  selectHostileBuffEvents,
-  selectHostileBuffEventsLoading,
-} from '../../store/selectors/eventsSelectors';
+  selectHostileBuffEventsEntryForContext,
+  selectHostileBuffEventsForContext,
+} from '../../store/events_data/hostileBuffEventsSelectors';
+import { fetchHostileBuffEvents } from '../../store/events_data/hostileBuffEventsSlice';
+import type { RootState } from '../../store/storeWithHistory';
 import { useAppDispatch } from '../../store/useAppDispatch';
 import { BuffEvent } from '../../types/combatlogEvents';
 import { BuffLookupData } from '../../utils/BuffLookupUtils';
+import { useFightForContext } from '../useFightForContext';
+import { useResolvedReportFightContext } from '../useResolvedReportFightContext';
 import { useBuffLookupTask } from '../workerTasks/useBuffLookupTask';
 
-export function useHostileBuffEvents(): {
+interface UseHostileBuffEventsOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useHostileBuffEvents(options?: UseHostileBuffEventsOptions): {
   hostileBuffEvents: BuffEvent[];
   isHostileBuffEventsLoading: boolean;
 } {
   const dispatch = useAppDispatch();
-  const { reportId, fightId } = useSelectedReportAndFight();
-  const fights = useSelector(selectReportFights);
   const client = useEsoLogsClientInstance();
-
-  // Get the specific fight from the report data
-  const selectedFight = React.useMemo(() => {
-    if (!fightId || !fights) return null;
-    const fightIdNumber = parseInt(fightId, 10);
-    return fights.find((fight) => fight && fight.id === fightIdNumber) || null;
-  }, [fightId, fights]);
+  const context = useResolvedReportFightContext(options?.context);
+  const selectedFight = useFightForContext(context);
+  const hostileBuffEvents = useSelector((state: RootState) =>
+    selectHostileBuffEventsForContext(state, context),
+  );
+  const hostileBuffEntry = useSelector((state: RootState) =>
+    selectHostileBuffEventsEntryForContext(state, context),
+  );
+  const isHostileBuffEventsLoading = hostileBuffEntry?.status === 'loading';
 
   React.useEffect(() => {
-    if (reportId && selectedFight && client) {
+    if (context.reportCode && selectedFight && client) {
       dispatch(
         fetchHostileBuffEvents({
-          reportCode: reportId,
+          reportCode: context.reportCode,
           fight: selectedFight,
           client,
           // Optional: you can customize the interval size
@@ -42,10 +48,7 @@ export function useHostileBuffEvents(): {
         }),
       );
     }
-  }, [dispatch, reportId, selectedFight, client]);
-
-  const hostileBuffEvents = useSelector(selectHostileBuffEvents);
-  const isHostileBuffEventsLoading = useSelector(selectHostileBuffEventsLoading);
+  }, [dispatch, context.reportCode, context.fightId, selectedFight, client]);
 
   return React.useMemo(
     () => ({ hostileBuffEvents, isHostileBuffEventsLoading }),
@@ -67,12 +70,14 @@ export function useHostileBuffEvents(): {
  *   - isHostileBuffEventsLoading: boolean indicating if events are still loading
  *   - progress: optional progress information during calculation
  */
-export function useWorkerHostileBuffsLookup(): {
+export function useWorkerHostileBuffsLookup(
+  options?: UseHostileBuffEventsOptions,
+): {
   hostileBuffsLookup: BuffLookupData;
   isHostileBuffEventsLoading: boolean;
   progress?: { phase: string; percentage?: number };
 } {
-  const { isHostileBuffEventsLoading } = useHostileBuffEvents();
+  const { isHostileBuffEventsLoading } = useHostileBuffEvents(options);
   const { buffLookupData, isBuffLookupLoading, buffLookupProgress } = useBuffLookupTask();
 
   return React.useMemo(

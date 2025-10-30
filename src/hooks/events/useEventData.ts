@@ -1,30 +1,10 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { ReportActorFragment } from '../../graphql/gql/graphql';
-import { useSelectedReportAndFight } from '../../ReportFightContext';
-import { fetchDamageEvents } from '../../store/events_data/damageEventsSlice';
-import { selectReportFights } from '../../store/report/reportSelectors';
-import {
-  selectAllEvents,
-  selectDamageEvents,
-  selectHealingEvents,
-  selectDeathEvents,
-  selectCombatantInfoEvents,
-  selectDebuffEvents,
-  selectCastEvents,
-  selectResourceEvents,
-  selectDamageEventsLoading,
-  selectHealingEventsLoading,
-  selectDeathEventsLoading,
-  selectCombatantInfoEventsLoading,
-  selectDebuffEventsLoading,
-  selectCastEventsLoading,
-  selectResourceEventsLoading,
-  selectEventPlayers,
-} from '../../store/selectors/eventsSelectors';
-import { useAppDispatch } from '../../store/useAppDispatch';
+import type { ReportFightContextInput } from '../../store/contextTypes';
+import { selectActorsById } from '../../store/master_data/masterDataSelectors';
+import type { RootState } from '../../store/storeWithHistory';
 import {
   LogEvent,
   DamageEvent,
@@ -35,8 +15,24 @@ import {
   ResourceChangeEvent,
   UnifiedCastEvent,
 } from '../../types/combatlogEvents';
+import { useFightForContext } from '../useFightForContext';
+import { useResolvedReportFightContext } from '../useResolvedReportFightContext';
 
-export function useEventData(): {
+import { useCastEvents } from './useCastEvents';
+import { useCombatantInfoEvents } from './useCombatantInfoEvents';
+import { useDamageEvents } from './useDamageEvents';
+import { useDeathEvents } from './useDeathEvents';
+import { useDebuffEvents } from './useDebuffEvents';
+import { useFriendlyBuffEvents } from './useFriendlyBuffEvents';
+import { useHealingEvents } from './useHealingEvents';
+import { useHostileBuffEvents } from './useHostileBuffEvents';
+import { useResourceEvents } from './useResourceEvents';
+
+interface UseEventDataOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useEventData(options?: UseEventDataOptions): {
   allEvents: LogEvent[];
   eventPlayers: ReportActorFragment[];
   isAnyEventLoading: boolean;
@@ -55,47 +51,61 @@ export function useEventData(): {
   isCastEventsLoading: boolean;
   isResourceEventsLoading: boolean;
 } {
-  const client = useEsoLogsClientInstance();
-  const dispatch = useAppDispatch();
-  const { reportId, fightId } = useSelectedReportAndFight();
-  const fights = useSelector(selectReportFights);
+  const context = useResolvedReportFightContext(options?.context);
+  const selectedFight = useFightForContext(context);
 
-  // Get the specific fight from the report data
-  const selectedFight = React.useMemo(() => {
-    if (!fightId || !fights) return null;
-    const fightIdNumber = parseInt(fightId, 10);
-    return fights.find((fight) => fight && fight.id === fightIdNumber) || null;
-  }, [fightId, fights]);
+  const {
+    damageEvents,
+    isDamageEventsLoading,
+  } = useDamageEvents({ context });
+  const { healingEvents, isHealingEventsLoading } = useHealingEvents({ context });
+  const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context });
+  const {
+    combatantInfoEvents,
+    isCombatantInfoEventsLoading,
+  } = useCombatantInfoEvents({ context });
+  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents({ context });
+  const { castEvents, isCastEventsLoading } = useCastEvents({ context });
+  const { resourceEvents, isResourceEventsLoading } = useResourceEvents({ context });
+  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents({ context });
+  const { hostileBuffEvents, isHostileBuffEventsLoading } = useHostileBuffEvents({ context });
 
-  // Fetch damage events when we have all required data
-  React.useEffect(() => {
-    if (reportId && selectedFight) {
-      dispatch(
-        fetchDamageEvents({
-          reportCode: reportId,
-          fight: selectedFight,
-          client,
-        }),
-      );
+  const actorsById = useSelector((state: RootState) => selectActorsById(state));
+
+  const allEvents = React.useMemo<LogEvent[]>(
+    () => [
+      ...damageEvents,
+      ...healingEvents,
+      ...deathEvents,
+      ...combatantInfoEvents,
+      ...debuffEvents,
+      ...castEvents,
+      ...resourceEvents,
+      ...friendlyBuffEvents,
+      ...hostileBuffEvents,
+    ],
+    [
+      castEvents,
+      combatantInfoEvents,
+      damageEvents,
+      deathEvents,
+      debuffEvents,
+      friendlyBuffEvents,
+      healingEvents,
+      hostileBuffEvents,
+      resourceEvents,
+    ],
+  );
+
+  const eventPlayers = React.useMemo(() => {
+    if (!selectedFight) {
+      return [];
     }
-  }, [dispatch, reportId, selectedFight, client]);
-  const allEvents = useSelector(selectAllEvents);
-  const damageEvents = useSelector(selectDamageEvents);
-  const healingEvents = useSelector(selectHealingEvents);
-  const deathEvents = useSelector(selectDeathEvents);
-  const combatantInfoEvents = useSelector(selectCombatantInfoEvents);
-  const debuffEvents = useSelector(selectDebuffEvents);
-  const castEvents = useSelector(selectCastEvents);
-  const resourceEvents = useSelector(selectResourceEvents);
-  const eventPlayers = useSelector(selectEventPlayers);
 
-  const isDamageEventsLoading = useSelector(selectDamageEventsLoading);
-  const isHealingEventsLoading = useSelector(selectHealingEventsLoading);
-  const isDeathEventsLoading = useSelector(selectDeathEventsLoading);
-  const isCombatantInfoEventsLoading = useSelector(selectCombatantInfoEventsLoading);
-  const isDebuffEventsLoading = useSelector(selectDebuffEventsLoading);
-  const isCastEventsLoading = useSelector(selectCastEventsLoading);
-  const isResourceEventsLoading = useSelector(selectResourceEventsLoading);
+    return (selectedFight.friendlyPlayers ?? [])
+      .map((id) => (id != null ? actorsById[id] : null))
+      .filter((player): player is ReportActorFragment => Boolean(player));
+  }, [actorsById, selectedFight]);
 
   const isAnyEventLoading = React.useMemo(
     () =>
@@ -105,7 +115,9 @@ export function useEventData(): {
       isCombatantInfoEventsLoading ||
       isDebuffEventsLoading ||
       isCastEventsLoading ||
-      isResourceEventsLoading,
+      isResourceEventsLoading ||
+      isFriendlyBuffEventsLoading ||
+      isHostileBuffEventsLoading,
     [
       isDamageEventsLoading,
       isHealingEventsLoading,
@@ -114,6 +126,8 @@ export function useEventData(): {
       isDebuffEventsLoading,
       isCastEventsLoading,
       isResourceEventsLoading,
+      isFriendlyBuffEventsLoading,
+      isHostileBuffEventsLoading,
     ],
   );
 

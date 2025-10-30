@@ -1,8 +1,14 @@
 import { Box, Typography } from '@mui/material';
 import React from 'react';
 
-import { useCriticalDamageTask, useCurrentFight, usePlayerData } from '../../../hooks';
+import {
+  useCriticalDamageTask,
+  usePlayerData,
+  useResolvedReportFightContext,
+  useFightForContext,
+} from '../../../hooks';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 
 import { CriticalDamagePanelView } from './CriticalDamagePanelView';
@@ -11,22 +17,28 @@ import { CriticalDamagePanelView } from './CriticalDamagePanelView';
  * Smart component that handles data processing and state management for critical damage panel
  */
 interface CriticalDamagePanelProps {
+  context?: ReportFightContextInput;
   phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
 export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
+  context,
   phaseTransitionInfo,
 }) => {
-  const { fight, isFightLoading } = useCurrentFight();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
+  const resolvedContext = useResolvedReportFightContext(context);
+  const fight = useFightForContext(resolvedContext);
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
   const { criticalDamageData, isCriticalDamageLoading, criticalDamageError } =
-    useCriticalDamageTask();
+    useCriticalDamageTask({ context: resolvedContext });
 
-  const isLoading = isCriticalDamageLoading || isPlayerDataLoading || isFightLoading;
+  const isLoading = isCriticalDamageLoading || isPlayerDataLoading || !fight;
 
   // Only show details when all loading is complete AND we have data
   const hasCompleteData =
-    !isLoading && criticalDamageData?.playerDataMap && playerData?.playersById;
+    !isLoading &&
+    criticalDamageData?.playerDataMap &&
+    playerData?.playersById &&
+    fight;
 
   // Get all players for accordion
   const players = React.useMemo(() => {
@@ -76,10 +88,12 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
     );
   }
 
+  const fightForView = fight as NonNullable<typeof fight>;
+
   return (
     <CriticalDamagePanelView
       players={players}
-      fight={fight}
+      fight={fightForView}
       expandedPanels={expandedPanels}
       onExpandChange={handleExpandChange}
       criticalDamageData={criticalDamageData?.playerDataMap || null}

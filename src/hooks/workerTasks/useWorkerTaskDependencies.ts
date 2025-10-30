@@ -1,14 +1,18 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
-
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { FightFragment } from '../../graphql/gql/graphql';
-import { useSelectedReportAndFight } from '../../ReportFightContext';
-import { selectReportFights } from '../../store/report/reportSelectors';
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import { useAppDispatch } from '../../store/useAppDispatch';
+import { useFightForContext } from '../useFightForContext';
+import { useResolvedReportFightContext } from '../useResolvedReportFightContext';
 
 // Helper hook to get selected fight and basic dependencies for worker tasks
-export function useWorkerTaskDependencies(): {
+interface UseWorkerTaskDependenciesOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useWorkerTaskDependencies(
+  options?: UseWorkerTaskDependenciesOptions,
+): {
   dispatch: ReturnType<typeof useAppDispatch>;
   reportId: string | null;
   fightId: string | null;
@@ -16,16 +20,11 @@ export function useWorkerTaskDependencies(): {
   client: ReturnType<typeof useEsoLogsClientInstance>;
 } {
   const dispatch = useAppDispatch();
-  const { reportId, fightId } = useSelectedReportAndFight();
-  const fights = useSelector(selectReportFights);
+  const context = useResolvedReportFightContext(options?.context);
   const client = useEsoLogsClientInstance();
-
-  // Get the specific fight from the report data
-  const selectedFight = React.useMemo(() => {
-    if (!fightId || !fights) return null;
-    const fightIdNumber = parseInt(fightId, 10);
-    return fights.find((fight) => fight && fight.id === fightIdNumber) || null;
-  }, [fightId, fights]);
+  const selectedFight = useFightForContext(context);
+  const reportId = context.reportCode;
+  const fightId = context.fightId !== null ? String(context.fightId) : null;
 
   return {
     dispatch,

@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useAppDispatch } from '@/store/useAppDispatch';
 import { executePenetrationDataTask, penetrationDataActions } from '@/store/worker_results';
 
-import { FightFragment } from '../../graphql/gql/graphql';
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
   selectPenetrationDataResult,
   selectWorkerTaskLoading,
@@ -12,27 +12,33 @@ import {
   selectWorkerTaskProgress,
 } from '../../store/worker_results/selectors';
 import { useCombatantInfoRecord } from '../events/useCombatantInfoRecord';
-import { useCurrentFight } from '../useCurrentFight';
 import { usePlayerData } from '../usePlayerData';
 import { useSelectedTargetIds } from '../useSelectedTargetIds';
 
 import { useBuffLookupTask } from './useBuffLookupTask';
 import { useDebuffLookupTask } from './useDebuffLookupTask';
+import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
 // Hook for penetration data calculation
-export function usePenetrationDataTask(): {
+interface UsePenetrationDataTaskOptions {
+  context?: ReportFightContextInput;
+}
+
+export function usePenetrationDataTask(options?: UsePenetrationDataTaskOptions): {
   penetrationData: unknown;
   isPenetrationDataLoading: boolean;
   penetrationDataError: string | null;
   penetrationDataProgress: number | null;
-  selectedFight: FightFragment | null;
+  selectedFight: ReturnType<typeof useWorkerTaskDependencies>['selectedFight'];
 } {
   const dispatch = useAppDispatch();
-  const { fight: selectedFight, isFightLoading } = useCurrentFight();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-  const { combatantInfoRecord, isCombatantInfoEventsLoading } = useCombatantInfoRecord();
-  const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask();
-  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
+  const { selectedFight, fightId } = useWorkerTaskDependencies(options);
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: options?.context });
+  const { combatantInfoRecord, isCombatantInfoEventsLoading } = useCombatantInfoRecord({
+    context: options?.context,
+  });
+  const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask(options);
+  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask(options);
   const selectedTargetIds = useSelectedTargetIds();
 
   // Clear any existing result when dependencies change to force fresh calculation
@@ -40,7 +46,8 @@ export function usePenetrationDataTask(): {
     dispatch(penetrationDataActions.clearResult());
   }, [
     dispatch,
-    selectedFight,
+  selectedFight,
+  fightId,
     playerData,
     combatantInfoRecord,
     buffLookupData,
@@ -53,7 +60,6 @@ export function usePenetrationDataTask(): {
     // Check that all dependencies are completely loaded with data available
     const allDependenciesReady =
       selectedFight &&
-      !isFightLoading &&
       !isPlayerDataLoading &&
       playerData?.playersById &&
       !isCombatantInfoEventsLoading &&
@@ -78,7 +84,6 @@ export function usePenetrationDataTask(): {
   }, [
     dispatch,
     selectedFight,
-    isFightLoading,
     playerData,
     combatantInfoRecord,
     isCombatantInfoEventsLoading,
@@ -115,7 +120,7 @@ export function usePenetrationDataTask(): {
       isPenetrationDataLoading,
       penetrationDataError,
       penetrationDataProgress,
-      selectedFight: selectedFight || null,
+      selectedFight,
     }),
     [
       penetrationData,
