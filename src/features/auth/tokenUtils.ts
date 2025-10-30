@@ -67,6 +67,20 @@ export function decodeAccessToken(token: string | null | undefined): DecodedAcce
   }
 }
 
+export function getAccessTokenSubject(token: string | null | undefined): string | null {
+  const decoded = decodeAccessToken(token);
+  if (!decoded) {
+    return null;
+  }
+
+  const subject = typeof decoded.sub === 'string' ? decoded.sub.trim() : '';
+  if (!subject) {
+    return null;
+  }
+
+  return subject;
+}
+
 export function getAccessTokenExpiry(token: string | null | undefined): number | null {
   const decoded = decodeAccessToken(token);
   if (!decoded?.exp || typeof decoded.exp !== 'number') {
@@ -86,11 +100,5 @@ export function isAccessTokenExpired(token: string | null | undefined, skewMs = 
 }
 
 export function tokenHasUserSubject(token: string | null | undefined): boolean {
-  const decoded = decodeAccessToken(token);
-  if (!decoded) {
-    return false;
-  }
-
-  const subject = typeof decoded.sub === 'string' ? decoded.sub.trim() : '';
-  return subject.length > 0;
+  return Boolean(getAccessTokenSubject(token));
 }

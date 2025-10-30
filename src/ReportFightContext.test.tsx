@@ -140,7 +140,18 @@ describe('ReportFightContext analytics tracking', () => {
       result.current.setSelectedTab(TabId.DAMAGE_DONE);
     });
 
-    expect(trackEvent).toHaveBeenCalledWith('Report Detail', 'Select Tab', TabId.DAMAGE_DONE);
+    expect(trackEvent).toHaveBeenCalledWith(
+      'Report Detail',
+      'Select Tab',
+      TabId.DAMAGE_DONE,
+      undefined,
+      expect.objectContaining({
+        report_id: 'abc',
+        fight_id: '1',
+        target_tab: TabId.DAMAGE_DONE,
+        previous_tab: TabId.INSIGHTS,
+      }),
+    );
   });
 
   it('tracks experimental tab enablement when selecting experimental tab', () => {
@@ -150,12 +161,31 @@ describe('ReportFightContext analytics tracking', () => {
       result.current.setSelectedTab(TabId.RAW_EVENTS);
     });
 
-    expect(trackEvent).toHaveBeenNthCalledWith(1, 'Report Detail', 'Select Tab', TabId.RAW_EVENTS);
+    expect(trackEvent).toHaveBeenNthCalledWith(
+      1,
+      'Report Detail',
+      'Select Tab',
+      TabId.RAW_EVENTS,
+      undefined,
+      expect.objectContaining({
+        report_id: 'abc',
+        fight_id: '1',
+        target_tab: TabId.RAW_EVENTS,
+        is_experimental_tab: true,
+      }),
+    );
     expect(trackEvent).toHaveBeenNthCalledWith(
       2,
       'Report Detail',
       'Enable Experimental Tabs',
       TabId.RAW_EVENTS,
+      undefined,
+      expect.objectContaining({
+        report_id: 'abc',
+        fight_id: '1',
+        target_tab: TabId.RAW_EVENTS,
+        triggered_by_tab_selection: true,
+      }),
     );
   });
 
@@ -166,6 +196,17 @@ describe('ReportFightContext analytics tracking', () => {
       result.current.setShowExperimentalTabs(true);
     });
 
-    expect(trackEvent).toHaveBeenCalledWith('Report Detail', 'Toggle Experimental Tabs', 'enable');
+    expect(trackEvent).toHaveBeenCalledWith(
+      'Report Detail',
+      'Toggle Experimental Tabs',
+      'enable',
+      undefined,
+      expect.objectContaining({
+        report_id: 'abc',
+        fight_id: '1',
+        target_tab: TabId.INSIGHTS,
+        enabled: true,
+      }),
+    );
   });
 });

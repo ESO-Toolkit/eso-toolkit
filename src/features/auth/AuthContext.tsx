@@ -9,13 +9,19 @@ import React, {
 
 import { useEsoLogsClientContext } from '../../EsoLogsClientContext';
 import { GetCurrentUserQuery, GetCurrentUserDocument } from '../../graphql/gql/graphql';
+import { setAnalyticsUserId, setUserProperties } from '../../utils/analytics';
 import { checkUserBan, DEFAULT_BAN_REASON } from '../../utils/banlist';
 import { isDevelopment } from '../../utils/envUtils';
 import { Logger, LogLevel } from '../../utils/logger';
 import { addBreadcrumb, setUserContext } from '../../utils/sentryUtils';
 
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './auth';
-import { getAccessTokenExpiry, isAccessTokenExpired, tokenHasUserSubject } from './tokenUtils';
+import {
+  getAccessTokenExpiry,
+  getAccessTokenSubject,
+  isAccessTokenExpired,
+  tokenHasUserSubject,
+} from './tokenUtils';
 
 const logger = new Logger({
   level: LogLevel.ERROR,
@@ -23,6 +29,39 @@ const logger = new Logger({
 });
 
 type CurrentUser = NonNullable<NonNullable<GetCurrentUserQuery['userData']>['currentUser']>;
+
+type AnalyticsUserProperties = Record<string, string | number | boolean>;
+
+const deriveAccountRegion = (user: CurrentUser | null): string => {
+  const hasNa = Boolean(user?.naDisplayName);
+  const hasEu = Boolean(user?.euDisplayName);
+
+  if (hasNa && hasEu) return 'multi';
+  if (hasNa) return 'na';
+  if (hasEu) return 'eu';
+  return 'unknown';
+};
+
+const buildUserPropertyPayload = (
+  user: CurrentUser | null,
+  options: { isLoggedIn: boolean; isBanned: boolean; hasSubject: boolean },
+): AnalyticsUserProperties => {
+  const hasNa = Boolean(user?.naDisplayName);
+  const hasEu = Boolean(user?.euDisplayName);
+  const displayNameCount = Number(hasNa) + Number(hasEu);
+
+  return {
+    auth_state: options.isLoggedIn ? 'authenticated' : 'guest',
+    ban_state: options.isBanned ? 'banned' : 'clear',
+    account_region: deriveAccountRegion(user),
+    has_na_display_name: hasNa,
+    has_eu_display_name: hasEu,
+    display_name_count: displayNameCount,
+    profile_named: Boolean(user?.name),
+    user_profile_state: user ? 'resolved' : 'missing',
+    has_token_subject: options.hasSubject,
+  };
+};
 
 interface AuthContextType {
   accessToken: string;
@@ -54,6 +93,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const accessTokenHasUser = React.useMemo(() => tokenHasUserSubject(accessToken), [accessToken]);
   const accessTokenExpiry = React.useMemo(() => getAccessTokenExpiry(accessToken), [accessToken]);
   const accessTokenExpired = React.useMemo(() => isAccessTokenExpired(accessToken), [accessToken]);
+  const lastUserPropertyPayload = React.useRef<string>('');
 
   if (isDevelopment()) {
     // eslint-disable-next-line no-console
@@ -68,6 +108,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       userError,
     });
   }
+
+  useEffect(() => {
+    const subject = getAccessTokenSubject(accessToken);
+    setAnalyticsUserId(subject);
+  }, [accessToken]);
 
   // Re-bind access token from localStorage
   const rebindAccessToken = useCallback(() => {
@@ -213,6 +258,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [setAuthToken]);
 
   const isLoggedIn = !!accessToken && accessTokenHasUser && !accessTokenExpired && !isBanned;
+
+  useEffect(() => {
+    const payload = buildUserPropertyPayload(currentUser, {
+      isLoggedIn,
+      isBanned,
+      hasSubject: accessTokenHasUser,
+    });
+
+    const serialized = JSON.stringify(payload);
+    if (serialized !== lastUserPropertyPayload.current) {
+      setUserProperties(payload);
+      lastUserPropertyPayload.current = serialized;
+    }
+  }, [currentUser, isLoggedIn, isBanned, accessTokenHasUser]);
 
   useEffect(() => {
     if (isDevelopment()) {

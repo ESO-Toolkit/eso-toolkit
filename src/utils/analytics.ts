@@ -5,10 +5,19 @@
 
 import ReactGA from 'react-ga4';
 
+import { getBuildInfo, getBuildInfoAsync } from './cacheBusting';
 import { getEnvVar } from './envUtils';
 import { Logger, LogLevel } from './logger';
 
 const logger = new Logger({ level: LogLevel.ERROR, contextPrefix: 'Analytics' });
+
+type BuildInfo = NonNullable<ReturnType<typeof getBuildInfo>>;
+type EventPayload = {
+  action: string;
+  category: string;
+  label?: string;
+  value?: number;
+} & Record<string, unknown>;
 
 /**
  * Initialize Google Analytics with the measurement ID from environment variables
@@ -24,6 +33,30 @@ export const initializeAnalytics = (): void => {
           send_page_view: false,
         },
       });
+
+      const applyBuildMetadata = (info: BuildInfo): void => {
+        setUserProperties({
+          app_version: info.version,
+          app_build_id: info.buildId,
+          app_commit: info.shortCommit,
+          app_build_timestamp: info.timestamp,
+        });
+      };
+
+      const buildInfo = getBuildInfo();
+      if (buildInfo) {
+        applyBuildMetadata(buildInfo);
+      } else {
+        void getBuildInfoAsync()
+          .then((info) => {
+            if (info) {
+              applyBuildMetadata(info as BuildInfo);
+            }
+          })
+          .catch(() => {
+            // Ignore version fetch failures; analytics already initialized
+          });
+      }
     } catch (error) {
       logger.error('Failed to initialize Google Analytics', error as Error);
     }
@@ -90,17 +123,34 @@ export const trackEvent = (
   action: string,
   label?: string,
   value?: number,
+  params?: Record<string, unknown>,
 ): void => {
   const measurementId = getEnvVar('VITE_GA_MEASUREMENT_ID');
 
   if (measurementId && typeof measurementId === 'string') {
     try {
-      ReactGA.event({
+      const payload: EventPayload = {
         category,
         action,
-        label,
-        value,
-      });
+      };
+
+      if (label !== undefined) {
+        payload.label = label;
+      }
+
+      if (value !== undefined) {
+        payload.value = value;
+      }
+
+      if (params) {
+        Object.entries(params).forEach(([key, paramValue]) => {
+          if (paramValue !== undefined) {
+            payload[key] = paramValue;
+          }
+        });
+      }
+
+      ReactGA.event(payload);
     } catch (error) {
       logger.error('Failed to track event', error as Error);
     }

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 
@@ -11,9 +11,16 @@ const mockEsoLogsClient = {
 
 const mockSetAuthToken = jest.fn();
 const mockClearAuthToken = jest.fn();
+const mockSetAnalyticsUserId = jest.fn();
+const mockSetUserProperties = jest.fn();
 
 jest.mock('../../utils/banlist', () => ({
   checkUserBan: jest.fn(),
+}));
+
+jest.mock('../../utils/analytics', () => ({
+  setAnalyticsUserId: mockSetAnalyticsUserId,
+  setUserProperties: mockSetUserProperties,
 }));
 
 // Mock the EsoLogsClientContext module BEFORE importing
@@ -132,6 +139,8 @@ describe('AuthContext', () => {
     mockLocalStorage.getItem.mockReturnValue('');
     mockSetAuthToken.mockClear();
     mockClearAuthToken.mockClear();
+    mockSetAnalyticsUserId.mockClear();
+    mockSetUserProperties.mockClear();
     mockCheckUserBan.mockResolvedValue({ isBanned: false });
     mockEsoLogsClient.query.mockResolvedValue({
       userData: {
@@ -157,6 +166,12 @@ describe('AuthContext', () => {
     expect(screen.getByTestId('user-loading')).toHaveTextContent('false');
     expect(screen.getByTestId('user-error')).toHaveTextContent('no-error');
     expect(screen.getByTestId('current-user')).toHaveTextContent('no-user');
+
+    return waitFor(() => {
+      expect(mockSetUserProperties).toHaveBeenCalledWith(
+        expect.objectContaining({ auth_state: 'guest', has_token_subject: false }),
+      );
+    });
   });
 
   it('should detect logged in state with valid token', () => {
@@ -182,6 +197,42 @@ describe('AuthContext', () => {
 
     expect(screen.getByTestId('access-token')).toHaveTextContent(mockToken);
     expect(screen.getByTestId('is-logged-in')).toHaveTextContent('false');
+  });
+
+  it('updates analytics user id when access token changes', async () => {
+    const futureExp = Math.floor(Date.now() / 1000) + 3600;
+    const mockToken = createMockToken(futureExp);
+    mockLocalStorage.getItem.mockReturnValue(mockToken);
+
+    renderWithAuthProvider(<TestComponent />);
+
+    await waitFor(() => {
+      expect(mockSetAnalyticsUserId).toHaveBeenCalledWith('eso-user-123');
+    });
+
+    await waitFor(() => {
+      expect(mockSetUserProperties).toHaveBeenCalledWith(
+        expect.objectContaining({
+          auth_state: 'authenticated',
+          has_token_subject: true,
+          account_region: 'multi',
+        }),
+      );
+    });
+
+    mockSetUserProperties.mockClear();
+    mockLocalStorage.getItem.mockReturnValue('');
+    fireEvent.click(screen.getByTestId('rebind-token'));
+
+    await waitFor(() => {
+      expect(mockSetAnalyticsUserId).toHaveBeenCalledWith(null);
+    });
+
+    await waitFor(() => {
+      expect(mockSetUserProperties).toHaveBeenCalledWith(
+        expect.objectContaining({ auth_state: 'guest', has_token_subject: false }),
+      );
+    });
   });
 
   it('should fetch user data when logged in', async () => {
