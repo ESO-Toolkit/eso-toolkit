@@ -10,7 +10,7 @@ import castEventsReducer, {
   clearCastEvents,
   fetchCastEvents,
 } from './castEventsSlice';
-import { resolveCacheKey } from './cacheStateHelpers';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
 // Mock the esologsClient
 jest.mock('../../esologsClient');

@@ -1,57 +1,38 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { FightFragment } from '../../graphql/gql/graphql';
-import {
-  UnifiedCastEvent,
-  DamageEvent,
-  HealEvent,
-  BuffEvent,
-  DeathEvent,
-  CombatantInfoEvent,
-  DebuffEvent,
-  ResourceChangeEvent,
-} from '../../types/combatlogEvents';
+import { DamageEvent, HealEvent, ResourceChangeEvent } from '../../types/combatlogEvents';
 import { createBuffLookup, createDebuffLookup, BuffLookupData } from '../../utils/BuffLookupUtils';
+import type { ReportFightContextInput } from '../contextTypes';
 import { selectCastEvents as selectCastEventsFromCache } from '../events_data/castEventsSelectors';
+import {
+  selectCombatantInfoEvents as selectCombatantInfoEventsFromSlice,
+  selectCombatantInfoEventsLoading as selectCombatantInfoEventsLoadingFromSlice,
+} from '../events_data/combatantInfoEventsSelectors';
 import { selectDamageEvents } from '../events_data/damageEventsSelectors';
-import { selectHealingEvents } from '../events_data/healingEventsSelectors';
-import {
-  selectFriendlyBuffEvents as selectFriendlyBuffEventsFromSlice,
-  selectFriendlyBuffEventsEntryForContext,
-  selectFriendlyBuffEventsForContext,
-  selectFriendlyBuffEventsLoading as selectFriendlyBuffEventsLoadingFromSlice,
-} from '../events_data/friendlyBuffEventsSelectors';
-import {
-  selectHostileBuffEvents as selectHostileBuffEventsFromSlice,
-  selectHostileBuffEventsEntryForContext,
-  selectHostileBuffEventsForContext,
-  selectHostileBuffEventsLoading as selectHostileBuffEventsLoadingFromSlice,
-} from '../events_data/hostileBuffEventsSelectors';
-import {
-  selectDebuffEvents as selectDebuffEventsFromSlice,
-  selectDebuffEventsEntryForContext,
-  selectDebuffEventsForContext,
-  selectDebuffEventsLoading as selectDebuffEventsLoadingFromSlice,
-} from '../events_data/debuffEventsSelectors';
 import {
   selectDeathEvents as selectDeathEventsFromSlice,
-  selectDeathEventsEntryForContext,
-  selectDeathEventsForContext,
   selectDeathEventsLoading as selectDeathEventsLoadingFromSlice,
 } from '../events_data/deathEventsSelectors';
 import {
-  selectCombatantInfoEvents as selectCombatantInfoEventsFromSlice,
-  selectCombatantInfoEventsEntryForContext,
-  selectCombatantInfoEventsForContext,
-  selectCombatantInfoEventsLoading as selectCombatantInfoEventsLoadingFromSlice,
-} from '../events_data/combatantInfoEventsSelectors';
-import { resolveCacheKey } from '../events_data/cacheStateHelpers';
+  selectDebuffEvents as selectDebuffEventsFromSlice,
+  selectDebuffEventsLoading as selectDebuffEventsLoadingFromSlice,
+} from '../events_data/debuffEventsSelectors';
+import {
+  selectFriendlyBuffEvents as selectFriendlyBuffEventsFromSlice,
+  selectFriendlyBuffEventsLoading as selectFriendlyBuffEventsLoadingFromSlice,
+} from '../events_data/friendlyBuffEventsSelectors';
+import { selectHealingEvents } from '../events_data/healingEventsSelectors';
+import {
+  selectHostileBuffEvents as selectHostileBuffEventsFromSlice,
+  selectHostileBuffEventsLoading as selectHostileBuffEventsLoadingFromSlice,
+} from '../events_data/hostileBuffEventsSelectors';
 import type { ResourceEventsEntry, ResourceEventsState } from '../events_data/resourceEventsSlice';
 import { selectActorsById } from '../master_data/masterDataSelectors';
 import { selectActiveReportContext, selectReportFights } from '../report/reportSelectors';
-import type { ReportFightContextInput } from '../contextTypes';
-import { createReportFightContextSelector } from '../utils/contextSelectors';
 import { RootState } from '../storeWithHistory';
+import { createReportFightContextSelector } from '../utils/contextSelectors';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
 export {
   selectDamageEvents,
@@ -107,7 +88,7 @@ const createActiveContextInput = (
   state: RootState,
   fightId: number | string | null,
 ): ReportFightContextInput => ({
-  reportCode: state.report.activeContext.reportId ?? state.report.reportId,
+  reportCode: state.report.activeContext.reportId ?? (state.report.reportId || null),
   fightId,
 });
 

@@ -7,8 +7,8 @@ import { selectActorsById } from '../master_data/masterDataSelectors';
 import { selectActiveReportContext } from '../report/reportSelectors';
 import type { RootState } from '../storeWithHistory';
 import { createReportFightContextSelector } from '../utils/contextSelectors';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
-import { resolveCacheKey } from './cacheStateHelpers';
 import { DamageEventsEntry, DamageEventsState } from './damageEventsSlice';
 
 // Basic damage events selectors

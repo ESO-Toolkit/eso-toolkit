@@ -10,7 +10,6 @@ import {
 } from '../../graphql/gql/graphql';
 import { ResourceChangeEvent, LogEvent } from '../../types/combatlogEvents';
 import { Logger, LogLevel } from '../../utils/logger';
-
 import {
   KeyedCacheState,
   removeFromCache,
@@ -18,7 +17,8 @@ import {
   resetCacheState,
   touchAccessOrder,
   trimCache,
-} from './cacheStateHelpers';
+} from '../utils/keyedCacheState';
+
 import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 

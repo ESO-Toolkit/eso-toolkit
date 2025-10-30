@@ -9,7 +9,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 import { SkillTooltip } from './SkillTooltip';
-import { resolveCacheKey } from '../store/events_data/cacheStateHelpers';
+import { resolveCacheKey } from '../store/utils/keyedCacheState';
 
 // Mock the logger to avoid context issues
 jest.mock('../hooks/useLogger', () => ({
@@ -339,6 +339,20 @@ const createMockStore = () => {
       ) => state,
       report: (
         state = {
+          entries: {
+            [resolveCacheKey({ reportCode }).key]: {
+              data: null,
+              status: 'idle',
+              error: null,
+              fightsById: {},
+              fightIds: [],
+              cacheMetadata: {
+                lastFetchedTimestamp: null,
+              },
+              currentRequest: null,
+            },
+          },
+          accessOrder: [resolveCacheKey({ reportCode }).key],
           reportId: reportCode,
           data: {
             fights: [
@@ -369,7 +383,6 @@ const createMockStore = () => {
             reportId: reportCode,
             fightId,
           },
-          reportsById: {},
           fightIndexByReport: {},
         },
       ) => state,

@@ -4,15 +4,15 @@ import { useSelector } from 'react-redux';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import {
-  selectMasterData,
+  CombinedMasterData,
+  selectCombinedMasterData,
   selectMasterDataLoadingState,
 } from '../store/master_data/masterDataSelectors';
 import { fetchReportMasterData } from '../store/master_data/masterDataSlice';
-import { RootState } from '../store/storeWithHistory';
 import { useAppDispatch } from '../store/useAppDispatch';
 
 export function useReportMasterData(): {
-  reportMasterData: RootState['masterData'];
+  reportMasterData: CombinedMasterData;
   isMasterDataLoading: boolean;
 } {
   const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
@@ -20,7 +20,7 @@ export function useReportMasterData(): {
   const { reportId } = useSelectedReportAndFight();
 
   // Move selectors BEFORE the effects that use them
-  const reportMasterData = useSelector(selectMasterData);
+  const reportMasterData = useSelector(selectCombinedMasterData);
   const isMasterDataLoading = useSelector(selectMasterDataLoadingState);
 
   React.useEffect(() => {

@@ -4,10 +4,24 @@ import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 
 import reportSlice, {
   clearReport,
-  ReportRegistryEntry,
+  ReportEntry,
   ReportState,
   setActiveReportContext,
 } from './reportSlice';
+import { resolveCacheKey } from '../utils/keyedCacheState';
+
+const createReportEntry = (overrides: Partial<ReportEntry> = {}): ReportEntry => ({
+  data: null,
+  status: 'idle',
+  error: null,
+  fightsById: {},
+  fightIds: [],
+  cacheMetadata: {
+    lastFetchedTimestamp: null,
+  },
+  currentRequest: null,
+  ...overrides,
+});
 
 describe('reportSlice caching logic', () => {
   let store: ReturnType<typeof configureStore>;
@@ -24,7 +38,8 @@ describe('reportSlice caching logic', () => {
     const state = store.getState() as { report: ReportState };
     expect(state.report.cacheMetadata.lastFetchedReportId).toBeNull();
     expect(state.report.cacheMetadata.lastFetchedTimestamp).toBeNull();
-    expect(state.report.reportsById).toEqual({});
+    expect(state.report.entries).toEqual({});
+    expect(state.report.accessOrder).toEqual([]);
     expect(state.report.activeContext).toEqual({ reportId: null, fightId: null });
   });
 
@@ -42,7 +57,19 @@ describe('reportSlice caching logic', () => {
     };
 
     // First, simulate some cache data
+    const { key } = resolveCacheKey({ reportCode: 'test-report' });
+
     const initialState: ReportState = {
+      entries: {
+        [key]: createReportEntry({
+          data: mockData,
+          status: 'succeeded',
+          cacheMetadata: {
+            lastFetchedTimestamp: Date.now(),
+          },
+        }),
+      },
+      accessOrder: [key],
       reportId: 'test-report',
       data: mockData,
       loading: false,
@@ -54,19 +81,6 @@ describe('reportSlice caching logic', () => {
       activeContext: {
         reportId: 'test-report',
         fightId: null,
-      },
-      reportsById: {
-        'test-report': {
-          reportId: 'test-report',
-          data: mockData,
-          status: 'succeeded',
-          error: null,
-          fightsById: {},
-          fightIds: [],
-          cacheMetadata: {
-            lastFetchedTimestamp: Date.now(),
-          },
-        } satisfies ReportRegistryEntry,
       },
       fightIndexByReport: {
         'test-report': [],
@@ -92,7 +106,8 @@ describe('reportSlice caching logic', () => {
     expect(state.report.error).toBeNull();
     expect(state.report.cacheMetadata.lastFetchedReportId).toBeNull();
     expect(state.report.cacheMetadata.lastFetchedTimestamp).toBeNull();
-    expect(state.report.reportsById).toEqual({});
+    expect(state.report.entries).toEqual({});
+    expect(state.report.accessOrder).toEqual([]);
     expect(state.report.fightIndexByReport).toEqual({});
     expect(state.report.activeContext).toEqual({ reportId: null, fightId: null });
   });
@@ -103,7 +118,8 @@ describe('reportSlice caching logic', () => {
     expect(typeof state.report.cacheMetadata.lastFetchedReportId).toBe('object'); // null is object
     expect(typeof state.report.cacheMetadata.lastFetchedTimestamp).toBe('object'); // null is object
     expect(state.report.activeContext).toEqual({ reportId: null, fightId: null });
-    expect(state.report.reportsById).toEqual({});
+    expect(state.report.entries).toEqual({});
+    expect(state.report.accessOrder).toEqual([]);
     expect(state.report.fightIndexByReport).toEqual({});
   });
 
@@ -140,7 +156,9 @@ describe('reportSlice caching logic', () => {
       const state = store.getState() as { report: ReportState };
       expect(state.report.activeContext).toEqual({ reportId: 'TEST-123', fightId: 45 });
       expect(state.report.reportId).toBe('TEST-123');
-      expect(Object.keys(state.report.reportsById)).toContain('TEST-123');
+      const reportKey = resolveCacheKey({ reportCode: 'TEST-123' }).key;
+      expect(Object.keys(state.report.entries)).toContain(reportKey);
+      expect(state.report.accessOrder).toContain(reportKey);
     });
 
     it('clears context when payload is empty', () => {

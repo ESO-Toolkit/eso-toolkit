@@ -5,8 +5,8 @@ import type { ReportFightContextInput } from '../contextTypes';
 import { selectActiveReportContext } from '../report/reportSelectors';
 import type { RootState } from '../storeWithHistory';
 import { createReportFightContextSelector } from '../utils/contextSelectors';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
-import { resolveCacheKey } from './cacheStateHelpers';
 import type { CastEventsEntry, CastEventsState } from './castEventsSlice';
 
 export const selectCastEventsState = (state: RootState): CastEventsState => state.events.casts;

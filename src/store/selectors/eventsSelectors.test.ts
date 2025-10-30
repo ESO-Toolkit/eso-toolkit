@@ -1,5 +1,5 @@
 import { BuffEvent, DebuffEvent } from '../../types/combatlogEvents';
-import { resolveCacheKey } from '../events_data/cacheStateHelpers';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 import type { HostileBuffEventsEntry } from '../events_data/hostileBuffEventsSlice';
 import type { DebuffEventsEntry } from '../events_data/debuffEventsSlice';
 import { RootState } from '../storeWithHistory';
@@ -12,8 +12,20 @@ import {
 } from './eventsSelectors';
 
 // Mock state structure
-const createMockState = (overrides: Partial<RootState> = {}): RootState =>
-  ({
+const createMockState = (overrides: Partial<RootState> = {}): RootState => {
+  const reportKey = resolveCacheKey({ reportCode: 'test-report' }).key;
+  const fight = {
+    id: 1,
+    startTime: 1000,
+    endTime: 2000,
+    name: 'Test Fight',
+    friendlyPlayers: [1, 2],
+    enemyNPCs: [3, 4],
+    enemyPlayers: [],
+    maps: [{ id: 1 }],
+  };
+
+  return ({
     events: {
       friendlyBuffs: { entries: {}, accessOrder: [] },
       hostileBuffs: { entries: {}, accessOrder: [] },
@@ -29,20 +41,25 @@ const createMockState = (overrides: Partial<RootState> = {}): RootState =>
       },
     },
     report: {
+      entries: {
+        [reportKey]: {
+          data: null,
+          status: 'succeeded',
+          error: null,
+          fightsById: {
+            1: fight,
+          },
+          fightIds: [1],
+          cacheMetadata: {
+            lastFetchedTimestamp: null,
+          },
+          currentRequest: null,
+        },
+      },
+      accessOrder: [reportKey],
       reportId: 'test-report',
       data: {
-        fights: [
-          {
-            id: 1,
-            startTime: 1000,
-            endTime: 2000,
-            name: 'Test Fight',
-            friendlyPlayers: [1, 2],
-            enemyNPCs: [3, 4],
-            enemyPlayers: [],
-            maps: [{ id: 1 }],
-          },
-        ],
+        fights: [fight],
         masterData: {
           actors: [],
           abilities: [],
@@ -51,40 +68,25 @@ const createMockState = (overrides: Partial<RootState> = {}): RootState =>
       },
       loading: false,
       error: null,
+      cacheMetadata: {
+        lastFetchedReportId: null,
+        lastFetchedTimestamp: null,
+      },
       activeContext: {
         reportId: 'test-report',
         fightId: 1,
       },
-      reportsById: {
-        'test-report': {
-          reportId: 'test-report',
-          data: null,
-          status: 'succeeded',
-          error: null,
-          fightsById: {
-            1: {
-              id: 1,
-              startTime: 1000,
-              endTime: 2000,
-              name: 'Test Fight',
-              friendlyPlayers: [1, 2],
-              enemyNPCs: [3, 4],
-              enemyPlayers: [],
-              maps: [{ id: 1 }],
-            },
-          },
-          fightIds: [1],
-          cacheMetadata: {
-            lastFetchedTimestamp: null,
-          },
-        },
+      fightIndexByReport: {
+        'test-report': [1],
       },
-      fightIndexByReport: {},
     },
     masterData: {
-      actorsById: {},
-      abilitiesById: {},
-      gameZonesById: {},
+      entries: {},
+      accessOrder: [],
+    },
+    playerData: {
+      entries: {},
+      accessOrder: [],
     },
     router: {
       location: {
@@ -98,6 +100,7 @@ const createMockState = (overrides: Partial<RootState> = {}): RootState =>
     },
     ...overrides,
   }) as RootState;
+};
 
 // Helper to create a mock buff event
 const createMockBuffEvent = (

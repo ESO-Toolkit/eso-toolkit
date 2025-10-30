@@ -5,8 +5,8 @@ import type { ReportFightContextInput } from '../contextTypes';
 import { selectActiveReportContext } from '../report/reportSelectors';
 import { RootState } from '../storeWithHistory';
 import { createReportFightContextSelector } from '../utils/contextSelectors';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
-import { resolveCacheKey } from './cacheStateHelpers';
 import { HealingEventsEntry, HealingEventsState } from './healingEventsSlice';
 
 export const selectHealingEventsState = (state: RootState): HealingEventsState =>
