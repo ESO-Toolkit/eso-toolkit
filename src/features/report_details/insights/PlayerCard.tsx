@@ -32,17 +32,19 @@ import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillT
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
-import { selectActivePlayersById } from '../../../store/player_data/playerDataSelectors';
+import { selectActiveReportContext } from '../../../store/report/reportSelectors';
+import { selectPlayersByIdForContext } from '../../../store/player_data/playerDataSelectors';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import {
-  selectFriendlyBuffEvents,
-  selectHostileBuffEvents,
-  selectCastEvents,
-  selectDamageEvents,
-  selectDebuffEvents,
-  selectHealingEvents,
-  selectResourceEvents,
+  selectFriendlyBuffEventsForContext,
+  selectHostileBuffEventsForContext,
+  selectCastEventsForContext,
+  selectDamageEventsForContext,
+  selectDebuffEventsForContext,
+  selectHealingEventsForContext,
+  selectResourceEventsForContext,
 } from '../../../store/selectors/eventsSelectors';
+import type { RootState } from '../../../store/storeWithHistory';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
@@ -189,20 +191,55 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     const [gearDetailsOpen, setGearDetailsOpen] = useState(false);
     const [currentGearPlayerId, setCurrentGearPlayerId] = useState<string | number>(player.id);
 
-    // Get all players from Redux store
-    const playersById = useSelector(selectActivePlayersById);
-    const allPlayers = React.useMemo(() => {
-      return Object.values(playersById);
-    }, [playersById]);
+    const activeReportContext = useSelector(selectActiveReportContext);
+
+    const selectorContext = React.useMemo(() => {
+      const normalizedReportId =
+        typeof reportId === 'string' && reportId.trim().length > 0
+          ? reportId.trim()
+          : activeReportContext.reportId ?? null;
+
+      const normalizedFightId =
+        typeof fightId === 'string'
+          ? fightId.trim().length > 0
+            ? fightId.trim()
+            : activeReportContext.fightId ?? null
+          : fightId ?? activeReportContext.fightId ?? null;
+
+      return {
+        reportCode: normalizedReportId,
+        fightId: normalizedFightId,
+      };
+    }, [reportId, fightId, activeReportContext.reportId, activeReportContext.fightId]);
+
+    // Get all players from Redux store scoped to context
+    const playersById = useSelector((state: RootState) =>
+      selectPlayersByIdForContext(state, selectorContext),
+    );
+    const allPlayers = React.useMemo(() => Object.values(playersById), [playersById]);
 
     // Get combat event data for affix script detection
-    const friendlyBuffEvents = useSelector(selectFriendlyBuffEvents);
-    const hostileBuffEvents = useSelector(selectHostileBuffEvents);
-    const debuffEvents = useSelector(selectDebuffEvents);
-    const damageEvents = useSelector(selectDamageEvents);
-    const healingEvents = useSelector(selectHealingEvents);
-    const castEvents = useSelector(selectCastEvents);
-    const resourceEvents = useSelector(selectResourceEvents);
+    const friendlyBuffEvents = useSelector((state: RootState) =>
+      selectFriendlyBuffEventsForContext(state, selectorContext),
+    );
+    const hostileBuffEvents = useSelector((state: RootState) =>
+      selectHostileBuffEventsForContext(state, selectorContext),
+    );
+    const debuffEvents = useSelector((state: RootState) =>
+      selectDebuffEventsForContext(state, selectorContext),
+    );
+    const damageEvents = useSelector((state: RootState) =>
+      selectDamageEventsForContext(state, selectorContext),
+    );
+    const healingEvents = useSelector((state: RootState) =>
+      selectHealingEventsForContext(state, selectorContext),
+    );
+    const castEvents = useSelector((state: RootState) =>
+      selectCastEventsForContext(state, selectorContext),
+    );
+    const resourceEvents = useSelector((state: RootState) =>
+      selectResourceEventsForContext(state, selectorContext),
+    );
 
     // Combine combat event data
     const combatEventData: CombatEventData = React.useMemo(
