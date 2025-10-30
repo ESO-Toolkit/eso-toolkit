@@ -4,44 +4,37 @@ import { EsoLogsClient } from '../../esologsClient';
 import { ReportAbilityFragment, ReportActorFragment } from '../../graphql/gql/graphql';
 
 import masterDataReducer, {
+  MasterDataState,
   clearMasterData,
   resetLoadingState,
   forceMasterDataRefresh,
   fetchReportMasterData,
   MasterDataPayload,
+  setMasterDataContext,
 } from './masterDataSlice';
 
 // Mock the esologsClient
 jest.mock('../../esologsClient');
-
-interface MasterDataState {
-  abilitiesById: Record<string | number, ReportAbilityFragment>;
-  actorsById: Record<string | number, ReportActorFragment>;
-  loading: boolean;
-  loaded: boolean;
-  error: string | null;
-  cacheMetadata: {
-    lastFetchedReportId: string | null;
-    lastFetchedTimestamp: number | null;
-    actorCount: number;
-    abilityCount: number;
-  };
-}
 
 interface RootState {
   masterData: MasterDataState;
 }
 
 describe('masterDataSlice', () => {
-  let store: ReturnType<typeof configureStore<RootState>>;
-  let mockClient: jest.Mocked<EsoLogsClient>;
-
-  beforeEach(() => {
-    store = configureStore({
+  const createTestStore = () =>
+    configureStore<RootState>({
       reducer: {
         masterData: masterDataReducer,
       },
     });
+  let store!: ReturnType<typeof createTestStore>;
+  let mockClient: jest.Mocked<EsoLogsClient>;
+  const setContext = (reportCode: string | null) => {
+    store.dispatch(setMasterDataContext(reportCode));
+  };
+
+  beforeEach(() => {
+    store = createTestStore();
     mockClient = {
       query: jest.fn(),
     } as any;
@@ -66,6 +59,8 @@ describe('masterDataSlice', () => {
           actorCount: 0,
           abilityCount: 0,
         },
+        activeContext: { reportId: null },
+        entriesByReportId: {},
       });
     });
   });
@@ -88,6 +83,7 @@ describe('masterDataSlice', () => {
         actorsById: { 1: mockActor },
       };
 
+      setContext('test-report');
       store.dispatch(
         fetchReportMasterData.fulfilled(mockData, 'test-request-id', {
           reportCode: 'test-report',
@@ -100,6 +96,7 @@ describe('masterDataSlice', () => {
       expect(state.masterData.loaded).toBe(true);
       expect(Object.keys(state.masterData.abilitiesById)).toHaveLength(1);
       expect(Object.keys(state.masterData.actorsById)).toHaveLength(1);
+      expect(state.masterData.entriesByReportId['test-report']).toBeDefined();
 
       // Clear the data
       store.dispatch(clearMasterData());
@@ -118,11 +115,14 @@ describe('masterDataSlice', () => {
           actorCount: 0,
           abilityCount: 0,
         },
+        activeContext: { reportId: null },
+        entriesByReportId: {},
       });
     });
 
     it('should clear error state', () => {
       // First set an error state
+      setContext('test-report');
       store.dispatch(
         fetchReportMasterData.rejected(
           new Error('Test error'),
@@ -140,12 +140,97 @@ describe('masterDataSlice', () => {
 
       state = store.getState();
       expect(state.masterData.error).toBeNull();
+      expect(state.masterData.entriesByReportId).toEqual({});
+      expect(state.masterData.activeContext).toEqual({ reportId: null });
+    });
+  });
+
+  describe('setMasterDataContext', () => {
+    it('should synchronize active state with the targeted entry', () => {
+      const reportOne = 'report-one';
+      const reportTwo = 'report-two';
+
+      const reportOneData: MasterDataPayload = {
+        reportCode: reportOne,
+        abilities: [{ gameID: 1, name: 'Ability 1', icon: 'icon1.png' }],
+        abilitiesById: { 1: { gameID: 1, name: 'Ability 1', icon: 'icon1.png' } },
+        actors: [{ id: 1, name: 'Actor 1', type: 'Player' }],
+        actorsById: { 1: { id: 1, name: 'Actor 1', type: 'Player' } },
+      };
+
+      const reportTwoData: MasterDataPayload = {
+        reportCode: reportTwo,
+        abilities: [{ gameID: 2, name: 'Ability 2', icon: 'icon2.png' }],
+        abilitiesById: { 2: { gameID: 2, name: 'Ability 2', icon: 'icon2.png' } },
+        actors: [{ id: 2, name: 'Actor 2', type: 'NPC' }],
+        actorsById: { 2: { id: 2, name: 'Actor 2', type: 'NPC' } },
+      };
+
+      setContext(reportOne);
+      store.dispatch(
+        fetchReportMasterData.fulfilled(reportOneData, 'request-one', {
+          reportCode: reportOne,
+          client: mockClient,
+        }),
+      );
+
+      setContext(reportTwo);
+      store.dispatch(
+        fetchReportMasterData.fulfilled(reportTwoData, 'request-two', {
+          reportCode: reportTwo,
+          client: mockClient,
+        }),
+      );
+
+      // Switch back to the first report and verify active state mirrors entry data
+      setContext(reportOne);
+      let state = store.getState();
+      expect(state.masterData.activeContext.reportId).toBe(reportOne);
+      expect(state.masterData.abilitiesById).toEqual(reportOneData.abilitiesById);
+      expect(state.masterData.actorsById).toEqual(reportOneData.actorsById);
+
+      // Switch to second report and ensure the active state mirrors its entry
+      setContext(reportTwo);
+      state = store.getState();
+      expect(state.masterData.activeContext.reportId).toBe(reportTwo);
+      expect(state.masterData.abilitiesById).toEqual(reportTwoData.abilitiesById);
+      expect(state.masterData.actorsById).toEqual(reportTwoData.actorsById);
+    });
+
+    it('should clear active data when context is cleared', () => {
+      const reportId = 'report-clear';
+      const payload: MasterDataPayload = {
+        reportCode: reportId,
+        abilities: [{ gameID: 10, name: 'Ability', icon: 'icon.png' }],
+        abilitiesById: { 10: { gameID: 10, name: 'Ability', icon: 'icon.png' } },
+        actors: [{ id: 10, name: 'Actor', type: 'Player' }],
+        actorsById: { 10: { id: 10, name: 'Actor', type: 'Player' } },
+      };
+
+      setContext(reportId);
+      store.dispatch(
+        fetchReportMasterData.fulfilled(payload, 'request-clear', {
+          reportCode: reportId,
+          client: mockClient,
+        }),
+      );
+
+      setContext(null);
+
+      const state = store.getState();
+      expect(state.masterData.activeContext.reportId).toBeNull();
+      expect(state.masterData.abilitiesById).toEqual({});
+      expect(state.masterData.actorsById).toEqual({});
+      expect(state.masterData.loading).toBe(false);
+      expect(state.masterData.loaded).toBe(false);
+      expect(state.masterData.error).toBeNull();
     });
   });
 
   describe('resetLoadingState', () => {
     it('should reset loading and error states without affecting data', () => {
       // Set up a loading state with error
+      setContext('test-report');
       store.dispatch(
         fetchReportMasterData.pending('test-request-id', {
           reportCode: 'test-report',
@@ -172,6 +257,8 @@ describe('masterDataSlice', () => {
       state = store.getState();
       expect(state.masterData.loading).toBe(false);
       expect(state.masterData.error).toBeNull();
+      expect(state.masterData.entriesByReportId['test-report']?.loading).toBe(false);
+      expect(state.masterData.entriesByReportId['test-report']?.error).toBeNull();
     });
 
     it('should not affect other state properties', () => {
@@ -183,6 +270,7 @@ describe('masterDataSlice', () => {
         actorsById: { 1: { id: 1, name: 'Test Actor', type: 'Player' } },
       };
 
+      setContext('test-report');
       store.dispatch(
         fetchReportMasterData.fulfilled(mockData, 'test-request-id', {
           reportCode: 'test-report',
@@ -201,6 +289,9 @@ describe('masterDataSlice', () => {
       expect(afterReset.masterData.actorsById).toEqual(beforeReset.masterData.actorsById);
       expect(afterReset.masterData.loaded).toBe(beforeReset.masterData.loaded);
       expect(afterReset.masterData.cacheMetadata).toEqual(beforeReset.masterData.cacheMetadata);
+      expect(afterReset.masterData.entriesByReportId['test-report']).toEqual(
+        beforeReset.masterData.entriesByReportId['test-report'],
+      );
     });
   });
 
@@ -215,6 +306,7 @@ describe('masterDataSlice', () => {
         actorsById: { 1: { id: 1, name: 'Test Actor', type: 'Player' } },
       };
 
+      setContext('test-report');
       store.dispatch(
         fetchReportMasterData.fulfilled(mockData, 'test-request-id', {
           reportCode: 'test-report',
@@ -232,6 +324,10 @@ describe('masterDataSlice', () => {
       const afterRefresh = store.getState();
       expect(afterRefresh.masterData.loaded).toBe(false);
       expect(afterRefresh.masterData.cacheMetadata.lastFetchedTimestamp).toBeNull();
+      expect(
+        afterRefresh.masterData.entriesByReportId['test-report']?.cacheMetadata.lastFetchedTimestamp,
+      ).toBeNull();
+      expect(afterRefresh.masterData.entriesByReportId['test-report']?.loaded).toBe(false);
 
       // Data should remain unchanged
       expect(afterRefresh.masterData.abilitiesById).toEqual(beforeRefresh.masterData.abilitiesById);
@@ -245,6 +341,7 @@ describe('masterDataSlice', () => {
   describe('fetchReportMasterData async thunk', () => {
     describe('pending state', () => {
       it('should set loading to true and clear error', () => {
+        setContext('test-report');
         store.dispatch(
           fetchReportMasterData.pending('test-request-id', {
             reportCode: 'test-report',
@@ -256,6 +353,7 @@ describe('masterDataSlice', () => {
         expect(state.masterData.loading).toBe(true);
         expect(state.masterData.error).toBeNull();
         expect(state.masterData.loaded).toBe(false);
+        expect(state.masterData.entriesByReportId['test-report']?.loading).toBe(true);
       });
     });
 
@@ -293,6 +391,7 @@ describe('masterDataSlice', () => {
 
         const beforeTime = Date.now();
 
+        setContext('test-report-123');
         store.dispatch(
           fetchReportMasterData.fulfilled(mockData, 'test-request-id', {
             reportCode: 'test-report-123',
@@ -302,12 +401,17 @@ describe('masterDataSlice', () => {
 
         const afterTime = Date.now();
         const state = store.getState();
+        const entry = state.masterData.entriesByReportId['test-report-123'];
 
         expect(state.masterData.loading).toBe(false);
         expect(state.masterData.loaded).toBe(true);
         expect(state.masterData.error).toBeNull();
         expect(state.masterData.abilitiesById).toEqual(abilitiesById);
         expect(state.masterData.actorsById).toEqual(actorsById);
+        expect(entry?.abilitiesById).toEqual(abilitiesById);
+        expect(entry?.actorsById).toEqual(actorsById);
+        expect(entry?.loaded).toBe(true);
+        expect(entry?.loading).toBe(false);
 
         // Check cache metadata
         expect(state.masterData.cacheMetadata.lastFetchedReportId).toBe('test-report-123');
@@ -317,6 +421,7 @@ describe('masterDataSlice', () => {
         expect(state.masterData.cacheMetadata.lastFetchedTimestamp).toBeLessThanOrEqual(afterTime);
         expect(state.masterData.cacheMetadata.actorCount).toBe(1);
         expect(state.masterData.cacheMetadata.abilityCount).toBe(1);
+        expect(entry?.cacheMetadata.lastFetchedReportId).toBe('test-report-123');
       });
 
       it('should handle empty data arrays', () => {
@@ -328,6 +433,7 @@ describe('masterDataSlice', () => {
           actorsById: {},
         };
 
+        setContext('empty-report');
         store.dispatch(
           fetchReportMasterData.fulfilled(mockData, 'test-request-id', {
             reportCode: 'empty-report',
@@ -336,11 +442,15 @@ describe('masterDataSlice', () => {
         );
 
         const state = store.getState();
+        const entry = state.masterData.entriesByReportId['empty-report'];
         expect(state.masterData.abilitiesById).toEqual({});
         expect(state.masterData.actorsById).toEqual({});
         expect(state.masterData.cacheMetadata.actorCount).toBe(0);
         expect(state.masterData.cacheMetadata.abilityCount).toBe(0);
         expect(state.masterData.loaded).toBe(true);
+        expect(entry?.abilitiesById).toEqual({});
+        expect(entry?.actorsById).toEqual({});
+        expect(entry?.loaded).toBe(true);
       });
 
       it('should handle multiple abilities and actors', () => {
@@ -367,6 +477,7 @@ describe('masterDataSlice', () => {
           actorsById: actors.reduce((acc, actor) => ({ ...acc, [actor.id]: actor }), {}),
         };
 
+        setContext('multi-data-report');
         store.dispatch(
           fetchReportMasterData.fulfilled(mockData, 'test-request-id', {
             reportCode: 'multi-data-report',
@@ -375,10 +486,13 @@ describe('masterDataSlice', () => {
         );
 
         const state = store.getState();
+        const entry = state.masterData.entriesByReportId['multi-data-report'];
         expect(Object.keys(state.masterData.abilitiesById)).toHaveLength(3);
         expect(Object.keys(state.masterData.actorsById)).toHaveLength(3);
         expect(state.masterData.cacheMetadata.actorCount).toBe(3);
         expect(state.masterData.cacheMetadata.abilityCount).toBe(3);
+        expect(Object.keys(entry?.abilitiesById ?? {})).toHaveLength(3);
+        expect(Object.keys(entry?.actorsById ?? {})).toHaveLength(3);
       });
     });
 
@@ -386,6 +500,7 @@ describe('masterDataSlice', () => {
       it('should set error message and stop loading', () => {
         const errorMessage = 'Network error occurred';
 
+        setContext('test-report');
         store.dispatch(
           fetchReportMasterData.rejected(
             new Error(errorMessage),
@@ -396,12 +511,16 @@ describe('masterDataSlice', () => {
         );
 
         const state = store.getState();
+        const entry = state.masterData.entriesByReportId['test-report'];
         expect(state.masterData.loading).toBe(false);
         expect(state.masterData.error).toBe(errorMessage);
         expect(state.masterData.loaded).toBe(false);
+        expect(entry?.error).toBe(errorMessage);
+        expect(entry?.loading).toBe(false);
       });
 
       it('should use default error message when payload is not provided', () => {
+        setContext('test-report');
         store.dispatch(
           fetchReportMasterData.rejected(new Error('Some error'), 'test-request-id', {
             reportCode: 'test-report',
@@ -411,6 +530,9 @@ describe('masterDataSlice', () => {
 
         const state = store.getState();
         expect(state.masterData.error).toBe('Failed to fetch master data');
+        expect(state.masterData.entriesByReportId['test-report']?.error).toBe(
+          'Failed to fetch master data',
+        );
       });
 
       it('should not modify existing data on error', () => {
@@ -423,6 +545,7 @@ describe('masterDataSlice', () => {
           actorsById: { 1: { id: 1, name: 'Test Actor', type: 'Player' } },
         };
 
+        setContext('test-report');
         store.dispatch(
           fetchReportMasterData.fulfilled(mockData, 'test-request-id', {
             reportCode: 'test-report',
@@ -455,9 +578,15 @@ describe('masterDataSlice', () => {
           stateBeforeError.masterData.cacheMetadata,
         );
 
-        // But error and loading states should be updated
-        expect(stateAfterError.masterData.error).toBe('Network error');
+        // Error should be stored on the targeted entry while active data remains untouched
         expect(stateAfterError.masterData.loading).toBe(false);
+        expect(stateAfterError.masterData.error).toBe(stateBeforeError.masterData.error);
+        expect(stateAfterError.masterData.entriesByReportId['different-report']?.error).toBe(
+          'Network error',
+        );
+        expect(stateAfterError.masterData.entriesByReportId['different-report']?.loaded).toBe(
+          false,
+        );
       });
     });
   });
@@ -488,6 +617,7 @@ describe('masterDataSlice', () => {
 
       const beforeTime = Date.now();
 
+      setContext('cache-test-report');
       store.dispatch(
         fetchReportMasterData.fulfilled(mockData, 'test-request-id', {
           reportCode: 'cache-test-report',
@@ -497,11 +627,14 @@ describe('masterDataSlice', () => {
 
       const state = store.getState();
       const cacheMetadata = state.masterData.cacheMetadata;
+      const entryMetadata = state.masterData.entriesByReportId['cache-test-report']?.cacheMetadata;
 
       expect(cacheMetadata.lastFetchedReportId).toBe('cache-test-report');
       expect(cacheMetadata.lastFetchedTimestamp).toBeGreaterThanOrEqual(beforeTime);
       expect(cacheMetadata.actorCount).toBe(3);
       expect(cacheMetadata.abilityCount).toBe(2);
+      expect(entryMetadata?.actorCount).toBe(3);
+      expect(entryMetadata?.abilityCount).toBe(2);
     });
 
     it('should preserve cache metadata through error states', () => {
@@ -514,6 +647,7 @@ describe('masterDataSlice', () => {
         actorsById: { 1: { id: 1, name: 'Test Actor', type: 'Player' } },
       };
 
+      setContext('initial-report');
       store.dispatch(
         fetchReportMasterData.fulfilled(mockData, 'test-request-id', {
           reportCode: 'initial-report',
@@ -538,6 +672,9 @@ describe('masterDataSlice', () => {
 
       // Cache metadata should remain unchanged
       expect(stateAfterError.masterData.cacheMetadata).toEqual(originalCacheMetadata);
+      expect(stateAfterError.masterData.entriesByReportId['different-report']?.error).toBe(
+        'Network error',
+      );
     });
   });
 });

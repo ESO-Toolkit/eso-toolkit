@@ -1,12 +1,27 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { RootState } from '../storeWithHistory';
+import { createReportFightKey } from '../cacheKeys';
 
 // PLAYER DATA SELECTORS - Read from playerData slice
 
 export const selectPlayerData = (state: RootState): RootState['playerData'] => state.playerData;
 export const selectPlayersById = (state: RootState): RootState['playerData']['playersById'] =>
   state.playerData.playersById;
+export const selectPlayerDataEntries = (state: RootState) => state.playerData.entriesByKey;
+export const selectPlayerDataActiveContext = (state: RootState) => state.playerData.activeContext;
+
+export const makeSelectPlayersByContext = () =>
+  createSelector(
+    [selectPlayerDataEntries, (_: RootState, reportCode: string, fightId: number) => ({
+      reportCode,
+      fightId,
+    })],
+    (entriesByKey, { reportCode, fightId }) => {
+      const key = createReportFightKey(reportCode, fightId);
+      return entriesByKey[key]?.playersById ?? {};
+    },
+  );
 
 // Player data loading state
 export const selectPlayerDataLoadingState = createSelector(

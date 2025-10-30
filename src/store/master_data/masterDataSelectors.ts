@@ -1,6 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { RootState } from '../storeWithHistory';
+import { ReportActorFragment } from '../../graphql/gql/graphql';
 
 // MASTER DATA SELECTORS - Read from masterData slice
 
@@ -9,6 +10,14 @@ export const selectActorsById = (state: RootState): RootState['masterData']['act
   state.masterData.actorsById;
 export const selectAbilitiesById = (state: RootState): RootState['masterData']['abilitiesById'] =>
   state.masterData.abilitiesById;
+export const selectMasterDataEntries = (state: RootState) => state.masterData.entriesByReportId;
+export const selectMasterDataActiveContext = (state: RootState) => state.masterData.activeContext;
+
+export const makeSelectMasterDataForReport = () =>
+  createSelector(
+    [selectMasterDataEntries, (_: RootState, reportCode: string) => reportCode],
+    (entries, reportCode) => entries[reportCode] ?? null,
+  );
 
 // Master data loading state
 export const selectMasterDataLoadingState = createSelector(
@@ -35,8 +44,9 @@ export const selectCombinedMasterData = createSelector([selectMasterData], (mast
 export const selectPlayerActors = createSelector([selectActorsById], (actorsById) => {
   const playerActors: typeof actorsById = {};
   Object.entries(actorsById).forEach(([id, actor]) => {
-    if (actor.type === 'Player') {
-      playerActors[id] = actor;
+    const typedActor = actor as ReportActorFragment;
+    if (typedActor.type === 'Player') {
+      playerActors[id] = typedActor;
     }
   });
   return playerActors;

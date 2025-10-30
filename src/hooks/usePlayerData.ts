@@ -7,7 +7,11 @@ import {
   selectPlayerData,
   selectPlayerDataLoadingState,
 } from '../store/player_data/playerDataSelectors';
-import { fetchPlayerData, PlayerDataState } from '../store/player_data/playerDataSlice';
+import {
+  fetchPlayerData,
+  PlayerDataState,
+  setPlayerDataContext,
+} from '../store/player_data/playerDataSlice';
 import { useAppDispatch } from '../store/useAppDispatch';
 
 export function usePlayerData(): {
@@ -26,9 +30,13 @@ export function usePlayerData(): {
     if (reportId && fightId) {
       const fightIdNumber = parseInt(fightId, 10);
       if (!isNaN(fightIdNumber)) {
+        dispatch(setPlayerDataContext({ reportCode: reportId, fightId: fightIdNumber }));
         dispatch(fetchPlayerData({ reportCode: reportId, fightId: fightIdNumber, client }));
+        return;
       }
     }
+
+    dispatch(setPlayerDataContext(null));
   }, [dispatch, reportId, fightId, client]);
 
   return React.useMemo(

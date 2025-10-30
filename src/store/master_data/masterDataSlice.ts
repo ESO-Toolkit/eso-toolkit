@@ -9,34 +9,94 @@ import {
 } from '../../graphql/gql/graphql';
 import { cleanArray } from '../../utils/cleanArray';
 
-interface MasterDataState {
+export interface MasterDataCacheMetadata {
+  lastFetchedReportId: string | null;
+  lastFetchedTimestamp: number | null;
+  actorCount: number;
+  abilityCount: number;
+}
+
+export interface MasterDataCacheEntry {
+  reportCode: string;
   abilitiesById: Record<string | number, ReportAbilityFragment>;
   actorsById: Record<string | number, ReportActorFragment>;
   loading: boolean;
   loaded: boolean;
   error: string | null;
-  // OPTIMIZED: Add cache management and granular loading states
-  cacheMetadata: {
-    lastFetchedReportId: string | null;
-    lastFetchedTimestamp: number | null;
-    actorCount: number;
-    abilityCount: number;
-  };
+  cacheMetadata: MasterDataCacheMetadata;
 }
 
-const initialState: MasterDataState = {
+export interface MasterDataContext {
+  reportId: string | null;
+}
+
+export interface MasterDataState {
+  abilitiesById: Record<string | number, ReportAbilityFragment>;
+  actorsById: Record<string | number, ReportActorFragment>;
+  loading: boolean;
+  loaded: boolean;
+  error: string | null;
+  cacheMetadata: MasterDataCacheMetadata;
+  activeContext: MasterDataContext;
+  entriesByReportId: Record<string, MasterDataCacheEntry>;
+}
+
+const createEmptyCacheMetadata = (): MasterDataCacheMetadata => ({
+  lastFetchedReportId: null,
+  lastFetchedTimestamp: null,
+  actorCount: 0,
+  abilityCount: 0,
+});
+
+const createEmptyEntry = (reportCode: string): MasterDataCacheEntry => ({
+  reportCode,
   abilitiesById: {},
   actorsById: {},
   loading: false,
   loaded: false,
   error: null,
-  // OPTIMIZED: Initialize cache metadata
-  cacheMetadata: {
-    lastFetchedReportId: null,
-    lastFetchedTimestamp: null,
-    actorCount: 0,
-    abilityCount: 0,
+  cacheMetadata: createEmptyCacheMetadata(),
+});
+
+const createInitialState = (): MasterDataState => ({
+  abilitiesById: {},
+  actorsById: {},
+  loading: false,
+  loaded: false,
+  error: null,
+  cacheMetadata: createEmptyCacheMetadata(),
+  activeContext: {
+    reportId: null,
   },
+  entriesByReportId: {},
+});
+
+const initialState: MasterDataState = createInitialState();
+
+const ensureEntry = (state: MasterDataState, reportCode: string): MasterDataCacheEntry => {
+  if (!state.entriesByReportId[reportCode]) {
+    state.entriesByReportId[reportCode] = createEmptyEntry(reportCode);
+  }
+  return state.entriesByReportId[reportCode];
+};
+
+const syncActiveEntry = (state: MasterDataState, entry: MasterDataCacheEntry | undefined) => {
+  if (!entry) {
+    state.abilitiesById = {};
+    state.actorsById = {};
+    state.loading = false;
+    state.loaded = false;
+    state.error = null;
+    state.cacheMetadata = createEmptyCacheMetadata();
+    return;
+  }
+
+  state.abilitiesById = entry.abilitiesById;
+  state.actorsById = entry.actorsById;
+  state.loading = entry.loading;
+  state.loaded = entry.loaded;
+  state.error = entry.error;
+  state.cacheMetadata = { ...entry.cacheMetadata };
 };
 
 export interface MasterDataPayload {
@@ -96,31 +156,27 @@ export const fetchReportMasterData = createAsyncThunk<
   {
     condition: ({ reportCode }, { getState }) => {
       const state = getState() as { masterData: MasterDataState };
+      const entry = state.masterData.entriesByReportId[reportCode];
 
-      // Check if we already have master data for this report and it's still fresh
-      const isCached =
-        state.masterData.cacheMetadata.lastFetchedReportId === reportCode &&
-        state.masterData.loaded &&
-        Object.keys(state.masterData.abilitiesById).length > 0 &&
-        Object.keys(state.masterData.actorsById).length > 0;
+      if (!entry) {
+        return true;
+      }
 
+      const isCached = entry.loaded;
+      const lastFetched = entry.cacheMetadata.lastFetchedTimestamp;
       const isFresh =
-        state.masterData.cacheMetadata.lastFetchedTimestamp &&
-        Date.now() - state.masterData.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
+        typeof lastFetched === 'number' &&
+        Date.now() - lastFetched < DATA_FETCH_CACHE_TIMEOUT;
 
       if (isCached && isFresh) {
-        return false; // Prevent thunk execution - data is cached and fresh
+        return false;
       }
 
-      // Only prevent duplicate execution if we're loading the SAME report
-      if (
-        state.masterData.loading &&
-        state.masterData.cacheMetadata.lastFetchedReportId === reportCode
-      ) {
-        return false; // Prevent duplicate execution for same report
+      if (entry.loading) {
+        return false;
       }
 
-      return true; // Allow thunk execution
+      return true;
     },
   },
 );
@@ -130,57 +186,100 @@ const masterDataSlice = createSlice({
   initialState,
   reducers: {
     clearMasterData(state) {
-      state.abilitiesById = {};
-      state.actorsById = {};
-      state.loading = false;
-      state.loaded = false;
-      state.error = null;
-      state.cacheMetadata = {
-        lastFetchedReportId: null,
-        lastFetchedTimestamp: null,
-        actorCount: 0,
-        abilityCount: 0,
-      };
+      const reset = createInitialState();
+      state.abilitiesById = reset.abilitiesById;
+      state.actorsById = reset.actorsById;
+      state.loading = reset.loading;
+      state.loaded = reset.loaded;
+      state.error = reset.error;
+      state.cacheMetadata = reset.cacheMetadata;
+      state.activeContext = reset.activeContext;
+      state.entriesByReportId = {};
     },
     resetLoadingState(state) {
       state.loading = false;
       state.error = null;
+      const reportId = state.activeContext.reportId;
+      if (reportId && state.entriesByReportId[reportId]) {
+        state.entriesByReportId[reportId].loading = false;
+        state.entriesByReportId[reportId].error = null;
+      }
     },
     forceMasterDataRefresh(state) {
-      // Clear cache metadata to force a refresh on next fetch
-      state.cacheMetadata.lastFetchedTimestamp = null;
-      state.loaded = false;
+      const reportId = state.activeContext.reportId;
+      if (reportId && state.entriesByReportId[reportId]) {
+        const entry = state.entriesByReportId[reportId];
+        entry.cacheMetadata.lastFetchedTimestamp = null;
+        entry.loaded = false;
+        if (state.activeContext.reportId === entry.reportCode) {
+          syncActiveEntry(state, entry);
+        }
+      } else {
+        state.cacheMetadata.lastFetchedTimestamp = null;
+        state.loaded = false;
+      }
+    },
+    setMasterDataContext(state, action: PayloadAction<string | null>) {
+      const reportCode = action.payload;
+      state.activeContext = {
+        reportId: reportCode,
+      };
+      if (!reportCode) {
+        syncActiveEntry(state, undefined);
+        return;
+      }
+
+      const entry = ensureEntry(state, reportCode);
+      syncActiveEntry(state, entry);
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchReportMasterData.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-        state.loaded = false;
+      .addCase(fetchReportMasterData.pending, (state, action) => {
+        const { reportCode } = action.meta.arg;
+        const entry = ensureEntry(state, reportCode);
+        entry.loading = true;
+        entry.error = null;
+        entry.loaded = false;
+        if (state.activeContext.reportId === reportCode) {
+          syncActiveEntry(state, entry);
+        }
       })
       .addCase(
         fetchReportMasterData.fulfilled,
         (state, action: PayloadAction<MasterDataPayload>) => {
-          state.abilitiesById = action.payload.abilitiesById;
-          state.actorsById = action.payload.actorsById;
-          state.loading = false;
-          state.loaded = true;
-          state.error = null;
-          // OPTIMIZED: Update cache metadata
-          state.cacheMetadata.lastFetchedReportId = action.payload.reportCode;
-          state.cacheMetadata.lastFetchedTimestamp = Date.now();
-          state.cacheMetadata.actorCount = action.payload.actors.length;
-          state.cacheMetadata.abilityCount = action.payload.abilities.length;
+          const { reportCode, abilitiesById, actorsById, abilities, actors } = action.payload;
+          const entry = ensureEntry(state, reportCode);
+          entry.abilitiesById = abilitiesById;
+          entry.actorsById = actorsById;
+          entry.loading = false;
+          entry.loaded = true;
+          entry.error = null;
+          entry.cacheMetadata = {
+            lastFetchedReportId: reportCode,
+            lastFetchedTimestamp: Date.now(),
+            actorCount: actors.length,
+            abilityCount: abilities.length,
+          };
+
+          if (state.activeContext.reportId === reportCode) {
+            syncActiveEntry(state, entry);
+          }
         },
       )
       .addCase(fetchReportMasterData.rejected, (state, action) => {
-        state.loading = false;
-        state.error = (action.payload as string) || 'Failed to fetch master data';
+        const { reportCode } = action.meta.arg;
+        const entry = ensureEntry(state, reportCode);
+        entry.loading = false;
+        entry.loaded = false;
+        entry.error = (action.payload as string) || 'Failed to fetch master data';
+        if (state.activeContext.reportId === reportCode) {
+          syncActiveEntry(state, entry);
+        }
       });
   },
 });
 
-export const { clearMasterData, resetLoadingState, forceMasterDataRefresh } =
+export const { clearMasterData, resetLoadingState, forceMasterDataRefresh, setMasterDataContext } =
   masterDataSlice.actions;
 export default masterDataSlice.reducer;

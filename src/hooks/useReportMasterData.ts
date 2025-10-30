@@ -7,7 +7,10 @@ import {
   selectMasterData,
   selectMasterDataLoadingState,
 } from '../store/master_data/masterDataSelectors';
-import { fetchReportMasterData } from '../store/master_data/masterDataSlice';
+import {
+  fetchReportMasterData,
+  setMasterDataContext,
+} from '../store/master_data/masterDataSlice';
 import { RootState } from '../store/storeWithHistory';
 import { useAppDispatch } from '../store/useAppDispatch';
 
@@ -26,8 +29,12 @@ export function useReportMasterData(): {
   React.useEffect(() => {
     // Only fetch if client is ready, user is logged in, and we have a reportId
     if (reportId && isReady && isLoggedIn && client) {
+      dispatch(setMasterDataContext(reportId));
       dispatch(fetchReportMasterData({ reportCode: reportId, client }));
+      return;
     }
+
+    dispatch(setMasterDataContext(null));
   }, [dispatch, reportId, client, isReady, isLoggedIn]);
 
   return React.useMemo(

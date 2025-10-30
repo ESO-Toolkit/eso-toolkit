@@ -11,6 +11,7 @@ import playerDataReducer, {
   resetPlayerDataLoading,
   fetchPlayerData,
   PlayerDataPayload,
+  setPlayerDataContext,
 } from './playerDataSlice';
 
 // Mock the esologsClient
@@ -53,6 +54,12 @@ describe('playerDataSlice', () => {
           lastFetchedTimestamp: null,
           playerCount: 0,
         },
+        activeContext: {
+          reportId: null,
+          fightId: null,
+          key: null,
+        },
+        entriesByKey: {},
       });
     });
   });
@@ -60,6 +67,7 @@ describe('playerDataSlice', () => {
   describe('clearPlayerData', () => {
     it('should reset state to initial values', () => {
       // Set up state with some data
+      store.dispatch(setPlayerDataContext({ reportCode: 'test123', fightId: 1 }));
       store.dispatch({
         type: 'playerData/fetchPlayerData/fulfilled',
         payload: {
@@ -84,6 +92,12 @@ describe('playerDataSlice', () => {
           lastFetchedTimestamp: null,
           playerCount: 0,
         },
+        activeContext: {
+          reportId: null,
+          fightId: null,
+          key: null,
+        },
+        entriesByKey: {},
       });
     });
   });
@@ -91,12 +105,15 @@ describe('playerDataSlice', () => {
   describe('resetPlayerDataLoading', () => {
     it('should reset loading and error states', () => {
       // Set up state with loading and error
+      store.dispatch(setPlayerDataContext({ reportCode: 'test', fightId: 1 }));
       store.dispatch({
         type: 'playerData/fetchPlayerData/pending',
+        meta: { arg: { reportCode: 'test', fightId: 1 } },
       });
       store.dispatch({
         type: 'playerData/fetchPlayerData/rejected',
         payload: 'Test error',
+        meta: { arg: { reportCode: 'test', fightId: 1 } },
       });
 
       // Reset loading state
@@ -105,6 +122,11 @@ describe('playerDataSlice', () => {
       const state = store.getState();
       expect(state.playerData.loading).toBe(false);
       expect(state.playerData.error).toBeNull();
+      const key = state.playerData.activeContext.key;
+      if (key) {
+        expect(state.playerData.entriesByKey[key].loading).toBe(false);
+        expect(state.playerData.entriesByKey[key].error).toBeNull();
+      }
     });
   });
 
@@ -174,14 +196,20 @@ describe('playerDataSlice', () => {
 
     describe('pending', () => {
       it('should set loading to true and clear error', () => {
+        store.dispatch(setPlayerDataContext({ reportCode: 'ABC123', fightId: 1 }));
         store.dispatch({
           type: 'playerData/fetchPlayerData/pending',
+          meta: { arg: { reportCode: 'ABC123', fightId: 1 } },
         });
 
         const state = store.getState();
-        expect(state.playerData.loading).toBe(true);
-        expect(state.playerData.error).toBeNull();
-        expect(state.playerData.loaded).toBe(false);
+        const key = state.playerData.activeContext.key;
+        expect(key).toBe('ABC123::1');
+        if (key) {
+          expect(state.playerData.entriesByKey[key].loading).toBe(true);
+          expect(state.playerData.entriesByKey[key].error).toBeNull();
+          expect(state.playerData.entriesByKey[key].loaded).toBe(false);
+        }
       });
     });
 
@@ -207,13 +235,16 @@ describe('playerDataSlice', () => {
 
         jest.spyOn(Date, 'now').mockReturnValue(mockTimestamp);
 
-        await store.dispatch(fetchPlayerData({ reportCode, fightId, client: mockClient }));
+  store.dispatch(setPlayerDataContext({ reportCode, fightId }));
+  await store.dispatch(fetchPlayerData({ reportCode, fightId, client: mockClient }));
 
-        const state = store.getState();
+  const state = store.getState();
 
-        expect(state.playerData.loading).toBe(false);
-        expect(state.playerData.loaded).toBe(true);
-        expect(state.playerData.error).toBeNull();
+  const key = state.playerData.activeContext.key;
+  expect(key).toBe('ABC123::1');
+  expect(state.playerData.loading).toBe(false);
+  expect(state.playerData.loaded).toBe(true);
+  expect(state.playerData.error).toBeNull();
 
         // Check that players are mapped with correct roles
         const playersById = state.playerData.playersById;
@@ -235,7 +266,7 @@ describe('playerDataSlice', () => {
           lastFetchedReportId: reportCode,
           lastFetchedFightId: fightId,
           lastFetchedTimestamp: mockTimestamp,
-          playerCount: 0, // This doesn't seem to be updated in the reducer
+          playerCount: 3,
         });
 
         expect(mockClient.query).toHaveBeenCalledWith({
@@ -245,11 +276,11 @@ describe('playerDataSlice', () => {
       });
 
       it('should handle damage role mapping to dps', async () => {
-        const mockPlayerDetailsWithDamage: PlayerDetails = {
+        const mockPlayerDetailsWithDamage = {
           damage: [mockPlayerDetails.dps[0]], // Use 'damage' key instead of 'dps'
           healers: [],
           tanks: [],
-        };
+        } as unknown as PlayerDetails;
 
         const mockResponse = {
           reportData: {
@@ -265,6 +296,7 @@ describe('playerDataSlice', () => {
 
         mockClient.query.mockResolvedValueOnce(mockResponse);
 
+        store.dispatch(setPlayerDataContext({ reportCode: 'ABC123', fightId: 1 }));
         await store.dispatch(
           fetchPlayerData({ reportCode: 'ABC123', fightId: 1, client: mockClient }),
         );
@@ -278,7 +310,7 @@ describe('playerDataSlice', () => {
           unknownRole: [mockPlayerDetails.dps[0]], // Unknown role
           healers: [],
           tanks: [],
-        };
+        } as unknown as PlayerDetails;
 
         const mockResponse = {
           reportData: {
@@ -294,6 +326,7 @@ describe('playerDataSlice', () => {
 
         mockClient.query.mockResolvedValueOnce(mockResponse);
 
+        store.dispatch(setPlayerDataContext({ reportCode: 'ABC123', fightId: 1 }));
         await store.dispatch(
           fetchPlayerData({ reportCode: 'ABC123', fightId: 1, client: mockClient }),
         );
@@ -308,6 +341,7 @@ describe('playerDataSlice', () => {
         const errorMessage = 'Network error';
         mockClient.query.mockRejectedValueOnce(new Error(errorMessage));
 
+        store.dispatch(setPlayerDataContext({ reportCode: 'ABC123', fightId: 1 }));
         await store.dispatch(
           fetchPlayerData({ reportCode: 'ABC123', fightId: 1, client: mockClient }),
         );
@@ -321,12 +355,13 @@ describe('playerDataSlice', () => {
       it('should handle non-error rejections with default message', async () => {
         mockClient.query.mockRejectedValueOnce('string error');
 
+        store.dispatch(setPlayerDataContext({ reportCode: 'ABC123', fightId: 1 }));
         await store.dispatch(
           fetchPlayerData({ reportCode: 'ABC123', fightId: 1, client: mockClient }),
         );
 
-        const state = store.getState();
-        expect(state.playerData.error).toBe('Failed to fetch player data');
+  const state = store.getState();
+  expect(state.playerData.error).toBe('Failed to fetch player data');
       });
     });
 
@@ -336,6 +371,7 @@ describe('playerDataSlice', () => {
         const fightId = 1;
 
         // Set up cached state
+        store.dispatch(setPlayerDataContext({ reportCode, fightId }));
         store.dispatch({
           type: 'playerData/fetchPlayerData/fulfilled',
           payload: {
@@ -346,6 +382,7 @@ describe('playerDataSlice', () => {
         });
 
         // Try to fetch the same data again
+  store.dispatch(setPlayerDataContext({ reportCode, fightId }));
         await store.dispatch(fetchPlayerData({ reportCode, fightId, client: mockClient }));
 
         // Should not call the client because data is cached
@@ -354,8 +391,10 @@ describe('playerDataSlice', () => {
 
       it('should not fetch if already loading', async () => {
         // Set loading state
+        store.dispatch(setPlayerDataContext({ reportCode: 'ABC123', fightId: 1 }));
         store.dispatch({
           type: 'playerData/fetchPlayerData/pending',
+          meta: { arg: { reportCode: 'ABC123', fightId: 1 } },
         });
 
         await store.dispatch(
@@ -372,6 +411,7 @@ describe('playerDataSlice', () => {
         const fightId = 1;
 
         // Set up cached state
+        store.dispatch(setPlayerDataContext({ reportCode: reportCode1, fightId }));
         store.dispatch({
           type: 'playerData/fetchPlayerData/fulfilled',
           payload: {
@@ -396,6 +436,7 @@ describe('playerDataSlice', () => {
         mockClient.query.mockResolvedValueOnce(mockResponse);
 
         // Try to fetch different report
+        store.dispatch(setPlayerDataContext({ reportCode: reportCode2, fightId }));
         await store.dispatch(
           fetchPlayerData({ reportCode: reportCode2, fightId, client: mockClient }),
         );
@@ -410,6 +451,7 @@ describe('playerDataSlice', () => {
         const fightId2 = 2;
 
         // Set up cached state
+        store.dispatch(setPlayerDataContext({ reportCode, fightId: fightId1 }));
         store.dispatch({
           type: 'playerData/fetchPlayerData/fulfilled',
           payload: {
@@ -434,6 +476,7 @@ describe('playerDataSlice', () => {
         mockClient.query.mockResolvedValueOnce(mockResponse);
 
         // Try to fetch different fight
+        store.dispatch(setPlayerDataContext({ reportCode, fightId: fightId2 }));
         await store.dispatch(
           fetchPlayerData({ reportCode, fightId: fightId2, client: mockClient }),
         );
