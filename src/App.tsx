@@ -93,6 +93,9 @@ const CalculationKnowledgeBasePage = React.lazy(() =>
     default: module.CalculationKnowledgeBasePage,
   })),
 );
+const WhoAmIPage = React.lazy(() =>
+  import('./pages/WhoAmIPage').then((module) => ({ default: module.WhoAmIPage })),
+);
 
 // Lazy load the feedback FAB to improve initial page load performance
 const LazyModernFeedbackFab = React.lazy(() =>
@@ -349,6 +352,18 @@ const AppRoutes: React.FC = () => {
                   <ErrorBoundary>
                     <Suspense fallback={<LoadingFallback />}>
                       <LatestReports />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/whoami"
+              element={
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <WhoAmIPage />
                     </Suspense>
                   </ErrorBoundary>
                 </AuthenticatedRoute>

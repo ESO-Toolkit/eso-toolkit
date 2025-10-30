@@ -129,14 +129,26 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
 
       const experimentalParam = shouldShowExperimental ? '?experimental=true' : '';
 
-      trackEvent('Report Detail', 'Select Tab', newTabId);
+      trackEvent('Report Detail', 'Select Tab', newTabId, undefined, {
+        report_id: reportId,
+        fight_id: fightId,
+        previous_tab: selectedTabId,
+        target_tab: newTabId,
+        is_experimental_tab: isExperimentalTab,
+        experimental_enabled: shouldShowExperimental,
+      });
       if (isExperimentalTab && !showExperimentalTabs) {
-        trackEvent('Report Detail', 'Enable Experimental Tabs', newTabId);
+        trackEvent('Report Detail', 'Enable Experimental Tabs', newTabId, undefined, {
+          report_id: reportId,
+          fight_id: fightId,
+          triggered_by_tab_selection: true,
+          target_tab: newTabId,
+        });
       }
 
       navigate(`/report/${reportId}/fight/${fightId}/${newTabId}${experimentalParam}`);
     },
-    [navigate, reportId, fightId, showExperimentalTabs],
+    [navigate, reportId, fightId, selectedTabId, showExperimentalTabs],
   );
 
   const setShowExperimentalTabs = React.useCallback(
@@ -164,7 +176,19 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
       }
 
       const experimentalParam = enabled ? '?experimental=true' : '';
-      trackEvent('Report Detail', 'Toggle Experimental Tabs', enabled ? 'enable' : 'disable');
+      trackEvent(
+        'Report Detail',
+        'Toggle Experimental Tabs',
+        enabled ? 'enable' : 'disable',
+        undefined,
+        {
+          report_id: reportId,
+          fight_id: fightId,
+          target_tab: targetTab,
+          previous_tab: selectedTabId,
+          enabled,
+        },
+      );
 
       navigate(`/report/${reportId}/fight/${fightId}/${targetTab}${experimentalParam}`);
     },

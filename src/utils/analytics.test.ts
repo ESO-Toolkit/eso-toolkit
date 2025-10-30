@@ -3,6 +3,7 @@
  * Tests Google Analytics initialization and tracking functions
  */
 
+import { waitFor } from '@testing-library/react';
 import ReactGA from 'react-ga4';
 
 import {
@@ -13,6 +14,7 @@ import {
   trackEvent,
   trackPageView,
 } from './analytics';
+import * as cacheBusting from './cacheBusting';
 import * as envUtils from './envUtils';
 
 // Mock react-ga4
@@ -20,6 +22,11 @@ jest.mock('react-ga4');
 
 // Mock envUtils
 jest.mock('./envUtils');
+
+jest.mock('./cacheBusting', () => ({
+  getBuildInfo: jest.fn(),
+  getBuildInfoAsync: jest.fn(),
+}));
 
 // Mock logger - use a simple inline mock
 jest.mock('./logger', () => {
@@ -35,12 +42,25 @@ jest.mock('./logger', () => {
 describe('analytics', () => {
   const mockMeasurementId = 'G-XXXXXXXXXX';
   let getEnvVarSpy: jest.SpyInstance;
+  const mockBuildInfo = {
+    version: '1.2.3',
+    buildTime: '2025-10-01T00:00:00Z',
+    gitCommit: 'abcdef1234567890abcdef1234567890abcdef12',
+    shortCommit: 'abcdef1',
+    buildId: 'build-123',
+    timestamp: 1696118400000,
+    cacheBuster: 'v=build-123',
+  } as const;
+  const mockGetBuildInfo = cacheBusting.getBuildInfo as jest.Mock;
+  const mockGetBuildInfoAsync = cacheBusting.getBuildInfoAsync as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
     (ReactGA as unknown as { gtag: jest.Mock }).gtag = jest.fn();
     // Spy on getEnvVar
     getEnvVarSpy = jest.spyOn(envUtils, 'getEnvVar');
+    mockGetBuildInfo.mockReturnValue(mockBuildInfo);
+    mockGetBuildInfoAsync.mockResolvedValue(mockBuildInfo);
   });
 
   afterEach(() => {
@@ -48,7 +68,7 @@ describe('analytics', () => {
   });
 
   describe('initializeAnalytics', () => {
-    it('should initialize GA when measurement ID is set', () => {
+    it('should initialize GA when measurement ID is set', async () => {
       getEnvVarSpy.mockReturnValue(mockMeasurementId);
 
       initializeAnalytics();
@@ -58,6 +78,18 @@ describe('analytics', () => {
         gtagOptions: {
           send_page_view: false,
         },
+      });
+
+      await waitFor(() => {
+        expect(ReactGA.gtag).toHaveBeenCalledWith(
+          'set',
+          'user_properties',
+          expect.objectContaining({
+            app_version: mockBuildInfo.version,
+            app_build_id: mockBuildInfo.buildId,
+            app_commit: mockBuildInfo.shortCommit,
+          }),
+        );
       });
     });
 
@@ -89,6 +121,24 @@ describe('analytics', () => {
 
       // We can't easily verify the logger.error call due to mock limitations
       // But the function should complete without throwing
+    });
+    it('hydrates build metadata when not immediately available', async () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+      mockGetBuildInfo.mockReturnValue(undefined);
+
+      initializeAnalytics();
+
+      await waitFor(() => {
+        expect(mockGetBuildInfoAsync).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        expect(ReactGA.gtag).toHaveBeenCalledWith(
+          'set',
+          'user_properties',
+          expect.objectContaining({ app_version: mockBuildInfo.version }),
+        );
+      });
     });
   });
 
@@ -154,12 +204,14 @@ describe('analytics', () => {
       trackEvent('Test Category', 'Test Action', 'Test Label', 123);
 
       expect(getEnvVarSpy).toHaveBeenCalledWith('VITE_GA_MEASUREMENT_ID');
-      expect(ReactGA.event).toHaveBeenCalledWith({
-        category: 'Test Category',
-        action: 'Test Action',
-        label: 'Test Label',
-        value: 123,
-      });
+      expect(ReactGA.event).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: 'Test Category',
+          action: 'Test Action',
+          label: 'Test Label',
+          value: 123,
+        }),
+      );
     });
 
     it('should track event with only required parameters', () => {
@@ -167,12 +219,32 @@ describe('analytics', () => {
 
       trackEvent('Test Category', 'Test Action');
 
-      expect(ReactGA.event).toHaveBeenCalledWith({
-        category: 'Test Category',
-        action: 'Test Action',
-        label: undefined,
-        value: undefined,
+      expect(ReactGA.event).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: 'Test Category',
+          action: 'Test Action',
+        }),
+      );
+      expect((ReactGA.event as jest.Mock).mock.calls[0][0]).not.toHaveProperty('label');
+      expect((ReactGA.event as jest.Mock).mock.calls[0][0]).not.toHaveProperty('value');
+    });
+
+    it('should merge additional event parameters', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      trackEvent('Test Category', 'Test Action', undefined, undefined, {
+        report_id: 'abc',
+        fight_id: '123',
       });
+
+      expect(ReactGA.event).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: 'Test Category',
+          action: 'Test Action',
+          report_id: 'abc',
+          fight_id: '123',
+        }),
+      );
     });
 
     it('should not track event when measurement ID is not set', () => {
