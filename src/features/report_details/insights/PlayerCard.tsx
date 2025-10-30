@@ -32,7 +32,7 @@ import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillT
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
-import { selectPlayerData } from '../../../store/player_data/playerDataSelectors';
+import { selectActivePlayersById } from '../../../store/player_data/playerDataSelectors';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import {
   selectFriendlyBuffEvents,
@@ -190,10 +190,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     const [currentGearPlayerId, setCurrentGearPlayerId] = useState<string | number>(player.id);
 
     // Get all players from Redux store
-    const playerData = useSelector(selectPlayerData);
+    const playersById = useSelector(selectActivePlayersById);
     const allPlayers = React.useMemo(() => {
-      return Object.values(playerData?.playersById || {});
-    }, [playerData]);
+      return Object.values(playersById);
+    }, [playersById]);
 
     // Get combat event data for affix script detection
     const friendlyBuffEvents = useSelector(selectFriendlyBuffEvents);
