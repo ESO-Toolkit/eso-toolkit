@@ -14,7 +14,7 @@ import friendlyBuffEventsReducer from './friendlyBuffEventsSlice';
 import healingEventsReducer from './healingEventsSlice';
 import hostileBuffEventsReducer from './hostileBuffEventsSlice';
 import resourceEventsReducer from './resourceEventsSlice';
-import { resolveCacheKey } from './cacheStateHelpers';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
 // Define store type
 const createTestStore = () =>

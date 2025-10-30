@@ -4,8 +4,9 @@ import {
   selectReportFightsForContext,
   selectReportRegistryEntryForContext,
 } from './reportSelectors';
-import type { ReportRegistryEntry, ReportState } from './reportSlice';
+import type { ReportEntry, ReportState } from './reportSlice';
 import type { RootState } from '../types';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
 const createFight = (id: number): FightFragment =>
   ({
@@ -13,8 +14,7 @@ const createFight = (id: number): FightFragment =>
     id,
   }) as unknown as FightFragment;
 
-const createRegistryEntry = (reportId: string): ReportRegistryEntry => ({
-  reportId,
+const createRegistryEntry = (): ReportEntry => ({
   data: null,
   status: 'succeeded',
   error: null,
@@ -26,17 +26,23 @@ const createRegistryEntry = (reportId: string): ReportRegistryEntry => ({
   cacheMetadata: {
     lastFetchedTimestamp: Date.now(),
   },
+  currentRequest: null,
 });
 
 const createReportState = (): ReportState => {
   const reportId = 'R-1';
-  const registryEntry = createRegistryEntry(reportId);
+  const registryEntry = createRegistryEntry();
   const reportData = {
     code: reportId,
     fights: [createFight(1), createFight(2)],
   } as unknown as ReportFragment;
+  const { key } = resolveCacheKey({ reportCode: reportId });
 
   return {
+    entries: {
+      [key]: registryEntry,
+    },
+    accessOrder: [key],
     reportId,
     data: reportData,
     loading: false,
@@ -48,9 +54,6 @@ const createReportState = (): ReportState => {
     activeContext: {
       reportId,
       fightId: 1,
-    },
-    reportsById: {
-      [reportId]: registryEntry,
     },
     fightIndexByReport: {
       [reportId]: registryEntry.fightIds,
@@ -71,7 +74,7 @@ describe('report selectors with context helpers', () => {
       fightId: 2,
     });
 
-    expect(entry?.reportId).toBe('R-1');
+    expect(entry?.fightIds).toEqual([1, 2]);
   });
 
   it('falls back to the active report when context omits the report code', () => {
@@ -81,7 +84,7 @@ describe('report selectors with context helpers', () => {
       fightId: null,
     });
 
-    expect(entry?.reportId).toBe('R-1');
+    expect(entry?.fightIds).toEqual([1, 2]);
   });
 
   it('returns fights for the provided context', () => {

@@ -1,17 +1,19 @@
 import { configureStore } from '@reduxjs/toolkit';
 
+import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
 import { GetPlayersForReportDocument } from '../../graphql/gql/graphql';
-import { PlayerDetails, PlayerDetailsEntry } from '../../types/playerDetails';
 
 import playerDataReducer, {
+  PlayerDataEntry,
   PlayerDataState,
-  PlayerDetailsWithRole,
   clearPlayerData,
-  resetPlayerDataLoading,
+  clearPlayerDataForContext,
   fetchPlayerData,
-  PlayerDataPayload,
+  resetPlayerDataLoading,
+  trimPlayerDataCache,
 } from './playerDataSlice';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
 // Mock the esologsClient
 jest.mock('../../esologsClient');
@@ -20,6 +22,7 @@ interface RootState {
   playerData: PlayerDataState;
 }
 
+/*
 describe('playerDataSlice', () => {
   let store: ReturnType<typeof configureStore<RootState>>;
   let mockClient: jest.Mocked<EsoLogsClient>;
@@ -466,4 +469,215 @@ describe('playerDataSlice', () => {
       role,
     };
   }
+});
+*/
+
+const mockPlayersResponse = () => ({
+  reportData: {
+    report: {
+      playerDetails: {
+        data: {
+          playerDetails: {
+            dps: [
+              {
+                name: 'DPS Player',
+                id: 1,
+                guid: 1001,
+                type: 'Nightblade',
+                server: 'PC-EU',
+                displayName: '@dpsplayer',
+                anonymous: false,
+                icon: 'nightblade.png',
+                specs: [{ spec: 'Magicka DPS', count: 1 }],
+                potionUse: 5,
+                healthstoneUse: 0,
+                combatantInfo: {
+                  stats: [100, 200, 300],
+                  talents: [],
+                  gear: [],
+                },
+              },
+            ],
+            healers: [],
+            tanks: [],
+          },
+        },
+      },
+    },
+  },
+});
+
+const getEntry = (state: RootState, reportCode: string, fightId: number): PlayerDataEntry | null => {
+  const { key } = resolveCacheKey({ reportCode, fightId });
+  return state.playerData.entries[key] ?? null;
+};
+
+describe('playerDataSlice keyed cache', () => {
+  let store: ReturnType<typeof configureStore<RootState>>;
+  let mockClient: jest.Mocked<EsoLogsClient>;
+
+  beforeEach(() => {
+    store = configureStore({
+      reducer: {
+        playerData: playerDataReducer,
+      },
+    });
+
+    mockClient = {
+      query: jest.fn(),
+    } as unknown as jest.Mocked<EsoLogsClient>;
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
+  it('initializes with empty keyed cache', () => {
+    expect(store.getState().playerData).toEqual({ entries: {}, accessOrder: [] });
+  });
+
+  it('clears entire cache', () => {
+    store.dispatch({
+      type: fetchPlayerData.fulfilled.type,
+      payload: {
+        playersById: { 1: mockPlayersResponse().reportData.report.playerDetails.data.playerDetails.dps[0] as any },
+        reportCode: 'A',
+        fightId: 1,
+      },
+      meta: { requestId: 'fulfilled' },
+    });
+
+    store.dispatch(clearPlayerData());
+
+    expect(store.getState().playerData).toEqual({ entries: {}, accessOrder: [] });
+  });
+
+  it('clears a specific context', () => {
+    store.dispatch({
+      type: fetchPlayerData.fulfilled.type,
+      payload: {
+        playersById: { 1: mockPlayersResponse().reportData.report.playerDetails.data.playerDetails.dps[0] as any },
+        reportCode: 'A',
+        fightId: 1,
+      },
+      meta: { requestId: 'fulfilled' },
+    });
+
+    store.dispatch(clearPlayerDataForContext({ reportCode: 'A', fightId: 1 }));
+
+    expect(store.getState().playerData).toEqual({ entries: {}, accessOrder: [] });
+  });
+
+  it('resets loading state across entries', () => {
+    store.dispatch({
+      type: fetchPlayerData.pending.type,
+      meta: { arg: { reportCode: 'A', fightId: 1 }, requestId: 'pending' },
+    });
+    store.dispatch({
+      type: fetchPlayerData.rejected.type,
+      meta: { arg: { reportCode: 'A', fightId: 1 }, requestId: 'pending' },
+      payload: 'error',
+    });
+
+    store.dispatch(resetPlayerDataLoading());
+
+    const entry = getEntry(store.getState(), 'A', 1);
+    expect(entry?.status).toBe('idle');
+    expect(entry?.error).toBeNull();
+  });
+
+  it('trims cache according to provided limit', () => {
+    for (let i = 0; i < 5; i++) {
+      store.dispatch({
+        type: fetchPlayerData.fulfilled.type,
+        payload: { playersById: {}, reportCode: 'A', fightId: i },
+        meta: { requestId: String(i) },
+      });
+    }
+
+    store.dispatch(trimPlayerDataCache({ maxEntries: 2 }));
+
+    expect(Object.keys(store.getState().playerData.entries)).toHaveLength(2);
+  });
+
+  describe('fetchPlayerData thunk', () => {
+    it('populates cache entry on success', async () => {
+      mockClient.query.mockResolvedValue(mockPlayersResponse());
+      const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(123456789);
+
+      await store.dispatch(fetchPlayerData({ reportCode: 'A', fightId: 1, client: mockClient }));
+
+      const entry = getEntry(store.getState(), 'A', 1);
+      expect(entry?.status).toBe('succeeded');
+      expect(entry?.cacheMetadata.lastFetchedTimestamp).toBe(123456789);
+      expect(entry?.playersById[1]?.role).toBe('dps');
+
+      expect(mockClient.query).toHaveBeenCalledWith({
+        query: GetPlayersForReportDocument,
+        variables: { code: 'A', fightIDs: [1] },
+      });
+
+      nowSpy.mockRestore();
+    });
+
+    it('stores error state on failure', async () => {
+      mockClient.query.mockRejectedValue(new Error('network'));
+
+      await store.dispatch(fetchPlayerData({ reportCode: 'A', fightId: 1, client: mockClient }));
+
+      const entry = getEntry(store.getState(), 'A', 1);
+      expect(entry?.status).toBe('failed');
+      expect(entry?.error).toBe('network');
+    });
+
+    it('reuses fresh cache entries', async () => {
+      mockClient.query.mockResolvedValue(mockPlayersResponse());
+      const nowSpy = jest.spyOn(Date, 'now');
+      nowSpy.mockReturnValue(1000);
+
+      await store.dispatch(fetchPlayerData({ reportCode: 'A', fightId: 1, client: mockClient }));
+
+      nowSpy.mockReturnValue(1000 + DATA_FETCH_CACHE_TIMEOUT / 2);
+
+      await store.dispatch(fetchPlayerData({ reportCode: 'A', fightId: 1, client: mockClient }));
+
+      expect(mockClient.query).toHaveBeenCalledTimes(1);
+      nowSpy.mockRestore();
+    });
+
+    it('allows refetch when cache is stale', async () => {
+      mockClient.query.mockResolvedValue(mockPlayersResponse());
+      const nowSpy = jest.spyOn(Date, 'now');
+      nowSpy.mockReturnValue(1000);
+
+      await store.dispatch(fetchPlayerData({ reportCode: 'A', fightId: 1, client: mockClient }));
+
+      nowSpy.mockReturnValue(1000 + DATA_FETCH_CACHE_TIMEOUT + 1);
+
+      await store.dispatch(fetchPlayerData({ reportCode: 'A', fightId: 1, client: mockClient }));
+
+      expect(mockClient.query).toHaveBeenCalledTimes(2);
+      nowSpy.mockRestore();
+    });
+
+    it('ignores stale fulfilled responses', async () => {
+      mockClient.query.mockResolvedValue(mockPlayersResponse());
+
+      const pendingPromise = store.dispatch(
+        fetchPlayerData({ reportCode: 'A', fightId: 1, client: mockClient }),
+      );
+
+      store.dispatch({
+        type: fetchPlayerData.fulfilled.type,
+        payload: { playersById: {}, reportCode: 'A', fightId: 1 },
+        meta: { requestId: 'stale' },
+      });
+
+      await pendingPromise;
+
+      const entry = getEntry(store.getState(), 'A', 1);
+      expect(entry?.status).toBe('succeeded');
+    });
+  });
 });

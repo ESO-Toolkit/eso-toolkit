@@ -4,8 +4,9 @@ import { FightFragment } from '../../graphql/gql/graphql';
 import type { ReportFightContext } from '../contextTypes';
 import type { RootState } from '../storeWithHistory';
 import { createReportFightContextSelector } from '../utils/contextSelectors';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
-import type { ReportRegistryEntry } from './reportSlice';
+import type { ReportEntry } from './reportSlice';
 
 // REPORT SELECTORS - Read from report slice
 
@@ -17,12 +18,18 @@ export const selectActiveReportContext = (state: RootState): RootState['report']
 export const selectReportEntryById = (
   state: RootState,
   reportId: string,
-): ReportRegistryEntry | null => state.report.reportsById[reportId] ?? null;
+): ReportEntry | null => {
+  if (!reportId) {
+    return null;
+  }
+  const { key } = resolveCacheKey({ reportCode: reportId });
+  return state.report.entries[key] ?? null;
+};
 
 const selectReportRegistryEntryByContext = (
   state: RootState,
   context: ReportFightContext,
-): ReportRegistryEntry | null => {
+): ReportEntry | null => {
   const reportId =
     context.reportCode ?? state.report.activeContext.reportId ?? state.report.reportId ?? null;
 
@@ -30,14 +37,18 @@ const selectReportRegistryEntryByContext = (
     return null;
   }
 
-  return state.report.reportsById[reportId] ?? null;
+  const { key } = resolveCacheKey({ reportCode: reportId });
+  return state.report.entries[key] ?? null;
 };
 
 export const selectReportRegistryEntryForContext = createReportFightContextSelector<
   RootState,
   [typeof selectReportRegistryEntryByContext],
-  ReportRegistryEntry | null
->([selectReportRegistryEntryByContext], (entry, _context) => entry);
+  ReportEntry | null
+>([selectReportRegistryEntryByContext], (...args) => {
+  const [entry] = args as [ReportEntry | null, ReportFightContext];
+  return entry;
+});
 
 export const selectActiveReportEntry = createSelector(
   [(state: RootState) => state, selectActiveReportContext],
@@ -52,7 +63,13 @@ export const selectReportFightsForContext = createReportFightContextSelector<
   RootState,
   [typeof selectReport, typeof selectReportRegistryEntryByContext],
   Array<FightFragment | null> | null
->([selectReport, selectReportRegistryEntryByContext], (report, registryEntry, context) => {
+>([selectReport, selectReportRegistryEntryByContext], (...args) => {
+  const [report, registryEntry, context] = args as [
+    RootState['report'],
+    ReportEntry | null,
+    ReportFightContext,
+  ];
+
   if (registryEntry) {
     return registryEntry.fightIds.map(
       (fightId: number) => registryEntry.fightsById[fightId] ?? null,

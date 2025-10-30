@@ -1,38 +1,100 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
+import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
 import { GetPlayersForReportDocument } from '../../graphql/gql/graphql';
 import { PlayerDetails, PlayerDetailsEntry } from '../../types/playerDetails';
+import { Logger, LogLevel } from '../../utils/logger';
+import {
+  KeyedCacheState,
+  removeFromCache,
+  resolveCacheKey,
+  resetCacheState,
+  touchAccessOrder,
+  trimCache,
+} from '../utils/keyedCacheState';
 
-export interface PlayerDataState {
-  playersById: Record<string | number, PlayerDetailsWithRole>;
-  loading: boolean;
-  loaded: boolean;
-  error: string | null;
-  cacheMetadata: {
-    lastFetchedReportId: string | null;
-    lastFetchedFightId: number | null;
-    lastFetchedTimestamp: number | null;
-    playerCount: number;
-  };
+const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'PlayerData' });
+
+const PLAYER_DATA_CACHE_MAX_ENTRIES = 6;
+
+interface PlayerDataRequest {
+  reportId: string;
+  fightId: number;
+  requestId: string;
 }
 
-const initialState: PlayerDataState = {
-  playersById: {},
-  loading: false,
-  loaded: false,
-  error: null,
-  cacheMetadata: {
-    lastFetchedReportId: null,
-    lastFetchedFightId: null,
-    lastFetchedTimestamp: null,
-    playerCount: 0,
-  },
+type MaybePlayerDataRequest = PlayerDataRequest | null;
+
+const createCurrentRequest = (
+  reportId: string,
+  fightId: number,
+  requestId: string,
+): PlayerDataRequest => ({
+  reportId,
+  fightId,
+  requestId,
+});
+
+const isStaleResponse = (
+  currentRequest: MaybePlayerDataRequest,
+  responseRequestId: string,
+  expectedReportId: string,
+  expectedFightId: number,
+): boolean => {
+  if (!currentRequest) {
+    return true;
+  }
+  return (
+    currentRequest.requestId !== responseRequestId ||
+    currentRequest.reportId !== expectedReportId ||
+    currentRequest.fightId !== expectedFightId
+  );
 };
 
 export interface PlayerDetailsWithRole extends PlayerDetailsEntry {
   role: 'dps' | 'tank' | 'healer';
 }
+
+export interface PlayerDataEntry {
+  playersById: Record<string | number, PlayerDetailsWithRole>;
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
+  error: string | null;
+  cacheMetadata: {
+    lastFetchedTimestamp: number | null;
+    playerCount: number;
+  };
+  currentRequest: MaybePlayerDataRequest;
+}
+
+export type PlayerDataState = KeyedCacheState<PlayerDataEntry>;
+
+interface LocalRootState {
+  playerData: PlayerDataState;
+}
+
+const createEmptyEntry = (): PlayerDataEntry => ({
+  playersById: {},
+  status: 'idle',
+  error: null,
+  cacheMetadata: {
+    lastFetchedTimestamp: null,
+    playerCount: 0,
+  },
+  currentRequest: null,
+});
+
+const ensureEntry = (state: PlayerDataState, key: string): PlayerDataEntry => {
+  if (!state.entries[key]) {
+    state.entries[key] = createEmptyEntry();
+  }
+  return state.entries[key];
+};
+
+const initialState: PlayerDataState = {
+  entries: {},
+  accessOrder: [],
+};
 
 export interface PlayerDataPayload {
   playersById: Record<string | number, PlayerDetailsWithRole>;
@@ -54,9 +116,9 @@ export const fetchPlayerData = createAsyncThunk<
       });
 
       const playerDetails: PlayerDetails =
-        response.reportData?.report?.playerDetails?.data?.playerDetails;
+        response.reportData?.report?.playerDetails?.data?.playerDetails || ({} as PlayerDetails);
 
-      const playersById: Record<string, PlayerDetailsWithRole> = {};
+      const playersById: Record<string | number, PlayerDetailsWithRole> = {};
 
       // Map role strings to our expected role types
       const roleMap: Record<string, 'dps' | 'tank' | 'healer'> = {
@@ -91,16 +153,30 @@ export const fetchPlayerData = createAsyncThunk<
   },
   {
     condition: ({ reportCode, fightId }, { getState }) => {
-      const state = getState() as { playerData: PlayerDataState };
+      const state = (getState() as LocalRootState).playerData;
+      const { key } = resolveCacheKey({ reportCode, fightId });
+      const entry = state.entries[key];
 
-      if (
-        state.playerData.cacheMetadata.lastFetchedReportId === reportCode &&
-        state.playerData.cacheMetadata.lastFetchedFightId === fightId
-      ) {
-        return false; // Prevent thunk execution - data is cached
+      const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp ?? null;
+      const isCached = Boolean(entry && Object.keys(entry.playersById).length > 0);
+      const isFresh =
+        typeof lastFetchedTimestamp === 'number' &&
+        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
+
+      if (isCached && isFresh) {
+        logger.info('Using cached player data', {
+          reportCode,
+          fightId,
+          cacheAge: lastFetchedTimestamp ? Date.now() - lastFetchedTimestamp : null,
+        });
+        return false;
       }
 
-      if (state.playerData.loading) {
+      if (entry?.status === 'loading') {
+        logger.info('Player data fetch already in progress, skipping', {
+          reportCode,
+          fightId,
+        });
         return false;
       }
 
@@ -114,44 +190,121 @@ const playerDataSlice = createSlice({
   initialState,
   reducers: {
     clearPlayerData(state) {
-      state.playersById = {};
-      state.loading = false;
-      state.loaded = false;
-      state.error = null;
-      state.cacheMetadata = {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-        playerCount: 0,
-      };
+      resetCacheState(state);
     },
     resetPlayerDataLoading(state) {
-      state.loading = false;
-      state.error = null;
+      Object.values(state.entries).forEach((entry) => {
+        if (entry.status === 'loading') {
+          entry.status = 'idle';
+        }
+        entry.error = null;
+        entry.currentRequest = null;
+      });
+    },
+    clearPlayerDataForContext(
+      state,
+      action: PayloadAction<{ reportCode?: string | null; fightId?: number | string | null }>,
+    ) {
+      const { context, key } = resolveCacheKey(action.payload);
+      if (!context.reportCode || context.fightId === null) {
+        resetCacheState(state);
+        return;
+      }
+      removeFromCache(state, key);
+    },
+    trimPlayerDataCache(state, action: PayloadAction<{ maxEntries?: number } | undefined>) {
+      const limit = action?.payload?.maxEntries ?? PLAYER_DATA_CACHE_MAX_ENTRIES;
+      trimCache(state, limit);
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchPlayerData.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-        state.loaded = false;
+      .addCase(fetchPlayerData.pending, (state, action) => {
+        const { key, context } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: action.meta.arg.fightId,
+        });
+        if (!context.reportCode || context.fightId === null) {
+          return;
+        }
+        const entry = ensureEntry(state, key);
+        entry.status = 'loading';
+        entry.error = null;
+        entry.currentRequest = createCurrentRequest(
+          action.meta.arg.reportCode,
+          action.meta.arg.fightId,
+          action.meta.requestId,
+        );
+        touchAccessOrder(state, key);
       })
-      .addCase(fetchPlayerData.fulfilled, (state, action: PayloadAction<PlayerDataPayload>) => {
-        state.playersById = action.payload.playersById;
-        state.loading = false;
-        state.loaded = true;
-        state.error = null;
-        state.cacheMetadata.lastFetchedReportId = action.payload.reportCode;
-        state.cacheMetadata.lastFetchedFightId = action.payload.fightId;
-        state.cacheMetadata.lastFetchedTimestamp = Date.now();
+      .addCase(fetchPlayerData.fulfilled, (state, action) => {
+        const { key, context } = resolveCacheKey({
+          reportCode: action.payload.reportCode,
+          fightId: action.payload.fightId,
+        });
+        if (!context.reportCode || context.fightId === null) {
+          return;
+        }
+        const entry = ensureEntry(state, key);
+        if (
+          isStaleResponse(
+            entry.currentRequest,
+            action.meta.requestId,
+            action.payload.reportCode,
+            action.payload.fightId,
+          )
+        ) {
+          logger.info('Ignoring stale player data response', {
+            reportCode: action.payload.reportCode,
+            fightId: action.payload.fightId,
+          });
+          return;
+        }
+        entry.playersById = action.payload.playersById;
+        entry.status = 'succeeded';
+        entry.error = null;
+        entry.cacheMetadata.lastFetchedTimestamp = Date.now();
+        entry.cacheMetadata.playerCount = Object.keys(action.payload.playersById).length;
+        entry.currentRequest = null;
+        touchAccessOrder(state, key);
+        trimCache(state, PLAYER_DATA_CACHE_MAX_ENTRIES);
       })
       .addCase(fetchPlayerData.rejected, (state, action) => {
-        state.loading = false;
-        state.error = (action.payload as string) || 'Failed to fetch player data';
+        const { key, context } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: action.meta.arg.fightId,
+        });
+        if (!context.reportCode || context.fightId === null) {
+          return;
+        }
+        const entry = ensureEntry(state, key);
+        if (
+          isStaleResponse(
+            entry.currentRequest,
+            action.meta.requestId,
+            action.meta.arg.reportCode,
+            action.meta.arg.fightId,
+          )
+        ) {
+          logger.info('Ignoring stale player data error response', {
+            reportCode: action.meta.arg.reportCode,
+            fightId: action.meta.arg.fightId,
+          });
+          return;
+        }
+        entry.status = 'failed';
+        entry.error =
+          (action.payload as string) || action.error.message || 'Failed to fetch player data';
+        entry.currentRequest = null;
+        touchAccessOrder(state, key);
       });
   },
 });
 
-export const { clearPlayerData, resetPlayerDataLoading } = playerDataSlice.actions;
+export const {
+  clearPlayerData,
+  resetPlayerDataLoading,
+  clearPlayerDataForContext,
+  trimPlayerDataCache,
+} = playerDataSlice.actions;
 export default playerDataSlice.reducer;

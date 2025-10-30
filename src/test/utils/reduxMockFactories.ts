@@ -1,4 +1,5 @@
 import { RootState } from '../../store/storeWithHistory';
+import { resolveCacheKey } from '../../store/utils/keyedCacheState';
 import { BuffEvent, DebuffEvent } from '../../types/combatlogEvents';
 
 /**
@@ -9,6 +10,7 @@ import { BuffEvent, DebuffEvent } from '../../types/combatlogEvents';
  * Creates a mock RootState for testing selectors and components
  */
 export const createMockState = (overrides: Partial<RootState> = {}): RootState => {
+  const reportKey = resolveCacheKey({ reportCode: 'test-report' }).key;
   const baseState = {
     events: {
       combatantInfo: {
@@ -57,6 +59,20 @@ export const createMockState = (overrides: Partial<RootState> = {}): RootState =
       sidebarOpen: false,
     },
     report: {
+      entries: {
+        [reportKey]: {
+          data: null,
+          status: 'idle',
+          error: null,
+          fightsById: {},
+          fightIds: [],
+          cacheMetadata: {
+            lastFetchedTimestamp: null,
+          },
+          currentRequest: null,
+        },
+      },
+      accessOrder: [reportKey],
       reportId: 'test-report',
       data: {
         fights: [
@@ -87,16 +103,15 @@ export const createMockState = (overrides: Partial<RootState> = {}): RootState =
         reportId: 'test-report',
         fightId: 1,
       },
-      reportsById: {},
       fightIndexByReport: {},
     },
     masterData: {
-      actorsById: {},
-      abilitiesById: {},
-      gameZonesById: {},
+      entries: {},
+      accessOrder: [],
     },
     playerData: {
-      playersById: {},
+      entries: {},
+      accessOrder: [],
     },
     parseAnalysis: {} as unknown,
     workerResults: {} as unknown,

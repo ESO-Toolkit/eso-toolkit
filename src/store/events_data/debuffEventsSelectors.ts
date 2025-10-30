@@ -5,8 +5,8 @@ import type { ReportFightContextInput } from '../contextTypes';
 import { selectActiveReportContext } from '../report/reportSelectors';
 import type { RootState } from '../storeWithHistory';
 import { createReportFightContextSelector } from '../utils/contextSelectors';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
-import { resolveCacheKey } from './cacheStateHelpers';
 import { DebuffEventsEntry, DebuffEventsState } from './debuffEventsSlice';
 
 export const selectDebuffEventsState = (state: RootState): DebuffEventsState => state.events.debuffs;

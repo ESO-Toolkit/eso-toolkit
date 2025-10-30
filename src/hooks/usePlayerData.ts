@@ -4,23 +4,32 @@ import { useSelector } from 'react-redux';
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import {
-  selectPlayerData,
-  selectPlayerDataLoadingState,
+  selectIsPlayerDataLoadingForContext,
+  selectPlayerDataEntryForContext,
 } from '../store/player_data/playerDataSelectors';
-import { fetchPlayerData, PlayerDataState } from '../store/player_data/playerDataSlice';
+import { fetchPlayerData, PlayerDataEntry } from '../store/player_data/playerDataSlice';
+import type { RootState } from '../store/storeWithHistory';
 import { useAppDispatch } from '../store/useAppDispatch';
 
 export function usePlayerData(): {
-  playerData: PlayerDataState | null;
+  playerData: PlayerDataEntry | null;
   isPlayerDataLoading: boolean;
 } {
   const client = useEsoLogsClientInstance();
   const dispatch = useAppDispatch();
   const { reportId, fightId } = useSelectedReportAndFight();
 
-  // Move selectors BEFORE the effects that use them
-  const playerData = useSelector(selectPlayerData);
-  const isPlayerDataLoading = useSelector(selectPlayerDataLoadingState);
+  const selectorContext = React.useMemo(
+    () => ({ reportCode: reportId ?? null, fightId: fightId ?? null }),
+    [reportId, fightId],
+  );
+
+  const playerData = useSelector((state: RootState) =>
+    selectPlayerDataEntryForContext(state, selectorContext),
+  );
+  const isPlayerDataLoading = useSelector((state: RootState) =>
+    selectIsPlayerDataLoadingForContext(state, selectorContext),
+  );
 
   React.useEffect(() => {
     if (reportId && fightId) {
@@ -32,7 +41,7 @@ export function usePlayerData(): {
   }, [dispatch, reportId, fightId, client]);
 
   return React.useMemo(
-    () => ({ playerData, isPlayerDataLoading }),
+    () => ({ playerData: playerData ?? null, isPlayerDataLoading }),
     [playerData, isPlayerDataLoading],
   );
 }
