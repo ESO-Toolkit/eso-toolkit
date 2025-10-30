@@ -32,13 +32,13 @@ export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): 
   criticalDamageProgress: number | null;
   selectedFight: ReturnType<typeof useWorkerTaskDependencies>['selectedFight'];
 } {
-  const { dispatch, selectedFight } = useWorkerTaskDependencies();
-  const { combatantInfoRecord, isCombatantInfoEventsLoading } = useCombatantInfoRecord();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-  const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask();
-  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
-  const selectedTargetIds = useSelectedTargetIds();
+  const { dispatch, selectedFight } = useWorkerTaskDependencies(options);
+  const { combatantInfoRecord, isCombatantInfoEventsLoading } = useCombatantInfoRecord({
+    context: options?.context,
+  });
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: options?.context });
+  const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask(options);
+  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask(options);
 
   // For now, we'll use placeholder data until the dependencies are properly integrated
   React.useEffect(() => {
@@ -49,9 +49,7 @@ export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): 
       !isCombatantInfoEventsLoading &&
       combatantInfoRecord !== null &&
       !isPlayerDataLoading &&
-      playerData?.playersById &&
-      !isDamageEventsLoading &&
-      damageEvents.length > 0
+  playerData?.playersById
     ) {
       // Only require debuff data if it's actually loading or available
       const hasDebuffData = debuffLookupData !== null || !isDebuffLookupLoading;
