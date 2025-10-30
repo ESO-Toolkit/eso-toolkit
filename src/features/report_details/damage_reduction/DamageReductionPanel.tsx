@@ -1,6 +1,10 @@
 import React from 'react';
 
-import { usePlayerData, useResolvedReportFightContext, useFightForContext } from '../../../hooks';
+import {
+  usePlayerData,
+  useResolvedReportFightContext,
+  useFightForContext,
+} from '../../../hooks';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { useDamageReductionTask } from '../../../hooks/workerTasks/useDamageReductionTask';
 import type { ReportFightContextInput } from '../../../store/contextTypes';

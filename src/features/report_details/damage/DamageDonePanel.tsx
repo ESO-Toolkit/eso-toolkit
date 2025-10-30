@@ -39,9 +39,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
   const { damageEventsByPlayer, isDamageEventsLookupLoading } = useDamageEventsLookup({
     context: resolvedContext,
   });
-  const { reportMasterData, isMasterDataLoading } = useReportMasterData({
-    context: resolvedContext,
-  });
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData({ context: resolvedContext });
   const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
   const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context: resolvedContext });
   const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });

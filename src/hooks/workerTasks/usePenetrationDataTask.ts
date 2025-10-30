@@ -48,8 +48,8 @@ export function usePenetrationDataTask(options?: UsePenetrationDataTaskOptions):
     dispatch(penetrationDataActions.clearResult());
   }, [
     dispatch,
-    selectedFight,
-    fightId,
+  selectedFight,
+  fightId,
     playerData,
     combatantInfoRecord,
     buffLookupData,

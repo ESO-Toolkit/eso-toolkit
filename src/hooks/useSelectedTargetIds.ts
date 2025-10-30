@@ -79,8 +79,8 @@ export function useSelectedTargetIds(options?: UseSelectedTargetIdsOptions): Set
   }, [fight?.enemyNPCs, reportMasterData?.actorsById]);
 
   const selectedTargetsSet = React.useMemo(() => {
-    const filteredIds = selectedTargetIds.filter(
-      (id: number) => id !== ALL_TARGETS_SENTINEL && id !== ALL_ENEMIES_SENTINEL,
+    const filteredIds = selectedTargetIds.filter((id: number) =>
+      id !== ALL_TARGETS_SENTINEL && id !== ALL_ENEMIES_SENTINEL,
     );
     return new Set<number>(filteredIds);
   }, [selectedTargetIds]);

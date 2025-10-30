@@ -70,7 +70,9 @@ export function useHostileBuffEvents(options?: UseHostileBuffEventsOptions): {
  *   - isHostileBuffEventsLoading: boolean indicating if events are still loading
  *   - progress: optional progress information during calculation
  */
-export function useWorkerHostileBuffsLookup(options?: UseHostileBuffEventsOptions): {
+export function useWorkerHostileBuffsLookup(
+  options?: UseHostileBuffEventsOptions,
+): {
   hostileBuffsLookup: BuffLookupData;
   isHostileBuffEventsLoading: boolean;
   progress?: { phase: string; percentage?: number };

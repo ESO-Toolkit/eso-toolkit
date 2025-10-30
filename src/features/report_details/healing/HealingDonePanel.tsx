@@ -30,9 +30,7 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ context }) =
   const fight = useFightForContext(resolvedContext);
   // Use hooks to get data
   const { healingEvents, isHealingEventsLoading } = useHealingEvents({ context: resolvedContext });
-  const { reportMasterData, isMasterDataLoading } = useReportMasterData({
-    context: resolvedContext,
-  });
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData({ context: resolvedContext });
   const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
   const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
   const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context: resolvedContext });

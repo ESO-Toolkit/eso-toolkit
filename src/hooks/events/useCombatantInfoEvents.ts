@@ -51,10 +51,14 @@ export function useCombatantInfoEvents(options?: UseCombatantInfoEventsOptions):
         }),
       );
     }
-  }, [dispatch, context.reportCode, context.fightId, selectedFight, client, restrictToFightWindow]);
-
-  return React.useMemo(
-    () => ({
+}, [
+  dispatch,
+  context.reportCode,
+  context.fightId,
+  selectedFight,
+  client,
+  restrictToFightWindow,
+]);
       combatantInfoEvents,
       isCombatantInfoEventsLoading,
       selectedFight,

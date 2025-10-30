@@ -90,6 +90,5 @@ export const selectLocationHeatmapData = createSelector(
 );
 
 // Location heatmap optimized data
-export const selectLocationHeatmapDataSelector =
-  (context: ReportFightContext) => (state: RootState) =>
-    selectLocationHeatmapDataForContext(state, context);
+export const selectLocationHeatmapDataSelector = (context: ReportFightContext) =>
+  (state: RootState) => selectLocationHeatmapDataForContext(state, context);

@@ -2,11 +2,7 @@ import { Box, Typography } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import {
-  useFightForContext,
-  useReportMasterData,
-  useResolvedReportFightContext,
-} from '../../../hooks';
+import { useFightForContext, useReportMasterData, useResolvedReportFightContext } from '../../../hooks';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { selectAllEventsSelector } from '../../../store/events_data/actions';
 import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
