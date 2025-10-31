@@ -194,7 +194,7 @@ const playerDataSlice = createSlice({
     },
     resetPlayerDataLoading(state) {
       Object.values(state.entries).forEach((entry) => {
-        if (entry.status === 'loading') {
+        if (entry.status === 'loading' || entry.status === 'failed') {
           entry.status = 'idle';
         }
         entry.error = null;

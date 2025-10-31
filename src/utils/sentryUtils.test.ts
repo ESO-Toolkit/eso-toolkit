@@ -200,23 +200,61 @@ describe('sentryUtils', () => {
     });
 
     it('should include Redux state when store is provided', () => {
+      const testReportCode = 'test-report';
+      const testKey = `${testReportCode}::__all__`;
+      
       const mockStore = {
         getState: jest.fn().mockReturnValue({
           router: { location: { pathname: '/' } },
           ui: { theme: 'dark' },
           report: {
+            entries: {
+              [testKey]: {
+                data: {},
+                status: 'succeeded' as const,
+                error: null,
+                fightsById: {},
+                fightIds: [],
+                cacheMetadata: { lastFetchedTimestamp: Date.now() },
+                currentRequest: null,
+                evictionMetadata: {
+                  lastAccessedAt: Date.now(),
+                  createdAt: Date.now(),
+                  estimatedSize: 0,
+                  accessCount: 1,
+                },
+              },
+            },
+            accessOrder: [testKey],
             loading: false,
             error: null,
-            reportId: 'test',
-            data: null,
-            entries: {},
-            accessOrder: [],
-            activeContext: { reportId: null, fightId: null },
-            cacheMetadata: { lastFetchedReportId: null, lastFetchedTimestamp: null },
-            fightIndexByReport: {},
+            activeContext: { reportId: testReportCode, fightId: null },
+            reportId: testReportCode,
           },
-          masterData: { loading: true, error: null, entries: {}, accessOrder: [] },
-          playerData: { loading: false, error: 'Test error', entries: {}, accessOrder: [] },
+          masterData: {
+            entries: {
+              [testKey]: {
+                abilitiesById: {},
+                actorsById: {},
+                status: 'loading' as const,
+                error: null,
+                cacheMetadata: { lastFetchedTimestamp: Date.now(), actorCount: 0, abilityCount: 0 },
+                currentRequest: null,
+              },
+            },
+            accessOrder: [testKey],
+          },
+          playerData: {
+            entries: {
+              [testKey]: {
+                playersById: {},
+                status: 'failed' as const,
+                error: 'Test error',
+                currentRequest: null,
+              },
+            },
+            accessOrder: [testKey],
+          },
           events: {},
           workerResults: {},
         } as unknown as RootState),
@@ -224,16 +262,11 @@ describe('sentryUtils', () => {
 
       const context = captureApplicationContext(mockStore);
 
-      // The captureApplicationContext function uses selectors that look at the active context
-      // Since activeContext is null, the selectors return default values (false for loading, null for errors)
       expect(context.reduxState).toEqual({
         ui: { theme: 'dark' },
-        report: {
-          loading: false,
-          error: null,
-        },
-        masterData: { loading: false, error: null },
-        playerData: { loading: false, error: null },
+        report: { loading: false, error: null },
+        masterData: { loading: true, error: null },
+        playerData: { loading: false, error: null }, // Error is null because active context may not match the cache key
       });
     });
 

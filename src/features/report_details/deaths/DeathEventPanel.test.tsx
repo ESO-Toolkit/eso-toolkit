@@ -128,8 +128,14 @@ const mockFight: FightFragment = createMockFight({
 
 // Default mock setup
 const setupMocks = (overrides: any = {}) => {
+  const defaultContext = { reportCode: 'test-report', fightId: 1 };
   const defaultMocks = {
     useSelectedReportAndFight: { reportId: 'test-report', fightId: '1' },
+    useResolvedReportFightContext: defaultContext,
+    useFightForContext: createMockFight({
+      startTime: 1000000,
+      endTime: 1060000,
+    }),
     useDeathEvents: { deathEvents: [], isDeathEventsLoading: false },
     useDamageEvents: { damageEvents: [], isDamageEventsLoading: false },
     useCastEvents: { castEvents: [], isCastEventsLoading: false },
@@ -145,6 +151,8 @@ const setupMocks = (overrides: any = {}) => {
   const mergedMocks = { ...defaultMocks, ...overrides };
 
   useSelectedReportAndFight.mockReturnValue(mergedMocks.useSelectedReportAndFight);
+  useResolvedReportFightContext.mockReturnValue(mergedMocks.useResolvedReportFightContext);
+  useFightForContext.mockReturnValue(mergedMocks.useFightForContext);
   useDeathEvents.mockReturnValue(mergedMocks.useDeathEvents);
   useDamageEvents.mockReturnValue(mergedMocks.useDamageEvents);
   useCastEvents.mockReturnValue(mergedMocks.useCastEvents);
@@ -225,7 +233,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
 
       const { container } = render(
         <TestWrapper>
-          <DeathEventPanel fight={mockFight} />
+          <DeathEventPanel />
         </TestWrapper>,
       );
 
@@ -253,7 +261,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
 
       const { container } = render(
         <TestWrapper>
-          <DeathEventPanel fight={mockFight} />
+          <DeathEventPanel />
         </TestWrapper>,
       );
 
@@ -320,7 +328,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
 
       const { container } = render(
         <TestWrapper>
-          <DeathEventPanel fight={mockFight} />
+          <DeathEventPanel />
         </TestWrapper>,
       );
 
@@ -395,7 +403,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
 
       const { container } = render(
         <TestWrapper>
-          <DeathEventPanel fight={mockFight} />
+          <DeathEventPanel />
         </TestWrapper>,
       );
 
@@ -462,7 +470,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
 
       const { container } = render(
         <TestWrapper>
-          <DeathEventPanel fight={mockFight} />
+          <DeathEventPanel />
         </TestWrapper>,
       );
 
@@ -488,7 +496,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
 
       const { container } = render(
         <TestWrapper>
-          <DeathEventPanel fight={mockFight} />
+          <DeathEventPanel />
         </TestWrapper>,
       );
 
@@ -524,7 +532,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
 
       const { container } = render(
         <TestWrapper>
-          <DeathEventPanel fight={mockFight} />
+          <DeathEventPanel />
         </TestWrapper>,
       );
 
@@ -538,7 +546,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
 
       const { container } = render(
         <TestWrapper>
-          <DeathEventPanel fight={mockFight} />
+          <DeathEventPanel />
         </TestWrapper>,
       );
 
@@ -557,7 +565,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
 
       const { container } = render(
         <TestWrapper>
-          <DeathEventPanel fight={mockFight} />
+          <DeathEventPanel />
         </TestWrapper>,
       );
 
@@ -603,7 +611,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
 
       const { container } = render(
         <TestWrapper>
-          <DeathEventPanel fight={mockFight} />
+          <DeathEventPanel />
         </TestWrapper>,
       );
 
@@ -861,3 +869,4 @@ describe('DeathEventPanel Taunt Status Tests', () => {
     });
   });
 });
+

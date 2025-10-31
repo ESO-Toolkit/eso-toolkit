@@ -224,76 +224,90 @@ const mockMasterData = {
   },
 };
 
-// Create mock store
-const createMockStore = (selectedTargetIds: number[] = [], customState?: Partial<any>): Store => {
-  const initialState = {
-    ui: {
-      darkMode: false,
-      sidebarOpen: true,
-      showExperimentalTabs: false,
-      selectedTargetIds,
-    },
-    masterData: {
-      entries: {
-        'test-report::__all__': {
-          abilitiesById: mockMasterData.abilitiesById,
-          actorsById: mockMasterData.actorsById,
-          status: 'succeeded' as const,
-          error: null,
-          cacheMetadata: {
-            lastFetchedTimestamp: Date.now(),
-            actorCount: Object.keys(mockMasterData.actorsById).length,
-            abilityCount: Object.keys(mockMasterData.abilitiesById).length,
-          },
-          currentRequest: null,
-        },
-      },
-      accessOrder: ['test-report::__all__'],
-    },
-    report: {
-      entries: {
-        'test-report::__all__': {
-          data: mockReportData,
-          status: 'succeeded' as const,
-          error: null,
-          fightsById: {
-            1: mockFightWithBosses,
-            2: mockFightWithoutEnemies,
-            3: mockFightWithNullEnemies,
-            10: mockFightWithDuplicates,
-          },
-          fightIds: [1, 2, 3, 10],
-          cacheMetadata: { lastFetchedTimestamp: Date.now() },
-          currentRequest: null,
-        },
-      },
-      accessOrder: ['test-report::__all__'],
-      reportId: 'test-report',
-      data: mockReportData,
-      loading: false,
-      error: null,
-      cacheMetadata: {
-        lastFetchedReportId: 'test-report',
-        lastFetchedTimestamp: Date.now(),
-      },
-      activeContext: {
-        reportId: 'test-report',
-        fightId: null,
-      },
-      fightIndexByReport: {
-        'test-report': [1, 2, 3, 10],
-      },
-    },
-    ...customState,
-  };
+// Helper to create a test wrapper with custom fight and actor data
+interface CustomTestWrapperProps extends TestWrapperProps {
+  customFight?: FightFragment | null;
+  customActors?: Record<number, ReportActorFragment>;
+}
 
-  const rootReducer = combineReducers({
-    ui: (state = initialState.ui) => state,
-    masterData: (state = initialState.masterData) => state,
-    report: (state = initialState.report) => state,
+const CustomTestWrapper: React.FC<CustomTestWrapperProps> = ({
+  children,
+  reportId = 'test-report',
+  fightId = '1',
+  selectedTargetIds = [],
+  customFight = null,
+  customActors = {},
+}) => {
+  const reportKey = `${reportId}::__all__`;
+  const masterDataKey = `${reportId}::__all__`;
+
+  const fight = customFight || mockFightWithBosses;
+  const fightIdNum = parseInt(fightId || '1', 10);
+
+  const store = createMockStore({
+    initialState: {
+      ui: {
+        selectedTargetIds,
+      },
+      report: {
+        entries: {
+          [reportKey]: {
+            data: mockReportData,
+            status: 'succeeded' as const,
+            error: null,
+            fightsById: {
+              [fightIdNum]: fight,
+            },
+            fightIds: [fightIdNum],
+            cacheMetadata: {
+              lastFetchedTimestamp: Date.now(),
+            },
+            currentRequest: null,
+            evictionMetadata: {
+              lastAccessedAt: Date.now(),
+              createdAt: Date.now(),
+              estimatedSize: 0,
+              accessCount: 1,
+            },
+          },
+        },
+        accessOrder: [reportKey],
+      },
+      masterData: {
+        entries: {
+          [masterDataKey]: {
+            abilitiesById: {},
+            actorsById: customActors,
+            status: 'succeeded' as const,
+            error: null,
+            cacheMetadata: {
+              lastFetchedTimestamp: Date.now(),
+              actorCount: Object.keys(customActors).length,
+              abilityCount: 0,
+            },
+            currentRequest: null,
+          },
+        },
+        accessOrder: [masterDataKey],
+      },
+    },
   });
 
-  return createStore(rootReducer);
+  const contextValue = {
+    reportId,
+    fightId,
+    tabId: null,
+    selectedTabId: 'overview' as TabId,
+    showExperimentalTabs: false,
+    setSelectedTab: () => {},
+    setShowExperimentalTabs: () => {},
+  };
+
+  return (
+    <Provider store={store}>
+      <ReportFightContext.Provider value={contextValue}>{children}</ReportFightContext.Provider>
+    </Provider>
+  );
 };
 
 // Test wrapper component
@@ -477,24 +491,39 @@ describe('useSelectedTargetIds', () => {
     expect(Array.from(result.current)).toEqual([]);
   });
 
-  it.skip('should return empty set when no report data is available', () => {
-    // SKIP: This test needs refactoring to work with keyed Redux cache
-    // The hook reads from Redux store directly, not from mocked hooks
+  it('should return empty set when no report data is available', () => {
     mockUseReportData.mockReturnValue({
       reportData: null,
       isReportLoading: false,
     });
 
     mockUseReportMasterData.mockReturnValue({
-      reportMasterData: mockMasterData,
+      reportMasterData: {
+        abilitiesById: {},
+        actorsById: {
+          100: mockBossActor1,
+          200: mockBossActor2,
+          300: mockNonBossActor,
+        },
+        loaded: false,
+      },
       isMasterDataLoading: false,
     });
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="1" selectedTargetIds={[]}>
+        <CustomTestWrapper
+          fightId="999"
+          selectedTargetIds={[]}
+          customFight={null}
+          customActors={{
+            100: mockBossActor1,
+            200: mockBossActor2,
+            300: mockNonBossActor,
+          }}
+        >
           {children}
-        </TestWrapper>
+        </CustomTestWrapper>
       ),
     });
 
@@ -535,8 +564,7 @@ describe('useSelectedTargetIds', () => {
     expect(Array.from(result.current).sort()).toEqual([100, 200, 300]);
   });
 
-  it.skip('should return all enemy NPCs when fight has only non-boss NPCs', () => {
-    // SKIP: Test needs custom Redux store with fight ID 4 in entries
+  it('should return all enemy NPCs when fight has only non-boss NPCs', () => {
     // Create fight with only non-boss NPCs
     const fightWithNonBosses: FightFragment = {
       ...mockFightWithBosses,
@@ -547,26 +575,34 @@ describe('useSelectedTargetIds', () => {
       ],
     };
 
-    const reportDataWithNonBosses: ReportFragment = {
-      ...mockReportData,
-      fights: [fightWithNonBosses],
-    };
-
     mockUseReportData.mockReturnValue({
-      reportData: reportDataWithNonBosses,
+      reportData: mockReportData,
       isReportLoading: false,
     });
 
     mockUseReportMasterData.mockReturnValue({
-      reportMasterData: mockMasterData,
+      reportMasterData: {
+        abilitiesById: {},
+        actorsById: {
+          300: mockNonBossActor,
+        },
+        loaded: true,
+      },
       isMasterDataLoading: false,
     });
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="4" selectedTargetIds={[]}>
+        <CustomTestWrapper
+          fightId="4"
+          selectedTargetIds={[]}
+          customFight={fightWithNonBosses}
+          customActors={{
+            300: mockNonBossActor,
+          }}
+        >
           {children}
-        </TestWrapper>
+        </CustomTestWrapper>
       ),
     });
 
@@ -574,8 +610,7 @@ describe('useSelectedTargetIds', () => {
     expect(Array.from(result.current)).toEqual([300]);
   });
 
-  it.skip('should handle NPCs with null IDs', () => {
-    // SKIP: Test needs custom Redux store with fight ID 5 in entries
+  it('should handle NPCs with null IDs', () => {
     const fightWithNullIds: FightFragment = {
       ...mockFightWithBosses,
       id: 5,
@@ -586,26 +621,34 @@ describe('useSelectedTargetIds', () => {
       ],
     };
 
-    const reportDataWithNullIds: ReportFragment = {
-      ...mockReportData,
-      fights: [fightWithNullIds],
-    };
-
     mockUseReportData.mockReturnValue({
-      reportData: reportDataWithNullIds,
+      reportData: mockReportData,
       isReportLoading: false,
     });
 
     mockUseReportMasterData.mockReturnValue({
-      reportMasterData: mockMasterData,
+      reportMasterData: {
+        abilitiesById: {},
+        actorsById: {
+          100: mockBossActor1,
+        },
+        loaded: true,
+      },
       isMasterDataLoading: false,
     });
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="5" selectedTargetIds={[]}>
+        <CustomTestWrapper
+          fightId="5"
+          selectedTargetIds={[]}
+          customFight={fightWithNullIds}
+          customActors={{
+            100: mockBossActor1,
+          }}
+        >
           {children}
-        </TestWrapper>
+        </CustomTestWrapper>
       ),
     });
 
@@ -613,8 +656,7 @@ describe('useSelectedTargetIds', () => {
     expect(Array.from(result.current)).toEqual([100]);
   });
 
-  it.skip('should handle actors that do not exist in master data', () => {
-    // SKIP: Test needs custom Redux store with fight ID 6 in entries
+  it('should handle actors that do not exist in master data', () => {
     const fightWithMissingActors: FightFragment = {
       ...mockFightWithBosses,
       id: 6,
@@ -625,26 +667,34 @@ describe('useSelectedTargetIds', () => {
       ],
     };
 
-    const reportDataWithMissingActors: ReportFragment = {
-      ...mockReportData,
-      fights: [fightWithMissingActors],
-    };
-
     mockUseReportData.mockReturnValue({
-      reportData: reportDataWithMissingActors,
+      reportData: mockReportData,
       isReportLoading: false,
     });
 
     mockUseReportMasterData.mockReturnValue({
-      reportMasterData: mockMasterData,
+      reportMasterData: {
+        abilitiesById: {},
+        actorsById: {
+          100: mockBossActor1, // Only ID 100 exists in actors
+        },
+        loaded: true,
+      },
       isMasterDataLoading: false,
     });
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="6" selectedTargetIds={[]}>
+        <CustomTestWrapper
+          fightId="6"
+          selectedTargetIds={[]}
+          customFight={fightWithMissingActors}
+          customActors={{
+            100: mockBossActor1, // Only ID 100 exists in actors
+          }}
+        >
           {children}
-        </TestWrapper>
+        </CustomTestWrapper>
       ),
     });
 
