@@ -9,7 +9,7 @@ interface EsoLogsClientContextType {
   client: EsoLogsClient | null;
   isReady: boolean;
   isLoggedIn: boolean;
-  setAuthToken: (token: string) => void;
+  setAuthToken: (token: string, loginStatus?: boolean) => void;
   clearAuthToken: () => void;
 }
 
@@ -28,8 +28,9 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
 
   // Method to set auth token from AuthContext
   const setAuthToken = useCallback(
-    (token: string) => {
-      setIsLoggedIn(!!token);
+    (token: string, loginStatus?: boolean) => {
+      // Use provided login status if available, otherwise fall back to !!token
+      setIsLoggedIn(loginStatus !== undefined ? loginStatus : !!token);
 
       if (token) {
         // Only update if the token has actually changed
