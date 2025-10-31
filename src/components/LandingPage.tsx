@@ -1315,7 +1315,7 @@ export const LandingPage: React.FC = () => {
                 <li>Preview before posting</li>
                 <li>Save templates for reuse</li>
               </ToolFeatures>
-              <ToolAction href="/text-editor">Launch Editor</ToolAction>
+              <ToolAction href="#/text-editor">Launch Editor</ToolAction>
             </ToolCard>
 
             <ToolCard index={1}>
@@ -1341,7 +1341,7 @@ export const LandingPage: React.FC = () => {
                 <li>Armor resistance planner</li>
                 <li>Real-time cap status indicators</li>
               </ToolFeatures>
-              <ToolAction href="/calculator">Launch Calculator</ToolAction>
+              <ToolAction href="#/calculator">Launch Calculator</ToolAction>
             </ToolCard>
 
             <ToolCard index={2}>
