@@ -84,6 +84,9 @@ async function findUsableFightButton(
 }
 
 test.describe('Nightly Regression - Interactive Features', () => {
+  // Run these tests serially to avoid browser closure issues when using --max-failures
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async ({ page }) => {
     // No API mocking - we need real data for these features
     test.setTimeout(180000); // 3 minutes per test for complex features
