@@ -5,7 +5,15 @@ import { EsoLogsClient } from '../../esologsClient';
 import { FightFragment, GetReportByCodeDocument, ReportFragment } from '../../graphql/gql/graphql';
 import type { ReportFightContextInput } from '../contextTypes';
 import { RootState } from '../storeWithHistory';
+import {
+  CacheEntryMetadata,
+  CacheEvictionConfig,
+  createCacheEntryMetadata,
+  DEFAULT_CACHE_EVICTION_CONFIG,
+  touchCacheEntryMetadata,
+} from '../utils/cacheEviction';
 import { normalizeReportFightContext } from '../utils/cacheKeys';
+import { logCacheEvict, logCacheHit, logCacheMiss, logCacheSet } from '../utils/cacheMetrics';
 import {
   KeyedCacheState,
   removeFromCache,
@@ -17,7 +25,15 @@ import {
 
 export type ReportLoadStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 
-const REPORT_CACHE_MAX_ENTRIES = 6;
+// Cache configuration for reports
+const REPORT_CACHE_CONFIG: CacheEvictionConfig = {
+  maxEntries: 6,
+  maxAgeMs: DATA_FETCH_CACHE_TIMEOUT,
+  maxSizeBytes: undefined, // No size limit for reports
+};
+
+// Cache name for metrics logging
+const CACHE_NAME = 'report';
 
 interface ReportRequest {
   reportId: string;
@@ -57,6 +73,8 @@ export interface ReportEntry {
   fightIds: number[];
   cacheMetadata: ReportCacheMetadata;
   currentRequest: MaybeReportRequest;
+  /** Enhanced cache metadata for eviction policies */
+  evictionMetadata: CacheEntryMetadata;
 }
 
 export interface ActiveReportContext {
@@ -87,6 +105,7 @@ const createEmptyEntry = (): ReportEntry => ({
     lastFetchedTimestamp: null,
   },
   currentRequest: null,
+  evictionMetadata: createCacheEntryMetadata(),
 });
 
 const mapFights = (
@@ -143,7 +162,16 @@ const getEntry = (state: ReportState, reportId: string | null | undefined): Repo
   if (!cacheKey) {
     return null;
   }
-  return state.entries[cacheKey] ?? null;
+  const entry = state.entries[cacheKey] ?? null;
+
+  // Log cache hit/miss for metrics
+  if (entry) {
+    logCacheHit(CACHE_NAME, cacheKey);
+  } else {
+    logCacheMiss(CACHE_NAME, cacheKey);
+  }
+
+  return entry;
 };
 
 const ensureEntry = (state: ReportState, reportId: string): ReportEntry => {
@@ -250,8 +278,9 @@ const reportSlice = createSlice({
 
       if (normalized.reportCode) {
         const { key } = resolveCacheKey({ reportCode: normalized.reportCode });
-        ensureEntry(state, normalized.reportCode);
+        const entry = ensureEntry(state, normalized.reportCode);
         touchAccessOrder(state, key);
+        entry.evictionMetadata = touchCacheEntryMetadata(entry.evictionMetadata);
       }
 
       syncActiveReportState(state);
@@ -284,7 +313,8 @@ const reportSlice = createSlice({
 
       const { key } = resolveCacheKey({ reportCode: resolvedReportId });
       touchAccessOrder(state, key);
-      trimCache(state, REPORT_CACHE_MAX_ENTRIES);
+      entry.evictionMetadata = touchCacheEntryMetadata(entry.evictionMetadata);
+      trimCache(state, REPORT_CACHE_CONFIG.maxEntries!);
 
       state.activeContext.reportId =
         payload?.code ?? state.activeContext.reportId ?? resolvedReportId;
@@ -322,6 +352,10 @@ const reportSlice = createSlice({
         syncActiveReportState(state);
         return;
       }
+      const entry = state.entries[key];
+      if (entry) {
+        logCacheEvict(CACHE_NAME, key, entry.evictionMetadata);
+      }
       removeFromCache(state, key);
       delete state.fightIndexByReport[context.reportCode];
       if (state.activeContext.reportId === context.reportCode) {
@@ -330,7 +364,10 @@ const reportSlice = createSlice({
       syncActiveReportState(state);
     },
     trimReportCache(state, action: PayloadAction<{ maxEntries?: number } | undefined>) {
-      const limit = action?.payload?.maxEntries ?? REPORT_CACHE_MAX_ENTRIES;
+      const limit =
+        action?.payload?.maxEntries ??
+        REPORT_CACHE_CONFIG.maxEntries ??
+        DEFAULT_CACHE_EVICTION_CONFIG.maxEntries;
       trimCache(state, limit);
       syncActiveReportState(state);
     },
@@ -377,7 +414,9 @@ const reportSlice = createSlice({
         state.fightIndexByReport[reportId] = fightIds;
 
         touchAccessOrder(state, cacheKey);
-        trimCache(state, REPORT_CACHE_MAX_ENTRIES);
+        entry.evictionMetadata = touchCacheEntryMetadata(entry.evictionMetadata);
+        logCacheSet(CACHE_NAME, cacheKey);
+        trimCache(state, REPORT_CACHE_CONFIG.maxEntries!);
 
         if (!state.activeContext.reportId) {
           state.activeContext.reportId = reportId;

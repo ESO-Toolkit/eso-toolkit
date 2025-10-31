@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
+import { createCacheEntryMetadata } from '../utils/cacheEviction';
 
 import reportSlice, {
   clearReport,
@@ -20,6 +21,7 @@ const createReportEntry = (overrides: Partial<ReportEntry> = {}): ReportEntry =>
     lastFetchedTimestamp: null,
   },
   currentRequest: null,
+  evictionMetadata: createCacheEntryMetadata(),
   ...overrides,
 });
 
@@ -178,6 +180,161 @@ describe('reportSlice caching logic', () => {
 
       const state = store.getState() as { report: ReportState };
       expect(state.report.activeContext).toEqual({ reportId: null, fightId: null });
+    });
+  });
+
+  describe('Multi-report caching', () => {
+    it('should maintain multiple report entries without overwriting', () => {
+      const mockData1 = {
+        __typename: 'Report' as const,
+        code: 'report-1',
+        title: 'Report 1',
+        startTime: 1000,
+        endTime: 2000,
+        visibility: 'Public',
+        zone: null,
+        fights: null,
+      };
+
+      const mockData2 = {
+        __typename: 'Report' as const,
+        code: 'report-2',
+        title: 'Report 2',
+        startTime: 3000,
+        endTime: 4000,
+        visibility: 'Public',
+        zone: null,
+        fights: null,
+      };
+
+      // Set first report
+      store.dispatch(
+        setActiveReportContext({
+          reportCode: 'report-1',
+          fightId: null,
+        }),
+      );
+
+      // Set second report
+      store.dispatch(
+        setActiveReportContext({
+          reportCode: 'report-2',
+          fightId: null,
+        }),
+      );
+
+      const state = store.getState() as { report: ReportState };
+      const key1 = resolveCacheKey({ reportCode: 'report-1' }).key;
+      const key2 = resolveCacheKey({ reportCode: 'report-2' }).key;
+
+      // Both reports should exist in cache
+      expect(state.report.entries[key1]).toBeDefined();
+      expect(state.report.entries[key2]).toBeDefined();
+      expect(state.report.accessOrder).toContain(key1);
+      expect(state.report.accessOrder).toContain(key2);
+    });
+
+    it('should update eviction metadata when accessing entries', () => {
+      store.dispatch(
+        setActiveReportContext({
+          reportCode: 'test-report',
+          fightId: null,
+        }),
+      );
+
+      const state1 = store.getState() as { report: ReportState };
+      const key = resolveCacheKey({ reportCode: 'test-report' }).key;
+      const entry1 = state1.report.entries[key];
+      const initialAccessCount = entry1?.evictionMetadata.accessCount ?? 0;
+
+      // Access the same report again
+      store.dispatch(
+        setActiveReportContext({
+          reportCode: 'test-report',
+          fightId: '1',
+        }),
+      );
+
+      const state2 = store.getState() as { report: ReportState };
+      const entry2 = state2.report.entries[key];
+
+      // Access count should have increased
+      expect(entry2?.evictionMetadata.accessCount).toBeGreaterThan(initialAccessCount);
+    });
+  });
+
+  describe('Cache eviction', () => {
+    it('should maintain eviction metadata for all entries', () => {
+      for (let i = 1; i <= 3; i++) {
+        store.dispatch(
+          setActiveReportContext({
+            reportCode: `report-${i}`,
+            fightId: null,
+          }),
+        );
+      }
+
+      const state = store.getState() as { report: ReportState };
+      const entries = Object.values(state.report.entries);
+
+      entries.forEach((entry) => {
+        expect(entry.evictionMetadata).toBeDefined();
+        expect(entry.evictionMetadata.createdAt).toBeGreaterThan(0);
+        expect(entry.evictionMetadata.lastAccessedAt).toBeGreaterThan(0);
+        expect(entry.evictionMetadata.accessCount).toBeGreaterThanOrEqual(1);
+      });
+    });
+
+    it('should track fightIndexByReport for multiple reports', () => {
+      const key1 = resolveCacheKey({ reportCode: 'report-1' }).key;
+      const key2 = resolveCacheKey({ reportCode: 'report-2' }).key;
+
+      const initialState: ReportState = {
+        entries: {
+          [key1]: createReportEntry({
+            data: null,
+            status: 'succeeded',
+            fightIds: [1, 2],
+            fightsById: {},
+          }),
+          [key2]: createReportEntry({
+            data: null,
+            status: 'succeeded',
+            fightIds: [3],
+            fightsById: {},
+          }),
+        },
+        accessOrder: [key1, key2],
+        reportId: 'report-1',
+        data: null,
+        loading: false,
+        error: null,
+        cacheMetadata: {
+          lastFetchedReportId: 'report-1',
+          lastFetchedTimestamp: Date.now(),
+        },
+        activeContext: {
+          reportId: 'report-1',
+          fightId: null,
+        },
+        fightIndexByReport: {
+          'report-1': [1, 2],
+          'report-2': [3],
+        },
+      };
+
+      store = configureStore({
+        reducer: {
+          report: reportSlice,
+        },
+        preloadedState: {
+          report: initialState,
+        },
+      });
+
+      const state = store.getState() as { report: ReportState };
+      expect(state.report.fightIndexByReport['report-1']).toEqual([1, 2]);
+      expect(state.report.fightIndexByReport['report-2']).toEqual([3]);
     });
   });
 });

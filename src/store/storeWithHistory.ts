@@ -26,7 +26,7 @@ import { eventsReducer } from './events_data';
 import masterDataReducer from './master_data/masterDataSlice';
 import parseAnalysisReducer from './parse_analysis/parseAnalysisSlice';
 import playerDataReducer from './player_data/playerDataSlice';
-import reportReducer from './report/reportSlice';
+import reportReducer, { ReportState } from './report/reportSlice';
 import uiReducer, { UIState } from './ui/uiSlice';
 import userReportsReducer from './user_reports';
 import { workerResultsReducer } from './worker_results';
@@ -86,6 +86,39 @@ const uiTransform = createTransform<UIState, Partial<UIState>>(
   { whitelist: ['ui'] },
 );
 
+/**
+ * Transform to avoid persisting heavy fight data in report entries.
+ * Only persist metadata and structure, not the actual fight data.
+ */
+const reportTransform = createTransform<ReportState, ReportState>(
+  // Transform state before persisting
+  (inboundState) => {
+    const transformed: ReportState = {
+      ...inboundState,
+      entries: Object.entries(inboundState.entries).reduce(
+        (acc, [key, entry]) => {
+          if (entry) {
+            // Persist everything except fightsById (which can be large)
+            acc[key] = {
+              ...entry,
+              fightsById: {}, // Clear heavy fight data
+            };
+          }
+          return acc;
+        },
+        {} as ReportState['entries'],
+      ),
+    };
+    return transformed;
+  },
+  // Transform state after rehydrating
+  (outboundState) => {
+    // No transformation needed on rehydration
+    return outboundState;
+  },
+  { whitelist: ['report'] },
+);
+
 // Define RootState type from the root reducer (before persist config)
 export type RootState = ReturnType<typeof rootReducer>;
 
@@ -93,11 +126,13 @@ export type RootState = ReturnType<typeof rootReducer>;
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['ui'], // Persist essential data, but not events (too large)
-  transforms: [uiTransform], // Apply transform to exclude report-specific UI state
-};
+  whitelist: ['ui', 'report'], // Persist ui and report state
+  blacklist: [], // Events and large data are not persisted
+  transforms: [uiTransform, reportTransform], // Apply both transforms
+} as const;
 
-const persistedReducer = persistReducer<RootState>(persistConfig, rootReducer);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const persistedReducer = persistReducer(persistConfig as any, rootReducer);
 
 // Define thunk extra argument interface
 export interface ThunkExtraArgument {

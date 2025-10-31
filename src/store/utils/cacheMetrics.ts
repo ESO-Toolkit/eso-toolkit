@@ -1,4 +1,5 @@
 import type { ReportFightCacheKey } from '../contextTypes';
+
 import type { CacheEntryMetadata } from './cacheEviction';
 
 /**
@@ -103,6 +104,7 @@ class InMemoryCacheMetricsLogger implements CacheMetricsLogger {
 
     // Optional: Log to console in dev mode
     if (process.env.NODE_ENV === 'development' && typeof console !== 'undefined') {
+      // eslint-disable-next-line no-console
       console.debug('[Cache Metrics]', metrics);
     }
   }
