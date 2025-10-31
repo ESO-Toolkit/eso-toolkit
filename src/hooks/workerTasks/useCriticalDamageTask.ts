@@ -49,7 +49,7 @@ export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): 
       !isCombatantInfoEventsLoading &&
       combatantInfoRecord !== null &&
       !isPlayerDataLoading &&
-  playerData?.playersById
+      playerData?.playersById
     ) {
       // Only require debuff data if it's actually loading or available
       const hasDebuffData = debuffLookupData !== null || !isDebuffLookupLoading;
