@@ -39,8 +39,8 @@ export default defineConfig({
   /* Global setup for authentication */
   globalSetup: './tests/global-setup.ts',
 
-  /* Only run nightly regression tests */
-  testMatch: '**/nightly-regression*.spec.ts',
+  /* Only run nightly regression tests and normalized state architecture tests */
+  testMatch: ['**/nightly-regression*.spec.ts', '**/normalized-state-architecture.spec.ts'],
 
   /* Run tests in files in parallel, but limit workers to avoid overloading APIs */
   fullyParallel: true,
@@ -120,7 +120,7 @@ export default defineConfig({
           ],
         },
       },
-      testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
+      testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts', '**/normalized-state-architecture.spec.ts'],
     },
     {
       name: 'firefox-desktop',
@@ -137,7 +137,7 @@ export default defineConfig({
           },
         },
       },
-      testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
+      testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts', '**/normalized-state-architecture.spec.ts'],
     },
     {
       name: 'webkit-desktop',
@@ -147,7 +147,7 @@ export default defineConfig({
         storageState: 'tests/auth-state.json', // Use auth state for report access
         // WebKit doesn't support the same launch args as Chromium, keep minimal config
       },
-      testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
+      testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts', '**/normalized-state-architecture.spec.ts'],
     },
 
     /* Additional Authenticated Tests for specific auth scenarios */
