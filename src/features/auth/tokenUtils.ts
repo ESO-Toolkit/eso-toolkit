@@ -102,3 +102,22 @@ export function isAccessTokenExpired(token: string | null | undefined, skewMs = 
 export function tokenHasUserSubject(token: string | null | undefined): boolean {
   return Boolean(getAccessTokenSubject(token));
 }
+
+/**
+ * Check if a token has the necessary scopes to view reports.
+ * Used for client_credentials tokens that don't have a user subject.
+ */
+export function tokenHasReportViewScopes(token: string | null | undefined): boolean {
+  const decoded = decodeAccessToken(token);
+  if (!decoded) {
+    return false;
+  }
+
+  const scopes = decoded.scopes;
+  if (!Array.isArray(scopes)) {
+    return false;
+  }
+
+  // Check if token has either view-user-profile or view-private-reports scope
+  return scopes.includes('view-user-profile') || scopes.includes('view-private-reports');
+}

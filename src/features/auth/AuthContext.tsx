@@ -21,6 +21,7 @@ import {
   getAccessTokenSubject,
   isAccessTokenExpired,
   tokenHasUserSubject,
+  tokenHasReportViewScopes,
 } from './tokenUtils';
 
 const logger = new Logger({
@@ -91,6 +92,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const { client: esoLogsClient, setAuthToken, clearAuthToken } = useEsoLogsClientContext();
 
   const accessTokenHasUser = React.useMemo(() => tokenHasUserSubject(accessToken), [accessToken]);
+  const accessTokenHasReportScopes = React.useMemo(
+    () => tokenHasReportViewScopes(accessToken),
+    [accessToken],
+  );
   const accessTokenExpiry = React.useMemo(() => getAccessTokenExpiry(accessToken), [accessToken]);
   const accessTokenExpired = React.useMemo(() => isAccessTokenExpired(accessToken), [accessToken]);
   const lastUserPropertyPayload = React.useRef<string>('');
@@ -257,7 +262,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => window.removeEventListener('storage', handler);
   }, [setAuthToken]);
 
-  const isLoggedIn = !!accessToken && accessTokenHasUser && !accessTokenExpired && !isBanned;
+  const isLoggedIn =
+    !!accessToken &&
+    (accessTokenHasUser || accessTokenHasReportScopes) &&
+    !accessTokenExpired &&
+    !isBanned;
+
+  // Sync login status with EsoLogsClient context
+  useEffect(() => {
+    setAuthToken(accessToken, isLoggedIn);
+  }, [accessToken, isLoggedIn, setAuthToken]);
 
   useEffect(() => {
     const payload = buildUserPropertyPayload(currentUser, {
