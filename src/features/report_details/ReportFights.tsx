@@ -34,7 +34,7 @@ export const ReportFights: React.FC = () => {
       return {
         title,
         description,
-        url: `${window.location.origin}${window.location.pathname}#${window.location.hash}`,
+        url: `${window.location.origin}${window.location.pathname}${window.location.search}`,
         type: 'website' as const,
       };
     }

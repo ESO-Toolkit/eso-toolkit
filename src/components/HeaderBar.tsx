@@ -407,7 +407,7 @@ const Calculator = ({ size }: CalculatorProps): React.JSX.Element => (
 // Function to determine logo text based on current path
 const getLogoText = (pathname: string): string => {
   // Landing page
-  if (pathname === '/' || pathname === '' || pathname === '#/') {
+  if (pathname === '/' || pathname === '') {
     return 'ESO Toolkit';
   }
 
@@ -725,11 +725,7 @@ export const HeaderBar: React.FC = () => {
                     letterSpacing: '-.02em',
                     fontFamily: 'Space Grotesk,Inter,system-ui',
                     textTransform:
-                      location.pathname === '/' ||
-                      location.pathname === '' ||
-                      location.pathname === '#/'
-                        ? 'uppercase'
-                        : 'none',
+                      location.pathname === '/' || location.pathname === '' ? 'uppercase' : 'none',
                     background:
                       theme.palette.mode === 'dark'
                         ? 'linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%)'
@@ -1258,9 +1254,7 @@ export const HeaderBar: React.FC = () => {
               alignItems: 'center',
               gap: 1,
               textTransform:
-                location.pathname === '/' || location.pathname === '' || location.pathname === '#/'
-                  ? 'uppercase'
-                  : 'none',
+                location.pathname === '/' || location.pathname === '' ? 'uppercase' : 'none',
             }}
           >
             <img src={esoLogo} alt="ESO Helpers" style={{ width: 32, height: 32 }} />

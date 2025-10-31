@@ -21,7 +21,7 @@ test.describe('Scribing Detection - Regression Tests', () => {
   const SHATTERING_KNIFE_ABILITY_ID = '217340';
   
   // Use relative path that works with Playwright's base URL
-  const TEST_PATH = `#/report/${REPORT_ID}/fight/${FIGHT_ID}/players`;
+  const TEST_PATH = `/report/${REPORT_ID}/fight/${FIGHT_ID}/players`;
 
   test.beforeEach(async ({ page }) => {
     // Set up API mocking for consistent testing

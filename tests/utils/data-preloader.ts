@@ -275,7 +275,7 @@ async function preloadTabData(
   console.log(`📄 Pre-loading data for ${tab} tab...`);
   
   // Navigate to the tab URL
-  const tabUrl = `/#/report/${reportCode}/fight/${fightId}/${tab}`;
+  const tabUrl = `/report/${reportCode}/fight/${fightId}/${tab}`;
   await page.goto(tabUrl, { waitUntil: 'domcontentloaded', timeout });
   
   // Wait for the page to initialize
@@ -313,7 +313,7 @@ async function verifyDataPreloaded(
   
   for (const tab of tabs) {
     // Quick navigation to each tab to verify instant loading
-    const tabUrl = `/#/report/${reportCode}/fight/${fightId}/${tab}`;
+    const tabUrl = `/report/${reportCode}/fight/${fightId}/${tab}`;
     
     console.log(`🔎 Verifying ${tab} tab loads instantly...`);
     const startTime = Date.now();

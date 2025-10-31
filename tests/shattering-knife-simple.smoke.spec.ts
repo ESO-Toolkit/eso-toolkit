@@ -22,7 +22,7 @@ test.describe('Scribing Detection - Simple Regression', () => {
     console.log('🔍 Testing basic report loading with scribing infrastructure...');
     
     // Navigate to the report (without specific fight/players path that might not exist)
-    await page.goto(`/#/report/${REPORT_ID}`);
+    await page.goto(`/report/${REPORT_ID}`);
     
     // Wait for basic page load
     await page.waitForLoadState('domcontentloaded');
@@ -58,7 +58,7 @@ test.describe('Scribing Detection - Simple Regression', () => {
     console.log('🔍 Testing Fight 11 navigation...');
     
     // Navigate to Fight 11 specifically 
-    await page.goto(`/#/report/${REPORT_ID}/fight/${FIGHT_ID}`);
+    await page.goto(`/report/${REPORT_ID}/fight/${FIGHT_ID}`);
     
     // Wait for page to load
     await page.waitForLoadState('domcontentloaded');
@@ -164,7 +164,7 @@ test.describe('Scribing Detection - Simple Regression', () => {
     console.log('📸 Taking visual regression baseline screenshot of Players panel...');
     
     // Navigate to Fight 11 Players panel (the target page for Shattering Knife detection)
-    await page.goto(`/#/report/${REPORT_ID}/fight/${FIGHT_ID}/players`);
+    await page.goto(`/report/${REPORT_ID}/fight/${FIGHT_ID}/players`);
     await page.waitForLoadState('domcontentloaded');
     
     // Wait for any dynamic content to load

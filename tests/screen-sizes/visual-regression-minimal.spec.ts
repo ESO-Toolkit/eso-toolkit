@@ -160,7 +160,7 @@ async function waitForPanelLoadingComplete(page: any, panelName: string = 'panel
  * Navigate to report page - simplified
  */
 async function navigateToReport(page: any, path: string = '') {
-  const url = `http://localhost:3000/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}${path}`;
+  const url = `http://localhost:3000/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}${path}`;
   // Use config timeout and domcontentloaded since we have comprehensive preprocessing
   await page.goto(url, { waitUntil: 'domcontentloaded' });
 }

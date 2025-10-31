@@ -1,12 +1,13 @@
 import { Box } from '@mui/material';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
-import { Routes, Route, HashRouter } from 'react-router-dom';
+import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { AnalyticsListener } from './components/AnalyticsListener';
 import { MemoizedLoadingSpinner } from './components/CustomLoadingSpinner';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { HashRouteRedirect } from './components/HashRouteRedirect';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
@@ -138,7 +139,7 @@ const App: React.FC = () => {
   }, []);
 
   // Check if we're on the landing page to conditionally load components
-  const isLandingPage = window.location.hash === '' || window.location.hash === '#/';
+  const isLandingPage = window.location.pathname === '/' || window.location.pathname === '';
 
   return (
     <LoggerProvider
@@ -184,24 +185,9 @@ const AppRoutes: React.FC = () => {
     });
   }, []);
 
-  // Support non-hash OAuth redirect: /oauth-redirect?code=...
-  // HashRouter won't match a path without a hash, so we short-circuit here.
-  // Check current path for OAuth redirect
-  const publicUrl = process.env.PUBLIC_URL || '';
-  const currentPath = window.location.pathname.replace(publicUrl, '');
-
-  if (currentPath === '/oauth-redirect') {
-    return (
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <OAuthRedirect />
-        </Suspense>
-      </ErrorBoundary>
-    );
-  }
-
   return (
-    <HashRouter>
+    <BrowserRouter>
+      <HashRouteRedirect />
       <AnalyticsListener />
       <ScrollRestoration />
       <BanRedirect />
@@ -423,7 +409,7 @@ const AppRoutes: React.FC = () => {
           />
         </Routes>
       </ErrorBoundary>
-    </HashRouter>
+    </BrowserRouter>
   );
 };
 

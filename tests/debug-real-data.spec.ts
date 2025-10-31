@@ -218,3 +218,4 @@ test.describe('Debug - Real Data from ESO Logs', () => {
     console.log(`\n✓ Screenshot saved to test-results/`);
   });
 });
+

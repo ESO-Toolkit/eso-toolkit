@@ -67,7 +67,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
       console.log('🔍 Environment variables:');
       console.log('  NIGHTLY_BASE_URL:', process.env.NIGHTLY_BASE_URL);
       console.log('  BASE_URL:', process.env.BASE_URL);
-      console.log('  Expected navigation to: #/login');
+      console.log('  Expected navigation to: /login');
 
       // Navigate to login page using the page class method
       await esoPage.goToLogin();
@@ -136,7 +136,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         console.log('✅ Authentication state loaded successfully');
 
         // Navigate to a protected route
-        await page.goto('#/my-reports', {
+        await page.goto('/my-reports', {
           waitUntil: 'domcontentloaded',
           timeout: TEST_TIMEOUTS.navigation,
         });
@@ -262,7 +262,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
 
   test.describe('Latest Reports Page', () => {
     test('should load latest reports page', async ({ page }) => {
-      await page.goto('#/latest-reports', {
+      await page.goto('/latest-reports', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -338,7 +338,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
       const isAuth = await authUtils.isAuthenticated();
       console.log(`ℹ️  Testing user reports page - authenticated: ${isAuth}`);
 
-      await page.goto('#/my-reports', {
+      await page.goto('/my-reports', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -423,7 +423,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
       const isAuth = await authUtils.isAuthenticated();
       console.log(`ℹ️  Testing report interactions - authenticated: ${isAuth}`);
 
-      await page.goto('#/my-reports', {
+      await page.goto('/my-reports', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -479,7 +479,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
 
   test.describe('Calculator Page', () => {
     test('should load calculator page without authentication', async ({ page }) => {
-      await page.goto('#/calculator', {
+      await page.goto('/calculator', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -757,7 +757,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
   test.describe('Error Handling and Edge Cases', () => {
     test('should handle invalid report IDs gracefully', async ({ page }) => {
       // Try to access a non-existent report
-      await page.goto('#/report/INVALID_REPORT_ID', {
+      await page.goto('/report/INVALID_REPORT_ID', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -815,7 +815,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
 
     test('should handle network issues gracefully', async ({ page }) => {
       // Navigate to a report first
-      await page.goto('#/report/3gjVGWB2dxCL8XAw', {
+      await page.goto('/report/3gjVGWB2dxCL8XAw', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -869,7 +869,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
   test.describe('Cross-browser Compatibility Checks', () => {
     test('should verify key functionality works across browsers', async ({ page, browserName }) => {
       // Test basic navigation in different browsers
-      await page.goto('#/calculator', {
+      await page.goto('/calculator', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -893,3 +893,4 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
     });
   });
 });
+

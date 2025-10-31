@@ -82,3 +82,4 @@ test.describe('404 Not Found Page', () => {
     await expect(page.getByRole('heading', { name: 'Page Not Found' })).toBeVisible();
   });
 });
+

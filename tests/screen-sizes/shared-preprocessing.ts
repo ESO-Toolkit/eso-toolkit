@@ -15,7 +15,7 @@ const DEFAULT_LOCAL_BASE_URL = 'http://localhost:3000';
 const RAW_BASE_URL = getBaseUrl();
 const NORMALIZED_BASE_URL = (RAW_BASE_URL || DEFAULT_LOCAL_BASE_URL).replace(/\/+$/, '');
 const APP_BASE_URL = NORMALIZED_BASE_URL || DEFAULT_LOCAL_BASE_URL;
-const REPORT_BASE_URL = `${APP_BASE_URL}/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`;
+const REPORT_BASE_URL = `${APP_BASE_URL}/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`;
 
 // Log levels
 type LogLevel = 'silent' | 'error' | 'warn' | 'info' | 'verbose';

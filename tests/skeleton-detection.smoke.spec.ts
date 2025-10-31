@@ -6,7 +6,7 @@ test.describe('Skeleton Detection Smoke Tests', () => {
     console.log('Navigating to calculator page...');
     
     // Navigate directly to calculator
-    await page.goto('/#/calculator');
+    await page.goto('/calculator');
     
     // Create skeleton detector
     const skeletonDetector = createSkeletonDetector(page);
@@ -69,7 +69,7 @@ test.describe('Skeleton Detection Smoke Tests', () => {
     console.log('Testing specific skeleton type detection...');
     
     // Navigate to calculator which might show calculator-specific skeletons
-    await page.goto('/#/calculator');
+    await page.goto('/calculator');
     
     const skeletonDetector = createSkeletonDetector(page);
     

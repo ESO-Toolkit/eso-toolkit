@@ -22,7 +22,7 @@ export class EsoLogAggregatorPage {
    * Navigate to the login page
    */
   async goToLogin() {
-    await this.page.goto('#/login', { 
+    await this.page.goto('/login', { 
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -32,7 +32,7 @@ export class EsoLogAggregatorPage {
    * Navigate to the my reports page
    */
   async goToMyReports() {
-    await this.page.goto('#/my-reports', { 
+    await this.page.goto('/my-reports', { 
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -42,7 +42,7 @@ export class EsoLogAggregatorPage {
    * Navigate to the latest reports page
    */
   async goToLatestReports() {
-    await this.page.goto('#/latest-reports', { 
+    await this.page.goto('/latest-reports', { 
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -52,7 +52,7 @@ export class EsoLogAggregatorPage {
    * Navigate to the calculator page
    */
   async goToCalculator() {
-    await this.page.goto('#/calculator', { 
+    await this.page.goto('/calculator', { 
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -63,7 +63,7 @@ export class EsoLogAggregatorPage {
    * @param reportId - The report ID to navigate to
    */
   async goToReport(reportId: string) {
-    await this.page.goto(`#/report/${reportId}`, { 
+    await this.page.goto(`/report/${reportId}`, { 
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -74,7 +74,7 @@ export class EsoLogAggregatorPage {
    * @param reportId - The report ID to navigate to
    */
   async goToReportLive(reportId: string) {
-    await this.page.goto(`#/report/${reportId}/live`, { 
+    await this.page.goto(`/report/${reportId}/live`, { 
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -86,7 +86,7 @@ export class EsoLogAggregatorPage {
    * @param fightId - The fight ID
    */
   async goToFight(reportId: string, fightId: string) {
-    await this.page.goto(`#/report/${reportId}/fight/${fightId}`, { 
+    await this.page.goto(`/report/${reportId}/fight/${fightId}`, { 
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -99,7 +99,7 @@ export class EsoLogAggregatorPage {
    * @param tab - The tab name (e.g., 'insights', 'replay', 'players', 'damage-done', etc.)
    */
   async goToFightTab(reportId: string, fightId: string, tab: string) {
-    await this.page.goto(`#/report/${reportId}/fight/${fightId}/${tab}`, { 
+    await this.page.goto(`/report/${reportId}/fight/${fightId}/${tab}`, { 
       waitUntil: 'domcontentloaded',
       timeout: DEFAULT_TIMEOUTS.navigation,
     });
@@ -146,22 +146,22 @@ export class EsoLogAggregatorPage {
    * @param invalidReportId - An invalid report ID
    */
   async goToInvalidReport(invalidReportId: string = 'INVALID_REPORT_ID') {
-    await this.page.goto(`#/report/${invalidReportId}`, { waitUntil: 'networkidle' });
+    await this.page.goto(`/report/${invalidReportId}`, { waitUntil: 'networkidle' });
   }
 
   /**
    * Build a URL for a specific route without navigating
-   * @param route - The route path (without the # prefix)
+   * @param route - The route path
    * @returns The complete URL
    */
   buildUrl(route: string): string {
-    const cleanRoute = route.startsWith('#/') ? route.substring(2) : route.startsWith('/') ? route.substring(1) : route;
-    return `#/${cleanRoute}`;
+    const cleanRoute = route.startsWith('/') ? route : `/${route}`;
+    return cleanRoute;
   }
 
   /**
    * Navigate to a custom route
-   * @param route - The route to navigate to (can include or exclude the # prefix)
+   * @param route - The route to navigate to
    */
   async goToRoute(route: string) {
     const url = this.buildUrl(route);
@@ -169,11 +169,11 @@ export class EsoLogAggregatorPage {
   }
 
   /**
-   * Get the current URL hash (route)
-   * @returns The current route hash
+   * Get the current URL path (route)
+   * @returns The current route path
    */
   async getCurrentRoute(): Promise<string> {
-    return await this.page.evaluate(() => window.location.hash);
+    return await this.page.evaluate(() => window.location.pathname);
   }
 
   /**

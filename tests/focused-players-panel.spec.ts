@@ -108,7 +108,7 @@ test.describe('Focused Players Panel Test - Real Data', () => {
     
     // Try to navigate directly to players URL regardless of current page state
     console.log('Navigating directly to players tab...');
-    await page.goto(`#/report/${REPORT_CODE}/fight/${FIGHT_ID}/players`);
+    await page.goto(`/report/${REPORT_CODE}/fight/${FIGHT_ID}/players`);
     
     // Wait for navigation to complete
     await page.waitForLoadState('domcontentloaded');

@@ -454,10 +454,10 @@ export const HealerGuide: React.FC = () => {
 
       {/* CTA */}
       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 4 }}>
-        <Button variant="contained" color="primary" href="#/calculator">
+        <Button variant="contained" color="primary" href="/calculator">
           Open Calculator
         </Button>
-        <Button variant="outlined" color="primary" href="#/">
+        <Button variant="outlined" color="primary" href="/">
           Analyze Logs
         </Button>
       </Box>

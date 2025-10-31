@@ -51,7 +51,7 @@ export const restHandlers = [
     return new HttpResponse(null, {
       status: 302,
       headers: {
-        Location: `${process.env.PUBLIC_URL || ''}/#/oauth-redirect?code=mock_auth_code&state=mock_state`,
+        Location: `${process.env.PUBLIC_URL || ''}/oauth-redirect?code=mock_auth_code&state=mock_state`,
       },
     });
   }),
