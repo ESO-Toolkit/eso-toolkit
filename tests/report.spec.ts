@@ -11,7 +11,7 @@ test.describe('Report Page', () => {
     const testReportId = 'TEST123';
 
     // Navigate to the report page
-    await page.goto(`/#/report/${testReportId}`);
+    await page.goto(`/report/${testReportId}`);
 
     // Wait for the page title to be set
     await expect(page).toHaveTitle(/ESO Toolkit/);
@@ -44,7 +44,7 @@ test.describe('Report Page', () => {
 
   test('should handle report data loading', async ({ page }) => {
     // Navigate to the report page
-    await page.goto(`/#/report/TEST123`);
+    await page.goto(`/report/TEST123`);
 
     // Wait for loading to complete
     await page.waitForLoadState('domcontentloaded');
@@ -63,7 +63,7 @@ test.describe('Report Page', () => {
     const testReportId = 'TEST123';
 
     // Navigate to the main report page first (without specific fight)
-    await page.goto(`/#/report/${testReportId}`);
+    await page.goto(`/report/${testReportId}`);
 
     // Wait for page to load
     await page.waitForLoadState('domcontentloaded');
@@ -95,7 +95,7 @@ test.describe('Report Page', () => {
     const invalidReportId = 'INVALID123';
 
     // Navigate to an invalid report
-    await page.goto(`/#/report/${invalidReportId}`);
+    await page.goto(`/report/${invalidReportId}`);
 
     // Wait for the page to load
     await page.waitForLoadState('domcontentloaded');
@@ -118,7 +118,7 @@ test.describe('Report Page', () => {
       await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE size
 
       const testReportId = 'TEST123';
-      await page.goto(`/#/report/${testReportId}`);
+      await page.goto(`/report/${testReportId}`);
       await page.waitForLoadState('domcontentloaded');
 
       // Check for horizontal overflow
@@ -133,7 +133,7 @@ test.describe('Report Page', () => {
       await page.setViewportSize({ width: 768, height: 1024 }); // iPad size
 
       const testReportId = 'TEST123';
-      await page.goto(`/#/report/${testReportId}`);
+      await page.goto(`/report/${testReportId}`);
       await page.waitForLoadState('domcontentloaded');
 
       // Basic checks that page loads properly on tablet
@@ -157,7 +157,7 @@ test.describe('Report Page', () => {
 
       for (const viewport of viewports) {
         await page.setViewportSize(viewport);
-        await page.goto(`/#/report/${testReportId}`);
+        await page.goto(`/report/${testReportId}`);
         await page.waitForLoadState('domcontentloaded');
 
         // Check that page loads without errors on this viewport
@@ -183,10 +183,11 @@ test.describe('Report Page', () => {
   // Mobile-specific device tests
   test.describe('Mobile Device Compatibility', () => {
     test('should work on Pixel 5', async ({ page }) => {
-      test.use({ ...devices['Pixel 5'] });
+      // Set Pixel 5 viewport size
+      await page.setViewportSize({ width: 393, height: 851 });
 
       const testReportId = 'TEST123';
-      await page.goto(`/#/report/${testReportId}`);
+      await page.goto(`/report/${testReportId}`);
       await page.waitForLoadState('domcontentloaded');
 
       await expect(page.locator('body')).toBeVisible();
@@ -198,10 +199,11 @@ test.describe('Report Page', () => {
     });
 
     test('should work on iPhone 12', async ({ page }) => {
-      test.use({ ...devices['iPhone 12'] });
+      // Set iPhone 12 viewport size
+      await page.setViewportSize({ width: 390, height: 844 });
 
       const testReportId = 'TEST123';
-      await page.goto(`/#/report/${testReportId}`);
+      await page.goto(`/report/${testReportId}`);
       await page.waitForLoadState('domcontentloaded');
 
       await expect(page.locator('body')).toBeVisible();

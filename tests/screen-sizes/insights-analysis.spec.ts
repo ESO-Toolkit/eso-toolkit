@@ -70,7 +70,7 @@ test.describe('ESO Log Insights Panel - Screen Size Validation', () => {
     console.log('📊 Testing insights players panel with preloaded data...');
     
     // Navigate to insights tab using preloaded data
-    const url = `/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}/insights`;
+    const url = `/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}/insights`;
     await navigateWithPreloadedData(page, url, { verifyInstantLoad: true });
 
     // Wait for content to be fully loaded using improved detection

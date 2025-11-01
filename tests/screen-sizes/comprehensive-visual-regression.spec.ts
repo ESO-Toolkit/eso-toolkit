@@ -28,7 +28,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     
     // Navigate directly to the players panel
     console.log('📍 Navigating to players panel...');
-    await page.goto('/#/report/nbKdDtT4NcZyVrvX/fight/117');
+    await page.goto('/report/nbKdDtT4NcZyVrvX/fight/117');
     
     // Create skeleton detector
     const skeletonDetector = createSkeletonDetector(page);
@@ -70,7 +70,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     
     // Navigate directly to the players panel
     console.log('📍 Navigating to players panel...');
-    await page.goto('/#/report/nbKdDtT4NcZyVrvX/fight/117');
+    await page.goto('/report/nbKdDtT4NcZyVrvX/fight/117');
     
     // Create skeleton detector
     const skeletonDetector = createSkeletonDetector(page);
@@ -112,7 +112,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     
     // Navigate directly to the players panel
     console.log('📍 Navigating to players panel...');
-    await page.goto('/#/report/nbKdDtT4NcZyVrvX/fight/117');
+    await page.goto('/report/nbKdDtT4NcZyVrvX/fight/117');
     
     // Create skeleton detector
     const skeletonDetector = createSkeletonDetector(page);
@@ -154,7 +154,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     
     // Navigate directly to the insights panel
     console.log('📍 Navigating to insights panel...');
-    await page.goto('/#/report/nbKdDtT4NcZyVrvX/fight/117/insights');
+    await page.goto('/report/nbKdDtT4NcZyVrvX/fight/117/insights');
     
     // Create skeleton detector
     const skeletonDetector = createSkeletonDetector(page);
@@ -193,7 +193,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     
     // Navigate directly to the login page WITHOUT enableApiCaching
     console.log('📍 Navigating to login page...');
-    await page.goto('/#/login');
+    await page.goto('/login');
     
     // Wait for login page to load
     console.log('⏳ Waiting for login page to load...');
@@ -261,7 +261,7 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     
     // Navigate to the calculator page WITHOUT enableApiCaching (public, no auth required)
     console.log('📍 Navigating to calculator page...');
-    await page.goto('/#/calculator');
+    await page.goto('/calculator');
     
     // Wait for the calculator to load - look for Container or main calculator elements
     console.log('⏳ Waiting for calculator content to load...');

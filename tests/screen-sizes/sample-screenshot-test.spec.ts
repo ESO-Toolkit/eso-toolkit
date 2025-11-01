@@ -15,7 +15,7 @@ test.describe('Sample Screenshot Test', () => {
     await setupAuthentication(page);
 
     // Navigate directly to the page
-    await page.goto(`/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`, {
+    await page.goto(`/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`, {
       waitUntil: 'networkidle',
       timeout: 60000
     });

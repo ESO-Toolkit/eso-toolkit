@@ -9,7 +9,7 @@ test.describe('Authentication Flow', () => {
 
   test('should handle OAuth redirect without external calls', async ({ page }) => {
     // Navigate to the OAuth redirect page with mock parameters
-    await page.goto('/#/oauth-redirect?code=mock_auth_code&state=mock_state');
+    await page.goto('/oauth-redirect?code=mock_auth_code&state=mock_state');
 
     // Wait for the page to load
     await page.waitForLoadState('domcontentloaded');
@@ -42,7 +42,7 @@ test.describe('Authentication Flow', () => {
   test('should handle OAuth errors gracefully', async ({ page }) => {
     // Navigate to OAuth redirect with error parameter
     await page.goto(
-      '/#/oauth-redirect?error=access_denied&error_description=User%20denied%20access',
+      '/oauth-redirect?error=access_denied&error_description=User%20denied%20access',
     );
 
     // Wait for the page to load
@@ -93,14 +93,14 @@ test.describe('Authentication Flow', () => {
 
   test('should handle authenticated state properly', async ({ page }) => {
     // First simulate authentication by going through OAuth flow
-    await page.goto('/#/oauth-redirect?code=mock_auth_code&state=mock_state');
+    await page.goto('/oauth-redirect?code=mock_auth_code&state=mock_state');
     await page.waitForLoadState('domcontentloaded');
 
     // Give time for authentication to process
     await page.waitForTimeout(500);
 
     // Now navigate to a protected area
-    await page.goto('/#/report/TEST123');
+    await page.goto('/report/TEST123');
     await page.waitForLoadState('domcontentloaded');
 
     // Check that the page loads

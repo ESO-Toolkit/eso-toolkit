@@ -15,7 +15,7 @@ test.describe('ESO Log Aggregator - Simplified Screen Size Tests', () => {
     await setupAuthentication(page);
 
     // Navigate directly to the page
-    await page.goto(`/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`, {
+    await page.goto(`/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`, {
       waitUntil: 'networkidle',
       timeout: 60000
     });
@@ -48,7 +48,7 @@ test.describe('ESO Log Aggregator - Simplified Screen Size Tests', () => {
     await setupAuthentication(page);
 
     // Navigate directly to the insights page
-    await page.goto(`/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}/insights`, {
+    await page.goto(`/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}/insights`, {
       waitUntil: 'networkidle',
       timeout: 60000
     });

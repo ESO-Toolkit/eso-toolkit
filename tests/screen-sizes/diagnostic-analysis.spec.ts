@@ -9,7 +9,7 @@ test.describe('Diagnostic Test - Content Detection Analysis', () => {
     await setupAuthentication(page);
     
     console.log('📍 Navigating to players panel...');
-    await page.goto('/#/report/nbKdDtT4NcZyVrvX/fight/117', {
+    await page.goto('/report/nbKdDtT4NcZyVrvX/fight/117', {
       waitUntil: 'networkidle',
       timeout: 30000
     });

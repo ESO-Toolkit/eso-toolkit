@@ -586,8 +586,7 @@ export const HeaderBar: React.FC = () => {
   };
 
   const handleSampleReport = React.useCallback((): void => {
-    // Navigate to landing page where sample report button is available
-    navigate('/');
+    navigate('/sample-report');
     setReportsAnchorEl(null);
     setMobileOpen(false);
     setMobileReportsOpen(false);

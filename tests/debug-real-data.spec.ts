@@ -125,7 +125,7 @@ test.describe('Debug - Real Data from ESO Logs', () => {
 
   test(`loads ${REPORT_CODE} fight ${FIGHT_ID} and debugs ${PLAYER_NAME}`, async ({ page }) => {
     // Navigate to our local app with the specified fight
-    const url = `${APP_URL}/#/report/${REPORT_CODE}/fight/${FIGHT_ID}/players?experimental=true`;
+    const url = `${APP_URL}/report/${REPORT_CODE}/fight/${FIGHT_ID}/players?experimental=true`;
     console.log(`\n${'='.repeat(80)}`);
     console.log(`Navigating to: ${url}`);
     console.log(`Testing our app with REAL API data (no mocking)`);

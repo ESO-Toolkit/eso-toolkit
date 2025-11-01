@@ -315,7 +315,7 @@ test.describe('Visual Regression - Core Panels', () => {
     console.log('📸 Testing players panel visual regression with preloaded data...');
     
     // Navigate to players panel using preloaded data
-    const url = `/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`;
+    const url = `/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`;
     await navigateWithPreloadedData(page, url, { verifyInstantLoad: true });
 
     // Wait for content to be fully loaded using improved detection
@@ -388,7 +388,7 @@ test.describe('Visual Regression - Core Panels', () => {
     console.log('📊 Testing insights panel visual regression with preloaded data...');
     
     // Navigate to insights panel using preloaded data
-    const url = `/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}/insights`;
+    const url = `/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}/insights`;
     await navigateWithPreloadedData(page, url, { verifyInstantLoad: true });
 
     // Wait for content to be fully loaded using improved detection

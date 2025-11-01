@@ -97,6 +97,9 @@ const CalculationKnowledgeBasePage = React.lazy(() =>
 const WhoAmIPage = React.lazy(() =>
   import('./pages/WhoAmIPage').then((module) => ({ default: module.WhoAmIPage })),
 );
+const SampleReportPage = React.lazy(() =>
+  import('./pages/SampleReportPage').then((module) => ({ default: module.SampleReportPage })),
+);
 
 // Lazy load the feedback FAB to improve initial page load performance
 const LazyModernFeedbackFab = React.lazy(() =>
@@ -327,6 +330,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <LeaderboardLogsPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/sample-report"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <SampleReportPage />
                   </Suspense>
                 </ErrorBoundary>
               }
