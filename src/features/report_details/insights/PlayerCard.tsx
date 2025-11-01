@@ -358,6 +358,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         sensitivity: 'base',
       }) !== 0;
 
+  
     return (
       <Box sx={{ minWidth: 0, display: 'flex', height: '100%' }}>
         <Card
@@ -388,47 +389,39 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     minWidth={0}
                     gap={1}
                   >
-                    {/* Player Name and Character */}
+                    {/* Player Name with Character Name Hover */}
                     <Box
                       sx={{
                         display: 'flex',
                         flexDirection: 'column',
                         flex: '1 1 auto',
                         minWidth: 0,
-                        gap: shouldShowCharacterName ? 0.25 : 0,
                       }}
                     >
                       <OneLineAutoFit minScale={0.8}>
-                        <Typography
-                          variant="subtitle1"
-                          sx={{
-                            fontFamily: 'space grotesk',
-                            fontSize: '1.15rem',
-                            fontWeight: 100,
-                            lineHeight: 1.2,
-                            whiteSpace: 'nowrap',
+                        <Tooltip
+                          title={shouldShowCharacterName ? trimmedCharacterName : ''}
+                          placement="top"
+                          arrow
+                          PopperProps={{
+                            style: { zIndex: 9999 }
                           }}
                         >
-                          {normalizedDisplayName || resolvedPlayerName}
-                        </Typography>
-                      </OneLineAutoFit>
-                      {shouldShowCharacterName && (
-                        <OneLineAutoFit minScale={0.9}>
                           <Typography
-                            variant="subtitle2"
-                            color="text.secondary"
+                            variant="subtitle1"
                             sx={{
                               fontFamily: 'space grotesk',
-                              fontSize: '0.85rem',
-                              fontWeight: 400,
-                              lineHeight: 1.1,
+                              fontSize: '1.15rem',
+                              fontWeight: 100,
+                              lineHeight: 1.2,
                               whiteSpace: 'nowrap',
+                              cursor: 'help', // Add cursor to indicate hoverable
                             }}
                           >
-                            {trimmedCharacterName}
+                            {normalizedDisplayName || resolvedPlayerName}
                           </Typography>
-                        </OneLineAutoFit>
-                      )}
+                        </Tooltip>
+                      </OneLineAutoFit>
                     </Box>
 
                     {/* Gear Weights */}
