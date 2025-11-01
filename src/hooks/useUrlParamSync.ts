@@ -30,15 +30,8 @@ export interface UrlParams {
 function parseUrlParams(location: { search: string; hash: string }): Partial<UrlParams> {
   const params: Partial<UrlParams> = {};
 
-  // Parse search params from hash (since we're using hash routing)
-  const hash = location.hash;
-  let searchString = '';
-
-  if (hash.includes('?')) {
-    searchString = hash.split('?')[1];
-  }
-
-  const searchParams = new URLSearchParams(searchString);
+  // Parse search params from URL search (browser routing)
+  const searchParams = new URLSearchParams(location.search);
 
   // Parse selectedTargetIds (comma-separated string)
   const targetIds = searchParams.get('selectedTargetIds');
@@ -115,11 +108,8 @@ function updateUrl(
   currentLocation: { pathname: string; search: string; hash: string },
   newParams: Partial<UrlParams>,
 ): string {
-  // Extract current search params
-  const hash = currentLocation.hash;
-  const pathOnly = hash.includes('?') ? hash.split('?')[0] : hash;
-  const currentSearchString = hash.includes('?') ? hash.split('?')[1] : '';
-  const currentSearchParams = new URLSearchParams(currentSearchString);
+  // Extract current search params from location.search (browser routing)
+  const currentSearchParams = new URLSearchParams(currentLocation.search);
 
   // Update our tracked params
   if (newParams.selectedTargetIds !== undefined) {
@@ -150,11 +140,13 @@ function updateUrl(
     currentSearchParams.set('showExperimentalTabs', newParams.showExperimentalTabs.toString());
   }
 
-  // Build new URL
+  // Build new URL with search params
   const searchString = currentSearchParams.toString();
-  const newHash = searchString ? `${pathOnly}?${searchString}` : pathOnly;
+  const newUrl = searchString
+    ? `${currentLocation.pathname}?${searchString}`
+    : currentLocation.pathname;
 
-  return newHash;
+  return newUrl;
 }
 
 /**

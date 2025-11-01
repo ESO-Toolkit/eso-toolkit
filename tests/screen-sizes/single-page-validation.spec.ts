@@ -13,7 +13,7 @@ test.describe('Single Screen Size Test - Optimized for CI', () => {
     const startTime = Date.now();
     
     // Navigate directly without preloading complexity
-    await page.goto('/#/report/nbKdDtT4NcZyVrvX/fight/117', {
+    await page.goto('/report/nbKdDtT4NcZyVrvX/fight/117', {
       waitUntil: 'networkidle',
       timeout: 30000
     });

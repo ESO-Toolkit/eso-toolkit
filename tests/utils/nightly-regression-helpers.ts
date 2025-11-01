@@ -77,7 +77,7 @@ export async function getFirstFightId(
   reportId: string, 
   timeouts: TestTimeouts = DEFAULT_TIMEOUTS
 ): Promise<string> {
-  await page.goto(`/#/report/${reportId}`, {
+  await page.goto(`/report/${reportId}`, {
     waitUntil: 'domcontentloaded',
     timeout: timeouts.navigation,
   });
@@ -107,7 +107,7 @@ export async function navigateToFightTab(
   tabId: string,
   timeouts: TestTimeouts = DEFAULT_TIMEOUTS
 ): Promise<void> {
-  await page.goto(`/#/report/${reportId}/fight/${fightId}/${tabId}`, {
+  await page.goto(`/report/${reportId}/fight/${fightId}/${tabId}`, {
     waitUntil: 'domcontentloaded',
     timeout: timeouts.navigation,
   });

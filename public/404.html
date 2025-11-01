@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ESO Log Insights by NotaGuild</title>
+    <script>
+      // GitHub Pages SPA redirect solution
+      // This script takes the current request URL and converts it to a redirect to index.html
+      // The redirect is stored in sessionStorage to be read by the app on load
+      
+      // Get the path after the domain
+      const pathSegmentsToKeep = 0;
+      const path = window.location.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/');
+      const query = window.location.search;
+      const hash = window.location.hash;
+      
+      // Store the intended path in sessionStorage so the app can navigate to it
+      sessionStorage.setItem('redirectPath', '/' + path + query + hash);
+      
+      // Redirect to the base URL
+      window.location.replace(
+        window.location.origin + window.location.pathname.split('/').slice(0, pathSegmentsToKeep + 1).join('/') + '/?redirect=' + encodeURIComponent('/' + path + query + hash)
+      );
+    </script>
+  </head>
+  <body>
+    <!-- This page is only shown briefly while redirecting -->
+  </body>
+</html>

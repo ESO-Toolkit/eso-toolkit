@@ -401,7 +401,7 @@ async function performBrowserLogin(
   try {
     // Navigate to the app
     const baseUrl = getBaseUrl();
-    await page.goto(`${baseUrl}/#/login`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(`${baseUrl}/login`, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
     // If we have an existing token from client credentials, inject it
     if (existingToken) {

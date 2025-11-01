@@ -5,8 +5,8 @@ import { DynamicMetaTags, generateReportMetaTags, generatePlayerMetaTags } from 
 // Mock window.location for generateReportMetaTags and generatePlayerMetaTags
 const mockLocation = {
   origin: 'https://bkrupa.github.io',
-  pathname: '/eso-log-aggregator/',
-  hash: '#/report/ABC123/fight/1',
+  pathname: '/eso-log-aggregator/report/ABC123/fight/1',
+  hash: '',
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

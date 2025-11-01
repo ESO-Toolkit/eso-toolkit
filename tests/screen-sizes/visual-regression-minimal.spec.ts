@@ -160,7 +160,7 @@ async function waitForPanelLoadingComplete(page: any, panelName: string = 'panel
  * Navigate to report page - simplified
  */
 async function navigateToReport(page: any, path: string = '') {
-  const url = `http://localhost:3000/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}${path}`;
+  const url = `http://localhost:3000/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}${path}`;
   // Use config timeout and domcontentloaded since we have comprehensive preprocessing
   await page.goto(url, { waitUntil: 'domcontentloaded' });
 }
@@ -315,7 +315,7 @@ test.describe('Visual Regression - Core Panels', () => {
     console.log('📸 Testing players panel visual regression with preloaded data...');
     
     // Navigate to players panel using preloaded data
-    const url = `/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`;
+    const url = `/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`;
     await navigateWithPreloadedData(page, url, { verifyInstantLoad: true });
 
     // Wait for content to be fully loaded using improved detection
@@ -388,7 +388,7 @@ test.describe('Visual Regression - Core Panels', () => {
     console.log('📊 Testing insights panel visual regression with preloaded data...');
     
     // Navigate to insights panel using preloaded data
-    const url = `/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}/insights`;
+    const url = `/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}/insights`;
     await navigateWithPreloadedData(page, url, { verifyInstantLoad: true });
 
     // Wait for content to be fully loaded using improved detection

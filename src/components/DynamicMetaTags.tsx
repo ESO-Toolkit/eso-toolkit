@@ -115,7 +115,7 @@ export const generateReportMetaTags = (
   return {
     title,
     description,
-    url: `${window.location.origin}${window.location.pathname}#${window.location.hash}`,
+    url: `${window.location.origin}${window.location.pathname}${window.location.search}`,
     type: 'article' as const,
   };
 };
@@ -145,7 +145,7 @@ export const generatePlayerMetaTags = (
   return {
     title,
     description,
-    url: `${window.location.origin}${window.location.pathname}#${window.location.hash}`,
+    url: `${window.location.origin}${window.location.pathname}${window.location.search}`,
     type: 'article' as const,
   };
 };

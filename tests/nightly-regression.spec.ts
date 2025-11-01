@@ -56,7 +56,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
     REAL_REPORT_IDS.forEach((reportId) => {
       test(`should load report ${reportId} landing page`, async ({ page }, testInfo) => {
         // Navigate to report
-        await page.goto(`#/report/${reportId}`, {
+        await page.goto(`/report/${reportId}`, {
           waitUntil: 'domcontentloaded',
           timeout: TEST_TIMEOUTS.navigation,
         });
@@ -148,7 +148,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
     REAL_REPORT_IDS.forEach((reportId) => {
       test(`should load fight details for report ${reportId}`, async ({ page }) => {
         // Navigate to report first to get fight list
-        await page.goto(`#/report/${reportId}`, {
+        await page.goto(`/report/${reportId}`, {
           waitUntil: 'domcontentloaded',
           timeout: TEST_TIMEOUTS.navigation,
         });
@@ -260,7 +260,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
             console.log('Using direct navigation with fallback fight ID...');
           }
 
-          const directNavigationUrl = `#/report/${reportId}/fight/${fightId}/insights`;
+          const directNavigationUrl = `/report/${reportId}/fight/${fightId}/insights`;
 
           console.log('Navigating directly to:', directNavigationUrl);
           await page.goto(`${getBaseUrl()}${directNavigationUrl}`, {
@@ -272,7 +272,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
         // Wait for React Router navigation - check for hash change
         await page.waitForFunction(
           () => {
-            return window.location.hash.includes('/fight/');
+            return window.location.pathname.includes('/fight/');
           },
           { timeout: TEST_TIMEOUTS.navigation },
         );
@@ -294,7 +294,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
           console.log(`\nTesting tab: ${tabId}`);
 
           try {
-            await page.goto(`#/report/${reportId}/fight/${fightId}/${tabId}`, {
+            await page.goto(`/report/${reportId}/fight/${fightId}/${tabId}`, {
               waitUntil: 'domcontentloaded',
               timeout: TEST_TIMEOUTS.navigation,
             });
@@ -381,7 +381,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       const reportId = REAL_REPORT_IDS[1]; // qdxpGgyQ92A31LBr - confirmed to have fights
 
       // Navigate to report and get first fight
-      await page.goto(`#/report/${reportId}`, {
+      await page.goto(`/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -427,14 +427,14 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       // If we don't have a fight ID yet, navigate directly using known fight ID
       if (!foundVisibleButton || !page.url().includes('/fight/')) {
         console.log(`ℹ️ Using direct navigation to fight ${fightId}`);
-        await page.goto(`#/report/${reportId}/fight/${fightId}`, {
+        await page.goto(`/report/${reportId}/fight/${fightId}`, {
           waitUntil: 'domcontentloaded',
           timeout: TEST_TIMEOUTS.navigation,
         });
       }
 
       // Navigate to insights tab first to enable experimental tabs
-      await page.goto(`#/report/${reportId}/fight/${fightId}/insights`, {
+      await page.goto(`/report/${reportId}/fight/${fightId}/insights`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -454,7 +454,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
         test.step(`Testing experimental ${tabId} tab`, async () => {
           console.log(`\nTesting experimental tab: ${tabId}`);
 
-          await page.goto(`#/report/${reportId}/fight/${fightId}/${tabId}`, {
+          await page.goto(`/report/${reportId}/fight/${fightId}/${tabId}`, {
             waitUntil: 'domcontentloaded',
             timeout: TEST_TIMEOUTS.navigation,
           });
@@ -497,7 +497,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       const reportId = REAL_REPORT_IDS[0];
 
       // Navigate to players tab - use direct navigation to avoid fight button issues
-      await page.goto(`#/report/${reportId}`, {
+      await page.goto(`/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -525,7 +525,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       }
 
       // Navigate directly to players tab
-      await page.goto(`#/report/${reportId}/fight/${fightId}/players`, {
+      await page.goto(`/report/${reportId}/fight/${fightId}/players`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -578,7 +578,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       const fightId = '1'; // Use direct fight ID to avoid navigation issues
 
       // Navigate directly to damage tab which should have target selector
-      await page.goto(`#/report/${reportId}/fight/${fightId}/damage-done`, {
+      await page.goto(`/report/${reportId}/fight/${fightId}/damage-done`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -616,7 +616,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
         console.log('Screenshot failed but continuing test:', (screenshotError as Error).message);
       }
 
-      await page.goto(`#/report/${reportId}/fight/${fightId}/damage-done`, {
+      await page.goto(`/report/${reportId}/fight/${fightId}/damage-done`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -637,7 +637,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       for (const tab of tabsToTest) {
         console.log(`Testing navigation to ${tab} tab...`);
 
-        await page.goto(`#/report/${reportId}/fight/${navigationFightId}/${tab}`, {
+        await page.goto(`/report/${reportId}/fight/${navigationFightId}/${tab}`, {
           waitUntil: 'domcontentloaded',
           timeout: TEST_TIMEOUTS.navigation,
         });
@@ -694,7 +694,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       // Track performance metrics
       const startTime = Date.now();
 
-      await page.goto(`#/report/${reportId}`, {
+      await page.goto(`/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -722,7 +722,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
 
       // Navigate to insights tab and measure load time
       const insightsStartTime = Date.now();
-      await page.goto(`#/report/${reportId}/fight/${performanceFightId}/insights`, {
+      await page.goto(`/report/${reportId}/fight/${performanceFightId}/insights`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -751,7 +751,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       const quickTestTabs = ['damage-done', 'players'];
       for (const tab of quickTestTabs) {
         try {
-          await page.goto(`#/report/${reportId}/fight/${performanceFightId}/${tab}`, {
+          await page.goto(`/report/${reportId}/fight/${performanceFightId}/${tab}`, {
             waitUntil: 'domcontentloaded',
             timeout: 15000, // Shorter timeout for performance test
           });
@@ -776,7 +776,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       const reportId = REAL_REPORT_IDS[0];
 
       // Landing page
-      await page.goto(`#/report/${reportId}`, {
+      await page.goto(`/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -823,7 +823,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
 
       for (const tab of tabsToCheck) {
         try {
-          await page.goto(`#/report/${reportId}/fight/${consistencyFightId}/${tab}`, {
+          await page.goto(`/report/${reportId}/fight/${consistencyFightId}/${tab}`, {
             waitUntil: 'domcontentloaded',
             timeout: 15000,
           });
@@ -851,3 +851,5 @@ test.describe('Nightly Regression Tests - Real Data', () => {
     });
   });
 });
+
+

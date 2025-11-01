@@ -68,7 +68,7 @@ test.describe('ESO Log Aggregator - Core Panels Screen Size Validation', () => {
     console.log('📸 Testing players panel with preloaded data...');
     
     // Navigate using preloaded data (should be instant with cache)
-    const url = `/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`;
+    const url = `/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`;
     await navigateWithPreloadedData(page, url, { verifyInstantLoad: true });
 
     // Wait for content to be fully loaded using improved detection
@@ -88,7 +88,7 @@ test.describe('ESO Log Aggregator - Core Panels Screen Size Validation', () => {
     console.log('📊 Testing insights panel with preloaded data...');
     
     // Navigate to insights tab using preloaded data
-    const url = `/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}/insights`;
+    const url = `/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}/insights`;
     await navigateWithPreloadedData(page, url, { verifyInstantLoad: true });
 
     // Wait for content to be fully loaded using improved detection
