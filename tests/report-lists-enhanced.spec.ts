@@ -26,13 +26,35 @@ test.describe('Enhanced Report Lists Tests', () => {
   });
 
   test.describe('Latest Reports Page', () => {
-    // Helper to set up authentication before accessing latest-reports
-    async function setupAuth(page: Page) {
-      // Mock currentUser query BEFORE navigation
-      await page.route('**/graphql', (route) => {
+    /**
+     * Helper to set up proper authentication for /latest-reports
+     * This mocks both the token AND the currentUser query to make isLoggedIn = true
+     * 
+     * @param reportMockData - Optional mock data for getLatestReports query
+     */
+    async function setupAuth(page: Page, reportMockData?: any) {
+      // Navigate to home page first to initialize localStorage context
+      await page.goto('/');
+      await page.waitForLoadState('domcontentloaded');
+
+      // Set localStorage token with valid structure
+      await page.evaluate(() => {
+        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+        const payload = btoa(JSON.stringify({
+          sub: '999', // User ID as subject
+          exp: Math.floor(Date.now() / 1000) + 3600, // Expires in 1 hour
+          iat: Math.floor(Date.now() / 1000),
+        }));
+        const token = `${header}.${payload}.mock_signature`;
+        localStorage.setItem('access_token', token);
+      });
+
+      // Mock GraphQL queries
+      await page.route('**/api/v2/**', async (route) => {
         const postData = route.request().postDataJSON();
+        
         if (postData?.query?.includes('currentUser')) {
-          route.fulfill({
+          await route.fulfill({
             status: 200,
             contentType: 'application/json',
             body: JSON.stringify({
@@ -41,29 +63,35 @@ test.describe('Enhanced Report Lists Tests', () => {
                   currentUser: {
                     id: 999,
                     name: 'TestUser',
+                    naDisplayName: 'TestUser-NA',
+                    euDisplayName: null,
                   },
                 },
               },
             }),
           });
+        } else if (postData?.query?.includes('getLatestReports') || postData?.query?.includes('latestReports')) {
+          // Always mock getLatestReports, use provided data or empty array
+          const mockData = reportMockData || { data: [], current_page: 1, per_page: 25, last_page: 1, has_more_pages: false, total: 0 };
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              data: {
+                reportData: {
+                  reports: mockData,
+                },
+              },
+            }),
+          });
         } else {
-          route.continue();
+          await route.continue();
         }
       });
 
-      // Navigate to home page first to initialize localStorage context
-      await page.goto('/');
-
-      // Now set localStorage token
-      await page.evaluate(() => {
-        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-        const payload = btoa(JSON.stringify({
-          sub: 'test_user',
-          exp: Math.floor(Date.now() / 1000) + 3600,
-        }));
-        const token = `${header}.${payload}.mock_signature`;
-        localStorage.setItem('access_token', token);
-      });
+      // Trigger a page reload to pick up the auth state
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(500); // Give AuthContext time to process
     }
 
     test.describe('Pagination', () => {
@@ -876,6 +904,168 @@ test.describe('Enhanced Report Lists Tests', () => {
         // Desktop may show table or card layout
         const bodyContent = await page.locator('body').textContent();
         expect(bodyContent).toBeTruthy();
+      });
+    });
+
+    // ===================================================================
+    // STRICT DATA VALIDATION TESTS
+    // These tests verify that mocked data actually appears correctly
+    // They complement the defensive tests above
+    // ===================================================================
+    test.describe('Strict Data Validation', () => {
+      test('should display specific mocked report data', async ({ page }) => {
+        const mockReportData = {
+          data: [
+            {
+              __typename: 'Report',
+              code: 'STRICT123',
+              startTime: 1730419200000, // Nov 1, 2024
+              endTime: 1730422800000,
+              title: 'Sunspire Hard Mode Clear',
+              visibility: 'public',
+              zone: { __typename: 'Zone', name: 'Sunspire' },
+              owner: { __typename: 'User', name: 'RaidLeader' },
+            },
+            {
+              __typename: 'Report',
+              code: 'STRICT456',
+              startTime: 1730415600000,
+              endTime: 1730419200000,
+              title: 'Rockgrove Practice Run',
+              visibility: 'private',
+              zone: { __typename: 'Zone', name: 'Rockgrove' },
+              owner: { __typename: 'User', name: 'TestUser' },
+            },
+          ],
+          current_page: 1,
+          per_page: 25,
+          last_page: 1,
+          has_more_pages: false,
+          total: 2,
+        };
+
+        await setupAuth(page, mockReportData);
+
+        await page.goto('/latest-reports');
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(2000); // Give time for data to render
+
+        // Strict checks: Verify specific report titles appear
+        const report1 = page.locator('text="Sunspire Hard Mode Clear"');
+        await expect(report1).toBeVisible({ timeout: 10000 });
+
+        const report2 = page.locator('text="Rockgrove Practice Run"');
+        await expect(report2).toBeVisible({ timeout: 10000 });
+
+        // Verify zone names appear
+        await expect(page.locator('text="Sunspire"').first()).toBeVisible();
+        await expect(page.locator('text="Rockgrove"').first()).toBeVisible();
+
+        // Note: Owner names might not be visible in all layouts (card vs table view)
+      });
+
+      test('should display correct pagination controls with mocked multi-page data', async ({ page }) => {
+        const mockReportData = {
+          data: Array.from({ length: 25 }, (_, i) => ({
+            __typename: 'Report',
+            code: `MOCK${i + 1}`,
+            startTime: Date.now() - i * 3600000,
+            endTime: Date.now() - i * 3600000 + 1800000,
+            title: `Test Report ${i + 1}`,
+            visibility: i % 2 === 0 ? 'public' : 'private',
+            zone: { __typename: 'Zone', name: i % 3 === 0 ? 'Sunspire' : 'Rockgrove' },
+            owner: { __typename: 'User', name: `Player${i + 1}` },
+          })),
+          current_page: 1,
+          per_page: 25,
+          last_page: 5,
+          has_more_pages: true,
+          total: 125,
+        };
+
+        await setupAuth(page, mockReportData);
+
+        await page.goto('/latest-reports');
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(2000);
+
+        // Strict check: Pagination should be visible
+        const pagination = page.locator('.MuiPagination-root');
+        await expect(pagination).toBeVisible({ timeout: 10000 });
+
+        // Strict check: Should show multiple page buttons (at least 3-5 pages visible)
+        const pageButtons = page.locator('.MuiPaginationItem-root');
+        const count = await pageButtons.count();
+        expect(count).toBeGreaterThan(3); // Should have prev, 1, 2, 3, next at minimum
+
+        // Strict check: First report title should be visible
+        await expect(page.locator('text="Test Report 1"')).toBeVisible({ timeout: 10000 });
+      });
+
+      test('should display visibility badges correctly', async ({ page }) => {
+        const mockReportData = {
+          data: [
+            {
+              __typename: 'Report',
+              code: 'PUBLIC1',
+              startTime: Date.now(),
+              endTime: Date.now() + 3600000,
+              title: 'Public Test Report',
+              visibility: 'public',
+              zone: { __typename: 'Zone', name: 'Sunspire' },
+              owner: { __typename: 'User', name: 'User1' },
+            },
+            {
+              __typename: 'Report',
+              code: 'PRIVATE1',
+              startTime: Date.now(),
+              endTime: Date.now() + 3600000,
+              title: 'Private Test Report',
+              visibility: 'private',
+              zone: { __typename: 'Zone', name: 'Rockgrove' },
+              owner: { __typename: 'User', name: 'User2' },
+            },
+          ],
+          current_page: 1,
+          per_page: 25,
+          last_page: 1,
+          has_more_pages: false,
+          total: 2,
+        };
+
+        await setupAuth(page, mockReportData);
+
+        await page.goto('/latest-reports');
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(2000);
+
+        // Strict check: Both visibility badges should appear
+        const publicBadge = page.locator('text="public"').first();
+        await expect(publicBadge).toBeVisible({ timeout: 10000 });
+
+        const privateBadge = page.locator('text="private"').first();
+        await expect(privateBadge).toBeVisible({ timeout: 10000 });
+      });
+
+      test('should show empty state message when no reports exist', async ({ page }) => {
+        const mockReportData = {
+          data: [],
+          current_page: 1,
+          per_page: 25,
+          last_page: 1,
+          has_more_pages: false,
+          total: 0,
+        };
+
+        await setupAuth(page, mockReportData);
+
+        await page.goto('/latest-reports');
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(2000);
+
+        // Strict check: Empty state message should be visible
+        const emptyMessage = page.locator('text="No reports found."');
+        await expect(emptyMessage).toBeVisible({ timeout: 10000 });
       });
     });
   });
