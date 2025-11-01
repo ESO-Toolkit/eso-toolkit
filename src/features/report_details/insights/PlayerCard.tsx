@@ -404,7 +404,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           placement="top"
                           arrow
                           PopperProps={{
-                            style: { zIndex: 9999 }
+                            style: { zIndex: 9999 },
                           }}
                         >
                           <Typography
