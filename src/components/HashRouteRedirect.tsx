@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { safeSessionStorageGet, safeSessionStorageRemove } from '@/utils/safeStorage';
+
 /**
  * HashRouteRedirect component handles the migration from hash-based routing to browser routing.
  *
@@ -18,9 +20,9 @@ export const HashRouteRedirect: React.FC = () => {
 
   useEffect(() => {
     // Check if there's a redirect path from 404.html
-    const redirectPath = sessionStorage.getItem('redirectPath');
+    const redirectPath = safeSessionStorageGet('redirectPath');
     if (redirectPath) {
-      sessionStorage.removeItem('redirectPath');
+      safeSessionStorageRemove('redirectPath');
       navigate(redirectPath, { replace: true });
       return;
     }
