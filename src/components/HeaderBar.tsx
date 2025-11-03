@@ -634,6 +634,11 @@ export const HeaderBar: React.FC = () => {
       icon: '📚',
       path: '/docs/calculations',
     },
+    {
+      text: 'Roster Builder',
+      icon: '👥',
+      path: '/roster-builder',
+    },
   ];
 
   const reportsItems = [

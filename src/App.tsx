@@ -100,6 +100,9 @@ const WhoAmIPage = React.lazy(() =>
 const SampleReportPage = React.lazy(() =>
   import('./pages/SampleReportPage').then((module) => ({ default: module.SampleReportPage })),
 );
+const RosterBuilderPage = React.lazy(() =>
+  import('./pages/RosterBuilderPage').then((module) => ({ default: module.RosterBuilderPage })),
+);
 
 // Lazy load the feedback FAB to improve initial page load performance
 const LazyModernFeedbackFab = React.lazy(() =>
@@ -406,6 +409,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <CalculationKnowledgeBasePage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/roster-builder"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <RosterBuilderPage />
                   </Suspense>
                 </ErrorBoundary>
               }
