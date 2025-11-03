@@ -641,23 +641,39 @@ export const HeaderBar: React.FC = () => {
     },
   ];
 
-  const reportsItems = [
-    {
-      text: 'Sample Report',
-      icon: '🎲',
-      action: handleSampleReport,
-    },
-    {
-      text: 'Latest Report',
-      icon: '📊',
-      path: '/latest-reports',
-    },
-    {
-      text: 'Leaderboards',
-      icon: '🏆',
-      path: '/leaderboards',
-    },
-  ];
+  const reportsItems = React.useMemo(() => {
+    const items = [];
+
+    // Add "My Reports" if user is logged in
+    if (isLoggedIn) {
+      items.push({
+        text: 'My Reports',
+        icon: '📁',
+        path: '/my-reports',
+      });
+    }
+
+    // Always show these items
+    items.push(
+      {
+        text: 'Sample Report',
+        icon: '🎲',
+        action: handleSampleReport,
+      },
+      {
+        text: 'Latest Report',
+        icon: '📊',
+        path: '/latest-reports',
+      },
+      {
+        text: 'Leaderboards',
+        icon: '🏆',
+        path: '/leaderboards',
+      },
+    );
+
+    return items;
+  }, [isLoggedIn, handleSampleReport]);
 
   const accountItems = React.useMemo(() => {
     const items: Array<{
