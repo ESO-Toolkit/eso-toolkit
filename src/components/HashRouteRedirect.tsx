@@ -31,10 +31,14 @@ export const HashRouteRedirect: React.FC = () => {
     const params = new URLSearchParams(window.location.search);
     const redirectParam = params.get('redirect');
     if (redirectParam) {
+      // Normalize the redirect path to prevent protocol-relative URLs
+      // Remove leading slashes beyond the first one (e.g., //path -> /path)
+      const normalizedPath = redirectParam.replace(/^\/+/, '/');
+      
       // Clean up the URL parameter
       const cleanUrl = window.location.pathname;
       window.history.replaceState({}, '', cleanUrl);
-      navigate(redirectParam, { replace: true });
+      navigate(normalizedPath, { replace: true });
       return;
     }
 
