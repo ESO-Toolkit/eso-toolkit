@@ -159,6 +159,51 @@ describe('analytics', () => {
       );
     });
 
+    it('should normalize report paths and extract report code', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      trackPageView('/report/abc123/insights');
+
+      expect(ReactGA.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hitType: 'pageview',
+          page: '/report/[code]/insights',
+          report_code: 'abc123',
+          location: expect.stringContaining('/report/[code]/insights'),
+        }),
+      );
+    });
+
+    it('should normalize report and fight paths', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      trackPageView('/report/xyz789/fight/5/damage');
+
+      expect(ReactGA.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hitType: 'pageview',
+          page: '/report/[code]/fight/[fightId]/damage',
+          report_code: 'xyz789',
+          fight_id: '5',
+          location: expect.stringContaining('/report/[code]/fight/[fightId]/damage'),
+        }),
+      );
+    });
+
+    it('should handle report path without trailing segments', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      trackPageView('/report/test123');
+
+      expect(ReactGA.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hitType: 'pageview',
+          page: '/report/[code]',
+          report_code: 'test123',
+        }),
+      );
+    });
+
     it('should track page view with title when provided', () => {
       getEnvVarSpy.mockReturnValue(mockMeasurementId);
 

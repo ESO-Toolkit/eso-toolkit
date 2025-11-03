@@ -38,6 +38,11 @@ export default defineConfig({
     
     /* Screenshot on failure */
     screenshot: 'only-on-failure',
+    
+    /* Block analytics and tracking scripts in tests */
+    extraHTTPHeaders: {
+      'DNT': '1', // Do Not Track
+    },
   },
   
   /* Configure projects for major browsers */
