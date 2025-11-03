@@ -72,11 +72,11 @@ jobs:
             const fs = require('fs');
             
             // Configuration - Merge Queue Labels and Settings
-            const MERGE_QUEUE_LABEL = 'merge-queue';
+            const MERGE_QUEUE_LABEL = 'auto-merge'; // Changed from 'merge-queue' to 'auto-merge'
             const PRIORITY_LABELS = ['priority', 'hotfix', 'critical'];
             const BLOCK_LABELS = ['do not merge', 'do-not-merge', 'wip', 'work in progress', 'needs review'];
             const REQUIRED_REVIEWS = 0; // Note: This is in addition to any branch protection rules
-            const AUTO_MERGE_LABEL = 'auto-merge';
+            const AUTO_MERGE_LABEL = 'auto-merge'; // Same as MERGE_QUEUE_LABEL for backwards compatibility
             
             // Note: Merge method is determined by repository settings (respects branch protection rules)
             
@@ -408,34 +408,41 @@ jobs:
               const emoji = statusEmojis[status] || '📋';
               const body = `${emoji} **Merge Queue Status: ${status.toUpperCase()}**\n\n**Reason:** ${reason}\n\n---\n*Updated: ${new Date().toISOString()}*`;
               
-              // Look for existing merge queue status comments
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number
-              });
-              
-              const existingComment = comments.find(comment => 
-                comment.user.type === 'Bot' && 
-                comment.body.includes('**Merge Queue Status:')
-              );
-              
-              if (existingComment) {
-                // Update existing comment
-                await github.rest.issues.updateComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  comment_id: existingComment.id,
-                  body: body
-                });
-              } else {
-                // Create new comment
-                await github.rest.issues.createComment({
+              try {
+                // Look for existing merge queue status comments
+                const { data: comments } = await github.rest.issues.listComments({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: pr.number,
-                  body: body
+                  per_page: 100
                 });
+                
+                // Find existing comment from this bot/user that contains the merge queue status marker
+                const existingComment = comments.find(comment => 
+                  comment.body && comment.body.includes('**Merge Queue Status:')
+                );
+                
+                if (existingComment) {
+                  // Update existing comment
+                  await log(`Updating existing merge queue status comment (ID: ${existingComment.id})`);
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: existingComment.id,
+                    body: body
+                  });
+                } else {
+                  // Create new comment
+                  await log(`Creating new merge queue status comment`);
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: pr.number,
+                    body: body
+                  });
+                }
+              } catch (error) {
+                await log(`Warning: Failed to update PR status comment: ${error.message}`);
               }
             }
 
@@ -515,7 +522,7 @@ jobs:
           echo "The merge queue has been processed. Check the logs above for detailed information about each PR." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### How to use the merge queue:" >> $GITHUB_STEP_SUMMARY
-          echo "1. Add the \`merge-queue\` or \`auto-merge\` label to a PR" >> $GITHUB_STEP_SUMMARY
+          echo "1. Add the \`auto-merge\` label to a PR" >> $GITHUB_STEP_SUMMARY
           echo "2. Ensure all required checks pass" >> $GITHUB_STEP_SUMMARY
           echo "3. Get required approvals" >> $GITHUB_STEP_SUMMARY
           echo "4. The merge queue will automatically click the merge button when ready" >> $GITHUB_STEP_SUMMARY
@@ -525,4 +532,5 @@ jobs:
           echo "- ✅ Uses repository's default merge method" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Priority queue support with priority labels" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Automatic retry when conditions change" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Single comment per PR (updates existing status)" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Detailed status updates and error reporting" >> $GITHUB_STEP_SUMMARY

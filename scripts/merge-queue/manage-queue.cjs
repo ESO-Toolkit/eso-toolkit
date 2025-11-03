@@ -16,7 +16,7 @@ const path = require('path');
 
 // Configuration
 const CONFIG = {
-  MERGE_QUEUE_LABEL: 'merge-queue',
+  MERGE_QUEUE_LABEL: 'auto-merge', // Changed from 'merge-queue' to 'auto-merge'
   AUTO_MERGE_LABEL: 'auto-merge',
   PRIORITY_LABELS: ['priority', 'hotfix', 'critical'],
   BLOCK_LABELS: ['do not merge', 'do-not-merge', 'wip', 'work in progress', 'needs review'],

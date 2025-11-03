@@ -9,13 +9,13 @@
       "properties": {
         "mergeQueue": {
           "type": "string",
-          "default": "merge-queue",
-          "description": "Label to add PRs to the standard merge queue"
+          "default": "auto-merge",
+          "description": "Label to add PRs to the merge queue (changed from 'merge-queue' to 'auto-merge')"
         },
         "autoMerge": {
           "type": "string", 
           "default": "auto-merge",
-          "description": "Label for high-priority auto-merge"
+          "description": "Label for auto-merge (same as mergeQueue)"
         },
         "priority": {
           "type": "array",
