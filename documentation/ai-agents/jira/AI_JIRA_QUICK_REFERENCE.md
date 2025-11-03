@@ -18,17 +18,64 @@ acli jira workitem search --jql "project = ESO AND status = 'To Do'" --fields ke
 
 ### Start Work (Transition to In Progress)
 ```powershell
-acli jira workitem transition ESO-394 --to "In Progress"
+# ✅ CORRECT SYNTAX
+acli jira workitem transition --key ESO-394 --status "In Progress"
+
+# ❌ WRONG (--to flag doesn't exist)
+# acli jira workitem transition ESO-394 --to "In Progress"
 ```
 
 ### Complete Work (Transition to Done)
 ```powershell
-acli jira workitem transition ESO-394 --to "Done"
+acli jira workitem transition --key ESO-394 --status "Done"
 ```
 
 ### Add Comment
 ```powershell
-acli jira workitem comment add ESO-394 --body "✅ Completed with 15 tests passing"
+acli jira workitem comment create -k ESO-394 -b "✅ Completed with 15 tests passing"
+```
+
+---
+
+## 🔄 Complete Development Workflow
+
+```powershell
+# 1. View task details
+acli jira workitem view ESO-XXX
+
+# 2. Start work (update Jira status)
+acli jira workitem transition --key ESO-XXX --status "In Progress"
+
+# 3. Create feature branch
+git checkout -b bkrupa/ESO-XXX-brief-description
+
+# 4. Make code changes
+# ... implement feature ...
+
+# 5. Validate changes
+npm run lint        # Fix any linting errors
+npm run typecheck   # Ensure TypeScript is correct
+npm test           # Run tests
+
+# 6. Commit changes
+git add <files>
+git commit -m "feat(Component): description [ESO-XXX]
+
+- Change detail 1
+- Change detail 2"
+
+# 7. Push to remote
+git push -u origin bkrupa/ESO-XXX-brief-description
+
+# 8. Create Pull Request (using GitHub tools)
+# Include summary, testing notes, and Jira reference
+
+# 9. Update Jira with completion
+acli jira workitem transition --key ESO-XXX --status "Done"
+acli jira workitem comment create -k ESO-XXX -b "Implementation complete. PR: <url>"
+
+# 10. Verify clean state
+git status  # Should show "nothing to commit, working tree clean"
 ```
 
 ---
@@ -57,25 +104,62 @@ acli jira workitem search --jql "project = ESO AND status = 'In Progress'" --fie
 
 ---
 
-## 🔄 Standard Workflow
+## � Common Development Issues
 
+### Linting Errors
 ```powershell
-# 1. Find next task
-acli jira workitem search --jql "project = ESO AND status = 'To Do'" --fields key,summary --order-by created | Select-Object -First 1
+# Auto-fix many issues
+npm run lint:fix
 
-# 2. View details
-acli jira workitem view ESO-394
+# Common issue: Missing trailing commas
+# ESLint requires trailing commas in multi-line arrays/objects
+```
 
-# 3. Start work
-acli jira workitem transition ESO-394 --to "In Progress"
+### Twig Branch Management
+```powershell
+# View branch tree
+twig tree
 
-# 4. [Do the implementation work]
+# Fix orphaned branches
+twig branch depend <child-branch> <parent-branch>
 
-# 5. Add completion comment
-acli jira workitem comment add ESO-394 --body "✅ Implementation complete"
+# Cascade changes
+twig cascade
+```
 
-# 6. Mark done
-acli jira workitem transition ESO-394 --to "Done"
+---
+
+## 💡 Branch Naming Convention
+
+**Pattern**: `bkrupa/ESO-XXX-kebab-case-description`
+
+**Examples**:
+- `bkrupa/ESO-516-add-my-reports-link`
+- `bkrupa/ESO-372-integration-tests`
+- `bkrupa/ESO-394-test-infrastructure`
+
+---
+
+## 📝 Commit Message Format
+
+```
+<type>(<scope>): <brief description> [ESO-XXX]
+
+- Detailed change 1
+- Detailed change 2
+- Implementation notes
+```
+
+**Types**: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
+
+**Example**:
+```
+feat(HeaderBar): add My Reports link to reports menu [ESO-516]
+
+- Added conditional 'My Reports' menu item to reports submenu
+- Item appears first in the menu when user is logged in
+- Navigates to /my-reports route
+- Converted reportsItems to React.useMemo for dynamic rendering
 ```
 
 ---
@@ -97,6 +181,7 @@ acli jira workitem transition ESO-394 --to "Done"
   - ESO-397: Test Camera Following Flow
   - ESO-398: Test Map Timeline Flow
 
+
 **To Do (📋):**
 - ESO-373: Performance Monitoring (8 SP)
 - ESO-374: Extract PlaybackControls (5 SP)
@@ -108,10 +193,14 @@ acli jira workitem transition ESO-394 --to "Done"
 ## 💡 Quick Tips
 
 - **Always query first**: `acli jira workitem view ESO-XXX`
+- **Use correct transition syntax**: `--key` and `--status` (not `--to`)
 - **Use transitions**: Don't forget to move items to "In Progress" and "Done"
 - **Add detailed comments**: Help future agents understand your work
 - **Check dependencies**: View parent/related items before starting
 - **Use JQL filters**: More efficient than viewing items one by one
+- **Follow branch naming**: `bkrupa/ESO-XXX-description`
+- **Run validation**: `npm run lint`, `npm run typecheck`, `npm test`
+- **Fix trailing commas**: ESLint requires them in multi-line constructs
 
 ---
 
@@ -124,6 +213,13 @@ See **AI_JIRA_ACLI_INSTRUCTIONS.md** for comprehensive guide with:
 - Best practices
 - Comment templates
 
+See **AI_AGENT_GUIDELINES.md** for:
+- Complete development workflow
+- Git and GitHub workflow
+- Documentation policy
+- TypeScript practices
+
 ---
 
-**Last Updated**: October 15, 2025
+**Last Updated**: November 3, 2025
+
