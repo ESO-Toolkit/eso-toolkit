@@ -31,6 +31,7 @@ import reportReducer from './report/reportSlice';
 import uiReducer, { UIState } from './ui/uiSlice';
 import userReportsReducer from './user_reports';
 import { workerResultsReducer } from './worker_results';
+import loadoutReducer from '../features/loadout-manager/store/loadoutSlice';
 
 // Create history
 export const history = createBrowserHistory();
@@ -42,6 +43,7 @@ const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHisto
 const rootReducer = combineReducers({
   dashboard: dashboardReducer,
   events: eventsReducer,
+  loadout: loadoutReducer,
   masterData: masterDataReducer,
   parseAnalysis: parseAnalysisReducer,
   playerData: playerDataReducer,
@@ -95,8 +97,8 @@ export type RootState = ReturnType<typeof rootReducer>;
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['ui', 'dashboard'], // Persist essential data, but not events (too large)
   transforms: [uiTransform], // Apply transform to exclude report-specific UI state
+  whitelist: ['ui', 'loadout', 'dashboard'], // Persist essential data and loadout, but not events (too large)
 };
 
 const persistedReducer = persistReducer<RootState>(persistConfig, rootReducer);
