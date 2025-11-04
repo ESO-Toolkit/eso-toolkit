@@ -1,6 +1,6 @@
 {
   "labels": {
-    "mergeQueue": "merge-queue",
+    "mergeQueue": "auto-merge",
     "autoMerge": "auto-merge",
     "priority": ["priority", "hotfix", "critical"],
     "blocking": ["do not merge", "do-not-merge", "wip", "work in progress", "needs review", "waiting on parent", "waiting-on-parent"]

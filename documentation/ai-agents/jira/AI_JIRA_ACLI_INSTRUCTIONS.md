@@ -79,12 +79,16 @@ acli jira workitem search --jql "project = ESO AND status = Done" --fields key,s
 
 #### Start Work on a Task (To Do → In Progress)
 ```powershell
-acli jira workitem transition ESO-394 --to "In Progress"
+# ✅ CORRECT SYNTAX
+acli jira workitem transition --key ESO-394 --status "In Progress"
+
+# ❌ WRONG (--to flag doesn't exist)
+# acli jira workitem transition ESO-394 --to "In Progress"
 ```
 
 #### Complete a Task (In Progress → Done)
 ```powershell
-acli jira workitem transition ESO-394 --to "Done"
+acli jira workitem transition --key ESO-394 --status "Done"
 ```
 
 #### Check Available Transitions
@@ -94,7 +98,7 @@ acli jira workitem view ESO-394 --transitions
 
 **Common workflow:**
 1. Query for next "To Do" item
-2. Transition to "In Progress"
+2. Transition to "In Progress" (use `--key` and `--status`)
 3. Complete implementation
 4. Transition to "Done"
 5. Query for next item
@@ -164,7 +168,7 @@ acli jira workitem search --jql "project = ESO AND parent = ESO-372 AND type = S
 acli jira workitem view ESO-394
 
 # Step 6: Transition to In Progress
-acli jira workitem transition ESO-394 --to "In Progress"
+acli jira workitem transition --key ESO-394 --status "In Progress"
 
 # Step 7: Optionally assign to self
 acli jira workitem assign ESO-394 --assignee currentUser
@@ -174,10 +178,10 @@ acli jira workitem assign ESO-394 --assignee currentUser
 
 ```powershell
 # Step 8: Add completion comment
-acli jira workitem comment add ESO-394 --body "✅ Integration test infrastructure set up with Jest, createMockStore utility, and mock worker system. 5 new tests passing."
+acli jira workitem comment create -k ESO-394 -b "✅ Integration test infrastructure set up with Jest, createMockStore utility, and mock worker system. 5 new tests passing."
 
 # Step 9: Transition to Done
-acli jira workitem transition ESO-394 --to "Done"
+acli jira workitem transition --key ESO-394 --status "Done"
 
 # Step 10: Query for next subtask
 acli jira workitem search --jql "project = ESO AND parent = ESO-372 AND type = Subtask AND status = 'To Do'" --fields key,summary --order-by created
@@ -367,10 +371,10 @@ acli jira workitem transition --help
 - [ ] View epic context: `acli jira workitem view ESO-368`
 - [ ] Find next task: `acli jira workitem search --jql "project = ESO AND status = 'To Do'" --fields key,summary,type,points`
 - [ ] View task details: `acli jira workitem view ESO-XXX`
-- [ ] Transition to In Progress: `acli jira workitem transition ESO-XXX --to "In Progress"`
+- [ ] Transition to In Progress: `acli jira workitem transition --key ESO-XXX --status "In Progress"`
 - [ ] Complete implementation
-- [ ] Add completion comment: `acli jira workitem comment add ESO-XXX --body "✅ Completed..."`
-- [ ] Transition to Done: `acli jira workitem transition ESO-XXX --to "Done"`
+- [ ] Add completion comment: `acli jira workitem comment create -k ESO-XXX -b "✅ Completed..."`
+- [ ] Transition to Done: `acli jira workitem transition --key ESO-XXX --status "Done"`
 - [ ] Query for next task
 
 ---

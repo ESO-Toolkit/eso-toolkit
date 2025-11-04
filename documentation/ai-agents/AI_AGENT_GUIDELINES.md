@@ -85,3 +85,202 @@ See: [jira/AI_JIRA_ACLI_INSTRUCTIONS.md](jira/AI_JIRA_ACLI_INSTRUCTIONS.md)
 - **Ask before extensive work** - Confirm approach for major changes
 - **Provide options** - When multiple solutions exist, present choices
 - **Show, don't tell** - Code examples over lengthy explanations
+
+## Complete Development Workflow
+
+### 1. Start Work on a Jira Task
+
+```powershell
+# View the task details
+acli jira workitem view ESO-XXX
+
+# Transition to In Progress (correct syntax)
+acli jira workitem transition --key ESO-XXX --status "In Progress"
+```
+
+**Common Error**: The command is `transition --key ESO-XXX --status "In Progress"` (NOT `--to`)
+
+### 2. Create Feature Branch
+
+Follow the twig branch naming convention:
+
+```powershell
+# Create branch from master (or appropriate parent branch)
+git checkout -b bkrupa/ESO-XXX-brief-description
+
+# Example:
+git checkout -b bkrupa/ESO-516-add-my-reports-link
+```
+
+**Branch Naming Pattern**: `<username>/ESO-<issue-number>-<kebab-case-description>`
+
+### 3. Implement Changes
+
+- Make code changes
+- Follow existing code patterns and conventions
+- Ensure TypeScript types are correct
+
+### 4. Validate Changes
+
+```powershell
+# Run linting (will auto-fix some issues)
+npm run lint
+
+# Check TypeScript compilation
+npm run typecheck
+
+# Run tests
+npm test
+
+# Or run all validation
+npm run validate
+```
+
+**Important**: Fix all linting errors before committing. The project uses ESLint 9 with strict rules including trailing commas.
+
+### 5. Commit Changes
+
+```powershell
+# Stage changes
+git add <files>
+
+# Commit with descriptive message
+git commit -m "feat(Component): brief description [ESO-XXX]
+
+- Detailed change 1
+- Detailed change 2
+- Implementation notes"
+```
+
+**Commit Message Format**:
+- Type: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
+- Scope: Component or area affected (in parentheses)
+- Include Jira ticket in square brackets
+- Use bullet points for detailed changes
+
+### 6. Push to Remote
+
+```powershell
+# Push branch and set upstream tracking
+git push -u origin bkrupa/ESO-XXX-brief-description
+```
+
+### 7. Create Pull Request
+
+Use GitHub CLI or tools:
+
+```powershell
+# Using the GitHub tool
+# Include:
+# - Clear title with [ESO-XXX]
+# - Summary of changes
+# - Testing performed
+# - Related Jira ticket reference
+```
+
+**PR Template**:
+```markdown
+## Summary
+Brief description of the change
+
+## Changes
+- Specific change 1
+- Specific change 2
+
+## Testing
+- ✅ TypeScript compilation passed
+- ✅ ESLint linting passed
+- ✅ Tests passing
+
+## Related
+Jira: ESO-XXX
+```
+
+### 8. Update Jira Ticket
+
+```powershell
+# Mark task as Done
+acli jira workitem transition --key ESO-XXX --status "Done"
+
+# Add completion comment with details
+acli jira workitem comment create -k ESO-XXX -b "Implementation complete. Changes: <summary>. Testing: All checks passing. PR: <url>"
+
+# Add PR link comment
+acli jira workitem comment create -k ESO-XXX -b "Pull request created: https://github.com/bkrupa/eso-log-aggregator/pull/XXX"
+```
+
+### 9. Verify Clean State
+
+```powershell
+git status
+# Should show: "nothing to commit, working tree clean"
+```
+
+## Common Development Issues
+
+### Linting Errors
+
+**Trailing Comma Missing**:
+```typescript
+// ❌ Wrong
+const items = [
+  { foo: 'bar' }
+];
+
+// ✅ Correct
+const items = [
+  { foo: 'bar' },
+];
+```
+
+**Fix Command**: `npm run lint:fix` (auto-fixes many issues)
+
+### TypeScript Errors
+
+- Check with `npm run typecheck`
+- Ensure all types are properly imported
+- Don't add runtime type checks for already typed properties
+- Use type guards only for truly unknown input
+
+### Twig Branch Management
+
+```powershell
+# View branch tree
+twig tree
+
+# Check for orphaned branches
+# If branch appears under "Orphaned branches", fix with:
+twig branch depend <child-branch> <parent-branch>
+
+# Cascade changes (if working with stacked branches)
+twig cascade
+```
+
+### Git Status Check
+
+Always verify clean state:
+- No uncommitted changes
+- Branch pushed to remote
+- PR created and linked to Jira
+
+## Quick Reference: acli Jira Commands
+
+```powershell
+# View task
+acli jira workitem view ESO-XXX
+
+# Start work
+acli jira workitem transition --key ESO-XXX --status "In Progress"
+
+# Complete work
+acli jira workitem transition --key ESO-XXX --status "Done"
+
+# Add comment
+acli jira workitem comment create -k ESO-XXX -b "Your comment here"
+
+# Search for tasks
+acli jira workitem search --jql "project = ESO AND status = 'To Do'" --fields key,summary,type
+```
+
+See [jira/AI_JIRA_ACLI_INSTRUCTIONS.md](jira/AI_JIRA_ACLI_INSTRUCTIONS.md) for comprehensive acli documentation.
+
