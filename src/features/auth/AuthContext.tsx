@@ -31,7 +31,7 @@ const logger = new Logger({
 
 type CurrentUser = NonNullable<NonNullable<GetCurrentUserQuery['userData']>['currentUser']>;
 
-type AnalyticsUserProperties = Record<string, string | number | boolean>;
+type AnalyticsUserProperties = Record<string, string | number | boolean | undefined>;
 
 const deriveAccountRegion = (user: CurrentUser | null): string => {
   const hasNa = Boolean(user?.naDisplayName);
@@ -58,9 +58,8 @@ const buildUserPropertyPayload = (
     has_na_display_name: hasNa,
     has_eu_display_name: hasEu,
     display_name_count: displayNameCount,
-    profile_named: Boolean(user?.name),
-    user_profile_state: user ? 'resolved' : 'missing',
-    has_token_subject: options.hasSubject,
+    has_user_subject: options.hasSubject,
+    username: user?.name || undefined, // Add username for easier user tracking
   };
 };
 

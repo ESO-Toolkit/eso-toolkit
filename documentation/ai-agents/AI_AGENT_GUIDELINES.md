@@ -25,9 +25,9 @@ When documentation IS warranted:
 1. **Keep it concise** - Focus on the "why" not the "what"
 2. **Location**:
    - Major features → `documentation/features/[feature-name]/`
-   - Fixes → `documentation/fixes/` (only if complex)
    - Architecture → `documentation/architecture/`
    - AI-specific → `documentation/ai-agents/`
+   - **Bug fixes/implementation details** → Jira ticket comments (NOT separate markdown files)
 3. **Format**: Brief markdown with:
    - Problem statement (2-3 sentences)
    - Solution overview (1-2 paragraphs)
@@ -39,8 +39,19 @@ When documentation IS warranted:
 For simple changes, use:
 - **Clear commit messages** with context
 - **Code comments** explaining non-obvious logic
-- **Jira ticket updates** for tracked work
+- **Jira ticket comments** for implementation details, fixes, and work summaries
 - **Inline documentation** in complex functions
+
+### Jira Ticket Comments
+
+**When to use Jira comments instead of markdown files:**
+- Implementation details for bug fixes
+- Work summaries and completion notes
+- Root cause analysis
+- Testing results and verification
+- Next steps and follow-up items
+
+Use `acli jira workitem comment create -k TICKET-ID -b "Your comment"` to add detailed implementation notes directly to the ticket.
 
 ## Jira Integration
 

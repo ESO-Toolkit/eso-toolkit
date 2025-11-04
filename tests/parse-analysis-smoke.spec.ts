@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { setupTestPage } from './setup/global-test-setup';
 
 /**
  * Parse Analysis Smoke Tests (ESO-501)
@@ -17,6 +18,9 @@ test.describe('Parse Analysis Smoke Tests', () => {
    * Helper to set up authentication
    */
   async function setupAuth(page: Page) {
+    // Block analytics first
+    await setupTestPage(page);
+    
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
