@@ -1,6 +1,22 @@
+import { gql } from '@apollo/client';
 import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   Download as DownloadIcon,
   Upload as UploadIcon,
   ContentCopy as CopyIcon,
@@ -8,6 +24,8 @@ import {
   Link as LinkIcon,
   PersonAdd as PersonAddIcon,
   Star as GearIcon,
+  DragIndicator as DragIndicatorIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import {
   Button,
@@ -39,23 +57,27 @@ import {
   DialogContent,
   DialogActions,
   Avatar,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import React, { useState, useCallback } from 'react';
 
 import { SetAssignmentManager } from '../components/SetAssignmentManager';
+import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
+import { GetPlayersForReportQuery } from '../graphql/gql/graphql';
+import { KnownAbilities, KnownSetIDs } from '../types/abilities';
 import {
   RaidRoster,
   TankSetup,
   HealerSetup,
-  DDRequirement,
   DPSSlot,
   SupportUltimate,
   HealerBuff,
+  HealerChampionPoint,
+  JailDDType,
   CLASS_SKILL_LINES,
   SkillLineConfig,
   createDefaultRoster,
-  defaultSkillLineConfig,
-  RECOMMENDED_SETS,
   TANK_5PIECE_SETS,
   HEALER_5PIECE_SETS,
   FLEXIBLE_5PIECE_SETS,
@@ -64,9 +86,79 @@ import {
   FLEXIBLE_MONSTER_SETS,
   MONSTER_SETS,
   ALL_5PIECE_SETS,
-  canAssignToFivePieceSlot,
-  canAssignToMonsterSlot,
+  validateCompatibility,
 } from '../types/roster';
+import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
+
+/**
+ * Type definitions for log file import
+ */
+interface GearItem {
+  setName?: string;
+  [key: string]: unknown;
+}
+
+interface TalentItem {
+  name?: string;
+  guid?: number;
+  type?: number;
+  abilityIcon?: string;
+  flags?: number;
+  [key: string]: unknown;
+}
+
+interface CombatantInfo {
+  gear?: GearItem[];
+  talents?: TalentItem[];
+  [key: string]: unknown;
+}
+
+interface PlayerData {
+  name?: string;
+  id?: number;
+  combatantInfo?: CombatantInfo;
+  [key: string]: unknown;
+}
+
+interface PlayerDetails {
+  tanks?: PlayerData[];
+  healers?: PlayerData[];
+  dps?: PlayerData[];
+  [key: string]: unknown;
+}
+
+interface AuraInfo {
+  source: number;
+  ability: number;
+  stacks?: number;
+  icon?: string;
+  name?: string;
+}
+
+interface CombatantInfoEvent {
+  timestamp: number;
+  type: string;
+  sourceID: number;
+  targetID?: number;
+  sourceIsFriendly?: boolean;
+  auras?: AuraInfo[];
+}
+
+/**
+ * GraphQL query for fetching player details and combatant info events from a report
+ */
+const GET_PLAYERS_FOR_REPORT = gql`
+  query getPlayersForReport($code: String!, $fightIDs: [Int]) {
+    reportData {
+      report(code: $code) {
+        playerDetails(includeCombatantInfo: true, fightIDs: $fightIDs)
+        events(fightIDs: $fightIDs, dataType: CombatantInfo, useActorIDs: true, limit: 1000000) {
+          data
+        }
+      }
+    }
+  }
+`;
 
 /**
  * Encode roster to base64 for URL sharing
@@ -98,15 +190,15 @@ const decodeRosterFromURL = (encoded: string): RaidRoster | null => {
 
 // Icon mappings for ESO abilities
 const ULTIMATE_ICONS: Record<string, string> = {
-  'Aggressive Warhorn': 'ability_ava_003_a',
-  'Glacial Colossus': 'ability_necromancer_006_b',
-  Barrier: 'ability_ava_006',
-  'Greater Storm Atronach': 'ability_sorcerer_greater_storm_atronach',
+  [SupportUltimate.WARHORN]: 'ability_ava_003_a',
+  [SupportUltimate.COLOSSUS]: 'ability_necromancer_006_b',
+  [SupportUltimate.BARRIER]: 'ability_ava_006',
+  [SupportUltimate.ATRONACH]: 'ability_sorcerer_greater_storm_atronach',
 };
 
 const HEALER_BUFF_ICONS: Record<string, string> = {
-  'Enlivening Overflow': 'ability_mage_065',
-  'From the Brink': 'ability_mage_065',
+  [HealerBuff.ENLIVENING_OVERFLOW]: 'ability_mage_065',
+  [HealerBuff.FROM_THE_BRINK]: 'ability_mage_065',
 };
 
 const SKILL_LINE_ICONS: Record<string, string> = {
@@ -197,20 +289,17 @@ const getSkillLineIcon = (skillLine: string): React.ReactElement | null => {
  * Get 5-piece set options for tank role (set1/set2 slots only)
  */
 const getTank5PieceSetOptions = (): readonly string[] => {
-  const sets = new Set<string>();
+  // Return sets in order: Tank-specific first, then Hybrid, maintaining alphabetical within each group
+  // Use Sets to avoid duplicates if a set appears in both arrays
+  const tankSets = Array.from(TANK_5PIECE_SETS)
+    .map((id) => getSetDisplayName(id))
+    .sort();
+  const hybridSets = Array.from(FLEXIBLE_5PIECE_SETS)
+    .filter((set) => !TANK_5PIECE_SETS.includes(set))
+    .map((id) => getSetDisplayName(id))
+    .sort();
 
-  // Add recommended 5-piece sets (always run)
-  (RECOMMENDED_SETS.filter(canAssignToFivePieceSlot) as readonly string[]).forEach((set) =>
-    sets.add(set),
-  );
-
-  // Add tank-specific 5-piece sets
-  TANK_5PIECE_SETS.forEach((set) => sets.add(set));
-
-  // Add flexible 5-piece sets (can be run on tanks or healers)
-  FLEXIBLE_5PIECE_SETS.forEach((set) => sets.add(set));
-
-  return Array.from(sets).sort();
+  return [...tankSets, ...hybridSets];
 };
 
 /**
@@ -219,16 +308,11 @@ const getTank5PieceSetOptions = (): readonly string[] => {
 const getTankMonsterSetOptions = (): readonly string[] => {
   const sets = new Set<string>();
 
-  // Add recommended monster sets
-  (RECOMMENDED_SETS.filter(canAssignToMonsterSlot) as readonly string[]).forEach((set) =>
-    sets.add(set),
-  );
-
   // Add tank-specific monster sets
-  TANK_MONSTER_SETS.forEach((set) => sets.add(set));
+  TANK_MONSTER_SETS.forEach((id) => sets.add(getSetDisplayName(id)));
 
   // Add flexible monster sets
-  FLEXIBLE_MONSTER_SETS.forEach((set) => sets.add(set));
+  FLEXIBLE_MONSTER_SETS.forEach((id) => sets.add(getSetDisplayName(id)));
 
   return Array.from(sets).sort();
 };
@@ -237,20 +321,17 @@ const getTankMonsterSetOptions = (): readonly string[] => {
  * Get 5-piece set options for healer role (set1/set2 slots only)
  */
 const getHealer5PieceSetOptions = (): readonly string[] => {
-  const sets = new Set<string>();
+  // Return sets in order: Healer-specific first, then Hybrid, maintaining alphabetical within each group
+  // Use Sets to avoid duplicates if a set appears in both arrays
+  const healerSets = Array.from(HEALER_5PIECE_SETS)
+    .map((id) => getSetDisplayName(id))
+    .sort();
+  const hybridSets = Array.from(FLEXIBLE_5PIECE_SETS)
+    .filter((set) => !HEALER_5PIECE_SETS.includes(set))
+    .map((id) => getSetDisplayName(id))
+    .sort();
 
-  // Add recommended 5-piece sets (always run)
-  (RECOMMENDED_SETS.filter(canAssignToFivePieceSlot) as readonly string[]).forEach((set) =>
-    sets.add(set),
-  );
-
-  // Add healer-specific 5-piece sets
-  HEALER_5PIECE_SETS.forEach((set) => sets.add(set));
-
-  // Add flexible 5-piece sets (can be run on tanks or healers)
-  FLEXIBLE_5PIECE_SETS.forEach((set) => sets.add(set));
-
-  return Array.from(sets).sort();
+  return [...healerSets, ...hybridSets];
 };
 
 /**
@@ -259,16 +340,11 @@ const getHealer5PieceSetOptions = (): readonly string[] => {
 const getHealerMonsterSetOptions = (): readonly string[] => {
   const sets = new Set<string>();
 
-  // Add recommended monster sets
-  (RECOMMENDED_SETS.filter(canAssignToMonsterSlot) as readonly string[]).forEach((set) =>
-    sets.add(set),
-  );
-
   // Add healer-specific monster sets
-  HEALER_MONSTER_SETS.forEach((set) => sets.add(set));
+  HEALER_MONSTER_SETS.forEach((id) => sets.add(getSetDisplayName(id)));
 
   // Add flexible monster sets
-  FLEXIBLE_MONSTER_SETS.forEach((set) => sets.add(set));
+  FLEXIBLE_MONSTER_SETS.forEach((id) => sets.add(getSetDisplayName(id)));
 
   return Array.from(sets).sort();
 };
@@ -276,24 +352,20 @@ const getHealerMonsterSetOptions = (): readonly string[] => {
 /**
  * Helper functions for type-safe set membership checks
  */
-const isRecommendedSet = (setName: string): boolean => {
-  return (RECOMMENDED_SETS as readonly string[]).includes(setName);
+const isTank5PieceSet = (setId: KnownSetIDs): boolean => {
+  return TANK_5PIECE_SETS.includes(setId);
 };
 
-const isTank5PieceSet = (setName: string): boolean => {
-  return (TANK_5PIECE_SETS as readonly string[]).includes(setName);
+const isHealer5PieceSet = (setId: KnownSetIDs): boolean => {
+  return HEALER_5PIECE_SETS.includes(setId);
 };
 
-const isHealer5PieceSet = (setName: string): boolean => {
-  return (HEALER_5PIECE_SETS as readonly string[]).includes(setName);
+const isFlexible5PieceSet = (setId: KnownSetIDs): boolean => {
+  return FLEXIBLE_5PIECE_SETS.includes(setId);
 };
 
-const isFlexible5PieceSet = (setName: string): boolean => {
-  return (FLEXIBLE_5PIECE_SETS as readonly string[]).includes(setName);
-};
-
-const isMonsterSet = (setName: string): boolean => {
-  return (MONSTER_SETS as readonly string[]).includes(setName);
+const isMonsterSet = (setId: KnownSetIDs): boolean => {
+  return MONSTER_SETS.includes(setId);
 };
 
 /**
@@ -302,6 +374,7 @@ const isMonsterSet = (setName: string): boolean => {
  */
 export const RosterBuilderPage: React.FC = () => {
   const [roster, setRoster] = useState<RaidRoster>(createDefaultRoster());
+  const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -313,6 +386,97 @@ export const RosterBuilderPage: React.FC = () => {
   });
   const [quickFillDialog, setQuickFillDialog] = useState(false);
   const [quickFillText, setQuickFillText] = useState('');
+  const [previewDialog, setPreviewDialog] = useState(false);
+  const [importUrlDialog, setImportUrlDialog] = useState(false);
+  const [importUrl, setImportUrl] = useState('');
+  const [importLoading, setImportLoading] = useState(false);
+
+  // Get Apollo Client for GraphQL queries
+  const client = useEsoLogsClientInstance();
+
+  // Helper functions for role mapping
+  const getRoleNumber = useCallback((role: 'tank1' | 'tank2' | 'healer1' | 'healer2'): 1 | 2 => {
+    return role === 'tank1' || role === 'healer1' ? 1 : 2;
+  }, []);
+
+  const isTankRole = useCallback(
+    (role: 'tank1' | 'tank2' | 'healer1' | 'healer2'): role is 'tank1' | 'tank2' => {
+      return role === 'tank1' || role === 'tank2';
+    },
+    [],
+  );
+
+  // Memoized callbacks for SetAssignmentManager
+  const handleSetAssignment = useCallback(
+    (setName: string, role: 'tank1' | 'tank2' | 'healer1' | 'healer2', slot: string) => {
+      const roleNum = getRoleNumber(role);
+      // Convert 'monster' to 'monsterSet' for internal state
+      const slotKey = (slot === 'monster' ? 'monsterSet' : slot) as 'set1' | 'set2' | 'monsterSet';
+
+      if (isTankRole(role)) {
+        const currentTank = roster[role];
+        handleTankChange(roleNum, {
+          gearSets: {
+            ...currentTank.gearSets,
+            [slotKey]: setName,
+          },
+        });
+      } else {
+        handleHealerChange(roleNum, {
+          [slotKey]: setName,
+        });
+      }
+    },
+    [roster, getRoleNumber, isTankRole],
+  );
+
+  const handleUltimateUpdate = useCallback(
+    (role: 'tank1' | 'tank2' | 'healer1' | 'healer2', ultimate: string | null) => {
+      const roleNum = getRoleNumber(role);
+      if (isTankRole(role)) {
+        handleTankChange(roleNum, { ultimate });
+      } else {
+        handleHealerChange(roleNum, { ultimate });
+      }
+    },
+    [getRoleNumber, isTankRole],
+  );
+
+  const handleHealerCPUpdate = useCallback(
+    (role: 'healer1' | 'healer2', championPoint: HealerChampionPoint | null) => {
+      const healerNum = getRoleNumber(role);
+      handleHealerChange(healerNum, {
+        championPoint,
+      });
+    },
+    [getRoleNumber],
+  );
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  // Handle drag end for DPS slots reordering
+  const handleDPSDragEnd = (event: DragEndEvent): void => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setRoster((prev) => {
+        const oldIndex = prev.dpsSlots.findIndex((slot) => slot.slotNumber === active.id);
+        const newIndex = prev.dpsSlots.findIndex((slot) => slot.slotNumber === over.id);
+
+        return {
+          ...prev,
+          dpsSlots: arrayMove(prev.dpsSlots, oldIndex, newIndex),
+          updatedAt: new Date().toISOString(),
+        };
+      });
+    }
+  };
 
   // Load roster from URL on mount
   React.useEffect(() => {
@@ -383,96 +547,47 @@ export const RosterBuilderPage: React.FC = () => {
     }));
   };
 
-  // Add DD requirement - replaces the last available empty DPS slot
-  const handleAddDDRequirement = (type: 'war-machine-mk' | 'zen-alkosh'): void => {
+  // Convert existing DPS slot to jail DD requirement
+  const handleConvertDPSToJail = (slotNumber: number, jailType: JailDDType): void => {
     setRoster((prev) => {
-      // Find the last empty DPS slot (one without a player name)
-      let emptySlotIndex = -1;
-      for (let i = prev.dpsSlots.length - 1; i >= 0; i--) {
-        const slot = prev.dpsSlots[i];
-        if (slot && (!slot.playerName || slot.playerName.trim() === '')) {
-          emptySlotIndex = i;
-          break;
-        }
-      }
+      // Find the DPS slot to convert
+      const slotIndex = prev.dpsSlots.findIndex((s) => s.slotNumber === slotNumber);
+      if (slotIndex === -1) return prev;
 
-      // If we found an empty slot, replace it with a DD requirement
-      if (emptySlotIndex !== -1) {
-        const removedSlotNumber = prev.dpsSlots[emptySlotIndex].slotNumber;
-        const updatedDpsSlots = [...prev.dpsSlots];
-        updatedDpsSlots.splice(emptySlotIndex, 1); // Remove the empty slot
-
-        return {
-          ...prev,
-          dpsSlots: updatedDpsSlots,
-          ddRequirements: [
-            ...prev.ddRequirements,
-            {
-              type,
-              playerName: '',
-              playerNumber: removedSlotNumber, // Assign the slot number from the removed slot
-              skillLines: defaultSkillLineConfig(),
-              notes: '',
-            },
-          ],
-          updatedAt: new Date().toISOString(),
-        };
-      }
-
-      // If no empty slots, find the next available number
-      const usedNumbers = new Set([
-        ...prev.dpsSlots.map((slot) => slot.slotNumber),
-        ...prev.ddRequirements
-          .map((req) => req.playerNumber)
-          .filter((n): n is number => n !== undefined),
-      ]);
-
-      let nextNumber = 1;
-      while (usedNumbers.has(nextNumber)) {
-        nextNumber++;
-      }
+      // Update the slot to be a jail DD (keep it in place)
+      const updatedDpsSlots = [...prev.dpsSlots];
+      updatedDpsSlots[slotIndex] = {
+        ...updatedDpsSlots[slotIndex],
+        jailDDType: jailType,
+        customDescription: jailType === 'custom' ? '' : undefined,
+      };
 
       return {
         ...prev,
-        ddRequirements: [
-          ...prev.ddRequirements,
-          {
-            type,
-            playerName: '',
-            playerNumber: nextNumber, // Assign the next available number
-            skillLines: defaultSkillLineConfig(),
-            notes: '',
-          },
-        ],
+        dpsSlots: updatedDpsSlots,
         updatedAt: new Date().toISOString(),
       };
     });
   };
 
-  // Update DD requirement
-  const handleUpdateDDRequirement = (index: number, updates: Partial<DDRequirement>): void => {
-    setRoster((prev) => ({
-      ...prev,
-      ddRequirements: prev.ddRequirements.map((req, i) =>
-        i === index ? { ...req, ...updates } : req,
-      ),
-      updatedAt: new Date().toISOString(),
-    }));
-  };
-
-  // Remove DD requirement - adds back an empty DPS slot
-  const handleRemoveDDRequirement = (index: number): void => {
+  // Convert jail DD back to regular DPS
+  const handleConvertJailToDPS = (slotNumber: number): void => {
     setRoster((prev) => {
-      // Calculate the next slot number based on existing DPS slots
-      const maxSlotNumber = prev.dpsSlots.reduce((max, slot) => Math.max(max, slot.slotNumber), 0);
-      const newSlot: DPSSlot = {
-        slotNumber: maxSlotNumber + 1,
-      };
+      const slotIndex = prev.dpsSlots.findIndex((s) => s.slotNumber === slotNumber);
+      if (slotIndex === -1) return prev;
+
+      // Clear jail DD fields
+      const updatedDpsSlots = [...prev.dpsSlots];
+      const {
+        jailDDType: _removed1,
+        customDescription: _removed2,
+        ...regularSlot
+      } = updatedDpsSlots[slotIndex];
+      updatedDpsSlots[slotIndex] = regularSlot;
 
       return {
         ...prev,
-        dpsSlots: [...prev.dpsSlots, newSlot],
-        ddRequirements: prev.ddRequirements.filter((_, i) => i !== index),
+        dpsSlots: updatedDpsSlots,
         updatedAt: new Date().toISOString(),
       };
     });
@@ -513,6 +628,387 @@ export const RosterBuilderPage: React.FC = () => {
     };
     reader.readAsText(file);
   }, []);
+
+  // Import roster from ESO Logs URL
+  const handleImportFromUrl = useCallback(async (): Promise<void> => {
+    if (!importUrl) {
+      setSnackbar({
+        open: true,
+        message: 'Please enter a valid ESO Logs URL.',
+        severity: 'error',
+      });
+      return;
+    }
+
+    try {
+      setImportLoading(true);
+
+      // Parse URL to extract code and fight ID
+      // Expected formats:
+      // https://www.esologs.com/reports/<code>#fight=<fightId>
+      // https://www.esologs.com/reports/<code>?fight=<fightId>
+      // https://www.esologs.com/reports/<code>
+      const urlMatch = importUrl.match(/esologs\.com\/reports\/([^#/?]+)(?:[#?]fight=(\d+))?/);
+      if (!urlMatch) {
+        setSnackbar({
+          open: true,
+          message:
+            'Invalid ESO Logs URL format. Expected: https://www.esologs.com/reports/CODE or https://www.esologs.com/reports/CODE?fight=ID',
+          severity: 'error',
+        });
+        setImportLoading(false);
+        return;
+      }
+
+      const [, code, fightIdStr] = urlMatch;
+      const fightId = fightIdStr ? parseInt(fightIdStr, 10) : undefined;
+
+      // Fetch player details from the report
+      const response = await client.query<GetPlayersForReportQuery>({
+        query: GET_PLAYERS_FOR_REPORT,
+        variables: {
+          code,
+          fightIDs: fightId ? [fightId] : undefined,
+        },
+        fetchPolicy: 'no-cache',
+      });
+
+      const playerDetails = response.reportData?.report?.playerDetails;
+      if (!playerDetails) {
+        setSnackbar({
+          open: true,
+          message: 'No player data found in the report.',
+          severity: 'error',
+        });
+        setImportLoading(false);
+        return;
+      }
+
+      // Extract player details from the response object
+      // The playerDetails structure is: { data: { playerDetails: { tanks, healers, dps } } }
+      let details: PlayerDetails | undefined;
+
+      if (typeof playerDetails === 'string') {
+        // If it's a string, parse it as JSON
+        try {
+          const parsed = JSON.parse(playerDetails) as { data?: { playerDetails?: PlayerDetails } };
+          details = parsed?.data?.playerDetails;
+        } catch (error) {
+          setSnackbar({
+            open: true,
+            message: `Failed to parse player details: ${error instanceof Error ? error.message : 'Invalid JSON'}`,
+            severity: 'error',
+          });
+          setImportLoading(false);
+          return;
+        }
+      } else if (typeof playerDetails === 'object') {
+        // If it's already an object, extract the nested data
+        const payload = (playerDetails as { data?: unknown }).data;
+        if (payload && typeof payload === 'object') {
+          details = (payload as { playerDetails?: PlayerDetails }).playerDetails;
+        }
+      }
+
+      if (!details) {
+        setSnackbar({
+          open: true,
+          message: 'Invalid player details format.',
+          severity: 'error',
+        });
+        setImportLoading(false);
+        return;
+      }
+
+      const { tanks = [], healers = [], dps = [] } = details;
+
+      // Extract combatant info events from the response
+      // Note: TypeScript doesn't know about the events field, so we cast it
+      const report = response.reportData?.report as {
+        playerDetails?: unknown;
+        events?: { data?: string | unknown };
+      };
+      const eventsData = report?.events?.data;
+
+      // Parse events data - it might be a string or already an object
+      let combatantInfoEvents: CombatantInfoEvent[] = [];
+      if (eventsData) {
+        try {
+          if (typeof eventsData === 'string') {
+            combatantInfoEvents = JSON.parse(eventsData);
+          } else if (Array.isArray(eventsData)) {
+            combatantInfoEvents = eventsData as CombatantInfoEvent[];
+          }
+        } catch {
+          // Failed to parse combatant info events - continue without champion point detection from auras
+        }
+      }
+
+      // Build a map of player ID to champion points detected from auras
+      const playerChampionPoints = new Map<string, Set<number>>();
+      combatantInfoEvents.forEach((event) => {
+        if (!event.auras || event.auras.length === 0) return;
+
+        const sourceId = String(event.sourceID);
+        if (!playerChampionPoints.has(sourceId)) {
+          playerChampionPoints.set(sourceId, new Set());
+        }
+
+        event.auras.forEach((aura) => {
+          // Track champion point ability IDs
+          if (
+            aura.ability === KnownAbilities.ENLIVENING_OVERFLOW ||
+            aura.ability === KnownAbilities.FROM_THE_BRINK
+          ) {
+            playerChampionPoints.get(sourceId)?.add(aura.ability);
+          }
+        });
+      });
+
+      // Helper function to categorize gear sets properly
+      const categorizeSets = (
+        gear: GearItem[],
+      ): {
+        fivePieceSets: string[];
+        monsterSets: string[];
+        otherSets: string[];
+      } => {
+        const setCountMap = new Map<string, number>();
+
+        // Count how many pieces of each set
+        gear.forEach((item: GearItem) => {
+          if (item.setName) {
+            setCountMap.set(item.setName, (setCountMap.get(item.setName) || 0) + 1);
+          }
+        });
+
+        const fivePieceSets: string[] = [];
+        const monsterSets: string[] = [];
+        const otherSets: string[] = [];
+
+        setCountMap.forEach((count, setName) => {
+          // Try to find the set ID for this set name
+          const setId = findSetIdByName(setName);
+
+          // Monster sets are typically 2-piece or 1-piece and are in our MONSTER_SETS list
+          if (setId && MONSTER_SETS.includes(setId)) {
+            monsterSets.push(setName);
+          } else if (setId && (count >= 5 || ALL_5PIECE_SETS.includes(setId))) {
+            // 5-piece sets have 5+ items or are in our known 5-piece list
+            fivePieceSets.push(setName);
+          } else {
+            // Everything else goes to additional sets
+            otherSets.push(setName);
+          }
+        });
+
+        return { fivePieceSets, monsterSets, otherSets };
+      };
+
+      // Helper function to extract ultimate from talents
+      const extractUltimate = (
+        combatantInfo: CombatantInfo | undefined,
+      ): SupportUltimate | null => {
+        if (!combatantInfo?.talents) return null;
+
+        // Map ability IDs to support ultimates
+        const ultimateIdMap: Record<number, SupportUltimate> = {
+          [KnownAbilities.AGGRESSIVE_HORN]: SupportUltimate.WARHORN,
+          [KnownAbilities.GLACIAL_COLOSSUS]: SupportUltimate.COLOSSUS,
+          [KnownAbilities.REVIVING_BARRIER]: SupportUltimate.BARRIER,
+          [KnownAbilities.REPLENISHING_BARRIER]: SupportUltimate.BARRIER,
+          [KnownAbilities.SUMMON_CHARGED_ATRONACH]: SupportUltimate.ATRONACH,
+        };
+
+        for (const talent of combatantInfo.talents) {
+          if (talent.guid && ultimateIdMap[talent.guid]) {
+            return ultimateIdMap[talent.guid];
+          }
+        }
+
+        return null;
+      };
+
+      // Helper function to extract healer champion point from talents or auras
+      const extractHealerChampionPoint = (
+        combatantInfo: CombatantInfo | undefined,
+        playerId: number | undefined,
+      ): HealerChampionPoint | null => {
+        // First, check auras from combatant info events (more reliable)
+        if (playerId !== undefined) {
+          const championPoints = playerChampionPoints.get(String(playerId));
+          if (championPoints) {
+            if (championPoints.has(KnownAbilities.ENLIVENING_OVERFLOW)) {
+              return HealerChampionPoint.ENLIVENING_OVERFLOW;
+            }
+            if (championPoints.has(KnownAbilities.FROM_THE_BRINK)) {
+              return HealerChampionPoint.FROM_THE_BRINK;
+            }
+          }
+        }
+
+        // Fallback to checking talents (less reliable, but worth trying)
+        if (!combatantInfo?.talents) return null;
+
+        // Map ability IDs to champion points
+        const championPointIdMap: Record<number, HealerChampionPoint> = {
+          [KnownAbilities.ENLIVENING_OVERFLOW]: HealerChampionPoint.ENLIVENING_OVERFLOW,
+          [KnownAbilities.FROM_THE_BRINK]: HealerChampionPoint.FROM_THE_BRINK,
+        };
+
+        for (const talent of combatantInfo.talents) {
+          if (talent.guid && championPointIdMap[talent.guid]) {
+            return championPointIdMap[talent.guid];
+          }
+        }
+
+        return null;
+      };
+
+      // Helper function to extract healer buff from talents or auras
+      const extractHealerBuff = (
+        combatantInfo: CombatantInfo | undefined,
+        playerId: number | undefined,
+      ): HealerBuff | null => {
+        // First, check auras from combatant info events (more reliable)
+        if (playerId !== undefined) {
+          const championPoints = playerChampionPoints.get(String(playerId));
+          if (championPoints) {
+            if (championPoints.has(KnownAbilities.ENLIVENING_OVERFLOW)) {
+              return HealerBuff.ENLIVENING_OVERFLOW;
+            }
+            if (championPoints.has(KnownAbilities.FROM_THE_BRINK)) {
+              return HealerBuff.FROM_THE_BRINK;
+            }
+          }
+        }
+
+        // Fallback to checking talents (less reliable, but worth trying)
+        if (!combatantInfo?.talents) return null;
+
+        // Map ability IDs to healer buffs
+        const healerBuffIdMap: Record<number, HealerBuff> = {
+          [KnownAbilities.ENLIVENING_OVERFLOW]: HealerBuff.ENLIVENING_OVERFLOW,
+          [KnownAbilities.FROM_THE_BRINK]: HealerBuff.FROM_THE_BRINK,
+        };
+
+        for (const talent of combatantInfo.talents) {
+          if (talent.guid && healerBuffIdMap[talent.guid]) {
+            return healerBuffIdMap[talent.guid];
+          }
+        }
+
+        return null;
+      };
+
+      // Parse tanks
+      const parsedTanks: TankSetup[] = tanks.map((tank: PlayerData, index: number) => {
+        const gear = tank.combatantInfo?.gear || [];
+        const { fivePieceSets, monsterSets, otherSets } = categorizeSets(gear);
+
+        return {
+          playerName: tank.name || `Tank ${index + 1}`,
+          roleLabel: `T${index + 1}`,
+          gearSets: {
+            set1: fivePieceSets[0] ? findSetIdByName(fivePieceSets[0]) : undefined,
+            set2: fivePieceSets[1] ? findSetIdByName(fivePieceSets[1]) : undefined,
+            monsterSet: monsterSets[0] ? findSetIdByName(monsterSets[0]) : undefined,
+            additionalSets: [...fivePieceSets.slice(2), ...monsterSets.slice(1), ...otherSets]
+              .map((name) => findSetIdByName(name))
+              .filter((id): id is KnownSetIDs => id !== undefined),
+          },
+          skillLines: {
+            line1: '',
+            line2: '',
+            line3: '',
+            isFlex: false,
+          },
+          ultimate: extractUltimate(tank.combatantInfo),
+          specificSkills: [],
+        };
+      });
+
+      // Parse healers
+      const parsedHealers: HealerSetup[] = healers.map((healer: PlayerData, index: number) => {
+        const gear = healer.combatantInfo?.gear || [];
+        const { fivePieceSets, monsterSets, otherSets } = categorizeSets(gear);
+
+        return {
+          playerName: healer.name || `Healer ${index + 1}`,
+          roleLabel: `H${index + 1}`,
+          set1: fivePieceSets[0] ? findSetIdByName(fivePieceSets[0]) : undefined,
+          set2: fivePieceSets[1] ? findSetIdByName(fivePieceSets[1]) : undefined,
+          monsterSet: monsterSets[0] ? findSetIdByName(monsterSets[0]) : undefined,
+          additionalSets: [...fivePieceSets.slice(2), ...monsterSets.slice(1), ...otherSets]
+            .map((name) => findSetIdByName(name))
+            .filter((id): id is KnownSetIDs => id !== undefined),
+          skillLines: {
+            line1: '',
+            line2: '',
+            line3: '',
+            isFlex: false,
+          },
+          healerBuff: extractHealerBuff(healer.combatantInfo, healer.id),
+          championPoint: extractHealerChampionPoint(healer.combatantInfo, healer.id),
+          ultimate: extractUltimate(healer.combatantInfo),
+        };
+      });
+
+      // Parse DPS (up to 8 slots)
+      const parsedDPS: DPSSlot[] = dps.slice(0, 8).map((dpsPlayer: PlayerData, index: number) => {
+        const gear = dpsPlayer.combatantInfo?.gear || [];
+        const { fivePieceSets, monsterSets, otherSets } = categorizeSets(gear);
+
+        return {
+          slotNumber: index + 1,
+          playerName: dpsPlayer.name || '',
+          gearSets: [...fivePieceSets, ...monsterSets, ...otherSets]
+            .filter(Boolean)
+            .map((name) => findSetIdByName(name))
+            .filter((id): id is KnownSetIDs => id !== undefined),
+          skillLines: {
+            line1: '',
+            line2: '',
+            line3: '',
+            isFlex: false,
+          },
+        };
+      });
+
+      // Update roster with parsed data (tank1, tank2, healer1, healer2, and DPS slots)
+      setRoster((prev) => ({
+        ...prev,
+        tank1: parsedTanks[0] || prev.tank1,
+        tank2: parsedTanks[1] || prev.tank2,
+        healer1: parsedHealers[0] || prev.healer1,
+        healer2: parsedHealers[1] || prev.healer2,
+        dpsSlots: parsedDPS.length > 0 ? parsedDPS : prev.dpsSlots,
+        updatedAt: new Date().toISOString(),
+      }));
+
+      const tankCount = Math.min(parsedTanks.length, 2);
+      const healerCount = Math.min(parsedHealers.length, 2);
+      const dpsCount = Math.min(parsedDPS.length, 8);
+
+      setSnackbar({
+        open: true,
+        message: `Successfully imported ${tankCount} tank(s), ${healerCount} healer(s), and ${dpsCount} DPS from ESO Logs!`,
+        severity: 'success',
+      });
+
+      // Close dialog and reset state
+      setImportUrlDialog(false);
+      setImportUrl('');
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: `Failed to import from URL: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        severity: 'error',
+      });
+    } finally {
+      setImportLoading(false);
+    }
+  }, [importUrl, client]);
 
   // Quick fill player names from text
   const handleQuickFill = useCallback((): void => {
@@ -588,11 +1084,40 @@ export const RosterBuilderPage: React.FC = () => {
       </Alert>
 
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h4" component="h1">
-            Roster Builder
-          </Typography>
-          <Stack direction="row" spacing={1}>
+        <Stack spacing={3} mb={3}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 2,
+            }}
+          >
+            <Typography variant="h4" component="h1">
+              Roster Builder
+            </Typography>
+
+            {/* Simple/Advanced Mode Toggle */}
+            <ToggleButtonGroup
+              value={mode}
+              exclusive
+              onChange={(_event, newMode) => {
+                if (newMode !== null) {
+                  setMode(newMode);
+                }
+              }}
+              size="small"
+              color="primary"
+            >
+              <ToggleButton value="simple">Simple Mode</ToggleButton>
+              <ToggleButton value="advanced">Advanced Mode</ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+
+          {/* Action Buttons - organized into logical groups */}
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {/* Import/Export Group */}
             <Button
               variant="outlined"
               startIcon={<PersonAddIcon />}
@@ -601,15 +1126,33 @@ export const RosterBuilderPage: React.FC = () => {
               Quick Fill
             </Button>
             <Button variant="outlined" startIcon={<UploadIcon />} component="label">
-              Import
+              Import Roster
               <input type="file" hidden accept=".json" onChange={handleImportJSON} />
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<LinkIcon />}
+              onClick={() => setImportUrlDialog(true)}
+            >
+              Import from Log
             </Button>
             <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleExportJSON}>
               Export JSON
             </Button>
+
+            {/* Discord Group */}
+            <Button
+              variant="outlined"
+              startIcon={<VisibilityIcon />}
+              onClick={() => setPreviewDialog(true)}
+            >
+              Preview Discord
+            </Button>
             <Button variant="contained" startIcon={<CopyIcon />} onClick={handleCopyDiscordFormat}>
               Copy for Discord
             </Button>
+
+            {/* Share Group */}
             <Button
               variant="contained"
               color="secondary"
@@ -618,7 +1161,7 @@ export const RosterBuilderPage: React.FC = () => {
             >
               Copy Share Link
             </Button>
-          </Stack>
+          </Box>
         </Stack>
 
         <TextField
@@ -631,194 +1174,166 @@ export const RosterBuilderPage: React.FC = () => {
 
         <Divider sx={{ my: 3 }} />
 
-        {/* Player Groups Management */}
-        <Typography variant="h5" gutterBottom>
-          Player Groups
-        </Typography>
-        <Stack spacing={2} mb={3}>
-          <Autocomplete
-            multiple
-            freeSolo
-            options={[]}
-            value={roster.availableGroups}
-            onChange={(_, value) =>
-              setRoster((prev) => ({
-                ...prev,
-                availableGroups: value,
-                updatedAt: new Date().toISOString(),
-              }))
-            }
-            slotProps={{
-              popper: {
-                disablePortal: true,
-              },
-            }}
-            ChipProps={{
-              onMouseDown: (event) => {
-                event.stopPropagation();
-              },
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Available Groups (e.g., Slayer Stack 1, Group A)"
-                placeholder="Add group..."
-                helperText="Create groups to organize players. Common examples: Slayer Stack 1, Slayer Stack 2, Group A, Group B"
+        {/* Simple Mode: Set Assignment Manager */}
+        {mode === 'simple' && (
+          <>
+            <SetAssignmentManager
+              tank1={roster.tank1}
+              tank2={roster.tank2}
+              healer1={roster.healer1}
+              healer2={roster.healer2}
+              onAssignSet={handleSetAssignment}
+              onUpdateUltimate={handleUltimateUpdate}
+              onUpdateHealerCP={handleHealerCPUpdate}
+            />
+          </>
+        )}
+
+        {/* Advanced Mode: Full Roster Details */}
+        {mode === 'advanced' && (
+          <>
+            {/* Player Groups Management */}
+            <Typography variant="h5" gutterBottom>
+              Player Groups
+            </Typography>
+            <Stack spacing={2} mb={3}>
+              <Autocomplete
+                multiple
+                freeSolo
+                options={[]}
+                value={roster.availableGroups}
+                onChange={(_, value) =>
+                  setRoster((prev) => ({
+                    ...prev,
+                    availableGroups: value,
+                    updatedAt: new Date().toISOString(),
+                  }))
+                }
+                slotProps={{
+                  popper: {
+                    disablePortal: true,
+                  },
+                }}
+                ChipProps={{
+                  onMouseDown: (event) => {
+                    event.stopPropagation();
+                  },
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Available Groups (e.g., Slayer Stack 1, Group A)"
+                    placeholder="Add group..."
+                    helperText="Create groups to organize players. Common examples: Slayer Stack 1, Slayer Stack 2, Group A, Group B"
+                  />
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => {
+                    const { key, ...chipProps } = getTagProps({ index });
+                    return <Chip label={option} {...chipProps} key={key} />;
+                  })
+                }
               />
-            )}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => {
-                const { key, ...chipProps } = getTagProps({ index });
-                return <Chip label={option} {...chipProps} key={key} />;
-              })
-            }
-          />
-        </Stack>
+            </Stack>
 
-        <Divider sx={{ my: 3 }} />
+            <Divider sx={{ my: 3 }} />
 
-        {/* Set Assignment Manager */}
-        <SetAssignmentManager
-          tank1={roster.tank1}
-          tank2={roster.tank2}
-          healer1={roster.healer1}
-          healer2={roster.healer2}
-          onAssignSet={(setName, role, slot) => {
-            if (role === 'tank1' || role === 'tank2') {
-              const tankNum = role === 'tank1' ? 1 : 2;
-              const currentTank = roster[role];
-              const slotKey = slot === 'set1' ? 'set1' : slot === 'set2' ? 'set2' : 'monsterSet';
-              handleTankChange(tankNum, {
-                gearSets: {
-                  ...currentTank.gearSets,
-                  [slotKey]: setName,
-                },
-              });
-            } else if (role === 'healer1' || role === 'healer2') {
-              const healerNum = role === 'healer1' ? 1 : 2;
-              const slotKey = slot === 'set1' ? 'set1' : slot === 'set2' ? 'set2' : 'monsterSet';
-              handleHealerChange(healerNum, {
-                [slotKey]: setName,
-              });
-            }
-          }}
-        />
+            {/* Tanks Section */}
+            <Typography variant="h5" gutterBottom>
+              Tanks
+            </Typography>
+            <Stack spacing={2} mb={3}>
+              {[1, 2].map((num) => (
+                <TankCard
+                  key={num}
+                  tankNum={num as 1 | 2}
+                  tank={roster[`tank${num}` as 'tank1' | 'tank2']}
+                  onChange={(updates) => handleTankChange(num as 1 | 2, updates)}
+                  availableGroups={roster.availableGroups}
+                />
+              ))}
+            </Stack>
 
-        {/* Tanks Section */}
-        <Typography variant="h5" gutterBottom>
-          Tanks
-        </Typography>
-        <Stack spacing={2} mb={3}>
-          {[1, 2].map((num) => (
-            <TankCard
-              key={num}
-              tankNum={num as 1 | 2}
-              tank={roster[`tank${num}` as 'tank1' | 'tank2']}
-              onChange={(updates) => handleTankChange(num as 1 | 2, updates)}
-              availableGroups={roster.availableGroups}
-            />
-          ))}
-        </Stack>
+            <Divider sx={{ my: 3 }} />
 
-        <Divider sx={{ my: 3 }} />
+            {/* Healers Section */}
+            <Typography variant="h5" gutterBottom>
+              Healers
+            </Typography>
+            <Stack spacing={2} mb={3}>
+              {[1, 2].map((num) => (
+                <HealerCard
+                  key={num}
+                  healerNum={num as 1 | 2}
+                  healer={roster[`healer${num}` as 'healer1' | 'healer2']}
+                  onChange={(updates) => handleHealerChange(num as 1 | 2, updates)}
+                  availableGroups={roster.availableGroups}
+                  usedBuffs={
+                    [roster.healer1.healerBuff, roster.healer2.healerBuff].filter(
+                      Boolean,
+                    ) as HealerBuff[]
+                  }
+                />
+              ))}
+            </Stack>
 
-        {/* Healers Section */}
-        <Typography variant="h5" gutterBottom>
-          Healers
-        </Typography>
-        <Stack spacing={2} mb={3}>
-          {[1, 2].map((num) => (
-            <HealerCard
-              key={num}
-              healerNum={num as 1 | 2}
-              healer={roster[`healer${num}` as 'healer1' | 'healer2']}
-              onChange={(updates) => handleHealerChange(num as 1 | 2, updates)}
-              availableGroups={roster.availableGroups}
-              usedBuffs={
-                [roster.healer1.healerBuff, roster.healer2.healerBuff].filter(
-                  Boolean,
-                ) as HealerBuff[]
-              }
-            />
-          ))}
-        </Stack>
+            <Divider sx={{ my: 3 }} />
 
-        <Divider sx={{ my: 3 }} />
+            {/* DPS Slots Section */}
+            <Typography variant="h5" gutterBottom>
+              DPS Roster (8 Slots)
+            </Typography>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDPSDragEnd}
+            >
+              <SortableContext
+                items={roster.dpsSlots.map((slot) => slot.slotNumber)}
+                strategy={verticalListSortingStrategy}
+              >
+                <Stack spacing={1.5} mb={3}>
+                  {roster.dpsSlots.map((slot, index) => (
+                    <DPSSlotCard
+                      key={slot.slotNumber}
+                      slot={slot}
+                      availableGroups={roster.availableGroups}
+                      onChange={(updates) => {
+                        const updatedSlots = [...roster.dpsSlots];
+                        updatedSlots[index] = { ...updatedSlots[index], ...updates };
+                        setRoster((prev) => ({
+                          ...prev,
+                          dpsSlots: updatedSlots,
+                          updatedAt: new Date().toISOString(),
+                        }));
+                      }}
+                      onConvertToJail={handleConvertDPSToJail}
+                      onConvertToDPS={handleConvertJailToDPS}
+                    />
+                  ))}
+                </Stack>
+              </SortableContext>
+            </DndContext>
 
-        {/* DPS Slots Section */}
-        <Typography variant="h5" gutterBottom>
-          DPS Roster (8 Slots)
-        </Typography>
-        <Stack spacing={1.5} mb={3}>
-          {roster.dpsSlots.map((slot, index) => (
-            <DPSSlotCard
-              key={slot.slotNumber}
-              slot={slot}
-              availableGroups={roster.availableGroups}
-              onChange={(updates) => {
-                const updatedSlots = [...roster.dpsSlots];
-                updatedSlots[index] = { ...updatedSlots[index], ...updates };
+            <Divider sx={{ my: 3 }} />
+
+            {/* General Notes */}
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              label="General Notes"
+              value={roster.notes || ''}
+              onChange={(e) =>
                 setRoster((prev) => ({
                   ...prev,
-                  dpsSlots: updatedSlots,
+                  notes: e.target.value,
                   updatedAt: new Date().toISOString(),
-                }));
-              }}
+                }))
+              }
             />
-          ))}
-        </Stack>
-
-        <Divider sx={{ my: 3 }} />
-
-        {/* DD Requirements Section */}
-        <Typography variant="h5" gutterBottom>
-          Damage Dealer Requirements
-        </Typography>
-        <Stack spacing={2} mb={2}>
-          {roster.ddRequirements.map((req, index) => (
-            <DDRequirementCard
-              key={index}
-              requirement={req}
-              availableGroups={roster.availableGroups}
-              onChange={(updates) => handleUpdateDDRequirement(index, updates)}
-              onRemove={() => handleRemoveDDRequirement(index)}
-            />
-          ))}
-        </Stack>
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={() => handleAddDDRequirement('war-machine-mk')}
-          >
-            Add War Machine + MK DD
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={() => handleAddDDRequirement('zen-alkosh')}
-          >
-            Add Zen + Alkosh DD
-          </Button>
-        </Stack>
-
-        <Divider sx={{ my: 3 }} />
-
-        {/* General Notes */}
-        <TextField
-          fullWidth
-          multiline
-          rows={3}
-          label="General Notes"
-          value={roster.notes || ''}
-          onChange={(e) =>
-            setRoster((prev) => ({
-              ...prev,
-              notes: e.target.value,
-              updatedAt: new Date().toISOString(),
-            }))
-          }
-        />
+          </>
+        )}
       </Paper>
 
       {/* Quick Fill Dialog */}
@@ -850,6 +1365,99 @@ export const RosterBuilderPage: React.FC = () => {
           <Button onClick={() => setQuickFillDialog(false)}>Cancel</Button>
           <Button onClick={handleQuickFill} variant="contained">
             Fill Roster
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Discord Preview Dialog */}
+      <Dialog open={previewDialog} onClose={() => setPreviewDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Discord Message Preview</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            This is how your roster will appear when posted to Discord:
+          </Typography>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              bgcolor: 'grey.900',
+              color: 'grey.100',
+              fontFamily: 'monospace',
+              fontSize: '0.875rem',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              overflowX: 'auto',
+              border: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            {generateDiscordFormat(roster)}
+          </Paper>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPreviewDialog(false)}>Close</Button>
+          <Button
+            onClick={() => {
+              handleCopyDiscordFormat();
+              setPreviewDialog(false);
+            }}
+            variant="contained"
+            startIcon={<CopyIcon />}
+          >
+            Copy to Clipboard
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Import from URL Dialog */}
+      <Dialog
+        open={importUrlDialog}
+        onClose={() => {
+          setImportUrlDialog(false);
+          setImportUrl('');
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Import Roster from ESO Logs</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Enter the ESO Logs report URL for a specific fight. The roster will be automatically
+            derived from the player data in the report.
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <strong>Example URL formats:</strong>
+            <br />
+            • With fight ID (hash): https://www.esologs.com/reports/ABC123#fight=5
+            <br />
+            • With fight ID (query): https://www.esologs.com/reports/ABC123?fight=5
+            <br />• Without fight ID: https://www.esologs.com/reports/ABC123
+          </Typography>
+          <TextField
+            autoFocus
+            fullWidth
+            variant="outlined"
+            label="ESO Logs URL"
+            placeholder="https://www.esologs.com/reports/ABC123#fight=5"
+            value={importUrl}
+            onChange={(e) => setImportUrl(e.target.value)}
+            sx={{ mt: 2 }}
+            disabled={importLoading}
+            helperText="The report must be public or you must be logged in to access it"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setImportUrlDialog(false);
+              setImportUrl('');
+            }}
+            disabled={importLoading}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleImportFromUrl} variant="contained" disabled={importLoading}>
+            {importLoading ? 'Importing...' : 'Import Roster'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -902,7 +1510,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
             <Box sx={{ flex: '1 1 45%', minWidth: 150 }}>
               <Autocomplete
                 freeSolo
-                options={availableGroups}
+                options={[...availableGroups].sort()}
                 value={tank.group?.groupName || ''}
                 onChange={(_, value) =>
                   onChange({
@@ -917,25 +1525,35 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
           </Box>
 
           {/* Gear Sets */}
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            Configure gear sets (5-piece sets + 2-piece monster/mythic)
+          </Typography>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
                 freeSolo
                 options={getTank5PieceSetOptions()}
-                value={tank.gearSets.set1}
+                value={tank.gearSets.set1 ? getSetDisplayName(tank.gearSets.set1) : ''}
                 onChange={(_, value) =>
-                  onChange({ gearSets: { ...tank.gearSets, set1: value || '' } })
+                  onChange({
+                    gearSets: {
+                      ...tank.gearSets,
+                      set1: value ? findSetIdByName(value) : undefined,
+                    },
+                  })
                 }
                 groupBy={(option) => {
-                  if (isRecommendedSet(option)) return '⭐ Recommended (Always Run)';
-                  if (isTank5PieceSet(option)) return 'Tank Sets';
-                  if (isFlexible5PieceSet(option)) return 'Flexible (Tank/Healer)';
+                  const setId = findSetIdByName(option);
+                  if (setId && isTank5PieceSet(setId)) return 'Tank Sets';
+                  if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
                   return 'Other';
                 }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Set 1 (5-piece)"
+                    label="Primary 5-Piece Set (Body)"
+                    placeholder="e.g., Alkosh, Yolnahkriin"
+                    helperText="Worn on body armor pieces (type custom set name if not listed)"
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -944,32 +1562,34 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     }}
                   />
                 )}
-                renderOption={(props, option) => (
-                  <li {...props}>
-                    {isRecommendedSet(option) && '⭐ '}
-                    {option}
-                  </li>
-                )}
+                renderOption={(props, option) => <li {...props}>{option}</li>}
               />
             </Box>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
                 freeSolo
                 options={getTank5PieceSetOptions()}
-                value={tank.gearSets.set2}
+                value={tank.gearSets.set2 ? getSetDisplayName(tank.gearSets.set2) : ''}
                 onChange={(_, value) =>
-                  onChange({ gearSets: { ...tank.gearSets, set2: value || '' } })
+                  onChange({
+                    gearSets: {
+                      ...tank.gearSets,
+                      set2: value ? findSetIdByName(value) : undefined,
+                    },
+                  })
                 }
                 groupBy={(option) => {
-                  if (isRecommendedSet(option)) return '⭐ Recommended (Always Run)';
-                  if (isTank5PieceSet(option)) return 'Tank Sets';
-                  if (isFlexible5PieceSet(option)) return 'Flexible (Tank/Healer)';
+                  const setId = findSetIdByName(option);
+                  if (setId && isTank5PieceSet(setId)) return 'Tank Sets';
+                  if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
                   return 'Other';
                 }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Set 2 (5-piece)"
+                    label="Secondary 5-Piece Set (Jewelry)"
+                    placeholder="e.g., Crimson Oath's Rive"
+                    helperText="Worn on jewelry + weapons (type custom set name if not listed)"
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -978,30 +1598,31 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     }}
                   />
                 )}
-                renderOption={(props, option) => (
-                  <li {...props}>
-                    {isRecommendedSet(option) && '⭐ '}
-                    {option}
-                  </li>
-                )}
+                renderOption={(props, option) => <li {...props}>{option}</li>}
               />
             </Box>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
                 freeSolo
                 options={getTankMonsterSetOptions()}
-                value={tank.gearSets.monsterSet || ''}
+                value={tank.gearSets.monsterSet ? getSetDisplayName(tank.gearSets.monsterSet) : ''}
                 onChange={(_, value) =>
-                  onChange({ gearSets: { ...tank.gearSets, monsterSet: value || '' } })
+                  onChange({
+                    gearSets: {
+                      ...tank.gearSets,
+                      monsterSet: value ? findSetIdByName(value) : undefined,
+                    },
+                  })
                 }
-                groupBy={(option) => {
-                  if (isRecommendedSet(option)) return '⭐ Recommended (Always Run)';
+                groupBy={(_option) => {
                   return 'Monster Sets';
                 }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Monster/Mythic Set"
+                    label="2-Piece Monster/Mythic Set"
+                    placeholder="e.g., Symphony of Blades"
+                    helperText="Head + shoulders, or 1-piece mythic (type custom set name if not listed)"
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -1010,42 +1631,55 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     }}
                   />
                 )}
-                renderOption={(props, option) => (
-                  <li {...props}>
-                    {isRecommendedSet(option) && '⭐ '}
-                    {option}
-                  </li>
-                )}
+                renderOption={(props, option) => <li {...props}>{option}</li>}
               />
             </Box>
           </Box>
 
-          <FormControl fullWidth>
-            <InputLabel>Ultimate</InputLabel>
-            <Select
-              value={tank.ultimate || ''}
-              onChange={(e) => onChange({ ultimate: (e.target.value as SupportUltimate) || null })}
-              label="Ultimate"
-              renderValue={(value) => (
+          <Autocomplete
+            freeSolo
+            options={availableUltimates}
+            value={tank.ultimate || null}
+            onChange={(_event, newValue) => onChange({ ultimate: newValue as string | null })}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Ultimate"
+                placeholder="Select or type custom ultimate"
+              />
+            )}
+            renderOption={(props, option) => (
+              <li {...props} key={option}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  {getUltimateIcon(value)}
-                  {value || <em>None</em>}
+                  {getUltimateIcon(option)}
+                  {option}
                 </Box>
-              )}
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              {availableUltimates.map((ult) => (
-                <MenuItem key={ult} value={ult}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {getUltimateIcon(ult)}
-                    {ult}
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              </li>
+            )}
+          />
+
+          {/* Compatibility Warnings */}
+          {(() => {
+            const warnings = validateCompatibility(
+              [
+                tank.gearSets.set1 ? getSetDisplayName(tank.gearSets.set1) : undefined,
+                tank.gearSets.set2 ? getSetDisplayName(tank.gearSets.set2) : undefined,
+                tank.gearSets.monsterSet ? getSetDisplayName(tank.gearSets.monsterSet) : undefined,
+                ...(tank.gearSets.additionalSets || []).map((id) => getSetDisplayName(id)),
+              ].filter((s): s is string => s !== undefined),
+              tank.ultimate,
+            );
+            if (warnings.length === 0) return null;
+            return (
+              <Stack spacing={1}>
+                {warnings.map((warning, index) => (
+                  <Alert key={index} severity="warning" sx={{ py: 0.5 }}>
+                    {warning}
+                  </Alert>
+                ))}
+              </Stack>
+            );
+          })()}
 
           {/* Advanced Options - Collapsible */}
           <Accordion elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
@@ -1081,6 +1715,30 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   </Box>
                 </Box>
 
+                {/* Player Labels/Tags */}
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  size="small"
+                  options={[]}
+                  value={tank.labels || []}
+                  onChange={(_, value) => onChange({ labels: value })}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
+                    ))
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      size="small"
+                      label="Labels / Tags"
+                      placeholder="Add custom labels"
+                      helperText="Press Enter to add new label"
+                    />
+                  )}
+                />
+
                 <TextField
                   fullWidth
                   size="small"
@@ -1099,33 +1757,35 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   multiple
                   freeSolo
                   size="small"
-                  options={[...ALL_5PIECE_SETS, ...MONSTER_SETS]}
-                  value={tank.gearSets.additionalSets || []}
+                  options={[...ALL_5PIECE_SETS, ...MONSTER_SETS]
+                    .map((id) => getSetDisplayName(id))
+                    .sort()}
+                  value={(tank.gearSets.additionalSets || []).map((id) => getSetDisplayName(id))}
                   onChange={(_, value) =>
                     onChange({
-                      gearSets: { ...tank.gearSets, additionalSets: value },
+                      gearSets: {
+                        ...tank.gearSets,
+                        additionalSets: value
+                          .map((name) => findSetIdByName(name))
+                          .filter((id): id is KnownSetIDs => id !== undefined),
+                      },
                     })
                   }
                   groupBy={(option) => {
-                    if (isRecommendedSet(option)) return '⭐ Recommended';
-                    if (isTank5PieceSet(option)) return 'Tank 5-Piece Sets';
-                    if (isFlexible5PieceSet(option)) return 'Flexible 5-Piece';
-                    if (isMonsterSet(option)) return 'Monster Sets';
+                    const setId = findSetIdByName(option);
+                    if (setId && isTank5PieceSet(setId)) return 'Tank Sets';
+                    if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
+                    if (setId && isMonsterSet(setId)) return 'Monster Sets';
                     return 'Other';
                   }}
                   renderInput={(params) => (
                     <TextField
                       {...params}
                       label="Additional Sets"
-                      helperText="e.g., monster sets, arena weapons"
+                      helperText="e.g., monster sets, arena weapons (type custom set name if not listed)"
                     />
                   )}
-                  renderOption={(props, option) => (
-                    <li {...props}>
-                      {isRecommendedSet(option) && '⭐ '}
-                      {option}
-                    </li>
-                  )}
+                  renderOption={(props, option) => <li {...props}>{option}</li>}
                 />
 
                 {/* Skill Lines Section */}
@@ -1151,7 +1811,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       <Autocomplete
                         freeSolo
                         size="small"
-                        options={[...CLASS_SKILL_LINES]}
+                        options={[...CLASS_SKILL_LINES].sort()}
                         value={tank.skillLines.line1}
                         onChange={(_, value) =>
                           onChange({
@@ -1173,7 +1833,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       <Autocomplete
                         freeSolo
                         size="small"
-                        options={[...CLASS_SKILL_LINES]}
+                        options={[...CLASS_SKILL_LINES].sort()}
                         value={tank.skillLines.line2}
                         onChange={(_, value) =>
                           onChange({
@@ -1195,7 +1855,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       <Autocomplete
                         freeSolo
                         size="small"
-                        options={[...CLASS_SKILL_LINES]}
+                        options={[...CLASS_SKILL_LINES].sort()}
                         value={tank.skillLines.line3}
                         onChange={(_, value) =>
                           onChange({
@@ -1307,7 +1967,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
                 freeSolo
-                options={availableGroups}
+                options={[...availableGroups].sort()}
                 value={healer.group?.groupName || ''}
                 onChange={(_, value) =>
                   onChange({
@@ -1320,23 +1980,30 @@ const HealerCard: React.FC<HealerCardProps> = ({
           </Box>
 
           {/* Gear Sets */}
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            Configure gear sets (5-piece sets + 2-piece monster/mythic)
+          </Typography>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
                 freeSolo
                 options={getHealer5PieceSetOptions()}
-                value={healer.set1}
-                onChange={(_, value) => onChange({ set1: value || '' })}
+                value={healer.set1 ? getSetDisplayName(healer.set1) : ''}
+                onChange={(_, value) =>
+                  onChange({ set1: value ? findSetIdByName(value) : undefined })
+                }
                 groupBy={(option) => {
-                  if (isRecommendedSet(option)) return '⭐ Recommended (Always Run)';
-                  if (isHealer5PieceSet(option)) return 'Healer Sets';
-                  if (isFlexible5PieceSet(option)) return 'Flexible (Tank/Healer)';
+                  const setId = findSetIdByName(option);
+                  if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
+                  if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
                   return 'Other';
                 }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Set 1 (5-piece)"
+                    label="Primary 5-Piece Set (Body)"
+                    placeholder="e.g., Stone-Talker's Oath"
+                    helperText="Worn on body armor pieces (type custom set name if not listed)"
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -1345,30 +2012,29 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     }}
                   />
                 )}
-                renderOption={(props, option) => (
-                  <li {...props}>
-                    {isRecommendedSet(option) && '⭐ '}
-                    {option}
-                  </li>
-                )}
+                renderOption={(props, option) => <li {...props}>{option}</li>}
               />
             </Box>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
                 freeSolo
                 options={getHealer5PieceSetOptions()}
-                value={healer.set2}
-                onChange={(_, value) => onChange({ set2: value || '' })}
+                value={healer.set2 ? getSetDisplayName(healer.set2) : ''}
+                onChange={(_, value) =>
+                  onChange({ set2: value ? findSetIdByName(value) : undefined })
+                }
                 groupBy={(option) => {
-                  if (isRecommendedSet(option)) return '⭐ Recommended (Always Run)';
-                  if (isHealer5PieceSet(option)) return 'Healer Sets';
-                  if (isFlexible5PieceSet(option)) return 'Flexible (Tank/Healer)';
+                  const setId = findSetIdByName(option);
+                  if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
+                  if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
                   return 'Other';
                 }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Set 2 (5-piece)"
+                    label="Secondary 5-Piece Set (Jewelry)"
+                    placeholder="e.g., Worm's Raiment"
+                    helperText="Worn on jewelry + weapons (type custom set name if not listed)"
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -1377,28 +2043,26 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     }}
                   />
                 )}
-                renderOption={(props, option) => (
-                  <li {...props}>
-                    {isRecommendedSet(option) && '⭐ '}
-                    {option}
-                  </li>
-                )}
+                renderOption={(props, option) => <li {...props}>{option}</li>}
               />
             </Box>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
                 freeSolo
                 options={getHealerMonsterSetOptions()}
-                value={healer.monsterSet || ''}
-                onChange={(_, value) => onChange({ monsterSet: value || '' })}
-                groupBy={(option) => {
-                  if (isRecommendedSet(option)) return '⭐ Recommended (Always Run)';
+                value={healer.monsterSet ? getSetDisplayName(healer.monsterSet) : ''}
+                onChange={(_, value) =>
+                  onChange({ monsterSet: value ? findSetIdByName(value) : undefined })
+                }
+                groupBy={(_option) => {
                   return 'Monster Sets';
                 }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Monster/Mythic Set"
+                    label="2-Piece Monster/Mythic Set"
+                    placeholder="e.g., Symphony of Blades"
+                    helperText="Head + shoulders, or 1-piece mythic (type custom set name if not listed)"
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -1407,12 +2071,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     }}
                   />
                 )}
-                renderOption={(props, option) => (
-                  <li {...props}>
-                    {isRecommendedSet(option) && '⭐ '}
-                    {option}
-                  </li>
-                )}
+                renderOption={(props, option) => <li {...props}>{option}</li>}
               />
             </Box>
           </Box>
@@ -1444,32 +2103,50 @@ const HealerCard: React.FC<HealerCardProps> = ({
             </Select>
           </FormControl>
 
-          <FormControl fullWidth>
-            <InputLabel>Ultimate</InputLabel>
-            <Select
-              value={healer.ultimate || ''}
-              onChange={(e) => onChange({ ultimate: (e.target.value as SupportUltimate) || null })}
-              label="Ultimate"
-              renderValue={(value) => (
+          <Autocomplete
+            freeSolo
+            options={availableUltimates}
+            value={healer.ultimate || null}
+            onChange={(_event, newValue) => onChange({ ultimate: newValue as string | null })}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Ultimate"
+                placeholder="Select or type custom ultimate"
+              />
+            )}
+            renderOption={(props, option) => (
+              <li {...props} key={option}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  {getUltimateIcon(value)}
-                  {value || <em>None</em>}
+                  {getUltimateIcon(option)}
+                  {option}
                 </Box>
-              )}
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              {availableUltimates.map((ult) => (
-                <MenuItem key={ult} value={ult}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {getUltimateIcon(ult)}
-                    {ult}
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              </li>
+            )}
+          />
+
+          {/* Compatibility Warnings */}
+          {(() => {
+            const warnings = validateCompatibility(
+              [
+                healer.set1 ? getSetDisplayName(healer.set1) : undefined,
+                healer.set2 ? getSetDisplayName(healer.set2) : undefined,
+                healer.monsterSet ? getSetDisplayName(healer.monsterSet) : undefined,
+                ...(healer.additionalSets || []).map((id) => getSetDisplayName(id)),
+              ].filter((s): s is string => s !== undefined),
+              healer.ultimate,
+            );
+            if (warnings.length === 0) return null;
+            return (
+              <Stack spacing={1}>
+                {warnings.map((warning, index) => (
+                  <Alert key={index} severity="warning" sx={{ py: 0.5 }}>
+                    {warning}
+                  </Alert>
+                ))}
+              </Stack>
+            );
+          })()}
 
           {/* Advanced Options - Collapsible */}
           <Accordion elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
@@ -1505,6 +2182,30 @@ const HealerCard: React.FC<HealerCardProps> = ({
                   </Box>
                 </Box>
 
+                {/* Player Labels/Tags */}
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  size="small"
+                  options={[]}
+                  value={healer.labels || []}
+                  onChange={(_, value) => onChange({ labels: value })}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
+                    ))
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      size="small"
+                      label="Labels / Tags"
+                      placeholder="Add custom labels"
+                      helperText="Press Enter to add new label"
+                    />
+                  )}
+                />
+
                 <TextField
                   fullWidth
                   size="small"
@@ -1523,29 +2224,32 @@ const HealerCard: React.FC<HealerCardProps> = ({
                   multiple
                   freeSolo
                   size="small"
-                  options={[...ALL_5PIECE_SETS, ...MONSTER_SETS]}
-                  value={healer.additionalSets || []}
-                  onChange={(_, value) => onChange({ additionalSets: value })}
+                  options={[...ALL_5PIECE_SETS, ...MONSTER_SETS]
+                    .map((id) => getSetDisplayName(id))
+                    .sort()}
+                  value={(healer.additionalSets || []).map((id) => getSetDisplayName(id))}
+                  onChange={(_, value) =>
+                    onChange({
+                      additionalSets: value
+                        .map((name) => findSetIdByName(name))
+                        .filter((id): id is KnownSetIDs => id !== undefined),
+                    })
+                  }
                   groupBy={(option) => {
-                    if (isRecommendedSet(option)) return '⭐ Recommended';
-                    if (isHealer5PieceSet(option)) return 'Healer 5-Piece Sets';
-                    if (isFlexible5PieceSet(option)) return 'Flexible 5-Piece';
-                    if (isMonsterSet(option)) return 'Monster Sets';
+                    const setId = findSetIdByName(option);
+                    if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
+                    if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
+                    if (setId && isMonsterSet(setId)) return 'Monster Sets';
                     return 'Other';
                   }}
                   renderInput={(params) => (
                     <TextField
                       {...params}
                       label="Additional Sets"
-                      helperText="e.g., monster sets, mythics"
+                      helperText="e.g., monster sets, mythics (type custom set name if not listed)"
                     />
                   )}
-                  renderOption={(props, option) => (
-                    <li {...props}>
-                      {isRecommendedSet(option) && '⭐ '}
-                      {option}
-                    </li>
-                  )}
+                  renderOption={(props, option) => <li {...props}>{option}</li>}
                 />
 
                 {/* Skill Lines Section */}
@@ -1571,7 +2275,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       <Autocomplete
                         freeSolo
                         size="small"
-                        options={[...CLASS_SKILL_LINES]}
+                        options={[...CLASS_SKILL_LINES].sort()}
                         value={healer.skillLines.line1}
                         onChange={(_, value) =>
                           onChange({
@@ -1593,7 +2297,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       <Autocomplete
                         freeSolo
                         size="small"
-                        options={[...CLASS_SKILL_LINES]}
+                        options={[...CLASS_SKILL_LINES].sort()}
                         value={healer.skillLines.line2}
                         onChange={(_, value) =>
                           onChange({
@@ -1615,7 +2319,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       <Autocomplete
                         freeSolo
                         size="small"
-                        options={[...CLASS_SKILL_LINES]}
+                        options={[...CLASS_SKILL_LINES].sort()}
                         value={healer.skillLines.line3}
                         onChange={(_, value) =>
                           onChange({
@@ -1659,15 +2363,70 @@ interface DPSSlotCardProps {
   slot: DPSSlot;
   availableGroups: string[];
   onChange: (updates: Partial<DPSSlot>) => void;
+  onConvertToJail: (slotNumber: number, jailType: JailDDType) => void;
+  onConvertToDPS: (slotNumber: number) => void;
 }
 
-const DPSSlotCard: React.FC<DPSSlotCardProps> = ({ slot, availableGroups, onChange }) => {
+const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
+  slot,
+  availableGroups,
+  onChange,
+  onConvertToJail,
+  onConvertToDPS,
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: slot.slotNumber,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const getJailDDTitle = (type: JailDDType): string => {
+    switch (type) {
+      case 'banner':
+        return 'Banner Jail DD';
+      case 'zenkosh':
+        return 'Zenkosh Jail DD';
+      case 'wm':
+        return 'War Machine Jail DD';
+      case 'wm-mk':
+        return 'WM/MK Jail DD';
+      case 'mk':
+        return 'Martial Knowledge Jail DD';
+      case 'custom':
+        return slot.customDescription || 'Custom Jail DD';
+      default:
+        return 'Jail DD';
+    }
+  };
+
   return (
-    <Card variant="outlined" sx={{ bgcolor: 'action.hover' }}>
+    <Card
+      ref={setNodeRef}
+      style={style}
+      variant="outlined"
+      sx={{ bgcolor: 'action.hover', cursor: isDragging ? 'grabbing' : 'default' }}
+    >
       <CardContent>
-        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-          DPS {slot.slotNumber}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <IconButton size="small" {...attributes} {...listeners} sx={{ cursor: 'grab' }}>
+            <DragIndicatorIcon />
+          </IconButton>
+          <Typography variant="subtitle1" fontWeight="bold">
+            DPS {slot.slotNumber}
+            {slot.jailDDType && (
+              <Chip
+                label={getJailDDTitle(slot.jailDDType)}
+                size="small"
+                color="primary"
+                sx={{ ml: 1 }}
+              />
+            )}
+          </Typography>
+        </Box>
         <Stack spacing={2}>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 40%', minWidth: 180 }}>
@@ -1693,7 +2452,7 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({ slot, availableGroups, onChan
               <Autocomplete
                 freeSolo
                 size="small"
-                options={availableGroups}
+                options={[...availableGroups].sort()}
                 value={slot.group?.groupName || ''}
                 onChange={(_, value) =>
                   onChange({
@@ -1704,6 +2463,97 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({ slot, availableGroups, onChan
               />
             </Box>
           </Box>
+
+          {/* Player Labels/Tags */}
+          <Autocomplete
+            multiple
+            freeSolo
+            size="small"
+            options={[]}
+            value={slot.labels || []}
+            onChange={(_, value) => onChange({ labels: value })}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
+              ))
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                size="small"
+                label="Labels / Tags"
+                placeholder="Add custom labels (Press Enter)"
+              />
+            )}
+          />
+
+          {/* Convert to Jail DD or back to regular DPS */}
+          {!slot.jailDDType ? (
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mb: 0.5, display: 'block' }}
+              >
+                Convert to Jail DD:
+              </Typography>
+              <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => onConvertToJail(slot.slotNumber, 'banner')}
+                >
+                  Banner
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => onConvertToJail(slot.slotNumber, 'zenkosh')}
+                >
+                  Zenkosh
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => onConvertToJail(slot.slotNumber, 'wm')}
+                >
+                  WM
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => onConvertToJail(slot.slotNumber, 'wm-mk')}
+                >
+                  WM/MK
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => onConvertToJail(slot.slotNumber, 'mk')}
+                >
+                  MK
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => onConvertToJail(slot.slotNumber, 'custom')}
+                >
+                  Custom
+                </Button>
+              </Stack>
+            </Box>
+          ) : (
+            <Box>
+              <Button
+                size="small"
+                variant="outlined"
+                color="secondary"
+                onClick={() => onConvertToDPS(slot.slotNumber)}
+              >
+                Convert Back to Regular DPS
+              </Button>
+            </Box>
+          )}
         </Stack>
       </CardContent>
     </Card>
@@ -1711,147 +2561,6 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({ slot, availableGroups, onChan
 };
 
 // DD Requirement Card Component
-interface DDRequirementCardProps {
-  requirement: DDRequirement;
-  availableGroups: string[];
-  onChange: (updates: Partial<DDRequirement>) => void;
-  onRemove: () => void;
-}
-
-const DDRequirementCard: React.FC<DDRequirementCardProps> = ({
-  requirement,
-  availableGroups,
-  onChange,
-  onRemove,
-}) => {
-  const title =
-    requirement.type === 'war-machine-mk'
-      ? 'War Machine + Martial Knowledge DD'
-      : "Zen's Redress + Alkosh DD";
-
-  return (
-    <Card variant="outlined">
-      <CardContent>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6">{title}</Typography>
-          <IconButton onClick={onRemove} color="error">
-            <DeleteIcon />
-          </IconButton>
-        </Stack>
-        <Stack spacing={2}>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-              <TextField
-                fullWidth
-                label="Player Name (Optional)"
-                value={requirement.playerName || ''}
-                onChange={(e) => onChange({ playerName: e.target.value })}
-              />
-            </Box>
-            <Box sx={{ flex: '1 1 20%', minWidth: 100 }}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Player #"
-                value={requirement.playerNumber || ''}
-                onChange={(e) =>
-                  onChange({
-                    playerNumber: e.target.value ? parseInt(e.target.value, 10) : undefined,
-                  })
-                }
-                helperText="Optional ID"
-              />
-            </Box>
-            <Box sx={{ flex: '1 1 25%', minWidth: 150 }}>
-              <Autocomplete
-                freeSolo
-                options={availableGroups}
-                value={requirement.group?.groupName || ''}
-                onChange={(_, value) =>
-                  onChange({
-                    group: value ? { groupName: value } : undefined,
-                  })
-                }
-                renderInput={(params) => <TextField {...params} label="Group" />}
-              />
-            </Box>
-          </Box>
-
-          {/* Skill Lines Section */}
-          <Divider textAlign="left">
-            <Chip label="Skill Lines" size="small" />
-          </Divider>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={requirement.skillLines.isFlex}
-                onChange={(e) =>
-                  onChange({
-                    skillLines: { ...requirement.skillLines, isFlex: e.target.checked },
-                  })
-                }
-              />
-            }
-            label="Flexible (any skill lines)"
-          />
-          {!requirement.skillLines.isFlex && (
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
-                <Autocomplete
-                  freeSolo
-                  options={[...CLASS_SKILL_LINES]}
-                  value={requirement.skillLines.line1}
-                  onChange={(_, value) =>
-                    onChange({
-                      skillLines: { ...requirement.skillLines, line1: value || '' },
-                    })
-                  }
-                  renderInput={(params) => <TextField {...params} label="Skill Line 1" required />}
-                />
-              </Box>
-              <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
-                <Autocomplete
-                  freeSolo
-                  options={[...CLASS_SKILL_LINES]}
-                  value={requirement.skillLines.line2}
-                  onChange={(_, value) =>
-                    onChange({
-                      skillLines: { ...requirement.skillLines, line2: value || '' },
-                    })
-                  }
-                  renderInput={(params) => <TextField {...params} label="Skill Line 2" required />}
-                />
-              </Box>
-              <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
-                <Autocomplete
-                  freeSolo
-                  options={[...CLASS_SKILL_LINES]}
-                  value={requirement.skillLines.line3}
-                  onChange={(_, value) =>
-                    onChange({
-                      skillLines: { ...requirement.skillLines, line3: value || '' },
-                    })
-                  }
-                  renderInput={(params) => <TextField {...params} label="Skill Line 3" required />}
-                />
-              </Box>
-            </Box>
-          )}
-
-          <TextField
-            fullWidth
-            multiline
-            rows={2}
-            label="Notes"
-            value={requirement.notes || ''}
-            onChange={(e) => onChange({ notes: e.target.value })}
-          />
-        </Stack>
-      </CardContent>
-    </Card>
-  );
-};
-
 // Generate Discord formatted text
 const generateDiscordFormat = (roster: RaidRoster): string => {
   const lines: string[] = [];
@@ -1860,25 +2569,17 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
   lines.push('');
 
   // Helper to format ultimate in brackets
-  const formatUlt = (ult: SupportUltimate | null): string => {
+  const formatUlt = (ult: string | null): string => {
     if (!ult) return '';
-    const names: Record<SupportUltimate, string> = {
-      [SupportUltimate.WARHORN]: 'Aggressive Warhorn',
-      [SupportUltimate.COLOSSUS]: 'Glacial Colossus',
-      [SupportUltimate.BARRIER]: 'Barrier',
-      [SupportUltimate.ATRONACH]: 'Greater Storm Atronach',
-    };
-    return ` [${names[ult]}]`;
+    // Return custom ultimates as-is, or use preset names
+    return ` [${ult}]`;
   };
 
   // Helper to format healer buff
   const formatBuff = (buff: HealerBuff | null): string => {
     if (!buff) return '';
-    const names: Record<HealerBuff, string> = {
-      [HealerBuff.ENLIVENING_OVERFLOW]: 'Enlivening Overflow',
-      [HealerBuff.FROM_THE_BRINK]: 'From the Brink',
-    };
-    return names[buff];
+    // Enum values already contain the display names
+    return buff;
   };
 
   // Helper to format skill lines compactly (returns empty string if nothing)
@@ -1890,21 +2591,33 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
 
   // Helper to format gear sets (returns empty string if no sets)
   const formatGearSets = (
-    tank?: { set1: string; set2: string; monsterSet?: string; additionalSets?: string[] },
-    healer?: { set1: string; set2: string; monsterSet?: string; additionalSets?: string[] },
+    tank?: {
+      set1?: KnownSetIDs;
+      set2?: KnownSetIDs;
+      monsterSet?: KnownSetIDs;
+      additionalSets?: KnownSetIDs[];
+    },
+    healer?: {
+      set1?: KnownSetIDs;
+      set2?: KnownSetIDs;
+      monsterSet?: KnownSetIDs;
+      additionalSets?: KnownSetIDs[];
+    },
   ): string => {
     const sets: string[] = [];
     if (tank) {
-      if (tank.set1) sets.push(tank.set1);
-      if (tank.set2) sets.push(tank.set2);
-      if (tank.monsterSet) sets.push(tank.monsterSet);
-      if (tank.additionalSets) sets.push(...tank.additionalSets.filter(Boolean));
+      if (tank.set1) sets.push(getSetDisplayName(tank.set1));
+      if (tank.set2) sets.push(getSetDisplayName(tank.set2));
+      if (tank.monsterSet) sets.push(getSetDisplayName(tank.monsterSet));
+      if (tank.additionalSets)
+        sets.push(...tank.additionalSets.map((id) => getSetDisplayName(id)).filter(Boolean));
     }
     if (healer) {
-      if (healer.set1) sets.push(healer.set1);
-      if (healer.set2) sets.push(healer.set2);
-      if (healer.monsterSet) sets.push(healer.monsterSet);
-      if (healer.additionalSets) sets.push(...healer.additionalSets.filter(Boolean));
+      if (healer.set1) sets.push(getSetDisplayName(healer.set1));
+      if (healer.set2) sets.push(getSetDisplayName(healer.set2));
+      if (healer.monsterSet) sets.push(getSetDisplayName(healer.monsterSet));
+      if (healer.additionalSets)
+        sets.push(...healer.additionalSets.map((id) => getSetDisplayName(id)).filter(Boolean));
     }
     return sets.filter(Boolean).join('/');
   };
@@ -1915,8 +2628,9 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
     const label = num === 1 ? 'MT' : 'OT';
     const roleNote = tank.roleNotes ? ` [${tank.roleNotes}]` : '';
     const playerName = tank.playerName ? ` ${tank.playerName}` : '';
+    const labels = tank.labels && tank.labels.length > 0 ? ` (${tank.labels.join(', ')})` : '';
 
-    lines.push(`${label}${roleNote}:${playerName}`);
+    lines.push(`${label}${roleNote}:${playerName}${labels}`);
     const gearSets = formatGearSets(tank.gearSets);
     if (gearSets) lines.push(gearSets);
     const skillLines = formatSkillLines(tank.skillLines);
@@ -1935,8 +2649,9 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
     const roleNote = h.roleNotes ? ` [${h.roleNotes}]` : '';
     const playerName = h.playerName ? ` ${h.playerName}` : '';
     const groupName = h.group?.groupName ? ` (${h.group.groupName})` : '';
+    const labels = h.labels && h.labels.length > 0 ? ` [${h.labels.join(', ')}]` : '';
 
-    lines.push(`${label}${roleNote}:${playerName}${groupName}`);
+    lines.push(`${label}${roleNote}:${playerName}${groupName}${labels}`);
     const gearSets = formatGearSets(undefined, h);
     if (gearSets) lines.push(gearSets);
     const buff = formatBuff(h.healerBuff);
@@ -1951,65 +2666,38 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
   lines.push('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
   lines.push('');
 
-  // DPS - combine regular slots and DD requirements
-  interface DDEntry {
-    number: number;
-    playerName?: string;
-    roleNotes?: string;
-    groupName?: string;
-    type?: 'war-machine-mk' | 'zen-alkosh';
-    skillLines?: SkillLineConfig;
-  }
-
-  const allDDs: DDEntry[] = [];
-
-  // Add regular DPS slots
-  roster.dpsSlots.forEach((slot) => {
-    allDDs.push({
-      number: slot.slotNumber,
-      playerName: slot.playerName,
-      roleNotes: slot.roleNotes,
-      groupName: slot.group?.groupName,
-    });
-  });
-
-  // Track used slot numbers from regular DPS slots and DD requirements
-  const usedNumbers = new Set(roster.dpsSlots.map((slot) => slot.slotNumber));
-
-  // Add DD requirements with proper numbering
-  roster.ddRequirements.forEach((req) => {
-    // Use the explicitly set playerNumber if available
-    let ddNumber = req.playerNumber;
-
-    // If no playerNumber is set, find the next available slot
-    if (!ddNumber) {
-      ddNumber = 1;
-      while (usedNumbers.has(ddNumber)) {
-        ddNumber++;
-      }
+  // Format jail DD type for display
+  const formatJailDDType = (type: JailDDType, customDescription?: string): string => {
+    switch (type) {
+      case 'banner':
+        return 'Banner';
+      case 'zenkosh':
+        return 'ZenKosh';
+      case 'wm':
+        return 'WM';
+      case 'wm-mk':
+        return 'WM/MK';
+      case 'mk':
+        return 'MK';
+      case 'custom':
+        return customDescription || 'Custom';
+      default:
+        return '';
     }
+  };
 
-    usedNumbers.add(ddNumber);
-
-    allDDs.push({
-      number: ddNumber,
-      playerName: req.playerName,
-      roleNotes: req.notes,
-      groupName: req.group?.groupName,
-      type: req.type,
-      skillLines: req.skillLines,
-    });
-  });
+  // DPS - all slots are now in dpsSlots array, some may have jailDDType
+  const sortedDPS = [...roster.dpsSlots].sort((a, b) => a.slotNumber - b.slotNumber);
 
   // Check if any DDs have groups assigned
-  const hasGroups = allDDs.some((dd) => dd.groupName);
+  const hasGroups = sortedDPS.some((dd) => dd.group?.groupName);
 
   if (hasGroups) {
     // Group DDs by their group
-    const groupedDDs = new Map<string, DDEntry[]>();
+    const groupedDDs = new Map<string, DPSSlot[]>();
 
-    allDDs.forEach((dd) => {
-      const group = dd.groupName || 'Unassigned';
+    sortedDPS.forEach((dd) => {
+      const group = dd.group?.groupName || 'Unassigned';
       if (!groupedDDs.has(group)) {
         groupedDDs.set(group, []);
       }
@@ -2022,10 +2710,11 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
       dds.forEach((dd) => {
         const roleNote = dd.roleNotes ? ` [${dd.roleNotes}]` : '';
         const playerName = dd.playerName ? ` ${dd.playerName}` : '';
-        const typeLabel = dd.type
-          ? ` [${dd.type === 'war-machine-mk' ? 'MK/WM DK' : 'ZenKosh DK'}]`
+        const typeLabel = dd.jailDDType
+          ? ` [${formatJailDDType(dd.jailDDType, dd.customDescription)}]`
           : '';
-        lines.push(`${dd.number}${typeLabel}${roleNote}:${playerName}`);
+        const labels = dd.labels && dd.labels.length > 0 ? ` (${dd.labels.join(', ')})` : '';
+        lines.push(`${dd.slotNumber}${typeLabel}${roleNote}:${playerName}${labels}`);
         if (dd.skillLines) {
           const skillLines = formatSkillLines(dd.skillLines);
           if (skillLines) lines.push(skillLines);
@@ -2035,13 +2724,14 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
     });
   } else {
     // No groups - print DDs sequentially
-    allDDs.forEach((dd) => {
+    sortedDPS.forEach((dd) => {
       const roleNote = dd.roleNotes ? ` [${dd.roleNotes}]` : '';
       const playerName = dd.playerName ? ` ${dd.playerName}` : '';
-      const typeLabel = dd.type
-        ? ` [${dd.type === 'war-machine-mk' ? 'MK/WM DK' : 'ZenKosh DK'}]`
+      const typeLabel = dd.jailDDType
+        ? ` [${formatJailDDType(dd.jailDDType, dd.customDescription)}]`
         : '';
-      lines.push(`${dd.number}${typeLabel}${roleNote}:${playerName}`);
+      const labels = dd.labels && dd.labels.length > 0 ? ` (${dd.labels.join(', ')})` : '';
+      lines.push(`${dd.slotNumber}${typeLabel}${roleNote}:${playerName}${labels}`);
       if (dd.skillLines) {
         const skillLines = formatSkillLines(dd.skillLines);
         if (skillLines) lines.push(skillLines);

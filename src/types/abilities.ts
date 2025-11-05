@@ -599,12 +599,100 @@ export enum CriticalDamageValues {
 }
 
 /**
- * Set IDs for gear sets that provide penetration
+ * Set IDs for gear sets
+ *
+ * IMPORTANT: These are ACTUAL set IDs from the ESO Logs API.
+ * Extracted from combat log data: report bTL2vHXGk3JaPcmx, fight 9
+ *
+ * To add more set IDs:
+ * 1. Download report data: npm run download-report-data <report-code> <fight-id>
+ * 2. Extract setID from player-details.json gear data
+ * 3. Add to this enum with the actual ID from the API
  */
 export enum KnownSetIDs {
-  VELOTHI_UR_MAGE = 694,
-  ANSUULS_TORMENT_SET = 707,
-  TIDEBORN_WILDSTALKER_SET = 809,
+  // ============================================================
+  // SUPPORT SETS - HEALER 5-PIECE
+  // ============================================================
+  WAY_OF_MARTIAL_KNOWLEDGE = 147, // Way of Martial Knowledge (aka Martial Knowledge)
+  POWERFUL_ASSAULT = 180, // Powerful Assault
+  SPELL_POWER_CURE = 185, // Spell Power Cure
+  COMBAT_PHYSICIAN = 194, // Combat Physician
+  MASTER_ARCHITECT = 332, // Master Architect
+  JORVULDS_GUIDANCE = 346, // Jorvuld's Guidance
+  VESTMENT_OF_OLORIME = 391, // Vestment of Olorime (Olorime)
+  PERFECTED_VESTMENT_OF_OLORIME = 395, // Perfected Vestment of Olorime
+  ZENS_REDRESS = 455, // Z'en's Redress
+  ROARING_OPPORTUNIST = 496, // Roaring Opportunist
+  PERFECTED_ROARING_OPPORTUNIST = 497, // Perfected Roaring Opportunist
+
+  // ============================================================
+  // SUPPORT SETS - TANK 5-PIECE
+  // ============================================================
+  ROAR_OF_ALKOSH = 232, // Roar of Alkosh
+  WAR_MACHINE = 331, // War Machine
+  CLAW_OF_YOLNAHKRIIN = 446, // Claw of Yolnahkriin
+  PERFECTED_CLAW_OF_YOLNAHKRIIN = 451, // Perfected Claw of Yolnahkriin
+  DRAKES_RUSH = 571, // Drake's Rush
+  PERFECTED_SAXHLEEL_CHAMPION = 589, // Perfected Saxhleel Champion
+  PEARLESCENT_WARD = 648, // Pearlescent Ward
+  PILLAGERS_PROFIT = 649, // Pillager's Profit
+  PERFECTED_PILLAGERS_PROFIT = 650, // Perfected Pillager's Profit
+  PERFECTED_PEARLESCENT_WARD = 651, // Perfected Pearlescent Ward
+  LUCENT_ECHOES = 768, // Lucent Echoes
+  PERFECTED_LUCENT_ECHOES = 771, // Perfected Lucent Echoes
+
+  // ============================================================
+  // SUPPORT SETS - MONSTER SETS (2-PIECE)
+  // ============================================================
+  ENGINE_GUARDIAN = 166, // Engine Guardian
+  VALKYN_SKORIA = 169, // Valkyn Skoria
+  SLIMECRAW = 270, // Slimecraw
+  EARTHGORE = 341, // Earthgore
+  SYMPHONY_OF_BLADES = 436, // Symphony of Blades
+  STONE_HUSK = 534, // Stone Husk
+  ENCRATIS_BEHEMOTH = 577, // Encratis's Behemoth (Encratis)
+  BARON_ZAUDRUS = 578, // Baron Zaudrus
+  SPAULDER_OF_RUIN = 627, // Spaulder of Ruin
+  NAZARAY = 633, // Nazaray
+  NUNATAK = 634, // Nunatak
+  ARCHDRUID_DEVYRIC = 666, // Archdruid Devyric
+  OZEZAN = 687, // Ozezan the Great
+  THE_BLIND = 738, // The Blind
+
+  // ============================================================
+  // MYTHIC SETS
+  // ============================================================
+  PEARLS_OF_EHLNOFEY = 576, // Pearls of Ehlnofey
+  VELOTHI_UR_MAGE = 694, // Velothi Ur-Mage's Amulet
+
+  // ============================================================
+  // DPS SETS - 5-PIECE
+  // ============================================================
+  DEADLY_STRIKE = 127, // Deadly Strike
+  PERFECTED_MERCILESS_CHARGE = 522, // Perfected Merciless Charge
+  MERCILESS_CHARGE = 369, // Merciless Charge
+  CRUSHING_WALL = 373, // Crushing Wall
+  PERFECTED_CRUSHING_WALL = 526, // Perfected Crushing Wall
+  PERFECTED_GRAND_REJUVENATION = 533, // Perfected Grand Rejuvenation
+  CRYPTCANON_VESTMENTS = 691, // Cryptcanon Vestments
+  PERFECTED_ANSUULS_TORMENT = 707, // Perfected Ansuul's Torment
+  SLIVERS_OF_THE_NULL_ARCA = 767, // Slivers of the Null Arca
+  PERFECTED_SLIVERS_OF_THE_NULL_ARCA = 772, // Perfected Slivers of the Null Arca
+  PERFECTED_XORYNS_MASTERPIECE = 770, // Perfected Xoryn's Masterpiece
+  TIDEBORN_WILDSTALKER = 809, // Tide-Born Wildstalker
+
+  // ============================================================
+  // OTHER SETS (Training/Leveling)
+  // ============================================================
+  ARMOR_OF_THE_TRAINEE = 281, // Armor of the Trainee
+  AEGIS_CALLER = 475, // Aegis Caller
+  PLAGUE_SLINGER = 347, // Plague Slinger
+
+  // ============================================================
+  // DPS/PENETRATION SETS (Previously defined, keeping for compatibility)
+  // ============================================================
+  ANSUULS_TORMENT_SET = 707, // Same as PERFECTED_ANSUULS_TORMENT
+  TIDEBORN_WILDSTALKER_SET = 809, // Same as TIDEBORN_WILDSTALKER
   SUL_XAN_TORMENT_SET = 708, // Sul-Xan's Torment set
   MORA_SCRIBE_THESIS_SET = 709, // Mora Scribe's Thesis set
   HARPOONER_WADING_KILT_SET = 710, // Harpooner's Wading Kilt set
@@ -622,7 +710,7 @@ export enum KnownSetIDs {
   CORPSEBURSTER_SET = 722, // Corpseburster set
   PERFECT_ARMS_OF_RELEQUEN_SET = 723, // Perfect Arms of Relequen set
   PERFECT_AURORAN_THUNDER_SET = 724, // Perfect Auroran's Thunder set
-  PERFECT_ANSUULS_TORMENT_SET = 725, // Perfect Ansuul's Torment set
+  PERFECT_ANSUULS_TORMENT_SET = 725, // Perfect Ansuul's Torment set (duplicate of 707)
   DARK_CONVERGENCE_SET = 726, // Dark Convergence set
   DRAUGRKINS_GRIP_SET = 727, // Draugrkin's Grip set
   DRO_ZAKARS_CLAWS_SET = 728, // Dro'Zakar's Claws set
@@ -643,11 +731,9 @@ export enum KnownSetIDs {
   NOXIOUS_BOULDER_SET = 743, // Noxious Boulder set
   OBLIVIONS_FOE_SET = 744, // Oblivion's Foe set
   PELINALS_WRATH_SET = 745, // Pelinal's Wrath set
-  PERFECTED_CRUSHING_WALL_SET = 746, // Perfected Crushing Wall set
+  PERFECTED_CRUSHING_WALL_SET = 746, // Perfected Crushing Wall set (duplicate of 526)
   PERFECTED_KAZPIANS_CRUEL_SIGNET_SET = 747, // Perfected Kazpian's Cruel Signet set
-  PERFECTED_MERCILESS_CHARGE_SET = 748, // Perfected Merciless Charge set
-
-  // TODO: Add other set IDs as needed
+  PERFECTED_MERCILESS_CHARGE_SET = 748, // Perfected Merciless Charge set (duplicate of 522)
 }
 
 /**
