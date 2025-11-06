@@ -133,6 +133,8 @@
     "coverage:gist": "node scripts/upload-coverage-to-gist.cjs",
     "coverage:open": "start coverage/lcov-report/index.html",
     "dev": "node scripts/generate-version.cjs && vite",
+    "discover-missing-sets": "npm run script -- scripts/discover-missing-sets.ts",
+    "discover-sets-personal": "npm run script -- scripts/discover-sets-from-personal-logs.ts",
     "download-report-data": "npm run script -- scripts/download-report-data.ts",
     "download-test-data": "npm run script -- scripts/download-test-data.ts",
     "extract-grimoire-ids": "node scripts/extract-grimoire-ids.js",

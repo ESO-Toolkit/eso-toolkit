@@ -314,11 +314,11 @@ export function isComputedSourceActive(
     case ComputedCriticalDamageSources.FATED_FORTUNE:
       return isAuraActive(combatantInfo, KnownAbilities.FATED_FORTUNE_STAGE_ONE);
     case ComputedCriticalDamageSources.SUL_XAN_TORMENT:
-      return isGearSourceActive(combatantInfo, KnownSetIDs.SUL_XAN_TORMENT_SET, 5);
+      return isGearSourceActive(combatantInfo, KnownSetIDs.SUL_XAN_TORMENT, 5);
     case ComputedCriticalDamageSources.MORA_SCRIBE_THESIS:
-      return isGearSourceActive(combatantInfo, KnownSetIDs.MORA_SCRIBE_THESIS_SET, 5);
+      return isGearSourceActive(combatantInfo, KnownSetIDs.MORA_SCRIBE, 5);
     case ComputedCriticalDamageSources.HARPOONER_WADING_KILT:
-      return isGearSourceActive(combatantInfo, KnownSetIDs.HARPOONER_WADING_KILT_SET, 1);
+      return isGearSourceActive(combatantInfo, KnownSetIDs.HARPOONERS_KILT, 1);
     case ComputedCriticalDamageSources.ADVANCED_SPECIES:
       return isAuraActive(combatantInfo, KnownAbilities.ADVANCED_SPECIES);
     case ComputedCriticalDamageSources.DUAL_WIELD_AXES:
@@ -619,21 +619,17 @@ export function getCritDamageFromComputedSource(
       return 0;
     case ComputedCriticalDamageSources.SUL_XAN_TORMENT: {
       // Check if player has 5 pieces of Sul-Xan's Torment equipped
-      const hasFullSet = isGearSourceActive(combatantInfo, KnownSetIDs.SUL_XAN_TORMENT_SET, 5);
+      const hasFullSet = isGearSourceActive(combatantInfo, KnownSetIDs.SUL_XAN_TORMENT, 5);
       return hasFullSet ? CriticalDamageValues.SUL_XAN_TORMENT : 0;
     }
     case ComputedCriticalDamageSources.MORA_SCRIBE_THESIS: {
       // Check if player has 5 pieces of Mora Scribe's Thesis equipped
-      const hasFullMoraSet = isGearSourceActive(
-        combatantInfo,
-        KnownSetIDs.MORA_SCRIBE_THESIS_SET,
-        5,
-      );
+      const hasFullMoraSet = isGearSourceActive(combatantInfo, KnownSetIDs.MORA_SCRIBE, 5);
       return hasFullMoraSet ? CriticalDamageValues.MORA_SCRIBE_THESIS : 0;
     }
     case ComputedCriticalDamageSources.HARPOONER_WADING_KILT: {
       // Check if player has Harpooner's Wading Kilt equipped
-      const hasKilt = isGearSourceActive(combatantInfo, KnownSetIDs.HARPOONER_WADING_KILT_SET, 1);
+      const hasKilt = isGearSourceActive(combatantInfo, KnownSetIDs.HARPOONERS_KILT, 1);
       return hasKilt ? CriticalDamageValues.HARPOONER_WADING_KILT : 0;
     }
     case ComputedCriticalDamageSources.ADVANCED_SPECIES: {

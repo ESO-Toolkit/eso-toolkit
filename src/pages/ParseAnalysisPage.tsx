@@ -1271,6 +1271,7 @@ const ParseAnalysisPageContent: React.FC = () => {
               size="small"
               onClick={() => setWeaveDetailsOpen(true)}
               title="View detailed cast breakdown"
+              aria-label="View detailed cast breakdown"
             >
               <InfoIcon />
             </IconButton>

@@ -63,7 +63,8 @@ import {
 import React, { useState, useCallback } from 'react';
 
 import { SetAssignmentManager } from '../components/SetAssignmentManager';
-import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
+import { useEsoLogsClientContext } from '../EsoLogsClientContext';
+import { useAuth } from '../features/auth/AuthContext';
 import { GetPlayersForReportQuery } from '../graphql/gql/graphql';
 import { KnownAbilities, KnownSetIDs } from '../types/abilities';
 import {
@@ -95,6 +96,8 @@ import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
  */
 interface GearItem {
   setName?: string;
+  setID?: number; // Set ID from API
+  permanentEnchant?: number; // Mythic items have this set, counts as 2 pieces
   [key: string]: unknown;
 }
 
@@ -391,8 +394,14 @@ export const RosterBuilderPage: React.FC = () => {
   const [importUrl, setImportUrl] = useState('');
   const [importLoading, setImportLoading] = useState(false);
 
-  // Get Apollo Client for GraphQL queries
-  const client = useEsoLogsClientInstance();
+  // Get auth state
+  const { isLoggedIn } = useAuth();
+
+  // Get ESO Logs client context (safe to call - doesn't throw if not logged in)
+  const { client: esoLogsClient, isReady, isLoggedIn: clientLoggedIn } = useEsoLogsClientContext();
+
+  // Client is only available when ready and logged in
+  const client = isReady && clientLoggedIn ? esoLogsClient : null;
 
   // Helper functions for role mapping
   const getRoleNumber = useCallback((role: 'tank1' | 'tank2' | 'healer1' | 'healer2'): 1 | 2 => {
@@ -413,17 +422,24 @@ export const RosterBuilderPage: React.FC = () => {
       // Convert 'monster' to 'monsterSet' for internal state
       const slotKey = (slot === 'monster' ? 'monsterSet' : slot) as 'set1' | 'set2' | 'monsterSet';
 
+      // Convert set name to set ID for proper type safety
+      const setId = findSetIdByName(setName);
+      if (!setId) {
+        // Set not found, skip assignment silently
+        return;
+      }
+
       if (isTankRole(role)) {
         const currentTank = roster[role];
         handleTankChange(roleNum, {
           gearSets: {
             ...currentTank.gearSets,
-            [slotKey]: setName,
+            [slotKey]: setId,
           },
         });
       } else {
         handleHealerChange(roleNum, {
-          [slotKey]: setName,
+          [slotKey]: setId,
         });
       }
     },
@@ -640,6 +656,15 @@ export const RosterBuilderPage: React.FC = () => {
       return;
     }
 
+    if (!client) {
+      setSnackbar({
+        open: true,
+        message: 'You must be logged in to import from ESO Logs.',
+        severity: 'error',
+      });
+      return;
+    }
+
     try {
       setImportLoading(true);
 
@@ -773,28 +798,100 @@ export const RosterBuilderPage: React.FC = () => {
         monsterSets: string[];
         otherSets: string[];
       } => {
-        const setCountMap = new Map<string, number>();
+        // Helper to normalize set names (remove "Perfected" prefix)
+        const normalizeSetName = (name: string): string => {
+          return name.replace(/^Perfected\s+/i, '');
+        };
 
-        // Count how many pieces of each set
-        gear.forEach((item: GearItem) => {
-          if (item.setName) {
-            setCountMap.set(item.setName, (setCountMap.get(item.setName) || 0) + 1);
+        // Helper to check if a name has "Perfected" prefix
+        const isPerfected = (name: string): boolean => {
+          return /^Perfected\s+/i.test(name);
+        };
+
+        // Transform gear items: if setName is missing but setID exists, look up the name
+        const transformedGear = gear.map((item) => {
+          if (!item.setName && item.setID) {
+            // Try to get the display name from the setID
+            const displayName = getSetDisplayName(item.setID as KnownSetIDs);
+            if (displayName) {
+              return { ...item, setName: displayName };
+            }
           }
+          return item;
+        });
+
+        // First pass: Count pieces and track which version (perfected/non-perfected) we have
+        const rawCountMap = new Map<string, number>();
+        const perfectedVersions = new Map<string, string>(); // normalized name -> actual perfected name
+
+        transformedGear.forEach((item: GearItem) => {
+          if (item.setName) {
+            const pieceCount = item.permanentEnchant ? 2 : 1;
+            rawCountMap.set(item.setName, (rawCountMap.get(item.setName) || 0) + pieceCount);
+
+            // Track perfected versions
+            if (isPerfected(item.setName)) {
+              const normalized = normalizeSetName(item.setName);
+              perfectedVersions.set(normalized, item.setName);
+            }
+          }
+        });
+
+        // Second pass: Consolidate perfected and non-perfected sets
+        const setCountMap = new Map<string, number>();
+        const processedNormalized = new Set<string>();
+
+        rawCountMap.forEach((count, setName) => {
+          const normalized = normalizeSetName(setName);
+
+          // Skip if we've already processed this set (either version)
+          if (processedNormalized.has(normalized)) {
+            return;
+          }
+
+          processedNormalized.add(normalized);
+
+          // Check if there's a perfected version
+          const perfectedName = perfectedVersions.get(normalized);
+
+          // Calculate total count (perfected + non-perfected pieces)
+          let totalCount = 0;
+          if (perfectedName) {
+            totalCount += rawCountMap.get(perfectedName) || 0;
+          }
+          // Add non-perfected count (if it exists)
+          const nonPerfectedCount = rawCountMap.get(normalized) || 0;
+          totalCount += nonPerfectedCount;
+
+          // Always use the non-perfected (normalized) name for consistency
+          setCountMap.set(normalized, totalCount);
         });
 
         const fivePieceSets: string[] = [];
         const monsterSets: string[] = [];
         const otherSets: string[] = [];
 
+        // Sets to exclude from import (crafted sets, leveling sets, etc.)
+        const excludedSetIds = new Set([
+          KnownSetIDs.ARMOR_OF_THE_TRAINEE, // Crafted leveling set
+          KnownSetIDs.DRUIDS_BRAID, // Crafted set from High Isle
+        ]);
+
         setCountMap.forEach((count, setName) => {
           // Try to find the set ID for this set name
           const setId = findSetIdByName(setName);
 
+          // Skip excluded sets
+          if (setId && excludedSetIds.has(setId)) {
+            return;
+          }
+
+          // Categorize the set based on type and piece count
           // Monster sets are typically 2-piece or 1-piece and are in our MONSTER_SETS list
           if (setId && MONSTER_SETS.includes(setId)) {
             monsterSets.push(setName);
-          } else if (setId && (count >= 5 || ALL_5PIECE_SETS.includes(setId))) {
-            // 5-piece sets have 5+ items or are in our known 5-piece list
+          } else if (setId && count >= 5 && ALL_5PIECE_SETS.includes(setId)) {
+            // 5-piece sets MUST have 5+ items AND be in our known 5-piece list
             fivePieceSets.push(setName);
           } else {
             // Everything else goes to additional sets
@@ -827,6 +924,27 @@ export const RosterBuilderPage: React.FC = () => {
         }
 
         return null;
+      };
+
+      // Helper function to deduplicate set IDs by their display names
+      // This prevents having both "Pillager's Profit" (649) and "Perfected Pillager's Profit" (650)
+      const deduplicateSetIds = (setIds: KnownSetIDs[]): KnownSetIDs[] => {
+        const normalizeDisplayName = (name: string): string => {
+          return name.replace(/^Perfected\s+/i, '');
+        };
+
+        const seen = new Set<string>();
+        const result = setIds.filter((id) => {
+          const displayName = getSetDisplayName(id);
+          const normalizedName = normalizeDisplayName(displayName);
+
+          if (seen.has(normalizedName)) {
+            return false;
+          }
+          seen.add(normalizedName);
+          return true;
+        });
+        return result;
       };
 
       // Helper function to extract healer champion point from talents or auras
@@ -905,6 +1023,21 @@ export const RosterBuilderPage: React.FC = () => {
       const parsedTanks: TankSetup[] = tanks.map((tank: PlayerData, index: number) => {
         const gear = tank.combatantInfo?.gear || [];
         const { fivePieceSets, monsterSets, otherSets } = categorizeSets(gear);
+        const extractedUltimate = extractUltimate(tank.combatantInfo);
+
+        // Get existing ultimate for this tank (if roster already has data)
+        const existingUltimate = index === 0 ? roster.tank1.ultimate : roster.tank2.ultimate;
+
+        // Only replace ultimate if:
+        // 1. There's no existing ultimate, OR
+        // 2. The existing ultimate is Barrier AND we found a non-Barrier ultimate
+        const shouldReplaceUltimate =
+          !existingUltimate ||
+          (existingUltimate === SupportUltimate.BARRIER &&
+            extractedUltimate &&
+            extractedUltimate !== SupportUltimate.BARRIER);
+
+        const finalUltimate = shouldReplaceUltimate ? extractedUltimate : existingUltimate;
 
         return {
           playerName: tank.name || `Tank ${index + 1}`,
@@ -913,9 +1046,11 @@ export const RosterBuilderPage: React.FC = () => {
             set1: fivePieceSets[0] ? findSetIdByName(fivePieceSets[0]) : undefined,
             set2: fivePieceSets[1] ? findSetIdByName(fivePieceSets[1]) : undefined,
             monsterSet: monsterSets[0] ? findSetIdByName(monsterSets[0]) : undefined,
-            additionalSets: [...fivePieceSets.slice(2), ...monsterSets.slice(1), ...otherSets]
-              .map((name) => findSetIdByName(name))
-              .filter((id): id is KnownSetIDs => id !== undefined),
+            additionalSets: deduplicateSetIds(
+              [...fivePieceSets.slice(2), ...monsterSets.slice(1), ...otherSets]
+                .map((name) => findSetIdByName(name))
+                .filter((id): id is KnownSetIDs => id !== undefined),
+            ),
           },
           skillLines: {
             line1: '',
@@ -923,7 +1058,7 @@ export const RosterBuilderPage: React.FC = () => {
             line3: '',
             isFlex: false,
           },
-          ultimate: extractUltimate(tank.combatantInfo),
+          ultimate: finalUltimate,
           specificSkills: [],
         };
       });
@@ -932,6 +1067,21 @@ export const RosterBuilderPage: React.FC = () => {
       const parsedHealers: HealerSetup[] = healers.map((healer: PlayerData, index: number) => {
         const gear = healer.combatantInfo?.gear || [];
         const { fivePieceSets, monsterSets, otherSets } = categorizeSets(gear);
+        const extractedUltimate = extractUltimate(healer.combatantInfo);
+
+        // Get existing ultimate for this healer (if roster already has data)
+        const existingUltimate = index === 0 ? roster.healer1.ultimate : roster.healer2.ultimate;
+
+        // Only replace ultimate if:
+        // 1. There's no existing ultimate, OR
+        // 2. The existing ultimate is Barrier AND we found a non-Barrier ultimate
+        const shouldReplaceUltimate =
+          !existingUltimate ||
+          (existingUltimate === SupportUltimate.BARRIER &&
+            extractedUltimate &&
+            extractedUltimate !== SupportUltimate.BARRIER);
+
+        const finalUltimate = shouldReplaceUltimate ? extractedUltimate : existingUltimate;
 
         return {
           playerName: healer.name || `Healer ${index + 1}`,
@@ -939,9 +1089,11 @@ export const RosterBuilderPage: React.FC = () => {
           set1: fivePieceSets[0] ? findSetIdByName(fivePieceSets[0]) : undefined,
           set2: fivePieceSets[1] ? findSetIdByName(fivePieceSets[1]) : undefined,
           monsterSet: monsterSets[0] ? findSetIdByName(monsterSets[0]) : undefined,
-          additionalSets: [...fivePieceSets.slice(2), ...monsterSets.slice(1), ...otherSets]
-            .map((name) => findSetIdByName(name))
-            .filter((id): id is KnownSetIDs => id !== undefined),
+          additionalSets: deduplicateSetIds(
+            [...fivePieceSets.slice(2), ...monsterSets.slice(1), ...otherSets]
+              .map((name) => findSetIdByName(name))
+              .filter((id): id is KnownSetIDs => id !== undefined),
+          ),
           skillLines: {
             line1: '',
             line2: '',
@@ -950,7 +1102,7 @@ export const RosterBuilderPage: React.FC = () => {
           },
           healerBuff: extractHealerBuff(healer.combatantInfo, healer.id),
           championPoint: extractHealerChampionPoint(healer.combatantInfo, healer.id),
-          ultimate: extractUltimate(healer.combatantInfo),
+          ultimate: finalUltimate,
         };
       });
 
@@ -962,10 +1114,12 @@ export const RosterBuilderPage: React.FC = () => {
         return {
           slotNumber: index + 1,
           playerName: dpsPlayer.name || '',
-          gearSets: [...fivePieceSets, ...monsterSets, ...otherSets]
-            .filter(Boolean)
-            .map((name) => findSetIdByName(name))
-            .filter((id): id is KnownSetIDs => id !== undefined),
+          gearSets: deduplicateSetIds(
+            [...fivePieceSets, ...monsterSets, ...otherSets]
+              .filter(Boolean)
+              .map((name) => findSetIdByName(name))
+              .filter((id): id is KnownSetIDs => id !== undefined),
+          ),
           skillLines: {
             line1: '',
             line2: '',
@@ -1008,7 +1162,14 @@ export const RosterBuilderPage: React.FC = () => {
     } finally {
       setImportLoading(false);
     }
-  }, [importUrl, client]);
+  }, [
+    importUrl,
+    client,
+    roster.tank1.ultimate,
+    roster.tank2.ultimate,
+    roster.healer1.ultimate,
+    roster.healer2.ultimate,
+  ]);
 
   // Quick fill player names from text
   const handleQuickFill = useCallback((): void => {
@@ -1127,15 +1288,23 @@ export const RosterBuilderPage: React.FC = () => {
             </Button>
             <Button variant="outlined" startIcon={<UploadIcon />} component="label">
               Import Roster
-              <input type="file" hidden accept=".json" onChange={handleImportJSON} />
+              <input
+                type="file"
+                hidden
+                accept=".json"
+                onChange={handleImportJSON}
+                aria-label="Upload roster JSON file"
+              />
             </Button>
-            <Button
-              variant="outlined"
-              startIcon={<LinkIcon />}
-              onClick={() => setImportUrlDialog(true)}
-            >
-              Import from Log
-            </Button>
+            {isLoggedIn && (
+              <Button
+                variant="outlined"
+                startIcon={<LinkIcon />}
+                onClick={() => setImportUrlDialog(true)}
+              >
+                Import from Log
+              </Button>
+            )}
             <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleExportJSON}>
               Export JSON
             </Button>
@@ -2412,7 +2581,13 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
     >
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <IconButton size="small" {...attributes} {...listeners} sx={{ cursor: 'grab' }}>
+          <IconButton
+            size="small"
+            {...attributes}
+            {...listeners}
+            sx={{ cursor: 'grab' }}
+            aria-label={`Drag to reorder DPS ${slot.slotNumber}`}
+          >
             <DragIndicatorIcon />
           </IconButton>
           <Typography variant="subtitle1" fontWeight="bold">
@@ -2604,22 +2779,46 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
       additionalSets?: KnownSetIDs[];
     },
   ): string => {
-    const sets: string[] = [];
+    const fivePieceSets: string[] = [];
+    const monsterSets: string[] = [];
+
+    const categorizeSet = (setId: KnownSetIDs): void => {
+      const displayName = getSetDisplayName(setId);
+      if (!displayName) return;
+
+      // Check if it's a monster set
+      if (MONSTER_SETS.includes(setId)) {
+        monsterSets.push(displayName);
+      } else {
+        fivePieceSets.push(displayName);
+      }
+    };
+
     if (tank) {
-      if (tank.set1) sets.push(getSetDisplayName(tank.set1));
-      if (tank.set2) sets.push(getSetDisplayName(tank.set2));
-      if (tank.monsterSet) sets.push(getSetDisplayName(tank.monsterSet));
-      if (tank.additionalSets)
-        sets.push(...tank.additionalSets.map((id) => getSetDisplayName(id)).filter(Boolean));
+      if (tank.set1) categorizeSet(tank.set1);
+      if (tank.set2) categorizeSet(tank.set2);
+      if (tank.monsterSet) categorizeSet(tank.monsterSet);
+      if (tank.additionalSets) {
+        tank.additionalSets.forEach(categorizeSet);
+      }
     }
     if (healer) {
-      if (healer.set1) sets.push(getSetDisplayName(healer.set1));
-      if (healer.set2) sets.push(getSetDisplayName(healer.set2));
-      if (healer.monsterSet) sets.push(getSetDisplayName(healer.monsterSet));
-      if (healer.additionalSets)
-        sets.push(...healer.additionalSets.map((id) => getSetDisplayName(id)).filter(Boolean));
+      if (healer.set1) categorizeSet(healer.set1);
+      if (healer.set2) categorizeSet(healer.set2);
+      if (healer.monsterSet) categorizeSet(healer.monsterSet);
+      if (healer.additionalSets) {
+        healer.additionalSets.forEach(categorizeSet);
+      }
     }
-    return sets.filter(Boolean).join('/');
+
+    // Remove duplicates and sort
+    const uniqueFivePiece = Array.from(new Set(fivePieceSets)).sort((a, b) =>
+      a.localeCompare(b, 'en', { sensitivity: 'base' }),
+    );
+    const uniqueMonster = Array.from(new Set(monsterSets));
+
+    // Combine: five-piece sets alphabetically, then monster sets
+    return [...uniqueFivePiece, ...uniqueMonster].join('/');
   };
 
   // Tanks - always MT/OT

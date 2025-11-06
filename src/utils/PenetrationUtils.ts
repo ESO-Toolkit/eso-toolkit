@@ -24,53 +24,42 @@ import {
 // Armor set configurations for penetration groups
 const ARMOR_SET_PENETRATION_CONFIG = Object.freeze({
   [PenetrationComputedSourceKey.ARMOR_SETS_7918]: [
-    { setId: KnownSetIDs.SHATTERED_FATE_SET, requiredPieces: 5 },
-    // Add other 7918 penetration sets here when identified
+    // NOTE: Shattered Fate removed - fabricated ID (711) doesn't match real API data
+    // Add back when verified set ID is obtained from combat logs
   ],
   [PenetrationComputedSourceKey.ARMOR_SETS_3460]: [
-    { setId: KnownSetIDs.SPRIGGANS_THORNS_SET, requiredPieces: 5 },
-    // Add other 3460 penetration sets here when identified
+    // NOTE: Spriggan's Thorns removed - fabricated ID (712) doesn't match real API data
+    // Add back when verified set ID is obtained from combat logs
   ],
   [PenetrationComputedSourceKey.ARMOR_SETS_1496]: [
-    { setId: KnownSetIDs.PERFECT_ARMS_OF_RELEQUEN_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.PERFECT_AURORAN_THUNDER_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.PERFECT_ANSUULS_TORMENT_SET, requiredPieces: 4 },
+    { setId: KnownSetIDs.RELEQUEN_PERFECTED, requiredPieces: 4 },
+    // NOTE: Perfect Auroran's Thunder removed - fabricated ID (724) doesn't match real API data
+    { setId: KnownSetIDs.PERFECTED_ANSUULS_TORMENT, requiredPieces: 4 },
   ],
   [PenetrationComputedSourceKey.ARMOR_SETS_1487]: [
-    { setId: KnownSetIDs.ANSUULS_TORMENT_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.TIDEBORN_WILDSTALKER_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.ARMS_OF_RELEQUEN_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.AERIES_CRY_SET, requiredPieces: 2 },
-    { setId: KnownSetIDs.AURORANS_THUNDER_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.ARMS_OF_THE_ANCESTORS_SET, requiredPieces: 3 },
-    { setId: KnownSetIDs.ARCHDRUID_DEVYRIC_SET, requiredPieces: 1 },
-    { setId: KnownSetIDs.BLACK_GEM_MONSTROSITY_SET, requiredPieces: 1 },
-    { setId: KnownSetIDs.COLOVIAN_HIGHLANDS_GENERAL_SET, requiredPieces: 1 },
-    { setId: KnownSetIDs.CINDERS_OF_ANTHELMIR_SET, requiredPieces: 2 },
-    { setId: KnownSetIDs.DARK_CONVERGENCE_SET, requiredPieces: 3 },
-    { setId: KnownSetIDs.DRAUGRKINS_GRIP_SET, requiredPieces: 3 },
-    { setId: KnownSetIDs.DRO_ZAKARS_CLAWS_SET, requiredPieces: 2 },
-    { setId: KnownSetIDs.FLAME_BLOSSOM_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.GRISLY_GOURMET_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.GRYPHONS_REPRISAL_SET, requiredPieces: 3 },
-    { setId: KnownSetIDs.HROTHGARS_CHILL_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.ICY_CONJURER_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.JERENSIS_BLADESTORM_SET, requiredPieces: 3 },
-    { setId: KnownSetIDs.KAZPIANS_CRUEL_SIGNET_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.KRAGH_SET, requiredPieces: 1 },
-    { setId: KnownSetIDs.LADY_MALYGDA_SET, requiredPieces: 1 },
-    { setId: KnownSetIDs.LANGUOR_OF_PERYITE_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.LEGACY_OF_KARTH_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.NEW_MOON_ACOLYTE_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.NOCTURNALS_PLOY_SET, requiredPieces: 2 },
-    { setId: KnownSetIDs.NOXIOUS_BOULDER_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.OBLIVIONS_FOE_SET, requiredPieces: 3 },
-    { setId: KnownSetIDs.PELINALS_WRATH_SET, requiredPieces: 3 },
-    { setId: KnownSetIDs.PERFECTED_KAZPIANS_CRUEL_SIGNET_SET, requiredPieces: 4 },
+    { setId: KnownSetIDs.PERFECTED_ANSUULS_TORMENT, requiredPieces: 4 },
+    { setId: KnownSetIDs.TIDEBORN_WILDSTALKER, requiredPieces: 4 },
+    { setId: KnownSetIDs.RELEQUEN, requiredPieces: 4 },
+    // NOTE: The following sets removed due to fabricated IDs (711-744 range):
+    // - Aerie's Cry, Auroran's Thunder, Arms of the Ancestors, Colovian Highlands General
+    // - Cinders of Anthelmir, Dark Convergence, Draugrkin's Grip, Dro'Zakar's Claws
+    // - Grisly Gourmet, Gryphon's Reprisal, Hrothgar's Chill, Icy Conjurer
+    // - Languor of Peryite, Legacy of Karth, Nocturnal's Ploy, Noxious Boulder, Oblivion's Foe
+    // Add back when verified set IDs are obtained from combat logs
+    { setId: KnownSetIDs.ARCHDRUID_DEVYRIC, requiredPieces: 1 },
+    { setId: KnownSetIDs.BLACK_GEM_MONSTROSITY, requiredPieces: 1 },
+    { setId: KnownSetIDs.FLAME_BLOSSOM, requiredPieces: 4 },
+    { setId: KnownSetIDs.JERENSI, requiredPieces: 3 },
+    { setId: KnownSetIDs.KAZPIAN, requiredPieces: 4 },
+    { setId: KnownSetIDs.KRAGH, requiredPieces: 1 },
+    { setId: KnownSetIDs.THE_BLIND, requiredPieces: 1 },
+    { setId: KnownSetIDs.NEW_MOON_ACOLYTE, requiredPieces: 4 },
+    { setId: KnownSetIDs.PELINALS_WRATH, requiredPieces: 3 },
+    { setId: KnownSetIDs.KAZPIAN_PERFECTED, requiredPieces: 4 },
   ],
   [PenetrationComputedSourceKey.ARMOR_SETS_1190]: [
-    { setId: KnownSetIDs.PERFECTED_CRUSHING_WALL_SET, requiredPieces: 2 },
-    { setId: KnownSetIDs.PERFECTED_MERCILESS_CHARGE_SET, requiredPieces: 2 },
+    { setId: KnownSetIDs.PERFECTED_CRUSHING_WALL, requiredPieces: 2 },
+    { setId: KnownSetIDs.PERFECTED_MERCILESS_CHARGE, requiredPieces: 2 },
   ],
 } as const);
 
@@ -424,7 +413,7 @@ function isComputedSourceActive(
     case PenetrationComputedSourceKey.BALORGH:
       if (!combatantInfo || !combatantInfo.gear) return false;
       // Check if player has 2 pieces of Balorgh equipped
-      return getSetCount(combatantInfo.gear, KnownSetIDs.BALORGH_SET) >= 2;
+      return getSetCount(combatantInfo.gear, KnownSetIDs.BALORGH) >= 2;
     case PenetrationComputedSourceKey.SHARPENED_1H:
       if (!combatantInfo || !combatantInfo.gear) return false;
       return countOneHandedSharpenedWeapons(combatantInfo) > 0;
@@ -432,9 +421,9 @@ function isComputedSourceActive(
       if (!combatantInfo || !combatantInfo.gear) return false;
       return hasTwoHandedSharpenedWeapon(combatantInfo);
     case PenetrationComputedSourceKey.HEW_AND_SUNDER:
-      if (!combatantInfo || !combatantInfo.gear) return false;
-      // Check if player has 5 pieces of Hew and Sunder equipped
-      return getSetCount(combatantInfo.gear, KnownSetIDs.HEW_AND_SUNDER_SET) >= 5;
+      // NOTE: Hew and Sunder set removed - fabricated ID (732) doesn't match real API data
+      // Returns false until verified set ID is obtained from combat logs
+      return false;
     default:
       return false;
   }
@@ -542,7 +531,7 @@ function getPenetrationFromComputedSource(
 
     case PenetrationComputedSourceKey.BALORGH: {
       if (!combatantInfo || !combatantInfo.gear) return 0;
-      const hasBalorgh = getSetCount(combatantInfo.gear, KnownSetIDs.BALORGH_SET) >= 2;
+      const hasBalorgh = getSetCount(combatantInfo.gear, KnownSetIDs.BALORGH) >= 2;
       return hasBalorgh ? PenetrationValues.BALORGH_PENETRATION : 0;
     }
 
@@ -559,11 +548,9 @@ function getPenetrationFromComputedSource(
     }
 
     case PenetrationComputedSourceKey.HEW_AND_SUNDER: {
-      if (!combatantInfo || !combatantInfo.gear) return 0;
-      const hasHewAndSunder = getSetCount(combatantInfo.gear, KnownSetIDs.HEW_AND_SUNDER_SET) >= 5;
-      // TODO: Count enemies within 8 meters of target
-      // For now, assume 1 enemy when the set is equipped
-      return hasHewAndSunder ? PenetrationValues.HEW_AND_SUNDER_PER_ENEMY * 1 : 0;
+      // NOTE: Hew and Sunder set removed - fabricated ID (732) doesn't match real API data
+      // Returns 0 until verified set ID is obtained from combat logs
+      return 0;
     }
 
     default:

@@ -277,52 +277,111 @@ export interface SupportSet {
   description?: string;
 }
 
+// ============================================================
+// QUICK ASSIGNMENT CONFIGURATION
+// These arrays explicitly control what appears in the Quick Assignment UI
+// ============================================================
+
 /**
- * Recommended 5-piece sets that should always be run
- * Based on data analysis from boss fights (November 2025)
- * Perfected and non-perfected versions combined into single entries
- * Alphabetically sorted
- *
- * Configuration: These can ONLY be assigned to set1/set2 slots
+ * Tank 5-piece sets for Quick Assignment
+ * These appear in the blue "Tank Sets" column
  */
-export const RECOMMENDED_5PIECE_SETS: readonly KnownSetIDs[] = [
-  KnownSetIDs.CLAW_OF_YOLNAHKRIIN, // 17.7% (Tank: 31%, Healer: 6%)
-  KnownSetIDs.JORVULDS_GUIDANCE, // 11.3% (Tank: 0%, Healer: 21%)
+export const QUICK_TANK_5PIECE_SETS: readonly KnownSetIDs[] = [
   KnownSetIDs.LUCENT_ECHOES, // 25.8% (Tank: 45%, Healer: 9%)
   KnownSetIDs.PEARLESCENT_WARD, // 29.0% (Tank: 52%, Healer: 9%)
+  KnownSetIDs.SAXHLEEL_CHAMPION, // 11.3% (Tank: 21%, Healer: 3%)
+  KnownSetIDs.XORYNS_MASTERPIECE, // Tank set
+  KnownSetIDs.CLAW_OF_YOLNAHKRIIN, // 17.7% (Tank: 31%, Healer: 6%)
+] as const;
+
+/**
+ * Flexible 5-piece sets for Quick Assignment
+ * These appear in the orange "Flexible" column (can be used by tanks or healers)
+ */
+export const QUICK_FLEXIBLE_5PIECE_SETS: readonly KnownSetIDs[] = [
   KnownSetIDs.PILLAGERS_PROFIT, // 19.4% (Tank: 24%, Healer: 15%)
   KnownSetIDs.POWERFUL_ASSAULT, // 19.4% (Tank: 3%, Healer: 33%)
+] as const;
+
+/**
+ * Healer 5-piece sets for Quick Assignment
+ * These appear in the purple "Healer Sets" column
+ */
+export const QUICK_HEALER_5PIECE_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.JORVULDS_GUIDANCE, // 11.3% (Tank: 0%, Healer: 21%)
   KnownSetIDs.ROARING_OPPORTUNIST, // 11.3% (Tank: 0%, Healer: 21%)
-  KnownSetIDs.PERFECTED_SAXHLEEL_CHAMPION, // 11.3% (Tank: 21%, Healer: 3%)
   KnownSetIDs.SPELL_POWER_CURE, // 17.7% (Tank: 0%, Healer: 33%)
 ] as const;
 
 /**
- * Recommended 2-piece monster sets
- * Based on data analysis from boss fights (November 2025)
- * Alphabetically sorted
- *
- * Configuration: These can ONLY be assigned to monsterSet slot
+ * All recommended 5-piece sets combined (for backwards compatibility)
  */
-export const RECOMMENDED_2PIECE_SETS: readonly KnownSetIDs[] = [
-  KnownSetIDs.ARCHDRUID_DEVYRIC, // Tank monster set
-  KnownSetIDs.BARON_ZAUDRUS, //  3.2% (Tank: 7%, Healer: 0%)
-  KnownSetIDs.NAZARAY, // 22.6% (Tank: 38%, Healer: 9%)
-  KnownSetIDs.NUNATAK, // Tank monster set
-  KnownSetIDs.OZEZAN, // Healer monster set
-  KnownSetIDs.SYMPHONY_OF_BLADES, // 14.5% (Tank: 0%, Healer: 27%)
-  KnownSetIDs.THE_BLIND, // Healer monster set
+export const RECOMMENDED_5PIECE_SETS: readonly KnownSetIDs[] = [
+  ...QUICK_TANK_5PIECE_SETS,
+  ...QUICK_FLEXIBLE_5PIECE_SETS,
+  ...QUICK_HEALER_5PIECE_SETS,
 ] as const;
 
 /**
- * Recommended 1-piece sets (mythic items)
- * Based on data analysis from boss fights (November 2025)
- * Alphabetically sorted
- *
- * Configuration: These can be assigned to additionalSets
+ * Tank monster sets for Quick Assignment
+ * These appear in the blue "Tank Sets" column (monster section)
+ */
+export const QUICK_TANK_MONSTER_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.ARCHDRUID_DEVYRIC,
+  KnownSetIDs.BARON_ZAUDRUS, // 3.2% (Tank: 7%, Healer: 0%)
+] as const;
+
+/**
+ * Flexible monster sets for Quick Assignment
+ * These appear in the orange "Flexible" column (monster section)
+ */
+export const QUICK_FLEXIBLE_MONSTER_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.NAZARAY, // 22.6% (Tank: 38%, Healer: 9%)
+  KnownSetIDs.NUNATAK, // Flexible support set
+  KnownSetIDs.SPAULDER_OF_RUIN, // Flexible support set
+] as const;
+
+/**
+ * Healer monster sets for Quick Assignment
+ * These appear in the purple "Healer Sets" column (monster section)
+ */
+export const QUICK_HEALER_MONSTER_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.OZEZAN,
+  KnownSetIDs.SYMPHONY_OF_BLADES, // 14.5% (Tank: 0%, Healer: 27%)
+  KnownSetIDs.THE_BLIND,
+] as const;
+
+/**
+ * All recommended monster sets combined (for backwards compatibility)
+ */
+export const RECOMMENDED_2PIECE_SETS: readonly KnownSetIDs[] = [
+  ...QUICK_TANK_MONSTER_SETS,
+  ...QUICK_FLEXIBLE_MONSTER_SETS,
+  ...QUICK_HEALER_MONSTER_SETS,
+] as const;
+
+/**
+ * Flexible mythic items for Quick Assignment
+ * These appear in the orange "Flexible" column (mythic section)
+ */
+export const QUICK_FLEXIBLE_MYTHICS: readonly KnownSetIDs[] = [
+  KnownSetIDs.CRYPTCANON_VESTMENTS,
+] as const;
+
+/**
+ * Healer mythic items for Quick Assignment
+ * These appear in the purple "Healer Sets" column (mythic section)
+ */
+export const QUICK_HEALER_MYTHICS: readonly KnownSetIDs[] = [
+  KnownSetIDs.PEARLS_OF_EHLNOFEY, // 17.7% (Tank: 0%, Healer: 33%)
+] as const;
+
+/**
+ * All recommended mythic items combined (for backwards compatibility)
  */
 export const RECOMMENDED_1PIECE_SETS: readonly KnownSetIDs[] = [
-  KnownSetIDs.PEARLS_OF_EHLNOFEY, // 17.7% (Tank: 0%, Healer: 33%)
+  ...QUICK_FLEXIBLE_MYTHICS,
+  ...QUICK_HEALER_MYTHICS,
 ] as const;
 
 /**
@@ -488,28 +547,29 @@ export const isMonsterSet = (setId: KnownSetIDs): boolean => {
 
 /**
  * Tank-specific 5-piece support sets
- * Ordered by frequency in actual usage data
+ * Alphabetically sorted
  * Can only be assigned to set1/set2 slots
  */
 export const TANK_5PIECE_SETS: readonly KnownSetIDs[] = [
-  KnownSetIDs.PILLAGERS_PROFIT, // 8.8% occurrence (15% of tanks)
-  KnownSetIDs.WAR_MACHINE, // 4.4% occurrence (6% of tanks)
-  KnownSetIDs.PEARLESCENT_WARD, // 1.5% occurrence (3% of tanks)
-  // Less common but still viable options:
   KnownSetIDs.CLAW_OF_YOLNAHKRIIN,
-  KnownSetIDs.PERFECTED_SAXHLEEL_CHAMPION,
   KnownSetIDs.DRAKES_RUSH,
+  KnownSetIDs.LUCENT_ECHOES, // 25.8% occurrence (Tank: 45%, Healer: 9%)
+  KnownSetIDs.PEARLESCENT_WARD, // 1.5% occurrence (3% of tanks)
+  KnownSetIDs.PERFECTED_SAXHLEEL_CHAMPION,
+  KnownSetIDs.WAR_MACHINE, // 4.4% occurrence (6% of tanks)
+  KnownSetIDs.PERFECTED_XORYNS_MASTERPIECE, // Xoryn's Masterpiece
 ] as const;
 
 /**
  * Tank-specific monster sets
+ * Alphabetically sorted
  * Can only be assigned to monsterSet slot
  */
 export const TANK_MONSTER_SETS: readonly KnownSetIDs[] = [
-  KnownSetIDs.BARON_ZAUDRUS, // 2.9% occurrence (6% of tanks)
   KnownSetIDs.ARCHDRUID_DEVYRIC,
+  KnownSetIDs.BARON_ZAUDRUS, // 2.9% occurrence (6% of tanks)
   KnownSetIDs.ENCRATIS_BEHEMOTH,
-  KnownSetIDs.NUNATAK,
+  KnownSetIDs.SPAULDER_OF_RUIN, // 1-piece mythic for tank support
   KnownSetIDs.STONE_HUSK,
 ] as const;
 
@@ -522,19 +582,16 @@ export const TANK_SETS: readonly KnownSetIDs[] = [
 ] as const;
 
 /**
- * Healer-specific 5-piece support sets
- * Ordered by frequency in actual usage data
+ * Healer-specific 5-piece support setsasass
+ * Alphabetically sorted
  * Can only be assigned to set1/set2 slots
  */
 export const HEALER_5PIECE_SETS: readonly KnownSetIDs[] = [
-  KnownSetIDs.POWERFUL_ASSAULT, // 17.6% occurrence (31% of healers)
-  KnownSetIDs.SPELL_POWER_CURE, // 17.6% occurrence (34% of healers)
+  KnownSetIDs.COMBAT_PHYSICIAN, // 1.5% occurrence (3% of healers)
   KnownSetIDs.JORVULDS_GUIDANCE, // 11.8% occurrence (23% of healers)
   KnownSetIDs.MASTER_ARCHITECT, // 4.4% occurrence (9% of healers)
   KnownSetIDs.ROARING_OPPORTUNIST, // 4.4% occurrence (9% of healers)
-  KnownSetIDs.COMBAT_PHYSICIAN, // 1.5% occurrence (3% of healers)
-  // Less common but still viable options:
-  KnownSetIDs.PILLAGERS_PROFIT,
+  KnownSetIDs.SPELL_POWER_CURE, // 17.6% occurrence (34% of healers)
   KnownSetIDs.VESTMENT_OF_OLORIME,
   KnownSetIDs.WAY_OF_MARTIAL_KNOWLEDGE,
   KnownSetIDs.ZENS_REDRESS,
@@ -542,13 +599,16 @@ export const HEALER_5PIECE_SETS: readonly KnownSetIDs[] = [
 
 /**
  * Healer-specific monster sets
+ * Alphabetically sorted
  * Can only be assigned to monsterSet slot
  */
 export const HEALER_MONSTER_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.ENGINE_GUARDIAN,
+  KnownSetIDs.NUNATAK, // Healer monster set
+  KnownSetIDs.OZEZAN,
+  KnownSetIDs.PEARLS_OF_EHLNOFEY, // 17.7% (Tank: 0%, Healer: 33%) - 1-piece mythic
   KnownSetIDs.SYMPHONY_OF_BLADES, // 13.2% occurrence (26% of healers)
   KnownSetIDs.THE_BLIND,
-  KnownSetIDs.OZEZAN,
-  KnownSetIDs.ENGINE_GUARDIAN,
 ] as const;
 
 /**
@@ -561,20 +621,23 @@ export const HEALER_SETS: readonly KnownSetIDs[] = [
 
 /**
  * 5-piece sets that can be run on either tanks or healers
- * Based on actual cross-role usage patterns
+ * Alphabetically sorted
  * Can only be assigned to set1/set2 slots
  */
 export const FLEXIBLE_5PIECE_SETS: readonly KnownSetIDs[] = [
-  KnownSetIDs.WAR_MACHINE, // Primarily tank, some healer usage
-  KnownSetIDs.PEARLESCENT_WARD, // Historically flexible, low current usage
   KnownSetIDs.COMBAT_PHYSICIAN, // Can be used by both roles
+  KnownSetIDs.PILLAGERS_PROFIT, // 19.4% (Tank: 24%, Healer: 15%)
+  KnownSetIDs.POWERFUL_ASSAULT, // 19.4% (Tank: 3%, Healer: 33%)
+  KnownSetIDs.WAR_MACHINE, // Primarily tank, some healer usage
 ] as const;
 
 /**
  * Monster sets that can be run on either tanks or healers
  * Can only be assigned to monsterSet slot
  */
-export const FLEXIBLE_MONSTER_SETS: readonly KnownSetIDs[] = [] as const;
+export const FLEXIBLE_MONSTER_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.SPAULDER_OF_RUIN, // Spaulder of Ruin - Flexible support set
+] as const;
 
 /**
  * All flexible sets combined (for backwards compatibility)
@@ -609,12 +672,13 @@ export const ALL_5PIECE_SETS: readonly KnownSetIDs[] = [
 
 /**
  * DD special role sets
+ * Alphabetically sorted
  */
 export const DD_SPECIAL_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.ROAR_OF_ALKOSH,
   KnownSetIDs.WAR_MACHINE,
   KnownSetIDs.WAY_OF_MARTIAL_KNOWLEDGE,
   KnownSetIDs.ZENS_REDRESS,
-  KnownSetIDs.ROAR_OF_ALKOSH,
 ] as const;
 
 /**

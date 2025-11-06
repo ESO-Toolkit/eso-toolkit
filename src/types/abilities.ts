@@ -662,78 +662,253 @@ export enum KnownSetIDs {
   // ============================================================
   // MYTHIC SETS
   // ============================================================
+  GRAVE_GUARDIAN = 476, // Grave Guardian's Amulet
+  PALE_ORDER = 575, // Ring of the Pale Order
   PEARLS_OF_EHLNOFEY = 576, // Pearls of Ehlnofey
+  GAZE_OF_SITHIS = 593, // Gaze of Sithis
+  HARPOONERS_KILT = 594, // Harpooner's Wading Kilt
+  MARKYN_RING = 625, // Markyn Ring of Majesty
+  SEA_SERPENTS_COIL = 657, // Sea-Serpent's Coil
+  OAKENSOUL = 658, // Oakensoul Ring
+  CRYPTCANON_VESTMENTS = 691, // Cryptcanon Vestments
   VELOTHI_UR_MAGE = 694, // Velothi Ur-Mage's Amulet
 
   // ============================================================
   // DPS SETS - 5-PIECE
   // ============================================================
   DEADLY_STRIKE = 127, // Deadly Strike
-  PERFECTED_MERCILESS_CHARGE = 522, // Perfected Merciless Charge
   MERCILESS_CHARGE = 369, // Merciless Charge
+  PERFECTED_MERCILESS_CHARGE = 522, // Perfected Merciless Charge
   CRUSHING_WALL = 373, // Crushing Wall
   PERFECTED_CRUSHING_WALL = 526, // Perfected Crushing Wall
   PERFECTED_GRAND_REJUVENATION = 533, // Perfected Grand Rejuvenation
-  CRYPTCANON_VESTMENTS = 691, // Cryptcanon Vestments
+  ANSUULS_TORMENT = 702, // Ansuul's Torment (non-perfected)
   PERFECTED_ANSUULS_TORMENT = 707, // Perfected Ansuul's Torment
   SLIVERS_OF_THE_NULL_ARCA = 767, // Slivers of the Null Arca
   PERFECTED_SLIVERS_OF_THE_NULL_ARCA = 772, // Perfected Slivers of the Null Arca
   PERFECTED_XORYNS_MASTERPIECE = 770, // Perfected Xoryn's Masterpiece
   TIDEBORN_WILDSTALKER = 809, // Tide-Born Wildstalker
+  RELEQUEN = 389, // Relequen (non-perfected)
+  RELEQUEN_PERFECTED = 393, // Relequen's Perfected
+  SIRORIA_PERFECTED = 394, // Siroria's Perfected
+  LOKKESTIIZ_PERFECTED = 450, // Lokkestiiz's Perfected
+  VROL_PERFECTED = 495, // Vrol's Perfected
+  SAXHLEEL_CHAMPION = 585, // Saxhleel Champion (non-perfected)
+  SUL_XAN_TORMENT = 586, // Sul-Xan's Torment (non-perfected)
+  PERFECTED_SUL_XAN_TORMENT = 590, // Perfected Sul-Xan's Torment
+  BAHSEI_MANIA_PERFECTED = 591, // Perfected Bahsei's Mania
+  CORAL_RIPTIDE = 647, // Coral Riptide (non-perfected)
+  CORAL_RIPTIDE_PERFECTED = 652, // Perfected Coral Riptide
+  MORA_SCRIBE = 766, // Mora Scribe (non-perfected)
+  MORA_SCRIBE_PERFECTED = 773, // Perfected Mora Scribe
+  XORYNS_MASTERPIECE = 769, // Xoryn's Masterpiece (non-perfected)
+  KAZPIAN = 815, // Kazpian's (non-perfected)
+  KAZPIAN_PERFECTED = 820, // Perfected Kazpian's
+  RAKKHAT_VOIDMANTLE = 812, // Rakkhat's Voidmantle
+  HUNDINGS_RAGE = 80, // Hunding's Rage
+  ELF_BANE = 83, // Elf Bane
+  NECROPOTENCE = 98, // Necropotence
+  ADVANCING_YOKEDA = 137, // Advancing Yokeda
+  ETERNAL_YOKEDA = 171, // Eternal Yokeda
+  UNDAUNTED_UNWEAVER = 157, // Undaunted Unweaver
+  BURNING_SPELLWEAVE = 160, // Burning Spellweave
+  INFALLIBLE_AETHER = 172, // Infallible Aether
+  LAW_OF_JULIANOS = 207, // Law of Julianos
+  BRIARHEART = 212, // Briarheart
+  MOTHERS_SORROW = 292, // Mother's Sorrow
+  MEDUSA = 304, // Medusa
+  WAR_MAIDEN = 320, // War Maiden
+  PILLAR_OF_NIRN = 336, // Pillar of Nirn
+  MECHANICAL_ACUITY = 353, // Mechanical Acuity
+  AZUREBLIGHT = 456, // Azureblight
+  NEW_MOON_ACOLYTE = 470, // New Moon Acolyte
+  TZOGVINS_WARBAND = 430, // Tzogvin's Warband
+  FALSE_GODS_DEVOTION = 444, // False God's Devotion
+  FALSE_GODS_PERFECTED = 449, // Perfected False God's Devotion
+  KINRAS_WRATH = 570, // Kinras's Wrath
+  DEATH_DEALERS_FETE = 596, // Death Dealer's Fete
+  ORDERS_WRATH = 640, // Order's Wrath
+  RUNECARVERS_BLAZE = 684, // Runecarver's Blaze
+  MACABRE_VINTAGE = 758, // Macabre Vintage
+  PYREBRAND = 776, // Pyrebrand
+  CORPSEBURSTER = 777, // Corpseburster
+  BEACON_OF_OBLIVION = 779, // Beacon of Oblivion
+  XANMEER_SPELLWEAVER = 825, // Xanmeer Spellweaver
+  COUP_DE_GRACE = 831, // Coup De Grâce
+  JERENSI = 795, // Jerensi
+  VANDORALLEN = 794, // Vandorallen
+  AEGIS_CALLER = 475, // Aegis Caller
 
   // ============================================================
-  // OTHER SETS (Training/Leveling)
+  // DPS SETS - MONSTER SETS (2-PIECE)
+  // ============================================================
+  BLOODSPAWN = 163, // Bloodspawn
+  NERIENETH = 168, // Nerien'eth
+  MAW_OF_THE_INFERNAL = 170, // Maw of the Infernal
+  MOLAG_KENA = 183, // Molag Kena
+  VELIDRETH = 257, // Velidreth
+  KRAGH = 266, // Kra'gh
+  ICEHEART = 274, // Iceheart
+  TREMORSCALE = 276, // Tremorscale
+  GROTHDARR = 280, // Grothdarr
+  ZAAN = 350, // Zaan
+  BALORGH = 397, // Balorgh
+  STONEKEEPER = 432, // Stonekeeper
+  GRUNDWULF = 458, // Grundwulf
+  KJALNARS_NIGHTMARE = 479, // Kjalnar's Nightmare
+  YANDIRS_MIGHT = 498, // Yandir's Might
+  CRIMSON_OATH = 602, // Crimson Oath
+  BARON_THIRSK = 636, // Baron Thirsk
+  ROKSA_THE_WARPED = 683, // Roksa the Warped
+  BLACK_GEM_MONSTROSITY = 828, // Black Gem Monstrosity
+
+  // ============================================================
+  // ARENA WEAPONS - DRAGONSTAR ARENA
+  // ============================================================
+  THE_MASTERS_BOW = 316, // The Master's Bow
+  THE_MASTERS_MACE = 314, // The Master's Mace
+  THE_MASTERS_ICE_STAFF = 317, // The Master's Ice Staff
+  THE_MASTERS_RESTORATION_STAFF = 318, // The Master's Restoration Staff
+
+  // ============================================================
+  // ARENA WEAPONS - MAELSTROM ARENA
+  // ============================================================
+  MAELSTROMS_BOW = 372, // Maelstrom's Bow
+
+  // ============================================================
+  // ARENA WEAPONS - ASYLUM SANCTORIUM
+  // ============================================================
+  ASYLUM_PERFECTED_DAGGER = 358, // Asylum's Perfected Dagger
+  ASYLUM_PERFECTED_RESTO = 362, // Asylum's Perfected Restoration Staff
+  GALENWES_PERFECTED_RESTO = 392, // Galenwe's Perfected Restoration Staff
+
+  // ============================================================
+  // ARENA WEAPONS - BLACKROSE PRISON
+  // ============================================================
+  BLACKROSE_BOW = 414, // Blackrose Prison Bow
+  BLACKROSE_DAGGER = 413, // Blackrose Prison Dagger
+  BLACKROSE_ICE_STAFF = 415, // Blackrose Prison Ice Staff
+  BLACKROSE_RESTO = 416, // Blackrose Prison Restoration Staff
+  BLACKROSE_PERFECTED_BOW = 426, // Blackrose Prison Perfected Bow
+  BLACKROSE_PERFECTED_DAGGER = 425, // Blackrose Prison Perfected Dagger
+  BLACKROSE_PERFECTED_ICE_STAFF = 427, // Blackrose Prison Perfected Ice Staff
+  BLACKROSE_PERFECTED_RESTO = 428, // Blackrose Prison Perfected Restoration Staff
+
+  // ============================================================
+  // ARENA WEAPONS - VATESHRAN HOLLOWS
+  // ============================================================
+  VATESHRAN_GREATSWORD = 559, // Vateshran's Greatsword
+  VATESHRAN_PERFECTED_SWORD = 563, // Vateshran's Perfected Sword
+  VATESHRAN_PERFECTED_DAGGER = 564, // Vateshran's Perfected Dagger
+  VATESHRAN_PERFECTED_STAFF = 567, // Vateshran's Perfected Staff
+
+  // ============================================================
+  // SUPPORT SETS - ADDITIONAL 5-PIECE
+  // ============================================================
+  BLESSING_OF_THE_POTENTATES = 128, // Blessing of the Potentates
+  RESILIENT_YOKEDA = 138, // Resilient Yokeda
+  BRANDS_OF_IMPERIUM = 184, // Brands of Imperium
+  WRETCHED_VITALITY = 610, // Wretched Vitality
+  HEXOS_WARD = 614, // Hexos' Ward
+  TURNING_TIDE = 622, // Turning Tide
+  RALLYING_CRY = 629, // Rallying Cry
+  MORAS_WHISPERS = 654, // Mora's Whispers
+  HIGHLAND_SENTINEL = 764, // Highland Sentinel
+  ARKAYS_CHARITY = 802, // Arkay's Charity
+  RECOVERY_CONVERGENCE = 817, // Recovery Convergence (non-perfected)
+  RECOVERY_CONVERGENCE_PERFECTED = 818, // Perfected Recovery Convergence
+  STONEHULK_DOMINATION = 827, // Stonehulk Domination
+  LEECHING_PLATE = 196, // Leeching Plate
+
+  // ============================================================
+  // SUPPORT SETS - ADDITIONAL MONSTER SETS (2-PIECE)
+  // ============================================================
+  LORD_WARDEN = 164, // Lord Warden
+  MIGHTY_CHUDAN = 256, // Mighty Chudan
+  SWARM_MOTHER = 267, // Swarm Mother
+  CHOKETHORN = 269, // Chokethorn
+  ILAMBRIS = 273, // Ilambris
+  STORMFIST = 275, // Stormfist
+  THE_TROLL_KING = 278, // The Troll King
+  MAD_TINKERER = 354, // Mad Tinkerer
+  VYKOSA = 398, // Vykosa
+  LADY_MALYGDA = 635, // Lady Malygda
+
+  // ============================================================
+  // PVP / UTILITY SETS
+  // ============================================================
+  NIGHT_TERROR = 112, // Night Terror
+  TREASURE_HUNTER = 305, // Treasure Hunter
+  DEFILER = 321, // Defiler
+  UNFATHOMABLE_DARKNESS = 355, // Unfathomable Darkness
+  DRAGONGUARD_ELITE = 467, // Dragonguard Elite
+  VENOMOUS_SMITE = 488, // Venomous Smite
+  WILD_HUNT = 503, // Wild Hunt
+  FROSTBITE = 579, // Frostbite
+  HEARTLAND_CONQUEROR = 583, // Heartland Conqueror
+  MAGMA_INCARNATE = 609, // Magma Incarnate
+  PLAGUEBREAK = 617, // Plaguebreak
+  THUNDER_CALLER = 606, // Thunder Caller
+  STORM_CURSED = 623, // Storm-Cursed
+  GOURMAND = 671, // Gourmand
+  STORMWEAVER = 675, // Stormweaver
+  AKATOSHS_LAW = 690, // Akatosh's Law
+  OAKFATHERS_RETRIBUTION = 754, // Oakfather's Retribution
+  THE_WEALD = 757, // The Weald
+  THREE_QUEENS = 805, // Three Queens
+  DEATH_DANCER = 806, // Death-Dancer
+
+  // ============================================================
+  // CRAFTED SETS
+  // ============================================================
+  ARMOR_OF_THE_VEILED_HERITANCE = 36, // Armor of the Veiled Heritance
+  ARMOR_OF_THE_SEDUCER = 43, // Armor of the Seducer
+  ASHEN_GRIP = 54, // Ashen Grip
+  HATCHLINGS_SHELL = 62, // Hatchling's Shell
+  TORUGS_PACT = 75, // Torug's Pact
+  KAGRENACS_HOPE = 92, // Kagrenac's Hope
+  TWIN_SISTERS = 105, // Twin Sisters
+  ANCIENT_GRACE = 126, // Ancient Grace
+  OVERWHELMING = 193, // Overwhelming
+  THE_PARIAH = 210, // The Pariah
+  MORKULDIN = 219, // Morkuldin
+  PELINALS_WRATH = 242, // Pelinal's Wrath
+  ASSASSINS_GUILE = 323, // Assassin's Guile
+  VANGUARDS_CHALLENGE = 326, // Vanguard's Challenge
+  FLAME_BLOSSOM = 338, // Flame Blossom
+  BOG_RAIDER = 581, // Bog Raider
+  DRUIDS_BRAID = 642, // Druid's Braid
+
+  // ============================================================
+  // OTHER SETS
+  // ============================================================
+  THE_SERGEANT = 29, // The Sergeant (Jewelry)
+  THE_NOBLE_DUELIST = 46, // The Noble Duelist (Jewelry)
+  DREUGH_KING_SLAYER = 61, // Dreugh King Slayer (Jewelry)
+  THE_CRUSADER = 77, // The Crusader (Jewelry)
+  PRISMATIC_WEAPON = 84, // Prismatic Greatblade
+  AETHER_DESTRUCTION = 140, // Aether (Destruction)
+  VICIOUS_OPHIDIAN = 173, // Vicious Ophidian
+  SWAMP_RAIDER = 187, // Swamp Raider
+  STORM_MASTER = 188, // Storm Master
+  SCATHING_MAGE = 190, // Scathing Mage
+  ESSENCE_THIEF = 198, // Essence Thief
+  ENDURANCE = 204, // Endurance (Jewelry)
+  AGILITY = 206, // Agility (Jewelry)
+  PLAGUE_DOCTOR = 293, // Plague Doctor
+  PLAGUE_SLINGER = 347, // Plague Slinger
+  SCORIONS_FEAST = 603, // Scorion's Feast
+
+  // ============================================================
+  // TRAINING / LEVELING SETS
   // ============================================================
   ARMOR_OF_THE_TRAINEE = 281, // Armor of the Trainee
-  AEGIS_CALLER = 475, // Aegis Caller
-  PLAGUE_SLINGER = 347, // Plague Slinger
 
   // ============================================================
-  // DPS/PENETRATION SETS (Previously defined, keeping for compatibility)
+  // UNKNOWN SETS
   // ============================================================
-  ANSUULS_TORMENT_SET = 707, // Same as PERFECTED_ANSUULS_TORMENT
-  TIDEBORN_WILDSTALKER_SET = 809, // Same as TIDEBORN_WILDSTALKER
-  SUL_XAN_TORMENT_SET = 708, // Sul-Xan's Torment set
-  MORA_SCRIBE_THESIS_SET = 709, // Mora Scribe's Thesis set
-  HARPOONER_WADING_KILT_SET = 710, // Harpooner's Wading Kilt set
-  SHATTERED_FATE_SET = 711, // Shattered Fate set
-  SPRIGGANS_THORNS_SET = 712, // Spriggan's Thorns set
-  BALORGH_SET = 713, // Balorgh set
-  AERIES_CRY_SET = 714, // Aerie's Cry set
-  AURORANS_THUNDER_SET = 715, // Auroran's Thunder set
-  ARMS_OF_RELEQUEN_SET = 716, // Arms of Relequen set
-  ARMS_OF_THE_ANCESTORS_SET = 717, // Arms of the Ancestors set
-  ARCHDRUID_DEVYRIC_SET = 718, // Archdruid Devyric set
-  BLACK_GEM_MONSTROSITY_SET = 719, // Black Gem Monstrosity set
-  COLOVIAN_HIGHLANDS_GENERAL_SET = 720, // Colovian Highlands General set
-  CINDERS_OF_ANTHELMIR_SET = 721, // Cinders of Anthelmir set
-  CORPSEBURSTER_SET = 722, // Corpseburster set
-  PERFECT_ARMS_OF_RELEQUEN_SET = 723, // Perfect Arms of Relequen set
-  PERFECT_AURORAN_THUNDER_SET = 724, // Perfect Auroran's Thunder set
-  PERFECT_ANSUULS_TORMENT_SET = 725, // Perfect Ansuul's Torment set (duplicate of 707)
-  DARK_CONVERGENCE_SET = 726, // Dark Convergence set
-  DRAUGRKINS_GRIP_SET = 727, // Draugrkin's Grip set
-  DRO_ZAKARS_CLAWS_SET = 728, // Dro'Zakar's Claws set
-  FLAME_BLOSSOM_SET = 729, // Flame Blossom set
-  GRISLY_GOURMET_SET = 730, // Grisly Gourmet set
-  GRYPHONS_REPRISAL_SET = 731, // Gryphon's Reprisal set
-  HEW_AND_SUNDER_SET = 732, // Hew and Sunder set
-  HROTHGARS_CHILL_SET = 733, // Hrothgar's Chill set
-  ICY_CONJURER_SET = 734, // Icy Conjurer set
-  JERENSIS_BLADESTORM_SET = 735, // Jerensi's Bladestorm set
-  KAZPIANS_CRUEL_SIGNET_SET = 736, // Kazpian's Cruel Signet set
-  KRAGH_SET = 737, // Kra'gh set
-  LADY_MALYGDA_SET = 738, // Lady Malygda set
-  LANGUOR_OF_PERYITE_SET = 739, // Languor of Peryite set
-  LEGACY_OF_KARTH_SET = 740, // Legacy of Karth set
-  NEW_MOON_ACOLYTE_SET = 741, // New Moon Acolyte set
-  NOCTURNALS_PLOY_SET = 742, // Nocturnal's Ploy set
-  NOXIOUS_BOULDER_SET = 743, // Noxious Boulder set
-  OBLIVIONS_FOE_SET = 744, // Oblivion's Foe set
-  PELINALS_WRATH_SET = 745, // Pelinal's Wrath set
-  PERFECTED_CRUSHING_WALL_SET = 746, // Perfected Crushing Wall set (duplicate of 526)
-  PERFECTED_KAZPIANS_CRUEL_SIGNET_SET = 747, // Perfected Kazpian's Cruel Signet set
-  PERFECTED_MERCILESS_CHARGE_SET = 748, // Perfected Merciless Charge set (duplicate of 522)
+  UNKNOWN_SET_845 = 845, // Unknown Set (ID 845)
+  UNKNOWN_SET_846 = 846, // Unknown Set (ID 846)
 }
 
 /**

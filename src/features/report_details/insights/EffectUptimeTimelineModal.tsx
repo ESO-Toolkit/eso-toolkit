@@ -288,7 +288,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
           )}
         </Box>
         <Tooltip title="Close">
-          <IconButton onClick={onClose} size="small">
+          <IconButton onClick={onClose} size="small" aria-label="Close">
             <CloseIcon />
           </IconButton>
         </Tooltip>

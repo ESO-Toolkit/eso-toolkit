@@ -1,6 +1,42 @@
 import { KnownSetIDs } from '../types/abilities';
 
 /**
+ * Sets that are not currently supported for calculations due to missing verified API IDs.
+ * These sets will be marked with "(unsupported)" in the UI.
+ * When verified set IDs are obtained from combat logs, they should be added to KnownSetIDs.
+ */
+export const UNSUPPORTED_SET_NAMES: Record<string, string> = {
+  'Shattered Fate': 'Shattered Fate',
+  "Spriggan's Thorns": "Spriggan's Thorns",
+  "Aerie's Cry": "Aerie's Cry",
+  "Auroran's Thunder": "Auroran's Thunder",
+  'Arms of the Ancestors': 'Arms of the Ancestors',
+  'Colovian Highlands General': 'Colovian Highlands General',
+  'Cinders of Anthelmir': 'Cinders of Anthelmir',
+  "Perfect Auroran's Thunder": "Perfect Auroran's Thunder",
+  'Dark Convergence': 'Dark Convergence',
+  "Draugrkin's Grip": "Draugrkin's Grip",
+  "Dro'Zakar's Claws": "Dro'Zakar's Claws",
+  'Grisly Gourmet': 'Grisly Gourmet',
+  "Gryphon's Reprisal": "Gryphon's Reprisal",
+  'Hew and Sunder': 'Hew and Sunder',
+  "Hrothgar's Chill": "Hrothgar's Chill",
+  'Icy Conjurer': 'Icy Conjurer',
+  'Languor of Peryite': 'Languor of Peryite',
+  'Legacy of Karth': 'Legacy of Karth',
+  "Nocturnal's Ploy": "Nocturnal's Ploy",
+  'Noxious Boulder': 'Noxious Boulder',
+  "Oblivion's Foe": "Oblivion's Foe",
+};
+
+/**
+ * Check if a set name is in the unsupported list
+ */
+export function isUnsupportedSet(setName: string): boolean {
+  return setName in UNSUPPORTED_SET_NAMES;
+}
+
+/**
  * Map of set IDs to their display names
  * This centralizes the display name mapping for the roster builder
  */
@@ -73,61 +109,193 @@ export const SET_DISPLAY_NAMES: Record<KnownSetIDs, string> = {
   [KnownSetIDs.PERFECTED_ANSUULS_TORMENT]: "Perfected Ansuul's Torment",
   [KnownSetIDs.SLIVERS_OF_THE_NULL_ARCA]: 'Slivers of the Null Arca',
   [KnownSetIDs.PERFECTED_SLIVERS_OF_THE_NULL_ARCA]: 'Perfected Slivers of the Null Arca',
-  [KnownSetIDs.PERFECTED_XORYNS_MASTERPIECE]: "Perfected Xoryn's Masterpiece",
+  [KnownSetIDs.PERFECTED_XORYNS_MASTERPIECE]: "Xoryn's Masterpiece",
   [KnownSetIDs.TIDEBORN_WILDSTALKER]: 'Tide-Born Wildstalker',
 
   // ============================================================
   // OTHER SETS (Training/Leveling)
   // ============================================================
   [KnownSetIDs.ARMOR_OF_THE_TRAINEE]: 'Armor of the Trainee',
+  [KnownSetIDs.DRUIDS_BRAID]: "Druid's Braid",
   [KnownSetIDs.AEGIS_CALLER]: 'Aegis Caller',
   [KnownSetIDs.PLAGUE_SLINGER]: 'Plague Slinger',
 
   // ============================================================
-  // DPS/PENETRATION SETS (Previously defined, keeping for compatibility)
-  // Note: Some IDs are duplicates (ANSUULS_TORMENT_SET=707, TIDEBORN_WILDSTALKER_SET=809)
+  // MISSING SETS (Discovered from Leaderboard Logs - Nov 2024)
   // ============================================================
-  [KnownSetIDs.SUL_XAN_TORMENT_SET]: "Sul-Xan's Torment",
-  [KnownSetIDs.MORA_SCRIBE_THESIS_SET]: "Mora Scribe's Thesis",
-  [KnownSetIDs.HARPOONER_WADING_KILT_SET]: "Harpooner's Wading Kilt",
-  [KnownSetIDs.SHATTERED_FATE_SET]: 'Shattered Fate',
-  [KnownSetIDs.SPRIGGANS_THORNS_SET]: "Spriggan's Thorns",
-  [KnownSetIDs.BALORGH_SET]: 'Balorgh',
-  [KnownSetIDs.AERIES_CRY_SET]: "Aerie's Cry",
-  [KnownSetIDs.AURORANS_THUNDER_SET]: "Auroran's Thunder",
-  [KnownSetIDs.ARMS_OF_RELEQUEN_SET]: 'Arms of Relequen',
-  [KnownSetIDs.ARMS_OF_THE_ANCESTORS_SET]: 'Arms of the Ancestors',
-  [KnownSetIDs.ARCHDRUID_DEVYRIC_SET]: 'Archdruid Devyric',
-  [KnownSetIDs.BLACK_GEM_MONSTROSITY_SET]: 'Black Gem Monstrosity',
-  [KnownSetIDs.COLOVIAN_HIGHLANDS_GENERAL_SET]: 'Colovian Highlands General',
-  [KnownSetIDs.CINDERS_OF_ANTHELMIR_SET]: 'Cinders of Anthelmir',
-  [KnownSetIDs.CORPSEBURSTER_SET]: 'Corpseburster',
-  [KnownSetIDs.PERFECT_ARMS_OF_RELEQUEN_SET]: 'Perfect Arms of Relequen',
-  [KnownSetIDs.PERFECT_AURORAN_THUNDER_SET]: "Perfect Auroran's Thunder",
-  [KnownSetIDs.PERFECT_ANSUULS_TORMENT_SET]: "Perfect Ansuul's Torment",
-  [KnownSetIDs.DARK_CONVERGENCE_SET]: 'Dark Convergence',
-  [KnownSetIDs.DRAUGRKINS_GRIP_SET]: "Draugrkin's Grip",
-  [KnownSetIDs.DRO_ZAKARS_CLAWS_SET]: "Dro'Zakar's Claws",
-  [KnownSetIDs.FLAME_BLOSSOM_SET]: 'Flame Blossom',
-  [KnownSetIDs.GRISLY_GOURMET_SET]: 'Grisly Gourmet',
-  [KnownSetIDs.GRYPHONS_REPRISAL_SET]: "Gryphon's Reprisal",
-  [KnownSetIDs.HEW_AND_SUNDER_SET]: 'Hew and Sunder',
-  [KnownSetIDs.HROTHGARS_CHILL_SET]: "Hrothgar's Chill",
-  [KnownSetIDs.ICY_CONJURER_SET]: 'Icy Conjurer',
-  [KnownSetIDs.JERENSIS_BLADESTORM_SET]: "Jerensi's Bladestorm",
-  [KnownSetIDs.KAZPIANS_CRUEL_SIGNET_SET]: "Kazpian's Cruel Signet",
-  [KnownSetIDs.KRAGH_SET]: "Kra'gh",
-  // Note: LADY_MALYGDA_SET = 738 is duplicate with THE_BLIND
-  [KnownSetIDs.LANGUOR_OF_PERYITE_SET]: 'Languor of Peryite',
-  [KnownSetIDs.LEGACY_OF_KARTH_SET]: 'Legacy of Karth',
-  [KnownSetIDs.NEW_MOON_ACOLYTE_SET]: 'New Moon Acolyte',
-  [KnownSetIDs.NOCTURNALS_PLOY_SET]: "Nocturnal's Ploy",
-  [KnownSetIDs.NOXIOUS_BOULDER_SET]: 'Noxious Boulder',
-  [KnownSetIDs.OBLIVIONS_FOE_SET]: "Oblivion's Foe",
-  [KnownSetIDs.PELINALS_WRATH_SET]: "Pelinal's Wrath",
-  [KnownSetIDs.PERFECTED_CRUSHING_WALL_SET]: 'Perfected Crushing Wall',
-  [KnownSetIDs.PERFECTED_KAZPIANS_CRUEL_SIGNET_SET]: "Perfected Kazpian's Cruel Signet",
-  [KnownSetIDs.PERFECTED_MERCILESS_CHARGE_SET]: 'Perfected Merciless Charge',
+  [KnownSetIDs.THE_SERGEANT]: 'The Sergeant',
+  [KnownSetIDs.THE_NOBLE_DUELIST]: 'The Noble Duelist',
+  [KnownSetIDs.DREUGH_KING_SLAYER]: 'Dreugh King Slayer',
+  [KnownSetIDs.THE_CRUSADER]: 'The Crusader',
+  [KnownSetIDs.HUNDINGS_RAGE]: "Hunding's Rage",
+  [KnownSetIDs.ELF_BANE]: 'Elf Bane',
+  [KnownSetIDs.NECROPOTENCE]: 'Necropotence',
+  [KnownSetIDs.NIGHT_TERROR]: 'Night Terror',
+  [KnownSetIDs.BLESSING_OF_THE_POTENTATES]: 'Blessing of the Potentates',
+  [KnownSetIDs.ADVANCING_YOKEDA]: 'Advancing Yokeda',
+  [KnownSetIDs.RESILIENT_YOKEDA]: 'Resilient Yokeda',
+  [KnownSetIDs.AETHER_DESTRUCTION]: 'Aether',
+  [KnownSetIDs.UNDAUNTED_UNWEAVER]: 'Undaunted Unweaver',
+  [KnownSetIDs.BURNING_SPELLWEAVE]: 'Burning Spellweave',
+  [KnownSetIDs.BLOODSPAWN]: 'Bloodspawn',
+  [KnownSetIDs.NERIENETH]: "Nerien'eth",
+  [KnownSetIDs.MAW_OF_THE_INFERNAL]: 'Maw of the Infernal',
+  [KnownSetIDs.INFALLIBLE_AETHER]: 'Infallible Aether',
+  [KnownSetIDs.MOLAG_KENA]: 'Molag Kena',
+  [KnownSetIDs.BRANDS_OF_IMPERIUM]: 'Brands of Imperium',
+  [KnownSetIDs.SWAMP_RAIDER]: 'Swamp Raider',
+  [KnownSetIDs.STORM_MASTER]: 'Storm Master',
+  [KnownSetIDs.SCATHING_MAGE]: 'Scathing Mage',
+  [KnownSetIDs.LEECHING_PLATE]: 'Leeching Plate',
+  [KnownSetIDs.ESSENCE_THIEF]: 'Essence Thief',
+  [KnownSetIDs.AGILITY]: 'Agility',
+  [KnownSetIDs.LAW_OF_JULIANOS]: 'Law of Julianos',
+  [KnownSetIDs.BRIARHEART]: 'Briarheart',
+  [KnownSetIDs.MIGHTY_CHUDAN]: 'Mighty Chudan',
+  [KnownSetIDs.SWARM_MOTHER]: 'Swarm Mother',
+  [KnownSetIDs.ICEHEART]: 'Iceheart',
+  [KnownSetIDs.TREMORSCALE]: 'Tremorscale',
+  [KnownSetIDs.GROTHDARR]: 'Grothdarr',
+  [KnownSetIDs.MOTHERS_SORROW]: "Mother's Sorrow",
+  [KnownSetIDs.PLAGUE_DOCTOR]: 'Plague Doctor',
+  [KnownSetIDs.MEDUSA]: 'Medusa',
+  [KnownSetIDs.TREASURE_HUNTER]: 'Treasure Hunter',
+  [KnownSetIDs.THE_MASTERS_MACE]: "The Master's Mace",
+  [KnownSetIDs.THE_MASTERS_ICE_STAFF]: "The Master's Ice Staff",
+  [KnownSetIDs.THE_MASTERS_RESTORATION_STAFF]: "The Master's Restoration Staff",
+  [KnownSetIDs.WAR_MAIDEN]: 'War Maiden',
+  [KnownSetIDs.DEFILER]: 'Defiler',
+  [KnownSetIDs.PILLAR_OF_NIRN]: 'Pillar of Nirn',
+  [KnownSetIDs.ZAAN]: 'Zaan',
+  [KnownSetIDs.MECHANICAL_ACUITY]: 'Mechanical Acuity',
+  [KnownSetIDs.UNFATHOMABLE_DARKNESS]: 'Unfathomable Darkness',
+  [KnownSetIDs.ASYLUM_PERFECTED_DAGGER]: "Asylum's Perfected Dagger",
+  [KnownSetIDs.ASYLUM_PERFECTED_RESTO]: "Asylum's Perfected Restoration Staff",
+  [KnownSetIDs.MAELSTROMS_BOW]: "Maelstrom's Bow",
+  [KnownSetIDs.RELEQUEN]: 'Relequen',
+  [KnownSetIDs.RELEQUEN_PERFECTED]: "Relequen's Perfected",
+  [KnownSetIDs.SIRORIA_PERFECTED]: "Siroria's Perfected",
+  [KnownSetIDs.BALORGH]: 'Balorgh',
+  [KnownSetIDs.BLACKROSE_DAGGER]: 'Blackrose Prison Dagger',
+  [KnownSetIDs.BLACKROSE_PERFECTED_DAGGER]: 'Blackrose Prison Perfected Dagger',
+  [KnownSetIDs.BLACKROSE_PERFECTED_BOW]: 'Blackrose Prison Perfected Bow',
+  [KnownSetIDs.BLACKROSE_PERFECTED_ICE_STAFF]: 'Blackrose Prison Perfected Ice Staff',
+  [KnownSetIDs.BLACKROSE_PERFECTED_RESTO]: 'Blackrose Prison Perfected Restoration Staff',
+  [KnownSetIDs.STONEKEEPER]: 'Stonekeeper',
+  [KnownSetIDs.LOKKESTIIZ_PERFECTED]: "Lokkestiiz's Perfected",
+  [KnownSetIDs.AZUREBLIGHT]: 'Azureblight',
+  [KnownSetIDs.DRAGONGUARD_ELITE]: 'Dragonguard Elite',
+  [KnownSetIDs.NEW_MOON_ACOLYTE]: 'New Moon Acolyte',
+  [KnownSetIDs.VENOMOUS_SMITE]: 'Venomous Smite',
+  [KnownSetIDs.VROL_PERFECTED]: "Vrol's Perfected",
+  [KnownSetIDs.WILD_HUNT]: 'Wild Hunt',
+  [KnownSetIDs.VATESHRAN_GREATSWORD]: "Vateshran's Greatsword",
+  [KnownSetIDs.VATESHRAN_PERFECTED_STAFF]: "Vateshran's Perfected Staff",
+  [KnownSetIDs.FROSTBITE]: 'Frostbite',
+  [KnownSetIDs.HEARTLAND_CONQUEROR]: 'Heartland Conqueror',
+  [KnownSetIDs.SAXHLEEL_CHAMPION]: 'Saxhleel Champion',
+  [KnownSetIDs.SUL_XAN_TORMENT]: "Sul-Xan's Torment",
+  [KnownSetIDs.PERFECTED_SUL_XAN_TORMENT]: "Perfected Sul-Xan's Torment",
+  [KnownSetIDs.BAHSEI_MANIA_PERFECTED]: "Perfected Bahsei's Mania",
+  [KnownSetIDs.HARPOONERS_KILT]: "Harpooner's Wading Kilt",
+  [KnownSetIDs.DEATH_DEALERS_FETE]: "Death Dealer's Fete",
+  [KnownSetIDs.CRIMSON_OATH]: 'Crimson Oath',
+  [KnownSetIDs.MAGMA_INCARNATE]: 'Magma Incarnate',
+  [KnownSetIDs.WRETCHED_VITALITY]: 'Wretched Vitality',
+  [KnownSetIDs.HEXOS_WARD]: "Hexos' Ward",
+  [KnownSetIDs.PLAGUEBREAK]: 'Plaguebreak',
+  [KnownSetIDs.TURNING_TIDE]: 'Turning Tide',
+  [KnownSetIDs.MARKYN_RING]: 'Markyn Ring of Majesty',
+  [KnownSetIDs.RALLYING_CRY]: 'Rallying Cry',
+  [KnownSetIDs.BARON_THIRSK]: 'Baron Thirsk',
+  [KnownSetIDs.ORDERS_WRATH]: "Order's Wrath",
+  [KnownSetIDs.CORAL_RIPTIDE]: 'Coral Riptide',
+  [KnownSetIDs.CORAL_RIPTIDE_PERFECTED]: 'Perfected Coral Riptide',
+  [KnownSetIDs.MORAS_WHISPERS]: "Mora's Whispers",
+  [KnownSetIDs.OAKENSOUL]: 'Oakensoul Ring',
+  [KnownSetIDs.GOURMAND]: 'Gourmand',
+  [KnownSetIDs.ROKSA_THE_WARPED]: 'Roksa the Warped',
+  [KnownSetIDs.RUNECARVERS_BLAZE]: "Runecarver's Blaze",
+  [KnownSetIDs.ANSUULS_TORMENT]: "Ansuul's Torment",
+  [KnownSetIDs.MACABRE_VINTAGE]: 'Macabre Vintage',
+  [KnownSetIDs.HIGHLAND_SENTINEL]: 'Highland Sentinel',
+  [KnownSetIDs.MORA_SCRIBE]: 'Mora Scribe',
+  [KnownSetIDs.MORA_SCRIBE_PERFECTED]: 'Perfected Mora Scribe',
+  [KnownSetIDs.PYREBRAND]: 'Pyrebrand',
+  [KnownSetIDs.CORPSEBURSTER]: 'Corpseburster',
+  [KnownSetIDs.BEACON_OF_OBLIVION]: 'Beacon of Oblivion',
+  [KnownSetIDs.JERENSI]: 'Jerensi',
+  [KnownSetIDs.ARKAYS_CHARITY]: "Arkay's Charity",
+  [KnownSetIDs.RAKKHAT_VOIDMANTLE]: "Rakkhat's Voidmantle",
+  [KnownSetIDs.KAZPIAN]: "Kazpian's",
+  [KnownSetIDs.RECOVERY_CONVERGENCE]: 'Recovery Convergence',
+  [KnownSetIDs.RECOVERY_CONVERGENCE_PERFECTED]: 'Perfected Recovery Convergence',
+  [KnownSetIDs.KAZPIAN_PERFECTED]: "Perfected Kazpian's",
+  [KnownSetIDs.STONEHULK_DOMINATION]: 'Stonehulk Domination',
+  [KnownSetIDs.UNKNOWN_SET_845]: 'Unknown',
+  [KnownSetIDs.ARMOR_OF_THE_VEILED_HERITANCE]: 'Armor of the Veiled Heritance',
+  [KnownSetIDs.ARMOR_OF_THE_SEDUCER]: 'Armor of the Seducer',
+  [KnownSetIDs.ASHEN_GRIP]: 'Ashen Grip',
+  [KnownSetIDs.HATCHLINGS_SHELL]: "Hatchling's Shell",
+  [KnownSetIDs.TORUGS_PACT]: "Torug's Pact",
+  [KnownSetIDs.PRISMATIC_WEAPON]: 'Prismatic Weapon',
+  [KnownSetIDs.KAGRENACS_HOPE]: "Kagrenac's Hope",
+  [KnownSetIDs.TWIN_SISTERS]: 'Twin Sisters',
+  [KnownSetIDs.ANCIENT_GRACE]: 'Ancient Grace',
+  [KnownSetIDs.LORD_WARDEN]: 'Lord Warden',
+  [KnownSetIDs.ETERNAL_YOKEDA]: 'Eternal Yokeda',
+  [KnownSetIDs.VICIOUS_OPHIDIAN]: 'Vicious Ophidian',
+  [KnownSetIDs.OVERWHELMING]: 'Overwhelming',
+  [KnownSetIDs.ENDURANCE]: 'Endurance',
+  [KnownSetIDs.THE_PARIAH]: 'The Pariah',
+  [KnownSetIDs.MORKULDIN]: 'Morkuldin',
+  [KnownSetIDs.PELINALS_WRATH]: "Pelinal's Wrath",
+  [KnownSetIDs.VELIDRETH]: 'Velidreth',
+  [KnownSetIDs.KRAGH]: "Kra'gh",
+  [KnownSetIDs.CHOKETHORN]: 'Chokethorn',
+  [KnownSetIDs.ILAMBRIS]: 'Ilambris',
+  [KnownSetIDs.STORMFIST]: 'Stormfist',
+  [KnownSetIDs.THE_TROLL_KING]: 'The Troll King',
+  [KnownSetIDs.THE_MASTERS_BOW]: "The Master's Bow",
+  [KnownSetIDs.ASSASSINS_GUILE]: "Assassin's Guile",
+  [KnownSetIDs.VANGUARDS_CHALLENGE]: "Vanguard's Challenge",
+  [KnownSetIDs.FLAME_BLOSSOM]: 'Flame Blossom',
+  [KnownSetIDs.MAD_TINKERER]: 'Mad Tinkerer',
+  [KnownSetIDs.GALENWES_PERFECTED_RESTO]: "Galenwe's Perfected",
+  [KnownSetIDs.VYKOSA]: 'Vykosa',
+  [KnownSetIDs.BLACKROSE_BOW]: 'Blackrose Bow',
+  [KnownSetIDs.BLACKROSE_ICE_STAFF]: 'Blackrose Ice Staff',
+  [KnownSetIDs.BLACKROSE_RESTO]: 'Blackrose Resto',
+  [KnownSetIDs.TZOGVINS_WARBAND]: "Tzogvin's Warband",
+  [KnownSetIDs.FALSE_GODS_DEVOTION]: "False God's Devotion",
+  [KnownSetIDs.FALSE_GODS_PERFECTED]: "Perfected False God's",
+  [KnownSetIDs.GRUNDWULF]: 'Grundwulf',
+  [KnownSetIDs.GRAVE_GUARDIAN]: 'Grave Guardian',
+  [KnownSetIDs.KJALNARS_NIGHTMARE]: "Kjalnar's Nightmare",
+  [KnownSetIDs.YANDIRS_MIGHT]: "Yandir's Might",
+  [KnownSetIDs.VATESHRAN_PERFECTED_SWORD]: 'Vateshran Perfected Sword',
+  [KnownSetIDs.VATESHRAN_PERFECTED_DAGGER]: 'Vateshran Perfected Dagger',
+  [KnownSetIDs.KINRAS_WRATH]: "Kinras's Wrath",
+  [KnownSetIDs.PALE_ORDER]: 'Pale Order',
+  [KnownSetIDs.BOG_RAIDER]: 'Bog Raider',
+  [KnownSetIDs.GAZE_OF_SITHIS]: 'Gaze of Sithis',
+  [KnownSetIDs.SCORIONS_FEAST]: "Scorion's Feast",
+  [KnownSetIDs.THUNDER_CALLER]: 'Thunder Caller',
+  [KnownSetIDs.STORM_CURSED]: 'Storm-Cursed',
+  [KnownSetIDs.LADY_MALYGDA]: 'Lady Malygda',
+  [KnownSetIDs.SEA_SERPENTS_COIL]: "Sea-Serpent's Coil",
+  [KnownSetIDs.STORMWEAVER]: 'Stormweaver',
+  [KnownSetIDs.AKATOSHS_LAW]: "Akatosh's Law",
+  [KnownSetIDs.OAKFATHERS_RETRIBUTION]: "Oakfather's Retribution",
+  [KnownSetIDs.THE_WEALD]: 'The Weald',
+  [KnownSetIDs.XORYNS_MASTERPIECE]: "Xoryn's Masterpiece",
+  [KnownSetIDs.VANDORALLEN]: 'Vandorallen',
+  [KnownSetIDs.THREE_QUEENS]: 'Three Queens',
+  [KnownSetIDs.DEATH_DANCER]: 'Death-Dancer',
+  [KnownSetIDs.XANMEER_SPELLWEAVER]: 'Xanmeer Spellweaver',
+  [KnownSetIDs.BLACK_GEM_MONSTROSITY]: 'Black Gem Monstrosity',
+  [KnownSetIDs.COUP_DE_GRACE]: 'Coup De Grâce',
+  [KnownSetIDs.UNKNOWN_SET_846]: 'Unknown',
 };
 
 /**
@@ -147,9 +315,21 @@ export function findSetIdByName(displayName: string | undefined | null): KnownSe
 
   const normalized = displayName.toLowerCase().trim();
 
+  // Try exact match first
   for (const [setId, name] of Object.entries(SET_DISPLAY_NAMES)) {
     if (name.toLowerCase() === normalized) {
       return Number(setId) as KnownSetIDs;
+    }
+  }
+
+  // If no exact match, try removing "Perfected" prefix and search again
+  // This handles cases like "Perfected Saxhleel Champion" → "Saxhleel Champion"
+  const withoutPerfected = normalized.replace(/^perfected\s+/, '');
+  if (withoutPerfected !== normalized) {
+    for (const [setId, name] of Object.entries(SET_DISPLAY_NAMES)) {
+      if (name.toLowerCase() === withoutPerfected) {
+        return Number(setId) as KnownSetIDs;
+      }
     }
   }
 
@@ -196,4 +376,19 @@ export function getSetIdsSortedByName(): KnownSetIDs[] {
  */
 export function getAllSetDisplayNames(): string[] {
   return Object.values(SET_DISPLAY_NAMES).sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Get display name for a set with optional unsupported indicator.
+ * If the set name matches an unsupported set, appends " (unsupported)" to the display name.
+ * This is used to indicate sets with unverified API IDs that cannot be used in calculations.
+ *
+ * @param setName - The name of the set to check
+ * @returns The display name, potentially with " (unsupported)" suffix
+ */
+export function getSetDisplayNameWithUnsupportedIndicator(setName: string): string {
+  if (isUnsupportedSet(setName)) {
+    return `${setName} (unsupported)`;
+  }
+  return setName;
 }

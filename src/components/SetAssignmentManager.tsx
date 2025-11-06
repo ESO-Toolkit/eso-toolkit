@@ -35,6 +35,14 @@ import {
   RECOMMENDED_5PIECE_SETS,
   RECOMMENDED_2PIECE_SETS,
   RECOMMENDED_1PIECE_SETS,
+  QUICK_TANK_5PIECE_SETS,
+  QUICK_TANK_MONSTER_SETS,
+  QUICK_FLEXIBLE_5PIECE_SETS,
+  QUICK_FLEXIBLE_MONSTER_SETS,
+  QUICK_FLEXIBLE_MYTHICS,
+  QUICK_HEALER_5PIECE_SETS,
+  QUICK_HEALER_MONSTER_SETS,
+  QUICK_HEALER_MYTHICS,
   TANK_SETS,
   HEALER_SETS,
   FLEXIBLE_SETS,
@@ -52,15 +60,35 @@ import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
 
 /**
- * Determine the primary role(s) for a set based on data analysis
- * Data source: 62 players across 37 boss fights (November 2025, trash excluded)
- * Note: Perfected and non-perfected versions combined
+ * Determine the primary role(s) for a set in Quick Assignment UI
+ * Uses explicit QUICK_* arrays for clear categorization
  */
 const getSetRole = (setId: KnownSetIDs): 'tank' | 'healer' | 'both' => {
-  // Default based on category
+  // Check Quick Assignment arrays for explicit role
+  if (QUICK_TANK_5PIECE_SETS.includes(setId) || QUICK_TANK_MONSTER_SETS.includes(setId)) {
+    return 'tank';
+  }
+
+  if (
+    QUICK_HEALER_5PIECE_SETS.includes(setId) ||
+    QUICK_HEALER_MONSTER_SETS.includes(setId) ||
+    QUICK_HEALER_MYTHICS.includes(setId)
+  ) {
+    return 'healer';
+  }
+
+  if (
+    QUICK_FLEXIBLE_5PIECE_SETS.includes(setId) ||
+    QUICK_FLEXIBLE_MONSTER_SETS.includes(setId) ||
+    QUICK_FLEXIBLE_MYTHICS.includes(setId)
+  ) {
+    return 'both';
+  }
+
+  // Fallback to category-based logic for sets not in Quick Assignment
+  if (FLEXIBLE_SETS.includes(setId)) return 'both';
   if (TANK_SETS.includes(setId)) return 'tank';
   if (HEALER_SETS.includes(setId)) return 'healer';
-  if (FLEXIBLE_SETS.includes(setId)) return 'both';
 
   return 'both'; // Default for unknown sets
 };
@@ -266,8 +294,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
 
   // Memoized recommended assignments
   const recommendedAssignments: SetAssignment[] = useMemo(() => {
-    return Array.from(RECOMMENDED_SETS).map((setId) => {
+    const assignments = Array.from(RECOMMENDED_SETS).map((setId) => {
       const setName = getSetDisplayName(setId);
+
       return {
         setName,
         assignedTo: setAssignments.get(setName) || [],
@@ -275,6 +304,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
         category: SetCategory.RECOMMENDED,
       };
     });
+
+    return assignments;
   }, [setAssignments]);
 
   const allSets = useMemo(() => {
@@ -351,7 +382,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
 
   const is5PieceSetWithRole = useCallback(
     (assignment: SetAssignment, role: 'tank' | 'healer' | 'both'): boolean => {
-      return is5PieceSet(assignment.setName) && filterByRole(assignment, role);
+      const is5Piece = is5PieceSet(assignment.setName);
+      const hasRole = filterByRole(assignment, role);
+      return is5Piece && hasRole;
     },
     [filterByRole, is5PieceSet],
   );
@@ -1004,7 +1037,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 <MenuItem dense onClick={() => handleAssignToRole('tank1', 'set1')}>
                   <ListItemText
                     primary="Tank 1 - Set 1"
-                    secondary={tank1.gearSets.set1 || 'Empty'}
+                    secondary={
+                      tank1.gearSets.set1 ? getSetDisplayName(tank1.gearSets.set1) : 'Empty'
+                    }
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
@@ -1012,7 +1047,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 <MenuItem dense onClick={() => handleAssignToRole('tank1', 'set2')}>
                   <ListItemText
                     primary="Tank 1 - Set 2"
-                    secondary={tank1.gearSets.set2 || 'Empty'}
+                    secondary={
+                      tank1.gearSets.set2 ? getSetDisplayName(tank1.gearSets.set2) : 'Empty'
+                    }
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
@@ -1023,7 +1060,11 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               <MenuItem dense onClick={() => handleAssignToRole('tank1', 'monster')}>
                 <ListItemText
                   primary="Tank 1 - Monster"
-                  secondary={tank1.gearSets.monsterSet || 'Empty'}
+                  secondary={
+                    tank1.gearSets.monsterSet
+                      ? getSetDisplayName(tank1.gearSets.monsterSet)
+                      : 'Empty'
+                  }
                   primaryTypographyProps={{ fontSize: '0.875rem' }}
                   secondaryTypographyProps={{ fontSize: '0.75rem' }}
                 />
@@ -1038,7 +1079,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 <MenuItem dense onClick={() => handleAssignToRole('tank2', 'set1')}>
                   <ListItemText
                     primary="Tank 2 - Set 1"
-                    secondary={tank2.gearSets.set1 || 'Empty'}
+                    secondary={
+                      tank2.gearSets.set1 ? getSetDisplayName(tank2.gearSets.set1) : 'Empty'
+                    }
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
@@ -1046,7 +1089,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 <MenuItem dense onClick={() => handleAssignToRole('tank2', 'set2')}>
                   <ListItemText
                     primary="Tank 2 - Set 2"
-                    secondary={tank2.gearSets.set2 || 'Empty'}
+                    secondary={
+                      tank2.gearSets.set2 ? getSetDisplayName(tank2.gearSets.set2) : 'Empty'
+                    }
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
@@ -1057,7 +1102,11 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               <MenuItem dense onClick={() => handleAssignToRole('tank2', 'monster')}>
                 <ListItemText
                   primary="Tank 2 - Monster"
-                  secondary={tank2.gearSets.monsterSet || 'Empty'}
+                  secondary={
+                    tank2.gearSets.monsterSet
+                      ? getSetDisplayName(tank2.gearSets.monsterSet)
+                      : 'Empty'
+                  }
                   primaryTypographyProps={{ fontSize: '0.875rem' }}
                   secondaryTypographyProps={{ fontSize: '0.75rem' }}
                 />
@@ -1082,7 +1131,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 <MenuItem dense onClick={() => handleAssignToRole('healer1', 'set1')}>
                   <ListItemText
                     primary="Healer 1 - Set 1"
-                    secondary={healer1.set1 || 'Empty'}
+                    secondary={healer1.set1 ? getSetDisplayName(healer1.set1) : 'Empty'}
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
@@ -1090,7 +1139,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 <MenuItem dense onClick={() => handleAssignToRole('healer1', 'set2')}>
                   <ListItemText
                     primary="Healer 1 - Set 2"
-                    secondary={healer1.set2 || 'Empty'}
+                    secondary={healer1.set2 ? getSetDisplayName(healer1.set2) : 'Empty'}
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
@@ -1101,7 +1150,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               <MenuItem dense onClick={() => handleAssignToRole('healer1', 'monster')}>
                 <ListItemText
                   primary="Healer 1 - Monster"
-                  secondary={healer1.monsterSet || 'Empty'}
+                  secondary={healer1.monsterSet ? getSetDisplayName(healer1.monsterSet) : 'Empty'}
                   primaryTypographyProps={{ fontSize: '0.875rem' }}
                   secondaryTypographyProps={{ fontSize: '0.75rem' }}
                 />
@@ -1116,7 +1165,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 <MenuItem dense onClick={() => handleAssignToRole('healer2', 'set1')}>
                   <ListItemText
                     primary="Healer 2 - Set 1"
-                    secondary={healer2.set1 || 'Empty'}
+                    secondary={healer2.set1 ? getSetDisplayName(healer2.set1) : 'Empty'}
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
@@ -1124,7 +1173,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 <MenuItem dense onClick={() => handleAssignToRole('healer2', 'set2')}>
                   <ListItemText
                     primary="Healer 2 - Set 2"
-                    secondary={healer2.set2 || 'Empty'}
+                    secondary={healer2.set2 ? getSetDisplayName(healer2.set2) : 'Empty'}
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
@@ -1135,7 +1184,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               <MenuItem dense onClick={() => handleAssignToRole('healer2', 'monster')}>
                 <ListItemText
                   primary="Healer 2 - Monster"
-                  secondary={healer2.monsterSet || 'Empty'}
+                  secondary={healer2.monsterSet ? getSetDisplayName(healer2.monsterSet) : 'Empty'}
                   primaryTypographyProps={{ fontSize: '0.875rem' }}
                   secondaryTypographyProps={{ fontSize: '0.75rem' }}
                 />
