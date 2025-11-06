@@ -21,8 +21,7 @@ import {
   useTheme,
 } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { MemoizedLoadingSpinner } from '../../components/CustomLoadingSpinner';
 import { useLogger } from '../../contexts/LoggerContext';
@@ -32,8 +31,6 @@ import {
   UserReportSummaryFragment,
   GetUserReportsDocument,
 } from '../../graphql/gql/graphql';
-import { selectMyReportsPage } from '../../store/ui/uiSelectors';
-import { setMyReportsPage } from '../../store/ui/uiSlice';
 import { useAuth } from '../auth/AuthContext';
 import { ReportListMobile } from '../reports/components/ReportListMobile';
 import {
@@ -224,13 +221,14 @@ export const UserReports: React.FC = () => {
   const logger = useLogger('UserReports');
   const theme = useTheme();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isLoggedIn, currentUser, userLoading, userError } = useAuth();
   const client = useEsoLogsClientInstance();
   const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
   
-  // Get the persisted page number from Redux store
-  const persistedPage = useSelector(selectMyReportsPage);
+  // Get the current page from URL query parameter, default to 1
+  const currentPageFromUrl = parseInt(searchParams.get('page') || '1', 10);
+  const pageToUse = isNaN(currentPageFromUrl) || currentPageFromUrl < 1 ? 1 : currentPageFromUrl;
 
   const [state, setState] = useState<UserReportsState>({
     reports: [],
@@ -238,7 +236,7 @@ export const UserReports: React.FC = () => {
     initialLoading: true, // Show loading overlay on first load
     error: null,
     pagination: {
-      currentPage: persistedPage, // Use persisted page from Redux
+      currentPage: pageToUse, // Use page from URL
       totalPages: 1,
       totalReports: 0,
       perPage: REPORTS_PER_PAGE,
@@ -338,11 +336,11 @@ export const UserReports: React.FC = () => {
 
   const handlePageChange = useCallback(
     (_event: React.ChangeEvent<unknown>, page: number) => {
-      // Save the page to Redux for persistence
-      dispatch(setMyReportsPage(page));
+      // Update URL query parameter to persist the page
+      setSearchParams({ page: page.toString() });
       fetchUserReports(page);
     },
-    [dispatch, fetchUserReports],
+    [setSearchParams, fetchUserReports],
   );
 
   const handleReportClick = useCallback(
@@ -374,7 +372,7 @@ export const UserReports: React.FC = () => {
 
     // Fetch reports when user is logged in and we have currentUser data
     if (currentUser?.id) {
-      fetchUserReports(persistedPage);
+      fetchUserReports(pageToUse);
     } else if (currentUser === null && !userLoading) {
       // Handle case where user is logged in but currentUser is null (failed to load user data)
       setState((prev) => ({
@@ -392,7 +390,7 @@ export const UserReports: React.FC = () => {
         error: 'User ID not available. Please ensure you are logged in.',
       }));
     }
-  }, [isLoggedIn, currentUser, userLoading, persistedPage, fetchUserReports]);
+  }, [isLoggedIn, currentUser, userLoading, pageToUse, fetchUserReports]);
 
   if (!isLoggedIn) {
     return (

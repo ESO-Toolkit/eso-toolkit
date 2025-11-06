@@ -145,14 +145,8 @@ const renderWithProviders = (
   // Setup localStorage mock
   mockLocalStorage.getItem.mockReturnValue(token);
 
-  // Create mock store with optional initial page
-  const store = createMockStore({
-    initialState: {
-      ui: {
-        myReportsPage: initialPage,
-      },
-    },
-  });
+  // Create mock store
+  const store = createMockStore();
 
   // Setup client query responses
   mockClient.query.mockImplementation((params) => {
@@ -183,9 +177,12 @@ const renderWithProviders = (
 
   (useAuth as jest.Mock).mockReturnValue(mockAuthValue);
 
+  // Set initial URL with page parameter if provided
+  const initialUrl = initialPage > 1 ? `/my-reports?page=${initialPage}` : '/my-reports';
+
   return render(
     <Provider store={store}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[initialUrl]}>
         <ThemeProvider theme={defaultTheme}>
           <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
             <EsoLogsClientProvider>
@@ -558,7 +555,7 @@ describe('UserReports Component', () => {
   });
 
   describe('Pagination persistence (ESO-544)', () => {
-    it('should use persisted page number from Redux store on mount', async () => {
+    it('should use page number from URL query parameter on mount', async () => {
       const mockReportsPage3 = {
         reportData: {
           reports: {
@@ -609,18 +606,11 @@ describe('UserReports Component', () => {
       };
       (useAuth as jest.Mock).mockReturnValue(mockAuthValue);
 
-      // Create store with page 3
-      const store = createMockStore({
-        initialState: {
-          ui: {
-            myReportsPage: 3,
-          },
-        },
-      });
+      const store = createMockStore();
 
       render(
         <Provider store={store}>
-          <MemoryRouter>
+          <MemoryRouter initialEntries={['/my-reports?page=3']}>
             <ThemeProvider theme={defaultTheme}>
               <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
                 <EsoLogsClientProvider>
@@ -642,7 +632,7 @@ describe('UserReports Component', () => {
       expect(requestedPage).toBe(3);
     });
 
-    it('should update Redux store when page changes', async () => {
+    it('should update URL when page changes', async () => {
       const mockReportsWithMultiplePages = {
         reportData: {
           reports: {
@@ -664,57 +654,31 @@ describe('UserReports Component', () => {
         },
       };
 
-      const store = createMockStore();
-
-      mockClient.query.mockImplementation(() => {
-        return Promise.resolve(mockReportsWithMultiplePages);
+      renderWithProviders(<UserReports />, {
+        token: validToken,
+        reportsData: mockReportsWithMultiplePages,
       });
-
-      const mockAuthValue = {
-        accessToken: validToken,
-        isLoggedIn: true,
-        isBanned: false,
-        banReason: null,
-        currentUser: mockUserData.userData.currentUser,
-        userLoading: false,
-        userError: null,
-        setAccessToken: jest.fn(),
-        rebindAccessToken: jest.fn(),
-        refetchUser: jest.fn(),
-      };
-
-      (useAuth as jest.Mock).mockReturnValue(mockAuthValue);
-
-      render(
-        <Provider store={store}>
-          <MemoryRouter>
-            <ThemeProvider theme={defaultTheme}>
-              <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
-                <EsoLogsClientProvider>
-                  <AuthProvider>
-                    <UserReports />
-                  </AuthProvider>
-                </EsoLogsClientProvider>
-              </LoggerProvider>
-            </ThemeProvider>
-          </MemoryRouter>
-        </Provider>,
-      );
 
       await waitFor(() => {
         expect(screen.getByText('Report 1')).toBeInTheDocument();
       });
 
-      // Initial state should be page 1
-      expect(store.getState().ui.myReportsPage).toBe(1);
-
       // Find and click page 2 button
       const page2Button = screen.getByRole('button', { name: /Go to page 2/i });
+      
+      // Mock should be called with page 2 after clicking
+      mockClient.query.mockClear();
       fireEvent.click(page2Button);
 
-      // Wait for the Redux state to update
+      // Verify the query was called with page 2
       await waitFor(() => {
-        expect(store.getState().ui.myReportsPage).toBe(2);
+        expect(mockClient.query).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variables: expect.objectContaining({
+              page: 2,
+            }),
+          })
+        );
       });
     });
   });
