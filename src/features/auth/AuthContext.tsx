@@ -115,8 +115,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     const subject = getAccessTokenSubject(accessToken);
-    setAnalyticsUserId(subject);
-  }, [accessToken]);
+    // If we have currentUser with a name, combine subject with username for better GA reporting
+    const userId = subject && currentUser?.name 
+      ? `${subject}|${currentUser.name}` 
+      : subject;
+    setAnalyticsUserId(userId);
+  }, [accessToken, currentUser]);
 
   // Re-bind access token from localStorage
   const rebindAccessToken = useCallback(() => {

@@ -210,8 +210,14 @@ describe('AuthContext', () => {
 
     renderWithAuthProvider(<TestComponent />);
 
+    // First call happens before user data is loaded (subject only)
     await waitFor(() => {
       expect(mockSetAnalyticsUserId).toHaveBeenCalledWith('eso-user-123');
+    });
+
+    // Second call happens after user data is loaded (subject + username)
+    await waitFor(() => {
+      expect(mockSetAnalyticsUserId).toHaveBeenCalledWith('eso-user-123|testuser');
     });
 
     await waitFor(() => {
