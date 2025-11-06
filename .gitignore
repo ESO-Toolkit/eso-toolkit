@@ -22,6 +22,7 @@
 /playwright/.cache/
 /tests/auth-state.json
 /tests/auth-metadata.json
+/.playwright-mcp/
 
 # Screen size test report directories and artifacts (keep baseline screenshots)
 /tests/screen-sizes/**/test-results/
