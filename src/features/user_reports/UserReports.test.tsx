@@ -366,6 +366,63 @@ describe('UserReports Component', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/report/ABC123');
     });
 
+    it('should open report in new window on middle-click', async () => {
+      const windowOpenSpy = jest.spyOn(window, 'open').mockImplementation();
+
+      renderWithProviders(<UserReports />, { token: validToken });
+
+      await waitFor(() => {
+        const reportRow = screen.getByText('Test Report 1').closest('tr');
+        expect(reportRow).toBeInTheDocument();
+      });
+
+      const reportRow = screen.getByText('Test Report 1').closest('tr')!;
+      fireEvent.mouseDown(reportRow, { button: 1 });
+
+      expect(windowOpenSpy).toHaveBeenCalledWith('/report/ABC123', '_blank', 'noopener,noreferrer');
+      expect(mockNavigate).not.toHaveBeenCalled();
+
+      windowOpenSpy.mockRestore();
+    });
+
+    it('should open report in new window on Ctrl+Click', async () => {
+      const windowOpenSpy = jest.spyOn(window, 'open').mockImplementation();
+
+      renderWithProviders(<UserReports />, { token: validToken });
+
+      await waitFor(() => {
+        const reportRow = screen.getByText('Test Report 1').closest('tr');
+        expect(reportRow).toBeInTheDocument();
+      });
+
+      const reportRow = screen.getByText('Test Report 1').closest('tr')!;
+      fireEvent.click(reportRow, { ctrlKey: true });
+
+      expect(windowOpenSpy).toHaveBeenCalledWith('/report/ABC123', '_blank', 'noopener,noreferrer');
+      expect(mockNavigate).not.toHaveBeenCalled();
+
+      windowOpenSpy.mockRestore();
+    });
+
+    it('should open report in new window on Cmd+Click (Mac)', async () => {
+      const windowOpenSpy = jest.spyOn(window, 'open').mockImplementation();
+
+      renderWithProviders(<UserReports />, { token: validToken });
+
+      await waitFor(() => {
+        const reportRow = screen.getByText('Test Report 1').closest('tr');
+        expect(reportRow).toBeInTheDocument();
+      });
+
+      const reportRow = screen.getByText('Test Report 1').closest('tr')!;
+      fireEvent.click(reportRow, { metaKey: true });
+
+      expect(windowOpenSpy).toHaveBeenCalledWith('/report/ABC123', '_blank', 'noopener,noreferrer');
+      expect(mockNavigate).not.toHaveBeenCalled();
+
+      windowOpenSpy.mockRestore();
+    });
+
     it('should refresh data when refresh button is clicked', async () => {
       renderWithProviders(<UserReports />, { token: validToken });
 

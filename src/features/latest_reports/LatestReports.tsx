@@ -139,8 +139,16 @@ export const LatestReports: React.FC = () => {
     fetchLatestReports(page);
   };
 
-  const handleReportClick = (reportCode: string): void => {
-    navigate(`/report/${reportCode}`);
+  const handleReportClick = (reportCode: string, event?: React.MouseEvent): void => {
+    const url = `/report/${reportCode}`;
+
+    // Check if middle-click, Ctrl+Click, or Cmd+Click (Mac)
+    if (event && (event.button === 1 || event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(url);
+    }
   };
 
   // Loading state
@@ -291,7 +299,14 @@ export const LatestReports: React.FC = () => {
                         <TableRow
                           key={report.code}
                           hover
-                          onClick={() => handleReportClick(report.code)}
+                          onClick={(e) => handleReportClick(report.code, e)}
+                          onMouseDown={(e) => {
+                            // Handle middle-click
+                            if (e.button === 1) {
+                              e.preventDefault();
+                              handleReportClick(report.code, e);
+                            }
+                          }}
                           sx={{
                             cursor: 'pointer',
                             transition: 'all 0.2s ease-in-out',

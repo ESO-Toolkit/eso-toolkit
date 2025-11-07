@@ -337,8 +337,16 @@ export const UserReports: React.FC = () => {
   );
 
   const handleReportClick = useCallback(
-    (reportCode: string) => {
-      navigate(`/report/${reportCode}`);
+    (reportCode: string, event?: React.MouseEvent) => {
+      const url = `/report/${reportCode}`;
+
+      // Check if middle-click, Ctrl+Click, or Cmd+Click (Mac)
+      if (event && (event.button === 1 || event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } else {
+        navigate(url);
+      }
     },
     [navigate],
   );
@@ -563,7 +571,14 @@ export const UserReports: React.FC = () => {
                         <TableRow
                           key={report.code}
                           hover
-                          onClick={() => handleReportClick(report.code)}
+                          onClick={(e) => handleReportClick(report.code, e)}
+                          onMouseDown={(e) => {
+                            // Handle middle-click
+                            if (e.button === 1) {
+                              e.preventDefault();
+                              handleReportClick(report.code, e);
+                            }
+                          }}
                           sx={{
                             cursor: 'pointer',
                             animation: !state.loading ? 'fadeIn 0.3s ease-out both' : 'none',
