@@ -14,6 +14,7 @@ Features: data visualization, real-time analytics, comprehensive testing infrast
 - **Feature Docs**: [documentation/features/](documentation/features/)
 - **Architecture**: [documentation/architecture/](documentation/architecture/)
 - **Complete Guide**: [documentation/AGENTS.md](documentation/AGENTS.md)
+- **VS Code MCP Playwright Tool**: Prefer the built-in Playwright tool from the VS Code MCP server for interactive test discovery and targeted runs without leaving the editor.
 
 ---
 
@@ -26,6 +27,8 @@ Features: data visualization, real-time analytics, comprehensive testing infrast
 - ✅ Only document significant features/architecture changes
 - 💬 Be concise - ask before extensive work
 - 📝 Use code comments and clear commit messages for simple changes
+- 🧪 When validating UI flows, launch tests through the VS Code MCP Playwright tool instead of ad-hoc CLI commands
+- 🔧 When interacting with GitHub, Sentry, Atlassian, or GitKraken workflows, prefer the corresponding MCP servers and tools instead of manual web or CLI steps
 
 ---
 
@@ -85,7 +88,7 @@ tech_stack,ui_library_2,dependency,Emotion for styling,package.json,,,"CSS-in-JS
 tech_stack,ui_library_3,dependency,React Three Fiber for 3D visualization,package.json,,,"3D graphics rendering"
 tech_stack,ui_library_4,dependency,Chart.js for data visualization,package.json,,,"Data visualization charts"
 tech_stack,testing_framework_1,dependency,Jest,jest.config.cjs,,tests,"Unit and integration testing"
-tech_stack,testing_framework_2,dependency,Playwright,playwright.nightly.config.ts,,tests,"End-to-end testing"
+tech_stack,testing_framework_2,dependency,Playwright,playwright.nightly.config.ts,,tests,"End-to-end testing; integrate with VS Code MCP Playwright tool"
 tech_stack,testing_framework_3,dependency,Testing Library,package.json,,,"Component testing utilities"
 tech_stack,code_quality_1,dependency,ESLint 9,eslint.config.js,,,"Code linting"
 tech_stack,code_quality_2,dependency,Prettier,package.json,,,"Code formatting"
@@ -94,7 +97,7 @@ tech_stack,documentation,dependency,Storybook,.storybook,,,"Component documentat
 tech_stack,monitoring,dependency,Sentry,package.json,,,"Error tracking and monitoring"
 tech_stack,deployment,platform,GitHub Pages,package.json,,,"Production deployment platform"
 directory_structure,src,directory,Main application source code,,,,
-directory_structure,tests,directory,End-to-end tests (Playwright),,,,
+directory_structure,tests,directory,End-to-end tests (Playwright),,,,"Manage and launch via VS Code MCP Playwright tool"
 directory_structure,public,directory,Static assets and HTML template,,,,
 directory_structure,scripts,directory,Build and utility scripts,,,,
 directory_structure,documentation,directory,Technical documentation,,,,
@@ -102,11 +105,11 @@ directory_structure,data,directory,Static data files (abilities.json),,,,
 directory_structure,.storybook,directory,Storybook configuration,,,,
 directory_structure,coverage,directory,Test coverage reports (generated),,,,
 directory_structure,build,directory,Production build output (generated),,,,
-directory_structure,playwright-report,directory,Playwright test reports (generated),,,,
+directory_structure,playwright-report,directory,Playwright test reports (generated),,,,"Review outputs from VS Code MCP Playwright tool runs"
 config_file,package.json,json,Dependencies and scripts,package.json,,,"Project configuration and dependencies"
 config_file,vite.config.mjs,javascript,Vite build configuration,vite.config.mjs,,,"Build tool configuration"
 config_file,jest.config.cjs,javascript,Jest testing configuration,jest.config.cjs,,,"Unit test configuration"
-config_file,playwright.nightly.config.ts,typescript,Playwright E2E test configurations,playwright.nightly.config.ts,,,"End-to-end test configuration"
+config_file,playwright.nightly.config.ts,typescript,Playwright E2E test configurations,playwright.nightly.config.ts,,,"End-to-end test configuration; consumed by VS Code MCP Playwright tool and CLI"
 config_file,eslint.config.js,javascript,ESLint linting rules,eslint.config.js,,,"Code linting configuration"
 config_file,tsconfig.json,json,TypeScript configuration,tsconfig.json,,,"TypeScript compiler configuration"
 config_file,codegen.yml,yaml,GraphQL code generation,codegen.yml,,,"GraphQL type generation configuration"
@@ -115,7 +118,7 @@ tool,vite,build_tool,Modern build tool with HMR,vite.config.mjs,,,"React SWC, SV
 tool,typescript,compiler,Static typing,tsconfig.json,,,"Main config and type checking"
 tool,eslint,linter,Code linting (Flat config format),eslint.config.js,,,"React, TypeScript, Import resolution plugins"
 tool,jest,test_framework,Unit & Integration Testing,jest.config.cjs,,,"Main, Coverage, Smoke, CRA compatibility configs"
-tool,playwright,test_framework,End-to-End Testing,playwright.nightly.config.ts,,,"Nightly, Smoke, Screen Size configs with sharding support"
+tool,playwright,test_framework,End-to-End Testing,playwright.nightly.config.ts,,,"Launch via VS Code MCP Playwright tool; Nightly, Smoke, Screen Size configs with sharding support"
 tool,testing_library,test_utility,Component testing utilities,package.json,,,"React component testing helpers"
 tool,prettier,formatter,Code formatting,package.json,,,"Automatic code formatting"
 tool,apollo_client,graphql_client,GraphQL client,package.json,,,"GraphQL queries and mutations"
@@ -137,18 +140,18 @@ command,test_coverage,testing,Generate coverage report,,npm run test:coverage,,"
 command,coverage_open,testing,Open coverage report,,npm run coverage:open,,"Open coverage report in browser"
 command,coverage_full,testing,Complete coverage workflow,,npm run coverage:full,,"Complete coverage workflow"
 
-command,test_nightly_all,testing,Nightly tests (all browsers),,npm run test:nightly:all,,"Comprehensive cross-browser testing"
-command,test_nightly_chromium,testing,Nightly tests (Chromium),,npm run test:nightly:chromium,,"Nightly tests in Chromium"
-command,test_nightly_firefox,testing,Nightly tests (Firefox),,npm run test:nightly:firefox,,"Nightly tests in Firefox"
-command,test_nightly_webkit,testing,Nightly tests (WebKit),,npm run test:nightly:webkit,,"Nightly tests in WebKit"
-command,test_smoke,testing,Smoke tests (unit and E2E),,npm run test:smoke,,"Quick validation tests"
+command,test_nightly_all,testing,Nightly tests (all browsers),,npm run test:nightly:all,,"Comprehensive cross-browser testing; prefer launching via VS Code MCP Playwright tool"
+command,test_nightly_chromium,testing,Nightly tests (Chromium),,npm run test:nightly:chromium,,"Nightly tests in Chromium; prefer launching via VS Code MCP Playwright tool"
+command,test_nightly_firefox,testing,Nightly tests (Firefox),,npm run test:nightly:firefox,,"Nightly tests in Firefox; prefer launching via VS Code MCP Playwright tool"
+command,test_nightly_webkit,testing,Nightly tests (WebKit),,npm run test:nightly:webkit,,"Nightly tests in WebKit; prefer launching via VS Code MCP Playwright tool"
+command,test_smoke,testing,Smoke tests (unit and E2E),,npm run test:smoke,,"Quick validation tests; use VS Code MCP Playwright tool for E2E coverage"
 command,test_smoke_unit,testing,Smoke tests (unit only),,npm run test:smoke:unit,,"Quick unit test validation"
-command,test_smoke_e2e,testing,Smoke tests (E2E only),,npm run test:smoke:e2e,,"Quick E2E test validation"
-command,test_full,testing,Full E2E test suite (all non-nightly tests),,npm run test:full,,"Comprehensive E2E testing for releases"
-command,test_full_headed,testing,Full E2E test suite (headed mode),,npm run test:full:headed,,"Run full suite with visible browser"
-command,test_full_report,testing,View full test suite report,,npm run test:full:report,,"Open HTML report for full suite"
-command,test_performance,testing,Performance benchmarking tests,,npm run test:performance,,"Core Web Vitals and performance metrics"
-command,test_performance_report,testing,View performance test report,,npm run test:performance:report,,"Open performance test HTML report"
+command,test_smoke_e2e,testing,Smoke tests (E2E only),,npm run test:smoke:e2e,,"Quick E2E test validation; launch via VS Code MCP Playwright tool"
+command,test_full,testing,Full E2E test suite (all non-nightly tests),,npm run test:full,,"Comprehensive E2E testing for releases; launch via VS Code MCP Playwright tool"
+command,test_full_headed,testing,Full E2E test suite (headed mode),,npm run test:full:headed,,"Run full suite with visible browser; launch via VS Code MCP Playwright tool"
+command,test_full_report,testing,View full test suite report,,npm run test:full:report,,"Open HTML report for full suite; generated by VS Code MCP Playwright tool runs or CLI"
+command,test_performance,testing,Performance benchmarking tests,,npm run test:performance,,"Core Web Vitals and performance metrics; launch via VS Code MCP Playwright tool"
+command,test_performance_report,testing,View performance test report,,npm run test:performance:report,,"Open performance test HTML report; pair with VS Code MCP Playwright tool runs"
 command,build,build,Production build,,npm run build,,"Create production build"
 command,preview,build,Preview production build,,npm run preview,,"Preview production build locally"
 command,analyze,build,Bundle analysis,,npm run analyze,,"Analyze bundle size"
@@ -171,10 +174,10 @@ command,download_report_data,utility,Download report data,,npm run download-repo
 command,health_check,utility,Health checks,,npm run health-check,scripts,"System health validation"
 command,generate_version,utility,Version management,,node scripts/generate-version.cjs,scripts,"Generate version information"
 command,clean_version,utility,Version cleanup,,node scripts/clean-version.cjs,scripts,"Clean version files"
-command,test_nightly_shard1,sharding,Manual sharding (shard 1),,npm run test:nightly:shard1,,"Parallel execution shard 1"
-command,test_nightly_shard2,sharding,Manual sharding (shard 2),,npm run test:nightly:shard2,,"Parallel execution shard 2"
-command,test_nightly_shard3,sharding,Manual sharding (shard 3),,npm run test:nightly:shard3,,"Parallel execution shard 3"
-command,test_nightly_sharded,sharding,Automated sharding,,npm run test:nightly:sharded,,"Automated parallel execution"
+command,test_nightly_shard1,sharding,Manual sharding (shard 1),,npm run test:nightly:shard1,,"Parallel execution shard 1; trigger via VS Code MCP Playwright tool when coordinating runs"
+command,test_nightly_shard2,sharding,Manual sharding (shard 2),,npm run test:nightly:shard2,,"Parallel execution shard 2; trigger via VS Code MCP Playwright tool when coordinating runs"
+command,test_nightly_shard3,sharding,Manual sharding (shard 3),,npm run test:nightly:shard3,,"Parallel execution shard 3; trigger via VS Code MCP Playwright tool when coordinating runs"
+command,test_nightly_sharded,sharding,Automated sharding,,npm run test:nightly:sharded,,"Automated parallel execution; manage via VS Code MCP Playwright tool where possible"
 file_organization,components,directory,UI components,,,src/components,"React UI components"
 file_organization,features,directory,Feature-specific code,,,src/features,"Feature modules"
 file_organization,store,directory,Redux state management,,,src/store,"Redux store and slices"
@@ -187,9 +190,9 @@ path_alias,@utils/,alias,Utils directory,tsconfig.json,,,"Maps to src/utils/ dir
 path_alias,@store/,alias,Store directory,tsconfig.json,,,"Maps to src/store/ directory"
 testing_strategy,unit_tests,strategy,Jest for component and utility testing,jest.config.cjs,,,"Component and utility testing"
 testing_strategy,integration_tests,strategy,Testing Library for component integration,package.json,,,"Component integration testing"
-testing_strategy,e2e_tests,strategy,Playwright for full user workflows,playwright.nightly.config.ts,,,"End-to-end user workflow testing"
-testing_strategy,smoke_tests,strategy,Quick validation of critical paths,playwright.smoke.config.ts,,,"Quick critical path validation"
-testing_strategy,nightly_tests,strategy,Comprehensive cross-browser testing,playwright.nightly.config.ts,,,"Comprehensive cross-browser validation"
+testing_strategy,e2e_tests,strategy,Playwright for full user workflows,playwright.nightly.config.ts,,,"End-to-end user workflow testing; prefer VS Code MCP Playwright tool for execution"
+testing_strategy,smoke_tests,strategy,Quick validation of critical paths,playwright.smoke.config.ts,,,"Quick critical path validation; start runs from VS Code MCP Playwright tool when possible"
+testing_strategy,nightly_tests,strategy,Comprehensive cross-browser testing,playwright.nightly.config.ts,,,"Comprehensive cross-browser validation; initiate via VS Code MCP Playwright tool for guided sharding"
 code_quality_workflow,validate,workflow,TypeScript + ESLint + Prettier,,npm run validate,,"Complete validation workflow"
 code_quality_workflow,typecheck,workflow,TypeScript compilation check,,npm run typecheck,,"TypeScript compilation validation"
 code_quality_workflow,lint_check,workflow,ESLint analysis,,npm run lint,,"Code quality analysis"

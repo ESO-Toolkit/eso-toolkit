@@ -136,10 +136,4 @@ Icon?
 *.temp
 *.lock
 *.pid
-.playwright-mcp/roster-builder-eso-ultimate-icons.png
-.playwright-mcp/roster-builder-skill-line-icons.png
-.playwright-mcp/roster-builder-ultimate-icons.png
-.playwright-mcp/skill-line-icons-bottom.png
-.playwright-mcp/skill-line-icons-display.png
-.playwright-mcp/skill-line-icons-fixed.png
-.playwright-mcp/skill-line-icons-scrolled.png
+.playwright-mcp/

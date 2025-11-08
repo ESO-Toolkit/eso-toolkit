@@ -10,6 +10,16 @@ import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
 import { MapMarkersState } from '../types/mapMarkers';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
+import { 
+  extractPlayerPaths, 
+  getVisiblePlayerIds, 
+  DEFAULT_PATH_SAMPLING 
+} from '../utils/pathUtils';
+import { 
+  globalPlayerColorManager, 
+  getPlayerPathColor,
+  resetPlayerColors 
+} from '../utils/playerColors';
 
 import { AnimationFrameActor3D } from './AnimationFrameActor3D';
 import { BossHealthHUD } from './BossHealthHUD';
@@ -19,6 +29,8 @@ import { KeyboardCameraControls } from './KeyboardCameraControls';
 import { MapMarkers } from './MapMarkers';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { PerformanceMonitorCanvas } from './PerformanceMonitor';
+import { PlayerListHUD } from './PlayerListHUD';
+import { PlayerPathTrail3D } from './PlayerPathTrail3D';
 
 // Create logger instance for Arena3DScene
 const logger = new Logger({
@@ -138,6 +150,14 @@ export interface Arena3DSceneProps {
   onMarkerContextMenu?: (payload: MarkerContextMenuPayload) => void;
   fight: FightFragment;
   initialTarget?: [number, number, number];
+  /** Selected player IDs for path visualization */
+  selectedPlayerIds?: Set<number>;
+  /** Callback when player selection changes */
+  onPlayerSelectionChange?: (selectedIds: Set<number>) => void;
+  /** Whether to show player paths HUD */
+  showPlayerPathsHUD?: boolean;
+  /** Whether to show player trail paths */
+  showPlayerTrails?: boolean;
 }
 
 /**
@@ -158,6 +178,10 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   onMarkerContextMenu,
   fight,
   initialTarget,
+  selectedPlayerIds = new Set(),
+  onPlayerSelectionChange,
+  showPlayerPathsHUD = false,
+  showPlayerTrails = false,
 }) => {
   // Calculate arena dimensions and camera settings based on fight bounding box
   const arenaDimensions = useMemo(() => {
@@ -295,6 +319,28 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
     return DEFAULT_ACTOR_SCALE;
   }, [fight.boundingBox, fight.gameZone?.id, fight.id, fight.maps]);
 
+  // Process player paths for visualization
+  const playerPaths = useMemo(() => {
+    if (!lookup || !showPlayerTrails) {
+      return new Map();
+    }
+
+    // Extract paths for selected players
+    const paths = extractPlayerPaths(lookup, Array.from(selectedPlayerIds), DEFAULT_PATH_SAMPLING);
+    
+    // Assign colors to each path
+    paths.forEach(path => {
+      path.color = getPlayerPathColor(path.actorId);
+    });
+
+    return paths;
+  }, [lookup, selectedPlayerIds, showPlayerTrails]);
+
+  // Get all visible player IDs for HUD
+  const availablePlayerIds = useMemo(() => {
+    return lookup ? getVisiblePlayerIds(lookup) : [];
+  }, [lookup]);
+
   // Debug logging for Scene component
 
   return (
@@ -385,6 +431,40 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           markersState={markersState}
           fight={fight}
           onMarkerContextMenu={onMarkerContextMenu}
+        />
+      )}
+
+      {/* Player Path Trails - Animated trails for selected players */}
+      {showPlayerTrails && (
+        <PlayerPathTrail3D
+          paths={playerPaths}
+          timeRef={timeRef}
+          lookup={lookup}
+          fadeTime={15000} // 15 second fade
+          lineWidth={3}
+          visible={showPlayerTrails}
+        />
+      )}
+
+      {/* Player List HUD - Multi-player selection and management */}
+      {showPlayerPathsHUD && onPlayerSelectionChange && (
+        <PlayerListHUD
+          paths={new Map(availablePlayerIds.map(id => [id, {
+            actorId: id,
+            name: `Player ${id}`,
+            role: undefined,
+            points: [],
+            color: getPlayerPathColor(id),
+            visible: true,
+          }]))}
+          selectedPlayerIds={selectedPlayerIds}
+          onPlayerSelectionChange={onPlayerSelectionChange}
+          lookup={lookup}
+          timeRef={timeRef}
+          colorManager={globalPlayerColorManager}
+          visible={showPlayerPathsHUD}
+          playersPerPage={8}
+          positionOffset={{ x: -20, y: 20 }}
         />
       )}
 
