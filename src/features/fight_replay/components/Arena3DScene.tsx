@@ -1,6 +1,6 @@
 import { Grid, OrbitControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
-import React, { Suspense, useMemo } from 'react';
+import React, { Suspense, useMemo, useState, useCallback } from 'react';
 
 import { FightFragment } from '@/graphql/gql/graphql';
 
@@ -12,7 +12,8 @@ import { MapMarkersState } from '../types/mapMarkers';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 import { 
   extractPlayerPaths, 
-  getVisiblePlayerIds, 
+  getVisiblePlayerIds,
+  getPlayerInfo,
   DEFAULT_PATH_SAMPLING 
 } from '../utils/pathUtils';
 import { 
@@ -30,6 +31,7 @@ import { MapMarkers } from './MapMarkers';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { PerformanceMonitorCanvas } from './PerformanceMonitor';
 import { PlayerListHUD } from './PlayerListHUD';
+import { PlayerListHUDOverlay } from './PlayerListHUDOverlay';
 import { PlayerPathTrail3D } from './PlayerPathTrail3D';
 
 // Create logger instance for Arena3DScene
@@ -55,6 +57,7 @@ interface AnimationFrameSceneActorsProps {
   };
   followingActorIdRef: React.RefObject<number | null>;
   onActorClick?: (actorId: number) => void;
+  playerVisibility?: Map<number, boolean>;
 }
 
 export interface GroundContextMenuPayload {
@@ -73,6 +76,7 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   scrubbingMode,
   followingActorIdRef,
   onActorClick,
+  playerVisibility,
 }) => {
   // Get list of actor IDs to render from the lookup structure
   const actorIds = useMemo(() => {
@@ -99,18 +103,27 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
 
   return (
     <>
-      {actorIds.map((actorId) => (
-        <AnimationFrameActor3D
-          key={actorId}
-          actorId={actorId}
-          lookup={lookup}
-          timeRef={timeRef}
-          scale={scale}
-          showName={effectiveShowNames}
-          selectedActorRef={followingActorIdRef}
-          onActorClick={onActorClick}
-        />
-      ))}
+      {actorIds.map((actorId) => {
+        // Check if this actor should be visible
+        const isVisible = playerVisibility ? (playerVisibility.get(actorId) ?? true) : true;
+        
+        if (!isVisible) {
+          return null;
+        }
+        
+        return (
+          <AnimationFrameActor3D
+            key={actorId}
+            actorId={actorId}
+            lookup={lookup}
+            timeRef={timeRef}
+            scale={scale}
+            showName={effectiveShowNames}
+            selectedActorRef={followingActorIdRef}
+            onActorClick={onActorClick}
+          />
+        );
+      })}
     </>
   );
 };
@@ -183,6 +196,18 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   showPlayerPathsHUD = false,
   showPlayerTrails = false,
 }) => {
+  // State for player visibility (actor models in 3D scene)
+  const [playerVisibility, setPlayerVisibility] = useState<Map<number, boolean>>(new Map());
+  
+  // Handler for toggling player visibility
+  const handlePlayerVisibilityChange = useCallback((actorId: number, visible: boolean) => {
+    setPlayerVisibility(prev => {
+      const next = new Map(prev);
+      next.set(actorId, visible);
+      return next;
+    });
+  }, []);
+  
   // Calculate arena dimensions and camera settings based on fight bounding box
   const arenaDimensions = useMemo(() => {
     // Arena must always be 100x100 centered at (50, 50) to match actor coordinate system
@@ -420,6 +445,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         scrubbingMode={scrubbingMode}
         followingActorIdRef={followingActorIdRef}
         onActorClick={onActorClick}
+        playerVisibility={playerVisibility}
       />
 
       {/* Boss Health HUD - positioned in corner of 3D scene */}
@@ -446,29 +472,30 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         />
       )}
 
-      {/* Player List HUD - Multi-player selection and management */}
-      {showPlayerPathsHUD && onPlayerSelectionChange && (
+      {/* Player List HUD - 3D Canvas Version with Fixed Screen-Space Positioning */}
+      {showPlayerPathsHUD && onPlayerSelectionChange && lookup && (
         <PlayerListHUD
-          paths={new Map(availablePlayerIds.map(id => [id, {
-            actorId: id,
-            name: `Player ${id}`,
-            role: undefined,
-            points: [],
-            color: getPlayerPathColor(id),
-            visible: true,
-          }]))}
+          paths={new Map(availablePlayerIds.map(id => {
+            const playerInfo = getPlayerInfo(lookup, id);
+            return [id, {
+              actorId: id,
+              name: playerInfo?.name || `Player ${id}`,
+              role: playerInfo?.role,
+              points: [],
+              color: getPlayerPathColor(id),
+              visible: playerVisibility.get(id) ?? true,
+            }];
+          }))}
           selectedPlayerIds={selectedPlayerIds}
           onPlayerSelectionChange={onPlayerSelectionChange}
+          onPlayerVisibilityChange={handlePlayerVisibilityChange}
           lookup={lookup}
           timeRef={timeRef}
           colorManager={globalPlayerColorManager}
           visible={showPlayerPathsHUD}
-          playersPerPage={8}
           positionOffset={{ x: -20, y: 20 }}
         />
-      )}
-
-      {/* Interaction plane for context menu support (Alt + Right Click) */}
+      )}      {/* Interaction plane for context menu support (Alt + Right Click) */}
       <mesh
         position={[arenaDimensions.centerX, -0.019, arenaDimensions.centerZ]}
         rotation={[-Math.PI / 2, 0, 0]}

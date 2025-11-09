@@ -223,6 +223,11 @@ export const BossHealthHUD: React.FC<BossHealthHUDProps> = ({ lookup, timeRef })
     const screenX = viewWidth / 2 - marginX; // Close to right edge
     const screenY = viewHeight / 2 - marginY; // Close to top edge
 
+    // Simplified debug output - only show key values occasionally  
+    if (Math.random() < 0.01) { // Only log 1% of frames to reduce noise
+      console.log(`[BossHealthHUD] screenX: ${screenX.toFixed(3)}, viewWidth: ${viewWidth.toFixed(3)}, marginX: ${marginX.toFixed(3)}`);
+    }
+
     // Convert screen position to world position relative to camera
     const cameraDirection = new THREE.Vector3();
     camera.getWorldDirection(cameraDirection);
@@ -240,6 +245,15 @@ export const BossHealthHUD: React.FC<BossHealthHUDProps> = ({ lookup, timeRef })
     hudPosition.add(up.multiplyScalar(screenY));
 
     groupRef.current.position.copy(hudPosition);
+
+    // Debug world position (temporary)
+    console.log('[BossHealthHUD] World Position:', {
+      worldPos: hudPosition.clone(),
+      cameraPos: camera.position.clone(),
+      rightVector: right.clone(),
+      upVector: up.clone(),
+      cameraDirection: cameraDirection.clone()
+    });
 
     // Keep HUD aligned with camera view plane (no tilting/pivoting)
     // Copy camera's rotation so HUD stays square to the screen

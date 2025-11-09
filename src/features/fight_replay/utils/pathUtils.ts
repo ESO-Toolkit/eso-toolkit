@@ -313,6 +313,7 @@ export function getVisiblePlayerIds(lookup: TimestampPositionLookup): number[] {
   for (const timestamp of sampleTimestamps) {
     const positions = getAllActorPositionsAtTimestamp(lookup, timestamp);
     for (const actor of positions) {
+      // Only include actual players (not enemies, bosses, or NPCs)
       if (actor.type === 'player') {
         playerIds.add(actor.id);
       }
@@ -320,4 +321,31 @@ export function getVisiblePlayerIds(lookup: TimestampPositionLookup): number[] {
   }
 
   return Array.from(playerIds).sort((a, b) => a - b);
+}
+
+/**
+ * Get player information (name, role) from lookup data
+ */
+export function getPlayerInfo(
+  lookup: TimestampPositionLookup,
+  playerId: number
+): { name: string; role?: 'dps' | 'tank' | 'healer' } | null {
+  if (!lookup?.positionsByTimestamp) {
+    return null;
+  }
+
+  // Find the first timestamp where this player appears
+  const timestamps = Object.keys(lookup.positionsByTimestamp).map(Number);
+  for (const timestamp of timestamps) {
+    const positions = lookup.positionsByTimestamp[timestamp];
+    const actor = positions?.[playerId];
+    if (actor && actor.type === 'player') {
+      return {
+        name: actor.name,
+        role: actor.role,
+      };
+    }
+  }
+
+  return null;
 }
