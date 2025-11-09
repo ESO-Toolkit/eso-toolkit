@@ -1,5 +1,7 @@
 import { KnownSetIDs } from '../types/abilities';
 
+import { reportError } from './sentryUtils';
+
 /**
  * Sets that are not currently supported for calculations due to missing verified API IDs.
  * These sets will be marked with "(unsupported)" in the UI.
@@ -303,7 +305,22 @@ export const SET_DISPLAY_NAMES: Record<KnownSetIDs, string> = {
  */
 export function getSetDisplayName(setId: KnownSetIDs | undefined | null): string {
   if (setId === undefined || setId === null) return '';
-  return SET_DISPLAY_NAMES[setId] || `Unknown Set (${setId})`;
+  
+  const displayName = SET_DISPLAY_NAMES[setId];
+  
+  // If set is not found, report to Sentry
+  if (!displayName) {
+    reportError(new Error(`Unknown set ID detected: ${setId}`), {
+      setId,
+      setIdType: typeof setId,
+      availableSetCount: Object.keys(SET_DISPLAY_NAMES).length,
+      component: 'setNameUtils',
+      function: 'getSetDisplayName',
+    });
+    return `Unknown Set (${setId})`;
+  }
+  
+  return displayName;
 }
 
 /**
