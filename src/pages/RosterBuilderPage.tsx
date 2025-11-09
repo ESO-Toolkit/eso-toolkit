@@ -79,6 +79,9 @@ import {
   CLASS_SKILL_LINES,
   SkillLineConfig,
   createDefaultRoster,
+  defaultTankSetup,
+  defaultHealerSetup,
+  createDefaultDPSSlots,
   TANK_5PIECE_SETS,
   HEALER_5PIECE_SETS,
   FLEXIBLE_5PIECE_SETS,
@@ -372,6 +375,49 @@ const isMonsterSet = (setId: KnownSetIDs): boolean => {
 };
 
 /**
+ * Validates and normalizes imported roster data to ensure type safety
+ * @param data - Parsed JSON data (unknown type)
+ * @returns Validated RaidRoster with all required fields
+ */
+const validateImportedRoster = (data: unknown): RaidRoster => {
+  // Type guard to check if data is an object
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid roster data: expected an object');
+  }
+
+  const parsedData = data as Partial<RaidRoster>;
+
+  // Create a validated roster by merging with defaults
+  const validatedRoster: RaidRoster = {
+    ...createDefaultRoster(),
+    ...parsedData,
+    // Explicitly validate and provide defaults for required complex fields
+    tank1:
+      parsedData.tank1 && typeof parsedData.tank1 === 'object'
+        ? { ...defaultTankSetup(), ...parsedData.tank1 }
+        : defaultTankSetup(),
+    tank2:
+      parsedData.tank2 && typeof parsedData.tank2 === 'object'
+        ? { ...defaultTankSetup(), ...parsedData.tank2 }
+        : defaultTankSetup(),
+    healer1:
+      parsedData.healer1 && typeof parsedData.healer1 === 'object'
+        ? { ...defaultHealerSetup(), ...parsedData.healer1 }
+        : defaultHealerSetup(),
+    healer2:
+      parsedData.healer2 && typeof parsedData.healer2 === 'object'
+        ? { ...defaultHealerSetup(), ...parsedData.healer2 }
+        : defaultHealerSetup(),
+    dpsSlots:
+      Array.isArray(parsedData.dpsSlots) && parsedData.dpsSlots.length > 0
+        ? parsedData.dpsSlots
+        : createDefaultDPSSlots(),
+  };
+
+  return validatedRoster;
+};
+
+/**
  * RosterBuilderPage - Allows raid leads to create and manage raid rosters
  * Includes tank/healer gear assignments, DD requirements, and ultimate assignments
  */
@@ -631,13 +677,18 @@ export const RosterBuilderPage: React.FC = () => {
     const reader = new FileReader();
     reader.onload = (e): void => {
       try {
-        const importedRoster = JSON.parse(e.target?.result as string) as RaidRoster;
-        setRoster(importedRoster);
+        // Parse JSON as unknown (not using type assertion)
+        const parsedData: unknown = JSON.parse(e.target?.result as string);
+
+        // Validate and normalize the data with proper type checking
+        const validatedRoster = validateImportedRoster(parsedData);
+
+        setRoster(validatedRoster);
         setSnackbar({ open: true, message: 'Roster imported successfully!', severity: 'success' });
-      } catch {
+      } catch (error) {
         setSnackbar({
           open: true,
-          message: 'Failed to import roster. Invalid JSON file.',
+          message: `Failed to import roster: ${error instanceof Error ? error.message : 'Invalid JSON file'}`,
           severity: 'error',
         });
       }
@@ -1438,7 +1489,7 @@ export const RosterBuilderPage: React.FC = () => {
                   onChange={(updates) => handleHealerChange(num as 1 | 2, updates)}
                   availableGroups={roster.availableGroups}
                   usedBuffs={
-                    [roster.healer1.healerBuff, roster.healer2.healerBuff].filter(
+                    [roster.healer1?.healerBuff, roster.healer2?.healerBuff].filter(
                       Boolean,
                     ) as HealerBuff[]
                   }
