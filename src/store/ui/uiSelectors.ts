@@ -24,6 +24,8 @@ export const selectSelectedPlayerId = (state: RootState): RootState['ui']['selec
   state.ui.selectedPlayerId;
 export const selectSelectedTabId = (state: RootState): RootState['ui']['selectedTabId'] =>
   state.ui.selectedTabId;
+export const selectMyReportsPage = (state: RootState): RootState['ui']['myReportsPage'] =>
+  state.ui.myReportsPage;
 
 // Combined UI state
 export const selectCombinedUIState = createSelector([selectUI], (ui) => ({
@@ -34,4 +36,5 @@ export const selectCombinedUIState = createSelector([selectUI], (ui) => ({
   selectedTargetId: ui.selectedTargetIds.length > 0 ? ui.selectedTargetIds[0] : null, // Compatibility
   selectedPlayerId: ui.selectedPlayerId,
   selectedTabId: ui.selectedTabId,
+  myReportsPage: ui.myReportsPage,
 }));

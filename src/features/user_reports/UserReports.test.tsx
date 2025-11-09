@@ -2,7 +2,9 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
+import { Provider } from 'react-redux';
 import { LoggerProvider } from '../../contexts/LoggerContext';
+import { createMockStore } from '../../test/utils/createMockStore';
 
 import { UserReports } from './UserReports';
 
@@ -131,15 +133,20 @@ const renderWithProviders = (
     userData = mockUserData,
     reportsData = mockReportsData,
     reportsError,
+    initialPage = 1,
   }: {
     token?: string;
     userData?: any;
     reportsData?: any;
     reportsError?: Error | string;
+    initialPage?: number;
   } = {},
 ) => {
   // Setup localStorage mock
   mockLocalStorage.getItem.mockReturnValue(token);
+
+  // Create mock store
+  const store = createMockStore();
 
   // Setup client query responses
   mockClient.query.mockImplementation((params) => {
@@ -170,16 +177,21 @@ const renderWithProviders = (
 
   (useAuth as jest.Mock).mockReturnValue(mockAuthValue);
 
+  // Set initial URL with page parameter if provided
+  const initialUrl = initialPage > 1 ? `/my-reports?page=${initialPage}` : '/my-reports';
+
   return render(
-    <MemoryRouter>
-      <ThemeProvider theme={defaultTheme}>
-        <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
-          <EsoLogsClientProvider>
-            <AuthProvider>{component}</AuthProvider>
-          </EsoLogsClientProvider>
-        </LoggerProvider>
-      </ThemeProvider>
-    </MemoryRouter>,
+    <Provider store={store}>
+      <MemoryRouter initialEntries={[initialUrl]}>
+        <ThemeProvider theme={defaultTheme}>
+          <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
+            <EsoLogsClientProvider>
+              <AuthProvider>{component}</AuthProvider>
+            </EsoLogsClientProvider>
+          </LoggerProvider>
+        </ThemeProvider>
+      </MemoryRouter>
+    </Provider>,
   );
 };
 
@@ -217,18 +229,22 @@ describe('UserReports Component', () => {
 
       (useAuth as jest.Mock).mockReturnValue(mockAuthValue);
 
+      const store = createMockStore();
+
       render(
-        <MemoryRouter>
-          <ThemeProvider theme={defaultTheme}>
-            <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
-              <EsoLogsClientProvider>
-                <AuthProvider>
-                  <UserReports />
-                </AuthProvider>
-              </EsoLogsClientProvider>
-            </LoggerProvider>
-          </ThemeProvider>
-        </MemoryRouter>,
+        <Provider store={store}>
+          <MemoryRouter>
+            <ThemeProvider theme={defaultTheme}>
+              <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
+                <EsoLogsClientProvider>
+                  <AuthProvider>
+                    <UserReports />
+                  </AuthProvider>
+                </EsoLogsClientProvider>
+              </LoggerProvider>
+            </ThemeProvider>
+          </MemoryRouter>
+        </Provider>,
       );
 
       expect(screen.getByText('Loading user information...')).toBeInTheDocument();
@@ -466,18 +482,22 @@ describe('UserReports Component', () => {
 
       (useAuth as jest.Mock).mockReturnValue(mockAuthValue);
 
+      const store = createMockStore();
+
       render(
-        <MemoryRouter>
-          <ThemeProvider theme={defaultTheme}>
-            <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
-              <EsoLogsClientProvider>
-                <AuthProvider>
-                  <UserReports />
-                </AuthProvider>
-              </EsoLogsClientProvider>
-            </LoggerProvider>
-          </ThemeProvider>
-        </MemoryRouter>,
+        <Provider store={store}>
+          <MemoryRouter>
+            <ThemeProvider theme={defaultTheme}>
+              <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
+                <EsoLogsClientProvider>
+                  <AuthProvider>
+                    <UserReports />
+                  </AuthProvider>
+                </EsoLogsClientProvider>
+              </LoggerProvider>
+            </ThemeProvider>
+          </MemoryRouter>
+        </Provider>,
       );
 
       await waitFor(() => {
@@ -530,6 +550,135 @@ describe('UserReports Component', () => {
       await waitFor(() => {
         expect(screen.getByText('public')).toBeInTheDocument();
         expect(screen.getByText('private')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Pagination persistence (ESO-544)', () => {
+    it('should use page number from URL query parameter on mount', async () => {
+      const mockReportsPage3 = {
+        reportData: {
+          reports: {
+            data: [
+              {
+                code: 'PAGE3_REPORT1',
+                startTime: 1640995200000,
+                endTime: 1640998800000,
+                title: 'Page 3 Report',
+                visibility: 'public',
+                zone: { name: 'Cloudrest' },
+                owner: { name: 'TestUser' },
+              },
+            ],
+            current_page: 3,
+            per_page: 10,
+            last_page: 5,
+            has_more_pages: true,
+            total: 50,
+          },
+        },
+      };
+
+      // Track which page was requested
+      let requestedPage: number | undefined;
+
+      // Setup mock to capture page parameter
+      mockLocalStorage.getItem.mockReturnValue(validToken);
+      mockClient.query.mockImplementation((params) => {
+        if (params.variables?.page !== undefined) {
+          requestedPage = params.variables.page;
+        }
+        return Promise.resolve(mockReportsPage3);
+      });
+
+      // Setup auth mock
+      const mockAuthValue = {
+        accessToken: validToken,
+        isLoggedIn: true,
+        isBanned: false,
+        banReason: null,
+        currentUser: mockUserData.userData.currentUser,
+        userLoading: false,
+        userError: null,
+        setAccessToken: jest.fn(),
+        rebindAccessToken: jest.fn(),
+        refetchUser: jest.fn(),
+      };
+      (useAuth as jest.Mock).mockReturnValue(mockAuthValue);
+
+      const store = createMockStore();
+
+      render(
+        <Provider store={store}>
+          <MemoryRouter initialEntries={['/my-reports?page=3']}>
+            <ThemeProvider theme={defaultTheme}>
+              <LoggerProvider config={{ enableConsole: false, enableStorage: false }}>
+                <EsoLogsClientProvider>
+                  <AuthProvider>
+                    <UserReports />
+                  </AuthProvider>
+                </EsoLogsClientProvider>
+              </LoggerProvider>
+            </ThemeProvider>
+          </MemoryRouter>
+        </Provider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Page 3 Report')).toBeInTheDocument();
+      });
+
+      // Verify that page 3 was requested, not page 1
+      expect(requestedPage).toBe(3);
+    });
+
+    it('should update URL when page changes', async () => {
+      const mockReportsWithMultiplePages = {
+        reportData: {
+          reports: {
+            data: Array.from({ length: 10 }, (_, i) => ({
+              code: `REPORT${i + 1}`,
+              startTime: 1640995200000,
+              endTime: 1640998800000,
+              title: `Report ${i + 1}`,
+              visibility: 'public',
+              zone: { name: 'Cloudrest' },
+              owner: { name: 'TestUser' },
+            })),
+            current_page: 1,
+            per_page: 10,
+            last_page: 3,
+            has_more_pages: true,
+            total: 30,
+          },
+        },
+      };
+
+      renderWithProviders(<UserReports />, {
+        token: validToken,
+        reportsData: mockReportsWithMultiplePages,
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Report 1')).toBeInTheDocument();
+      });
+
+      // Find and click page 2 button
+      const page2Button = screen.getByRole('button', { name: /Go to page 2/i });
+
+      // Mock should be called with page 2 after clicking
+      mockClient.query.mockClear();
+      fireEvent.click(page2Button);
+
+      // Verify the query was called with page 2
+      await waitFor(() => {
+        expect(mockClient.query).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variables: expect.objectContaining({
+              page: 2,
+            }),
+          }),
+        );
       });
     });
   });

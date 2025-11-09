@@ -97,6 +97,7 @@ export function createMockStore(options: MockStoreOptions = {}): EnhancedStore {
         selectedTargetIds: [],
         selectedPlayerId: null,
         selectedTabId: null,
+        myReportsPage: 1,
         ...(initialState.ui || {}),
       },
       // Add other slice initial states here as needed
@@ -114,4 +115,5 @@ export const defaultMockUIState: UIState = {
   selectedTargetIds: [],
   selectedPlayerId: null,
   selectedTabId: null,
+  myReportsPage: 1,
 };

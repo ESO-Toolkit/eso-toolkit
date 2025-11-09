@@ -7,6 +7,7 @@ export interface UIState {
   selectedTargetIds: number[]; // Changed from single ID to array of IDs
   showExperimentalTabs: boolean;
   sidebarOpen: boolean;
+  myReportsPage: number; // Persisted page number for my-reports
 }
 
 const initialState: UIState = {
@@ -16,6 +17,7 @@ const initialState: UIState = {
   selectedTargetIds: [], // Initialize as empty array
   showExperimentalTabs: false,
   sidebarOpen: false,
+  myReportsPage: 1, // Default to page 1
 };
 
 const uiSlice = createSlice({
@@ -62,6 +64,9 @@ const uiSlice = createSlice({
     toggleSidebar: (state) => {
       state.sidebarOpen = !state.sidebarOpen;
     },
+    setMyReportsPage: (state, action: PayloadAction<number>) => {
+      state.myReportsPage = action.payload;
+    },
   },
 });
 
@@ -75,5 +80,6 @@ export const {
   setShowExperimentalTabs,
   setSidebarOpen,
   toggleSidebar,
+  setMyReportsPage,
 } = uiSlice.actions;
 export default uiSlice.reducer;

@@ -34,6 +34,7 @@ describe('uiSlice', () => {
         selectedTargetIds: [],
         showExperimentalTabs: false,
         sidebarOpen: false,
+        myReportsPage: 1,
       });
     });
   });
@@ -291,6 +292,7 @@ describe('uiSlice', () => {
         selectedTargetIds: [],
         showExperimentalTabs: true,
         sidebarOpen: true,
+        myReportsPage: 1,
       });
     });
 
