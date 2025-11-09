@@ -258,6 +258,21 @@ export const BossHealthHUD: React.FC<BossHealthHUDProps> = ({ lookup, timeRef })
         );
       }
     });
+
+    // Clear any unused renderers to prevent stale boss bars from showing
+    // This is critical when bosses die and are removed from the array
+    for (let i = bossActors.length; i < healthRenderers.length; i++) {
+      const renderer = healthRenderers[i];
+      if (renderer) {
+        // Clear the canvas for this renderer
+        const canvas = renderer.getTexture().image as HTMLCanvasElement;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          renderer.getTexture().needsUpdate = true;
+        }
+      }
+    }
   }, RenderPriority.HUD);
 
   // Clean up renderers on unmount
