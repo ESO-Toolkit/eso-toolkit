@@ -225,7 +225,7 @@ export const UserReports: React.FC = () => {
   const { isLoggedIn, currentUser, userLoading, userError } = useAuth();
   const client = useEsoLogsClientInstance();
   const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
-  
+
   // Get the current page from URL query parameter, default to 1
   const currentPageFromUrl = parseInt(searchParams.get('page') || '1', 10);
   const pageToUse = isNaN(currentPageFromUrl) || currentPageFromUrl < 1 ? 1 : currentPageFromUrl;

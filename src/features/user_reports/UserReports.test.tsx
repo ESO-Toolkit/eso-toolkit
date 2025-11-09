@@ -581,7 +581,7 @@ describe('UserReports Component', () => {
 
       // Track which page was requested
       let requestedPage: number | undefined;
-      
+
       // Setup mock to capture page parameter
       mockLocalStorage.getItem.mockReturnValue(validToken);
       mockClient.query.mockImplementation((params) => {
@@ -665,7 +665,7 @@ describe('UserReports Component', () => {
 
       // Find and click page 2 button
       const page2Button = screen.getByRole('button', { name: /Go to page 2/i });
-      
+
       // Mock should be called with page 2 after clicking
       mockClient.query.mockClear();
       fireEvent.click(page2Button);
@@ -677,7 +677,7 @@ describe('UserReports Component', () => {
             variables: expect.objectContaining({
               page: 2,
             }),
-          })
+          }),
         );
       });
     });
