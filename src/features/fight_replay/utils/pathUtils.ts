@@ -1,15 +1,14 @@
 /**
  * Path processing utilities for multi-player trail rendering
- * 
+ *
  * Handles path sampling, smoothing, and optimization for 3D trail visualization
  */
 
 import * as THREE from 'three';
 
-import { 
-  ActorPosition, 
+import {
   TimestampPositionLookup,
-  getAllActorPositionsAtTimestamp 
+  getAllActorPositionsAtTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
 
 /**
@@ -40,16 +39,16 @@ export interface PlayerPath {
 export interface PathSamplingConfig {
   /** Minimum time between path samples (ms) */
   minSampleInterval: number;
-  
+
   /** Minimum distance between path points (world units) */
   minDistance: number;
-  
+
   /** Maximum number of points per path (for performance) */
   maxPoints: number;
-  
+
   /** Smoothing factor (0 = no smoothing, 1 = maximum smoothing) */
   smoothingFactor: number;
-  
+
   /** Whether to include rotation data */
   includeRotation: boolean;
 }
@@ -58,10 +57,10 @@ export interface PathSamplingConfig {
  * Default path sampling configuration
  */
 export const DEFAULT_PATH_SAMPLING: PathSamplingConfig = {
-  minSampleInterval: 100,    // 100ms between samples (10fps)
-  minDistance: 0.5,          // 0.5 world units minimum movement
-  maxPoints: 1000,           // Maximum 1000 points per trail
-  smoothingFactor: 0.2,      // Light smoothing
+  minSampleInterval: 100, // 100ms between samples (10fps)
+  minDistance: 0.5, // 0.5 world units minimum movement
+  maxPoints: 1000, // Maximum 1000 points per trail
+  smoothingFactor: 0.2, // Light smoothing
   includeRotation: true,
 };
 
@@ -71,10 +70,10 @@ export const DEFAULT_PATH_SAMPLING: PathSamplingConfig = {
 export function extractPlayerPaths(
   lookup: TimestampPositionLookup,
   selectedActorIds: number[],
-  config: PathSamplingConfig = DEFAULT_PATH_SAMPLING
+  config: PathSamplingConfig = DEFAULT_PATH_SAMPLING,
 ): Map<number, PlayerPath> {
   const paths = new Map<number, PlayerPath>();
-  
+
   if (!lookup?.positionsByTimestamp) {
     return paths;
   }
@@ -97,7 +96,7 @@ export function extractPlayerPaths(
     .sort((a, b) => a - b);
 
   let lastSampleTime = 0;
-  
+
   // Sample positions at regular intervals
   for (const timestamp of timestamps) {
     // Skip if too soon since last sample
@@ -106,7 +105,7 @@ export function extractPlayerPaths(
     }
 
     const positions = getAllActorPositionsAtTimestamp(lookup, timestamp);
-    
+
     for (const actorData of positions) {
       const path = paths.get(actorData.id);
       if (!path) continue;
@@ -158,8 +157,8 @@ export function extractPlayerPaths(
  * Calculate 3D distance between two points
  */
 function calculateDistance3D(
-  point1: [number, number, number], 
-  point2: [number, number, number]
+  point1: [number, number, number],
+  point2: [number, number, number],
 ): number {
   const dx = point2[0] - point1[0];
   const dy = point2[1] - point1[1];
@@ -185,14 +184,16 @@ function smoothPath(points: PathPoint[], factor: number): PathPoint[] {
     const windowPoints = points.slice(start, end);
 
     // Calculate weighted average position
-    let x = 0, y = 0, z = 0;
+    let x = 0,
+      y = 0,
+      z = 0;
     let totalWeight = 0;
 
     for (let j = 0; j < windowPoints.length; j++) {
       // Gaussian weight (higher weight for closer points)
-      const distance = Math.abs(j - (windowPoints.length / 2));
+      const distance = Math.abs(j - windowPoints.length / 2);
       const weight = Math.exp(-(distance * distance) / (2 * factor * factor));
-      
+
       x += windowPoints[j].position[0] * weight;
       y += windowPoints[j].position[1] * weight;
       z += windowPoints[j].position[2] * weight;
@@ -212,11 +213,8 @@ function smoothPath(points: PathPoint[], factor: number): PathPoint[] {
 /**
  * Get path points up to a specific timestamp (for animated playback)
  */
-export function getPathPointsUpToTime(
-  path: PlayerPath, 
-  currentTime: number
-): PathPoint[] {
-  return path.points.filter(point => point.timestamp <= currentTime);
+export function getPathPointsUpToTime(path: PlayerPath, currentTime: number): PathPoint[] {
+  return path.points.filter((point) => point.timestamp <= currentTime);
 }
 
 /**
@@ -224,7 +222,7 @@ export function getPathPointsUpToTime(
  */
 export function createPathGeometry(points: PathPoint[]): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry();
-  
+
   if (points.length === 0) {
     return geometry;
   }
@@ -232,7 +230,7 @@ export function createPathGeometry(points: PathPoint[]): THREE.BufferGeometry {
   // Create positions array
   const positions = new Float32Array(points.length * 3);
   const timestamps = new Float32Array(points.length);
-  
+
   for (let i = 0; i < points.length; i++) {
     const point = points[i];
     positions[i * 3] = point.position[0];
@@ -250,10 +248,7 @@ export function createPathGeometry(points: PathPoint[]): THREE.BufferGeometry {
 /**
  * Update existing geometry with new path points (for performance)
  */
-export function updatePathGeometry(
-  geometry: THREE.BufferGeometry, 
-  points: PathPoint[]
-): void {
+export function updatePathGeometry(geometry: THREE.BufferGeometry, points: PathPoint[]): void {
   const positionAttribute = geometry.getAttribute('position') as THREE.BufferAttribute;
   const timestampAttribute = geometry.getAttribute('timestamp') as THREE.BufferAttribute;
 
@@ -275,7 +270,7 @@ export function updatePathGeometry(
 
   // Set draw range to only render valid points
   geometry.setDrawRange(0, points.length);
-  
+
   positionAttribute.needsUpdate = true;
   timestampAttribute.needsUpdate = true;
 }
@@ -286,14 +281,14 @@ export function updatePathGeometry(
 export function calculateTrailOpacity(
   pointTimestamp: number,
   currentTime: number,
-  fadeTime: number = 5000 // 5 seconds fade
+  fadeTime: number = 5000, // 5 seconds fade
 ): number {
   const age = currentTime - pointTimestamp;
   if (age < 0) return 0; // Future points
   if (age > fadeTime) return 0; // Too old
-  
+
   // Linear fade from 1.0 to 0.0
-  return Math.max(0, 1 - (age / fadeTime));
+  return Math.max(0, 1 - age / fadeTime);
 }
 
 /**
@@ -305,11 +300,11 @@ export function getVisiblePlayerIds(lookup: TimestampPositionLookup): number[] {
   }
 
   const playerIds = new Set<number>();
-  
+
   // Sample a few timestamps to find all actors
   const timestamps = Object.keys(lookup.positionsByTimestamp).map(Number);
   const sampleTimestamps = timestamps.filter((_, index) => index % 10 === 0); // Every 10th timestamp
-  
+
   for (const timestamp of sampleTimestamps) {
     const positions = getAllActorPositionsAtTimestamp(lookup, timestamp);
     for (const actor of positions) {
@@ -328,7 +323,7 @@ export function getVisiblePlayerIds(lookup: TimestampPositionLookup): number[] {
  */
 export function getPlayerInfo(
   lookup: TimestampPositionLookup,
-  playerId: number
+  playerId: number,
 ): { name: string; role?: 'dps' | 'tank' | 'healer' } | null {
   if (!lookup?.positionsByTimestamp) {
     return null;

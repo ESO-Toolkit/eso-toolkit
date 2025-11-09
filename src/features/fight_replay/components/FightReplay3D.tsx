@@ -56,7 +56,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
 
   // Player path visualization state
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<number>>(
-    new Set(initialSelectedPlayerIds)
+    new Set(initialSelectedPlayerIds),
   );
   const [showPlayerPathsHUD, setShowPlayerPathsHUD] = useState(showPlayerPaths);
   const [showPlayerTrails, setShowPlayerTrails] = useState(showPlayerPaths);
@@ -176,7 +176,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
 
   // Keyboard shortcuts for player path features
   useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
+    const handleKeyPress = (event: KeyboardEvent): void => {
       // Don't interfere with text input
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
         return;
@@ -184,11 +184,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
 
       switch (event.key.toLowerCase()) {
         case 'p': // Toggle player paths HUD
-          setShowPlayerPathsHUD(prev => !prev);
+          setShowPlayerPathsHUD((prev) => !prev);
           event.preventDefault();
           break;
         case 't': // Toggle player trails
-          setShowPlayerTrails(prev => !prev);
+          setShowPlayerTrails((prev) => !prev);
           event.preventDefault();
           break;
       }

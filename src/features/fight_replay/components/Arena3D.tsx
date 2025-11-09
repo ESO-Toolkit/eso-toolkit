@@ -27,7 +27,6 @@ import { Arena3DScene, GroundContextMenuPayload } from './Arena3DScene';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { MarkerSpritePreview } from './MarkerSpritePreview';
 import { PerformanceMonitorExternal } from './PerformanceMonitor/PerformanceMonitorExternal';
-import { PlayerListHUDOverlay } from './PlayerListHUDOverlay';
 import { ReplayErrorBoundary } from './ReplayErrorBoundary';
 
 // Create logger instance for Arena3D
@@ -626,10 +625,10 @@ export const Arena3D: React.FC<Arena3DProps> = ({
             showPlayerTrails={showPlayerTrails}
           />
         </Canvas>
-        
+
         {/* HTML Overlay HUD - DISABLED: Can cause conflicts with 3D scene interactions */}
         {/* Using 3D canvas-based HUD instead for better integration */}
-        
+
         {contextMenu && (
           <ClickAwayListener onClickAway={handleCloseContextMenu}>
             <div>

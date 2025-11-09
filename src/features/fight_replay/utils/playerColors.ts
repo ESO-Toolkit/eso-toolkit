@@ -1,6 +1,6 @@
 /**
  * Stable color assignment system for multi-player path visualization
- * 
+ *
  * Provides consistent, visually distinct colors for players across sessions
  * and ensures good readability in both light and dark themes.
  */
@@ -11,13 +11,13 @@ import { ActorPosition } from '../../../workers/calculations/CalculateActorPosit
 // Extended color palette for multi-player visualization
 export const PLAYER_PATH_COLORS = {
   // Primary role colors (high priority)
-  tank: DARK_ROLE_COLORS.tank,        // Blue
-  healer: DARK_ROLE_COLORS.healer,    // Purple  
-  dps: DARK_ROLE_COLORS.dps,          // Orange
+  tank: DARK_ROLE_COLORS.tank, // Blue
+  healer: DARK_ROLE_COLORS.healer, // Purple
+  dps: DARK_ROLE_COLORS.dps, // Orange
 
   // Extended palette for additional players
   red: '#ff4757',
-  green: '#2ed573', 
+  green: '#2ed573',
   cyan: '#00d2d3',
   yellow: '#ffa502',
   pink: '#ff6b9d',
@@ -32,10 +32,10 @@ export const PLAYER_PATH_COLORS = {
 
 // Ordered color assignment sequence for stable allocation
 const COLOR_SEQUENCE = [
-  'tank',     // Blue - most important role
-  'healer',   // Purple - second most important 
-  'dps',      // Orange - DPS players
-  'red',      // Additional colors in visual priority order
+  'tank', // Blue - most important role
+  'healer', // Purple - second most important
+  'dps', // Orange - DPS players
+  'red', // Additional colors in visual priority order
   'green',
   'cyan',
   'yellow',

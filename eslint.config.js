@@ -168,6 +168,7 @@ export default [
           ignore: [
             // Three.js mesh properties
             'geometry',
+            'material',
             'position',
             'rotation',
             'scale',
@@ -175,6 +176,7 @@ export default [
             'castShadow',
             'receiveShadow',
             'args',
+            'object', // For primitive components
             
             // Three.js material properties
             'transparent',
