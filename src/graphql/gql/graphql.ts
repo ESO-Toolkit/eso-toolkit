@@ -39,6 +39,7 @@ export type ArchonViewModels = {
   buildsSpecPageSlugs?: Maybe<Scalars['JSON']['output']>;
   buildsZonePage?: Maybe<Scalars['JSON']['output']>;
   buildsZonePageSlugs?: Maybe<Scalars['JSON']['output']>;
+  characterIndexPage?: Maybe<Scalars['JSON']['output']>;
   characterPage?: Maybe<Scalars['JSON']['output']>;
   characterPageContent?: Maybe<Scalars['JSON']['output']>;
   cmsNavigation?: Maybe<Scalars['JSON']['output']>;
@@ -106,6 +107,11 @@ export type ArchonViewModelsBuildsZonePageArgs = {
   gameSlug?: InputMaybe<Scalars['String']['input']>;
   rankingsSlug?: InputMaybe<Scalars['String']['input']>;
   zoneTypeSlug?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ArchonViewModelsCharacterIndexPageArgs = {
+  gameSlug: Scalars['String']['input'];
+  userId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type ArchonViewModelsCharacterPageArgs = {
