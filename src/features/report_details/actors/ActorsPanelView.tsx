@@ -185,7 +185,12 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
 
           return (
             <Tooltip title="Copy playersById entry to clipboard">
-              <IconButton size="small" onClick={() => copyPlayerData(actorId)} color="primary">
+              <IconButton
+                size="small"
+                onClick={() => copyPlayerData(actorId)}
+                color="primary"
+                aria-label="Copy player data"
+              >
                 <ContentCopy fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -211,7 +216,12 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
 
           return (
             <Tooltip title="Copy actorsById entry to clipboard">
-              <IconButton size="small" onClick={() => copyActorData(actorId)} color="secondary">
+              <IconButton
+                size="small"
+                onClick={() => copyActorData(actorId)}
+                color="secondary"
+                aria-label="Copy actor data"
+              >
                 <ContentCopy fontSize="small" />
               </IconButton>
             </Tooltip>

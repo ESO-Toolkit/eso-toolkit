@@ -3,6 +3,8 @@
  * Defines the structure for raid roster management including roles, gear sets, and assignments
  */
 
+import { KnownSetIDs } from './abilities';
+
 /**
  * Role types in a raid
  */
@@ -26,6 +28,14 @@ export enum SupportUltimate {
  * Healer-specific buff assignments
  */
 export enum HealerBuff {
+  ENLIVENING_OVERFLOW = 'Enlivening Overflow',
+  FROM_THE_BRINK = 'From the Brink',
+}
+
+/**
+ * Healer champion point slot selections
+ */
+export enum HealerChampionPoint {
   ENLIVENING_OVERFLOW = 'Enlivening Overflow',
   FROM_THE_BRINK = 'From the Brink',
 }
@@ -94,12 +104,17 @@ export interface PlayerGroup {
  * Tank gear set configuration
  */
 export interface TankGearSet {
-  set1: string; // First 5-piece set
-  set2: string; // Second 5-piece set
-  monsterSet?: string; // 2-piece monster set (head + shoulders)
-  additionalSets?: string[]; // Optional additional sets (e.g., arena weapons, mythics)
+  set1: KnownSetIDs | undefined; // First 5-piece set
+  set2: KnownSetIDs | undefined; // Second 5-piece set
+  monsterSet?: KnownSetIDs; // 2-piece monster set (head + shoulders)
+  additionalSets?: KnownSetIDs[]; // Optional additional sets (e.g., arena weapons, mythics)
   notes?: string;
 }
+
+/**
+ * Jail DD types - standard configurations for special DD requirements
+ */
+export type JailDDType = 'banner' | 'zenkosh' | 'wm' | 'wm-mk' | 'mk' | 'custom';
 
 /**
  * DPS slot configuration
@@ -109,10 +124,13 @@ export interface DPSSlot {
   playerName?: string;
   playerNumber?: number;
   roleNotes?: string; // e.g., "Portal L - Ele sus", "Z'en", etc.
-  gearSets?: string[]; // Optional gear set tracking
+  labels?: string[]; // Multiple labels/tags for the player
+  gearSets?: KnownSetIDs[]; // Optional gear set tracking
   skillLines?: SkillLineConfig;
   group?: PlayerGroup;
   notes?: string;
+  jailDDType?: JailDDType; // If set, this slot is configured as a jail DD
+  customDescription?: string; // For 'custom' jail DD type
 }
 
 /**
@@ -123,13 +141,15 @@ export interface HealerSetup {
   playerNumber?: number; // Optional player identifier (1, 2, etc.)
   roleLabel?: string; // e.g., "H1", "H2"
   roleNotes?: string; // e.g., "TOMB HEALER", "TOMB 1B"
-  set1: string; // First 5-piece set
-  set2: string; // Second 5-piece set
-  monsterSet?: string; // 2-piece monster set (head + shoulders)
-  additionalSets?: string[]; // For mythics or special items
+  labels?: string[]; // Multiple labels/tags for the player
+  set1: KnownSetIDs | undefined; // First 5-piece set
+  set2: KnownSetIDs | undefined; // Second 5-piece set
+  monsterSet?: KnownSetIDs; // 2-piece monster set (head + shoulders)
+  additionalSets?: KnownSetIDs[]; // For mythics or special items
   skillLines: SkillLineConfig;
   healerBuff: HealerBuff | null;
-  ultimate: SupportUltimate | null;
+  championPoint?: HealerChampionPoint | null; // Champion point slotted
+  ultimate: string | null; // Allows preset ultimates or custom text
   group?: PlayerGroup;
   notes?: string;
 }
@@ -142,22 +162,11 @@ export interface TankSetup {
   playerNumber?: number; // Optional player identifier (1, 2, etc.)
   roleLabel?: string; // e.g., "MT", "OT"
   roleNotes?: string; // e.g., "TOMB 1A", "TOMB 1B"
+  labels?: string[]; // Multiple labels/tags for the player
   gearSets: TankGearSet;
   skillLines: SkillLineConfig;
-  ultimate: SupportUltimate | null;
+  ultimate: string | null; // Allows preset ultimates or custom text
   specificSkills: string[];
-  group?: PlayerGroup;
-  notes?: string;
-}
-
-/**
- * Damage Dealer special requirements
- */
-export interface DDRequirement {
-  type: 'war-machine-mk' | 'zen-alkosh';
-  playerName?: string;
-  playerNumber?: number; // Optional player identifier
-  skillLines: SkillLineConfig;
   group?: PlayerGroup;
   notes?: string;
 }
@@ -178,11 +187,8 @@ export interface RaidRoster {
   healer1: HealerSetup;
   healer2: HealerSetup;
 
-  // DPS Slots (1-8)
+  // DPS Slots (1-8) - can be regular DPS or jail DDs with jailDDType set
   dpsSlots: DPSSlot[];
-
-  // DD Requirements (legacy/special roles)
-  ddRequirements: DDRequirement[];
 
   // Available player groups (for organizing players)
   availableGroups: string[]; // e.g., ["Left Stack", "Right Stack", "Slayer Stack 1"]
@@ -206,8 +212,8 @@ export const defaultSkillLineConfig = (): SkillLineConfig => ({
  */
 export const defaultTankSetup = (): TankSetup => ({
   gearSets: {
-    set1: '',
-    set2: '',
+    set1: undefined,
+    set2: undefined,
   },
   skillLines: defaultSkillLineConfig(),
   ultimate: null,
@@ -218,8 +224,8 @@ export const defaultTankSetup = (): TankSetup => ({
  * Default healer setup
  */
 export const defaultHealerSetup = (): HealerSetup => ({
-  set1: '',
-  set2: '',
+  set1: undefined,
+  set2: undefined,
   skillLines: defaultSkillLineConfig(),
   healerBuff: null,
   ultimate: null,
@@ -246,8 +252,7 @@ export const createDefaultRoster = (): RaidRoster => ({
   healer1: defaultHealerSetup(),
   healer2: defaultHealerSetup(),
   dpsSlots: createDefaultDPSSlots(),
-  ddRequirements: [],
-  availableGroups: ['Left Stack', 'Right Stack'],
+  availableGroups: [],
 });
 
 /**
@@ -266,63 +271,225 @@ export enum SetCategory {
  * Support set configuration
  */
 export interface SupportSet {
-  name: string;
+  name: KnownSetIDs;
   category: SetCategory;
   isRecommended?: boolean; // For quick highlighting
   description?: string;
 }
 
+// ============================================================
+// QUICK ASSIGNMENT CONFIGURATION
+// These arrays explicitly control what appears in the Quick Assignment UI
+// ============================================================
+
 /**
- * Recommended 5-piece sets that should always be run
- * Based on data analysis from boss fights (November 2025)
- * Perfected and non-perfected versions combined into single entries
- * Alphabetically sorted
- *
- * Configuration: These can ONLY be assigned to set1/set2 slots
+ * Tank 5-piece sets for Quick Assignment
+ * These appear in the blue "Tank Sets" column
  */
-export const RECOMMENDED_5PIECE_SETS: readonly string[] = [
-  'Claw of Yolnahkriin', // 17.7% (Tank: 31%, Healer: 6%)
-  "Jorvuld's Guidance", // 11.3% (Tank: 0%, Healer: 21%)
-  'Lucent Echoes', // 25.8% (Tank: 45%, Healer: 9%)
-  'Pearlescent Ward', // 29.0% (Tank: 52%, Healer: 9%)
-  "Pillager's Profit", // 19.4% (Tank: 24%, Healer: 15%)
-  'Powerful Assault', // 19.4% (Tank: 3%, Healer: 33%)
-  'Roaring Opportunist', // 11.3% (Tank: 0%, Healer: 21%)
-  'Saxhleel Champion', // 11.3% (Tank: 21%, Healer: 3%)
-  'Spell Power Cure', // 17.7% (Tank: 0%, Healer: 33%)
+export const QUICK_TANK_5PIECE_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.LUCENT_ECHOES, // 25.8% (Tank: 45%, Healer: 9%)
+  KnownSetIDs.PEARLESCENT_WARD, // 29.0% (Tank: 52%, Healer: 9%)
+  KnownSetIDs.SAXHLEEL_CHAMPION, // 11.3% (Tank: 21%, Healer: 3%)
+  KnownSetIDs.XORYNS_MASTERPIECE, // Tank set
+  KnownSetIDs.CLAW_OF_YOLNAHKRIIN, // 17.7% (Tank: 31%, Healer: 6%)
 ] as const;
 
 /**
- * Recommended 2-piece monster sets
- * Based on data analysis from boss fights (November 2025)
- * Alphabetically sorted
- *
- * Configuration: These can ONLY be assigned to monsterSet slot
+ * Flexible 5-piece sets for Quick Assignment
+ * These appear in the orange "Flexible" column (can be used by tanks or healers)
  */
-export const RECOMMENDED_2PIECE_SETS: readonly string[] = [
-  'Baron Zaudrus', //  3.2% (Tank: 7%, Healer: 0%)
-  'Nazaray', // 22.6% (Tank: 38%, Healer: 9%)
-  'Symphony of Blades', // 14.5% (Tank: 0%, Healer: 27%)
-  'Tremorscale', //  1.6% (Tank: 3%, Healer: 0%)
+export const QUICK_FLEXIBLE_5PIECE_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.PILLAGERS_PROFIT, // 19.4% (Tank: 24%, Healer: 15%)
+  KnownSetIDs.POWERFUL_ASSAULT, // 19.4% (Tank: 3%, Healer: 33%)
 ] as const;
 
 /**
- * Recommended 1-piece sets (mythic items)
- * Based on data analysis from boss fights (November 2025)
- * Alphabetically sorted
- *
- * Configuration: These can be assigned to additionalSets
+ * Healer 5-piece sets for Quick Assignment
+ * These appear in the purple "Healer Sets" column
  */
-export const RECOMMENDED_1PIECE_SETS: readonly string[] = [
-  'Pearls of Ehlnofey', // 17.7% (Tank: 0%, Healer: 33%)
+export const QUICK_HEALER_5PIECE_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.JORVULDS_GUIDANCE, // 11.3% (Tank: 0%, Healer: 21%)
+  KnownSetIDs.ROARING_OPPORTUNIST, // 11.3% (Tank: 0%, Healer: 21%)
+  KnownSetIDs.SPELL_POWER_CURE, // 17.7% (Tank: 0%, Healer: 33%)
 ] as const;
+
+/**
+ * All recommended 5-piece sets combined (for backwards compatibility)
+ */
+export const RECOMMENDED_5PIECE_SETS: readonly KnownSetIDs[] = [
+  ...QUICK_TANK_5PIECE_SETS,
+  ...QUICK_FLEXIBLE_5PIECE_SETS,
+  ...QUICK_HEALER_5PIECE_SETS,
+] as const;
+
+/**
+ * Tank monster sets for Quick Assignment
+ * These appear in the blue "Tank Sets" column (monster section)
+ */
+export const QUICK_TANK_MONSTER_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.ARCHDRUID_DEVYRIC,
+  KnownSetIDs.BARON_ZAUDRUS, // 3.2% (Tank: 7%, Healer: 0%)
+] as const;
+
+/**
+ * Flexible monster sets for Quick Assignment
+ * These appear in the orange "Flexible" column (monster section)
+ */
+export const QUICK_FLEXIBLE_MONSTER_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.NAZARAY, // 22.6% (Tank: 38%, Healer: 9%)
+  KnownSetIDs.NUNATAK, // Flexible support set
+  KnownSetIDs.SPAULDER_OF_RUIN, // Flexible support set
+] as const;
+
+/**
+ * Healer monster sets for Quick Assignment
+ * These appear in the purple "Healer Sets" column (monster section)
+ */
+export const QUICK_HEALER_MONSTER_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.OZEZAN,
+  KnownSetIDs.SYMPHONY_OF_BLADES, // 14.5% (Tank: 0%, Healer: 27%)
+  KnownSetIDs.THE_BLIND,
+] as const;
+
+/**
+ * All recommended monster sets combined (for backwards compatibility)
+ */
+export const RECOMMENDED_2PIECE_SETS: readonly KnownSetIDs[] = [
+  ...QUICK_TANK_MONSTER_SETS,
+  ...QUICK_FLEXIBLE_MONSTER_SETS,
+  ...QUICK_HEALER_MONSTER_SETS,
+] as const;
+
+/**
+ * Flexible mythic items for Quick Assignment
+ * These appear in the orange "Flexible" column (mythic section)
+ */
+export const QUICK_FLEXIBLE_MYTHICS: readonly KnownSetIDs[] = [
+  KnownSetIDs.CRYPTCANON_VESTMENTS,
+] as const;
+
+/**
+ * Healer mythic items for Quick Assignment
+ * These appear in the purple "Healer Sets" column (mythic section)
+ */
+export const QUICK_HEALER_MYTHICS: readonly KnownSetIDs[] = [
+  KnownSetIDs.PEARLS_OF_EHLNOFEY, // 17.7% (Tank: 0%, Healer: 33%)
+] as const;
+
+/**
+ * All recommended mythic items combined (for backwards compatibility)
+ */
+export const RECOMMENDED_1PIECE_SETS: readonly KnownSetIDs[] = [
+  ...QUICK_FLEXIBLE_MYTHICS,
+  ...QUICK_HEALER_MYTHICS,
+] as const;
+
+/**
+ * Compatibility rule types for set and ultimate validation
+ */
+export enum CompatibilityRuleType {
+  REQUIRED_ULTIMATE = 'required_ultimate', // Set requires specific ultimate
+  EXCLUSIVE_SETS = 'exclusive_sets', // Sets that cannot be used together
+  REQUIRED_SET = 'required_set', // Set requires another set to be equipped
+}
+
+/**
+ * Compatibility rule definition
+ */
+export interface CompatibilityRule {
+  type: CompatibilityRuleType;
+  setName: string;
+  requirement?: string | string[]; // Required ultimate(s) or set(s)
+  exclusions?: string[]; // Sets that cannot be paired with this set
+  message: string; // User-friendly warning message
+}
+
+/**
+ * Set and ultimate compatibility rules
+ * Defines which combinations are valid or invalid
+ */
+export const COMPATIBILITY_RULES: readonly CompatibilityRule[] = [
+  {
+    type: CompatibilityRuleType.REQUIRED_ULTIMATE,
+    setName: 'Nazaray',
+    requirement: [SupportUltimate.WARHORN, SupportUltimate.ATRONACH],
+    message: `Nazaray should only be paired with ${SupportUltimate.WARHORN} or ${SupportUltimate.ATRONACH} ultimate`,
+  },
+  {
+    type: CompatibilityRuleType.EXCLUSIVE_SETS,
+    setName: 'Saxhleel Champion',
+    exclusions: ['Nazaray'],
+    message: 'Saxhleel Champion cannot be paired with Nazaray',
+  },
+  {
+    type: CompatibilityRuleType.EXCLUSIVE_SETS,
+    setName: 'Nazaray',
+    exclusions: ['Saxhleel Champion'],
+    message: 'Nazaray cannot be paired with Saxhleel Champion',
+  },
+] as const;
+
+/**
+ * Helper function to validate gear and ultimate compatibility
+ * Returns array of warning messages for any rule violations
+ */
+export function validateCompatibility(
+  sets: (string | undefined | null)[],
+  ultimate?: string | null,
+): string[] {
+  const warnings: string[] = [];
+  const activeSets = sets.filter((set): set is string => !!set);
+
+  // Check each active set against compatibility rules
+  activeSets.forEach((activeSet) => {
+    COMPATIBILITY_RULES.forEach((rule) => {
+      if (rule.setName !== activeSet) return;
+
+      switch (rule.type) {
+        case CompatibilityRuleType.REQUIRED_ULTIMATE:
+          if (ultimate && rule.requirement) {
+            const requiredUltimates = Array.isArray(rule.requirement)
+              ? rule.requirement
+              : [rule.requirement];
+            if (!requiredUltimates.includes(ultimate)) {
+              warnings.push(rule.message);
+            }
+          }
+          break;
+
+        case CompatibilityRuleType.EXCLUSIVE_SETS:
+          if (rule.exclusions) {
+            const conflictingSets = activeSets.filter((set) => rule.exclusions?.includes(set));
+            if (conflictingSets.length > 0) {
+              warnings.push(rule.message);
+            }
+          }
+          break;
+
+        case CompatibilityRuleType.REQUIRED_SET:
+          if (rule.requirement) {
+            const requiredSets = Array.isArray(rule.requirement)
+              ? rule.requirement
+              : [rule.requirement];
+            const hasRequired = requiredSets.some((reqSet) => activeSets.includes(reqSet));
+            if (!hasRequired) {
+              warnings.push(rule.message);
+            }
+          }
+          break;
+      }
+    });
+  });
+
+  return warnings;
+}
 
 /**
  * All recommended sets combined
  * TOP 14 sets to meet typical 12+ support set requirements
  * Note: 9 five-piece sets + 4 two-piece monster sets + 1 one-piece mythic = 14 total support sets
  */
-export const RECOMMENDED_SETS: readonly string[] = [
+export const RECOMMENDED_SETS: readonly KnownSetIDs[] = [
   ...RECOMMENDED_5PIECE_SETS,
   ...RECOMMENDED_2PIECE_SETS,
   ...RECOMMENDED_1PIECE_SETS,
@@ -333,9 +500,9 @@ export const RECOMMENDED_SETS: readonly string[] = [
  * Defines which sets can be assigned to which slots
  */
 export interface SetSlotRestrictions {
-  fivePieceSets: readonly string[]; // Can only go in set1/set2
-  monsterSets: readonly string[]; // Can only go in monsterSet (includes 2-piece and 1-piece)
-  flexibleSets: readonly string[]; // Can go in additionalSets
+  fivePieceSets: readonly KnownSetIDs[]; // Can only go in set1/set2
+  monsterSets: readonly KnownSetIDs[]; // Can only go in monsterSet (includes 2-piece and 1-piece)
+  flexibleSets: readonly KnownSetIDs[]; // Can go in additionalSets
 }
 
 /**
@@ -352,133 +519,130 @@ export const SET_SLOT_RESTRICTIONS: SetSlotRestrictions = {
 /**
  * Helper function to check if a set can be assigned to set1/set2 slots
  */
-export const canAssignToFivePieceSlot = (setName: string): boolean => {
-  return (SET_SLOT_RESTRICTIONS.fivePieceSets as readonly string[]).includes(setName);
+export const canAssignToFivePieceSlot = (setId: KnownSetIDs): boolean => {
+  return SET_SLOT_RESTRICTIONS.fivePieceSets.includes(setId);
 };
 
 /**
  * Helper function to check if a set can be assigned to monster set slot
  * Accepts both 2-piece monster sets and 1-piece mythic sets
  */
-export const canAssignToMonsterSlot = (setName: string): boolean => {
-  return (SET_SLOT_RESTRICTIONS.monsterSets as readonly string[]).includes(setName);
+export const canAssignToMonsterSlot = (setId: KnownSetIDs): boolean => {
+  return SET_SLOT_RESTRICTIONS.monsterSets.includes(setId);
 };
 
 /**
  * Helper function to check if a set is a 5-piece set (for filtering autocomplete options)
  */
-export const isFivePieceSet = (setName: string): boolean => {
-  return canAssignToFivePieceSlot(setName);
+export const isFivePieceSet = (setId: KnownSetIDs): boolean => {
+  return canAssignToFivePieceSlot(setId);
 };
 
 /**
  * Helper function to check if a set is a monster set (for filtering autocomplete options)
  */
-export const isMonsterSet = (setName: string): boolean => {
-  return canAssignToMonsterSlot(setName);
+export const isMonsterSet = (setId: KnownSetIDs): boolean => {
+  return canAssignToMonsterSlot(setId);
 };
 
 /**
  * Tank-specific 5-piece support sets
- * Ordered by frequency in actual usage data
+ * Alphabetically sorted
  * Can only be assigned to set1/set2 slots
  */
-export const TANK_5PIECE_SETS: readonly string[] = [
-  "Pillager's Profit", // 8.8% occurrence (15% of tanks)
-  'Turning Tide', // 8.8% occurrence (9% of tanks, also used by healers)
-  'War Machine', // 4.4% occurrence (6% of tanks)
-  'Pearlescent Ward', // 1.5% occurrence (3% of tanks)
-  // Less common but still viable options:
-  'Yolnahkriin',
-  'Alkosh',
-  'Saxhleel Champion',
-  "Drake's Rush",
-  'Crimson Oath',
-  'Encratis',
+export const TANK_5PIECE_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.CLAW_OF_YOLNAHKRIIN,
+  KnownSetIDs.DRAKES_RUSH,
+  KnownSetIDs.LUCENT_ECHOES, // 25.8% occurrence (Tank: 45%, Healer: 9%)
+  KnownSetIDs.PEARLESCENT_WARD, // 1.5% occurrence (3% of tanks)
+  KnownSetIDs.PERFECTED_SAXHLEEL_CHAMPION,
+  KnownSetIDs.WAR_MACHINE, // 4.4% occurrence (6% of tanks)
+  KnownSetIDs.PERFECTED_XORYNS_MASTERPIECE, // Xoryn's Masterpiece
 ] as const;
 
 /**
  * Tank-specific monster sets
+ * Alphabetically sorted
  * Can only be assigned to monsterSet slot
  */
-export const TANK_MONSTER_SETS: readonly string[] = [
-  'Tremorscale', // 4.4% occurrence (9% of tanks)
-  'Baron Zaudrus', // 2.9% occurrence (6% of tanks)
-  'Sentinel of Rkugamz',
-  'Stone Husk',
-  'Bloodspawn',
-  'Lord Warden',
+export const TANK_MONSTER_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.ARCHDRUID_DEVYRIC,
+  KnownSetIDs.BARON_ZAUDRUS, // 2.9% occurrence (6% of tanks)
+  KnownSetIDs.ENCRATIS_BEHEMOTH,
+  KnownSetIDs.SPAULDER_OF_RUIN, // 1-piece mythic for tank support
+  KnownSetIDs.STONE_HUSK,
 ] as const;
 
 /**
  * All tank sets combined (for backwards compatibility)
  */
-export const TANK_SETS: readonly string[] = [...TANK_5PIECE_SETS, ...TANK_MONSTER_SETS] as const;
+export const TANK_SETS: readonly KnownSetIDs[] = [
+  ...TANK_5PIECE_SETS,
+  ...TANK_MONSTER_SETS,
+] as const;
 
 /**
- * Healer-specific 5-piece support sets
- * Ordered by frequency in actual usage data
+ * Healer-specific 5-piece support setsasass
+ * Alphabetically sorted
  * Can only be assigned to set1/set2 slots
  */
-export const HEALER_5PIECE_SETS: readonly string[] = [
-  'Powerful Assault', // 17.6% occurrence (31% of healers)
-  'Spell Power Cure', // 17.6% occurrence (34% of healers)
-  "Jorvuld's Guidance", // 11.8% occurrence (23% of healers)
-  'Master Architect', // 4.4% occurrence (9% of healers)
-  'Roaring Opportunist', // 4.4% occurrence (9% of healers)
-  'Combat Physician', // 1.5% occurrence (3% of healers)
-  // Less common but still viable options:
-  "Pillager's Profit",
-  "Worm's Raiment",
-  'Olorime',
-  'Martial Knowledge',
-  "Zen's Redress",
+export const HEALER_5PIECE_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.COMBAT_PHYSICIAN, // 1.5% occurrence (3% of healers)
+  KnownSetIDs.JORVULDS_GUIDANCE, // 11.8% occurrence (23% of healers)
+  KnownSetIDs.MASTER_ARCHITECT, // 4.4% occurrence (9% of healers)
+  KnownSetIDs.ROARING_OPPORTUNIST, // 4.4% occurrence (9% of healers)
+  KnownSetIDs.SPELL_POWER_CURE, // 17.6% occurrence (34% of healers)
+  KnownSetIDs.VESTMENT_OF_OLORIME,
+  KnownSetIDs.WAY_OF_MARTIAL_KNOWLEDGE,
+  KnownSetIDs.ZENS_REDRESS,
 ] as const;
 
 /**
  * Healer-specific monster sets
+ * Alphabetically sorted
  * Can only be assigned to monsterSet slot
  */
-export const HEALER_MONSTER_SETS: readonly string[] = [
-  'Symphony of Blades', // 13.2% occurrence (26% of healers)
-  'Sentinel of Rkugamz',
-  'Encratis',
-  'Engine Guardian',
+export const HEALER_MONSTER_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.ENGINE_GUARDIAN,
+  KnownSetIDs.NUNATAK, // Healer monster set
+  KnownSetIDs.OZEZAN,
+  KnownSetIDs.PEARLS_OF_EHLNOFEY, // 17.7% (Tank: 0%, Healer: 33%) - 1-piece mythic
+  KnownSetIDs.SYMPHONY_OF_BLADES, // 13.2% occurrence (26% of healers)
+  KnownSetIDs.THE_BLIND,
 ] as const;
 
 /**
  * All healer sets combined (for backwards compatibility)
  */
-export const HEALER_SETS: readonly string[] = [
+export const HEALER_SETS: readonly KnownSetIDs[] = [
   ...HEALER_5PIECE_SETS,
   ...HEALER_MONSTER_SETS,
 ] as const;
 
 /**
  * 5-piece sets that can be run on either tanks or healers
- * Based on actual cross-role usage patterns
+ * Alphabetically sorted
  * Can only be assigned to set1/set2 slots
  */
-export const FLEXIBLE_5PIECE_SETS: readonly string[] = [
-  'Turning Tide', // Used by both roles (3 tanks, 3 healers)
-  'War Machine', // Primarily tank, some healer usage
-  'Pearlescent Ward', // Historically flexible, low current usage
-  'Combat Physician', // Can be used by both roles
+export const FLEXIBLE_5PIECE_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.COMBAT_PHYSICIAN, // Can be used by both roles
+  KnownSetIDs.PILLAGERS_PROFIT, // 19.4% (Tank: 24%, Healer: 15%)
+  KnownSetIDs.POWERFUL_ASSAULT, // 19.4% (Tank: 3%, Healer: 33%)
+  KnownSetIDs.WAR_MACHINE, // Primarily tank, some healer usage
 ] as const;
 
 /**
  * Monster sets that can be run on either tanks or healers
  * Can only be assigned to monsterSet slot
  */
-export const FLEXIBLE_MONSTER_SETS: readonly string[] = [
-  'Sentinel of Rkugamz',
-  'Encratis',
+export const FLEXIBLE_MONSTER_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.SPAULDER_OF_RUIN, // Spaulder of Ruin - Flexible support set
 ] as const;
 
 /**
  * All flexible sets combined (for backwards compatibility)
  */
-export const FLEXIBLE_SETS: readonly string[] = [
+export const FLEXIBLE_SETS: readonly KnownSetIDs[] = [
   ...FLEXIBLE_5PIECE_SETS,
   ...FLEXIBLE_MONSTER_SETS,
 ] as const;
@@ -487,7 +651,7 @@ export const FLEXIBLE_SETS: readonly string[] = [
  * All monster sets (2-piece) and mythic sets (1-piece)
  * Can only be assigned to monsterSet slot
  */
-export const MONSTER_SETS: readonly string[] = [
+export const MONSTER_SETS: readonly KnownSetIDs[] = [
   ...RECOMMENDED_2PIECE_SETS,
   ...RECOMMENDED_1PIECE_SETS,
   ...TANK_MONSTER_SETS,
@@ -499,7 +663,7 @@ export const MONSTER_SETS: readonly string[] = [
  * All 5-piece sets
  * Can only be assigned to set1/set2 slots
  */
-export const ALL_5PIECE_SETS: readonly string[] = [
+export const ALL_5PIECE_SETS: readonly KnownSetIDs[] = [
   ...RECOMMENDED_5PIECE_SETS,
   ...TANK_5PIECE_SETS,
   ...HEALER_5PIECE_SETS,
@@ -508,12 +672,13 @@ export const ALL_5PIECE_SETS: readonly string[] = [
 
 /**
  * DD special role sets
+ * Alphabetically sorted
  */
-export const DD_SPECIAL_SETS: readonly string[] = [
-  'War Machine',
-  'Martial Knowledge',
-  "Zen's Redress",
-  'Alkosh',
+export const DD_SPECIAL_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.ROAR_OF_ALKOSH,
+  KnownSetIDs.WAR_MACHINE,
+  KnownSetIDs.WAY_OF_MARTIAL_KNOWLEDGE,
+  KnownSetIDs.ZENS_REDRESS,
 ] as const;
 
 /**

@@ -147,7 +147,7 @@ export const LoggerDebugPanel: React.FC<LoggerDebugPanelProps> = ({ open, onClos
               color="primary"
             />
           </Box>
-          <IconButton onClick={onClose} size="small">
+          <IconButton onClick={onClose} size="small" aria-label="Close">
             <CloseIcon />
           </IconButton>
         </Box>

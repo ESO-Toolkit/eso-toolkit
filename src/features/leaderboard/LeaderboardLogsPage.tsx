@@ -525,7 +525,12 @@ export const LeaderboardLogsPage: React.FC = () => {
                 </Typography>
               </Box>
             </Box>
-            <IconButton onClick={handleRefresh} disabled={rankingsLoading} color="primary">
+            <IconButton
+              onClick={handleRefresh}
+              disabled={rankingsLoading}
+              color="primary"
+              aria-label="Refresh leaderboard"
+            >
               <RefreshIcon />
             </IconButton>
           </Stack>
