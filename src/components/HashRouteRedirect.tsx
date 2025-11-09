@@ -73,6 +73,8 @@ export const HashRouteRedirect: React.FC = () => {
       // Validate that the normalized path starts with / to ensure it's a relative path
       if (!normalizedPath.startsWith('/')) {
         // Invalid redirect path - ignore it to prevent navigation errors
+        // eslint-disable-next-line no-console
+        console.warn('Invalid redirect path detected:', redirectParam);
         return;
       }
 
@@ -82,10 +84,18 @@ export const HashRouteRedirect: React.FC = () => {
         return;
       }
 
-      // Clean up the URL parameter (safe history operation to handle SecurityError)
-      const cleanUrl = window.location.pathname;
-      safeHistoryReplaceState({}, '', cleanUrl);
-      navigate(normalizedPath, { replace: true });
+      // Clean up the URL to remove the redirect parameter before navigation
+      // This prevents SecurityError when React Router tries to use history.replaceState
+      // with a malformed URL still in the address bar
+      const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+      const cleanupSucceeded = safeHistoryReplaceState({}, '', cleanUrl);
+
+      // Only navigate if we successfully cleaned up the URL
+      // If cleanup failed (e.g., SecurityError in restricted context),
+      // don't attempt navigation to prevent cascading errors
+      if (cleanupSucceeded) {
+        navigate(normalizedPath, { replace: true });
+      }
       return;
     }
 
