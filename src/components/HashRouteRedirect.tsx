@@ -53,7 +53,7 @@ export const HashRouteRedirect: React.FC = () => {
     const redirectPath = safeSessionStorageGet('redirectPath');
     if (redirectPath) {
       safeSessionStorageRemove('redirectPath');
-      
+
       // Validate the redirect path before navigation
       if (isValidRedirectPath(redirectPath)) {
         navigate(redirectPath, { replace: true });
