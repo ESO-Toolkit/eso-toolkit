@@ -1194,7 +1194,14 @@ function initTabs() {
     } catch {}
     if (setHash) {
       const newHash = '#' + id;
-      if (location.hash !== newHash) history.replaceState(null, '', newHash);
+      if (location.hash !== newHash) {
+        try {
+          history.replaceState(null, '', newHash);
+        } catch (e) {
+          // SecurityError can occur in Firefox with tracking protection or restricted contexts
+          console.warn('Unable to update URL hash:', e);
+        }
+      }
     }
     // Refresh fixed totals bar to reflect new active tab
     if (typeof updateFixedTotalsFromActive === 'function') {

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { safeHistoryReplaceState } from '@/utils/safeHistory';
 import { safeSessionStorageGet, safeSessionStorageRemove } from '@/utils/safeStorage';
 
 /**
@@ -41,8 +42,9 @@ export const HashRouteRedirect: React.FC = () => {
         return;
       }
 
-      // Navigate first, which will update the URL, then we can clean up the query parameter
-      // This avoids SecurityError when trying to replaceState with mismatched protocols
+      // Clean up the URL parameter (safe history operation to handle SecurityError)
+      const cleanUrl = window.location.pathname;
+      safeHistoryReplaceState({}, '', cleanUrl);
       navigate(normalizedPath, { replace: true });
       return;
     }
@@ -52,7 +54,8 @@ export const HashRouteRedirect: React.FC = () => {
     if (hash && hash.startsWith('#/')) {
       // Extract the path after #/
       const hashPath = hash.substring(1); // Remove the # to get /path
-      // Navigate to the clean path - React Router will update the URL
+      // Remove the hash from URL and navigate to the clean path (safe history operation)
+      safeHistoryReplaceState({}, '', window.location.pathname);
       navigate(hashPath, { replace: true });
     }
   }, [navigate]);
