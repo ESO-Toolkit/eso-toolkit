@@ -84,7 +84,7 @@ describe('setNameUtils', () => {
       getSetDisplayName(33333 as KnownSetIDs);
 
       expect(sentryUtils.reportError).toHaveBeenCalledTimes(3);
-      
+
       const calls = (sentryUtils.reportError as jest.Mock).mock.calls;
       expect(calls[0][1].setId).toBe(11111);
       expect(calls[1][1].setId).toBe(22222);

@@ -305,9 +305,9 @@ export const SET_DISPLAY_NAMES: Record<KnownSetIDs, string> = {
  */
 export function getSetDisplayName(setId: KnownSetIDs | undefined | null): string {
   if (setId === undefined || setId === null) return '';
-  
+
   const displayName = SET_DISPLAY_NAMES[setId];
-  
+
   // If set is not found, report to Sentry
   if (!displayName) {
     reportError(new Error(`Unknown set ID detected: ${setId}`), {
@@ -319,7 +319,7 @@ export function getSetDisplayName(setId: KnownSetIDs | undefined | null): string
     });
     return `Unknown Set (${setId})`;
   }
-  
+
   return displayName;
 }
 
