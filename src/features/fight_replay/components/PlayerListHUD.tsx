@@ -1,7 +1,7 @@
 /**
  * Player List HUD component for multi-player path visualization
  * 
- * Displays a toggleable list of players with selection controls, paging,
+ * Displays a toggleable list of all players with selection controls
  * and visual indicators for path visibility and player status.
  */
 
@@ -9,7 +9,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import React, { useRef, useMemo, useCallback, useState, useEffect } from 'react';
 import * as THREE from 'three';
 
-import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
+import { TimestampPositionLookup, getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
 import { RenderPriority } from '../constants/renderPriorities';
 
 import { PlayerPath } from '../utils/pathUtils';
@@ -28,6 +28,9 @@ interface PlayerListHUDProps {
   /** Callback when player selection changes */
   onPlayerSelectionChange: (selectedIds: Set<number>) => void;
   
+  /** Callback when player visibility changes */
+  onPlayerVisibilityChange?: (actorId: number, visible: boolean) => void;
+  
   /** Position lookup for real-time updates */
   lookup: TimestampPositionLookup | null;
   
@@ -40,9 +43,6 @@ interface PlayerListHUDProps {
   /** Whether HUD is visible */
   visible?: boolean;
   
-  /** Maximum players to show per page */
-  playersPerPage?: number;
-  
   /** HUD position offset from screen edges */
   positionOffset?: { x: number; y: number };
 }
@@ -51,20 +51,33 @@ interface PlayerListHUDProps {
  * HUD canvas dimensions and styling
  */
 const HUD_CONFIG = {
-  width: 280,           // Canvas width in pixels
-  height: 400,          // Canvas height in pixels
-  padding: 12,          // Inner padding
-  lineHeight: 24,       // Line height for text
-  headerHeight: 32,     // Header section height
-  playerHeight: 28,     // Height per player entry
-  buttonHeight: 24,     // Button height
-  fontSize: 12,         // Base font size
-  titleFontSize: 14,    // Title font size
+  width: 165,           // Canvas width in pixels (increased for icons)
+  height: 251,          // Canvas height in pixels (233 + 18 for header)
+  padding: 8,           // Inner padding (10% smaller: 9 * 0.9, rounded)
+  lineHeight: 16,       // Line height for text (10% smaller: 18 * 0.9, rounded)
+  headerHeight: 18,     // Compact header for collapse control
+  playerHeight: 20,     // Height per player entry (10% smaller: 22 * 0.9, rounded)
+  buttonHeight: 16,     // Button height (10% smaller: 18 * 0.9, rounded)
+  fontSize: 9,          // Base font size (10% smaller: 10 * 0.9, rounded)
+  titleFontSize: 10,    // Title font size (compact for header)
+  iconSize: 14,         // Icon button size
+  iconFontSize: 11,     // Icon font size
+  maxNameLength: 16,    // Maximum characters for player names (reduced for icons)
+  healthBarWidth: 50,   // Width of health bar
+  healthBarHeight: 3,   // Height of health bar
   backgroundColor: 'rgba(0, 0, 0, 0.8)',
   borderColor: 'rgba(255, 255, 255, 0.3)',
   textColor: '#ffffff',
   selectedColor: 'rgba(100, 200, 255, 0.3)',
   hoverColor: 'rgba(255, 255, 255, 0.1)',
+  headerBackgroundColor: 'rgba(30, 30, 30, 0.9)',
+  iconActiveColor: 'rgba(100, 255, 100, 0.9)',
+  iconInactiveColor: 'rgba(150, 150, 150, 0.6)',
+  iconHoverColor: 'rgba(200, 200, 255, 0.8)',
+  healthBarBackgroundColor: 'rgba(60, 60, 60, 0.8)',
+  healthBarFillColor: 'rgba(100, 200, 100, 0.9)',
+  healthBarLowColor: 'rgba(200, 100, 50, 0.9)',
+  healthBarCriticalColor: 'rgba(200, 50, 50, 0.9)',
 } as const;
 
 /**
@@ -77,8 +90,9 @@ class PlayerListHUDRenderer {
   
   // Interaction state
   private hoveredIndex = -1;
-  private currentPage = 0;
-  private totalPages = 0;
+  private hoveredIcon: 'eye' | 'path' | null = null;
+  private hoveredHeader = false;
+  private isCollapsed = false;
   
   constructor() {
     // Create high-resolution canvas for crisp text
@@ -114,55 +128,64 @@ class PlayerListHUDRenderer {
   updateHUD(
     paths: Map<number, PlayerPath>,
     selectedPlayerIds: Set<number>,
-    playersPerPage: number,
-    currentPage: number = 0,
-    colorManager: PlayerColorManager
+    colorManager: PlayerColorManager,
+    lookup: TimestampPositionLookup | null,
+    currentTime: number
   ): void {
     const ctx = this.context;
     
     // Clear canvas
     ctx.clearRect(0, 0, HUD_CONFIG.width, HUD_CONFIG.height);
     
-    // Background panel
-    ctx.fillStyle = HUD_CONFIG.backgroundColor;
-    ctx.fillRect(0, 0, HUD_CONFIG.width, HUD_CONFIG.height);
+    // Get effective height based on collapsed state
+    const effectiveHeight = this.isCollapsed ? HUD_CONFIG.headerHeight : HUD_CONFIG.height;
     
-    // Border
+    // Background panel - only draw what's needed
+    ctx.fillStyle = HUD_CONFIG.backgroundColor;
+    ctx.fillRect(0, 0, HUD_CONFIG.width, effectiveHeight);
+    
+    // Border - adjust to effective height
     ctx.strokeStyle = HUD_CONFIG.borderColor;
     ctx.lineWidth = 1;
-    ctx.strokeRect(0.5, 0.5, HUD_CONFIG.width - 1, HUD_CONFIG.height - 1);
-    
-    const players = Array.from(paths.values());
-    const totalPlayers = players.length;
-    this.totalPages = Math.ceil(totalPlayers / playersPerPage);
-    this.currentPage = Math.max(0, Math.min(currentPage, this.totalPages - 1));
-    
-    const startIndex = this.currentPage * playersPerPage;
-    const endIndex = Math.min(startIndex + playersPerPage, totalPlayers);
-    const visiblePlayers = players.slice(startIndex, endIndex);
-    
-    let y = HUD_CONFIG.padding;
+    ctx.strokeRect(0.5, 0.5, HUD_CONFIG.width - 1, effectiveHeight - 1);
     
     // Header
+    ctx.fillStyle = this.hoveredHeader ? HUD_CONFIG.hoverColor : HUD_CONFIG.headerBackgroundColor;
+    ctx.fillRect(0, 0, HUD_CONFIG.width, HUD_CONFIG.headerHeight);
+    
+    // Header border (only draw bottom border if expanded)
+    if (!this.isCollapsed) {
+      ctx.strokeStyle = HUD_CONFIG.borderColor;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, HUD_CONFIG.headerHeight);
+      ctx.lineTo(HUD_CONFIG.width, HUD_CONFIG.headerHeight);
+      ctx.stroke();
+    }
+    
+    // Header text
     ctx.fillStyle = HUD_CONFIG.textColor;
-    ctx.font = `bold ${HUD_CONFIG.titleFontSize}px Arial`;
+    ctx.font = `${HUD_CONFIG.titleFontSize}px Arial`;
     ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText('Player Paths', HUD_CONFIG.padding, y);
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Players', HUD_CONFIG.padding, HUD_CONFIG.headerHeight / 2);
     
-    // Selection count
-    ctx.font = `${HUD_CONFIG.fontSize}px Arial`;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    // Collapse/expand arrow
     ctx.textAlign = 'right';
-    ctx.fillText(
-      `${selectedPlayerIds.size}/${totalPlayers} selected`, 
-      HUD_CONFIG.width - HUD_CONFIG.padding, 
-      y
-    );
+    ctx.fillText(this.isCollapsed ? '▶' : '▼', HUD_CONFIG.width - HUD_CONFIG.padding, HUD_CONFIG.headerHeight / 2);
     
-    y += HUD_CONFIG.headerHeight;
+    const players = Array.from(paths.values());
     
-    // Player list
+    // Show all players - no pagination
+    const visiblePlayers = players;
+    
+    let y = HUD_CONFIG.headerHeight + HUD_CONFIG.padding;
+    
+    // Player list (skip if collapsed)
+    if (this.isCollapsed) {
+      this.texture.needsUpdate = true;
+      return;
+    }
     for (let i = 0; i < visiblePlayers.length; i++) {
       const player = visiblePlayers[i];
       const isSelected = selectedPlayerIds.has(player.actorId);
@@ -178,12 +201,12 @@ class PlayerListHUDRenderer {
       const assignment = colorManager.getAssignment(player.actorId);
       if (assignment) {
         ctx.fillStyle = assignment.colorValue;
-        ctx.fillRect(HUD_CONFIG.padding + 4, y + 6, 12, 12);
+        ctx.fillRect(HUD_CONFIG.padding + 2, y + 5, 12, 12);
         
         // Color border
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = 1;
-        ctx.strokeRect(HUD_CONFIG.padding + 4, y + 6, 12, 12);
+        ctx.strokeRect(HUD_CONFIG.padding + 2, y + 5, 12, 12);
       }
       
       // Player name
@@ -192,82 +215,78 @@ class PlayerListHUDRenderer {
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       
-      const nameX = HUD_CONFIG.padding + 24;
+      const nameX = HUD_CONFIG.padding + 20;
       const nameY = y + HUD_CONFIG.playerHeight / 2;
       
-      // Truncate long names
+      // Truncate names to maximum character length
       let displayName = player.name;
-      const maxWidth = HUD_CONFIG.width - nameX - HUD_CONFIG.padding - 40;
-      if (ctx.measureText(displayName).width > maxWidth) {
-        while (ctx.measureText(displayName + '...').width > maxWidth && displayName.length > 1) {
-          displayName = displayName.slice(0, -1);
-        }
-        displayName += '...';
+      if (displayName.length > HUD_CONFIG.maxNameLength) {
+        displayName = displayName.slice(0, HUD_CONFIG.maxNameLength) + '...';
       }
       
       ctx.fillText(displayName, nameX, nameY);
       
-      // Role indicator
-      if (player.role) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.font = `${HUD_CONFIG.fontSize - 2}px Arial`;
-        ctx.textAlign = 'right';
-        ctx.fillText(
-          player.role.toUpperCase(), 
-          HUD_CONFIG.width - HUD_CONFIG.padding - 4, 
-          nameY
-        );
+      // Health bar - small horizontal bar below name with 3px gap
+      if (lookup && currentTime >= 0) {
+        const position = getActorPositionAtClosestTimestamp(lookup, player.actorId, currentTime);
+        
+        if (position?.health) {
+          const healthPercent = Math.max(0, Math.min(1, position.health.percentage / 100));
+          
+          const healthBarX = nameX;
+          const healthBarY = nameY + HUD_CONFIG.fontSize / 2 + 3; // Position below text with small gap
+          
+          // Background
+          ctx.fillStyle = HUD_CONFIG.healthBarBackgroundColor;
+          ctx.fillRect(healthBarX, healthBarY, HUD_CONFIG.healthBarWidth, HUD_CONFIG.healthBarHeight);
+          
+          // Health fill with color based on health percentage
+          let healthColor: string = HUD_CONFIG.healthBarFillColor;
+          if (healthPercent < 0.25) {
+            healthColor = HUD_CONFIG.healthBarCriticalColor;
+          } else if (healthPercent < 0.5) {
+            healthColor = HUD_CONFIG.healthBarLowColor;
+          }
+          
+          ctx.fillStyle = healthColor;
+          ctx.fillRect(healthBarX, healthBarY, HUD_CONFIG.healthBarWidth * healthPercent, HUD_CONFIG.healthBarHeight);
+          
+          // Border
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+          ctx.lineWidth = 0.5;
+          ctx.strokeRect(healthBarX, healthBarY, HUD_CONFIG.healthBarWidth, HUD_CONFIG.healthBarHeight);
+        }
       }
       
-      // Visibility indicator (eye icon approximation)
-      if (player.visible) {
-        ctx.fillStyle = 'rgba(100, 255, 100, 0.8)';
-        ctx.font = `${HUD_CONFIG.fontSize}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.fillText('●', HUD_CONFIG.width - HUD_CONFIG.padding - 24, nameY);
-      }
+      // Eye icon (visibility toggle) - right side
+      const eyeIconX = HUD_CONFIG.width - HUD_CONFIG.padding - HUD_CONFIG.iconSize - 18;
+      const eyeIconY = y + (HUD_CONFIG.playerHeight - HUD_CONFIG.iconSize) / 2;
       
-      y += HUD_CONFIG.playerHeight;
-    }
-    
-    // Pagination controls
-    if (this.totalPages > 1) {
-      y = HUD_CONFIG.height - HUD_CONFIG.padding - HUD_CONFIG.buttonHeight;
+      const isEyeHovered = this.hoveredIndex === i && this.hoveredIcon === 'eye';
+      const eyeColor = isEyeHovered 
+        ? HUD_CONFIG.iconHoverColor 
+        : (player.visible ? HUD_CONFIG.iconActiveColor : HUD_CONFIG.iconInactiveColor);
       
-      // Page info
-      ctx.fillStyle = HUD_CONFIG.textColor;
-      ctx.font = `${HUD_CONFIG.fontSize}px Arial`;
+      ctx.fillStyle = eyeColor;
+      ctx.font = `${HUD_CONFIG.iconFontSize}px Arial`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(
-        `Page ${this.currentPage + 1} of ${this.totalPages}`,
-        HUD_CONFIG.width / 2,
-        y + HUD_CONFIG.buttonHeight / 2
-      );
+      ctx.fillText(player.visible ? '👁' : '👁', eyeIconX + HUD_CONFIG.iconSize / 2, eyeIconY + HUD_CONFIG.iconSize / 2);
       
-      // Previous button
-      if (this.currentPage > 0) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.fillRect(HUD_CONFIG.padding, y, 40, HUD_CONFIG.buttonHeight);
-        ctx.strokeStyle = HUD_CONFIG.borderColor;
-        ctx.strokeRect(HUD_CONFIG.padding, y, 40, HUD_CONFIG.buttonHeight);
-        
-        ctx.fillStyle = HUD_CONFIG.textColor;
-        ctx.textAlign = 'center';
-        ctx.fillText('<', HUD_CONFIG.padding + 20, y + HUD_CONFIG.buttonHeight / 2);
-      }
+      // Path icon (trail toggle) - rightmost
+      const pathIconX = HUD_CONFIG.width - HUD_CONFIG.padding - HUD_CONFIG.iconSize;
+      const pathIconY = y + (HUD_CONFIG.playerHeight - HUD_CONFIG.iconSize) / 2;
       
-      // Next button
-      if (this.currentPage < this.totalPages - 1) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.fillRect(HUD_CONFIG.width - HUD_CONFIG.padding - 40, y, 40, HUD_CONFIG.buttonHeight);
-        ctx.strokeStyle = HUD_CONFIG.borderColor;
-        ctx.strokeRect(HUD_CONFIG.width - HUD_CONFIG.padding - 40, y, 40, HUD_CONFIG.buttonHeight);
-        
-        ctx.fillStyle = HUD_CONFIG.textColor;
-        ctx.textAlign = 'center';
-        ctx.fillText('>', HUD_CONFIG.width - HUD_CONFIG.padding - 20, y + HUD_CONFIG.buttonHeight / 2);
-      }
+      const isPathHovered = this.hoveredIndex === i && this.hoveredIcon === 'path';
+      const hasPath = isSelected;
+      const pathColor = isPathHovered 
+        ? HUD_CONFIG.iconHoverColor 
+        : (hasPath ? HUD_CONFIG.iconActiveColor : HUD_CONFIG.iconInactiveColor);
+      
+      ctx.fillStyle = pathColor;
+      ctx.fillText(hasPath ? '━' : '╌', pathIconX + HUD_CONFIG.iconSize / 2, pathIconY + HUD_CONFIG.iconSize / 2);
+      
+      y += HUD_CONFIG.playerHeight;
     }
     
     this.texture.needsUpdate = true;
@@ -281,51 +300,60 @@ class PlayerListHUDRenderer {
     y: number, 
     paths: Map<number, PlayerPath>,
     selectedPlayerIds: Set<number>,
-    playersPerPage: number,
-    onSelectionChange: (ids: Set<number>) => void
+    onSelectionChange: (ids: Set<number>) => void,
+    onVisibilityChange?: (actorId: number, visible: boolean) => void
   ): boolean {
-    const players = Array.from(paths.values());
-    const startIndex = this.currentPage * playersPerPage;
-    const visiblePlayers = players.slice(startIndex, startIndex + playersPerPage);
-    
-    // Check player list clicks
-    let listY = HUD_CONFIG.padding + HUD_CONFIG.headerHeight;
-    for (let i = 0; i < visiblePlayers.length; i++) {
-      const player = visiblePlayers[i];
-      
-      if (y >= listY && y < listY + HUD_CONFIG.playerHeight) {
-        // Toggle selection
-        const newSelection = new Set(selectedPlayerIds);
-        if (newSelection.has(player.actorId)) {
-          newSelection.delete(player.actorId);
-        } else {
-          newSelection.add(player.actorId);
-        }
-        onSelectionChange(newSelection);
-        return true;
-      }
-      
-      listY += HUD_CONFIG.playerHeight;
+    // Check header click for collapse/expand
+    if (y <= HUD_CONFIG.headerHeight) {
+      this.isCollapsed = !this.isCollapsed;
+      return true;
     }
     
-    // Check pagination clicks
-    if (this.totalPages > 1) {
-      const paginationY = HUD_CONFIG.height - HUD_CONFIG.padding - HUD_CONFIG.buttonHeight;
+    // Skip player list if collapsed
+    if (this.isCollapsed) {
+      return false;
+    }
+    
+    const players = Array.from(paths.values());
+    
+    // Check player list clicks (starts after header)
+    let listY = HUD_CONFIG.headerHeight + HUD_CONFIG.padding;
+    for (let i = 0; i < players.length; i++) {
+      const player = players[i];
       
-      if (y >= paginationY && y < paginationY + HUD_CONFIG.buttonHeight) {
-        // Previous button
-        if (x >= HUD_CONFIG.padding && x < HUD_CONFIG.padding + 40 && this.currentPage > 0) {
-          this.currentPage--;
+      if (y >= listY && y < listY + HUD_CONFIG.playerHeight) {
+        const iconY = listY + (HUD_CONFIG.playerHeight - HUD_CONFIG.iconSize) / 2;
+        
+        // Check eye icon click (visibility toggle)
+        const eyeIconX = HUD_CONFIG.width - HUD_CONFIG.padding - HUD_CONFIG.iconSize - 18;
+        if (x >= eyeIconX && x <= eyeIconX + HUD_CONFIG.iconSize &&
+            y >= iconY && y <= iconY + HUD_CONFIG.iconSize) {
+          if (onVisibilityChange) {
+            onVisibilityChange(player.actorId, !player.visible);
+          }
           return true;
         }
         
-        // Next button
-        const nextButtonX = HUD_CONFIG.width - HUD_CONFIG.padding - 40;
-        if (x >= nextButtonX && x < nextButtonX + 40 && this.currentPage < this.totalPages - 1) {
-          this.currentPage++;
+        // Check path icon click (trail toggle)
+        const pathIconX = HUD_CONFIG.width - HUD_CONFIG.padding - HUD_CONFIG.iconSize;
+        if (x >= pathIconX && x <= pathIconX + HUD_CONFIG.iconSize &&
+            y >= iconY && y <= iconY + HUD_CONFIG.iconSize) {
+          // Toggle path selection
+          const newSelection = new Set(selectedPlayerIds);
+          if (newSelection.has(player.actorId)) {
+            newSelection.delete(player.actorId);
+          } else {
+            newSelection.add(player.actorId);
+          }
+          onSelectionChange(newSelection);
           return true;
         }
+        
+        // No icon clicked, ignore click on player row
+        return false;
       }
+      
+      listY += HUD_CONFIG.playerHeight;
     }
     
     return false;
@@ -334,31 +362,79 @@ class PlayerListHUDRenderer {
   /**
    * Handle hover interactions
    */
-  handleHover(x: number, y: number, playersPerPage: number): boolean {
+  handleHover(x: number, y: number, totalPlayers: number): boolean {
     const oldHovered = this.hoveredIndex;
+    const oldIcon = this.hoveredIcon;
+    const oldHeaderHovered = this.hoveredHeader;
     this.hoveredIndex = -1;
+    this.hoveredIcon = null;
+    this.hoveredHeader = false;
     
-    // Check if hovering over player list
-    let listY = HUD_CONFIG.padding + HUD_CONFIG.headerHeight;
-    const maxPlayers = Math.min(playersPerPage, Math.ceil((HUD_CONFIG.height - listY - HUD_CONFIG.padding * 2) / HUD_CONFIG.playerHeight));
+    // Check header hover
+    if (y <= HUD_CONFIG.headerHeight) {
+      this.hoveredHeader = true;
+      return this.hoveredHeader !== oldHeaderHovered || this.hoveredIndex !== oldHovered || this.hoveredIcon !== oldIcon;
+    }
     
-    for (let i = 0; i < maxPlayers; i++) {
+    // Skip player list hover if collapsed
+    if (this.isCollapsed) {
+      return this.hoveredHeader !== oldHeaderHovered || this.hoveredIndex !== oldHovered || this.hoveredIcon !== oldIcon;
+    }
+    
+    // Check if hovering over player list (starts after header)
+    let listY = HUD_CONFIG.headerHeight + HUD_CONFIG.padding;
+    
+    for (let i = 0; i < totalPlayers; i++) {
       if (y >= listY && y < listY + HUD_CONFIG.playerHeight) {
         this.hoveredIndex = i;
+        
+        const iconY = listY + (HUD_CONFIG.playerHeight - HUD_CONFIG.iconSize) / 2;
+        
+        // Check eye icon hover
+        const eyeIconX = HUD_CONFIG.width - HUD_CONFIG.padding - HUD_CONFIG.iconSize - 18;
+        if (x >= eyeIconX && x <= eyeIconX + HUD_CONFIG.iconSize &&
+            y >= iconY && y <= iconY + HUD_CONFIG.iconSize) {
+          this.hoveredIcon = 'eye';
+        }
+        
+        // Check path icon hover
+        const pathIconX = HUD_CONFIG.width - HUD_CONFIG.padding - HUD_CONFIG.iconSize;
+        if (x >= pathIconX && x <= pathIconX + HUD_CONFIG.iconSize &&
+            y >= iconY && y <= iconY + HUD_CONFIG.iconSize) {
+          this.hoveredIcon = 'path';
+        }
+        
         break;
       }
       listY += HUD_CONFIG.playerHeight;
     }
     
-    return this.hoveredIndex !== oldHovered;
+    return this.hoveredIndex !== oldHovered || this.hoveredIcon !== oldIcon || this.hoveredHeader !== oldHeaderHovered;
+  }
+  
+  /**
+   * Check if currently hovering over an icon or header
+   */
+  isHoveringIcon(): boolean {
+    return this.hoveredIcon !== null || this.hoveredHeader;
+  }
+  
+  /**
+   * Get current collapsed state
+   */
+  getIsCollapsed(): boolean {
+    return this.isCollapsed;
+  }
+  
+  /**
+   * Get current effective height based on collapsed state
+   */
+  getEffectiveHeight(): number {
+    return this.isCollapsed ? HUD_CONFIG.headerHeight : HUD_CONFIG.height;
   }
   
   getTexture(): THREE.CanvasTexture {
     return this.texture;
-  }
-  
-  getCurrentPage(): number {
-    return this.currentPage;
   }
   
   dispose(): void {
@@ -373,25 +449,49 @@ export const PlayerListHUD: React.FC<PlayerListHUDProps> = ({
   paths,
   selectedPlayerIds,
   onPlayerSelectionChange,
+  onPlayerVisibilityChange,
   lookup,
   timeRef,
   colorManager,
   visible = true,
-  playersPerPage = 10,
   positionOffset = { x: -20, y: 20 },
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const meshRef = useRef<THREE.Mesh>(null);
-  const [currentPage, setCurrentPage] = useState(0);
+  
+  // Track collapsed state for geometry updates
+  const [isCollapsed, setIsCollapsed] = useState(false);
   
   // Create HUD renderer
   const hudRenderer = useMemo(() => new PlayerListHUDRenderer(), []);
   
-  // Get shared geometry for HUD panel
+  // Create appropriately sized geometry for HUD - use same 1:1000 pixel mapping as BossHealthHUD
+  // Recreate geometry when collapsed state changes
   const geometry = useMemo(() => {
-    const aspect = HUD_CONFIG.width / HUD_CONFIG.height;
-    return new THREE.PlaneGeometry(aspect * 0.4, 0.4); // Scale to reasonable world size
-  }, []);
+    // Convert pixel dimensions to world units (same as BossHealthHUD: pixels / 1000)
+    const hudWidthWorld = HUD_CONFIG.width / 1000;
+    const effectiveHeight = isCollapsed ? HUD_CONFIG.headerHeight : HUD_CONFIG.height;
+    const hudHeightWorld = effectiveHeight / 1000;
+    
+    const geom = new THREE.PlaneGeometry(hudWidthWorld, hudHeightWorld);
+    
+    // Adjust UV coordinates when collapsed to only show the header portion of the texture
+    if (isCollapsed) {
+      const uvAttr = geom.attributes.uv;
+      const headerRatio = HUD_CONFIG.headerHeight / HUD_CONFIG.height;
+      
+      // UV coordinates: bottom-left (0,0), top-right (1,1)
+      // We want to map only the top portion of the texture (header area)
+      for (let i = 0; i < uvAttr.count; i++) {
+        const v = uvAttr.getY(i);
+        // Map from [0,1] to [1-headerRatio, 1] (top portion only)
+        uvAttr.setY(i, 1 - headerRatio + v * headerRatio);
+      }
+      uvAttr.needsUpdate = true;
+    }
+    
+    return geom;
+  }, [isCollapsed]);
   
   // Create material with HUD texture
   const material = useMemo(() => {
@@ -399,6 +499,7 @@ export const PlayerListHUD: React.FC<PlayerListHUDProps> = ({
       map: hudRenderer.getTexture(),
       transparent: true,
       alphaTest: 0.01,
+      side: THREE.DoubleSide,
     });
   }, [hudRenderer]);
   
@@ -408,68 +509,135 @@ export const PlayerListHUD: React.FC<PlayerListHUDProps> = ({
       return;
     }
     
+    // Check if collapsed state changed and sync with component state
+    const rendererCollapsed = hudRenderer.getIsCollapsed();
+    if (rendererCollapsed !== isCollapsed) {
+      setIsCollapsed(rendererCollapsed);
+    }
+    
     // Update HUD content
     hudRenderer.updateHUD(
       paths,
       selectedPlayerIds,
-      playersPerPage,
-      currentPage,
-      colorManager
+      colorManager,
+      lookup,
+      timeRef.current
     );
     
-    // Position HUD in screen space (top-left corner)
-    const distance = 2; // Distance from camera
-    const screenX = -(size.width / size.height) * distance + positionOffset.x * 0.01;
-    const screenY = distance - positionOffset.y * 0.01;
+    // Use the exact same camera-locked positioning as BossHealthHUD but mirrored to left side
+    const aspect = size.width / size.height;
+    const distance = 0.5; // Very close to camera for large appearance (same as BossHealthHUD)
+
+    // Calculate the camera's view dimensions at the HUD distance (exact same as BossHealthHUD)
+    const vFOV = ((camera as THREE.PerspectiveCamera).fov * Math.PI) / 180; // Convert to radians
+    const viewHeight = 2 * Math.tan(vFOV / 2) * distance;
+    const viewWidth = viewHeight * aspect;
+
+    // Position HUD in top-left corner - using actual HUD dimensions converted to world units
+    const hudWidthWorld = HUD_CONFIG.width / 1000; // 280px -> 0.28 world units
+    const effectiveHeight = hudRenderer.getEffectiveHeight();
+    const hudHeightWorld = effectiveHeight / 1000; // Dynamic based on collapsed state
     
-    // Calculate world position relative to camera
+    // Match HTML overlay positioning: 16px from top-left corner
+    // Convert 16px to world units at the HUD distance
+    const pixelMargin = 16; // Match HTML overlay's top: 16, left: 16
+    const marginWorld = (pixelMargin / size.height) * viewHeight; // Convert pixels to world units
+    
+    // Calculate screen position (left side, matching HTML overlay)
+    // Start at left edge, add small margin, add half HUD width to center it
+    const screenX = -viewWidth / 2 + marginWorld + hudWidthWorld / 2;
+    const screenY = viewHeight / 2 - marginWorld - hudHeightWorld / 2; // Top edge with margin
+
+    // Convert screen position to world position relative to camera (same as BossHealthHUD)
     const cameraDirection = new THREE.Vector3();
     camera.getWorldDirection(cameraDirection);
-    
+
     const right = new THREE.Vector3();
     right.crossVectors(cameraDirection, camera.up).normalize();
-    
+
     const up = new THREE.Vector3();
     up.crossVectors(right, cameraDirection).normalize();
-    
+
+    // Position relative to camera at fixed distance
     const hudPosition = camera.position.clone();
     hudPosition.add(cameraDirection.multiplyScalar(distance));
     hudPosition.add(right.multiplyScalar(screenX));
     hudPosition.add(up.multiplyScalar(screenY));
-    
+
     groupRef.current.position.copy(hudPosition);
+
+    // Keep HUD aligned with camera view plane (no tilting/pivoting) - same as BossHealthHUD
+    // Copy camera's rotation so HUD stays square to the screen
     groupRef.current.rotation.copy(camera.rotation);
     
   }, RenderPriority.HUD);
   
-  // Handle click events
+  // Handle click events with proper UV coordinate conversion
   const handleClick = useCallback((event: any) => {
     if (event?.stopPropagation) {
       event.stopPropagation();
     }
     
-    if (!meshRef.current) return;
+    if (!meshRef.current || !event.uv) {
+      return;
+    }
     
-    // Convert to local coordinates (simplified for this implementation)
-    // In a full implementation, you'd use raycasting to get precise UV coordinates
+    // Convert UV coordinates (0-1) to canvas coordinates
+    // UV origin is bottom-left, canvas origin is top-left
+    const canvasX = event.uv.x * HUD_CONFIG.width;
+    const canvasY = (1 - event.uv.y) * HUD_CONFIG.height; // Flip Y axis
+    
     const clicked = hudRenderer.handleClick(
-      HUD_CONFIG.width * 0.5,  // Simplified: assume center click
-      HUD_CONFIG.height * 0.5,
+      canvasX,
+      canvasY,
       paths,
       selectedPlayerIds,
-      playersPerPage,
-      (newSelection) => {
-        onPlayerSelectionChange(newSelection);
-        // Update current page from renderer
-        setCurrentPage(hudRenderer.getCurrentPage());
-      }
+      onPlayerSelectionChange,
+      onPlayerVisibilityChange
     );
     
     if (clicked) {
       // Force re-render
-      hudRenderer.updateHUD(paths, selectedPlayerIds, playersPerPage, hudRenderer.getCurrentPage(), colorManager);
+      hudRenderer.updateHUD(paths, selectedPlayerIds, colorManager, lookup, timeRef.current);
     }
-  }, [paths, selectedPlayerIds, playersPerPage, onPlayerSelectionChange, colorManager, hudRenderer]);
+  }, [paths, selectedPlayerIds, onPlayerSelectionChange, onPlayerVisibilityChange, colorManager, hudRenderer, lookup, timeRef]);
+
+  // Handle hover for cursor changes
+  const handlePointerMove = useCallback((event: any) => {
+    // Stop propagation to prevent cursor changes from content behind the panel
+    event.stopPropagation();
+    
+    if (!meshRef.current || !event.uv) return;
+    
+    // Convert UV coordinates to canvas coordinates
+    const canvasX = event.uv.x * HUD_CONFIG.width;
+    const canvasY = (1 - event.uv.y) * HUD_CONFIG.height;
+    
+    const needsUpdate = hudRenderer.handleHover(canvasX, canvasY, paths.size);
+    
+    // Update cursor based on hover state
+    const isHoveringIcon = hudRenderer.isHoveringIcon();
+    document.body.style.cursor = isHoveringIcon ? 'pointer' : 'default';
+    
+    if (needsUpdate) {
+      hudRenderer.updateHUD(paths, selectedPlayerIds, colorManager, lookup, timeRef.current);
+    }
+  }, [paths, selectedPlayerIds, colorManager, hudRenderer, lookup, timeRef]);
+
+  // Handle pointer leave to clear hover state
+  const handlePointerLeave = useCallback((event: any) => {
+    // Stop propagation
+    event?.stopPropagation?.();
+    
+    const needsUpdate = hudRenderer.handleHover(-1, -1, paths.size);
+    
+    // Reset cursor when leaving the panel
+    document.body.style.cursor = 'default';
+    
+    if (needsUpdate) {
+      hudRenderer.updateHUD(paths, selectedPlayerIds, colorManager, lookup, timeRef.current);
+    }
+  }, [paths, selectedPlayerIds, colorManager, hudRenderer, lookup, timeRef]);
   
   // Cleanup
   useEffect(() => {
@@ -489,6 +657,17 @@ export const PlayerListHUD: React.FC<PlayerListHUDProps> = ({
         geometry={geometry}
         material={material}
         onClick={handleClick}
+        onPointerMove={handlePointerMove}
+        onPointerOver={(e) => {
+          // Stop propagation to block interaction with content behind the panel
+          e.stopPropagation();
+        }}
+        onPointerLeave={handlePointerLeave}
+        onPointerOut={(e) => {
+          // Stop propagation and reset cursor when leaving HUD
+          e.stopPropagation();
+          document.body.style.cursor = 'default';
+        }}
       />
     </group>
   );
