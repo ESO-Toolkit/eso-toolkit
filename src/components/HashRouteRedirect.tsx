@@ -5,6 +5,35 @@ import { safeHistoryReplaceState } from '@/utils/safeHistory';
 import { safeSessionStorageGet, safeSessionStorageRemove } from '@/utils/safeStorage';
 
 /**
+ * Validates that a redirect path is safe to use with React Router's history API.
+ * Ensures the path is a relative path (starts with /) and doesn't contain
+ * protocol schemes that could cause SecurityError.
+ */
+function isValidRedirectPath(path: string): boolean {
+  // Must start with exactly one forward slash
+  if (!path.startsWith('/')) {
+    return false;
+  }
+
+  // Must not start with // (protocol-relative URL)
+  if (path.startsWith('//')) {
+    return false;
+  }
+
+  // Must not contain protocol schemes
+  if (path.includes('://')) {
+    return false;
+  }
+
+  // Must not be empty after the leading slash
+  if (path.length <= 1) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * HashRouteRedirect component handles the migration from hash-based routing to browser routing.
  *
  * This component serves two purposes:
@@ -24,7 +53,12 @@ export const HashRouteRedirect: React.FC = () => {
     const redirectPath = safeSessionStorageGet('redirectPath');
     if (redirectPath) {
       safeSessionStorageRemove('redirectPath');
-      navigate(redirectPath, { replace: true });
+
+      // Validate the redirect path before navigation
+      if (isValidRedirectPath(redirectPath)) {
+        navigate(redirectPath, { replace: true });
+      }
+      // If invalid, silently ignore and let the app stay on the home page
       return;
     }
 
@@ -39,6 +73,12 @@ export const HashRouteRedirect: React.FC = () => {
       // Validate that the normalized path starts with / to ensure it's a relative path
       if (!normalizedPath.startsWith('/')) {
         // Invalid redirect path - ignore it to prevent navigation errors
+        return;
+      }
+
+      // Additional validation to prevent malformed URLs
+      if (!isValidRedirectPath(normalizedPath)) {
+        // Malformed path - silently ignore to prevent SecurityError
         return;
       }
 
