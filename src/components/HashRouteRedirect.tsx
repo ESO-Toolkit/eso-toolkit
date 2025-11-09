@@ -35,9 +35,14 @@ export const HashRouteRedirect: React.FC = () => {
       // Remove leading slashes beyond the first one (e.g., //path -> /path)
       const normalizedPath = redirectParam.replace(/^\/+/, '/');
 
-      // Clean up the URL parameter
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, '', cleanUrl);
+      // Validate that the normalized path starts with / to ensure it's a relative path
+      if (!normalizedPath.startsWith('/')) {
+        // Invalid redirect path - ignore it to prevent navigation errors
+        return;
+      }
+
+      // Navigate first, which will update the URL, then we can clean up the query parameter
+      // This avoids SecurityError when trying to replaceState with mismatched protocols
       navigate(normalizedPath, { replace: true });
       return;
     }
@@ -47,8 +52,7 @@ export const HashRouteRedirect: React.FC = () => {
     if (hash && hash.startsWith('#/')) {
       // Extract the path after #/
       const hashPath = hash.substring(1); // Remove the # to get /path
-      // Remove the hash from URL and navigate to the clean path
-      window.history.replaceState({}, '', window.location.pathname);
+      // Navigate to the clean path - React Router will update the URL
       navigate(hashPath, { replace: true });
     }
   }, [navigate]);
