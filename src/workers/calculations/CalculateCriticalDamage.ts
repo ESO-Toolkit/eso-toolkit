@@ -1,5 +1,9 @@
 import { PlayerDetailsWithRole } from '@/store/player_data/playerDataSlice';
-import { CombatantInfoEvent } from '@/types/combatlogEvents';
+import { CombatantInfoEvent, DamageEvent } from '@/types/combatlogEvents';
+import {
+  calculateActiveCombatTime,
+  filterDataPointsByActiveCombat,
+} from '@/utils/activeCombatTimeUtils';
 import { BuffLookupData } from '@/utils/BuffLookupUtils';
 import {
   calculateDynamicCriticalDamageAtTimestamp,
@@ -19,6 +23,8 @@ export interface CriticalDamageCalculationTask {
   combatantInfoEvents: Record<number, CombatantInfoEvent>;
   friendlyBuffsLookup: BuffLookupData;
   debuffsLookup: BuffLookupData;
+  damageEvents: DamageEvent[];
+  selectedTargetIds?: number[];
 }
 
 export interface CriticalDamageDataPoint {
@@ -50,6 +56,8 @@ export interface PlayerCriticalDamageDataExtended {
   criticalDamageAlerts: CriticalDamageAlert[];
   criticalDamageSources: CriticalDamageSourceWithActiveState[];
   staticCriticalDamage: number;
+  /** Inactive combat intervals (gaps in boss damage) in seconds relative to fight start */
+  inactiveCombatIntervals: Array<{ start: number; end: number }>;
 }
 
 export interface CriticalDamageCalculationResult {
@@ -60,11 +68,27 @@ export function calculateCriticalDamageData(
   data: CriticalDamageCalculationTask,
   onProgress?: OnProgressCallback,
 ): CriticalDamageCalculationResult {
-  const { fight, players, combatantInfoEvents, friendlyBuffsLookup, debuffsLookup } = data;
+  const {
+    fight,
+    players,
+    combatantInfoEvents,
+    friendlyBuffsLookup,
+    debuffsLookup,
+    damageEvents,
+    selectedTargetIds,
+  } = data;
 
   // BuffLookupData is now a POJO, no deserialization needed
   const deserializedFriendlyBuffsLookup = friendlyBuffsLookup;
   const deserializedDebuffsLookup = debuffsLookup;
+
+  // Calculate active combat time based on when bosses are taking damage
+  const activeCombatTimeResult = calculateActiveCombatTime(
+    damageEvents,
+    fight.startTime,
+    fight.endTime,
+    selectedTargetIds && selectedTargetIds.length > 0 ? selectedTargetIds : undefined,
+  );
 
   // Report initial progress
   onProgress?.(0);
@@ -163,12 +187,67 @@ export function calculateCriticalDamageData(
   // Build the final result record
   const playerDataRecord: Record<number, PlayerCriticalDamageDataExtended> = {};
 
+  // Calculate inactive intervals (gaps between active periods) in seconds relative to fight start
+  const inactiveCombatIntervals: Array<{ start: number; end: number }> = [];
+  const activeIntervals = activeCombatTimeResult.activeCombatIntervals;
+
+  if (activeIntervals.length === 0) {
+    // If no active intervals, the entire fight is inactive
+    inactiveCombatIntervals.push({
+      start: 0,
+      end: fightDurationSeconds,
+    });
+  } else {
+    // Add inactive period before first active period
+    if (activeIntervals[0].start > fightStart) {
+      inactiveCombatIntervals.push({
+        start: 0,
+        end: (activeIntervals[0].start - fightStart) / 1000,
+      });
+    }
+
+    // Add inactive periods between active periods
+    for (let i = 0; i < activeIntervals.length - 1; i++) {
+      const gapStart = (activeIntervals[i].end - fightStart) / 1000;
+      const gapEnd = (activeIntervals[i + 1].start - fightStart) / 1000;
+      if (gapEnd > gapStart) {
+        inactiveCombatIntervals.push({
+          start: gapStart,
+          end: gapEnd,
+        });
+      }
+    }
+
+    // Add inactive period after last active period
+    const lastActiveEnd = activeIntervals[activeIntervals.length - 1].end;
+    if (lastActiveEnd < fightEnd) {
+      inactiveCombatIntervals.push({
+        start: (lastActiveEnd - fightStart) / 1000,
+        end: fightDurationSeconds,
+      });
+    }
+  }
+
   playersData.forEach((playerData) => {
-    const dataPointCount = playerData.dataPoints.length;
-    const effectiveCriticalDamage =
-      dataPointCount > 0 ? playerData.totalCriticalDamage / dataPointCount : 50;
+    // Filter data points to only include those during active combat
+    const activeDataPoints = filterDataPointsByActiveCombat(
+      playerData.dataPoints,
+      activeCombatTimeResult.activeCombatIntervals,
+    );
+
+    // Calculate time at cap based on active combat periods only
+    const timeAtCapCount = activeDataPoints.filter((point) => point.criticalDamage >= 125).length;
     const timeAtCapPercentage =
-      dataPointCount > 0 ? (playerData.timeAtCapCount / dataPointCount) * 100 : 0;
+      activeDataPoints.length > 0 ? (timeAtCapCount / activeDataPoints.length) * 100 : 0;
+
+    // Calculate effective critical damage based on active combat time only
+    const effectiveCriticalDamage =
+      activeDataPoints.length > 0
+        ? activeDataPoints.reduce((sum, point) => sum + point.criticalDamage, 0) /
+          activeDataPoints.length
+        : playerData.dataPoints.length > 0
+          ? playerData.totalCriticalDamage / playerData.dataPoints.length
+          : 50;
 
     playerDataRecord[playerData.player.id] = {
       playerId: playerData.player.id,
@@ -180,6 +259,7 @@ export function calculateCriticalDamageData(
       criticalDamageAlerts: [], // TODO: Implement critical damage alerts if needed
       criticalDamageSources: playerData.allSources,
       staticCriticalDamage: playerData.staticCriticalDamage,
+      inactiveCombatIntervals,
     };
   });
 

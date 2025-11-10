@@ -12,6 +12,7 @@ import {
   selectWorkerTaskProgress,
 } from '../../store/worker_results/selectors';
 import { useCombatantInfoRecord } from '../events/useCombatantInfoRecord';
+import { useDamageEvents } from '../events/useDamageEvents';
 import { useCurrentFight } from '../useCurrentFight';
 import { usePlayerData } from '../usePlayerData';
 import { useSelectedTargetIds } from '../useSelectedTargetIds';
@@ -33,6 +34,7 @@ export function usePenetrationDataTask(): {
   const { combatantInfoRecord, isCombatantInfoEventsLoading } = useCombatantInfoRecord();
   const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask();
   const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const selectedTargetIds = useSelectedTargetIds();
 
   // Clear any existing result when dependencies change to force fresh calculation
@@ -45,6 +47,7 @@ export function usePenetrationDataTask(): {
     combatantInfoRecord,
     buffLookupData,
     debuffLookupData,
+    damageEvents,
     selectedTargetIds,
   ]);
 
@@ -61,7 +64,9 @@ export function usePenetrationDataTask(): {
       !isBuffLookupLoading &&
       buffLookupData !== null &&
       !isDebuffLookupLoading &&
-      debuffLookupData !== null;
+      debuffLookupData !== null &&
+      !isDamageEventsLoading &&
+      damageEvents.length > 0;
 
     if (allDependenciesReady) {
       dispatch(
@@ -71,6 +76,7 @@ export function usePenetrationDataTask(): {
           combatantInfoEvents: combatantInfoRecord,
           friendlyBuffsLookup: buffLookupData,
           debuffsLookup: debuffLookupData,
+          damageEvents: damageEvents,
           selectedTargetIds: Array.from(selectedTargetIds),
         }),
       );
@@ -84,6 +90,8 @@ export function usePenetrationDataTask(): {
     isCombatantInfoEventsLoading,
     buffLookupData,
     debuffLookupData,
+    damageEvents,
+    isDamageEventsLoading,
     selectedTargetIds,
     isDebuffLookupLoading,
     isBuffLookupLoading,
