@@ -3,7 +3,6 @@
  * Allows selection and management of skills for front and back bars
  */
 
-import React from 'react';
 import {
   Box,
   Grid,
@@ -17,10 +16,13 @@ import {
   Chip,
   Divider,
 } from '@mui/material';
+import React from 'react';
 import { useDispatch } from 'react-redux';
-import { SkillsConfig } from '../types/loadout.types';
-import { updateSkills } from '../store/loadoutSlice';
+
 import { SKILL_LINES_REGISTRY } from '@/utils/skillLinesRegistry';
+
+import { updateSkills } from '../store/loadoutSlice';
+import { SkillsConfig } from '../types/loadout.types';
 
 interface SkillSelectorProps {
   skills: SkillsConfig;

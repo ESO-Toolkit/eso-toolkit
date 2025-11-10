@@ -3,7 +3,6 @@
  * Displays a list of all setups for the current trial/page
  */
 
-import React from 'react';
 import {
   List,
   ListItem,
@@ -14,6 +13,8 @@ import {
   Box,
   Paper,
 } from '@mui/material';
+import React from 'react';
+
 import { LoadoutSetup } from '../types/loadout.types';
 
 interface SetupListProps {

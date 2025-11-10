@@ -3,7 +3,7 @@
  * Allows exporting loadout data to JSON or Wizard's Wardrobe format
  */
 
-import React, { useState } from 'react';
+import { Download, ContentCopy } from '@mui/icons-material';
 import {
   Dialog,
   DialogTitle,
@@ -20,10 +20,11 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Download, ContentCopy } from '@mui/icons-material';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { selectCurrentTrial, selectCurrentSetups } from '../store/selectors';
+
 import { TRIALS } from '../data/trialConfigs';
+import { selectCurrentTrial, selectCurrentSetups } from '../store/selectors';
 import { WizardWardrobeExport } from '../types/loadout.types';
 
 interface ExportDialogProps {

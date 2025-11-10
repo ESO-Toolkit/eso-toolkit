@@ -23,6 +23,8 @@ import storage from 'redux-persist/lib/storage';
 import type { EsoLogsClient } from '@/esologsClient';
 
 import dashboardReducer from './dashboard/dashboardSlice';
+import loadoutReducer from '../features/loadout-manager/store/loadoutSlice';
+
 import { eventsReducer } from './events_data';
 import masterDataReducer from './master_data/masterDataSlice';
 import parseAnalysisReducer from './parse_analysis/parseAnalysisSlice';
@@ -31,7 +33,6 @@ import reportReducer from './report/reportSlice';
 import uiReducer, { UIState } from './ui/uiSlice';
 import userReportsReducer from './user_reports';
 import { workerResultsReducer } from './worker_results';
-import loadoutReducer from '../features/loadout-manager/store/loadoutSlice';
 
 // Create history
 export const history = createBrowserHistory();

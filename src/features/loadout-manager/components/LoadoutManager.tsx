@@ -3,7 +3,7 @@
  * Top-level container for managing trial/dungeon loadouts
  */
 
-import React, { useEffect, useState } from 'react';
+import { FileDownload } from '@mui/icons-material';
 import {
   Box,
   Container,
@@ -19,9 +19,12 @@ import {
   Stack,
   Divider,
 } from '@mui/material';
-import { FileDownload } from '@mui/icons-material';
+import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+
 import { RootState } from '@/store/storeWithHistory';
+
+import { TRIALS, generateSetupStructure } from '../data/trialConfigs';
 import {
   setCurrentTrial,
   setMode,
@@ -32,10 +35,10 @@ import {
   selectMode,
   selectCurrentSetups,
 } from '../store/selectors';
-import { TRIALS, generateSetupStructure } from '../data/trialConfigs';
-import { SetupList } from './SetupList';
-import { SetupEditor } from './SetupEditor';
+
 import { ExportDialog } from './ExportDialog';
+import { SetupEditor } from './SetupEditor';
+import { SetupList } from './SetupList';
 
 export const LoadoutManager: React.FC = () => {
   const dispatch = useDispatch();

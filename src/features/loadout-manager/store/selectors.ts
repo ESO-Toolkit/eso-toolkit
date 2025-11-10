@@ -3,6 +3,7 @@
  */
 
 import { RootState } from '@/store/storeWithHistory';
+
 import { LoadoutSetup } from '../types/loadout.types';
 
 /**

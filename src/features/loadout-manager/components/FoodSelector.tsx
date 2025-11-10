@@ -3,7 +3,7 @@
  * Allows selection of food/drink buffs for the loadout
  */
 
-import React, { useState } from 'react';
+import { Clear, Restaurant } from '@mui/icons-material';
 import {
   Box,
   Paper,
@@ -18,10 +18,11 @@ import {
   IconButton,
   Alert,
 } from '@mui/material';
-import { Clear, Restaurant } from '@mui/icons-material';
+import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { FoodConfig } from '../types/loadout.types';
+
 import { updateFood } from '../store/loadoutSlice';
+import { FoodConfig } from '../types/loadout.types';
 
 interface FoodSelectorProps {
   food: FoodConfig;
@@ -130,7 +131,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
   };
 
   const filteredItems = ALL_CONSUMABLES.filter((item) =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const currentItem = getCurrentItem();

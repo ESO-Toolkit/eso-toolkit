@@ -3,7 +3,7 @@
  * Placeholder for CP selection - full implementation coming soon
  */
 
-import React from 'react';
+import { Construction } from '@mui/icons-material';
 import {
   Box,
   Paper,
@@ -15,7 +15,8 @@ import {
   Chip,
   Alert,
 } from '@mui/material';
-import { Construction } from '@mui/icons-material';
+import React from 'react';
+
 import { ChampionPointsConfig } from '../types/loadout.types';
 
 interface ChampionPointSelectorProps {

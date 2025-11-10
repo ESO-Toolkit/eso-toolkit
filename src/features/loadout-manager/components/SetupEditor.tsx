@@ -3,7 +3,13 @@
  * Main editor for a single setup with tabs for different sections
  */
 
-import React, { useState } from 'react';
+import {
+  ContentCopy,
+  ContentPaste,
+  Delete,
+  Clear,
+  FileCopy,
+} from '@mui/icons-material';
 import {
   Box,
   Paper,
@@ -16,15 +22,9 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import {
-  ContentCopy,
-  ContentPaste,
-  Delete,
-  Clear,
-  FileCopy,
-} from '@mui/icons-material';
+import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { LoadoutSetup, ClipboardSetup } from '../types/loadout.types';
+
 import {
   duplicateSetup,
   deleteSetup,
@@ -34,9 +34,11 @@ import {
   clearGear,
   replaceSetup,
 } from '../store/loadoutSlice';
-import { SkillSelector } from './SkillSelector';
+import { LoadoutSetup, ClipboardSetup } from '../types/loadout.types';
+
 import { ChampionPointSelector } from './ChampionPointSelector';
 import { FoodSelector } from './FoodSelector';
+import { SkillSelector } from './SkillSelector';
 
 interface SetupEditorProps {
   setup: LoadoutSetup;
@@ -161,7 +163,7 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
 
       showSnackbar(
         `Pasted setup from ${clipboardData.sourceBossName || 'unknown source'}`,
-        'success'
+        'success',
       );
     } catch (error) {
       console.error('Failed to paste:', error);
