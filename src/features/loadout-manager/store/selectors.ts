@@ -23,19 +23,30 @@ export const selectCurrentPage = (state: RootState): number => state.loadout.cur
 export const selectMode = (state: RootState): 'basic' | 'advanced' => state.loadout.mode;
 
 /**
- * Get all pages for a specific trial
+ * Get the current character ID
  */
-export const selectTrialPages = (state: RootState, trialId: string) =>
-  state.loadout.pages[trialId] || [];
+export const selectCurrentCharacter = (state: RootState): string | null =>
+  state.loadout.currentCharacter;
 
 /**
- * Get the current page for the current trial
+ * Get all pages for a specific trial (for the current character)
+ */
+export const selectTrialPages = (state: RootState, trialId: string) => {
+  const characterId = state.loadout.currentCharacter;
+  if (!characterId) return [];
+  return state.loadout.pages[characterId]?.[trialId] || [];
+};
+
+/**
+ * Get the current page for the current trial (for the current character)
  */
 export const selectCurrentTrialPage = (state: RootState) => {
   const trialId = state.loadout.currentTrial;
-  if (!trialId) return null;
+  const characterId = state.loadout.currentCharacter;
+  
+  if (!trialId || !characterId) return null;
 
-  const pages = state.loadout.pages[trialId];
+  const pages = state.loadout.pages[characterId]?.[trialId];
   if (!pages) return null;
 
   return pages[state.loadout.currentPage] || null;
@@ -50,7 +61,7 @@ export const selectCurrentSetups = (state: RootState): LoadoutSetup[] => {
 };
 
 /**
- * Get a specific setup
+ * Get a specific setup (for the current character)
  */
 export const selectSetup = (
   state: RootState,
@@ -58,7 +69,9 @@ export const selectSetup = (
   pageIndex: number,
   setupIndex: number,
 ): LoadoutSetup | null => {
-  return state.loadout.pages[trialId]?.[pageIndex]?.setups[setupIndex] || null;
+  const characterId = state.loadout.currentCharacter;
+  if (!characterId) return null;
+  return state.loadout.pages[characterId]?.[trialId]?.[pageIndex]?.setups[setupIndex] || null;
 };
 
 /**

@@ -21,7 +21,9 @@ import {
   Chip,
   Snackbar,
   Alert,
+  ChipProps,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 
@@ -35,6 +37,13 @@ import {
   replaceSetup,
 } from '../store/loadoutSlice';
 import { LoadoutSetup, ClipboardSetup } from '../types/loadout.types';
+import {
+  getSetupConditionSummary,
+  getSetupProgressSections,
+  formatProgressSection,
+  getSetupTags,
+  SetupProgressSection,
+} from '../utils/setupDisplay';
 
 import { ChampionPointSelector } from './ChampionPointSelector';
 import { FoodSelector } from './FoodSelector';
@@ -45,6 +54,7 @@ interface SetupEditorProps {
   setupIndex: number;
   trialId: string;
   pageIndex: number;
+  variant?: 'page' | 'drawer';
 }
 
 interface TabPanelProps {
@@ -64,7 +74,9 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`setup-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+      {value === index && (
+        <Box sx={{ py: { xs: 1.5, md: 2 }, px: { xs: 1.5, md: 2 } }}>{children}</Box>
+      )}
     </div>
   );
 }
@@ -74,8 +86,10 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
   setupIndex,
   trialId,
   pageIndex,
+  variant = 'page',
 }) => {
   const dispatch = useDispatch();
+  const isDrawer = variant === 'drawer';
   const [currentTab, setCurrentTab] = React.useState(0);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -118,17 +132,23 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
   };
 
   const validateClipboardSetup = (data: any): data is ClipboardSetup => {
-    return (
-      data &&
-      typeof data === 'object' &&
-      data.version === 1 &&
-      data.setup &&
-      typeof data.setup === 'object' &&
-      data.setup.skills &&
-      data.setup.championPoints &&
-      data.setup.food &&
-      data.setup.gear
-    );
+    if (!data || typeof data !== 'object') {
+      return false;
+    }
+
+    const setupData = data.setup;
+    if (!setupData || typeof setupData !== 'object') {
+      return false;
+    }
+
+    const hasSkills = typeof setupData.skills === 'object' && setupData.skills !== null;
+    const hasCp =
+      (typeof setupData.cp === 'object' && setupData.cp !== null) ||
+      (typeof setupData.championPoints === 'object' && setupData.championPoints !== null);
+    const hasFood = typeof setupData.food === 'object' && setupData.food !== null;
+    const hasGear = typeof setupData.gear === 'object' && setupData.gear !== null;
+
+    return data.version === 1 && hasSkills && hasCp && hasFood && hasGear;
   };
 
   const handlePaste = async () => {
@@ -154,12 +174,23 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
       }
 
       // Import the setup data (replace current setup)
-      dispatch(replaceSetup({
-        trialId,
-        pageIndex,
-        setupIndex,
-        setupData: clipboardData.setup,
-      }));
+      const { championPoints, ...restSetup } = clipboardData.setup as ClipboardSetup['setup'] & {
+        championPoints?: ClipboardSetup['setup']['cp'];
+      };
+
+      const setupToImport: LoadoutSetup = {
+        ...restSetup,
+        cp: restSetup.cp ?? championPoints ?? {},
+      };
+
+      dispatch(
+        replaceSetup({
+          trialId,
+          pageIndex,
+          setupIndex,
+          setupData: setupToImport,
+        }),
+      );
 
       showSnackbar(
         `Pasted setup from ${clipboardData.sourceBossName || 'unknown source'}`,
@@ -204,68 +235,178 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
     }
   };
 
-  const isBoss = setup.condition.boss && setup.condition.boss !== 'Trash';
+  const tags = getSetupTags(setup);
+  const conditionSummary = getSetupConditionSummary(setup);
+  const progressSections = getSetupProgressSections(setup);
+
+  const getProgressChipColor = (section: SetupProgressSection): ChipProps['color'] => {
+    switch (section.type) {
+      case 'skills':
+        return 'primary';
+      case 'cp':
+        return 'secondary';
+      case 'food':
+        return 'success';
+      case 'gear':
+        return 'info';
+      default:
+        return 'default';
+    }
+  };
 
   return (
-    <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Paper
+      variant={isDrawer ? 'elevation' : 'outlined'}
+      elevation={isDrawer ? 0 : undefined}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        flex: 1,
+        borderRadius: isDrawer ? 0 : 3,
+        height: isDrawer ? '100%' : 'auto',
+        boxShadow: isDrawer ? 'none' : undefined,
+      }}
+    >
       {/* Header */}
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Box>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography variant="h6">{setup.name}</Typography>
-              {isBoss && <Chip label="Boss" size="small" color="error" />}
-              {setup.condition.trash !== undefined && (
-                <Chip label="Trash" size="small" />
+      <Box
+        sx={(theme) => ({
+          px: isDrawer ? { xs: 1.5, md: 2 } : { xs: 1.75, md: 2 },
+          py: isDrawer ? { xs: 1.5, md: 2 } : { xs: 1.75, md: 2.25 },
+          borderBottom: 1,
+          borderColor: 'divider',
+          backgroundColor:
+            theme.palette.mode === 'dark'
+              ? alpha(theme.palette.primary.main, 0.08)
+              : alpha(theme.palette.primary.light, 0.16),
+        })}
+      >
+        <Stack spacing={2.25} sx={{ minWidth: 0 }}>
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={{ xs: 1.5, md: 2 }}
+            alignItems={{ xs: 'flex-start', md: 'center' }}
+            justifyContent="space-between"
+            useFlexGap
+          >
+            <Stack spacing={0.5} sx={{ minWidth: 0 }}>
+              <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1 }}>
+                Active Setup
+              </Typography>
+              <Typography
+                variant={isDrawer ? 'h5' : 'h4'}
+                sx={{
+                  fontWeight: 600,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {setup.name}
+              </Typography>
+              {conditionSummary && (
+                <Typography variant="body2" color="text.secondary">
+                  {conditionSummary}
+                </Typography>
               )}
             </Stack>
-            {setup.disabled && (
-              <Typography variant="caption" color="error">
-                Disabled
-              </Typography>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                flexWrap: 'wrap',
+                rowGap: 1,
+                justifyContent: { xs: 'flex-start', md: 'flex-end' },
+              }}
+              useFlexGap
+            >
+              <Button
+                size="small"
+                startIcon={<ContentCopy />}
+                onClick={handleCopy}
+                variant="contained"
+                color="primary"
+              >
+                Copy
+              </Button>
+              <Button
+                size="small"
+                startIcon={<ContentPaste />}
+                onClick={handlePaste}
+                variant="contained"
+                color="secondary"
+              >
+                Paste
+              </Button>
+              <Button
+                size="small"
+                startIcon={<FileCopy />}
+                onClick={handleDuplicate}
+                variant="outlined"
+              >
+                Duplicate
+              </Button>
+              <Button
+                size="small"
+                startIcon={<Delete />}
+                onClick={handleDelete}
+                color="error"
+                variant="outlined"
+              >
+                Delete
+              </Button>
+            </Stack>
+          </Stack>
+
+          {tags.length > 0 && (
+            <Stack
+              direction="row"
+              spacing={0.75}
+              sx={{ flexWrap: 'wrap', rowGap: 0.75 }}
+              useFlexGap
+            >
+              {tags.map((tag, index) => (
+                <Chip
+                  key={`${tag.label}-${index}`}
+                  label={tag.label}
+                  size="small"
+                  color={tag.color}
+                  variant={tag.variant ?? 'filled'}
+                />
+              ))}
+            </Stack>
+          )}
+
+          <Stack
+            direction="row"
+            spacing={0.75}
+            sx={{ flexWrap: 'wrap', rowGap: 0.75 }}
+            useFlexGap
+          >
+            {progressSections.length === 0 ? (
+              <Chip label="Empty setup" size="small" variant="outlined" />
+            ) : (
+              progressSections.map((section, index) => (
+                <Chip
+                  key={`${section.type}-${index}`}
+                  label={formatProgressSection(section)}
+                  size="small"
+                  color={getProgressChipColor(section)}
+                  variant="outlined"
+                />
+              ))
             )}
-          </Box>
-          <Stack direction="row" spacing={1}>
-            <Button
-              size="small"
-              startIcon={<ContentCopy />}
-              onClick={handleCopy}
-              variant="outlined"
-            >
-              Copy
-            </Button>
-            <Button
-              size="small"
-              startIcon={<ContentPaste />}
-              onClick={handlePaste}
-              variant="outlined"
-            >
-              Paste
-            </Button>
-            <Button
-              size="small"
-              startIcon={<FileCopy />}
-              onClick={handleDuplicate}
-              variant="outlined"
-            >
-              Duplicate
-            </Button>
-            <Button
-              size="small"
-              startIcon={<Delete />}
-              onClick={handleDelete}
-              color="error"
-              variant="outlined"
-            >
-              Delete
-            </Button>
           </Stack>
         </Stack>
       </Box>
 
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={currentTab} onChange={handleTabChange}>
+        <Tabs
+          value={currentTab}
+          onChange={handleTabChange}
+          variant="fullWidth"
+          sx={{ px: { xs: isDrawer ? 0.5 : 0.75, md: isDrawer ? 1.25 : 1.75 } }}
+        >
           <Tab label="Skills" />
           <Tab label="Champion Points" />
           <Tab label="Food & Drink" />
@@ -274,16 +415,25 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
       </Box>
 
       {/* Tab Panels */}
-      <Box sx={{ flex: 1, overflow: 'auto' }}>
+      <Box sx={{ flex: 1 }}>
         <TabPanel value={currentTab} index={0}>
-          <Stack spacing={2}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle1">Skills Configuration</Typography>
+          <Stack spacing={1.75} sx={{ minWidth: 0 }}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ flexWrap: 'wrap', rowGap: 1 }}
+              useFlexGap
+            >
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Skills Configuration
+              </Typography>
               <Button
                 size="small"
                 startIcon={<Clear />}
                 onClick={handleClearSkills}
                 color="warning"
+                variant="outlined"
               >
                 Clear All Skills
               </Button>
@@ -298,14 +448,23 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
         </TabPanel>
 
         <TabPanel value={currentTab} index={1}>
-          <Stack spacing={2}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle1">Champion Points</Typography>
+          <Stack spacing={1.75}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ flexWrap: 'wrap', rowGap: 1 }}
+              useFlexGap
+            >
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Champion Points
+              </Typography>
               <Button
                 size="small"
                 startIcon={<Clear />}
                 onClick={handleClearCP}
                 color="warning"
+                variant="outlined"
               >
                 Clear All CP
               </Button>
@@ -320,14 +479,23 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
         </TabPanel>
 
         <TabPanel value={currentTab} index={2}>
-          <Stack spacing={2}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle1">Food & Drink</Typography>
+          <Stack spacing={1.75}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ flexWrap: 'wrap', rowGap: 1 }}
+              useFlexGap
+            >
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Food & Drink
+              </Typography>
               <Button
                 size="small"
                 startIcon={<Clear />}
                 onClick={handleClearFood}
                 color="warning"
+                variant="outlined"
               >
                 Clear Food
               </Button>
@@ -342,14 +510,23 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
         </TabPanel>
 
         <TabPanel value={currentTab} index={3}>
-          <Stack spacing={2}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle1">Gear Configuration</Typography>
+          <Stack spacing={1.75}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ flexWrap: 'wrap', rowGap: 1 }}
+              useFlexGap
+            >
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Gear Configuration
+              </Typography>
               <Button
                 size="small"
                 startIcon={<Clear />}
                 onClick={handleClearGear}
                 color="warning"
+                variant="outlined"
               >
                 Clear All Gear
               </Button>

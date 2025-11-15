@@ -1,0 +1,111 @@
+{
+  "totalChecked": 423,
+  "mismatches": [],
+  "perfect": [
+    {
+      "class": "necromancer",
+      "skillLine": "boneTyrant",
+      "count": 21
+    },
+    {
+      "class": "necromancer",
+      "skillLine": "graveLord",
+      "count": 22
+    },
+    {
+      "class": "necromancer",
+      "skillLine": "livingDeath",
+      "count": 22
+    },
+    {
+      "class": "arcanist",
+      "skillLine": "curativeRuneforms",
+      "count": 15
+    },
+    {
+      "class": "arcanist",
+      "skillLine": "heraldOfTheTome",
+      "count": 13
+    },
+    {
+      "class": "arcanist",
+      "skillLine": "soldierOfApocrypha",
+      "count": 13
+    },
+    {
+      "class": "templar",
+      "skillLine": "aedricSpear",
+      "count": 22
+    },
+    {
+      "class": "templar",
+      "skillLine": "dawnsWrath",
+      "count": 21
+    },
+    {
+      "class": "templar",
+      "skillLine": "restoringLight",
+      "count": 22
+    },
+    {
+      "class": "dragonknight",
+      "skillLine": "ardentFlame",
+      "count": 22
+    },
+    {
+      "class": "dragonknight",
+      "skillLine": "draconicPower",
+      "count": 22
+    },
+    {
+      "class": "dragonknight",
+      "skillLine": "earthenHeart",
+      "count": 21
+    },
+    {
+      "class": "sorcerer",
+      "skillLine": "daedricSummoning",
+      "count": 22
+    },
+    {
+      "class": "sorcerer",
+      "skillLine": "darkMagic",
+      "count": 22
+    },
+    {
+      "class": "sorcerer",
+      "skillLine": "stormCalling",
+      "count": 20
+    },
+    {
+      "class": "nightblade",
+      "skillLine": "assassination",
+      "count": 19
+    },
+    {
+      "class": "nightblade",
+      "skillLine": "shadow",
+      "count": 22
+    },
+    {
+      "class": "nightblade",
+      "skillLine": "siphoning",
+      "count": 22
+    },
+    {
+      "class": "warden",
+      "skillLine": "animalCompanions",
+      "count": 21
+    },
+    {
+      "class": "warden",
+      "skillLine": "greenBalance",
+      "count": 19
+    },
+    {
+      "class": "warden",
+      "skillLine": "wintersEmbrace",
+      "count": 20
+    }
+  ]
+}

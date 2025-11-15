@@ -1,0 +1,203 @@
+/**
+ * Dark Magic — Sorcerer Skill Line
+ * Source: https://eso-hub.com/en/skills/sorcerer/dark-magic
+ * Regenerated: 2025-11-14T20:33:08.843Z
+ */
+
+import { SkillLineData } from '@/data/types/skill-line-types';
+import { ClassSkillId } from '@/features/loadout-manager/data/classSkillIds';
+
+export const darkMagic: SkillLineData = {
+  id: 'class.dark-magic',
+  name: 'Dark Magic',
+  class: 'Sorcerer',
+  category: 'class',
+  icon: 'ability_sorcerer_monsoon',
+  sourceUrl: 'https://eso-hub.com/en/skills/sorcerer/dark-magic',
+  skills: [
+    {
+      id: ClassSkillId.SORCERER_NEGATE_MAGIC,
+      name: 'Negate Magic',
+      type: 'ultimate',
+      icon: 'ability_sorcerer_monsoon',
+      description:
+        'Create a globe of magic suppression, removing and preventing all enemy AoE abilities.',
+      isUltimate: true,
+      baseSkillId: ClassSkillId.SORCERER_NEGATE_MAGIC,
+    },
+    {
+      id: ClassSkillId.SORCERER_ABSORPTION_FIELD,
+      name: 'Absorption Field',
+      type: 'ultimate',
+      icon: 'ability_sorcerer_rushing_winds',
+      description: 'The globe also heals you and your allies.',
+      isUltimate: true,
+      baseSkillId: ClassSkillId.SORCERER_NEGATE_MAGIC,
+    },
+    {
+      id: ClassSkillId.SORCERER_SUPPRESSION_FIELD,
+      name: 'Suppression Field',
+      type: 'ultimate',
+      icon: 'ability_sorcerer_crushing_monsoon',
+      description: 'The globe also damages enemies.',
+      isUltimate: true,
+      baseSkillId: ClassSkillId.SORCERER_NEGATE_MAGIC,
+    },
+    {
+      id: ClassSkillId.SORCERER_CRYSTAL_SHARD,
+      name: 'Crystal Shard',
+      type: 'active',
+      icon: 'ability_sorcerer_thunderclap',
+      description: 'Conjure dark crystals to bombard an enemy, dealing Magic Damage.',
+      baseSkillId: ClassSkillId.SORCERER_CRYSTAL_SHARD,
+    },
+    {
+      id: ClassSkillId.SORCERER_CRYSTAL_FRAGMENTS,
+      name: 'Crystal Fragments',
+      type: 'active',
+      icon: 'ability_sorcerer_thunderstomp',
+      description: '33% chance for instant cast at half cost when casting non-Ultimate abilities.',
+      baseSkillId: ClassSkillId.SORCERER_CRYSTAL_SHARD,
+    },
+    {
+      id: ClassSkillId.SORCERER_CRYSTAL_WEAPON,
+      name: 'Crystal Weapon',
+      type: 'active',
+      icon: 'ability_sorcerer_crystalweapon',
+      description: 'Encase weapon in crystals for enhanced Light/Heavy Attacks.',
+      baseSkillId: ClassSkillId.SORCERER_CRYSTAL_SHARD,
+    },
+    {
+      id: ClassSkillId.SORCERER_ENCASE,
+      name: 'Encase',
+      type: 'active',
+      icon: 'ability_mage_065',
+      description: 'Call forth Daedric shards to immobilize enemies in front of you.',
+      baseSkillId: ClassSkillId.SORCERER_ENCASE,
+    },
+    {
+      id: ClassSkillId.SORCERER_SHATTERING_SPINES,
+      name: 'Shattering Spines',
+      type: 'active',
+      icon: 'ability_sorcerer_twister',
+      description: 'Shards shatter when effect ends, dealing damage to encased enemies.',
+      baseSkillId: ClassSkillId.SORCERER_ENCASE,
+    },
+    {
+      id: ClassSkillId.SORCERER_VIBRANT_SHROUD,
+      name: 'Vibrant Shroud',
+      type: 'active',
+      icon: 'ability_sorcerer_crushing_winds',
+      description: 'Heals allies and grants Minor Vitality instead of immobilizing.',
+      baseSkillId: ClassSkillId.SORCERER_ENCASE,
+    },
+    {
+      id: ClassSkillId.SORCERER_RUNE_PRISON,
+      name: 'Rune Prison',
+      type: 'active',
+      icon: 'ability_sorcerer_dark_fog',
+      description: 'Imprison an enemy in a sphere of dark magic with delayed stun.',
+      baseSkillId: ClassSkillId.SORCERER_RUNE_PRISON,
+    },
+    {
+      id: ClassSkillId.SORCERER_DEFENSIVE_RUNE,
+      name: 'Defensive Rune',
+      type: 'active',
+      icon: 'ability_sorcerer_weakening_fog',
+      description: 'Place protective rune on yourself that triggers when attacked.',
+      baseSkillId: ClassSkillId.SORCERER_RUNE_PRISON,
+    },
+    {
+      id: ClassSkillId.SORCERER_RUNE_CAGE,
+      name: 'Rune Cage',
+      type: 'active',
+      icon: 'ability_sorcerer_dark_haze',
+      description: 'Deals damage if the stun completes successfully.',
+      baseSkillId: ClassSkillId.SORCERER_RUNE_PRISON,
+    },
+    {
+      id: ClassSkillId.SORCERER_DARK_EXCHANGE,
+      name: 'Dark Exchange',
+      type: 'active',
+      icon: 'ability_sorcerer_dark_exchange',
+      description: 'Bargain with darkness to restore Health and Magicka.',
+      baseSkillId: ClassSkillId.SORCERER_DARK_EXCHANGE,
+    },
+    {
+      id: ClassSkillId.SORCERER_DARK_CONVERSION,
+      name: 'Dark Conversion',
+      type: 'active',
+      icon: 'ability_sorcerer_dark_conversion',
+      description: 'Enhanced Health and Magicka restoration.',
+      baseSkillId: ClassSkillId.SORCERER_DARK_EXCHANGE,
+    },
+    {
+      id: ClassSkillId.SORCERER_DARK_DEAL,
+      name: 'Dark Deal',
+      type: 'active',
+      icon: 'ability_sorcerer_dark_deal',
+      description: 'Converts to Magicka cost, restores Stamina instead.',
+      baseSkillId: ClassSkillId.SORCERER_DARK_EXCHANGE,
+    },
+    {
+      id: ClassSkillId.SORCERER_DAEDRIC_MINES,
+      name: 'Daedric Mines',
+      type: 'active',
+      icon: 'ability_sorcerer_daedric_mines',
+      description: 'Place 3 volatile mines around you that arm after delay.',
+      baseSkillId: ClassSkillId.SORCERER_DAEDRIC_MINES,
+    },
+    {
+      id: ClassSkillId.SORCERER_DAEDRIC_REFUGE,
+      name: 'Daedric Refuge',
+      type: 'active',
+      icon: 'ability_sorcerer_daedric_minefield',
+      description: '5 protective wards that grant damage shields to allies.',
+      baseSkillId: ClassSkillId.SORCERER_DAEDRIC_MINES,
+    },
+    {
+      id: ClassSkillId.SORCERER_DAEDRIC_TOMB,
+      name: 'Daedric Tomb',
+      type: 'active',
+      icon: 'ability_sorcerer_daedric_tomb',
+      description: 'Place mines at target location that arm instantly.',
+      baseSkillId: ClassSkillId.SORCERER_DAEDRIC_MINES,
+    },
+    {
+      id: ClassSkillId.SORCERER_UNHOLY_KNOWLEDGE,
+      name: 'Unholy Knowledge',
+      type: 'passive',
+      icon: 'ability_sorcerer_045',
+      description:
+        'Reduces the Health, Magicka, and Stamina costs of your non Core Combat abilities by 6%.',
+      isPassive: true,
+    },
+    {
+      id: ClassSkillId.SORCERER_BLOOD_MAGIC,
+      name: 'Blood Magic',
+      type: 'passive',
+      icon: 'ability_sorcerer_026',
+      description:
+        'When you cast a Dark Magic ability with a cost, you heal for 1600 Health if you are not at full Health. If your Health is full, the higher of your Max Magicka or Stamina is increased by 10% for 10 seconds.',
+      isPassive: true,
+    },
+    {
+      id: ClassSkillId.SORCERER_PERSISTENCE,
+      name: 'Persistence',
+      type: 'passive',
+      icon: 'ability_sorcerer_054',
+      description:
+        'After blocking an attack, your next Health, Magicka, or Stamina ability costs 18% less.',
+      isPassive: true,
+    },
+    {
+      id: ClassSkillId.SORCERER_EXPLOITATION,
+      name: 'Exploitation',
+      type: 'passive',
+      icon: 'ability_sorcerer_039',
+      description:
+        'When you cast a Dark Magic ability you grant Minor Prophecy to you and your group, increasing your Spell Critical rating by 1314 for 20 seconds.',
+      isPassive: true,
+    },
+  ],
+};

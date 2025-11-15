@@ -1,4 +1,4 @@
-import { wardenData } from '../data/skillsets/warden';
+import { wardenData } from '../data/skill-lines/class/warden';
 import { PlayerDetailsWithRole } from '../store/player_data/playerDataSlice';
 import { CriticalDamageValues, KnownAbilities, KnownSetIDs } from '../types/abilities';
 import { CombatantInfoEvent } from '../types/combatlogEvents';

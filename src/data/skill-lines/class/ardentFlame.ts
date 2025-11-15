@@ -1,0 +1,203 @@
+/**
+ * Ardent Flame — Dragonknight Skill Line
+ * Source: https://eso-hub.com/en/skills/dragonknight/ardent-flame
+ * Regenerated: 2025-11-14T20:33:08.778Z
+ */
+
+import { SkillLineData } from '@/data/types/skill-line-types';
+import { ClassSkillId } from '@/features/loadout-manager/data/classSkillIds';
+
+export const ardentFlame: SkillLineData = {
+  id: 'class.ardent-flame',
+  name: 'Ardent Flame',
+  class: 'Dragonknight',
+  category: 'class',
+  icon: 'ability_dragonknight_006',
+  sourceUrl: 'https://eso-hub.com/en/skills/dragonknight/ardent-flame',
+  skills: [
+    {
+      id: ClassSkillId.DRAGONKNIGHT_DRAGONKNIGHT_STANDARD,
+      name: 'Dragonknight Standard',
+      type: 'ultimate',
+      icon: 'ability_dragonknight_006',
+      description:
+        'Call down a battle standard, dealing Flame Damage over time to enemies and reducing their healing received.',
+      isUltimate: true,
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGONKNIGHT_STANDARD,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_SHIFTING_STANDARD,
+      name: 'Shifting Standard',
+      type: 'ultimate',
+      icon: 'ability_dragonknight_006_a',
+      description: 'Duration increases. You can move the standard at will.',
+      isUltimate: true,
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGONKNIGHT_STANDARD,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_STANDARD_OF_MIGHT,
+      name: 'Standard of Might',
+      type: 'ultimate',
+      icon: 'ability_dragonknight_006_b',
+      description: 'You deal more damage and take less damage while standing in your standard.',
+      isUltimate: true,
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGONKNIGHT_STANDARD,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_FIERY_BREATH,
+      name: 'Fiery Breath',
+      type: 'active',
+      icon: 'ability_mage_065',
+      description: 'Exhale flame in a cone, dealing Flame Damage over time.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_BREATH,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_NOXIOUS_BREATH,
+      name: 'Noxious Breath',
+      type: 'active',
+      icon: 'ability_dragonknight_004_a',
+      description: 'Converts to Poison Damage, applies Major Breach.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_BREATH,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_ENGULFING_FLAMES,
+      name: 'Engulfing Flames',
+      type: 'active',
+      icon: 'ability_dragonknight_004_b',
+      description: 'Increases Flame Damage enemies take.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_BREATH,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_SEARING_STRIKE,
+      name: 'Searing Strike',
+      type: 'active',
+      icon: 'ability_dragonknight_003',
+      description: 'Burns the target, dealing Flame Damage over time.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_SEARING_STRIKE,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_VENOMOUS_CLAW,
+      name: 'Venomous Claw',
+      type: 'active',
+      icon: 'ability_dragonknight_003_a',
+      description: 'Converts to Poison Damage, increasing in power over time.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_SEARING_STRIKE,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_BURNING_EMBERS,
+      name: 'Burning Embers',
+      type: 'active',
+      icon: 'ability_dragonknight_003_b',
+      description: 'Deals strong DoT, heals you for the damage dealt when the effect ends.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_SEARING_STRIKE,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_FIERY_GRIP,
+      name: 'Fiery Grip',
+      type: 'active',
+      icon: 'ability_dragonknight_005',
+      description: 'Pull an enemy to you, dealing Flame Damage.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_GRIP,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_UNRELENTING_GRIP,
+      name: 'Unrelenting Grip',
+      type: 'active',
+      icon: 'ability_dragonknight_005_a',
+      description: 'If target cannot be pulled, the cost is refunded.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_GRIP,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_CHAINS_OF_DEVASTATION,
+      name: 'Chains of Devastation',
+      type: 'active',
+      icon: 'ability_dragonknight_005_b',
+      description: 'Grants you Empower after pulling. Pull yourself to enemy instead.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_GRIP,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_LAVA_WHIP,
+      name: 'Lava Whip',
+      type: 'active',
+      icon: 'ability_dragonknight_001',
+      description: 'Lash an enemy with fire, dealing instant Flame Damage.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_LAVA_WHIP,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_MOLTEN_WHIP,
+      name: 'Molten Whip',
+      type: 'active',
+      icon: 'ability_dragonknight_001_b',
+      description: 'Increases damage of next whip per Ardent Flame ability used.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_LAVA_WHIP,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_FLAME_LASH,
+      name: 'Flame Lash',
+      type: 'active',
+      icon: 'ability_dragonknight_001_a',
+      description: 'Can be reactivated for free when hitting Off Balance enemies, healing you.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_LAVA_WHIP,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_INFERNO,
+      name: 'Inferno',
+      type: 'active',
+      icon: 'ability_mage_065',
+      description:
+        'Summons a flaming orb around you, passively increasing Spell Critical. Can activate to deal Flame Damage to enemies.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_INFERNO,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_FLAMES_OF_OBLIVION,
+      name: 'Flames of Oblivion',
+      type: 'active',
+      icon: 'ability_dragonknight_002_a',
+      description: 'Now shoots fireballs automatically at enemies.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_INFERNO,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_CAUTERIZE,
+      name: 'Cauterize',
+      type: 'active',
+      icon: 'ability_dragonknight_002_b',
+      description: 'Shoots healing fireballs that heal you or allies instead of dealing damage.',
+      baseSkillId: ClassSkillId.DRAGONKNIGHT_INFERNO,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_COMBUSTION,
+      name: 'Combustion',
+      type: 'passive',
+      icon: 'death_recap_fire_aoe',
+      description:
+        'Increases the damage of your Burning and Poisoned status effects by 33%. When you apply Burning or Poisoned to an enemy, you restore 423 Magicka and Stamina. This effect can occur once every 3 seconds.',
+      isPassive: true,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_SEARING_HEAT,
+      name: 'Searing Heat',
+      type: 'passive',
+      icon: 'ability_dragonknight_028',
+      description:
+        'Increases the damage over time of your Fiery Breath, Searing Strike, and Dragonknight Standard abilities by 25% and the duration by 4 seconds.',
+      isPassive: true,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_WARMTH,
+      name: 'Warmth',
+      type: 'passive',
+      icon: 'ability_dragonknight_023',
+      description:
+        'When you deal direct damage with an Ardent Flame ability, your damage over time attacks deal 6% increased damage to the target, and reduce their Movement Speed by 30% for 3 seconds.',
+      isPassive: true,
+    },
+    {
+      id: ClassSkillId.DRAGONKNIGHT_WORLD_IN_RUIN,
+      name: 'World in Ruin',
+      type: 'passive',
+      icon: 'ability_dragonknight_024',
+      description: 'Increases the damage of your Flame and Poison attacks by 5%.',
+      isPassive: true,
+    },
+  ],
+};

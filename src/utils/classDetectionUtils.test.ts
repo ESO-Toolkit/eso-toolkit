@@ -1,8 +1,8 @@
 // Mock data imports - define mocks before imports
-jest.mock('../data/skillsets/arcanist', () => ({
+jest.mock('../data/skill-lines/class/arcanist', () => ({
   arcanistData: { class: 'Arcanist', skillLines: {} },
 }));
-jest.mock('../data/skillsets/dragonknight', () => ({
+jest.mock('../data/skill-lines/class/dragonknight', () => ({
   dragonknightData: {
     class: 'Dragonknight',
     skillLines: {
@@ -17,13 +17,13 @@ jest.mock('../data/skillsets/dragonknight', () => ({
     },
   },
 }));
-jest.mock('../data/skillsets/necromancer', () => ({
+jest.mock('../data/skill-lines/class/necromancer', () => ({
   necromancerData: { class: 'Necromancer', skillLines: {} },
 }));
-jest.mock('../data/skillsets/nightblade', () => ({
+jest.mock('../data/skill-lines/class/nightblade', () => ({
   nightbladeData: { class: 'Nightblade', skillLines: {} },
 }));
-jest.mock('../data/skillsets/sorcerer', () => ({
+jest.mock('../data/skill-lines/class/sorcerer', () => ({
   sorcererData: {
     class: 'Sorcerer',
     skillLines: {
@@ -47,10 +47,10 @@ jest.mock('../data/skillsets/sorcerer', () => ({
     },
   },
 }));
-jest.mock('../data/skillsets/templar', () => ({
+jest.mock('../data/skill-lines/class/templar', () => ({
   templarData: { class: 'Templar', skillLines: {} },
 }));
-jest.mock('../data/skillsets/warden', () => ({
+jest.mock('../data/skill-lines/class/warden', () => ({
   wardenData: { class: 'Warden', skillLines: {} },
 }));
 

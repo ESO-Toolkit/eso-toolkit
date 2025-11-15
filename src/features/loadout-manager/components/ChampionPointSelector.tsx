@@ -1,23 +1,26 @@
 /**
  * Champion Points Selector Component
- * Placeholder for CP selection - full implementation coming soon
+ * Presents imported champion point assignments grouped by tree.
  */
 
-import { Construction } from '@mui/icons-material';
 import {
-  Box,
   Paper,
   Typography,
-  Grid,
   Card,
   CardContent,
   Stack,
   Chip,
-  Alert,
+  Tooltip,
 } from '@mui/material';
-import React from 'react';
+import { alpha, useTheme } from '@mui/material/styles';
+import React, { useMemo } from 'react';
 
 import { ChampionPointsConfig } from '../types/loadout.types';
+import {
+  CHAMPION_POINT_ABILITIES,
+  ChampionPointAbilityId,
+  type ChampionPointAbilityMetadata,
+} from '@/types/champion-points';
 
 interface ChampionPointSelectorProps {
   championPoints: ChampionPointsConfig;
@@ -29,21 +32,87 @@ interface ChampionPointSelectorProps {
 // CP slot indices (1-12)
 const CP_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
-// CP Tree names (placeholder)
+// Human-friendly CP tree names
 const CP_TREES = {
   craft: 'Craft',
   warfare: 'Warfare',
   fitness: 'Fitness',
 };
 
+type TreeKey = keyof typeof CP_TREES;
+
+interface TreeVisualStyle {
+  cardBorder: string;
+  cardBackground: string;
+  slotBackgroundFilled: string;
+  slotBorderFilled: string;
+  slotBackgroundEmpty: string;
+  slotBorderEmpty: string;
+  chipColor: 'success' | 'info' | 'error';
+  titleColor: string;
+}
+
 export const ChampionPointSelector: React.FC<ChampionPointSelectorProps> = ({
   championPoints,
 }) => {
-  // Group slots by tree (placeholder logic - 4 slots per tree)
-  const slotsByTree = {
-    craft: CP_SLOTS.slice(0, 4),
-    warfare: CP_SLOTS.slice(4, 8),
-    fitness: CP_SLOTS.slice(8, 12),
+  const theme = useTheme();
+
+  const slotsByTree = useMemo(
+    () => ({
+      craft: CP_SLOTS.slice(0, 4),
+      warfare: CP_SLOTS.slice(4, 8),
+      fitness: CP_SLOTS.slice(8, 12),
+    }),
+    [],
+  );
+
+  const treeVisuals = useMemo<Record<TreeKey, TreeVisualStyle>>(
+    () => ({
+      craft: {
+        cardBorder: alpha(theme.palette.success.main, 0.35),
+        cardBackground: alpha(theme.palette.success.main, 0.07),
+        slotBackgroundFilled: alpha(theme.palette.success.main, 0.18),
+        slotBorderFilled: alpha(theme.palette.success.main, 0.55),
+        slotBackgroundEmpty: alpha(theme.palette.success.main, 0.08),
+        slotBorderEmpty: alpha(theme.palette.success.main, 0.25),
+        chipColor: 'success',
+        titleColor: theme.palette.success.light,
+      },
+      warfare: {
+        cardBorder: alpha(theme.palette.info.main, 0.35),
+        cardBackground: alpha(theme.palette.info.main, 0.07),
+        slotBackgroundFilled: alpha(theme.palette.info.main, 0.18),
+        slotBorderFilled: alpha(theme.palette.info.main, 0.55),
+        slotBackgroundEmpty: alpha(theme.palette.info.main, 0.08),
+        slotBorderEmpty: alpha(theme.palette.info.main, 0.25),
+        chipColor: 'info',
+        titleColor: theme.palette.info.light,
+      },
+      fitness: {
+        cardBorder: alpha(theme.palette.error.main, 0.35),
+        cardBackground: alpha(theme.palette.error.main, 0.07),
+        slotBackgroundFilled: alpha(theme.palette.error.main, 0.18),
+        slotBorderFilled: alpha(theme.palette.error.main, 0.55),
+        slotBackgroundEmpty: alpha(theme.palette.error.main, 0.08),
+        slotBorderEmpty: alpha(theme.palette.error.main, 0.25),
+        chipColor: 'error',
+        titleColor: theme.palette.error.light,
+      },
+    }),
+    [theme],
+  );
+
+  const resolveChampionPoint = (cpId?: number): ChampionPointAbilityMetadata | undefined => {
+    if (!cpId) {
+      return undefined;
+    }
+
+    const metadata = CHAMPION_POINT_ABILITIES[cpId as ChampionPointAbilityId];
+    if (metadata) {
+      return metadata;
+    }
+
+    return undefined;
   };
 
   const getSlotStatus = (slotIndex: number): 'empty' | 'filled' => {
@@ -51,27 +120,11 @@ export const ChampionPointSelector: React.FC<ChampionPointSelectorProps> = ({
   };
 
   const getFilledCount = (): number => {
-    return Object.keys(championPoints).length;
+    return Object.values(championPoints).filter(Boolean).length;
   };
 
   return (
     <Stack spacing={3}>
-      {/* Placeholder Alert */}
-      <Alert
-        severity="info"
-        icon={<Construction />}
-        sx={{ bgcolor: 'warning.light', color: 'warning.contrastText' }}
-      >
-        <Typography variant="subtitle2" fontWeight="bold">
-          🚧 Champion Points - Coming Soon
-        </Typography>
-        <Typography variant="body2" sx={{ mt: 0.5 }}>
-          This is a placeholder for the Champion Points selection system. Full implementation
-          with CP trees, star selection, and slottable management will be added in the next phase.
-        </Typography>
-      </Alert>
-
-      {/* Progress Summary */}
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="subtitle1">Champion Points Selected</Typography>
@@ -82,43 +135,22 @@ export const ChampionPointSelector: React.FC<ChampionPointSelectorProps> = ({
         </Stack>
       </Paper>
 
-      {/* CP Trees Grid */}
-      <Grid container spacing={2}>
-        {Object.entries(slotsByTree).map(([treeName, slots]) => (
-          <Grid size={{ xs: 12, md: 4 }} key={treeName}>
+      <Stack spacing={{ xs: 2, md: 2.75 }}>
+        {Object.entries(slotsByTree).map(([treeKey, slots]) => {
+          const typedKey = treeKey as TreeKey;
+          return (
             <CPTree
-              treeName={CP_TREES[treeName as keyof typeof CP_TREES]}
+              key={treeKey}
+              treeName={CP_TREES[typedKey]}
               slots={slots}
               championPoints={championPoints}
               getSlotStatus={getSlotStatus}
+              resolveChampionPoint={resolveChampionPoint}
+              visuals={treeVisuals[typedKey]}
             />
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Implementation Notes */}
-      <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
-        <Typography variant="subtitle2" gutterBottom>
-          Planned Features:
-        </Typography>
-        <Box component="ul" sx={{ mt: 1, pl: 2 }}>
-          <Typography component="li" variant="body2">
-            Browse and select CP stars from each tree
-          </Typography>
-          <Typography component="li" variant="body2">
-            Multi-select interface for slottable abilities (up to 12 slots)
-          </Typography>
-          <Typography component="li" variant="body2">
-            Visual tree representation with star icons
-          </Typography>
-          <Typography component="li" variant="body2">
-            Search and filter CP stars by name or effect
-          </Typography>
-          <Typography component="li" variant="body2">
-            Import/export CP configurations
-          </Typography>
-        </Box>
-      </Paper>
+          );
+        })}
+      </Stack>
     </Stack>
   );
 };
@@ -128,38 +160,74 @@ interface CPTreeProps {
   slots: number[];
   championPoints: ChampionPointsConfig;
   getSlotStatus: (slotIndex: number) => 'empty' | 'filled';
+  resolveChampionPoint: (cpId?: number) => ChampionPointAbilityMetadata | undefined;
+  visuals: TreeVisualStyle;
 }
 
-const CPTree: React.FC<CPTreeProps> = ({ treeName, slots, championPoints, getSlotStatus }) => {
+const CPTree: React.FC<CPTreeProps> = ({
+  treeName,
+  slots,
+  championPoints,
+  getSlotStatus,
+  resolveChampionPoint,
+  visuals,
+}) => {
   return (
-    <Card variant="outlined">
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
+    <Card
+      variant="outlined"
+      sx={{
+        borderColor: visuals.cardBorder,
+        backgroundColor: visuals.cardBackground,
+        backdropFilter: 'blur(2px)',
+      }}
+    >
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        <Typography variant="h6" sx={{ color: visuals.titleColor, fontWeight: 700 }}>
           {treeName}
         </Typography>
-        <Stack spacing={1}>
+        <Stack spacing={1.25}>
           {slots.map((slotIndex) => {
             const status = getSlotStatus(slotIndex);
             const cpId = championPoints[slotIndex];
+            const cpMetadata = resolveChampionPoint(cpId);
+            const hasChampionPoint = Boolean(cpId);
+            const isFilled = status === 'filled';
 
             return (
               <Paper
                 key={slotIndex}
                 variant="outlined"
                 sx={{
-                  p: 1.5,
-                  bgcolor: status === 'filled' ? 'success.light' : 'grey.100',
-                  borderColor: status === 'filled' ? 'success.main' : 'grey.300',
+                  px: 1.75,
+                  py: 1.35,
+                  minHeight: 78,
+                  display: 'flex',
+                  alignItems: 'center',
+                  bgcolor: isFilled ? visuals.slotBackgroundFilled : visuals.slotBackgroundEmpty,
+                  borderColor: isFilled ? visuals.slotBorderFilled : visuals.slotBorderEmpty,
+                  transition: 'background-color 120ms ease, border-color 120ms ease',
                 }}
               >
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="body2">Slot {slotIndex}</Typography>
-                  {cpId ? (
-                    <Chip label={`CP ID: ${cpId}`} size="small" color="success" />
-                  ) : (
-                    <Chip label="Empty" size="small" variant="outlined" />
-                  )}
-                </Stack>
+                {cpMetadata ? (
+                  <Stack spacing={0.35} sx={{ width: '100%' }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}
+                    >
+                      {cpMetadata.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {treeName} • ID {cpMetadata.id}
+                      {!cpMetadata.verified && ' • Unverified mapping'}
+                    </Typography>
+                  </Stack>
+                ) : hasChampionPoint ? (
+                  <Tooltip title="Champion point ID not yet mapped in metadata">
+                    <Chip label={`Unknown CP ${cpId}`} size="small" color={visuals.chipColor} />
+                  </Tooltip>
+                ) : (
+                  <Chip label="Empty" size="small" variant="outlined" />
+                )}
               </Paper>
             );
           })}

@@ -106,6 +106,16 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
     return data.length > 500 ? data.substring(0, 500) + '\n...' : data;
   };
 
+  // Get the ESO SavedVariables path using Documents folder from environment
+  const getESOSavedVarsPath = (): string => {
+    // This is a hint for the user, not actually used by the browser
+    if (typeof window !== 'undefined' && (window as any).electron) {
+      // If running in Electron, we could potentially use this
+      return 'Documents\\Elder Scrolls Online\\live\\SavedVariables\\';
+    }
+    return 'Documents\\Elder Scrolls Online\\live\\SavedVariables\\';
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Export Loadout</DialogTitle>
@@ -168,6 +178,21 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
           {copied && (
             <Alert severity="success" onClose={() => setCopied(false)}>
               Copied to clipboard!
+            </Alert>
+          )}
+
+          {/* Help text for Wizard's Wardrobe format */}
+          {exportFormat === 'wizard' && (
+            <Alert severity="info">
+              <Typography variant="caption" component="div">
+                <strong>To use in-game:</strong> Save this file to your ESO folder at:
+                <br />
+                <code style={{ fontSize: '0.85em', display: 'block', marginTop: '4px' }}>
+                  {getESOSavedVarsPath()}WizardWardrobe.lua
+                </code>
+                <br />
+                Then use <code>/reloadui</code> in-game to load your changes.
+              </Typography>
             </Alert>
           )}
         </Stack>

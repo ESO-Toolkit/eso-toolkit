@@ -168,6 +168,7 @@ Your AI agents now have:
 - ✅ **Validation tools** to verify compliance  
 - ✅ **Working examples** to reference
 - ✅ **Debugging guidance** when tests fail
+- ✅ **MCP tools documentation** for authentication and setup
 
 The instructions emphasize that **even with mocked data, your app needs 15-45 seconds to fully load** due to its sophisticated React/GraphQL/Redux architecture. AI agents will now understand this is normal and expected, not something to optimize away.
 
@@ -176,3 +177,4 @@ The instructions emphasize that **even with mocked data, your app needs 15-45 se
 2. Share `AI_PLAYWRIGHT_QUICK_REFERENCE.md` with your next AI agent
 3. Monitor test reliability improvements
 4. Update guidelines based on feedback and new patterns
+5. For MCP tool setup, see [MCP Tools Documentation](./mcp-tools/INDEX.md)

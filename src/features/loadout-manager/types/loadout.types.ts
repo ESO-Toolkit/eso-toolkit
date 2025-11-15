@@ -89,9 +89,9 @@ export interface BossConfig {
  * Trial/Dungeon configuration
  */
 export interface TrialConfig {
-  id: string; // Unique identifier (e.g., 'SS', 'DSR')
-  name: string; // Display name (e.g., 'Sunspire', 'Dreadsail Reef')
-  type: 'trial' | 'dungeon' | 'arena';
+  id: string; // Unique identifier (e.g., 'SS', 'DSR', 'GEN', 'SUB')
+  name: string; // Display name (e.g., 'Sunspire', 'Dreadsail Reef', 'General')
+  type: 'trial' | 'dungeon' | 'arena' | 'general' | 'substitute';
   bosses: BossConfig[];
 }
 
@@ -104,14 +104,54 @@ export interface SetupPage {
 }
 
 /**
+ * ESO Class Skill Lines
+ */
+export type ClassSkillLine =
+  | 'Dragonknight_Ardent Flame'
+  | 'Dragonknight_Draconic Power'
+  | 'Dragonknight_Earthen Heart'
+  | 'Sorcerer_Dark Magic'
+  | 'Sorcerer_Daedric Summoning'
+  | 'Sorcerer_Storm Calling'
+  | 'Nightblade_Assassination'
+  | 'Nightblade_Shadow'
+  | 'Nightblade_Siphoning'
+  | 'Templar_Aedric Spear'
+  | 'Templar_Dawn\'s Wrath'
+  | 'Templar_Restoring Light'
+  | 'Warden_Animal Companions'
+  | 'Warden_Green Balance'
+  | 'Warden_Winter\'s Embrace'
+  | 'Necromancer_Grave Lord'
+  | 'Necromancer_Bone Tyrant'
+  | 'Necromancer_Living Death'
+  | 'Arcanist_Herald of the Tome'
+  | 'Arcanist_Soldier of Apocrypha'
+  | 'Arcanist_Curative Runeforms';
+
+/**
+ * Character information
+ */
+export interface CharacterInfo {
+  id: string; // Unique identifier (e.g., character name)
+  name: string; // Display name
+  skillLines?: ClassSkillLine[]; // Up to 3 class skill lines
+  role?: string; // Role (e.g., 'Tank', 'DPS', 'Healer')
+}
+
+/**
  * Complete loadout state for the application
  */
 export interface LoadoutState {
+  currentCharacter: string | null; // Currently selected character ID
+  characters: CharacterInfo[]; // List of available characters
   currentTrial: string | null; // Currently selected trial ID
   currentPage: number; // Currently active page index
   mode: 'basic' | 'advanced'; // Basic (bosses only) or Advanced (includes trash)
   pages: {
-    [trialId: string]: SetupPage[];
+    [characterId: string]: {
+      [trialId: string]: SetupPage[];
+    };
   };
 }
 
@@ -123,12 +163,13 @@ export interface WizardWardrobeExport {
   setups: {
     [trialId: string]: Array<{
       [setupIndex: number]: LoadoutSetup;
-      name?: string;
     }>;
   };
-  pages: {
+  pages?: {
     [trialId: string]: Array<{
-      selected: number;
+      name?: string;
+      selected?: number;
+      [key: number]: any; // Can contain setup data on some page indices
     }>;
   };
   version: number;

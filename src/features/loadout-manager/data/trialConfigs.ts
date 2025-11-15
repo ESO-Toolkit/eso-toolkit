@@ -7,21 +7,64 @@ import { TrialConfig } from '../types/loadout.types';
 
 /**
  * All available trials in ESO
+ * Ordered: General first, then alphabetically by name
  */
 export const TRIALS: TrialConfig[] = [
-  // Elsweyr Trials
+  // Always first - General
   {
-    id: 'SS',
-    name: 'Sunspire',
-    type: 'trial',
+    id: 'GEN',
+    name: 'General',
+    type: 'general',
     bosses: [
-      { name: 'Lokkestiiz', trashPacksBefore: 3 },
-      { name: 'Yolnahkriin', trashPacksBefore: 2 },
-      { name: 'Nahviintaas', trashPacksBefore: 1 },
+      { name: 'General Setup', trashPacksBefore: 0 },
     ],
   },
 
-  // High Isle Trials
+  // Alphabetically ordered
+  {
+    id: 'AA',
+    name: 'Aetherian Archive',
+    type: 'trial',
+    bosses: [
+      { name: 'Storm Atronach', trashPacksBefore: 2 },
+      { name: 'Foundation Stone Atronach', trashPacksBefore: 3 },
+      { name: 'Varlariel', trashPacksBefore: 2 },
+      { name: 'The Mage', trashPacksBefore: 1 },
+    ],
+  },
+
+  {
+    id: 'AS',
+    name: 'Asylum Sanctorium',
+    type: 'trial',
+    bosses: [
+      { name: 'Saint Olms the Just', trashPacksBefore: 0 },
+      { name: 'Saint Llothis the Pious', trashPacksBefore: 0 }, // Mini-boss (optional)
+      { name: 'Saint Felms the Bold', trashPacksBefore: 0 }, // Mini-boss (optional)
+    ],
+  },
+
+  {
+    id: 'BRP',
+    name: 'Blackrose Prison',
+    type: 'arena',
+    bosses: [
+      { name: 'Arena Setup', trashPacksBefore: 0 },
+    ],
+  },
+
+  {
+    id: 'CR',
+    name: 'Cloudrest',
+    type: 'trial',
+    bosses: [
+      { name: "Z'Maja", trashPacksBefore: 0 },
+      { name: 'Shade of Galenwe', trashPacksBefore: 0 }, // Mini-boss (optional)
+      { name: 'Shade of Relequen', trashPacksBefore: 0 }, // Mini-boss (optional)
+      { name: 'Shade of Siroria', trashPacksBefore: 0 }, // Mini-boss (optional)
+    ],
+  },
+
   {
     id: 'DSR',
     name: 'Dreadsail Reef',
@@ -35,78 +78,16 @@ export const TRIALS: TrialConfig[] = [
     ],
   },
 
-  // Summerset Trials
   {
-    id: 'CR',
-    name: 'Cloudrest',
+    id: 'HOF',
+    name: 'Halls of Fabrication',
     type: 'trial',
     bosses: [
-      { name: "Z'Maja", trashPacksBefore: 0 },
-      { name: 'Shade of Galenwe', trashPacksBefore: 0 }, // Mini-boss (optional)
-      { name: 'Shade of Relequen', trashPacksBefore: 0 }, // Mini-boss (optional)
-      { name: 'Shade of Siroria', trashPacksBefore: 0 }, // Mini-boss (optional)
-    ],
-  },
-
-  // Greymoor Trials
-  {
-    id: 'KA',
-    name: 'Kyne\'s Aegis',
-    type: 'trial',
-    bosses: [
-      { name: 'Yandir the Butcher', trashPacksBefore: 1 },
-      { name: 'Captain Vrol', trashPacksBefore: 2 },
-      { name: 'Lord Falgravn', trashPacksBefore: 2 },
-    ],
-  },
-
-  // Blackwood Trials
-  {
-    id: 'RG',
-    name: 'Rockgrove',
-    type: 'trial',
-    bosses: [
-      { name: 'Oaxiltso', trashPacksBefore: 1 },
-      { name: 'Flame-Herald Bahsei', trashPacksBefore: 2 },
-      { name: 'Xalvakka', trashPacksBefore: 2 },
-    ],
-  },
-
-  // Necrom Trials
-  {
-    id: 'SE',
-    name: 'Sanity\'s Edge',
-    type: 'trial',
-    bosses: [
-      { name: 'Exarchanic Yaseyla', trashPacksBefore: 1 },
-      { name: 'Archwizard Twelvane', trashPacksBefore: 2 },
-      { name: 'Ansuul the Tormentor', trashPacksBefore: 2 },
-    ],
-  },
-
-  // Scalebreaker DLC Trials
-  {
-    id: 'LC',
-    name: 'Lucent Citadel',
-    type: 'trial',
-    bosses: [
-      { name: 'Count Ryelaz and Zilyesset', trashPacksBefore: 1 },
-      { name: 'Cavot Agnan', trashPacksBefore: 1 },
-      { name: 'Orphic Shattered Shard', trashPacksBefore: 1 },
-      { name: 'Arcane Knot', trashPacksBefore: 2 },
-    ],
-  },
-
-  // Classic Trials
-  {
-    id: 'AA',
-    name: 'Aetherian Archive',
-    type: 'trial',
-    bosses: [
-      { name: 'Storm Atronach', trashPacksBefore: 2 },
-      { name: 'Foundation Stone Atronach', trashPacksBefore: 3 },
-      { name: 'Varlariel', trashPacksBefore: 2 },
-      { name: 'The Mage', trashPacksBefore: 1 },
+      { name: 'Hunter-Killer Fabricants', trashPacksBefore: 2 },
+      { name: 'Pinnacle Factotum', trashPacksBefore: 3 },
+      { name: 'Archcustodian', trashPacksBefore: 2 },
+      { name: 'Reactor', trashPacksBefore: 1 },
+      { name: 'Assembly General', trashPacksBefore: 2 },
     ],
   },
 
@@ -123,18 +104,37 @@ export const TRIALS: TrialConfig[] = [
   },
 
   {
-    id: 'SO',
-    name: 'Sanctum Ophidia',
-    type: 'trial',
+    id: 'IA',
+    name: 'Infinite Archive',
+    type: 'arena',
     bosses: [
-      { name: 'Possessed Mantikora', trashPacksBefore: 3 },
-      { name: 'Stonebreaker', trashPacksBefore: 2 },
-      { name: 'Ozara', trashPacksBefore: 1 },
-      { name: 'The Serpent', trashPacksBefore: 2 },
+      { name: 'Infinite Archive Setup', trashPacksBefore: 0 },
     ],
   },
 
-  // Orsinium Trial
+  {
+    id: 'KA',
+    name: 'Kyne\'s Aegis',
+    type: 'trial',
+    bosses: [
+      { name: 'Yandir the Butcher', trashPacksBefore: 1 },
+      { name: 'Captain Vrol', trashPacksBefore: 2 },
+      { name: 'Lord Falgravn', trashPacksBefore: 2 },
+    ],
+  },
+
+  {
+    id: 'LC',
+    name: 'Lucent Citadel',
+    type: 'trial',
+    bosses: [
+      { name: 'Count Ryelaz and Zilyesset', trashPacksBefore: 1 },
+      { name: 'Cavot Agnan', trashPacksBefore: 1 },
+      { name: 'Orphic Shattered Shard', trashPacksBefore: 1 },
+      { name: 'Arcane Knot', trashPacksBefore: 2 },
+    ],
+  },
+
   {
     id: 'MOL',
     name: 'Maw of Lorkhaj',
@@ -146,29 +146,76 @@ export const TRIALS: TrialConfig[] = [
     ],
   },
 
-  // Morrowind Trial
   {
-    id: 'HOF',
-    name: 'Halls of Fabrication',
-    type: 'trial',
+    id: 'OC',
+    name: 'Overland/Other Content',
+    type: 'general',
     bosses: [
-      { name: 'Hunter-Killer Fabricants', trashPacksBefore: 2 },
-      { name: 'Pinnacle Factotum', trashPacksBefore: 3 },
-      { name: 'Archcustodian', trashPacksBefore: 2 },
-      { name: 'Reactor', trashPacksBefore: 1 },
-      { name: 'Assembly General', trashPacksBefore: 2 },
+      { name: 'General Setup', trashPacksBefore: 0 },
     ],
   },
 
-  // Clockwork City Trial
   {
-    id: 'AS',
-    name: 'Asylum Sanctorium',
+    id: 'PVP',
+    name: 'PVP',
+    type: 'general',
+    bosses: [
+      { name: 'PVP Setup', trashPacksBefore: 0 },
+    ],
+  },
+
+  {
+    id: 'RG',
+    name: 'Rockgrove',
     type: 'trial',
     bosses: [
-      { name: 'Saint Olms the Just', trashPacksBefore: 0 },
-      { name: 'Saint Llothis the Pious', trashPacksBefore: 0 }, // Mini-boss (optional)
-      { name: 'Saint Felms the Bold', trashPacksBefore: 0 }, // Mini-boss (optional)
+      { name: 'Oaxiltso', trashPacksBefore: 1 },
+      { name: 'Flame-Herald Bahsei', trashPacksBefore: 2 },
+      { name: 'Xalvakka', trashPacksBefore: 2 },
+    ],
+  },
+
+  {
+    id: 'SO',
+    name: 'Sanctum Ophidia',
+    type: 'trial',
+    bosses: [
+      { name: 'Possessed Mantikora', trashPacksBefore: 3 },
+      { name: 'Stonebreaker', trashPacksBefore: 2 },
+      { name: 'Ozara', trashPacksBefore: 1 },
+      { name: 'The Serpent', trashPacksBefore: 2 },
+    ],
+  },
+
+  {
+    id: 'SE',
+    name: 'Sanity\'s Edge',
+    type: 'trial',
+    bosses: [
+      { name: 'Exarchanic Yaseyla', trashPacksBefore: 1 },
+      { name: 'Archwizard Twelvane', trashPacksBefore: 2 },
+      { name: 'Ansuul the Tormentor', trashPacksBefore: 2 },
+    ],
+  },
+
+  {
+    id: 'SUB',
+    name: 'Substitute Setups',
+    type: 'substitute',
+    bosses: [
+      { name: 'Substitute Boss', trashPacksBefore: 0 },
+      { name: 'Substitute Trash', trashPacksBefore: 0 },
+    ],
+  },
+
+  {
+    id: 'SS',
+    name: 'Sunspire',
+    type: 'trial',
+    bosses: [
+      { name: 'Lokkestiiz', trashPacksBefore: 3 },
+      { name: 'Yolnahkriin', trashPacksBefore: 2 },
+      { name: 'Nahviintaas', trashPacksBefore: 1 },
     ],
   },
 ];

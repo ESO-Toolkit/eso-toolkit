@@ -1,208 +1,711 @@
-/**
- * Main Loadout Manager Component
- * Top-level container for managing trial/dungeon loadouts
- */
-
-import { FileDownload } from '@mui/icons-material';
 import {
+  Add as AddIcon,
+  ArrowBack,
+  AutoAwesome,
+  DeleteSweep,
+  Edit,
+  FileDownload,
+  FileUpload,
+  Search as SearchIcon,
+} from '@mui/icons-material';
+import {
+  Alert,
   Box,
-  Container,
-  Paper,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  ToggleButtonGroup,
-  ToggleButton,
   Button,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Drawer,
+  FormControl,
+  IconButton,
+  InputAdornment,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  Snackbar,
   Stack,
-  Divider,
+  Tab,
+  Tabs,
+  TextField,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import type { SelectChangeEvent } from '@mui/material/Select';
+import { alpha } from '@mui/material/styles';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
-import { RootState } from '@/store/storeWithHistory';
+import type { RootState } from '@/store/storeWithHistory';
 
+import { preloadSkillData } from '../data/skillLineSkills';
 import { TRIALS, generateSetupStructure } from '../data/trialConfigs';
 import {
-  setCurrentTrial,
-  setMode,
+  addPage,
+  addSetup,
+  deleteSetup,
+  duplicateSetup,
   initializeSetups,
+  loadState,
+  renamePage,
+  resetLoadout,
+  setCurrentPage,
+  setCurrentTrial,
 } from '../store/loadoutSlice';
 import {
-  selectCurrentTrial,
-  selectMode,
+  selectCurrentPage,
   selectCurrentSetups,
+  selectCurrentTrial,
+  selectTrialPages,
 } from '../store/selectors';
+import type { ClipboardSetup, LoadoutSetup, LoadoutState } from '../types/loadout.types';
+import { extractWizardWardrobeData, parseLuaSavedVariables } from '../utils/luaParser';
+import { convertAllCharactersToLoadoutState } from '../utils/wizardWardrobeConverter';
 
+import { CharacterSelector } from './CharacterSelector';
 import { ExportDialog } from './ExportDialog';
 import { SetupEditor } from './SetupEditor';
 import { SetupList } from './SetupList';
 
+const MIN_PAGES = 1;
+
+const createBlankSetup = (name: string): LoadoutSetup => ({
+  name,
+  disabled: false,
+  condition: { boss: 'Custom' },
+  skills: { 0: {}, 1: {} },
+  cp: {},
+  food: {},
+  gear: {},
+  code: '',
+});
+
 export const LoadoutManager: React.FC = () => {
   const dispatch = useDispatch();
-  const currentTrial = useSelector(selectCurrentTrial);
-  const mode = useSelector(selectMode);
-  const setups = useSelector(selectCurrentSetups);
-  const [selectedSetupIndex, setSelectedSetupIndex] = React.useState<number | null>(null);
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMdDown = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Initialize setups when trial or mode changes
+  const currentTrial = useSelector(selectCurrentTrial);
+  const currentPage = useSelector(selectCurrentPage);
+  const setups = useSelector(selectCurrentSetups);
+  const allPages = useSelector((state: RootState) =>
+    currentTrial ? selectTrialPages(state, currentTrial) : [],
+  );
+  const currentCharacter = useSelector((state: RootState) => state.loadout.currentCharacter);
+
+  const [selectedSetupIndex, setSelectedSetupIndex] = useState<number | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameTargetIndex, setRenameTargetIndex] = useState<number | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({ open: false, message: '', severity: 'success' });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Preload skill data on mount
   useEffect(() => {
-    if (currentTrial) {
-      const structure = generateSetupStructure(currentTrial, mode === 'advanced');
+    preloadSkillData();
+  }, []);
+
+  useEffect(() => {
+    if (!currentTrial || !currentCharacter) {
+      return;
+    }
+
+    if (allPages.length < MIN_PAGES) {
+      const pagesNeeded = MIN_PAGES - allPages.length;
+      for (let i = 0; i < pagesNeeded; i += 1) {
+        const pageName = `Page ${allPages.length + i + 1}`;
+        dispatch(addPage({ trialId: currentTrial, pageName }));
+      }
+    }
+  }, [currentTrial, currentCharacter, allPages.length, dispatch]);
+
+  useEffect(() => {
+    if (!currentTrial || setups.length > 0) {
+      return;
+    }
+
+    const structure = generateSetupStructure(currentTrial, true);
+    if (structure.length > 0) {
       dispatch(
         initializeSetups({
           trialId: currentTrial,
-          pageIndex: 0,
+          pageIndex: currentPage,
           structure,
         }),
       );
     }
-  }, [currentTrial, mode, dispatch]);
+  }, [currentTrial, currentPage, setups.length, dispatch]);
 
-  const handleTrialChange = (event: any) => {
-    const trialId = event.target.value as string;
-    dispatch(setCurrentTrial(trialId));
-    setSelectedSetupIndex(null);
+  useEffect(() => {
+    if (setups.length === 0) {
+      setSelectedSetupIndex(null);
+      setDrawerOpen(false);
+      return;
+    }
+
+    setSelectedSetupIndex((previous) => {
+      if (previous === null || previous >= setups.length) {
+        return 0;
+      }
+      return previous;
+    });
+  }, [setups.length]);
+
+  useEffect(() => {
+    if (!isMdDown) {
+      setDrawerOpen(false);
+    }
+  }, [isMdDown]);
+
+  const selectedSetup = useMemo(
+    () => (selectedSetupIndex !== null ? setups[selectedSetupIndex] : null),
+    [selectedSetupIndex, setups],
+  );
+
+  const headerSubtitle = useMemo(() => {
+    if (!currentTrial) {
+      return 'Select a trial to start organizing your loadouts.';
+    }
+    const trial = TRIALS.find((entry) => entry.id === currentTrial);
+    if (!trial) {
+      return 'Custom loadouts';
+    }
+    const kind =
+      trial.type === 'trial'
+        ? 'Trial'
+        : trial.type === 'arena'
+        ? 'Arena'
+        : trial.type === 'substitute'
+        ? 'Substitute'
+        : 'General';
+    return `${trial.name} · ${kind}`;
+  }, [currentTrial]);
+
+  const showSnackbar = (message: string, severity: 'success' | 'error'): void => {
+    setSnackbar({ open: true, message, severity });
   };
 
-  const handleModeChange = (_event: React.MouseEvent<HTMLElement>, newMode: 'basic' | 'advanced' | null) => {
-    if (newMode !== null) {
-      dispatch(setMode(newMode));
-      setSelectedSetupIndex(null);
+  const handleSnackbarClose = (): void => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  const handleBack = (): void => {
+    navigate(-1);
+  };
+
+  const handleTrialChange = (event: SelectChangeEvent<string>): void => {
+    const value = event.target.value;
+    dispatch(setCurrentTrial(value));
+    setSelectedSetupIndex(null);
+    setDrawerOpen(false);
+  };
+
+  const handlePageChange = (_event: React.SyntheticEvent, value: number): void => {
+    dispatch(setCurrentPage(value));
+    setSelectedSetupIndex(null);
+    if (isMdDown) {
+      setDrawerOpen(false);
     }
   };
 
-  const selectedSetup = selectedSetupIndex !== null ? setups[selectedSetupIndex] : null;
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    setSearchTerm(event.target.value);
+  };
+
+  const ensureTrialSelected = (): boolean => {
+    if (!currentTrial) {
+      showSnackbar('Pick a trial before managing setups.', 'error');
+      return false;
+    }
+    return true;
+  };
+
+  const handleAddSetup = (): void => {
+    if (!ensureTrialSelected()) {
+      return;
+    }
+
+    const setup = createBlankSetup(`Setup ${setups.length + 1}`);
+    dispatch(addSetup({ trialId: currentTrial!, pageIndex: currentPage, setup }));
+    setSelectedSetupIndex(setups.length);
+    if (isMdDown) {
+      setDrawerOpen(true);
+    }
+    showSnackbar('Blank setup added.', 'success');
+  };
+
+  const handleDuplicateSetup = (index: number): void => {
+    if (!ensureTrialSelected()) {
+      return;
+    }
+
+    dispatch(duplicateSetup({ trialId: currentTrial!, pageIndex: currentPage, setupIndex: index }));
+    setSelectedSetupIndex(setups.length);
+    showSnackbar('Setup duplicated.', 'success');
+  };
+
+  const handleDeleteSetup = (index: number): void => {
+    if (!ensureTrialSelected()) {
+      return;
+    }
+
+    dispatch(deleteSetup({ trialId: currentTrial!, pageIndex: currentPage, setupIndex: index }));
+    setSelectedSetupIndex((prev) => {
+      if (prev === null) {
+        return null;
+      }
+      if (prev === index && setups.length - 1 > 0) {
+        return Math.max(0, prev - 1);
+      }
+      if (prev > index) {
+        return prev - 1;
+      }
+      return prev;
+    });
+    showSnackbar('Setup deleted.', 'success');
+  };
+
+  const handleCopySetup = async (index: number): Promise<void> => {
+    const target = setups[index];
+    if (!target) {
+      return;
+    }
+
+    try {
+      const payload: ClipboardSetup = {
+        version: 1,
+        timestamp: Date.now(),
+        setup: target,
+        sourceTrialId: currentTrial || undefined,
+        sourceBossName: target.condition?.boss,
+      };
+      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+      showSnackbar('Setup copied to clipboard.', 'success');
+    } catch {
+      showSnackbar('Could not copy setup to clipboard.', 'error');
+    }
+  };
+
+  const handleSelectSetup = (index: number): void => {
+    setSelectedSetupIndex(index);
+    if (isMdDown) {
+      setDrawerOpen(true);
+    }
+  };
+
+  const handleOpenDetails = (index: number): void => {
+    handleSelectSetup(index);
+  };
+
+  const handleAddPage = (): void => {
+    if (!ensureTrialSelected()) {
+      return;
+    }
+    const nextIndex = allPages.length + 1;
+    dispatch(addPage({ trialId: currentTrial!, pageName: `Page ${nextIndex}` }));
+    dispatch(setCurrentPage(allPages.length));
+    showSnackbar('Page added.', 'success');
+  };
+
+  const handleOpenRename = (index: number): void => {
+    const page = allPages[index];
+    if (!page) {
+      return;
+    }
+    setRenameTargetIndex(index);
+    setRenameValue(page.name);
+    setRenameDialogOpen(true);
+  };
+
+  const handleSubmitRename = (): void => {
+    if (!ensureTrialSelected() || renameTargetIndex === null) {
+      return;
+    }
+    if (!renameValue.trim()) {
+      showSnackbar('Page name cannot be empty.', 'error');
+      return;
+    }
+
+    dispatch(
+      renamePage({
+        trialId: currentTrial!,
+        pageIndex: renameTargetIndex,
+        newName: renameValue.trim(),
+      }),
+    );
+    setRenameDialogOpen(false);
+    showSnackbar('Page renamed.', 'success');
+  };
+
+  const handleClearAll = (): void => {
+    setClearDialogOpen(false);
+    dispatch(resetLoadout());
+    setSelectedSetupIndex(null);
+    setSearchTerm('');
+    showSnackbar('Loadouts cleared.', 'success');
+  };
+
+  const handleImportClick = (): void => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const lowerName = file.name.toLowerCase();
+
+      if (lowerName.endsWith('.json')) {
+        const json = JSON.parse(text) as LoadoutState;
+        if (json && typeof json === 'object' && 'pages' in json && 'characters' in json) {
+          dispatch(loadState(json));
+          setSelectedSetupIndex(null);
+          showSnackbar('Imported loadout JSON.', 'success');
+          return;
+        }
+      }
+
+      const parsedLua = parseLuaSavedVariables(text);
+      const wizardData = extractWizardWardrobeData(parsedLua);
+      if (!wizardData) {
+        throw new Error("Could not find Wizard's Wardrobe data in file.");
+      }
+
+      const converted = convertAllCharactersToLoadoutState(wizardData);
+      dispatch(loadState(converted));
+      setSelectedSetupIndex(null);
+      const characterCount = Object.keys(converted.pages).length;
+      showSnackbar(
+        `Imported loadouts for ${characterCount} ${characterCount === 1 ? 'character' : 'characters'}.`,
+        'success',
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to import file.';
+      showSnackbar(message, 'error');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const handleExportClick = (): void => {
+    setExportDialogOpen(true);
+  };
+
+  const renameDisabled = !(currentTrial && allPages.length > 0);
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h3" gutterBottom>
-        Loadout Manager
-      </Typography>
-      <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-        Manage your skill setups, champion points, food, and gear for trials and dungeons
-      </Typography>
-
-      <Paper sx={{ p: 3, mt: 3 }}>
-        <Stack spacing={3}>
-          {/* Trial Selection and Mode Toggle */}
-          <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-            <Stack direction="row" spacing={2} alignItems="center">
-              <FormControl sx={{ minWidth: 300 }}>
-                <InputLabel id="trial-select-label">Select Trial/Dungeon</InputLabel>
-                <Select
-                  labelId="trial-select-label"
-                  id="trial-select"
-                  value={currentTrial || ''}
-                  label="Select Trial/Dungeon"
-                  onChange={handleTrialChange}
-                >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
-                  {TRIALS.map((trial) => (
-                    <MenuItem key={trial.id} value={trial.id}>
-                      {trial.name} ({trial.type})
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              {currentTrial && (
-                <ToggleButtonGroup
-                  value={mode}
-                  exclusive
-                  onChange={handleModeChange}
-                  aria-label="setup mode"
-                >
-                  <ToggleButton value="basic" aria-label="basic mode">
-                    Basic (Bosses Only)
-                  </ToggleButton>
-                  <ToggleButton value="advanced" aria-label="advanced mode">
-                    Advanced (Include Trash)
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              )}
+    <Container maxWidth="xl" sx={{ py: 3, pb: 6 }}>
+      <Stack spacing={3}>
+        <Paper
+          variant="outlined"
+          sx={{
+            px: { xs: 1.75, md: 2.5 },
+            py: { xs: 1.5, md: 2 },
+            borderRadius: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1,
+            background:
+              theme.palette.mode === 'dark'
+                ? alpha(theme.palette.background.paper, 0.65)
+                : alpha(theme.palette.background.paper, 0.96),
+          }}
+        >
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1.5}
+            alignItems={{ xs: 'flex-start', sm: 'center' }}
+            justifyContent="space-between"
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Tooltip title="Back" arrow>
+                <IconButton onClick={handleBack} size="small">
+                  <ArrowBack fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <AutoAwesome color="primary" />
+              <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                Wizard&apos;s Wardrobe Manager
+              </Typography>
             </Stack>
-
-            {currentTrial && setups.length > 0 && (
+            <Stack direction="row" spacing={1}>
               <Button
-                variant="contained"
+                variant="text"
+                color="primary"
+                startIcon={<FileUpload />}
+                onClick={handleImportClick}
+              >
+                Import
+              </Button>
+              <Button
+                variant="outlined"
+                color="primary"
                 startIcon={<FileDownload />}
-                onClick={() => setExportDialogOpen(true)}
+                onClick={handleExportClick}
+                disabled={setups.length === 0}
               >
                 Export
               </Button>
-            )}
+              <Button
+                variant="text"
+                color="error"
+                startIcon={<DeleteSweep />}
+                onClick={() => setClearDialogOpen(true)}
+              >
+                Clear All
+              </Button>
+            </Stack>
+          </Stack>
+          <Typography variant="body2" color="text.secondary">
+            {headerSubtitle}
+          </Typography>
+        </Paper>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            px: { xs: 1.75, md: 2.5 },
+            py: { xs: 1.5, md: 2 },
+            borderRadius: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+          }}
+        >
+          <CharacterSelector />
+
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'center' }}>
+            <FormControl sx={{ minWidth: 220 }} size="small">
+              <InputLabel id="trial-select-label">Trial / Activity</InputLabel>
+              <Select
+                labelId="trial-select-label"
+                value={currentTrial ?? ''}
+                label="Trial / Activity"
+                onChange={handleTrialChange}
+              >
+                {TRIALS.map((trial) => (
+                  <MenuItem key={trial.id} value={trial.id}>
+                    <Stack spacing={0.25}>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {trial.name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {trial.type === 'trial'
+                          ? 'Trial'
+                          : trial.type === 'arena'
+                          ? 'Arena'
+                          : trial.type === 'substitute'
+                          ? 'Substitute'
+                          : 'General'}
+                      </Typography>
+                    </Stack>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1, minWidth: 0 }}>
+              <Tabs
+                value={Math.min(currentPage, Math.max(allPages.length - 1, 0))}
+                onChange={handlePageChange}
+                variant="scrollable"
+                scrollButtons="auto"
+                allowScrollButtonsMobile
+                sx={{ flex: 1, minHeight: 44 }}
+              >
+                {allPages.map((page, index) => (
+                  <Tab key={`${page.name}-${index}`} label={page.name} value={index} />
+                ))}
+              </Tabs>
+              <Tooltip title="Rename page" arrow>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleOpenRename(currentPage)}
+                    disabled={renameDisabled}
+                  >
+                    <Edit fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Add page" arrow>
+                <IconButton size="small" color="primary" onClick={handleAddPage}>
+                  <AddIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
           </Stack>
 
-          {currentTrial && (
-            <>
-              <Divider />
-              
-              {/* Main Content Area */}
-              <Box sx={{ display: 'flex', gap: 3, minHeight: 500 }}>
-                {/* Setup List (Left Sidebar) */}
-                <Box sx={{ width: 300, flexShrink: 0 }}>
-                  <SetupList
-                    setups={setups}
-                    selectedIndex={selectedSetupIndex}
-                    onSelectSetup={setSelectedSetupIndex}
-                  />
-                </Box>
-
-                {/* Setup Editor (Main Area) */}
-                <Box sx={{ flex: 1 }}>
-                  {selectedSetup ? (
-                    <SetupEditor
-                      setup={selectedSetup}
-                      setupIndex={selectedSetupIndex!}
-                      trialId={currentTrial}
-                      pageIndex={0}
-                    />
-                  ) : (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        height: '100%',
-                        color: 'text.secondary',
-                      }}
-                    >
-                      <Typography variant="h6">
-                        Select a setup from the list to edit
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-            </>
-          )}
-
-          {!currentTrial && (
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: 400,
-                color: 'text.secondary',
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ md: 'center' }}>
+            <TextField
+              value={searchTerm}
+              onChange={handleSearchChange}
+              placeholder="Search setups, tags, bosses..."
+              size="small"
+              fullWidth
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
               }}
+            />
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddSetup}
+              disabled={!currentTrial}
             >
-              <Typography variant="h6">
-                Select a trial or dungeon to get started
-              </Typography>
+              New Setup
+            </Button>
+          </Stack>
+        </Paper>
+
+        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} alignItems="stretch">
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <SetupList
+              setups={setups}
+              selectedIndex={selectedSetupIndex}
+              filterText={searchTerm}
+              onOpenDetails={handleOpenDetails}
+              onDuplicateSetup={handleDuplicateSetup}
+              onDeleteSetup={handleDeleteSetup}
+              onCopySetup={handleCopySetup}
+            />
+          </Box>
+
+          {!isMdDown && (
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              {selectedSetup ? (
+                <SetupEditor
+                  setup={selectedSetup}
+                  setupIndex={selectedSetupIndex ?? 0}
+                  trialId={currentTrial ?? 'GEN'}
+                  pageIndex={currentPage}
+                  variant="page"
+                />
+              ) : (
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    height: '100%',
+                    borderRadius: 3,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    px: 3,
+                    py: 6,
+                    color: 'text.secondary',
+                  }}
+                >
+                  <Stack spacing={1.5} alignItems="center">
+                    <Typography variant="h6">Select a setup to edit</Typography>
+                    <Typography variant="body2">
+                      Choose a loadout from the list to review gear, skills, and Champion Points.
+                    </Typography>
+                  </Stack>
+                </Paper>
+              )}
             </Box>
           )}
         </Stack>
-      </Paper>
+      </Stack>
 
-      {/* Export Dialog */}
+      <input
+        type="file"
+        accept=".lua,.json,.txt"
+        hidden
+        ref={fileInputRef}
+        onChange={handleFileChange}
+      />
+
+      <Drawer
+        anchor="right"
+        open={drawerOpen && Boolean(selectedSetup)}
+        onClose={() => setDrawerOpen(false)}
+        ModalProps={{ keepMounted: true }}
+        PaperProps={{ sx: { width: { xs: '100%', sm: 420 } } }}
+      >
+        {selectedSetup && (
+          <SetupEditor
+            setup={selectedSetup}
+            setupIndex={selectedSetupIndex ?? 0}
+            trialId={currentTrial ?? 'GEN'}
+            pageIndex={currentPage}
+            variant="drawer"
+          />
+        )}
+      </Drawer>
+
       <ExportDialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} />
+
+      <Dialog open={renameDialogOpen} onClose={() => setRenameDialogOpen(false)}>
+        <DialogTitle>Rename Page</DialogTitle>
+        <DialogContent>
+          <TextField
+            value={renameValue}
+            onChange={(event) => setRenameValue(event.target.value)}
+            autoFocus
+            fullWidth
+            margin="dense"
+            label="Page name"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRenameDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleSubmitRename} variant="contained">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)}>
+        <DialogTitle>Clear all loadouts?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This removes every character, page, and setup. You can re-import data from Wizard&apos;s Wardrobe at any time.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setClearDialogOpen(false)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={handleClearAll}>
+            Clear everything
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} onClose={handleSnackbarClose} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

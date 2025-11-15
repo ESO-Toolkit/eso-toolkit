@@ -95,6 +95,11 @@ const CalculationKnowledgeBasePage = React.lazy(() =>
     default: module.CalculationKnowledgeBasePage,
   })),
 );
+const FoodSelectorKnowledgeBasePage = React.lazy(() =>
+  import('./pages/FoodSelectorKnowledgeBasePage').then((module) => ({
+    default: module.FoodSelectorKnowledgeBasePage,
+  })),
+);
 const WhoAmIPage = React.lazy(() =>
   import('./pages/WhoAmIPage').then((module) => ({ default: module.WhoAmIPage })),
 );
@@ -472,6 +477,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <LoadoutManager />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/docs/loadout/food-selector"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <FoodSelectorKnowledgeBasePage />
                   </Suspense>
                 </ErrorBoundary>
               }
