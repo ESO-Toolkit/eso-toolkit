@@ -12,7 +12,9 @@ import {
   selectWorkerTaskProgress,
 } from '../../store/worker_results/selectors';
 import { useCombatantInfoRecord } from '../events/useCombatantInfoRecord';
+import { useDamageEvents } from '../events/useDamageEvents';
 import { usePlayerData } from '../usePlayerData';
+import { useSelectedTargetIds } from '../useSelectedTargetIds';
 
 import { useBuffLookupTask } from './useBuffLookupTask';
 import { useDebuffLookupTask } from './useDebuffLookupTask';
@@ -31,6 +33,8 @@ export function useCriticalDamageTask(): {
   const { playerData, isPlayerDataLoading } = usePlayerData();
   const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask();
   const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const selectedTargetIds = useSelectedTargetIds();
 
   // For now, we'll use placeholder data until the dependencies are properly integrated
   React.useEffect(() => {
@@ -41,7 +45,9 @@ export function useCriticalDamageTask(): {
       !isCombatantInfoEventsLoading &&
       combatantInfoRecord !== null &&
       !isPlayerDataLoading &&
-      playerData?.playersById
+      playerData?.playersById &&
+      !isDamageEventsLoading &&
+      damageEvents.length > 0
     ) {
       // Only require debuff data if it's actually loading or available
       const hasDebuffData = debuffLookupData !== null || !isDebuffLookupLoading;
@@ -56,6 +62,8 @@ export function useCriticalDamageTask(): {
             combatantInfoEvents: combatantInfoRecord,
             friendlyBuffsLookup: buffLookupData,
             debuffsLookup: debuffLookupData || { buffIntervals: {} },
+            damageEvents: damageEvents,
+            selectedTargetIds: Array.from(selectedTargetIds),
           }),
         );
       }
@@ -68,6 +76,9 @@ export function useCriticalDamageTask(): {
     combatantInfoRecord,
     buffLookupData,
     debuffLookupData,
+    damageEvents,
+    isDamageEventsLoading,
+    selectedTargetIds,
     isBuffLookupLoading,
     isDebuffLookupLoading,
     isCombatantInfoEventsLoading,

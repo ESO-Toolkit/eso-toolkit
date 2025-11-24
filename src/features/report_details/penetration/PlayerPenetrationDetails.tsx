@@ -22,6 +22,7 @@ interface PlayerPenetrationData {
   timeAtCapPercentage: number;
   penetrationSources: PenetrationSourceWithActiveState[];
   playerBasePenetration: number;
+  inactiveCombatIntervals: Array<{ start: number; end: number }>;
 }
 
 interface PlayerPenetrationDetailsProps {
