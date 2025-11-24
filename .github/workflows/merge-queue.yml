@@ -55,7 +55,7 @@ jobs:
     
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.MERGE_QUEUE_TOKEN }}
           fetch-depth: 0
