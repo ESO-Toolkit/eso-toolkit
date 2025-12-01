@@ -5,6 +5,7 @@
 
 import { Download, ContentCopy } from '@mui/icons-material';
 import {
+  Box,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -23,9 +24,12 @@ import {
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { useLogger } from '@/hooks/useLogger';
+
 import { TRIALS } from '../data/trialConfigs';
 import { selectCurrentTrial, selectCurrentSetups } from '../store/selectors';
 import { WizardWardrobeExport } from '../types/loadout.types';
+import { validateGearConfig } from '../utils/itemSlotValidator';
 
 interface ExportDialogProps {
   open: boolean;
@@ -33,12 +37,37 @@ interface ExportDialogProps {
 }
 
 export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => {
+  const logger = useLogger('ExportDialog');
   const currentTrialId = useSelector(selectCurrentTrial);
   const setups = useSelector(selectCurrentSetups);
   const [exportFormat, setExportFormat] = useState<'json' | 'wizard'>('json');
   const [copied, setCopied] = useState(false);
 
   const currentTrial = TRIALS.find((t) => t.id === currentTrialId);
+  const validationReports = React.useMemo(
+    () =>
+      setups.map((setup, index) => ({
+        index,
+        name: setup.name || `Setup ${index + 1}`,
+        validation: validateGearConfig(setup.gear ?? {}),
+      })),
+    [setups],
+  );
+  const blockingErrors = React.useMemo(
+    () =>
+      validationReports.flatMap((report) =>
+        report.validation.errors.map((error) => `${report.name}: ${error}`),
+      ),
+    [validationReports],
+  );
+  const warningMessages = React.useMemo(
+    () =>
+      validationReports.flatMap((report) =>
+        report.validation.warnings.map((warning) => `${report.name}: ${warning}`),
+      ),
+    [validationReports],
+  );
+  const exportBlocked = blockingErrors.length > 0;
 
   const generateJSON = (): string => {
     const exportData = {
@@ -70,7 +99,10 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
     return JSON.stringify(wizardData, null, 2);
   };
 
-  const handleExport = () => {
+  const handleExport = (): void => {
+    if (exportBlocked) {
+      return;
+    }
     const data = exportFormat === 'json' ? generateJSON() : generateWizardWardrobe();
     const filename =
       exportFormat === 'json'
@@ -89,14 +121,18 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
     URL.revokeObjectURL(url);
   };
 
-  const handleCopy = async () => {
+  const handleCopy = async (): Promise<void> => {
+    if (exportBlocked) {
+      return;
+    }
     const data = exportFormat === 'json' ? generateJSON() : generateWizardWardrobe();
     try {
       await navigator.clipboard.writeText(data);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Failed to copy:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Failed to copy export payload', err);
     }
   };
 
@@ -109,9 +145,12 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
   // Get the ESO SavedVariables path using Documents folder from environment
   const getESOSavedVarsPath = (): string => {
     // This is a hint for the user, not actually used by the browser
-    if (typeof window !== 'undefined' && (window as any).electron) {
-      // If running in Electron, we could potentially use this
-      return 'Documents\\Elder Scrolls Online\\live\\SavedVariables\\';
+    if (typeof window !== 'undefined') {
+      const electronWindow = window as Window & { electron?: unknown };
+      if (electronWindow.electron) {
+        // If running in Electron, we could potentially use this
+        return 'Documents\\Elder Scrolls Online\\live\\SavedVariables\\';
+      }
     }
     return 'Documents\\Elder Scrolls Online\\live\\SavedVariables\\';
   };
@@ -126,6 +165,36 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
             Exporting <strong>{setups.length} setups</strong> from{' '}
             <strong>{currentTrial?.name || 'Unknown Trial'}</strong>
           </Alert>
+
+          {blockingErrors.length > 0 && (
+            <Alert severity="error">
+              <Typography variant="subtitle2" gutterBottom>
+                Fix these gear slot issues before exporting:
+              </Typography>
+              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                {blockingErrors.map((error, index) => (
+                  <Typography key={`blocking-${index}`} component="li" variant="caption">
+                    {error}
+                  </Typography>
+                ))}
+              </Box>
+            </Alert>
+          )}
+
+          {warningMessages.length > 0 && (
+            <Alert severity="warning">
+              <Typography variant="subtitle2" gutterBottom>
+                Some items are missing slot metadata:
+              </Typography>
+              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                {warningMessages.map((warning, index) => (
+                  <Typography key={`warning-${index}`} component="li" variant="caption">
+                    {warning}
+                  </Typography>
+                ))}
+              </Box>
+            </Alert>
+          )}
 
           {/* Format Selector */}
           <FormControl fullWidth>
@@ -145,7 +214,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
               </MenuItem>
               <MenuItem value="wizard">
                 <Stack>
-                  <Typography variant="body1">Wizard's Wardrobe (ESO Addon)</Typography>
+                  <Typography variant="body1">Wizard’s Wardrobe (ESO Addon)</Typography>
                   <Typography variant="caption" color="text.secondary">
                     Compatible with in-game addon
                   </Typography>
@@ -181,7 +250,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
             </Alert>
           )}
 
-          {/* Help text for Wizard's Wardrobe format */}
+          {/* Help text for Wizard’s Wardrobe format */}
           {exportFormat === 'wizard' && (
             <Alert severity="info">
               <Typography variant="caption" component="div">
@@ -197,12 +266,29 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
           )}
         </Stack>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ alignItems: 'flex-start' }}>
+        <Box sx={{ flexGrow: 1 }}>
+          {exportBlocked && (
+            <Typography variant="caption" color="error">
+              Resolve the errors above to enable exporting.
+            </Typography>
+          )}
+        </Box>
         <Button onClick={onClose}>Cancel</Button>
-        <Button startIcon={<ContentCopy />} onClick={handleCopy} variant="outlined">
+        <Button
+          startIcon={<ContentCopy />}
+          onClick={handleCopy}
+          variant="outlined"
+          disabled={exportBlocked}
+        >
           Copy to Clipboard
         </Button>
-        <Button startIcon={<Download />} onClick={handleExport} variant="contained">
+        <Button
+          startIcon={<Download />}
+          onClick={handleExport}
+          variant="contained"
+          disabled={exportBlocked}
+        >
           Download File
         </Button>
       </DialogActions>

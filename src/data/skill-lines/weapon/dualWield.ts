@@ -174,14 +174,16 @@ export const dualWieldSkillLine: SkillLineData = {
       name: 'Slaughter',
       type: 'passive',
       baseAbilityId: AbilityId.SLAUGHTER,
-      description: 'WHILE DUAL WIELDING Increases damage with Dual Wield abilities by 20% against enemies with under 25% Health.',
+      description:
+        'WHILE DUAL WIELDING Increases damage with Dual Wield abilities by 20% against enemies with under 25% Health.',
     },
     {
       id: AbilityId.DUAL_WIELD_EXPERT,
       name: 'Dual Wield Expert',
       type: 'passive',
       baseAbilityId: AbilityId.DUAL_WIELD_EXPERT,
-      description: "WHILE DUAL WIELDING Increases Weapon and Spell Damage by 6% of off-hand weapon's damage.",
+      description:
+        "WHILE DUAL WIELDING Increases Weapon and Spell Damage by 6% of off-hand weapon's damage.",
     },
     {
       id: AbilityId.CONTROLLED_FURY,

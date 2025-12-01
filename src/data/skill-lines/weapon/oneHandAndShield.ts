@@ -155,7 +155,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.POWER_BASH,
       description:
-        'Strike an enemy full-force with your shield, dealing 2399 Physical Damage. While slotted, blocking any attack grants you Resentment, which reduces the cost of your next Power Slam cast within 10 seconds by 50%. This ability\'s damage is considered Bash damage and interrupts the enemy if they are casting.',
+        "Strike an enemy full-force with your shield, dealing 2399 Physical Damage. While slotted, blocking any attack grants you Resentment, which reduces the cost of your next Power Slam cast within 10 seconds by 50%. This ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
     },
     {
       id: 38386, // Reverberating Bash (morph)

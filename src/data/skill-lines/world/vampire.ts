@@ -113,7 +113,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        '|ce60000CRIMINAL ACT Siphon away your enemies\' vitality, dealing 870 Magic Damage and healing you for 25% of your missing Health every 1 second for 3 seconds. This ability is considered direct damage.',
+        "|ce60000CRIMINAL ACT Siphon away your enemies' vitality, dealing 870 Magic Damage and healing you for 25% of your missing Health every 1 second for 3 seconds. This ability is considered direct damage.",
       alternateIds: [134583],
     },
     {
@@ -124,7 +124,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        'Siphon away your enemies\' vitality, dealing 870 Magic Damage, healing you for 25% of your missing Health, and restoring 10% of your missing Stamina every 1 second for 3 seconds. This ability is considered direct damage. Restores a portion of your missing Stamina.',
+        "Siphon away your enemies' vitality, dealing 870 Magic Damage, healing you for 25% of your missing Health, and restoring 10% of your missing Stamina every 1 second for 3 seconds. This ability is considered direct damage. Restores a portion of your missing Stamina.",
     },
     {
       id: 137259, // Morph of Vampiric Drain
@@ -134,7 +134,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        'Siphon away your enemies\' vitality, dealing 870 Magic Damage, healing you for 25% of your missing Health, and generating 5 Ultimate every 1 second for 3 seconds. This ability is considered direct damage. Generates Ultimate.',
+        "Siphon away your enemies' vitality, dealing 870 Magic Damage, healing you for 25% of your missing Health, and generating 5 Ultimate every 1 second for 3 seconds. This ability is considered direct damage. Generates Ultimate.",
     },
 
     // Active abilities - Mesmerize

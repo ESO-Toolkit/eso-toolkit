@@ -4,13 +4,12 @@
 
 import { RootState } from '@/store/storeWithHistory';
 
-import { LoadoutSetup } from '../types/loadout.types';
+import { LoadoutSetup, LoadoutState, SetupPage } from '../types/loadout.types';
 
 /**
  * Get the current trial ID
  */
-export const selectCurrentTrial = (state: RootState): string | null =>
-  state.loadout.currentTrial;
+export const selectCurrentTrial = (state: RootState): string | null => state.loadout.currentTrial;
 
 /**
  * Get the current page index
@@ -31,7 +30,7 @@ export const selectCurrentCharacter = (state: RootState): string | null =>
 /**
  * Get all pages for a specific trial (for the current character)
  */
-export const selectTrialPages = (state: RootState, trialId: string) => {
+export const selectTrialPages = (state: RootState, trialId: string): SetupPage[] => {
   const characterId = state.loadout.currentCharacter;
   if (!characterId) return [];
   return state.loadout.pages[characterId]?.[trialId] || [];
@@ -40,10 +39,10 @@ export const selectTrialPages = (state: RootState, trialId: string) => {
 /**
  * Get the current page for the current trial (for the current character)
  */
-export const selectCurrentTrialPage = (state: RootState) => {
+export const selectCurrentTrialPage = (state: RootState): SetupPage | null => {
   const trialId = state.loadout.currentTrial;
   const characterId = state.loadout.currentCharacter;
-  
+
   if (!trialId || !characterId) return null;
 
   const pages = state.loadout.pages[characterId]?.[trialId];
@@ -77,4 +76,4 @@ export const selectSetup = (
 /**
  * Get the complete loadout state for export
  */
-export const selectLoadoutState = (state: RootState) => state.loadout;
+export const selectLoadoutState = (state: RootState): LoadoutState => state.loadout;

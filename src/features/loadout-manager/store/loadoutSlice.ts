@@ -37,7 +37,11 @@ function createEmptySetup(name: string, condition: LoadoutSetup['condition']): L
 /**
  * Helper to get pages for current character and trial
  */
-function getCharacterTrialPages(state: LoadoutState, characterId: string | null, trialId: string): SetupPage[] | undefined {
+function getCharacterTrialPages(
+  state: LoadoutState,
+  characterId: string | null,
+  trialId: string,
+): SetupPage[] | undefined {
   if (!characterId) return undefined;
   return state.pages[characterId]?.[trialId];
 }
@@ -45,17 +49,23 @@ function getCharacterTrialPages(state: LoadoutState, characterId: string | null,
 /**
  * Helper to ensure character and trial pages exist
  */
-function ensureCharacterTrialPages(state: LoadoutState, characterId: string | null, trialId: string): void {
+function ensureCharacterTrialPages(
+  state: LoadoutState,
+  characterId: string | null,
+  trialId: string,
+): void {
   if (!characterId) return;
-  
+
   if (!state.pages[characterId]) {
     state.pages[characterId] = {};
   }
   if (!state.pages[characterId][trialId]) {
-    state.pages[characterId][trialId] = [{
-      name: 'Default Page',
-      setups: [],
-    }];
+    state.pages[characterId][trialId] = [
+      {
+        name: 'Default Page',
+        setups: [],
+      },
+    ];
   }
 }
 
@@ -149,7 +159,7 @@ const loadoutSlice = createSlice({
     addPage: (state, action: PayloadAction<{ trialId: string; pageName: string }>) => {
       const { trialId, pageName } = action.payload;
       if (!state.currentCharacter) return;
-      
+
       ensureCharacterTrialPages(state, state.currentCharacter, trialId);
       state.pages[state.currentCharacter][trialId].push({
         name: pageName,
@@ -164,9 +174,9 @@ const loadoutSlice = createSlice({
       state,
       action: PayloadAction<{ trialId: string; pageIndex: number; newName: string }>,
     ) => {
-      const { trialId, pageIndex, newName} = action.payload;
+      const { trialId, pageIndex, newName } = action.payload;
       if (!state.currentCharacter) return;
-      
+
       const pages = getCharacterTrialPages(state, state.currentCharacter, trialId);
       if (pages?.[pageIndex]) {
         pages[pageIndex].name = newName;
@@ -179,7 +189,7 @@ const loadoutSlice = createSlice({
     deletePage: (state, action: PayloadAction<{ trialId: string; pageIndex: number }>) => {
       const { trialId, pageIndex } = action.payload;
       if (!state.currentCharacter) return;
-      
+
       const pages = getCharacterTrialPages(state, state.currentCharacter, trialId);
       if (pages) {
         pages.splice(pageIndex, 1);
@@ -254,7 +264,13 @@ const loadoutSlice = createSlice({
       }>,
     ) => {
       const { trialId, pageIndex, setupIndex, updates } = action.payload;
-      const setup = getSetupByIndices(state, state.currentCharacter, trialId, pageIndex, setupIndex);
+      const setup = getSetupByIndices(
+        state,
+        state.currentCharacter,
+        trialId,
+        pageIndex,
+        setupIndex,
+      );
       if (setup) {
         Object.assign(setup, updates);
       }
@@ -273,7 +289,13 @@ const loadoutSlice = createSlice({
       }>,
     ) => {
       const { trialId, pageIndex, setupIndex, skills } = action.payload;
-      const setup = getSetupByIndices(state, state.currentCharacter, trialId, pageIndex, setupIndex);
+      const setup = getSetupByIndices(
+        state,
+        state.currentCharacter,
+        trialId,
+        pageIndex,
+        setupIndex,
+      );
       if (setup) {
         setup.skills = skills;
       }
@@ -292,7 +314,13 @@ const loadoutSlice = createSlice({
       }>,
     ) => {
       const { trialId, pageIndex, setupIndex, cp } = action.payload;
-      const setup = getSetupByIndices(state, state.currentCharacter, trialId, pageIndex, setupIndex);
+      const setup = getSetupByIndices(
+        state,
+        state.currentCharacter,
+        trialId,
+        pageIndex,
+        setupIndex,
+      );
       if (setup) {
         setup.cp = cp;
       }
@@ -311,7 +339,13 @@ const loadoutSlice = createSlice({
       }>,
     ) => {
       const { trialId, pageIndex, setupIndex, food } = action.payload;
-      const setup = getSetupByIndices(state, state.currentCharacter, trialId, pageIndex, setupIndex);
+      const setup = getSetupByIndices(
+        state,
+        state.currentCharacter,
+        trialId,
+        pageIndex,
+        setupIndex,
+      );
       if (setup) {
         setup.food = food;
       }
@@ -330,7 +364,13 @@ const loadoutSlice = createSlice({
       }>,
     ) => {
       const { trialId, pageIndex, setupIndex, gear } = action.payload;
-      const setup = getSetupByIndices(state, state.currentCharacter, trialId, pageIndex, setupIndex);
+      const setup = getSetupByIndices(
+        state,
+        state.currentCharacter,
+        trialId,
+        pageIndex,
+        setupIndex,
+      );
       if (setup) {
         setup.gear = gear;
       }
@@ -348,7 +388,13 @@ const loadoutSlice = createSlice({
       }>,
     ) => {
       const { trialId, pageIndex, setupIndex } = action.payload;
-      const setup = getSetupByIndices(state, state.currentCharacter, trialId, pageIndex, setupIndex);
+      const setup = getSetupByIndices(
+        state,
+        state.currentCharacter,
+        trialId,
+        pageIndex,
+        setupIndex,
+      );
       if (setup) {
         setup.skills = { 0: {}, 1: {} };
       }
@@ -366,7 +412,13 @@ const loadoutSlice = createSlice({
       }>,
     ) => {
       const { trialId, pageIndex, setupIndex } = action.payload;
-      const setup = getSetupByIndices(state, state.currentCharacter, trialId, pageIndex, setupIndex);
+      const setup = getSetupByIndices(
+        state,
+        state.currentCharacter,
+        trialId,
+        pageIndex,
+        setupIndex,
+      );
       if (setup) {
         setup.cp = {};
       }
@@ -384,7 +436,13 @@ const loadoutSlice = createSlice({
       }>,
     ) => {
       const { trialId, pageIndex, setupIndex } = action.payload;
-      const setup = getSetupByIndices(state, state.currentCharacter, trialId, pageIndex, setupIndex);
+      const setup = getSetupByIndices(
+        state,
+        state.currentCharacter,
+        trialId,
+        pageIndex,
+        setupIndex,
+      );
       if (setup) {
         setup.food = {};
       }
@@ -402,7 +460,13 @@ const loadoutSlice = createSlice({
       }>,
     ) => {
       const { trialId, pageIndex, setupIndex } = action.payload;
-      const setup = getSetupByIndices(state, state.currentCharacter, trialId, pageIndex, setupIndex);
+      const setup = getSetupByIndices(
+        state,
+        state.currentCharacter,
+        trialId,
+        pageIndex,
+        setupIndex,
+      );
       if (setup) {
         setup.gear = {};
       }
@@ -441,7 +505,13 @@ const loadoutSlice = createSlice({
       }>,
     ) => {
       const { trialId, pageIndex, setupIndex } = action.payload;
-      const setup = getSetupByIndices(state, state.currentCharacter, trialId, pageIndex, setupIndex);
+      const setup = getSetupByIndices(
+        state,
+        state.currentCharacter,
+        trialId,
+        pageIndex,
+        setupIndex,
+      );
       if (setup) {
         const duplicate = JSON.parse(JSON.stringify(setup)) as LoadoutSetup;
         duplicate.name = `${setup.name} (Copy)`;
@@ -484,7 +554,13 @@ const loadoutSlice = createSlice({
       }>,
     ) => {
       const { trialId, pageIndex, setupIndex, setupData } = action.payload;
-      const existingSetup = getSetupByIndices(state, state.currentCharacter, trialId, pageIndex, setupIndex);
+      const existingSetup = getSetupByIndices(
+        state,
+        state.currentCharacter,
+        trialId,
+        pageIndex,
+        setupIndex,
+      );
       if (existingSetup) {
         // Preserve the name and condition, update everything else
         const pages = getCharacterTrialPages(state, state.currentCharacter, trialId);

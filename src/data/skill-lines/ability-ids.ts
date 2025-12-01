@@ -1,15 +1,17 @@
+/* eslint-disable @typescript-eslint/no-duplicate-enum-values */
+
 /**
  * ESO Ability IDs
- * 
+ *
  * This enum contains the base ability IDs for all known skill line abilities.
  * These IDs correspond to the first rank of each ability in abilities.json.
- * 
+ *
  * Multi-rank abilities have consecutive IDs:
  * - Rank 1: Base ID
  * - Rank 2: Base ID + 1 (or next occurrence)
  * - Rank 3: Base ID + 2 (or next occurrence)
  * - etc.
- * 
+ *
  * Source: abilities.json (exact string matching)
  * Last Updated: November 2025
  */
@@ -77,7 +79,7 @@ export enum AbilityId {
   // ==========================================
   // WEAPON SKILL LINES
   // ==========================================
-  
+
   // Two-Handed
   BERSERKER_STRIKE = 83216,
   SMASH = 138586,

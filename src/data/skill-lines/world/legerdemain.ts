@@ -45,8 +45,7 @@ export const legerdemain: SkillLineData = {
       id: AbilityId.TRAFFICKER,
       name: 'Trafficker',
       icon: 'https://eso-hub.com/storage/icons/ability_world_legerdemain_003.png',
-      description:
-        'Increases the number of fence interactions you can use each day by 180%.',
+      description: 'Increases the number of fence interactions you can use each day by 180%.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,
@@ -68,8 +67,7 @@ export const legerdemain: SkillLineData = {
       id: AbilityId.KICKBACK,
       name: 'Kickback',
       icon: 'https://eso-hub.com/storage/icons/ability_world_legerdemain_005.png',
-      description:
-        'Reduces bounties you willingly pay to guards and fences by 40%.',
+      description: 'Reduces bounties you willingly pay to guards and fences by 40%.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,

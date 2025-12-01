@@ -48,8 +48,7 @@ export const excavation: SkillLineData = {
       id: AbilityId.KEEN_EYE_DIG_SITES,
       name: 'Keen Eye: Dig Sites',
       icon: 'https://eso-hub.com/storage/icons/ability_world_excavation_keen_eye_dig_sites.png',
-      description:
-        'Antiquity Dig Sites will be easier to see when you are 30 meters or closer.',
+      description: 'Antiquity Dig Sites will be easier to see when you are 30 meters or closer.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,
@@ -78,8 +77,7 @@ export const excavation: SkillLineData = {
       id: AbilityId.KEEN_EYE_TREASURE_CHESTS,
       name: 'Keen Eye: Treasure Chests',
       icon: 'https://eso-hub.com/storage/icons/ability_world_excavation_keen_eye_treasure_chests.png',
-      description:
-        'Treasure Chests will be easier to see when you are 30 meters or closer.',
+      description: 'Treasure Chests will be easier to see when you are 30 meters or closer.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,

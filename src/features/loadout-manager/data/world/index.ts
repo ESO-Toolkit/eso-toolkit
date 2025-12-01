@@ -1,7 +1,8 @@
 import type { SkillData } from '../types';
-import { WEREWOLF_SKILLS } from './werewolf';
-import { VAMPIRE_SKILLS } from './vampire';
+
 import { SOUL_MAGIC_SKILLS } from './soulMagic';
+import { VAMPIRE_SKILLS } from './vampire';
+import { WEREWOLF_SKILLS } from './werewolf';
 
 export const WORLD_SKILLS: SkillData[] = [
   ...WEREWOLF_SKILLS,

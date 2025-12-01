@@ -39,8 +39,7 @@ export const restorationStaff: SkillLineData = {
       name: "Mender's Bond",
       type: 'active',
       baseAbilityId: AbilityId.MENDERS_BOND,
-      description:
-        'Tether yourself to an ally, manifesting a life link between you and them.',
+      description: 'Tether yourself to an ally, manifesting a life link between you and them.',
     },
     // Active abilities - Grand Healing family
     {

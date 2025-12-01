@@ -1,13 +1,13 @@
 /**
  * Champion Point Ability IDs from ESO
- * 
+ *
  * Mappings derived from WizardsWardrobe.lua saved variables cross-referenced with in-game screenshots.
- * 
+ *
  * Structure: 12 slottable Champion Point abilities per build
  * - Slots 1-4: Craft Tree (Green)
- * - Slots 5-8: Warfare Tree (Blue)  
+ * - Slots 5-8: Warfare Tree (Blue)
  * - Slots 9-12: Fitness Tree (Red)
- * 
+ *
  * Total CP IDs in Lua file: 48
  * Verified via screenshots: 37
  * Unmapped (need additional coverage): 11
@@ -118,7 +118,9 @@ export interface ChampionPointAbilityMetadata {
  * Complete Champion Point ability metadata
  * Only includes verified/mapped abilities - Unknown_ enum values are excluded
  */
-export const CHAMPION_POINT_ABILITIES: Partial<Record<ChampionPointAbilityId, ChampionPointAbilityMetadata>> = {
+export const CHAMPION_POINT_ABILITIES: Partial<
+  Record<ChampionPointAbilityId, ChampionPointAbilityMetadata>
+> = {
   // CRAFT
   [ChampionPointAbilityId.GiftedRider]: {
     id: ChampionPointAbilityId.GiftedRider,

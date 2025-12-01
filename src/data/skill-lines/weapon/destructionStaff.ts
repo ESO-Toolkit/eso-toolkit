@@ -152,7 +152,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.DESTRUCTIVE_TOUCH,
       description:
-        'Devastate an enemy with an enhanced charge from your staff, dealing 1161 Magic Damage and an additional 3470 Magic Damage over 20 seconds. The initial hit always applies the element\'s status effect.',
+        "Devastate an enemy with an enhanced charge from your staff, dealing 1161 Magic Damage and an additional 3470 Magic Damage over 20 seconds. The initial hit always applies the element's status effect.",
     },
     {
       id: 38984, // Destructive Clench (morph)
@@ -160,7 +160,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.DESTRUCTIVE_TOUCH,
       description:
-        'Devastate an enemy with an enhanced charge from your staff, dealing 1161 Magic Damage. The initial hit always applies the element\'s status effect. Flame Clench also knocks the enemy back. Frost Clench deals less damage, has increased range, applies Major Maim, immobilizes, and taunts the enemy. Shock Clench converts the attack into an area of effect explosion.',
+        "Devastate an enemy with an enhanced charge from your staff, dealing 1161 Magic Damage. The initial hit always applies the element's status effect. Flame Clench also knocks the enemy back. Frost Clench deals less damage, has increased range, applies Major Maim, immobilizes, and taunts the enemy. Shock Clench converts the attack into an area of effect explosion.",
       alternateIds: [38989], // Frost Clench variant
     },
     {
@@ -169,7 +169,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.DESTRUCTIVE_TOUCH,
       description:
-        'Devastate an enemy with an enhanced charge from your staff, dealing 1161 Magic Damage and an additional 3470 Magic Damage over 20 seconds. The initial hit always applies the element\'s status effect.',
+        "Devastate an enemy with an enhanced charge from your staff, dealing 1161 Magic Damage and an additional 3470 Magic Damage over 20 seconds. The initial hit always applies the element's status effect.",
     },
     {
       id: AbilityId.WEAKNESS_TO_ELEMENTS,
@@ -177,7 +177,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.WEAKNESS_TO_ELEMENTS,
       description:
-        'Send the elements to sap an enemy\'s defenses and afflict them with Major Breach for 30 seconds, reducing their Physical and Spell Resistance by 5948.',
+        "Send the elements to sap an enemy's defenses and afflict them with Major Breach for 30 seconds, reducing their Physical and Spell Resistance by 5948.",
     },
     {
       id: 39095, // Elemental Drain (morph)
@@ -185,7 +185,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.WEAKNESS_TO_ELEMENTS,
       description:
-        'Send the elements to sap an enemy\'s defenses and afflict them with Major Breach for 1 minute, reducing their Physical and Spell Resistance by 5948. Also applies Minor Magickasteal to the enemy for 1 minute, causing you and your allies to restore 168 Magicka every 1 second when damaging them.',
+        "Send the elements to sap an enemy's defenses and afflict them with Major Breach for 1 minute, reducing their Physical and Spell Resistance by 5948. Also applies Minor Magickasteal to the enemy for 1 minute, causing you and your allies to restore 168 Magicka every 1 second when damaging them.",
     },
     {
       id: 39089, // Elemental Susceptibility (morph)
@@ -193,7 +193,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.WEAKNESS_TO_ELEMENTS,
       description:
-        'Send the elements to sap an enemy\'s defenses and afflict them with Major Breach for 30 seconds, reducing their Physical and Spell Resistance by 5948. Every 7.5 seconds the enemy is afflicted with the Burning, Chilled, and Concussion status effect.',
+        "Send the elements to sap an enemy's defenses and afflict them with Major Breach for 30 seconds, reducing their Physical and Spell Resistance by 5948. Every 7.5 seconds the enemy is afflicted with the Burning, Chilled, and Concussion status effect.",
     },
     {
       id: AbilityId.IMPULSE,
@@ -201,7 +201,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.IMPULSE,
       description:
-        'Release a surge of elemental energy, dealing 1742 Magic Damage to nearby enemies. Fire Impulse hits Burning enemies with Impulse Afterburn, which deals more damage based on their missing Health. Frost Impulse also provides Minor Protection. Shock Impulse\'s damage increases based on the number of enemies hit.',
+        "Release a surge of elemental energy, dealing 1742 Magic Damage to nearby enemies. Fire Impulse hits Burning enemies with Impulse Afterburn, which deals more damage based on their missing Health. Frost Impulse also provides Minor Protection. Shock Impulse's damage increases based on the number of enemies hit.",
       alternateIds: [28798],
     },
     {
@@ -210,7 +210,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.IMPULSE,
       description:
-        'Release a surge of elemental energy, dealing 1799 Magic Damage to enemies at the target location. Fire Ring hits Burning enemies with Ring Afterburn, which deals more damage based on their missing Health. Frost Ring also provides Minor Protection. Shock Ring\'s damage increases based on the number of enemies hit.',
+        "Release a surge of elemental energy, dealing 1799 Magic Damage to enemies at the target location. Fire Ring hits Burning enemies with Ring Afterburn, which deals more damage based on their missing Health. Frost Ring also provides Minor Protection. Shock Ring's damage increases based on the number of enemies hit.",
     },
     {
       id: 39161, // Pulsar (morph)
@@ -218,7 +218,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.IMPULSE,
       description:
-        'Release a surge of elemental energy, dealing 1742 Magic Damage to nearby enemies and afflicting them with Minor Mangle, reducing their Max Health by 10% for 10 seconds. Flame Pulsar hits Burning enemies with Pulsar Afterburn, which deals more damage based on their missing Health. Frost Pulsar also provides Minor Protection. Storm Pulsar\'s damage increases based on the number of enemies hit.',
+        "Release a surge of elemental energy, dealing 1742 Magic Damage to nearby enemies and afflicting them with Minor Mangle, reducing their Max Health by 10% for 10 seconds. Flame Pulsar hits Burning enemies with Pulsar Afterburn, which deals more damage based on their missing Health. Frost Pulsar also provides Minor Protection. Storm Pulsar's damage increases based on the number of enemies hit.",
       alternateIds: [39163],
     },
 
@@ -237,14 +237,15 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.PENETRATING_MAGIC,
       description:
-        'WITH DESTRUCTION STAFF EQUIPPED Your Destruction Staff abilities ignore 2974 of the enemy\'s Spell Resistance.',
+        "WITH DESTRUCTION STAFF EQUIPPED Your Destruction Staff abilities ignore 2974 of the enemy's Spell Resistance.",
     },
     {
       id: AbilityId.ELEMENTAL_FORCE,
       name: 'Elemental Force',
       type: 'passive',
       baseAbilityId: AbilityId.ELEMENTAL_FORCE,
-      description: 'WITH DESTRUCTION STAFF EQUIPPED Increases your chance to apply status effects by 100%.',
+      description:
+        'WITH DESTRUCTION STAFF EQUIPPED Increases your chance to apply status effects by 100%.',
     },
     {
       id: AbilityId.ANCIENT_KNOWLEDGE,

@@ -39,16 +39,16 @@ export interface FoodConfig {
  */
 export interface GearPiece {
   link?: string; // ESO item link format
-  id?: string; // Item ID as string
+  id?: string | number; // Item ID (string for compatibility with Wizard's Wardrobe)
 }
 
 /**
  * Full gear configuration
  * Slot indices follow ESO's equipment slot system:
  * 0: Head, 1: Neck, 2: Chest, 3: Shoulders, 4: Main Hand
- * 5: (unused), 6: Belt, 8: Legs, 9: Feet, 10: (unused)
- * 11: Ring 1, 12: Ring 2, 13-14: (unused), 16: Boots
- * 20: Back Bar Weapon, 21: (unused)
+ * 5: Off Hand, 6: Belt, 8: Legs, 9: Feet, 10: (unused)
+ * 11: Ring 1, 12: Ring 2, 13-14: (unused), 16: Hands/Gloves
+ * 20: Back Bar Main Hand, 21: Back Bar Off Hand
  */
 export interface GearConfig {
   [slotIndex: number]: GearPiece;
@@ -117,11 +117,11 @@ export type ClassSkillLine =
   | 'Nightblade_Shadow'
   | 'Nightblade_Siphoning'
   | 'Templar_Aedric Spear'
-  | 'Templar_Dawn\'s Wrath'
+  | "Templar_Dawn's Wrath"
   | 'Templar_Restoring Light'
   | 'Warden_Animal Companions'
   | 'Warden_Green Balance'
-  | 'Warden_Winter\'s Embrace'
+  | "Warden_Winter's Embrace"
   | 'Necromancer_Grave Lord'
   | 'Necromancer_Bone Tyrant'
   | 'Necromancer_Living Death'
@@ -169,7 +169,7 @@ export interface WizardWardrobeExport {
     [trialId: string]: Array<{
       name?: string;
       selected?: number;
-      [key: number]: any; // Can contain setup data on some page indices
+      [key: number]: unknown; // Can contain setup data on some page indices
     }>;
   };
   version: number;

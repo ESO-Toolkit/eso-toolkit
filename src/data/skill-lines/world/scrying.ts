@@ -15,7 +15,8 @@ export const scrying: SkillLineData = {
       maxRank: 1,
       isUltimate: false,
       isPassive: true,
-      description: 'Adds the selected contiguous group of facets to your area of control. Consumes 1 turn.',
+      description:
+        'Adds the selected contiguous group of facets to your area of control. Consumes 1 turn.',
       skillStyles: [],
     },
     {

@@ -4,23 +4,14 @@
  */
 
 import { HelpOutline, Restaurant } from '@mui/icons-material';
+import { Alert, Box, Chip, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import Autocomplete, { AutocompleteInputChangeReason } from '@mui/material/Autocomplete';
-import {
-  Alert,
-  Box,
-  Chip,
-  IconButton,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
 import React from 'react';
 import { useDispatch } from 'react-redux';
-
 import { Link as RouterLink } from 'react-router-dom';
 
 import { ESO_CONSUMABLES, ESO_CONSUMABLE_LOOKUP, EsoConsumable } from '@/data/esoConsumables';
+
 import { updateFood } from '../store/loadoutSlice';
 import { FoodConfig } from '../types/loadout.types';
 
@@ -113,7 +104,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
       id: itemId,
       name: linkName && linkName.length > 0 ? linkName : `Item ${itemId}`,
       type: 'food',
-      description: 'Imported from Wizard\'s Wardrobe export. Add to catalog to enable metadata.',
+      description: "Imported from Wizard's Wardrobe export. Add to catalog to enable metadata.",
     };
   }, [food]);
 
@@ -126,13 +117,13 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
     return alreadyPresent ? BASE_CONSUMABLES : [...BASE_CONSUMABLES, resolvedConsumable];
   }, [resolvedConsumable]);
 
-  const handleClear = () => {
+  const handleClear = (): void => {
     dispatch(updateFood({ trialId, pageIndex, setupIndex, food: {} }));
     setInputValue('');
     setDropdownOpen(false);
   };
 
-  const handleSelect = (item: DisplayConsumable | null) => {
+  const handleSelect = (item: DisplayConsumable | null): void => {
     if (!item) {
       handleClear();
       return;
@@ -149,7 +140,10 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
   };
 
   const filterConsumables = React.useCallback(
-    (options: DisplayConsumable[], { inputValue: optionInput }: { inputValue: string }) => {
+    (
+      options: DisplayConsumable[],
+      { inputValue: optionInput }: { inputValue: string },
+    ): DisplayConsumable[] => {
       const query = optionInput.trim().toLowerCase();
       if (query.length < MIN_SEARCH_LENGTH) {
         return [];
@@ -172,7 +166,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
   const handleAutocompleteChange = (
     _event: React.SyntheticEvent,
     option: DisplayConsumable | null,
-  ) => {
+  ): void => {
     if (option) {
       handleSelect(option);
       setInputValue(option.name);
@@ -187,7 +181,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
     _event: React.SyntheticEvent,
     value: string,
     reason: AutocompleteInputChangeReason,
-  ) => {
+  ): void => {
     setInputValue(value);
 
     if (reason === 'reset') {
@@ -206,13 +200,13 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
     }
   };
 
-  const handleAutocompleteOpen = () => {
+  const handleAutocompleteOpen = (): void => {
     if (inputValue.trim().length >= MIN_SEARCH_LENGTH) {
       setDropdownOpen(true);
     }
   };
 
-  const handleAutocompleteClose = () => {
+  const handleAutocompleteClose = (): void => {
     setDropdownOpen(false);
   };
 
@@ -241,7 +235,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
         onOpen={handleAutocompleteOpen}
         onClose={handleAutocompleteClose}
         options={consumables}
-  value={currentItem ?? undefined}
+        value={currentItem ?? undefined}
         onChange={handleAutocompleteChange}
         inputValue={inputValue}
         onInputChange={handleInputChange}
@@ -321,9 +315,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
             borderRadius: 1,
             border: (theme) => `1px solid ${theme.palette.success.light}`,
             bgcolor: (theme) =>
-              theme.palette.mode === 'dark'
-                ? 'rgba(46, 125, 50, 0.18)'
-                : 'rgba(76, 175, 80, 0.12)',
+              theme.palette.mode === 'dark' ? 'rgba(46, 125, 50, 0.18)' : 'rgba(76, 175, 80, 0.12)',
           }}
         >
           <Box flex={1}>

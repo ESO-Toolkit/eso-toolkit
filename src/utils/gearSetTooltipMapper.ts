@@ -4,14 +4,14 @@ import type {
   GearPieceInfo,
 } from '../components/GearSetTooltip';
 import * as arenaSets from '../data/Gear Sets/arena';
-import { arenaSpecialGearSets, monsterGearSets } from '../data/Gear Sets/legacyAdapters';
 import * as heavySets from '../data/Gear Sets/heavy';
+import { arenaSpecialGearSets, monsterGearSets } from '../data/Gear Sets/legacyAdapters';
 import * as lightSets from '../data/Gear Sets/light';
 import * as mediumSets from '../data/Gear Sets/medium';
 import * as mythicSets from '../data/Gear Sets/mythics';
 import * as sharedSets from '../data/Gear Sets/shared';
-import type { PlayerGear } from '../types/playerDetails';
 import type { GearSetData } from '../types/gearSet';
+import type { PlayerGear } from '../types/playerDetails';
 
 import type { PlayerGearSetRecord } from './gearUtilities';
 

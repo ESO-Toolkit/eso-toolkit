@@ -15,9 +15,7 @@ export const TRIALS: TrialConfig[] = [
     id: 'GEN',
     name: 'General',
     type: 'general',
-    bosses: [
-      { name: 'General Setup', trashPacksBefore: 0 },
-    ],
+    bosses: [{ name: 'General Setup', trashPacksBefore: 0 }],
   },
 
   // Alphabetically ordered
@@ -48,9 +46,7 @@ export const TRIALS: TrialConfig[] = [
     id: 'BRP',
     name: 'Blackrose Prison',
     type: 'arena',
-    bosses: [
-      { name: 'Arena Setup', trashPacksBefore: 0 },
-    ],
+    bosses: [{ name: 'Arena Setup', trashPacksBefore: 0 }],
   },
 
   {
@@ -98,7 +94,7 @@ export const TRIALS: TrialConfig[] = [
     bosses: [
       { name: 'Ra Kotu', trashPacksBefore: 2 },
       { name: 'Raktu', trashPacksBefore: 2 },
-      { name: 'Yokeda Rok\'dun', trashPacksBefore: 3 },
+      { name: "Yokeda Rok'dun", trashPacksBefore: 3 },
       { name: 'The Warrior', trashPacksBefore: 2 },
     ],
   },
@@ -107,14 +103,12 @@ export const TRIALS: TrialConfig[] = [
     id: 'IA',
     name: 'Infinite Archive',
     type: 'arena',
-    bosses: [
-      { name: 'Infinite Archive Setup', trashPacksBefore: 0 },
-    ],
+    bosses: [{ name: 'Infinite Archive Setup', trashPacksBefore: 0 }],
   },
 
   {
     id: 'KA',
-    name: 'Kyne\'s Aegis',
+    name: "Kyne's Aegis",
     type: 'trial',
     bosses: [
       { name: 'Yandir the Butcher', trashPacksBefore: 1 },
@@ -140,7 +134,7 @@ export const TRIALS: TrialConfig[] = [
     name: 'Maw of Lorkhaj',
     type: 'trial',
     bosses: [
-      { name: 'Zhaj\'hassa the Forgotten', trashPacksBefore: 2 },
+      { name: "Zhaj'hassa the Forgotten", trashPacksBefore: 2 },
       { name: 'The Twins', trashPacksBefore: 3 },
       { name: 'Rakkhat', trashPacksBefore: 1 },
     ],
@@ -150,18 +144,14 @@ export const TRIALS: TrialConfig[] = [
     id: 'OC',
     name: 'Overland/Other Content',
     type: 'general',
-    bosses: [
-      { name: 'General Setup', trashPacksBefore: 0 },
-    ],
+    bosses: [{ name: 'General Setup', trashPacksBefore: 0 }],
   },
 
   {
     id: 'PVP',
     name: 'PVP',
     type: 'general',
-    bosses: [
-      { name: 'PVP Setup', trashPacksBefore: 0 },
-    ],
+    bosses: [{ name: 'PVP Setup', trashPacksBefore: 0 }],
   },
 
   {
@@ -189,7 +179,7 @@ export const TRIALS: TrialConfig[] = [
 
   {
     id: 'SE',
-    name: 'Sanity\'s Edge',
+    name: "Sanity's Edge",
     type: 'trial',
     bosses: [
       { name: 'Exarchanic Yaseyla', trashPacksBefore: 1 },
@@ -268,7 +258,7 @@ export function generateSetupStructure(
 
   const structure: Array<{ type: 'trash' | 'boss'; name: string; trashIndex?: number }> = [];
 
-  trial.bosses.forEach((boss, bossIndex) => {
+  trial.bosses.forEach((boss) => {
     // Add trash packs before this boss
     if (includeTrash && boss.trashPacksBefore > 0) {
       for (let i = 1; i <= boss.trashPacksBefore; i++) {

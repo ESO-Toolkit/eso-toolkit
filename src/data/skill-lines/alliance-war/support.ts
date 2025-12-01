@@ -40,8 +40,7 @@ export const support: SkillLineData = {
     {
       id: AbilityId.BANNER_BEARER,
       name: 'Banner Bearer',
-      description:
-        'Bring out a banner to inspire yourself and nearby group members.',
+      description: 'Bring out a banner to inspire yourself and nearby group members.',
       isUltimate: false,
       isPassive: false,
       maxRank: 4,
@@ -69,7 +68,7 @@ export const support: SkillLineData = {
       id: 40229, // Morph of Siege Shield
       name: 'Siege Weapon Shield',
       description:
-        'Create a protective sphere over your location that reduces damage taken from siege weapons by 50% for you and nearby allies. The sphere also protects you and your allies\' siege weapons, reducing damage from enemy siege weapons by 75%.',
+        "Create a protective sphere over your location that reduces damage taken from siege weapons by 50% for you and nearby allies. The sphere also protects you and your allies' siege weapons, reducing damage from enemy siege weapons by 75%.",
       isUltimate: false,
       isPassive: false,
       maxRank: 4,
@@ -159,8 +158,7 @@ export const support: SkillLineData = {
     {
       id: AbilityId.MAGICKA_AID,
       name: 'Magicka Aid',
-      description:
-        'Increases your Magicka Recovery by 10% for each Support ability slotted.',
+      description: 'Increases your Magicka Recovery by 10% for each Support ability slotted.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,
@@ -168,8 +166,7 @@ export const support: SkillLineData = {
     {
       id: AbilityId.COMBAT_MEDIC,
       name: 'Combat Medic',
-      description:
-        'Increases your healing done by 20% when you are near a Keep.',
+      description: 'Increases your healing done by 20% when you are near a Keep.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,

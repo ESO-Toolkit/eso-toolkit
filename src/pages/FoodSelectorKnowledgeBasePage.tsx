@@ -121,9 +121,7 @@ export const FoodSelectorKnowledgeBasePage: React.FC = () => {
           sx={{
             borderLeft: `4px solid ${theme.palette.success.main}`,
             backgroundColor:
-              theme.palette.mode === 'dark'
-                ? 'rgba(76, 175, 80, 0.12)'
-                : 'rgba(76, 175, 80, 0.08)',
+              theme.palette.mode === 'dark' ? 'rgba(76, 175, 80, 0.12)' : 'rgba(76, 175, 80, 0.08)',
           }}
         >
           We refresh the consumable catalog regularly. If something looks out of date, run the

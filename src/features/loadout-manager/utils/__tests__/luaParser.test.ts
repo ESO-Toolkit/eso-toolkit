@@ -2,7 +2,11 @@
  * @jest-environment jsdom
  */
 
-import { parseLuaSavedVariables, extractWizardWardrobeData, isWizardWardrobeFormat } from '../luaParser';
+import {
+  parseLuaSavedVariables,
+  extractWizardWardrobeData,
+  isWizardWardrobeFormat,
+} from '../luaParser';
 import type { WizardWardrobeExport } from '../../types/loadout.types';
 
 describe('Lua Parser', () => {
@@ -137,7 +141,7 @@ describe('Lua Parser', () => {
 
       expect(allWizardData).not.toBeNull();
       expect(allWizardData).toBeDefined();
-      
+
       // extractWizardWardrobeData now returns all characters
       const wizardData = allWizardData?.['$AccountWide'];
       expect(wizardData).toBeDefined();
@@ -196,13 +200,13 @@ describe('Lua Parser', () => {
       const allWizardData = extractWizardWardrobeData(parsed);
 
       expect(allWizardData).not.toBeNull();
-      
+
       // extractWizardWardrobeData now returns all characters
       const wizardData = allWizardData?.['$AccountWide'];
       expect(wizardData).toBeDefined();
       expect(wizardData?.setups['SS']).toBeDefined();
       expect(Array.isArray(wizardData?.setups['SS'])).toBe(true);
-      
+
       // The first element of the array is an object with numeric keys
       const firstPage = wizardData?.setups['SS']?.[0];
       expect(firstPage).toBeDefined();

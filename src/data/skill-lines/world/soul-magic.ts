@@ -60,7 +60,7 @@ export const soulMagic: SkillLineData = {
       id: AbilityId.SOUL_TRAP,
       name: 'Soul Trap',
       description:
-        'Lay claim to an enemy\'s soul, dealing 4631 Magic Damage over 20 seconds. Fills an empty Soul Gem if an affected enemy dies.',
+        "Lay claim to an enemy's soul, dealing 4631 Magic Damage over 20 seconds. Fills an empty Soul Gem if an affected enemy dies.",
       icon: 'https://eso-hub.com/storage/icons/ability_soul_magic_soul_trap.png',
       isUltimate: false,
       isPassive: false,
@@ -70,7 +70,7 @@ export const soulMagic: SkillLineData = {
       id: 40319, // Morph of Soul Trap
       name: 'Consuming Trap',
       description:
-        'Lay claim to an enemy\'s soul, dealing 4642 Magic Damage over 20 seconds. If an affected enemy dies, you fill an empty Soul Gem, heal for 3200 Health, and restore 2400 Magicka and 2400 Stamina. This portion of the ability scales off your Max Health, Magicka, and Stamina. Also restore Health, Magicka, and Stamina if enemy dies while affected.',
+        "Lay claim to an enemy's soul, dealing 4642 Magic Damage over 20 seconds. If an affected enemy dies, you fill an empty Soul Gem, heal for 3200 Health, and restore 2400 Magicka and 2400 Stamina. This portion of the ability scales off your Max Health, Magicka, and Stamina. Also restore Health, Magicka, and Stamina if enemy dies while affected.",
       icon: 'https://eso-hub.com/storage/icons/ability_soul_magic_consuming_trap.png',
       isUltimate: false,
       isPassive: false,
@@ -99,8 +99,7 @@ export const soulMagic: SkillLineData = {
     {
       id: AbilityId.SOUL_SUMMONS,
       name: 'Soul Summons',
-      description:
-        'Allows you to revive once every 1 hour without spending a Soul Gem.',
+      description: 'Allows you to revive once every 1 hour without spending a Soul Gem.',
       icon: 'https://eso-hub.com/storage/icons/ability_soul_magic_soul_summons.png',
       isUltimate: false,
       isPassive: true,
@@ -109,8 +108,7 @@ export const soulMagic: SkillLineData = {
     {
       id: AbilityId.SOUL_LOCK,
       name: 'Soul Lock',
-      description:
-        'Killing an enemy has a 10% chance of automatically filling an empty Soul Gem.',
+      description: 'Killing an enemy has a 10% chance of automatically filling an empty Soul Gem.',
       icon: 'https://eso-hub.com/storage/icons/ability_soul_magic_soul_lock.png',
       isUltimate: false,
       isPassive: true,

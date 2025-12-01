@@ -10,7 +10,13 @@ export const nord: SkillLineData = {
   name: 'Nord',
   skills: [
     { id: AbilityId.REVELER, name: 'Reveler', isPassive: true, isUltimate: false, maxRank: 2 },
-    { id: AbilityId.RESIST_FROST, name: 'Resist Frost', isPassive: true, isUltimate: false, maxRank: 2 },
+    {
+      id: AbilityId.RESIST_FROST,
+      name: 'Resist Frost',
+      isPassive: true,
+      isUltimate: false,
+      maxRank: 2,
+    },
     { id: AbilityId.STALWART, name: 'Stalwart', isPassive: true, isUltimate: false, maxRank: 2 },
     { id: AbilityId.RUGGED, name: 'Rugged', isPassive: true, isUltimate: false, maxRank: 2 },
   ],

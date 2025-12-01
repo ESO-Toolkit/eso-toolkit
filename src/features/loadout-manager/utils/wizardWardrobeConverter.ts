@@ -2,6 +2,9 @@
  * Wizard's Wardrobe Format Converter
  * Converts between Wizard's Wardrobe addon format and internal LoadoutState
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { Logger } from '@/utils/logger';
 
 import type {
   ChampionPointsConfig,
@@ -9,6 +12,8 @@ import type {
   LoadoutSetup,
   WizardWardrobeExport,
 } from '../types/loadout.types';
+
+const converterLogger = new Logger({ contextPrefix: 'WizardWardrobeConverter' });
 
 /**
  * Convert all character data from Wizard's Wardrobe to internal LoadoutState
@@ -25,7 +30,7 @@ export function convertAllCharactersToLoadoutState(
     // Generate character ID and name
     const characterName = wizardData.$LastCharacterName || `Character ${characterKey}`;
     const characterId = `${characterName.toLowerCase().replace(/\s+/g, '-')}-${characterKey}`;
-    
+
     if (!firstCharacterId) {
       firstCharacterId = characterId;
     }
@@ -44,7 +49,7 @@ export function convertAllCharactersToLoadoutState(
       if (!Array.isArray(trialSetups)) continue;
 
       const trialPages: any[] = [];
-      
+
       // Get page names from the separate pages property if it exists
       const pageNames = wizardData.pages?.[trialId];
 
@@ -52,29 +57,54 @@ export function convertAllCharactersToLoadoutState(
         const pageData = trialSetups[pageIndex];
         if (!pageData || typeof pageData !== 'object') continue;
 
-        console.log(`Processing page ${pageIndex} for trial ${trialId}:`, pageData);
-        console.log('Page data keys:', Object.keys(pageData));
+        converterLogger.debug('Processing Wizard page', {
+          pageIndex,
+          trialId,
+          keys: Object.keys(pageData),
+        });
 
         const setups: LoadoutSetup[] = [];
-        
+
         // Page names are stored 1-indexed in the pages property
         // setups[0] corresponds to pages[1], setups[1] to pages[2], etc.
         let pageName = pageNames?.[pageIndex + 1]?.name || `Page ${pageIndex + 1}`;
-        console.log(`  Page name from pages[${pageIndex + 1}]: "${pageNames?.[pageIndex + 1]?.name || 'not found'}"`);
+        converterLogger.debug('Resolved page name', {
+          trialId,
+          pageIndex,
+          pageName: pageNames?.[pageIndex + 1]?.name ?? null,
+        });
 
-        // Extract setups from numeric keys in the setups array
-        for (const [key, value] of Object.entries(pageData)) {
-          console.log(`  Checking key "${key}", type: ${typeof key}, value type: ${typeof value}`);
-          if (!isNaN(Number(key))) {
-            const setup = normalizeSetup(value as any);
-            if (setup) {
-              setups.push(setup);
+        // Check if pageData is a setup object itself or a container of setups
+        // If it has a 'name' property, it's a setup object
+        if ('name' in pageData && typeof (pageData as any).name === 'string') {
+          converterLogger.debug('Page entry is a direct setup', { trialId, pageIndex });
+          const setup = normalizeSetup(pageData);
+          if (setup) {
+            setups.push(setup);
+          }
+        } else {
+          // Extract setups from numeric keys in the setups array
+          for (const [key, value] of Object.entries(pageData)) {
+            converterLogger.debug('Inspecting page key for setup extraction', {
+              key,
+              keyType: typeof key,
+              valueType: typeof value,
+            });
+            if (!isNaN(Number(key))) {
+              const setup = normalizeSetup(value as any);
+              if (setup) {
+                setups.push(setup);
+              }
             }
           }
         }
 
         if (setups.length > 0) {
-          console.log(`  Adding page "${pageName}" with ${setups.length} setups`);
+          converterLogger.info('Adding converted page', {
+            trialId,
+            pageName,
+            setupCount: setups.length,
+          });
           trialPages.push({
             name: pageName,
             setups,
@@ -83,7 +113,10 @@ export function convertAllCharactersToLoadoutState(
       }
 
       if (trialPages.length > 0) {
-        console.log(`Trial ${trialId} has ${trialPages.length} pages:`, trialPages.map(p => p.name));
+        converterLogger.info('Trial conversion summary', {
+          trialId,
+          pageNames: trialPages.map((p) => p.name),
+        });
         characterPages[trialId] = trialPages;
       }
     }
@@ -106,7 +139,9 @@ export function convertAllCharactersToLoadoutState(
  * Convert Wizard's Wardrobe export format to internal LoadoutState
  * This function is kept for backwards compatibility but now just wraps the new function
  */
-export function convertWizardWardrobeToLoadoutState(wizardData: WizardWardrobeExport): LoadoutState {
+export function convertWizardWardrobeToLoadoutState(
+  wizardData: WizardWardrobeExport,
+): LoadoutState {
   const pages: LoadoutState['pages'] = {};
 
   // Create a default character for imported data
@@ -119,7 +154,7 @@ export function convertWizardWardrobeToLoadoutState(wizardData: WizardWardrobeEx
 
     // Each trial can have multiple pages
     const trialPages: any[] = [];
-    
+
     // Get page names from the separate pages property if it exists
     const pageNames = wizardData.pages?.[trialId];
 
@@ -130,18 +165,27 @@ export function convertWizardWardrobeToLoadoutState(wizardData: WizardWardrobeEx
       if (!pageData || typeof pageData !== 'object') continue;
 
       const setups: LoadoutSetup[] = [];
-      
+
       // Page names are stored 1-indexed in the pages property
       // setups[0] corresponds to pages[1], setups[1] to pages[2], etc.
       let pageName = pageNames?.[pageIndex + 1]?.name || `Page ${pageIndex + 1}`;
 
-      // Extract setups from numeric keys
-      for (const [key, value] of Object.entries(pageData)) {
-        if (!isNaN(Number(key))) {
-          // Numeric key = setup
-          const setup = normalizeSetup(value as any);
-          if (setup) {
-            setups.push(setup);
+      // Check if pageData is a setup object itself or a container of setups
+      // If it has a 'name' property, it's a setup object
+      if ('name' in pageData && typeof (pageData as any).name === 'string') {
+        const setup = normalizeSetup(pageData);
+        if (setup) {
+          setups.push(setup);
+        }
+      } else {
+        // Extract setups from numeric keys
+        for (const [key, value] of Object.entries(pageData)) {
+          if (!isNaN(Number(key))) {
+            // Numeric key = setup
+            const setup = normalizeSetup(value as any);
+            if (setup) {
+              setups.push(setup);
+            }
           }
         }
       }
@@ -193,10 +237,12 @@ function normalizeSetup(setup: any): LoadoutSetup | null {
       skills: normalizeSkills(setup.skills),
       cp: normalizeChampionPoints(setup.cp),
       food: normalizeFood(setup.food),
-      gear: setup.gear || {},
+      gear: normalizeGear(setup.gear),
       code: setup.code || '',
     };
   } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    converterLogger.error('Failed to normalize setup', err);
     return null;
   }
 }
@@ -228,18 +274,18 @@ function normalizeCondition(condition: any): LoadoutSetup['condition'] {
  */
 function normalizeSkills(skills: any): LoadoutSetup['skills'] {
   if (!skills || typeof skills !== 'object') {
-    console.log('normalizeSkills: No skills or not an object', skills);
+    converterLogger.warn('normalizeSkills: Missing or invalid skills payload');
     return { 0: {}, 1: {} };
   }
 
-  console.log('normalizeSkills input:', JSON.stringify(skills, null, 2));
+  converterLogger.debug('normalizeSkills input', { skills });
 
   const normalized: LoadoutSetup['skills'] = { 0: {}, 1: {} };
 
   // Handle bar 0 (front bar) and bar 1 (back bar)
   for (const barIndex of [0, 1] as const) {
     const bar = skills[barIndex];
-    console.log(`normalizeSkills bar ${barIndex}:`, bar);
+    converterLogger.debug('normalizeSkills bar snapshot', { barIndex, bar });
     if (bar && typeof bar === 'object') {
       // Clean up the bar data - remove nulls and ensure valid slot numbers
       const cleanBar: Record<number, number> = {};
@@ -247,14 +293,14 @@ function normalizeSkills(skills: any): LoadoutSetup['skills'] {
         const slot = Number(slotStr);
         if (!isNaN(slot) && abilityId && typeof abilityId === 'number') {
           cleanBar[slot] = abilityId;
-          console.log(`  Slot ${slot} = Ability ${abilityId}`);
+          converterLogger.debug('normalizeSkills slot assignment', { barIndex, slot, abilityId });
         }
       }
       normalized[barIndex] = cleanBar;
     }
   }
 
-  console.log('normalizeSkills output:', JSON.stringify(normalized, null, 2));
+  converterLogger.debug('normalizeSkills output', { normalized });
   return normalized;
 }
 
@@ -269,7 +315,7 @@ function normalizeChampionPoints(cp: any): ChampionPointsConfig {
   const normalized: ChampionPointsConfig = {};
   const assignedSlots = new Set<number>();
 
-  const assignSlot = (slotIndex: number, value: unknown) => {
+  const assignSlot = (slotIndex: number, value: unknown): void => {
     if (
       slotIndex >= 1 &&
       slotIndex <= 12 &&
@@ -283,7 +329,7 @@ function normalizeChampionPoints(cp: any): ChampionPointsConfig {
     }
   };
 
-  const processTreeCollection = (collection: unknown, baseOffset: number) => {
+  const processTreeCollection = (collection: unknown, baseOffset: number): void => {
     if (!collection) {
       return;
     }
@@ -357,6 +403,101 @@ function normalizeFood(food: any): LoadoutSetup['food'] {
   }
 
   return result;
+}
+
+/**
+ * Maps Wizard's Wardrobe slot indices to our internal slot IDs
+ *
+ * Wizard's Wardrobe uses 0-based array indices that correspond to ESO's EQUIP_SLOT constants:
+ * [0] = EQUIP_SLOT_HEAD, [1] = EQUIP_SLOT_NECK, [2] = EQUIP_SLOT_CHEST, etc.
+ *
+ * Our internal system uses a different slot numbering with gaps.
+ */
+const WIZARD_WARDROBE_SLOT_MAP: Record<number, number | null> = {
+  0: 0, // EQUIP_SLOT_HEAD → Head
+  1: 1, // EQUIP_SLOT_NECK → Neck
+  2: 2, // EQUIP_SLOT_CHEST → Chest
+  3: 3, // EQUIP_SLOT_SHOULDER → Shoulders
+  4: 4, // EQUIP_SLOT_MAIN_HAND → Main Hand
+  5: 5, // EQUIP_SLOT_OFF_HAND → Off Hand
+  6: 6, // EQUIP_SLOT_WAIST → Belt
+  7: null, // EQUIP_SLOT_LEGS_DEPRECATED (not used)
+  8: 8, // EQUIP_SLOT_LEGS → Legs
+  9: 9, // EQUIP_SLOT_FEET → Feet
+  10: null, // EQUIP_SLOT_COSTUME / vanity - not mapped
+  11: 11, // EQUIP_SLOT_RING1 → Ring 1
+  12: 12, // EQUIP_SLOT_RING2 → Ring 2
+  13: 20, // Legacy backup main-hand index
+  14: 21, // Legacy backup off-hand index
+  16: 16, // EQUIP_SLOT_HAND → Hands/Gloves
+  20: 20, // Modern backup main-hand index
+  21: 21, // Modern backup off-hand index
+};
+
+/**
+ * Parse ESO item link to extract item ID and link
+ * Item links have format: |H0:item:itemId:...:...|h|h
+ *
+ * Note: Item names can be fetched asynchronously using itemLinkParser.ts utilities
+ */
+function parseItemLink(link: string): { link: string; itemId?: number } | null {
+  if (!link || typeof link !== 'string') {
+    return null;
+  }
+
+  // Item links start with |H0:item: or |H1:item:
+  if (!link.startsWith('|H')) {
+    return null;
+  }
+
+  // Extract item ID if possible
+  const match = link.match(/\|H[01]:item:(\d+)/);
+  const itemId = match ? parseInt(match[1], 10) : undefined;
+
+  return { link, itemId };
+}
+
+/**
+ * Normalize gear configuration
+ * Handles Wizard's Wardrobe format where gear is keyed by slot index
+ * and contains item links: { [0]: { link: "...", id: "..." }, [1]: { ... } }
+ */
+function normalizeGear(gear: any): LoadoutSetup['gear'] {
+  if (!gear || typeof gear !== 'object') {
+    return {};
+  }
+
+  const normalized: LoadoutSetup['gear'] = {};
+
+  // Wizard's Wardrobe uses numeric keys (0, 1, 2, ...) for slot indices
+  for (const [key, value] of Object.entries(gear)) {
+    const wwSlot = Number(key);
+
+    if (isNaN(wwSlot) || !value || typeof value !== 'object') {
+      continue;
+    }
+
+    // Map Wizard's Wardrobe slot to internal slot ID
+    const internalSlot = WIZARD_WARDROBE_SLOT_MAP[wwSlot];
+    if (internalSlot === null || internalSlot === undefined) {
+      continue; // Skip slots we don't track (off-hand, etc.)
+    }
+
+    const gearPiece = value as any;
+
+    // Parse the item link to get gear information
+    if (gearPiece.link) {
+      const parsedItem = parseItemLink(gearPiece.link);
+      if (parsedItem) {
+        normalized[internalSlot] = {
+          ...parsedItem,
+          id: gearPiece.id, // Keep the Wizard's Wardrobe ID for reference
+        };
+      }
+    }
+  }
+
+  return normalized;
 }
 
 /**

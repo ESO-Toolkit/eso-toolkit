@@ -10,8 +10,26 @@ export const redguard: SkillLineData = {
   name: 'Redguard',
   skills: [
     { id: AbilityId.WAYFARER, name: 'Wayfarer', isPassive: true, isUltimate: false, maxRank: 2 },
-    { id: AbilityId.MARTIAL_TRAINING, name: 'Martial Training', isPassive: true, isUltimate: false, maxRank: 2 },
-    { id: AbilityId.CONDITIONING, name: 'Conditioning', isPassive: true, isUltimate: false, maxRank: 2 },
-    { id: AbilityId.ADRENALINE_RUSH, name: 'Adrenaline Rush', isPassive: true, isUltimate: false, maxRank: 2 },
+    {
+      id: AbilityId.MARTIAL_TRAINING,
+      name: 'Martial Training',
+      isPassive: true,
+      isUltimate: false,
+      maxRank: 2,
+    },
+    {
+      id: AbilityId.CONDITIONING,
+      name: 'Conditioning',
+      isPassive: true,
+      isUltimate: false,
+      maxRank: 2,
+    },
+    {
+      id: AbilityId.ADRENALINE_RUSH,
+      name: 'Adrenaline Rush',
+      isPassive: true,
+      isUltimate: false,
+      maxRank: 2,
+    },
   ],
 };

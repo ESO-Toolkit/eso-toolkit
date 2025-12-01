@@ -22,10 +22,7 @@ jest.mock('../data/Gear Sets/legacyAdapters', () => ({
       name: 'Monster Helm Set',
       icon: 'monster',
       setType: 'Monster Set',
-      bonuses: [
-        '(1 item) Adds 1096 Maximum Magicka',
-        '(2 items) Summon a monster ally',
-      ],
+      bonuses: ['(1 item) Adds 1096 Maximum Magicka', '(2 items) Summon a monster ally'],
     },
   },
 }));
@@ -74,10 +71,7 @@ jest.mock('../data/Gear Sets/arena', () => ({
     name: 'Arena Master Set',
     icon: 'arena_master',
     setType: 'Arena',
-    bonuses: [
-      '(1 item) Adds 100 Weapon Damage',
-      '(2 items) Arena effect',
-    ],
+    bonuses: ['(1 item) Adds 100 Weapon Damage', '(2 items) Arena effect'],
   },
 }));
 

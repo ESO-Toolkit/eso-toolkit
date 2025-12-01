@@ -3,13 +3,14 @@
  * Aggregates all weapon skill line modules
  */
 
-import { SkillData } from "../types";
-import { ONE_HAND_AND_SHIELD_SKILLS } from "./oneHandAndShield";
-import { TWO_HANDED_SKILLS } from "./twoHanded";
-import { BOW_SKILLS } from "./bow";
-import { DUAL_WIELD_SKILLS } from "./dualWield";
-import { DESTRUCTION_STAFF_SKILLS } from "./destructionStaff";
-import { RESTORATION_STAFF_SKILLS } from "./restorationStaff";
+import { SkillData } from '../types';
+
+import { BOW_SKILLS } from './bow';
+import { DESTRUCTION_STAFF_SKILLS } from './destructionStaff';
+import { DUAL_WIELD_SKILLS } from './dualWield';
+import { ONE_HAND_AND_SHIELD_SKILLS } from './oneHandAndShield';
+import { RESTORATION_STAFF_SKILLS } from './restorationStaff';
+import { TWO_HANDED_SKILLS } from './twoHanded';
 
 /**
  * All weapon skill line skills combined

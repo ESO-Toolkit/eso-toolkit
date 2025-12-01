@@ -4,15 +4,7 @@
  */
 
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
-import {
-  Box,
-  Chip,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography,
-  useTheme,
-} from '@mui/material';
+import { Box, Chip, IconButton, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -22,7 +14,9 @@ import type { RootState } from '@/store/storeWithHistory';
 import { setCurrentCharacter } from '../store/loadoutSlice';
 import type { ClassSkillLine } from '../types/loadout.types';
 
-const getRoleChipColor = (role?: string): 'default' | 'primary' | 'secondary' | 'success' | 'info' => {
+const getRoleChipColor = (
+  role?: string,
+): 'default' | 'primary' | 'secondary' | 'success' | 'info' => {
   switch (role) {
     case 'Tank':
       return 'primary';
@@ -100,32 +94,33 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
             '&::-webkit-scrollbar': { display: 'none' },
             scrollbarWidth: 'none',
             borderRadius: 999,
-            backgroundColor: alpha(theme.palette.action.hover, theme.palette.mode === 'dark' ? 0.4 : 0.6),
+            backgroundColor: alpha(
+              theme.palette.action.hover,
+              theme.palette.mode === 'dark' ? 0.4 : 0.6,
+            ),
           }}
         >
-          {hasCharacters ? (
-            characters.map((char) => {
-              const isSelected = char.id === currentCharacter;
-              return (
-                <Chip
-                  key={char.id}
-                  label={char.name}
-                  color={isSelected ? 'primary' : getRoleChipColor(char.role)}
-                  variant={isSelected ? 'filled' : 'outlined'}
-                  onClick={() => dispatch(setCurrentCharacter(char.id))}
-                  sx={{
-                    flexShrink: 0,
-                    fontWeight: 600,
-                    letterSpacing: 0.25,
-                    px: 1,
-                    py: 0.25,
-                  }}
-                />
-              );
-            })
-          ) : (
-            emptyPlaceholder
-          )}
+          {hasCharacters
+            ? characters.map((char) => {
+                const isSelected = char.id === currentCharacter;
+                return (
+                  <Chip
+                    key={char.id}
+                    label={char.name}
+                    color={isSelected ? 'primary' : getRoleChipColor(char.role)}
+                    variant={isSelected ? 'filled' : 'outlined'}
+                    onClick={() => dispatch(setCurrentCharacter(char.id))}
+                    sx={{
+                      flexShrink: 0,
+                      fontWeight: 600,
+                      letterSpacing: 0.25,
+                      px: 1,
+                      py: 0.25,
+                    }}
+                  />
+                );
+              })
+            : emptyPlaceholder}
         </Box>
 
         <Tooltip title="Scroll right" placement="top" arrow>
@@ -143,12 +138,9 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
       </Stack>
 
       {selectedCharacter && (
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ mt: 0.75, display: 'block' }}
-        >
-          {(selectedCharacter.role ?? 'Unknown role')} · {formatSkillLines(selectedCharacter.skillLines)}
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: 'block' }}>
+          {selectedCharacter.role ?? 'Unknown role'} ·{' '}
+          {formatSkillLines(selectedCharacter.skillLines)}
         </Typography>
       )}
     </Box>

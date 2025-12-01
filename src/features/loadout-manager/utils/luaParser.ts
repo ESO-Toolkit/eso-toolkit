@@ -2,10 +2,15 @@
  * Lua Parser Utility
  * Parses ESO saved variables files (Lua format) to JavaScript objects
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import * as luaparse from 'luaparse';
 
+import { Logger } from '@/utils/logger';
+
 import type { WizardWardrobeExport } from '../types/loadout.types';
+
+const luaParserLogger = new Logger({ contextPrefix: 'LuaParser' });
 
 /**
  * Parse ESO saved variables Lua file content
@@ -24,16 +29,15 @@ export function parseLuaSavedVariables(luaContent: string): Record<string, any> 
 
     // Convert AST to JavaScript object
     const result = evaluateLuaAST(ast);
-    
+
     // Debug log
-    console.log('[luaParser] Parsed variables:', Object.keys(result));
-    
+    luaParserLogger.debug('Parsed variables', { keys: Object.keys(result) });
+
     return result;
   } catch (error) {
-    console.error('[luaParser] Parse error:', error);
-    throw new Error(
-      `Failed to parse Lua file: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    );
+    const err = error instanceof Error ? error : new Error(String(error));
+    luaParserLogger.error('Parse error', err);
+    throw new Error(`Failed to parse Lua file: ${err.message}`);
   }
 }
 
@@ -84,7 +88,7 @@ function evaluateLuaAST(node: any): any {
           // Bracket key: [expression]
           const key = evaluateLuaAST(field.key);
           const value = evaluateLuaAST(field.value);
-          
+
           // Check if key is a string (e.g., ["name"]) or numeric (e.g., [1])
           if (typeof key === 'string') {
             hasStringKeys = true;
@@ -107,9 +111,9 @@ function evaluateLuaAST(node: any): any {
       // Check if this should be treated as an array (consecutive 1-based indices, no string keys)
       if (!hasStringKeys && numericKeys.length > 0 && !hasImplicitValues) {
         const sortedKeys = [...numericKeys].sort((a, b) => a - b);
-        const isConsecutiveFromOne = sortedKeys[0] === 1 && 
-                                      sortedKeys.every((key, idx) => key === idx + 1);
-        
+        const isConsecutiveFromOne =
+          sortedKeys[0] === 1 && sortedKeys.every((key, idx) => key === idx + 1);
+
         if (isConsecutiveFromOne) {
           // Convert to 0-indexed array
           const result: any[] = [];
@@ -173,72 +177,79 @@ function evaluateLuaAST(node: any): any {
  * Structure: WizardWardrobeDataSaved["Default"]["@AccountName"]["$AccountWide"] or ["CharacterId"]
  * Returns ALL character data, not just the first one found
  */
-export function extractWizardWardrobeData(parsedLua: Record<string, any>): Record<string, WizardWardrobeExport> | null {
+export function extractWizardWardrobeData(
+  parsedLua: Record<string, any>,
+): Record<string, WizardWardrobeExport> | null {
   try {
-    console.log('[extractWizardWardrobeData] Available keys:', Object.keys(parsedLua));
-    
+    luaParserLogger.debug('Available parsed keys', { keys: Object.keys(parsedLua) });
+
     // Look for Wizard's Wardrobe saved variable (multiple possible names)
-    const data = parsedLua.WizardsWardrobeSV || 
-                 parsedLua.WizardWardrobeDataSaved || 
-                 parsedLua.WizardWardrobe ||
-                 parsedLua.WizardsWardrobe;
+    const data =
+      parsedLua.WizardsWardrobeSV ||
+      parsedLua.WizardWardrobeDataSaved ||
+      parsedLua.WizardWardrobe ||
+      parsedLua.WizardsWardrobe;
     if (!data) {
-      console.log('[extractWizardWardrobeData] No Wizard\'s Wardrobe variable found');
+      luaParserLogger.info("No Wizard's Wardrobe variable found in parsed data");
       return null;
     }
 
-    console.log('[extractWizardWardrobeData] Found data, keys:', Object.keys(data));
+    luaParserLogger.debug('Wizard Wardrobe candidate keys', { keys: Object.keys(data) });
 
     // Navigate through the nested structure
     const defaultData = data.Default;
     if (!defaultData) {
-      console.log('[extractWizardWardrobeData] No "Default" key found');
+      luaParserLogger.warn('No "Default" key found in Wizard Wardrobe data');
       return null;
     }
 
-    console.log('[extractWizardWardrobeData] Found Default, keys:', Object.keys(defaultData));
+    luaParserLogger.debug('Default data keys', { keys: Object.keys(defaultData) });
 
     // Find the first account (usually only one)
     const accountKeys = Object.keys(defaultData);
     if (accountKeys.length === 0) {
-      console.log('[extractWizardWardrobeData] No account keys found');
+      luaParserLogger.warn('No account keys found in Wizard Wardrobe data');
       return null;
     }
 
     const accountKey = accountKeys[0];
-    console.log('[extractWizardWardrobeData] Using account:', accountKey);
-    
+    luaParserLogger.debug('Using account for extraction', { accountKey });
+
     const accountData = defaultData[accountKey];
-    console.log('[extractWizardWardrobeData] Account data keys:', Object.keys(accountData));
+    luaParserLogger.debug('Account data keys', { keys: Object.keys(accountData) });
 
     const allCharacterData: Record<string, WizardWardrobeExport> = {};
-    
+
     // Check $AccountWide first
     if (accountData.$AccountWide && accountData.$AccountWide.setups) {
-      console.log('[extractWizardWardrobeData] Account-wide data keys:', Object.keys(accountData.$AccountWide));
+      luaParserLogger.debug('Account-wide data keys', {
+        keys: Object.keys(accountData.$AccountWide),
+      });
       allCharacterData['$AccountWide'] = accountData.$AccountWide as WizardWardrobeExport;
     }
-    
+
     // Look through all character IDs with setups
     for (const key of Object.keys(accountData)) {
       if (key !== '$AccountWide' && accountData[key] && typeof accountData[key] === 'object') {
-        console.log(`[extractWizardWardrobeData] Checking character ${key}, keys:`, Object.keys(accountData[key]));
         if (accountData[key].setups) {
-          console.log('[extractWizardWardrobeData] Found setups in character data:', key);
+          luaParserLogger.debug('Found setups in character data', { characterKey: key });
           allCharacterData[key] = accountData[key] as WizardWardrobeExport;
         }
       }
     }
 
     if (Object.keys(allCharacterData).length === 0) {
-      console.log('[extractWizardWardrobeData] No character data with setups found');
+      luaParserLogger.warn('No character data with setups found');
       return null;
     }
 
-    console.log('[extractWizardWardrobeData] Successfully extracted data for', Object.keys(allCharacterData).length, 'characters');
+    luaParserLogger.info('Extracted Wizard Wardrobe data', {
+      characterCount: Object.keys(allCharacterData).length,
+    });
     return allCharacterData;
   } catch (error) {
-    console.error('[extractWizardWardrobeData] Error:', error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    luaParserLogger.error('Error while extracting Wizard Wardrobe data', err);
     return null;
   }
 }
@@ -249,9 +260,9 @@ export function extractWizardWardrobeData(parsedLua: Record<string, any>): Recor
 export function isWizardWardrobeFormat(data: any): data is WizardWardrobeExport {
   return Boolean(
     data &&
-    typeof data === 'object' &&
-    typeof data.setups === 'object' &&
-    typeof data.pages === 'object' &&
-    typeof data.version === 'number',
+      typeof data === 'object' &&
+      typeof data.setups === 'object' &&
+      typeof data.pages === 'object' &&
+      typeof data.version === 'number',
   );
 }

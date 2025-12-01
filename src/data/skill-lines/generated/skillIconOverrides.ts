@@ -296,4 +296,3 @@ export const SKILL_ICON_OVERRIDES = {
   217646: 'ability_mage_065',
   217699: 'ability_grimoire_support',
 } as const satisfies Record<number, string>;
-

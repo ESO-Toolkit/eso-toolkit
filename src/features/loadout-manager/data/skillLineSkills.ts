@@ -2,25 +2,28 @@
  * Skill Line Skills - Uses curated skill line data for ability selection
  * Provides active abilities and ultimates from organized skill lines
  */
+/* eslint-disable import/order */
 
-import type { SkillData, SkillLineData } from '../../../data/types/skill-line-types';
-import { SKILL_ICON_OVERRIDES } from '../../../data/skill-lines/generated/skillIconOverrides';
 import scribingDatabaseRaw from '../../../../data/scribing-complete.json';
+import { assault } from '../../../data/skill-lines/alliance-war/assault';
+import { support } from '../../../data/skill-lines/alliance-war/support';
+import { heavyArmor } from '../../../data/skill-lines/armor/heavyArmor';
+import { lightArmor } from '../../../data/skill-lines/armor/lightArmor';
+import { mediumArmor } from '../../../data/skill-lines/armor/mediumArmor';
+import * as classSkillLines from '../../../data/skill-lines/class';
+import { SKILL_ICON_OVERRIDES } from '../../../data/skill-lines/generated/skillIconOverrides';
 
 // Import guild skill lines (SkillLineData with flat skills array)
+import { darkBrotherhood } from '../../../data/skill-lines/guild/darkBrotherhood';
 import { fightersGuild } from '../../../data/skill-lines/guild/fightersGuild';
 import { magesGuild } from '../../../data/skill-lines/guild/magesGuild';
 import { psijicOrder } from '../../../data/skill-lines/guild/psijicOrder';
-import { undaunted } from '../../../data/skill-lines/guild/undaunted';
-import { darkBrotherhood } from '../../../data/skill-lines/guild/darkBrotherhood';
 import { thievesGuild } from '../../../data/skill-lines/guild/thievesGuild';
+import { undaunted } from '../../../data/skill-lines/guild/undaunted';
 
 // Import regenerated class skill lines (SkillLineData modules)
-import * as classSkillLines from '../../../data/skill-lines/class';
 
 // Import alliance war skill lines
-import { assault } from '../../../data/skill-lines/alliance-war/assault';
-import { support } from '../../../data/skill-lines/alliance-war/support';
 
 // Import regenerated weapon skill lines
 import { bowSkillLine } from '../../../data/skill-lines/weapon/bow';
@@ -29,16 +32,15 @@ import { dualWieldSkillLine } from '../../../data/skill-lines/weapon/dualWield';
 import { oneHandAndShieldSkillLine } from '../../../data/skill-lines/weapon/oneHandAndShield';
 import { restorationStaff as restorationStaffSkillLine } from '../../../data/skill-lines/weapon/restorationStaff';
 import { twoHandedSkillLine } from '../../../data/skill-lines/weapon/twoHanded';
-import { heavyArmor } from '../../../data/skill-lines/armor/heavyArmor';
-import { lightArmor } from '../../../data/skill-lines/armor/lightArmor';
-import { mediumArmor } from '../../../data/skill-lines/armor/mediumArmor';
-import { soulMagic } from '../../../data/skill-lines/world/soul-magic';
-import { vampire } from '../../../data/skill-lines/world/vampire';
-import { werewolf } from '../../../data/skill-lines/world/werewolf';
-import { scrying } from '../../../data/skill-lines/world/scrying';
 import { excavation } from '../../../data/skill-lines/world/excavation';
 import { legerdemain } from '../../../data/skill-lines/world/legerdemain';
 import { mythicAbilities } from '../../../data/skill-lines/world/mythicAbilities';
+import { scrying } from '../../../data/skill-lines/world/scrying';
+import { soulMagic } from '../../../data/skill-lines/world/soul-magic';
+import { vampire } from '../../../data/skill-lines/world/vampire';
+import { werewolf } from '../../../data/skill-lines/world/werewolf';
+import type { SkillData, SkillLineData } from '../../../data/types/skill-line-types';
+import { Logger } from '@/utils/logger';
 
 // Guild skill lines (flat structure)
 const GUILD_SKILL_LINES: SkillLineData[] = [
@@ -67,7 +69,15 @@ const ARMOR_SKILL_LINES: SkillLineData[] = [lightArmor, mediumArmor, heavyArmor]
 
 const ALLIANCE_SKILL_LINES: SkillLineData[] = [assault, support];
 
-const WORLD_SKILL_LINES: SkillLineData[] = [soulMagic, vampire, werewolf, scrying, excavation, legerdemain, mythicAbilities];
+const WORLD_SKILL_LINES: SkillLineData[] = [
+  soulMagic,
+  vampire,
+  werewolf,
+  scrying,
+  excavation,
+  legerdemain,
+  mythicAbilities,
+];
 
 const SANITIZED_ICON_MISSING = new Set(['', 'icon_missing']);
 const SKILL_ICON_OVERRIDE_MAP: Record<number, string> = SKILL_ICON_OVERRIDES;
@@ -127,6 +137,7 @@ const scribingDatabase = scribingDatabaseRaw as ScribingDatabase;
 let activeSkillsCache: SkillData[] | null = null;
 let skillsByIdCache: Map<number, SkillData> | null = null;
 let skillsByNameCache: Map<string, SkillData> | null = null;
+const skillsLogger = new Logger({ contextPrefix: 'SkillLineSkills' });
 
 /**
  * Initialize the cache by extracting all active/ultimate abilities from skill lines
@@ -141,12 +152,13 @@ async function initializeCache(): Promise<void> {
   const skillsById = skillsByIdCache;
   const skillsByName = skillsByNameCache;
 
-  const ingestSkillLine = (skillLineData: SkillLineData | undefined) => {
+  const ingestSkillLine = (skillLineData: SkillLineData | undefined): void => {
     if (!skillLineData?.skills) return;
     const skillLineName = skillLineData.name || 'Unknown';
 
     for (const skill of skillLineData.skills) {
-      const skillType = skill.type ?? (skill.isUltimate ? 'ultimate' : skill.isPassive ? 'passive' : 'active');
+      const skillType =
+        skill.type ?? (skill.isUltimate ? 'ultimate' : skill.isPassive ? 'passive' : 'active');
       if (skillType !== 'active' && skillType !== 'ultimate') continue;
 
       const baseSkillId = skill.baseSkillId ?? skill.baseAbilityId;
@@ -187,15 +199,15 @@ async function initializeCache(): Promise<void> {
     ...ALLIANCE_SKILL_LINES,
     ...WORLD_SKILL_LINES,
     ...ARMOR_SKILL_LINES,
-  ].forEach(
-    ingestSkillLine,
-  );
+  ].forEach(ingestSkillLine);
 
   ingestScribingSkills(activeSkills, skillsById, skillsByName);
 
   // Sort alphabetically for better UX
   activeSkills.sort((a, b) => a.name.localeCompare(b.name));
-  console.log(`✅ Initialized skill line cache: ${activeSkillsCache.length} active skills`);
+  skillsLogger.info('Initialized skill line cache', {
+    count: activeSkillsCache.length,
+  });
 }
 
 function ingestScribingSkills(
@@ -274,17 +286,17 @@ export function searchSkills(query: string, limit = 50): SkillData[] {
     initializeCache();
     return [];
   }
-  
+
   const lowerQuery = query.toLowerCase().trim();
   const results: SkillData[] = [];
-  
+
   for (const skill of activeSkillsCache) {
     if (skill.name.toLowerCase().includes(lowerQuery)) {
       results.push(skill);
       if (results.length >= limit) break;
     }
   }
-  
+
   return results;
 }
 
@@ -307,7 +319,7 @@ export function getUltimates(): SkillData[] {
     initializeCache();
     return [];
   }
-  return activeSkillsCache?.filter(skill => skill.isUltimate) || [];
+  return activeSkillsCache?.filter((skill) => skill.isUltimate) || [];
 }
 
 /**
@@ -318,7 +330,7 @@ export function getRegularSkills(): SkillData[] {
     initializeCache();
     return [];
   }
-  return activeSkillsCache?.filter(skill => !skill.isUltimate) || [];
+  return activeSkillsCache?.filter((skill) => !skill.isUltimate) || [];
 }
 
 /**
@@ -329,14 +341,14 @@ export function getCategories(): string[] {
     initializeCache();
     return [];
   }
-  
+
   const categories = new Set<string>();
   for (const skill of activeSkillsCache) {
     if (skill.category) {
       categories.add(skill.category);
     }
   }
-  
+
   return Array.from(categories).sort();
 }
 
@@ -348,8 +360,8 @@ export function getSkillsByCategory(category: string): SkillData[] {
     initializeCache();
     return [];
   }
-  
-  return activeSkillsCache.filter(skill => skill.category === category);
+
+  return activeSkillsCache.filter((skill) => skill.category === category);
 }
 
 /**
@@ -376,10 +388,10 @@ export function getSkillStats(): {
     initializeCache();
     return { total: 0, ultimates: 0, actives: 0, categories: 0 };
   }
-  
-  const ultimates = activeSkillsCache.filter(skill => skill.isUltimate).length;
-  const actives = activeSkillsCache.filter(skill => !skill.isUltimate).length;
-  
+
+  const ultimates = activeSkillsCache.filter((skill) => skill.isUltimate).length;
+  const actives = activeSkillsCache.filter((skill) => !skill.isUltimate).length;
+
   return {
     total: activeSkillsCache.length,
     ultimates,

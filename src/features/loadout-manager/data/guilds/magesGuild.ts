@@ -4,7 +4,13 @@ export const MAGES_GUILD_SKILLS: SkillData[] = [
   // Ultimate
   { id: 16536, name: 'Meteor', category: 'Mages Guild', isUltimate: true },
   { id: 40489, name: 'Ice Comet', category: 'Mages Guild', isUltimate: true, baseSkillId: 16536 },
-  { id: 40493, name: 'Shooting Star', category: 'Mages Guild', isUltimate: true, baseSkillId: 16536 },
+  {
+    id: 40493,
+    name: 'Shooting Star',
+    category: 'Mages Guild',
+    isUltimate: true,
+    baseSkillId: 16536,
+  },
 
   // Ulfsild's Contingency (new skill)
   { id: 217528, name: "Ulfsild's Contingency", category: 'Mages Guild' },

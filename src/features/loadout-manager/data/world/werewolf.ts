@@ -4,7 +4,13 @@ export const WEREWOLF_SKILLS: SkillData[] = [
   // Ultimate
   { id: 32455, name: 'Werewolf Transformation', category: 'Werewolf', isUltimate: true },
   { id: 32632, name: 'Pack Leader', category: 'Werewolf', isUltimate: true, baseSkillId: 32455 },
-  { id: 32634, name: 'Werewolf Berserker', category: 'Werewolf', isUltimate: true, baseSkillId: 32455 },
+  {
+    id: 32634,
+    name: 'Werewolf Berserker',
+    category: 'Werewolf',
+    isUltimate: true,
+    baseSkillId: 32455,
+  },
 
   // Pounce
   { id: 9291, name: 'Pounce', category: 'Werewolf' },

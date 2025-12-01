@@ -4,7 +4,6 @@
  */
 
 import { Close as CloseIcon } from '@mui/icons-material';
-import Autocomplete, { AutocompleteInputChangeReason } from '@mui/material/Autocomplete';
 import {
   Box,
   Paper,
@@ -17,13 +16,16 @@ import {
   DialogTitle,
   DialogContent,
 } from '@mui/material';
+import Autocomplete, { AutocompleteInputChangeReason } from '@mui/material/Autocomplete';
 import React, { useState, useMemo, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 
+import { useLogger } from '@/hooks/useLogger';
+
+import type { SkillData } from '../../../data/types/skill-line-types';
 import { getSkillById, searchSkills, getSkillStats } from '../data/skillLineSkills';
 import { updateSkills } from '../store/loadoutSlice';
 import { SkillsConfig } from '../types/loadout.types';
-import type { SkillData } from '../../../data/types/skill-line-types';
 
 interface SkillSelectorProps {
   skills: SkillsConfig;
@@ -48,14 +50,15 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
   setupIndex,
 }): React.ReactElement => {
   const dispatch = useDispatch();
+  const logger = useLogger('SkillSelector');
 
   // Log skill statistics on mount (dev mode only)
   React.useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
       const stats = getSkillStats();
-      console.log('📚 Skill Line Data Loaded:', stats);
+      logger.debug('Skill line data loaded', stats);
     }
-  }, []);
+  }, [logger]);
 
   const handleSkillChange = (barIndex: 0 | 1, slotIndex: number, abilityId: number): void => {
     const updatedSkills = {
@@ -128,7 +131,7 @@ const SkillBarRow: React.FC<SkillBarRowProps> = ({
       spacing={0.9}
       alignItems="center"
       sx={{
-  flexWrap: { xs: 'wrap', md: 'nowrap' },
+        flexWrap: { xs: 'wrap', md: 'nowrap' },
         rowGap: 0.75,
         justifyContent: { xs: 'center', md: 'flex-start' },
         maxWidth: '100%',

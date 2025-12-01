@@ -74,8 +74,9 @@ export const SetupList: React.FC<SetupListProps> = ({
       .map((setup, index) => ({ setup, index }))
       .filter(({ setup }) => {
         if (!normalizedFilter) return true;
-        const tags = getSetupTags(setup).
-          map((tag) => tag.label.toLowerCase()).join(' ');
+        const tags = getSetupTags(setup)
+          .map((tag) => tag.label.toLowerCase())
+          .join(' ');
         const condition = getSetupConditionSummary(setup)?.toLowerCase() ?? '';
         const progress = getSetupProgressSections(setup)
           .map((section) => formatProgressSection(section).toLowerCase())
@@ -102,7 +103,10 @@ export const SetupList: React.FC<SetupListProps> = ({
           py: 1,
           borderBottom: 1,
           borderColor: 'divider',
-          backgroundColor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.6 : 0.9),
+          backgroundColor: alpha(
+            theme.palette.background.paper,
+            theme.palette.mode === 'dark' ? 0.6 : 0.9,
+          ),
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -126,7 +130,9 @@ export const SetupList: React.FC<SetupListProps> = ({
               color: 'text.secondary',
             }}
           >
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>No matching setups</Typography>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              No matching setups
+            </Typography>
             <Typography variant="caption">Adjust filters or create a new loadout.</Typography>
           </Box>
         ) : (
@@ -187,9 +193,7 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
           display: 'grid',
           gridTemplateColumns: 'auto 1fr',
           gap: 1,
-          borderColor: selected
-            ? alpha(theme.palette.primary.main, 0.6)
-            : theme.palette.divider,
+          borderColor: selected ? alpha(theme.palette.primary.main, 0.6) : theme.palette.divider,
           backgroundColor: selected
             ? alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.24 : 0.12)
             : alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.9 : 0.98),
@@ -218,7 +222,12 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
                 </Typography>
               )}
               {tags.length > 0 && (
-                <Stack direction="row" spacing={0.5} useFlexGap sx={{ flexWrap: 'wrap', rowGap: 0.5 }}>
+                <Stack
+                  direction="row"
+                  spacing={0.5}
+                  useFlexGap
+                  sx={{ flexWrap: 'wrap', rowGap: 0.5 }}
+                >
                   {tags.map((tag, idx) => (
                     <Chip
                       key={`${tag.label}-${idx}`}
@@ -284,7 +293,10 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
   );
 };
 
-const BadgeBox: React.FC<{ selected: boolean; children: React.ReactNode }> = ({ selected, children }) => (
+const BadgeBox: React.FC<{ selected: boolean; children: React.ReactNode }> = ({
+  selected,
+  children,
+}) => (
   <Box
     sx={(theme) => ({
       width: 36,

@@ -3,8 +3,20 @@ import type { SkillData } from '../types';
 export const FIGHTERS_GUILD_SKILLS: SkillData[] = [
   // Ultimate
   { id: 35713, name: 'Dawnbreaker', category: 'Fighters Guild', isUltimate: true },
-  { id: 40158, name: 'Dawnbreaker of Smiting', category: 'Fighters Guild', isUltimate: true, baseSkillId: 35713 },
-  { id: 40161, name: 'Flawless Dawnbreaker', category: 'Fighters Guild', isUltimate: true, baseSkillId: 35713 },
+  {
+    id: 40158,
+    name: 'Dawnbreaker of Smiting',
+    category: 'Fighters Guild',
+    isUltimate: true,
+    baseSkillId: 35713,
+  },
+  {
+    id: 40161,
+    name: 'Flawless Dawnbreaker',
+    category: 'Fighters Guild',
+    isUltimate: true,
+    baseSkillId: 35713,
+  },
 
   // Silver Bolts
   { id: 35721, name: 'Silver Bolts', category: 'Fighters Guild' },

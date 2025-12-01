@@ -3,13 +3,7 @@
  * Main editor for a single setup with tabs for different sections
  */
 
-import {
-  ContentCopy,
-  ContentPaste,
-  Delete,
-  Clear,
-  FileCopy,
-} from '@mui/icons-material';
+import { ContentCopy, ContentPaste, Delete, Clear, FileCopy } from '@mui/icons-material';
 import {
   Box,
   Paper,
@@ -26,6 +20,8 @@ import {
 import { alpha } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
+
+import { useLogger } from '@/hooks/useLogger';
 
 import {
   duplicateSetup,
@@ -47,6 +43,7 @@ import {
 
 import { ChampionPointSelector } from './ChampionPointSelector';
 import { FoodSelector } from './FoodSelector';
+import { GearSelector } from './GearSelector';
 import { SkillSelector } from './SkillSelector';
 
 interface SetupEditorProps {
@@ -63,9 +60,11 @@ interface TabPanelProps {
   value: number;
 }
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+type ClipboardSetupPayload = ClipboardSetup['setup'] & {
+  championPoints?: ClipboardSetup['setup']['cp'];
+};
 
+const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => {
   return (
     <div
       role="tabpanel"
@@ -79,7 +78,15 @@ function TabPanel(props: TabPanelProps) {
       )}
     </div>
   );
-}
+};
+
+const confirmAction = (message: string): boolean => {
+  if (typeof window === 'undefined') {
+    return true;
+  }
+
+  return window.confirm(message);
+};
 
 export const SetupEditor: React.FC<SetupEditorProps> = ({
   setup,
@@ -89,6 +96,7 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
   variant = 'page',
 }) => {
   const dispatch = useDispatch();
+  const logger = useLogger('SetupEditor');
   const isDrawer = variant === 'drawer';
   const [currentTab, setCurrentTab] = React.useState(0);
   const [snackbar, setSnackbar] = useState<{
@@ -101,19 +109,22 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
     severity: 'success',
   });
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number): void => {
     setCurrentTab(newValue);
   };
 
-  const showSnackbar = (message: string, severity: 'success' | 'error' | 'info' = 'success') => {
+  const showSnackbar = (
+    message: string,
+    severity: 'success' | 'error' | 'info' = 'success',
+  ): void => {
     setSnackbar({ open: true, message, severity });
   };
 
-  const handleCloseSnackbar = () => {
+  const handleCloseSnackbar = (): void => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const handleCopy = async () => {
+  const handleCopy = async (): Promise<void> => {
     try {
       const clipboardData: ClipboardSetup = {
         version: 1,
@@ -122,21 +133,23 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
         sourceTrialId: trialId,
         sourceBossName: setup.condition.boss,
       };
-      
+
       await navigator.clipboard.writeText(JSON.stringify(clipboardData, null, 2));
       showSnackbar('Setup copied to clipboard!', 'success');
     } catch (error) {
-      console.error('Failed to copy:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Failed to copy setup to clipboard', err);
       showSnackbar('Failed to copy setup to clipboard', 'error');
     }
   };
 
-  const validateClipboardSetup = (data: any): data is ClipboardSetup => {
+  const validateClipboardSetup = (data: unknown): data is ClipboardSetup => {
     if (!data || typeof data !== 'object') {
       return false;
     }
 
-    const setupData = data.setup;
+    const clipboardData = data as Partial<ClipboardSetup>;
+    const setupData = clipboardData.setup as ClipboardSetupPayload | undefined;
     if (!setupData || typeof setupData !== 'object') {
       return false;
     }
@@ -148,19 +161,19 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
     const hasFood = typeof setupData.food === 'object' && setupData.food !== null;
     const hasGear = typeof setupData.gear === 'object' && setupData.gear !== null;
 
-    return data.version === 1 && hasSkills && hasCp && hasFood && hasGear;
+    return clipboardData.version === 1 && hasSkills && hasCp && hasFood && hasGear;
   };
 
-  const handlePaste = async () => {
+  const handlePaste = async (): Promise<void> => {
     try {
       const text = await navigator.clipboard.readText();
-      
+
       if (!text.trim()) {
         showSnackbar('Clipboard is empty', 'error');
         return;
       }
 
-      let clipboardData: any;
+      let clipboardData: unknown;
       try {
         clipboardData = JSON.parse(text);
       } catch {
@@ -173,10 +186,10 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
         return;
       }
 
+      const validClipboardData = clipboardData as ClipboardSetup;
       // Import the setup data (replace current setup)
-      const { championPoints, ...restSetup } = clipboardData.setup as ClipboardSetup['setup'] & {
-        championPoints?: ClipboardSetup['setup']['cp'];
-      };
+      const clipboardSetup = validClipboardData.setup as ClipboardSetupPayload;
+      const { championPoints, ...restSetup } = clipboardSetup;
 
       const setupToImport: LoadoutSetup = {
         ...restSetup,
@@ -193,44 +206,45 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
       );
 
       showSnackbar(
-        `Pasted setup from ${clipboardData.sourceBossName || 'unknown source'}`,
+        `Pasted setup from ${validClipboardData.sourceBossName || 'unknown source'}`,
         'success',
       );
     } catch (error) {
-      console.error('Failed to paste:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Failed to paste setup from clipboard', err);
       showSnackbar('Failed to paste from clipboard', 'error');
     }
   };
 
-  const handleDuplicate = () => {
+  const handleDuplicate = (): void => {
     dispatch(duplicateSetup({ trialId, pageIndex, setupIndex }));
     showSnackbar('Setup duplicated!', 'success');
   };
 
-  const handleDelete = () => {
-    if (confirm(`Are you sure you want to delete "${setup.name}"?`)) {
+  const handleDelete = (): void => {
+    if (confirmAction(`Are you sure you want to delete "${setup.name}"?`)) {
       dispatch(deleteSetup({ trialId, pageIndex, setupIndex }));
     }
   };
 
-  const handleClearSkills = () => {
-    if (confirm('Clear all skills for this setup?')) {
+  const handleClearSkills = (): void => {
+    if (confirmAction('Clear all skills for this setup?')) {
       dispatch(clearSkills({ trialId, pageIndex, setupIndex }));
     }
   };
 
-  const handleClearCP = () => {
-    if (confirm('Clear all champion points for this setup?')) {
+  const handleClearCP = (): void => {
+    if (confirmAction('Clear all champion points for this setup?')) {
       dispatch(clearChampionPoints({ trialId, pageIndex, setupIndex }));
     }
   };
 
-  const handleClearFood = () => {
+  const handleClearFood = (): void => {
     dispatch(clearFood({ trialId, pageIndex, setupIndex }));
   };
 
-  const handleClearGear = () => {
-    if (confirm('Clear all gear for this setup?')) {
+  const handleClearGear = (): void => {
+    if (confirmAction('Clear all gear for this setup?')) {
       dispatch(clearGear({ trialId, pageIndex, setupIndex }));
     }
   };
@@ -376,12 +390,7 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
             </Stack>
           )}
 
-          <Stack
-            direction="row"
-            spacing={0.75}
-            sx={{ flexWrap: 'wrap', rowGap: 0.75 }}
-            useFlexGap
-          >
+          <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', rowGap: 0.75 }} useFlexGap>
             {progressSections.length === 0 ? (
               <Chip label="Empty setup" size="small" variant="outlined" />
             ) : (
@@ -531,9 +540,12 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
                 Clear All Gear
               </Button>
             </Stack>
-            <Typography color="text.secondary">
-              Gear editor coming soon (Priority 2)
-            </Typography>
+            <GearSelector
+              gear={setup.gear}
+              trialId={trialId}
+              pageIndex={pageIndex}
+              setupIndex={setupIndex}
+            />
           </Stack>
         </TabPanel>
       </Box>

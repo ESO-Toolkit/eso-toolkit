@@ -67,7 +67,7 @@ function flattenCategory(category: RegistryCategory): SkillLineData[] {
   for (const value of Object.values(category)) {
     if (!value) continue;
     if (Array.isArray(value)) {
-      entries.push(...value.filter(Boolean) as SkillLineData[]);
+      entries.push(...(value.filter(Boolean) as SkillLineData[]));
     } else {
       entries.push(value as SkillLineData);
     }
@@ -133,7 +133,10 @@ function skillDataToSkillNode(skill: SkillData): SkillNode {
   return skillNode;
 }
 
-function findParentSkillNode(skillLineData: SkillLineData, skill: SkillData): SkillNode | undefined {
+function findParentSkillNode(
+  skillLineData: SkillLineData,
+  skill: SkillData,
+): SkillNode | undefined {
   const parentId = skill.baseSkillId ?? skill.baseAbilityId;
   if (!parentId || parentId === skill.id) {
     return undefined;

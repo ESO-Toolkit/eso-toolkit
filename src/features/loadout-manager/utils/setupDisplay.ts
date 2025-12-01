@@ -21,9 +21,9 @@ export interface SetupTag {
   variant?: 'filled' | 'outlined';
 }
 
-const normalize = (value?: string | null) => (value ?? '').trim();
+const normalize = (value?: string | null): string => (value ?? '').trim();
 
-const isTrashKeyword = (value: string) => value.includes('trash');
+const isTrashKeyword = (value: string): boolean => value.includes('trash');
 
 export const isTrashSetup = (setup: LoadoutSetup): boolean => {
   if (typeof setup.condition.trash === 'number') {
@@ -45,7 +45,12 @@ export const isBossSetup = (setup: LoadoutSetup): boolean => {
   }
 
   const normalized = bossName.toLowerCase();
-  if (normalized === 'trash' || normalized === 'any' || normalized === 'general' || normalized === 'default') {
+  if (
+    normalized === 'trash' ||
+    normalized === 'any' ||
+    normalized === 'general' ||
+    normalized === 'default'
+  ) {
     return false;
   }
 
@@ -115,14 +120,14 @@ const countAbilitySlots = (bar: Record<number, number> | undefined): number => {
     return 0;
   }
 
-  return Object.values(bar).filter((abilityId) => typeof abilityId === 'number' && abilityId > 0).length;
+  return Object.values(bar).filter((abilityId) => typeof abilityId === 'number' && abilityId > 0)
+    .length;
 };
 
 export const getSetupProgressSections = (setup: LoadoutSetup): SetupProgressSection[] => {
   const sections: SetupProgressSection[] = [];
 
-  const totalSkills =
-    countAbilitySlots(setup.skills?.[0]) + countAbilitySlots(setup.skills?.[1]);
+  const totalSkills = countAbilitySlots(setup.skills?.[0]) + countAbilitySlots(setup.skills?.[1]);
   if (totalSkills > 0) {
     sections.push({ type: 'skills', count: totalSkills });
   }

@@ -1,5 +1,6 @@
 import type { GearSetData } from '../../types/gearSet';
 import type { SkillsetData, Passive } from '../skillsets/Skillset';
+
 import * as arenaSpecialLegacy from './arena-specials';
 import * as monsterLegacy from './monster';
 

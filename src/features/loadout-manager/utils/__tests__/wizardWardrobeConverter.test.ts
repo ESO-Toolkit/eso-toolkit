@@ -18,7 +18,9 @@ describe('wizardWardrobeConverter', () => {
               disabled: false,
               condition: { boss: 'Test Boss' },
               skills: { 0: {}, 1: {} },
-              cp: [92, 82, 66, 78, 24, 28, 263, 262, 2, 34, 270, 56] as unknown as ChampionPointsConfig,
+              cp: [
+                92, 82, 66, 78, 24, 28, 263, 262, 2, 34, 270, 56,
+              ] as unknown as ChampionPointsConfig,
               food: {},
               gear: {},
               code: '',
@@ -128,5 +130,51 @@ describe('wizardWardrobeConverter', () => {
 
     expect(foodConfig.id).toBe(87697);
     expect(foodConfig.link).toBe('|H0:item:87697:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:1:0:0:0:0|h|h');
+  });
+
+  it('maps Wizard Wardrobe gear indices to the correct internal slots', () => {
+    const makeLink = (itemId: number) =>
+      `|H0:item:${itemId}:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h`;
+
+    const wizardData: WizardWardrobeExport = {
+      version: 1,
+      selectedZoneTag: 'SS',
+      setups: {
+        SS: [
+          {
+            1: {
+              name: 'Gear Slots Test',
+              disabled: false,
+              condition: {},
+              skills: { 0: {}, 1: {} },
+              cp: {},
+              food: {},
+              gear: {
+                11: { link: makeLink(1115), id: 'ring-1' },
+                12: { link: makeLink(1116), id: 'ring-2' },
+                16: { link: makeLink(6027), id: 'hands' },
+                20: { link: makeLink(117099), id: 'back-main' },
+                21: { link: makeLink(117100), id: 'back-off' },
+              },
+            },
+          },
+        ],
+      },
+      pages: {
+        SS: [{ name: 'Page 1' }],
+      },
+      $LastCharacterName: 'Slot Tester',
+    };
+
+    const state = convertAllCharactersToLoadoutState({ charKey: wizardData });
+    const characterId = 'slot-tester-charKey';
+    const gear = state.pages[characterId].SS[0].setups[0].gear;
+
+  expect(gear[11]?.link).toContain('item:1115');
+  expect(gear[12]?.link).toContain('item:1116');
+  expect(gear[16]?.link).toContain('item:6027');
+  expect(gear[20]?.link).toContain('item:117099');
+  expect(gear[21]?.link).toContain('item:117100');
+    expect(gear[10]).toBeUndefined();
   });
 });

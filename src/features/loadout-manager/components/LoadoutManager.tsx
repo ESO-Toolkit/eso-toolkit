@@ -44,6 +44,7 @@ import { useNavigate } from 'react-router-dom';
 
 import type { RootState } from '@/store/storeWithHistory';
 
+import { preloadChampionPointData } from '../data/championPointData';
 import { preloadSkillData } from '../data/skillLineSkills';
 import { TRIALS, generateSetupStructure } from '../data/trialConfigs';
 import {
@@ -66,6 +67,7 @@ import {
 } from '../store/selectors';
 import type { ClipboardSetup, LoadoutSetup, LoadoutState } from '../types/loadout.types';
 import { extractWizardWardrobeData, parseLuaSavedVariables } from '../utils/luaParser';
+import { registerSlotsFromLoadoutState, clearWizardWardrobeSlotRegistry } from '../utils/wizardWardrobeSlotRegistry';
 import { convertAllCharactersToLoadoutState } from '../utils/wizardWardrobeConverter';
 
 import { CharacterSelector } from './CharacterSelector';
@@ -116,9 +118,10 @@ export const LoadoutManager: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Preload skill data on mount
+  // Preload skill and champion point data on mount
   useEffect(() => {
     preloadSkillData();
+    preloadChampionPointData();
   }, []);
 
   useEffect(() => {
@@ -190,10 +193,10 @@ export const LoadoutManager: React.FC = () => {
       trial.type === 'trial'
         ? 'Trial'
         : trial.type === 'arena'
-        ? 'Arena'
-        : trial.type === 'substitute'
-        ? 'Substitute'
-        : 'General';
+          ? 'Arena'
+          : trial.type === 'substitute'
+            ? 'Substitute'
+            : 'General';
     return `${trial.name} · ${kind}`;
   }, [currentTrial]);
 
@@ -356,6 +359,7 @@ export const LoadoutManager: React.FC = () => {
   const handleClearAll = (): void => {
     setClearDialogOpen(false);
     dispatch(resetLoadout());
+    clearWizardWardrobeSlotRegistry();
     setSelectedSetupIndex(null);
     setSearchTerm('');
     showSnackbar('Loadouts cleared.', 'success');
@@ -379,6 +383,7 @@ export const LoadoutManager: React.FC = () => {
         const json = JSON.parse(text) as LoadoutState;
         if (json && typeof json === 'object' && 'pages' in json && 'characters' in json) {
           dispatch(loadState(json));
+          registerSlotsFromLoadoutState(json, 'manual', { reset: true });
           setSelectedSetupIndex(null);
           showSnackbar('Imported loadout JSON.', 'success');
           return;
@@ -393,6 +398,7 @@ export const LoadoutManager: React.FC = () => {
 
       const converted = convertAllCharactersToLoadoutState(wizardData);
       dispatch(loadState(converted));
+      registerSlotsFromLoadoutState(converted, 'wizard-wardrobe', { reset: true });
       setSelectedSetupIndex(null);
       const characterCount = Object.keys(converted.pages).length;
       showSnackbar(
@@ -513,10 +519,10 @@ export const LoadoutManager: React.FC = () => {
                         {trial.type === 'trial'
                           ? 'Trial'
                           : trial.type === 'arena'
-                          ? 'Arena'
-                          : trial.type === 'substitute'
-                          ? 'Substitute'
-                          : 'General'}
+                            ? 'Arena'
+                            : trial.type === 'substitute'
+                              ? 'Substitute'
+                              : 'General'}
                       </Typography>
                     </Stack>
                   </MenuItem>
@@ -556,7 +562,11 @@ export const LoadoutManager: React.FC = () => {
             </Stack>
           </Stack>
 
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ md: 'center' }}>
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={1.5}
+            alignItems={{ md: 'center' }}
+          >
             <TextField
               value={searchTerm}
               onChange={handleSearchChange}
@@ -685,7 +695,8 @@ export const LoadoutManager: React.FC = () => {
         <DialogTitle>Clear all loadouts?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            This removes every character, page, and setup. You can re-import data from Wizard&apos;s Wardrobe at any time.
+            This removes every character, page, and setup. You can re-import data from Wizard&apos;s
+            Wardrobe at any time.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

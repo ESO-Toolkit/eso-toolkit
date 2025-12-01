@@ -31,8 +31,7 @@ export const thievesGuild: SkillLineData = {
     {
       id: AbilityId.HAGGLING,
       name: 'Haggling',
-      description:
-        'Stolen items sold at a fence are worth 10% more. Does not apply to Laundering.',
+      description: 'Stolen items sold at a fence are worth 10% more. Does not apply to Laundering.',
       icon: 'https://eso-hub.com/storage/icons/passive_guild_32.webp',
       type: 'passive',
       isPassive: true,
