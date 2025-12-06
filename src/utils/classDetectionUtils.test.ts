@@ -64,6 +64,7 @@ import {
   ReportAbilitiesData,
   ClassAnalysisResult,
 } from './classDetectionUtils';
+import { KnownAbilities } from '../types/abilities';
 
 describe('classDetectionUtils', () => {
   const playerId = '123'; // Fixed: use string version of the sourceID used in mock events
@@ -194,16 +195,38 @@ describe('classDetectionUtils', () => {
       expect(result).toEqual(new Set([1001, 1002]));
     });
 
+    it('should skip excluded aura abilities', () => {
+      const auraEvents = [
+        {
+          type: 'combatantinfo',
+          sourceID: 123,
+          auras: [
+            {
+              ability: KnownAbilities.UNNERVING_BONEYARD,
+              source: 123,
+              stacks: 1,
+              icon: '',
+              name: '',
+            },
+          ],
+        },
+      ];
+
+      const result = extractPlayerAbilityIds(playerId, auraEvents, [], [], [], []);
+
+      expect(result).toEqual(new Set());
+    });
+
     it('should extract ability IDs from cast events', () => {
       const result = extractPlayerAbilityIds(playerId, [], mockCastEvents, [], [], []);
 
       expect(result).toEqual(new Set([1001, 1002]));
     });
 
-    it('should extract ability IDs from damage events', () => {
+    it('should ignore ability IDs from damage events', () => {
       const result = extractPlayerAbilityIds(playerId, [], [], mockDamageEvents, [], []);
 
-      expect(result).toEqual(new Set([1001]));
+      expect(result).toEqual(new Set());
     });
 
     it('should extract ability IDs from buff events', () => {
@@ -514,6 +537,31 @@ describe('classDetectionUtils', () => {
         mockDamageEvents,
         mockBuffEvents,
         mockDebuffEvents,
+      );
+
+      expect(result.primary).toBeNull();
+      expect(result.skillLines).toHaveLength(0);
+    });
+
+    it('should return empty result when only damage evidence exists', () => {
+      const damageOnlyPlayer = 'damage-only';
+      const damageOnlyEvents = [
+        {
+          type: 'damage',
+          sourceID: damageOnlyPlayer,
+          abilityGameID: COMBUSTION_ID,
+        },
+      ];
+
+      const result = analyzePlayerClassFromEvents(
+        damageOnlyPlayer,
+        mockAbilitiesData,
+        [],
+        [],
+        damageOnlyEvents,
+        [],
+        [],
+        [],
       );
 
       expect(result.primary).toBeNull();
