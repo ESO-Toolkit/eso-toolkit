@@ -8,7 +8,7 @@
  */
 
 // Import skillset data
-import { KnownAbilities } from '@/types/abilities';
+import { KnownAbilities, AURA_EXCLUDED_ABILITIES } from '@/types/abilities';
 
 import { arcanistData } from '../data/skillsets/arcanist';
 import { dragonknightData } from '../data/skillsets/dragonknight';
@@ -68,6 +68,7 @@ export interface ClassAnalysisResult {
     skillLine: string;
     className: string;
     count: number;
+    skillIds: Set<number>;
   }>;
 }
 
@@ -95,7 +96,7 @@ export function extractPlayerAbilityIds(
   playerId: string,
   combatantInfoEvents: CombatantInfoEvent[],
   castEvents: UnifiedCastEvent[],
-  damageEvents: DamageEvent[],
+  _damageEvents: DamageEvent[],
   friendlyBuffEvents: BuffEvent[],
   debuffEvents: DebuffEvent[],
   talents?: PlayerTalent[],
@@ -111,7 +112,7 @@ export function extractPlayerAbilityIds(
   combatantInfoEventsForPlayer.forEach((cie) => {
     const auras = cie.auras || [];
     auras.forEach((aura) => {
-      if (typeof aura.ability === 'number') {
+      if (typeof aura.ability === 'number' && !AURA_EXCLUDED_ABILITIES.has(aura.ability)) {
         abilityIds.add(aura.ability);
       }
     });
@@ -129,15 +130,8 @@ export function extractPlayerAbilityIds(
   });
 
   // Add abilities from damage events
-  damageEvents.forEach((event) => {
-    if (
-      event.type === 'damage' &&
-      String(event.sourceID) === playerId &&
-      typeof event.abilityGameID === 'number'
-    ) {
-      abilityIds.add(event.abilityGameID);
-    }
-  });
+  // Damage events routinely report class skills cast by other combatants (synergies, companions, etc.)
+  // and create false positives, so they are intentionally ignored.
 
   // Add abilities from friendly buff events (only apply events)
   friendlyBuffEvents.forEach((event) => {

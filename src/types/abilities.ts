@@ -386,6 +386,9 @@ export enum KnownAbilities {
   AGGRESSIVE_HORN = 40223,
   REPLENISHING_BARRIER = 40239,
   REVIVING_BARRIER = 40237,
+
+  // Necromancer abilities used for filtering
+  UNNERVING_BONEYARD = 117815,
 }
 
 /**
@@ -1020,4 +1023,9 @@ export const SYNERGY_ABILITY_IDS = Object.freeze(
     26832, // Blessed Shards (Luminous Shards synergy)
     45223, // Restore Magicka (another variant)
   ]),
+);
+
+// Aura ability IDs that should be ignored for class detection to prevent false positives
+export const AURA_EXCLUDED_ABILITIES = Object.freeze(
+  new Set<number>([KnownAbilities.UNNERVING_BONEYARD]),
 );
