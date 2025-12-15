@@ -48,7 +48,7 @@ jobs:
           node-version: '20'
 
       - name: Cache Playwright Browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -66,7 +66,7 @@ jobs:
         run: npx playwright install-deps
 
       - name: Cache ESO Logs API Responses
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: api-cache
         with:
           path: cache/eso-logs-api/
@@ -82,7 +82,7 @@ jobs:
           echo "✅ ESO Logs API cache cleared"
 
       - name: Cache Test Data
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: test-data-cache
         with:
           path: data-downloads/
@@ -134,7 +134,7 @@ jobs:
           fi
 
       - name: Cache Build Output
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: build-cache
         with:
           path: |
