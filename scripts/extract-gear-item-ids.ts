@@ -12,6 +12,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 
+import { itemIdMap } from '../src/features/loadout-manager/data/itemIdMap';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -19,6 +21,16 @@ interface ExtractedItem {
   itemId: number;
   link: string;
   count: number; // How many times this item appears
+  name?: string;
+  slotMask?: number;
+}
+
+interface CollectionItemInfo {
+  slotMask?: number;
+}
+
+interface SlotDataset {
+  items?: Record<string, CollectionItemInfo>;
 }
 
 /**
@@ -45,6 +57,7 @@ function extractItemIds(filePath: string): Map<number, ExtractedItem> {
     const itemId = parseItemLink(link);
     
     if (itemId) {
+      const itemName = itemIdMap[itemId]?.name;
       const existing = itemMap.get(itemId);
       if (existing) {
         existing.count++;
@@ -52,13 +65,38 @@ function extractItemIds(filePath: string): Map<number, ExtractedItem> {
         itemMap.set(itemId, {
           itemId,
           link,
-          count: 1
+          count: 1,
+          name: itemName
         });
       }
     }
   }
   
   return itemMap;
+}
+
+function loadSlotMaskMap(): Map<number, number> {
+  const datasetPath = path.join(__dirname, '..', 'data', 'eso-globals-item-set-collections.json');
+  const slotMaskMap = new Map<number, number>();
+
+  if (!fs.existsSync(datasetPath)) {
+    console.warn('⚠️  Slot mask dataset not found. Skipping mask enrichment.');
+    return slotMaskMap;
+  }
+
+  try {
+    const raw: SlotDataset = JSON.parse(fs.readFileSync(datasetPath, 'utf-8'));
+    const entries = Object.entries(raw.items ?? {});
+    for (const [id, info] of entries) {
+      if (typeof info?.slotMask === 'number') {
+        slotMaskMap.set(Number(id), info.slotMask);
+      }
+    }
+  } catch (error) {
+    console.warn('⚠️  Failed to parse slot mask dataset. Skipping mask enrichment.', error);
+  }
+
+  return slotMaskMap;
 }
 
 /**
@@ -75,6 +113,14 @@ function main() {
   
   console.log('📖 Reading WizardsWardrobe.lua...');
   const items = extractItemIds(wwFilePath);
+  const slotMaskMap = loadSlotMaskMap();
+
+  items.forEach((item) => {
+    const slotMask = slotMaskMap.get(item.itemId);
+    if (typeof slotMask === 'number') {
+      item.slotMask = slotMask;
+    }
+  });
   
   console.log(`\n✅ Found ${items.size} unique item IDs\n`);
   
@@ -82,17 +128,19 @@ function main() {
   const sorted = Array.from(items.values()).sort((a, b) => b.count - a.count);
   
   // Output as CSV for easy processing
-  console.log('Item ID,Count,Sample Link');
-  console.log('========,=====,===========');
+  console.log('Item ID,Count,Name,Slot Mask,Sample Link');
+  console.log('========,=====,====,========,==========');
   sorted.forEach(item => {
-    console.log(`${item.itemId},${item.count},"${item.link}"`);
+    console.log(`${item.itemId},${item.count},${formatCsvValue(item.name ?? '')},${item.slotMask ?? ''},${formatCsvValue(item.link)}`);
   });
   
   // Save to file
   const outputPath = path.join(__dirname, '..', 'tmp', 'extracted-item-ids.csv');
   const csvContent = [
-    'itemId,count,link',
-    ...sorted.map(item => `${item.itemId},${item.count},"${item.link}"`)
+    'itemId,count,name,slotMask,link',
+    ...sorted.map(item =>
+      `${item.itemId},${item.count},${formatCsvValue(item.name ?? '')},${item.slotMask ?? ''},${formatCsvValue(item.link)}`
+    )
   ].join('\n');
   
   fs.writeFileSync(outputPath, csvContent, 'utf-8');
@@ -108,6 +156,11 @@ function main() {
   console.log('   1. Open tmp/extracted-item-ids.csv');
   console.log('   2. Look up item names using ESO game or UESP wiki');
   console.log('   3. Add mappings to src/features/loadout-manager/data/itemIdMap.ts');
+}
+
+function formatCsvValue(value: string): string {
+  const escaped = value.replace(/"/g, '""');
+  return `"${escaped}"`;
 }
 
 // Direct execution

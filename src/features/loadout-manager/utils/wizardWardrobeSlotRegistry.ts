@@ -1,7 +1,7 @@
-import { getItemIdFromLink } from './itemLinkParser';
-
 import type { SlotType } from '../data/slotTypes';
 import type { GearPiece, LoadoutState } from '../types/loadout.types';
+
+import { getItemIdFromLink } from './itemLinkParser';
 
 type SlotSource = 'wizard-wardrobe' | 'manual';
 
@@ -60,7 +60,12 @@ function resolveItemId(piece?: GearPiece): number | undefined {
   return undefined;
 }
 
-function registerSlotInternal(itemId: number, slot: SlotType, source: SlotSource, force = false): void {
+function registerSlotInternal(
+  itemId: number,
+  slot: SlotType,
+  source: SlotSource,
+  force = false,
+): void {
   if (!itemId || !slot) {
     return;
   }
@@ -87,7 +92,11 @@ export function clearWizardWardrobeSlotRegistry(): void {
   slotRegistry.clear();
 }
 
-export function registerWizardWardrobeSlot(itemId: number, slot: SlotType, source: SlotSource): void {
+export function registerWizardWardrobeSlot(
+  itemId: number,
+  slot: SlotType,
+  source: SlotSource,
+): void {
   registerSlotInternal(itemId, slot, source);
 }
 

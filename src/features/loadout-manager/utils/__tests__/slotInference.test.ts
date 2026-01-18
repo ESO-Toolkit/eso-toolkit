@@ -36,8 +36,8 @@ describe('slotInference', () => {
     });
 
     it('accepts items WITHOUT slot data via inference (medium confidence)', () => {
-  const gear: GearConfig = {};
-  gear[0] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Crafted set - no slot data
+      const gear: GearConfig = {};
+      gear[0] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Crafted set - no slot data
 
       const result = validateGearConfigWithInference(gear);
 
@@ -51,8 +51,8 @@ describe('slotInference', () => {
     });
 
     it('rejects items with CONFLICTING explicit slot data', () => {
-  const gear: GearConfig = {};
-  gear[0] = createGearPiece('1115'); // Armor of the Trainee Ring - explicit slot
+      const gear: GearConfig = {};
+      gear[0] = createGearPiece('1115'); // Armor of the Trainee Ring - explicit slot
 
       const result = validateGearConfigWithInference(gear);
 
@@ -65,7 +65,7 @@ describe('slotInference', () => {
     it('handles mixed loadout (some explicit, some inferred)', () => {
       const gear: GearConfig = {};
       gear[0] = createGearPiece('59380'); // Head - explicit slot
-  gear[2] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Chest - no slot (inferred)
+      gear[2] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Chest - no slot (inferred)
       gear[3] = createGearPiece('59403'); // Shoulders - explicit slot
 
       const result = validateGearConfigWithInference(gear);
@@ -79,8 +79,8 @@ describe('slotInference', () => {
 
     it('assigns medium confidence when mostly inferred', () => {
       const gear: GearConfig = {};
-  gear[0] = createGearPiece(String(SLOTLESS_ITEM_ID)); // No slot
-  gear[2] = createGearPiece(String(SECOND_SLOTLESS_ITEM_ID)); // No slot
+      gear[0] = createGearPiece(String(SLOTLESS_ITEM_ID)); // No slot
+      gear[2] = createGearPiece(String(SECOND_SLOTLESS_ITEM_ID)); // No slot
       gear[3] = createGearPiece('59403'); // Has slot
 
       const result = validateGearConfigWithInference(gear);
@@ -126,8 +126,8 @@ describe('slotInference', () => {
     });
 
     it('allows export of inferred loadout with warnings (medium confidence)', () => {
-  const gear: GearConfig = {};
-  gear[0] = createGearPiece(String(SLOTLESS_ITEM_ID)); // No slot - inferred
+      const gear: GearConfig = {};
+      gear[0] = createGearPiece(String(SLOTLESS_ITEM_ID)); // No slot - inferred
 
       const result = canExportLoadoutWithInference(gear);
 
@@ -138,8 +138,8 @@ describe('slotInference', () => {
     });
 
     it('blocks export of conflicting slots (low confidence)', () => {
-  const gear: GearConfig = {};
-  gear[0] = createGearPiece('1115'); // Ring in head slot - conflict!
+      const gear: GearConfig = {};
+      gear[0] = createGearPiece('1115'); // Ring in head slot - conflict!
 
       const result = canExportLoadoutWithInference(gear);
 
@@ -150,9 +150,9 @@ describe('slotInference', () => {
     });
 
     it('includes warnings even when export is allowed', () => {
-  const gear: GearConfig = {};
-  gear[0] = createGearPiece('59380'); // Explicit
-  gear[2] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Inferred
+      const gear: GearConfig = {};
+      gear[0] = createGearPiece('59380'); // Explicit
+      gear[2] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Inferred
 
       const result = canExportLoadoutWithInference(gear);
 
@@ -169,7 +169,7 @@ describe('slotInference', () => {
     });
 
     it('returns null for generic "Gear" items', () => {
-  const slot = suggestSlotForItem(SLOTLESS_ITEM_ID); // Shalidor's Curse Gear
+      const slot = suggestSlotForItem(SLOTLESS_ITEM_ID); // Shalidor's Curse Gear
       expect(slot).toBeNull();
     });
 
@@ -181,16 +181,16 @@ describe('slotInference', () => {
     it('infers from item name patterns when available', () => {
       // This would work if we had items with descriptive names
       // For now, most items are just "Gear" so will return null
-  const slot = suggestSlotForItem(1115); // Armor of the Trainee Ring
+      const slot = suggestSlotForItem(1115); // Armor of the Trainee Ring
       expect(slot).toBe('ring'); // Has explicit slot
     });
   });
 
   describe('generateExportMetadata', () => {
     it('generates metadata with explicit and inferred assignments', () => {
-  const gear: GearConfig = {};
-  gear[0] = createGearPiece('59380'); // Explicit
-  gear[2] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Inferred
+      const gear: GearConfig = {};
+      gear[0] = createGearPiece('59380'); // Explicit
+      gear[2] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Inferred
 
       const metadata = generateExportMetadata(gear);
 
@@ -213,8 +213,8 @@ describe('slotInference', () => {
     });
 
     it('includes validation results', () => {
-  const gear: GearConfig = {};
-  gear[0] = createGearPiece('1115'); // Conflict
+      const gear: GearConfig = {};
+      gear[0] = createGearPiece('1115'); // Conflict
 
       const metadata = generateExportMetadata(gear);
 
@@ -225,13 +225,13 @@ describe('slotInference', () => {
 
   describe('real-world scenarios', () => {
     it('allows full loadout of regular sets (all inferred)', () => {
-  const gear: GearConfig = {};
-  // Build a full Death's Wind loadout (no explicit slots)
-  gear[0] = createGearPiece(String(SLOTLESS_ITEM_ID));
-  gear[1] = createGearPiece(String(SECOND_SLOTLESS_ITEM_ID));
-  gear[2] = createGearPiece(String(THIRD_SLOTLESS_ITEM_ID));
-  gear[8] = createGearPiece(String(FOURTH_SLOTLESS_ITEM_ID));
-  gear[9] = createGearPiece(String(FIFTH_SLOTLESS_ITEM_ID));
+      const gear: GearConfig = {};
+      // Build a full Death's Wind loadout (no explicit slots)
+      gear[0] = createGearPiece(String(SLOTLESS_ITEM_ID));
+      gear[1] = createGearPiece(String(SECOND_SLOTLESS_ITEM_ID));
+      gear[2] = createGearPiece(String(THIRD_SLOTLESS_ITEM_ID));
+      gear[8] = createGearPiece(String(FOURTH_SLOTLESS_ITEM_ID));
+      gear[9] = createGearPiece(String(FIFTH_SLOTLESS_ITEM_ID));
 
       const result = validateGearConfigWithInference(gear);
 
@@ -247,10 +247,10 @@ describe('slotInference', () => {
       gear[0] = createGearPiece('59380'); // Spawn of Mephala Head - explicit
       gear[3] = createGearPiece('59403'); // Spawn of Mephala Shoulders - explicit
 
-  // Body set (inferred slots)
-  gear[2] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Chest - inferred
-  gear[8] = createGearPiece(String(SECOND_SLOTLESS_ITEM_ID)); // Legs - inferred
-  gear[9] = createGearPiece(String(THIRD_SLOTLESS_ITEM_ID)); // Feet - inferred
+      // Body set (inferred slots)
+      gear[2] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Chest - inferred
+      gear[8] = createGearPiece(String(SECOND_SLOTLESS_ITEM_ID)); // Legs - inferred
+      gear[9] = createGearPiece(String(THIRD_SLOTLESS_ITEM_ID)); // Feet - inferred
 
       const result = validateGearConfigWithInference(gear);
 
@@ -262,12 +262,12 @@ describe('slotInference', () => {
 
     it('provides useful warnings for user review', () => {
       const gear: GearConfig = {};
-  gear[0] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Shalidor's Curse - inferred
+      gear[0] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Shalidor's Curse - inferred
 
       const result = validateGearConfigWithInference(gear);
       const exportCheck = canExportLoadoutWithInference(gear);
 
-  expect(result.warnings[0]).toContain("Shalidor's Curse Gear");
+      expect(result.warnings[0]).toContain("Shalidor's Curse Gear");
       expect(result.warnings[0]).toContain('has no slot verification');
       expect(result.warnings[0]).toContain('Assuming');
 
@@ -290,7 +290,7 @@ describe('slotInference', () => {
       const gear: GearConfig = {};
       gear[0] = createGearPiece('59380'); // Explicit
       gear[3] = createGearPiece('59403'); // Explicit
-  gear[2] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Inferred (25%)
+      gear[2] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Inferred (25%)
 
       const result = validateGearConfigWithInference(gear);
       expect(result.confidence).toBe('high');
@@ -299,7 +299,7 @@ describe('slotInference', () => {
     it('medium confidence: >30% inferred', () => {
       const gear: GearConfig = {};
       gear[0] = createGearPiece('59380'); // Explicit
-  gear[2] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Inferred (50%)
+      gear[2] = createGearPiece(String(SLOTLESS_ITEM_ID)); // Inferred (50%)
 
       const result = validateGearConfigWithInference(gear);
       expect(result.confidence).toBe('medium');
@@ -307,7 +307,7 @@ describe('slotInference', () => {
 
     it('medium confidence: all inferred', () => {
       const gear: GearConfig = {};
-  gear[0] = createGearPiece(String(SLOTLESS_ITEM_ID));
+      gear[0] = createGearPiece(String(SLOTLESS_ITEM_ID));
 
       const result = validateGearConfigWithInference(gear);
       expect(result.confidence).toBe('medium');

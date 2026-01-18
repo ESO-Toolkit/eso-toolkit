@@ -67,8 +67,11 @@ import {
 } from '../store/selectors';
 import type { ClipboardSetup, LoadoutSetup, LoadoutState } from '../types/loadout.types';
 import { extractWizardWardrobeData, parseLuaSavedVariables } from '../utils/luaParser';
-import { registerSlotsFromLoadoutState, clearWizardWardrobeSlotRegistry } from '../utils/wizardWardrobeSlotRegistry';
 import { convertAllCharactersToLoadoutState } from '../utils/wizardWardrobeConverter';
+import {
+  registerSlotsFromLoadoutState,
+  clearWizardWardrobeSlotRegistry,
+} from '../utils/wizardWardrobeSlotRegistry';
 
 import { CharacterSelector } from './CharacterSelector';
 import { ExportDialog } from './ExportDialog';

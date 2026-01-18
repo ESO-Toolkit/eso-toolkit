@@ -1,6 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 type SlotCategory = 'armor' | 'weapon' | 'jewelry' | 'unknown';
 type ArmorWeight = 'light' | 'medium' | 'heavy';
@@ -22,6 +26,7 @@ interface SlotInfo {
     | 'offhand';
   weight?: ArmorWeight;
   note?: string;
+  itemType?: string;
 }
 
 interface ItemEntry {
@@ -31,6 +36,7 @@ interface ItemEntry {
   slot?: SlotInfo['slot'];
   weight?: ArmorWeight;
   note?: string;
+  itemType?: string;
 }
 
 interface MythicSlotOverride {
@@ -73,20 +79,70 @@ const SLOT_MASK_INFO: Record<number, SlotInfo> = {
   2097152: { category: 'jewelry', slot: 'neck' },
   4194304: { category: 'jewelry', slot: 'ring' },
   // High-bit weapon masks (Wizard's Wardrobe exports these as backup weapon slots)
-  536870912: { category: 'weapon', slot: 'weapon', note: 'High-bit weapon slot mask (WW export)' },
-  4294967296: { category: 'weapon', slot: 'weapon', note: 'High-bit weapon slot mask (WW export)' },
-  8589934592: { category: 'weapon', slot: 'weapon', note: 'Frost staff slot mask (WW export)' },
-  17179869184: { category: 'weapon', slot: 'weapon', note: 'High-bit weapon slot mask (WW export)' },
+  536870912: {
+    category: 'weapon',
+    slot: 'weapon',
+    note: 'Battle axe (WW export mask; confirmed via itemId 166159 sample link)',
+    itemType: 'battle-axe',
+  },
+  4294967296: {
+    category: 'weapon',
+    slot: 'weapon',
+    note: 'Inferno staff (WW export mask)',
+    itemType: 'inferno-staff',
+  },
+  8589934592: {
+    category: 'weapon',
+    slot: 'weapon',
+    note: 'Frost staff (mask override; confirmed by itemId 174950 sample link)',
+    itemType: 'frost-staff',
+  },
+  17179869184: {
+    category: 'weapon',
+    slot: 'weapon',
+    note: 'Lightning staff (WW export mask; verified via itemId 57454 Destructive Impact weapon link)',
+    itemType: 'lightning-staff',
+  },
   // Weapons (front bar / generic)
-  8388608: { category: 'weapon', slot: 'weapon' },
-  16777216: { category: 'weapon', slot: 'weapon' },
-  33554432: { category: 'weapon', slot: 'weapon' },
-  67108864: { category: 'weapon', slot: 'weapon' },
-  134217728: { category: 'weapon', slot: 'weapon' },
-  268435456: { category: 'weapon', slot: 'weapon' },
-  1073741824: { category: 'weapon', slot: 'weapon' },
-  2147483648: { category: 'weapon', slot: 'weapon' },
-  34359738368: { category: 'weapon', slot: 'offhand' },
+  8388608: { category: 'weapon', slot: 'weapon', note: 'Dagger (front bar)', itemType: 'dagger' },
+  16777216: {
+    category: 'weapon',
+    slot: 'weapon',
+    note: 'One-hand axe (WW mask; confirmed via itemId 181706 Turning Tide link)',
+    itemType: 'one-hand-axe',
+  },
+  33554432: {
+    category: 'weapon',
+    slot: 'weapon',
+    note: 'One-hand mace (WW mask; confirmed via item 206813)',
+    itemType: 'one-hand-mace',
+  },
+  67108864: {
+    category: 'weapon',
+    slot: 'weapon',
+    note: 'One-hand sword (WW mask; confirmed via item 95872)',
+    itemType: 'one-hand-sword',
+  },
+  134217728: {
+    category: 'weapon',
+    slot: 'weapon',
+    note: 'Unconfirmed weapon mask (WW backup bar slot not observed in available data)',
+    itemType: 'unknown',
+  },
+  268435456: {
+    category: 'weapon',
+    slot: 'weapon',
+    note: 'Maul (WW mask; confirmed via itemId 166058 sample link)',
+    itemType: 'maul',
+  },
+  1073741824: { category: 'weapon', slot: 'weapon', note: 'Bow', itemType: 'bow' },
+  2147483648: {
+    category: 'weapon',
+    slot: 'weapon',
+    note: 'Restoration staff',
+    itemType: 'restoration-staff',
+  },
+  34359738368: { category: 'weapon', slot: 'offhand', note: 'Shield', itemType: 'shield' },
 };
 
 const globalsPath = path.join(__dirname, '..', 'tmp', 'globals.txt');
@@ -173,6 +229,7 @@ async function main() {
         slot: slotInfo.slot,
         weight: slotInfo.weight,
         note: slotInfo.note,
+        itemType: slotInfo.itemType,
       };
 
       totalPieces += 1;
@@ -250,6 +307,7 @@ function addMythicSlotOverrides(items: Record<string, ItemEntry>): number {
           slot: slotInfo.slot,
           weight: slotInfo.weight,
           note: override.note ?? 'Mythic slot override from LibSets',
+          itemType: slotInfo.itemType,
         };
       }
       return;
@@ -262,6 +320,7 @@ function addMythicSlotOverrides(items: Record<string, ItemEntry>): number {
       slot: slotInfo.slot,
       weight: slotInfo.weight,
       note: override.note ?? 'Mythic slot override from LibSets',
+      itemType: slotInfo.itemType,
     };
     added += 1;
   });

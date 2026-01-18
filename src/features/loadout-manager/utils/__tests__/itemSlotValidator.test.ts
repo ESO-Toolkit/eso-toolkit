@@ -105,9 +105,9 @@ describe('itemSlotValidator', () => {
     it('detects slot mismatches', () => {
       const gear = createEmptyGearConfig();
 
-  // Try to put a ring item (slot 'ring') in the head slot (slot 0)
-  // First need to find a ring item with slot info
-  gear[0] = createGearPiece('1115'); // Armor of the Trainee Ring should fail
+      // Try to put a ring item (slot 'ring') in the head slot (slot 0)
+      // First need to find a ring item with slot info
+      gear[0] = createGearPiece('1115'); // Armor of the Trainee Ring should fail
 
       const result = validateGearConfig(gear);
 
@@ -252,8 +252,8 @@ describe('itemSlotValidator', () => {
     it('counts warnings for mixed explicit and inferred items', () => {
       const gear: GearConfig = {};
 
-  gear[0] = { id: '59380' }; // Valid: Spawn of Mephala Head
-  gear[2] = { id: String(UNKNOWN_SLOT_ITEM_ID) }; // Invalid: No slot info
+      gear[0] = { id: '59380' }; // Valid: Spawn of Mephala Head
+      gear[2] = { id: String(UNKNOWN_SLOT_ITEM_ID) }; // Invalid: No slot info
 
       const result = validateGearConfig(gear);
 
@@ -267,10 +267,10 @@ describe('itemSlotValidator', () => {
     it('tracks warnings when multiple items need inference', () => {
       const gear: GearConfig = {};
 
-  gear[0] = { id: '59380' }; // Explicit slot
-  gear[2] = { id: String(UNKNOWN_SLOT_ITEM_ID) }; // Inferred
-  gear[3] = { id: '59403' }; // Explicit slot
-  gear[11] = { id: String(SECOND_UNKNOWN_SLOT_ITEM_ID) }; // Inferred
+      gear[0] = { id: '59380' }; // Explicit slot
+      gear[2] = { id: String(UNKNOWN_SLOT_ITEM_ID) }; // Inferred
+      gear[3] = { id: '59403' }; // Explicit slot
+      gear[11] = { id: String(SECOND_UNKNOWN_SLOT_ITEM_ID) }; // Inferred
 
       const result = validateGearConfig(gear);
 

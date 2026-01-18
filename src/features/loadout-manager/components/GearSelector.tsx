@@ -5,7 +5,17 @@
  */
 
 import { Close, Add } from '@mui/icons-material';
-import { Box, Button, Card, CardContent, Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
@@ -62,6 +72,17 @@ const BACK_MAIN_SLOT = 20;
 const BACK_OFF_SLOT = 21;
 
 const TWO_HANDED_KEYWORDS = ['greatsword', 'battle axe', 'battleaxe', 'maul', 'bow', 'staff'];
+// Slot mask values from LibSets/Wizard's Wardrobe exports that map to 2H weapons
+const TWO_HANDED_SLOT_MASKS = new Set<number>([
+  134_217_728, // Two-handed sword
+  268_435_456, // Two-handed axe
+  536_870_912, // Maul (WW high-bit variant included)
+  1_073_741_824, // Bow
+  2_147_483_648, // Inferno staff
+  4_294_967_296, // Lightning staff
+  8_589_934_592, // Frost staff
+  17_179_869_184, // Restoration staff / other 2H magical variants
+]);
 
 const isSlotCompatible = (expected: SlotType, actual: SlotType): boolean => {
   if (expected === actual) {
@@ -214,18 +235,16 @@ const GearPieceDisplay: React.FC<GearPieceDisplayProps> = ({
   const primaryItemName = gearPiece?.name || itemData?.name || setName;
   const showAsEquipped = hasGear && !gearPiece?.name && !itemData?.name;
   const showItemIdFallback = resolvedItemId && !resolvedSetId && !setName ? resolvedItemId : null;
-  const gearLabel = primaryItemName
-    ? `${slotName}: ${primaryItemName}`
-    : resolvedSetId
-      ? `${slotName}: ${resolvedSetId}`
-      : showItemIdFallback
-        ? `${slotName}: Unknown Set (ID ${showItemIdFallback})`
-        : `${slotName}: Unknown Set`;
-  let isSameAsPrimary = false;
-  if (primaryItemName && setName) {
-    isSameAsPrimary = setName.localeCompare(primaryItemName, undefined, { sensitivity: 'accent' }) === 0;
-  }
-  const shouldRenderSetName = Boolean(setName && !isSameAsPrimary);
+  const fallbackLabel = resolvedSetId
+    ? `Set ID ${resolvedSetId}`
+    : showItemIdFallback
+      ? `Unknown Set (ID ${showItemIdFallback})`
+      : 'Unknown Item';
+  const gearLabel = setName ?? primaryItemName ?? fallbackLabel;
+  const isDuplicateDisplay = Boolean(
+    setName && gearLabel && setName.localeCompare(gearLabel, undefined, { sensitivity: 'accent' }) === 0,
+  );
+  const shouldRenderSetName = Boolean(setName && !isDuplicateDisplay);
 
   return (
     <Card
@@ -470,6 +489,12 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
     if (!itemId) {
       return false;
     }
+
+    const collectionItem = getCollectionItem(itemId);
+    if (collectionItem?.slotMask && TWO_HANDED_SLOT_MASKS.has(collectionItem.slotMask)) {
+      return true;
+    }
+
     const itemInfo = getItemInfo(itemId);
     return itemInfo ? isTwoHandedFromText(itemInfo.name) : false;
   };

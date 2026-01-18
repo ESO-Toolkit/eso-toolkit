@@ -170,11 +170,11 @@ describe('wizardWardrobeConverter', () => {
     const characterId = 'slot-tester-charKey';
     const gear = state.pages[characterId].SS[0].setups[0].gear;
 
-  expect(gear[11]?.link).toContain('item:1115');
-  expect(gear[12]?.link).toContain('item:1116');
-  expect(gear[16]?.link).toContain('item:6027');
-  expect(gear[20]?.link).toContain('item:117099');
-  expect(gear[21]?.link).toContain('item:117100');
+    expect(gear[11]?.link).toContain('item:1115');
+    expect(gear[12]?.link).toContain('item:1116');
+    expect(gear[16]?.link).toContain('item:6027');
+    expect(gear[20]?.link).toContain('item:117099');
+    expect(gear[21]?.link).toContain('item:117100');
     expect(gear[10]).toBeUndefined();
   });
 });

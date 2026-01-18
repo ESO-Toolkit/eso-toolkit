@@ -1,4 +1,5 @@
 import collectionsRaw from '../../../../data/eso-globals-item-set-collections.json';
+import setNamesRaw from '../../../../data/libsets-set-names.json';
 
 import type { SlotType } from './slotTypes';
 
@@ -30,9 +31,22 @@ interface CollectionItemEntry {
   note?: string;
 }
 
+interface LibSetsSetNamesFile {
+  metadata: {
+    generatedAt: string;
+    source: string;
+    totalSets: number;
+    languages: string[];
+  };
+  sets: Record<string, Record<string, string>>;
+}
+
+type LocalizedSetNameEntry = Record<string, string>;
+
 export interface ProcessedCollectionItem extends CollectionItemEntry {
   itemId: number;
   slotType?: SlotType;
+  setName?: string;
 }
 
 const slotAliasMap: Record<string, SlotType> = {
@@ -57,12 +71,67 @@ const slotTypeOverrides: Record<number, SlotType> = {
 };
 
 const data = collectionsRaw as ItemSetCollectionsFile;
+const setNamesData = setNamesRaw as LibSetsSetNamesFile;
 
 const collectionItems = new Map<number, ProcessedCollectionItem>();
 const collectionItemsBySetAndMask = new Map<string, ProcessedCollectionItem>();
 const collectionItemsBySetAndSlotType = new Map<string, ProcessedCollectionItem>();
 
-const slotMaskInfoMap = new Map<number, { category: SlotMaskEntry['category']; slotType?: SlotType; weight?: SlotMaskEntry['weight'] }>();
+const DEFAULT_SET_NAME_LOCALE = 'en';
+const availableSetNameLocales = setNamesData.metadata?.languages ?? [];
+const fallbackLocales: string[] = [
+  DEFAULT_SET_NAME_LOCALE,
+  ...availableSetNameLocales.filter((locale) => locale !== DEFAULT_SET_NAME_LOCALE),
+];
+
+const setNamesById = new Map<number, LocalizedSetNameEntry>();
+Object.entries(setNamesData.sets).forEach(([setId, names]) => {
+  const numericId = Number(setId);
+  if (!Number.isNaN(numericId)) {
+    setNamesById.set(numericId, names);
+  }
+});
+
+const resolveSetName = (setId: number, locale: string = DEFAULT_SET_NAME_LOCALE): string | undefined => {
+  const names = setNamesById.get(setId);
+  if (!names) {
+    return undefined;
+  }
+
+  if (locale && names[locale]) {
+    return names[locale];
+  }
+
+  if (names[DEFAULT_SET_NAME_LOCALE]) {
+    return names[DEFAULT_SET_NAME_LOCALE];
+  }
+
+  for (const fallbackLocale of fallbackLocales) {
+    if (names[fallbackLocale]) {
+      return names[fallbackLocale];
+    }
+  }
+
+  const firstAvailable = Object.values(names)[0];
+  return firstAvailable;
+};
+
+export const getSetNameLocales = (): string[] => [...fallbackLocales];
+
+export const getSetName = (
+  setId: number,
+  locale: string = DEFAULT_SET_NAME_LOCALE,
+): string | undefined => resolveSetName(setId, locale);
+
+export const getSetNameOrFallback = (
+  setId: number,
+  locale: string = DEFAULT_SET_NAME_LOCALE,
+): string => resolveSetName(setId, locale) ?? `Unknown Set (${setId})`;
+
+const slotMaskInfoMap = new Map<
+  number,
+  { category: SlotMaskEntry['category']; slotType?: SlotType; weight?: SlotMaskEntry['weight'] }
+>();
 
 Object.entries(data.slotMasks).forEach(([maskValue, entry]) => {
   const mask = Number(maskValue);
@@ -81,11 +150,14 @@ Object.entries(data.items).forEach(([id, entry]) => {
   const itemId = Number(id);
   const slotMaskInfo = slotMaskInfoMap.get(entry.slotMask);
   const slotTypeOverride = slotTypeOverrides[itemId];
-  const slotType = slotTypeOverride ?? (entry.slot ? slotAliasMap[entry.slot] : slotMaskInfo?.slotType);
+  const slotType =
+    slotTypeOverride ?? (entry.slot ? slotAliasMap[entry.slot] : slotMaskInfo?.slotType);
+  const setName = typeof entry.setId === 'number' ? resolveSetName(entry.setId) : undefined;
   const processedItem: ProcessedCollectionItem = {
     ...entry,
     itemId,
     slotType,
+    setName,
   };
 
   collectionItems.set(itemId, processedItem);
