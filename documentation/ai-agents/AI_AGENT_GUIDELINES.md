@@ -68,10 +68,37 @@ See: [jira/AI_JIRA_ACLI_INSTRUCTIONS.md](jira/AI_JIRA_ACLI_INSTRUCTIONS.md)
 
 ## Testing Requirements
 
-- Run tests before committing: `npm test`
+### Running Tests
+
+- Run unit tests before committing: `npm test`
 - Run linting: `npm run lint`
 - For UI changes, verify in browser
 - Update tests if behavior changed
+
+### Testing Tools Strategy
+
+**Three-Tier Testing Approach**:
+
+1. **Structured Test Suites** → Use **VS Code MCP Playwright Tool**
+   - Running existing Playwright test suites
+   - Viewing test results and reports
+   - Managing test files within VS Code
+   - CI/CD integration validation
+
+2. **Ad-hoc Exploratory Testing** → Use **Claude Skill** (`.claude/`)
+   - Quick feature verification without writing test files
+   - Interactive testing with AI guidance
+   - Visual inspection via screenshots
+   - Debugging specific UI issues
+   - Rapid test prototyping
+   - **Setup**: See [../../.claude/README.md](../../.claude/README.md)
+
+3. **Unit/Component Testing** → Use **Jest + Testing Library**
+   - Component unit tests
+   - Utility function tests
+   - Integration tests
+
+**Avoid**: One-off CLI commands like `npx playwright test` for ad-hoc testing. Use the Claude Skill instead.
 
 ## TypeScript Practices
 

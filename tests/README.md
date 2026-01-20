@@ -2,6 +2,25 @@
 
 This directory contains Playwright end-to-end tests for the ESO Log Aggregator application.
 
+## 🧪 Testing Tools
+
+**For AI Agents**: Choose the right tool for your testing needs:
+
+- **Running Existing Tests** → Use **VS Code MCP Playwright Tool**
+  - Execute test suites within VS Code
+  - View test results and reports
+  - Manage test files
+
+- **Ad-hoc Exploratory Testing** → Use **Claude Skill** ([../.claude/](../.claude/))
+  - Quick feature verification without writing test files
+  - Interactive testing with AI guidance
+  - Visual inspection and screenshots
+  - See [../.claude/README.md](../.claude/README.md) for setup
+
+- **Writing New Tests** → Follow this guide
+  - Create test files following existing patterns
+  - Use npm scripts from root package.json
+
 ## Overview
 
 The test suite includes:
