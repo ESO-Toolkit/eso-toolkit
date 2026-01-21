@@ -475,11 +475,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     (id: number) => {
       try {
         const targetPath = `/report/${reportId}/fight/${id}/insights`;
-        console.log('[ReportFightsView] Navigating to:', targetPath);
         navigate(targetPath);
-        console.log('[ReportFightsView] Navigation triggered successfully');
-      } catch (error) {
-        console.error('[ReportFightsView] Navigation error:', error);
+      } catch {
+        // Navigation error handled silently
       }
     },
     [navigate, reportId],
