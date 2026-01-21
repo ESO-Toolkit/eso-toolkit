@@ -1,3 +1,5 @@
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { Box, Typography, LinearProgress, Avatar, useTheme, Chip } from '@mui/material';
 import React from 'react';
 
@@ -21,7 +23,9 @@ export interface BuffUptime {
     uptime: number;
     uptimePercentage: number;
     applications: number;
+    groupAverageUptimePercentage?: number; // Per-stack group average for stagger
   }>; // All stack data for Touch of Z'en to enable switching
+  groupAverageUptimePercentage?: number; // Group average uptime percentage for delta calculation
 }
 
 interface BuffUptimeProgressBarProps {
@@ -93,10 +97,27 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
       uptime: buff.uptime,
       uptimePercentage: buff.uptimePercentage,
       applications: buff.applications,
+      groupAverageUptimePercentage: buff.groupAverageUptimePercentage,
     };
   }, [buff, selectedStack]);
 
   const pct = Math.max(0, Math.min(100, currentData.uptimePercentage));
+
+  // Calculate delta from group average if available
+  // For stacked abilities (e.g., Stagger), use the per-stack group average from currentData
+  // Otherwise, use the buff-level group average
+  const delta = React.useMemo(() => {
+    const groupAverage =
+      currentData.groupAverageUptimePercentage ?? buff.groupAverageUptimePercentage;
+    if (groupAverage !== undefined) {
+      return currentData.uptimePercentage - groupAverage;
+    }
+    return null;
+  }, [
+    currentData.uptimePercentage,
+    currentData.groupAverageUptimePercentage,
+    buff.groupAverageUptimePercentage,
+  ]);
 
   const onMainClick = React.useCallback((): void => {
     const url = createEsoLogsUrl(
@@ -330,6 +351,87 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           >
             {Math.round(pct)}%
           </Typography>
+          {/* Delta indicator - only show if groupAverage is provided */}
+          {delta !== null && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                ml: 0.5,
+              }}
+            >
+              {/* Show neutral indicator for very close to average (within ±2%) */}
+              {Math.abs(delta) < 2 ? (
+                <>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                      color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                      textShadow:
+                        theme.palette.mode === 'dark'
+                          ? '1px 1px 2px rgba(0,0,0,0.8)'
+                          : '1px 1px 1px rgba(255,255,255,0.9)',
+                    }}
+                  >
+                    ≈
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: '0.7rem',
+                      color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                      textShadow:
+                        theme.palette.mode === 'dark'
+                          ? '1px 1px 2px rgba(0,0,0,0.8), 0 0 6px rgba(0,0,0,0.6)'
+                          : '1px 1px 1px rgba(255,255,255,0.9), 0 0 3px rgba(255,255,255,0.7)',
+                    }}
+                  >
+                    {delta > 0 ? '+' : ''}
+                    {Math.round(delta)}%
+                  </Typography>
+                </>
+              ) : (
+                <>
+                  {delta > 0 ? (
+                    <TrendingUpIcon
+                      sx={{
+                        fontSize: '1rem',
+                        color: '#10b981',
+                        filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
+                      }}
+                    />
+                  ) : (
+                    <TrendingDownIcon
+                      sx={{
+                        fontSize: '1rem',
+                        color: '#ef4444',
+                        filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
+                      }}
+                    />
+                  )}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: '0.7rem',
+                      color: delta > 0 ? '#10b981' : '#ef4444',
+                      textShadow:
+                        theme.palette.mode === 'dark'
+                          ? '1px 1px 2px rgba(0,0,0,0.8), 0 0 6px rgba(0,0,0,0.6)'
+                          : '1px 1px 1px rgba(255,255,255,0.9), 0 0 3px rgba(255,255,255,0.7)',
+                    }}
+                  >
+                    {delta > 0 ? '+' : ''}
+                    {Math.round(delta)}%
+                  </Typography>
+                </>
+              )}
+            </Box>
+          )}
         </Box>
       </Box>
     </Box>

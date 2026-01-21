@@ -1,0 +1,24 @@
+{
+  "name": "eso-log-aggregator-claude-skill",
+  "version": "1.0.0",
+  "description": "Claude Skill (MCP Server) for ESO Log Aggregator testing with Playwright",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"No tests configured for Claude skill\""
+  },
+  "keywords": [
+    "mcp",
+    "claude",
+    "playwright",
+    "testing",
+    "eso-log-aggregator"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "@playwright/test": "^1.49.1"
+  }
+}

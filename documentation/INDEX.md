@@ -1,6 +1,6 @@
 # ESO Log Aggregator - Documentation Index
 
-**Last Updated**: October 16, 2025  
+**Last Updated**: January 18, 2026  
 **Purpose**: Central entry point for all project documentation
 
 ---
@@ -45,6 +45,10 @@ Comprehensive guides for AI agents working on this codebase:
 - **[Jira Integration](./ai-agents/jira/)** - Work item management with acli
   - [ACLI Instructions](./ai-agents/jira/AI_JIRA_ACLI_INSTRUCTIONS.md)
   - [Quick Reference](./ai-agents/jira/AI_JIRA_QUICK_REFERENCE.md)
+
+- **[Report Data Debugging](./ai-agents/)** - Debug production reports
+  - [Debugging Guide](./ai-agents/AI_REPORT_DATA_DEBUGGING.md)
+  - [Quick Reference](./ai-agents/AI_REPORT_DATA_DEBUGGING_QUICK_REFERENCE.md)
 
 - **[Agent Setup Summary](./ai-agents/AI_AGENT_SETUP_SUMMARY.md)** - Complete agent onboarding
 

@@ -14,7 +14,8 @@ Features: data visualization, real-time analytics, comprehensive testing infrast
 - **Feature Docs**: [documentation/features/](documentation/features/)
 - **Architecture**: [documentation/architecture/](documentation/architecture/)
 - **Complete Guide**: [documentation/AGENTS.md](documentation/AGENTS.md)
-- **VS Code MCP Playwright Tool**: Prefer the built-in Playwright tool from the VS Code MCP server for interactive test discovery and targeted runs without leaving the editor.
+- **VS Code MCP Playwright Tool**: For structured test execution - use this tool for running existing Playwright test suites, discovering test files, and viewing test results within VS Code.
+- **Claude Skill (.claude/)**: For ad-hoc exploratory testing - use Claude's MCP server for interactive testing sessions, quick verification, and debugging with AI assistance. See [.claude/README.md](.claude/README.md) for setup.
 
 ---
 
@@ -27,8 +28,56 @@ Features: data visualization, real-time analytics, comprehensive testing infrast
 - ✅ Only document significant features/architecture changes
 - 💬 Be concise - ask before extensive work
 - 📝 Use code comments and clear commit messages for simple changes
-- 🧪 When validating UI flows, launch tests through the VS Code MCP Playwright tool instead of ad-hoc CLI commands
+- 🧪 **Testing Strategy**:
+  - **Structured Testing**: Use VS Code MCP Playwright tool for running test suites and managing test files
+  - **Exploratory Testing**: Use Claude Skill (.claude/) for ad-hoc testing, quick verification, and interactive debugging
+  - **Avoid**: Ad-hoc CLI commands for one-off testing scenarios
 - 🔧 When interacting with GitHub, Sentry, Atlassian, or GitKraken workflows, prefer the corresponding MCP servers and tools instead of manual web or CLI steps
+
+---
+
+## 🤖 Claude Skill for Local Testing (January 2026)
+
+**NEW**: Claude Skill (MCP Server) for interactive Playwright testing with local authentication!
+
+📖 **Full Documentation**:
+- **[.claude/README.md](.claude/README.md)** - Complete setup and usage guide
+
+**Quick Start**:
+```powershell
+# Install dependencies
+cd .claude
+npm install
+
+# Configure Claude Desktop (see README for full instructions)
+# Restart Claude Desktop to load the skill
+```
+
+**Key Features**:
+- **Authenticated Testing**: Use local OAuth tokens from `tests/auth-state.json`
+- **Playwright Integration**: Full browser automation with AI assistance
+- **Interactive Exploration**: Ad-hoc testing with Claude's guidance
+- **Screenshot Capture**: Visual verification of UI states
+- **Element Inspection**: Verify elements exist and are visible
+
+**Available Tools**:
+- `get_auth_status`: Check authentication token status and expiry
+- `run_authenticated_test`: Execute custom Playwright test code
+- `navigate_and_verify`: Navigate and verify page loads correctly
+- `take_screenshot`: Capture screenshots of pages
+- `check_element`: Check element existence and visibility
+
+**Use Cases**:
+- Quick feature verification without writing full test files
+- Exploratory testing with AI-guided scenarios
+- Visual inspection and screenshot comparison
+- Debugging authentication and UI issues
+- Rapid prototyping of test scenarios
+
+**Prerequisites**:
+1. Valid `tests/auth-state.json` with OAuth token (run `npm run test:nightly:all` to generate)
+2. Development server running (`npm run dev`)
+3. Claude Desktop with MCP server configured
 
 ---
 
@@ -72,6 +121,41 @@ acli jira workitem transition ESO-394 --to "Done"
 **Key Insight**: Always check **ALL event types** (cast, damage, healing, buff, debuff, **resource**) when searching for signature scripts. Example: Anchorite's Potency appears as resource events, not combat events!
 
 **Test Coverage**: 38 tests passing, fully validated against Fight 11 combat logs.
+
+---
+
+## 🐛 Report Data Debugging (January 2026)
+
+**NEW**: Debug production issues by downloading and analyzing live report data!
+
+📖 **Full Documentation**:
+- **[documentation/ai-agents/AI_REPORT_DATA_DEBUGGING.md](documentation/ai-agents/AI_REPORT_DATA_DEBUGGING.md)** - Complete guide
+- **[documentation/ai-agents/AI_REPORT_DATA_DEBUGGING_QUICK_REFERENCE.md](documentation/ai-agents/AI_REPORT_DATA_DEBUGGING_QUICK_REFERENCE.md)** - Quick reference
+
+**Quick Start**:
+```powershell
+# Download full report (all fights)
+npm run script -- scripts/download-report-data.ts <report-code>
+
+# Download single fight
+npm run script -- scripts/download-report-data.ts <report-code> <fight-id>
+```
+
+**Output Location**: `data-downloads/<report-code>/`
+
+**Key Features**:
+- Download all event types (damage, healing, buffs, debuffs, casts, resources, deaths)
+- Separate friendly/hostile buff/debuff files for detailed analysis
+- Chronologically ordered events (all-events.json)
+- Master data with actors and abilities for cross-referencing
+- Metadata tracking for pagination and download verification
+
+**Common Use Cases**:
+- Debug missing damage/healing calculations
+- Analyze buff/debuff uptime issues
+- Investigate scribing detection problems (check ALL event types!)
+- Review death causes and combat flow
+- Validate event timing and sequencing
 
 ---
 

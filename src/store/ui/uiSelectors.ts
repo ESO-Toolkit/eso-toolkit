@@ -22,6 +22,11 @@ export const selectSelectedTargetId = (state: RootState): number | null => {
 };
 export const selectSelectedPlayerId = (state: RootState): RootState['ui']['selectedPlayerId'] =>
   state.ui.selectedPlayerId;
+
+export const selectSelectedFriendlyPlayerId = (
+  state: RootState,
+): RootState['ui']['selectedFriendlyPlayerId'] => state.ui.selectedFriendlyPlayerId;
+
 export const selectSelectedTabId = (state: RootState): RootState['ui']['selectedTabId'] =>
   state.ui.selectedTabId;
 export const selectMyReportsPage = (state: RootState): RootState['ui']['myReportsPage'] =>

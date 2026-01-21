@@ -99,8 +99,10 @@ public/mockServiceWorker.js
 # Vite cache directory
 /.vite/
 
-# Claude AI assistant local settings
-/.claude/
+# Claude AI assistant local settings (keep skill but protect sensitive data)
+/.claude/node_modules/
+/.claude/mcp-config.json
+/.claude/screenshots/
 /.claude-rules.md
 
 # Build cache and temporary directories

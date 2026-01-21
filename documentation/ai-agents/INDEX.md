@@ -1,6 +1,6 @@
 # AI Agent Documentation Index
 
-**Last Updated**: October 16, 2025  
+**Last Updated**: January 18, 2026  
 **Purpose**: Central hub for all AI agent guidance and instructions
 
 ---
@@ -97,6 +97,44 @@ Data preloading architecture for optimized performance and offline support.
   - Setup and configuration
   - Environment requirements
   - Validation steps
+
+---
+
+### 🐛 Report Data Debugging
+
+Debug production issues using downloaded ESO Logs report data.
+
+**Documents**:
+- **[AI_REPORT_DATA_DEBUGGING.md](./AI_REPORT_DATA_DEBUGGING.md)** (12-15 min read)
+  - Complete debugging guide
+  - Data structure documentation
+  - Common scenarios and solutions
+  - File organization reference
+  - Analysis tips and patterns
+
+- **[AI_REPORT_DATA_DEBUGGING_QUICK_REFERENCE.md](./AI_REPORT_DATA_DEBUGGING_QUICK_REFERENCE.md)** (3-5 min read)
+  - Quick command reference
+  - File location map
+  - Common debugging tasks
+  - Critical notes and gotchas
+
+**Key Features**:
+- Download live report data to local files for analysis
+- Organized folder structure with all event types
+- Separate friendly/hostile buff/debuff files
+- Chronological event ordering
+- Metadata tracking for pagination
+
+**Download Command**:
+```powershell
+# Full report
+npm run script -- scripts/download-report-data.ts <report-code>
+
+# Single fight
+npm run script -- scripts/download-report-data.ts <report-code> <fight-id>
+```
+
+**Output Location**: `data-downloads/<report-code>/`
 
 ---
 
@@ -239,6 +277,7 @@ acli jira workitem transition ESO-XXX --to "Done"
 | **Working on scribing detection** | [scribing/AI_SCRIBING_QUICK_REFERENCE.md](./scribing/AI_SCRIBING_QUICK_REFERENCE.md) |
 | **Writing E2E tests** | [playwright/AI_PLAYWRIGHT_INSTRUCTIONS.md](./playwright/AI_PLAYWRIGHT_INSTRUCTIONS.md) |
 | **Implementing preloading** | [preloading/AI_PRELOADING_INSTRUCTIONS.md](./preloading/AI_PRELOADING_INSTRUCTIONS.md) |
+| **Debugging production reports** | [AI_REPORT_DATA_DEBUGGING_QUICK_REFERENCE.md](./AI_REPORT_DATA_DEBUGGING_QUICK_REFERENCE.md) |
 | **Managing Jira tickets** | [jira/AI_JIRA_QUICK_REFERENCE.md](./jira/AI_JIRA_QUICK_REFERENCE.md) |
 | **First time setup** | [AI_AGENT_SETUP_SUMMARY.md](./AI_AGENT_SETUP_SUMMARY.md) |
 | **Understanding architecture** | [../architecture/system-architecture.md](../architecture/system-architecture.md) |

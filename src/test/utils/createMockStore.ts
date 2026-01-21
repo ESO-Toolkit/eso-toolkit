@@ -96,6 +96,7 @@ export function createMockStore(options: MockStoreOptions = {}): EnhancedStore {
         showExperimentalTabs: false,
         selectedTargetIds: [],
         selectedPlayerId: null,
+        selectedFriendlyPlayerId: null,
         selectedTabId: null,
         myReportsPage: 1,
         ...(initialState.ui || {}),
@@ -114,6 +115,7 @@ export const defaultMockUIState: UIState = {
   showExperimentalTabs: false,
   selectedTargetIds: [],
   selectedPlayerId: null,
+  selectedFriendlyPlayerId: null,
   selectedTabId: null,
   myReportsPage: 1,
 };

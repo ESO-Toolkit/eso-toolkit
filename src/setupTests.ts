@@ -9,6 +9,17 @@ import '@testing-library/jest-dom';
 // Mock environment utilities to avoid import.meta issues in Jest
 jest.mock('./utils/envUtils');
 
+// Mock Logger to suppress console output during tests
+jest.mock('./utils/logger', () => {
+  const actual = jest.requireActual('./utils/logger');
+  const { MockLogger } = jest.requireActual('./test/__mocks__/loggerMock');
+
+  return {
+    ...actual,
+    Logger: MockLogger,
+  };
+});
+
 // Polyfill for TextEncoder and TextDecoder (required for MUI X DataGrid and other components)
 
 if (typeof global.TextEncoder === 'undefined') {

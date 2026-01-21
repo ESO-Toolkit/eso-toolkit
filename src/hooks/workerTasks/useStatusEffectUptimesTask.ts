@@ -52,6 +52,8 @@ export function useStatusEffectUptimesTask(): {
           debuffsLookup: debuffLookupData,
           fightStartTime: selectedFight.startTime,
           fightEndTime: selectedFight?.endTime,
+          friendlyPlayerIds:
+            selectedFight.friendlyPlayers?.filter((id): id is number => id !== null) || [],
         }),
       );
     }
