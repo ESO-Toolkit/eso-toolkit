@@ -297,8 +297,8 @@ describe('BuffUptimeProgressBar - Delta Indicators', () => {
   });
 
   describe('Stacked Abilities (e.g., Stagger)', () => {
-    it('should show neutral indicator for Stack 1 with delta = 0%', () => {
-      const buff = createBuffData(56, undefined, {
+    it('should show delta indicator for highest stack when multi-stack', () => {
+      const buff = createBuffData(29, undefined, {
         abilityName: 'Stagger',
         maxStacks: 3,
         stackLevel: 1,
@@ -332,13 +332,17 @@ describe('BuffUptimeProgressBar - Delta Indicators', () => {
 
       renderBuffProgressBar(buff);
 
-      // Should show neutral indicator for Stack 1
-      expect(screen.getByText('≈')).toBeInTheDocument();
-      expect(screen.getByText('0%')).toBeInTheDocument();
+      // Should show all stack percentages in segmented format below bar (S1: 56% | S2: 42% | S3: 29%) with -27% delta for highest stack
+      expect(screen.getByText(/S1:\s*56%/)).toBeInTheDocument();
+      expect(screen.getByText(/S2:\s*42%/)).toBeInTheDocument();
+      expect(screen.getByText(/S3:\s*29%/)).toBeInTheDocument();
+      expect(screen.queryByText('≈')).not.toBeInTheDocument();
+      expect(screen.getByText('-27%')).toBeInTheDocument();
+      expect(screen.getByTestId('TrendingDownIcon')).toBeInTheDocument();
     });
 
     it('should use per-stack group average for stacked abilities', () => {
-      const buff = createBuffData(42, 99, {
+      const buff = createBuffData(29, 99, {
         // Top-level group average is 99% (should be ignored)
         abilityName: 'Stagger',
         maxStacks: 3,
@@ -358,7 +362,7 @@ describe('BuffUptimeProgressBar - Delta Indicators', () => {
             uptime: 150,
             uptimePercentage: 42,
             applications: 20,
-            groupAverageUptimePercentage: 57, // Should use this (42% - 57% = -15%)
+            groupAverageUptimePercentage: 57, // Delta = -15%
           },
           {
             stackLevel: 3,
@@ -366,16 +370,19 @@ describe('BuffUptimeProgressBar - Delta Indicators', () => {
             uptime: 100,
             uptimePercentage: 29,
             applications: 25,
-            groupAverageUptimePercentage: 56,
+            groupAverageUptimePercentage: 56, // Should use this for Stack 3 (29% - 56% = -27%)
           },
         ],
       });
 
       renderBuffProgressBar(buff);
 
-      // Should show -15% (not based on top-level 99%)
+      // Should show all stack percentages in segmented format below bar (S1: 56% | S2: 42% | S3: 29%) with -27% for Stack 3 (highest stack), not based on top-level 99%
+      expect(screen.getByText(/S1:\s*56%/)).toBeInTheDocument();
+      expect(screen.getByText(/S2:\s*42%/)).toBeInTheDocument();
+      expect(screen.getByText(/S3:\s*29%/)).toBeInTheDocument();
       expect(screen.queryByText('≈')).not.toBeInTheDocument();
-      expect(screen.getByText('-15%')).toBeInTheDocument();
+      expect(screen.getByText('-27%')).toBeInTheDocument();
     });
   });
 
@@ -404,6 +411,93 @@ describe('BuffUptimeProgressBar - Delta Indicators', () => {
 
       // Verify component rendered successfully
       expect(container.querySelector('.MuiLinearProgress-root')).toBeInTheDocument();
+    });
+  });
+
+  describe('Multi-Stack Visualization', () => {
+    it('should render multiple overlaid progress bars for multi-stack abilities', () => {
+      const buff = createBuffData(35, undefined, {
+        maxStacks: 3,
+        stackLevel: 3,
+        allStacksData: [
+          {
+            stackLevel: 1,
+            totalDuration: 170000,
+            uptime: 170,
+            uptimePercentage: 85,
+            applications: 42,
+          },
+          {
+            stackLevel: 2,
+            totalDuration: 120000,
+            uptime: 120,
+            uptimePercentage: 60,
+            applications: 30,
+          },
+          {
+            stackLevel: 3,
+            totalDuration: 70000,
+            uptime: 70,
+            uptimePercentage: 35,
+            applications: 18,
+          },
+        ],
+      });
+
+      const { container } = renderBuffProgressBar(buff);
+
+      // Should not render the default LinearProgress for multi-stack
+      const linearProgress = container.querySelector('.MuiLinearProgress-root');
+      expect(linearProgress).not.toBeInTheDocument();
+    });
+
+    it('should render single progress bar for non-stacked abilities', () => {
+      const buff = createBuffData(75);
+      const { container } = renderBuffProgressBar(buff);
+
+      // Should render the default LinearProgress
+      const linearProgress = container.querySelector('.MuiLinearProgress-root');
+      expect(linearProgress).toBeInTheDocument();
+
+      // Should not render stack indicators
+      expect(screen.queryByText('1')).not.toBeInTheDocument();
+    });
+
+    it('should show correct percentage for multi-stack ability', () => {
+      const buff = createBuffData(35, undefined, {
+        maxStacks: 3,
+        stackLevel: 3,
+        allStacksData: [
+          {
+            stackLevel: 1,
+            totalDuration: 170000,
+            uptime: 170,
+            uptimePercentage: 85,
+            applications: 42,
+          },
+          {
+            stackLevel: 2,
+            totalDuration: 120000,
+            uptime: 120,
+            uptimePercentage: 60,
+            applications: 30,
+          },
+          {
+            stackLevel: 3,
+            totalDuration: 70000,
+            uptime: 70,
+            uptimePercentage: 35,
+            applications: 18,
+          },
+        ],
+      });
+
+      renderBuffProgressBar(buff);
+
+      // Should show all stack percentages in segmented format below bar (S1: 85% | S2: 60% | S3: 35%)
+      expect(screen.getByText(/S1:\s*85%/)).toBeInTheDocument();
+      expect(screen.getByText(/S2:\s*60%/)).toBeInTheDocument();
+      expect(screen.getByText(/S3:\s*35%/)).toBeInTheDocument();
     });
   });
 });

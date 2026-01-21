@@ -83,14 +83,47 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
 }) => {
   const theme = useTheme();
 
-  // State to track currently selected stack for Touch of Z'en
-  const [selectedStack, setSelectedStack] = React.useState(buff.stackLevel || buff.maxStacks || 5);
+  // Helper function to get stack gradient
+  const getStackGradient = React.useCallback(
+    (stackLevel: number): string => {
+      const isDark = theme.palette.mode === 'dark';
+      // Use gradients from primary (red) through warm colors to blue/purple
+      // Matches the app's color scheme and the single-bar gradient style
+      const gradients = isDark
+        ? [
+            // Stack 1: Red gradient
+            'linear-gradient(90deg, rgba(211, 47, 47, 0.7) 0%, rgba(244, 67, 54, 0.75) 100%)',
+            // Stack 2: Orange gradient
+            'linear-gradient(90deg, rgba(255, 87, 34, 0.75) 0%, rgba(255, 112, 67, 0.8) 100%)',
+            // Stack 3: Amber gradient
+            'linear-gradient(90deg, rgba(255, 152, 0, 0.8) 0%, rgba(255, 179, 0, 0.85) 100%)',
+            // Stack 4: Blue gradient (from single bar)
+            'linear-gradient(90deg, rgba(59, 130, 246, 0.8) 0%, rgba(96, 165, 250, 0.85) 100%)',
+            // Stack 5: Purple gradient (from single bar)
+            'linear-gradient(90deg, rgba(139, 92, 246, 0.85) 0%, rgba(167, 139, 250, 0.9) 100%)',
+          ]
+        : [
+            // Stack 1: Light red gradient
+            'linear-gradient(90deg, rgba(211, 47, 47, 0.5) 0%, rgba(244, 67, 54, 0.6) 100%)',
+            // Stack 2: Light orange gradient
+            'linear-gradient(90deg, rgba(255, 87, 34, 0.55) 0%, rgba(255, 112, 67, 0.65) 100%)',
+            // Stack 3: Light amber gradient
+            'linear-gradient(90deg, rgba(255, 152, 0, 0.6) 0%, rgba(255, 179, 0, 0.7) 100%)',
+            // Stack 4: Cyan gradient (from single bar)
+            'linear-gradient(90deg, rgba(103, 232, 249, 0.65) 0%, rgba(147, 197, 253, 0.75) 100%)',
+            // Stack 5: Light purple gradient (from single bar)
+            'linear-gradient(90deg, rgba(196, 181, 253, 0.7) 0%, rgba(216, 180, 254, 0.8) 100%)',
+          ];
+      return gradients[Math.min(stackLevel - 1, gradients.length - 1)];
+    },
+    [theme.palette.mode],
+  );
 
-  // Get current data based on selected stack
+  // Get current data for text display (use highest stack for multi-stack abilities)
   const currentData = React.useMemo(() => {
-    if (buff.allStacksData) {
-      const stackData = buff.allStacksData.find((stack) => stack.stackLevel === selectedStack);
-      return stackData || buff.allStacksData[buff.allStacksData.length - 1]; // Fallback to highest stack
+    if (buff.allStacksData && buff.allStacksData.length > 0) {
+      // Use the highest stack level for display
+      return buff.allStacksData[buff.allStacksData.length - 1];
     }
     return {
       totalDuration: buff.totalDuration,
@@ -99,7 +132,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
       applications: buff.applications,
       groupAverageUptimePercentage: buff.groupAverageUptimePercentage,
     };
-  }, [buff, selectedStack]);
+  }, [buff]);
 
   const pct = Math.max(0, Math.min(100, currentData.uptimePercentage));
 
@@ -141,17 +174,6 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
     buff.dotAbilityIds,
   ]);
 
-  const onStackClick = React.useCallback(
-    (e: React.MouseEvent): void => {
-      e.stopPropagation(); // Prevent the main click from firing
-      if (buff.allStacksData && buff.maxStacks) {
-        const nextStack = selectedStack >= buff.maxStacks ? 1 : selectedStack + 1;
-        setSelectedStack(nextStack);
-      }
-    },
-    [buff.allStacksData, buff.maxStacks, selectedStack],
-  );
-
   return (
     <Box
       sx={{
@@ -164,12 +186,11 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
       }}
       onClick={onMainClick}
     >
-      {/* Background progress bar */}
-      <LinearProgress
-        variant="determinate"
-        value={pct}
+      {/* Progress bars container */}
+      <Box
         sx={{
-          height: 48,
+          position: 'relative',
+          height: buff.allStacksData ? 56 : 48, // Taller for multi-stack abilities
           borderRadius: 2,
           bgcolor:
             theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(203, 213, 225, 0.3)',
@@ -178,19 +199,61 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
             theme.palette.mode === 'dark'
               ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)'
               : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
-          '& .MuiLinearProgress-bar': {
-            borderRadius: 2,
-            background:
-              theme.palette.mode === 'dark'
-                ? 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)'
-                : 'linear-gradient(90deg, #67e8f9 0%, #93c5fd 25%, #c4b5fd 75%, #f9a8d4 100%)',
-            boxShadow:
-              theme.palette.mode === 'dark'
-                ? '0 2px 8px rgba(59, 130, 246, 0.3), 0 0 20px rgba(139, 92, 246, 0.2)'
-                : '0 1px 3px rgba(103, 232, 249, 0.3), 0 0 8px rgba(147, 197, 253, 0.2)',
-          },
+          overflow: 'hidden',
         }}
-      />
+      >
+        {/* Multi-stack progress bars (if available) */}
+        {buff.allStacksData
+          ? buff.allStacksData
+              .slice()
+              .sort((a, b) => a.stackLevel - b.stackLevel) // Sort lowest to highest so highest renders last (on top)
+              .map((stackData) => {
+                const stackPct = Math.max(0, Math.min(100, stackData.uptimePercentage));
+                return (
+                  <Box
+                    key={stackData.stackLevel}
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      height: '100%',
+                      width: `${stackPct}%`,
+                      background: getStackGradient(stackData.stackLevel),
+                      borderRadius: 2,
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? '0 1px 4px rgba(0, 0, 0, 0.3)'
+                          : '0 1px 2px rgba(0, 0, 0, 0.1)',
+                      transition: 'width 0.3s ease-in-out, background 0.3s ease-in-out',
+                    }}
+                  />
+                );
+              })
+          : // Single progress bar (non-stacked abilities)
+            null}
+        {!buff.allStacksData && (
+          <LinearProgress
+            variant="determinate"
+            value={pct}
+            sx={{
+              height: '100%',
+              borderRadius: 2,
+              bgcolor: 'transparent',
+              '& .MuiLinearProgress-bar': {
+                borderRadius: 2,
+                background:
+                  theme.palette.mode === 'dark'
+                    ? 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)'
+                    : 'linear-gradient(90deg, #67e8f9 0%, #93c5fd 25%, #c4b5fd 75%, #f9a8d4 100%)',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 2px 8px rgba(59, 130, 246, 0.3), 0 0 20px rgba(139, 92, 246, 0.2)'
+                    : '0 1px 3px rgba(103, 232, 249, 0.3), 0 0 8px rgba(147, 197, 253, 0.2)',
+              },
+            }}
+          />
+        )}
+      </Box>
 
       {/* Content overlay */}
       <Box
@@ -199,7 +262,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           top: 0,
           left: 0,
           right: 0,
-          bottom: 0,
+          height: buff.allStacksData ? 56 : 48, // Match the progress bar container height
           display: 'flex',
           alignItems: 'center',
           px: 2,
@@ -273,71 +336,8 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           </Typography>
         </Box>
 
-        {/* Right side: Stack badge and Percentage */}
+        {/* Right side: Percentage */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-          {buff.maxStacks && (
-            <Chip
-              label={`${selectedStack}/${buff.maxStacks}`}
-              icon={
-                buff.allStacksData ? (
-                  <Box
-                    sx={{
-                      width: 4,
-                      height: 4,
-                      borderRadius: '50%',
-                      backgroundColor:
-                        theme.palette.mode === 'dark' ? '#fbbf24' : 'rgba(255,255,255,0.9)',
-                      mr: 0.5,
-                      boxShadow: '0 0 3px rgba(0,0,0,0.3)',
-                    }}
-                  />
-                ) : undefined
-              }
-              size="small"
-              onClick={onStackClick}
-              sx={{
-                height: 24,
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                background:
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, #d97706 0%, #dc2626 100%)'
-                    : 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)',
-                color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
-                border: 'none',
-                boxShadow:
-                  theme.palette.mode === 'dark'
-                    ? '0 2px 8px rgba(59, 130, 246, 0.5), inset 0 1px 0 rgba(255,255,255,0.25)'
-                    : '0 2px 6px rgba(96, 165, 250, 0.4), inset 0 1px 0 rgba(255,255,255,0.5)',
-                backdropFilter: 'blur(8px)',
-                cursor: buff.allStacksData ? 'pointer' : 'default',
-                transition: 'all 0.15s ease-in-out',
-                '&:hover': buff.allStacksData
-                  ? {
-                      transform: 'scale(1.08)',
-                      boxShadow:
-                        theme.palette.mode === 'dark'
-                          ? '0 4px 12px rgba(59, 130, 246, 0.6), inset 0 1px 0 rgba(255,255,255,0.35)'
-                          : '0 3px 8px rgba(96, 165, 250, 0.5), inset 0 1px 0 rgba(255,255,255,0.6)',
-                    }
-                  : {},
-                '&:active': buff.allStacksData
-                  ? {
-                      transform: 'scale(0.95)',
-                    }
-                  : {},
-                '& .MuiChip-label': {
-                  px: buff.allStacksData ? 1 : 1.5,
-                  textShadow: theme.palette.mode === 'dark' ? '0 1px 2px rgba(0,0,0,0.6)' : 'none',
-                  fontWeight: 800,
-                },
-                '& .MuiChip-icon': {
-                  marginLeft: '4px',
-                  marginRight: '-2px',
-                },
-              }}
-            />
-          )}
           <Typography
             variant="body2"
             sx={{
@@ -434,6 +434,64 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           )}
         </Box>
       </Box>
+
+      {/* Segmented stack labels (below bar for multi-stack abilities) */}
+      {buff.allStacksData && buff.allStacksData.length > 0 && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
+            mt: 0.5,
+            flexWrap: 'wrap',
+          }}
+        >
+          {buff.allStacksData.map((stackData, index) => (
+            <React.Fragment key={stackData.stackLevel}>
+              {index > 0 && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: theme.palette.mode === 'dark' ? '#64748b' : '#94a3b8',
+                    fontSize: '0.7rem',
+                    fontWeight: 500,
+                  }}
+                >
+                  |
+                </Typography>
+              )}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '2px',
+                    background: getStackGradient(stackData.stackLevel),
+                    flexShrink: 0,
+                  }}
+                />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: theme.palette.mode === 'dark' ? '#e2e8f0' : '#475569',
+                  }}
+                >
+                  S{stackData.stackLevel}: {Math.round(stackData.uptimePercentage)}%
+                </Typography>
+              </Box>
+            </React.Fragment>
+          ))}
+        </Box>
+      )}
     </Box>
   );
 };
