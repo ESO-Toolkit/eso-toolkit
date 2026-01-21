@@ -473,7 +473,12 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
   const handleFightSelect = React.useCallback(
     (id: number) => {
-      navigate(`/report/${reportId}/fight/${id}/insights`);
+      try {
+        const targetPath = `/report/${reportId}/fight/${id}/insights`;
+        navigate(targetPath);
+      } catch {
+        // Navigation error handled silently
+      }
     },
     [navigate, reportId],
   );

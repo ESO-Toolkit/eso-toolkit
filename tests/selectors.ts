@@ -101,12 +101,13 @@ export const TEST_TIMEOUTS = {
 
 /**
  * Common test data
+ * 
+ * NOTE: ESO Logs reports expire/get deleted over time. Update these IDs periodically
+ * with valid public reports from https://esotk.com/latest-reports
  */
 export const TEST_DATA = {
   REAL_REPORT_IDS: [
-    'nbKdDtT4NcZyVrvX', // Report with fight-117 (confirmed)
-    'qdxpGgyQ92A31LBr', // Report with fight-5 (confirmed)
-    'QrXtM3W2CZ1yazDq', // Report with fight-69 and fight-74 (confirmed)
+    'prV8jWb1NqFJc97Z', // Current valid report (updated 2026-01-21) - Rockgrove with 17 fights
   ],
   
   MAIN_TABS: [

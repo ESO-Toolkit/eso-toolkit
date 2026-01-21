@@ -162,7 +162,7 @@
     "shrinkwrap:create": "node scripts/scribing-shrinkwrap.js create",
     "shrinkwrap:validate": "node scripts/scribing-shrinkwrap.js validate",
     "shrinkwrap:update": "node scripts/scribing-shrinkwrap.js update",
-    "lint": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" eslint ./src",
+    "lint": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" eslint ./src --max-warnings 0",
     "lint:fix": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" eslint ./src --fix",
     "postbuild": "echo Build completed with cache-busting enabled",
     "prebuild": "node scripts/generate-version.cjs && node scripts/update-manifest.cjs",

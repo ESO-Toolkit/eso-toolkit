@@ -1,0 +1,15 @@
+{
+  "agentSkills": {
+    "eso-log-aggregator-testing": {
+      "command": "node",
+      "args": [
+        "d:\\code\\eso-log-aggregator\\.copilot\\server.js"
+      ],
+      "env": {
+        "AUTH_STATE_PATH": "d:\\code\\eso-log-aggregator\\tests\\auth-state.json",
+        "BASE_URL": "http://localhost:3000",
+        "PLAYWRIGHT_CONFIG": "d:\\code\\eso-log-aggregator\\playwright.debug.config.ts"
+      }
+    }
+  }
+}

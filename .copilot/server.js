@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * ESO Log Aggregator - Claude Skill (MCP Server)
+ * ESO Log Aggregator - GitHub Copilot Agent Skill (MCP Server)
  * 
- * This MCP server provides tools for Claude to interact with the ESO Log Aggregator
+ * This MCP server provides tools for GitHub Copilot to interact with the ESO Log Aggregator
  * application using Playwright, with proper authentication using local tokens.
+ * 
+ * Compatible with: GitHub Copilot (VS Code) via Agent Skills standard
  * 
  * Tools provided:
  * - run_authenticated_test: Run Playwright tests with local auth token
@@ -12,6 +14,17 @@
  * - navigate_and_verify: Navigate to a page and verify it loads correctly
  * - take_screenshot: Capture a screenshot of the current page
  * - check_element: Check if an element exists and is visible
+ * - start_dev_server: Start development server in background
+ * - stop_dev_server: Stop running development server
+ * - dev_server_status: Check dev server status
+ * - run_smoke_tests: Quick validation tests
+ * - run_full_tests: Full E2E test suite
+ * - run_nightly_tests: Comprehensive cross-browser testing
+ * - run_format: Format code with Prettier
+ * - run_lint: Lint code with ESLint
+ * - run_typecheck: TypeScript type checking
+ * - run_unit_tests: Jest unit tests
+ * - run_build: Production build
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';

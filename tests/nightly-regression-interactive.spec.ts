@@ -11,7 +11,7 @@ import { SELECTORS, TEST_TIMEOUTS, TEST_DATA, getBaseUrl } from './selectors';
  */
 
 const REAL_REPORT_IDS = TEST_DATA.REAL_REPORT_IDS.slice(0, 3); // Use first 3 for better coverage
-const REPORT_WITH_FIGHTS = REAL_REPORT_IDS[1]; // qdxpGgyQ92A31LBr - try with auth
+const REPORT_WITH_FIGHTS = REAL_REPORT_IDS[0]; // prV8jWb1NqFJc97Z - Rockgrove with 17 fights
 
 /**
  * Helper function to check if fights are available and get a usable fight button
