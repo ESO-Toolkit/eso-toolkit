@@ -166,10 +166,21 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
       // For each stack level (1, 2, 3)
       [1, 2, 3].forEach((stackLevel) => {
         const playerUptimesForStack = playerStaggerResults
-          .map((result: { playerId: number; stackResults: Array<{ stackLevel: number; uptimePercentage: number; abilityGameID: number }> }) => {
-            const stackData = result.stackResults.find((s: { stackLevel: number }) => s.stackLevel === stackLevel);
-            return stackData?.uptimePercentage || 0;
-          })
+          .map(
+            (result: {
+              playerId: number;
+              stackResults: Array<{
+                stackLevel: number;
+                uptimePercentage: number;
+                abilityGameID: string;
+              }>;
+            }) => {
+              const stackData = result.stackResults.find(
+                (s: { stackLevel: number }) => s.stackLevel === stackLevel,
+              );
+              return stackData?.uptimePercentage || 0;
+            },
+          )
           .filter((uptime: number) => uptime > 0); // Only count players who contributed
 
         if (playerUptimesForStack.length > 0) {
@@ -182,7 +193,14 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
 
       // Get the selected player's stagger data
       const selectedPlayerResult = playerStaggerResults.find(
-        (r: { playerId: number; stackResults: Array<{ stackLevel: number; uptimePercentage: number; abilityGameID: number }> }) => r.playerId === selectedPlayerId,
+        (r: {
+          playerId: number;
+          stackResults: Array<{
+            stackLevel: number;
+            uptimePercentage: number;
+            abilityGameID: string;
+          }>;
+        }) => r.playerId === selectedPlayerId,
       );
 
       if (selectedPlayerResult?.stackResults.length) {
