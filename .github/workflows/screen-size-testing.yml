@@ -437,7 +437,7 @@ jobs:
           fi
 
       - name: Upload Test Report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: screen-size-test-report-complete

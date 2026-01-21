@@ -246,7 +246,7 @@ jobs:
           PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: 'true'
 
       - name: Upload Test Results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: nightly-test-results-shard-${{ matrix.shard }}-${{ github.run_id }}
@@ -256,7 +256,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Test Report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: nightly-playwright-report-shard-${{ matrix.shard }}-${{ github.run_id }}
@@ -377,7 +377,7 @@ jobs:
           echo "✅ Consolidation complete"
 
       - name: Upload Consolidated Results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: nightly-consolidated-results-${{ github.run_id }}
