@@ -15,7 +15,8 @@ Features: data visualization, real-time analytics, comprehensive testing infrast
 - **Architecture**: [documentation/architecture/](documentation/architecture/)
 - **Complete Guide**: [documentation/AGENTS.md](documentation/AGENTS.md)
 - **VS Code MCP Playwright Tool**: For structured test execution - use this tool for running existing Playwright test suites, discovering test files, and viewing test results within VS Code.
-- **Claude Skill (.claude/)**: For ad-hoc exploratory testing - use Claude's MCP server for interactive testing sessions, quick verification, and debugging with AI assistance. See [.claude/README.md](.claude/README.md) for setup.
+- **GitHub Copilot Agent Skill (.copilot/)**: For GitHub Copilot users - comprehensive MCP server with Playwright testing, dev workflow automation, and interactive debugging. See [.copilot/README.md](.copilot/README.md) for setup.
+- **Claude Agent Skill (.claude/)**: For Claude Desktop users - equivalent MCP server for interactive testing sessions, quick verification, and debugging with AI assistance. See [.claude/README.md](.claude/README.md) for setup.
 
 ---
 
@@ -30,26 +31,43 @@ Features: data visualization, real-time analytics, comprehensive testing infrast
 - 📝 Use code comments and clear commit messages for simple changes
 - 🧪 **Testing Strategy**:
   - **Structured Testing**: Use VS Code MCP Playwright tool for running test suites and managing test files
-  - **Exploratory Testing**: Use Claude Skill (.claude/) for ad-hoc testing, quick verification, and interactive debugging
+  - **Exploratory Testing**: Use GitHub Copilot Agent Skill (.copilot/) or Claude Agent Skill (.claude/) for ad-hoc testing, quick verification, and interactive debugging
   - **Avoid**: Ad-hoc CLI commands for one-off testing scenarios
 - 🔧 When interacting with GitHub, Sentry, Atlassian, or GitKraken workflows, prefer the corresponding MCP servers and tools instead of manual web or CLI steps
 
 ---
 
-## 🤖 Claude Skill for Local Testing (January 2026)
+## 🤖 Agent Skills for Local Testing (January 2026)
 
-**NEW**: Claude Skill (MCP Server) for interactive Playwright testing with local authentication!
+**NEW**: Agent Skills (MCP Servers) for interactive Playwright testing with local authentication!
+
+**Two Implementations**:
+- **[.copilot/](.copilot/)** - GitHub Copilot (VS Code) implementation
+- **[.claude/](.claude/)** - Claude Desktop implementation
+
+Both provide the same 16 tools for comprehensive testing and development workflow automation.
 
 📖 **Full Documentation**:
-- **[.claude/README.md](.claude/README.md)** - Complete setup and usage guide
+- **[.copilot/README.md](.copilot/README.md)** - GitHub Copilot setup and usage
+- **[.claude/README.md](.claude/README.md)** - Claude Desktop setup and usage
 
-**Quick Start**:
+**Quick Start (GitHub Copilot)**:
+```powershell
+# Install dependencies
+cd .copilot
+npm install
+
+# Configuration is already set in .vscode/settings.json
+# Reload VS Code window to activate the skill
+```
+
+**Quick Start (Claude Desktop)**:
 ```powershell
 # Install dependencies
 cd .claude
 npm install
 
-# Configure Claude Desktop (see README for full instructions)
+# Configure Claude Desktop (see .claude/README.md for full instructions)
 # Restart Claude Desktop to load the skill
 ```
 
@@ -59,13 +77,16 @@ npm install
 - **Interactive Exploration**: Ad-hoc testing with Claude's guidance
 - **Screenshot Capture**: Visual verification of UI states
 - **Element Inspection**: Verify elements exist and are visible
+- **Dev Server Management**: Start/stop dev server as background process
 
-**Available Tools**:
-- `get_auth_status`: Check authentication token status and expiry
-- `run_authenticated_test`: Execute custom Playwright test code
-- `navigate_and_verify`: Navigate and verify page loads correctly
-- `take_screenshot`: Capture screenshots of pages
-- `check_element`: Check element existence and visibility
+**Available Tools** (16 total):
+- **Dev Server**: `start_dev_server`, `stop_dev_server`, `dev_server_status`
+- **E2E Testing**: `run_smoke_tests`, `run_full_tests`, `run_nightly_tests`, `run_authenticated_test`
+- **Unit Testing**: `run_unit_tests` (with optional coverage)
+- ***For Copilot**: VS Code with GitHub Copilot extension + `.vscode/settings.json` configured (already set up)
+4. **For Claude**: Claude Desktop with MCP server configured in `claude_desktop_config.json`
+- **Navigation**: `navigate_and_verify`, `take_screenshot`, `check_element`
+- **Auth**: `get_auth_status`
 
 **Use Cases**:
 - Quick feature verification without writing full test files
@@ -73,11 +94,12 @@ npm install
 - Visual inspection and screenshot comparison
 - Debugging authentication and UI issues
 - Rapid prototyping of test scenarios
+- Background dev server management (start/stop without blocking terminal)
 
 **Prerequisites**:
 1. Valid `tests/auth-state.json` with OAuth token (run `npm run test:nightly:all` to generate)
-2. Development server running (`npm run dev`)
-3. Claude Desktop with MCP server configured
+2. Development server (can be started via `start_dev_server` tool)
+3. Claude Desktop with MCP server configured OR GitHub Copilot (VS Code) with Agent Skill configured
 
 ---
 
