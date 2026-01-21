@@ -25,7 +25,7 @@ import fs from 'fs';
 import path from 'path';
 
 const AUTH_STATE_PATH = process.env.AUTH_STATE_PATH || path.resolve('tests', 'auth-state.json');
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'; // Dev server runs on port 3000
 
 /**
  * Load authentication state from file

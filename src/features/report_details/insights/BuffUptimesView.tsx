@@ -136,7 +136,9 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
       </Stack>
 
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} id={descriptionId}>
-        Shows average buff uptimes across friendly players
+        {selectedTargetId
+          ? 'Shows buff uptimes for the selected player with delta from group average'
+          : 'Shows average buff uptimes across friendly players'}
         {!showAllBuffs && ' (filtered to important buffs only)'}. Click on a buff to view in ESO
         Logs.
       </Typography>

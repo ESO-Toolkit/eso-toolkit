@@ -5,6 +5,7 @@ export interface UIState {
   selectedPlayerId: number | null;
   selectedTabId: number | null;
   selectedTargetIds: number[]; // Changed from single ID to array of IDs
+  selectedFriendlyPlayerId: number | null | undefined; // Selected friendly player for uptime filtering
   showExperimentalTabs: boolean;
   sidebarOpen: boolean;
   myReportsPage: number; // Persisted page number for my-reports
@@ -15,6 +16,7 @@ const initialState: UIState = {
   selectedPlayerId: null,
   selectedTabId: null,
   selectedTargetIds: [], // Initialize as empty array
+  selectedFriendlyPlayerId: null, // Default to no filtering (show all players)
   showExperimentalTabs: false,
   sidebarOpen: false,
   myReportsPage: 1, // Default to page 1
@@ -40,6 +42,9 @@ const uiSlice = createSlice({
     },
     setSelectedPlayerId: (state, action: PayloadAction<number | null>) => {
       state.selectedPlayerId = action.payload;
+    },
+    setSelectedFriendlyPlayerId: (state, action: PayloadAction<number | null | undefined>) => {
+      state.selectedFriendlyPlayerId = action.payload;
     },
     setSelectedTabId: (state, action: PayloadAction<number | null>) => {
       state.selectedTabId = action.payload;
@@ -75,6 +80,7 @@ export const {
   toggleDarkMode,
   syncWithSystemTheme,
   setSelectedPlayerId,
+  setSelectedFriendlyPlayerId,
   setSelectedTabId,
   setSelectedTargetIds,
   setShowExperimentalTabs,

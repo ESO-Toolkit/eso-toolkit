@@ -36,10 +36,12 @@ import React, { Suspense } from 'react';
 
 import { AnimatedTabContent } from '../../components/AnimatedTabContent';
 import { FightFragment } from '../../graphql/gql/graphql';
+import { useReportMasterData } from '../../hooks';
 import { usePhaseTransitions } from '../../hooks/usePhaseTransitions';
 import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
+import { BuffSourcePlayerSelector } from './insights/BuffSourcePlayerSelector';
 import { TargetSelector } from './insights/TargetSelector';
 import { useFightNavigation } from './ReportFightHeader';
 
@@ -174,6 +176,22 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
+  // Generate player list for the buff source selector
+  const { reportMasterData } = useReportMasterData();
+  const playerList = React.useMemo(() => {
+    if (!fight?.friendlyPlayers || !reportMasterData?.actorsById) {
+      return [];
+    }
+
+    return fight.friendlyPlayers
+      .filter((id): id is number => id !== null)
+      .map((id) => ({
+        id,
+        name: reportMasterData.actorsById[id]?.name || `Player ${id}`,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [fight?.friendlyPlayers, reportMasterData?.actorsById]);
+
   return (
     <React.Fragment>
       {/* Target Selection and Navigation Row */}
@@ -184,18 +202,39 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: { xs: 'wrap', md: 'nowrap' },
-          gap: { xs: 2, md: 0 },
+          gap: { xs: 2, md: 2 },
         }}
       >
-        <FormControl
+        {/* Selectors Group */}
+        <Box
           sx={{
-            minWidth: { xs: '100%', sm: 180, md: 200 },
-            maxWidth: { xs: '100%', md: 'none' },
-            overflow: 'visible',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            flexWrap: { xs: 'wrap', md: 'nowrap' },
+            flex: { xs: '1 1 100%', md: '0 1 auto' },
           }}
         >
-          <TargetSelector />
-        </FormControl>
+          <FormControl
+            sx={{
+              minWidth: { xs: '100%', sm: 180, md: 200 },
+              maxWidth: { xs: '100%', md: 'none' },
+              overflow: 'visible',
+            }}
+          >
+            <TargetSelector />
+          </FormControl>
+
+          <FormControl
+            sx={{
+              minWidth: { xs: '100%', sm: 180, md: 200 },
+              maxWidth: { xs: '100%', md: 'none' },
+              overflow: 'visible',
+            }}
+          >
+            <BuffSourcePlayerSelector players={playerList} />
+          </FormControl>
+        </Box>
 
         {/* Fight Navigation - aligned with target selector */}
         <Box

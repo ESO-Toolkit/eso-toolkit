@@ -1,7 +1,9 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { useDamageEvents, usePlayerData, useCombatantInfoEvents } from '../../../hooks';
+import { selectSelectedFriendlyPlayerId } from '../../../store/ui/uiSelectors';
 import { KnownAbilities } from '../../../types/abilities';
 import { PlayerTalent } from '../../../types/playerDetails';
 
@@ -28,6 +30,7 @@ const CHAMPION_POINT_MAPPINGS: Record<number, KnownAbilities> = {
 
 export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
   const durationSeconds = (fight.endTime - fight.startTime) / 1000;
+  const selectedFriendlyPlayerId = useSelector(selectSelectedFriendlyPlayerId);
 
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { playerData, isPlayerDataLoading } = usePlayerData();
@@ -138,6 +141,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
       abilityEquipped={abilityEquipped}
       buffActors={buffActors}
       firstDamageDealer={firstDamageDealer}
+      selectedPlayerId={selectedFriendlyPlayerId ?? null}
       isLoading={isCombatantInfoEventsLoading || isDamageEventsLoading || isPlayerDataLoading}
     />
   );
