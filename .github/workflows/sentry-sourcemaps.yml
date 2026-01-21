@@ -80,28 +80,18 @@ jobs:
           echo "Found sourcemap files:"
           find ./build -name "*.map" -type f || echo "No .map files found"
           
-          # Upload JS sourcemaps
-          if [ -d "./build/assets" ] && [ "$(ls -A ./build/assets/*.js.map 2>/dev/null)" ]; then
-            echo "Uploading JS sourcemaps from ./build/assets/..."
-            sentry-cli releases files "${{ env.RELEASE_VERSION }}" upload-sourcemaps \
+          # Upload all sourcemaps from build/assets directory
+          if [ -d "./build/assets" ] && [ "$(find ./build/assets -name "*.map" -type f 2>/dev/null)" ]; then
+            echo "Uploading sourcemaps from ./build/assets/..."
+            sentry-cli sourcemaps upload \
+              --release "${{ env.RELEASE_VERSION }}" \
               --url-prefix "~/assets/" \
               --validate \
               --strip-common-prefix \
               ./build/assets/
           else
-            echo "⚠️ Warning: No JS sourcemaps found in ./build/assets/"
-          fi
-
-          # Upload CSS sourcemaps if they exist
-          if [ -d "./build/assets" ] && [ "$(ls -A ./build/assets/*.css.map 2>/dev/null)" ]; then
-            echo "Uploading CSS sourcemaps from ./build/assets/..."
-            sentry-cli releases files "${{ env.RELEASE_VERSION }}" upload-sourcemaps \
-              --url-prefix "~/assets/" \
-              --validate \
-              --strip-common-prefix \
-              ./build/assets/
-          else
-            echo "ℹ️ Info: No CSS sourcemaps found"
+            echo "❌ Error: No sourcemaps found in ./build/assets/"
+            exit 1
           fi
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
