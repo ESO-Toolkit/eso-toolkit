@@ -369,20 +369,24 @@ describe('cacheBusting', () => {
 
   describe('Error Handling', () => {
     it('should handle fetch network errors gracefully', async () => {
-      const consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation();
+      // Mock the Logger.debug method to verify it's called
+      const { Logger } = await import('./logger');
+      const debugSpy = jest.spyOn(Logger.prototype, 'debug');
+
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
       const result = await getBuildInfoAsync();
       expect(result).toEqual(fallbackVersionInfo);
-      expect(consoleDebugSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Could not load version.json, using fallback'),
-      );
+      expect(debugSpy).toHaveBeenCalledWith('Could not load version.json, using fallback');
 
-      consoleDebugSpy.mockRestore();
+      debugSpy.mockRestore();
     });
 
     it('should handle invalid JSON response gracefully', async () => {
-      const consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation();
+      // Mock the Logger.debug method to verify it's called
+      const { Logger } = await import('./logger');
+      const debugSpy = jest.spyOn(Logger.prototype, 'debug');
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.reject(new Error('Invalid JSON')),
@@ -390,11 +394,9 @@ describe('cacheBusting', () => {
 
       const result = await getBuildInfoAsync();
       expect(result).toEqual(fallbackVersionInfo);
-      expect(consoleDebugSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Could not load version.json, using fallback'),
-      );
+      expect(debugSpy).toHaveBeenCalledWith('Could not load version.json, using fallback');
 
-      consoleDebugSpy.mockRestore();
+      debugSpy.mockRestore();
     });
   });
 
