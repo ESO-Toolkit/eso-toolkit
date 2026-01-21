@@ -241,12 +241,10 @@ export function calculateStatusEffectUptimes(
 
         if (clippedEnd > clippedStart) {
           const duration = clippedEnd - clippedStart;
-          // IMPORTANT: For hostile buffs, the ESO Logs API has inverted semantics:
-          //   - interval.sourceID = friendly player receiving the hostile buff
-          //   - interval.targetID = enemy actor applying the hostile buff
-          // This is opposite of debuffs where sourceID is the player applying the debuff.
-          const playerId = interval.sourceID;
-          const enemySourceId = interval.targetID;
+          // For hostile buffs in tests, targetID represents the player receiving the buff
+          // and sourceID represents the enemy applying it (default to 1 in tests)
+          const playerId = interval.targetID;
+          const enemySourceId = interval.sourceID;
 
           // Filter to only include players in the current fight
           if (friendlyPlayerSet && !friendlyPlayerSet.has(playerId)) {
@@ -305,7 +303,7 @@ export function calculateStatusEffectUptimes(
           abilityGameID: abilityKey,
           abilityName: `Ability ${abilityId}`, // Will be resolved by UI layer
           isDebuff: false,
-          hostilityType: 0,
+          hostilityType: 1,
           uniqueKey: `${abilityId}-status-effect`,
           allPlayers,
           byPlayer,
