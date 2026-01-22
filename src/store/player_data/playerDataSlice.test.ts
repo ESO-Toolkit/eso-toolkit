@@ -507,7 +507,11 @@ const mockPlayersResponse = () => ({
   },
 });
 
-const getEntry = (state: RootState, reportCode: string, fightId: number): PlayerDataEntry | null => {
+const getEntry = (
+  state: RootState,
+  reportCode: string,
+  fightId: number,
+): PlayerDataEntry | null => {
   const { key } = resolveCacheKey({ reportCode, fightId });
   return state.playerData.entries[key] ?? null;
 };
@@ -541,7 +545,9 @@ describe('playerDataSlice keyed cache', () => {
     store.dispatch({
       type: fetchPlayerData.fulfilled.type,
       payload: {
-        playersById: { 1: mockPlayersResponse().reportData.report.playerDetails.data.playerDetails.dps[0] as any },
+        playersById: {
+          1: mockPlayersResponse().reportData.report.playerDetails.data.playerDetails.dps[0] as any,
+        },
         reportCode: 'A',
         fightId: 1,
       },
@@ -557,7 +563,9 @@ describe('playerDataSlice keyed cache', () => {
     store.dispatch({
       type: fetchPlayerData.fulfilled.type,
       payload: {
-        playersById: { 1: mockPlayersResponse().reportData.report.playerDetails.data.playerDetails.dps[0] as any },
+        playersById: {
+          1: mockPlayersResponse().reportData.report.playerDetails.data.playerDetails.dps[0] as any,
+        },
         reportCode: 'A',
         fightId: 1,
       },

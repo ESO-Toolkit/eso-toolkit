@@ -25,7 +25,7 @@ const createMockState = (overrides: Partial<RootState> = {}): RootState => {
     maps: [{ id: 1 }],
   };
 
-  return ({
+  return {
     events: {
       friendlyBuffs: { entries: {}, accessOrder: [] },
       hostileBuffs: { entries: {}, accessOrder: [] },
@@ -99,7 +99,7 @@ const createMockState = (overrides: Partial<RootState> = {}): RootState => {
       action: null,
     },
     ...overrides,
-  }) as RootState;
+  } as RootState;
 };
 
 // Helper to create a mock buff event

@@ -25,7 +25,7 @@ interface UseCriticalDamageTaskOptions {
   context?: ReportFightContextInput;
 }
 
-export function useCriticalDamageTask(options?: UseCriticalDamageTaskOptions): {
+export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): {
   criticalDamageData: SharedWorkerResultType<'calculateCriticalDamageData'> | null;
   isCriticalDamageLoading: boolean;
   criticalDamageError: string | null;

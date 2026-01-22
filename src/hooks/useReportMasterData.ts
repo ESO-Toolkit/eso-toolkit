@@ -28,7 +28,9 @@ interface UseReportMasterDataOptions {
   context?: ReportFightContextInput;
 }
 
-export function useReportMasterData(options?: UseReportMasterDataOptions): UseReportMasterDataResult {
+export function useReportMasterData(
+  options?: UseReportMasterDataOptions,
+): UseReportMasterDataResult {
   const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
   const dispatch = useAppDispatch();
   const context = useResolvedReportFightContext(options?.context);

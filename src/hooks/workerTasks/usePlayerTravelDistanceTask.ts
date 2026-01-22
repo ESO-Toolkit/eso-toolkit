@@ -41,7 +41,9 @@ export function usePlayerTravelDistanceTask(
   const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: options?.context });
   const { healingEvents, isHealingEventsLoading } = useHealingEvents({ context: options?.context });
   const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context: options?.context });
-  const { resourceEvents, isResourceEventsLoading } = useResourceEvents({ context: options?.context });
+  const { resourceEvents, isResourceEventsLoading } = useResourceEvents({
+    context: options?.context,
+  });
   const { castEvents, isCastEventsLoading } = useCastEvents({ context: options?.context });
 
   const playerIds = React.useMemo(() => {

@@ -89,9 +89,8 @@ export const selectDamageEventsByPlayerForContext = createReportFightContextSele
   RootState,
   [typeof selectDamageEventsForContext, typeof selectActorsByIdForContext],
   Record<string, DamageEvent[]>
->(
-  [selectDamageEventsForContext, selectActorsByIdForContext],
-  (damageEvents, actorsById) => getDamageEventsByPlayer(damageEvents, actorsById),
+>([selectDamageEventsForContext, selectActorsByIdForContext], (damageEvents, actorsById) =>
+  getDamageEventsByPlayer(damageEvents, actorsById),
 );
 
 export const selectDamageEventsByPlayer = createSelector(

@@ -58,15 +58,12 @@ const buildPayload = (
   );
 
   const actors = actorIds.map((id) => createActor(id));
-  const actorsById = actors.reduce<Record<string | number, ReportActorFragment>>(
-    (acc, actor) => {
-      if (typeof actor.id === 'number' || typeof actor.id === 'string') {
-        acc[actor.id] = actor;
-      }
-      return acc;
-    },
-    {},
-  );
+  const actorsById = actors.reduce<Record<string | number, ReportActorFragment>>((acc, actor) => {
+    if (typeof actor.id === 'number' || typeof actor.id === 'string') {
+      acc[actor.id] = actor;
+    }
+    return acc;
+  }, {});
 
   return {
     reportCode,

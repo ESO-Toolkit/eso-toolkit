@@ -2,11 +2,7 @@ import { SelectChangeEvent } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import {
-  usePlayerData,
-  useResolvedReportFightContext,
-  useFightForContext,
-} from '../../../hooks';
+import { usePlayerData, useResolvedReportFightContext, useFightForContext } from '../../../hooks';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { LogEvent, ResourceChangeEvent } from '../../../types/combatlogEvents';
 import { resolveActorName } from '../../../utils/resolveActorName';

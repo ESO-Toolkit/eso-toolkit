@@ -36,7 +36,11 @@ import {
 } from '../events_data/hostileBuffEventsSelectors';
 import type { ResourceEventsEntry, ResourceEventsState } from '../events_data/resourceEventsSlice';
 import { selectActorsByIdForContext } from '../master_data/masterDataSelectors';
-import { selectActiveReportContext, selectReportFights, selectReportFightsForContext } from '../report/reportSelectors';
+import {
+  selectActiveReportContext,
+  selectReportFights,
+  selectReportFightsForContext,
+} from '../report/reportSelectors';
 import { RootState } from '../storeWithHistory';
 import { createReportFightContextSelector } from '../utils/contextSelectors';
 import { resolveCacheKey } from '../utils/keyedCacheState';
@@ -129,10 +133,7 @@ export const selectResourceEventsForContext = createReportFightContextSelector<
 export const selectResourceEvents = createSelector(
   [(state: RootState) => state, selectActiveReportContext],
   (state, activeContext) =>
-    selectResourceEventsForContext(
-      state,
-      createActiveContextInput(state, activeContext.fightId),
-    ),
+    selectResourceEventsForContext(state, createActiveContextInput(state, activeContext.fightId)),
 );
 
 // Loading state selectors
@@ -285,8 +286,8 @@ export const selectAllEvents = createSelector(
     }),
 );
 
-export const selectAllEventsSelector = (context: ReportFightContext) =>
-  (state: RootState) => selectAllEventsForContext(state, context);
+export const selectAllEventsSelector = (context: ReportFightContext) => (state: RootState) =>
+  selectAllEventsForContext(state, context);
 
 // Loading state selectors
 

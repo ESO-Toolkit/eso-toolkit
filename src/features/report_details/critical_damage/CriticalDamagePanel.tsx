@@ -35,10 +35,7 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
 
   // Only show details when all loading is complete AND we have data
   const hasCompleteData =
-    !isLoading &&
-    criticalDamageData?.playerDataMap &&
-    playerData?.playersById &&
-    fight;
+    !isLoading && criticalDamageData?.playerDataMap && playerData?.playersById && fight;
 
   // Get all players for accordion
   const players = React.useMemo(() => {

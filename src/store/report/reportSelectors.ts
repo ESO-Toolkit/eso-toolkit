@@ -15,10 +15,7 @@ export const selectReport = (state: RootState): RootState['report'] => state.rep
 export const selectActiveReportContext = (state: RootState): RootState['report']['activeContext'] =>
   state.report.activeContext;
 
-export const selectReportEntryById = (
-  state: RootState,
-  reportId: string,
-): ReportEntry | null => {
+export const selectReportEntryById = (state: RootState, reportId: string): ReportEntry | null => {
   if (!reportId) {
     return null;
   }

@@ -54,16 +54,10 @@ export function useEventData(options?: UseEventDataOptions): {
   const context = useResolvedReportFightContext(options?.context);
   const selectedFight = useFightForContext(context);
 
-  const {
-    damageEvents,
-    isDamageEventsLoading,
-  } = useDamageEvents({ context });
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context });
   const { healingEvents, isHealingEventsLoading } = useHealingEvents({ context });
   const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context });
-  const {
-    combatantInfoEvents,
-    isCombatantInfoEventsLoading,
-  } = useCombatantInfoEvents({ context });
+  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents({ context });
   const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents({ context });
   const { castEvents, isCastEventsLoading } = useCastEvents({ context });
   const { resourceEvents, isResourceEventsLoading } = useResourceEvents({ context });

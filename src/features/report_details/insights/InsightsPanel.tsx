@@ -5,7 +5,7 @@ import { FightFragment } from '../../../graphql/gql/graphql';
 import {
   useCombatantInfoEvents,
   useDamageEvents,
-  usePlayerData, 
+  usePlayerData,
   useResolvedReportFightContext,
 } from '../../../hooks';
 import type { ReportFightContextInput } from '../../../store/contextTypes';

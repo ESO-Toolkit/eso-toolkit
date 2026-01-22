@@ -231,7 +231,10 @@ const masterDataSlice = createSlice({
         const entry = ensureEntry(state, key);
         entry.status = 'loading';
         entry.error = null;
-        entry.currentRequest = createCurrentRequest(action.meta.arg.reportCode, action.meta.requestId);
+        entry.currentRequest = createCurrentRequest(
+          action.meta.arg.reportCode,
+          action.meta.requestId,
+        );
         touchAccessOrder(state, key);
       })
       .addCase(fetchReportMasterData.fulfilled, (state, action) => {
@@ -240,7 +243,9 @@ const masterDataSlice = createSlice({
           return;
         }
         const entry = ensureEntry(state, key);
-        if (isStaleResponse(entry.currentRequest, action.meta.requestId, action.payload.reportCode)) {
+        if (
+          isStaleResponse(entry.currentRequest, action.meta.requestId, action.payload.reportCode)
+        ) {
           logger.info('Ignoring stale master data response', {
             reportCode: action.payload.reportCode,
           });
@@ -263,7 +268,9 @@ const masterDataSlice = createSlice({
           return;
         }
         const entry = ensureEntry(state, key);
-        if (isStaleResponse(entry.currentRequest, action.meta.requestId, action.meta.arg.reportCode)) {
+        if (
+          isStaleResponse(entry.currentRequest, action.meta.requestId, action.meta.arg.reportCode)
+        ) {
           logger.info('Ignoring stale master data error response', {
             reportCode: action.meta.arg.reportCode,
           });

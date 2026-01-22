@@ -127,11 +127,15 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
   const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: resolvedContext });
   const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
   const { healingEvents, isHealingEventsLoading } = useHealingEvents({ context: resolvedContext });
-  const { resourceEvents, isResourceEventsLoading } = useResourceEvents({ context: resolvedContext });
+  const { resourceEvents, isResourceEventsLoading } = useResourceEvents({
+    context: resolvedContext,
+  });
   const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask({
     context: resolvedContext,
   });
-  const { reportMasterData, isMasterDataLoading } = useReportMasterData({ context: resolvedContext });
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData({
+    context: resolvedContext,
+  });
   const { playerData } = usePlayerData({ context: resolvedContext });
 
   const deathInfos: DeathInfo[] = React.useMemo(() => {

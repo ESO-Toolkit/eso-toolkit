@@ -987,7 +987,9 @@ export function useScribingDetection(
           new Set(
             talents
               .map((talent) => talent?.guid)
-              .filter((guid): guid is number => typeof guid === 'number' && isScribingAbility(guid)),
+              .filter(
+                (guid): guid is number => typeof guid === 'number' && isScribingAbility(guid),
+              ),
           ),
         );
 

@@ -195,14 +195,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       const normalizedReportId =
         typeof reportId === 'string' && reportId.trim().length > 0
           ? reportId.trim()
-          : activeReportContext.reportId ?? null;
+          : (activeReportContext.reportId ?? null);
 
       const normalizedFightId =
         typeof fightId === 'string'
           ? fightId.trim().length > 0
             ? fightId.trim()
-            : activeReportContext.fightId ?? null
-          : fightId ?? activeReportContext.fightId ?? null;
+            : (activeReportContext.fightId ?? null)
+          : (fightId ?? activeReportContext.fightId ?? null);
 
       return {
         reportCode: normalizedReportId,

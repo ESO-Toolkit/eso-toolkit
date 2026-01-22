@@ -6,7 +6,6 @@ import {
   selectCastEventsForContext,
 } from '@/store/events_data/castEventsSelectors';
 
-
 import { useEsoLogsClientContext } from '../../EsoLogsClientContext';
 import { FightFragment } from '../../graphql/gql/graphql';
 import type { ReportFightContextInput } from '../../store/contextTypes';
@@ -34,7 +33,9 @@ export function useCastEvents(options?: UseCastEventsOptions): {
   const selectedFight = useFightForContext(context);
 
   const castEvents = useSelector((state: RootState) => selectCastEventsForContext(state, context));
-  const castEntry = useSelector((state: RootState) => selectCastEventsEntryForContext(state, context));
+  const castEntry = useSelector((state: RootState) =>
+    selectCastEventsEntryForContext(state, context),
+  );
   const isCastEventsLoading = castEntry?.status === 'loading';
 
   const restrictToFightWindow = options?.restrictToFightWindow ?? true;

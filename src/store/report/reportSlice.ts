@@ -2,11 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
-import {
-  FightFragment,
-  GetReportByCodeDocument,
-  ReportFragment,
-} from '../../graphql/gql/graphql';
+import { FightFragment, GetReportByCodeDocument, ReportFragment } from '../../graphql/gql/graphql';
 import type { ReportFightContextInput } from '../contextTypes';
 import { RootState } from '../storeWithHistory';
 import { normalizeReportFightContext } from '../utils/cacheKeys';
@@ -290,7 +286,8 @@ const reportSlice = createSlice({
       touchAccessOrder(state, key);
       trimCache(state, REPORT_CACHE_MAX_ENTRIES);
 
-      state.activeContext.reportId = payload?.code ?? state.activeContext.reportId ?? resolvedReportId;
+      state.activeContext.reportId =
+        payload?.code ?? state.activeContext.reportId ?? resolvedReportId;
       syncActiveReportState(state);
     },
     setReportCacheMetadata(state, action: PayloadAction<{ lastFetchedReportId: string }>) {

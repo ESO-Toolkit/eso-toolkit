@@ -5,11 +5,7 @@ import type { RootState } from '../storeWithHistory';
 import { createReportFightContextSelector } from '../utils/contextSelectors';
 import { resolveCacheKey } from '../utils/keyedCacheState';
 
-import type {
-  PlayerDataEntry,
-  PlayerDataState,
-  PlayerDetailsWithRole,
-} from './playerDataSlice';
+import type { PlayerDataEntry, PlayerDataState, PlayerDetailsWithRole } from './playerDataSlice';
 
 export const selectPlayerDataState = (state: RootState): PlayerDataState => state.playerData;
 
@@ -56,7 +52,9 @@ const createActiveContextInput = (state: RootState): ReportFightContext => ({
 export const selectActivePlayerDataEntry = (state: RootState): PlayerDataEntry | null =>
   selectPlayerDataEntryForContext(state, createActiveContextInput(state));
 
-export const selectActivePlayersById = (state: RootState): Record<string | number, PlayerDetailsWithRole> =>
+export const selectActivePlayersById = (
+  state: RootState,
+): Record<string | number, PlayerDetailsWithRole> =>
   selectPlayersByIdForContext(state, createActiveContextInput(state));
 
 export const selectActivePlayerDataStatus = (state: RootState): boolean =>

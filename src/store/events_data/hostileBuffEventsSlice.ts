@@ -190,11 +190,7 @@ export const fetchHostileBuffEvents = createAsyncThunk<
       }
 
       const inFlight = entry?.currentRequest;
-      if (
-        inFlight &&
-        inFlight.reportId === reportCode &&
-        inFlight.fightId === Number(fight.id)
-      ) {
+      if (inFlight && inFlight.reportId === reportCode && inFlight.fightId === Number(fight.id)) {
         return false; // Prevent duplicate execution
       }
 
@@ -274,8 +270,9 @@ const hostileBuffEventsSlice = createSlice({
         entry.error = null;
         entry.cacheMetadata.lastFetchedTimestamp = Date.now();
         entry.cacheMetadata.intervalCount = action.payload.intervalResults.length;
-        entry.cacheMetadata.failedIntervals = action.payload.intervalResults.filter((r) => r.error)
-          .length;
+        entry.cacheMetadata.failedIntervals = action.payload.intervalResults.filter(
+          (r) => r.error,
+        ).length;
         entry.currentRequest = null;
         touchAccessOrder(state, key);
         trimCache(state, EVENT_CACHE_MAX_ENTRIES);

@@ -138,7 +138,9 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents({ context: resolvedContext });
   const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: resolvedContext });
   const { healingEvents, isHealingEventsLoading } = useHealingEvents({ context: resolvedContext });
-  const { resourceEvents, isResourceEventsLoading } = useResourceEvents({ context: resolvedContext });
+  const { resourceEvents, isResourceEventsLoading } = useResourceEvents({
+    context: resolvedContext,
+  });
   const isFightLoading = resolvedContext.fightId !== null && !fight;
 
   const fightIdNumber = resolvedContext.fightId;

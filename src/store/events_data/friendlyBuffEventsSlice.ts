@@ -356,11 +356,11 @@ const friendlyBuffEventsSlice = createSlice({
         entry.status = 'succeeded';
         entry.error = null;
         entry.cacheMetadata.lastFetchedTimestamp = Date.now();
-        entry.cacheMetadata.restrictToFightWindow =
-          action.meta.arg.restrictToFightWindow ?? true;
+        entry.cacheMetadata.restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
         entry.cacheMetadata.intervalCount = action.payload.intervalResults.length;
-        entry.cacheMetadata.failedIntervals = action.payload.intervalResults.filter((r) => r.error)
-          .length;
+        entry.cacheMetadata.failedIntervals = action.payload.intervalResults.filter(
+          (r) => r.error,
+        ).length;
         entry.currentRequest = null;
         touchAccessOrder(state, key);
         trimCache(state, EVENT_CACHE_MAX_ENTRIES);

@@ -9,7 +9,8 @@ import { resolveCacheKey } from '../utils/keyedCacheState';
 
 import { DebuffEventsEntry, DebuffEventsState } from './debuffEventsSlice';
 
-export const selectDebuffEventsState = (state: RootState): DebuffEventsState => state.events.debuffs;
+export const selectDebuffEventsState = (state: RootState): DebuffEventsState =>
+  state.events.debuffs;
 
 export const selectDebuffEventsEntryForContext = createReportFightContextSelector<
   RootState,
@@ -46,10 +47,7 @@ const createActiveContextInput = (
 export const selectDebuffEvents = createSelector(
   [(state: RootState) => state, selectActiveReportContext],
   (state, activeContext) =>
-    selectDebuffEventsForContext(
-      state,
-      createActiveContextInput(state, activeContext.fightId),
-    ),
+    selectDebuffEventsForContext(state, createActiveContextInput(state, activeContext.fightId)),
 );
 
 export const selectDebuffEventsLoading = createSelector(

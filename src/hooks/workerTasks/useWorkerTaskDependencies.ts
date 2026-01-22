@@ -10,9 +10,7 @@ interface UseWorkerTaskDependenciesOptions {
   context?: ReportFightContextInput;
 }
 
-export function useWorkerTaskDependencies(
-  options?: UseWorkerTaskDependenciesOptions,
-): {
+export function useWorkerTaskDependencies(options?: UseWorkerTaskDependenciesOptions): {
   dispatch: ReturnType<typeof useAppDispatch>;
   reportId: string | null;
   fightId: string | null;

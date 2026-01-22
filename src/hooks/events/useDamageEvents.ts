@@ -7,7 +7,6 @@ import {
   selectDamageEventsForContext,
 } from '@/store/events_data/damageEventsSelectors';
 
-
 import { useEsoLogsClientContext } from '../../EsoLogsClientContext';
 import { FightFragment } from '../../graphql/gql/graphql';
 import type { ReportFightContextInput } from '../../store/contextTypes';

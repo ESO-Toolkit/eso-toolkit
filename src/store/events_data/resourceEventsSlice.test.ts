@@ -55,11 +55,7 @@ describe('resourceEventsSlice', () => {
   const getSliceState = (): ResourceEventsState =>
     (store.getState() as { events: { resources: ResourceEventsState } }).events.resources;
 
-  const seedEntry = (
-    fightId: number,
-    requestId: string,
-    events: ResourceChangeEvent[],
-  ): void => {
+  const seedEntry = (fightId: number, requestId: string, events: ResourceChangeEvent[]): void => {
     const fight = { ...mockFight, id: fightId } as FightFragment;
     store.dispatch({
       type: 'resourceEvents/fetchResourceEvents/pending',
@@ -127,7 +123,7 @@ describe('resourceEventsSlice', () => {
       const state = getSliceState();
       const keys = fights.map((fightId) => resolveCacheKey({ reportCode: 'ABC123', fightId }).key);
 
-  expect(state.entries[keys[0]]).toBeUndefined();
+      expect(state.entries[keys[0]]).toBeUndefined();
       expect(state.accessOrder).toEqual([keys[1], keys[2]]);
     });
   });
@@ -211,7 +207,7 @@ describe('resourceEventsSlice', () => {
 
       mockClient.query.mockResolvedValue(response);
 
-  const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(1_000_000);
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(1_000_000);
 
       await store.dispatch(
         fetchResourceEvents({ reportCode: 'ABC123', fight: mockFight, client: mockClient }) as any,
@@ -219,7 +215,7 @@ describe('resourceEventsSlice', () => {
 
       expect(mockClient.query).toHaveBeenCalledTimes(2);
 
-  dateSpy.mockReturnValue(1_000_000 + DATA_FETCH_CACHE_TIMEOUT / 2);
+      dateSpy.mockReturnValue(1_000_000 + DATA_FETCH_CACHE_TIMEOUT / 2);
 
       await store.dispatch(
         fetchResourceEvents({ reportCode: 'ABC123', fight: mockFight, client: mockClient }) as any,

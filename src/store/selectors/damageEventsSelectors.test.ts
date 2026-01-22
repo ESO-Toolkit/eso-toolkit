@@ -94,7 +94,7 @@ describe('selectDamageEventsByPlayer', () => {
       createDamageEvent(789, 456, 750),
     ];
 
-  const state = createStateWithDamageEvents(events);
+    const state = createStateWithDamageEvents(events);
     const result = selectDamageEventsByPlayer(state);
 
     expect(result).toEqual({
@@ -104,7 +104,7 @@ describe('selectDamageEventsByPlayer', () => {
   });
 
   it('should return empty object for empty damage events', () => {
-  const state = createStateWithDamageEvents([]);
+    const state = createStateWithDamageEvents([]);
     const result = selectDamageEventsByPlayer(state);
 
     expect(result).toEqual({});
@@ -113,7 +113,7 @@ describe('selectDamageEventsByPlayer', () => {
   it('should memoize results correctly', () => {
     const events = [createDamageEvent(123, 456, 1000), createDamageEvent(789, 456, 750)];
 
-  const state = createStateWithDamageEvents(events);
+    const state = createStateWithDamageEvents(events);
     const result1 = selectDamageEventsByPlayer(state);
     const result2 = selectDamageEventsByPlayer(state);
 

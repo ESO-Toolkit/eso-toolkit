@@ -269,8 +269,7 @@ const castEventsSlice = createSlice({
         entry.status = 'succeeded';
         entry.error = null;
         entry.cacheMetadata.lastFetchedTimestamp = Date.now();
-        entry.cacheMetadata.restrictToFightWindow =
-          action.meta.arg.restrictToFightWindow ?? true;
+        entry.cacheMetadata.restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
         entry.currentRequest = null;
         touchAccessOrder(state, key);
         trimCache(state, EVENT_CACHE_MAX_ENTRIES);

@@ -185,11 +185,11 @@ describe('clearAction', () => {
       });
 
       // Verify that data exists
-    let state = store.getState() as TestRootState;
-    const castKey = resolveCacheKey({ reportCode: 'test123', fightId: Number(testFight.id) }).key;
-    expect(state.events.casts.entries[castKey]?.events.length).toBeGreaterThan(0);
-    expect(Object.keys(state.events.damage.entries)).toContain(DEFAULT_CONTEXT_KEY);
-    expect(state.events.damage.entries[DEFAULT_CONTEXT_KEY].events.length).toBeGreaterThan(0);
+      let state = store.getState() as TestRootState;
+      const castKey = resolveCacheKey({ reportCode: 'test123', fightId: Number(testFight.id) }).key;
+      expect(state.events.casts.entries[castKey]?.events.length).toBeGreaterThan(0);
+      expect(Object.keys(state.events.damage.entries)).toContain(DEFAULT_CONTEXT_KEY);
+      expect(state.events.damage.entries[DEFAULT_CONTEXT_KEY].events.length).toBeGreaterThan(0);
 
       // Dispatch clearAllEvents
       store.dispatch(clearAllEvents());
@@ -386,7 +386,9 @@ describe('clearAction', () => {
 
       // Verify cache metadata is reset
       state = store.getState() as TestRootState;
-      expect(getCastEntry(state, { reportCode: 'cached-report', fightId: Number(testFight.id) }).entry).toBeUndefined();
+      expect(
+        getCastEntry(state, { reportCode: 'cached-report', fightId: Number(testFight.id) }).entry,
+      ).toBeUndefined();
     });
 
     it('should not affect individual slice clear actions', () => {
@@ -514,10 +516,10 @@ describe('clearAction', () => {
       // Clear only cast events using individual slice action
       store.dispatch(clearCastEvents());
 
-    const state = store.getState() as TestRootState;
+      const state = store.getState() as TestRootState;
 
-    // Cast events should be cleared
-    expect(state.events.casts).toEqual(castEventsReducer(undefined, { type: 'init' }));
+      // Cast events should be cleared
+      expect(state.events.casts).toEqual(castEventsReducer(undefined, { type: 'init' }));
 
       // Damage events should still have data for the cached context
       expect(state.events.damage.entries[DEFAULT_CONTEXT_KEY].events.length).toBeGreaterThan(0);
@@ -545,8 +547,8 @@ describe('clearAction', () => {
         },
       });
 
-    const state = store.getState() as TestRootState;
-    expect(getCastEntry(state).entry?.status).toBe('loading');
+      const state = store.getState() as TestRootState;
+      expect(getCastEntry(state).entry?.status).toBe('loading');
     });
 
     it('should handle undefined state correctly', () => {
@@ -567,7 +569,7 @@ describe('clearAction', () => {
       expect(state.events).toHaveProperty('resources');
 
       // Each slice should have its initial state
-    expect(state.events.casts).toEqual(castEventsReducer(undefined, { type: 'init' }));
+      expect(state.events.casts).toEqual(castEventsReducer(undefined, { type: 'init' }));
       expect(state.events.damage).toEqual(damageEventsReducer(undefined, { type: 'init' }));
     });
   });
