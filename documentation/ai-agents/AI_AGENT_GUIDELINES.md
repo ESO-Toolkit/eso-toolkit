@@ -266,6 +266,28 @@ The Git Workflow skill is configured in `.vscode/settings.json`:
 
 ## Complete Development Workflow
 
+⚠️ **CRITICAL FIRST STEP**: Create a feature branch BEFORE making ANY code changes! Do not work on master.
+
+### Pre-Implementation Checklist
+
+Before writing ANY code, complete these steps in order:
+
+1. ✅ View Jira task: `acli jira workitem view ESO-XXX`
+2. ✅ Transition to "In Progress": `acli jira workitem transition --key ESO-XXX --status "In Progress"`
+3. ✅ Check current branch: `git branch --show-current`
+4. ✅ Create feature branch: `git checkout -b ESO-XXX/description`
+5. ✅ **NOW you can start implementing**
+
+**If you realize you've already made changes without creating a branch:**
+```powershell
+# Save your work by creating a branch from current state
+git checkout -b ESO-XXX/description
+
+# Stage and commit the changes
+git add <files>
+git commit -m "feat: description [ESO-XXX]"
+```
+
 ### 1. Start Work on a Jira Task
 
 **Use Jira Agent Skill** (preferred):
@@ -283,9 +305,11 @@ acli jira workitem view ESO-XXX
 acli jira workitem transition --key ESO-XXX --status "In Progress"
 ```
 
-### 2. Create Feature Branch **FIRST** ⚠️
+**Common Error**: The command is `transition --key ESO-XXX --status "In Progress"` (NOT `--to`)
 
-**CRITICAL**: Always create a feature branch BEFORE making any code changes!
+### 2. Create Feature Branch **IMMEDIATELY** ⚠️
+
+**MANDATORY**: Create a feature branch as the FIRST action before implementing anything!
 
 Follow the branch naming convention:
 
