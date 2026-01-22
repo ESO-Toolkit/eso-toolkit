@@ -29,7 +29,9 @@ describe('CookieConsent', () => {
     };
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent));
 
-    const { container } = render(<CookieConsent />);
+    await act(async () => {
+      render(<CookieConsent />);
+    });
 
     // Component should not render the banner
     await waitFor(
@@ -53,8 +55,13 @@ describe('CookieConsent', () => {
   });
 
   it('should hide banner when user accepts consent', async () => {
-    render(<CookieConsent />);
-    expect(screen.getByText('We Value Your Privacy')).toBeInTheDocument();
+    await act(async () => {
+      render(<CookieConsent />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('We Value Your Privacy')).toBeInTheDocument();
+    });
 
     const acceptButton = screen.getByRole('button', { name: /^accept$/i });
 
@@ -79,8 +86,13 @@ describe('CookieConsent', () => {
   });
 
   it('should hide banner when user declines consent', async () => {
-    render(<CookieConsent />);
-    expect(screen.getByText('We Value Your Privacy')).toBeInTheDocument();
+    await act(async () => {
+      render(<CookieConsent />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('We Value Your Privacy')).toBeInTheDocument();
+    });
 
     const declineButton = screen.getByRole('button', { name: /^decline$/i });
 
@@ -119,7 +131,9 @@ describe('CookieConsent', () => {
   });
 
   it('should close details dialog when clicking Close', async () => {
-    render(<CookieConsent />);
+    await act(async () => {
+      render(<CookieConsent />);
+    });
 
     // Open dialog
     const learnMoreLink = screen.getByRole('button', { name: /learn more/i });
@@ -139,9 +153,15 @@ describe('CookieConsent', () => {
       fireEvent.click(closeButtons[0]);
     });
 
-    await waitFor(() => {
-      expect(screen.queryByText('Privacy & Cookie Policy')).not.toBeInTheDocument();
-    });
+    // Dialog uses keepMounted, so check for the dialog to be hidden via class
+    await waitFor(
+      () => {
+        const dialogs = screen.getAllByRole('presentation', { hidden: true });
+        const dialogRoot = dialogs.find((el) => el.classList.contains('MuiDialog-root'));
+        expect(dialogRoot).toHaveClass('MuiModal-hidden');
+      },
+      { timeout: 2000 },
+    );
   });
 
   it('should accept from details dialog', async () => {

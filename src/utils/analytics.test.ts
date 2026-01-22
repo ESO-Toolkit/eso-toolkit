@@ -35,6 +35,9 @@ jest.mock('./logger', () => {
     ...actualLogger,
     Logger: jest.fn().mockImplementation(() => ({
       error: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
     })),
   };
 });
@@ -61,10 +64,19 @@ describe('analytics', () => {
     getEnvVarSpy = jest.spyOn(envUtils, 'getEnvVar');
     mockGetBuildInfo.mockReturnValue(mockBuildInfo);
     mockGetBuildInfoAsync.mockResolvedValue(mockBuildInfo);
+
+    // Set up consent in localStorage
+    const consent = {
+      accepted: true,
+      version: '1',
+      timestamp: new Date().toISOString(),
+    };
+    localStorage.setItem('eso-log-aggregator-cookie-consent', JSON.stringify(consent));
   });
 
   afterEach(() => {
     getEnvVarSpy.mockRestore();
+    localStorage.clear();
   });
 
   describe('initializeAnalytics', () => {
