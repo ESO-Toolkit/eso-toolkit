@@ -538,7 +538,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
 
       {/* Expanded view - individual bars for each stack (highest on top) */}
       {buff.allStacksData && (
-        <Collapse in={isExpanded} timeout={300} unmountOnExit>
+        <Collapse in={isExpanded} timeout={300}>
           <Box sx={{ width: '100%', mt: 1 }}>
             {buff.allStacksData
               .slice()
