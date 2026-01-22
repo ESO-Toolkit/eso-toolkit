@@ -399,9 +399,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           {roleFilter !== 'all' && (
             <Chip
               label={`Role: ${
-                roleFilter === 'supports'
-                  ? 'Supports (Tanks & Healers)'
-                  : roleFilter.toUpperCase()
+                roleFilter === 'supports' ? 'Supports (Tanks & Healers)' : roleFilter.toUpperCase()
               }`}
               size="small"
               onDelete={() => setRoleFilter('all')}
