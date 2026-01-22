@@ -1,0 +1,54 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.pythonProjects": [],
+    "github.copilot.chat.mcp.enabled": true,
+    "github.copilot.chat.mcp.servers": {
+        "eso-log-aggregator-testing": {
+            "command": "node",
+            "args": [
+                "${workspaceFolder}\\.copilot\\server.js"
+            ],
+            "env": {
+                "AUTH_STATE_PATH": "${workspaceFolder}\\tests\\auth-state.json",
+                "BASE_URL": "http://localhost:3000",
+                "PLAYWRIGHT_CONFIG": "${workspaceFolder}\\playwright.debug.config.ts"
+            }
+        },
+        "eso-log-aggregator-jira": {
+            "command": "node",
+            "args": [
+                "${workspaceFolder}\\.copilot-jira\\server.js"
+            ],
+            "env": {
+                "DEBUG": "false"
+            }
+        },
+        "eso-log-aggregator-reports": {
+            "command": "node",
+            "args": [
+                "${workspaceFolder}\\.copilot-reports\\server.js"
+            ],
+            "env": {
+                "DEBUG": "false"
+            }
+        },
+        "eso-log-aggregator-git": {
+            "command": "node",
+            "args": [
+                "${workspaceFolder}\\.copilot-git\\server.js"
+            ],
+            "env": {
+                "DEBUG": "false"
+            }
+        },
+        "eso-log-aggregator-rebase": {
+            "command": "node",
+            "args": [
+                "${workspaceFolder}\\.copilot-rebase\\index.js"
+            ],
+            "env": {
+                "DEBUG": "false"
+            }
+        }
+    }
+}

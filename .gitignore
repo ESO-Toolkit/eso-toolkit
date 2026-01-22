@@ -5,6 +5,18 @@
 /.pnp
 .pnp.js
 
+# Agent skill dependencies (MCP servers)
+/.copilot/node_modules/
+/.copilot-jira/node_modules/
+/.copilot-reports/node_modules/
+/.copilot-git/node_modules/
+/.copilot-rebase/node_modules/
+/.claude/node_modules/
+/.claude-jira/node_modules/
+/.claude-reports/node_modules/
+/.claude-git/node_modules/
+/.claude-rebase/node_modules/
+
 # Cache directories
 /cache/
 
