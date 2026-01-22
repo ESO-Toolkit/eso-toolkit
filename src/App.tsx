@@ -5,6 +5,7 @@ import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { AnalyticsListener } from './components/AnalyticsListener';
+import { CookieConsent } from './components/CookieConsent';
 import { MemoizedLoadingSpinner } from './components/CustomLoadingSpinner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HashRouteRedirect } from './components/HashRouteRedirect';
@@ -144,6 +145,26 @@ const App: React.FC = () => {
     });
   }, []);
 
+  // Listen for consent changes and reinitialize analytics
+  React.useEffect(() => {
+    const handleStorageChange = (e: StorageEvent): void => {
+      if (e.key === 'eso-log-aggregator-cookie-consent' && e.newValue) {
+        try {
+          const consent = JSON.parse(e.newValue);
+          if (consent.accepted) {
+            // User has accepted consent, reinitialize analytics
+            initializeAnalytics();
+          }
+        } catch {
+          // Ignore parsing errors
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // Check if we're on the landing page to conditionally load components
   const isLandingPage = window.location.pathname === '/' || window.location.pathname === '';
 
@@ -170,6 +191,8 @@ const App: React.FC = () => {
               )}
               {/* Update notification for new versions */}
               <UpdateNotification />
+              {/* Cookie consent banner */}
+              <CookieConsent />
             </AuthProvider>
           </EsoLogsClientProvider>
         </PersistGate>
