@@ -1,230 +1,152 @@
-# AI Agent Quick Reference: acli Jira Commands
+# AI Agent Quick Reference: Jira Integration
 
-**Quick reference card for AI agents working with Jira via acli**
+**Date Updated**: January 22, 2026  
+**Method**: Agent Skill (MCP Server) - **PREFERRED**  
+**Fallback**: Manual acli commands (see deprecated docs)
 
 ---
 
-## 🚀 Essential Commands
+## ⚡ Quick Start
+
+### Using the Jira Skill (RECOMMENDED)
+
+**In GitHub Copilot (VS Code):**
+```
+@workspace View ESO-372
+@workspace Find all To Do tasks in ESO
+@workspace Move ESO-569 to "In Progress"
+@workspace Add comment to ESO-569: Implementation complete
+```
+
+**In Claude Desktop:**
+Same natural language commands - the skill handles everything!
+
+---
+
+## 🛠️ Common Operations
 
 ### View Work Item
-```powershell
-acli jira workitem view ESO-372
+```
+@workspace View ESO-372
+@workspace Show me ESO-449
 ```
 
-### Find Next To Do Task
-```powershell
-acli jira workitem search --jql "project = ESO AND status = 'To Do'" --fields key,summary,type,points --order-by created
+### Search
+```
+@workspace Find all ESO tasks in "To Do"
+@workspace Search for unassigned stories
+@workspace Show tasks in epic ESO-368
 ```
 
-### Start Work (Transition to In Progress)
-```powershell
-# ✅ CORRECT SYNTAX
-acli jira workitem transition --key ESO-394 --status "In Progress"
-
-# ❌ WRONG (--to flag doesn't exist)
-# acli jira workitem transition ESO-394 --to "In Progress"
+### Transition Status
 ```
-
-### Complete Work (Transition to Done)
-```powershell
-acli jira workitem transition --key ESO-394 --status "Done"
+@workspace Move ESO-569 to "In Progress"
+@workspace Mark ESO-449 as Done
+@workspace Transition ESO-372 to "In Review"
 ```
 
 ### Add Comment
+```
+@workspace Add comment to ESO-569:
+Implementation complete. PR: #123
+
+- Updated state management
+- Added tests
+- All checks passing
+```
+
+### Link Work Items
+```
+@workspace Link ESO-569 to ESO-449 (depends on)
+@workspace ESO-488 blocks ESO-463
+```
+
+### Epic Status
+```
+@workspace What's the status of epic ESO-368?
+@workspace Show progress for ESO-368
+```
+
+### Assign
+```
+@workspace Assign ESO-569 to myself
+@workspace Unassign ESO-372
+```
+
+### Update Story Points
+```
+@workspace Set ESO-569 story points to 3
+@workspace Update ESO-449 estimate to 5
+```
+
+---
+
+## 🔄 Complete Workflow
+
+```
+@workspace Implement ESO-569
+
+Steps (automated):
+1. View ticket (requirements)
+2. Create branch
+3. [Make changes]
+4. Run tests/quality checks
+5. Commit and push
+6. Transition to "In Review"
+7. Add PR link comment
+```
+
+---
+
+## 📋 JQL Quick Reference
+
+Use with search operations:
+
+### Status Queries
+- `project = ESO AND status = 'To Do'`
+- `project = ESO AND status = 'In Progress'`
+- `project = ESO AND status = 'Done'`
+
+### Assignment Queries
+- `project = ESO AND assignee IS EMPTY`
+- `project = ESO AND assignee = currentUser()`
+
+### Epic Queries
+- `"Epic Link" = ESO-368`
+- `project = ESO AND type = Epic`
+
+### Combined Queries
+- `project = ESO AND status = 'To Do' AND type = Task`
+- `project = ESO AND assignee IS EMPTY AND priority = High`
+
+---
+
+## 🚨 Troubleshooting
+
+### Skill Not Available
+1. Check `.vscode/settings.json` configuration
+2. Reload VS Code window
+3. Run `cd .copilot-jira && npm install`
+
+### acli Errors
 ```powershell
-acli jira workitem comment create -k ESO-394 -b "✅ Completed with 15 tests passing"
+acli --version         # Should show 1.3.4+
+acli jira auth status  # Should show authenticated
+acli jira auth login   # If not authenticated
 ```
 
 ---
 
-## 🔄 Complete Development Workflow
+## 📚 Documentation
 
-```powershell
-# 1. View task details
-acli jira workitem view ESO-XXX
-
-# 2. Start work (update Jira status)
-acli jira workitem transition --key ESO-XXX --status "In Progress"
-
-# 3. ⚠️ Create feature branch FIRST (BEFORE making any code changes!)
-git checkout -b ESO-XXX/brief-kebab-case-description
-
-# Example: git checkout -b ESO-566/remove-local-storage-for-selected-player
-
-# 4. Make code changes
-# ... implement feature ...
-
-# 5. Validate changes
-npm run lint        # Fix any linting errors
-npm run typecheck   # Ensure TypeScript is correct
-npm test           # Run tests
-
-# 6. Commit changes
-git add <files>
-git commit -m "ESO-XXX: Brief description
-
-- Change detail 1
-- Change detail 2
-- Implementation notes"
-
-# 7. Push to remote
-git push -u origin ESO-XXX/brief-kebab-case-description
-
-# 8. Create Pull Request (using GitHub tools)
-# Include summary, testing notes, and Jira reference
-
-# 9. Update Jira with completion
-acli jira workitem transition --key ESO-XXX --status "Done"
-acli jira workitem comment create -k ESO-XXX -b "Implementation complete. PR: <url>"
-
-# 10. Verify clean state
-git status  # Should show "nothing to commit, working tree clean"
-```
-
-**⚠️ CRITICAL**: Never commit directly to master! Always create a feature branch in step 3.
+- **[AI_JIRA_INTEGRATION_GUIDE.md](AI_JIRA_INTEGRATION_GUIDE.md)** - Complete guide
+- **[.copilot-jira/README.md](../../../.copilot-jira/README.md)** - Skill setup
+- **[AI_JIRA_ACLI_INSTRUCTIONS.md.deprecated](AI_JIRA_ACLI_INSTRUCTIONS.md.deprecated)** - Old manual method
+- **[AI_JIRA_QUICK_REFERENCE.md.deprecated](AI_JIRA_QUICK_REFERENCE.md.deprecated)** - Old quick reference
 
 ---
 
-## 📋 Common JQL Queries
-
-### All Stories in Epic
-```powershell
-acli jira workitem search --jql "project = ESO AND parent = ESO-368 AND type = Story" --fields key,summary,status,points
-```
-
-### All Subtasks for Story
-```powershell
-acli jira workitem search --jql "project = ESO AND parent = ESO-372 AND type = Subtask" --fields key,summary,status
-```
-
-### All Incomplete Items
-```powershell
-acli jira workitem search --jql "project = ESO AND status != Done" --fields key,summary,status
-```
-
-### In Progress Items
-```powershell
-acli jira workitem search --jql "project = ESO AND status = 'In Progress'" --fields key,summary,assignee
-```
-
----
-
-## � Common Development Issues
-
-### Linting Errors
-```powershell
-# Auto-fix many issues
-npm run lint:fix
-
-# Common issue: Missing trailing commas
-# ESLint requires trailing commas in multi-line arrays/objects
-```
-
-### Twig Branch Management
-```powershell
-# View branch tree
-twig tree
-
-# Fix orphaned branches
-twig branch depend <child-branch> <parent-branch>
-
-# Cascade changes
-twig cascade
-```
-
----
-
-## 💡 Branch Naming Convention
-
-**Pattern**: `bkrupa/ESO-XXX-kebab-case-description`
-
-**Examples**:
-- `bkrupa/ESO-516-add-my-reports-link`
-- `bkrupa/ESO-372-integration-tests`
-- `bkrupa/ESO-394-test-infrastructure`
-
----
-
-## 📝 Commit Message Format
-
-```
-<type>(<scope>): <brief description> [ESO-XXX]
-
-- Detailed change 1
-- Detailed change 2
-- Implementation notes
-```
-
-**Types**: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
-
-**Example**:
-```
-feat(HeaderBar): add My Reports link to reports menu [ESO-516]
-
-- Added conditional 'My Reports' menu item to reports submenu
-- Item appears first in the menu when user is logged in
-- Navigates to /my-reports route
-- Converted reportsItems to React.useMemo for dynamic rendering
-```
-
----
-
-## 🎯 Work Item Status Reference
-
-### Current Epic: ESO-368 (Replay System Architecture Improvements)
-
-**Completed Stories (✅):**
-- ESO-369: Documentation (8 SP)
-- ESO-370: Refactor Arena3D (13 SP)  
-- ESO-371: Error Boundaries (8 SP)
-
-**In Progress (🔄):**
-- ESO-372: Integration Tests (13 SP) - **CURRENT**
-  - ESO-394: Set Up Integration Test Infrastructure
-  - ESO-395: Test Events to Worker to Redux Flow
-  - ESO-396: Test Timeline Scrubbing Flow
-  - ESO-397: Test Camera Following Flow
-  - ESO-398: Test Map Timeline Flow
-
-
-**To Do (📋):**
-- ESO-373: Performance Monitoring (8 SP)
-- ESO-374: Extract PlaybackControls (5 SP)
-- ESO-375: Worker Pool (13 SP)
-- ESO-376: Timeline Features (8 SP)
-
----
-
-## 💡 Quick Tips
-
-- **Always query first**: `acli jira workitem view ESO-XXX`
-- **Use correct transition syntax**: `--key` and `--status` (not `--to`)
-- **Use transitions**: Don't forget to move items to "In Progress" and "Done"
-- **Add detailed comments**: Help future agents understand your work
-- **Check dependencies**: View parent/related items before starting
-- **Use JQL filters**: More efficient than viewing items one by one
-- **Follow branch naming**: `bkrupa/ESO-XXX-description`
-- **Run validation**: `npm run lint`, `npm run typecheck`, `npm test`
-- **Fix trailing commas**: ESLint requires them in multi-line constructs
-
----
-
-## 📚 Full Documentation
-
-See **AI_JIRA_ACLI_INSTRUCTIONS.md** for comprehensive guide with:
-- Complete command reference
-- Advanced JQL queries
-- Troubleshooting
-- Best practices
-- Comment templates
-
-See **AI_AGENT_GUIDELINES.md** for:
-- Complete development workflow
-- Git and GitHub workflow
-- Documentation policy
-- TypeScript practices
-
----
-
-**Last Updated**: November 3, 2025
+**Last Updated**: January 22, 2026  
+**Preferred Method**: Agent Skill (natural language)  
+**Project**: ESO | **Board**: https://bkrupa.atlassian.net
 

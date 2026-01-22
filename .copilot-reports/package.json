@@ -1,0 +1,16 @@
+{
+  "name": "eso-log-aggregator-reports",
+  "version": "1.0.0",
+  "description": "Report data debugging skill for ESO Log Aggregator",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "keywords": ["mcp", "copilot", "eso", "debugging"],
+  "author": "",
+  "license": "MIT"
+}

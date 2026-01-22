@@ -2,6 +2,16 @@
 
 ## Download Data
 
+**Use Report Debugging Agent Skill** (preferred):
+```
+@workspace Download report data for <report-code>
+@workspace Download fight data for <report-code> fight <fight-id>
+@workspace Analyze structure of report <report-code>
+@workspace Search for "<ability-name>" in <event-type> events of fight <id>
+@workspace Compare fight <id1> and fight <id2> in report <report-code>
+```
+
+**Alternative (Manual Scripts)**:
 ```powershell
 # Full report (all fights)
 npm run script -- scripts/download-report-data.ts <report-code>
@@ -153,14 +163,17 @@ Get-ChildItem data-downloads/<report-code>/fight-*
 
 ## Jira Workflow
 
+**Use Jira Agent Skill** (preferred):
+```
+@workspace Move ESO-XXX to "In Progress"
+@workspace Add comment to ESO-XXX: Analysis findings...
+@workspace Move ESO-XXX to "Done"
+```
+
+**Alternative (Manual)**:
 ```powershell
-# Start work
 acli jira workitem transition --key ESO-XXX --status "In Progress"
-
-# Add findings to ticket (not separate file)
 acli jira workitem comment create -k ESO-XXX -b "Analysis: ..."
-
-# Complete work
 acli jira workitem transition --key ESO-XXX --status "Done"
 ```
 

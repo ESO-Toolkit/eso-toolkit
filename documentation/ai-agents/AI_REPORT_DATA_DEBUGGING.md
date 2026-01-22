@@ -4,10 +4,19 @@
 
 This guide enables AI agents to debug production issues in ESO Logs reports by analyzing downloaded report data. The data download process captures comprehensive event data, metadata, and combat logs from live reports for local analysis.
 
+**IMPORTANT**: Use the Report Debugging Agent Skill (`.copilot-reports/` or `.claude-reports/`) for automated workflows. Manual scripts are provided as alternatives.
+
 ## Quick Start
 
 ### 1. Download Report Data
 
+**Use Report Debugging Agent Skill** (preferred):
+```
+@workspace Download report data for <report-code>
+@workspace Download fight data for <report-code> fight <fight-id>
+```
+
+**Alternative (Manual Scripts)**:
 ```powershell
 # Download entire report (all fights)
 npm run script -- scripts/download-report-data.ts <report-code>
@@ -24,14 +33,16 @@ npm run script -- scripts/download-report-data.ts 3gjVGWB2dxCL8XAw 32
 
 **Location**: Data is saved to `data-downloads/<report-code>/`
 
-### 2. Verify Download
+### 2. Analyze and Search
 
-Check the `index.json` file for a complete inventory of downloaded files:
-
-```powershell
-# View the navigation guide
-cat data-downloads/<report-code>/index.json
+**Use Report Debugging Agent Skill** (preferred):
 ```
+@workspace Analyze structure of report <report-code>
+@workspace Search for "Anchorite's Potency" in resource events of fight 32
+@workspace Compare fight 32 and fight 35 in report <report-code>
+```
+
+**Alternative (Manual)**: Navigate files directly in `data-downloads/<report-code>/`
 
 ## Data Structure
 
@@ -334,25 +345,26 @@ console.log('Event Type Distribution:', distribution);
 
 When debugging report data issues:
 
-1. **Start work**:
-   ```powershell
-   acli jira workitem transition --key ESO-XXX --status "In Progress"
-   ```
+**Use Jira Agent Skill** (preferred):
+```
+@workspace Move ESO-XXX to "In Progress"
+@workspace Add comment to ESO-XXX: Analysis of report 3gjVGWB2dxCL8XAw fight 32:
+- Issue: Missing damage for player X
+- Root cause: Ability ID Y not in master data
+- Fix: Added ability mapping in abilities.json
+@workspace Move ESO-XXX to "Done"
+```
 
-2. **Document findings in Jira comments** (not separate markdown files):
-   ```powershell
-   acli jira workitem comment create -k ESO-XXX -b "Analysis of report 3gjVGWB2dxCL8XAw fight 32:
-   - Issue: Missing damage for player X
-   - Root cause: Ability ID Y not in master data
-   - Fix: Added ability mapping in abilities.json"
-   ```
+**Alternative (Manual)**:
+```powershell
+acli jira workitem transition --key ESO-XXX --status "In Progress"
+acli jira workitem comment create -k ESO-XXX -b "Analysis findings..."
+acli jira workitem transition --key ESO-XXX --status "Done"
+```
 
-3. **Complete work**:
-   ```powershell
-   acli jira workitem transition --key ESO-XXX --status "Done"
-   ```
+**Document findings in Jira comments** (not separate markdown files).
 
-See [jira/AI_JIRA_ACLI_INSTRUCTIONS.md](jira/AI_JIRA_ACLI_INSTRUCTIONS.md) for complete Jira workflow.
+See [jira/AI_JIRA_INTEGRATION_GUIDE.md](jira/AI_JIRA_INTEGRATION_GUIDE.md) for complete Jira workflow.
 
 ## Related Documentation
 
