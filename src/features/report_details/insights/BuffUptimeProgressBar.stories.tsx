@@ -237,7 +237,7 @@ export const MultiStackStagger: Story = {
       <Box sx={{ mb: 2 }}>
         <strong>Multi-Stack: Stagger (segmented display)</strong>
         <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '4px' }}>
-          Overlaid colored bars with segmented labels below: S1: 85% | S2: 60% | S3: 35%
+          Overlaid colored bars with segmented labels below: 85% | 60% | 35%
         </div>
         <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '4px' }}>
           Color gradient: Primary red → Orange → Amber (matches app theme)
@@ -261,7 +261,7 @@ export const MultiStackTouchOfZen: Story = {
       <Box sx={{ mb: 2 }}>
         <strong>Multi-Stack: Touch of Z&apos;en (segmented display)</strong>
         <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '4px' }}>
-          5 stacks with segmented labels: S1: 95% | S2: 88% | S3: 72% | S4: 55% | S5: 38%
+          5 stacks with segmented labels: 95% | 88% | 72% | 55% | 38%
         </div>
         <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '4px' }}>
           Full gradient: Red → Orange → Amber → Blue → Purple
@@ -285,7 +285,7 @@ export const MultiStackWithGroupAverage: Story = {
       <Box sx={{ mb: 2 }}>
         <strong>Multi-Stack: Elemental Weakness (segmented with group average)</strong>
         <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '4px' }}>
-          Segmented display: S1: 78% | S2: 52% | S3: 28%
+          Segmented display: 78% | 52% | 28%
         </div>
         <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '4px' }}>
           With delta indicators: +8%, +2%, -2% vs group averages

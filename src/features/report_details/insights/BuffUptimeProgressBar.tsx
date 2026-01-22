@@ -528,7 +528,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                     color: theme.palette.mode === 'dark' ? '#e2e8f0' : '#475569',
                   }}
                 >
-                  S{stackData.stackLevel}: {Math.round(stackData.uptimePercentage)}%
+                  {Math.round(stackData.uptimePercentage)}%
                 </Typography>
               </Box>
             </React.Fragment>

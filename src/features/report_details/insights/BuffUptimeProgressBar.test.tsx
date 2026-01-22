@@ -332,10 +332,10 @@ describe('BuffUptimeProgressBar - Delta Indicators', () => {
 
       renderBuffProgressBar(buff);
 
-      // Should show all stack percentages in segmented format below bar (S1: 56% | S2: 42% | S3: 29%) with -27% delta for highest stack
-      expect(screen.getByText(/S1:\s*56%/)).toBeInTheDocument();
-      expect(screen.getByText(/S2:\s*42%/)).toBeInTheDocument();
-      expect(screen.getByText(/S3:\s*29%/)).toBeInTheDocument();
+      // Should show all stack percentages in segmented format below bar (56% | 42% | 29%) with -27% delta for highest stack
+      expect(screen.getAllByText('56%').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('42%').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('29%').length).toBeGreaterThan(0);
       // Note: Expanded view (hidden) may contain additional indicators, so we check for at least one occurrence
       expect(screen.getAllByText('-27%').length).toBeGreaterThan(0);
       expect(screen.getAllByTestId('TrendingDownIcon').length).toBeGreaterThan(0);
@@ -377,10 +377,10 @@ describe('BuffUptimeProgressBar - Delta Indicators', () => {
 
       renderBuffProgressBar(buff);
 
-      // Should show all stack percentages in segmented format below bar (S1: 56% | S2: 42% | S3: 29%) with -27% for Stack 3 (highest stack), not based on top-level 99%
-      expect(screen.getByText(/S1:\s*56%/)).toBeInTheDocument();
-      expect(screen.getByText(/S2:\s*42%/)).toBeInTheDocument();
-      expect(screen.getByText(/S3:\s*29%/)).toBeInTheDocument();
+      // Should show all stack percentages in segmented format below bar (56% | 42% | 29%) with -27% for Stack 3 (highest stack), not based on top-level 99%
+      expect(screen.getAllByText('56%').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('42%').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('29%').length).toBeGreaterThan(0);
       // Note: Expanded view (hidden) may contain additional indicators, so we check for at least one occurrence
       expect(screen.getAllByText('-27%').length).toBeGreaterThan(0);
     });
@@ -494,10 +494,10 @@ describe('BuffUptimeProgressBar - Delta Indicators', () => {
 
       renderBuffProgressBar(buff);
 
-      // Should show all stack percentages in segmented format below bar (S1: 85% | S2: 60% | S3: 35%)
-      expect(screen.getByText(/S1:\s*85%/)).toBeInTheDocument();
-      expect(screen.getByText(/S2:\s*60%/)).toBeInTheDocument();
-      expect(screen.getByText(/S3:\s*35%/)).toBeInTheDocument();
+      // Should show all stack percentages in segmented format below bar (85% | 60% | 35%)
+      expect(screen.getAllByText('85%').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('60%').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('35%').length).toBeGreaterThan(0);
     });
   });
 });
