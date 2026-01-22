@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
@@ -9,40 +9,75 @@ import {
   HostilityType,
 } from '../../graphql/gql/graphql';
 import { HealEvent, LogEvent } from '../../types/combatlogEvents';
-import { RootState } from '../storeWithHistory';
+import { Logger, LogLevel } from '../../utils/logger';
+import {
+  KeyedCacheState,
+  removeFromCache,
+  resolveCacheKey,
+  resetCacheState,
+  touchAccessOrder,
+  trimCache,
+} from '../utils/keyedCacheState';
 
-import { EVENT_PAGE_LIMIT } from './constants';
+import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
+import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
-export interface HealingEventsState {
+const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'HealingEvents' });
+
+type HealingEventsRequest = ReturnType<typeof createCurrentRequest> | null;
+
+export interface HealingEventsEntry {
   events: HealEvent[];
-  loading: boolean;
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
-  // Cache metadata for better cache management
   cacheMetadata: {
-    lastFetchedReportId: string | null;
-    lastFetchedFightId: number | null;
     lastFetchedTimestamp: number | null;
+  };
+  currentRequest: HealingEventsRequest;
+}
+
+export type HealingEventsState = KeyedCacheState<HealingEventsEntry>;
+
+// Local interface to avoid circular dependency with RootState
+interface LocalRootState {
+  events: {
+    healing: HealingEventsState;
   };
 }
 
-const initialState: HealingEventsState = {
+const createEmptyEntry = (): HealingEventsEntry => ({
   events: [],
-  loading: false,
+  status: 'idle',
   error: null,
   cacheMetadata: {
-    lastFetchedReportId: null,
-    lastFetchedFightId: null,
     lastFetchedTimestamp: null,
   },
+  currentRequest: null,
+});
+
+const ensureEntry = (state: HealingEventsState, key: string): HealingEventsEntry => {
+  if (!state.entries[key]) {
+    state.entries[key] = createEmptyEntry();
+  }
+  return state.entries[key];
 };
 
-export const fetchHealingEvents = createAsyncThunk<
-  HealEvent[],
-  { reportCode: string; fight: FightFragment; client: EsoLogsClient },
-  { state: RootState; rejectValue: string }
->(
+const initialState: HealingEventsState = {
+  entries: {},
+  accessOrder: [],
+};
+
+export const fetchHealingEvents = createAsyncThunk(
   'healingEvents/fetchHealingEvents',
-  async ({ reportCode, fight, client }) => {
+  async ({
+    reportCode,
+    fight,
+    client,
+  }: {
+    reportCode: string;
+    fight: FightFragment;
+    client: EsoLogsClient;
+  }) => {
     // Fetch both friendly and enemy healing events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
     let allEvents: LogEvent[] = [];
@@ -67,33 +102,54 @@ export const fetchHealingEvents = createAsyncThunk<
         const page = response.reportData?.report?.events;
         if (page?.data) {
           allEvents = allEvents.concat(page.data);
+          logger.info(`Fetched healing events page for ${hostilityType}`, {
+            reportCode,
+            fightId: Number(fight.id),
+            hostilityType,
+            eventsInPage: page.data.length,
+            totalEvents: allEvents.length,
+          });
         }
         nextPageTimestamp = page?.nextPageTimestamp ?? null;
       } while (nextPageTimestamp);
     }
 
+    logger.info('Healing events fetch completed', {
+      reportCode,
+      fightId: Number(fight.id),
+      totalEvents: allEvents.length,
+    });
+
     return allEvents as HealEvent[];
   },
   {
     condition: ({ reportCode, fight }, { getState }) => {
-      const state = getState().events.healing;
-      const requestedReportId = reportCode;
-      const requestedFightId = Number(fight.id);
+      const state = (getState() as LocalRootState).events.healing;
+      const { key } = resolveCacheKey({ reportCode, fightId: Number(fight.id) });
+      const entry = state.entries[key];
 
-      // Check if healing events are already cached for this fight
-      const isCached =
-        state.cacheMetadata.lastFetchedReportId === requestedReportId &&
-        state.cacheMetadata.lastFetchedFightId === requestedFightId;
+      const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
+      const isCached = Boolean(entry?.events.length);
       const isFresh =
-        state.cacheMetadata.lastFetchedTimestamp &&
-        Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
+        typeof lastFetchedTimestamp === 'number' &&
+        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
       if (isCached && isFresh) {
+        logger.info('Using cached healing events', {
+          reportCode,
+          fightId: Number(fight.id),
+          cacheAge: lastFetchedTimestamp ? Date.now() - lastFetchedTimestamp : 0,
+        });
         return false; // Prevent thunk execution
       }
 
-      if (state.loading) {
-        return false; // Prevent duplicate execution
+      const inFlight = entry?.currentRequest;
+      if (inFlight && inFlight.reportId === reportCode && inFlight.fightId === Number(fight.id)) {
+        logger.info('Healing events fetch already in progress, skipping', {
+          reportCode,
+          fightId: Number(fight.id),
+        });
+        return false;
       }
 
       return true; // Allow thunk execution
@@ -106,39 +162,111 @@ const healingEventsSlice = createSlice({
   initialState,
   reducers: {
     clearHealingEvents(state) {
-      state.events = [];
-      state.loading = false;
-      state.error = null;
-      state.cacheMetadata = {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-      };
+      resetCacheState(state);
+    },
+    resetHealingEventsLoading(state) {
+      Object.values(state.entries).forEach((entry) => {
+        if (entry.status === 'loading') {
+          entry.status = 'idle';
+        }
+        entry.error = null;
+        entry.currentRequest = null;
+      });
+    },
+    clearHealingEventsForContext(
+      state,
+      action: PayloadAction<{ reportCode?: string | null; fightId?: number | string | null }>,
+    ) {
+      const { context, key } = resolveCacheKey(action.payload);
+      if (!context.reportCode) {
+        resetCacheState(state);
+        return;
+      }
+      removeFromCache(state, key);
+    },
+    trimHealingEventsCache(state, action: PayloadAction<{ maxEntries?: number } | undefined>) {
+      const limit = action?.payload?.maxEntries ?? EVENT_CACHE_MAX_ENTRIES;
+      trimCache(state, limit);
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchHealingEvents.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+      .addCase(fetchHealingEvents.pending, (state, action) => {
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
+        entry.status = 'loading';
+        entry.error = null;
+        entry.currentRequest = createCurrentRequest(
+          action.meta.arg.reportCode,
+          Number(action.meta.arg.fight.id),
+          action.meta.requestId,
+          true,
+        );
+        touchAccessOrder(state, key);
       })
       .addCase(fetchHealingEvents.fulfilled, (state, action) => {
-        state.events = action.payload;
-        state.loading = false;
-        state.error = null;
-        // Update cache metadata
-        state.cacheMetadata = {
-          lastFetchedReportId: action.meta.arg.reportCode,
-          lastFetchedFightId: Number(action.meta.arg.fight.id),
-          lastFetchedTimestamp: Date.now(),
-        };
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
+        if (
+          isStaleResponse(
+            entry.currentRequest,
+            action.meta.requestId,
+            action.meta.arg.reportCode,
+            Number(action.meta.arg.fight.id),
+          )
+        ) {
+          logger.info('Ignoring stale healing events response', {
+            reportCode: action.meta.arg.reportCode,
+            fightId: Number(action.meta.arg.fight.id),
+          });
+          return;
+        }
+        entry.events = action.payload;
+        entry.status = 'succeeded';
+        entry.error = null;
+        entry.cacheMetadata.lastFetchedTimestamp = Date.now();
+        entry.currentRequest = null;
+        touchAccessOrder(state, key);
+        trimCache(state, EVENT_CACHE_MAX_ENTRIES);
       })
       .addCase(fetchHealingEvents.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to fetch healing events';
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
+        if (
+          isStaleResponse(
+            entry.currentRequest,
+            action.meta.requestId,
+            action.meta.arg.reportCode,
+            Number(action.meta.arg.fight.id),
+          )
+        ) {
+          logger.info('Ignoring stale healing events error response', {
+            reportCode: action.meta.arg.reportCode,
+            fightId: Number(action.meta.arg.fight.id),
+          });
+          return;
+        }
+        entry.status = 'failed';
+        entry.error = action.error.message || 'Failed to fetch healing events';
+        entry.currentRequest = null;
+        touchAccessOrder(state, key);
       });
   },
 });
 
-export const { clearHealingEvents } = healingEventsSlice.actions;
+export const {
+  clearHealingEvents,
+  resetHealingEventsLoading,
+  clearHealingEventsForContext,
+  trimHealingEventsCache,
+} = healingEventsSlice.actions;
 export default healingEventsSlice.reducer;

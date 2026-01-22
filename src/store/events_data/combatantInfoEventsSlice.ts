@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
@@ -10,45 +10,64 @@ import {
 } from '../../graphql/gql/graphql';
 import { CombatantInfoEvent, LogEvent } from '../../types/combatlogEvents';
 import { Logger, LogLevel } from '../../utils/logger';
-import type { RootState } from '../storeWithHistory';
+import {
+  KeyedCacheState,
+  removeFromCache,
+  resolveCacheKey,
+  resetCacheState,
+  touchAccessOrder,
+  trimCache,
+} from '../utils/keyedCacheState';
 
-import { EVENT_PAGE_LIMIT } from './constants';
+import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'CombatantInfoEvents' });
 
-export interface CombatantInfoEventsState {
+type CombatantInfoEventsRequest = ReturnType<typeof createCurrentRequest> | null;
+
+export interface CombatantInfoEventsEntry {
   events: CombatantInfoEvent[];
-  loading: boolean;
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
-  // Cache metadata for better cache management
   cacheMetadata: {
-    lastFetchedReportId: string | null;
-    lastFetchedFightId: number | null;
     lastFetchedTimestamp: number | null;
     eventCount: number;
-    lastRestrictToFightWindow: boolean | null;
+    restrictToFightWindow: boolean | null;
   };
-  currentRequest: {
-    reportId: string;
-    fightId: number;
-    requestId: string;
-    restrictToFightWindow: boolean;
-  } | null;
+  currentRequest: CombatantInfoEventsRequest;
 }
 
-const initialState: CombatantInfoEventsState = {
+export type CombatantInfoEventsState = KeyedCacheState<CombatantInfoEventsEntry>;
+
+interface LocalRootState {
+  events: {
+    combatantInfo: CombatantInfoEventsState;
+  };
+}
+
+const createEmptyEntry = (): CombatantInfoEventsEntry => ({
   events: [],
-  loading: false,
+  status: 'idle',
   error: null,
   cacheMetadata: {
-    lastFetchedReportId: null,
-    lastFetchedFightId: null,
     lastFetchedTimestamp: null,
     eventCount: 0,
-    lastRestrictToFightWindow: null,
+    restrictToFightWindow: null,
   },
   currentRequest: null,
+});
+
+const ensureEntry = (state: CombatantInfoEventsState, key: string): CombatantInfoEventsEntry => {
+  if (!state.entries[key]) {
+    state.entries[key] = createEmptyEntry();
+  }
+  return state.entries[key];
+};
+
+const initialState: CombatantInfoEventsState = {
+  entries: {},
+  accessOrder: [],
 };
 
 export const fetchCombatantInfoEvents = createAsyncThunk<
@@ -64,7 +83,7 @@ export const fetchCombatantInfoEvents = createAsyncThunk<
      */
     restrictToFightWindow?: boolean;
   },
-  { state: RootState; rejectValue: string }
+  { state: LocalRootState; rejectValue: string }
 >(
   'combatantInfoEvents/fetchCombatantInfoEvents',
   async ({ reportCode, fight, client, restrictToFightWindow = true }) => {
@@ -109,29 +128,27 @@ export const fetchCombatantInfoEvents = createAsyncThunk<
   {
     condition: ({ reportCode, fight, restrictToFightWindow = true }, { getState }) => {
       const state = getState().events.combatantInfo;
-      const requestedReportId = reportCode;
-      const requestedFightId = Number(fight.id);
+      const { key } = resolveCacheKey({ reportCode, fightId: Number(fight.id) });
+      const entry = state.entries[key];
 
-      const cachedRestrict = state.cacheMetadata.lastRestrictToFightWindow ?? true;
+      const cachedRestrict = entry?.cacheMetadata.restrictToFightWindow ?? true;
       const restrictMatches = cachedRestrict === restrictToFightWindow;
 
-      // Check if combatant info events are already cached for this report and fight
-      const isCached =
-        state.cacheMetadata.lastFetchedReportId === requestedReportId &&
-        state.cacheMetadata.lastFetchedFightId === requestedFightId;
+      const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
+      const isCached = Boolean(entry?.events.length);
       const isFresh =
-        state.cacheMetadata.lastFetchedTimestamp &&
-        Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
+        typeof lastFetchedTimestamp === 'number' &&
+        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
       if (isCached && isFresh && restrictMatches) {
         return false; // Prevent thunk execution
       }
 
-      const inFlight = state.currentRequest;
+      const inFlight = entry?.currentRequest;
       if (
         inFlight &&
-        inFlight.reportId === requestedReportId &&
-        inFlight.fightId === requestedFightId &&
+        inFlight.reportId === reportCode &&
+        inFlight.fightId === Number(fight.id) &&
         inFlight.restrictToFightWindow === restrictToFightWindow
       ) {
         return false; // Prevent duplicate execution for same fight
@@ -147,40 +164,64 @@ const combatantInfoEventsSlice = createSlice({
   initialState,
   reducers: {
     clearCombatantInfoEvents(state) {
-      state.events = [];
-      state.loading = false;
-      state.error = null;
-      state.cacheMetadata = {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-        eventCount: 0,
-        lastRestrictToFightWindow: null,
-      };
-      state.currentRequest = null;
+      resetCacheState(state);
     },
     resetCombatantInfoEventsLoading(state) {
-      state.loading = false;
-      state.error = null;
-      state.currentRequest = null;
+      Object.values(state.entries).forEach((entry) => {
+        if (entry.status === 'loading') {
+          entry.status = 'idle';
+        }
+        entry.error = null;
+        entry.currentRequest = null;
+      });
+    },
+    clearCombatantInfoEventsForContext(
+      state,
+      action: PayloadAction<{ reportCode?: string | null; fightId?: number | string | null }>,
+    ) {
+      const { context, key } = resolveCacheKey(action.payload);
+      if (!context.reportCode) {
+        resetCacheState(state);
+        return;
+      }
+      removeFromCache(state, key);
+    },
+    trimCombatantInfoEventsCache(
+      state,
+      action: PayloadAction<{ maxEntries?: number } | undefined>,
+    ) {
+      const limit = action?.payload?.maxEntries ?? EVENT_CACHE_MAX_ENTRIES;
+      trimCache(state, limit);
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchCombatantInfoEvents.pending, (state, action) => {
-        state.loading = true;
-        state.error = null;
-        state.currentRequest = createCurrentRequest(
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
+        entry.status = 'loading';
+        entry.error = null;
+        entry.currentRequest = createCurrentRequest(
           action.meta.arg.reportCode,
           Number(action.meta.arg.fight.id),
           action.meta.requestId,
           action.meta.arg.restrictToFightWindow ?? true,
         );
+        entry.cacheMetadata.restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
+        touchAccessOrder(state, key);
       })
       .addCase(fetchCombatantInfoEvents.fulfilled, (state, action) => {
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
         if (
           isStaleResponse(
-            state.currentRequest,
+            entry.currentRequest,
             action.meta.requestId,
             action.meta.arg.reportCode,
             Number(action.meta.arg.fight.id),
@@ -192,23 +233,25 @@ const combatantInfoEventsSlice = createSlice({
           });
           return;
         }
-        state.events = action.payload;
-        state.loading = false;
-        state.error = null;
-        // Update cache metadata
-        state.cacheMetadata = {
-          lastFetchedReportId: action.meta.arg.reportCode,
-          lastFetchedFightId: Number(action.meta.arg.fight.id),
-          lastFetchedTimestamp: Date.now(),
-          eventCount: action.payload.length,
-          lastRestrictToFightWindow: action.meta.arg.restrictToFightWindow ?? true,
-        };
-        state.currentRequest = null;
+        entry.events = action.payload;
+        entry.status = 'succeeded';
+        entry.error = null;
+        entry.cacheMetadata.lastFetchedTimestamp = Date.now();
+        entry.cacheMetadata.eventCount = action.payload.length;
+        entry.cacheMetadata.restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
+        entry.currentRequest = null;
+        touchAccessOrder(state, key);
+        trimCache(state, EVENT_CACHE_MAX_ENTRIES);
       })
       .addCase(fetchCombatantInfoEvents.rejected, (state, action) => {
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
         if (
           isStaleResponse(
-            state.currentRequest,
+            entry.currentRequest,
             action.meta.requestId,
             action.meta.arg.reportCode,
             Number(action.meta.arg.fight.id),
@@ -220,13 +263,18 @@ const combatantInfoEventsSlice = createSlice({
           });
           return;
         }
-        state.loading = false;
-        state.error = action.error.message || 'Failed to fetch combatant info events';
-        state.currentRequest = null;
+        entry.status = 'failed';
+        entry.error = action.error.message || 'Failed to fetch combatant info events';
+        entry.currentRequest = null;
+        touchAccessOrder(state, key);
       });
   },
 });
 
-export const { clearCombatantInfoEvents, resetCombatantInfoEventsLoading } =
-  combatantInfoEventsSlice.actions;
+export const {
+  clearCombatantInfoEvents,
+  resetCombatantInfoEventsLoading,
+  clearCombatantInfoEventsForContext,
+  trimCombatantInfoEventsCache,
+} = combatantInfoEventsSlice.actions;
 export default combatantInfoEventsSlice.reducer;

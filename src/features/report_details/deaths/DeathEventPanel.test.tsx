@@ -27,6 +27,8 @@ jest.mock('../../../hooks', () => ({
   useHealingEvents: jest.fn(),
   useResourceEvents: jest.fn(),
   useRoleColors: jest.fn(),
+  useResolvedReportFightContext: jest.fn(),
+  useFightForContext: jest.fn(),
 }));
 
 jest.mock('../../../hooks/workerTasks/useDebuffLookupTask', () => ({
@@ -53,6 +55,8 @@ const {
   useHealingEvents,
   useResourceEvents,
   useRoleColors,
+  useResolvedReportFightContext,
+  useFightForContext,
 } = jest.requireMock('../../../hooks');
 
 const { useDebuffLookupTask } = jest.requireMock('../../../hooks/workerTasks/useDebuffLookupTask');
@@ -114,6 +118,14 @@ const createMockPlayerData = () => ({
   },
 });
 
+// Mock fight data
+const mockFight: FightFragment = createMockFight({
+  id: 1,
+  startTime: 1000,
+  endTime: 60000,
+  name: 'Test Fight',
+});
+
 // Default mock setup
 const setupMocks = (overrides: any = {}) => {
   const defaultMocks = {
@@ -126,6 +138,8 @@ const setupMocks = (overrides: any = {}) => {
     useDebuffLookupTask: { debuffLookupData: null, isDebuffLookupLoading: false },
     useReportMasterData: { reportMasterData: createMockMasterData(), isMasterDataLoading: false },
     usePlayerData: { playerData: createMockPlayerData() },
+    useResolvedReportFightContext: { reportCode: 'test-report', fightId: 1 },
+    useFightForContext: mockFight,
   };
 
   const mergedMocks = { ...defaultMocks, ...overrides };
@@ -139,6 +153,8 @@ const setupMocks = (overrides: any = {}) => {
   useDebuffLookupTask.mockReturnValue(mergedMocks.useDebuffLookupTask);
   useReportMasterData.mockReturnValue(mergedMocks.useReportMasterData);
   usePlayerData.mockReturnValue(mergedMocks.usePlayerData);
+  useResolvedReportFightContext.mockReturnValue(mergedMocks.useResolvedReportFightContext);
+  useFightForContext.mockReturnValue(mergedMocks.useFightForContext);
 
   // Setup calculateDeathDurations mock to return empty array
   calculateDeathDurations.mockReturnValue([]);

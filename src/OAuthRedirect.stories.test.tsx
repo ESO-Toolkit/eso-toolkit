@@ -43,7 +43,7 @@ jest.mock('react-redux', () => ({
     const mockState = {
       auth: { isAuthenticated: false },
       report: { selectedReport: null },
-      events: { hostileBuffs: { data: [], loading: false } },
+      events: { hostileBuffs: { entries: {}, accessOrder: [] } },
       workerResults: {},
     };
     return selector(mockState);
@@ -55,7 +55,7 @@ const mockStore = {
   getState: jest.fn(() => ({
     auth: { isAuthenticated: false },
     report: { selectedReport: null },
-    events: { hostileBuffs: { data: [], loading: false } },
+    events: { hostileBuffs: { entries: {}, accessOrder: [] } },
     workerResults: {},
   })),
   subscribe: jest.fn(() => jest.fn()),

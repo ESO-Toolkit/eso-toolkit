@@ -111,7 +111,7 @@ const { resourceEvents: resources } = useResourceEvents();
 **Why event hooks instead of selectors?**
 
 **Selectors only read from Redux state:**
-- `selectDamageEvents()` returns whatever is in `state.events.damage.events`
+- `selectDamageEvents()` returns whatever is cached for the active report/fight context
 - If data was never fetched, selector returns empty array `[]`
 - No automatic fetching happens
 

@@ -1,4 +1,5 @@
 import { RootState } from '../../store/storeWithHistory';
+import { resolveCacheKey } from '../../store/utils/keyedCacheState';
 import { BuffEvent, DebuffEvent } from '../../types/combatlogEvents';
 
 /**
@@ -8,75 +9,75 @@ import { BuffEvent, DebuffEvent } from '../../types/combatlogEvents';
 /**
  * Creates a mock RootState for testing selectors and components
  */
-export const createMockState = (overrides: Partial<RootState> = {}): RootState =>
-  ({
+export const createMockState = (overrides: Partial<RootState> = {}): RootState => {
+  const reportKey = resolveCacheKey({ reportCode: 'test-report' }).key;
+  const baseState = {
     events: {
       combatantInfo: {
-        events: [],
-        loading: false,
-        error: null,
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
+        entries: {},
+        accessOrder: [],
       },
       damage: {
-        events: [],
-        loading: false,
-        error: null,
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
+        entries: {},
+        accessOrder: [],
+      },
+      healing: {
+        entries: {},
+        accessOrder: [],
+      },
+      deaths: {
+        entries: {},
+        accessOrder: [],
       },
       friendlyBuffs: {
-        events: [],
-        loading: false,
-        error: null,
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
+        entries: {},
+        accessOrder: [],
       },
       hostileBuffs: {
-        events: [],
-        loading: false,
-        error: null,
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
+        entries: {},
+        accessOrder: [],
       },
       debuffs: {
-        events: [],
-        loading: false,
-        error: null,
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
+        entries: {},
+        accessOrder: [],
       },
       casts: {
-        events: [],
-        loading: false,
-        error: null,
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
+        entries: {},
+        accessOrder: [],
+      },
+      resources: {
+        entries: {},
+        accessOrder: [],
       },
     },
     ui: {
-      checkedStats: new Set(),
-      selectedTargetIds: new Set(),
-      selectedPlayerName: null,
+      darkMode: true,
       selectedPlayerId: null,
-      selectedPlayerGuid: null,
-      filterSettings: {
-        abilities: [],
-        gameZones: [],
-      },
+      selectedTabId: null,
+      selectedTargetIds: [],
+      showExperimentalTabs: false,
+      sidebarOpen: false,
     },
     report: {
+      entries: {
+        [reportKey]: {
+          data: null,
+          status: 'idle',
+          error: null,
+          fightsById: {},
+          fightIds: [],
+          cacheMetadata: {
+            lastFetchedTimestamp: null,
+          },
+          currentRequest: null,
+        },
+      },
+      accessOrder: [reportKey],
       reportId: 'test-report',
       data: {
         fights: [
           {
-            id: '1',
+            id: 1,
             startTime: 1000,
             endTime: 2000,
             name: 'Test Fight',
@@ -94,17 +95,34 @@ export const createMockState = (overrides: Partial<RootState> = {}): RootState =
       },
       loading: false,
       error: null,
+      cacheMetadata: {
+        lastFetchedReportId: null,
+        lastFetchedTimestamp: null,
+      },
+      activeContext: {
+        reportId: 'test-report',
+        fightId: 1,
+      },
+      fightIndexByReport: {},
     },
     masterData: {
-      actorsById: {},
-      abilitiesById: {},
-      gameZonesById: {},
+      entries: {},
+      accessOrder: [],
     },
     playerData: {
-      playersById: {},
+      entries: {},
+      accessOrder: [],
     },
+    parseAnalysis: {} as unknown,
+    workerResults: {} as unknown,
+    router: undefined,
+  } as unknown as RootState;
+
+  return {
+    ...baseState,
     ...overrides,
-  }) as RootState;
+  } as RootState;
+};
 
 /**
  * Helper to create a mock buff event for testing Redux selectors

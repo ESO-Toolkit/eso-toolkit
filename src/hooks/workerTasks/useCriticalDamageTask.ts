@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { executeCriticalDamageTask, criticalDamageActions } from '@/store/worker_results';
 import { SharedWorkerResultType } from '@/workers/SharedWorker';
 
-import { FightFragment } from '../../graphql/gql/graphql';
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
   selectCriticalDamageResult,
   selectWorkerTaskLoading,
@@ -21,12 +21,16 @@ import { useDebuffLookupTask } from './useDebuffLookupTask';
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
 // Hook for critical damage calculation
-export function useCriticalDamageTask(): {
+interface UseCriticalDamageTaskOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): {
   criticalDamageData: SharedWorkerResultType<'calculateCriticalDamageData'> | null;
   isCriticalDamageLoading: boolean;
   criticalDamageError: string | null;
   criticalDamageProgress: number | null;
-  selectedFight: FightFragment | null;
+  selectedFight: ReturnType<typeof useWorkerTaskDependencies>['selectedFight'];
 } {
   const { dispatch, selectedFight } = useWorkerTaskDependencies();
   const { combatantInfoRecord, isCombatantInfoEventsLoading } = useCombatantInfoRecord();

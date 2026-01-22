@@ -1,4 +1,7 @@
 import { BuffEvent, DebuffEvent } from '../../types/combatlogEvents';
+import { resolveCacheKey } from '../utils/keyedCacheState';
+import type { HostileBuffEventsEntry } from '../events_data/hostileBuffEventsSlice';
+import type { DebuffEventsEntry } from '../events_data/debuffEventsSlice';
 import { RootState } from '../storeWithHistory';
 
 import {
@@ -9,115 +12,54 @@ import {
 } from './eventsSelectors';
 
 // Mock state structure
-const createMockState = (overrides: Partial<RootState> = {}): RootState =>
-  ({
+const createMockState = (overrides: Partial<RootState> = {}): RootState => {
+  const reportKey = resolveCacheKey({ reportCode: 'test-report' }).key;
+  const fight = {
+    id: 1,
+    startTime: 1000,
+    endTime: 2000,
+    name: 'Test Fight',
+    friendlyPlayers: [1, 2],
+    enemyNPCs: [3, 4],
+    enemyPlayers: [],
+    maps: [{ id: 1 }],
+  };
+
+  return {
     events: {
-      friendlyBuffs: {
-        events: [],
-        loading: false,
-        error: null,
-        cacheMetadata: {
-          lastFetchedReportId: null,
-          lastFetchedFightId: null,
-          lastFetchedTimestamp: null,
-        },
-      },
-      hostileBuffs: {
-        events: [],
-        loading: false,
-        error: null,
-        cacheMetadata: {
-          lastFetchedReportId: null,
-          lastFetchedFightId: null,
-          lastFetchedTimestamp: null,
-        },
-      },
-      debuffs: {
-        events: [],
-        loading: false,
-        error: null,
-        cacheMetadata: {
-          lastFetchedReportId: null,
-          lastFetchedFightId: null,
-          lastFetchedTimestamp: null,
-        },
-      },
-      damage: {
-        events: [],
-        loading: false,
-        error: null,
-        cacheMetadata: {
-          lastFetchedReportId: null,
-          lastFetchedFightId: null,
-          lastFetchedTimestamp: null,
-        },
-      },
-      healing: {
-        events: [],
-        loading: false,
-        error: null,
-        cacheMetadata: {
-          lastFetchedReportId: null,
-          lastFetchedFightId: null,
-          lastFetchedTimestamp: null,
-        },
-      },
-      deaths: {
-        events: [],
-        loading: false,
-        error: null,
-        cacheMetadata: {
-          lastFetchedReportId: null,
-          lastFetchedFightId: null,
-          lastFetchedTimestamp: null,
-        },
-      },
-      combatantInfo: {
-        events: [],
-        loading: false,
-        error: null,
-        cacheMetadata: {
-          lastFetchedReportId: null,
-          lastFetchedFightId: null,
-          lastFetchedTimestamp: null,
-        },
-      },
-      casts: {
-        events: [],
-        loading: false,
-        error: null,
-        cacheMetadata: {
-          lastFetchedReportId: null,
-          lastFetchedFightId: null,
-          lastFetchedTimestamp: null,
-        },
-      },
+      friendlyBuffs: { entries: {}, accessOrder: [] },
+      hostileBuffs: { entries: {}, accessOrder: [] },
+      debuffs: { entries: {}, accessOrder: [] },
+      damage: { entries: {}, accessOrder: [] },
+      healing: { entries: {}, accessOrder: [] },
+      deaths: { entries: {}, accessOrder: [] },
+      combatantInfo: { entries: {}, accessOrder: [] },
+      casts: { entries: {}, accessOrder: [] },
       resources: {
-        events: [],
-        loading: false,
-        error: null,
-        cacheMetadata: {
-          lastFetchedReportId: null,
-          lastFetchedFightId: null,
-          lastFetchedTimestamp: null,
-        },
+        entries: {},
+        accessOrder: [],
       },
     },
     report: {
+      entries: {
+        [reportKey]: {
+          data: null,
+          status: 'succeeded',
+          error: null,
+          fightsById: {
+            1: fight,
+          },
+          fightIds: [1],
+          cacheMetadata: {
+            lastFetchedTimestamp: null,
+          },
+          currentRequest: null,
+        },
+      },
+      accessOrder: [reportKey],
       reportId: 'test-report',
       data: {
-        fights: [
-          {
-            id: '1',
-            startTime: 1000,
-            endTime: 2000,
-            name: 'Test Fight',
-            friendlyPlayers: [1, 2],
-            enemyNPCs: [3, 4],
-            enemyPlayers: [],
-            maps: [{ id: 1 }],
-          },
-        ],
+        fights: [fight],
         masterData: {
           actors: [],
           abilities: [],
@@ -126,11 +68,25 @@ const createMockState = (overrides: Partial<RootState> = {}): RootState =>
       },
       loading: false,
       error: null,
+      cacheMetadata: {
+        lastFetchedReportId: null,
+        lastFetchedTimestamp: null,
+      },
+      activeContext: {
+        reportId: 'test-report',
+        fightId: 1,
+      },
+      fightIndexByReport: {
+        'test-report': [1],
+      },
     },
     masterData: {
-      actorsById: {},
-      abilitiesById: {},
-      gameZonesById: {},
+      entries: {},
+      accessOrder: [],
+    },
+    playerData: {
+      entries: {},
+      accessOrder: [],
     },
     router: {
       location: {
@@ -143,7 +99,8 @@ const createMockState = (overrides: Partial<RootState> = {}): RootState =>
       action: null,
     },
     ...overrides,
-  }) as RootState;
+  } as RootState;
+};
 
 // Helper to create a mock buff event
 const createMockBuffEvent = (
@@ -178,6 +135,7 @@ const createMockDebuffEvent = (
   targetIsFriendly: true,
   abilityGameID,
   fight: 1,
+  extraAbilityGameID: 0,
 });
 
 describe('Buff Lookup Selectors', () => {
@@ -185,15 +143,21 @@ describe('Buff Lookup Selectors', () => {
 
   describe('selectHostileBuffLookup', () => {
     it('should return empty buffLookup when loading', () => {
-      const state = createMockState({
-        events: {
-          ...createMockState().events,
-          hostileBuffs: {
-            ...createMockState().events.hostileBuffs,
-            loading: true,
-          },
+      const state = createMockState();
+      const { key } = resolveCacheKey({ reportCode: 'test-report', fightId: 1 });
+      const loadingEntry: HostileBuffEventsEntry = {
+        events: [],
+        status: 'loading',
+        error: null,
+        cacheMetadata: {
+          lastFetchedTimestamp: null,
+          intervalCount: 0,
+          failedIntervals: 0,
         },
-      });
+        currentRequest: null,
+      };
+      state.events.hostileBuffs.entries[key] = loadingEntry;
+      state.events.hostileBuffs.accessOrder.push(key);
 
       const result = selectHostileBuffLookup(state);
 
@@ -206,15 +170,21 @@ describe('Buff Lookup Selectors', () => {
         createMockBuffEvent(1500, 456, 20, 'removebuff'),
       ];
 
-      const state = createMockState({
-        events: {
-          ...createMockState().events,
-          hostileBuffs: {
-            ...createMockState().events.hostileBuffs,
-            events: buffEvents,
-          },
+      const state = createMockState();
+      const { key } = resolveCacheKey({ reportCode: 'test-report', fightId: 1 });
+      const succeededEntry: HostileBuffEventsEntry = {
+        events: buffEvents,
+        status: 'succeeded',
+        error: null,
+        cacheMetadata: {
+          lastFetchedTimestamp: Date.now(),
+          intervalCount: 1,
+          failedIntervals: 0,
         },
-      });
+        currentRequest: null,
+      };
+      state.events.hostileBuffs.entries[key] = succeededEntry;
+      state.events.hostileBuffs.accessOrder.push(key);
 
       const result = selectHostileBuffLookup(state);
 
@@ -225,15 +195,20 @@ describe('Buff Lookup Selectors', () => {
 
   describe('selectDebuffLookup', () => {
     it('should return empty buffLookup when loading', () => {
-      const state = createMockState({
-        events: {
-          ...createMockState().events,
-          debuffs: {
-            ...createMockState().events.debuffs,
-            loading: true,
-          },
+      const state = createMockState();
+      const { key } = resolveCacheKey({ reportCode: 'test-report', fightId: 1 });
+      const loadingEntry: DebuffEventsEntry = {
+        events: [],
+        status: 'loading',
+        error: null,
+        cacheMetadata: {
+          lastFetchedTimestamp: null,
+          restrictToFightWindow: true,
         },
-      });
+        currentRequest: null,
+      };
+      state.events.debuffs.entries[key] = loadingEntry;
+      state.events.debuffs.accessOrder.push(key);
 
       const result = selectDebuffLookup(state);
 
@@ -246,15 +221,20 @@ describe('Buff Lookup Selectors', () => {
         createMockDebuffEvent(1500, 789, 30, 'removedebuff'),
       ];
 
-      const state = createMockState({
-        events: {
-          ...createMockState().events,
-          debuffs: {
-            ...createMockState().events.debuffs,
-            events: debuffEvents,
-          },
+      const state = createMockState();
+      const { key } = resolveCacheKey({ reportCode: 'test-report', fightId: 1 });
+      const succeededEntry: DebuffEventsEntry = {
+        events: debuffEvents,
+        status: 'succeeded',
+        error: null,
+        cacheMetadata: {
+          lastFetchedTimestamp: Date.now(),
+          restrictToFightWindow: true,
         },
-      });
+        currentRequest: null,
+      };
+      state.events.debuffs.entries[key] = succeededEntry;
+      state.events.debuffs.accessOrder.push(key);
 
       const result = selectDebuffLookup(state);
 
@@ -316,7 +296,7 @@ describe('Buff Lookup Selectors', () => {
 
       const currentFight = selectCurrentFight(state);
       expect(currentFight).toEqual({
-        id: '1',
+        id: 1,
         startTime: 1000,
         endTime: 2000,
         name: 'Test Fight',

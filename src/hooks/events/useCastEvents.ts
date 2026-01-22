@@ -1,49 +1,67 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
+import {
+  selectCastEventsEntryForContext,
+  selectCastEventsForContext,
+} from '@/store/events_data/castEventsSelectors';
+
 import { useEsoLogsClientContext } from '../../EsoLogsClientContext';
 import { FightFragment } from '../../graphql/gql/graphql';
-import { useSelectedReportAndFight } from '../../ReportFightContext';
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import { fetchCastEvents } from '../../store/events_data/castEventsSlice';
-import { selectCastEvents, selectCastEventsLoading } from '../../store/selectors/eventsSelectors';
+import type { RootState } from '../../store/storeWithHistory';
 import { useAppDispatch } from '../../store/useAppDispatch';
-import { useSelectedFight } from '../useSelectedFight';
+import type { UnifiedCastEvent } from '../../types/combatlogEvents';
+import { useFightForContext } from '../useFightForContext';
+import { useResolvedReportFightContext } from '../useResolvedReportFightContext';
 
 interface UseCastEventsOptions {
   restrictToFightWindow?: boolean;
+  context?: ReportFightContextInput;
 }
 
 export function useCastEvents(options?: UseCastEventsOptions): {
-  castEvents: ReturnType<typeof selectCastEvents>;
-  isCastEventsLoading: ReturnType<typeof selectCastEventsLoading>;
+  castEvents: UnifiedCastEvent[];
+  isCastEventsLoading: boolean;
   selectedFight: FightFragment | null;
 } {
   const dispatch = useAppDispatch();
-  const { reportId } = useSelectedReportAndFight();
 
   const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
+  const context = useResolvedReportFightContext(options?.context);
+  const selectedFight = useFightForContext(context);
 
-  // Get the specific fight from the report data
-  const selectedFight = useSelectedFight();
+  const castEvents = useSelector((state: RootState) => selectCastEventsForContext(state, context));
+  const castEntry = useSelector((state: RootState) =>
+    selectCastEventsEntryForContext(state, context),
+  );
+  const isCastEventsLoading = castEntry?.status === 'loading';
 
   const restrictToFightWindow = options?.restrictToFightWindow ?? true;
 
   React.useEffect(() => {
     // Only fetch if client is ready, user is logged in, and we have required data
-    if (reportId && selectedFight && isReady && isLoggedIn && client) {
+    if (context.reportCode && selectedFight && isReady && isLoggedIn && client) {
       dispatch(
         fetchCastEvents({
-          reportCode: reportId,
+          reportCode: context.reportCode,
           fight: selectedFight,
           client,
           restrictToFightWindow,
         }),
       );
     }
-  }, [dispatch, reportId, selectedFight, client, isReady, isLoggedIn, restrictToFightWindow]);
-
-  const castEvents = useSelector(selectCastEvents);
-  const isCastEventsLoading = useSelector(selectCastEventsLoading);
+  }, [
+    dispatch,
+    context.reportCode,
+    context.fightId,
+    selectedFight,
+    client,
+    isReady,
+    isLoggedIn,
+    restrictToFightWindow,
+  ]);
 
   return React.useMemo(
     () => ({ castEvents, isCastEventsLoading, selectedFight }),
