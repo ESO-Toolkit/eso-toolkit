@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Copilot Agent Skill includes git workflow automation tools to streamline the contribution process. These tools enable AI agents to create branches, commit changes, and push to remote without manual intervention.
+The Copilot Agent Skill includes git workflow automation tools to streamline the contribution process. These tools enable AI agents to create branches, commit changes, push to remote, and handle complex branch tree rebasing without manual intervention.
 
 ## Available Tools
 
@@ -134,6 +134,77 @@ Pushes current branch to remote origin with upstream tracking and provides PR cr
 - Extracts PR creation URL from git output
 - Fails if branch is already up-to-date
 - Detects current branch automatically
+
+---
+
+### 4. `git_rebase_tree`
+
+Rebases child branches in a tree structure after a parent branch is squashed into main. Automatically handles commit skipping to avoid conflicts.
+
+**Use Cases**:
+- After squash-merging a parent branch into main
+- Managing stacked branches with twig
+- Avoiding duplicate commit conflicts during rebase
+- Batch rebasing multiple child branches
+
+**Parameters**:
+```json
+{
+  "parentBranch": "ESO-449/structure-redux-state",
+  "targetBranch": "master",
+  "childBranches": [],
+  "dryRun": false,
+  "autoStash": true
+}
+```
+
+**Parameters**:
+- `parentBranch`: The branch that was squashed (required)
+- `targetBranch`: Branch to rebase onto (default: "master")
+- `childBranches`: Specific children to rebase (default: auto-detect)
+- `dryRun`: Preview changes without executing (default: false)
+- `autoStash`: Automatically stash/pop changes (default: true)
+
+**Returns**:
+```json
+{
+  "success": true,
+  "dryRun": false,
+  "parentBranch": "ESO-449/structure-redux-state",
+  "targetBranch": "master",
+  "commitsSkipped": 13,
+  "skipCommitsList": ["abc123...", "def456...", "..."],
+  "summary": {
+    "total": 2,
+    "successful": 2,
+    "failed": 0
+  },
+  "results": [
+    {
+      "branch": "ESO-461/establish-foundations",
+      "success": true,
+      "message": "Successfully rebased ESO-461/establish-foundations onto master",
+      "commitsSkipped": 13
+    },
+    {
+      "branch": "ESO-465/worker-results-keyed",
+      "success": true,
+      "message": "Successfully rebased ESO-465/worker-results-keyed onto master",
+      "commitsSkipped": 13
+    }
+  ],
+  "message": "Successfully rebased all 2 child branches onto master."
+}
+```
+
+**Behavior**:
+- Detects child branches using `twig tree`
+- Identifies commits from parent that were squashed
+- Reparents children to target branch
+- Rebases while skipping squashed commits
+- Handles conflicts gracefully
+
+**See Also**: [TREE_REBASE_GUIDE.md](./TREE_REBASE_GUIDE.md) for detailed usage
 
 ---
 
@@ -412,7 +483,6 @@ git branch -D ESO-XXX-branch-name
 
 Potential additions:
 - `git_create_pr`: Auto-create GitHub PR with template
-- `git_rebase_main`: Interactive rebase against main
 - `git_squash_commits`: Squash multiple commits before push
 - `git_tag_release`: Create and push version tags
 - `git_cherry_pick`: Cherry-pick specific commits
@@ -421,6 +491,7 @@ Potential additions:
 
 ## Related Documentation
 
+- [Tree Rebase Guide](./TREE_REBASE_GUIDE.md) - Detailed guide for git_rebase_tree
 - [AI Agent Guidelines](../documentation/ai-agents/AI_AGENT_GUIDELINES.md)
 - [Jira Workflow](../documentation/ai-agents/jira/AI_JIRA_ACLI_INSTRUCTIONS.md)
 - [Testing Tools](./TEST_EXECUTION_TOOLS.md)

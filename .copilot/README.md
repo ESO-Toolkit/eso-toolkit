@@ -250,6 +250,23 @@ Push current branch to remote origin with upstream tracking. Returns push status
 @workspace Push the current branch
 ```
 
+#### `git_rebase_tree`
+Rebase child branches in a tree structure after parent is squashed into main. Automatically handles commit skipping to avoid conflicts.
+
+**Parameters:**
+- `parentBranch` (required): Branch that was squashed
+- `targetBranch` (optional): Branch to rebase onto (default: "master")
+- `childBranches` (optional): Specific children to rebase (default: auto-detect)
+- `dryRun` (optional): Preview changes without executing (default: false)
+- `autoStash` (optional): Automatically stash/pop changes (default: true)
+
+**Example:**
+```
+@workspace Rebase children of ESO-449/structure-redux-state after it was merged
+```
+
+**See:** [TREE_REBASE_GUIDE.md](./TREE_REBASE_GUIDE.md) for detailed usage
+
 **Complete Workflow Example:**
 ```
 @workspace Implement ESO-569: Remove duplicate roles dropdown

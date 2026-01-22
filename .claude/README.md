@@ -469,6 +469,34 @@ Push the current branch
 - PR creation URL
 - Push output
 
+---
+
+### 20. `git_rebase_tree`
+
+Rebase child branches in a tree structure after parent is squashed into main. Automatically handles commit skipping to avoid conflicts.
+
+**Usage:**
+```
+Rebase children of ESO-449/structure-redux-state after it was merged into master
+```
+
+**Parameters:**
+- `parentBranch` (required): Branch that was squashed
+- `targetBranch` (optional): Branch to rebase onto (default: "master")
+- `childBranches` (optional): Specific children to rebase (default: auto-detect)
+- `dryRun` (optional): Preview changes without executing (default: false)
+- `autoStash` (optional): Automatically stash/pop changes (default: true)
+
+**Returns:**
+- Rebase summary
+- Results for each child branch
+- Number of commits skipped
+- Success/failure status
+
+**See:** [TREE_REBASE_GUIDE.md](./TREE_REBASE_GUIDE.md) for detailed usage
+
+---
+
 **Complete Workflow Example:**
 ```
 Claude: Implement ESO-569 - remove duplicate roles dropdown
