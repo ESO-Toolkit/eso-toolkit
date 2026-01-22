@@ -5,12 +5,7 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import React from 'react';
 
-import {
-  CookieConsent,
-  hasAcceptedCookies,
-  getConsentState,
-  clearConsent,
-} from '../CookieConsent';
+import { CookieConsent, hasAcceptedCookies, getConsentState, clearConsent } from '../CookieConsent';
 
 const COOKIE_CONSENT_KEY = 'eso-log-aggregator-cookie-consent';
 const COOKIE_CONSENT_VERSION = '1';
@@ -35,11 +30,14 @@ describe('CookieConsent', () => {
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent));
 
     const { container } = render(<CookieConsent />);
-    
+
     // Component should not render the banner
-    await waitFor(() => {
-      expect(screen.queryByText('We Value Your Privacy')).not.toBeInTheDocument();
-    }, { timeout: 1000 });
+    await waitFor(
+      () => {
+        expect(screen.queryByText('We Value Your Privacy')).not.toBeInTheDocument();
+      },
+      { timeout: 1000 },
+    );
   });
 
   it('should show banner when consent version is outdated', () => {
@@ -59,7 +57,7 @@ describe('CookieConsent', () => {
     expect(screen.getByText('We Value Your Privacy')).toBeInTheDocument();
 
     const acceptButton = screen.getByRole('button', { name: /^accept$/i });
-    
+
     await act(async () => {
       fireEvent.click(acceptButton);
     });
@@ -85,7 +83,7 @@ describe('CookieConsent', () => {
     expect(screen.getByText('We Value Your Privacy')).toBeInTheDocument();
 
     const declineButton = screen.getByRole('button', { name: /^decline$/i });
-    
+
     await act(async () => {
       fireEvent.click(declineButton);
     });
@@ -110,7 +108,7 @@ describe('CookieConsent', () => {
     render(<CookieConsent />);
 
     const learnMoreLink = screen.getByRole('button', { name: /learn more/i });
-    
+
     await act(async () => {
       fireEvent.click(learnMoreLink);
     });
@@ -125,7 +123,7 @@ describe('CookieConsent', () => {
 
     // Open dialog
     const learnMoreLink = screen.getByRole('button', { name: /learn more/i });
-    
+
     await act(async () => {
       fireEvent.click(learnMoreLink);
     });
@@ -136,7 +134,7 @@ describe('CookieConsent', () => {
 
     // Close dialog
     const closeButtons = screen.getAllByRole('button', { name: /close/i });
-    
+
     await act(async () => {
       fireEvent.click(closeButtons[0]);
     });
@@ -151,7 +149,7 @@ describe('CookieConsent', () => {
 
     // Open dialog
     const learnMoreLink = screen.getByRole('button', { name: /learn more/i });
-    
+
     await act(async () => {
       fireEvent.click(learnMoreLink);
     });
@@ -163,7 +161,7 @@ describe('CookieConsent', () => {
     // Accept from dialog (last Accept button)
     const acceptButtons = screen.getAllByRole('button', { name: /accept/i });
     const dialogAcceptButton = acceptButtons[acceptButtons.length - 1];
-    
+
     await act(async () => {
       fireEvent.click(dialogAcceptButton);
     });
@@ -191,11 +189,11 @@ describe('hasAcceptedCookies', () => {
       timestamp: new Date().toISOString(),
     };
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent));
-    
+
     // Verify it was stored correctly
     const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
     expect(stored).toBeTruthy();
-    
+
     const result = hasAcceptedCookies();
     expect(result).toBe(true);
   });
@@ -237,11 +235,11 @@ describe('getConsentState', () => {
       timestamp: '2024-01-01T00:00:00.000Z',
     };
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent));
-    
+
     // Verify storage worked
     const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
     expect(stored).toBeTruthy();
-    
+
     const result = getConsentState();
     expect(result).toEqual(consent);
   });
