@@ -20,8 +20,23 @@ type EventPayload = {
 } & Record<string, unknown>;
 
 /**
+ * Check if user has consented to cookies/analytics
+ * This is a lazy import to avoid circular dependencies
+ */
+const hasUserConsented = (): boolean => {
+  try {
+    const consentStr = localStorage.getItem('eso-log-aggregator-cookie-consent');
+    if (!consentStr) return false;
+    const consent = JSON.parse(consentStr);
+    return consent.accepted === true;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Initialize Google Analytics with the measurement ID from environment variables
- * Only initializes if VITE_GA_MEASUREMENT_ID is set and not in test mode
+ * Only initializes if VITE_GA_MEASUREMENT_ID is set, not in test mode, and user has consented
  */
 export const initializeAnalytics = (): void => {
   // Skip initialization if in Playwright test mode
@@ -29,6 +44,12 @@ export const initializeAnalytics = (): void => {
     typeof window !== 'undefined' &&
     (window as Window & { __PLAYWRIGHT_TEST_MODE__?: boolean }).__PLAYWRIGHT_TEST_MODE__
   ) {
+    return;
+  }
+
+  // Skip initialization if user has not consented to cookies
+  if (!hasUserConsented()) {
+    logger.info('Analytics not initialized - user has not consented to cookies');
     return;
   }
 
@@ -126,6 +147,11 @@ export const trackPageView = (path: string, title?: string): void => {
     return;
   }
 
+  // Skip tracking if user has not consented
+  if (!hasUserConsented()) {
+    return;
+  }
+
   const measurementId = getEnvVar('VITE_GA_MEASUREMENT_ID');
 
   if (measurementId && typeof measurementId === 'string') {
@@ -206,6 +232,11 @@ export const trackEvent = (
     return;
   }
 
+  // Skip tracking if user has not consented
+  if (!hasUserConsented()) {
+    return;
+  }
+
   const measurementId = getEnvVar('VITE_GA_MEASUREMENT_ID');
 
   if (measurementId && typeof measurementId === 'string') {
@@ -252,6 +283,11 @@ export const trackConversion = (name: string, params?: Record<string, unknown>):
     return;
   }
 
+  // Skip tracking if user has not consented
+  if (!hasUserConsented()) {
+    return;
+  }
+
   const measurementId = getEnvVar('VITE_GA_MEASUREMENT_ID');
 
   if (measurementId && typeof measurementId === 'string') {
@@ -272,6 +308,11 @@ export const setAnalyticsUserId = (userId: string | null): void => {
     typeof window !== 'undefined' &&
     (window as Window & { __PLAYWRIGHT_TEST_MODE__?: boolean }).__PLAYWRIGHT_TEST_MODE__
   ) {
+    return;
+  }
+
+  // Skip tracking if user has not consented
+  if (!hasUserConsented()) {
     return;
   }
 
@@ -301,6 +342,11 @@ export const setUserProperties = (
     typeof window !== 'undefined' &&
     (window as Window & { __PLAYWRIGHT_TEST_MODE__?: boolean }).__PLAYWRIGHT_TEST_MODE__
   ) {
+    return;
+  }
+
+  // Skip tracking if user has not consented
+  if (!hasUserConsented()) {
     return;
   }
 

@@ -48,22 +48,34 @@ if (typeof global.ResizeObserver === 'undefined') {
   };
 }
 
-// Mock localStorage
-// Don't use jest.fn() here because it can cause issues if the individual tests spy
-const localStorageMock = {
-  getItem: () => null,
-  setItem: () => {
-    /* Do Nothing */
-  },
-  removeItem: () => {
-    /* Do Nothing */
-  },
-  clear: () => {
-    /* Do Nothing */
-  },
+// Mock localStorage with a functional implementation
+const createLocalStorageMock = (): Storage => {
+  let store: Record<string, string> = {};
+
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
+      store[key] = value.toString();
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: (index: number) => {
+      const keys = Object.keys(store);
+      return keys[index] || null;
+    },
+  };
 };
+
 Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
+  value: createLocalStorageMock(),
+  writable: true,
 });
 
 // Mock fetch to prevent actual network requests
