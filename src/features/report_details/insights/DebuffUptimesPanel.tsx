@@ -20,7 +20,9 @@ import {
   computeBuffUptimes,
   computeBuffUptimesWithGroupAverage,
 } from '../../../utils/buffUptimeCalculator';
+import { calculateElementalWeaknessStacks } from '../../../workers/calculations/CalculateElementalWeaknessStacks';
 import { calculateStaggerStacks } from '../../../workers/calculations/CalculateStaggerStacks';
+import { calculateTouchOfZenStacks } from '../../../workers/calculations/CalculateTouchOfZenStacks';
 
 import { DebuffUptimesView } from './DebuffUptimesView';
 import { EffectUptimeTimelineModal } from './EffectUptimeTimelineModal';
@@ -280,6 +282,307 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
     reportMasterData?.actorsById,
   ]);
 
+  // Calculate per-player Touch of Z'en stacks when a player is selected
+  const touchOfZenStackUptimesWithGroupAvg = React.useMemo(() => {
+    if (!touchOfZenStacksData?.length) return [];
+
+    // Get all friendly player IDs from reportMasterData
+    const allFriendlyPlayers = reportMasterData?.actorsById
+      ? Object.values(reportMasterData.actorsById)
+          .filter((actor) => actor?.type === 'Player')
+          .map((actor) => actor.id)
+          .filter((id): id is number => typeof id === 'number')
+      : [];
+
+    // If a player is selected and we have damage/debuff data, calculate per-player Touch of Z'en
+    if (selectedPlayerId && debuffsLookup && damageEvents && fightStartTime && fightEndTime) {
+      // Calculate Touch of Z'en stacks for each player
+      const playerTouchOfZenResults = allFriendlyPlayers.map((playerId: number) => {
+        const playerDebuffsLookup = {
+          ...debuffsLookup,
+          buffIntervals: Object.keys(debuffsLookup.buffIntervals).reduce(
+            (acc, abilityId) => {
+              const intervals = debuffsLookup.buffIntervals[abilityId];
+              // Filter intervals to only include those from this player
+              const playerIntervals = intervals.filter(
+                (interval: { sourceID: number }) => interval.sourceID === playerId,
+              );
+              if (playerIntervals.length > 0) {
+                acc[abilityId] = playerIntervals;
+              }
+              return acc;
+            },
+            {} as typeof debuffsLookup.buffIntervals,
+          ),
+        };
+
+        const playerDamageEvents = damageEvents.filter((event) => event.sourceID === playerId);
+
+        const playerTouchOfZen = calculateTouchOfZenStacks({
+          debuffsLookup: playerDebuffsLookup,
+          damageEvents: playerDamageEvents,
+          fightStartTime,
+          fightEndTime,
+        });
+
+        return {
+          playerId,
+          stackResults: playerTouchOfZen.stackResults,
+        };
+      });
+
+      // Calculate group averages by stack level (1-5)
+      const groupAveragesByStack = new Map<number, number>();
+
+      [1, 2, 3, 4, 5].forEach((stackLevel) => {
+        const playerUptimesForStack = playerTouchOfZenResults
+          .map((result) => {
+            const stackData = result.stackResults.find((s) => s.stackLevel === stackLevel);
+            return stackData?.uptimePercentage || 0;
+          })
+          .filter((uptime) => uptime > 0);
+
+        if (playerUptimesForStack.length > 0) {
+          const average =
+            playerUptimesForStack.reduce((sum, val) => sum + val, 0) / playerUptimesForStack.length;
+          groupAveragesByStack.set(stackLevel, average);
+        }
+      });
+
+      // Get the selected player's Touch of Z'en data
+      const selectedPlayerResult = playerTouchOfZenResults.find(
+        (r) => r.playerId === selectedPlayerId,
+      );
+
+      if (selectedPlayerResult?.stackResults.length) {
+        const defaultStack = selectedPlayerResult.stackResults[0];
+        const touchOfZenAbility = reportMasterData?.abilitiesById?.[defaultStack.abilityGameID];
+
+        const allStacksData = selectedPlayerResult.stackResults.map((stack) => ({
+          stackLevel: stack.stackLevel,
+          totalDuration: stack.totalDuration,
+          uptime: stack.uptime,
+          uptimePercentage: stack.uptimePercentage,
+          applications: stack.applications,
+          groupAverageUptimePercentage: groupAveragesByStack.get(stack.stackLevel),
+        }));
+
+        return [
+          {
+            abilityGameID: defaultStack.abilityGameID,
+            abilityName: "Touch of Z'en",
+            icon: touchOfZenAbility?.icon ? String(touchOfZenAbility.icon) : defaultStack.icon,
+            totalDuration: defaultStack.totalDuration,
+            uptime: defaultStack.uptime,
+            uptimePercentage: defaultStack.uptimePercentage,
+            applications: defaultStack.applications,
+            isDebuff: defaultStack.isDebuff,
+            hostilityType: defaultStack.hostilityType,
+            uniqueKey: `touch_of_zen_grouped`,
+            dotAbilityIds: allDotAbilityIds || [],
+            stackLevel: defaultStack.stackLevel,
+            maxStacks: 5,
+            allStacksData,
+            groupAverageUptimePercentage: groupAveragesByStack.get(defaultStack.stackLevel),
+          },
+        ];
+      }
+
+      return [];
+    }
+
+    // No player selected - use aggregate Touch of Z'en data (no group averages)
+    if (!touchOfZenStacksData?.length) return [];
+
+    const defaultStack = touchOfZenStacksData[0];
+    const touchOfZenAbility = reportMasterData?.abilitiesById?.[defaultStack.abilityGameID];
+
+    const allStacksData = touchOfZenStacksData.map((stack) => ({
+      stackLevel: stack.stackLevel,
+      totalDuration: stack.totalDuration,
+      uptime: stack.uptime,
+      uptimePercentage: stack.uptimePercentage,
+      applications: stack.applications,
+    }));
+
+    return [
+      {
+        abilityGameID: defaultStack.abilityGameID,
+        abilityName: "Touch of Z'en",
+        icon: touchOfZenAbility?.icon ? String(touchOfZenAbility.icon) : defaultStack.icon,
+        totalDuration: defaultStack.totalDuration,
+        uptime: defaultStack.uptime,
+        uptimePercentage: defaultStack.uptimePercentage,
+        applications: defaultStack.applications,
+        isDebuff: defaultStack.isDebuff,
+        hostilityType: defaultStack.hostilityType,
+        uniqueKey: `touch_of_zen_grouped`,
+        dotAbilityIds: allDotAbilityIds || [],
+        stackLevel: defaultStack.stackLevel,
+        maxStacks: 5,
+        allStacksData,
+      },
+    ];
+  }, [
+    touchOfZenStacksData,
+    allDotAbilityIds,
+    selectedPlayerId,
+    debuffsLookup,
+    damageEvents,
+    fightStartTime,
+    fightEndTime,
+    reportMasterData?.abilitiesById,
+    reportMasterData?.actorsById,
+  ]);
+
+  // Calculate per-player Elemental Weakness stacks when a player is selected
+  const elementalWeaknessStackUptimesWithGroupAvg = React.useMemo(() => {
+    if (!elementalWeaknessStacksData?.length) return [];
+
+    // Get all friendly player IDs from reportMasterData
+    const allFriendlyPlayers = reportMasterData?.actorsById
+      ? Object.values(reportMasterData.actorsById)
+          .filter((actor) => actor?.type === 'Player')
+          .map((actor) => actor.id)
+          .filter((id): id is number => typeof id === 'number')
+      : [];
+
+    // If a player is selected and we have debuff data, calculate per-player Elemental Weakness
+    if (selectedPlayerId && debuffsLookup && fightStartTime && fightEndTime) {
+      // Calculate Elemental Weakness stacks for each player
+      const playerElementalWeaknessResults = allFriendlyPlayers.map((playerId: number) => {
+        const playerDebuffsLookup = {
+          ...debuffsLookup,
+          buffIntervals: Object.keys(debuffsLookup.buffIntervals).reduce(
+            (acc, abilityId) => {
+              const intervals = debuffsLookup.buffIntervals[abilityId];
+              // Filter intervals to only include those from this player
+              const playerIntervals = intervals.filter(
+                (interval: { sourceID: number }) => interval.sourceID === playerId,
+              );
+              if (playerIntervals.length > 0) {
+                acc[abilityId] = playerIntervals;
+              }
+              return acc;
+            },
+            {} as typeof debuffsLookup.buffIntervals,
+          ),
+        };
+
+        const playerElementalWeakness = calculateElementalWeaknessStacks({
+          debuffsLookup: playerDebuffsLookup,
+          fightStartTime,
+          fightEndTime,
+        });
+
+        return {
+          playerId,
+          stackResults: playerElementalWeakness.stackResults,
+        };
+      });
+
+      // Calculate group averages by stack level (1-3)
+      const groupAveragesByStack = new Map<number, number>();
+
+      [1, 2, 3].forEach((stackLevel) => {
+        const playerUptimesForStack = playerElementalWeaknessResults
+          .map((result) => {
+            const stackData = result.stackResults.find((s) => s.stackLevel === stackLevel);
+            return stackData?.uptimePercentage || 0;
+          })
+          .filter((uptime) => uptime > 0);
+
+        if (playerUptimesForStack.length > 0) {
+          const average =
+            playerUptimesForStack.reduce((sum, val) => sum + val, 0) / playerUptimesForStack.length;
+          groupAveragesByStack.set(stackLevel, average);
+        }
+      });
+
+      // Get the selected player's Elemental Weakness data
+      const selectedPlayerResult = playerElementalWeaknessResults.find(
+        (r) => r.playerId === selectedPlayerId,
+      );
+
+      if (selectedPlayerResult?.stackResults.length) {
+        const defaultStack = selectedPlayerResult.stackResults[0];
+        const flameWeaknessAbility = reportMasterData?.abilitiesById?.[defaultStack.abilityGameID];
+
+        const allStacksData = selectedPlayerResult.stackResults.map((stack) => ({
+          stackLevel: stack.stackLevel,
+          totalDuration: stack.totalDuration,
+          uptime: stack.uptime,
+          uptimePercentage: stack.uptimePercentage,
+          applications: stack.applications,
+          groupAverageUptimePercentage: groupAveragesByStack.get(stack.stackLevel),
+        }));
+
+        return [
+          {
+            abilityGameID: defaultStack.abilityGameID,
+            abilityName: 'Elemental Weakness',
+            icon: flameWeaknessAbility?.icon
+              ? String(flameWeaknessAbility.icon)
+              : defaultStack.icon,
+            totalDuration: defaultStack.totalDuration,
+            uptime: defaultStack.uptime,
+            uptimePercentage: defaultStack.uptimePercentage,
+            applications: defaultStack.applications,
+            isDebuff: defaultStack.isDebuff,
+            hostilityType: defaultStack.hostilityType,
+            uniqueKey: `elemental_weakness_grouped`,
+            stackLevel: defaultStack.stackLevel,
+            maxStacks: 3,
+            allStacksData,
+            groupAverageUptimePercentage: groupAveragesByStack.get(defaultStack.stackLevel),
+          },
+        ];
+      }
+
+      return [];
+    }
+
+    // No player selected - use aggregate Elemental Weakness data (no group averages)
+    if (!elementalWeaknessStacksData?.length) return [];
+
+    const defaultStack = elementalWeaknessStacksData[0];
+    const flameWeaknessAbility = reportMasterData?.abilitiesById?.[defaultStack.abilityGameID];
+
+    const allStacksData = elementalWeaknessStacksData.map((stack) => ({
+      stackLevel: stack.stackLevel,
+      totalDuration: stack.totalDuration,
+      uptime: stack.uptime,
+      uptimePercentage: stack.uptimePercentage,
+      applications: stack.applications,
+    }));
+
+    return [
+      {
+        abilityGameID: defaultStack.abilityGameID,
+        abilityName: 'Elemental Weakness',
+        icon: flameWeaknessAbility?.icon ? String(flameWeaknessAbility.icon) : defaultStack.icon,
+        totalDuration: defaultStack.totalDuration,
+        uptime: defaultStack.uptime,
+        uptimePercentage: defaultStack.uptimePercentage,
+        applications: defaultStack.applications,
+        isDebuff: defaultStack.isDebuff,
+        hostilityType: defaultStack.hostilityType,
+        uniqueKey: `elemental_weakness_grouped`,
+        stackLevel: defaultStack.stackLevel,
+        maxStacks: 3,
+        allStacksData,
+      },
+    ];
+  }, [
+    elementalWeaknessStacksData,
+    selectedPlayerId,
+    debuffsLookup,
+    fightStartTime,
+    fightEndTime,
+    reportMasterData?.abilitiesById,
+    reportMasterData?.actorsById,
+  ]);
+
   // Calculate debuff uptimes for selected targets using the utility function
   const allDebuffUptimes = React.useMemo(() => {
     if (
@@ -425,90 +728,13 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
       uniqueKey: `debuff_${debuff.abilityGameID}`, // Add unique key for regular debuffs
     }));
 
-    // Optimize Touch of Z'en stacks processing - reduce complexity
-    const touchOfZenStackUptimes = touchOfZenStacksData?.length
-      ? (() => {
-          // Just use the first available stack as default, avoid expensive sorting
-          const defaultStack = touchOfZenStacksData[0];
-          if (!defaultStack) return [];
-
-          // Look up the Touch of Z'en ability for icon information (cached)
-          const touchOfZenAbility = reportMasterData?.abilitiesById?.[defaultStack.abilityGameID];
-
-          // Create simplified stack data without expensive loops
-          const allStacksData = touchOfZenStacksData.map((stack) => ({
-            stackLevel: stack.stackLevel,
-            totalDuration: stack.totalDuration,
-            uptime: stack.uptime,
-            uptimePercentage: stack.uptimePercentage,
-            applications: stack.applications,
-          }));
-
-          return [
-            {
-              abilityGameID: defaultStack.abilityGameID,
-              abilityName: "Touch of Z'en", // Clean name without stack info
-              icon: touchOfZenAbility?.icon ? String(touchOfZenAbility.icon) : defaultStack.icon,
-              totalDuration: defaultStack.totalDuration,
-              uptime: defaultStack.uptime,
-              uptimePercentage: defaultStack.uptimePercentage,
-              applications: defaultStack.applications,
-              isDebuff: defaultStack.isDebuff,
-              hostilityType: defaultStack.hostilityType,
-              uniqueKey: `touch_of_zen_grouped`, // Single unique key for the grouped entry
-              dotAbilityIds: allDotAbilityIds || [], // Include the DOT ability IDs for filtering
-              stackLevel: defaultStack.stackLevel,
-              maxStacks: 5, // Touch of Z'en has 5 stacks maximum
-              allStacksData, // Provide all stack data for interactive switching
-            },
-          ];
-        })()
-      : [];
+    // Use pre-calculated Touch of Z'en and Elemental Weakness with group averages
+    // These are calculated in separate useMemo hooks above to include per-player group averages
+    const touchOfZenStackUptimes = touchOfZenStackUptimesWithGroupAvg;
+    const elementalWeaknessStackUptimes = elementalWeaknessStackUptimesWithGroupAvg;
 
     // Stagger stacks are calculated as a top-level hook (see above)
     // and referenced here to avoid conditional hook calls
-
-    // Optimize Elemental Weakness stacks processing - reduce complexity
-    const elementalWeaknessStackUptimes = elementalWeaknessStacksData?.length
-      ? (() => {
-          // Just use the first available stack as default, avoid expensive sorting
-          const defaultStack = elementalWeaknessStacksData[0];
-          if (!defaultStack) return [];
-
-          // Look up the Flame Weakness ability for icon information (cached)
-          const flameWeaknessAbility =
-            reportMasterData?.abilitiesById?.[defaultStack.abilityGameID];
-
-          // Create simplified stack data without expensive loops
-          const allStacksData = elementalWeaknessStacksData.map((stack) => ({
-            stackLevel: stack.stackLevel,
-            totalDuration: stack.totalDuration,
-            uptime: stack.uptime,
-            uptimePercentage: stack.uptimePercentage,
-            applications: stack.applications,
-          }));
-
-          return [
-            {
-              abilityGameID: defaultStack.abilityGameID,
-              abilityName: 'Elemental Weakness', // Clean name without stack info
-              icon: flameWeaknessAbility?.icon
-                ? String(flameWeaknessAbility.icon)
-                : defaultStack.icon,
-              totalDuration: defaultStack.totalDuration,
-              uptime: defaultStack.uptime,
-              uptimePercentage: defaultStack.uptimePercentage,
-              applications: defaultStack.applications,
-              isDebuff: defaultStack.isDebuff,
-              hostilityType: defaultStack.hostilityType,
-              uniqueKey: `elemental_weakness_grouped`, // Single unique key for the grouped entry
-              stackLevel: defaultStack.stackLevel,
-              maxStacks: 3, // Elemental Weakness has 3 stacks maximum
-              allStacksData, // Provide all stack data for interactive switching
-            },
-          ];
-        })()
-      : [];
 
     // Combine regular debuffs with Touch of Z'en stacks, Stagger stacks, Elemental Weakness stacks and sort by uptime percentage (descending)
     // When a player is selected, filter stacked debuffs to only include ones the player contributed to
@@ -559,10 +785,9 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
     fightEndTime,
     realTargetIds,
     reportMasterData?.abilitiesById,
-    touchOfZenStacksData,
+    touchOfZenStackUptimesWithGroupAvg,
     staggerStackUptimes,
-    elementalWeaknessStacksData,
-    allDotAbilityIds,
+    elementalWeaknessStackUptimesWithGroupAvg,
     selectedFriendlyPlayerId,
     selectedPlayerId,
   ]);
