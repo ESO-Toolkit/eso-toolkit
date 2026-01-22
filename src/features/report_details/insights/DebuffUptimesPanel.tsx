@@ -300,22 +300,23 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
       const playerTouchOfZenResults = allFriendlyPlayers.map((playerId: number) => {
         const playerDebuffsLookup = {
           ...debuffsLookup,
-          buffIntervals: Object.keys(debuffsLookup.buffIntervals).reduce((acc, abilityId) => {
-            const intervals = debuffsLookup.buffIntervals[abilityId];
-            // Filter intervals to only include those from this player
-            const playerIntervals = intervals.filter(
-              (interval: { sourceID: number }) => interval.sourceID === playerId,
-            );
-            if (playerIntervals.length > 0) {
-              acc[abilityId] = playerIntervals;
-            }
-            return acc;
-          }, {} as typeof debuffsLookup.buffIntervals),
+          buffIntervals: Object.keys(debuffsLookup.buffIntervals).reduce(
+            (acc, abilityId) => {
+              const intervals = debuffsLookup.buffIntervals[abilityId];
+              // Filter intervals to only include those from this player
+              const playerIntervals = intervals.filter(
+                (interval: { sourceID: number }) => interval.sourceID === playerId,
+              );
+              if (playerIntervals.length > 0) {
+                acc[abilityId] = playerIntervals;
+              }
+              return acc;
+            },
+            {} as typeof debuffsLookup.buffIntervals,
+          ),
         };
 
-        const playerDamageEvents = damageEvents.filter(
-          (event) => event.sourceID === playerId,
-        );
+        const playerDamageEvents = damageEvents.filter((event) => event.sourceID === playerId);
 
         const playerTouchOfZen = calculateTouchOfZenStacks({
           debuffsLookup: playerDebuffsLookup,
@@ -343,8 +344,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
 
         if (playerUptimesForStack.length > 0) {
           const average =
-            playerUptimesForStack.reduce((sum, val) => sum + val, 0) /
-            playerUptimesForStack.length;
+            playerUptimesForStack.reduce((sum, val) => sum + val, 0) / playerUptimesForStack.length;
           groupAveragesByStack.set(stackLevel, average);
         }
       });
@@ -453,17 +453,20 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
       const playerElementalWeaknessResults = allFriendlyPlayers.map((playerId: number) => {
         const playerDebuffsLookup = {
           ...debuffsLookup,
-          buffIntervals: Object.keys(debuffsLookup.buffIntervals).reduce((acc, abilityId) => {
-            const intervals = debuffsLookup.buffIntervals[abilityId];
-            // Filter intervals to only include those from this player
-            const playerIntervals = intervals.filter(
-              (interval: { sourceID: number }) => interval.sourceID === playerId,
-            );
-            if (playerIntervals.length > 0) {
-              acc[abilityId] = playerIntervals;
-            }
-            return acc;
-          }, {} as typeof debuffsLookup.buffIntervals),
+          buffIntervals: Object.keys(debuffsLookup.buffIntervals).reduce(
+            (acc, abilityId) => {
+              const intervals = debuffsLookup.buffIntervals[abilityId];
+              // Filter intervals to only include those from this player
+              const playerIntervals = intervals.filter(
+                (interval: { sourceID: number }) => interval.sourceID === playerId,
+              );
+              if (playerIntervals.length > 0) {
+                acc[abilityId] = playerIntervals;
+              }
+              return acc;
+            },
+            {} as typeof debuffsLookup.buffIntervals,
+          ),
         };
 
         const playerElementalWeakness = calculateElementalWeaknessStacks({
@@ -491,8 +494,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
 
         if (playerUptimesForStack.length > 0) {
           const average =
-            playerUptimesForStack.reduce((sum, val) => sum + val, 0) /
-            playerUptimesForStack.length;
+            playerUptimesForStack.reduce((sum, val) => sum + val, 0) / playerUptimesForStack.length;
           groupAveragesByStack.set(stackLevel, average);
         }
       });

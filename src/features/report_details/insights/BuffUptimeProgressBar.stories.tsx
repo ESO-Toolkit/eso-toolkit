@@ -251,7 +251,7 @@ export const MultiStackStagger: Story = {
 // Multi-stack: Touch of Z'en with 5 stacks
 export const MultiStackTouchOfZen: Story = {
   args: {
-    buff: createMockMultiStackBuff('Touch of Z\'en', 5, [95, 88, 72, 55, 38]),
+    buff: createMockMultiStackBuff("Touch of Z'en", 5, [95, 88, 72, 55, 38]),
     reportId: 'abc123',
     fightId: '1',
     selectedTargetId: 12345,
@@ -301,7 +301,7 @@ export const MultiStackComparison: Story = {
   render: () => {
     const buffs: BuffUptime[] = [
       createMockMultiStackBuff('Stagger', 3, [85, 60, 35], [70, 55, 30]),
-      createMockMultiStackBuff('Touch of Z\'en', 5, [95, 88, 72, 55, 38]),
+      createMockMultiStackBuff("Touch of Z'en", 5, [95, 88, 72, 55, 38]),
       createMockMultiStackBuff('Elemental Weakness', 3, [78, 52, 28], [70, 50, 30]),
       createMockBuff('Major Courage', 84, 87), // Regular buff for comparison
     ];

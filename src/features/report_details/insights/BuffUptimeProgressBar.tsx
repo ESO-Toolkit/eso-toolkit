@@ -542,220 +542,220 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
               .slice()
               .sort((a, b) => b.uptimePercentage - a.uptimePercentage) // Sort highest first
               .map((stackData) => {
-              const stackPct = Math.max(0, Math.min(100, stackData.uptimePercentage));
-              const stackDelta =
-                stackData.groupAverageUptimePercentage !== undefined
-                  ? stackData.uptimePercentage - stackData.groupAverageUptimePercentage
-                  : null;
+                const stackPct = Math.max(0, Math.min(100, stackData.uptimePercentage));
+                const stackDelta =
+                  stackData.groupAverageUptimePercentage !== undefined
+                    ? stackData.uptimePercentage - stackData.groupAverageUptimePercentage
+                    : null;
 
-              return (
-                <Box
-                  key={stackData.stackLevel}
-                  sx={{
-                    width: '100%',
-                    mb: 0.75,
-                    cursor: 'pointer',
-                    animation: 'fadeIn 0.3s ease-in-out',
-                    '@keyframes fadeIn': {
-                      from: {
-                        opacity: 0,
-                        transform: 'translateY(-10px)',
-                      },
-                      to: {
-                        opacity: 1,
-                        transform: 'translateY(0)',
-                      },
-                    },
-                    '&:hover': {
-                      opacity: 0.9,
-                    },
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const url = createEsoLogsUrl(
-                      reportId,
-                      fightId,
-                      buff.abilityGameID,
-                      selectedTargetId,
-                      buff.isDebuff,
-                      buff.hostilityType,
-                      buff.dotAbilityIds,
-                    );
-                    window.open(url, '_blank');
-                  }}
-                >
-                  {/* Individual stack progress bar */}
+                return (
                   <Box
+                    key={stackData.stackLevel}
                     sx={{
-                      position: 'relative',
-                      height: 32,
-                      borderRadius: 1.5,
-                      bgcolor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(255,255,255,0.05)'
-                          : 'rgba(203, 213, 225, 0.2)',
-                      border:
-                        theme.palette.mode === 'dark'
-                          ? 'none'
-                          : '1px solid rgba(15, 23, 42, 0.08)',
-                      boxShadow:
-                        theme.palette.mode === 'dark'
-                          ? 'inset 0 1px 2px rgba(0, 0, 0, 0.3)'
-                          : 'inset 0 1px 1px rgba(15, 23, 42, 0.05)',
-                      overflow: 'hidden',
+                      width: '100%',
+                      mb: 0.75,
+                      cursor: 'pointer',
+                      animation: 'fadeIn 0.3s ease-in-out',
+                      '@keyframes fadeIn': {
+                        from: {
+                          opacity: 0,
+                          transform: 'translateY(-10px)',
+                        },
+                        to: {
+                          opacity: 1,
+                          transform: 'translateY(0)',
+                        },
+                      },
+                      '&:hover': {
+                        opacity: 0.9,
+                      },
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const url = createEsoLogsUrl(
+                        reportId,
+                        fightId,
+                        buff.abilityGameID,
+                        selectedTargetId,
+                        buff.isDebuff,
+                        buff.hostilityType,
+                        buff.dotAbilityIds,
+                      );
+                      window.open(url, '_blank');
                     }}
                   >
-                    {/* Progress fill */}
+                    {/* Individual stack progress bar */}
                     <Box
                       sx={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        height: '100%',
-                        width: `${stackPct}%`,
-                        background: getStackGradient(stackData.stackLevel),
+                        position: 'relative',
+                        height: 32,
                         borderRadius: 1.5,
-                        transition: 'width 0.3s ease-in-out',
-                      }}
-                    />
-
-                    {/* Content overlay */}
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        px: 1.5,
-                        gap: 1,
+                        bgcolor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255,255,255,0.05)'
+                            : 'rgba(203, 213, 225, 0.2)',
+                        border:
+                          theme.palette.mode === 'dark'
+                            ? 'none'
+                            : '1px solid rgba(15, 23, 42, 0.08)',
+                        boxShadow:
+                          theme.palette.mode === 'dark'
+                            ? 'inset 0 1px 2px rgba(0, 0, 0, 0.3)'
+                            : 'inset 0 1px 1px rgba(15, 23, 42, 0.05)',
+                        overflow: 'hidden',
                       }}
                     >
-                      {/* Stack indicator */}
+                      {/* Progress fill */}
                       <Box
                         sx={{
-                          width: 10,
-                          height: 10,
-                          borderRadius: '2px',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          height: '100%',
+                          width: `${stackPct}%`,
                           background: getStackGradient(stackData.stackLevel),
-                          flexShrink: 0,
-                          border:
-                            theme.palette.mode === 'dark'
-                              ? '1px solid rgba(255,255,255,0.2)'
-                              : '1px solid rgba(0,0,0,0.1)',
+                          borderRadius: 1.5,
+                          transition: 'width 0.3s ease-in-out',
                         }}
                       />
 
-                      {/* Stack label */}
-                      <Typography
-                        variant="body2"
+                      {/* Content overlay */}
+                      <Box
                         sx={{
-                          fontWeight: 600,
-                          fontSize: '0.8rem',
-                          color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
-                          textShadow:
-                            theme.palette.mode === 'dark'
-                              ? '1px 1px 2px rgba(0,0,0,0.8)'
-                              : '1px 1px 1px rgba(255,255,255,0.8)',
-                          flex: 1,
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          px: 1.5,
+                          gap: 1,
                         }}
                       >
-                        Stack {stackData.stackLevel}
-                      </Typography>
-
-                      {/* Applications */}
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color:
-                            theme.palette.mode === 'dark'
-                              ? 'rgba(255,255,255,0.7)'
-                              : 'rgba(30, 41, 59, 0.7)',
-                          textShadow:
-                            theme.palette.mode === 'dark'
-                              ? '1px 1px 1px rgba(0,0,0,0.8)'
-                              : '1px 1px 1px rgba(255,255,255,0.7)',
-                          fontSize: '0.7rem',
-                        }}
-                      >
-                        {stackData.applications}x
-                      </Typography>
-
-                      {/* Percentage */}
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: 700,
-                          fontSize: '0.85rem',
-                          color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
-                          textShadow:
-                            theme.palette.mode === 'dark'
-                              ? '1px 1px 2px rgba(0,0,0,0.8)'
-                              : '1px 1px 1px rgba(255,255,255,0.8)',
-                        }}
-                      >
-                        {Math.round(stackPct)}%
-                      </Typography>
-
-                      {/* Delta indicator */}
-                      {stackDelta !== null && (
+                        {/* Stack indicator */}
                         <Box
                           sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.5,
+                            width: 10,
+                            height: 10,
+                            borderRadius: '2px',
+                            background: getStackGradient(stackData.stackLevel),
+                            flexShrink: 0,
+                            border:
+                              theme.palette.mode === 'dark'
+                                ? '1px solid rgba(255,255,255,0.2)'
+                                : '1px solid rgba(0,0,0,0.1)',
+                          }}
+                        />
+
+                        {/* Stack label */}
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            fontSize: '0.8rem',
+                            color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
+                            textShadow:
+                              theme.palette.mode === 'dark'
+                                ? '1px 1px 2px rgba(0,0,0,0.8)'
+                                : '1px 1px 1px rgba(255,255,255,0.8)',
+                            flex: 1,
                           }}
                         >
-                          {Math.abs(stackDelta) < 2 ? (
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                fontWeight: 700,
-                                fontSize: '0.7rem',
-                                color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                              }}
-                            >
-                              ≈
-                            </Typography>
-                          ) : (
-                            <>
-                              {stackDelta > 0 ? (
-                                <TrendingUpIcon
-                                  sx={{
-                                    fontSize: '0.9rem',
-                                    color: '#10b981',
-                                  }}
-                                />
-                              ) : (
-                                <TrendingDownIcon
-                                  sx={{
-                                    fontSize: '0.9rem',
-                                    color: '#ef4444',
-                                  }}
-                                />
-                              )}
+                          Stack {stackData.stackLevel}
+                        </Typography>
+
+                        {/* Applications */}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(255,255,255,0.7)'
+                                : 'rgba(30, 41, 59, 0.7)',
+                            textShadow:
+                              theme.palette.mode === 'dark'
+                                ? '1px 1px 1px rgba(0,0,0,0.8)'
+                                : '1px 1px 1px rgba(255,255,255,0.7)',
+                            fontSize: '0.7rem',
+                          }}
+                        >
+                          {stackData.applications}x
+                        </Typography>
+
+                        {/* Percentage */}
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '0.85rem',
+                            color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
+                            textShadow:
+                              theme.palette.mode === 'dark'
+                                ? '1px 1px 2px rgba(0,0,0,0.8)'
+                                : '1px 1px 1px rgba(255,255,255,0.8)',
+                          }}
+                        >
+                          {Math.round(stackPct)}%
+                        </Typography>
+
+                        {/* Delta indicator */}
+                        {stackDelta !== null && (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                            }}
+                          >
+                            {Math.abs(stackDelta) < 2 ? (
                               <Typography
                                 variant="caption"
                                 sx={{
                                   fontWeight: 700,
-                                  fontSize: '0.65rem',
-                                  color: stackDelta > 0 ? '#10b981' : '#ef4444',
+                                  fontSize: '0.7rem',
+                                  color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
                                 }}
                               >
-                                {stackDelta > 0 ? '+' : ''}
-                                {Math.round(stackDelta)}%
+                                ≈
                               </Typography>
-                            </>
-                          )}
-                        </Box>
-                      )}
+                            ) : (
+                              <>
+                                {stackDelta > 0 ? (
+                                  <TrendingUpIcon
+                                    sx={{
+                                      fontSize: '0.9rem',
+                                      color: '#10b981',
+                                    }}
+                                  />
+                                ) : (
+                                  <TrendingDownIcon
+                                    sx={{
+                                      fontSize: '0.9rem',
+                                      color: '#ef4444',
+                                    }}
+                                  />
+                                )}
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.65rem',
+                                    color: stackDelta > 0 ? '#10b981' : '#ef4444',
+                                  }}
+                                >
+                                  {stackDelta > 0 ? '+' : ''}
+                                  {Math.round(stackDelta)}%
+                                </Typography>
+                              </>
+                            )}
+                          </Box>
+                        )}
+                      </Box>
                     </Box>
                   </Box>
-                </Box>
-              );
-            })}
+                );
+              })}
           </Box>
         </Collapse>
       )}
