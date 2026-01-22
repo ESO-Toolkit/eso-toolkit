@@ -2,13 +2,14 @@
 
 ## Overview
 
-This Agent Skill provides a Model Context Protocol (MCP) server that enables GitHub Copilot to manage Git workflows with advanced branching, rebasing, and PR status checking. The skill integrates with twig for branch dependency management and GitHub CLI for PR operations.
+This Agent Skill provides a Model Context Protocol (MCP) server that enables Claude Desktop to manage Git workflows with advanced branching, rebasing, and PR status checking. The skill integrates with twig for branch dependency management and GitHub CLI for PR operations.
 
 **Compatible With:**
-- GitHub Copilot (VS Code) via Agent Skills standard
+- Claude Desktop via MCP protocol
 
 ## Features
 
+- **Branch Creation with Twig**: Create new branches with automatic parent branch management
 - **Branch Tree Visualization**: View branch dependencies and stacking with twig
 - **Branch Dependency Management**: Set parent-child relationships between branches
 - **Interactive Rebase Guidance**: Get instructions for interactive rebase operations
@@ -44,22 +45,23 @@ gh auth login
 ### 2. Install Skill Dependencies
 
 ```powershell
-cd .copilot-git
+cd .claude-git
 npm install
 ```
 
-### 3. Configure GitHub Copilot (VS Code)
+### 3. Configure Claude Desktop
 
-Add this skill to your `.vscode/settings.json`:
+Add this skill to your Claude Desktop configuration file:
+
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
-  "github.copilot.chat.mcp.enabled": true,
-  "github.copilot.chat.mcp.servers": {
+  "mcpServers": {
     "eso-log-aggregator-git": {
       "command": "node",
       "args": [
-        "${workspaceFolder}\\.copilot-git\\server.js"
+        "D:\\code\\eso-log-aggregator\\.claude-git\\server.js"
       ],
       "env": {
         "DEBUG": "false"
@@ -72,11 +74,9 @@ Add this skill to your `.vscode/settings.json`:
 **Environment Variables:**
 - `DEBUG`: Set to `"true"` to enable detailed logging (useful for troubleshooting)
 
-### 4. Reload VS Code Window
+### 4. Restart Claude Desktop
 
-After installing dependencies and configuring, reload the VS Code window:
-
-**Keyboard Shortcut**: `Ctrl+Shift+P` → Type "Developer: Reload Window" → Enter
+After installing dependencies and configuring, restart Claude Desktop to load the skill.
 
 ## Prerequisites
 
@@ -89,16 +89,60 @@ After installing dependencies and configuring, reload the VS Code window:
 ### Natural Language Commands
 
 ```
-@workspace Show branch tree
-@workspace Set ESO-488 to depend on ESO-449
-@workspace Start interactive rebase on master
-@workspace Check PR status for current branch
-@workspace Check PR status for PR #123
+Create branch ESO-569/implement-feature
+Create branch ESO-569/implement-feature with parent ESO-449
+Create branch fix/bug-in-parser with parent master
+Show branch tree
+Set ESO-488 to depend on ESO-449
+Start interactive rebase on master
+Check PR status for current branch
+Check PR status for PR #123
 ```
 
 ### Tool Parameters
 
-#### 1. git_twig_tree
+#### 1. git_create_branch
+
+Create a new Git branch using twig with automatic parent branch management.
+
+**Parameters:**
+- `branchName` (string, required): Name of the new branch
+  - For Jira tickets: Use format `ESO-123/description-here`
+  - Otherwise: Use descriptive kebab-case name
+- `parentBranch` (string, optional): Parent branch name (default: "master")
+  - Use when creating a child branch that depends on another feature branch
+- `switchToBranch` (boolean, optional): Switch to new branch after creation (default: true)
+
+**Example:**
+```json
+{
+  "branchName": "ESO-569/implement-replay-system",
+  "parentBranch": "ESO-449/structure-redux-state",
+  "switchToBranch": true
+}
+```
+
+**Returns:**
+- Success confirmation
+- Branch name and parent branch
+- Current branch (after switch if requested)
+- Next steps for development
+
+**Use Cases:**
+- Create feature branch for Jira ticket
+- Create child branch depending on another feature
+- Create independent feature branch
+- Create bugfix branch
+
+**Branch Naming Conventions:**
+- Jira tickets: `ESO-123/short-description`
+- Features: `feature/descriptive-name`
+- Bugfixes: `fix/bug-description`
+- Refactoring: `refactor/what-changed`
+
+---
+
+#### 2. git_twig_tree
 
 Show branch dependency tree with twig visualization.
 
@@ -125,7 +169,7 @@ Show branch dependency tree with twig visualization.
 
 ---
 
-#### 2. git_twig_depend
+#### 3. git_twig_depend
 
 Set parent branch dependency for branch stacking.
 
@@ -153,7 +197,7 @@ Set parent branch dependency for branch stacking.
 
 ---
 
-#### 3. git_rebase_interactive
+#### 4. git_rebase_interactive
 
 Get instructions for interactive rebase on a target branch.
 
@@ -186,7 +230,7 @@ Get instructions for interactive rebase on a target branch.
 
 ---
 
-#### 4. git_check_pr_status
+#### 5. git_check_pr_status
 
 Check pull request status, reviews, CI checks, and mergability.
 
@@ -218,6 +262,41 @@ Check pull request status, reviews, CI checks, and mergability.
 - Get PR details without opening browser
 
 ## Common Workflows
+
+### Create New Feature Branch for Jira Ticket
+
+```
+1. Create branch ESO-569/implement-replay-system
+   - Automatically creates branch from master
+   - Switches to new branch
+   - Sets up twig dependency on master
+2. Make code changes
+3. git commit -m "Implement replay system"
+4. git push -u origin ESO-569/implement-replay-system
+```
+
+### Create Child Branch (Stacked on Another Feature)
+
+```
+1. Show branch tree (identify parent branch)
+2. Create branch ESO-570/add-replay-ui with parent ESO-569/implement-replay-system
+   - Creates branch from ESO-569
+   - Sets up twig dependency on ESO-569
+   - Switches to new branch
+3. Make code changes
+4. git push -u origin ESO-570/add-replay-ui
+```
+
+### Create Bugfix Branch
+
+```
+1. Create branch fix/parser-crash-on-invalid-log
+   - Creates from master (default)
+   - Uses descriptive name
+2. Fix the bug
+3. git commit -m "Fix parser crash on invalid log"
+4. git push -u origin fix/parser-crash-on-invalid-log
+```
 
 ### Set Up Feature Branch Stacking
 

@@ -211,7 +211,7 @@ const server = new Server(
   {
     name: 'eso-log-aggregator-git',
     version: '1.0.0',
-    description: 'Extended Git workflow for ESO Log Aggregator. Provides 4 tools for branch management with twig, interactive rebasing, and GitHub PR status checking.',
+    description: 'Extended Git workflow for ESO Log Aggregator. Provides 5 tools for branch management with twig, interactive rebasing, and GitHub PR status checking.',
   },
   {
     capabilities: {
@@ -228,6 +228,28 @@ log('Server initialized:', server.server.name, server.server.version);
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
+      {
+        name: 'git_create_branch',
+        description: 'Create a new Git branch using twig with automatic parent branch detection. If creating for a Jira ticket, include ticket ID in branch name (e.g., ESO-123/description). Automatically sets parent branch: if parentBranch is provided, uses it; otherwise defaults to master.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            branchName: {
+              type: 'string',
+              description: 'Name of the new branch. For Jira tickets, use format: ESO-123/description-here. Otherwise, use descriptive kebab-case name.',
+            },
+            parentBranch: {
+              type: 'string',
+              description: 'Parent branch name (optional). If not provided, defaults to "master". Use when creating a child branch that depends on another feature branch.',
+            },
+            switchToBranch: {
+              type: 'boolean',
+              description: 'Switch to the new branch after creation (default: true)',
+            },
+          },
+          required: ['branchName'],
+        },
+      },
       {
         name: 'git_twig_tree',
         description: 'Show branch dependency tree using twig. Visualizes branch stacking and relationships. Useful for understanding feature branch hierarchies.',
@@ -306,6 +328,94 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
+      case 'git_create_branch': {
+        const { branchName, parentBranch = 'master', switchToBranch = true } = args;
+        
+        // Validate branch name
+        const branchValidation = validateBranchName(branchName);
+        if (!branchValidation.valid) {
+          return createErrorResponse(
+            new Error(`Invalid branch name: ${branchValidation.error}${branchValidation.suggestion ? '\nSuggestion: ' + branchValidation.suggestion : ''}`),
+            name,
+            args
+          );
+        }
+        
+        // Validate parent branch if provided
+        const parentValidation = validateBranchName(parentBranch);
+        if (!parentValidation.valid) {
+          return createErrorResponse(
+            new Error(`Invalid parent branch: ${parentValidation.error}`),
+            name,
+            args
+          );
+        }
+        
+        log('Creating branch:', branchName, 'with parent:', parentBranch, 'switch:', switchToBranch);
+        
+        // Check if branch already exists
+        try {
+          executeGit(`rev-parse --verify ${branchName}`, 'Check if branch exists');
+          return createErrorResponse(
+            new Error(`Branch "${branchName}" already exists. Use a different name or delete the existing branch first.`),
+            name,
+            args
+          );
+        } catch (e) {
+          // Branch doesn't exist, which is what we want
+          log('Branch does not exist (good), proceeding with creation');
+        }
+        
+        // Check if parent branch exists
+        try {
+          executeGit(`rev-parse --verify ${parentBranch}`, 'Check if parent branch exists');
+        } catch (e) {
+          return createErrorResponse(
+            new Error(`Parent branch "${parentBranch}" does not exist. Create it first or use a different parent branch.`),
+            name,
+            args
+          );
+        }
+        
+        // Create the branch using twig
+        const createOutput = executeTwig(
+          `branch create ${branchName} ${parentBranch}`,
+          'Create branch with twig'
+        );
+        
+        // Switch to the branch if requested
+        let switchOutput = '';
+        if (switchToBranch) {
+          switchOutput = executeGit(`checkout ${branchName}`, 'Switch to new branch');
+        }
+        
+        // Verify the branch was created and parent was set
+        const treeOutput = executeTwig('tree', 'Verify branch creation');
+        const currentBranch = executeGit('branch --show-current', 'Get current branch');
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                branchName: branchName,
+                parentBranch: parentBranch,
+                currentBranch: currentBranch,
+                switched: switchToBranch,
+                message: `Branch ${branchName} created successfully${switchToBranch ? ' and checked out' : ''}`,
+                createOutput: createOutput,
+                nextSteps: [
+                  'Make your changes and commit them',
+                  `Push the branch: git push -u origin ${branchName}`,
+                  'Create a pull request when ready',
+                ],
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
       case 'git_twig_tree': {
         const { compact = false } = args;
         
