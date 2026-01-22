@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Agent Skill provides a Model Context Protocol (MCP) server that enables GitHub Copilot to manage Git workflows with advanced branching, rebasing, and PR status checking. The skill integrates with twig for branch dependency management and GitHub CLI for PR operations.
+This Agent Skill provides a Model Context Protocol (MCP) server that enables GitHub Copilot to manage Git workflows with advanced branching, rebasing, cascading, and PR status checking. The skill integrates with twig for branch dependency management and GitHub CLI for PR operations.
 
 **Compatible With:**
 - GitHub Copilot (VS Code) via Agent Skills standard
@@ -12,6 +12,7 @@ This Agent Skill provides a Model Context Protocol (MCP) server that enables Git
 - **Branch Creation with Twig**: Create new branches with automatic parent branch management
 - **Branch Tree Visualization**: View branch dependencies and stacking with twig
 - **Branch Dependency Management**: Set parent-child relationships between branches
+- **Branch Cascading**: Non-interactive cascade of changes through dependent branches
 - **Interactive Rebase Guidance**: Get instructions for interactive rebase operations
 - **PR Status Checking**: Check pull request review status, CI checks, and mergability
 - **Input Validation**: Validates branch names, repo formats before operations
@@ -95,6 +96,8 @@ After installing dependencies and configuring, reload the VS Code window:
 @workspace Create branch fix/bug-in-parser with parent master
 @workspace Show branch tree
 @workspace Set ESO-488 to depend on ESO-449
+@workspace Cascade branch changes with force push
+@workspace Cascade branch changes (dry run)
 @workspace Start interactive rebase on master
 @workspace Check PR status for current branch
 @workspace Check PR status for PR #123
@@ -262,6 +265,41 @@ Check pull request status, reviews, CI checks, and mergability.
 - Verify review approval
 - Get PR details without opening browser
 
+---
+
+#### 5. git_twig_cascade
+
+Cascade branch changes through dependent branches with non-interactive mode.
+
+**Parameters:**
+- `forcePush` (boolean, optional): Force push all updated branches after cascade (default: false)
+- `dryRun` (boolean, optional): Preview changes without applying them (default: false)
+
+**Example:**
+```json
+{
+  "forcePush": true,
+  "dryRun": false
+}
+```
+
+**Returns:**
+- Success status
+- Current branch name
+- List of affected branches
+- Next steps guidance
+- Raw twig output
+
+**Use Cases:**
+- Update all child branches after parent branch changes
+- Automatically rebase stacked feature branches
+- Sync branch hierarchies after merges
+- Preview cascade impact with dry-run
+
+**Key Feature**: Uses `--non-interactive` flag to avoid terminal prompts, making it safe for AI agent automation.
+
+**Note**: Requires clean working directory (no uncommitted changes).
+
 ## Common Workflows
 
 ### Create New Feature Branch for Jira Ticket
@@ -367,6 +405,34 @@ Set dependencies:
 ```
 @workspace Set ESO-488 to depend on ESO-449
 @workspace Set ESO-463 to depend on ESO-488
+```
+
+### Cascade Changes Through Stack
+
+After updating parent branch, cascade changes to children:
+
+```
+1. Make changes to ESO-449
+2. Commit and push ESO-449
+3. @workspace Cascade branch changes (dry run)
+4. Review what will be updated
+5. @workspace Cascade branch changes with force push
+6. All child branches are rebased and pushed
+```
+
+**Without force push** (local only):
+```
+@workspace Cascade branch changes
+```
+
+**With force push** (update remotes):
+```
+@workspace Cascade branch changes with force push
+```
+
+**Preview first** (recommended):
+```
+@workspace Cascade branch changes (dry run)
 ```
 
 ## Interactive Rebase Guide

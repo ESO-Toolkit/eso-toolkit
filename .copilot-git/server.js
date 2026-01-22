@@ -316,6 +316,23 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
         },
       },
+      {
+        name: 'git_twig_cascade',
+        description: 'Cascade branch changes through dependent branches using twig. Automatically rebases child branches onto updated parents. Use --force-push to push all updated branches.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            forcePush: {
+              type: 'boolean',
+              description: 'Force push all updated branches after cascade (default: false)',
+            },
+            dryRun: {
+              type: 'boolean',
+              description: 'Show what would be done without making changes (default: false)',
+            },
+          },
+        },
+      },
     ],
   };
 });
@@ -541,6 +558,74 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `If conflicts occur, resolve them and run: git rebase --continue`,
                 ],
                 note: 'Interactive rebase requires terminal interaction and cannot be fully automated',
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'git_twig_cascade': {
+        const { forcePush = false, dryRun = false } = args;
+        
+        log('Running twig cascade, forcePush:', forcePush, 'dryRun:', dryRun);
+        
+        // Check if there are uncommitted changes
+        const status = executeGit('status --porcelain', 'Check git status');
+        if (status && !dryRun) {
+          return createErrorResponse(
+            new Error('Cannot cascade with uncommitted changes. Commit or stash your changes first.'),
+            name,
+            args
+          );
+        }
+        
+        // Get current branch before cascade
+        const currentBranch = executeGit('branch --show-current', 'Get current branch');
+        
+        // Build cascade command with non-interactive option
+        let command = 'cascade --non-interactive';
+        if (forcePush) {
+          command += ' --force-push';
+        }
+        if (dryRun) {
+          command += ' --dry-run';
+        }
+        
+        // Execute cascade
+        const output = executeTwig(command, 'Cascade branch changes');
+        
+        // Parse output to extract affected branches
+        const affectedBranches = [];
+        const lines = output.split('\n');
+        for (const line of lines) {
+          // Look for branch names in output
+          if (line.includes('Rebasing') || line.includes('Updated')) {
+            const match = line.match(/['"]?([^'"\s]+)['"]?/);
+            if (match && match[1]) {
+              affectedBranches.push(match[1]);
+            }
+          }
+        }
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                currentBranch: currentBranch,
+                forcePush: forcePush,
+                dryRun: dryRun,
+                affectedBranches: affectedBranches.length > 0 ? affectedBranches : 'See raw output',
+                message: dryRun 
+                  ? 'Dry run completed - no changes made'
+                  : `Cascade completed${forcePush ? ' and force-pushed' : ''}`,
+                rawOutput: output,
+                nextSteps: dryRun 
+                  ? ['Review the dry run output', 'Run again without --dry-run to apply changes']
+                  : forcePush
+                  ? ['Branches have been cascaded and force-pushed', 'Verify PR status if needed']
+                  : ['Branches have been cascaded locally', 'Run with --force-push to push changes'],
               }, null, 2),
             },
           ],

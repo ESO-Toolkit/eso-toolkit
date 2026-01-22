@@ -54,7 +54,8 @@ Features: data visualization, real-time analytics, comprehensive testing infrast
   - Workflows: Download → Analyze → Search → Debug
   - **Avoid**: Manual `npm run script` commands- 🌿 **Git Workflow**: Use Git Workflow Skill (.copilot-git/ or .claude-git/) for branch management
   - Natural language: `@workspace Show branch tree`
-  - Workflows: Visualize branches → Set dependencies → Rebase → Check PR status
+  - Workflows: Visualize branches → Set dependencies → Cascade changes → Rebase → Check PR status
+  - **Key Feature**: Non-interactive cascade for safe AI automation
   - **Requires**: twig (`npm install -g @gittwig/twig`) and GitHub CLI (for PR operations)- �🔧 When interacting with GitHub, Sentry, or GitKraken workflows, prefer the corresponding MCP servers and tools instead of manual web or CLI steps
 
 ---
@@ -305,6 +306,8 @@ npm run script -- scripts/download-report-data.ts <report-code> <fight-id>
 ```
 @workspace Show branch tree
 @workspace Set ESO-488 to depend on ESO-449
+@workspace Cascade branch changes with force push
+@workspace Cascade branch changes (dry run)
 @workspace Start interactive rebase on master
 @workspace Check PR status for current branch
 ```
@@ -319,15 +322,17 @@ winget install GitHub.cli
 gh auth login
 ```
 
-**Available Tools** (4 total):
+**Available Tools** (5 total):
 - **git_twig_tree**: Show branch dependency tree with stacking relationships
 - **git_twig_depend**: Set parent-child branch dependencies
+- **git_twig_cascade**: Non-interactive cascade changes through dependent branches
 - **git_rebase_interactive**: Get interactive rebase instructions and guidance
 - **git_check_pr_status**: Check PR review status, CI checks, and mergability
 
 **Key Features**:
 - Branch stacking visualization with twig
 - Dependency management for feature branches
+- Non-interactive cascade for safe AI automation (avoids terminal prompts)
 - Interactive rebase guidance with conflict resolution
 - PR status monitoring (reviews, CI, mergability)
 - Input validation for branch names and repos
@@ -336,6 +341,7 @@ gh auth login
 
 **Common Use Cases**:
 - Set up feature branch stacking (ESO-449 → ESO-488 → ESO-463)
+- Cascade changes through stacked branches automatically
 - Fix orphaned branches
 - Clean up commit history before PR
 - Monitor PR readiness and CI status
