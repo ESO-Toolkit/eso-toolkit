@@ -170,20 +170,28 @@ acli jira workitem view ESO-394
 # Step 6: Transition to In Progress
 acli jira workitem transition --key ESO-394 --status "In Progress"
 
-# Step 7: Optionally assign to self
+# Step 7: Create feature branch BEFORE making any code changes
+git checkout -b ESO-394/brief-kebab-case-description
+
+# Step 8: Optionally assign to self
 acli jira workitem assign ESO-394 --assignee currentUser
 ```
+
+**⚠️ CRITICAL**: Always create a feature branch BEFORE implementing changes! Never commit directly to master.
 
 ### **Phase 3: Complete Work**
 
 ```powershell
-# Step 8: Add completion comment
+# Step 9: Add completion comment
 acli jira workitem comment create -k ESO-394 -b "✅ Integration test infrastructure set up with Jest, createMockStore utility, and mock worker system. 5 new tests passing."
 
-# Step 9: Transition to Done
+# Step 10: Transition to Done
 acli jira workitem transition --key ESO-394 --status "Done"
 
-# Step 10: Query for next subtask
+# Step 11: Push feature branch to remote
+git push -u origin ESO-394/brief-kebab-case-description
+
+# Step 12: Query for next subtask
 acli jira workitem search --jql "project = ESO AND parent = ESO-372 AND type = Subtask AND status = 'To Do'" --fields key,summary --order-by created
 ```
 

@@ -46,8 +46,10 @@ acli jira workitem view ESO-XXX
 # 2. Start work (update Jira status)
 acli jira workitem transition --key ESO-XXX --status "In Progress"
 
-# 3. Create feature branch
-git checkout -b bkrupa/ESO-XXX-brief-description
+# 3. ⚠️ Create feature branch FIRST (BEFORE making any code changes!)
+git checkout -b ESO-XXX/brief-kebab-case-description
+
+# Example: git checkout -b ESO-566/remove-local-storage-for-selected-player
 
 # 4. Make code changes
 # ... implement feature ...
@@ -59,13 +61,14 @@ npm test           # Run tests
 
 # 6. Commit changes
 git add <files>
-git commit -m "feat(Component): description [ESO-XXX]
+git commit -m "ESO-XXX: Brief description
 
 - Change detail 1
-- Change detail 2"
+- Change detail 2
+- Implementation notes"
 
 # 7. Push to remote
-git push -u origin bkrupa/ESO-XXX-brief-description
+git push -u origin ESO-XXX/brief-kebab-case-description
 
 # 8. Create Pull Request (using GitHub tools)
 # Include summary, testing notes, and Jira reference
@@ -77,6 +80,8 @@ acli jira workitem comment create -k ESO-XXX -b "Implementation complete. PR: <u
 # 10. Verify clean state
 git status  # Should show "nothing to commit, working tree clean"
 ```
+
+**⚠️ CRITICAL**: Never commit directly to master! Always create a feature branch in step 3.
 
 ---
 
