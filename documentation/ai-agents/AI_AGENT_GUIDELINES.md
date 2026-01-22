@@ -127,19 +127,27 @@ acli jira workitem transition --key ESO-XXX --status "In Progress"
 
 **Common Error**: The command is `transition --key ESO-XXX --status "In Progress"` (NOT `--to`)
 
-### 2. Create Feature Branch
+### 2. Create Feature Branch **FIRST** ⚠️
 
-Follow the twig branch naming convention:
+**CRITICAL**: Always create a feature branch BEFORE making any code changes!
+
+Follow the branch naming convention:
 
 ```powershell
-# Create branch from master (or appropriate parent branch)
-git checkout -b bkrupa/ESO-XXX-brief-description
+# Check current branch
+git branch --show-current
 
-# Example:
-git checkout -b bkrupa/ESO-516-add-my-reports-link
+# Create branch from master (or appropriate parent branch)
+git checkout -b ESO-XXX/brief-kebab-case-description
+
+# Examples:
+git checkout -b ESO-516/add-my-reports-link
+git checkout -b ESO-566/remove-local-storage-for-selected-player
 ```
 
-**Branch Naming Pattern**: `<username>/ESO-<issue-number>-<kebab-case-description>`
+**Branch Naming Pattern**: `ESO-<issue-number>/<kebab-case-description>`
+
+**⚠️ DO NOT commit directly to master!** Always work on a feature branch.
 
 ### 3. Implement Changes
 
@@ -189,7 +197,10 @@ git commit -m "feat(Component): brief description [ESO-XXX]
 
 ```powershell
 # Push branch and set upstream tracking
-git push -u origin bkrupa/ESO-XXX-brief-description
+git push -u origin ESO-XXX/brief-kebab-case-description
+
+# Example:
+git push -u origin ESO-566/remove-local-storage-for-selected-player
 ```
 
 ### 7. Create Pull Request
