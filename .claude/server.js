@@ -28,6 +28,7 @@
  * - git_create_branch: Create and checkout a new git branch
  * - git_commit_changes: Stage and commit changes with message
  * - git_push_branch: Push branch to remote with PR URL
+ * - git_rebase_tree: Rebase branches in tree while skipping squashed commits
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -559,6 +560,42 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               default: false,
             },
           },
+        },
+      },
+      {
+        name: 'git_rebase_tree',
+        description: 'Rebase branches in a tree structure while handling squashed commits. When a parent branch is squashed into main, this tool helps rebase child branches by skipping the squashed commits and only keeping new commits. Use this after landing/merging a branch into main.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            parentBranch: {
+              type: 'string',
+              description: 'The branch that was squashed into main (e.g., "ESO-449/feature-branch")',
+            },
+            targetBranch: {
+              type: 'string',
+              description: 'The base branch to rebase onto (typically "master" or "main")',
+              default: 'master',
+            },
+            childBranches: {
+              type: 'array',
+              description: 'List of child branches to rebase. If empty, will detect children automatically using twig tree.',
+              items: {
+                type: 'string',
+              },
+            },
+            dryRun: {
+              type: 'boolean',
+              description: 'Show what would be done without actually rebasing',
+              default: false,
+            },
+            autoStash: {
+              type: 'boolean',
+              description: 'Automatically stash and pop pending changes',
+              default: true,
+            },
+          },
+          required: ['parentBranch'],
         },
       },
     ],
@@ -1328,6 +1365,190 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
       }
 
+      case 'git_rebase_tree': {
+        const { parentBranch, targetBranch = 'master', childBranches, dryRun = false, autoStash = true } = args;
+        
+        console.error(`Rebasing tree after ${parentBranch} was squashed into ${targetBranch}...`);
+        
+        try {
+          // Step 1: Get list of child branches if not provided
+          let branches = childBranches;
+          if (!branches || branches.length === 0) {
+            console.error('Detecting child branches using twig tree...');
+            const treeOutput = execSync('twig tree', {
+              cwd: PROJECT_ROOT,
+              encoding: 'utf-8',
+            });
+            
+            // Parse twig tree output to find children of parentBranch
+            branches = parseChildBranches(treeOutput, parentBranch);
+            
+            if (branches.length === 0) {
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: JSON.stringify({
+                      success: false,
+                      message: `No child branches found for ${parentBranch}`,
+                      note: 'Run "twig tree" to see the branch structure',
+                    }, null, 2),
+                  },
+                ],
+              };
+            }
+            
+            console.error(`Found ${branches.length} child branches: ${branches.join(', ')}`);
+          }
+          
+          // Step 2: Get commits from parent branch that were squashed
+          console.error(`Identifying commits from ${parentBranch} that were squashed...`);
+          
+          // Find the merge base between parent and target
+          let commitsToSkip = [];
+          try {
+            // Get all commits in parent branch that aren't in target
+            const commitList = execSync(
+              `git log --pretty=format:%H ${targetBranch}..${parentBranch}`,
+              {
+                cwd: PROJECT_ROOT,
+                encoding: 'utf-8',
+              }
+            ).trim().split('\n').filter(c => c);
+            
+            commitsToSkip = commitList;
+            console.error(`Found ${commitsToSkip.length} commits to skip from ${parentBranch}`);
+          } catch (error) {
+            // Parent branch might not exist anymore if it was deleted after squashing
+            console.error(`Warning: Could not get commits from ${parentBranch}. It may have been deleted.`);
+            console.error('Will attempt to rebase without skip-commits...');
+          }
+          
+          // Step 3: Rebase each child branch
+          const results = [];
+          
+          for (const branch of branches) {
+            console.error(`\nRebasing ${branch}...`);
+            
+            if (dryRun) {
+              results.push({
+                branch,
+                action: 'dry-run',
+                message: `Would rebase ${branch} onto ${targetBranch}`,
+                commitsToSkip: commitsToSkip.length,
+              });
+              continue;
+            }
+            
+            try {
+              // First, reparent the branch to target using twig
+              console.error(`  Reparenting ${branch} to ${targetBranch}...`);
+              execSync(`twig branch reparent ${targetBranch} ${branch}`, {
+                cwd: PROJECT_ROOT,
+                encoding: 'utf-8',
+              });
+              
+              // Checkout the branch
+              execSync(`git checkout ${branch}`, {
+                cwd: PROJECT_ROOT,
+                encoding: 'utf-8',
+              });
+              
+              // Rebase with skip-commits
+              let rebaseCommand = `twig rebase`;
+              if (autoStash) {
+                rebaseCommand += ' --autostash';
+              }
+              
+              if (commitsToSkip.length > 0) {
+                // Write commits to a temp file
+                const skipCommitsFile = path.join(PROJECT_ROOT, '.twig', 'skip-commits.tmp');
+                fs.writeFileSync(skipCommitsFile, commitsToSkip.join('\n'));
+                rebaseCommand += ` --skip-commits ${skipCommitsFile}`;
+              }
+              
+              console.error(`  Running: ${rebaseCommand}`);
+              const rebaseOutput = execSync(rebaseCommand, {
+                cwd: PROJECT_ROOT,
+                encoding: 'utf-8',
+                stdio: ['pipe', 'pipe', 'pipe'],
+              });
+              
+              // Clean up temp file
+              if (commitsToSkip.length > 0) {
+                const skipCommitsFile = path.join(PROJECT_ROOT, '.twig', 'skip-commits.tmp');
+                if (fs.existsSync(skipCommitsFile)) {
+                  fs.unlinkSync(skipCommitsFile);
+                }
+              }
+              
+              results.push({
+                branch,
+                success: true,
+                message: `Successfully rebased ${branch} onto ${targetBranch}`,
+                commitsSkipped: commitsToSkip.length,
+              });
+              
+            } catch (error) {
+              results.push({
+                branch,
+                success: false,
+                error: error.message,
+                stderr: error.stderr?.toString() || '',
+                note: 'Rebase may have conflicts. Resolve manually with "git rebase --continue" or "git rebase --abort"',
+              });
+            }
+          }
+          
+          // Step 4: Return summary
+          const successful = results.filter(r => r.success).length;
+          const failed = results.filter(r => !r.success && !r.action).length;
+          
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: failed === 0,
+                  dryRun,
+                  parentBranch,
+                  targetBranch,
+                  commitsSkipped: commitsToSkip.length,
+                  skipCommitsList: commitsToSkip.slice(0, 5), // Show first 5
+                  summary: {
+                    total: branches.length,
+                    successful,
+                    failed,
+                  },
+                  results,
+                  message: dryRun
+                    ? `Dry run complete. Would rebase ${branches.length} branches.`
+                    : failed > 0
+                    ? `Rebased ${successful}/${branches.length} branches. ${failed} failed - check results for conflicts.`
+                    : `Successfully rebased all ${branches.length} child branches onto ${targetBranch}.`,
+                }, null, 2),
+              },
+            ],
+          };
+          
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  error: error.message,
+                  stderr: error.stderr?.toString() || '',
+                  note: 'Check that twig is installed and the branch names are correct',
+                }, null, 2),
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
@@ -1347,6 +1568,52 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     };
   }
 });
+
+/**
+ * Parse twig tree output to find child branches
+ */
+function parseChildBranches(treeOutput, parentBranch) {
+  const lines = treeOutput.split('\n');
+  const children = [];
+  let foundParent = false;
+  let parentIndent = 0;
+  
+  for (const line of lines) {
+    // Skip empty lines and headers
+    if (!line.trim() || line.includes('Orphaned branches') || line.includes('To organize')) {
+      continue;
+    }
+    
+    // Extract branch name and indentation
+    const match = line.match(/^(\s*[│├└─\s]*)\s*([^\s\[]+)/);
+    if (!match) continue;
+    
+    const indent = match[1].length;
+    const branchName = match[2].trim();
+    
+    if (branchName === parentBranch) {
+      foundParent = true;
+      parentIndent = indent;
+      continue;
+    }
+    
+    // If we found parent, collect children until we find a sibling or parent
+    if (foundParent) {
+      if (indent <= parentIndent) {
+        // We've moved to a sibling or back up the tree
+        break;
+      }
+      
+      // This is a direct child (one level deeper)
+      const childIndent = parentIndent + 4; // Twig uses 4 spaces for each level
+      if (indent <= childIndent + 2) { // Allow some tolerance for tree characters
+        children.push(branchName);
+      }
+    }
+  }
+  
+  return children;
+}
 
 /**
  * Start the server
