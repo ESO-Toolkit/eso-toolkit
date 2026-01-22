@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * ESO Log Aggregator - Claude Skill (MCP Server)
+ * ESO Log Aggregator - GitHub Copilot Agent Skill (MCP Server)
  * 
- * This MCP server provides tools for Claude to interact with the ESO Log Aggregator
+ * This MCP server provides tools for GitHub Copilot to interact with the ESO Log Aggregator
  * application using Playwright, with proper authentication using local tokens.
+ * 
+ * Compatible with: GitHub Copilot (VS Code) via Agent Skills standard
  * 
  * Tools provided:
  * - run_authenticated_test: Run Playwright tests with local auth token
@@ -12,6 +14,20 @@
  * - navigate_and_verify: Navigate to a page and verify it loads correctly
  * - take_screenshot: Capture a screenshot of the current page
  * - check_element: Check if an element exists and is visible
+ * - start_dev_server: Start development server in background
+ * - stop_dev_server: Stop running development server
+ * - dev_server_status: Check dev server status
+ * - run_smoke_tests: Quick validation tests
+ * - run_full_tests: Full E2E test suite
+ * - run_nightly_tests: Comprehensive cross-browser testing
+ * - run_format: Format code with Prettier
+ * - run_lint: Lint code with ESLint
+ * - run_typecheck: TypeScript type checking
+ * - run_unit_tests: Jest unit tests
+ * - run_build: Production build
+ * - git_create_branch: Create and checkout a new git branch
+ * - git_commit_changes: Stage and commit changes with message
+ * - git_push_branch: Push branch to remote with PR URL
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -494,6 +510,55 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {},
+        },
+      },
+      {
+        name: 'git_create_branch',
+        description: 'Create and checkout a new git branch based on Jira work item (e.g., ESO-569-description). Returns branch name and status.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            branchName: {
+              type: 'string',
+              description: 'Branch name to create (e.g., ESO-569-remove-duplicate-roles)',
+            },
+          },
+          required: ['branchName'],
+        },
+      },
+      {
+        name: 'git_commit_changes',
+        description: 'Stage and commit changes with a descriptive message. Returns commit hash and summary.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            message: {
+              type: 'string',
+              description: 'Commit message (should follow format: "ESO-XXX: Description\\n\\nBullet points of changes")',
+            },
+            files: {
+              type: 'array',
+              description: 'List of files to stage (relative to project root). If empty, stages all modified files.',
+              items: {
+                type: 'string',
+              },
+            },
+          },
+          required: ['message'],
+        },
+      },
+      {
+        name: 'git_push_branch',
+        description: 'Push current branch to remote origin with upstream tracking. Returns push status and PR creation URL.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            force: {
+              type: 'boolean',
+              description: 'Force push (use with caution)',
+              default: false,
+            },
+          },
         },
       },
     ],
@@ -1054,6 +1119,213 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
           ],
         };
+      }
+
+      case 'git_create_branch': {
+        const { branchName } = args;
+        
+        console.error(`Creating and checking out branch: ${branchName}...`);
+        
+        try {
+          // Check if branch already exists
+          const existingBranches = execSync('git branch --list', {
+            cwd: PROJECT_ROOT,
+            encoding: 'utf-8',
+          });
+          
+          if (existingBranches.includes(branchName)) {
+            // Branch exists, just check it out
+            execSync(`git checkout ${branchName}`, {
+              cwd: PROJECT_ROOT,
+              encoding: 'utf-8',
+            });
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    success: true,
+                    action: 'checkout',
+                    branch: branchName,
+                    message: `Checked out existing branch: ${branchName}`,
+                  }, null, 2),
+                },
+              ],
+            };
+          }
+          
+          // Create new branch
+          const output = execSync(`git checkout -b ${branchName}`, {
+            cwd: PROJECT_ROOT,
+            encoding: 'utf-8',
+          });
+          
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  action: 'create',
+                  branch: branchName,
+                  message: `Created and checked out new branch: ${branchName}`,
+                  output: output.trim(),
+                }, null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  error: error.message,
+                  stderr: error.stderr?.toString() || '',
+                }, null, 2),
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+
+      case 'git_commit_changes': {
+        const { message, files } = args;
+        
+        console.error('Staging and committing changes...');
+        
+        try {
+          // Stage files
+          if (files && files.length > 0) {
+            const fileList = files.join(' ');
+            execSync(`git add ${fileList}`, {
+              cwd: PROJECT_ROOT,
+              encoding: 'utf-8',
+            });
+          } else {
+            // Stage all modified files
+            execSync('git add -u', {
+              cwd: PROJECT_ROOT,
+              encoding: 'utf-8',
+            });
+          }
+          
+          // Get status before commit
+          const statusBefore = execSync('git status --short', {
+            cwd: PROJECT_ROOT,
+            encoding: 'utf-8',
+          });
+          
+          // Commit
+          const commitOutput = execSync(`git commit -m "${message.replace(/"/g, '\\"')}"`, {
+            cwd: PROJECT_ROOT,
+            encoding: 'utf-8',
+          });
+          
+          // Get commit hash
+          const commitHash = execSync('git rev-parse HEAD', {
+            cwd: PROJECT_ROOT,
+            encoding: 'utf-8',
+          }).trim();
+          
+          // Get short hash
+          const shortHash = commitHash.substring(0, 8);
+          
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  commitHash: shortHash,
+                  fullHash: commitHash,
+                  stagedFiles: statusBefore.trim(),
+                  output: commitOutput.trim(),
+                }, null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  error: error.message,
+                  stderr: error.stderr?.toString() || '',
+                  note: 'Check if there are files to commit or if commit message is valid',
+                }, null, 2),
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+
+      case 'git_push_branch': {
+        const { force } = args;
+        
+        console.error('Pushing branch to remote...');
+        
+        try {
+          // Get current branch
+          const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', {
+            cwd: PROJECT_ROOT,
+            encoding: 'utf-8',
+          }).trim();
+          
+          // Push with upstream tracking
+          const pushCommand = force
+            ? `git push -u origin ${currentBranch} --force`
+            : `git push -u origin ${currentBranch}`;
+          
+          const output = execSync(pushCommand, {
+            cwd: PROJECT_ROOT,
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'pipe'],
+          });
+          
+          // Extract PR URL from output
+          const prUrlMatch = output.match(/https:\/\/github\.com\/[^\s]+\/pull\/new\/[^\s]+/);
+          const prUrl = prUrlMatch ? prUrlMatch[0] : null;
+          
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  branch: currentBranch,
+                  forced: !!force,
+                  prUrl: prUrl,
+                  message: prUrl 
+                    ? `Branch pushed successfully. Create PR at: ${prUrl}`
+                    : `Branch ${currentBranch} pushed successfully`,
+                  output: output.trim(),
+                }, null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  error: error.message,
+                  stderr: error.stderr?.toString() || '',
+                  note: 'Check if you have uncommitted changes or if remote repository is accessible',
+                }, null, 2),
+              },
+            ],
+            isError: true,
+          };
+        }
       }
 
       default:

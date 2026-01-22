@@ -105,6 +105,18 @@ After configuration, verify the skill is loaded by asking your AI assistant:
 
 ## Available Tools
 
+The MCP server provides **19 tools** organized into four categories:
+
+1. **Development Server Management** (3 tools)
+2. **Test Execution** (4 tools)
+3. **Code Quality Tools** (4 tools)
+4. **Git Workflow Automation** (3 tools) - **NEW!**
+5. **Interactive Testing** (5 tools)
+
+📖 **Git Workflow Full Documentation**: [GIT_WORKFLOW_TOOLS.md](GIT_WORKFLOW_TOOLS.md)
+
+---
+
 ### 1. `get_auth_status`
 
 Check the current authentication status and token information.
@@ -392,6 +404,85 @@ Build for production
 - Success status
 - Build output
 - Bundle size information
+
+---
+
+### 17. `git_create_branch`
+
+Create and checkout a new git branch following project naming conventions (ESO-XXX-description).
+
+**Usage:**
+```
+Create branch ESO-569-remove-duplicate-roles
+```
+
+**Parameters:**
+- `branchName`: Branch name (e.g., "ESO-569-remove-duplicate-roles")
+
+**Returns:**
+- Branch name
+- Creation status
+- Action taken (create or checkout existing)
+
+---
+
+### 18. `git_commit_changes`
+
+Stage and commit changes with a descriptive message following project standards.
+
+**Usage:**
+```
+Commit changes with message:
+ESO-569: Remove duplicate roles in the roles dropdown
+
+- Removed redundant 'Damage Dealers' option
+- Updated RoleFilter type
+- Simplified filtering logic
+```
+
+**Parameters:**
+- `message`: Commit message (format: "ESO-XXX: Description\n\nBullet points")
+- `files` (optional): Array of files to stage (if omitted, stages all modified files)
+
+**Returns:**
+- Commit hash (short and full)
+- Staged files
+- Commit output
+
+---
+
+### 19. `git_push_branch`
+
+Push current branch to remote origin with upstream tracking. Returns PR creation URL.
+
+**Usage:**
+```
+Push the current branch
+```
+
+**Parameters:**
+- `force` (optional): Force push (default: false)
+
+**Returns:**
+- Push status
+- Branch name
+- PR creation URL
+- Push output
+
+**Complete Workflow Example:**
+```
+Claude: Implement ESO-569 - remove duplicate roles dropdown
+
+Agent will:
+1. Create branch: ESO-569-remove-duplicate-roles
+2. Make code changes
+3. Commit with proper message
+4. Push and provide PR URL
+```
+
+📖 **Full Documentation**: [GIT_WORKFLOW_TOOLS.md](GIT_WORKFLOW_TOOLS.md)
+
+---
 
 ## Usage Examples
 

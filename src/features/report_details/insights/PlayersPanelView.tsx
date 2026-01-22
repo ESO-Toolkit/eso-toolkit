@@ -57,7 +57,7 @@ type SortOption =
   | 'hp-low'
   | 'magicka-high'
   | 'magicka-low';
-type RoleFilter = 'all' | 'dps' | 'tank' | 'healer' | 'damage-dealers' | 'supports';
+type RoleFilter = 'all' | 'dps' | 'tank' | 'healer' | 'supports';
 
 export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
   ({
@@ -161,10 +161,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
 
       // Apply role filter
       if (roleFilter !== 'all') {
-        if (roleFilter === 'damage-dealers') {
-          // Filter for DPS only
-          filtered = filtered.filter((playerData) => playerData.player.role === 'dps');
-        } else if (roleFilter === 'supports') {
+        if (roleFilter === 'supports') {
           // Filter for non-DPS (tanks and healers)
           filtered = filtered.filter((playerData) => playerData.player.role !== 'dps');
         } else {
@@ -382,8 +379,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
               <MenuItem value="dps">DPS</MenuItem>
               <MenuItem value="tank">Tank</MenuItem>
               <MenuItem value="healer">Healer</MenuItem>
-              <MenuItem value="damage-dealers">Damage Dealers</MenuItem>
-              <MenuItem value="supports">Supports</MenuItem>
+              <MenuItem value="supports">Supports (Tanks & Healers)</MenuItem>
             </Select>
           </FormControl>
         </Stack>
@@ -403,11 +399,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           {roleFilter !== 'all' && (
             <Chip
               label={`Role: ${
-                roleFilter === 'damage-dealers'
-                  ? 'Damage Dealers'
-                  : roleFilter === 'supports'
-                    ? 'Supports'
-                    : roleFilter.toUpperCase()
+                roleFilter === 'supports' ? 'Supports (Tanks & Healers)' : roleFilter.toUpperCase()
               }`}
               size="small"
               onDelete={() => setRoleFilter('all')}
