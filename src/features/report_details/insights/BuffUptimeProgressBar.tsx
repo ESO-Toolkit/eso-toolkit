@@ -2,7 +2,16 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { Box, Typography, LinearProgress, Avatar, useTheme, Chip, IconButton } from '@mui/material';
+import {
+  Box,
+  Typography,
+  LinearProgress,
+  Avatar,
+  useTheme,
+  Chip,
+  IconButton,
+  Collapse,
+} from '@mui/material';
 import React from 'react';
 
 export interface BuffUptime {
@@ -455,17 +464,15 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                 ml: 0.5,
                 padding: 0.5,
                 color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
+                transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.3s ease-in-out',
               }}
               onClick={(e) => {
                 e.stopPropagation();
                 setIsExpanded((prev) => !prev);
               }}
             >
-              {isExpanded ? (
-                <ExpandLessIcon fontSize="small" />
-              ) : (
-                <ExpandMoreIcon fontSize="small" />
-              )}
+              <ExpandMoreIcon fontSize="small" />
             </IconButton>
           )}
         </Box>
@@ -530,12 +537,13 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
       )}
 
       {/* Expanded view - individual bars for each stack (highest on top) */}
-      {buff.allStacksData && isExpanded && (
-        <Box sx={{ width: '100%', mt: 1 }}>
-          {buff.allStacksData
-            .slice()
-            .sort((a, b) => b.uptimePercentage - a.uptimePercentage) // Sort highest first
-            .map((stackData) => {
+      {buff.allStacksData && (
+        <Collapse in={isExpanded} timeout={300} unmountOnExit>
+          <Box sx={{ width: '100%', mt: 1 }}>
+            {buff.allStacksData
+              .slice()
+              .sort((a, b) => b.uptimePercentage - a.uptimePercentage) // Sort highest first
+              .map((stackData) => {
               const stackPct = Math.max(0, Math.min(100, stackData.uptimePercentage));
               const stackDelta =
                 stackData.groupAverageUptimePercentage !== undefined
@@ -549,6 +557,17 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                     width: '100%',
                     mb: 0.75,
                     cursor: 'pointer',
+                    animation: 'fadeIn 0.3s ease-in-out',
+                    '@keyframes fadeIn': {
+                      from: {
+                        opacity: 0,
+                        transform: 'translateY(-10px)',
+                      },
+                      to: {
+                        opacity: 1,
+                        transform: 'translateY(0)',
+                      },
+                    },
                     '&:hover': {
                       opacity: 0.9,
                     },
@@ -739,7 +758,8 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                 </Box>
               );
             })}
-        </Box>
+          </Box>
+        </Collapse>
       )}
     </Box>
   );
