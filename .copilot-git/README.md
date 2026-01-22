@@ -9,6 +9,7 @@ This Agent Skill provides a Model Context Protocol (MCP) server that enables Git
 
 ## Features
 
+- **Branch Creation with Twig**: Create new branches with automatic parent branch management
 - **Branch Tree Visualization**: View branch dependencies and stacking with twig
 - **Branch Dependency Management**: Set parent-child relationships between branches
 - **Interactive Rebase Guidance**: Get instructions for interactive rebase operations
@@ -89,6 +90,9 @@ After installing dependencies and configuring, reload the VS Code window:
 ### Natural Language Commands
 
 ```
+@workspace Create branch ESO-569/implement-feature
+@workspace Create branch ESO-569/implement-feature with parent ESO-449
+@workspace Create branch fix/bug-in-parser with parent master
 @workspace Show branch tree
 @workspace Set ESO-488 to depend on ESO-449
 @workspace Start interactive rebase on master
@@ -98,7 +102,48 @@ After installing dependencies and configuring, reload the VS Code window:
 
 ### Tool Parameters
 
-#### 1. git_twig_tree
+#### 1. git_create_branch
+
+Create a new Git branch using twig with automatic parent branch management.
+
+**Parameters:**
+- `branchName` (string, required): Name of the new branch
+  - For Jira tickets: Use format `ESO-123/description-here`
+  - Otherwise: Use descriptive kebab-case name
+- `parentBranch` (string, optional): Parent branch name (default: "master")
+  - Use when creating a child branch that depends on another feature branch
+- `switchToBranch` (boolean, optional): Switch to new branch after creation (default: true)
+
+**Example:**
+```json
+{
+  "branchName": "ESO-569/implement-replay-system",
+  "parentBranch": "ESO-449/structure-redux-state",
+  "switchToBranch": true
+}
+```
+
+**Returns:**
+- Success confirmation
+- Branch name and parent branch
+- Current branch (after switch if requested)
+- Next steps for development
+
+**Use Cases:**
+- Create feature branch for Jira ticket
+- Create child branch depending on another feature
+- Create independent feature branch
+- Create bugfix branch
+
+**Branch Naming Conventions:**
+- Jira tickets: `ESO-123/short-description`
+- Features: `feature/descriptive-name`
+- Bugfixes: `fix/bug-description`
+- Refactoring: `refactor/what-changed`
+
+---
+
+#### 2. git_twig_tree
 
 Show branch dependency tree with twig visualization.
 
@@ -125,7 +170,7 @@ Show branch dependency tree with twig visualization.
 
 ---
 
-#### 2. git_twig_depend
+#### 3. git_twig_depend
 
 Set parent branch dependency for branch stacking.
 
@@ -153,7 +198,7 @@ Set parent branch dependency for branch stacking.
 
 ---
 
-#### 3. git_rebase_interactive
+#### 4. git_rebase_interactive
 
 Get instructions for interactive rebase on a target branch.
 
@@ -186,7 +231,7 @@ Get instructions for interactive rebase on a target branch.
 
 ---
 
-#### 4. git_check_pr_status
+#### 5. git_check_pr_status
 
 Check pull request status, reviews, CI checks, and mergability.
 
@@ -218,6 +263,41 @@ Check pull request status, reviews, CI checks, and mergability.
 - Get PR details without opening browser
 
 ## Common Workflows
+
+### Create New Feature Branch for Jira Ticket
+
+```
+1. @workspace Create branch ESO-569/implement-replay-system
+   - Automatically creates branch from master
+   - Switches to new branch
+   - Sets up twig dependency on master
+2. Make code changes
+3. git commit -m "Implement replay system"
+4. git push -u origin ESO-569/implement-replay-system
+```
+
+### Create Child Branch (Stacked on Another Feature)
+
+```
+1. @workspace Show branch tree (identify parent branch)
+2. @workspace Create branch ESO-570/add-replay-ui with parent ESO-569/implement-replay-system
+   - Creates branch from ESO-569
+   - Sets up twig dependency on ESO-569
+   - Switches to new branch
+3. Make code changes
+4. git push -u origin ESO-570/add-replay-ui
+```
+
+### Create Bugfix Branch
+
+```
+1. @workspace Create branch fix/parser-crash-on-invalid-log
+   - Creates from master (default)
+   - Uses descriptive name
+2. Fix the bug
+3. git commit -m "Fix parser crash on invalid log"
+4. git push -u origin fix/parser-crash-on-invalid-log
+```
 
 ### Set Up Feature Branch Stacking
 
