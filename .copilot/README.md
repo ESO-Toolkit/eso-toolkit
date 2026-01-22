@@ -83,6 +83,16 @@ After reloading, verify the skill is loaded by asking Copilot:
 
 ## Available Tools
 
+The Agent Skill provides **19 tools** organized into four categories:
+
+1. **Development Server Management** (3 tools)
+2. **Test Execution** (4 tools)
+3. **Code Quality Tools** (4 tools)
+4. **Git Workflow Automation** (3 tools) - **NEW!**
+5. **Interactive Testing** (5 tools)
+
+---
+
 ### Development Server Management
 
 #### `start_dev_server`
@@ -196,6 +206,62 @@ Run TypeScript type checking. Returns type errors if any.
 ```
 @workspace Run type checking
 ```
+
+---
+
+### Git Workflow Automation
+
+#### `git_create_branch`
+Create and checkout a new git branch following project naming conventions (ESO-XXX-description).
+
+**Parameters:**
+- `branchName`: Branch name to create (e.g., "ESO-569-remove-duplicate-roles")
+
+**Example:**
+```
+@workspace Create branch ESO-569-remove-duplicate-roles
+```
+
+#### `git_commit_changes`
+Stage and commit changes with a descriptive message following project commit standards.
+
+**Parameters:**
+- `message`: Commit message (should follow format: "ESO-XXX: Description\n\nBullet points")
+- `files` (optional): Array of files to stage (if omitted, stages all modified files)
+
+**Example:**
+```
+@workspace Commit changes with message:
+ESO-569: Remove duplicate roles in the roles dropdown
+
+- Removed redundant 'Damage Dealers' option
+- Updated RoleFilter type
+- Simplified filtering logic
+```
+
+#### `git_push_branch`
+Push current branch to remote origin with upstream tracking. Returns push status and PR creation URL.
+
+**Parameters:**
+- `force` (optional): Force push (default: false)
+
+**Example:**
+```
+@workspace Push the current branch
+```
+
+**Complete Workflow Example:**
+```
+@workspace Implement ESO-569: Remove duplicate roles dropdown
+
+Agent will:
+1. Create branch: ESO-569-remove-duplicate-roles
+2. Make code changes
+3. Commit with proper message
+4. Push and provide PR URL
+```
+
+📖 **Full Documentation**: [GIT_WORKFLOW_TOOLS.md](GIT_WORKFLOW_TOOLS.md)
 
 ---
 

@@ -2,7 +2,18 @@
 
 ## Overview
 
-The Agent Skill provides comprehensive development workflow automation with structured results. These tools cover the complete development cycle from formatting to building.
+The Agent Skill provides comprehensive development workflow automation with structured results. These tools cover the complete development cycle from formatting to building to version control.
+
+## Tool Categories
+
+1. **Code Quality**: Formatting, linting, type checking
+2. **Testing**: Unit tests with coverage
+3. **Building**: Production builds
+4. **Git Workflow**: Branch creation, commits, pushing - **NEW!**
+
+📖 **Git Workflow Full Documentation**: [GIT_WORKFLOW_TOOLS.md](GIT_WORKFLOW_TOOLS.md)
+
+---
 
 ## Code Quality Tools
 
