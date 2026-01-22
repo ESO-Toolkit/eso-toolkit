@@ -20,9 +20,9 @@ import {
   computeBuffUptimes,
   computeBuffUptimesWithGroupAverage,
 } from '../../../utils/buffUptimeCalculator';
+import { calculateElementalWeaknessStacks } from '../../../workers/calculations/CalculateElementalWeaknessStacks';
 import { calculateStaggerStacks } from '../../../workers/calculations/CalculateStaggerStacks';
 import { calculateTouchOfZenStacks } from '../../../workers/calculations/CalculateTouchOfZenStacks';
-import { calculateElementalWeaknessStacks } from '../../../workers/calculations/CalculateElementalWeaknessStacks';
 
 import { DebuffUptimesView } from './DebuffUptimesView';
 import { EffectUptimeTimelineModal } from './EffectUptimeTimelineModal';
@@ -786,7 +786,6 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
     touchOfZenStackUptimesWithGroupAvg,
     staggerStackUptimes,
     elementalWeaknessStackUptimesWithGroupAvg,
-    allDotAbilityIds,
     selectedFriendlyPlayerId,
     selectedPlayerId,
   ]);

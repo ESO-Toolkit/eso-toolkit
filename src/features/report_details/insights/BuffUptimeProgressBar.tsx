@@ -1,14 +1,12 @@
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import {
   Box,
   Typography,
   LinearProgress,
   Avatar,
   useTheme,
-  Chip,
   IconButton,
   Collapse,
 } from '@mui/material';
