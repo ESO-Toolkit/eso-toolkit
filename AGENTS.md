@@ -2,7 +2,7 @@
 
 ## Overview
 Project: ESO Log Aggregator - React-based web application for analyzing Elder Scrolls Online (ESO) combat logs
-Features: data visualization, real-time analytics, comprehensive testing infrastructure
+Features: data visualization, real-time analytics, comprehensive testing infrastructure, AI-assisted development
 
 ## 📚 Documentation Navigation
 
@@ -11,12 +11,24 @@ Features: data visualization, real-time analytics, comprehensive testing infrast
 **Quick Access**:
 - **AI Agent Guidelines**: [documentation/ai-agents/AI_AGENT_GUIDELINES.md](documentation/ai-agents/AI_AGENT_GUIDELINES.md) - **START HERE**
 - **AI Agent Guides**: [documentation/ai-agents/](documentation/ai-agents/)
+- **Jira Integration Skill**: [.copilot-jira/README.md](.copilot-jira/README.md) - **NEW!** Automated Jira workflows
+- **Report Debugging Skill**: [.copilot-reports/README.md](.copilot-reports/README.md) - **NEW!** Production data debugging
+- **Git Workflow Skill**: [.copilot-git/README.md](.copilot-git/README.md) - **NEW!** Branch management and PR status
+- **Testing & Dev Skill**: [.copilot/README.md](.copilot/README.md) - Testing, formatting, git automation
 - **Feature Docs**: [documentation/features/](documentation/features/)
 - **Architecture**: [documentation/architecture/](documentation/architecture/)
 - **Complete Guide**: [documentation/AGENTS.md](documentation/AGENTS.md)
 - **VS Code MCP Playwright Tool**: For structured test execution - use this tool for running existing Playwright test suites, discovering test files, and viewing test results within VS Code.
-- **GitHub Copilot Agent Skill (.copilot/)**: For GitHub Copilot users - comprehensive MCP server with Playwright testing, dev workflow automation, and interactive debugging. See [.copilot/README.md](.copilot/README.md) for setup.
-- **Claude Agent Skill (.claude/)**: For Claude Desktop users - equivalent MCP server for interactive testing sessions, quick verification, and debugging with AI assistance. See [.claude/README.md](.claude/README.md) for setup.
+- **GitHub Copilot Agent Skills**:
+  - **Testing & Dev** (.copilot/): Playwright testing, dev workflow automation, interactive debugging. See [.copilot/README.md](.copilot/README.md)
+  - **Jira Integration** (.copilot-jira/): Automated work item management. See [.copilot-jira/README.md](.copilot-jira/README.md)
+  - **Report Debugging** (.copilot-reports/): Download and analyze production report data. See [.copilot-reports/README.md](.copilot-reports/README.md)
+  - **Git Workflow** (.copilot-git/): **NEW!** Branch management with twig and PR status. See [.copilot-git/README.md](.copilot-git/README.md)
+- **Claude Agent Skills**:
+  - **Testing & Dev** (.claude/): For Claude Desktop users - equivalent MCP server for interactive testing sessions. See [.claude/README.md](.claude/README.md)
+  - **Jira Integration** (.claude-jira/): Automated work item management for Claude. See [.claude-jira/README.md](.claude-jira/README.md)
+  - **Report Debugging** (.claude-reports/): Production data debugging for Claude. See [.claude-reports/README.md](.claude-reports/README.md)
+  - **Git Workflow** (.claude-git/): **NEW!** Branch management with twig and PR status for Claude. See [.claude-git/README.md](.claude-git/README.md)
 
 ---
 
@@ -31,9 +43,19 @@ Features: data visualization, real-time analytics, comprehensive testing infrast
 - 📝 Use code comments and clear commit messages for simple changes
 - 🧪 **Testing Strategy**:
   - **Structured Testing**: Use VS Code MCP Playwright tool for running test suites and managing test files
-  - **Exploratory Testing**: Use GitHub Copilot Agent Skill (.copilot/) or Claude Agent Skill (.claude/) for ad-hoc testing, quick verification, and interactive debugging
+  - **Exploratory Testing**: Use GitHub Copilot Agent Skills (.copilot/) or Claude Agent Skills (.claude/) for ad-hoc testing, quick verification, and interactive debugging
   - **Avoid**: Ad-hoc CLI commands for one-off testing scenarios
-- 🔧 When interacting with GitHub, Sentry, Atlassian, or GitKraken workflows, prefer the corresponding MCP servers and tools instead of manual web or CLI steps
+- 🎫 **Jira Management**: Use Jira Agent Skill (.copilot-jira/ or .claude-jira/) for work item operations
+  - Natural language: `@workspace View ESO-372`
+  - Automated workflows: View ticket → Create branch → Implement → Test → Commit → Push → Update Jira
+  - **Avoid**: Manual `acli` commands (deprecated for AI agents)
+- � **Report Debugging**: Use Report Debugging Skill (.copilot-reports/ or .claude-reports/) for production issues
+  - Natural language: `@workspace Download report 3gjVGWB2dxCL8XAw`
+  - Workflows: Download → Analyze → Search → Debug
+  - **Avoid**: Manual `npm run script` commands- 🌿 **Git Workflow**: Use Git Workflow Skill (.copilot-git/ or .claude-git/) for branch management
+  - Natural language: `@workspace Show branch tree`
+  - Workflows: Visualize branches → Set dependencies → Rebase → Check PR status
+  - **Requires**: twig (`npm install -g @gittwig/twig`) and GitHub CLI (for PR operations)- �🔧 When interacting with GitHub, Sentry, or GitKraken workflows, prefer the corresponding MCP servers and tools instead of manual web or CLI steps
 
 ---
 
@@ -103,27 +125,94 @@ npm install
 
 ---
 
-## � Jira Work Item Management (acli)
+## 🎫 Jira Integration Skill (January 2026)
 
-**REQUIRED**: All AI agents must use `acli` (Atlassian CLI) for Jira work item management.
+**NEW**: Automated Jira work item management through AI Agent Skills!
+
+**Two Implementations**:
+- **[.copilot-jira/](.copilot-jira/)** - GitHub Copilot (VS Code) implementation
+- **[.claude-jira/](.claude-jira/)** - Claude Desktop implementation
+
+Both provide 8 tools for comprehensive Jira automation.
 
 📖 **Full Documentation**:
-- **[documentation/ai-agents/jira/AI_JIRA_ACLI_INSTRUCTIONS.md](documentation/ai-agents/jira/AI_JIRA_ACLI_INSTRUCTIONS.md)** - Comprehensive guide
-- **[documentation/ai-agents/jira/AI_JIRA_QUICK_REFERENCE.md](documentation/ai-agents/jira/AI_JIRA_QUICK_REFERENCE.md)** - Quick reference
+- **[.copilot-jira/README.md](.copilot-jira/README.md)** - GitHub Copilot Jira skill
+- **[documentation/ai-agents/jira/AI_JIRA_INTEGRATION_GUIDE.md](documentation/ai-agents/jira/AI_JIRA_INTEGRATION_GUIDE.md)** - Complete guide
 
 **Quick Start**:
 ```powershell
-# View current story
+# Install dependencies
+cd .copilot-jira
+npm install
+
+# Configuration is added to .vscode/settings.json
+# Reload VS Code window to activate
+```
+
+**Available Tools** (8 total):
+- **jira_view_workitem** - Get ticket details
+- **jira_search_workitems** - Find tickets with JQL queries
+- **jira_transition_workitem** - Change status (To Do → In Progress → Done)
+- **jira_comment_workitem** - Add comments (markdown supported)
+- **jira_link_workitems** - Create relationships between tickets
+- **jira_get_epic_status** - Track epic progress and completion
+- **jira_assign_workitem** - Assign work to team members
+- **jira_update_story_points** - Update estimates
+
+**Natural Language Usage**:
+```
+@workspace View ESO-372
+@workspace Find all To Do tasks in ESO
+@workspace Move ESO-569 to "In Progress"
+@workspace Add comment to ESO-569: Implementation complete
+```
+
+**Complete Workflow Example**:
+```
+@workspace Implement ESO-569
+
+Automated steps:
+1. View ticket (get requirements)
+2. Create git branch
+3. [Make code changes]
+4. Run tests + quality checks
+5. Commit and push
+6. Transition to "In Review"
+7. Add PR link comment
+```
+
+**Prerequisites**:
+1. Atlassian CLI (acli) installed and authenticated
+2. Access to ESO Jira project (https://bkrupa.atlassian.net)
+3. GitHub Copilot or Claude Desktop configured
+
+**Previous Method**: Manual `acli` commands are **deprecated for AI agents** (see `.deprecated` files in `documentation/ai-agents/jira/`)
+
+---
+
+## 📊 Project Information
+
+**REQUIRED**: All AI agents must use the Jira Agent Skill for work item management (see above).
+
+📖 **Full Documentation**:
+- **[.copilot-jira/README.md](.copilot-jira/README.md)** - Jira Agent Skill for GitHub Copilot
+- **[.claude-jira/README.md](.claude-jira/README.md)** - Jira Agent Skill for Claude Desktop
+- **[documentation/ai-agents/jira/AI_JIRA_INTEGRATION_GUIDE.md](documentation/ai-agents/jira/AI_JIRA_INTEGRATION_GUIDE.md)** - Complete integration guide
+
+**Quick Start** (using Agent Skill):
+```
+@workspace View ESO-372
+@workspace Find all To Do tasks in ESO
+@workspace Move ESO-394 to "In Progress"
+@workspace Move ESO-394 to "Done"
+```
+
+**Alternative (Manual acli)** - Deprecated for AI agents:
+```powershell
+# Use Agent Skill instead (see above)
+# Manual commands kept for reference only
 acli jira workitem view ESO-372
-
-# Find next task
-acli jira workitem search --jql "project = ESO AND status = 'To Do'" --fields key,summary,type
-
-# Start work
-acli jira workitem transition ESO-394 --to "In Progress"
-
-# Complete work
-acli jira workitem transition ESO-394 --to "Done"
+acli jira workitem transition --key ESO-394 --status "In Progress"
 ```
 
 **Epic**: ESO-368 - Replay System Architecture Improvements  
@@ -148,13 +237,25 @@ acli jira workitem transition ESO-394 --to "Done"
 
 ## 🐛 Report Data Debugging (January 2026)
 
-**NEW**: Debug production issues by downloading and analyzing live report data!
+**NEW**: Debug production issues by downloading and analyzing live report data with Agent Skills!
+
+**Agent Skill Available**: Use `.copilot-reports/` or `.claude-reports/` for automated report debugging
 
 📖 **Full Documentation**:
+- **[.copilot-reports/README.md](.copilot-reports/README.md)** - GitHub Copilot skill documentation
+- **[.claude-reports/README.md](.claude-reports/README.md)** - Claude Desktop skill documentation
 - **[documentation/ai-agents/AI_REPORT_DATA_DEBUGGING.md](documentation/ai-agents/AI_REPORT_DATA_DEBUGGING.md)** - Complete guide
 - **[documentation/ai-agents/AI_REPORT_DATA_DEBUGGING_QUICK_REFERENCE.md](documentation/ai-agents/AI_REPORT_DATA_DEBUGGING_QUICK_REFERENCE.md)** - Quick reference
 
-**Quick Start**:
+**Quick Start (Agent Skill)**:
+```
+@workspace Download report data for 3gjVGWB2dxCL8XAw
+@workspace Analyze structure of report 3gjVGWB2dxCL8XAw
+@workspace Search for "Anchorite's Potency" in resource events of fight 32
+@workspace Compare fight 32 and fight 35 in report 3gjVGWB2dxCL8XAw
+```
+
+**Alternative (Manual Script)**:
 ```powershell
 # Download full report (all fights)
 npm run script -- scripts/download-report-data.ts <report-code>
@@ -165,12 +266,21 @@ npm run script -- scripts/download-report-data.ts <report-code> <fight-id>
 
 **Output Location**: `data-downloads/<report-code>/`
 
+**Available Tools** (5 total):
+- **download_report_data**: Download complete report (all fights)
+- **download_fight_data**: Download specific fight only (faster)
+- **analyze_report_structure**: Get summary of downloaded data
+- **search_events**: Search for specific events by ability/actor
+- **compare_fights**: Compare two fights for differences
+
 **Key Features**:
 - Download all event types (damage, healing, buffs, debuffs, casts, resources, deaths)
 - Separate friendly/hostile buff/debuff files for detailed analysis
 - Chronologically ordered events (all-events.json)
 - Master data with actors and abilities for cross-referencing
 - Metadata tracking for pagination and download verification
+- Event searching with filtering and limits
+- Fight comparison for debugging inconsistencies
 
 **Common Use Cases**:
 - Debug missing damage/healing calculations
@@ -178,6 +288,58 @@ npm run script -- scripts/download-report-data.ts <report-code> <fight-id>
 - Investigate scribing detection problems (check ALL event types!)
 - Review death causes and combat flow
 - Validate event timing and sequencing
+
+---
+
+## 🌿 Git Workflow Management (January 2026)
+
+**NEW**: Advanced branch management with twig and GitHub PR status checking with Agent Skills!
+
+**Agent Skill Available**: Use `.copilot-git/` or `.claude-git/` for Git workflow automation
+
+📖 **Full Documentation**:
+- **[.copilot-git/README.md](.copilot-git/README.md)** - GitHub Copilot skill documentation
+- **[.claude-git/README.md](.claude-git/README.md)** - Claude Desktop skill documentation
+
+**Quick Start (Agent Skill)**:
+```
+@workspace Show branch tree
+@workspace Set ESO-488 to depend on ESO-449
+@workspace Start interactive rebase on master
+@workspace Check PR status for current branch
+```
+
+**Prerequisites**:
+```powershell
+# Install twig globally
+npm install -g @gittwig/twig
+
+# Install and authenticate GitHub CLI (for PR status)
+winget install GitHub.cli
+gh auth login
+```
+
+**Available Tools** (4 total):
+- **git_twig_tree**: Show branch dependency tree with stacking relationships
+- **git_twig_depend**: Set parent-child branch dependencies
+- **git_rebase_interactive**: Get interactive rebase instructions and guidance
+- **git_check_pr_status**: Check PR review status, CI checks, and mergability
+
+**Key Features**:
+- Branch stacking visualization with twig
+- Dependency management for feature branches
+- Interactive rebase guidance with conflict resolution
+- PR status monitoring (reviews, CI, mergability)
+- Input validation for branch names and repos
+- Error recovery with step-by-step suggestions
+- GitHub CLI integration for PR operations
+
+**Common Use Cases**:
+- Set up feature branch stacking (ESO-449 → ESO-488 → ESO-463)
+- Fix orphaned branches
+- Clean up commit history before PR
+- Monitor PR readiness and CI status
+- Understand complex branch hierarchies
 
 ---
 

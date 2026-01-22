@@ -51,18 +51,169 @@ For simple changes, use:
 - Testing results and verification
 - Next steps and follow-up items
 
-Use `acli jira workitem comment create -k TICKET-ID -b "Your comment"` to add detailed implementation notes directly to the ticket.
+Use `@workspace Add comment to TICKET-ID: Your detailed notes` to add implementation notes directly to the ticket.
 
 ## Jira Integration
 
-**REQUIRED**: Use `acli` for Jira work item management.
+**REQUIRED**: Use the Jira Agent Skill (`.copilot-jira/` or `.claude-jira/`) for work item management.
 
-See: [jira/AI_JIRA_ACLI_INSTRUCTIONS.md](jira/AI_JIRA_ACLI_INSTRUCTIONS.md)
+### Using the Jira Skill
 
-## Branch Management (Twig)
+**Natural language in chat:**
+```
+@workspace View ESO-372
+@workspace Find all To Do tasks
+@workspace Move ESO-569 to "In Progress"
+@workspace Add comment: Implementation complete
+```
 
-- Always confirm branch stacking with `twig tree` before and after creating feature branches.
-- If a branch appears under *Orphaned branches*, fix it immediately with `twig branch depend <child> <parent>` (or the appropriate `twig branch` command).
+**Complete workflow example:**
+```
+@workspace Implement ESO-569
+
+Steps (automated by skill):
+1. View ticket (requirements)
+2. Create branch
+3. [Make changes]
+4. Tests + quality checks
+5. Commit and push
+6. Transition to "In Review"
+7. Add PR link comment
+```
+
+### Setup
+
+The Jira skill is configured in `.vscode/settings.json`:
+
+```json
+{
+  "github.copilot.chat.mcp.servers": {
+    "eso-log-aggregator-jira": {
+      "command": "node",
+      "args": ["${workspaceFolder}\\.copilot-jira\\server.js"]
+    }
+  }
+}
+```
+
+**Documentation**: See [jira/AI_JIRA_INTEGRATION_GUIDE.md](jira/AI_JIRA_INTEGRATION_GUIDE.md)
+
+**Previous Method**: Manual `acli` commands are deprecated (see `.deprecated` files)
+
+---
+
+## Report Data Debugging
+
+**REQUIRED**: Use the Report Debugging Skill (`.copilot-reports/` or `.claude-reports/`) for production issues.
+
+### Using the Report Debugging Skill
+
+**Natural language in chat:**
+```
+@workspace Download report 3gjVGWB2dxCL8XAw
+@workspace Analyze structure of report 3gjVGWB2dxCL8XAw
+@workspace Search for "Anchorite's Potency" in resource events of fight 32
+@workspace Compare fight 32 and fight 35 in report 3gjVGWB2dxCL8XAw
+```
+
+**Complete debugging workflow:**
+```
+@workspace Debug scribing detection in report 3gjVGWB2dxCL8XAw fight 32
+
+Steps (automated by skill):
+1. Download fight data
+2. Search for signature script in buffs
+3. Search in resources (Anchorite's Potency!)
+4. Search in all events for comprehensive view
+5. Analyze event patterns and timings
+```
+
+### Setup
+
+The Report Debugging skill is configured in `.vscode/settings.json`:
+
+```json
+{
+  "github.copilot.chat.mcp.servers": {
+    "eso-log-aggregator-reports": {
+      "command": "node",
+      "args": ["${workspaceFolder}\\.copilot-reports\\server.js"]
+    }
+  }
+}
+```
+
+**Documentation**: 
+- [.copilot-reports/README.md](../../.copilot-reports/README.md)
+- [AI_REPORT_DATA_DEBUGGING.md](AI_REPORT_DATA_DEBUGGING.md)
+
+**Previous Method**: Manual `npm run script` commands still work but the skill is preferred
+
+---
+
+## Git Workflow Management
+
+**REQUIRED**: Use the Git Workflow Skill (`.copilot-git/` or `.claude-git/`) for branch management and PR status.
+
+### Using the Git Workflow Skill
+
+**Natural language in chat:**
+```
+@workspace Show branch tree
+@workspace Set ESO-488 to depend on ESO-449
+@workspace Start interactive rebase on master
+@workspace Check PR status for current branch
+```
+
+**Branch stacking workflow:**
+```
+@workspace Set up branch stack for ESO-488
+
+Steps (guided by skill):
+1. Show current branch tree
+2. Create feature branch ESO-488
+3. Set dependency: ESO-488 depends on ESO-449
+4. Verify tree structure
+5. Work on feature
+6. Check PR status before merging
+```
+
+### Prerequisites
+
+**Install twig globally:**
+```powershell
+npm install -g @gittwig/twig
+```
+
+**Install and authenticate GitHub CLI** (for PR status):
+```powershell
+winget install GitHub.cli
+gh auth login
+```
+
+### Setup
+
+The Git Workflow skill is configured in `.vscode/settings.json`:
+
+```json
+{
+  "github.copilot.chat.mcp.servers": {
+    "eso-log-aggregator-git": {
+      "command": "node",
+      "args": ["${workspaceFolder}\\.copilot-git\\server.js"]
+    }
+  }
+}
+```
+
+**Documentation**: [.copilot-git/README.md](../../.copilot-git/README.md)
+
+**Branch Stacking Strategy**: ESO-449 → ESO-488 → ESO-463 (unless instructed otherwise)
+
+---
+
+- Always confirm branch stacking with `@workspace Show branch tree` before and after creating feature branches.
+- If a branch appears under *Orphaned branches*, fix it immediately with `@workspace Set <child> to depend on <parent>`.
 - Keep replay-system work aligned: `ESO-449` → `ESO-488` → `ESO-463` unless instructed otherwise.
 - Document any intentional deviations in the relevant Jira ticket/comment so reviewers understand the stack layout.
 
@@ -117,15 +268,20 @@ See: [jira/AI_JIRA_ACLI_INSTRUCTIONS.md](jira/AI_JIRA_ACLI_INSTRUCTIONS.md)
 
 ### 1. Start Work on a Jira Task
 
+**Use Jira Agent Skill** (preferred):
+```
+@workspace View ESO-XXX
+@workspace Move ESO-XXX to "In Progress"
+```
+
+**Alternative (Manual)**:
 ```powershell
 # View the task details
 acli jira workitem view ESO-XXX
 
-# Transition to In Progress (correct syntax)
+# Transition to In Progress
 acli jira workitem transition --key ESO-XXX --status "In Progress"
 ```
-
-**Common Error**: The command is `transition --key ESO-XXX --status "In Progress"` (NOT `--to`)
 
 ### 2. Create Feature Branch **FIRST** ⚠️
 
@@ -236,15 +392,19 @@ Jira: ESO-XXX
 
 ### 8. Update Jira Ticket
 
+**Use Jira Agent Skill** (preferred):
+```
+@workspace Move ESO-XXX to "Done"
+@workspace Add comment to ESO-XXX: Implementation complete. Changes: <summary>. Testing: All checks passing. PR: <url>
+```
+
+**Alternative (Manual)**:
 ```powershell
 # Mark task as Done
 acli jira workitem transition --key ESO-XXX --status "Done"
 
-# Add completion comment with details
+# Add completion comment
 acli jira workitem comment create -k ESO-XXX -b "Implementation complete. Changes: <summary>. Testing: All checks passing. PR: <url>"
-
-# Add PR link comment
-acli jira workitem comment create -k ESO-XXX -b "Pull request created: https://github.com/bkrupa/eso-log-aggregator/pull/XXX"
 ```
 
 ### 9. Verify Clean State
@@ -282,12 +442,18 @@ const items = [
 
 ### Twig Branch Management
 
+**Use Git Workflow Agent Skill** (preferred):
+```
+@workspace Show branch tree
+@workspace Set <child-branch> to depend on <parent-branch>
+```
+
+**Alternative (Manual)**:
 ```powershell
 # View branch tree
 twig tree
 
-# Check for orphaned branches
-# If branch appears under "Orphaned branches", fix with:
+# Fix orphaned branches
 twig branch depend <child-branch> <parent-branch>
 
 # Cascade changes (if working with stacked branches)
@@ -301,24 +467,25 @@ Always verify clean state:
 - Branch pushed to remote
 - PR created and linked to Jira
 
-## Quick Reference: acli Jira Commands
+## Quick Reference: Jira Workflows
 
+**Use Agent Skills** (preferred):
+```
+@workspace View ESO-XXX
+@workspace Move ESO-XXX to "In Progress"
+@workspace Move ESO-XXX to "Done"
+@workspace Add comment to ESO-XXX: Your comment here
+@workspace Find all To Do tasks in ESO
+```
+
+**Manual Commands** (if needed):
 ```powershell
-# View task
 acli jira workitem view ESO-XXX
-
-# Start work
 acli jira workitem transition --key ESO-XXX --status "In Progress"
-
-# Complete work
 acli jira workitem transition --key ESO-XXX --status "Done"
-
-# Add comment
 acli jira workitem comment create -k ESO-XXX -b "Your comment here"
-
-# Search for tasks
 acli jira workitem search --jql "project = ESO AND status = 'To Do'" --fields key,summary,type
 ```
 
-See [jira/AI_JIRA_ACLI_INSTRUCTIONS.md](jira/AI_JIRA_ACLI_INSTRUCTIONS.md) for comprehensive acli documentation.
+See [jira/AI_JIRA_INTEGRATION_GUIDE.md](jira/AI_JIRA_INTEGRATION_GUIDE.md) for comprehensive Jira Agent Skill documentation.
 

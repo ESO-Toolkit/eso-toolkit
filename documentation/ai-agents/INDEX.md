@@ -1,6 +1,6 @@
 # AI Agent Documentation Index
 
-**Last Updated**: January 18, 2026  
+**Last Updated**: January 22, 2026  
 **Purpose**: Central hub for all AI agent guidance and instructions
 
 ---
@@ -8,6 +8,35 @@
 ## 📖 Overview
 
 This directory contains comprehensive documentation designed specifically for AI agents (like GitHub Copilot, Claude, ChatGPT, etc.) working on the ESO Log Aggregator codebase. Each subsystem has both detailed instructions and quick reference cards.
+
+---
+
+## 🆕 Copilot Skills Analysis (January 2026)
+
+**NEW**: Comprehensive analysis of which agent documentation can be converted into executable Copilot Skills (MCP Servers):
+
+- **[COPILOT_SKILLS_ANALYSIS.md](./COPILOT_SKILLS_ANALYSIS.md)** (20-25 min read)
+  - Full analysis of all agent documentation
+  - Detailed evaluation of conversion candidates
+  - Implementation roadmap and effort estimates
+  - Complete workflow vision
+
+- **[COPILOT_SKILLS_QUICK_SUMMARY.md](./COPILOT_SKILLS_QUICK_SUMMARY.md)** (3-5 min read)
+  - Executive summary of findings
+  - Priority rankings (P1: Jira, P2: Reports, P3: Git)
+  - Quick decision guide
+
+- **[COPILOT_SKILLS_DECISION_MATRIX.md](./COPILOT_SKILLS_DECISION_MATRIX.md)** (10-12 min read)
+  - Scoring matrix for each document
+  - Decision framework for future docs
+  - Why each doc is/isn't suitable
+
+- **[COPILOT_SKILLS_ECOSYSTEM.md](./COPILOT_SKILLS_ECOSYSTEM.md)** (8-10 min read)
+  - Visual ecosystem diagram
+  - Current vs. proposed architecture
+  - Complete workflow visualization
+
+**Key Finding**: 3 high-value skill candidates identified (Jira integration, Report debugging, Extended Git workflow)
 
 ---
 
@@ -125,7 +154,14 @@ Debug production issues using downloaded ESO Logs report data.
 - Chronological event ordering
 - Metadata tracking for pagination
 
-**Download Command**:
+**Use Agent Skill** (preferred):
+```
+@workspace Download report data for <report-code>
+@workspace Download fight data for <report-code> fight <fight-id>
+@workspace Analyze structure of report <report-code>
+```
+
+**Alternative (Manual)**:
 ```powershell
 # Full report
 npm run script -- scripts/download-report-data.ts <report-code>
@@ -138,39 +174,45 @@ npm run script -- scripts/download-report-data.ts <report-code> <fight-id>
 
 ---
 
-### 🎫 Jira Integration (acli)
-**Directory**: [`jira/`](./jira/)
+### 🎫 Jira Integration (Agent Skill)
+**Directory**: [`jira/`](./jira/)  
+**Skill**: `.copilot-jira/` and `.claude-jira/`
 
-Work item management using Atlassian CLI (acli) for Jira integration.
+**⭐ NEW**: Automated Jira work item management through AI agent skills!
 
 **Documents**:
-- **[AI_JIRA_ACLI_INSTRUCTIONS.md](./jira/AI_JIRA_ACLI_INSTRUCTIONS.md)**
-  - Complete acli guide
-  - Query patterns
-  - Workflow automation
-  - Best practices
+- **[AI_JIRA_INTEGRATION_GUIDE.md](./jira/AI_JIRA_INTEGRATION_GUIDE.md)**
+  - Complete skill usage guide
+  - All 8 Jira tools explained
+  - Natural language examples
+  - Complete workflow automation
 
 - **[AI_JIRA_QUICK_REFERENCE.md](./jira/AI_JIRA_QUICK_REFERENCE.md)**
-  - Essential commands
-  - Quick workflows
-  - Common queries
+  - Quick reference for skill usage
+  - Common operations
+  - JQL query templates
 
-**Required for ALL agents**: Use `acli` for Jira work item management.
+**Skill Features** (8 tools):
+- View work items
+- Search with JQL
+- Transition status
+- Add comments
+- Link work items
+- Get epic progress
+- Assign tickets
+- Update story points
 
-**Example Workflow**:
-```powershell
-# View current story
-acli jira workitem view ESO-372
-
-# Find next task
-acli jira workitem search --jql "project = ESO AND status = 'To Do'"
-
-# Start work
-acli jira workitem transition ESO-394 --to "In Progress"
-
-# Complete work
-acli jira workitem transition ESO-394 --to "Done"
+**Usage Example**:
 ```
+@workspace View ESO-372
+@workspace Find all To Do tasks in ESO
+@workspace Move ESO-569 to "In Progress"
+@workspace Add comment: Implementation complete
+```
+
+**Setup**: See [.copilot-jira/README.md](../../.copilot-jira/README.md)
+
+**Previous Method**: Manual acli commands (now deprecated, see `.deprecated` files)
 
 ---
 
@@ -192,6 +234,14 @@ Complete onboarding guide covering:
 ## 🔄 Typical Agent Workflow
 
 ### 1. **Check Current Work**
+
+**Use Jira Agent Skill**:
+```
+@workspace View ESO-XXX
+@workspace Find all To Do tasks in ESO
+```
+
+**Alternative (Manual)**:
 ```powershell
 acli jira workitem view ESO-XXX
 acli jira workitem search --jql "project = ESO AND status = 'To Do'"
@@ -223,6 +273,14 @@ npm run test:smoke     # Quick E2E validation
 - Add implementation summary in [implementation/](../implementation/)
 
 ### 6. **Update Jira**
+
+**Use Jira Agent Skill**:
+```
+@workspace Move ESO-XXX to "Done"
+@workspace Add comment to ESO-XXX: Implementation complete
+```
+
+**Alternative (Manual)**:
 ```powershell
 acli jira workitem transition ESO-XXX --to "Done"
 ```
