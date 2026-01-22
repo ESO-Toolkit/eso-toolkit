@@ -1,6 +1,8 @@
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import { Box, Typography, LinearProgress, Avatar, useTheme, Chip } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import { Box, Typography, LinearProgress, Avatar, useTheme, Chip, IconButton } from '@mui/material';
 import React from 'react';
 
 export interface BuffUptime {
@@ -82,6 +84,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
   selectedTargetId,
 }) => {
   const theme = useTheme();
+  const [isExpanded, setIsExpanded] = React.useState(false);
 
   // Helper function to get stack gradient
   const getStackGradient = React.useCallback(
@@ -152,8 +155,29 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
     buff.groupAverageUptimePercentage,
   ]);
 
-  const onMainClick = React.useCallback((): void => {
-    const url = createEsoLogsUrl(
+  const onMainClick = React.useCallback(
+    (e?: React.MouseEvent): void => {
+      // If multi-stack, toggle expansion instead of opening link
+      if (buff.allStacksData && buff.allStacksData.length > 0) {
+        if (e) e.stopPropagation();
+        setIsExpanded((prev) => !prev);
+        return;
+      }
+
+      // For single-stack abilities, open ESO Logs link
+      const url = createEsoLogsUrl(
+        reportId,
+        fightId,
+        buff.abilityGameID,
+        selectedTargetId,
+        buff.isDebuff,
+        buff.hostilityType,
+        buff.dotAbilityIds,
+      );
+
+      window.open(url, '_blank');
+    },
+    [
       reportId,
       fightId,
       buff.abilityGameID,
@@ -161,18 +185,9 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
       buff.isDebuff,
       buff.hostilityType,
       buff.dotAbilityIds,
-    );
-
-    window.open(url, '_blank');
-  }, [
-    reportId,
-    fightId,
-    buff.abilityGameID,
-    selectedTargetId,
-    buff.isDebuff,
-    buff.hostilityType,
-    buff.dotAbilityIds,
-  ]);
+      buff.allStacksData,
+    ],
+  );
 
   return (
     <Box
@@ -432,11 +447,32 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
               )}
             </Box>
           )}
+          {/* Expand/Collapse icon for multi-stack */}
+          {buff.allStacksData && buff.allStacksData.length > 0 && (
+            <IconButton
+              size="small"
+              sx={{
+                ml: 0.5,
+                padding: 0.5,
+                color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded((prev) => !prev);
+              }}
+            >
+              {isExpanded ? (
+                <ExpandLessIcon fontSize="small" />
+              ) : (
+                <ExpandMoreIcon fontSize="small" />
+              )}
+            </IconButton>
+          )}
         </Box>
       </Box>
 
-      {/* Segmented stack labels (below bar for multi-stack abilities) */}
-      {buff.allStacksData && buff.allStacksData.length > 0 && (
+      {/* Segmented stack labels (below bar for multi-stack abilities when collapsed) */}
+      {buff.allStacksData && buff.allStacksData.length > 0 && !isExpanded && (
         <Box
           sx={{
             display: 'flex',
@@ -490,6 +526,219 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
               </Box>
             </React.Fragment>
           ))}
+        </Box>
+      )}
+
+      {/* Expanded view - individual bars for each stack (highest on top) */}
+      {buff.allStacksData && isExpanded && (
+        <Box sx={{ width: '100%', mt: 1 }}>
+          {buff.allStacksData
+            .slice()
+            .sort((a, b) => b.uptimePercentage - a.uptimePercentage) // Sort highest first
+            .map((stackData) => {
+              const stackPct = Math.max(0, Math.min(100, stackData.uptimePercentage));
+              const stackDelta =
+                stackData.groupAverageUptimePercentage !== undefined
+                  ? stackData.uptimePercentage - stackData.groupAverageUptimePercentage
+                  : null;
+
+              return (
+                <Box
+                  key={stackData.stackLevel}
+                  sx={{
+                    width: '100%',
+                    mb: 0.75,
+                    cursor: 'pointer',
+                    '&:hover': {
+                      opacity: 0.9,
+                    },
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const url = createEsoLogsUrl(
+                      reportId,
+                      fightId,
+                      buff.abilityGameID,
+                      selectedTargetId,
+                      buff.isDebuff,
+                      buff.hostilityType,
+                      buff.dotAbilityIds,
+                    );
+                    window.open(url, '_blank');
+                  }}
+                >
+                  {/* Individual stack progress bar */}
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      height: 32,
+                      borderRadius: 1.5,
+                      bgcolor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255,255,255,0.05)'
+                          : 'rgba(203, 213, 225, 0.2)',
+                      border:
+                        theme.palette.mode === 'dark'
+                          ? 'none'
+                          : '1px solid rgba(15, 23, 42, 0.08)',
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? 'inset 0 1px 2px rgba(0, 0, 0, 0.3)'
+                          : 'inset 0 1px 1px rgba(15, 23, 42, 0.05)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {/* Progress fill */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        height: '100%',
+                        width: `${stackPct}%`,
+                        background: getStackGradient(stackData.stackLevel),
+                        borderRadius: 1.5,
+                        transition: 'width 0.3s ease-in-out',
+                      }}
+                    />
+
+                    {/* Content overlay */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        px: 1.5,
+                        gap: 1,
+                      }}
+                    >
+                      {/* Stack indicator */}
+                      <Box
+                        sx={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: '2px',
+                          background: getStackGradient(stackData.stackLevel),
+                          flexShrink: 0,
+                          border:
+                            theme.palette.mode === 'dark'
+                              ? '1px solid rgba(255,255,255,0.2)'
+                              : '1px solid rgba(0,0,0,0.1)',
+                        }}
+                      />
+
+                      {/* Stack label */}
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 600,
+                          fontSize: '0.8rem',
+                          color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
+                          textShadow:
+                            theme.palette.mode === 'dark'
+                              ? '1px 1px 2px rgba(0,0,0,0.8)'
+                              : '1px 1px 1px rgba(255,255,255,0.8)',
+                          flex: 1,
+                        }}
+                      >
+                        Stack {stackData.stackLevel}
+                      </Typography>
+
+                      {/* Applications */}
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255,255,255,0.7)'
+                              : 'rgba(30, 41, 59, 0.7)',
+                          textShadow:
+                            theme.palette.mode === 'dark'
+                              ? '1px 1px 1px rgba(0,0,0,0.8)'
+                              : '1px 1px 1px rgba(255,255,255,0.7)',
+                          fontSize: '0.7rem',
+                        }}
+                      >
+                        {stackData.applications}x
+                      </Typography>
+
+                      {/* Percentage */}
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: '0.85rem',
+                          color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
+                          textShadow:
+                            theme.palette.mode === 'dark'
+                              ? '1px 1px 2px rgba(0,0,0,0.8)'
+                              : '1px 1px 1px rgba(255,255,255,0.8)',
+                        }}
+                      >
+                        {Math.round(stackPct)}%
+                      </Typography>
+
+                      {/* Delta indicator */}
+                      {stackDelta !== null && (
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                          }}
+                        >
+                          {Math.abs(stackDelta) < 2 ? (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontWeight: 700,
+                                fontSize: '0.7rem',
+                                color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                              }}
+                            >
+                              ≈
+                            </Typography>
+                          ) : (
+                            <>
+                              {stackDelta > 0 ? (
+                                <TrendingUpIcon
+                                  sx={{
+                                    fontSize: '0.9rem',
+                                    color: '#10b981',
+                                  }}
+                                />
+                              ) : (
+                                <TrendingDownIcon
+                                  sx={{
+                                    fontSize: '0.9rem',
+                                    color: '#ef4444',
+                                  }}
+                                />
+                              )}
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  fontWeight: 700,
+                                  fontSize: '0.65rem',
+                                  color: stackDelta > 0 ? '#10b981' : '#ef4444',
+                                }}
+                              >
+                                {stackDelta > 0 ? '+' : ''}
+                                {Math.round(stackDelta)}%
+                              </Typography>
+                            </>
+                          )}
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
+                </Box>
+              );
+            })}
         </Box>
       )}
     </Box>
