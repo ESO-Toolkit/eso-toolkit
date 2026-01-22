@@ -2,7 +2,6 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
-import { selectSelectedFriendlyPlayerId } from '../../../store/ui/uiSelectors';
 import {
   useCombatantInfoEvents,
   useDamageEvents,
@@ -10,6 +9,7 @@ import {
   useResolvedReportFightContext,
 } from '../../../hooks';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
+import { selectSelectedFriendlyPlayerId } from '../../../store/ui/uiSelectors';
 import { KnownAbilities } from '../../../types/abilities';
 import { PlayerTalent } from '../../../types/playerDetails';
 
