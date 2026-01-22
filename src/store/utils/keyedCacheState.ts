@@ -66,6 +66,8 @@ export const trimCache = <TEntry>(state: KeyedCacheState<TEntry>, maxEntries: nu
     if (!oldestKey) {
       break;
     }
-    removeFromCache(state, oldestKey);
+    // Don't call removeFromCache here - we're already managing accessOrder via shift()
+    // Just delete the entry from the entries map
+    delete state.entries[oldestKey];
   }
 };

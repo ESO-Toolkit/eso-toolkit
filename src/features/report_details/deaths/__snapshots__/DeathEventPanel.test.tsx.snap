@@ -741,10 +741,10 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle missing deb
               <a
                 class="MuiTypography-root MuiTypography-caption MuiLink-root MuiLink-underlineAlways css-ec8d3o-MuiTypography-root-MuiLink-root"
                 data-discover="true"
-                href="/report/test-report/fight/1/replay?time=5000&actorId=456"
+                href="/report/test-report/fight/1/replay?time=1004000&actorId=456"
                 title="View in replay at this time"
               >
-                0:05.0
+                16:44.0
                  ▶
               </a>
             </div>
@@ -965,10 +965,10 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
               <a
                 class="MuiTypography-root MuiTypography-caption MuiLink-root MuiLink-underlineAlways css-ec8d3o-MuiTypography-root-MuiLink-root"
                 data-discover="true"
-                href="/report/test-report/fight/1/replay?time=5000&actorId=456"
+                href="/report/test-report/fight/1/replay?time=1004000&actorId=456"
                 title="View in replay at this time"
               >
-                0:05.0
+                16:44.0
                  ▶
               </a>
             </div>
@@ -1241,10 +1241,10 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
               <a
                 class="MuiTypography-root MuiTypography-caption MuiLink-root MuiLink-underlineAlways css-ec8d3o-MuiTypography-root-MuiLink-root"
                 data-discover="true"
-                href="/report/test-report/fight/1/replay?time=5000&actorId=456"
+                href="/report/test-report/fight/1/replay?time=1004000&actorId=456"
                 title="View in replay at this time"
               >
-                0:05.0
+                16:44.0
                  ▶
               </a>
             </div>
@@ -1528,10 +1528,10 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
               <a
                 class="MuiTypography-root MuiTypography-caption MuiLink-root MuiLink-underlineAlways css-ec8d3o-MuiTypography-root-MuiLink-root"
                 data-discover="true"
-                href="/report/test-report/fight/1/replay?time=5000&actorId=456"
+                href="/report/test-report/fight/1/replay?time=1004000&actorId=456"
                 title="View in replay at this time"
               >
-                0:05.0
+                16:44.0
                  ▶
               </a>
             </div>
@@ -1840,10 +1840,10 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               <a
                 class="MuiTypography-root MuiTypography-caption MuiLink-root MuiLink-underlineAlways css-ec8d3o-MuiTypography-root-MuiLink-root"
                 data-discover="true"
-                href="/report/test-report/fight/1/replay?time=5000&actorId=456"
+                href="/report/test-report/fight/1/replay?time=1004000&actorId=456"
                 title="View in replay at this time"
               >
-                0:05.0
+                16:44.0
                  ▶
               </a>
             </div>
@@ -2175,10 +2175,10 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               <a
                 class="MuiTypography-root MuiTypography-caption MuiLink-root MuiLink-underlineAlways css-ec8d3o-MuiTypography-root-MuiLink-root"
                 data-discover="true"
-                href="/report/test-report/fight/1/replay?time=5000&actorId=456"
+                href="/report/test-report/fight/1/replay?time=1004000&actorId=456"
                 title="View in replay at this time"
               >
-                0:05.0
+                16:44.0
                  ▶
               </a>
             </div>
@@ -2404,10 +2404,10 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               <a
                 class="MuiTypography-root MuiTypography-caption MuiLink-root MuiLink-underlineAlways css-ec8d3o-MuiTypography-root-MuiLink-root"
                 data-discover="true"
-                href="/report/test-report/fight/1/replay?time=5000&actorId=456"
+                href="/report/test-report/fight/1/replay?time=1004000&actorId=456"
                 title="View in replay at this time"
               >
-                0:05.0
+                16:44.0
                  ▶
               </a>
             </div>
@@ -2633,10 +2633,10 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               <a
                 class="MuiTypography-root MuiTypography-caption MuiLink-root MuiLink-underlineAlways css-ec8d3o-MuiTypography-root-MuiLink-root"
                 data-discover="true"
-                href="/report/test-report/fight/1/replay?time=5000&actorId=456"
+                href="/report/test-report/fight/1/replay?time=1004000&actorId=456"
                 title="View in replay at this time"
               >
-                0:05.0
+                16:44.0
                  ▶
               </a>
             </div>

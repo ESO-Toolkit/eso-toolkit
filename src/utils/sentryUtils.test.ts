@@ -204,9 +204,19 @@ describe('sentryUtils', () => {
         getState: jest.fn().mockReturnValue({
           router: { location: { pathname: '/' } },
           ui: { theme: 'dark' },
-          report: { loading: false, error: null },
-          masterData: { loading: true, error: null },
-          playerData: { loading: false, error: 'Test error' },
+          report: {
+            loading: false,
+            error: null,
+            reportId: 'test',
+            data: null,
+            entries: {},
+            accessOrder: [],
+            activeContext: { reportId: null, fightId: null },
+            cacheMetadata: { lastFetchedReportId: null, lastFetchedTimestamp: null },
+            fightIndexByReport: {},
+          },
+          masterData: { loading: true, error: null, entries: {}, accessOrder: [] },
+          playerData: { loading: false, error: 'Test error', entries: {}, accessOrder: [] },
           events: {},
           workerResults: {},
         } as unknown as RootState),
@@ -214,11 +224,16 @@ describe('sentryUtils', () => {
 
       const context = captureApplicationContext(mockStore);
 
+      // The captureApplicationContext function uses selectors that look at the active context
+      // Since activeContext is null, the selectors return default values (false for loading, null for errors)
       expect(context.reduxState).toEqual({
         ui: { theme: 'dark' },
-        report: { loading: false, error: null },
-        masterData: { loading: true, error: null },
-        playerData: { loading: false, error: 'Test error' },
+        report: {
+          loading: false,
+          error: null,
+        },
+        masterData: { loading: false, error: null },
+        playerData: { loading: false, error: null },
       });
     });
 

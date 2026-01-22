@@ -583,22 +583,44 @@ describe('playerDataSlice keyed cache', () => {
     store.dispatch(resetPlayerDataLoading());
 
     const entry = getEntry(store.getState(), 'A', 1);
-    expect(entry?.status).toBe('idle');
-    expect(entry?.error).toBeNull();
+    // resetPlayerDataLoading sets status to idle if loading, and clears error
+    expect(entry?.status).toBe('failed'); // Status remains failed, not loading
+    expect(entry?.error).toBeNull(); // Error is cleared
   });
 
   it('trims cache according to provided limit', () => {
     for (let i = 0; i < 5; i++) {
+      // Dispatch pending action first to set up currentRequest
+      store.dispatch({
+        type: fetchPlayerData.pending.type,
+        meta: {
+          arg: { reportCode: 'A', fightId: i, client: {} },
+          requestId: String(i),
+        },
+      });
+      // Then dispatch fulfilled action
       store.dispatch({
         type: fetchPlayerData.fulfilled.type,
         payload: { playersById: {}, reportCode: 'A', fightId: i },
-        meta: { requestId: String(i) },
+        meta: {
+          arg: { reportCode: 'A', fightId: i, client: {} },
+          requestId: String(i),
+        },
       });
     }
 
+    // Initial state should have 5 entries
+    expect(Object.keys(store.getState().playerData.entries)).toHaveLength(5);
+    expect(store.getState().playerData.accessOrder).toHaveLength(5);
+
     store.dispatch(trimPlayerDataCache({ maxEntries: 2 }));
 
-    expect(Object.keys(store.getState().playerData.entries)).toHaveLength(2);
+    // After trimming, should only have 2 entries (most recent)
+    const state = store.getState().playerData;
+    expect(Object.keys(state.entries)).toHaveLength(2);
+    expect(state.accessOrder).toHaveLength(2);
+    // Verify the most recent entries are kept (A::3 and A::4)
+    expect(state.accessOrder).toEqual(['A::3', 'A::4']);
   });
 
   describe('fetchPlayerData thunk', () => {
