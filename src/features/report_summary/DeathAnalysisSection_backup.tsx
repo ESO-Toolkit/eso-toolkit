@@ -1,4 +1,8 @@
-import React from 'react';
+/* eslint-disable import/no-default-export */
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import WarningIcon from '@mui/icons-material/Warning';
 import {
   Box,
   Typography,
@@ -23,12 +27,13 @@ import {
   Divider,
   LinearProgress,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import WarningIcon from '@mui/icons-material/Warning';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
+import React from 'react';
 
-import { ReportDeathAnalysis, MechanicCategory, DeathPatternType } from '../../types/reportSummaryTypes';
+import {
+  ReportDeathAnalysis,
+  MechanicCategory,
+  DeathPatternType,
+} from '../../types/reportSummaryTypes';
 
 interface DeathAnalysisSectionProps {
   deathAnalysis?: ReportDeathAnalysis;
@@ -48,9 +53,7 @@ const DeathAnalysisSection: React.FC<DeathAnalysisSectionProps> = ({
           <Typography variant="h5" gutterBottom>
             Death Analysis
           </Typography>
-          <Alert severity="error">
-            Failed to load death analysis data: {error}
-          </Alert>
+          <Alert severity="error">Failed to load death analysis data: {error}</Alert>
         </CardContent>
       </Card>
     );
@@ -75,10 +78,8 @@ const DeathAnalysisSection: React.FC<DeathAnalysisSectionProps> = ({
     <Card elevation={2}>
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-          <Typography variant="h5">
-            Death Analysis
-          </Typography>
-          <Chip 
+          <Typography variant="h5">Death Analysis</Typography>
+          <Chip
             label={`${deathAnalysis.totalDeaths} Total Deaths`}
             color={deathAnalysis.totalDeaths === 0 ? 'success' : 'error'}
             icon={deathAnalysis.totalDeaths === 0 ? <CheckCircleIcon /> : <ErrorIcon />}
@@ -101,7 +102,7 @@ const DeathAnalysisSection: React.FC<DeathAnalysisSectionProps> = ({
                   Key Issues Identified
                 </Typography>
                 {deathAnalysis.deathPatterns.map((pattern, index) => (
-                  <Alert 
+                  <Alert
                     key={index}
                     severity={getSeverityLevel(pattern.severity)}
                     sx={{ mb: 2 }}
@@ -123,9 +124,9 @@ const DeathAnalysisSection: React.FC<DeathAnalysisSectionProps> = ({
                           <Chip key={player} label={player} size="small" />
                         ))}
                         {pattern.affectedPlayers.length > 3 && (
-                          <Chip 
-                            label={`+${pattern.affectedPlayers.length - 3} more`} 
-                            size="small" 
+                          <Chip
+                            label={`+${pattern.affectedPlayers.length - 3} more`}
+                            size="small"
                             variant="outlined"
                           />
                         )}
@@ -149,11 +150,9 @@ const DeathAnalysisSection: React.FC<DeathAnalysisSectionProps> = ({
                         <ListItemText
                           primary={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                              <Typography variant="subtitle1">
-                                {mechanic.mechanicName}
-                              </Typography>
-                              <Chip 
-                                label={getCategoryLabel(mechanic.category)} 
+                              <Typography variant="subtitle1">{mechanic.mechanicName}</Typography>
+                              <Chip
+                                label={getCategoryLabel(mechanic.category)}
                                 size="small"
                                 color={getCategoryColor(mechanic.category)}
                               />
@@ -163,7 +162,8 @@ const DeathAnalysisSection: React.FC<DeathAnalysisSectionProps> = ({
                             <Box sx={{ mt: 1 }}>
                               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                 <Typography variant="body2">
-                                  {mechanic.totalDeaths} deaths • {mechanic.playersAffected.length} players affected
+                                  {mechanic.totalDeaths} deaths • {mechanic.playersAffected.length}{' '}
+                                  players affected
                                 </Typography>
                                 <Typography variant="body2">
                                   {mechanic.percentage.toFixed(1)}% of all deaths
@@ -177,7 +177,8 @@ const DeathAnalysisSection: React.FC<DeathAnalysisSectionProps> = ({
                               />
                               {mechanic.averageKillingBlowDamage > 0 && (
                                 <Typography variant="caption" color="text.secondary">
-                                  Avg. killing blow: {formatDamage(mechanic.averageKillingBlowDamage)}
+                                  Avg. killing blow:{' '}
+                                  {formatDamage(mechanic.averageKillingBlowDamage)}
                                 </Typography>
                               )}
                             </Box>
@@ -213,24 +214,28 @@ const DeathAnalysisSection: React.FC<DeathAnalysisSectionProps> = ({
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             {player.playerName}
                             {player.role && (
-                              <Chip 
-                                label={player.role} 
-                                size="small" 
+                              <Chip
+                                label={player.role}
+                                size="small"
                                 color={getRoleColor(player.role)}
                               />
                             )}
                           </Box>
                         </TableCell>
                         <TableCell align="right">
-                          <Chip 
+                          <Chip
                             label={player.totalDeaths.toString()}
                             size="small"
-                            color={player.totalDeaths === 0 ? 'success' : player.totalDeaths <= 2 ? 'warning' : 'error'}
+                            color={
+                              player.totalDeaths === 0
+                                ? 'success'
+                                : player.totalDeaths <= 2
+                                  ? 'warning'
+                                  : 'error'
+                            }
                           />
                         </TableCell>
-                        <TableCell align="right">
-                          {formatTime(player.averageTimeAlive)}
-                        </TableCell>
+                        <TableCell align="right">{formatTime(player.averageTimeAlive)}</TableCell>
                         <TableCell align="right">
                           {player.topCausesOfDeath.length > 0 ? (
                             <Typography variant="body2" noWrap>
@@ -261,12 +266,12 @@ const DeathAnalysisSection: React.FC<DeathAnalysisSectionProps> = ({
                       <Typography variant="subtitle1" sx={{ flex: 1 }}>
                         {fight.fightName}
                       </Typography>
-                      <Chip 
+                      <Chip
                         label={`${fight.totalDeaths} deaths`}
                         size="small"
                         color={fight.totalDeaths === 0 ? 'success' : 'error'}
                       />
-                      <Chip 
+                      <Chip
                         label={fight.success ? 'Kill' : 'Wipe'}
                         size="small"
                         color={fight.success ? 'success' : 'error'}
@@ -310,17 +315,17 @@ const DeathAnalysisSkeleton: React.FC = () => {
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
         <Skeleton variant="rectangular" width={150} height={32} />
       </Box>
-      
+
       <Typography variant="h6" gutterBottom>
         <Skeleton width="40%" />
       </Typography>
       <Skeleton variant="rectangular" height={120} sx={{ mb: 4 }} />
-      
+
       <Typography variant="h6" gutterBottom>
         <Skeleton width="45%" />
       </Typography>
       <Skeleton variant="rectangular" height={200} sx={{ mb: 4 }} />
-      
+
       <Typography variant="h6" gutterBottom>
         <Skeleton width="35%" />
       </Typography>
@@ -349,7 +354,9 @@ function formatTime(seconds: number): string {
   return `${minutes}m ${remainingSeconds}s`;
 }
 
-function getRoleColor(role: string): 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' {
+function getRoleColor(
+  role: string,
+): 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' {
   switch (role.toLowerCase()) {
     case 'tank':
       return 'primary';
@@ -362,7 +369,9 @@ function getRoleColor(role: string): 'primary' | 'secondary' | 'error' | 'warnin
   }
 }
 
-function getCategoryColor(category: MechanicCategory): 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' {
+function getCategoryColor(
+  category: MechanicCategory,
+): 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' {
   switch (category) {
     case MechanicCategory.AREA_EFFECT:
       return 'warning';

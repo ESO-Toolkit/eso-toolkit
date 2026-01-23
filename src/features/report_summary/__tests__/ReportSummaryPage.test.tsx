@@ -8,6 +8,7 @@ import { ReportSummaryPage } from '../ReportSummaryPage';
 import { EsoLogsClientProvider } from '../../../EsoLogsClientContext';
 import { ReportFightProvider } from '../../../ReportFightContext';
 import { AuthProvider } from '../../auth/AuthContext';
+import { LoggerProvider } from '../../../contexts/LoggerContext';
 
 // Mock the hooks
 jest.mock('../../../hooks/useReportData', () => ({
@@ -26,9 +27,9 @@ jest.mock('../../../hooks/useReportData', () => ({
   }),
 }));
 
-jest.mock('../hooks/useReportSummaryData', () => ({
-  useReportSummaryData: () => ({
-    summaryData: {
+jest.mock('../hooks/useOptimizedReportSummaryData', () => ({
+  useOptimizedReportSummaryData: () => ({
+    reportSummaryData: {
       reportInfo: {
         reportId: 'test123',
         title: 'Test Report',
@@ -102,8 +103,9 @@ jest.mock('../hooks/useReportSummaryData', () => ({
       },
     },
     isLoading: false,
-    error: undefined,
-    progress: undefined,
+    error: null,
+    progress: null,
+    fetchData: jest.fn(),
   }),
 }));
 
@@ -119,13 +121,31 @@ const createMockStore = () => {
     reducer: {
       report: (state = { data: null, loading: false, error: null }) => state,
       playerData: (state = { playersById: {}, loading: false, error: null }) => state,
-      masterData: (state = { abilitiesById: {}, actorsById: {}, loading: false }) => state,
+      masterData: (
+        state = {
+          abilitiesById: {},
+          actorsById: {},
+          loading: false,
+        },
+      ) => state,
       events: (
         state = {
-          damage: { events: [], loading: false },
-          healing: { events: [], loading: false },
-          death: { events: [], loading: false },
-        }
+          damage: {
+            'test123::__all__': { events: [], loading: false, error: null },
+            events: [],
+            loading: false,
+          },
+          healing: {
+            'test123::__all__': { events: [], loading: false, error: null },
+            events: [],
+            loading: false,
+          },
+          death: {
+            'test123::__all__': { events: [], loading: false, error: null },
+            events: [],
+            loading: false,
+          },
+        },
       ) => state,
     },
   });
@@ -141,21 +161,21 @@ const mockClient = {
 const renderWithProviders = (component: React.ReactElement) => {
   const store = createMockStore();
   const theme = createTheme();
-  
+
   return render(
     <Provider store={store}>
       <BrowserRouter>
         <ThemeProvider theme={theme}>
-          <EsoLogsClientProvider client={mockClient}>
-            <AuthProvider>
-              <ReportFightProvider>
-                {component}
-              </ReportFightProvider>
-            </AuthProvider>
-          </EsoLogsClientProvider>
+          <LoggerProvider>
+            <EsoLogsClientProvider client={mockClient}>
+              <AuthProvider>
+                <ReportFightProvider>{component}</ReportFightProvider>
+              </AuthProvider>
+            </EsoLogsClientProvider>
+          </LoggerProvider>
         </ThemeProvider>
       </BrowserRouter>
-    </Provider>
+    </Provider>,
   );
 };
 
@@ -166,7 +186,7 @@ describe('ReportSummaryPage', () => {
 
   it('renders report summary page with correct title', async () => {
     renderWithProviders(<ReportSummaryPage />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Report Summary')).toBeInTheDocument();
       expect(screen.getByText('Test Report')).toBeInTheDocument();
@@ -175,7 +195,7 @@ describe('ReportSummaryPage', () => {
 
   it('displays fight count chip', async () => {
     renderWithProviders(<ReportSummaryPage />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('2 Fights')).toBeInTheDocument();
     });
@@ -183,7 +203,7 @@ describe('ReportSummaryPage', () => {
 
   it('shows flawless performance message when no deaths', async () => {
     renderWithProviders(<ReportSummaryPage />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('0 Total Deaths')).toBeInTheDocument();
       expect(screen.getByText('Flawless Performance! 🎉')).toBeInTheDocument();
@@ -192,7 +212,7 @@ describe('ReportSummaryPage', () => {
 
   it('displays damage breakdown section', async () => {
     renderWithProviders(<ReportSummaryPage />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Damage Breakdown')).toBeInTheDocument();
       expect(screen.getByText('1M')).toBeInTheDocument(); // Total damage formatted
@@ -202,7 +222,7 @@ describe('ReportSummaryPage', () => {
 
   it('displays death analysis section', async () => {
     renderWithProviders(<ReportSummaryPage />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Death Analysis')).toBeInTheDocument();
     });
@@ -210,7 +230,7 @@ describe('ReportSummaryPage', () => {
 
   it('shows top damage dealers', async () => {
     renderWithProviders(<ReportSummaryPage />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Top Damage Dealers')).toBeInTheDocument();
       expect(screen.getByText('#1 Test Player 1')).toBeInTheDocument();
@@ -220,7 +240,7 @@ describe('ReportSummaryPage', () => {
 
   it('shows damage type breakdown', async () => {
     renderWithProviders(<ReportSummaryPage />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Damage Type Distribution')).toBeInTheDocument();
       expect(screen.getByText('Direct Damage')).toBeInTheDocument();
@@ -246,7 +266,7 @@ describe('ReportSummaryPage Loading State', () => {
     }));
 
     renderWithProviders(<ReportSummaryPage />);
-    
+
     expect(screen.getByText('Loading Report Summary')).toBeInTheDocument();
     expect(screen.getByText('Fetching damage events...')).toBeInTheDocument();
     expect(screen.getByText('2/10')).toBeInTheDocument();
@@ -266,7 +286,7 @@ describe('ReportSummaryPage Error State', () => {
     }));
 
     renderWithProviders(<ReportSummaryPage />);
-    
+
     expect(screen.getByText('Failed to Load Report Summary')).toBeInTheDocument();
     expect(screen.getByText(/Failed to fetch report data/)).toBeInTheDocument();
   });

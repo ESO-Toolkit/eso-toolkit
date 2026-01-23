@@ -1,11 +1,6 @@
+/* eslint-disable import/no-default-export, @typescript-eslint/no-explicit-any */
+import { Card, CardContent, Typography, Alert, LinearProgress } from '@mui/material';
 import React from 'react';
-import {
-  Card,
-  CardContent,
-  Typography,
-  Alert,
-  LinearProgress,
-} from '@mui/material';
 
 interface DeathAnalysisSectionProps {
   deathAnalysis?: any;
@@ -25,9 +20,7 @@ const DeathAnalysisSection: React.FC<DeathAnalysisSectionProps> = ({
           <Typography variant="h5" gutterBottom>
             Death Analysis
           </Typography>
-          <Alert severity="error">
-            Error loading death analysis: {error}
-          </Alert>
+          <Alert severity="error">Error loading death analysis: {error}</Alert>
         </CardContent>
       </Card>
     );
@@ -55,9 +48,7 @@ const DeathAnalysisSection: React.FC<DeathAnalysisSectionProps> = ({
         <Typography variant="h5" gutterBottom>
           Death Analysis
         </Typography>
-        <Typography variant="body1">
-          Death analysis feature coming soon...
-        </Typography>
+        <Typography variant="body1">Death analysis feature coming soon...</Typography>
         {deathAnalysis && (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Found {deathAnalysis.totalDeaths || 0} total deaths to analyze.

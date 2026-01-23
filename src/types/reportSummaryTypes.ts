@@ -1,11 +1,12 @@
 /**
  * Data structures for Report Summary Page
- * 
+ *
  * This file defines TypeScript interfaces for aggregated report data
  * that will be used across all fights in a report.
  */
 
-import { FightFragment, ReportActorFragment } from '../graphql/generated';
+import { FightFragment, ReportActorFragment } from '../graphql/gql/graphql';
+
 import { DamageEvent, DeathEvent, HealEvent } from './combatlogEvents';
 
 // ============================================================================
@@ -210,23 +211,23 @@ export interface PatternEvidence {
 
 export enum MechanicCategory {
   DIRECT_DAMAGE = 'Direct Damage',
-  BURST_DAMAGE = 'Burst Damage', 
+  BURST_DAMAGE = 'Burst Damage',
   EXECUTE_PHASE = 'Execute Phase',
   AREA_EFFECT = 'Area Effect',
   DAMAGE_OVER_TIME = 'Damage Over Time',
   ENVIRONMENTAL = 'Environmental',
   PLAYER_ABILITY = 'Player Ability',
-  OTHER = 'Other'
+  OTHER = 'Other',
 }
 
 export enum DeathPatternType {
   RECURRING_MECHANIC = 'Recurring Mechanic',
-  HIGH_DAMAGE_ABILITY = 'High Damage Ability', 
+  HIGH_DAMAGE_ABILITY = 'High Damage Ability',
   MULTI_DEATH_ENCOUNTER = 'Multi-Death Encounter',
   RESOURCE_DEPLETION = 'Resource Depletion',
   COORDINATION_FAILURE = 'Coordination Failure',
   PROGRESSIVE_DIFFICULTY = 'Progressive Difficulty',
-  ROLE_SPECIFIC_PATTERN = 'Role-Specific Pattern'
+  ROLE_SPECIFIC_PATTERN = 'Role-Specific Pattern',
 }
 
 // ============================================================================

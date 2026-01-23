@@ -1,47 +1,44 @@
-import React, { Suspense } from 'react';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import {
   Box,
   Typography,
   Card,
   CardContent,
-  Grid,
   LinearProgress,
   Alert,
   Chip,
+  Button,
+  IconButton,
 } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import React, { Suspense } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 
 import { DynamicMetaTags } from '../../components/DynamicMetaTags';
+import { ReportFragment } from '../../graphql/gql/graphql';
 import { useReportData } from '../../hooks';
 import { ReportSummaryData } from '../../types/reportSummaryTypes';
 
 // Lazy load heavy sections for better performance
-const DamageBreakdownSection = React.lazy(() => 
-  import('./DamageBreakdownSection')
-);
-const EnhancedDeathAnalysisSection = React.lazy(() => 
-  import('./EnhancedDeathAnalysisSection')
-);
-import { useReportSummaryData } from './hooks/useReportSummaryData';
+const DamageBreakdownSection = React.lazy(() => import('./DamageBreakdownSection'));
+const EnhancedDeathAnalysisSection = React.lazy(() => import('./EnhancedDeathAnalysisSection'));
+import { useOptimizedReportSummaryData } from './hooks/useOptimizedReportSummaryData';
 
-interface ReportSummaryPageProps {}
-
-export const ReportSummaryPage: React.FC<ReportSummaryPageProps> = () => {
+export const ReportSummaryPage: React.FC = () => {
   const { reportId } = useParams<{ reportId: string }>();
-  
+
   // Memoize reportId to prevent unnecessary re-fetches if URL params change
   const stableReportId = React.useMemo(() => reportId || '', [reportId]);
-  
+
   // Get basic report data
   const { reportData, isReportLoading } = useReportData();
-  
-  // Get aggregated summary data
+
+  // Get aggregated summary data using optimized Redux-based hook
   const {
-    summaryData,
+    reportSummaryData: summaryData,
     isLoading: isSummaryLoading,
     error: summaryError,
-    progress
-  } = useReportSummaryData(stableReportId);
+    progress,
+  } = useOptimizedReportSummaryData(stableReportId);
 
   // Generate meta tags for social sharing
   const metaTags = React.useMemo(() => {
@@ -64,7 +61,7 @@ export const ReportSummaryPage: React.FC<ReportSummaryPageProps> = () => {
     return (
       <Box sx={{ p: 3 }}>
         <DynamicMetaTags {...metaTags} />
-        <ReportSummaryLoadingView progress={progress} />
+        <ReportSummaryLoadingView progress={progress ?? undefined} />
       </Box>
     );
   }
@@ -74,8 +71,8 @@ export const ReportSummaryPage: React.FC<ReportSummaryPageProps> = () => {
     return (
       <Box sx={{ p: 3 }}>
         <DynamicMetaTags {...metaTags} />
-        <ReportSummaryErrorView 
-          error={summaryError || 'Failed to load report data'} 
+        <ReportSummaryErrorView
+          error={summaryError || 'Failed to load report data'}
           reportId={stableReportId}
         />
       </Box>
@@ -86,20 +83,21 @@ export const ReportSummaryPage: React.FC<ReportSummaryPageProps> = () => {
   return (
     <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
       <DynamicMetaTags {...metaTags} />
-      
-      <ReportSummaryHeader 
-        reportData={reportData} 
-        summaryData={summaryData}
+
+      <ReportSummaryHeader
+        reportData={reportData}
+        summaryData={summaryData ?? undefined}
+        reportId={stableReportId}
       />
-      
+
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
         {/* Damage Breakdown Section */}
         <Box>
           <Suspense fallback={<LinearProgress sx={{ mb: 2 }} />}>
-            <DamageBreakdownSection 
+            <DamageBreakdownSection
               damageBreakdown={summaryData?.damageBreakdown}
               isLoading={isSummaryLoading}
-              error={summaryError}
+              error={summaryError ?? undefined}
             />
           </Suspense>
         </Box>
@@ -110,7 +108,7 @@ export const ReportSummaryPage: React.FC<ReportSummaryPageProps> = () => {
             <EnhancedDeathAnalysisSection
               deathAnalysis={summaryData?.deathAnalysis}
               isLoading={isSummaryLoading}
-              error={summaryError}
+              error={summaryError ?? undefined}
             />
           </Suspense>
         </Box>
@@ -120,58 +118,79 @@ export const ReportSummaryPage: React.FC<ReportSummaryPageProps> = () => {
 };
 
 interface ReportSummaryHeaderProps {
-  reportData: any; // TODO: Type this properly
+  reportData: ReportFragment | null;
   summaryData?: ReportSummaryData;
+  reportId: string;
 }
 
-const ReportSummaryHeader: React.FC<ReportSummaryHeaderProps> = ({ 
-  reportData, 
-  summaryData 
+const ReportSummaryHeader: React.FC<ReportSummaryHeaderProps> = ({
+  reportData,
+  summaryData,
+  reportId,
 }) => {
+  const navigate = useNavigate();
+
+  const handleBackToFights = (): void => {
+    navigate(`/report/${reportId}`);
+  };
+
   return (
     <Card elevation={2} sx={{ mb: 3 }}>
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Typography 
-            variant="h4" 
-            component="h1" 
-            sx={{ 
+          <IconButton
+            onClick={handleBackToFights}
+            sx={{
+              mr: 1,
+              '&:hover': {
+                bgcolor: 'action.hover',
+              },
+            }}
+            aria-label="Back to fight selector"
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{
               fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
               fontWeight: 600,
-              flex: 1
+              flex: 1,
             }}
           >
             Report Summary
           </Typography>
-          <Chip 
-            label={`${summaryData?.fights.length || 0} Fights`} 
-            color="primary" 
+          <Chip
+            label={`${summaryData?.fights.length || 0} Fights`}
+            color="primary"
             variant="outlined"
           />
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            onClick={handleBackToFights}
+            sx={{ display: { xs: 'none', sm: 'flex' } }}
+          >
+            Back to Fights
+          </Button>
         </Box>
 
         <Typography variant="h5" color="text.secondary" gutterBottom>
-          {reportData.title}
+          {reportData?.title}
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 2 }}>
-          {reportData.zone?.name && (
-            <Chip 
-              label={reportData.zone.name} 
-              size="small" 
-              color="secondary"
-            />
+          {reportData?.zone?.name && (
+            <Chip label={reportData.zone.name} size="small" color="secondary" />
           )}
           {summaryData?.reportInfo.duration && (
-            <Chip 
-              label={formatDuration(summaryData.reportInfo.duration)} 
-              size="small"
-            />
+            <Chip label={formatDuration(summaryData.reportInfo.duration)} size="small" />
           )}
           {summaryData?.deathAnalysis.totalDeaths !== undefined && (
-            <Chip 
-              label={`${summaryData.deathAnalysis.totalDeaths} Total Deaths`} 
-              size="small" 
+            <Chip
+              label={`${summaryData.deathAnalysis.totalDeaths} Total Deaths`}
+              size="small"
               color={summaryData.deathAnalysis.totalDeaths === 0 ? 'success' : 'warning'}
             />
           )}
@@ -179,8 +198,9 @@ const ReportSummaryHeader: React.FC<ReportSummaryHeaderProps> = ({
 
         {summaryData?.reportInfo && (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            Report from {new Date(summaryData.reportInfo.startTime).toLocaleString()} 
-            {summaryData.reportInfo.ownerName && ` • Uploaded by ${summaryData.reportInfo.ownerName}`}
+            Report from {new Date(summaryData.reportInfo.startTime).toLocaleString()}
+            {summaryData.reportInfo.ownerName &&
+              ` • Uploaded by ${summaryData.reportInfo.ownerName}`}
           </Typography>
         )}
       </CardContent>
@@ -203,9 +223,10 @@ const ReportSummaryLoadingView: React.FC<ReportSummaryLoadingViewProps> = ({ pro
         <Typography variant="h5" gutterBottom>
           Loading Report Summary
         </Typography>
-        
+
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Analyzing all fight data to generate comprehensive report insights. This may take a moment...
+          Analyzing all fight data to generate comprehensive report insights. This may take a
+          moment...
         </Typography>
 
         {progress && (
@@ -218,21 +239,21 @@ const ReportSummaryLoadingView: React.FC<ReportSummaryLoadingViewProps> = ({ pro
                 {progress.current}/{progress.total}
               </Typography>
             </Box>
-            <LinearProgress 
-              variant="determinate" 
+            <LinearProgress
+              variant="determinate"
               value={(progress.current / progress.total) * 100}
               sx={{ height: 8, borderRadius: 4 }}
             />
           </Box>
         )}
 
-        {!progress && (
-          <LinearProgress sx={{ mb: 2 }} />
-        )}
+        {!progress && <LinearProgress sx={{ mb: 2 }} />}
 
         <Typography variant="body2" color="text.secondary">
-          📊 Aggregating damage data across all fights<br/>
-          💀 Analyzing death patterns and mechanics<br/>
+          📊 Aggregating damage data across all fights
+          <br />
+          💀 Analyzing death patterns and mechanics
+          <br />
           🎯 Identifying improvement opportunities
         </Typography>
       </CardContent>
@@ -245,24 +266,20 @@ interface ReportSummaryErrorViewProps {
   reportId?: string;
 }
 
-const ReportSummaryErrorView: React.FC<ReportSummaryErrorViewProps> = ({ 
-  error, 
-  reportId 
-}) => {
+const ReportSummaryErrorView: React.FC<ReportSummaryErrorViewProps> = ({ error, reportId }) => {
   return (
     <Card elevation={2}>
       <CardContent>
         <Typography variant="h5" gutterBottom color="error">
           Failed to Load Report Summary
         </Typography>
-        
+
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
 
         <Typography variant="body1" color="text.secondary">
-          We couldn't generate the report summary for report {reportId}. 
-          This could be due to:
+          We couldn&apos;t generate the report summary for report {reportId}. This could be due to:
         </Typography>
 
         <Box component="ul" sx={{ mt: 2, pl: 2 }}>

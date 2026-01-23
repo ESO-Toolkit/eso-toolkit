@@ -2,10 +2,10 @@ import { gql } from '@apollo/client';
 
 /**
  * OPTIMIZATION 2: Batch Event Fetching
- * 
+ *
  * This GraphQL query fetches multiple event types in a single request
  * to reduce the total number of API calls for report summary data.
- * 
+ *
  * Instead of 3 separate queries per fight (damage, death, healing),
  * this makes 1 query that gets all event types needed for summary analysis.
  */
@@ -17,7 +17,7 @@ export const GET_BATCH_EVENTS_FOR_SUMMARY = gql`
     $fightIds: [Int]!
     $hostilityType: HostilityType = Friendlies
     $damageLimit: Int = 500000
-    $deathLimit: Int = 10000  
+    $deathLimit: Int = 10000
     $healingLimit: Int = 100000
   ) {
     reportData {
@@ -36,8 +36,8 @@ export const GET_BATCH_EVENTS_FOR_SUMMARY = gql`
           data
           nextPageTimestamp
         }
-        
-        # Death events  
+
+        # Death events
         deathEvents: events(
           startTime: $startTime
           endTime: $endTime
@@ -51,7 +51,7 @@ export const GET_BATCH_EVENTS_FOR_SUMMARY = gql`
           data
           nextPageTimestamp
         }
-        
+
         # Healing events
         healingEvents: events(
           startTime: $startTime
@@ -73,7 +73,7 @@ export const GET_BATCH_EVENTS_FOR_SUMMARY = gql`
 
 /**
  * OPTIMIZATION 3: All Events Query
- * 
+ *
  * This query uses the "All" dataType to fetch all event types in a single request.
  * This is the most efficient approach but returns more data that needs to be filtered.
  */
@@ -134,7 +134,7 @@ export const GET_ALL_EVENTS_TIME_BASED = gql`
 
 /**
  * OPTIMIZATION 4: Multi-Fight Batch Query
- * 
+ *
  * This query fetches data for multiple fights in a single request by
  * not specifying fightIds, then filtering client-side. This reduces
  * the total number of queries from N fights × 3 event types to just 3 queries.

@@ -1,33 +1,27 @@
-import React from 'react';
 import { Box, Typography, Button, Alert, LinearProgress } from '@mui/material';
+import React from 'react';
 import { useParams } from 'react-router-dom';
 
-import { useOptimizedReportSummaryFetching } from './hooks/useOptimizedReportSummaryFetching';
 import { EnhancedDeathAnalysisSection } from './EnhancedDeathAnalysisSection';
+import { useOptimizedReportSummaryFetching } from './hooks/useOptimizedReportSummaryFetching';
 
 /**
  * Test component for the enhanced death analysis
- * 
+ *
  * This demonstrates the optimized event fetching with enhanced death analysis
  * showing abilities, actors, and patterns that caused deaths.
  */
 export const DeathAnalysisTestPage: React.FC = () => {
   const { reportId } = useParams<{ reportId: string }>();
-  
-  const {
-    reportSummaryData,
-    isLoading,
-    progress,
-    error,
-    fetchData,
-    fetchMetrics
-  } = useOptimizedReportSummaryFetching(reportId || '');
 
-  const handleFetchData = () => {
+  const { reportSummaryData, isLoading, progress, error, fetchData, fetchMetrics } =
+    useOptimizedReportSummaryFetching(reportId || '');
+
+  const handleFetchData = (): void => {
     if (reportId) {
-      fetchData({ 
+      fetchData({
         reportCode: reportId,
-        includeDetailedAnalysis: true 
+        includeDetailedAnalysis: true,
       });
     }
   };
@@ -42,11 +36,7 @@ export const DeathAnalysisTestPage: React.FC = () => {
         <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
           Testing the new death analysis system that shows abilities and actors causing deaths.
         </Typography>
-        <Button 
-          variant="contained" 
-          onClick={handleFetchData}
-          disabled={isLoading || !reportId}
-        >
+        <Button variant="contained" onClick={handleFetchData} disabled={isLoading || !reportId}>
           {isLoading ? 'Fetching Data...' : 'Fetch & Analyze Deaths'}
         </Button>
       </Box>
@@ -57,8 +47,8 @@ export const DeathAnalysisTestPage: React.FC = () => {
           <Typography variant="body2" color="text.secondary" gutterBottom>
             {progress.currentTask}
           </Typography>
-          <LinearProgress 
-            variant="determinate" 
+          <LinearProgress
+            variant="determinate"
             value={(progress.current / progress.total) * 100}
             sx={{ mb: 1 }}
           />
@@ -72,9 +62,9 @@ export const DeathAnalysisTestPage: React.FC = () => {
       {fetchMetrics && (
         <Alert severity="info" sx={{ mb: 3 }}>
           <Typography variant="body2">
-            <strong>Performance:</strong> {fetchMetrics.totalApiCalls} API calls, 
-            {' '}{Math.round(fetchMetrics.totalFetchTime)}ms total, 
-            {' '}{Math.round(fetchMetrics.eventsPerSecond)} events/sec
+            <strong>Performance:</strong> {fetchMetrics.totalApiCalls} API calls,{' '}
+            {Math.round(fetchMetrics.totalFetchTime)}ms total,{' '}
+            {Math.round(fetchMetrics.eventsPerSecond)} events/sec
           </Typography>
         </Alert>
       )}
@@ -101,27 +91,37 @@ export const DeathAnalysisTestPage: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             Debug Information
           </Typography>
-          <Typography variant="body2" component="pre" sx={{ 
-            fontFamily: 'monospace', 
-            fontSize: '0.8rem',
-            overflow: 'auto',
-            maxHeight: 300
-          }}>
-            {JSON.stringify({
-              totalDeaths: reportSummaryData.deathAnalysis?.totalDeaths,
-              mechanicsCount: reportSummaryData.deathAnalysis?.mechanicDeaths?.length,
-              playersAffected: reportSummaryData.deathAnalysis?.playerDeaths?.length,
-              patternsFound: reportSummaryData.deathAnalysis?.deathPatterns?.length,
-              topMechanics: reportSummaryData.deathAnalysis?.mechanicDeaths?.slice(0, 3).map(m => ({
-                name: m.mechanicName,
-                deaths: m.totalDeaths,
-                category: m.category
-              })),
-              reportInfo: {
-                fights: reportSummaryData.fights?.length,
-                duration: Math.round((reportSummaryData.reportInfo?.duration || 0) / 1000 / 60)
-              }
-            }, null, 2)}
+          <Typography
+            variant="body2"
+            component="pre"
+            sx={{
+              fontFamily: 'monospace',
+              fontSize: '0.8rem',
+              overflow: 'auto',
+              maxHeight: 300,
+            }}
+          >
+            {JSON.stringify(
+              {
+                totalDeaths: reportSummaryData.deathAnalysis?.totalDeaths,
+                mechanicsCount: reportSummaryData.deathAnalysis?.mechanicDeaths?.length,
+                playersAffected: reportSummaryData.deathAnalysis?.playerDeaths?.length,
+                patternsFound: reportSummaryData.deathAnalysis?.deathPatterns?.length,
+                topMechanics: reportSummaryData.deathAnalysis?.mechanicDeaths
+                  ?.slice(0, 3)
+                  .map((m) => ({
+                    name: m.mechanicName,
+                    deaths: m.totalDeaths,
+                    category: m.category,
+                  })),
+                reportInfo: {
+                  fights: reportSummaryData.fights?.length,
+                  duration: Math.round((reportSummaryData.reportInfo?.duration || 0) / 1000 / 60),
+                },
+              },
+              null,
+              2,
+            )}
           </Typography>
         </Box>
       )}

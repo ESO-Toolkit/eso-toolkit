@@ -1,4 +1,5 @@
 // Third-party imports
+import SummarizeIcon from '@mui/icons-material/Summarize';
 import {
   Box,
   Paper,
@@ -9,6 +10,7 @@ import {
   Collapse,
   Switch,
   FormControlLabel,
+  Button,
 } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
@@ -951,31 +953,57 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           position: 'relative',
         }}
       >
-        <Typography
-          variant="h5"
+        <Box
           sx={{
-            fontSize: { xs: '1.5rem', sm: '2rem' },
-            lineHeight: 1.334,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             mb: { xs: '1.5rem', sm: '2rem' },
-            mt: { xs: 0, sm: '-2.7rem' },
-            textAlign: { xs: 'center', sm: 'left' },
-            wordBreak: 'break-word',
-            whiteSpace: 'normal',
-            overflow: 'visible',
-            width: '100%',
-            maxWidth: { xs: '100%', sm: 'calc(100% + 8rem)' },
-            minWidth: 0,
-            px: { xs: 1, sm: '2.7rem' },
-            pl: { xs: 1, sm: '2.7rem' },
-            pr: { xs: 1, sm: '1rem' },
-            hyphens: 'auto',
-            position: 'relative',
-            zIndex: 2,
-            textIndent: { xs: 0, sm: '-2.7rem' },
           }}
         >
-          {reportData?.title || 'Report Details'}
-        </Typography>
+          <Typography
+            variant="h5"
+            sx={{
+              fontSize: { xs: '1.5rem', sm: '2rem' },
+              lineHeight: 1.334,
+              textAlign: { xs: 'center', sm: 'left' },
+              wordBreak: 'break-word',
+              whiteSpace: 'normal',
+              overflow: 'visible',
+              flex: 1,
+              minWidth: 0,
+              px: { xs: 1, sm: 0 },
+              hyphens: 'auto',
+            }}
+          >
+            {reportData?.title || 'Report Details'}
+          </Typography>
+          <Button
+            variant="outlined"
+            startIcon={<SummarizeIcon />}
+            onClick={() => navigate(`/report/${reportId}/summary`)}
+            sx={{
+              ml: 2,
+              flexShrink: 0,
+              display: { xs: 'none', sm: 'flex' },
+            }}
+          >
+            Report Summary
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => navigate(`/report/${reportId}/summary`)}
+            sx={{
+              ml: 2,
+              flexShrink: 0,
+              minWidth: 'auto',
+              px: 2,
+              display: { xs: 'flex', sm: 'none' },
+            }}
+          >
+            <SummarizeIcon />
+          </Button>
+        </Box>
 
         {encounters.length === 0 && <Typography> No Fights Found </Typography>}
         <Box data-testid="fight-list">
