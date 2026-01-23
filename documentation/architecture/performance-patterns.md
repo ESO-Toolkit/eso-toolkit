@@ -1,8 +1,15 @@
+<!-- AI Context: Load only when working on performance optimization or worker threading -->
 # Performance Optimization Patterns
 
 **Last Updated**: October 14, 2025  
 **Status**: Living Document  
 **Related**: [System Architecture](./system-architecture.md) | [Data Flow](./data-flow.md) | [Component Hierarchy](./component-hierarchy.md)
+
+**When to use this document**:
+- Optimizing rendering performance or reducing bundle size
+- Working with Web Workers or data processing
+- Investigating performance bottlenecks
+- NOT needed for general feature development
 
 ---
 
