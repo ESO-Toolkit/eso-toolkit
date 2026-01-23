@@ -58,7 +58,7 @@ const createMockStore = () => {
       masterData: (
         state = {
           entries: {
-            'test123': {
+            test123: {
               abilitiesById: {},
               actorsById: {},
               status: 'idle',
