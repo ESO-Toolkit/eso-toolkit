@@ -1,8 +1,15 @@
+<!-- AI Context: Load only when refactoring component structure or understanding component relationships -->
 # Component Hierarchy
 
 **Last Updated**: October 14, 2025  
 **Status**: Living Document  
 **Related**: [System Architecture](./system-architecture.md) | [Data Flow](./data-flow.md) | [Worker Dependencies](./worker-dependencies.md)
+
+**When to use this document**:
+- Refactoring component structure or prop passing
+- Understanding component dependencies and relationships
+- Adding new major features that need architectural context
+- NOT needed for minor component updates or bug fixes
 
 ---
 
