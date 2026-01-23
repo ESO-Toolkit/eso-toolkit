@@ -105,6 +105,12 @@ const RosterBuilderPage = React.lazy(() =>
   import('./pages/RosterBuilderPage').then((module) => ({ default: module.RosterBuilderPage })),
 );
 
+const ReportSummaryPage = React.lazy(() =>
+  import('./features/report_summary/ReportSummaryPage').then((module) => ({
+    default: module.ReportSummaryPage,
+  })),
+);
+
 // Lazy load the feedback FAB to improve initial page load performance
 const LazyModernFeedbackFab = React.lazy(() =>
   import('./components/BugReportDialog').then((module) => ({ default: module.ModernFeedbackFab })),
@@ -303,6 +309,18 @@ const AppRoutes: React.FC = () => {
                       <LiveLog>
                         <ReportFightDetails />
                       </LiveLog>
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/report/:reportId/summary"
+              element={
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ReportSummaryPage />
                     </Suspense>
                   </ErrorBoundary>
                 </AuthenticatedRoute>
