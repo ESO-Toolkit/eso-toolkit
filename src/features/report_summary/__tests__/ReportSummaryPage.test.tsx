@@ -27,86 +27,10 @@ jest.mock('../../../hooks/useReportData', () => ({
   }),
 }));
 
+const mockUseOptimizedReportSummaryData = jest.fn();
+
 jest.mock('../hooks/useOptimizedReportSummaryData', () => ({
-  useOptimizedReportSummaryData: () => ({
-    reportSummaryData: {
-      reportInfo: {
-        reportId: 'test123',
-        title: 'Test Report',
-        startTime: 1000000,
-        endTime: 2000000,
-        duration: 1000000,
-        zoneName: 'Test Zone',
-      },
-      fights: [
-        { id: 1, name: 'Test Fight 1' },
-        { id: 2, name: 'Test Fight 2' },
-      ],
-      damageBreakdown: {
-        totalDamage: 1000000,
-        dps: 5000,
-        playerBreakdown: [
-          {
-            playerId: '1',
-            playerName: 'Test Player 1',
-            role: 'DPS',
-            totalDamage: 600000,
-            dps: 3000,
-            damagePercentage: 60,
-            fightBreakdown: [],
-          },
-          {
-            playerId: '2',
-            playerName: 'Test Player 2',
-            role: 'Tank',
-            totalDamage: 400000,
-            dps: 2000,
-            damagePercentage: 40,
-            fightBreakdown: [],
-          },
-        ],
-        abilityTypeBreakdown: [
-          {
-            abilityType: 'Direct Damage',
-            totalDamage: 600000,
-            percentage: 60,
-            hitCount: 300,
-          },
-          {
-            abilityType: 'DOT',
-            totalDamage: 400000,
-            percentage: 40,
-            hitCount: 200,
-          },
-        ],
-        targetBreakdown: [],
-      },
-      deathAnalysis: {
-        totalDeaths: 0,
-        playerDeaths: [],
-        mechanicDeaths: [],
-        fightDeaths: [],
-        deathPatterns: [],
-      },
-      loadingStates: {
-        isLoading: false,
-        fightDataLoading: {},
-        damageEventsLoading: false,
-        deathEventsLoading: false,
-        playerDataLoading: false,
-        masterDataLoading: false,
-      },
-      errors: {
-        generalErrors: [],
-        fightErrors: {},
-        fetchErrors: {},
-      },
-    },
-    isLoading: false,
-    error: null,
-    progress: null,
-    fetchData: jest.fn(),
-  }),
+  useOptimizedReportSummaryData: (...args: any[]) => mockUseOptimizedReportSummaryData(...args),
 }));
 
 // Mock react-router-dom
@@ -119,13 +43,35 @@ jest.mock('react-router-dom', () => ({
 const createMockStore = () => {
   return configureStore({
     reducer: {
-      report: (state = { data: null, loading: false, error: null }) => state,
-      playerData: (state = { playersById: {}, loading: false, error: null }) => state,
+      report: (
+        state = {
+          entries: {},
+          accessOrder: [],
+        },
+      ) => state,
+      playerData: (
+        state = {
+          entries: {},
+          accessOrder: [],
+        },
+      ) => state,
       masterData: (
         state = {
-          abilitiesById: {},
-          actorsById: {},
-          loading: false,
+          entries: {
+            'test123': {
+              abilitiesById: {},
+              actorsById: {},
+              status: 'idle',
+              error: null,
+              cacheMetadata: {
+                lastFetchedTimestamp: null,
+                actorCount: 0,
+                abilityCount: 0,
+              },
+              currentRequest: null,
+            },
+          },
+          accessOrder: ['test123'],
         },
       ) => state,
       events: (
@@ -182,6 +128,86 @@ const renderWithProviders = (component: React.ReactElement) => {
 describe('ReportSummaryPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Set default mock return value
+    mockUseOptimizedReportSummaryData.mockReturnValue({
+      reportSummaryData: {
+        reportInfo: {
+          reportId: 'test123',
+          title: 'Test Report',
+          startTime: 1000000,
+          endTime: 2000000,
+          duration: 1000000,
+          zoneName: 'Test Zone',
+        },
+        fights: [
+          { id: 1, name: 'Test Fight 1' },
+          { id: 2, name: 'Test Fight 2' },
+        ],
+        damageBreakdown: {
+          totalDamage: 1000000,
+          dps: 5000,
+          playerBreakdown: [
+            {
+              playerId: '1',
+              playerName: 'Test Player 1',
+              role: 'DPS',
+              totalDamage: 600000,
+              dps: 3000,
+              damagePercentage: 60,
+              fightBreakdown: [],
+            },
+            {
+              playerId: '2',
+              playerName: 'Test Player 2',
+              role: 'Tank',
+              totalDamage: 400000,
+              dps: 2000,
+              damagePercentage: 40,
+              fightBreakdown: [],
+            },
+          ],
+          abilityTypeBreakdown: [
+            {
+              abilityType: 'Direct Damage',
+              totalDamage: 600000,
+              percentage: 60,
+              hitCount: 300,
+            },
+            {
+              abilityType: 'DOT',
+              totalDamage: 400000,
+              percentage: 40,
+              hitCount: 200,
+            },
+          ],
+          targetBreakdown: [],
+        },
+        deathAnalysis: {
+          totalDeaths: 0,
+          playerDeaths: [],
+          mechanicDeaths: [],
+          fightDeaths: [],
+          deathPatterns: [],
+        },
+        loadingStates: {
+          isLoading: false,
+          fightDataLoading: {},
+          damageEventsLoading: false,
+          deathEventsLoading: false,
+          playerDataLoading: false,
+          masterDataLoading: false,
+        },
+        errors: {
+          generalErrors: [],
+          fightErrors: {},
+          fetchErrors: {},
+        },
+      },
+      isLoading: false,
+      error: null,
+      progress: null,
+      fetchData: jest.fn(),
+    });
   });
 
   it('renders report summary page with correct title', async () => {
@@ -215,7 +241,7 @@ describe('ReportSummaryPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Damage Breakdown')).toBeInTheDocument();
-      expect(screen.getByText('1M')).toBeInTheDocument(); // Total damage formatted
+      expect(screen.getByText('1.0M')).toBeInTheDocument(); // Total damage formatted
       expect(screen.getByText('5,000 DPS')).toBeInTheDocument();
     });
   });
@@ -252,18 +278,17 @@ describe('ReportSummaryPage', () => {
 describe('ReportSummaryPage Loading State', () => {
   it('shows loading skeleton while data is loading', () => {
     // Mock loading state
-    jest.doMock('../hooks/useReportSummaryData', () => ({
-      useReportSummaryData: () => ({
-        summaryData: undefined,
-        isLoading: true,
-        error: undefined,
-        progress: {
-          current: 2,
-          total: 10,
-          currentTask: 'Fetching damage events...',
-        },
-      }),
-    }));
+    mockUseOptimizedReportSummaryData.mockReturnValue({
+      reportSummaryData: undefined,
+      isLoading: true,
+      error: undefined,
+      progress: {
+        current: 2,
+        total: 10,
+        currentTask: 'Fetching damage events...',
+      },
+      fetchData: jest.fn(),
+    });
 
     renderWithProviders(<ReportSummaryPage />);
 
@@ -276,14 +301,13 @@ describe('ReportSummaryPage Loading State', () => {
 describe('ReportSummaryPage Error State', () => {
   it('shows error message when data loading fails', () => {
     // Mock error state
-    jest.doMock('../hooks/useReportSummaryData', () => ({
-      useReportSummaryData: () => ({
-        summaryData: undefined,
-        isLoading: false,
-        error: 'Failed to fetch report data',
-        progress: undefined,
-      }),
-    }));
+    mockUseOptimizedReportSummaryData.mockReturnValue({
+      reportSummaryData: undefined,
+      isLoading: false,
+      error: 'Failed to fetch report data',
+      progress: undefined,
+      fetchData: jest.fn(),
+    });
 
     renderWithProviders(<ReportSummaryPage />);
 
