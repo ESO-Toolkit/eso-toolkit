@@ -1,0 +1,28 @@
+{
+  "name": "@eso-log-aggregator/claude-jira",
+  "version": "1.0.0",
+  "description": "GitHub Copilot Agent Skill for Jira work item management using acli",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test-jira-tools.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "github-copilot",
+    "agent-skill",
+    "jira",
+    "acli",
+    "atlassian"
+  ],
+  "author": "ESO Log Aggregator Team",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

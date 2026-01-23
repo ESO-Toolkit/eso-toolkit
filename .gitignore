@@ -5,6 +5,10 @@
 /.pnp
 .pnp.js
 
+# Agent skill dependencies (MCP servers)
+/.copilot/*/node_modules/
+/.claude/*/node_modules/
+
 # Cache directories
 /cache/
 

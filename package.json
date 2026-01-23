@@ -1,4 +1,8 @@
 {
+  "workspaces": [
+    ".copilot/*",
+    ".claude/*"
+  ],
   "browserslist": {
     "development": [
       "last 1 chrome version",

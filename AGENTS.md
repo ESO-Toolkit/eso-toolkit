@@ -11,24 +11,27 @@ Features: data visualization, real-time analytics, comprehensive testing infrast
 **Quick Access**:
 - **AI Agent Guidelines**: [documentation/ai-agents/AI_AGENT_GUIDELINES.md](documentation/ai-agents/AI_AGENT_GUIDELINES.md) - **START HERE**
 - **AI Agent Guides**: [documentation/ai-agents/](documentation/ai-agents/)
-- **Jira Integration Skill**: [.copilot-jira/README.md](.copilot-jira/README.md) - **NEW!** Automated Jira workflows
-- **Report Debugging Skill**: [.copilot-reports/README.md](.copilot-reports/README.md) - **NEW!** Production data debugging
-- **Git Workflow Skill**: [.copilot-git/README.md](.copilot-git/README.md) - **NEW!** Branch management and PR status
-- **Testing & Dev Skill**: [.copilot/README.md](.copilot/README.md) - Testing, formatting, git automation
+- **Jira Integration Skill**: [.copilot/jira/README.md](.copilot/jira/README.md) - Automated Jira workflows
+- **Report Debugging Skill**: [.copilot/reports/README.md](.copilot/reports/README.md) - Production data debugging
+- **Git Workflow Skill**: [.copilot/git/README.md](.copilot/git/README.md) - Branch management and PR status
+- **Post-Squash Rebase Skill**: [.copilot/rebase/README.md](.copilot/rebase/README.md) - Automated branch tree rebase after squash merges
+- **Testing & Dev Skill**: [.copilot/testing/README.md](.copilot/testing/README.md) - Testing, formatting, git automation
 - **Feature Docs**: [documentation/features/](documentation/features/)
 - **Architecture**: [documentation/architecture/](documentation/architecture/)
 - **Complete Guide**: [documentation/AGENTS.md](documentation/AGENTS.md)
 - **VS Code MCP Playwright Tool**: For structured test execution - use this tool for running existing Playwright test suites, discovering test files, and viewing test results within VS Code.
 - **GitHub Copilot Agent Skills**:
-  - **Testing & Dev** (.copilot/): Playwright testing, dev workflow automation, interactive debugging. See [.copilot/README.md](.copilot/README.md)
-  - **Jira Integration** (.copilot-jira/): Automated work item management. See [.copilot-jira/README.md](.copilot-jira/README.md)
-  - **Report Debugging** (.copilot-reports/): Download and analyze production report data. See [.copilot-reports/README.md](.copilot-reports/README.md)
-  - **Git Workflow** (.copilot-git/): **NEW!** Branch management with twig and PR status. See [.copilot-git/README.md](.copilot-git/README.md)
+  - **Testing & Dev** (.copilot/testing/): Playwright testing, dev workflow automation, interactive debugging. See [.copilot/testing/README.md](.copilot/testing/README.md)
+  - **Jira Integration** (.copilot/jira/): Automated work item management. See [.copilot/jira/README.md](.copilot/jira/README.md)
+  - **Report Debugging** (.copilot/reports/): Download and analyze production report data. See [.copilot/reports/README.md](.copilot/reports/README.md)
+  - **Git Workflow** (.copilot/git/): Branch management with twig and PR status. See [.copilot/git/README.md](.copilot/git/README.md)
+  - **Post-Squash Rebase** (.copilot/rebase/): Automated branch tree rebase after squash merges. See [.copilot/rebase/README.md](.copilot/rebase/README.md)
 - **Claude Agent Skills**:
-  - **Testing & Dev** (.claude/): For Claude Desktop users - equivalent MCP server for interactive testing sessions. See [.claude/README.md](.claude/README.md)
-  - **Jira Integration** (.claude-jira/): Automated work item management for Claude. See [.claude-jira/README.md](.claude-jira/README.md)
-  - **Report Debugging** (.claude-reports/): Production data debugging for Claude. See [.claude-reports/README.md](.claude-reports/README.md)
-  - **Git Workflow** (.claude-git/): **NEW!** Branch management with twig and PR status for Claude. See [.claude-git/README.md](.claude-git/README.md)
+  - **Testing & Dev** (.claude/testing/): For Claude Desktop users - equivalent MCP server for interactive testing sessions. See [.claude/testing/README.md](.claude/testing/README.md)
+  - **Jira Integration** (.claude/jira/): Automated work item management for Claude. See [.claude/jira/README.md](.claude/jira/README.md)
+  - **Report Debugging** (.claude/reports/): Production data debugging for Claude. See [.claude/reports/README.md](.claude/reports/README.md)
+  - **Git Workflow** (.claude/git/): Branch management with twig and PR status for Claude. See [.claude/git/README.md](.claude/git/README.md)
+  - **Post-Squash Rebase** (.claude/rebase/): Automated branch tree rebase after squash merges for Claude. See [.claude/rebase/README.md](.claude/rebase/README.md)
 
 ---
 
@@ -45,18 +48,24 @@ Features: data visualization, real-time analytics, comprehensive testing infrast
   - **Structured Testing**: Use VS Code MCP Playwright tool for running test suites and managing test files
   - **Exploratory Testing**: Use GitHub Copilot Agent Skills (.copilot/) or Claude Agent Skills (.claude/) for ad-hoc testing, quick verification, and interactive debugging
   - **Avoid**: Ad-hoc CLI commands for one-off testing scenarios
-- 🎫 **Jira Management**: Use Jira Agent Skill (.copilot-jira/ or .claude-jira/) for work item operations
+- 🎫 **Jira Management**: Use Jira Agent Skill (.copilot/jira/ or .claude/jira/) for work item operations
   - Natural language: `@workspace View ESO-372`
   - Automated workflows: View ticket → Create branch → Implement → Test → Commit → Push → Update Jira
   - **Avoid**: Manual `acli` commands (deprecated for AI agents)
-- � **Report Debugging**: Use Report Debugging Skill (.copilot-reports/ or .claude-reports/) for production issues
+- 📊 **Report Debugging**: Use Report Debugging Skill (.copilot/reports/ or .claude/reports/) for production issues
   - Natural language: `@workspace Download report 3gjVGWB2dxCL8XAw`
   - Workflows: Download → Analyze → Search → Debug
-  - **Avoid**: Manual `npm run script` commands- 🌿 **Git Workflow**: Use Git Workflow Skill (.copilot-git/ or .claude-git/) for branch management
+  - **Avoid**: Manual `npm run script` commands
+- 🌿 **Git Workflow**: Use Git Workflow Skill (.copilot/git/ or .claude/git/) for branch management
   - Natural language: `@workspace Show branch tree`
   - Workflows: Visualize branches → Set dependencies → Cascade changes → Rebase → Check PR status
   - **Key Feature**: Non-interactive cascade for safe AI automation
-  - **Requires**: twig (`npm install -g @gittwig/twig`) and GitHub CLI (for PR operations)- �🔧 When interacting with GitHub, Sentry, or GitKraken workflows, prefer the corresponding MCP servers and tools instead of manual web or CLI steps
+  - **Requires**: twig (`npm install -g @gittwig/twig`) and GitHub CLI (for PR operations)
+- 🔧 **Post-Squash Rebase**: Use Post-Squash Rebase Skill (.copilot/rebase/ or .claude/rebase/) after squash merges
+  - Natural language: `@workspace Rebase branch tree after ESO-449 was squashed`
+  - Workflows: Analyze conflicts → Recreate branches → Cherry-pick unique commits → Force push
+  - **Requires**: twig (`npm install -g @gittwig/twig`)
+- 🔧 When interacting with GitHub, Sentry, or GitKraken workflows, prefer the corresponding MCP servers and tools instead of manual web or CLI steps
 
 ---
 
@@ -76,8 +85,7 @@ Both provide the same 16 tools for comprehensive testing and development workflo
 
 **Quick Start (GitHub Copilot)**:
 ```powershell
-# Install dependencies
-cd .copilot
+# From project root - installs all workspaces
 npm install
 
 # Configuration is already set in .vscode/settings.json
@@ -86,8 +94,7 @@ npm install
 
 **Quick Start (Claude Desktop)**:
 ```powershell
-# Install dependencies
-cd .claude
+# From project root - installs all workspaces
 npm install
 
 # Configure Claude Desktop (see .claude/README.md for full instructions)
@@ -131,19 +138,18 @@ npm install
 **NEW**: Automated Jira work item management through AI Agent Skills!
 
 **Two Implementations**:
-- **[.copilot-jira/](.copilot-jira/)** - GitHub Copilot (VS Code) implementation
-- **[.claude-jira/](.claude-jira/)** - Claude Desktop implementation
+- **[.copilot/jira/](.copilot/jira/)** - GitHub Copilot (VS Code) implementation
+- **[.claude/jira/](.claude/jira/)** - Claude Desktop implementation
 
 Both provide 8 tools for comprehensive Jira automation.
 
 📖 **Full Documentation**:
-- **[.copilot-jira/README.md](.copilot-jira/README.md)** - GitHub Copilot Jira skill
+- **[.copilot/jira/README.md](.copilot/jira/README.md)** - GitHub Copilot Jira skill
 - **[documentation/ai-agents/jira/AI_JIRA_INTEGRATION_GUIDE.md](documentation/ai-agents/jira/AI_JIRA_INTEGRATION_GUIDE.md)** - Complete guide
 
 **Quick Start**:
 ```powershell
-# Install dependencies
-cd .copilot-jira
+# From project root - installs all workspaces
 npm install
 
 # Configuration is added to .vscode/settings.json
@@ -196,8 +202,8 @@ Automated steps:
 **REQUIRED**: All AI agents must use the Jira Agent Skill for work item management (see above).
 
 📖 **Full Documentation**:
-- **[.copilot-jira/README.md](.copilot-jira/README.md)** - Jira Agent Skill for GitHub Copilot
-- **[.claude-jira/README.md](.claude-jira/README.md)** - Jira Agent Skill for Claude Desktop
+- **[.copilot/jira/README.md](.copilot/jira/README.md)** - Jira Agent Skill for GitHub Copilot
+- **[.claude/jira/README.md](.claude/jira/README.md)** - Jira Agent Skill for Claude Desktop
 - **[documentation/ai-agents/jira/AI_JIRA_INTEGRATION_GUIDE.md](documentation/ai-agents/jira/AI_JIRA_INTEGRATION_GUIDE.md)** - Complete integration guide
 
 **Quick Start** (using Agent Skill):
@@ -240,11 +246,11 @@ acli jira workitem transition --key ESO-394 --status "In Progress"
 
 **NEW**: Debug production issues by downloading and analyzing live report data with Agent Skills!
 
-**Agent Skill Available**: Use `.copilot-reports/` or `.claude-reports/` for automated report debugging
+**Agent Skill Available**: Use `.copilot/reports/` or `.claude/reports/` for automated report debugging
 
 📖 **Full Documentation**:
-- **[.copilot-reports/README.md](.copilot-reports/README.md)** - GitHub Copilot skill documentation
-- **[.claude-reports/README.md](.claude-reports/README.md)** - Claude Desktop skill documentation
+- **[.copilot/reports/README.md](.copilot/reports/README.md)** - GitHub Copilot skill documentation
+- **[.claude/reports/README.md](.claude/reports/README.md)** - Claude Desktop skill documentation
 - **[documentation/ai-agents/AI_REPORT_DATA_DEBUGGING.md](documentation/ai-agents/AI_REPORT_DATA_DEBUGGING.md)** - Complete guide
 - **[documentation/ai-agents/AI_REPORT_DATA_DEBUGGING_QUICK_REFERENCE.md](documentation/ai-agents/AI_REPORT_DATA_DEBUGGING_QUICK_REFERENCE.md)** - Quick reference
 
@@ -296,11 +302,11 @@ npm run script -- scripts/download-report-data.ts <report-code> <fight-id>
 
 **NEW**: Advanced branch management with twig and GitHub PR status checking with Agent Skills!
 
-**Agent Skill Available**: Use `.copilot-git/` or `.claude-git/` for Git workflow automation
+**Agent Skill Available**: Use `.copilot/git/` or `.claude/git/` for Git workflow automation
 
 📖 **Full Documentation**:
-- **[.copilot-git/README.md](.copilot-git/README.md)** - GitHub Copilot skill documentation
-- **[.claude-git/README.md](.claude-git/README.md)** - Claude Desktop skill documentation
+- **[.copilot/git/README.md](.copilot/git/README.md)** - GitHub Copilot skill documentation
+- **[.claude/git/README.md](.claude/git/README.md)** - Claude Desktop skill documentation
 
 **Quick Start (Agent Skill)**:
 ```
@@ -346,6 +352,72 @@ gh auth login
 - Clean up commit history before PR
 - Monitor PR readiness and CI status
 - Understand complex branch hierarchies
+
+---
+
+## 🔧 Post-Squash Rebase Automation (January 2026)
+
+**NEW**: Automate branch tree rebasing after squashed merges into master with Agent Skills!
+
+**Agent Skill Available**: Use `.copilot/rebase/` or `.claude/rebase/` for post-squash rebase automation
+
+📖 **Full Documentation**:
+- **[.copilot/rebase/README.md](.copilot/rebase/README.md)** - GitHub Copilot skill documentation
+- **[.claude/rebase/README.md](.claude/rebase/README.md)** - Claude Desktop skill documentation
+
+**Quick Start (Agent Skill)**:
+```
+@workspace Analyze squash conflicts for ESO-449/structure-redux-state
+@workspace Rebase branch tree after ESO-449/structure-redux-state was squashed into master
+```
+
+**Prerequisites**:
+```powershell
+# Install twig globally
+npm install -g @gittwig/twig
+```
+
+**Available Tools** (2 total):
+- **identify_squash_conflicts**: Analyze impact of squash merge and identify affected branches
+- **rebase_after_squash**: Automatically rebase entire branch tree after squashed merge
+
+**What it does**:
+1. Identifies all child branches of the merged branch
+2. Finds unique commits in each child (not already in master)
+3. Recreates each branch from appropriate parent
+4. Cherry-picks only unique commits (skips duplicates)
+5. Sets twig dependencies automatically
+6. Force pushes all rebased branches
+7. Runs cascade for remaining branches
+
+**Key Features**:
+- Automatic duplicate commit detection
+- Smart cherry-picking (skips empty commits)
+- Handles entire branch tree recursively
+- Dry run mode for preview
+- Detailed step-by-step reporting
+- Error recovery and conflict reporting
+
+**Common Use Cases**:
+- Rebase after any squash merge to master
+- Clean up branch trees after PR merges
+- Resolve "duplicate commit" conflicts automatically
+- Update entire feature branch hierarchies
+
+**Complete Workflow**:
+```
+1. @workspace Analyze squash conflicts for ESO-449
+   (Shows which branches need rebasing)
+
+2. @workspace Dry run: rebase after ESO-449 squash
+   (Preview what would happen)
+
+3. @workspace Rebase branch tree after ESO-449 was squashed
+   (Execute the rebase)
+
+4. @workspace Show branch tree
+   (Verify result)
+```
 
 ---
 

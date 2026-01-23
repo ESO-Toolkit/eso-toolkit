@@ -1,0 +1,23 @@
+{
+  "name": "@eso-log-aggregator/claude-rebase",
+  "version": "1.0.0",
+  "description": "GitHub Copilot Agent Skill for post-squash branch tree rebase automation",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "keywords": [
+    "mcp",
+    "github-copilot",
+    "git",
+    "rebase",
+    "twig"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
