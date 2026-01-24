@@ -38,11 +38,41 @@ import { FightFragment } from '../graphql/gql/graphql';
 import { useReportData } from '../hooks';
 import { useDamageEventsLookup } from '../hooks/events/useDamageEvents';
 import { useDeathEvents } from '../hooks/events/useDeathEvents';
+import { useBuffLookupTask } from '../hooks/workerTasks/useBuffLookupTask';
 import { usePlayerData } from '../hooks/usePlayerData';
 import { ReportFightContextInput } from '../store/contextTypes';
 import { PlayerDetailsWithRole } from '../store/player_data/playerDataSlice';
+import {
+  TRI_STAT_FOOD,
+  HEALTH_AND_REGEN_FOOD,
+  HEALTH_FOOD,
+  MAGICKA_FOOD,
+  STAMINA_FOOD,
+  INCREASE_MAX_HEALTH_AND_STAMINA,
+  INCREASE_MAX_HEALTH_AND_MAGICKA,
+  INCREASE_MAX_MAGICKA_AND_STAMINA,
+  MAX_STAMINA_AND_MAGICKA_RECOVERY,
+  WITCHES_BREW,
+  EXPERIENCE_BOOST_FOOD,
+} from '../types/abilities';
 import { DeathEvent, DamageEvent } from '../types/combatlogEvents';
-import { BuildIssue } from '../utils/detectBuildIssues';
+import { BuildIssue, detectBuildIssues } from '../utils/detectBuildIssues';
+import { isBuffActiveOnTarget } from '../utils/BuffLookupUtils';
+
+// All food buff ability IDs
+const ALL_FOOD_BUFF_IDS = new Set([
+  ...TRI_STAT_FOOD,
+  ...HEALTH_AND_REGEN_FOOD,
+  ...HEALTH_FOOD,
+  ...MAGICKA_FOOD,
+  ...STAMINA_FOOD,
+  ...INCREASE_MAX_HEALTH_AND_STAMINA,
+  ...INCREASE_MAX_HEALTH_AND_MAGICKA,
+  ...INCREASE_MAX_MAGICKA_AND_STAMINA,
+  ...MAX_STAMINA_AND_MAGICKA_RECOVERY,
+  ...WITCHES_BREW,
+  ...EXPERIENCE_BOOST_FOOD,
+]);
 
 interface DashboardIssues {
   deaths: {
@@ -96,6 +126,7 @@ export const RaidDashboardPage: React.FC = () => {
   const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context });
   const { playerData, isPlayerDataLoading } = usePlayerData({ context });
   const { damageEventsByPlayer, isDamageEventsLookupLoading } = useDamageEventsLookup({ context });
+  const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask({ context });
 
   // Flatten damage events from the lookup
   const damageEvents = useMemo(() => {
@@ -103,7 +134,8 @@ export const RaidDashboardPage: React.FC = () => {
     return Object.values(damageEventsByPlayer).flat();
   }, [damageEventsByPlayer]);
 
-  const isAnalyzing = isDeathEventsLoading || isPlayerDataLoading || isDamageEventsLookupLoading;
+  const isAnalyzing =
+    isDeathEventsLoading || isPlayerDataLoading || isDamageEventsLookupLoading || isBuffLookupLoading;
 
   // Analyze issues
   React.useEffect(() => {
@@ -169,6 +201,47 @@ export const RaidDashboardPage: React.FC = () => {
       issues.deaths.topAbility = topAbilityEntry;
     }
 
+    // Analyze build issues for each player
+    if (playerData?.playersById) {
+      Object.values(playerData.playersById).forEach((player: PlayerDetailsWithRole) => {
+        const gear = player.combatantInfo?.gear;
+        const playerDamageEvents = damageEvents.filter(
+          (event: DamageEvent) => event.sourceID === player.id,
+        );
+
+        // Get player resource profile for role detection
+        const playerResources =
+          playerDamageEvents.length > 0
+            ? {
+                magicka: playerDamageEvents[0]?.sourceResources?.magicka,
+                maxMagicka: playerDamageEvents[0]?.sourceResources?.maxMagicka,
+                stamina: playerDamageEvents[0]?.sourceResources?.stamina,
+                maxStamina: playerDamageEvents[0]?.sourceResources?.maxStamina,
+              }
+            : undefined;
+
+        const buildIssues = detectBuildIssues(
+          gear,
+          buffLookupData || undefined,
+          mostRecentFight.startTime,
+          mostRecentFight.endTime ?? mostRecentFight.startTime,
+          [], // auras - would need separate hook for combatant info events
+          player.role,
+          playerDamageEvents,
+          player.id,
+          playerResources,
+        );
+
+        if (buildIssues.length > 0) {
+          issues.buildProblems.total += buildIssues.length;
+          issues.buildProblems.playerIssues.push({
+            player: player.name,
+            issues: buildIssues,
+          });
+        }
+      });
+    }
+
     // Analyze DPS performance
     if (playerData?.playersById) {
       const fightDuration =
@@ -195,8 +268,27 @@ export const RaidDashboardPage: React.FC = () => {
       });
     }
 
+    // Analyze missing food/drink
+    if (playerData?.playersById && buffLookupData) {
+      // Check at the midpoint of the fight for food buffs
+      const fightMidpoint =
+        mostRecentFight.startTime +
+        (mostRecentFight.endTime ?? mostRecentFight.startTime - mostRecentFight.startTime) / 2;
+
+      Object.values(playerData.playersById).forEach((player: PlayerDetailsWithRole) => {
+        // Check if player has any food buff active during the fight
+        const hasFoodBuff = Array.from(ALL_FOOD_BUFF_IDS).some((foodId) =>
+          isBuffActiveOnTarget(buffLookupData, foodId, fightMidpoint, player.id),
+        );
+
+        if (!hasFoodBuff) {
+          issues.missingFood.players.push(player.name);
+        }
+      });
+    }
+
     setDashboardData(issues);
-  }, [mostRecentFight, deathEvents, playerData, damageEvents]);
+  }, [mostRecentFight, deathEvents, playerData, damageEvents, buffLookupData]);
 
   const handleBackToReport = (): void => {
     navigate(`/report/${reportId}`);
@@ -424,11 +516,32 @@ export const RaidDashboardPage: React.FC = () => {
                   </Typography>
                 </Box>
 
-                <Alert severity="warning">
+                <Alert severity="warning" sx={{ mb: 2 }}>
                   Players with gear quality, enchantment, or buff issues detected.
                 </Alert>
 
-                {/* Build issues details would go here */}
+                {dashboardData.buildProblems.playerIssues.map((playerIssue, idx) => (
+                  <Accordion key={idx}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography>
+                        {playerIssue.player} ({playerIssue.issues.length}{' '}
+                        {playerIssue.issues.length === 1 ? 'issue' : 'issues'})
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <List dense>
+                        {playerIssue.issues.map((issue, issueIdx) => (
+                          <ListItem key={issueIdx}>
+                            <ListItemIcon>
+                              <WarningIcon color="warning" fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText primary={issue.message} />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
               </CardContent>
             </Card>
           )}
