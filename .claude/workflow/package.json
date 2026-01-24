@@ -1,0 +1,16 @@
+{
+  "name": "@eso-log-aggregator/claude-workflow",
+  "version": "1.0.0",
+  "description": "Git workflow enforcement skill for ESO Log Aggregator - ensures feature branches are created before work begins",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "keywords": ["mcp", "copilot", "git", "workflow", "branch", "enforcement"],
+  "author": "",
+  "license": "MIT"
+}

@@ -1,5 +1,20 @@
 # AI Agent Guidelines
 
+## 🚨 CRITICAL: Git Workflow Rule
+
+**⚠️ CREATE A FEATURE BRANCH BEFORE ANY CODE CHANGES ⚠️**
+
+**Rule**: NEVER commit to master. ALWAYS create a feature branch first.
+
+```bash
+# Required before ANY code changes:
+git checkout -b ESO-XXX/description
+```
+
+See [Complete Development Workflow](#complete-development-workflow) for full details.
+
+---
+
 ## Documentation Policy
 
 ### ❌ Do NOT Create Documentation For:
