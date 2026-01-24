@@ -21,10 +21,22 @@ npm run lint:fix         # Auto-fix linting issues
 
 ---
 
-## � CRITICAL: Git Workflow
+## 🚨 CRITICAL: Git Workflow
 
-**⚠️ ALWAYS CREATE A FEATURE BRANCH BEFORE ANY CODE CHANGES ⚠️**
+**⚠️ ALWAYS USE WORKFLOW SKILL BEFORE STARTING ANY WORK ⚠️**
 
+**Before implementing ANY Jira ticket, use the Workflow Skill:**
+```
+@workspace Ensure I'm on a feature branch for ESO-XXX work
+```
+
+**The skill will automatically:**
+- ✅ Check if you're on master/main (and stop you)
+- ✅ Create feature branch `ESO-XXX/description` if needed
+- ✅ Switch to existing feature branch if it already exists
+- ✅ Set up twig parent branch dependencies
+
+**Manual fallback (if skill unavailable):**
 ```bash
 # Step 1: Check current branch (must NOT be master)
 git branch --show-current
@@ -39,39 +51,22 @@ git checkout -b ESO-XXX/description-here
 **✅ ALWAYS work on feature branches**
 
 **If you've already made changes on master:**
-```bash
-# Create branch from current state
-git checkout -b ESO-XXX/description
-
-# Commit the changes
-git add .
-git commit -m "ESO-XXX: Description"
-
-# Reset master to origin
-git checkout master
-git reset --hard origin/master
-
-# Return to feature branch
-git checkout ESO-XXX/description
 ```
-
-**Use Git Workflow Skill:**
-```
-@workspace Create branch ESO-XXX/description
-@workspace Show branch tree
+@workspace Recover from master commits
 ```
 
 ---
 
-## �📚 Documentation Index
+## 📚 Documentation Index
 
 **Start Here**: [AI_AGENT_GUIDELINES.md](documentation/ai-agents/AI_AGENT_GUIDELINES.md)
 
 ### Agent Skills (MCP Servers)
+- **Git Workflow Enforcement**: [.copilot/workflow/](.copilot/workflow/) or [.claude/workflow/](.claude/workflow/) - **Use this FIRST**
 - **Testing & Dev**: [.copilot/testing/](.copilot/testing/) or [.claude/testing/](.claude/testing/)
 - **Jira Integration**: [.copilot/jira/](.copilot/jira/) or [.claude/jira/](.claude/jira/)
 - **Report Debugging**: [.copilot/reports/](.copilot/reports/) or [.claude/reports/](.claude/reports/)
-- **Git Workflow**: [.copilot/git/](.copilot/git/) or [.claude/git/](.claude/git/)
+- **Git Operations**: [.copilot/git/](.copilot/git/) or [.claude/git/](.claude/git/)
 - **Post-Squash Rebase**: [.copilot/rebase/](.copilot/rebase/) or [.claude/rebase/](.claude/rebase/)
 
 ### Feature & Architecture Docs
