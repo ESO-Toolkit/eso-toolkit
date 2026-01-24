@@ -38,8 +38,8 @@ import { FightFragment } from '../graphql/gql/graphql';
 import { useReportData } from '../hooks';
 import { useDamageEventsLookup } from '../hooks/events/useDamageEvents';
 import { useDeathEvents } from '../hooks/events/useDeathEvents';
-import { useBuffLookupTask } from '../hooks/workerTasks/useBuffLookupTask';
 import { usePlayerData } from '../hooks/usePlayerData';
+import { useBuffLookupTask } from '../hooks/workerTasks/useBuffLookupTask';
 import { ReportFightContextInput } from '../store/contextTypes';
 import { PlayerDetailsWithRole } from '../store/player_data/playerDataSlice';
 import {
@@ -56,8 +56,8 @@ import {
   EXPERIENCE_BOOST_FOOD,
 } from '../types/abilities';
 import { DeathEvent, DamageEvent } from '../types/combatlogEvents';
-import { BuildIssue, detectBuildIssues } from '../utils/detectBuildIssues';
 import { isBuffActiveOnTarget } from '../utils/BuffLookupUtils';
+import { BuildIssue, detectBuildIssues } from '../utils/detectBuildIssues';
 
 // All food buff ability IDs
 const ALL_FOOD_BUFF_IDS = new Set([
@@ -135,7 +135,10 @@ export const RaidDashboardPage: React.FC = () => {
   }, [damageEventsByPlayer]);
 
   const isAnalyzing =
-    isDeathEventsLoading || isPlayerDataLoading || isDamageEventsLookupLoading || isBuffLookupLoading;
+    isDeathEventsLoading ||
+    isPlayerDataLoading ||
+    isDamageEventsLookupLoading ||
+    isBuffLookupLoading;
 
   // Analyze issues
   React.useEffect(() => {
@@ -245,8 +248,7 @@ export const RaidDashboardPage: React.FC = () => {
     // Analyze DPS performance
     if (playerData?.playersById) {
       const fightDuration =
-        ((mostRecentFight.endTime ?? mostRecentFight.startTime) - mostRecentFight.startTime) /
-        1000;
+        ((mostRecentFight.endTime ?? mostRecentFight.startTime) - mostRecentFight.startTime) / 1000;
 
       Object.values(playerData.playersById).forEach((player: PlayerDetailsWithRole) => {
         if (player.role === 'dps') {
@@ -457,8 +459,8 @@ export const RaidDashboardPage: React.FC = () => {
                   <Alert severity="warning" sx={{ mt: 2 }}>
                     <Typography variant="subtitle2">Deadliest Mechanic</Typography>
                     <Typography variant="body2">
-                      {dashboardData.deaths.topAbility.name}: {dashboardData.deaths.topAbility.count}{' '}
-                      kills
+                      {dashboardData.deaths.topAbility.name}:{' '}
+                      {dashboardData.deaths.topAbility.count} kills
                     </Typography>
                   </Alert>
                 )}
