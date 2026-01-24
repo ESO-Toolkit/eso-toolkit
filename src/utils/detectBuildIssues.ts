@@ -373,7 +373,8 @@ export function detectBuildIssues(
         issues.push({
           buffName: 'Skilled Tracker',
           abilityId: SKILLED_TRACKER_PASSIVE_ID,
-          message: 'Missing Skilled Tracker (Fighters Guild Passive) - increases Weapon and Spell Damage against certain enemy types',
+          message:
+            'Missing Skilled Tracker (Fighters Guild Passive) - increases Weapon and Spell Damage against certain enemy types',
         });
       }
     }
