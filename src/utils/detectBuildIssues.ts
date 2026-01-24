@@ -99,6 +99,12 @@ const ALL_MAJOR_PROPHECY_IDS = [
   228052, 238068, 238421,
 ];
 
+// Champion Point: Exploiter - Increases damage against Off Balance enemies
+const EXPLOITER_CP_ID = 63880;
+
+// Fighters Guild Passive: Skilled Tracker - Increases Weapon and Spell Damage against certain enemy types
+const SKILLED_TRACKER_PASSIVE_ID = 40393;
+
 const MAGICKA_MAJOR_BUFF_REQUIREMENTS: BuffRequirement[] = [
   // Note: In modern ESO, Major Sorcery and Major Brutality are the same buff
   { abilityId: 61687, name: 'Major Sorcery', aliasIds: [219246, ...ALL_MAJOR_SORCERY_IDS] },
@@ -335,6 +341,40 @@ export function detectBuildIssues(
             message: `Missing ${buffName} (also provides Major ${resourceFocus === 'magicka' ? 'Savagery' : 'Prophecy'}) - players with higher ${orientationDescriptor} should maintain this buff`,
           });
         }
+      }
+
+      // Check for Exploiter CP (increases damage against Off Balance enemies)
+      const hasExploiter = wasBuffDetected({
+        buffLookup,
+        auras,
+        damageEvents,
+        playerId,
+        abilityIds: [EXPLOITER_CP_ID],
+      });
+
+      if (!hasExploiter) {
+        issues.push({
+          buffName: 'Exploiter',
+          abilityId: EXPLOITER_CP_ID,
+          message: 'Missing Exploiter (CP) - increases damage against Off Balance enemies',
+        });
+      }
+
+      // Check for Skilled Tracker passive (Fighters Guild)
+      const hasSkilledTracker = wasBuffDetected({
+        buffLookup,
+        auras,
+        damageEvents,
+        playerId,
+        abilityIds: [SKILLED_TRACKER_PASSIVE_ID],
+      });
+
+      if (!hasSkilledTracker) {
+        issues.push({
+          buffName: 'Skilled Tracker',
+          abilityId: SKILLED_TRACKER_PASSIVE_ID,
+          message: 'Missing Skilled Tracker (Fighters Guild Passive) - increases Weapon and Spell Damage against certain enemy types',
+        });
       }
     }
   }
