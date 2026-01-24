@@ -114,6 +114,10 @@ const ReportSummaryPage = React.lazy(() =>
   })),
 );
 
+const RaidDashboardPage = React.lazy(() =>
+  import('./pages/RaidDashboardPage').then((module) => ({ default: module.RaidDashboardPage })),
+);
+
 // Lazy load the feedback FAB to improve initial page load performance
 const LazyModernFeedbackFab = React.lazy(() =>
   import('./components/BugReportDialog').then((module) => ({ default: module.ModernFeedbackFab })),
@@ -324,6 +328,18 @@ const AppRoutes: React.FC = () => {
                   <ErrorBoundary>
                     <Suspense fallback={<LoadingFallback />}>
                       <ReportSummaryPage />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/report/:reportId/dashboard"
+              element={
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <RaidDashboardPage />
                     </Suspense>
                   </ErrorBoundary>
                 </AuthenticatedRoute>

@@ -1,4 +1,5 @@
 // Third-party imports
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import SummarizeIcon from '@mui/icons-material/Summarize';
 import {
   Box,
@@ -980,6 +981,18 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           </Typography>
           <Button
             variant="outlined"
+            startIcon={<DashboardIcon />}
+            onClick={() => navigate(`/report/${reportId}/dashboard`)}
+            sx={{
+              ml: 2,
+              flexShrink: 0,
+              display: { xs: 'none', sm: 'flex' },
+            }}
+          >
+            Dashboard
+          </Button>
+          <Button
+            variant="outlined"
             startIcon={<SummarizeIcon />}
             onClick={() => navigate(`/report/${reportId}/summary`)}
             sx={{
@@ -989,6 +1002,19 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             }}
           >
             Report Summary
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => navigate(`/report/${reportId}/dashboard`)}
+            sx={{
+              ml: 2,
+              flexShrink: 0,
+              minWidth: 'auto',
+              px: 2,
+              display: { xs: 'flex', sm: 'none' },
+            }}
+          >
+            <DashboardIcon />
           </Button>
           <Button
             variant="outlined"
