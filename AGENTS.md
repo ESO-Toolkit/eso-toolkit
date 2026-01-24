@@ -21,7 +21,49 @@ npm run lint:fix         # Auto-fix linting issues
 
 ---
 
-## 📚 Documentation Index
+## � CRITICAL: Git Workflow
+
+**⚠️ ALWAYS CREATE A FEATURE BRANCH BEFORE ANY CODE CHANGES ⚠️**
+
+```bash
+# Step 1: Check current branch (must NOT be master)
+git branch --show-current
+
+# Step 2: Create feature branch with Jira ticket format
+git checkout -b ESO-XXX/description-here
+
+# Step 3: Now you can start coding
+```
+
+**❌ NEVER commit directly to master**  
+**✅ ALWAYS work on feature branches**
+
+**If you've already made changes on master:**
+```bash
+# Create branch from current state
+git checkout -b ESO-XXX/description
+
+# Commit the changes
+git add .
+git commit -m "ESO-XXX: Description"
+
+# Reset master to origin
+git checkout master
+git reset --hard origin/master
+
+# Return to feature branch
+git checkout ESO-XXX/description
+```
+
+**Use Git Workflow Skill:**
+```
+@workspace Create branch ESO-XXX/description
+@workspace Show branch tree
+```
+
+---
+
+## �📚 Documentation Index
 
 **Start Here**: [AI_AGENT_GUIDELINES.md](documentation/ai-agents/AI_AGENT_GUIDELINES.md)
 
