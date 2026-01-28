@@ -1404,6 +1404,12 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                         >
                           Post-encounter trash
                         </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{ mb: 1, color: 'text.secondary', display: 'block' }}
+                        >
+                          Note: These are the same fights shown as pre-encounter trash for the next boss
+                        </Typography>
                         <List
                           sx={{
                             display: 'grid',

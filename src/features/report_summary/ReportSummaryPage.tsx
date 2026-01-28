@@ -1,4 +1,5 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import {
   Box,
   Typography,
@@ -166,6 +167,14 @@ const ReportSummaryHeader: React.FC<ReportSummaryHeaderProps> = ({
             color="primary"
             variant="outlined"
           />
+          <Button
+            variant="outlined"
+            startIcon={<DashboardIcon />}
+            onClick={() => navigate(`/report/${reportId}/dashboard`)}
+            sx={{ display: { xs: 'none', sm: 'flex' } }}
+          >
+            Dashboard
+          </Button>
           <Button
             variant="outlined"
             startIcon={<ArrowBackIcon />}

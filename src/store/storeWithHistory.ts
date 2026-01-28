@@ -22,6 +22,7 @@ import storage from 'redux-persist/lib/storage';
 
 import type { EsoLogsClient } from '@/esologsClient';
 
+import dashboardReducer from './dashboard/dashboardSlice';
 import { eventsReducer } from './events_data';
 import masterDataReducer from './master_data/masterDataSlice';
 import parseAnalysisReducer from './parse_analysis/parseAnalysisSlice';
@@ -39,15 +40,16 @@ const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHisto
 
 // Root reducer - adding essential slices
 const rootReducer = combineReducers({
+  dashboard: dashboardReducer,
+  events: eventsReducer,
+  masterData: masterDataReducer,
+  parseAnalysis: parseAnalysisReducer,
+  playerData: playerDataReducer,
+  report: reportReducer,
   router: routerReducer,
   ui: uiReducer,
-  report: reportReducer,
-  masterData: masterDataReducer,
-  playerData: playerDataReducer,
-  parseAnalysis: parseAnalysisReducer,
-  events: eventsReducer,
-  workerResults: workerResultsReducer,
   userReports: userReportsReducer,
+  workerResults: workerResultsReducer,
 });
 
 // Transform to exclude report/fight-specific UI state from persistence
@@ -93,7 +95,7 @@ export type RootState = ReturnType<typeof rootReducer>;
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['ui'], // Persist essential data, but not events (too large)
+  whitelist: ['ui', 'dashboard'], // Persist essential data, but not events (too large)
   transforms: [uiTransform], // Apply transform to exclude report-specific UI state
 };
 
