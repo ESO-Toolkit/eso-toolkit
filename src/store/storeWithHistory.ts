@@ -28,6 +28,7 @@ import parseAnalysisReducer from './parse_analysis/parseAnalysisSlice';
 import playerDataReducer from './player_data/playerDataSlice';
 import reportReducer from './report/reportSlice';
 import uiReducer, { UIState } from './ui/uiSlice';
+import userReportsReducer from './user_reports';
 import { workerResultsReducer } from './worker_results';
 
 // Create history
@@ -46,6 +47,7 @@ const rootReducer = combineReducers({
   parseAnalysis: parseAnalysisReducer,
   events: eventsReducer,
   workerResults: workerResultsReducer,
+  userReports: userReportsReducer,
 });
 
 // Transform to exclude report/fight-specific UI state from persistence

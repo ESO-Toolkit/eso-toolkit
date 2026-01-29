@@ -9,6 +9,7 @@ import playerDataReducer from '../../store/player_data/playerDataSlice';
 import reportReducer from '../../store/report/reportSlice';
 import uiReducer from '../../store/ui/uiSlice';
 import type { UIState } from '../../store/ui/uiSlice';
+import userReportsReducer from '../../store/user_reports';
 
 export interface MockStoreOptions {
   /**
@@ -82,6 +83,7 @@ export function createMockStore(options: MockStoreOptions = {}): EnhancedStore {
       masterData: masterDataReducer,
       playerData: playerDataReducer,
       report: reportReducer,
+      userReports: userReportsReducer, // Add userReports reducer
     },
     middleware: (getDefaultMiddleware) => {
       const defaultMiddleware = getDefaultMiddleware({
