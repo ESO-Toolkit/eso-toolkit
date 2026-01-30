@@ -457,13 +457,12 @@ describe('calculations types', () => {
         targetId: number;
       }
 
-      interface DamageCalculationTask
-        extends BaseCalculationTask<{
-          playerId: number;
-          startTime: number;
-          endTime: number;
-          dataPoints: DamageDataPoint[];
-        }> {
+      interface DamageCalculationTask extends BaseCalculationTask<{
+        playerId: number;
+        startTime: number;
+        endTime: number;
+        dataPoints: DamageDataPoint[];
+      }> {
         options?: {
           includeCrits?: boolean;
           excludeDoTs?: boolean;
