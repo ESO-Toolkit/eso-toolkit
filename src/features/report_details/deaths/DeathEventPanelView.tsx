@@ -1133,6 +1133,18 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                                 </span>
                               )}
                               <span style={{ color: sourceColor }}>{attackSourceName}</span>
+                              {attack.attackerWasTaunted && (
+                                <span
+                                  style={{
+                                    marginLeft: '4px',
+                                    fontSize: '0.6rem',
+                                    opacity: 0.9,
+                                  }}
+                                  title="Attacker was taunted"
+                                >
+                                  🎯
+                                </span>
+                              )}
                             </Typography>
                             <Box
                               sx={{
