@@ -95,16 +95,9 @@ After installing dependencies and configuring, restart Claude Desktop to load th
 ### Natural Language Commands
 
 ```
-<<<<<<< HEAD
-Create branch ESO-569/implement-feature
-Create branch ESO-569/implement-feature with parent ESO-449
-Create branch fix/bug-in-parser with parent master
-Show branch tree
-Set ESO-488 to depend on ESO-449
-Start interactive rebase on master
-Check PR status for current branch
-Check PR status for PR #123
-=======
+@workspace Create branch ESO-569/implement-feature
+@workspace Create branch ESO-569/implement-feature with parent ESO-449
+@workspace Create branch fix/bug-in-parser with parent master
 @workspace Show branch tree
 @workspace Set ESO-488 to depend on ESO-449
 @workspace Cascade branch changes with force push
@@ -112,7 +105,6 @@ Check PR status for PR #123
 @workspace Start interactive rebase on master
 @workspace Check PR status for current branch
 @workspace Check PR status for PR #123
->>>>>>> 54ee7f32 (Add non-interactive cascade tool to Git workflow skills)
 ```
 
 ### Tool Parameters
