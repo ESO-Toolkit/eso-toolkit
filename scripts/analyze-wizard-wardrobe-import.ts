@@ -2,8 +2,8 @@ import fs from 'fs';
 import path from 'path';
 
 import {
-  parseLuaSavedVariables,
   extractWizardWardrobeData,
+  parseWizardWardrobeSavedVariablesWithFallback,
 } from '../src/features/loadout-manager/utils/luaParser';
 import { convertAllCharactersToLoadoutState } from '../src/features/loadout-manager/utils/wizardWardrobeConverter';
 import {
@@ -62,8 +62,10 @@ async function main(): Promise<void> {
   const luaContent = fs.readFileSync(resolvedPath, 'utf8');
   console.log(`📂 Parsing ${resolvedPath} (${luaContent.length.toLocaleString()} bytes)`);
 
-  const parsedLua = parseLuaSavedVariables(luaContent);
-  const wizardDataByCharacter = extractWizardWardrobeData(parsedLua);
+  const parsed = parseWizardWardrobeSavedVariablesWithFallback(luaContent);
+  const wizardDataByCharacter = extractWizardWardrobeData({
+    [parsed.tableName]: parsed.data,
+  });
 
   if (!wizardDataByCharacter) {
     console.error('❌ No Wizard\'s Wardrobe data found in file');

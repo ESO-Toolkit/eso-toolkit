@@ -145,6 +145,13 @@ Central reference for every worker-based calculation (penetration, mitigation, a
 
 ---
 
+## 🧩 Add-ons & External Data
+
+### Wizard's Wardrobe
+- [addons/wizards-wardrobe-data-persistence.md](addons/wizards-wardrobe-data-persistence.md)
+
+---
+
 ## 🎨 Other Features
 
 ### Arena 3D Visualization

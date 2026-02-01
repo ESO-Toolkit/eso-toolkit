@@ -66,7 +66,10 @@ import {
   selectTrialPages,
 } from '../store/selectors';
 import type { ClipboardSetup, LoadoutSetup, LoadoutState } from '../types/loadout.types';
-import { extractWizardWardrobeData, parseLuaSavedVariables } from '../utils/luaParser';
+import {
+  extractWizardWardrobeData,
+  parseWizardWardrobeSavedVariablesWithFallback,
+} from '../utils/luaParser';
 import { convertAllCharactersToLoadoutState } from '../utils/wizardWardrobeConverter';
 import {
   registerSlotsFromLoadoutState,
@@ -393,8 +396,8 @@ export const LoadoutManager: React.FC = () => {
         }
       }
 
-      const parsedLua = parseLuaSavedVariables(text);
-      const wizardData = extractWizardWardrobeData(parsedLua);
+      const parsed = parseWizardWardrobeSavedVariablesWithFallback(text);
+      const wizardData = extractWizardWardrobeData({ [parsed.tableName]: parsed.data });
       if (!wizardData) {
         throw new Error("Could not find Wizard's Wardrobe data in file.");
       }

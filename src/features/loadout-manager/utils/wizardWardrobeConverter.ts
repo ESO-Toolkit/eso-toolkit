@@ -74,15 +74,9 @@ export function convertAllCharactersToLoadoutState(
           pageName: pageNames?.[pageIndex + 1]?.name ?? null,
         });
 
-        // Check if pageData is a setup object itself or a container of setups
-        // If it has a 'name' property, it's a setup object
-        if ('name' in pageData && typeof (pageData as any).name === 'string') {
-          converterLogger.debug('Page entry is a direct setup', { trialId, pageIndex });
-          const setup = normalizeSetup(pageData);
-          if (setup) {
-            setups.push(setup);
-          }
-        } else {
+        const numericKeys = Object.keys(pageData).filter((key) => !Number.isNaN(Number(key)));
+
+        if (numericKeys.length > 0) {
           // Extract setups from numeric keys in the setups array
           for (const [key, value] of Object.entries(pageData)) {
             converterLogger.debug('Inspecting page key for setup extraction', {
@@ -96,6 +90,12 @@ export function convertAllCharactersToLoadoutState(
                 setups.push(setup);
               }
             }
+          }
+        } else if ('name' in pageData && typeof (pageData as any).name === 'string') {
+          converterLogger.debug('Page entry is a direct setup', { trialId, pageIndex });
+          const setup = normalizeSetup(pageData);
+          if (setup) {
+            setups.push(setup);
           }
         }
 
@@ -388,20 +388,95 @@ function normalizeChampionPoints(cp: any): ChampionPointsConfig {
 }
 
 function normalizeFood(food: any): LoadoutSetup['food'] {
-  if (!food || typeof food !== 'object') {
+  if (food == null) {
     return {};
   }
 
   const result: LoadoutSetup['food'] = {};
 
-  if (typeof food.id === 'number' && Number.isFinite(food.id)) {
-    result.id = food.id;
+  const applyFoodValue = (value: unknown): void => {
+    if (!value) {
+      return;
+    }
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      result.id = value;
+      return;
+    }
+
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return;
+      }
+      if (trimmed.startsWith('|H')) {
+        result.link = trimmed;
+        if (result.id === undefined) {
+          const parsedItem = parseItemLink(trimmed);
+          if (parsedItem?.itemId) {
+            result.id = parsedItem.itemId;
+          }
+        }
+      } else {
+        const parsedId = Number(trimmed);
+        if (!Number.isNaN(parsedId) && Number.isFinite(parsedId)) {
+          result.id = parsedId;
+        }
+      }
+    }
+  };
+
+  const applyFoodObject = (value: Record<string, unknown>): void => {
+    if (typeof value.id === 'number' && Number.isFinite(value.id)) {
+      result.id = value.id;
+    } else if (typeof value.id === 'string') {
+      const parsedId = Number(value.id);
+      if (!Number.isNaN(parsedId) && Number.isFinite(parsedId)) {
+        result.id = parsedId;
+      }
+    }
+
+    if (typeof value.link === 'string' && value.link.trim().length > 0) {
+      result.link = value.link.trim();
+      if (result.id === undefined) {
+        const parsedItem = parseItemLink(result.link);
+        if (parsedItem?.itemId) {
+          result.id = parsedItem.itemId;
+        }
+      }
+    }
+
+    if (result.link === undefined) {
+      const candidateLink = value['1'] ?? value['link'] ?? value['itemLink'];
+      applyFoodValue(candidateLink);
+    }
+
+    if (result.id === undefined) {
+      const candidateId = value['id'] ?? value['1'] ?? value['itemId'];
+      applyFoodValue(candidateId);
+    }
+  };
+
+  if (Array.isArray(food)) {
+    for (const entry of food) {
+      if (!entry) {
+        continue;
+      }
+      if (typeof entry === 'object') {
+        applyFoodObject(entry as Record<string, unknown>);
+      } else {
+        applyFoodValue(entry);
+      }
+    }
+    return result;
   }
 
-  if (typeof food.link === 'string' && food.link.trim().length > 0) {
-    result.link = food.link.trim();
+  if (typeof food === 'object') {
+    applyFoodObject(food as Record<string, unknown>);
+    return result;
   }
 
+  applyFoodValue(food);
   return result;
 }
 
@@ -526,25 +601,28 @@ export function convertLoadoutStateToWizardWardrobe(
   // Convert each trial's pages
   for (const [trialId, trialPages] of Object.entries(characterPages)) {
     const trialSetupsArray: any[] = [];
+    const trialPagesMetadata: Array<{ name?: string; selected?: number }> = [];
+    trialPagesMetadata[0] = { selected: 1 };
 
-    for (const page of trialPages) {
+    for (const [pageIndex, page] of trialPages.entries()) {
       const pageSetups: Record<number, LoadoutSetup> = {};
 
       // Convert setups array to numeric-keyed object (Lua 1-indexed)
       page.setups.forEach((setup: LoadoutSetup, index: number) => {
-        pageSetups[index + 1] = setup;
+        pageSetups[index + 1] = normalizeSetupForExport(setup);
       });
 
+      const pageId = pageIndex + 1;
+      trialPagesMetadata[pageId] = { name: page.name };
       trialSetupsArray.push({
         ...pageSetups,
-        name: page.name,
       });
     }
 
     wizardSetups[trialId] = trialSetupsArray;
 
     // Create pages metadata
-    wizardPages[trialId] = [{ selected: 1 }];
+    wizardPages[trialId] = trialPagesMetadata;
   }
 
   return {
@@ -556,4 +634,35 @@ export function convertLoadoutStateToWizardWardrobe(
     autoEquipSetups: false,
     prebuffs: {},
   };
+}
+
+function normalizeSetupForExport(setup: LoadoutSetup): LoadoutSetup {
+  return {
+    name: setup.name ?? 'Unnamed Setup',
+    disabled: setup.disabled ?? false,
+    condition: setup.condition ?? {},
+    skills: setup.skills ?? { 0: {}, 1: {} },
+    cp: setup.cp ?? {},
+    food: normalizeFoodForExport(setup.food),
+    gear: setup.gear ?? {},
+    code: setup.code ?? '',
+  };
+}
+
+function normalizeFoodForExport(food: LoadoutSetup['food'] | undefined): LoadoutSetup['food'] {
+  if (!food) {
+    return {};
+  }
+
+  const normalized: LoadoutSetup['food'] = {};
+
+  if (typeof food.id === 'number' && Number.isFinite(food.id)) {
+    normalized.id = food.id;
+  }
+
+  if (typeof food.link === 'string' && food.link.trim().length > 0) {
+    normalized.link = food.link.trim();
+  }
+
+  return normalized;
 }

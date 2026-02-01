@@ -2,7 +2,10 @@
  * @jest-environment jsdom
  */
 
-import { convertAllCharactersToLoadoutState } from '../wizardWardrobeConverter';
+import {
+  convertAllCharactersToLoadoutState,
+  convertLoadoutStateToWizardWardrobe,
+} from '../wizardWardrobeConverter';
 import type { ChampionPointsConfig, WizardWardrobeExport } from '../../types/loadout.types';
 
 describe('wizardWardrobeConverter', () => {
@@ -132,6 +135,42 @@ describe('wizardWardrobeConverter', () => {
     expect(foodConfig.link).toBe('|H0:item:87697:5:1:0:0:0:0:0:0:0:0:0:0:0:0:0:1:0:0:0:0|h|h');
   });
 
+  it('derives food id from string or link inputs', () => {
+    const wizardData: WizardWardrobeExport = {
+      version: 1,
+      selectedZoneTag: 'SS',
+      setups: {
+        SS: [
+          {
+            1: {
+              name: 'Food Strings',
+              disabled: false,
+              condition: {},
+              skills: { 0: {}, 1: {} },
+              cp: {},
+              food: {
+                id: '153629',
+                link: '|H0:item:153629:6:1:0:0:0:0:0:0:0:0:0:0:0:0:0:1:0:0:0:0|h|h',
+              },
+              gear: {},
+            },
+          },
+        ],
+      },
+      pages: {
+        SS: [{ name: 'Page 1' }],
+      },
+      $LastCharacterName: 'Food Tester',
+    };
+
+    const state = convertAllCharactersToLoadoutState({ charKey: wizardData });
+    const characterId = 'food-tester-charKey';
+    const foodConfig = state.pages[characterId].SS[0].setups[0].food;
+
+    expect(foodConfig.id).toBe(153629);
+    expect(foodConfig.link).toContain('item:153629');
+  });
+
   it('maps Wizard Wardrobe gear indices to the correct internal slots', () => {
     const makeLink = (itemId: number) =>
       `|H0:item:${itemId}:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h`;
@@ -176,5 +215,43 @@ describe('wizardWardrobeConverter', () => {
     expect(gear[20]?.link).toContain('item:117099');
     expect(gear[21]?.link).toContain('item:117100');
     expect(gear[10]).toBeUndefined();
+  });
+
+  it('includes food data when exporting to Wizard Wardrobe format', () => {
+    const state = convertAllCharactersToLoadoutState({
+      charKey: {
+        version: 1,
+        selectedZoneTag: 'SS',
+        setups: {
+          SS: [
+            {
+              1: {
+                name: 'Food Export',
+                disabled: false,
+                condition: {},
+                skills: { 0: {}, 1: {} },
+                cp: {},
+                food: {
+                  id: 153629,
+                  link: '|H0:item:153629:6:1:0:0:0:0:0:0:0:0:0:0:0:0:0:1:0:0:0:0|h|h',
+                },
+                gear: {},
+              },
+            },
+          ],
+        },
+        pages: {
+          SS: [{ name: 'Page 1' }],
+        },
+        $LastCharacterName: 'Food Exporter',
+      },
+    });
+
+    const exported = convertLoadoutStateToWizardWardrobe(state, 'Food Exporter');
+    const firstPage = exported.setups.SS?.[0];
+    const setup = firstPage?.[1];
+
+    expect(setup?.food?.id).toBe(153629);
+    expect(setup?.food?.link).toContain('item:153629');
   });
 });

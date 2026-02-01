@@ -4,13 +4,47 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import * as luaparse from 'luaparse';
-
 import { Logger } from '@/utils/logger';
 
 import type { WizardWardrobeExport } from '../types/loadout.types';
+import { parseLuaAssignments } from './wizardsWardrobeSavedVariables';
+import {
+  parseWizardsWardrobeSavedVariables,
+  type WizardWardrobeSavedVariables,
+} from './wizardsWardrobeSavedVariables';
 
 const luaParserLogger = new Logger({ contextPrefix: 'LuaParser' });
+
+const WIZARD_WARDROBE_TABLE_NAMES = [
+  'WizardsWardrobeSV',
+  'WizardWardrobeDataSaved',
+  'WizardWardrobeData',
+  'WizardsWardrobe',
+  'WizardWardrobe',
+];
+
+export function parseWizardWardrobeSavedVariablesWithFallback(luaContent: string): {
+  tableName: string;
+  data: WizardWardrobeSavedVariables;
+} {
+  const errors: string[] = [];
+
+  for (const tableName of WIZARD_WARDROBE_TABLE_NAMES) {
+    try {
+      const data = parseWizardsWardrobeSavedVariables(luaContent, { tableName });
+      return { tableName, data };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      errors.push(message);
+    }
+  }
+
+  throw new Error(
+    `Unable to parse Wizard's Wardrobe saved variables. Tried ${WIZARD_WARDROBE_TABLE_NAMES.join(
+      ', ',
+    )}. ${errors[0] ?? ''}`.trim(),
+  );
+}
 
 /**
  * Parse ESO saved variables Lua file content
@@ -18,17 +52,7 @@ const luaParserLogger = new Logger({ contextPrefix: 'LuaParser' });
  */
 export function parseLuaSavedVariables(luaContent: string): Record<string, any> {
   try {
-    // Parse the Lua content into an Abstract Syntax Tree (AST)
-    const ast = luaparse.parse(luaContent, {
-      comments: false,
-      scope: false,
-      locations: false,
-      ranges: false,
-      luaVersion: '5.1', // ESO uses Lua 5.1
-    });
-
-    // Convert AST to JavaScript object
-    const result = evaluateLuaAST(ast);
+    const result = parseLuaAssignments(luaContent);
 
     // Debug log
     luaParserLogger.debug('Parsed variables', { keys: Object.keys(result) });
@@ -38,135 +62,6 @@ export function parseLuaSavedVariables(luaContent: string): Record<string, any> 
     const err = error instanceof Error ? error : new Error(String(error));
     luaParserLogger.error('Parse error', err);
     throw new Error(`Failed to parse Lua file: ${err.message}`);
-  }
-}
-
-/**
- * Recursively evaluate Lua AST nodes to JavaScript values
- * Handles tables (objects/arrays), strings, numbers, booleans, and nil
- */
-function evaluateLuaAST(node: any): any {
-  if (!node) return null;
-
-  switch (node.type) {
-    case 'Chunk': {
-      // Process all statements and collect assignments into an object
-      const result: Record<string, any> = {};
-      for (const statement of node.body) {
-        if (statement.type === 'AssignmentStatement') {
-          for (let i = 0; i < statement.variables.length; i++) {
-            const varNode = statement.variables[i];
-            const valueNode = statement.init[i];
-            const varName = evaluateLuaAST(varNode);
-            const value = evaluateLuaAST(valueNode);
-
-            // Handle both simple identifiers and member expressions
-            if (typeof varName === 'string') {
-              result[varName] = value;
-            }
-          }
-        }
-      }
-      return result;
-    }
-
-    case 'TableConstructorExpression': {
-      // Lua tables can be arrays or objects - determine which
-      const obj: Record<string, any> = {};
-      const arr: any[] = [];
-      let hasStringKeys = false;
-      let hasImplicitValues = false;
-      const numericKeys: number[] = [];
-
-      for (const field of node.fields) {
-        if (field.type === 'TableKeyString') {
-          // String key: ["key"] or key
-          hasStringKeys = true;
-          const key = field.key.name || field.key.value;
-          obj[key] = evaluateLuaAST(field.value);
-        } else if (field.type === 'TableKey') {
-          // Bracket key: [expression]
-          const key = evaluateLuaAST(field.key);
-          const value = evaluateLuaAST(field.value);
-
-          // Check if key is a string (e.g., ["name"]) or numeric (e.g., [1])
-          if (typeof key === 'string') {
-            hasStringKeys = true;
-          } else if (typeof key === 'number' && Number.isInteger(key)) {
-            numericKeys.push(key);
-          }
-          obj[key] = value;
-        } else if (field.type === 'TableValue') {
-          // Implicit array value (no key specified)
-          hasImplicitValues = true;
-          arr.push(evaluateLuaAST(field.value));
-        }
-      }
-
-      // Return as array if we have implicit values and NO explicit keys
-      if (hasImplicitValues && !hasStringKeys && numericKeys.length === 0) {
-        return arr;
-      }
-
-      // Check if this should be treated as an array (consecutive 1-based indices, no string keys)
-      if (!hasStringKeys && numericKeys.length > 0 && !hasImplicitValues) {
-        const sortedKeys = [...numericKeys].sort((a, b) => a - b);
-        const isConsecutiveFromOne =
-          sortedKeys[0] === 1 && sortedKeys.every((key, idx) => key === idx + 1);
-
-        if (isConsecutiveFromOne) {
-          // Convert to 0-indexed array
-          const result: any[] = [];
-          for (const key of numericKeys) {
-            result[key - 1] = obj[key];
-          }
-          return result;
-        }
-      }
-
-      // Otherwise return as object (preserves numeric keys like skill slots 0, 3-8)
-      return obj;
-    }
-
-    case 'StringLiteral': {
-      // luaparse stores string value in 'raw' with quotes, extract the actual string
-      if (node.value !== null) {
-        return node.value;
-      }
-      // Fallback: strip quotes from raw
-      return node.raw ? node.raw.replace(/^["']|["']$/g, '') : '';
-    }
-
-    case 'NumericLiteral':
-      return node.value;
-
-    case 'BooleanLiteral':
-      return node.value;
-
-    case 'NilLiteral':
-      return null;
-
-    case 'Identifier':
-      return node.name;
-
-    case 'MemberExpression': {
-      // Handle chained member access: table.subtable.value
-      const base = evaluateLuaAST(node.base);
-      const identifier = node.identifier.name;
-      // For AST traversal, we return a string representation
-      return typeof base === 'string' ? `${base}.${identifier}` : identifier;
-    }
-
-    case 'IndexExpression': {
-      // Handle bracket notation: table["key"] or table[1]
-      const indexBase = evaluateLuaAST(node.base);
-      const index = evaluateLuaAST(node.index);
-      return typeof indexBase === 'string' ? `${indexBase}[${index}]` : index;
-    }
-
-    default:
-      // Unhandled node type - return null silently for unknown nodes
-      return null;
   }
 }
 

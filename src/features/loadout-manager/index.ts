@@ -15,4 +15,5 @@ export * from './store/loadoutSlice';
 export * from './store/selectors';
 export * from './data/trialConfigs';
 export * from './utils/luaParser';
+export * from './utils/wizardsWardrobeSavedVariables';
 export * from './utils/wizardWardrobeConverter';
