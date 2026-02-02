@@ -50,7 +50,9 @@ describe('wizardsWardrobeSavedVariables', () => {
       }
     `;
 
-    const parsed = parseWizardsWardrobeSavedVariables(lua, { tableName: 'WizardWardrobeDataSaved' });
+    const parsed = parseWizardsWardrobeSavedVariables(lua, {
+      tableName: 'WizardWardrobeDataSaved',
+    });
     const accountWide = parsed.Default?.['@Account']?.$AccountWide;
 
     expect(accountWide?.selectedZoneTag).toBe('SS');

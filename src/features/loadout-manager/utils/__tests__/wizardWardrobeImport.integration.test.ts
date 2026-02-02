@@ -17,12 +17,7 @@ import {
 
 describe('Wizard Wardrobe import integration', () => {
   it('parses the sample SavedVariables file and builds loadout state', () => {
-    const samplePath = path.join(
-      process.cwd(),
-      'tests',
-      'fixtures',
-      'wizards-wardrobe-sample.lua',
-    );
+    const samplePath = path.join(process.cwd(), 'tests', 'fixtures', 'wizards-wardrobe-sample.lua');
     const luaContent = fs.readFileSync(samplePath, 'utf8');
 
     const parsed = parseWizardWardrobeSavedVariablesWithFallback(luaContent);
@@ -44,12 +39,7 @@ describe('Wizard Wardrobe import integration', () => {
   });
 
   it('round-trips the sample file through JSON and back to Lua', () => {
-    const samplePath = path.join(
-      process.cwd(),
-      'tests',
-      'fixtures',
-      'wizards-wardrobe-sample.lua',
-    );
+    const samplePath = path.join(process.cwd(), 'tests', 'fixtures', 'wizards-wardrobe-sample.lua');
     const luaContent = fs.readFileSync(samplePath, 'utf8');
 
     const parsed = parseWizardsWardrobeSavedVariables(luaContent);
@@ -62,12 +52,7 @@ describe('Wizard Wardrobe import integration', () => {
   });
 
   it('exports loadouts to lua and re-imports with food', () => {
-    const samplePath = path.join(
-      process.cwd(),
-      'tests',
-      'fixtures',
-      'wizards-wardrobe-sample.lua',
-    );
+    const samplePath = path.join(process.cwd(), 'tests', 'fixtures', 'wizards-wardrobe-sample.lua');
     const luaContent = fs.readFileSync(samplePath, 'utf8');
 
     const parsed = parseWizardsWardrobeSavedVariables(luaContent);
@@ -79,8 +64,8 @@ describe('Wizard Wardrobe import integration', () => {
       throw new Error('Sample saved variables missing account data.');
     }
 
-    const characterKey = Object.keys(accountData).find((key) => key === '$AccountWide') ??
-      Object.keys(accountData)[0];
+    const characterKey =
+      Object.keys(accountData).find((key) => key === '$AccountWide') ?? Object.keys(accountData)[0];
 
     if (!characterKey) {
       throw new Error('Sample saved variables missing character entry.');

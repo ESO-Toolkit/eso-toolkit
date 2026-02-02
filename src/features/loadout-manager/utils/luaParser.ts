@@ -7,6 +7,7 @@
 import { Logger } from '@/utils/logger';
 
 import type { WizardWardrobeExport } from '../types/loadout.types';
+
 import { parseLuaAssignments } from './wizardsWardrobeSavedVariables';
 import {
   parseWizardsWardrobeSavedVariables,
@@ -155,9 +156,9 @@ export function extractWizardWardrobeData(
 export function isWizardWardrobeFormat(data: any): data is WizardWardrobeExport {
   return Boolean(
     data &&
-      typeof data === 'object' &&
-      typeof data.setups === 'object' &&
-      typeof data.pages === 'object' &&
-      typeof data.version === 'number',
+    typeof data === 'object' &&
+    typeof data.setups === 'object' &&
+    typeof data.pages === 'object' &&
+    typeof data.version === 'number',
   );
 }

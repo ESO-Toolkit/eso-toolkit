@@ -11,6 +11,7 @@ import { heavyArmor } from '../../../data/skill-lines/armor/heavyArmor';
 import { lightArmor } from '../../../data/skill-lines/armor/lightArmor';
 import { mediumArmor } from '../../../data/skill-lines/armor/mediumArmor';
 import * as classSkillLines from '../../../data/skill-lines/class';
+import { SCRIBING_ICON_OVERRIDES } from '../../../data/skill-lines/generated/scribingIconOverrides';
 import { SKILL_ICON_OVERRIDES } from '../../../data/skill-lines/generated/skillIconOverrides';
 
 // Import guild skill lines (SkillLineData with flat skills array)
@@ -80,7 +81,10 @@ const WORLD_SKILL_LINES: SkillLineData[] = [
 ];
 
 const SANITIZED_ICON_MISSING = new Set(['', 'icon_missing']);
-const SKILL_ICON_OVERRIDE_MAP: Record<number, string> = SKILL_ICON_OVERRIDES;
+const SKILL_ICON_OVERRIDE_MAP: Record<number, string> = {
+  ...SKILL_ICON_OVERRIDES,
+  ...SCRIBING_ICON_OVERRIDES,
+};
 
 const sanitizeIconValue = (icon?: string | null): string | undefined => {
   if (!icon) return undefined;
@@ -224,6 +228,7 @@ function ingestScribingSkills(
     if (!grimoire) continue;
     const category = `Scribing · ${grimoire.name}`;
     const baseSkillId = typeof grimoire.id === 'number' ? grimoire.id : undefined;
+    const baseIcon = baseSkillId ? getIconOverride(baseSkillId) : undefined;
 
     if (baseSkillId && !seen.has(baseSkillId)) {
       const baseSkill: SkillData = {
@@ -231,6 +236,7 @@ function ingestScribingSkills(
         name: grimoire.name,
         type: 'active',
         category,
+        icon: baseIcon,
         baseSkillId,
         baseAbilityId: baseSkillId,
       };
@@ -246,11 +252,13 @@ function ingestScribingSkills(
       for (const abilityId of transformation.abilityIds) {
         if (seen.has(abilityId)) continue;
 
+        const icon = getIconOverride(abilityId) ?? baseIcon;
         const skillData: SkillData = {
           id: abilityId,
           name: transformation.name,
           type: 'active',
           category,
+          icon,
           baseSkillId,
           baseAbilityId: baseSkillId,
           grimoire: grimoire.name,

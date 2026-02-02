@@ -34,11 +34,15 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
   const dispatch = useDispatch();
   const currentCharacter = useSelector((state: RootState) => state.loadout.currentCharacter);
   const characters = useSelector((state: RootState) => state.loadout.characters);
+  const sortedCharacters = useMemo(
+    () => [...characters].sort((a, b) => a.name.localeCompare(b.name)),
+    [characters],
+  );
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const hasCharacters = characters.length > 0;
-  const selectedCharacter = characters.find((char) => char.id === currentCharacter) ?? null;
+  const hasCharacters = sortedCharacters.length > 0;
+  const selectedCharacter = sortedCharacters.find((char) => char.id === currentCharacter) ?? null;
 
   const scrollBy = (direction: number): void => {
     if (!scrollRef.current) return;
@@ -101,7 +105,7 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
           }}
         >
           {hasCharacters
-            ? characters.map((char) => {
+            ? sortedCharacters.map((char) => {
                 const isSelected = char.id === currentCharacter;
                 return (
                   <Chip

@@ -298,7 +298,7 @@ function tokenizeLua(source: string): LuaToken[] {
   const length = source.length;
   let index = 0;
 
-  const push = (type: LuaTokenType, value?: LuaToken['value'], position?: number) => {
+  const push = (type: LuaTokenType, value?: LuaToken['value'], position?: number): void => {
     tokens.push({ type, value, position: position ?? index });
   };
 

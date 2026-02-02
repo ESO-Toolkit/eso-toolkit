@@ -92,7 +92,10 @@ Object.entries(setNamesData.sets).forEach(([setId, names]) => {
   }
 });
 
-const resolveSetName = (setId: number, locale: string = DEFAULT_SET_NAME_LOCALE): string | undefined => {
+const resolveSetName = (
+  setId: number,
+  locale: string = DEFAULT_SET_NAME_LOCALE,
+): string | undefined => {
   const names = setNamesById.get(setId);
   if (!names) {
     return undefined;

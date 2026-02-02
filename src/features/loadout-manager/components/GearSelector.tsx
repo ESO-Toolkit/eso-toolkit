@@ -242,7 +242,9 @@ const GearPieceDisplay: React.FC<GearPieceDisplayProps> = ({
       : 'Unknown Item';
   const gearLabel = setName ?? primaryItemName ?? fallbackLabel;
   const isDuplicateDisplay = Boolean(
-    setName && gearLabel && setName.localeCompare(gearLabel, undefined, { sensitivity: 'accent' }) === 0,
+    setName &&
+    gearLabel &&
+    setName.localeCompare(gearLabel, undefined, { sensitivity: 'accent' }) === 0,
   );
   const shouldRenderSetName = Boolean(setName && !isDuplicateDisplay);
 

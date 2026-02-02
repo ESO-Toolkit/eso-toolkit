@@ -159,7 +159,7 @@ export const earthenHeart: SkillLineData = {
       id: ClassSkillId.DRAGONKNIGHT_ERUPTION,
       name: 'Eruption',
       type: 'active',
-      icon: 'death_recap_fire_aoe',
+      icon: 'ability_dragonknight_016b',
       description: 'Larger radius, initial burst of Flame Damage, then DoT.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_ASH_CLOUD,
       alternateIds: [32710],
