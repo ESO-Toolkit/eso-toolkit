@@ -104,6 +104,9 @@ const SampleReportPage = React.lazy(() =>
 const RosterBuilderPage = React.lazy(() =>
   import('./pages/RosterBuilderPage').then((module) => ({ default: module.RosterBuilderPage })),
 );
+const AboutPage = React.lazy(() =>
+  import('./pages/AboutPage').then((module) => ({ default: module.AboutPage })),
+);
 
 const ReportSummaryPage = React.lazy(() =>
   import('./features/report_summary/ReportSummaryPage').then((module) => ({
@@ -460,6 +463,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <RosterBuilderPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <AboutPage />
                   </Suspense>
                 </ErrorBoundary>
               }
