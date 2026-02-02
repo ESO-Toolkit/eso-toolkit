@@ -703,7 +703,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
       expect(recentAttackText).toContain('Enemy Boss');
       // Count taunt indicators - there should be none after the name
       // (Note: Killing blow section may still show taunt status separately)
-      
+
       expect(container).toMatchSnapshot('recent-attacks-without-taunt-indicator');
     });
 
@@ -770,7 +770,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
       // Should show multiple attacks with taunt indicators
       const recentAttackText = container.textContent || '';
       expect(recentAttackText).toContain('Enemy Boss');
-      
+
       // Should have taunt indicators for each attack
       const tauntMatches = (recentAttackText.match(/🎯/g) || []).length;
       expect(tauntMatches).toBeGreaterThan(0); // At least one taunt indicator
@@ -853,7 +853,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
       const recentAttackText = container.textContent || '';
       expect(recentAttackText).toContain('Enemy Boss'); // Taunted
       expect(recentAttackText).toContain('Add Enemy'); // Not taunted
-      
+
       // Should have some taunt indicators but not for all attacks
       expect(recentAttackText).toContain('🎯');
 
