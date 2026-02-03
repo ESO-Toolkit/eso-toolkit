@@ -23,6 +23,10 @@ jest.mock('../features/auth/auth', () => ({
   startPKCEAuth: jest.fn(),
 }));
 
+jest.mock('./ThemeToggle', () => ({
+  ThemeToggle: () => null,
+}));
+
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 
 describe('HeaderBar', () => {

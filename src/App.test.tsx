@@ -23,6 +23,7 @@ jest.mock('./EsoLogsClientContext', () => ({
 
 jest.mock('./features/auth/AuthContext', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useAuth: () => ({ isBanned: false }),
 }));
 
 jest.mock('./hooks/useWorkerManagerLogger', () => ({
@@ -62,6 +63,10 @@ jest.mock('./components/ScrollRestoration', () => ({
 
 jest.mock('./components/UpdateNotification', () => ({
   UpdateNotification: () => null,
+}));
+
+jest.mock('./components/BugReportDialog', () => ({
+  ModernFeedbackFab: () => null,
 }));
 
 jest.mock('./layouts/AppLayout', () => {
