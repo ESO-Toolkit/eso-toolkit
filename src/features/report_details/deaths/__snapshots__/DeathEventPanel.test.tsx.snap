@@ -1391,6 +1391,12 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
                   >
                     Enemy Boss
                   </span>
+                  <span
+                    style="margin-left: 4px; font-size: 0.6rem; opacity: 0.9;"
+                    title="Attacker was taunted"
+                  >
+                    🎯
+                  </span>
                 </span>
                 <div
                   class="MuiBox-root css-ts5sa3"
@@ -1399,6 +1405,1274 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
                     class="MuiTypography-root MuiTypography-caption css-14b1bc5-MuiTypography-root"
                   >
                     1,000
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators should NOT show taunt indicator after attacker name when not taunted: recent-attacks-without-taunt-indicator 1`] = `
+<div>
+  <div
+    class="MuiBox-root css-1yuhvjn"
+  >
+    <div
+      class="MuiBox-root css-rvh7fc"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-h6 css-1miy0lu-MuiTypography-root"
+      >
+        💀 Death Events
+      </h6>
+      <div
+        class="MuiBox-root css-1i27l4i"
+      >
+        <div
+          class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1i9xyed-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+          >
+            1 Total Deaths
+          </span>
+        </div>
+        <div
+          class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-sedkx8-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+          >
+            1 Players
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      class="MuiBox-root css-i3pbo"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-subtitle2 css-12ro8jl-MuiTypography-root"
+      >
+        Death Summary
+      </h6>
+      <div
+        class="MuiBox-root css-zefc5s"
+      >
+        <a
+          href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
+          rel="noopener noreferrer"
+          style="text-decoration: none;"
+          target="_blank"
+        >
+          <div
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1vbnbk-MuiChip-root"
+          >
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+            >
+              DPS Player: 1
+            </span>
+          </div>
+        </a>
+      </div>
+    </div>
+    <div
+      class="MuiBox-root css-i3pbo"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-subtitle2 css-12ro8jl-MuiTypography-root"
+      >
+        ⚔️ Deadly Skills Summary
+      </h6>
+      <div
+        class="MuiBox-root css-zefc5s"
+      >
+        <div
+          class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-9sgq2i-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+          >
+            Hurricane: 1
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      class="MuiBox-root css-p6sxho"
+    >
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1hyrswd-MuiPaper-root-MuiCard-root"
+        style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiCardContent-root css-93f6w9-MuiCardContent-root"
+        >
+          <div
+            class="MuiBox-root css-1amc7ct"
+          >
+            <div
+              class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-11xl7vz-MuiAvatar-root"
+            >
+              #
+              1
+            </div>
+            <div
+              class="MuiBox-root css-1xhmi63"
+            >
+              <h6
+                class="MuiTypography-root MuiTypography-subtitle2 css-1rzh0y3-MuiTypography-root"
+              >
+                DPS Player
+              </h6>
+              <a
+                class="MuiTypography-root MuiTypography-caption MuiLink-root MuiLink-underlineAlways css-ec8d3o-MuiTypography-root-MuiLink-root"
+                data-discover="true"
+                href="/report/test-report/fight/1/replay?time=1004000&actorId=456"
+                title="View in replay at this time"
+              >
+                16:44.0
+                 ▶
+              </a>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-1qm1lh"
+          >
+            <div
+              class="MuiBox-root css-0"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+              >
+                ⚡ Stamina at Death
+              </p>
+              <div
+                class="MuiBox-root css-154j2ue"
+              >
+                <p
+                  class="MuiTypography-root MuiTypography-body2 css-16gfzde-MuiTypography-root"
+                >
+                  12000
+                  /
+                  12000
+                   (
+                  <span
+                    style="font-weight: 800;"
+                  >
+                    100
+                    %
+                  </span>
+                  )
+                </p>
+              </div>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-1qm1lh"
+          >
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+            >
+              ❤️ Health Before Fatal Attack
+            </p>
+            <div
+              class="MuiBox-root css-12x3ecj"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 css-16gfzde-MuiTypography-root"
+              >
+                25,000
+                /
+                30,000
+                 (
+                <span
+                  style="font-weight: 800; color: rgb(56, 142, 60);"
+                >
+                  83
+                  %
+                </span>
+                )
+              </p>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-1qm1lh"
+          >
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+            >
+              ⚔️ Killing Blow
+            </p>
+            <div
+              class="MuiBox-root css-12x3ecj"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 css-uxjokf-MuiTypography-root"
+              >
+                <span
+                  style="font-weight: 500;"
+                >
+                  Killed
+                </span>
+                 
+                <span
+                  style="font-weight: 400;"
+                >
+                  by
+                </span>
+                 
+                <span
+                  style="font-weight: 300; color: rgb(191, 26, 118);"
+                >
+                  Hurricane
+                </span>
+                 
+                <span
+                  style="font-weight: 400;"
+                >
+                  by
+                </span>
+                 
+                <span
+                  style="font-weight: 900; color: rgb(191, 26, 118);"
+                >
+                  Enemy Boss
+                </span>
+              </p>
+              <span
+                class="MuiTypography-root MuiTypography-caption css-1x28p5b-MuiTypography-root"
+              >
+                🔴 Killer was NOT taunted
+              </span>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-0"
+          >
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+            >
+              🕒 Recent Attacks
+            </p>
+            <div
+              class="MuiBox-root css-1kkt86i"
+            >
+              <div
+                class="MuiBox-root css-6nhbos"
+              >
+                <span
+                  class="MuiTypography-root MuiTypography-caption css-1vchezl-MuiTypography-root"
+                >
+                  Exploiter
+                   by
+                   
+                  <span
+                    style="color: rgb(255, 107, 107);"
+                  >
+                    Enemy Boss
+                  </span>
+                </span>
+                <div
+                  class="MuiBox-root css-ts5sa3"
+                >
+                  <span
+                    class="MuiTypography-root MuiTypography-caption css-14b1bc5-MuiTypography-root"
+                  >
+                    2,000
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators should show mixed taunt indicators for attacks from different enemies: recent-attacks-mixed-taunt-status 1`] = `
+<div>
+  <div
+    class="MuiBox-root css-1yuhvjn"
+  >
+    <div
+      class="MuiBox-root css-rvh7fc"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-h6 css-1miy0lu-MuiTypography-root"
+      >
+        💀 Death Events
+      </h6>
+      <div
+        class="MuiBox-root css-1i27l4i"
+      >
+        <div
+          class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1i9xyed-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+          >
+            1 Total Deaths
+          </span>
+        </div>
+        <div
+          class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-sedkx8-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+          >
+            1 Players
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      class="MuiBox-root css-i3pbo"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-subtitle2 css-12ro8jl-MuiTypography-root"
+      >
+        Death Summary
+      </h6>
+      <div
+        class="MuiBox-root css-zefc5s"
+      >
+        <a
+          href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
+          rel="noopener noreferrer"
+          style="text-decoration: none;"
+          target="_blank"
+        >
+          <div
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1vbnbk-MuiChip-root"
+          >
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+            >
+              DPS Player: 1
+            </span>
+          </div>
+        </a>
+      </div>
+    </div>
+    <div
+      class="MuiBox-root css-i3pbo"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-subtitle2 css-12ro8jl-MuiTypography-root"
+      >
+        ⚔️ Deadly Skills Summary
+      </h6>
+      <div
+        class="MuiBox-root css-zefc5s"
+      >
+        <div
+          class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-9sgq2i-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+          >
+            Juggernaut: 1
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      class="MuiBox-root css-p6sxho"
+    >
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1hyrswd-MuiPaper-root-MuiCard-root"
+        style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiCardContent-root css-93f6w9-MuiCardContent-root"
+        >
+          <div
+            class="MuiBox-root css-1amc7ct"
+          >
+            <div
+              class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-11xl7vz-MuiAvatar-root"
+            >
+              #
+              1
+            </div>
+            <div
+              class="MuiBox-root css-1xhmi63"
+            >
+              <h6
+                class="MuiTypography-root MuiTypography-subtitle2 css-1rzh0y3-MuiTypography-root"
+              >
+                DPS Player
+              </h6>
+              <a
+                class="MuiTypography-root MuiTypography-caption MuiLink-root MuiLink-underlineAlways css-ec8d3o-MuiTypography-root-MuiLink-root"
+                data-discover="true"
+                href="/report/test-report/fight/1/replay?time=1004000&actorId=456"
+                title="View in replay at this time"
+              >
+                16:44.0
+                 ▶
+              </a>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-1qm1lh"
+          >
+            <div
+              class="MuiBox-root css-0"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+              >
+                ⚡ Stamina at Death
+              </p>
+              <div
+                class="MuiBox-root css-154j2ue"
+              >
+                <p
+                  class="MuiTypography-root MuiTypography-body2 css-16gfzde-MuiTypography-root"
+                >
+                  12000
+                  /
+                  12000
+                   (
+                  <span
+                    style="font-weight: 800;"
+                  >
+                    100
+                    %
+                  </span>
+                  )
+                </p>
+              </div>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-1qm1lh"
+          >
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+            >
+              ❤️ Health Before Fatal Attack
+            </p>
+            <div
+              class="MuiBox-root css-12x3ecj"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 css-16gfzde-MuiTypography-root"
+              >
+                25,000
+                /
+                30,000
+                 (
+                <span
+                  style="font-weight: 800; color: rgb(56, 142, 60);"
+                >
+                  83
+                  %
+                </span>
+                )
+              </p>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-1qm1lh"
+          >
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+            >
+              ⚔️ Killing Blow
+            </p>
+            <div
+              class="MuiBox-root css-12x3ecj"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 css-uxjokf-MuiTypography-root"
+              >
+                <span
+                  style="font-weight: 500;"
+                >
+                  Killed
+                </span>
+                 
+                <span
+                  style="font-weight: 400;"
+                >
+                  by
+                </span>
+                 
+                <span
+                  style="font-weight: 300; color: rgb(191, 26, 118);"
+                >
+                  Juggernaut
+                </span>
+                 
+                <span
+                  style="font-weight: 400;"
+                >
+                  by
+                </span>
+                 
+                <span
+                  style="font-weight: 900; color: rgb(191, 26, 118);"
+                >
+                  Enemy Boss
+                </span>
+              </p>
+              <span
+                class="MuiTypography-root MuiTypography-caption css-8fmmw9-MuiTypography-root"
+              >
+                🎯 Killer was taunted
+              </span>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-1qm1lh"
+          >
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+            >
+              💥 Fatal Damage
+            </p>
+            <div
+              class="MuiBox-root css-v3kbp6"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 css-mmn5d2-MuiTypography-root"
+              >
+                2,500
+                <span
+                  style="font-size: 0.75rem; font-weight: 400; opacity: 0.8; margin-left: 4px;"
+                >
+                  damage
+                </span>
+              </p>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-0"
+          >
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+            >
+              🕒 Recent Attacks
+            </p>
+            <div
+              class="MuiBox-root css-1kkt86i"
+            >
+              <div
+                class="MuiBox-root css-6nhbos"
+              >
+                <span
+                  class="MuiTypography-root MuiTypography-caption css-1vchezl-MuiTypography-root"
+                >
+                  Exploiter
+                   by
+                   
+                  <span
+                    style="margin-right: 4px; font-size: 0.6rem; opacity: 0.9;"
+                    title="Attacker was taunted"
+                  >
+                    🎯
+                  </span>
+                  <span
+                    style="color: rgb(255, 107, 107);"
+                  >
+                    Enemy Boss
+                  </span>
+                  <span
+                    style="margin-left: 4px; font-size: 0.6rem; opacity: 0.9;"
+                    title="Attacker was taunted"
+                  >
+                    🎯
+                  </span>
+                </span>
+                <div
+                  class="MuiBox-root css-ts5sa3"
+                >
+                  <span
+                    class="MuiTypography-root MuiTypography-caption css-14b1bc5-MuiTypography-root"
+                  >
+                    2,000
+                  </span>
+                </div>
+              </div>
+              <div
+                class="MuiBox-root css-6nhbos"
+              >
+                <span
+                  class="MuiTypography-root MuiTypography-caption css-1vchezl-MuiTypography-root"
+                >
+                  Reaving Blows
+                   by
+                   
+                  <span
+                    style="color: rgb(255, 107, 107);"
+                  >
+                    Add Enemy
+                  </span>
+                </span>
+                <div
+                  class="MuiBox-root css-ts5sa3"
+                >
+                  <span
+                    class="MuiTypography-root MuiTypography-caption css-14b1bc5-MuiTypography-root"
+                  >
+                    3,000
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators should show multiple taunt indicators for multiple taunted attacks: recent-attacks-multiple-taunt-indicators 1`] = `
+<div>
+  <div
+    class="MuiBox-root css-1yuhvjn"
+  >
+    <div
+      class="MuiBox-root css-rvh7fc"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-h6 css-1miy0lu-MuiTypography-root"
+      >
+        💀 Death Events
+      </h6>
+      <div
+        class="MuiBox-root css-1i27l4i"
+      >
+        <div
+          class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1i9xyed-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+          >
+            1 Total Deaths
+          </span>
+        </div>
+        <div
+          class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-sedkx8-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+          >
+            1 Players
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      class="MuiBox-root css-i3pbo"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-subtitle2 css-12ro8jl-MuiTypography-root"
+      >
+        Death Summary
+      </h6>
+      <div
+        class="MuiBox-root css-zefc5s"
+      >
+        <a
+          href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
+          rel="noopener noreferrer"
+          style="text-decoration: none;"
+          target="_blank"
+        >
+          <div
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1vbnbk-MuiChip-root"
+          >
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+            >
+              DPS Player: 1
+            </span>
+          </div>
+        </a>
+      </div>
+    </div>
+    <div
+      class="MuiBox-root css-i3pbo"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-subtitle2 css-12ro8jl-MuiTypography-root"
+      >
+        ⚔️ Deadly Skills Summary
+      </h6>
+      <div
+        class="MuiBox-root css-zefc5s"
+      >
+        <div
+          class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-9sgq2i-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+          >
+            Juggernaut: 1
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      class="MuiBox-root css-p6sxho"
+    >
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1hyrswd-MuiPaper-root-MuiCard-root"
+        style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiCardContent-root css-93f6w9-MuiCardContent-root"
+        >
+          <div
+            class="MuiBox-root css-1amc7ct"
+          >
+            <div
+              class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-11xl7vz-MuiAvatar-root"
+            >
+              #
+              1
+            </div>
+            <div
+              class="MuiBox-root css-1xhmi63"
+            >
+              <h6
+                class="MuiTypography-root MuiTypography-subtitle2 css-1rzh0y3-MuiTypography-root"
+              >
+                DPS Player
+              </h6>
+              <a
+                class="MuiTypography-root MuiTypography-caption MuiLink-root MuiLink-underlineAlways css-ec8d3o-MuiTypography-root-MuiLink-root"
+                data-discover="true"
+                href="/report/test-report/fight/1/replay?time=1004000&actorId=456"
+                title="View in replay at this time"
+              >
+                16:44.0
+                 ▶
+              </a>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-1qm1lh"
+          >
+            <div
+              class="MuiBox-root css-0"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+              >
+                ⚡ Stamina at Death
+              </p>
+              <div
+                class="MuiBox-root css-154j2ue"
+              >
+                <p
+                  class="MuiTypography-root MuiTypography-body2 css-16gfzde-MuiTypography-root"
+                >
+                  12000
+                  /
+                  12000
+                   (
+                  <span
+                    style="font-weight: 800;"
+                  >
+                    100
+                    %
+                  </span>
+                  )
+                </p>
+              </div>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-1qm1lh"
+          >
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+            >
+              ❤️ Health Before Fatal Attack
+            </p>
+            <div
+              class="MuiBox-root css-12x3ecj"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 css-16gfzde-MuiTypography-root"
+              >
+                25,000
+                /
+                30,000
+                 (
+                <span
+                  style="font-weight: 800; color: rgb(56, 142, 60);"
+                >
+                  83
+                  %
+                </span>
+                )
+              </p>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-1qm1lh"
+          >
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+            >
+              ⚔️ Killing Blow
+            </p>
+            <div
+              class="MuiBox-root css-12x3ecj"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 css-uxjokf-MuiTypography-root"
+              >
+                <span
+                  style="font-weight: 500;"
+                >
+                  Killed
+                </span>
+                 
+                <span
+                  style="font-weight: 400;"
+                >
+                  by
+                </span>
+                 
+                <span
+                  style="font-weight: 300; color: rgb(191, 26, 118);"
+                >
+                  Juggernaut
+                </span>
+                 
+                <span
+                  style="font-weight: 400;"
+                >
+                  by
+                </span>
+                 
+                <span
+                  style="font-weight: 900; color: rgb(191, 26, 118);"
+                >
+                  Enemy Boss
+                </span>
+              </p>
+              <span
+                class="MuiTypography-root MuiTypography-caption css-8fmmw9-MuiTypography-root"
+              >
+                🎯 Killer was taunted
+              </span>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-1qm1lh"
+          >
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+            >
+              💥 Fatal Damage
+            </p>
+            <div
+              class="MuiBox-root css-v3kbp6"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 css-mmn5d2-MuiTypography-root"
+              >
+                2,500
+                <span
+                  style="font-size: 0.75rem; font-weight: 400; opacity: 0.8; margin-left: 4px;"
+                >
+                  damage
+                </span>
+              </p>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-0"
+          >
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+            >
+              🕒 Recent Attacks
+            </p>
+            <div
+              class="MuiBox-root css-1kkt86i"
+            >
+              <div
+                class="MuiBox-root css-6nhbos"
+              >
+                <span
+                  class="MuiTypography-root MuiTypography-caption css-1vchezl-MuiTypography-root"
+                >
+                  Exploiter
+                   by
+                   
+                  <span
+                    style="margin-right: 4px; font-size: 0.6rem; opacity: 0.9;"
+                    title="Attacker was taunted"
+                  >
+                    🎯
+                  </span>
+                  <span
+                    style="color: rgb(255, 107, 107);"
+                  >
+                    Enemy Boss
+                  </span>
+                  <span
+                    style="margin-left: 4px; font-size: 0.6rem; opacity: 0.9;"
+                    title="Attacker was taunted"
+                  >
+                    🎯
+                  </span>
+                </span>
+                <div
+                  class="MuiBox-root css-ts5sa3"
+                >
+                  <span
+                    class="MuiTypography-root MuiTypography-caption css-14b1bc5-MuiTypography-root"
+                  >
+                    2,000
+                  </span>
+                </div>
+              </div>
+              <div
+                class="MuiBox-root css-6nhbos"
+              >
+                <span
+                  class="MuiTypography-root MuiTypography-caption css-1vchezl-MuiTypography-root"
+                >
+                  Reaving Blows
+                   by
+                   
+                  <span
+                    style="margin-right: 4px; font-size: 0.6rem; opacity: 0.9;"
+                    title="Attacker was taunted"
+                  >
+                    🎯
+                  </span>
+                  <span
+                    style="color: rgb(255, 107, 107);"
+                  >
+                    Enemy Boss
+                  </span>
+                  <span
+                    style="margin-left: 4px; font-size: 0.6rem; opacity: 0.9;"
+                    title="Attacker was taunted"
+                  >
+                    🎯
+                  </span>
+                </span>
+                <div
+                  class="MuiBox-root css-ts5sa3"
+                >
+                  <span
+                    class="MuiTypography-root MuiTypography-caption css-14b1bc5-MuiTypography-root"
+                  >
+                    3,000
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators should show taunt indicator after attacker name in recent attacks when taunted: recent-attacks-with-taunt-indicator 1`] = `
+<div>
+  <div
+    class="MuiBox-root css-1yuhvjn"
+  >
+    <div
+      class="MuiBox-root css-rvh7fc"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-h6 css-1miy0lu-MuiTypography-root"
+      >
+        💀 Death Events
+      </h6>
+      <div
+        class="MuiBox-root css-1i27l4i"
+      >
+        <div
+          class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1i9xyed-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+          >
+            1 Total Deaths
+          </span>
+        </div>
+        <div
+          class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-sedkx8-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+          >
+            1 Players
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      class="MuiBox-root css-i3pbo"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-subtitle2 css-12ro8jl-MuiTypography-root"
+      >
+        Death Summary
+      </h6>
+      <div
+        class="MuiBox-root css-zefc5s"
+      >
+        <a
+          href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
+          rel="noopener noreferrer"
+          style="text-decoration: none;"
+          target="_blank"
+        >
+          <div
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1vbnbk-MuiChip-root"
+          >
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+            >
+              DPS Player: 1
+            </span>
+          </div>
+        </a>
+      </div>
+    </div>
+    <div
+      class="MuiBox-root css-i3pbo"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-subtitle2 css-12ro8jl-MuiTypography-root"
+      >
+        ⚔️ Deadly Skills Summary
+      </h6>
+      <div
+        class="MuiBox-root css-zefc5s"
+      >
+        <div
+          class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-9sgq2i-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+          >
+            Hurricane: 1
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      class="MuiBox-root css-p6sxho"
+    >
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1hyrswd-MuiPaper-root-MuiCard-root"
+        style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiCardContent-root css-93f6w9-MuiCardContent-root"
+        >
+          <div
+            class="MuiBox-root css-1amc7ct"
+          >
+            <div
+              class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-11xl7vz-MuiAvatar-root"
+            >
+              #
+              1
+            </div>
+            <div
+              class="MuiBox-root css-1xhmi63"
+            >
+              <h6
+                class="MuiTypography-root MuiTypography-subtitle2 css-1rzh0y3-MuiTypography-root"
+              >
+                DPS Player
+              </h6>
+              <a
+                class="MuiTypography-root MuiTypography-caption MuiLink-root MuiLink-underlineAlways css-ec8d3o-MuiTypography-root-MuiLink-root"
+                data-discover="true"
+                href="/report/test-report/fight/1/replay?time=1004000&actorId=456"
+                title="View in replay at this time"
+              >
+                16:44.0
+                 ▶
+              </a>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-1qm1lh"
+          >
+            <div
+              class="MuiBox-root css-0"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+              >
+                ⚡ Stamina at Death
+              </p>
+              <div
+                class="MuiBox-root css-154j2ue"
+              >
+                <p
+                  class="MuiTypography-root MuiTypography-body2 css-16gfzde-MuiTypography-root"
+                >
+                  12000
+                  /
+                  12000
+                   (
+                  <span
+                    style="font-weight: 800;"
+                  >
+                    100
+                    %
+                  </span>
+                  )
+                </p>
+              </div>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-1qm1lh"
+          >
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+            >
+              ❤️ Health Before Fatal Attack
+            </p>
+            <div
+              class="MuiBox-root css-12x3ecj"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 css-16gfzde-MuiTypography-root"
+              >
+                25,000
+                /
+                30,000
+                 (
+                <span
+                  style="font-weight: 800; color: rgb(56, 142, 60);"
+                >
+                  83
+                  %
+                </span>
+                )
+              </p>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-1qm1lh"
+          >
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+            >
+              ⚔️ Killing Blow
+            </p>
+            <div
+              class="MuiBox-root css-12x3ecj"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 css-uxjokf-MuiTypography-root"
+              >
+                <span
+                  style="font-weight: 500;"
+                >
+                  Killed
+                </span>
+                 
+                <span
+                  style="font-weight: 400;"
+                >
+                  by
+                </span>
+                 
+                <span
+                  style="font-weight: 300; color: rgb(191, 26, 118);"
+                >
+                  Hurricane
+                </span>
+                 
+                <span
+                  style="font-weight: 400;"
+                >
+                  by
+                </span>
+                 
+                <span
+                  style="font-weight: 900; color: rgb(191, 26, 118);"
+                >
+                  Enemy Boss
+                </span>
+              </p>
+              <span
+                class="MuiTypography-root MuiTypography-caption css-8fmmw9-MuiTypography-root"
+              >
+                🎯 Killer was taunted
+              </span>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-0"
+          >
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-i83aoc-MuiTypography-root"
+            >
+              🕒 Recent Attacks
+            </p>
+            <div
+              class="MuiBox-root css-1kkt86i"
+            >
+              <div
+                class="MuiBox-root css-6nhbos"
+              >
+                <span
+                  class="MuiTypography-root MuiTypography-caption css-1vchezl-MuiTypography-root"
+                >
+                  Exploiter
+                   by
+                   
+                  <span
+                    style="margin-right: 4px; font-size: 0.6rem; opacity: 0.9;"
+                    title="Attacker was taunted"
+                  >
+                    🎯
+                  </span>
+                  <span
+                    style="color: rgb(255, 107, 107);"
+                  >
+                    Enemy Boss
+                  </span>
+                  <span
+                    style="margin-left: 4px; font-size: 0.6rem; opacity: 0.9;"
+                    title="Attacker was taunted"
+                  >
+                    🎯
+                  </span>
+                </span>
+                <div
+                  class="MuiBox-root css-ts5sa3"
+                >
+                  <span
+                    class="MuiTypography-root MuiTypography-caption css-14b1bc5-MuiTypography-root"
+                  >
+                    2,000
                   </span>
                 </div>
               </div>
@@ -1702,6 +2976,12 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
                     style="color: rgb(255, 107, 107);"
                   >
                     Enemy Boss
+                  </span>
+                  <span
+                    style="margin-left: 4px; font-size: 0.6rem; opacity: 0.9;"
+                    title="Attacker was taunted"
+                  >
+                    🎯
                   </span>
                 </span>
                 <div
@@ -2037,6 +3317,12 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                     style="color: rgb(255, 107, 107);"
                   >
                     Enemy Boss
+                  </span>
+                  <span
+                    style="margin-left: 4px; font-size: 0.6rem; opacity: 0.9;"
+                    title="Attacker was taunted"
+                  >
+                    🎯
                   </span>
                 </span>
                 <div
@@ -2805,6 +4091,12 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                     style="color: rgb(255, 107, 107);"
                   >
                     Enemy Boss
+                  </span>
+                  <span
+                    style="margin-left: 4px; font-size: 0.6rem; opacity: 0.9;"
+                    title="Attacker was taunted"
+                  >
+                    🎯
                   </span>
                 </span>
                 <div
