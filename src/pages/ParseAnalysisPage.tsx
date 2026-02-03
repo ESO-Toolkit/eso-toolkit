@@ -53,9 +53,12 @@ import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { BuffChecklist } from '../features/parse_analysis/components/BuffChecklist';
 import { BuildIssuesPanel } from '../features/parse_analysis/components/BuildIssuesPanel';
 import { DebuffChecklist } from '../features/parse_analysis/components/DebuffChecklist';
+import { ParseChecklist } from '../features/parse_analysis/components/ParseChecklist';
 import { TRIAL_DUMMY_TARGET_NAMES } from '../features/parse_analysis/constants/trialDummyConstants';
 import { BuffChecklistResult } from '../features/parse_analysis/types/buffChecklist';
 import { DebuffChecklistResult } from '../features/parse_analysis/types/debuffChecklist';
+import type { ParseChecklistItem } from '../features/parse_analysis/types/parseChecklist';
+import { buildParseChecklist } from '../features/parse_analysis/utils/parseChecklistUtils';
 import { analyzeBuffChecklist } from '../features/parse_analysis/utils/buffChecklistUtils';
 import { analyzeDebuffChecklist } from '../features/parse_analysis/utils/debuffChecklistUtils';
 import {
@@ -110,6 +113,7 @@ interface ParseAnalysisState {
   rotationResult: RotationAnalysisResult | null;
   activeTimeResult: ActivePercentageResult | null;
   buildIssues: BuildIssue[] | null;
+  parseChecklist: ParseChecklistItem[] | null;
 }
 
 interface PlayerRoleEntry {
@@ -235,6 +239,7 @@ const ParseAnalysisPageContent: React.FC = () => {
       rotationResult: null,
       activeTimeResult: null,
       buildIssues: null,
+      parseChecklist: null,
     }),
     [],
   );
@@ -670,6 +675,18 @@ const ParseAnalysisPageContent: React.FC = () => {
       );
     }
 
+    const parseChecklist = buildParseChecklist({
+      fightName: state.fightName,
+      foodResult,
+      activeTimeResult,
+      cpm,
+      weaveResult,
+      rotationResult,
+      buffChecklist,
+      debuffChecklist,
+      buildIssues,
+    });
+
     // Update state with analysis results
     setState((prev) => ({
       ...prev,
@@ -683,6 +700,7 @@ const ParseAnalysisPageContent: React.FC = () => {
       debuffChecklist,
       activeTimeResult,
       buildIssues,
+      parseChecklist,
     }));
 
     // Clear pending analysis
@@ -699,6 +717,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     isCombatantInfoEventsLoading,
     isDebuffEventsLoading,
     abilityMapper,
+    state.fightName,
   ]);
 
   // Handler for analyzing from URL parameters
@@ -723,6 +742,7 @@ const ParseAnalysisPageContent: React.FC = () => {
         dpsResult: null,
         rotationResult: null,
         activeTimeResult: null,
+        parseChecklist: null,
       }));
 
       try {
@@ -793,6 +813,7 @@ const ParseAnalysisPageContent: React.FC = () => {
       dpsResult: null,
       rotationResult: null,
       activeTimeResult: null,
+      parseChecklist: null,
     }));
 
     try {
@@ -878,6 +899,12 @@ const ParseAnalysisPageContent: React.FC = () => {
         </CardContent>
       </Card>
     );
+  };
+
+  const renderParseChecklist = (): React.ReactElement | null => {
+    if (!state.parseChecklist || state.parseChecklist.length === 0) return null;
+
+    return <ParseChecklist items={state.parseChecklist} />;
   };
 
   const renderActiveTimeAnalysis = (): React.ReactElement | null => {
@@ -1430,6 +1457,7 @@ const ParseAnalysisPageContent: React.FC = () => {
           </Card>
 
           {renderFoodAnalysis()}
+          {renderParseChecklist()}
           {renderActiveTimeAnalysis()}
           {renderCPMAnalysis()}
           {renderDPSAnalysis()}
