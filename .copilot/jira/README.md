@@ -9,6 +9,7 @@ This Agent Skill provides a Model Context Protocol (MCP) server that enables Git
 
 ## Features
 
+- **Create Work Items**: Create new Jira tickets (tasks, bugs, stories) with optional descriptions and parent epics
 - **View Work Items**: Get detailed information about specific Jira tickets (with caching)
 - **Search**: Find work items using JQL (Jira Query Language) (with caching)
 - **Transition**: Move tickets between statuses (To Do → In Progress → Done)
@@ -84,7 +85,27 @@ After reloading, verify the skill is loaded by asking Copilot:
 
 ## Available Tools
 
-### 1. `jira_view_workitem`
+### 1. `jira_create_workitem`
+Create a new Jira work item (task, bug, story).
+
+**Example:**
+```
+@workspace Create a task "Fix ARIA labels" and assign to me
+@workspace Create a bug "Navigation broken on mobile" for epic ESO-368
+```
+
+**Parameters:**
+- `summary` (required): Work item title
+- `type` (optional): Task, Bug, or Story (default: Task)
+- `description` (optional): Detailed description
+- `assignee` (optional): Email or "@me" for self-assign (default: @me)
+- `parent` (optional): Parent epic key (e.g., "ESO-368")
+
+**Returns**: Created ticket key, ID, summary, type, status, assignee, URL
+
+---
+
+### 2. `jira_view_workitem`
 View detailed information about a specific work item.
 
 **Example:**

@@ -249,6 +249,38 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
+        name: 'jira_create_workitem',
+        description: 'Create a new Jira work item (task, bug, story). Returns the created ticket key and details.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            summary: {
+              type: 'string',
+              description: 'Work item title/summary',
+            },
+            type: {
+              type: 'string',
+              description: 'Work item type (Task, Bug, Story)',
+              default: 'Task',
+            },
+            description: {
+              type: 'string',
+              description: 'Detailed description (optional)',
+            },
+            assignee: {
+              type: 'string',
+              description: 'Assignee email or "@me" to self-assign (optional)',
+              default: '@me',
+            },
+            parent: {
+              type: 'string',
+              description: 'Parent epic key (e.g., "ESO-368") - optional',
+            },
+          },
+          required: ['summary'],
+        },
+      },
+      {
         name: 'jira_view_workitem',
         description: 'View details of a specific Jira work item. Returns key, type, summary, status, description, assignee, story points, and timestamps.',
         inputSchema: {
@@ -402,6 +434,52 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
+      case 'jira_create_workitem': {
+        const { summary, type = 'Task', description, assignee = '@me', parent } = args;
+        
+        if (!summary || typeof summary !== 'string' || summary.trim().length === 0) {
+          return createErrorResponse(new Error('Summary is required'), name, args);
+        }
+        
+        log('Creating work item:', summary, 'type:', type);
+        
+        // Build command
+        let command = `acli jira workitem create --summary "${summary}" --project "${PROJECT_KEY}" --type "${type}" --assignee "${assignee}" --json`;
+        
+        if (description) {
+          const escapedDesc = description.replace(/"/g, '\\"');
+          command += ` --description "${escapedDesc}"`;
+        }
+        
+        if (parent) {
+          const validation = validateJiraKey(parent);
+          if (!validation.valid) {
+            return createErrorResponse(new Error(`Invalid parent key: ${validation.error}`), name, args);
+          }
+          command += ` --parent "${parent}"`;
+        }
+        
+        const output = executeAcli(command, false, true);
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                key: output.key,
+                id: output.id,
+                summary: output.fields?.summary || summary,
+                type: output.fields?.issuetype?.name || type,
+                status: output.fields?.status?.name,
+                assignee: output.fields?.assignee?.displayName,
+                url: `https://bkrupa.atlassian.net/browse/${output.key}`,
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
       case 'jira_view_workitem': {
         const { key } = args;
         
