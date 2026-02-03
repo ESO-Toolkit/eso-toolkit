@@ -1001,7 +1001,7 @@ export const HeaderBar: React.FC = () => {
                 </Tooltip>
               ) : (
                 <Tooltip title="Log in" arrow placement="bottom">
-                  <AuthIconButton onClick={handleLogin}>
+                  <AuthIconButton onClick={handleLogin} aria-label="Log in">
                     <Login />
                   </AuthIconButton>
                 </Tooltip>

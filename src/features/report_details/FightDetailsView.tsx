@@ -260,6 +260,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             onClick={navigateToPrevious}
             disabled={!navigationData.previousFight}
             size="small"
+            aria-label="Previous fight"
             sx={{
               width: { xs: 32, md: 28 },
               height: { xs: 32, md: 28 },
@@ -378,6 +379,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             onClick={navigateToNext}
             disabled={!navigationData.nextFight}
             size="small"
+            aria-label="Next fight"
             sx={{
               width: { xs: 32, md: 28 },
               height: { xs: 32, md: 28 },

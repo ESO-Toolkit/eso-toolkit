@@ -501,7 +501,7 @@ export const HealerGuide: React.FC = () => {
             Advanced: Full gear explorer, activation types, and example builds
           </Typography>
         </AccordionSummary>
-        <AccordionDetails>
+        <AccordionDetails id="advanced-content">
           {/* Gear Explorer */}
           <Box>
             <Stack

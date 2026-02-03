@@ -105,6 +105,7 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
             <IconButton
               size="small"
               onClick={handleOpenHelp}
+              aria-label="Open damage type help"
               sx={{
                 color: 'text.secondary',
                 '&:hover': { color: 'primary.main' },
@@ -185,6 +186,7 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
           <IconButton
             size="small"
             onClick={handleOpenHelp}
+            aria-label="Open damage type help"
             sx={{
               color: 'text.secondary',
               '&:hover': { color: 'primary.main' },

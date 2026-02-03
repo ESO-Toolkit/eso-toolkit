@@ -92,6 +92,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
 }) => {
   const theme = useTheme();
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const stacksContentId = React.useId();
 
   // Helper function to get stack gradient
   const getStackGradient = React.useCallback(
@@ -458,6 +459,9 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           {buff.allStacksData && buff.allStacksData.length > 0 && (
             <IconButton
               size="small"
+              aria-label={`Toggle ${buff.abilityName} stacks`}
+              aria-expanded={isExpanded}
+              aria-controls={stacksContentId}
               sx={{
                 ml: 0.5,
                 padding: 0.5,
@@ -536,7 +540,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
 
       {/* Expanded view - individual bars for each stack (highest on top) */}
       {buff.allStacksData && (
-        <Collapse in={isExpanded} timeout={300}>
+        <Collapse in={isExpanded} timeout={300} id={stacksContentId}>
           <Box sx={{ width: '100%', mt: 1 }}>
             {buff.allStacksData
               .slice()
