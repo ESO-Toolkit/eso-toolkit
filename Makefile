@@ -18,7 +18,7 @@ else
 	RM_ESLINT := rm -rf .eslintcache
 endif
 
-.PHONY: help install build test lint lint-fix format fmt clean dev codegen fetch-abilities all os-info clean-cache clear-cache clean-modules clean-all reinstall pre-commit pc check prod-build setup test-watch typecheck pr
+.PHONY: help install build test test-all lint lint-fix format fmt clean dev codegen fetch-abilities all os-info clean-cache clear-cache clean-modules clean-all reinstall pre-commit pc check prod-build setup test-watch typecheck pr
 
 # Default target
 help:
@@ -28,6 +28,7 @@ help:
 	@$(COLOR) color brightCyan "  os-info       - Show detected operating system"
 	@$(COLOR) color brightCyan "  dev           - Start development server"
 	@$(COLOR) color brightCyan "  test          - Run tests"
+	@$(COLOR) color brightCyan "  test-all      - Run all unit tests (no watch)"
 	@$(COLOR) color brightCyan "  test-watch    - Run tests in watch mode"
 	@$(COLOR) color brightCyan "  typecheck     - Run TypeScript type checking"
 	@$(COLOR) info "Code Quality Commands:"
@@ -85,6 +86,12 @@ test:
 	@$(COLOR) subheader "Running Tests"
 	@$(COLOR) info "Executing test suite..."
 	npm run test
+
+# Run full unit test suite (no watch, no onlyChanged)
+test-all:
+	@$(COLOR) subheader "Running Full Unit Test Suite"
+	@$(COLOR) info "Executing all Jest tests..."
+	npm run test:all
 
 # Run tests in watch mode
 test-watch:

@@ -12,6 +12,7 @@ function Show-Help {
     Write-Host "  install       - Install dependencies"
     Write-Host "  build         - Build the project for production"
     Write-Host "  test          - Run tests"
+    Write-Host "  test-all      - Run all unit tests (no watch)"
     Write-Host "  test-watch    - Run tests in watch mode"
     Write-Host "  lint          - Run ESLint to check code quality"
     Write-Host "  lint-fix      - Run ESLint and automatically fix issues"
@@ -48,6 +49,11 @@ function Build-Project {
 function Run-Tests {
     Write-Host "Running tests..." -ForegroundColor Yellow
     npm run test
+}
+
+function Run-TestsAll {
+    Write-Host "Running all unit tests..." -ForegroundColor Yellow
+    npm run test:all
 }
 
 function Run-TestsWatch {
@@ -190,6 +196,7 @@ switch ($Command.ToLower()) {
     "install" { Install-Dependencies }
     "build" { Build-Project }
     "test" { Run-Tests }
+    "test-all" { Run-TestsAll }
     "test-watch" { Run-TestsWatch }
     "lint" { Run-Lint }
     "lint-fix" { Run-LintFix }

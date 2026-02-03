@@ -639,6 +639,11 @@ export const HeaderBar: React.FC = () => {
       icon: '👥',
       path: '/roster-builder',
     },
+    {
+      text: 'About',
+      icon: 'ℹ️',
+      path: '/about',
+    },
   ];
 
   const reportsItems = React.useMemo(() => {
