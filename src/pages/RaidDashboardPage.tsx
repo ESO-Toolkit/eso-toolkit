@@ -77,8 +77,8 @@ export const RaidDashboardPage: React.FC = () => {
     if (!reportData?.fights) return [];
     
     // Log to debug fight count discrepancy
-    console.log('[Dashboard] Total fights in reportData:', reportData.fights.length);
-    console.log('[Dashboard] Report:', reportData.code || reportId);
+    // console.log('[Dashboard] Total fights in reportData:', reportData.fights.length);
+    // console.log('[Dashboard] Report:', reportData.code || reportId);
     
     return [...reportData.fights]
       .filter((f): f is FightFragment => f !== null)
@@ -87,7 +87,7 @@ export const RaidDashboardPage: React.FC = () => {
         const bEnd = b?.endTime ?? b?.startTime ?? 0;
         return bEnd - aEnd;
       });
-  }, [reportData?.fights, reportData?.code, reportId]);
+  }, [reportData?.fights]);
 
   const handleBackToReport = (): void => {
     navigate(`/report/${reportId}`);

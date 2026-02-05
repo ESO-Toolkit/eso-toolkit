@@ -1,10 +1,10 @@
 import WarningIcon from '@mui/icons-material/Warning';
-import { Box, Typography, Chip, CircularProgress, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { Box, CircularProgress, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import React from 'react';
 
 import { FightFragment } from '../../graphql/gql/graphql';
 import { usePlayerData } from '../../hooks/usePlayerData';
-import { useMultiFightBuffLookup, FightScope } from '../../hooks/workerTasks/useMultiFightBuffLookup';
+import { useMultiFightBuffLookup } from '../../hooks/workerTasks/useMultiFightBuffLookup';
 import { WidgetScope } from '../../store/dashboard/dashboardSlice';
 import { isBuffActiveOnTarget } from '../../utils/BuffLookupUtils';
 

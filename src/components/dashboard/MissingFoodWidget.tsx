@@ -4,7 +4,7 @@ import React from 'react';
 
 import { FightFragment } from '../../graphql/gql/graphql';
 import { usePlayerData } from '../../hooks/usePlayerData';
-import { useMultiFightBuffLookup, FightScope } from '../../hooks/workerTasks/useMultiFightBuffLookup';
+import { useMultiFightBuffLookup } from '../../hooks/workerTasks/useMultiFightBuffLookup';
 import { WidgetScope } from '../../store/dashboard/dashboardSlice';
 import {
   TRI_STAT_FOOD,
@@ -69,19 +69,19 @@ export const MissingFoodWidget: React.FC<MissingFoodWidgetProps> = ({
   });
 
   const playersWithoutFood = React.useMemo(() => {
-    console.log('[MissingFoodWidget] playerData:', !!playerData?.playersById, 'fightBuffData.size:', fightBuffData.size);
+    // console.log('[MissingFoodWidget] playerData:', !!playerData?.playersById, 'fightBuffData.size:', fightBuffData.size);
     
     if (!playerData?.playersById || fightBuffData.size === 0) return [];
 
     // Get list of fights we're analyzing based on fightBuffData
     const analyzedFights = fights.filter((fight) => fightBuffData.has(fight.id));
-    console.log('[MissingFoodWidget] Total fights:', fights.length, 'Analyzed fights:', analyzedFights.length);
-    console.log('[MissingFoodWidget] fightBuffData keys:', Array.from(fightBuffData.keys()));
-    console.log('[MissingFoodWidget] Fight IDs in fights array:', fights.map(f => f.id));
+    // console.log('[MissingFoodWidget] Total fights:', fights.length, 'Analyzed fights:', analyzedFights.length);
+    // console.log('[MissingFoodWidget] fightBuffData keys:', Array.from(fightBuffData.keys()));
+    // console.log('[MissingFoodWidget] Fight IDs in fights array:', fights.map(f => f.id));
     
     if (analyzedFights.length === 0) return [];
 
-    console.log('[MissingFoodWidget] Analyzing', analyzedFights.length, 'fights');
+    // console.log('[MissingFoodWidget] Analyzing', analyzedFights.length, 'fights');
 
     // Track count of fights where each player is missing food
     // Use a map to track: playerName -> { count, playerInfo }
@@ -92,10 +92,10 @@ export const MissingFoodWidget: React.FC<MissingFoodWidgetProps> = ({
 
     analyzedFights.forEach((fight) => {
       const buffLookupData = fightBuffData.get(fight.id);
-      console.log('[MissingFoodWidget] Getting buff data for fight', fight.id, ':', !!buffLookupData);
+      // console.log('[MissingFoodWidget] Getting buff data for fight', fight.id, ':', !!buffLookupData);
       
       if (!buffLookupData) {
-        console.log('[MissingFoodWidget] No buff data for fight', fight.id);
+        // console.log('[MissingFoodWidget] No buff data for fight', fight.id);
         return;
       }
 
@@ -114,7 +114,7 @@ export const MissingFoodWidget: React.FC<MissingFoodWidgetProps> = ({
         }
       });
       
-      console.log('[MissingFoodWidget] Fight', fight.id, 'has', playersInFight.size, 'unique players with buffs');
+      // console.log('[MissingFoodWidget] Fight', fight.id, 'has', playersInFight.size, 'unique players with buffs');
 
       const fightMidpoint = (fight.startTime + (fight.endTime ?? fight.startTime)) / 2;
 
@@ -140,14 +140,14 @@ export const MissingFoodWidget: React.FC<MissingFoodWidgetProps> = ({
       });
     });
 
-    console.log('[MissingFoodWidget] Total players missing food:', playerMissingFoodCount.size);
+    // console.log('[MissingFoodWidget] Total players missing food:', playerMissingFoodCount.size);
     
     // Convert to array with count information
     return Array.from(playerMissingFoodCount.entries())
       .map(([name, data]) => ({ 
         name, 
         count: data.count, 
-        totalFights: playerFightParticipation.get(name) || 0 
+        totalFights: playerFightParticipation.get(name) || 0, 
       }))
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   }, [playerData, fightBuffData, fights]);
