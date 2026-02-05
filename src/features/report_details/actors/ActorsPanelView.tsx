@@ -255,6 +255,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
                 size="small"
                 onClick={() => copyCombatantInfoEvents(actorId)}
                 color="info"
+                aria-label="Copy combatant info"
               >
                 <ContentCopy fontSize="small" />
               </IconButton>

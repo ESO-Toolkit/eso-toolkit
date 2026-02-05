@@ -180,6 +180,7 @@ export const LatestReports: React.FC = () => {
             <IconButton
               onClick={handleRefresh}
               disabled={state.loading}
+              aria-label="Refresh reports"
               color="primary"
               sx={{
                 position: 'absolute',
@@ -225,6 +226,7 @@ export const LatestReports: React.FC = () => {
                 <IconButton
                   onClick={handleRefresh}
                   disabled={state.loading}
+                  aria-label="Refresh reports"
                   color="primary"
                   sx={{
                     width: 'auto',
