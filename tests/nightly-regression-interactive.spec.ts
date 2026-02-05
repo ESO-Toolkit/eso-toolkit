@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-import { SELECTORS, TEST_TIMEOUTS, TEST_DATA, getBaseUrl } from './selectors';\nimport { ensureAuthState } from './auth-state-fallback';
+import { SELECTORS, TEST_TIMEOUTS, TEST_DATA, getBaseUrl } from './selectors';
 
 /**
  * Nightly Regression Tests - Interactive Features
