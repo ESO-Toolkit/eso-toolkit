@@ -41,13 +41,21 @@ When documentation IS warranted:
 2. **Location**:
    - Major features → `documentation/features/[feature-name]/`
    - Architecture → `documentation/architecture/`
+   - Implementation summaries → `documentation/implementation/`
+   - Bug fixes → `documentation/fixes/`
    - AI-specific → `documentation/ai-agents/`
+   - Outdated/historical → `documentation/archive/`
    - **Bug fixes/implementation details** → Jira ticket comments (NOT separate markdown files)
 3. **Format**: Brief markdown with:
    - Problem statement (2-3 sentences)
    - Solution overview (1-2 paragraphs)
    - Key files changed (list)
    - Testing notes (if applicable)
+4. **Token Optimization**: Follow [TOKEN_OPTIMIZATION_GUIDE.md](./TOKEN_OPTIMIZATION_GUIDE.md)
+   - Keep primary docs under 5 KB
+   - Use layered loading (always/on-demand/explicit)
+   - Avoid duplication - use links
+   - Archive obsolete docs instead of deleting
 
 ### Instead of Documentation
 

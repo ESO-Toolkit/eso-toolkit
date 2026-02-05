@@ -65,6 +65,7 @@ git checkout -b ESO-XXX/description-here
 - **Git Workflow Enforcement**: [.copilot/workflow/](.copilot/workflow/) or [.claude/workflow/](.claude/workflow/) - **Use this FIRST**
 - **Testing & Dev**: [.copilot/testing/](.copilot/testing/) or [.claude/testing/](.claude/testing/)
 - **Jira Integration**: [.copilot/jira/](.copilot/jira/) or [.claude/jira/](.claude/jira/)
+- **Sentry Integration**: [.copilot/sentry/](.copilot/sentry/) or [.claude/sentry/](.claude/sentry/)
 - **Report Debugging**: [.copilot/reports/](.copilot/reports/) or [.claude/reports/](.claude/reports/)
 - **Git Operations**: [.copilot/git/](.copilot/git/) or [.claude/git/](.claude/git/)
 - **Post-Squash Rebase**: [.copilot/rebase/](.copilot/rebase/) or [.claude/rebase/](.claude/rebase/)
@@ -94,8 +95,17 @@ git checkout -b ESO-XXX/description-here
 ```
 @workspace View ESO-372
 @workspace Move ESO-569 to "In Progress"
+@workspace Create a new task for fixing the scribing bug
 ```
 See: [.copilot/jira/](.copilot/jira/) or [.claude/jira/](.claude/jira/)
+
+**Sentry** (Error Tracking):
+```
+@workspace Search for unresolved TypeErrors in Sentry
+@workspace View Sentry issue 1234567890
+@workspace Resolve Sentry issue 1234567890 in release 1.2.3
+```
+See: [.copilot/sentry/](.copilot/sentry/) or [.claude/sentry/](.claude/sentry/)
 
 **Report Debugging** (Production Issues):
 ```

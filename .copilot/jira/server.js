@@ -422,6 +422,55 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['key', 'storyPoints'],
         },
       },
+      {
+        name: 'jira_create_workitem',
+        description: 'Create a new Jira work item (story, task, bug, etc.). Returns the created issue key.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            project: {
+              type: 'string',
+              description: 'Project key (e.g., "ESO")',
+              default: 'ESO',
+            },
+            type: {
+              type: 'string',
+              description: 'Issue type (e.g., "Story", "Task", "Bug", "Sub-task")',
+              default: 'Task',
+            },
+            summary: {
+              type: 'string',
+              description: 'Brief summary/title of the work item',
+            },
+            description: {
+              type: 'string',
+              description: 'Detailed description (markdown supported)',
+            },
+            assignee: {
+              type: 'string',
+              description: 'Username to assign to (optional)',
+            },
+            storyPoints: {
+              type: 'number',
+              description: 'Story point estimate (optional)',
+            },
+            priority: {
+              type: 'string',
+              description: 'Priority level (e.g., "High", "Medium", "Low")',
+            },
+            labels: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Array of labels to add',
+            },
+            epicKey: {
+              type: 'string',
+              description: 'Epic to link to (e.g., "ESO-368")',
+            },
+          },
+          required: ['summary'],
+        },
+      },
     ],
   };
 });
@@ -785,6 +834,90 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 key: key,
                 storyPoints: storyPoints,
                 message: output,
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'jira_create_workitem': {
+        const { 
+          project = 'ESO', 
+          type = 'Task', 
+          summary, 
+          description = '',
+          assignee,
+          storyPoints,
+          priority,
+          labels = [],
+          epicKey
+        } = args;
+        
+        // Validate required fields
+        if (!summary || typeof summary !== 'string' || summary.trim().length === 0) {
+          return createErrorResponse(new Error('Summary is required and cannot be empty'), name, args);
+        }
+        
+        log('Creating work item:', type, '-', summary.substring(0, 50));
+        
+        // Build the create command
+        let command = `acli jira workitem create --project ${project} --type "${type}" --summary "${summary.replace(/"/g, '\\"')}"`;
+        
+        if (description) {
+          command += ` --description "${description.replace(/"/g, '\\"')}"`;
+        }
+        
+        if (assignee) {
+          command += ` --assignee ${assignee}`;
+        }
+        
+        if (priority) {
+          command += ` --priority "${priority}"`;
+        }
+        
+        if (labels.length > 0) {
+          command += ` --labels "${labels.join(',')}"`;
+        }
+        
+        const output = executeAcli(command);
+        
+        // Extract created issue key from output
+        const keyMatch = output.match(/([A-Z]+-\d+)/);
+        const createdKey = keyMatch ? keyMatch[1] : null;
+        
+        if (!createdKey) {
+          return createErrorResponse(new Error('Failed to extract created issue key from output'), name, args);
+        }
+        
+        // Post-creation updates
+        if (storyPoints !== undefined) {
+          try {
+            executeAcli(`acli jira workitem update ${createdKey} --story-points ${storyPoints}`);
+          } catch (err) {
+            log('Warning: Failed to set story points:', err.message);
+          }
+        }
+        
+        if (epicKey) {
+          try {
+            executeAcli(`acli jira workitem link ${createdKey} ${epicKey} --link-type "Epic Link"`);
+          } catch (err) {
+            log('Warning: Failed to link to epic:', err.message);
+          }
+        }
+        
+        // Fetch the created issue details
+        const createdIssue = parseWorkitemView(executeAcli(`acli jira workitem view ${createdKey}`));
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                key: createdKey,
+                issue: createdIssue,
+                message: `Successfully created ${type}: ${createdKey}`,
               }, null, 2),
             },
           ],
