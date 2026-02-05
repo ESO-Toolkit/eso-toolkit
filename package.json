@@ -1,7 +1,6 @@
 {
   "workspaces": [
-    ".copilot/*",
-    ".claude/*"
+    ".copilot/*"
   ],
   "browserslist": {
     "development": [
