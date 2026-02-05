@@ -145,12 +145,16 @@ test.describe('Nightly Regression - Interactive Features', () => {
         }
       }
 
-      // Take screenshot of report page
-      await page.screenshot({
-        path: `test-results/nightly-regression-report-${reportId}.png`,
-        fullPage: true,
-        timeout: TEST_TIMEOUTS.screenshot,
-      });
+      // Take screenshot of report page with error handling
+      try {
+        await page.screenshot({
+          path: `test-results/nightly-regression-report-${reportId}.png`,
+          fullPage: true,
+          timeout: TEST_TIMEOUTS.screenshot,
+        });
+      } catch (screenshotError) {
+        console.warn('Screenshot failed but continuing test:', (screenshotError as Error).message);
+      }
 
       // Check if fight links are available (may not be present for all reports)
       const firstFightLink = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
@@ -239,11 +243,15 @@ test.describe('Nightly Regression - Interactive Features', () => {
         .isVisible({ timeout: TEST_TIMEOUTS.interaction });
 
       // Take screenshot whether replay loaded or not (for debugging)
-      await page.screenshot({
-        path: `test-results/nightly-regression-replay-${reportId}-${fightId}.png`,
-        fullPage: true,
-        timeout: TEST_TIMEOUTS.screenshot,
-      });
+      try {
+        await page.screenshot({
+          path: `test-results/nightly-regression-replay-${reportId}-${fightId}.png`,
+          fullPage: true,
+          timeout: TEST_TIMEOUTS.screenshot,
+        });
+      } catch (screenshotError) {
+        console.warn('Screenshot failed but continuing test:', (screenshotError as Error).message);
+      }
 
       if (hasReplayInterface) {
         // Test play/pause functionality
@@ -253,11 +261,15 @@ test.describe('Nightly Regression - Interactive Features', () => {
         // Wait for replay to start
         await page.waitForTimeout(3000);
 
-        await page.screenshot({
-          path: `test-results/nightly-regression-replay-playing-${reportId}.png`,
-          fullPage: true,
-          timeout: TEST_TIMEOUTS.screenshot,
-        });
+        try {
+          await page.screenshot({
+            path: `test-results/nightly-regression-replay-playing-${reportId}.png`,
+            fullPage: true,
+            timeout: TEST_TIMEOUTS.screenshot,
+          });
+        } catch (screenshotError) {
+          console.warn('Playing screenshot failed but continuing test:', (screenshotError as Error).message);
+        }
 
         // Test pause
         const pauseButton = page.locator('button[aria-label*="pause"], .pause-button').first();
@@ -274,11 +286,15 @@ test.describe('Nightly Regression - Interactive Features', () => {
           await timeline.first().click({ force: true });
           await page.waitForTimeout(2000);
 
-          await page.screenshot({
-            path: `test-results/nightly-regression-replay-scrubbed-${reportId}.png`,
-            fullPage: true,
-            timeout: TEST_TIMEOUTS.screenshot,
-          });
+          try {
+            await page.screenshot({
+              path: `test-results/nightly-regression-replay-scrubbed-${reportId}.png`,
+              fullPage: true,
+              timeout: TEST_TIMEOUTS.screenshot,
+            });
+          } catch (screenshotError) {
+            console.warn('Scrubbed screenshot failed but continuing test:', (screenshotError as Error).message);
+          }
         }
       }
 
@@ -340,11 +356,15 @@ test.describe('Nightly Regression - Interactive Features', () => {
           await controls.first().click();
           await page.waitForTimeout(2000);
 
-          await page.screenshot({
-            path: `test-results/nightly-regression-live-active-${reportId}.png`,
-            fullPage: true,
-            timeout: TEST_TIMEOUTS.screenshot,
-          });
+          try {
+            await page.screenshot({
+              path: `test-results/nightly-regression-live-active-${reportId}.png`,
+              fullPage: true,
+              timeout: TEST_TIMEOUTS.screenshot,
+            });
+          } catch (screenshotError) {
+            console.warn('Live active screenshot failed but continuing test:', (screenshotError as Error).message);
+          }
         }
       }
     });
@@ -394,10 +414,10 @@ test.describe('Nightly Regression - Interactive Features', () => {
         await page.screenshot({
           path: `test-results/nightly-regression-heatmap-${reportId}-${fightId}.png`,
           fullPage: true,
-          timeout: 15000, // Increased timeout
+          timeout: TEST_TIMEOUTS.screenshot,
         });
       } catch (screenshotError) {
-        console.log('Screenshot failed but continuing test:', (screenshotError as Error).message);
+        console.warn('Heatmap screenshot failed but continuing test:', (screenshotError as Error).message);
       }
 
       if (hasHeatmap) {
@@ -481,10 +501,10 @@ test.describe('Nightly Regression - Interactive Features', () => {
         await page.screenshot({
           path: `test-results/nightly-regression-rotation-${reportId}-${fightId}.png`,
           fullPage: true,
-          timeout: 15000, // Increased timeout
+          timeout: TEST_TIMEOUTS.screenshot,
         });
       } catch (screenshotError) {
-        console.log('Screenshot failed but continuing test:', (screenshotError as Error).message);
+        console.warn('Rotation screenshot failed but continuing test:', (screenshotError as Error).message);
       }
 
       // Test player selection for rotation analysis if available
