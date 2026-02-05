@@ -156,7 +156,7 @@ export function isBuffActiveOnTarget(
   targetID?: number,
 ): boolean {
   const intervals = buffLookup.buffIntervals[abilityGameID.toString()];
-  
+
   if (!intervals || intervals.length === 0) {
     return false;
   }
@@ -203,7 +203,7 @@ export function isBuffActiveOnTarget(
   for (const interval of intervals) {
     const timestampCheck = timestamp >= interval.start && timestamp <= interval.end;
     const targetCheck = interval.targetID === targetID;
-    
+
     if (timestampCheck && targetCheck) {
       return true;
     }

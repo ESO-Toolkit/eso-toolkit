@@ -132,4 +132,3 @@ export const MissingBuffsWidget: React.FC<MissingBuffsWidgetProps> = ({
     </BaseWidget>
   );
 };
-

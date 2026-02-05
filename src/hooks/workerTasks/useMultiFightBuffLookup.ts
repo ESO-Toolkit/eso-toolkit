@@ -2,10 +2,13 @@ import React from 'react';
 
 import type { FightFragment } from '@/graphql/gql/graphql';
 import { BuffLookupData } from '@/utils/BuffLookupUtils';
+import { Logger, LogLevel } from '@/utils/logger';
 
 import { useBuffLookupTask } from './useBuffLookupTask';
 
 export type FightScope = 'most-recent' | 'last-3' | 'last-5' | 'all-fights' | 'boss-only';
+
+const logger = new Logger({ level: LogLevel.DEBUG, contextPrefix: 'useMultiFightBuffLookup' });
 
 interface UseMultiFightBuffLookupOptions {
   reportCode: string;
@@ -15,10 +18,10 @@ interface UseMultiFightBuffLookupOptions {
 
 /**
  * Hook to manage buff lookup data across multiple fights.
- * 
+ *
  * Strategy: Load buff data sequentially for each fight to avoid Redux state conflicts.
  * Each fight's buff data is requested one at a time, and results are stored in local state.
- * 
+ *
  * This approach works around the limitation that buff lookup results are stored globally
  * in Redux without fight-specific keying.
  */
@@ -32,7 +35,7 @@ export function useMultiFightBuffLookup({
   hasError: boolean;
 } {
   // console.log('[useMultiFightBuffLookup] Called with:', { reportCode, fightsCount: fights.length, scope });
-  
+
   // Determine which fights to load based on scope
   const selectedFights = React.useMemo(() => {
     let filtered = fights;
@@ -52,8 +55,8 @@ export function useMultiFightBuffLookup({
     // 'all-fights' or 'boss-only' - return all filtered fights
     return filtered;
   }, [fights, scope]);
-  
-  // console.log('[useMultiFightBuffLookup] selectedFights:', selectedFights.length, selectedFights.map(f => f.id));
+
+  logger.debug('Selected fights', { count: selectedFights.length, fightIds: selectedFights.map(f => f.id) });
 
   // Store buff data results locally, keyed by fight ID
   const [buffDataCache, setBuffDataCache] = React.useState<Map<number, BuffLookupData>>(
@@ -65,28 +68,22 @@ export function useMultiFightBuffLookup({
 
   // Track loading state
   const [loadingFightIds, setLoadingFightIds] = React.useState<Set<number>>(new Set());
-  
+
   // Track which fight ID we last requested data for (to prevent saving wrong data from Redux)
   const [requestedFightId, setRequestedFightId] = React.useState<number | null>(null);
 
   // Get the current fight to load
   const currentFight = selectedFights[currentLoadIndex];
-  
-  // console.log('[useMultiFightBuffLookup] currentLoadIndex:', currentLoadIndex, 'currentFight:', currentFight?.id, 'buffDataCache.size:', buffDataCache.size);
+
+  logger.debug('Current load state', { currentLoadIndex, currentFightId: currentFight?.id, cacheSize: buffDataCache.size });
 
   // Use buff lookup task for current fight only
   // Skip if we already have this fight's data cached
   const shouldLoadCurrentFight = currentFight && !buffDataCache.has(currentFight.id);
-  
-  // console.log('[useMultiFightBuffLookup] shouldLoadCurrentFight:', shouldLoadCurrentFight);
 
   const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask({
-    context: shouldLoadCurrentFight
-      ? { reportCode, fightId: currentFight.id }
-      : undefined,
+    context: shouldLoadCurrentFight ? { reportCode, fightId: currentFight.id } : undefined,
   });
-  
-  // console.log('[useMultiFightBuffLookup] buffLookupData:', !!buffLookupData, 'isBuffLookupLoading:', isBuffLookupLoading);
 
   // When buff data loads for current fight, save it and move to next
   React.useEffect(() => {
@@ -103,7 +100,7 @@ export function useMultiFightBuffLookup({
 
     // Start loading for this fight if we should and haven't requested it yet
     if (shouldLoadCurrentFight && requestedFightId !== currentFight.id) {
-      // console.log('[useMultiFightBuffLookup] Starting load for fight', currentFight.id);
+      logger.debug('Starting buff data load', { fightId: currentFight.id });
       setRequestedFightId(currentFight.id);
       setLoadingFightIds((prev) => {
         const updated = new Set(prev);
@@ -115,14 +112,13 @@ export function useMultiFightBuffLookup({
 
     // Save data only if we requested this fight and loading is complete
     if (!isBuffLookupLoading && buffLookupData && requestedFightId === currentFight.id) {
-      // const buffIds = Object.keys(buffLookupData.buffIntervals);
-      // console.log('[useMultiFightBuffLookup] Saving buff data for fight', currentFight.id, ':', {
-      //   buffIdsCount: buffIds.length,
-      //   sampleBuffIds: buffIds.slice(0, 5),
-      //   hasData: buffIds.length > 0,
-      //   requestedFightId,
-      // });
-      
+      const buffIds = Object.keys(buffLookupData.buffIntervals);
+      logger.debug('Saving buff data', { 
+        fightId: currentFight.id, 
+        buffIdsCount: buffIds.length,
+        hasData: buffIds.length > 0,
+      });
+
       // Save the data for this fight
       setBuffDataCache((prev) => {
         const updated = new Map(prev);
@@ -136,7 +132,7 @@ export function useMultiFightBuffLookup({
         updated.delete(currentFight.id);
         return updated;
       });
-      
+
       // Clear requested fight ID
       setRequestedFightId(null);
 
@@ -145,11 +141,20 @@ export function useMultiFightBuffLookup({
         setCurrentLoadIndex((prev) => prev + 1);
       }
     }
-  }, [currentFight, buffLookupData, isBuffLookupLoading, currentLoadIndex, selectedFights.length, buffDataCache, shouldLoadCurrentFight, requestedFightId]);
+  }, [
+    currentFight,
+    buffLookupData,
+    isBuffLookupLoading,
+    currentLoadIndex,
+    selectedFights.length,
+    buffDataCache,
+    shouldLoadCurrentFight,
+    requestedFightId,
+  ]);
 
   // Reset when selectedFights array identity changes (not on every render)
   const selectedFightsKey = React.useMemo(
-    () => selectedFights.map(f => f.id).join(','),
+    () => selectedFights.map((f) => f.id).join(','),
     [selectedFights],
   );
 

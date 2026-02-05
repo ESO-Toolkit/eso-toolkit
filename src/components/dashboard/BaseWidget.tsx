@@ -75,7 +75,10 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
         title={title}
         titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
         subheader={SCOPE_LABELS[scope]}
-        subheaderTypographyProps={{ variant: 'caption', sx: { textTransform: 'uppercase', letterSpacing: 0.5 } }}
+        subheaderTypographyProps={{
+          variant: 'caption',
+          sx: { textTransform: 'uppercase', letterSpacing: 0.5 },
+        }}
         action={
           <Box>
             <IconButton size="small" onClick={handleScopeMenuOpen} aria-label="Settings">
@@ -86,32 +89,34 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
             </IconButton>
           </Box>
         }
-        sx={{ 
+        sx={{
           pb: 1,
           borderBottom: 1,
           borderColor: 'divider',
         }}
       />
-      <CardContent sx={{ 
-        pt: 2,
-        pb: 2,
-        maxHeight: 500,
-        overflow: 'auto',
-        '&::-webkit-scrollbar': {
-          width: '8px',
-        },
-        '&::-webkit-scrollbar-track': {
-          backgroundColor: 'rgba(0,0,0,0.05)',
-          borderRadius: '4px',
-        },
-        '&::-webkit-scrollbar-thumb': {
-          backgroundColor: 'rgba(0,0,0,0.2)',
-          borderRadius: '4px',
-          '&:hover': {
-            backgroundColor: 'rgba(0,0,0,0.3)',
+      <CardContent
+        sx={{
+          pt: 2,
+          pb: 2,
+          maxHeight: 500,
+          overflow: 'auto',
+          '&::-webkit-scrollbar': {
+            width: '8px',
           },
-        },
-      }}>
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: 'rgba(0,0,0,0.05)',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'rgba(0,0,0,0.2)',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: 'rgba(0,0,0,0.3)',
+            },
+          },
+        }}
+      >
         {isEmpty ? (
           <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
             No issues detected

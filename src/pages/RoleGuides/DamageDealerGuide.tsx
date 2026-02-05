@@ -15,8 +15,8 @@ export const DamageDealerGuide: React.FC = () => {
         </Typography>
       </Box>
 
-      <WorkInProgressDisclaimer 
-        featureName="Damage Dealer Guide" 
+      <WorkInProgressDisclaimer
+        featureName="Damage Dealer Guide"
         message="This comprehensive guide is coming soon. Check back later for DPS builds, rotation advice, and optimization tips!"
       />
     </Container>

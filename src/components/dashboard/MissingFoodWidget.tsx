@@ -69,38 +69,27 @@ export const MissingFoodWidget: React.FC<MissingFoodWidgetProps> = ({
   });
 
   const playersWithoutFood = React.useMemo(() => {
-    // console.log('[MissingFoodWidget] playerData:', !!playerData?.playersById, 'fightBuffData.size:', fightBuffData.size);
-    
-    if (!playerData?.playersById || fightBuffData.size === 0) return [];
+
 
     // Get list of fights we're analyzing based on fightBuffData
     const analyzedFights = fights.filter((fight) => fightBuffData.has(fight.id));
-    // console.log('[MissingFoodWidget] Total fights:', fights.length, 'Analyzed fights:', analyzedFights.length);
-    // console.log('[MissingFoodWidget] fightBuffData keys:', Array.from(fightBuffData.keys()));
-    // console.log('[MissingFoodWidget] Fight IDs in fights array:', fights.map(f => f.id));
     
     if (analyzedFights.length === 0) return [];
-
-    // console.log('[MissingFoodWidget] Analyzing', analyzedFights.length, 'fights');
-
-    // Track count of fights where each player is missing food
     // Use a map to track: playerName -> { count, playerInfo }
     const playerMissingFoodCount = new Map<string, { count: number; playerName: string }>();
-    
+
     // Track which players participated in each fight
     const playerFightParticipation = new Map<string, number>();
 
     analyzedFights.forEach((fight) => {
       const buffLookupData = fightBuffData.get(fight.id);
-      // console.log('[MissingFoodWidget] Getting buff data for fight', fight.id, ':', !!buffLookupData);
       
       if (!buffLookupData) {
-        // console.log('[MissingFoodWidget] No buff data for fight', fight.id);
         return;
       }
 
       const buffIds = Object.keys(buffLookupData.buffIntervals);
-      
+
       // Get unique player IDs who have ANY buffs in this fight
       const playersInFight = new Set<number>();
       buffIds.forEach((buffId) => {
@@ -113,19 +102,20 @@ export const MissingFoodWidget: React.FC<MissingFoodWidgetProps> = ({
           });
         }
       });
-      
-      // console.log('[MissingFoodWidget] Fight', fight.id, 'has', playersInFight.size, 'unique players with buffs');
 
       const fightMidpoint = (fight.startTime + (fight.endTime ?? fight.startTime)) / 2;
 
       // Check each player who participated in this fight
       playersInFight.forEach((playerId) => {
-        const player = playerData.playersById[playerId];
+        const player = playerData?.playersById?.[playerId];
         const playerName = player?.name || `Anonymous ${playerId}`;
-        
+
         // Track that this player participated in this fight
-        playerFightParticipation.set(playerName, (playerFightParticipation.get(playerName) || 0) + 1);
-        
+        playerFightParticipation.set(
+          playerName,
+          (playerFightParticipation.get(playerName) || 0) + 1,
+        );
+
         const hasFood = Array.from(ALL_FOOD_BUFF_IDS).some((foodBuffId) => {
           return isBuffActiveOnTarget(buffLookupData, foodBuffId, fightMidpoint, playerId);
         });
@@ -140,14 +130,12 @@ export const MissingFoodWidget: React.FC<MissingFoodWidgetProps> = ({
       });
     });
 
-    // console.log('[MissingFoodWidget] Total players missing food:', playerMissingFoodCount.size);
-    
     // Convert to array with count information
     return Array.from(playerMissingFoodCount.entries())
-      .map(([name, data]) => ({ 
-        name, 
-        count: data.count, 
-        totalFights: playerFightParticipation.get(name) || 0, 
+      .map(([name, data]) => ({
+        name,
+        count: data.count,
+        totalFights: playerFightParticipation.get(name) || 0,
       }))
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   }, [playerData, fightBuffData, fights]);
@@ -174,9 +162,9 @@ export const MissingFoodWidget: React.FC<MissingFoodWidgetProps> = ({
               <ListItemIcon>
                 <FastfoodIcon color="warning" />
               </ListItemIcon>
-              <ListItemText 
-                primary={player.name} 
-                secondary={`Missing food in ${player.count} of ${player.totalFights} fight${player.totalFights > 1 ? 's' : ''}`} 
+              <ListItemText
+                primary={player.name}
+                secondary={`Missing food in ${player.count} of ${player.totalFights} fight${player.totalFights > 1 ? 's' : ''}`}
               />
             </ListItem>
           ))}
@@ -185,4 +173,3 @@ export const MissingFoodWidget: React.FC<MissingFoodWidgetProps> = ({
     </BaseWidget>
   );
 };
-

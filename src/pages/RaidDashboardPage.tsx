@@ -76,10 +76,6 @@ export const RaidDashboardPage: React.FC = () => {
   const sortedFights = useMemo(() => {
     if (!reportData?.fights) return [];
     
-    // Log to debug fight count discrepancy
-    // console.log('[Dashboard] Total fights in reportData:', reportData.fights.length);
-    // console.log('[Dashboard] Report:', reportData.code || reportId);
-    
     return [...reportData.fights]
       .filter((f): f is FightFragment => f !== null)
       .sort((a, b) => {
@@ -263,7 +259,11 @@ export const RaidDashboardPage: React.FC = () => {
                   break;
               }
 
-              return <Box key={widget.id} sx={{ display: 'inline-block', width: '100%', mb: 3 }}>{widgetComponent}</Box>;
+              return (
+                <Box key={widget.id} sx={{ display: 'inline-block', width: '100%', mb: 3 }}>
+                  {widgetComponent}
+                </Box>
+              );
             })}
         </Box>
       )}

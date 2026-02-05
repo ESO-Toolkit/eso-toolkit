@@ -15,8 +15,8 @@ export const TankGuide: React.FC = () => {
         </Typography>
       </Box>
 
-      <WorkInProgressDisclaimer 
-        featureName="Tank Guide" 
+      <WorkInProgressDisclaimer
+        featureName="Tank Guide"
         message="This comprehensive guide is coming soon. Check back later for tips, builds, and strategies for tanking in ESO!"
       />
     </Container>

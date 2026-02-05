@@ -124,7 +124,7 @@ export const DeathCausesWidget: React.FC<DeathCausesWidgetProps> = ({
       if (event.targetIsFriendly && event.targetID) {
         const existing = playerDeathMap.get(event.targetID);
         const causeKey = `${event.abilityGameID || 0}-${event.sourceID || 0}`;
-        
+
         if (existing) {
           existing.count++;
           if (event.abilityGameID) {
@@ -159,7 +159,13 @@ export const DeathCausesWidget: React.FC<DeathCausesWidgetProps> = ({
       if (!player) return;
 
       let topCause:
-        | { abilityId: number; abilityName: string | null; sourceId: number; sourceName: string | null; count: number }
+        | {
+            abilityId: number;
+            abilityName: string | null;
+            sourceId: number;
+            sourceName: string | null;
+            count: number;
+          }
         | undefined;
       let maxCount = 0;
       data.causes.forEach((causeData) => {
@@ -225,7 +231,11 @@ export const DeathCausesWidget: React.FC<DeathCausesWidgetProps> = ({
                         {summary.topCause.count}x)
                       </Typography>
                       {summary.topCause.sourceName && (
-                        <Typography component="span" variant="body2" sx={{ ml: 1, color: 'text.secondary' }}>
+                        <Typography
+                          component="span"
+                          variant="body2"
+                          sx={{ ml: 1, color: 'text.secondary' }}
+                        >
                           from {summary.topCause.sourceName}
                         </Typography>
                       )}
