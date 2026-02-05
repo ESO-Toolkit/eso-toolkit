@@ -1,6 +1,6 @@
 # ESO Log Aggregator - Documentation Index
 
-**Last Updated**: January 18, 2026  
+**Last Updated**: February 5, 2026  
 **Purpose**: Central entry point for all project documentation
 
 ---
@@ -29,6 +29,9 @@ npm test               # Run tests
 
 Comprehensive guides for AI agents working on this codebase:
 
+- **[Token Optimization](./ai-agents/TOKEN_OPTIMIZATION_GUIDE.md)** - AI context optimization strategies
+- **[Agent Guidelines](./ai-agents/AI_AGENT_GUIDELINES.md)** - General AI agent best practices
+
 - **[Scribing Detection](./ai-agents/scribing/)** - Signature script detection system
   - [Instructions](./ai-agents/scribing/AI_SCRIBING_DETECTION_INSTRUCTIONS.md)
   - [Quick Reference](./ai-agents/scribing/AI_SCRIBING_QUICK_REFERENCE.md)
@@ -49,6 +52,8 @@ Comprehensive guides for AI agents working on this codebase:
 - **[Report Data Debugging](./ai-agents/)** - Debug production reports
   - [Debugging Guide](./ai-agents/AI_REPORT_DATA_DEBUGGING.md)
   - [Quick Reference](./ai-agents/AI_REPORT_DATA_DEBUGGING_QUICK_REFERENCE.md)
+
+- **[Documentation Skill](./DOCUMENTATION_SKILL_SETUP.md)** - MCP server for intelligent doc placement
 
 - **[Agent Setup Summary](./ai-agents/AI_AGENT_SETUP_SUMMARY.md)** - Complete agent onboarding
 
@@ -103,6 +108,8 @@ Jira ticket implementation summaries:
   - [ESO-394](./implementation/ESO-394_IMPLEMENTATION_SUMMARY.md) - Integration test infrastructure
   - [ESO-395](./implementation/ESO-395_IMPLEMENTATION_SUMMARY.md) - Preloading system
   - [ESO-396](./implementation/ESO-396_IMPLEMENTATION_SUMMARY.md) - Advanced features
+  - [Fetch Performance Optimization](./implementation/FETCH_PERFORMANCE_OPTIMIZATION.md) - API fetch optimization
+  - [Multiplayer Path Implementation](./implementation/MULTIPLAYER_PATH_IMPLEMENTATION.md) - Multiplayer support
 
 ---
 
@@ -116,6 +123,7 @@ Bug fixes and issue resolutions documented for reference:
 - Logger and dependency fixes
 - Performance monitor fixes
 - Camera control fixes
+- [Test Fixes Needed](./fixes/TEST_FIXES_NEEDED.md) - Pending test fixes
 
 [View Fixes Index →](./fixes/INDEX.md)
 
@@ -148,6 +156,15 @@ Session summaries, handoff commands, and status reports:
 
 - **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Deployment process and configuration
 - **[GITHUB_ACTION_SETUP.md](./GITHUB_ACTION_SETUP.md)** - CI/CD pipeline setup
+
+---
+
+### 🔧 Scripts & Automation
+
+- **[JIRA_SYNC_QUICKSTART.md](./JIRA_SYNC_QUICKSTART.md)** - Jira-branch status synchronization
+- **[MERGE_QUEUE.md](./MERGE_QUEUE.md)** - Branch merge queue management
+- **[MERGE_QUEUE_SETUP.md](./MERGE_QUEUE_SETUP.md)** - Setup guide for merge queue
+- **[scripts/README-sync-jira-status.md](../scripts/README-sync-jira-status.md)** - Full Jira sync documentation
 - **[MERGE_QUEUE.md](./MERGE_QUEUE.md)** - Merge queue usage
 - **[MERGE_QUEUE_SETUP.md](./MERGE_QUEUE_SETUP.md)** - Queue setup guide
 - **[COVERAGE.md](./COVERAGE.md)** - Test coverage tracking
@@ -165,8 +182,23 @@ Session summaries, handoff commands, and status reports:
 
 ### ⚡ Performance & Optimization
 
+- **[OPTIMIZATION_GUIDE.md](./OPTIMIZATION_GUIDE.md)** - General optimization strategies
 - **[WORKER_OPTIMIZATION.md](./WORKER_OPTIMIZATION.md)** - Web worker optimization strategies
 - **Architecture Performance Patterns** - See [architecture/](./architecture/)
+
+---
+
+### 📂 Archived Documentation
+**Location**: [`archive/`](./archive/)
+
+Historical documentation preserved for reference:
+
+- **[DEATH_ANALYSIS_REAL_DATA_STATUS.md](./archive/DEATH_ANALYSIS_REAL_DATA_STATUS.md)** - Historical death analysis implementation
+- **[DEATH_EVENTS_DEBUG_REPORT.md](./archive/DEATH_EVENTS_DEBUG_REPORT.md)** - Death events debugging session
+- **[DEATH_EVENTS_HOSTILITY_FIX.md](./archive/DEATH_EVENTS_HOSTILITY_FIX.md)** - Hostility filter fix
+- **[ENHANCED_DEATH_ANALYSIS_SUMMARY.md](./archive/ENHANCED_DEATH_ANALYSIS_SUMMARY.md)** - Enhanced analysis summary
+
+These files are preserved for historical reference but are no longer actively maintained.
 
 ---
 
@@ -199,12 +231,15 @@ Session summaries, handoff commands, and status reports:
 
 ## 📋 Documentation Standards
 
+**See**: [Documentation Best Practices](./DOCUMENTATION_BEST_PRACTICES.md) for comprehensive guidelines
+
 ### File Naming Conventions
 
-- **Feature docs**: `FEATURE_NAME_TYPE.md` (e.g., `MARKERS_IMPLEMENTATION.md`)
-- **Fix docs**: `COMPONENT_FIX.md` (e.g., `ARENA3D_BLACK_SCREEN_FIX.md`)
+- **Feature docs**: `README.md` in feature directory (e.g., `features/scribing/README.md`)
+- **Fix docs**: `COMPONENT_ISSUE_FIX.md` (e.g., `ARENA3D_BLACK_SCREEN_FIX.md`)
 - **Implementation**: `ESO-###_IMPLEMENTATION_SUMMARY.md`
 - **Session docs**: `SESSION_SUMMARY_DATE.md`
+- **AI guides**: `AI_FEATURE_INSTRUCTIONS.md` and `AI_FEATURE_QUICK_REFERENCE.md`
 
 ### Document Structure
 
@@ -217,11 +252,15 @@ All major documentation should include:
 
 ### When to Create Documentation
 
-- ✅ **New feature implementation** → Feature doc + Implementation summary
-- ✅ **Bug fix** → Fix doc (if non-trivial)
-- ✅ **Architectural change** → Architecture doc update
-- ✅ **Session handoff** → Session summary
-- ✅ **AI agent workflow** → Quick reference + Instructions
+See [Documentation Best Practices](./DOCUMENTATION_BEST_PRACTICES.md) for detailed guidelines.
+
+**Quick Summary**:
+- ✅ **New features** → Feature doc + Implementation summary
+- ✅ **Architectural changes** → Architecture doc update
+- ✅ **Complex bug fixes** → Fix doc (if non-trivial)
+- ✅ **AI workflows** → Quick reference + Instructions
+- ❌ **Minor changes** → Commit message only
+- ❌ **Simple refactoring** → Code comments only
 
 ---
 
