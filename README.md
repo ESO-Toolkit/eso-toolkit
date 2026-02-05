@@ -33,51 +33,6 @@ This project contains only the web application, built with React, TypeScript, Gr
 ## Getting Started
 
 ### Install Dependencies
-```
-
-<!-- Additional Info Badges -->
-
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-blue?style=flat&logo=github)](https://bkrupa.github.io/eso-log-aggregator/#/)
-[![Node Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen?style=flat&logo=node.js)](package.json)
-[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-
-> **Note**: Coverage badges are automatically generated and updated via GitHub Gist endpoints. They show real-time coverage from the dedicated [Coverage Workflow](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/coverage.yml). Detailed coverage reports and PR comments are available in the workflow runs.
-
-This project contains only the web application, built with React, TypeScript, GraphQL, Apollo Client, Material UI, Storybook, Jest, and Playwright.
-
-## 📚 Documentation
-
-**[Complete Documentation Index →](documentation/INDEX.md)**
-
-### Quick Links
-
-- **[AI Agent Documentation](documentation/ai-agents/)** - Guides for AI agents (Scribing, Playwright, Jira, Preloading)
-- **[Feature Documentation](documentation/features/)** - Feature-specific implementation guides
-- **[Architecture](documentation/architecture/)** - System design and architectural patterns
-- **[Fixes & Resolutions](documentation/fixes/)** - Bug fixes and issue resolutions
-- **[Implementation Summaries](documentation/implementation/)** - Jira ticket implementations
-- **[Developer Guide](documentation/AGENTS.md)** - Complete development workflows
-
-### For Developers
-- Start with [AGENTS.md](documentation/AGENTS.md) for development workflows
-- Review [Architecture Overview](documentation/architecture/system-architecture.md) for system design
-- Check [Feature Documentation](documentation/features/) for specific features
-
-### For AI Agents
-- See [AI Agent Documentation](documentation/ai-agents/) for comprehensive guides
-- Use Quick Reference cards for rapid lookups
-- Follow workflows in [Jira Integration](documentation/ai-agents/jira/)
-
-## Useful Links
-
-- [Deployment](https://bkrupa.github.io/eso-log-aggregator/#/)
-- [Jira](https://bkrupa.atlassian.net/jira/software/projects/ESO/boards/1/)
-- [Sentry](https://bkrupa.sentry.io/dashboards/)
-
-## Getting Started
-
-### Install Dependencies
-
 ```powershell
 npm ci
 ```
