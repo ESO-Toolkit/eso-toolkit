@@ -93,8 +93,19 @@ export default defineConfig({
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
 
-    /* Use saved authentication state if available */
-    storageState: process.env.CI ? undefined : 'tests/auth-state.json',
+    /* Use saved authentication state if available - gracefully handle missing auth */
+    storageState: (() => {
+      if (process.env.CI) return undefined;
+      
+      // Check if auth state file exists before using it
+      try {
+        const fs = require('fs');
+        const authStatePath = 'tests/auth-state.json';
+        return fs.existsSync(authStatePath) ? authStatePath : undefined;
+      } catch {
+        return undefined;
+      }
+    })(),
 
     /* Real network requests - MSW service worker removed from public folder to prevent interference */
     extraHTTPHeaders: nightlyExtraHeaders,
@@ -110,7 +121,15 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1920, height: 1080 },
-        storageState: 'tests/auth-state.json', // Use auth state for report access
+        storageState: (() => {
+          try {
+            const fs = require('fs');
+            const authStatePath = 'tests/auth-state.json';
+            return fs.existsSync(authStatePath) ? authStatePath : undefined;
+          } catch {
+            return undefined;
+          }
+        })(),
         launchOptions: {
           args: [
             '--disable-web-security',
@@ -127,7 +146,15 @@ export default defineConfig({
       use: {
         ...devices['Desktop Firefox'],
         viewport: { width: 1920, height: 1080 },
-        storageState: 'tests/auth-state.json', // Use auth state for report access
+        storageState: (() => {
+          try {
+            const fs = require('fs');
+            const authStatePath = 'tests/auth-state.json';
+            return fs.existsSync(authStatePath) ? authStatePath : undefined;
+          } catch {
+            return undefined;
+          }
+        })(),
         launchOptions: {
           firefoxUserPrefs: {
             'dom.security.https_only_mode': false,

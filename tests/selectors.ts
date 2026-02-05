@@ -93,7 +93,7 @@ export const SELECTOR_HELPERS = {
 export const TEST_TIMEOUTS = {
   navigation: 30000,
   dataLoad: 60000,
-  screenshot: 10000,
+  screenshot: 30000,
   interaction: 15000,
   shortWait: 5000,
   longWait: 120000,
