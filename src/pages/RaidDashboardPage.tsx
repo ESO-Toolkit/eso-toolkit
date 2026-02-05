@@ -75,7 +75,7 @@ export const RaidDashboardPage: React.FC = () => {
   // Get fights sorted by most recent first
   const sortedFights = useMemo(() => {
     if (!reportData?.fights) return [];
-    
+
     return [...reportData.fights]
       .filter((f): f is FightFragment => f !== null)
       .sort((a, b) => {

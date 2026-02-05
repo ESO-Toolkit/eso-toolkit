@@ -56,12 +56,13 @@ export function useMultiFightBuffLookup({
     return filtered;
   }, [fights, scope]);
 
-  logger.debug('Selected fights', { count: selectedFights.length, fightIds: selectedFights.map(f => f.id) });
+  logger.debug('Selected fights', {
+    count: selectedFights.length,
+    fightIds: selectedFights.map((f) => f.id),
+  });
 
   // Store buff data results locally, keyed by fight ID
-  const [buffDataCache, setBuffDataCache] = React.useState<Map<number, BuffLookupData>>(
-    new Map(),
-  );
+  const [buffDataCache, setBuffDataCache] = React.useState<Map<number, BuffLookupData>>(new Map());
 
   // Track which fight index we're currently loading (sequential loading)
   const [currentLoadIndex, setCurrentLoadIndex] = React.useState(0);
@@ -75,7 +76,11 @@ export function useMultiFightBuffLookup({
   // Get the current fight to load
   const currentFight = selectedFights[currentLoadIndex];
 
-  logger.debug('Current load state', { currentLoadIndex, currentFightId: currentFight?.id, cacheSize: buffDataCache.size });
+  logger.debug('Current load state', {
+    currentLoadIndex,
+    currentFightId: currentFight?.id,
+    cacheSize: buffDataCache.size,
+  });
 
   // Use buff lookup task for current fight only
   // Skip if we already have this fight's data cached
@@ -113,8 +118,8 @@ export function useMultiFightBuffLookup({
     // Save data only if we requested this fight and loading is complete
     if (!isBuffLookupLoading && buffLookupData && requestedFightId === currentFight.id) {
       const buffIds = Object.keys(buffLookupData.buffIntervals);
-      logger.debug('Saving buff data', { 
-        fightId: currentFight.id, 
+      logger.debug('Saving buff data', {
+        fightId: currentFight.id,
         buffIdsCount: buffIds.length,
         hasData: buffIds.length > 0,
       });

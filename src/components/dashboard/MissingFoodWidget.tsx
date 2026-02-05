@@ -69,11 +69,9 @@ export const MissingFoodWidget: React.FC<MissingFoodWidgetProps> = ({
   });
 
   const playersWithoutFood = React.useMemo(() => {
-
-
     // Get list of fights we're analyzing based on fightBuffData
     const analyzedFights = fights.filter((fight) => fightBuffData.has(fight.id));
-    
+
     if (analyzedFights.length === 0) return [];
     // Use a map to track: playerName -> { count, playerInfo }
     const playerMissingFoodCount = new Map<string, { count: number; playerName: string }>();
@@ -83,7 +81,7 @@ export const MissingFoodWidget: React.FC<MissingFoodWidgetProps> = ({
 
     analyzedFights.forEach((fight) => {
       const buffLookupData = fightBuffData.get(fight.id);
-      
+
       if (!buffLookupData) {
         return;
       }
