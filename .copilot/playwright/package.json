@@ -1,0 +1,27 @@
+{
+  "name": "@eso-log-aggregator/copilot-playwright",
+  "version": "1.0.0",
+  "description": "GitHub Copilot Agent Skill for running Playwright tests without HTML reports",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "github-copilot",
+    "agent-skill",
+    "playwright",
+    "testing",
+    "e2e"
+  ],
+  "author": "ESO Log Aggregator Team",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

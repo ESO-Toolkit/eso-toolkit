@@ -63,6 +63,7 @@ git checkout -b ESO-XXX/description-here
 
 ### Agent Skills (MCP Servers)
 - **Git Workflow Enforcement**: [.copilot/workflow/](.copilot/workflow/) or [.claude/workflow/](.claude/workflow/) - **Use this FIRST**
+- **Playwright Testing**: [.copilot/playwright/](.copilot/playwright/) - **Machine-readable E2E test results**
 - **Testing & Dev**: [.copilot/testing/](.copilot/testing/) or [.claude/testing/](.claude/testing/)
 - **Jira Integration**: [.copilot/jira/](.copilot/jira/) or [.claude/jira/](.claude/jira/)
 - **Sentry Integration**: [.copilot/sentry/](.copilot/sentry/) or [.claude/sentry/](.claude/sentry/)
@@ -87,9 +88,19 @@ git checkout -b ESO-XXX/description-here
 ### Tool Usage Patterns
 
 **Testing**:
-- Structured: VS Code MCP Playwright tool
+- Structured: VS Code MCP Playwright tool (`.copilot/playwright/`) - **Machine-readable results**
 - Exploratory: Agent Skills (`.copilot/testing/` or `.claude/testing/`)
 - Avoid: Ad-hoc CLI commands
+
+**Playwright Testing** (E2E Tests):
+```
+@workspace Run smoke tests
+@workspace Run full tests in headed mode
+@workspace List all playwright test files
+@workspace Run the RosterBuilderPage test
+@workspace Show me the last test results
+```
+See: [.copilot/playwright/](.copilot/playwright/)
 
 **Jira** (Work Item Management):
 ```
