@@ -63,6 +63,7 @@ import {
 import React, { useState, useCallback } from 'react';
 
 import { SetAssignmentManager } from '../components/SetAssignmentManager';
+import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
 import { GetPlayersForReportQuery } from '../graphql/gql/graphql';
@@ -1289,11 +1290,7 @@ export const RosterBuilderPage: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Development Banner */}
-      <Alert severity="info" sx={{ mb: 3 }}>
-        <strong>🚧 Under Active Development</strong> - This Roster Builder tool is currently being
-        developed and tested. Features may change, and some functionality may be incomplete. Please
-        report any issues or suggestions!
-      </Alert>
+      <WorkInProgressDisclaimer featureName="Roster Builder" sx={{ mb: 3 }} />
 
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Stack spacing={3} mb={3}>

@@ -1,6 +1,8 @@
 import { Container, Typography, Box } from '@mui/material';
 import React from 'react';
 
+import { WorkInProgressDisclaimer } from '../../components/WorkInProgressDisclaimer';
+
 export const TankGuide: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -13,14 +15,10 @@ export const TankGuide: React.FC = () => {
         </Typography>
       </Box>
 
-      <Box sx={{ textAlign: 'center', mt: 8 }}>
-        <Typography variant="h5" color="text.secondary">
-          Coming Soon
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-          This guide is currently under development.
-        </Typography>
-      </Box>
+      <WorkInProgressDisclaimer 
+        featureName="Tank Guide" 
+        message="This comprehensive guide is coming soon. Check back later for tips, builds, and strategies for tanking in ESO!"
+      />
     </Container>
   );
 };

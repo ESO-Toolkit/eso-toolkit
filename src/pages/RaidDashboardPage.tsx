@@ -2,7 +2,6 @@ import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import {
-  Alert,
   Box,
   Typography,
   Card,
@@ -26,6 +25,7 @@ import {
 } from '../components/dashboard';
 import { AddWidgetDialog } from '../components/dashboard/AddWidgetDialog';
 import { DynamicMetaTags } from '../components/DynamicMetaTags';
+import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/gql/graphql';
 import { useReportData } from '../hooks';
@@ -152,11 +152,7 @@ export const RaidDashboardPage: React.FC = () => {
       <DynamicMetaTags {...metaTags} />
 
       {/* Development Banner */}
-      <Alert severity="info" sx={{ mb: 3 }}>
-        <strong>🚧 Under Active Development</strong> - This Raid Dashboard is currently being
-        developed and tested. Features may change, and some functionality may be incomplete. Please
-        report any issues or suggestions!
-      </Alert>
+      <WorkInProgressDisclaimer featureName="Raid Dashboard" sx={{ mb: 3 }} />
 
       {/* Header */}
       <Card elevation={2} sx={{ mb: 3 }}>
