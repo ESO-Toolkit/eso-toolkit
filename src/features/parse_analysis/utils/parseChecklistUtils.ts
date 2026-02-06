@@ -1,14 +1,15 @@
+import type { BuildIssue, MissingBuffIssue } from '../../../utils/detectBuildIssues';
 import { TRIAL_DUMMY_TARGET_NAMES } from '../constants/trialDummyConstants';
 import type { BuffChecklistResult } from '../types/buffChecklist';
 import type { DebuffChecklistResult } from '../types/debuffChecklist';
 import type { ParseChecklistItem } from '../types/parseChecklist';
+
 import type {
   ActivePercentageResult,
   FoodDetectionResult,
   RotationAnalysisResult,
   WeaveAnalysisResult,
 } from './parseAnalysisUtils';
-import type { BuildIssue } from '../../../utils/detectBuildIssues';
 
 interface BuildParseChecklistInput {
   fightName: string | null;
@@ -34,7 +35,9 @@ const CP_PASSIVE_NAMES = new Set(['Exploiter', 'Skilled Tracker']);
 function getMissingBuffIssues(buildIssues: BuildIssue[] | null, buffNames: Set<string>): string[] {
   if (!buildIssues) return [];
   return buildIssues
-    .filter((issue) => 'buffName' in issue && buffNames.has(issue.buffName))
+    .filter(
+      (issue): issue is MissingBuffIssue => 'buffName' in issue && buffNames.has(issue.buffName),
+    )
     .map((issue) => issue.buffName);
 }
 
@@ -90,11 +93,7 @@ export function buildParseChecklist({
   items.push({
     id: 'major-buffs',
     title: 'Major damage/crit buffs active',
-    status: buildIssues
-      ? missingMajorBuffs.length > 0
-        ? 'fail'
-        : 'pass'
-      : 'info',
+    status: buildIssues ? (missingMajorBuffs.length > 0 ? 'fail' : 'pass') : 'info',
     detail: buildIssues
       ? missingMajorBuffs.length > 0
         ? `Missing: ${missingMajorBuffs.join(', ')}`
@@ -263,11 +262,7 @@ export function buildParseChecklist({
   items.push({
     id: 'cp-passives',
     title: 'Relevant CP/passives active',
-    status: buildIssues
-      ? missingCpPassives.length > 0
-        ? 'warn'
-        : 'pass'
-      : 'info',
+    status: buildIssues ? (missingCpPassives.length > 0 ? 'warn' : 'pass') : 'info',
     detail: buildIssues
       ? missingCpPassives.length > 0
         ? `Missing: ${missingCpPassives.join(', ')}`
@@ -279,11 +274,7 @@ export function buildParseChecklist({
   items.push({
     id: 'gear-quality',
     title: 'Gear quality and CP 160',
-    status: buildIssues
-      ? gearIssues > 0
-        ? 'warn'
-        : 'pass'
-      : 'info',
+    status: buildIssues ? (gearIssues > 0 ? 'warn' : 'pass') : 'info',
     detail: buildIssues
       ? gearIssues > 0
         ? `${gearIssues} gear issues detected`

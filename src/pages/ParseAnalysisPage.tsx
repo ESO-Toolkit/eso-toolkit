@@ -48,6 +48,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { AbilityIcon } from '../components/AbilityIcon';
+import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useAbilityIdMapper } from '../contexts/AbilityIdMapperContext';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { BuffChecklist } from '../features/parse_analysis/components/BuffChecklist';
@@ -58,7 +59,6 @@ import { TRIAL_DUMMY_TARGET_NAMES } from '../features/parse_analysis/constants/t
 import { BuffChecklistResult } from '../features/parse_analysis/types/buffChecklist';
 import { DebuffChecklistResult } from '../features/parse_analysis/types/debuffChecklist';
 import type { ParseChecklistItem } from '../features/parse_analysis/types/parseChecklist';
-import { buildParseChecklist } from '../features/parse_analysis/utils/parseChecklistUtils';
 import { analyzeBuffChecklist } from '../features/parse_analysis/utils/buffChecklistUtils';
 import { analyzeDebuffChecklist } from '../features/parse_analysis/utils/debuffChecklistUtils';
 import {
@@ -74,6 +74,7 @@ import {
   type RotationAnalysisResult,
   type ActivePercentageResult,
 } from '../features/parse_analysis/utils/parseAnalysisUtils';
+import { buildParseChecklist } from '../features/parse_analysis/utils/parseChecklistUtils';
 import {
   GetReportByCodeDocument,
   GetPlayersForReportDocument,
@@ -1378,6 +1379,9 @@ const ParseAnalysisPageContent: React.FC = () => {
           {!state.reportCode && ' Paste your ESOLogs report URL below.'}
         </Typography>
       </Box>
+
+      {/* Work in Progress Banner */}
+      <WorkInProgressDisclaimer featureName="Parse Analysis" sx={{ mb: 3 }} />
 
       {/* Only show URL input form if no report is loaded */}
       {!state.reportCode && !state.loading && (
