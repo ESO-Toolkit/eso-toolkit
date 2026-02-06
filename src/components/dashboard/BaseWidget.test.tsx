@@ -77,15 +77,16 @@ describe('BaseWidget', () => {
       </BaseWidget>,
     );
 
-    const scopeButton = screen.getByText(/most recent/i);
+    const scopeButton = screen.getByText(/most recent fight/i);
     await userEvent.click(scopeButton);
 
     // Menu should be open with all options
     expect(screen.getByRole('menu')).toBeInTheDocument();
-    expect(screen.getByText('Most Recent')).toBeInTheDocument();
-    expect(screen.getByText('Last 3 Fights')).toBeInTheDocument();
-    expect(screen.getByText('Last 5 Fights')).toBeInTheDocument();
-    expect(screen.getByText('All Fights')).toBeInTheDocument();
+    const menu = screen.getByRole('menu');
+    expect(within(menu).getByText('Most Recent Fight')).toBeInTheDocument();
+    expect(within(menu).getByText('Last 3 Fights')).toBeInTheDocument();
+    expect(within(menu).getByText('Last 5 Fights')).toBeInTheDocument();
+    expect(within(menu).getByText('All Fights')).toBeInTheDocument();
   });
 
   it('should call onScopeChange when a new scope is selected', async () => {
@@ -97,7 +98,7 @@ describe('BaseWidget', () => {
       </BaseWidget>,
     );
 
-    const scopeButton = screen.getByText(/most recent/i);
+    const scopeButton = screen.getByText(/most recent fight/i);
     await userEvent.click(scopeButton);
 
     const last5Option = screen.getByText('Last 5 Fights');
@@ -113,11 +114,11 @@ describe('BaseWidget', () => {
       </BaseWidget>,
     );
 
-    const scopeButton = screen.getByText(/most recent/i);
+    const scopeButton = screen.getByText(/most recent fight/i);
     await userEvent.click(scopeButton);
 
     const menu = screen.getByRole('menu');
-    expect(within(menu).getByText('Most Recent')).toBeInTheDocument();
+    expect(within(menu).getByText('Most Recent Fight')).toBeInTheDocument();
     expect(within(menu).getByText('Last 3 Fights')).toBeInTheDocument();
     expect(within(menu).getByText('Last 5 Fights')).toBeInTheDocument();
     expect(within(menu).getByText('All Fights')).toBeInTheDocument();
@@ -130,7 +131,7 @@ describe('BaseWidget', () => {
       </BaseWidget>,
     );
 
-    const scopeButton = screen.getByText(/most recent/i);
+    const scopeButton = screen.getByText(/most recent fight/i);
     await userEvent.click(scopeButton);
 
     expect(screen.getByRole('menu')).toBeInTheDocument();
@@ -146,7 +147,7 @@ describe('BaseWidget', () => {
       scope: 'most-recent' | 'last-3' | 'last-5' | 'all-fights';
       label: string;
     }> = [
-      { scope: 'most-recent', label: 'Most Recent' },
+      { scope: 'most-recent', label: 'Most Recent Fight' },
       { scope: 'last-3', label: 'Last 3 Fights' },
       { scope: 'last-5', label: 'Last 5 Fights' },
       { scope: 'all-fights', label: 'All Fights' },
@@ -177,8 +178,8 @@ describe('BaseWidget', () => {
     const menu = screen.getByRole('menu');
     const menuItems = within(menu).getAllByRole('menuitem');
 
-    // The "Last 3 Fights" option should be selected
+    // The "Last 3 Fights" option should be selected (MUI uses className for selection)
     const last3Item = menuItems.find((item) => item.textContent?.includes('Last 3 Fights'));
-    expect(last3Item).toHaveAttribute('aria-selected', 'true');
+    expect(last3Item).toHaveClass('Mui-selected');
   });
 });

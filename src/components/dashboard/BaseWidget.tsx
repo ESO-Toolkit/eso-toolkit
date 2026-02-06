@@ -57,6 +57,7 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
 
   return (
     <Card
+      data-testid={`widget-${_id}`}
       elevation={3}
       sx={{
         minHeight: 200,
@@ -74,11 +75,20 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
       <CardHeader
         title={title}
         titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
-        subheader={SCOPE_LABELS[scope]}
-        subheaderTypographyProps={{
-          variant: 'caption',
-          sx: { textTransform: 'uppercase', letterSpacing: 0.5 },
-        }}
+        subheader={
+          <Typography
+            variant="caption"
+            sx={{
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+              cursor: 'pointer',
+              '&:hover': { textDecoration: 'underline' },
+            }}
+            onClick={handleScopeMenuOpen}
+          >
+            {SCOPE_LABELS[scope]}
+          </Typography>
+        }
         action={
           <Box>
             <IconButton size="small" onClick={handleScopeMenuOpen} aria-label="Settings">

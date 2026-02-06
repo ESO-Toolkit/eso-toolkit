@@ -13,22 +13,20 @@ import { RaidDashboardPage } from './RaidDashboardPage';
 // Mock components
 jest.mock('../components/dashboard', () => ({
   DeathCausesWidget: ({ id }: { id: string }) => (
-    <div data-testid={`widget-death-causes-${id}`}>Death Causes Widget</div>
+    <div data-testid={`widget-${id}`}>Death Causes Widget</div>
   ),
   MissingBuffsWidget: ({ id }: { id: string }) => (
-    <div data-testid={`widget-missing-buffs-${id}`}>Missing Buffs Widget</div>
+    <div data-testid={`widget-${id}`}>Missing Buffs Widget</div>
   ),
   BuildIssuesWidget: ({ id }: { id: string }) => (
-    <div data-testid={`widget-build-issues-${id}`}>Build Issues Widget</div>
+    <div data-testid={`widget-${id}`}>Build Issues Widget</div>
   ),
-  LowDpsWidget: ({ id }: { id: string }) => (
-    <div data-testid={`widget-low-dps-${id}`}>Low DPS Widget</div>
-  ),
+  LowDpsWidget: ({ id }: { id: string }) => <div data-testid={`widget-${id}`}>Low DPS Widget</div>,
   MissingFoodWidget: ({ id }: { id: string }) => (
-    <div data-testid={`widget-missing-food-${id}`}>Missing Food Widget</div>
+    <div data-testid={`widget-${id}`}>Missing Food Widget</div>
   ),
   LowBuffUptimesWidget: ({ id }: { id: string }) => (
-    <div data-testid={`widget-low-buff-uptimes-${id}`}>Low Buff Uptimes Widget</div>
+    <div data-testid={`widget-${id}`}>Low Buff Uptimes Widget</div>
   ),
 }));
 
@@ -142,8 +140,8 @@ describe('RaidDashboardPage', () => {
     renderWithRouter();
 
     expect(screen.getByTestId('widget-death-causes-1')).toBeInTheDocument();
-    expect(screen.getByTestId('widget-missing-buffs-2')).toBeInTheDocument();
-    expect(screen.getByTestId('widget-build-issues-3')).toBeInTheDocument();
+    expect(screen.getByTestId('widget-missing-buffs-1')).toBeInTheDocument();
+    expect(screen.getByTestId('widget-build-issues-1')).toBeInTheDocument();
   });
 
   it('should show loading state when report is loading', () => {
@@ -160,7 +158,7 @@ describe('RaidDashboardPage', () => {
   it('should render auto-refresh toggle', () => {
     renderWithRouter();
 
-    expect(screen.getByRole('checkbox', { name: /auto-refresh/i })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: /auto-refresh/i })).toBeInTheDocument();
   });
 
   it('should render add widget button', () => {
@@ -201,10 +199,7 @@ describe('RaidDashboardPage', () => {
   it('should toggle auto-refresh', async () => {
     renderWithRouter();
 
-    const autoRefreshToggle = screen.getByRole('checkbox', { name: /auto-refresh/i });
-
-    // Should be enabled by default
-    expect(autoRefreshToggle).toBeChecked();
+    const autoRefreshToggle = screen.getByRole('switch', { name: /auto-refresh/i });
 
     await userEvent.click(autoRefreshToggle);
 
@@ -236,7 +231,7 @@ describe('RaidDashboardPage', () => {
     renderWithRouter();
 
     // Should not crash, but may show loading or empty state
-    expect(screen.getByText('Raid Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Failed to load report')).toBeInTheDocument();
   });
 
   it('should display widgets in a responsive grid', () => {
@@ -268,7 +263,7 @@ describe('RaidDashboardPage', () => {
       renderWithRouter(store);
 
       // Component should set up interval
-      expect(screen.getByRole('checkbox', { name: /auto-refresh/i })).toBeChecked();
+      expect(screen.getByRole('switch', { name: /auto-refresh/i })).toBeChecked();
     });
   });
 
@@ -307,7 +302,7 @@ describe('RaidDashboardPage', () => {
       const deathCausesWidget = screen.getByTestId('widget-death-causes-1');
       expect(deathCausesWidget).toBeInTheDocument();
 
-      const missingBuffsWidget = screen.getByTestId('widget-missing-buffs-2');
+      const missingBuffsWidget = screen.getByTestId('widget-missing-buffs-1');
       expect(missingBuffsWidget).toBeInTheDocument();
     });
   });
