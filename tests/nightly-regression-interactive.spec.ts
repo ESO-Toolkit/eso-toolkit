@@ -121,7 +121,13 @@ test.describe('Nightly Regression - Interactive Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+      // Try networkidle but fallback to content check if it times out
+      try {
+        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
+      } catch (error) {
+        console.log('⚠️ NetworkIdle timeout for fight replay, checking for content instead...');
+        await page.waitForTimeout(3000);
+      }
 
       // Additional wait for WebKit to ensure JavaScript has fully executed
       if (testInfo.project.name.includes('webkit')) {
@@ -451,7 +457,13 @@ test.describe('Nightly Regression - Interactive Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+      // Try networkidle but fallback to content check if it times out
+      try {
+        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
+      } catch (error) {
+        console.log('⚠️ NetworkIdle timeout for rotation analysis, checking for content instead...');
+        await page.waitForTimeout(3000);
+      }
 
       // Additional wait for WebKit to ensure JavaScript has fully executed
       if (testInfo.project.name.includes('webkit')) {
@@ -520,7 +532,13 @@ test.describe('Nightly Regression - Interactive Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+      // Try networkidle but fallback to content check if it times out
+      try {
+        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
+      } catch (error) {
+        console.log('⚠️ NetworkIdle timeout for talents grid, checking for content instead...');
+        await page.waitForTimeout(3000);
+      }
 
       // Use the robust fight detection helper function
       const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
@@ -592,7 +610,13 @@ test.describe('Nightly Regression - Interactive Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+      // Try networkidle but fallback to content check if it times out
+      try {
+        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
+      } catch (error) {
+        console.log('⚠️ NetworkIdle timeout for heatmap visualization, checking for content instead...');
+        await page.waitForTimeout(3000);
+      }
 
       // Test data grid filtering if available
       const dataGrid = page.locator('.MuiDataGrid-root');
@@ -688,7 +712,13 @@ test.describe('Nightly Regression - Interactive Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+      // Try networkidle but fallback to content check if it times out
+      try {
+        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
+      } catch (error) {
+        console.log('⚠️ NetworkIdle timeout for rapid tab switching, checking for content instead...');
+        await page.waitForTimeout(3000);
+      }
 
       // Use the robust fight detection helper function
       const { hasFights, fightButton, fightId } = await findUsableFightButton(page);

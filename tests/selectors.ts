@@ -92,11 +92,12 @@ export const SELECTOR_HELPERS = {
  */
 export const TEST_TIMEOUTS = {
   navigation: 30000,
-  dataLoad: 60000,
+  dataLoad: 90000, // Increased for sites with ongoing API requests
   screenshot: 30000,
   interaction: 15000,
   shortWait: 5000,
   longWait: 120000,
+  networkIdle: 75000, // Specific timeout for networkidle waits
 } as const;
 
 /**

@@ -563,7 +563,14 @@ test.describe('Nightly Regression Tests - Real Data', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+      // Try networkidle but fallback to content check if it times out
+      try {
+        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
+      } catch (error) {
+        console.log('⚠️ NetworkIdle timeout, checking for content instead...');
+        // Wait a bit for content to load, then continue
+        await page.waitForTimeout(3000);
+      }
 
       // Check if players content loaded (be lenient)
       const hasPlayersContent = await page
@@ -675,7 +682,14 @@ test.describe('Nightly Regression Tests - Real Data', () => {
           timeout: TEST_TIMEOUTS.navigation,
         });
 
-        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+        // Try networkidle but fallback to content check if it times out
+        try {
+          await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
+        } catch (error) {
+          console.log(`⚠️ NetworkIdle timeout for ${tab} tab, checking for content instead...`);
+          // Wait a bit for content to load, then continue
+          await page.waitForTimeout(3000);
+        }
 
         // Check if we successfully navigated
         const currentUrl = page.url();
@@ -732,8 +746,13 @@ test.describe('Nightly Regression Tests - Real Data', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      // Wait for network idle before checking content (needed for Firefox/WebKit)
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+      // Try networkidle but fallback to content check if it times out
+      try {
+        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
+      } catch (error) {
+        console.log('⚠️ NetworkIdle timeout for performance test, checking for content instead...');
+        await page.waitForTimeout(3000);
+      }
 
       // Additional wait for WebKit to ensure JavaScript has fully executed
       if (testInfo.project.name.includes('webkit')) {
@@ -821,7 +840,14 @@ test.describe('Nightly Regression Tests - Real Data', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+
+      // Try networkidle but fallback to content check if it times out
+      try {
+        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
+      } catch (error) {
+        console.log('⚠️ NetworkIdle timeout for visual regression test, checking for content instead...');
+        await page.waitForTimeout(3000);
+      }
 
       // Check if the page loaded successfully
       const bodyContent = await page.locator('body').textContent();
@@ -869,7 +895,13 @@ test.describe('Nightly Regression Tests - Real Data', () => {
             timeout: 15000,
           });
 
-          await page.waitForLoadState('networkidle', { timeout: 15000 });
+          // Try networkidle but fallback to content check if it times out
+          try {
+            await page.waitForLoadState('networkidle', { timeout: 15000 });
+          } catch (error) {
+            console.log(`⚠️ NetworkIdle timeout for ${tab} tab, checking for content instead...`);
+            await page.waitForTimeout(2000);
+          }
 
           // Check if we have any meaningful content
           const hasContent = await page
