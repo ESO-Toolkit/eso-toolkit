@@ -22,9 +22,9 @@ import storage from 'redux-persist/lib/storage';
 
 import type { EsoLogsClient } from '@/esologsClient';
 
-import dashboardReducer from './dashboard/dashboardSlice';
 import loadoutReducer from '../features/loadout-manager/store/loadoutSlice';
 
+import dashboardReducer from './dashboard/dashboardSlice';
 import { eventsReducer } from './events_data';
 import masterDataReducer from './master_data/masterDataSlice';
 import parseAnalysisReducer from './parse_analysis/parseAnalysisSlice';

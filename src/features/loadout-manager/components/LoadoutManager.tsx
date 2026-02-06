@@ -42,8 +42,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import type { RootState } from '@/store/storeWithHistory';
 import { WorkInProgressDisclaimer } from '@/components/WorkInProgressDisclaimer';
+import type { RootState } from '@/store/storeWithHistory';
 
 import { preloadChampionPointData } from '../data/championPointData';
 import { preloadSkillData } from '../data/skillLineSkills';
