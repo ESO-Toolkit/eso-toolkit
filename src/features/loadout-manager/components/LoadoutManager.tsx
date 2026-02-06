@@ -43,6 +43,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import type { RootState } from '@/store/storeWithHistory';
+import { WorkInProgressDisclaimer } from '@/components/WorkInProgressDisclaimer';
 
 import { preloadChampionPointData } from '../data/championPointData';
 import { preloadSkillData } from '../data/skillLineSkills';
@@ -427,6 +428,7 @@ export const LoadoutManager: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3, pb: 6 }}>
+      <WorkInProgressDisclaimer featureName="Loadout Manager" sx={{ mb: 3 }} />
       <Stack spacing={3}>
         <Paper
           variant="outlined"
