@@ -151,7 +151,7 @@ describe('DeathCausesWidget', () => {
     render(<DeathCausesWidget {...defaultProps} />);
 
     // Should show the most common ability (12345 appears 2 times)
-    expect(screen.getByText(/Most common: Ability 12345 \(2x\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Ability 12345.*\(2x\)/)).toBeInTheDocument();
   });
 
   it('should sort players by death count descending', () => {

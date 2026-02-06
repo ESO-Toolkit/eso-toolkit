@@ -194,7 +194,7 @@ export const DeathCausesWidget: React.FC<DeathCausesWidgetProps> = ({
     return summaries.sort((a, b) => b.deathCount - a.deathCount);
   }, [relevantDeathEvents, playerData]);
 
-  const isEmpty = deathSummaries.length === 0;
+  const isEmpty = !isLoading && deathSummaries.length === 0;
 
   return (
     <BaseWidget
