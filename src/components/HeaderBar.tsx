@@ -635,6 +635,11 @@ export const HeaderBar: React.FC = () => {
       path: '/docs/calculations',
     },
     {
+      text: 'Loadout Manager',
+      icon: '⚔️',
+      path: '/loadout-manager',
+    },
+    {
       text: 'Roster Builder',
       icon: '👥',
       path: '/roster-builder',

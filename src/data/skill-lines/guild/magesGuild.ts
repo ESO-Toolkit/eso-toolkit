@@ -1,184 +1,189 @@
-import { SkillsetData } from '../../skillsets/Skillset';
+import type { SkillLineData } from '../../types/skill-line-types';
+import { AbilityId } from '../ability-ids';
 
-export const magesGuildData: SkillsetData = {
-  weapon: 'Mages Guild',
-  skillLines: {
-    magesGuild: {
-      name: 'Mages Guild',
-      icon: '🔮',
-      passives: [
-        {
-          name: 'Mage Adept',
-          description:
-            'Gain 100 Weapon and Spell Damage. Increases by 100 per Mages Guild ability slotted.',
-          requirement: '',
-        },
-        {
-          name: 'Everlasting Magic',
-          description: 'Increases the duration of beneficial magic effects by 20%.',
-          requirement: '',
-        },
-        {
-          name: 'Magicka Controller',
-          description: 'Reduces the Magicka cost of your spells by 5%.',
-          requirement: '',
-        },
-        {
-          name: 'Might of the Guild',
-          description:
-            'Gain 20% more experience when you kill an enemy with a Mages Guild ability. When you cast a Mages Guild ability while you have 3 or more enemies within 8 meters of you, you gain 6 Ultimate.',
-          requirement: '',
-        },
-        {
-          name: 'Persuasive Will',
-          description:
-            'After casting a Mages Guild ability, you gain Major Prophecy for 20 seconds, increasing your Spell Critical rating by 2629.',
-          requirement: '',
-        },
-      ],
-      actives: [
-        {
-          name: 'Magelight',
-          cost: '5130 Magicka',
-          target: 'Self',
-          duration: '120 seconds',
-          description:
-            'Create a mote of magelight, revealing stealthed and invisible enemies around you for 5 seconds and reducing their movement speed by 50%. Grants you and nearby allies Major Prophecy, increasing Spell Critical rating by 2629 for 120 seconds.',
-          morphs: [
-            {
-              name: 'Inner Light',
-              cost: '5130 Magicka',
-              target: 'Self',
-              duration: '120 seconds',
-              description:
-                'Create a mote of magelight, revealing stealthed and invisible enemies around you for 5 seconds and reducing their movement speed by 50%. Grants you and nearby allies Major Prophecy, increasing Spell Critical rating by 2629 for 120 seconds. While slotted, your Max Magicka is increased by 10%.',
-            },
-            {
-              name: 'Radiant Magelight',
-              cost: '4590 Magicka',
-              target: 'Self',
-              duration: '120 seconds',
-              description:
-                'Create a mote of magelight, revealing stealthed and invisible enemies around you for 8 seconds and reducing their movement speed by 50%. Grants you and nearby allies Major Prophecy, increasing Spell Critical rating by 2629 for 120 seconds. While slotted, you are immune to being stunned by other players.',
-            },
-          ],
-        },
-        {
-          name: 'Entropy',
-          cost: '2700 Magicka',
-          target: 'Enemy',
-          duration: '30 seconds',
-          maxRange: '28 meters',
-          description:
-            'Bind an enemy with chaotic magic, dealing 1161 Magic Damage and an additional 3470 Magic Damage over 30 seconds. You heal for 33% of all damage done by this effect.',
-          morphs: [
-            {
-              name: 'Structured Entropy',
-              cost: '2700 Magicka',
-              target: 'Enemy',
-              duration: '30 seconds',
-              maxRange: '28 meters',
-              description:
-                'Bind an enemy with chaotic magic, dealing 1161 Magic Damage and an additional 3587 Magic Damage over 30 seconds. You heal for 33% of all damage done by this effect. While slotted on either ability bar, your Max Health is increased by 8%.',
-            },
-            {
-              name: 'Degeneration',
-              cost: '2700 Magicka',
-              target: 'Enemy',
-              duration: '30 seconds',
-              maxRange: '28 meters',
-              description:
-                'Bind an enemy with chaotic magic, dealing 1161 Magic Damage and an additional 3470 Magic Damage over 30 seconds. You heal for 33% of all damage done by this effect. Casting this spell again within 6 seconds will cause the first cast to instantly complete.',
-            },
-          ],
-        },
-        {
-          name: 'Fire Rune',
-          cost: '3780 Magicka',
-          target: 'Ground',
-          duration: '20 seconds',
-          maxRange: '28 meters',
-          radius: '2.5 meters',
-          description:
-            'Inscribe a burning rune at the target location, which lasts for 20 seconds. When triggered the rune explodes, dealing 2323 Flame Damage to all enemies in the target area and an additional 1161 Flame Damage over 20 seconds.',
-          morphs: [
-            {
-              name: 'Volcanic Rune',
-              cost: '3510 Magicka',
-              target: 'Ground',
-              duration: '20 seconds',
-              maxRange: '28 meters',
-              radius: '3.5 meters',
-              description:
-                'Inscribe a burning rune at the target location, which lasts for 20 seconds. When triggered the rune explodes, dealing 2399 Flame Damage to all enemies in the target area and an additional 1199 Flame Damage over 20 seconds.',
-            },
-            {
-              name: 'Scalding Rune',
-              cost: '3780 Magicka',
-              target: 'Ground',
-              duration: '20 seconds',
-              maxRange: '28 meters',
-              radius: '2.5 meters',
-              description:
-                'Inscribe a burning rune at the target location, which lasts for 20 seconds. When triggered the rune explodes, dealing 2323 Flame Damage to all enemies in the target area and an additional 2323 Flame Damage over 20 seconds.',
-            },
-          ],
-        },
-        {
-          name: 'Equilibrium',
-          cost: '25% Current Health',
-          target: 'Self',
-          description:
-            'Exchange a portion of your Health for Magicka, converting 25% of your current Health into an equal amount of Magicka. The conversion is improved by 20% if your Health is higher than your Magicka.',
-          morphs: [
-            {
-              name: 'Spell Symmetry',
-              cost: '25% Current Health',
-              target: 'Self',
-              description:
-                'Exchange a portion of your Health for Magicka, converting 25% of your current Health into an equal amount of Magicka. The conversion is improved by 20% if your Health is higher than your Magicka. After casting, you gain Major Resolve for 30 seconds, increasing your Physical and Spell Resistance by 5948.',
-            },
-            {
-              name: 'Balance',
-              cost: '25% Current Health',
-              target: 'Self',
-              description:
-                'Exchange a portion of your Health for Magicka, converting 25% of your current Health into Magicka equal to 150% of the Health cost. The conversion is improved by 20% if your Health is higher than your Magicka.',
-            },
-          ],
-        },
-      ],
-      ultimates: [
-        {
-          name: 'Meteor',
-          cost: '200 Ultimate',
-          target: 'Area',
-          maxRange: '28 meters',
-          radius: '8 meters',
-          description:
-            "Call down a meteor at the target location after 3.5 seconds, dealing 4171 Flame Damage to all enemies in the area and knocking them down for 2 seconds. The meteor's impact creates a burning ground effect that deals 870 Flame Damage every 1 second for 15 seconds.",
-          morphs: [
-            {
-              name: 'Ice Comet',
-              cost: '200 Ultimate',
-              target: 'Area',
-              maxRange: '28 meters',
-              radius: '8 meters',
-              description:
-                "Call down a comet at the target location after 3.5 seconds, dealing 4313 Frost Damage to all enemies in the area and stunning them for 2 seconds. The comet's impact creates a frozen ground effect that deals 899 Frost Damage every 1 second for 15 seconds and reduces enemy movement speed by 50%.",
-            },
-            {
-              name: 'Shooting Star',
-              cost: '200 Ultimate',
-              target: 'Area',
-              maxRange: '28 meters',
-              radius: '8 meters',
-              description:
-                "Call down a meteor at the target location after 3.5 seconds, dealing 4171 Flame Damage to all enemies in the area and knocking them down for 2 seconds. For each enemy hit by the initial impact, you restore 16 Ultimate. The meteor's impact creates a burning ground effect that deals 870 Flame Damage every 1 second for 15 seconds.",
-            },
-          ],
-        },
-      ],
+export const magesGuild: SkillLineData = {
+  id: 'mages-guild',
+  name: 'Mages Guild',
+  class: 'guild',
+  category: 'guild',
+  icon: 'https://eso-hub.com/storage/icons/class_003.png',
+  skills: [
+    // Ultimate abilities
+    {
+      id: AbilityId.METEOR,
+      name: 'Meteor',
+      type: 'ultimate',
+      baseAbilityId: AbilityId.METEOR,
+      description:
+        'Call a comet down from the constellations to blast an enemy, dealing 4065 Flame Damage to all enemies in the area, knocking them down, and stunning them for 2 seconds. After impact, enemies in the target area take 1161 Flame Damage every 1 second for 11 seconds.',
     },
-  },
+    {
+      id: 40489, // Ice Comet (morph)
+      name: 'Ice Comet',
+      type: 'ultimate',
+      baseAbilityId: AbilityId.METEOR,
+      description:
+        'Call a comet down from the constellations to blast an enemy, dealing 4620 Frost Damage to all enemies in the area, knocking them down, stunning them for 2 seconds, and reducing their Movement Speed by 50% for 5 seconds. After impact, enemies in the target area take 1319 Frost Damage every 1 second for 11 seconds. Increases the damage, deals Frost Damage, and reduces the Movement Speed of enemies hit.',
+    },
+    {
+      id: 40493, // Shooting Star (morph)
+      name: 'Shooting Star',
+      type: 'ultimate',
+      baseAbilityId: AbilityId.METEOR,
+      description:
+        'Call a comet down from the constellations to blast an enemy, dealing 4067 Flame Damage to all enemies in the area, knocking them down, and stunning them for 2 seconds. After impact, enemies in the target area take 1161 Flame Damage every 1 second for 11 seconds. You generate 10 Ultimate for each enemy hit by the initial blast, up to 6 times. You generate Ultimate for each enemy hit by the initial blast. Reduces the base cost as the ability ranks up.',
+    },
+
+    // Scribing ability
+    {
+      id: AbilityId.ULFSILD_CONTINGENCY,
+      name: "Ulfsild's Contingency",
+      type: 'active',
+      baseAbilityId: AbilityId.ULFSILD_CONTINGENCY,
+      description:
+        'Imbue yourself with the magical runes of Ulfsild. These runes trigger when you cast an ability with a cost, causing a burst of magic around you.',
+    },
+
+    // Active abilities - Magelight
+    {
+      id: AbilityId.MAGELIGHT,
+      name: 'Magelight',
+      type: 'active',
+      baseAbilityId: AbilityId.MAGELIGHT,
+      description:
+        'Summon a mote of magelight, revealing stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
+    },
+    {
+      id: 40478, // Inner Light (morph)
+      name: 'Inner Light',
+      type: 'active',
+      baseAbilityId: AbilityId.MAGELIGHT,
+      description:
+        'Summon a mote of magelight, revealing stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629 and your Max Magicka is increased by 5%. Also increases your Max Magicka while slotted.',
+    },
+    {
+      id: 40483, // Radiant Magelight (morph)
+      name: 'Radiant Magelight',
+      type: 'active',
+      baseAbilityId: AbilityId.MAGELIGHT,
+      description:
+        'Summon a mote of magelight, revealing stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629. You also prevent the stun from stealth attacks for you and nearby allies. Increases the radius of the reveal. You and nearby allies cannot be stunned from sneak attacks while slotted. Reduces the cost as the ability ranks up.',
+    },
+
+    // Active abilities - Entropy
+    {
+      id: AbilityId.ENTROPY,
+      name: 'Entropy',
+      type: 'active',
+      baseAbilityId: AbilityId.ENTROPY,
+      description: 'Bind an enemy with chaotic magic, dealing 4631 Magic Damage over 20 seconds.',
+    },
+    {
+      id: 40457, // Degeneration (morph)
+      name: 'Degeneration',
+      type: 'active',
+      baseAbilityId: AbilityId.ENTROPY,
+      description:
+        'Bind an enemy with chaotic magic, dealing 4642 Magic Damage over 20 seconds. Excess magic spills out from them, granting you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 20 seconds. You gain Major Brutality and Sorcery for a time after casting. Reduces the cost as the ability ranks up.',
+    },
+    {
+      id: 40452, // Structured Entropy (morph)
+      name: 'Structured Entropy',
+      type: 'active',
+      baseAbilityId: AbilityId.ENTROPY,
+      description:
+        'Bind an enemy with chaotic magic, dealing 4642 Magic Damage over 20 seconds, and healing you for 435 every 2 seconds. Adds a heal over time when the damage over time is active.',
+    },
+
+    // Active abilities - Fire Rune
+    {
+      id: AbilityId.FIRE_RUNE,
+      name: 'Fire Rune',
+      type: 'active',
+      baseAbilityId: AbilityId.FIRE_RUNE,
+      description:
+        'Inscribe a rune of cosmic fire on the earth, which takes 2 seconds to arm and lasts for 20 seconds. When triggered, the rune blasts all enemies in the target area for 2323 Flame Damage.',
+    },
+    {
+      id: 40465, // Scalding Rune (morph)
+      name: 'Scalding Rune',
+      type: 'active',
+      baseAbilityId: AbilityId.FIRE_RUNE,
+      description:
+        'Inscribe a rune of cosmic fire on the earth, which takes 2 seconds to arm and lasts for 20 seconds. When triggered, the rune blasts all enemies in the target area for 2323 Flame Damage and an additional 2871 Flame Damage over 22 seconds. The rune also deals additional damage over time.',
+    },
+    {
+      id: 40470, // Volcanic Rune (morph)
+      name: 'Volcanic Rune',
+      type: 'active',
+      baseAbilityId: AbilityId.FIRE_RUNE,
+      description:
+        'Inscribe a rune of cosmic fire on the earth, which takes 2 seconds to arm and lasts for 20 seconds. When triggered, the rune blasts all enemies in the target area for 2323 Flame Damage, knocks them into the air, and stuns them for 3 seconds. The rune knocks enemies into the air and stuns them. Reduces the cost as the ability ranks up.',
+    },
+
+    // Active abilities - Equilibrium
+    {
+      id: AbilityId.EQUILIBRIUM,
+      name: 'Equilibrium',
+      type: 'active',
+      baseAbilityId: AbilityId.EQUILIBRIUM,
+      description:
+        'Barter with Oblivion to trade vitality for power, sacrificing your Health in exchange for 3000 Magicka. The exchange reduces your healing done and damage shield strength by 50% for 4 seconds.',
+    },
+    {
+      id: 40441, // Balance (morph)
+      name: 'Balance',
+      type: 'active',
+      baseAbilityId: AbilityId.EQUILIBRIUM,
+      description:
+        'Barter with Oblivion to trade vitality for power, sacrificing your Health in exchange for 3000 Magicka. After the exchange is complete, you gain Major Resolve for 30 seconds, increasing your Physical and Spell Resistance by 5948. The exchange reduces your healing done and damage shield strength by 50% for 4 seconds. After the exchange is complete, you gain Major Resolve, increasing your Physical and Spell Resistance.',
+    },
+    {
+      id: 40445, // Spell Symmetry (morph)
+      name: 'Spell Symmetry',
+      type: 'active',
+      baseAbilityId: AbilityId.EQUILIBRIUM,
+      description:
+        'Barter with Oblivion to trade vitality for power, sacrificing your Health in exchange for 3000 Magicka. After the exchange is complete, the cost of your next Magicka ability is reduced by 33% for 5 seconds. The exchange reduces your healing done and damage shield strength by 50% for 4 seconds. After the exchange is complete, the cost of your next Magicka ability is reduced.',
+    },
+
+    // Passive abilities
+    {
+      id: AbilityId.PERSUASIVE_WILL,
+      name: 'Persuasive Will',
+      type: 'passive',
+      baseAbilityId: AbilityId.PERSUASIVE_WILL,
+      description: 'Allows you to Persuade NPCs in conversation.',
+    },
+    {
+      id: AbilityId.MAGE_ADEPT,
+      name: 'Mage Adept',
+      type: 'passive',
+      baseAbilityId: AbilityId.MAGE_ADEPT,
+      description: 'Reduces the Magicka and Health cost of your Mages Guild abilities by 15%.',
+    },
+    {
+      id: AbilityId.EVERLASTING_MAGIC,
+      name: 'Everlasting Magic',
+      type: 'passive',
+      baseAbilityId: AbilityId.EVERLASTING_MAGIC,
+      description: 'Increases the duration of your Mages Guild abilities by 2 seconds.',
+    },
+    {
+      id: AbilityId.MAGICKA_CONTROLLER,
+      name: 'Magicka Controller',
+      type: 'passive',
+      baseAbilityId: AbilityId.MAGICKA_CONTROLLER,
+      description:
+        'Increases your Max Magicka and Magicka Recovery by 2% for each Mages Guild ability slotted.',
+    },
+    {
+      id: AbilityId.MIGHT_OF_THE_GUILD,
+      name: 'Might of the Guild',
+      type: 'passive',
+      baseAbilityId: AbilityId.MIGHT_OF_THE_GUILD,
+      description:
+        'Casting a Mages Guild ability grants you Empower, increasing the damage of your Heavy Attacks against monsters by 70% for 10 seconds.',
+    },
+  ],
 };

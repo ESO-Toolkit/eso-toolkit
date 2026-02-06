@@ -52,6 +52,10 @@ Comprehensive guides for AI agents working on this codebase:
 - **[Report Data Debugging](./ai-agents/)** - Debug production reports
   - [Debugging Guide](./ai-agents/AI_REPORT_DATA_DEBUGGING.md)
   - [Quick Reference](./ai-agents/AI_REPORT_DATA_DEBUGGING_QUICK_REFERENCE.md)
+- **[MCP Tools](./ai-agents/mcp-tools/)** - Model Context Protocol tool setup and authentication
+  - [MCP Tools Index](./ai-agents/mcp-tools/INDEX.md)
+  - [Playwright Auth Setup](./ai-agents/mcp-tools/AI_MCP_PLAYWRIGHT_AUTH_SETUP.md)
+  - [Quick Reference](./ai-agents/mcp-tools/AI_MCP_QUICK_REFERENCE.md)
 
 - **[Documentation Skill](./DOCUMENTATION_SKILL_SETUP.md)** - MCP server for intelligent doc placement
 

@@ -35,17 +35,9 @@ This directory contains detailed documentation for major features of the ESO Log
 - Dynamic scaling
 - Bounding box filtering
 - Info panels and tooltips
-
----
-
 ## 🎯 Scribing Detection
 
-**Directory**: [`scribing/`](./scribing/)  
-**Status**: Production (38 tests passing)  
-**Related Jira**: Multiple
-
 ### Description
-ESO scribing ability detection system that identifies signature scripts from combat logs by analyzing multiple event types (cast, damage, healing, buff, debuff, and **resource** events).
 
 ### Key Files
 - Detection algorithm documentation
@@ -57,9 +49,7 @@ ESO scribing ability detection system that identifies signature scripts from com
 
 ### Key Features
 - Signature script detection
-- Multi-event-type analysis (CRITICAL: includes resource events!)
 - Database integration
-- UI filtering and display
 - Test coverage validation
 
 ### Critical Insight
@@ -71,15 +61,8 @@ ESO scribing ability detection system that identifies signature scripts from com
 
 ## 📚 Grimoire & Affixes
 
-**Directory**: [`grimoire/`](./grimoire/)  
-**Status**: Active  
-**Related Jira**: Multiple
 
 ### Description
-Grimoire filtering system and affix detection for ESO scribing abilities. Includes algorithm improvements for detecting grimoire-specific abilities and their affixes.
-
-### Key Files
-- Affix detection fixes and improvements
 - Grimoire filtering UI integration
 - Threshold removal documentation
 - Single best match algorithm
@@ -159,6 +142,13 @@ Central reference for every worker-based calculation (penetration, mitigation, a
 - Documents formulas, caps, and heuristics per calculation
 - Highlights cross-cutting limitations and TODO items
 - Links to validation suites and integration tests
+
+---
+
+## 🧩 Add-ons & External Data
+
+### Wizard's Wardrobe
+- [addons/wizards-wardrobe-data-persistence.md](addons/wizards-wardrobe-data-persistence.md)
 
 ---
 
