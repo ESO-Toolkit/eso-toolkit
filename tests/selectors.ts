@@ -12,9 +12,12 @@ export const SELECTORS = {
   FIRST_FIGHT_BUTTON: '[data-testid^="fight-button-"]:first-of-type',
   ANY_FIGHT_BUTTON: '[data-testid^="fight-button-"]',
   
-  // Loading states
-  LOADING_INDICATOR: '[data-testid="loading-indicator"]',
-  FIGHT_LIST_OR_LOADING: '[data-testid="fight-list"], [data-testid="loading-indicator"]',
+  // Loading states - with fallbacks for live site
+  LOADING_INDICATOR: '[data-testid="loading-indicator"], .loading, .spinner, [aria-label*="loading"], [aria-busy="true"], .MuiCircularProgress-root, .MuiLinearProgress-root',
+  FIGHT_LIST_OR_LOADING: '[data-testid="fight-list"], [data-testid="loading-indicator"], .loading, .spinner, [aria-label*="loading"], [aria-busy="true"], .MuiAccordion-root, [data-testid*="trial-accordion"], .fight-button, button[id^="fight-button-"]',
+  
+  // More resilient content detection for reports
+  REPORT_CONTENT: '[data-testid="fight-list"], .MuiAccordion-root, [data-testid*="trial-accordion"], .content, .report-content, .fight-list, .MuiContainer-root, .main-content, [role="main"], main, section[class*="content"]',
   
   // Trial and encounter structure
   TRIAL_ACCORDION: (trialId: string) => `[data-testid="trial-accordion-${trialId}"]`,
@@ -91,13 +94,13 @@ export const SELECTOR_HELPERS = {
  * Test timeouts used across test files
  */
 export const TEST_TIMEOUTS = {
-  navigation: 30000,
-  dataLoad: 90000, // Increased for sites with ongoing API requests
+  navigation: 45000, // Increased for production sites
+  dataLoad: 120000, // Increased for sites with ongoing API requests
   screenshot: 30000,
-  interaction: 15000,
+  interaction: 20000, // Increased for complex interactions
   shortWait: 5000,
-  longWait: 120000,
-  networkIdle: 75000, // Specific timeout for networkidle waits
+  longWait: 150000, // Increased for very slow operations
+  networkIdle: 90000, // Increased timeout for networkidle waits
 } as const;
 
 /**

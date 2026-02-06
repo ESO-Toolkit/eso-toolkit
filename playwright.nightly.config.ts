@@ -67,16 +67,16 @@ export default defineConfig({
 
   /* Comprehensive reporting for nightly runs */
   reporter: [
+    ['line'], // Primary reporter for console output
+    ['json', { outputFile: 'test-results/nightly-results.json' }],
+    ['junit', { outputFile: 'test-results/nightly-junit.xml' }],
     [
       'html',
       {
         outputFolder: 'playwright-report-nightly',
-        open: process.env.CI ? 'never' : 'on-failure',
+        open: 'never', // Never auto-open HTML report
       },
     ],
-    ['json', { outputFile: 'test-results/nightly-results.json' }],
-    ['junit', { outputFile: 'test-results/nightly-junit.xml' }],
-    ['line'],
   ],
 
   /* Base URL - use environment variable or default to production */

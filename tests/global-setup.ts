@@ -24,7 +24,7 @@ const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000; // refresh 5 minutes before expir
 const DEFAULT_BROWSER_TOKEN_TTL_MS = 55 * 60 * 1000; // fallback TTL when expiry unknown
 const MAX_TOKEN_CACHE_TTL_MS = 45 * 60 * 1000; // never cache tokens for longer than 45 minutes
 
-type AuthTokenSource = 'client_credentials' | 'browser';
+type AuthTokenSource = 'client_credentials' | 'browser' | 'api_key';
 
 interface AuthMetadata {
   accessToken: string;
@@ -136,6 +136,31 @@ async function ensureFreshClientCredentialsToken(
   return metadata;
 }
 
+/**
+ * Use API key for authentication
+ * This is ideal for testing environments where you have a dedicated API key
+ */
+async function ensureApiKeyAuth(apiKey: string): Promise<AuthMetadata> {
+  console.log('🔑 Setting up API key authentication...');
+  
+  // API keys typically don't expire, but we'll set a reasonable cache time
+  const now = Date.now();
+  const expiresAt = now + MAX_TOKEN_CACHE_TTL_MS; // 45 minutes
+
+  const metadata = normalizeAuthMetadata({
+    accessToken: apiKey,
+    obtainedAt: now,
+    expiresAt: expiresAt,
+    source: 'api_key',
+  });
+
+  await createAuthStateWithToken(metadata.accessToken, metadata.expiresAt);
+  saveAuthMetadata(metadata);
+
+  console.log(`✅ API key authentication configured`);
+  return metadata;
+}
+
 async function globalSetup(config: FullConfig) {
   console.log('🚀 Starting global setup for nightly tests...');
 
@@ -157,29 +182,48 @@ async function globalSetup(config: FullConfig) {
   // Check if we have authentication credentials
   const clientId = process.env.OAUTH_CLIENT_ID;
   const clientSecret = process.env.OAUTH_CLIENT_SECRET;
+  const apiKey = process.env.ESO_LOGS_API_KEY;
   const testUserEmail = process.env.ESO_LOGS_TEST_EMAIL;
   const testUserPassword = process.env.ESO_LOGS_TEST_PASSWORD;
 
-  if (!clientId) {
-    console.log('⚠️  No OAUTH_CLIENT_ID found - tests will run without authentication');
+  if (!clientId && !apiKey) {
+    console.log('⚠️  No authentication credentials found - tests will run without authentication');
     console.log(
-      '💡 To enable authentication, set OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET in your environment',
+      '💡 To enable authentication, set one of:',
     );
+    console.log('   - ESO_LOGS_API_KEY (recommended for testing)');
+    console.log('   - OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET (for OAuth flow)');
+    console.log('   - ESO_LOGS_TEST_EMAIL and ESO_LOGS_TEST_PASSWORD (for browser flow)');
     return;
   }
 
   console.log('🔑 Setting up authentication for nightly tests...');
 
-  // Primary method: OAuth client credentials flow (same as download-report-data script)
   let accessToken: string | null = null;
   let tokenMetadata: AuthMetadata | null = null;
 
-  if (clientSecret) {
+  // Method 1: API key authentication (simplest and most reliable for testing)
+  if (apiKey) {
+    try {
+      tokenMetadata = await ensureApiKeyAuth(apiKey);
+      accessToken = tokenMetadata.accessToken;
+      console.log('✅ Authentication state ready via API key');
+    } catch (error) {
+      clearAuthMetadata();
+      console.error('❌ Failed to set up API key authentication:', error);
+      console.log(
+        '💡 Falling back to other authentication methods if available',
+      );
+    }
+  }
+  
+  // Method 2: OAuth client credentials flow (automatic, no user interaction)
+  else if (clientSecret && clientId) {
     try {
       tokenMetadata = await ensureFreshClientCredentialsToken(clientId, clientSecret);
       accessToken = tokenMetadata.accessToken;
       console.log(
-        `✅ Authentication state ready (token expires ${new Date(tokenMetadata.expiresAt).toISOString()})`,
+        `✅ Authentication state ready via client credentials (token expires ${new Date(tokenMetadata.expiresAt).toISOString()})`,
       );
     } catch (error) {
       clearAuthMetadata();
@@ -188,12 +232,9 @@ async function globalSetup(config: FullConfig) {
         '💡 Falling back to browser-based authentication if user credentials are available',
       );
     }
-  } else {
-    console.log('ℹ️  No OAUTH_CLIENT_SECRET found - skipping client credentials flow');
-    console.log('💡 Set OAUTH_CLIENT_SECRET for automatic token acquisition');
   }
 
-  // Fallback method: Browser-based login (only if client credentials failed and user creds available)
+  // Method 3: Browser-based login (fallback when other methods failed and user creds available)
   if (!accessToken && testUserEmail && testUserPassword) {
     try {
       console.log('🔐 Attempting browser-based authentication as fallback...');
@@ -212,7 +253,8 @@ async function globalSetup(config: FullConfig) {
     if (!testUserEmail || !testUserPassword) {
       console.log('ℹ️  No fallback user credentials available');
       console.log('💡 For comprehensive authentication testing, consider setting:');
-      console.log('   - OAUTH_CLIENT_SECRET (recommended for automatic token acquisition)');
+      console.log('   - ESO_LOGS_API_KEY (recommended for testing)');
+      console.log('   - OAUTH_CLIENT_SECRET (for automatic OAuth token acquisition)');
       console.log('   - ESO_LOGS_TEST_EMAIL and ESO_LOGS_TEST_PASSWORD (for browser flow testing)');
     }
     clearAuthMetadata();
