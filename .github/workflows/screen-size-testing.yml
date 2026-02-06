@@ -58,12 +58,43 @@ jobs:
             playwright-browsers-${{ runner.os }}-
 
       - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps
+        run: |
+          echo "🔄 Installing Playwright browsers..."
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "⚡ Cache hit - installing system dependencies and verifying browsers..."
+            npx playwright install-deps
+            # Verify browsers are available, install if missing
+            if ! npx playwright install --dry-run 2>/dev/null; then
+              echo "🔧 Some browsers missing despite cache hit - installing..."
+              npx playwright install
+            fi
+          else
+            echo "🔄 Cache miss - installing browsers and dependencies..."
+            npx playwright install --with-deps
+          fi
 
-      - name: Install System Dependencies Only
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps
+      - name: Verify Playwright Installation
+        run: |
+          echo "🔍 Verifying Playwright installation..."
+          npx playwright --version
+
+          # Verify browsers are available
+          if [ -d ~/.cache/ms-playwright ]; then
+            echo "✅ Browser cache directory exists"
+            echo "Installed browsers:"
+            find ~/.cache/ms-playwright -name "chrome-*" -o -name "chromium-*" -o -name "firefox-*" -o -name "webkit-*" | head -5
+          else
+            echo "❌ No browser cache found"
+            exit 1
+          fi
+
+          # Test browser launch capability
+          echo "🛠️ Testing browser launch capability..."
+          if ! timeout 30s npx playwright install --dry-run; then
+            echo "❌ Browser installation verification failed"
+            exit 1
+          fi
+          echo "✅ All browsers verified and ready"
 
       - name: Cache ESO Logs API Responses
         uses: actions/cache@v5
