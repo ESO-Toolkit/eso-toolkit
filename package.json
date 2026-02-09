@@ -74,7 +74,7 @@
     "@storybook/react-vite": "^9.1.17",
     "@types/jest": "^30.0.0",
     "@types/luaparse": "^0.2.13",
-    "@types/node": "^20.19.30",
+    "@types/node": "^20.19.33",
     "@types/three": "^0.182.0",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
