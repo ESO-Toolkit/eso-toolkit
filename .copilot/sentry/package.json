@@ -21,7 +21,7 @@
   "author": "ESO Log Aggregator Team",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.4"
+    "@modelcontextprotocol/sdk": "^0.7.0"
   },
   "engines": {
     "node": ">=20.0.0"
