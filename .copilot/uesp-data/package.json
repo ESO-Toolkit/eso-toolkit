@@ -1,0 +1,23 @@
+{
+  "name": "@eso-log-aggregator/copilot-uesp-data",
+  "version": "1.0.0",
+  "description": "GitHub Copilot Agent Skill for fetching and updating ESO item data from UESP",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "mcp",
+    "github-copilot",
+    "uesp",
+    "eso",
+    "item-icons"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

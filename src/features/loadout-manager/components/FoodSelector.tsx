@@ -36,6 +36,33 @@ const FOOD_SELECTOR_KB_URL = '/docs/loadout/food-selector';
 
 const MIN_SEARCH_LENGTH = 2;
 
+const UESP_ICON_CDN = 'https://esoicons.uesp.net/esoui/art/treeicons';
+
+/** Maps provisioning categories to their UESP tree icons */
+const CATEGORY_ICON_MAP: Record<string, string> = {
+  'Meat Dishes': 'provisioner_indexicon_meat_up',
+  'Fruit Dishes': 'provisioner_indexicon_stew_up',
+  'Vegetable Dishes': 'provisioner_indexicon_baked_up',
+  Savouries: 'provisioner_indexicon_meat_up',
+  Ragout: 'provisioner_indexicon_stew_up',
+  Entremet: 'provisioner_indexicon_baked_up',
+  Gourmet: 'provisioner_indexicon_stew_up',
+  Delicacies: 'provisioner_indexicon_spirits_up',
+  'Alcoholic Drinks': 'provisioner_indexicon_beer_up',
+  Tea: 'provisioner_indexicon_spirits_up',
+  Tonics: 'provisioner_indexicon_wine_up',
+  Liqueurs: 'provisioner_indexicon_spirits_up',
+  Tinctures: 'provisioner_indexicon_beer_up',
+  'Cordial Teas': 'provisioner_indexicon_wine_up',
+  Distillates: 'provisioner_indexicon_spirits_up',
+};
+
+const getCategoryIconUrl = (category?: string): string | null => {
+  if (!category) return null;
+  const icon = CATEGORY_ICON_MAP[category];
+  return icon ? `${UESP_ICON_CDN}/${icon}.png` : null;
+};
+
 const toDisplayConsumable = (item: EsoConsumable): DisplayConsumable => ({
   id: item.id,
   name: item.name,
@@ -243,35 +270,44 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
         isOptionEqualToValue={(option, value) => option.id === value.id}
         getOptionLabel={(option) => option.name}
         noOptionsText={noOptionsText}
-        renderOption={(props, option) => (
-          <li {...props}>
-            <Stack spacing={0.5} width="100%">
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Typography fontWeight={600}>{option.name}</Typography>
-                <Chip
-                  label={option.type.toUpperCase()}
-                  size="small"
-                  color={option.type === 'food' ? 'success' : 'info'}
-                />
-                {option.category && <Chip label={option.category} size="small" color="default" />}
+        renderOption={(props, option) => {
+          const iconUrl = getCategoryIconUrl(option.category);
+          return (
+            <li {...props}>
+              <Stack direction="row" spacing={1.5} alignItems="center" width="100%">
+                {iconUrl && (
+                  <Box
+                    component="img"
+                    src={iconUrl}
+                    alt=""
+                    sx={{ width: 28, height: 28, flexShrink: 0, opacity: 0.85 }}
+                  />
+                )}
+                <Stack spacing={0} flex={1} minWidth={0}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Typography fontWeight={600} noWrap>
+                      {option.name}
+                    </Typography>
+                    <Chip
+                      label={option.type.toUpperCase()}
+                      size="small"
+                      color={option.type === 'food' ? 'success' : 'info'}
+                      sx={{ height: 18, fontSize: '0.65rem' }}
+                    />
+                  </Stack>
+                  <Typography variant="caption" color="text.secondary" noWrap>
+                    {[
+                      option.category,
+                      typeof option.quality === 'number' ? `Quality ${option.quality}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' • ')}
+                  </Typography>
+                </Stack>
               </Stack>
-              <Typography variant="caption" color="text.secondary">
-                {[
-                  option.category,
-                  typeof option.quality === 'number' ? `Quality ${option.quality}` : null,
-                  typeof option.recipeId === 'number' ? `Recipe ${option.recipeId}` : null,
-                ]
-                  .filter(Boolean)
-                  .join(' • ')}
-              </Typography>
-              {!option.category && option.description && (
-                <Typography variant="caption" color="text.secondary">
-                  {option.description}
-                </Typography>
-              )}
-            </Stack>
-          </li>
-        )}
+            </li>
+          );
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -304,56 +340,70 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
         handleHomeEndKeys
       />
 
-      {currentItem && (
-        <Box
-          display="flex"
-          alignItems="flex-start"
-          gap={2}
-          sx={{
-            px: 1.5,
-            py: 1,
-            borderRadius: 1,
-            border: (theme) => `1px solid ${theme.palette.success.light}`,
-            bgcolor: (theme) =>
-              theme.palette.mode === 'dark' ? 'rgba(46, 125, 50, 0.18)' : 'rgba(76, 175, 80, 0.12)',
-          }}
-        >
-          <Box flex={1}>
-            <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
-              <Typography fontWeight={600}>{currentItem.name}</Typography>
-              <Chip
-                label={currentItem.type.toUpperCase()}
-                size="small"
-                color={currentItem.type === 'food' ? 'success' : 'info'}
-              />
-              {currentItem.category && (
-                <Chip label={currentItem.category} size="small" color="default" />
+      {currentItem &&
+        (() => {
+          const iconUrl = getCategoryIconUrl(currentItem.category);
+          return (
+            <Box
+              display="flex"
+              alignItems="center"
+              gap={1.5}
+              sx={{
+                px: 1.5,
+                py: 1,
+                borderRadius: 1,
+                border: (theme) => `1px solid ${theme.palette.success.light}`,
+                bgcolor: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(46, 125, 50, 0.18)'
+                    : 'rgba(76, 175, 80, 0.12)',
+              }}
+            >
+              {iconUrl && (
+                <Box
+                  component="img"
+                  src={iconUrl}
+                  alt=""
+                  sx={{ width: 36, height: 36, flexShrink: 0 }}
+                />
               )}
-            </Stack>
-            <Typography variant="body2" color="text.secondary">
-              {[
-                currentItem.category,
-                typeof currentItem.quality === 'number' ? `Quality ${currentItem.quality}` : null,
-              ]
-                .filter(Boolean)
-                .join(' • ') || currentItem.description}
-            </Typography>
-            {currentItem.category && currentItem.description && (
-              <Typography variant="caption" color="text.secondary" display="block">
-                {currentItem.description}
-              </Typography>
-            )}
-            <Typography variant="caption" color="text.secondary" display="block">
-              Item ID: {currentItem.id}
-            </Typography>
-            {typeof currentItem.recipeId === 'number' && (
-              <Typography variant="caption" color="text.secondary" display="block">
-                Recipe ID: {currentItem.recipeId}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-      )}
+              <Box flex={1} minWidth={0}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography fontWeight={600} noWrap>
+                    {currentItem.name}
+                  </Typography>
+                  <Chip
+                    label={currentItem.type.toUpperCase()}
+                    size="small"
+                    color={currentItem.type === 'food' ? 'success' : 'info'}
+                    sx={{ height: 18, fontSize: '0.65rem' }}
+                  />
+                  {currentItem.category && (
+                    <Chip
+                      label={currentItem.category}
+                      size="small"
+                      color="default"
+                      sx={{ height: 18, fontSize: '0.65rem' }}
+                    />
+                  )}
+                </Stack>
+                <Typography variant="caption" color="text.secondary" noWrap>
+                  {[
+                    typeof currentItem.quality === 'number'
+                      ? `Quality ${currentItem.quality}`
+                      : null,
+                    `Item ${currentItem.id}`,
+                    typeof currentItem.recipeId === 'number'
+                      ? `Recipe ${currentItem.recipeId}`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' • ')}
+                </Typography>
+              </Box>
+            </Box>
+          );
+        })()}
     </Stack>
   );
 };

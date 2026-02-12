@@ -4,19 +4,10 @@
  * Shows all 22 equipment slots with item name and trait
  */
 
-import { Close, Add } from '@mui/icons-material';
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import React, { useEffect, useMemo, useState } from 'react';
+import { Close } from '@mui/icons-material';
+import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { useLogger } from '@/hooks/useLogger';
@@ -25,6 +16,7 @@ import { validateItemForSlot, getItemInfo, type SlotType } from '../data/itemIdM
 import { getCollectionItem, findCollectionItemBySetAndSlotType } from '../data/itemSetCollections';
 import { updateGear } from '../store/loadoutSlice';
 import { GearConfig, GearPiece } from '../types/loadout.types';
+import { fetchItemIconUrl } from '../utils/itemIconResolver';
 import { getItemData, getItemIdFromLink } from '../utils/itemLinkParser';
 import { registerManualSlot } from '../utils/wizardWardrobeSlotRegistry';
 
@@ -171,10 +163,52 @@ const resolveGearPieceItemId = (gearPiece?: GearPiece): number | null => {
   return null;
 };
 
-/**
- * Gear piece display component
- */
-interface GearPieceDisplayProps {
+// ---------------------------------------------------------------------------
+// SVG slot icons – simple silhouettes inspired by the ESO character screen
+// ---------------------------------------------------------------------------
+const SLOT_ICON_PATHS: Record<string, string> = {
+  Head: 'M12 2C9 2 6.5 4 6 7c-.3 1.5 0 3 .5 4 .3.7.5 1.2.5 2v1h10v-1c0-.8.2-1.3.5-2 .5-1 .8-2.5.5-4C17.5 4 15 2 12 2z',
+  Chest: 'M6 6l-3 3v9h6v-5h6v5h6V9l-3-3h-4l-2 2-2-2H6z',
+  Shoulders: 'M4 8c0-2 2-4 4-4h1v4H5v6h4v2H4V8zm16 0c0-2-2-4-4-4h-1v4h4v6h-4v2h5V8z',
+  Hands: 'M7 3v7l-2 1v5l3 4h8l3-4v-5l-2-1V3h-3v6h-1V2h-3v7h-1V3H7z',
+  Belt: 'M3 10h18v4H3v-4zm8 0v4h2v-4h-2z',
+  Legs: 'M7 4h4v7l-2 9H6l1-9V4zm6 0h4v7l1 9h-3l-2-9V4z',
+  Feet: 'M6 8l-2 6v4h7v-3l1-3 1 3v3h7v-4l-2-6h-4l-1 2h-2L10 8H6z',
+  Neck: 'M12 4a4 4 0 0 0-4 4c0 1.7 1.3 3.2 3 3.8V14h2v-2.2c1.7-.6 3-2.1 3-3.8a4 4 0 0 0-4-4zm0 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm-1 5h2v4h-2v-4z',
+  'Ring 1': 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 13a5 5 0 1 1 0-10 5 5 0 0 1 0 10z',
+  'Ring 2': 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 13a5 5 0 1 1 0-10 5 5 0 0 1 0 10z',
+  'Main Hand': 'M6 20l2-2 8-8 2 2 2-2-4-4-2 2-2-2 2-2-2-2-2 2-8 8z',
+  'Off Hand':
+    'M12 3L4 7v5c0 4.4 3.4 8.5 8 9.5 4.6-1 8-5.1 8-9.5V7l-8-4zm0 2.2L18 9v3c0 3.5-2.6 6.8-6 7.8V5.2z',
+  'Back Bar Main Hand': 'M6 20l2-2 8-8 2 2 2-2-4-4-2 2-2-2 2-2-2-2-2 2-8 8z',
+  'Back Bar Off Hand':
+    'M12 3L4 7v5c0 4.4 3.4 8.5 8 9.5 4.6-1 8-5.1 8-9.5V7l-8-4zm0 2.2L18 9v3c0 3.5-2.6 6.8-6 7.8V5.2z',
+};
+
+const SlotIcon: React.FC<{ name: string; size?: number; color?: string }> = ({
+  name,
+  size = 24,
+  color = 'currentColor',
+}) => {
+  const path = SLOT_ICON_PATHS[name];
+  if (!path) return null;
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill={color}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d={path} />
+    </svg>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Gear Tile – single equipment slot rendered as an icon tile
+// ---------------------------------------------------------------------------
+interface GearTileProps {
   slotName: string;
   gearPiece?: ExtendedGearPiece;
   onRemove: () => void;
@@ -182,9 +216,10 @@ interface GearPieceDisplayProps {
   addDisabled?: boolean;
   disabledReason?: string;
   validationStatus?: ValidationStatus | null;
+  tileSize?: number;
 }
 
-const GearPieceDisplay: React.FC<GearPieceDisplayProps> = ({
+const GearTile: React.FC<GearTileProps> = ({
   slotName,
   gearPiece,
   onRemove,
@@ -192,15 +227,17 @@ const GearPieceDisplay: React.FC<GearPieceDisplayProps> = ({
   addDisabled,
   disabledReason,
   validationStatus,
+  tileSize = 74,
 }) => {
-  const logger = useLogger('GearSelector:GearPieceDisplay');
-  // Check for either name or link (Wizard's Wardrobe provides link)
-  const hasGear = gearPiece?.name || gearPiece?.link;
+  const theme = useTheme();
+  const logger = useLogger('GearSelector:GearTile');
+
+  const hasGear = Boolean(gearPiece?.name || gearPiece?.link);
   const isMythic = gearPiece?.trait?.toLowerCase() === 'mythic';
 
-  // State for item data fetched from database or API
   const [itemData, setItemData] = useState<{ name: string; setName?: string } | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [iconUrl, setIconUrl] = useState<string | null>(null);
+  const [iconFailed, setIconFailed] = useState(false);
 
   const resolvedItemId = useMemo(() => resolveGearPieceItemId(gearPiece), [gearPiece]);
   const collectionItem = useMemo(
@@ -209,202 +246,192 @@ const GearPieceDisplay: React.FC<GearPieceDisplayProps> = ({
   );
   const resolvedSetId = gearPiece?.setId ?? collectionItem?.setId;
 
-  // Fetch item name when component mounts or link changes
   useEffect(() => {
     if (gearPiece?.link && !gearPiece?.name) {
-      setIsLoading(true);
       getItemData(gearPiece.link)
         .then((data) => {
-          if (data?.name) {
-            setItemData({ name: data.name, setName: data.setName });
-          }
+          if (data?.name) setItemData({ name: data.name, setName: data.setName });
         })
         .catch((err) => {
-          logger.warn('Failed to fetch item metadata for gear slot', {
+          logger.warn('Failed to fetch item metadata', {
             slotName,
             error: err instanceof Error ? err.message : String(err),
           });
-        })
-        .finally(() => {
-          setIsLoading(false);
         });
     }
   }, [gearPiece?.link, gearPiece?.name, logger, slotName]);
 
+  // Fetch item icon from UESP
+  useEffect(() => {
+    if (resolvedItemId && resolvedItemId > 0) {
+      setIconFailed(false);
+      fetchItemIconUrl(resolvedItemId)
+        .then((url) => {
+          if (url) setIconUrl(url);
+        })
+        .catch(() => {
+          /* silently fail; SVG fallback will show */
+        });
+    } else {
+      setIconUrl(null);
+    }
+  }, [resolvedItemId]);
+
   const setName = gearPiece?.setName || itemData?.setName;
   const primaryItemName = gearPiece?.name || itemData?.name || setName;
-  const showAsEquipped = hasGear && !gearPiece?.name && !itemData?.name;
   const showItemIdFallback = resolvedItemId && !resolvedSetId && !setName ? resolvedItemId : null;
   const fallbackLabel = resolvedSetId
     ? `Set ID ${resolvedSetId}`
     : showItemIdFallback
-      ? `Unknown Set (ID ${showItemIdFallback})`
+      ? `Unknown (ID ${showItemIdFallback})`
       : 'Unknown Item';
   const gearLabel = setName ?? primaryItemName ?? fallbackLabel;
-  const isDuplicateDisplay = Boolean(
-    setName &&
-    gearLabel &&
-    setName.localeCompare(gearLabel, undefined, { sensitivity: 'accent' }) === 0,
-  );
-  const shouldRenderSetName = Boolean(setName && !isDuplicateDisplay);
+
+  const tooltipLines: string[] = [slotName];
+  if (hasGear) {
+    tooltipLines.push(gearLabel);
+    if (setName && setName !== gearLabel) tooltipLines.push(setName);
+    if (isMythic) tooltipLines.push('Mythic');
+  } else {
+    tooltipLines.push(addDisabled ? (disabledReason ?? 'Locked') : 'Click to equip');
+  }
+  if (validationStatus) tooltipLines.push(`⚠ ${validationStatus.message}`);
+
+  const handleClick = useCallback(() => {
+    if (hasGear) {
+      onAdd(); // open picker to change item
+    } else if (!addDisabled) {
+      onAdd();
+    }
+  }, [hasGear, addDisabled, onAdd]);
+
+  const equippedBorder = isMythic ? theme.palette.warning.main : theme.palette.primary.main;
 
   return (
-    <Card
-      variant="outlined"
-      sx={{
-        width: '100%',
-        transition: 'all 0.2s',
-        borderColor: hasGear ? 'primary.main' : 'divider',
-        bgcolor: hasGear
-          ? (theme) =>
-              theme.palette.mode === 'dark'
-                ? 'rgba(144, 202, 249, 0.08)'
-                : 'rgba(25, 118, 210, 0.04)'
-          : 'background.paper',
-        '&:hover': hasGear
-          ? {
-              borderColor: 'primary.dark',
-              bgcolor: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? 'rgba(144, 202, 249, 0.12)'
-                  : 'rgba(25, 118, 210, 0.08)',
-            }
-          : undefined,
-      }}
+    <Tooltip
+      title={tooltipLines.join('\n')}
+      placement="top"
+      arrow
+      slotProps={{ tooltip: { sx: { whiteSpace: 'pre-line', textAlign: 'center' } } }}
     >
-      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <Stack spacing={1}>
-          {/* Slot header */}
-          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                {slotName}
-              </Typography>
-            </Stack>
-            {hasGear && (
-              <IconButton
-                size="small"
-                onClick={onRemove}
-                sx={{
-                  p: 0.25,
-                  color: 'error.main',
-                  '&:hover': {
-                    bgcolor: 'error.main',
-                    color: 'error.contrastText',
-                  },
-                }}
-              >
-                <Close sx={{ fontSize: 14 }} />
-              </IconButton>
-            )}
-          </Stack>
+      <Box
+        onClick={handleClick}
+        sx={{
+          position: 'relative',
+          width: tileSize,
+          height: tileSize,
+          borderRadius: 1,
+          border: '2px solid',
+          borderColor: hasGear ? alpha(equippedBorder, 0.6) : alpha(theme.palette.divider, 0.4),
+          bgcolor: hasGear ? alpha(equippedBorder, 0.1) : alpha(theme.palette.action.hover, 0.3),
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: addDisabled && !hasGear ? 'default' : 'pointer',
+          transition: 'all 150ms ease',
+          '&:hover': {
+            borderColor: hasGear ? equippedBorder : alpha(theme.palette.primary.main, 0.5),
+            bgcolor: hasGear
+              ? alpha(equippedBorder, 0.18)
+              : alpha(theme.palette.primary.main, 0.08),
+            transform: 'scale(1.05)',
+          },
+          opacity: addDisabled && !hasGear ? 0.35 : 1,
+        }}
+      >
+        {/* Item icon: actual image from UESP or SVG fallback */}
+        {hasGear && iconUrl && !iconFailed ? (
+          <Box
+            component="img"
+            src={iconUrl}
+            alt={gearLabel}
+            onError={() => setIconFailed(true)}
+            sx={{
+              width: tileSize * 0.55,
+              height: tileSize * 0.55,
+              objectFit: 'contain',
+              borderRadius: 0.5,
+              filter: isMythic ? 'drop-shadow(0 0 3px rgba(255,167,38,0.6))' : 'none',
+            }}
+          />
+        ) : (
+          <SlotIcon
+            name={slotName}
+            size={tileSize * 0.4}
+            color={
+              hasGear
+                ? isMythic
+                  ? theme.palette.warning.light
+                  : theme.palette.primary.light
+                : alpha(theme.palette.text.secondary, 0.4)
+            }
+          />
+        )}
+        <Typography
+          variant="caption"
+          sx={{
+            fontSize: '0.6rem',
+            lineHeight: 1.15,
+            mt: 0.25,
+            px: 0.25,
+            width: tileSize - 8,
+            textAlign: 'center',
+            color: hasGear ? 'text.primary' : 'text.disabled',
+            fontWeight: hasGear ? 600 : 400,
+            overflow: 'hidden',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            wordBreak: 'break-word',
+          }}
+        >
+          {hasGear ? gearLabel : slotName}
+        </Typography>
 
-          {/* Gear info */}
-          {hasGear ? (
-            <Box>
-              <Tooltip title={gearPiece.link || 'Equipped item'} placement="top">
-                <Typography
-                  variant="subtitle2"
-                  sx={{
-                    fontWeight: 600,
-                    color: isMythic ? 'warning.main' : 'text.primary',
-                    fontStyle: isLoading ? 'italic' : 'normal',
-                    opacity: isLoading ? 0.7 : 1,
-                    wordBreak: 'break-word',
-                  }}
-                >
-                  {isLoading ? 'Loading...' : gearLabel}
-                </Typography>
-              </Tooltip>
-              {shouldRenderSetName && (
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25 }}>
-                  {setName}
-                </Typography>
-              )}
-              {!showAsEquipped && !setName && (
-                <Chip
-                  label={itemData?.name ? 'Known Item' : 'Item Link'}
-                  size="small"
-                  color={isMythic ? 'warning' : itemData?.name ? 'info' : 'default'}
-                  sx={{
-                    mt: 0.5,
-                    height: 20,
-                    fontSize: '0.7rem',
-                    fontWeight: 500,
-                    alignSelf: 'flex-start',
-                  }}
-                />
-              )}
-              {showItemIdFallback && (
-                <Chip
-                  label={`Item ID ${showItemIdFallback.toLocaleString()}`}
-                  size="small"
-                  variant="outlined"
-                  color="info"
-                  sx={{
-                    mt: 0.75,
-                    height: 20,
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
-                  }}
-                />
-              )}
-              {disabledReason && (
-                <Chip
-                  label={disabledReason}
-                  size="small"
-                  color="warning"
-                  sx={{
-                    mt: 0.75,
-                    height: 20,
-                    fontSize: '0.7rem',
-                    fontWeight: 500,
-                  }}
-                />
-              )}
-              {validationStatus && (
-                <Tooltip
-                  title={validationStatus.details ?? ''}
-                  disableHoverListener={!validationStatus.details}
-                >
-                  <Chip
-                    label={validationStatus.message}
-                    size="small"
-                    color={validationStatus.severity === 'error' ? 'error' : 'warning'}
-                    sx={{
-                      mt: 0.75,
-                      height: 20,
-                      fontSize: '0.7rem',
-                      fontWeight: 600,
-                    }}
-                  />
-                </Tooltip>
-              )}
-            </Box>
-          ) : (
-            <Tooltip title={disabledReason ?? ''} disableHoverListener={!addDisabled}>
-              <span>
-                <Button
-                  size="small"
-                  startIcon={<Add />}
-                  onClick={addDisabled ? undefined : onAdd}
-                  variant="outlined"
-                  disabled={addDisabled}
-                  sx={{
-                    borderStyle: 'dashed',
-                    borderWidth: 2,
-                    textTransform: 'none',
-                    fontWeight: 500,
-                  }}
-                >
-                  Add Item
-                </Button>
-              </span>
-            </Tooltip>
-          )}
-        </Stack>
-      </CardContent>
-    </Card>
+        {/* Validation dot */}
+        {validationStatus && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 2,
+              right: 2,
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              bgcolor: validationStatus.severity === 'error' ? 'error.main' : 'warning.main',
+            }}
+          />
+        )}
+
+        {/* Remove button (appears on hover) */}
+        {hasGear && (
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            sx={{
+              position: 'absolute',
+              top: -6,
+              right: -6,
+              p: 0,
+              width: 16,
+              height: 16,
+              bgcolor: 'error.main',
+              color: 'white',
+              opacity: 0,
+              transition: 'opacity 150ms',
+              '.MuiBox-root:hover > &': { opacity: 1 },
+              '&:hover': { bgcolor: 'error.dark', opacity: 1 },
+            }}
+          >
+            <Close sx={{ fontSize: 10 }} />
+          </IconButton>
+        )}
+      </Box>
+    </Tooltip>
   );
 };
 
@@ -650,74 +677,118 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
     setPickerSlot(null);
   };
 
-  // Group slots by category for better organization
-  const armorSlots = GEAR_SLOTS.filter((s) => s.category === 'armor');
-  const jewelrySlots = GEAR_SLOTS.filter((s) => s.category === 'jewelry');
-  const weaponSlots = GEAR_SLOTS.filter((s) => s.category === 'weapon');
+  // Render helper – creates a GearTile for a slot definition
+  const renderTile = ({ slot, name, slotType }: (typeof GEAR_SLOTS)[number]): React.JSX.Element => (
+    <GearTile
+      key={slot}
+      slotName={name}
+      gearPiece={gear[slot] as ExtendedGearPiece}
+      onRemove={() => handleRemoveGear(slot)}
+      onAdd={() => handleAddGear(slot, name, slotType)}
+      addDisabled={Boolean(slotDisableReasons[slot])}
+      disabledReason={slotDisableReasons[slot]}
+      validationStatus={slotValidationStates[slot]}
+    />
+  );
+
+  // Slot lookup helper
+  const slotDef = (slotIndex: number): (typeof GEAR_SLOTS)[number] =>
+    GEAR_SLOTS.find((s) => s.slot === slotIndex)!;
+
   return (
-    <Stack spacing={3}>
-      {/* Armor Section */}
-      <Box>
-        <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600, color: 'text.secondary' }}>
-          Armor
-        </Typography>
-        <Stack spacing={1.25}>
-          {armorSlots.map(({ slot, name, slotType }) => (
-            <GearPieceDisplay
-              key={slot}
-              slotName={name}
-              gearPiece={gear[slot] as ExtendedGearPiece}
-              onRemove={() => handleRemoveGear(slot)}
-              onAdd={() => handleAddGear(slot, name, slotType)}
-              addDisabled={Boolean(slotDisableReasons[slot])}
-              disabledReason={slotDisableReasons[slot]}
-              validationStatus={slotValidationStates[slot]}
-            />
-          ))}
-        </Stack>
-      </Box>
+    <Stack spacing={2} alignItems="center">
+      {/* ── APPAREL ────────────────────────── */}
+      <Typography
+        variant="caption"
+        sx={{
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: 1.5,
+          color: 'text.secondary',
+          alignSelf: 'stretch',
+          textAlign: 'center',
+          borderBottom: 1,
+          borderColor: 'divider',
+          pb: 0.5,
+        }}
+      >
+        Apparel
+      </Typography>
 
-      {/* Jewelry Section */}
-      <Box>
-        <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600, color: 'text.secondary' }}>
-          Jewelry
-        </Typography>
-        <Stack spacing={1.25}>
-          {jewelrySlots.map(({ slot, name, slotType }) => (
-            <GearPieceDisplay
-              key={slot}
-              slotName={name}
-              gearPiece={gear[slot] as ExtendedGearPiece}
-              onRemove={() => handleRemoveGear(slot)}
-              onAdd={() => handleAddGear(slot, name, slotType)}
-              addDisabled={Boolean(slotDisableReasons[slot])}
-              disabledReason={slotDisableReasons[slot]}
-              validationStatus={slotValidationStates[slot]}
-            />
-          ))}
-        </Stack>
-      </Box>
+      {/* Row 1: Head · Chest · Shoulders */}
+      <Stack direction="row" spacing={1} justifyContent="center">
+        {renderTile(slotDef(0))}
+        {renderTile(slotDef(2))}
+        {renderTile(slotDef(3))}
+      </Stack>
 
-      {/* Weapons Section */}
-      <Box>
-        <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600, color: 'text.secondary' }}>
-          Weapons
-        </Typography>
-        <Stack spacing={1.25}>
-          {weaponSlots.map(({ slot, name, slotType }) => (
-            <GearPieceDisplay
-              key={slot}
-              slotName={name}
-              gearPiece={gear[slot] as ExtendedGearPiece}
-              onRemove={() => handleRemoveGear(slot)}
-              onAdd={() => handleAddGear(slot, name, slotType)}
-              addDisabled={Boolean(slotDisableReasons[slot])}
-              disabledReason={slotDisableReasons[slot]}
-              validationStatus={slotValidationStates[slot]}
-            />
-          ))}
-        </Stack>
-      </Box>
+      {/* Row 2: Hands · Belt · Legs */}
+      <Stack direction="row" spacing={1} justifyContent="center">
+        {renderTile(slotDef(16))}
+        {renderTile(slotDef(6))}
+        {renderTile(slotDef(8))}
+      </Stack>
+
+      {/* Row 3: Feet */}
+      <Stack direction="row" spacing={1} justifyContent="center">
+        {renderTile(slotDef(9))}
+      </Stack>
+
+      {/* ── ACCESSORIES ────────────────────── */}
+      <Typography
+        variant="caption"
+        sx={{
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: 1.5,
+          color: 'text.secondary',
+          alignSelf: 'stretch',
+          textAlign: 'center',
+          borderBottom: 1,
+          borderColor: 'divider',
+          pb: 0.5,
+          mt: 1,
+        }}
+      >
+        Accessories
+      </Typography>
+
+      <Stack direction="row" spacing={1} justifyContent="center">
+        {renderTile(slotDef(1))}
+        {renderTile(slotDef(11))}
+        {renderTile(slotDef(12))}
+      </Stack>
+
+      {/* ── WEAPONS ────────────────────────── */}
+      <Typography
+        variant="caption"
+        sx={{
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: 1.5,
+          color: 'text.secondary',
+          alignSelf: 'stretch',
+          textAlign: 'center',
+          borderBottom: 1,
+          borderColor: 'divider',
+          pb: 0.5,
+          mt: 1,
+        }}
+      >
+        Weapons
+      </Typography>
+
+      {/* Front bar */}
+      <Stack direction="row" spacing={1} justifyContent="center">
+        {renderTile(slotDef(4))}
+        {renderTile(slotDef(5))}
+      </Stack>
+
+      {/* Back bar */}
+      <Stack direction="row" spacing={1} justifyContent="center">
+        {renderTile(slotDef(20))}
+        {renderTile(slotDef(21))}
+      </Stack>
 
       {/* Item Picker Dialog */}
       {pickerSlot && (
