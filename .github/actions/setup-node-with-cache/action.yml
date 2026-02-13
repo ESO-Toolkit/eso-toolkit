@@ -17,33 +17,22 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
 
-    - name: Cache node_modules
+    - name: Cache npm
       id: npm-cache
       uses: actions/cache@v4
       with:
-        path: |
-          node_modules
-          ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
         restore-keys: |
-          ${{ runner.os }}-node-
+          ${{ runner.os }}-npm-
 
     - name: Install dependencies
-      if: steps.npm-cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        echo "🔄 Cache miss - installing dependencies..."
-        npm ci --prefer-offline --no-audit --no-fund
-
-    - name: Verify dependencies (cache hit)
-      if: steps.npm-cache.outputs.cache-hit == 'true'
-      shell: bash
-      run: |
-        echo "⚡ Cache hit - dependencies restored from cache"
-        echo "Verifying node_modules exists..."
-        if [ -d "node_modules" ]; then
-          echo "✅ node_modules directory exists"
+        if [ "${{ steps.npm-cache.outputs.cache-hit }}" = "true" ]; then
+          echo "⚡ Using cached npm packages"
         else
-          echo "❌ node_modules missing despite cache hit - running npm ci"
-          npm ci --prefer-offline --no-audit --no-fund
+          echo "🔄 Cache miss - will download packages"
         fi
+        echo "Running npm ci..."
+        npm ci --prefer-offline --no-audit --no-fund
