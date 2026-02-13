@@ -72,6 +72,7 @@
     "@storybook/addon-docs": "^9.1.17",
     "@storybook/addon-links": "^9.1.17",
     "@storybook/react-vite": "^9.1.17",
+    "@swc/core": "^1.15.11",
     "@types/jest": "^30.0.0",
     "@types/luaparse": "^0.2.13",
     "@types/node": "^20.19.33",
