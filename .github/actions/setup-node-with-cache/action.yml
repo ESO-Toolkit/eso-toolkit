@@ -32,3 +32,14 @@ runs:
       run: |
         echo "📦 Installing dependencies..."
         npm ci --no-audit --no-fund
+        
+    - name: Verify rollup installation
+      shell: bash
+      run: |
+        echo "🔍 Verifying rollup binary installation..."
+        if [ ! -d "node_modules/@rollup/rollup-linux-x64-gnu" ]; then
+          echo "⚠️  Rollup Linux binary not found, installing explicitly..."
+          npm install --no-save @rollup/rollup-linux-x64-gnu
+        else
+          echo "✅ Rollup Linux binary found"
+        fi
