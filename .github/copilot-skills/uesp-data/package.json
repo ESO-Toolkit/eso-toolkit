@@ -5,17 +5,21 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "dev": "node server.js"
+    "start": "node server.js"
   },
   "keywords": [
     "mcp",
+    "model-context-protocol",
     "github-copilot",
+    "agent-skill",
     "uesp",
     "eso",
     "item-icons"
   ],
+  "author": "ESO Log Aggregator Team",
+  "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.4"
+    "@modelcontextprotocol/sdk": "^0.7.0"
   },
   "engines": {
     "node": ">=20.0.0"
