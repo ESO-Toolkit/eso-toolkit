@@ -35,4 +35,4 @@ runs:
           echo "🔄 Cache miss - will download packages"
         fi
         echo "Running npm ci..."
-        npm ci --prefer-offline --no-audit --no-fund
+        npm ci --include=optional --no-audit --no-fund
