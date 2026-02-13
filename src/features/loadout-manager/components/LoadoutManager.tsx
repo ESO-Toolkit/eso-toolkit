@@ -1,11 +1,11 @@
 import {
   Add as AddIcon,
   ArrowBack,
-  AutoAwesome,
   DeleteSweep,
   Edit,
   FileDownload,
   FileUpload,
+  MoreVert,
   Search as SearchIcon,
 } from '@mui/icons-material';
 import {
@@ -18,11 +18,15 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Divider,
   Drawer,
   FormControl,
   IconButton,
   InputAdornment,
   InputLabel,
+  ListItemIcon,
+  ListItemText,
+  Menu,
   MenuItem,
   Paper,
   Select,
@@ -37,7 +41,6 @@ import {
   useTheme,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
-import { alpha } from '@mui/material/styles';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -64,6 +67,7 @@ import {
   selectCurrentPage,
   selectCurrentSetups,
   selectCurrentTrial,
+  selectLoadoutState,
   selectTrialPages,
 } from '../store/selectors';
 import type { ClipboardSetup, LoadoutSetup, LoadoutState } from '../types/loadout.types';
@@ -130,6 +134,19 @@ export const LoadoutManager: React.FC = () => {
     preloadSkillData();
     preloadChampionPointData();
   }, []);
+
+  // Restore slot registry from persisted state on mount.
+  // The registry is in-memory only (Map), so after a page reload Redux Persist
+  // brings back loadout data but the registry is empty. This ensures gear slot
+  // validation works correctly without requiring a fresh import.
+  const loadoutState = useSelector(selectLoadoutState);
+  const slotRegistryRestored = useRef(false);
+  useEffect(() => {
+    if (!slotRegistryRestored.current && Object.keys(loadoutState.pages).length > 0) {
+      slotRegistryRestored.current = true;
+      registerSlotsFromLoadoutState(loadoutState, 'wizard-wardrobe');
+    }
+  }, [loadoutState]);
 
   useEffect(() => {
     if (!currentTrial || !currentCharacter) {
@@ -426,90 +443,86 @@ export const LoadoutManager: React.FC = () => {
 
   const renameDisabled = !(currentTrial && allPages.length > 0);
 
+  // Overflow menu for Import / Export / Clear
+  const [overflowAnchor, setOverflowAnchor] = React.useState<HTMLElement | null>(null);
+  const overflowOpen = Boolean(overflowAnchor);
+
   return (
-    <Container maxWidth="xl" sx={{ py: 3, pb: 6 }}>
-      <WorkInProgressDisclaimer featureName="Loadout Manager" sx={{ mb: 3 }} />
-      <Stack spacing={3}>
+    <Container maxWidth="xl" sx={{ py: 2, pb: 6 }}>
+      <WorkInProgressDisclaimer featureName="Loadout Manager" sx={{ mb: 2 }} />
+
+      <Stack spacing={2}>
+        {/* ── Unified toolbar ─────────────────────────────────── */}
         <Paper
           variant="outlined"
           sx={{
-            px: { xs: 1.75, md: 2.5 },
-            py: { xs: 1.5, md: 2 },
-            borderRadius: 3,
+            px: { xs: 1.5, md: 2 },
+            py: { xs: 1.25, md: 1.5 },
+            borderRadius: 2,
             display: 'flex',
             flexDirection: 'column',
-            gap: 1,
-            background:
-              theme.palette.mode === 'dark'
-                ? alpha(theme.palette.background.paper, 0.65)
-                : alpha(theme.palette.background.paper, 0.96),
+            gap: 1.5,
           }}
         >
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1.5}
-            alignItems={{ xs: 'flex-start', sm: 'center' }}
-            justifyContent="space-between"
-          >
-            <Stack direction="row" spacing={1} alignItems="center">
+          {/* Row 1: title + global actions */}
+          <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
               <Tooltip title="Back" arrow>
                 <IconButton onClick={handleBack} size="small">
                   <ArrowBack fontSize="small" />
                 </IconButton>
               </Tooltip>
-              <AutoAwesome color="primary" />
-              <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                Wizard&apos;s Wardrobe Manager
+              <Typography variant="h6" sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
+                Loadout Manager
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  display: { xs: 'none', md: 'block' },
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {headerSubtitle}
               </Typography>
             </Stack>
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant="text"
-                color="primary"
-                startIcon={<FileUpload />}
-                onClick={handleImportClick}
-              >
-                Import
-              </Button>
-              <Button
-                variant="outlined"
-                color="primary"
-                startIcon={<FileDownload />}
-                onClick={handleExportClick}
-                disabled={setups.length === 0}
-              >
-                Export
-              </Button>
-              <Button
-                variant="text"
-                color="error"
-                startIcon={<DeleteSweep />}
-                onClick={() => setClearDialogOpen(true)}
-              >
-                Clear All
-              </Button>
+
+            <Stack direction="row" spacing={0.5} sx={{ flexShrink: 0 }}>
+              <Tooltip title="Import data" arrow>
+                <IconButton size="small" onClick={handleImportClick}>
+                  <FileUpload fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Export" arrow>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={handleExportClick}
+                    disabled={setups.length === 0}
+                  >
+                    <FileDownload fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="More actions" arrow>
+                <IconButton size="small" onClick={(e) => setOverflowAnchor(e.currentTarget)}>
+                  <MoreVert fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Stack>
           </Stack>
-          <Typography variant="body2" color="text.secondary">
-            {headerSubtitle}
-          </Typography>
-        </Paper>
 
-        <Paper
-          variant="outlined"
-          sx={{
-            px: { xs: 1.75, md: 2.5 },
-            py: { xs: 1.5, md: 2 },
-            borderRadius: 3,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-          }}
-        >
-          <CharacterSelector />
+          {/* Row 2: character + role + trial dropdowns */}
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={1.5}
+            alignItems={{ md: 'center' }}
+          >
+            <CharacterSelector />
 
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'center' }}>
-            <FormControl sx={{ minWidth: 220 }} size="small">
+            <FormControl sx={{ minWidth: 180 }} size="small">
               <InputLabel id="trial-select-label">Trial / Activity</InputLabel>
               <Select
                 labelId="trial-select-label"
@@ -519,7 +532,7 @@ export const LoadoutManager: React.FC = () => {
               >
                 {TRIALS.map((trial) => (
                   <MenuItem key={trial.id} value={trial.id}>
-                    <Stack spacing={0.25}>
+                    <Stack spacing={0.15}>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
                         {trial.name}
                       </Typography>
@@ -537,48 +550,46 @@ export const LoadoutManager: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1, minWidth: 0 }}>
-              <Tabs
-                value={Math.min(currentPage, Math.max(allPages.length - 1, 0))}
-                onChange={handlePageChange}
-                variant="scrollable"
-                scrollButtons="auto"
-                allowScrollButtonsMobile
-                sx={{ flex: 1, minHeight: 44 }}
-              >
-                {allPages.map((page, index) => (
-                  <Tab key={`${page.name}-${index}`} label={page.name} value={index} />
-                ))}
-              </Tabs>
-              <Tooltip title="Rename page" arrow>
-                <span>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleOpenRename(currentPage)}
-                    disabled={renameDisabled}
-                  >
-                    <Edit fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Tooltip title="Add page" arrow>
-                <IconButton size="small" color="primary" onClick={handleAddPage}>
-                  <AddIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Stack>
           </Stack>
 
-          <Stack
-            direction={{ xs: 'column', md: 'row' }}
-            spacing={1.5}
-            alignItems={{ md: 'center' }}
-          >
+          {/* Row 3: page tabs — full width */}
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <Tabs
+              value={Math.min(currentPage, Math.max(allPages.length - 1, 0))}
+              onChange={handlePageChange}
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
+              sx={{ flex: 1, minHeight: 36, '& .MuiTab-root': { minHeight: 36, py: 0.5 } }}
+            >
+              {allPages.map((page, index) => (
+                <Tab key={`${page.name}-${index}`} label={page.name} value={index} />
+              ))}
+            </Tabs>
+            <Tooltip title="Rename page" arrow>
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={() => handleOpenRename(currentPage)}
+                  disabled={renameDisabled}
+                >
+                  <Edit fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title="Add page" arrow>
+              <IconButton size="small" color="primary" onClick={handleAddPage}>
+                <AddIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+
+          {/* Row 4: search + new setup */}
+          <Stack direction="row" spacing={1} alignItems="center">
             <TextField
               value={searchTerm}
               onChange={handleSearchChange}
-              placeholder="Search setups, tags, bosses..."
+              placeholder="Search setups..."
               size="small"
               fullWidth
               InputProps={{
@@ -588,20 +599,33 @@ export const LoadoutManager: React.FC = () => {
                   </InputAdornment>
                 ),
               }}
+              sx={{ '& .MuiInputBase-root': { height: 36 } }}
             />
             <Button
               variant="contained"
+              size="small"
               startIcon={<AddIcon />}
               onClick={handleAddSetup}
               disabled={!currentTrial}
+              sx={{ flexShrink: 0, whiteSpace: 'nowrap', height: 36 }}
             >
-              New Setup
+              New
             </Button>
           </Stack>
         </Paper>
 
-        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} alignItems="stretch">
-          <Box sx={{ flex: 1, minWidth: 0 }}>
+        {/* ── Main content: list + editor ───────────────────── */}
+        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="stretch">
+          {/* Setup list — narrower on desktop */}
+          <Box
+            sx={{
+              width: { xs: '100%', lg: '38%' },
+              flexShrink: 0,
+              minWidth: 0,
+              maxHeight: { lg: 'calc(100vh - 280px)' },
+              display: 'flex',
+            }}
+          >
             <SetupList
               setups={setups}
               selectedIndex={selectedSetupIndex}
@@ -613,6 +637,7 @@ export const LoadoutManager: React.FC = () => {
             />
           </Box>
 
+          {/* Editor — wider on desktop */}
           {!isMdDown && (
             <Box sx={{ flex: 1, minWidth: 0 }}>
               {selectedSetup ? (
@@ -628,20 +653,23 @@ export const LoadoutManager: React.FC = () => {
                   variant="outlined"
                   sx={{
                     height: '100%',
-                    borderRadius: 3,
+                    minHeight: 200,
+                    borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     textAlign: 'center',
                     px: 3,
-                    py: 6,
+                    py: 4,
                     color: 'text.secondary',
                   }}
                 >
-                  <Stack spacing={1.5} alignItems="center">
-                    <Typography variant="h6">Select a setup to edit</Typography>
+                  <Stack spacing={1} alignItems="center">
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      Select a setup
+                    </Typography>
                     <Typography variant="body2">
-                      Choose a loadout from the list to review gear, skills, and Champion Points.
+                      Choose a loadout from the list to review gear, skills, and CP.
                     </Typography>
                   </Stack>
                 </Paper>
@@ -651,6 +679,7 @@ export const LoadoutManager: React.FC = () => {
         </Stack>
       </Stack>
 
+      {/* Hidden file input */}
       <input
         type="file"
         accept=".lua,.json,.txt"
@@ -659,12 +688,13 @@ export const LoadoutManager: React.FC = () => {
         onChange={handleFileChange}
       />
 
+      {/* Mobile drawer */}
       <Drawer
         anchor="right"
         open={drawerOpen && Boolean(selectedSetup)}
         onClose={() => setDrawerOpen(false)}
         ModalProps={{ keepMounted: true }}
-        PaperProps={{ sx: { width: { xs: '100%', sm: 420 } } }}
+        PaperProps={{ sx: { width: { xs: '100%', sm: 440 } } }}
       >
         {selectedSetup && (
           <SetupEditor
@@ -677,8 +707,56 @@ export const LoadoutManager: React.FC = () => {
         )}
       </Drawer>
 
+      {/* Export dialog */}
       <ExportDialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} />
 
+      {/* Overflow menu */}
+      <Menu
+        anchorEl={overflowAnchor}
+        open={overflowOpen}
+        onClose={() => setOverflowAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem
+          onClick={() => {
+            handleImportClick();
+            setOverflowAnchor(null);
+          }}
+        >
+          <ListItemIcon>
+            <FileUpload fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Import</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleExportClick();
+            setOverflowAnchor(null);
+          }}
+          disabled={setups.length === 0}
+        >
+          <ListItemIcon>
+            <FileDownload fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Export</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem
+          onClick={() => {
+            setClearDialogOpen(true);
+            setOverflowAnchor(null);
+          }}
+          sx={{ color: 'error.main' }}
+        >
+          <ListItemIcon>
+            <DeleteSweep fontSize="small" color="error" />
+          </ListItemIcon>
+          <ListItemText>Clear All Data</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Rename page dialog */}
       <Dialog open={renameDialogOpen} onClose={() => setRenameDialogOpen(false)}>
         <DialogTitle>Rename Page</DialogTitle>
         <DialogContent>
@@ -699,6 +777,7 @@ export const LoadoutManager: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Clear all dialog */}
       <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)}>
         <DialogTitle>Clear all loadouts?</DialogTitle>
         <DialogContent>
@@ -715,6 +794,7 @@ export const LoadoutManager: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}

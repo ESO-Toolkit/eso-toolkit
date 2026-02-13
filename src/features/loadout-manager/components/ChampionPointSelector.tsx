@@ -5,14 +5,10 @@
 
 import { Close as CloseIcon } from '@mui/icons-material';
 import {
-  Paper,
   Typography,
-  Card,
-  CardContent,
   Stack,
   Chip,
   Tooltip,
-  IconButton,
   TextField,
   Dialog,
   DialogTitle,
@@ -175,18 +171,20 @@ export const ChampionPointSelector: React.FC<ChampionPointSelectorProps> = ({
   };
 
   return (
-    <Stack spacing={3}>
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="subtitle1">Champion Points Selected</Typography>
-          <Chip
-            label={`${getFilledCount()} / ${CP_SLOTS.length} slots filled`}
-            color={getFilledCount() === CP_SLOTS.length ? 'success' : 'default'}
-          />
-        </Stack>
-      </Paper>
+    <Stack spacing={1.5}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: 0.5 }}>
+        <Typography variant="body2" color="text.secondary">
+          Champion Points
+        </Typography>
+        <Chip
+          label={`${getFilledCount()} / ${CP_SLOTS.length}`}
+          size="small"
+          color={getFilledCount() === CP_SLOTS.length ? 'success' : 'default'}
+          sx={{ height: 20, fontSize: '0.7rem' }}
+        />
+      </Stack>
 
-      <Stack spacing={{ xs: 2, md: 2.75 }}>
+      <Stack spacing={1.5}>
         {Object.entries(slotsByTree).map(([treeKey, slots]) => {
           const typedKey = treeKey as TreeKey;
           // Map tree key to ChampionPointTree enum
@@ -241,45 +239,49 @@ const CPTree: React.FC<CPTreeProps> = ({
   onCPRemove,
 }) => {
   return (
-    <Card
-      variant="outlined"
+    <Box
       sx={{
-        borderColor: visuals.cardBorder,
-        backgroundColor: visuals.cardBackground,
-        backdropFilter: 'blur(2px)',
+        borderLeft: `3px solid ${visuals.cardBorder}`,
+        pl: 1.5,
       }}
     >
-      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        <Typography variant="h6" sx={{ color: visuals.titleColor, fontWeight: 700 }}>
-          {treeName}
-        </Typography>
-        <Stack spacing={1.25}>
-          {slots.map((slotIndex) => {
-            const status = getSlotStatus(slotIndex);
-            const cpId = championPoints[slotIndex];
-            const cpMetadata = resolveChampionPoint(cpId);
-            const hasChampionPoint = Boolean(cpId);
-            const isFilled = status === 'filled';
+      <Typography
+        variant="caption"
+        sx={{
+          color: visuals.titleColor,
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
+        }}
+      >
+        {treeName}
+      </Typography>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+        {slots.map((slotIndex) => {
+          const status = getSlotStatus(slotIndex);
+          const cpId = championPoints[slotIndex];
+          const cpMetadata = resolveChampionPoint(cpId);
+          const hasChampionPoint = Boolean(cpId);
+          const isFilled = status === 'filled';
 
-            return (
-              <CPSlot
-                key={slotIndex}
-                slotIndex={slotIndex}
-                treeName={treeName}
-                tree={tree}
-                cpId={cpId}
-                cpMetadata={cpMetadata}
-                hasChampionPoint={hasChampionPoint}
-                isFilled={isFilled}
-                visuals={visuals}
-                onCPChange={onCPChange}
-                onCPRemove={onCPRemove}
-              />
-            );
-          })}
-        </Stack>
-      </CardContent>
-    </Card>
+          return (
+            <CPSlot
+              key={slotIndex}
+              slotIndex={slotIndex}
+              treeName={treeName}
+              tree={tree}
+              cpId={cpId}
+              cpMetadata={cpMetadata}
+              hasChampionPoint={hasChampionPoint}
+              _isFilled={isFilled}
+              visuals={visuals}
+              onCPChange={onCPChange}
+              onCPRemove={onCPRemove}
+            />
+          );
+        })}
+      </Box>
+    </Box>
   );
 };
 
@@ -290,7 +292,7 @@ interface CPSlotProps {
   cpId?: number;
   cpMetadata?: ChampionPointAbilityMetadata;
   hasChampionPoint: boolean;
-  isFilled: boolean;
+  _isFilled: boolean;
   visuals: TreeVisualStyle;
   onCPChange: (slotIndex: number, cpId: number) => void;
   onCPRemove: (slotIndex: number) => void;
@@ -303,7 +305,7 @@ const CPSlot: React.FC<CPSlotProps> = ({
   cpId,
   cpMetadata,
   hasChampionPoint,
-  isFilled,
+  _isFilled,
   visuals,
   onCPChange,
   onCPRemove,
@@ -359,73 +361,46 @@ const CPSlot: React.FC<CPSlotProps> = ({
   }, [inputValue, treeName]);
 
   return (
-    <Box sx={{ position: 'relative' }}>
-      <Paper
-        variant="outlined"
-        sx={{
-          px: 1.75,
-          py: 1.35,
-          minHeight: 78,
-          display: 'flex',
-          alignItems: 'center',
-          bgcolor: isFilled ? visuals.slotBackgroundFilled : visuals.slotBackgroundEmpty,
-          borderColor: isFilled ? visuals.slotBorderFilled : visuals.slotBorderEmpty,
-          transition: 'background-color 120ms ease, border-color 120ms ease',
-          cursor: 'pointer',
-          '&:hover': {
-            borderColor: visuals.slotBorderFilled,
-            bgcolor: isFilled
-              ? visuals.slotBackgroundFilled
-              : alpha(visuals.slotBackgroundEmpty, 1.5),
-          },
-        }}
-        onClick={() => setIsSelecting(true)}
-      >
-        {cpMetadata ? (
-          <Stack spacing={0.35} sx={{ width: '100%' }}>
-            <Typography
-              variant="body2"
-              sx={{ fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}
-            >
-              {cpMetadata.name}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {treeName} • ID {cpMetadata.id}
-              {!cpMetadata.verified && ' • Unverified mapping'}
-            </Typography>
-          </Stack>
-        ) : hasChampionPoint ? (
-          <Tooltip title="Champion point ID not yet mapped in metadata">
-            <Chip label={`Unknown CP ${cpId}`} size="small" color={visuals.chipColor} />
-          </Tooltip>
-        ) : (
-          <Chip label="Empty - Click to select" size="small" variant="outlined" />
-        )}
-      </Paper>
-
-      {/* Remove button */}
-      {currentCP && (
-        <IconButton
+    <Box>
+      {cpMetadata ? (
+        <Chip
+          label={cpMetadata.name}
           size="small"
-          sx={{
-            position: 'absolute',
-            top: -4,
-            right: -4,
-            bgcolor: 'error.main',
-            color: 'white',
-            width: 18,
-            height: 18,
-            '&:hover': {
-              bgcolor: 'error.dark',
-            },
-          }}
-          onClick={(e) => {
+          color={visuals.chipColor}
+          variant="outlined"
+          onClick={() => setIsSelecting(true)}
+          onDelete={(e: React.SyntheticEvent) => {
             e.stopPropagation();
             onCPRemove(slotIndex);
           }}
-        >
-          <CloseIcon sx={{ fontSize: 12 }} />
-        </IconButton>
+          deleteIcon={<CloseIcon sx={{ fontSize: 14 }} />}
+          sx={{ height: 24, fontSize: '0.75rem' }}
+        />
+      ) : hasChampionPoint ? (
+        <Tooltip title="Champion point ID not yet mapped in metadata">
+          <Chip
+            label={`Unknown CP ${cpId}`}
+            size="small"
+            color={visuals.chipColor}
+            onClick={() => setIsSelecting(true)}
+            sx={{ height: 24, fontSize: '0.75rem' }}
+          />
+        </Tooltip>
+      ) : (
+        <Chip
+          label="+"
+          size="small"
+          variant="outlined"
+          onClick={() => setIsSelecting(true)}
+          sx={{
+            height: 24,
+            fontSize: '0.75rem',
+            borderStyle: 'dashed',
+            borderColor: visuals.slotBorderEmpty,
+            color: 'text.disabled',
+            '&:hover': { borderColor: visuals.slotBorderFilled, color: 'text.secondary' },
+          }}
+        />
       )}
 
       {/* Selection Dialog */}

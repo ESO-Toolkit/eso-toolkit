@@ -139,6 +139,14 @@ See: [.github/copilot-skills/git/](.github/copilot-skills/git/)
 ```
 See: [.github/copilot-skills/rebase/](.github/copilot-skills/rebase/)
 
+**UESP Data** (Item Icons):
+```
+@workspace Fetch latest item icons from UESP
+@workspace Check icon coverage for our gear data
+@workspace Look up item 147237
+```
+See: [.copilot/uesp-data/](.copilot/uesp-data/)
+
 ---
 
 ## 🛠️ Tech Stack & Structure

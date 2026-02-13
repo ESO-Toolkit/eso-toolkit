@@ -581,6 +581,16 @@ const loadoutSlice = createSlice({
     },
 
     /**
+     * Update a character's role
+     */
+    updateCharacterRole: (state, action: PayloadAction<{ characterId: string; role: string }>) => {
+      const char = state.characters.find((c) => c.id === action.payload.characterId);
+      if (char) {
+        char.role = action.payload.role;
+      }
+    },
+
+    /**
      * Reset to initial state
      */
     resetLoadout: () => initialState,
@@ -613,6 +623,7 @@ export const {
   loadState,
   resetLoadout,
   setCurrentCharacter,
+  updateCharacterRole,
 } = loadoutSlice.actions;
 
 export default loadoutSlice.reducer;

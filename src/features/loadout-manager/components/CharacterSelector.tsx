@@ -1,36 +1,38 @@
 /**
- * Character Selector Component (compact pill layout)
- * Displays and selects characters imported from the addon
+ * Character Selector Component
+ * Compact dropdown selector for characters imported from the addon.
+ * Replaces the horizontal pill bar with a standard Select for consistency
+ * and to reduce vertical space in the toolbar.
  */
 
-import { ChevronLeft, ChevronRight } from '@mui/icons-material';
-import { Box, Chip, IconButton, Stack, Tooltip, Typography, useTheme } from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import React, { useMemo, useRef } from 'react';
+import {
+  FormControl,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  Select,
+  Stack,
+  Typography,
+} from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
+import React, { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
 
-import { setCurrentCharacter } from '../store/loadoutSlice';
+import { setCurrentCharacter, updateCharacterRole } from '../store/loadoutSlice';
 import type { ClassSkillLine } from '../types/loadout.types';
 
-const getRoleChipColor = (
-  role?: string,
-): 'default' | 'primary' | 'secondary' | 'success' | 'info' => {
-  switch (role) {
-    case 'Tank':
-      return 'primary';
-    case 'Healer':
-      return 'success';
-    case 'Support':
-      return 'info';
-    default:
-      return 'secondary';
-  }
+const ROLE_OPTIONS = ['DPS', 'Tank', 'Healer', 'Support'] as const;
+
+const formatRole = (role?: string): string => role ?? 'Unknown';
+
+const formatSkillLines = (skillLines?: ClassSkillLine[]): string => {
+  if (!skillLines || skillLines.length === 0) return '';
+  return skillLines.map((line) => line.split('_')[1]).join(', ');
 };
 
 export const CharacterSelector: React.FC = (): React.ReactElement => {
-  const theme = useTheme();
   const dispatch = useDispatch();
   const currentCharacter = useSelector((state: RootState) => state.loadout.currentCharacter);
   const characters = useSelector((state: RootState) => state.loadout.characters);
@@ -39,114 +41,95 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
     [characters],
   );
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-
   const hasCharacters = sortedCharacters.length > 0;
-  const selectedCharacter = sortedCharacters.find((char) => char.id === currentCharacter) ?? null;
 
-  const scrollBy = (direction: number): void => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollBy({ left: direction * 160, behavior: 'smooth' });
+  const handleChange = (event: SelectChangeEvent<string>): void => {
+    dispatch(setCurrentCharacter(event.target.value));
   };
 
-  const formatSkillLines = (skillLines?: ClassSkillLine[]): string => {
-    if (!skillLines || skillLines.length === 0) return 'No skill lines';
-    return skillLines.map((line) => line.split('_')[1]).join(', ');
+  const handleRoleChange = (characterId: string, newRole: string): void => {
+    dispatch(updateCharacterRole({ characterId, role: newRole }));
   };
 
-  const emptyPlaceholder = useMemo(
-    () => (
-      <Stack spacing={0.5} alignItems="flex-start">
-        <Typography variant="body2" color="text.secondary">
-          Import your Wizard&apos;s Wardrobe data to see characters here.
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          Use the import wizard to pull characters from the addon save data.
-        </Typography>
-      </Stack>
-    ),
-    [],
-  );
+  if (!hasCharacters) {
+    return (
+      <FormControl size="small" sx={{ minWidth: 200 }} disabled>
+        <InputLabel id="character-select-label">Character</InputLabel>
+        <Select labelId="character-select-label" value="" label="Character">
+          <MenuItem value="" disabled>
+            <Typography variant="body2" color="text.secondary">
+              Import Wizard&apos;s Wardrobe data first
+            </Typography>
+          </MenuItem>
+        </Select>
+      </FormControl>
+    );
+  }
 
   return (
-    <Box sx={{ position: 'relative', width: '100%' }}>
-      <Stack direction="row" spacing={1} alignItems="center">
-        <Tooltip title="Scroll left" placement="top" arrow>
-          <span>
-            <IconButton
-              size="small"
-              onClick={() => scrollBy(-1)}
-              disabled={!hasCharacters}
-              sx={{ visibility: hasCharacters ? 'visible' : 'hidden' }}
-            >
-              <ChevronLeft fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-
-        <Box
-          ref={scrollRef}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            overflowX: 'auto',
-            px: 0.5,
-            py: 0.5,
-            flex: 1,
-            scrollBehavior: 'smooth',
-            '&::-webkit-scrollbar': { display: 'none' },
-            scrollbarWidth: 'none',
-            borderRadius: 999,
-            backgroundColor: alpha(
-              theme.palette.action.hover,
-              theme.palette.mode === 'dark' ? 0.4 : 0.6,
-            ),
+    <>
+      <FormControl size="small" sx={{ minWidth: 200 }}>
+        <InputLabel id="character-select-label">Character</InputLabel>
+        <Select
+          labelId="character-select-label"
+          value={currentCharacter ?? ''}
+          label="Character"
+          onChange={handleChange}
+          renderValue={(value) => {
+            const char = sortedCharacters.find((c) => c.id === value);
+            if (!char) return 'Select character';
+            return `${char.name} · ${formatRole(char.role)}`;
           }}
         >
-          {hasCharacters
-            ? sortedCharacters.map((char) => {
-                const isSelected = char.id === currentCharacter;
-                return (
-                  <Chip
-                    key={char.id}
-                    label={char.name}
-                    color={isSelected ? 'primary' : getRoleChipColor(char.role)}
-                    variant={isSelected ? 'filled' : 'outlined'}
-                    onClick={() => dispatch(setCurrentCharacter(char.id))}
-                    sx={{
-                      flexShrink: 0,
-                      fontWeight: 600,
-                      letterSpacing: 0.25,
-                      px: 1,
-                      py: 0.25,
-                    }}
-                  />
-                );
-              })
-            : emptyPlaceholder}
-        </Box>
+          {sortedCharacters.map((char) => {
+            const skillInfo = formatSkillLines(char.skillLines);
+            return (
+              <MenuItem key={char.id} value={char.id}>
+                <ListItemText
+                  primary={char.name}
+                  secondary={
+                    <Stack
+                      component="span"
+                      direction="row"
+                      spacing={0.5}
+                      sx={{ display: 'inline-flex' }}
+                    >
+                      <Typography component="span" variant="caption" color="text.secondary">
+                        {formatRole(char.role)}
+                      </Typography>
+                      {skillInfo && (
+                        <Typography component="span" variant="caption" color="text.secondary">
+                          · {skillInfo}
+                        </Typography>
+                      )}
+                    </Stack>
+                  }
+                  primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                />
+              </MenuItem>
+            );
+          })}
+        </Select>
+      </FormControl>
 
-        <Tooltip title="Scroll right" placement="top" arrow>
-          <span>
-            <IconButton
-              size="small"
-              onClick={() => scrollBy(1)}
-              disabled={!hasCharacters}
-              sx={{ visibility: hasCharacters ? 'visible' : 'hidden' }}
-            >
-              <ChevronRight fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Stack>
-
-      {selectedCharacter && (
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: 'block' }}>
-          {selectedCharacter.role ?? 'Unknown role'} ·{' '}
-          {formatSkillLines(selectedCharacter.skillLines)}
-        </Typography>
+      {/* Role selector for the currently selected character */}
+      {currentCharacter && hasCharacters && (
+        <FormControl size="small" sx={{ minWidth: 100 }}>
+          <InputLabel id="role-select-label">Role</InputLabel>
+          <Select
+            labelId="role-select-label"
+            value={sortedCharacters.find((c) => c.id === currentCharacter)?.role ?? 'DPS'}
+            label="Role"
+            onChange={(e) => handleRoleChange(currentCharacter, e.target.value)}
+          >
+            {ROLE_OPTIONS.map((role) => (
+              <MenuItem key={role} value={role}>
+                {role}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       )}
-    </Box>
+    </>
   );
 };

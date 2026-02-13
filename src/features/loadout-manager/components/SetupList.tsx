@@ -1,6 +1,12 @@
 /**
  * Setup List Component
- * Displays a list of all setups for the current trial/page
+ * Compact, scannable list of setups with hover-to-reveal actions.
+ *
+ * UX improvements:
+ * - Clickable rows with clear left-border selected state
+ * - Actions in a context menu (⋮) instead of always-visible icon columns
+ * - Front+back bar skill strips shown in list for density
+ * - Smaller badges, tighter spacing
  */
 
 import BoltIcon from '@mui/icons-material/Bolt';
@@ -9,15 +15,17 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   Box,
-  Chip,
+  Divider,
   IconButton,
-  List,
-  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
   Paper,
   Stack,
   Tooltip,
@@ -92,15 +100,16 @@ export const SetupList: React.FC<SetupListProps> = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: 3,
+        borderRadius: 2,
         overflow: 'hidden',
         width: '100%',
       }}
     >
+      {/* Compact header */}
       <Box
         sx={(theme) => ({
           px: 1.5,
-          py: 1,
+          py: 0.75,
           borderBottom: 1,
           borderColor: 'divider',
           backgroundColor: alpha(
@@ -112,45 +121,45 @@ export const SetupList: React.FC<SetupListProps> = ({
           justifyContent: 'space-between',
         })}
       >
-        <Typography variant="overline" sx={{ letterSpacing: 0.8 }} color="text.secondary">
-          Loadout Library
+        <Typography
+          variant="caption"
+          sx={{ fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase' }}
+          color="text.secondary"
+        >
+          Setups
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          {filtered.length} shown · {setups.length} total
+          {filtered.length}/{setups.length}
         </Typography>
       </Box>
 
-      <List disablePadding>
+      {/* List */}
+      <Box sx={{ overflowY: 'auto', flex: 1 }}>
         {filtered.length === 0 ? (
-          <Box
-            sx={{
-              textAlign: 'center',
-              py: 4,
-              px: 2,
-              color: 'text.secondary',
-            }}
-          >
+          <Box sx={{ textAlign: 'center', py: 4, px: 2, color: 'text.secondary' }}>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               No matching setups
             </Typography>
             <Typography variant="caption">Adjust filters or create a new loadout.</Typography>
           </Box>
         ) : (
-          filtered.map(({ setup, index }) => (
-            <LoadoutRow
-              key={`${setup.name}-${index}`}
-              setup={setup}
-              index={index}
-              displayIndex={index + 1}
-              selected={selectedIndex === index}
-              onOpenDetails={onOpenDetails}
-              onDuplicate={onDuplicateSetup}
-              onDelete={onDeleteSetup}
-              onCopy={onCopySetup}
-            />
+          filtered.map(({ setup, index }, i) => (
+            <React.Fragment key={`${setup.name}-${index}`}>
+              <LoadoutRow
+                setup={setup}
+                index={index}
+                displayIndex={index + 1}
+                selected={selectedIndex === index}
+                onOpenDetails={onOpenDetails}
+                onDuplicate={onDuplicateSetup}
+                onDelete={onDeleteSetup}
+                onCopy={onCopySetup}
+              />
+              {i < filtered.length - 1 && <Divider />}
+            </React.Fragment>
           ))
         )}
-      </List>
+      </Box>
     </Paper>
   );
 };
@@ -176,80 +185,95 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
   onDelete,
   onCopy,
 }) => {
-  const tags = getSetupTags(setup);
   const conditionSummary = getSetupConditionSummary(setup);
   const progressSections = getSetupProgressSections(setup);
   const displayId = displayIndex.toString().padStart(2, '0');
 
+  // Context-menu state
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const menuOpen = Boolean(menuAnchor);
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>): void => {
+    event.stopPropagation();
+    setMenuAnchor(event.currentTarget);
+  };
+
+  const handleMenuClose = (): void => {
+    setMenuAnchor(null);
+  };
+
   return (
-    <ListItem disableGutters sx={{ px: 1.5, py: 1 }}>
-      <Paper
-        variant="outlined"
+    <>
+      <Box
+        onClick={() => onOpenDetails(index)}
         sx={(theme) => ({
-          width: '100%',
-          px: 1.25,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.25,
+          px: 1.5,
           py: 1,
-          borderRadius: 2,
-          display: 'grid',
-          gridTemplateColumns: 'auto 1fr',
-          gap: 1,
-          borderColor: selected ? alpha(theme.palette.primary.main, 0.6) : theme.palette.divider,
+          cursor: 'pointer',
+          transition: 'background-color 0.15s',
+          opacity: setup.disabled ? 0.55 : 1,
           backgroundColor: selected
-            ? alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.24 : 0.12)
-            : alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.9 : 0.98),
-          opacity: setup.disabled ? 0.6 : 1,
-          position: 'relative',
+            ? alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.18 : 0.1)
+            : 'transparent',
+          borderLeft: selected
+            ? `3px solid ${theme.palette.primary.main}`
+            : '3px solid transparent',
+          '&:hover': {
+            backgroundColor: selected
+              ? alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.24 : 0.14)
+              : alpha(theme.palette.action.hover, 0.06),
+          },
         })}
       >
-        <Stack spacing={0.65} sx={{ minWidth: 0 }}>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-            <BadgeBox selected={selected}>{displayId}</BadgeBox>
-            <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+        {/* Badge */}
+        <BadgeBox selected={selected}>{displayId}</BadgeBox>
+
+        {/* Content */}
+        <Stack spacing={0.4} sx={{ flex: 1, minWidth: 0 }}>
+          {/* Row 1: name + condition */}
+          <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {setup.name}
+            </Typography>
+            {conditionSummary && (
               <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: 600,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
+                variant="caption"
+                color="text.secondary"
+                sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}
               >
-                {setup.name}
+                · {conditionSummary}
               </Typography>
-              {conditionSummary && (
-                <Typography variant="caption" color="text.secondary">
-                  {conditionSummary}
-                </Typography>
-              )}
-              {tags.length > 0 && (
-                <Stack
-                  direction="row"
-                  spacing={0.5}
-                  useFlexGap
-                  sx={{ flexWrap: 'wrap', rowGap: 0.5 }}
-                >
-                  {tags.map((tag, idx) => (
-                    <Chip
-                      key={`${tag.label}-${idx}`}
-                      label={tag.label}
-                      size="small"
-                      color={tag.color}
-                      variant={tag.variant ?? 'filled'}
-                    />
-                  ))}
-                </Stack>
-              )}
-            </Stack>
+            )}
           </Stack>
 
-          <Stack spacing={0.75} sx={{ minWidth: 0 }}>
-            <SkillStrip bar={setup.skills?.[0]} label="Front" />
-            <SkillStrip bar={setup.skills?.[1]} label="Back" />
+          {/* Row 2: compact skill bars (front + back) */}
+          <Stack spacing={0.25}>
+            <SkillStrip bar={setup.skills?.[0]} label="F" />
+            <SkillStrip bar={setup.skills?.[1]} label="B" />
           </Stack>
 
-          <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', rowGap: 0.5 }}>
+          {/* Row 3: progress indicators */}
+          <Stack
+            direction="row"
+            spacing={0.5}
+            alignItems="center"
+            sx={{ flexWrap: 'wrap', rowGap: 0.3 }}
+          >
             {progressSections.length === 0 ? (
-              <Chip label="Empty" size="small" variant="outlined" />
+              <Typography variant="caption" color="text.disabled">
+                Empty
+              </Typography>
             ) : (
               progressSections.map((section, idx) => (
                 <ProgressBadge key={`${section.type}-${idx}`} section={section} />
@@ -258,38 +282,62 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
           </Stack>
         </Stack>
 
-        <Stack
-          spacing={0.5}
-          alignItems="center"
-          sx={{
-            justifySelf: 'end',
-            alignSelf: 'stretch',
-            justifyContent: 'center',
+        {/* Actions: single "more" button */}
+        <IconButton
+          size="small"
+          onClick={handleMenuOpen}
+          sx={{ flexShrink: 0, opacity: 0.6, '&:hover': { opacity: 1 } }}
+        >
+          <MoreVertIcon fontSize="small" />
+        </IconButton>
+      </Box>
+
+      {/* Context menu */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={menuOpen}
+        onClose={handleMenuClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{ paper: { sx: { minWidth: 160 } } }}
+      >
+        <MenuItem
+          onClick={() => {
+            onCopy(index);
+            handleMenuClose();
           }}
         >
-          <Tooltip title="Open details" arrow>
-            <IconButton size="small" onClick={() => onOpenDetails(index)}>
-              <VisibilityIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Copy to clipboard" arrow>
-            <IconButton size="small" onClick={() => onCopy(index)}>
-              <ContentCopyIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Duplicate" arrow>
-            <IconButton size="small" onClick={() => onDuplicate(index)}>
-              <FileCopyIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete" arrow>
-            <IconButton size="small" color="error" onClick={() => onDelete(index)}>
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      </Paper>
-    </ListItem>
+          <ListItemIcon>
+            <ContentCopyIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Copy</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            onDuplicate(index);
+            handleMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            <FileCopyIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Duplicate</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem
+          onClick={() => {
+            onDelete(index);
+            handleMenuClose();
+          }}
+          sx={{ color: 'error.main' }}
+        >
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" color="error" />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
+    </>
   );
 };
 
@@ -299,20 +347,20 @@ const BadgeBox: React.FC<{ selected: boolean; children: React.ReactNode }> = ({
 }) => (
   <Box
     sx={(theme) => ({
-      width: 36,
-      height: 36,
-      borderRadius: 1.5,
+      width: 30,
+      height: 30,
+      borderRadius: 1,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       fontWeight: 700,
-      fontSize: '0.85rem',
-      letterSpacing: 0.6,
+      fontSize: '0.75rem',
+      letterSpacing: 0.4,
       flexShrink: 0,
       color: selected ? theme.palette.primary.contrastText : theme.palette.primary.main,
       backgroundColor: selected
         ? theme.palette.primary.main
-        : alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.35 : 0.15),
+        : alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.12),
     })}
   >
     {children}
@@ -320,26 +368,27 @@ const BadgeBox: React.FC<{ selected: boolean; children: React.ReactNode }> = ({
 );
 
 const SkillStrip: React.FC<{ bar?: SkillBar; label: string }> = ({ bar, label }) => (
-  <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
+  <Stack direction="row" spacing={0.5} alignItems="center" sx={{ minWidth: 0 }}>
     <Typography
       variant="caption"
       color="text.secondary"
       sx={{
-        width: 44,
+        width: 14,
         flexShrink: 0,
-        fontWeight: 600,
-        letterSpacing: 0.5,
+        fontWeight: 700,
+        fontSize: '0.6rem',
+        letterSpacing: 0.4,
         textTransform: 'uppercase',
       }}
     >
       {label}
     </Typography>
-    <Stack direction="row" spacing={0.6} useFlexGap alignItems="center">
+    <Stack direction="row" spacing={0.4} useFlexGap alignItems="center">
       {SKILL_SLOTS.map((slot) => (
-        <AbilityIcon key={slot} abilityId={bar?.[slot]} size={32} />
+        <AbilityIcon key={slot} abilityId={bar?.[slot]} size={24} />
       ))}
       <DividerStub />
-      <AbilityIcon abilityId={bar?.[ULTIMATE_SLOT]} size={32} highlight />
+      <AbilityIcon abilityId={bar?.[ULTIMATE_SLOT]} size={24} highlight />
     </Stack>
   </Stack>
 );
@@ -347,11 +396,11 @@ const SkillStrip: React.FC<{ bar?: SkillBar; label: string }> = ({ bar, label })
 const DividerStub: React.FC = () => (
   <Box
     sx={{
-      width: 2,
-      height: 30,
+      width: 1.5,
+      height: 20,
       borderRadius: 1,
       backgroundColor: 'divider',
-      opacity: 0.5,
+      opacity: 0.4,
     }}
   />
 );
@@ -376,7 +425,7 @@ const AbilityIcon: React.FC<{ abilityId?: number; size: number; highlight?: bool
         sx={(theme) => ({
           width: size,
           height: size,
-          borderRadius: 1.5,
+          borderRadius: 1,
           border: `1px solid ${highlight ? theme.palette.warning.main : theme.palette.divider}`,
           overflow: 'hidden',
           display: 'flex',
@@ -384,7 +433,7 @@ const AbilityIcon: React.FC<{ abilityId?: number; size: number; highlight?: bool
           justifyContent: 'center',
           backgroundColor: abilityId
             ? alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.75 : 1)
-            : alpha(theme.palette.action.disabledBackground, 0.3),
+            : alpha(theme.palette.action.disabledBackground, 0.25),
         })}
       >
         {iconUrl && !loadFailed ? (
@@ -396,7 +445,7 @@ const AbilityIcon: React.FC<{ abilityId?: number; size: number; highlight?: bool
             onError={() => setLoadFailed(true)}
           />
         ) : (
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.55rem' }}>
             --
           </Typography>
         )}
@@ -422,16 +471,16 @@ const ProgressBadge: React.FC<{ section: SetupProgressSection }> = ({ section })
           return {
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 0.35,
-            px: 0.75,
-            py: 0.35,
+            gap: 0.25,
+            px: 0.5,
+            py: 0.15,
             borderRadius: 999,
-            fontSize: '0.68rem',
+            fontSize: '0.6rem',
             fontWeight: 600,
-            letterSpacing: 0.35,
+            letterSpacing: 0.3,
             textTransform: 'uppercase',
             color,
-            backgroundColor: alpha(color, theme.palette.mode === 'dark' ? 0.28 : 0.12),
+            backgroundColor: alpha(color, theme.palette.mode === 'dark' ? 0.22 : 0.1),
           };
         }}
       >
@@ -443,16 +492,17 @@ const ProgressBadge: React.FC<{ section: SetupProgressSection }> = ({ section })
 };
 
 const getProgressIcon = (type: SetupProgressSection['type']): React.ReactElement => {
+  const sx = { fontSize: '0.7rem' };
   switch (type) {
     case 'skills':
-      return <BoltIcon fontSize="inherit" />;
+      return <BoltIcon sx={sx} />;
     case 'cp':
-      return <PsychologyIcon fontSize="inherit" />;
+      return <PsychologyIcon sx={sx} />;
     case 'food':
-      return <RestaurantIcon fontSize="inherit" />;
+      return <RestaurantIcon sx={sx} />;
     case 'gear':
-      return <CheckroomIcon fontSize="inherit" />;
+      return <CheckroomIcon sx={sx} />;
     default:
-      return <HelpOutlineIcon fontSize="inherit" />;
+      return <HelpOutlineIcon sx={sx} />;
   }
 };

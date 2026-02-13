@@ -49,6 +49,15 @@
             "env": {
                 "DEBUG": "false"
             }
+        },
+        "eso-log-aggregator-uesp-data": {
+            "command": "node",
+            "args": [
+                "${workspaceFolder}\\.copilot\\uesp-data\\server.js"
+            ],
+            "env": {
+                "DEBUG": "false"
+            }
         }
     }
 }
