@@ -35,4 +35,9 @@ runs:
           echo "🔄 Cache miss - will download packages"
         fi
         echo "Running npm ci..."
-        npm ci --include=optional --no-audit --no-fund
+        npm ci --no-audit --no-fund
+        
+        # Workaround for npm bug with optional dependencies in CI
+        # https://github.com/npm/cli/issues/4828
+        echo "Ensuring rollup platform binaries are installed..."
+        npm install --no-save @rollup/rollup-linux-x64-gnu || echo "Warning: Could not install rollup binary"
