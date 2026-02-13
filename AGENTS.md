@@ -62,14 +62,14 @@ git checkout -b ESO-XXX/description-here
 **Start Here**: [AI_AGENT_GUIDELINES.md](documentation/ai-agents/AI_AGENT_GUIDELINES.md)
 
 ### Agent Skills (MCP Servers)
-- **Git Workflow Enforcement**: [.copilot/workflow/](.copilot/workflow/) or [.claude/workflow/](.claude/workflow/) - **Use this FIRST**
+- **Git Workflow Enforcement**: [.copilot/workflow/](.copilot/workflow/) - **Use this FIRST**
 - **Playwright Testing**: [.copilot/playwright/](.copilot/playwright/) - **Machine-readable E2E test results**
-- **Testing & Dev**: [.copilot/testing/](.copilot/testing/) or [.claude/testing/](.claude/testing/)
-- **Jira Integration**: [.copilot/jira/](.copilot/jira/) or [.claude/jira/](.claude/jira/)
-- **Sentry Integration**: [.copilot/sentry/](.copilot/sentry/) or [.claude/sentry/](.claude/sentry/)
-- **Report Debugging**: [.copilot/reports/](.copilot/reports/) or [.claude/reports/](.claude/reports/)
-- **Git Operations**: [.copilot/git/](.copilot/git/) or [.claude/git/](.claude/git/)
-- **Post-Squash Rebase**: [.copilot/rebase/](.copilot/rebase/) or [.claude/rebase/](.claude/rebase/)
+- **Testing & Dev**: [.copilot/testing/](.copilot/testing/)
+- **Jira Integration**: [.copilot/jira/](.copilot/jira/)
+- **Sentry Integration**: [.copilot/sentry/](.copilot/sentry/)
+- **Report Debugging**: [.copilot/reports/](.copilot/reports/)
+- **Git Operations**: [.copilot/git/](.copilot/git/)
+- **Post-Squash Rebase**: [.copilot/rebase/](.copilot/rebase/)
 
 ### Feature & Architecture Docs
 - **Features**: [documentation/features/](documentation/features/)
@@ -89,7 +89,7 @@ git checkout -b ESO-XXX/description-here
 
 **Testing**:
 - Structured: VS Code MCP Playwright tool (`.copilot/playwright/`) - **Machine-readable results**
-- Exploratory: Agent Skills (`.copilot/testing/` or `.claude/testing/`)
+- Exploratory: Agent Skills (`.copilot/testing/`)
 - Avoid: Ad-hoc CLI commands
 
 **Playwright Testing** (E2E Tests):
@@ -108,7 +108,7 @@ See: [.copilot/playwright/](.copilot/playwright/)
 @workspace Move ESO-569 to "In Progress"
 @workspace Create a new task for fixing the scribing bug
 ```
-See: [.copilot/jira/](.copilot/jira/) or [.claude/jira/](.claude/jira/)
+See: [.copilot/jira/](.copilot/jira/)
 
 **Sentry** (Error Tracking):
 ```
@@ -116,14 +116,14 @@ See: [.copilot/jira/](.copilot/jira/) or [.claude/jira/](.claude/jira/)
 @workspace View Sentry issue 1234567890
 @workspace Resolve Sentry issue 1234567890 in release 1.2.3
 ```
-See: [.copilot/sentry/](.copilot/sentry/) or [.claude/sentry/](.claude/sentry/)
+See: [.copilot/sentry/](.copilot/sentry/)
 
 **Report Debugging** (Production Issues):
 ```
 @workspace Download report 3gjVGWB2dxCL8XAw
 @workspace Analyze structure of report 3gjVGWB2dxCL8XAw
 ```
-See: [.copilot/reports/](.copilot/reports/) or [.claude/reports/](.claude/reports/)
+See: [.copilot/reports/](.copilot/reports/)
 
 **Git Workflow** (Branch Management):
 ```
@@ -131,13 +131,13 @@ See: [.copilot/reports/](.copilot/reports/) or [.claude/reports/](.claude/report
 @workspace Cascade branch changes with force push
 ```
 Requires: twig (`npm install -g @gittwig/twig`)  
-See: [.copilot/git/](.copilot/git/) or [.claude/git/](.claude/git/)
+See: [.copilot/git/](.copilot/git/)
 
 **Post-Squash Rebase**:
 ```
 @workspace Rebase branch tree after ESO-449 was squashed
 ```
-See: [.copilot/rebase/](.copilot/rebase/) or [.claude/rebase/](.claude/rebase/)
+See: [.copilot/rebase/](.copilot/rebase/)
 
 ---
 
