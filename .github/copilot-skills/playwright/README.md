@@ -39,7 +39,7 @@ Add this configuration to `.vscode/settings.json`:
     "eso-playwright": {
       "command": "node",
       "args": [
-        "${workspaceFolder}\\.copilot\\playwright\\server.js"
+        "${workspaceFolder}\\.github\copilot-skills\\playwright\\server.js"
       ]
     }
   }
@@ -281,7 +281,7 @@ All test execution tools return a consistent JSON format:
 
 ## Caching
 
-Test results are cached in `.copilot/playwright/last-results.json`. This allows:
+Test results are cached in `.github/copilot-skills/playwright/last-results.json`. This allows:
 - Quick access to results without re-running tests
 - Historical reference for debugging
 - Faster agent responses when just checking status
@@ -302,7 +302,7 @@ Test results are cached in `.copilot/playwright/last-results.json`. This allows:
 
 ### Results Not Parsing
 
-1. Check `.copilot/playwright/last-results.json` for cached data
+1. Check `.github/copilot-skills/playwright/last-results.json` for cached data
 2. Run with `--headed` to see what's happening visually
 3. Check the `output` field in results for raw test output
 
@@ -325,7 +325,7 @@ This skill works well with:
 
 - **Reporter**: Uses Playwright's `list` reporter (plain text output)
 - **Buffer Size**: 10MB max output buffer
-- **Result Caching**: JSON file in `.copilot/playwright/`
+- **Result Caching**: JSON file in `.github/copilot-skills/playwright/`
 - **Output Truncation**: First 5000 chars preserved for debugging
 - **Error Handling**: Captures both stdout and stderr
 

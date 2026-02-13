@@ -11,11 +11,11 @@ This directory contains Playwright end-to-end tests for the ESO Log Aggregator a
   - View test results and reports
   - Manage test files
 
-- **Ad-hoc Exploratory Testing** → Use **Claude Skill** ([../.claude/](../.claude/))
+- **Ad-hoc Exploratory Testing** → Use **GitHub Copilot Testing Skill** ([../.github/copilot-skills/testing/](../.github/copilot-skills/testing/))
   - Quick feature verification without writing test files
   - Interactive testing with AI guidance
   - Visual inspection and screenshots
-  - See [../.claude/README.md](../.claude/README.md) for setup
+  - See [../.github/copilot-skills/testing/README.md](../.github/copilot-skills/testing/README.md) for setup
 
 - **Writing New Tests** → Follow this guide
   - Create test files following existing patterns

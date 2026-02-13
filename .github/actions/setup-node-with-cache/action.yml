@@ -1,14 +1,10 @@
 name: 'Setup Node.js with NPM Cache'
-description: 'Setup Node.js with npm caching for both package.json and package-lock.json'
+description: 'Setup Node.js with npm caching using setup-node built-in cache'
 inputs:
   node-version:
     description: 'Node.js version to use'
     required: false
     default: '20'
-outputs:
-  cache-hit:
-    description: 'Whether dependencies were restored from cache'
-    value: ${{ steps.npm-cache.outputs.cache-hit }}
 runs:
   using: 'composite'
   steps:
@@ -16,23 +12,8 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-
-    - name: Cache npm
-      id: npm-cache
-      uses: actions/cache@v4
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-npm-
+        cache: 'npm'
 
     - name: Install dependencies
       shell: bash
-      run: |
-        if [ "${{ steps.npm-cache.outputs.cache-hit }}" = "true" ]; then
-          echo "⚡ Using cached npm packages"
-        else
-          echo "🔄 Cache miss - will download packages"
-        fi
-        echo "Running npm ci..."
-        npm ci --prefer-offline --no-audit --no-fund
+      run: npm ci --no-audit --no-fund

@@ -91,7 +91,7 @@ Add to your VS Code settings (`.vscode/settings.json`):
   "github.copilot.chat.experimental.agentSkills": {
     "sentry": {
       "command": "node",
-      "args": ["${workspaceFolder}/.copilot/sentry/server.js"],
+      "args": ["${workspaceFolder}/.github/copilot-skills/sentry/server.js"],
       "env": {
         "SENTRY_ORG": "your-org",
         "SENTRY_PROJECT": "eso-log-aggregator",

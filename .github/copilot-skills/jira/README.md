@@ -276,7 +276,7 @@ Logs appear in VS Code's Output panel under the MCP server.
 
 - **[AI_JIRA_INTEGRATION_GUIDE.md](../documentation/ai-agents/jira/AI_JIRA_INTEGRATION_GUIDE.md)** - Using this skill
 - **[AI_JIRA_QUICK_REFERENCE.md](../documentation/ai-agents/jira/AI_JIRA_QUICK_REFERENCE.md)** - Quick reference
-- **[.copilot/README.md](../.copilot/README.md)** - Main Copilot skill (testing, git, etc.)
+- **[.github/copilot-skills/README.md](../.github/copilot-skills/README.md)** - Main Copilot skill (testing, git, etc.)
 
 ## Version History
 
