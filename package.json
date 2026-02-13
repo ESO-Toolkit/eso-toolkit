@@ -1,6 +1,6 @@
 {
   "workspaces": [
-    ".copilot/*"
+    ".github/copilot-skills/*"
   ],
   "browserslist": {
     "development": [

@@ -62,14 +62,14 @@ git checkout -b ESO-XXX/description-here
 **Start Here**: [AI_AGENT_GUIDELINES.md](documentation/ai-agents/AI_AGENT_GUIDELINES.md)
 
 ### Agent Skills (MCP Servers)
-- **Git Workflow Enforcement**: [.copilot/workflow/](.copilot/workflow/) - **Use this FIRST**
-- **Playwright Testing**: [.copilot/playwright/](.copilot/playwright/) - **Machine-readable E2E test results**
-- **Testing & Dev**: [.copilot/testing/](.copilot/testing/)
-- **Jira Integration**: [.copilot/jira/](.copilot/jira/)
-- **Sentry Integration**: [.copilot/sentry/](.copilot/sentry/)
-- **Report Debugging**: [.copilot/reports/](.copilot/reports/)
-- **Git Operations**: [.copilot/git/](.copilot/git/)
-- **Post-Squash Rebase**: [.copilot/rebase/](.copilot/rebase/)
+- **Git Workflow Enforcement**: [.github/copilot-skills/workflow/](.github/copilot-skills/workflow/) - **Use this FIRST**
+- **Playwright Testing**: [.github/copilot-skills/playwright/](.github/copilot-skills/playwright/) - **Machine-readable E2E test results**
+- **Testing & Dev**: [.github/copilot-skills/testing/](.github/copilot-skills/testing/)
+- **Jira Integration**: [.github/copilot-skills/jira/](.github/copilot-skills/jira/)
+- **Sentry Integration**: [.github/copilot-skills/sentry/](.github/copilot-skills/sentry/)
+- **Report Debugging**: [.github/copilot-skills/reports/](.github/copilot-skills/reports/)
+- **Git Operations**: [.github/copilot-skills/git/](.github/copilot-skills/git/)
+- **Post-Squash Rebase**: [.github/copilot-skills/rebase/](.github/copilot-skills/rebase/)
 
 ### Feature & Architecture Docs
 - **Features**: [documentation/features/](documentation/features/)
@@ -88,8 +88,8 @@ git checkout -b ESO-XXX/description-here
 ### Tool Usage Patterns
 
 **Testing**:
-- Structured: VS Code MCP Playwright tool (`.copilot/playwright/`) - **Machine-readable results**
-- Exploratory: Agent Skills (`.copilot/testing/`)
+- Structured: VS Code MCP Playwright tool (`.github/copilot-skills/playwright/`) - **Machine-readable results**
+- Exploratory: Agent Skills (`.github/copilot-skills/testing/`)
 - Avoid: Ad-hoc CLI commands
 
 **Playwright Testing** (E2E Tests):
@@ -100,7 +100,7 @@ git checkout -b ESO-XXX/description-here
 @workspace Run the RosterBuilderPage test
 @workspace Show me the last test results
 ```
-See: [.copilot/playwright/](.copilot/playwright/)
+See: [.github/copilot-skills/playwright/](.github/copilot-skills/playwright/)
 
 **Jira** (Work Item Management):
 ```
@@ -108,7 +108,7 @@ See: [.copilot/playwright/](.copilot/playwright/)
 @workspace Move ESO-569 to "In Progress"
 @workspace Create a new task for fixing the scribing bug
 ```
-See: [.copilot/jira/](.copilot/jira/)
+See: [.github/copilot-skills/jira/](.github/copilot-skills/jira/)
 
 **Sentry** (Error Tracking):
 ```
@@ -116,14 +116,14 @@ See: [.copilot/jira/](.copilot/jira/)
 @workspace View Sentry issue 1234567890
 @workspace Resolve Sentry issue 1234567890 in release 1.2.3
 ```
-See: [.copilot/sentry/](.copilot/sentry/)
+See: [.github/copilot-skills/sentry/](.github/copilot-skills/sentry/)
 
 **Report Debugging** (Production Issues):
 ```
 @workspace Download report 3gjVGWB2dxCL8XAw
 @workspace Analyze structure of report 3gjVGWB2dxCL8XAw
 ```
-See: [.copilot/reports/](.copilot/reports/)
+See: [.github/copilot-skills/reports/](.github/copilot-skills/reports/)
 
 **Git Workflow** (Branch Management):
 ```
@@ -131,13 +131,13 @@ See: [.copilot/reports/](.copilot/reports/)
 @workspace Cascade branch changes with force push
 ```
 Requires: twig (`npm install -g @gittwig/twig`)  
-See: [.copilot/git/](.copilot/git/)
+See: [.github/copilot-skills/git/](.github/copilot-skills/git/)
 
 **Post-Squash Rebase**:
 ```
 @workspace Rebase branch tree after ESO-449 was squashed
 ```
-See: [.copilot/rebase/](.copilot/rebase/)
+See: [.github/copilot-skills/rebase/](.github/copilot-skills/rebase/)
 
 ---
 

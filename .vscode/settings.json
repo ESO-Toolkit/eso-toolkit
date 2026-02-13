@@ -6,7 +6,7 @@
         "eso-log-aggregator-testing": {
             "command": "node",
             "args": [
-                "${workspaceFolder}\\.copilot\\testing\\server.js"
+                "${workspaceFolder}\\.github\\copilot-skills\\testing\\server.js"
             ],
             "env": {
                 "AUTH_STATE_PATH": "${workspaceFolder}\\tests\\auth-state.json",
@@ -17,7 +17,7 @@
         "eso-log-aggregator-jira": {
             "command": "node",
             "args": [
-                "${workspaceFolder}\\.copilot\\jira\\server.js"
+                "${workspaceFolder}\\.github\\copilot-skills\\jira\\server.js"
             ],
             "env": {
                 "DEBUG": "false"
@@ -26,7 +26,7 @@
         "eso-log-aggregator-reports": {
             "command": "node",
             "args": [
-                "${workspaceFolder}\\.copilot\\reports\\server.js"
+                "${workspaceFolder}\\.github\\copilot-skills\\reports\\server.js"
             ],
             "env": {
                 "DEBUG": "false"
@@ -35,7 +35,7 @@
         "eso-log-aggregator-git": {
             "command": "node",
             "args": [
-                "${workspaceFolder}\\.copilot\\git\\server.js"
+                "${workspaceFolder}\\.github\\copilot-skills\\git\\server.js"
             ],
             "env": {
                 "DEBUG": "false"
@@ -44,7 +44,7 @@
         "eso-log-aggregator-rebase": {
             "command": "node",
             "args": [
-                "${workspaceFolder}\\.copilot\\rebase\\index.js"
+                "${workspaceFolder}\\.github\\copilot-skills\\rebase\\index.js"
             ],
             "env": {
                 "DEBUG": "false"
