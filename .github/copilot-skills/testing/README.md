@@ -39,7 +39,7 @@ The Agent Skill is already configured in [`.vscode/settings.json`](../.vscode/se
     "eso-log-aggregator-testing": {
       "command": "node",
       "args": [
-        "${workspaceFolder}\\.copilot\\server.js"
+        "${workspaceFolder}\\.github\copilot-skills\\server.js"
       ],
       "env": {
         "AUTH_STATE_PATH": "${workspaceFolder}\\tests\\auth-state.json",
@@ -436,7 +436,7 @@ Check if an element exists and is visible on a page.
 ### File Structure
 
 ```
-.copilot/
+.github/copilot-skills/
 ├── server.js              # Main MCP server implementation
 ├── auth-utils.js          # Authentication utilities
 ├── package.json           # Dependencies and metadata
@@ -492,7 +492,7 @@ The original `.claude/` directory contains the Claude Desktop implementation.
 
 When making changes to the Agent Skill:
 
-1. **Update Both Implementations**: Changes may need to apply to both `.copilot/` and `.claude/`
+1. **Update Both Implementations**: Changes may need to apply to both `.github/copilot-skills/` and `.claude/`
 2. **Test Thoroughly**: Verify tools work in VS Code before committing
 3. **Document Changes**: Update this README and relevant documentation
 4. **Version Bump**: Increment version in `package.json` for significant changes

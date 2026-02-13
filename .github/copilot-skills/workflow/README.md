@@ -42,7 +42,7 @@ This Agent Skill provides a Model Context Protocol (MCP) server that **enforces*
 ### 2. Install Skill Dependencies
 
 ```powershell
-cd .copilot\workflow
+cd .github\copilot-skills\workflow
 npm install
 ```
 
@@ -57,7 +57,7 @@ Add this skill to your `.vscode/settings.json`:
     "eso-log-aggregator-workflow": {
       "command": "node",
       "args": [
-        "${workspaceFolder}\\.copilot\\workflow\\server.js"
+        "${workspaceFolder}\\.github\copilot-skills\\workflow\\server.js"
       ],
       "env": {
         "DEBUG": "false"
@@ -278,7 +278,7 @@ The skill should detect master and create a feature branch before allowing work 
 
 **Skill not loading:**
 1. Check VS Code settings for correct path
-2. Ensure `npm install` was run in `.copilot\workflow`
+2. Ensure `npm install` was run in `.github\copilot-skills\workflow`
 3. Reload VS Code window
 4. Check Output panel → "GitHub Copilot Chat" for errors
 
