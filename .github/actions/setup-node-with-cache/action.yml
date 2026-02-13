@@ -1,14 +1,10 @@
 name: 'Setup Node.js with NPM Cache'
-description: 'Setup Node.js with npm caching for both package.json and package-lock.json'
+description: 'Setup Node.js with npm caching using setup-node built-in cache'
 inputs:
   node-version:
     description: 'Node.js version to use'
     required: false
     default: '20'
-outputs:
-  cache-hit:
-    description: 'Whether dependencies were restored from cache'
-    value: ${{ steps.cache-node-modules.outputs.cache-hit }}
 runs:
   using: 'composite'
   steps:
@@ -16,30 +12,8 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-
-    - name: Cache node_modules
-      id: cache-node-modules
-      uses: actions/cache@v4
-      with:
-        path: node_modules
-        key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-modules-
+        cache: 'npm'
 
     - name: Install dependencies
-      if: steps.cache-node-modules.outputs.cache-hit != 'true'
       shell: bash
-      run: |
-        echo "📦 Installing dependencies..."
-        npm ci --no-audit --no-fund
-        
-    - name: Verify rollup installation
-      shell: bash
-      run: |
-        echo "🔍 Verifying rollup binary installation..."
-        if [ ! -d "node_modules/@rollup/rollup-linux-x64-gnu" ]; then
-          echo "⚠️  Rollup Linux binary not found, installing explicitly..."
-          npm install --no-save @rollup/rollup-linux-x64-gnu
-        else
-          echo "✅ Rollup Linux binary found"
-        fi
+      run: npm ci --no-audit --no-fund
