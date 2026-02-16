@@ -478,7 +478,7 @@ jobs:
       - name: Generate GitHub App Token
         if: always()
         id: generate-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ secrets.MERGE_QUEUE_APP_ID }}
           private-key: ${{ secrets.MERGE_QUEUE_APP_PRIVATE_KEY }}
