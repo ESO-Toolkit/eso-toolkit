@@ -244,7 +244,7 @@ Ensure twig is installed globally: `npm install -g @gittwig/twig`
 
 ## 🔗 Related Documentation
 
-- [Git Workflow Skill](.copilot-git/README.md) - Branch management and PR status
+- [Git Workflow Skill](../.github/copilot-skills/git/README.md) - Branch management and PR status
 - [AI Agent Guidelines](documentation/ai-agents/AI_AGENT_GUIDELINES.md) - General AI workflow
 - [Twig Documentation](https://www.npmjs.com/package/@gittwig/twig) - Branch stacking tool
 

@@ -39,7 +39,7 @@ Add this skill to your `.vscode/settings.json`:
     "eso-log-aggregator-reports": {
       "command": "node",
       "args": [
-        "${workspaceFolder}\\.copilot-reports\\server.js"
+        "${workspaceFolder}\\.github\\copilot-skills\\reports\\server.js"
       ],
       "env": {
         "DEBUG": "false"

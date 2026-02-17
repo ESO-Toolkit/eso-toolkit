@@ -59,7 +59,7 @@ git checkout -b ESO-XXX/description-here
 
 ## 📚 Documentation Index
 
-**Start Here**: [AI_AGENT_GUIDELINES.md](documentation/ai-agents/AI_AGENT_GUIDELINES.md)
+**Full Index**: [documentation/INDEX.md](documentation/INDEX.md)
 
 ### Agent Skills (MCP Servers)
 - **Git Workflow Enforcement**: [.github/copilot-skills/workflow/](.github/copilot-skills/workflow/) - **Use this FIRST**

@@ -4,7 +4,7 @@
 
 This guide enables AI agents to debug production issues in ESO Logs reports by analyzing downloaded report data. The data download process captures comprehensive event data, metadata, and combat logs from live reports for local analysis.
 
-**IMPORTANT**: Use the Report Debugging Agent Skill (`.copilot-reports/` or `.claude-reports/`) for automated workflows. Manual scripts are provided as alternatives.
+**IMPORTANT**: Use the Report Debugging Agent Skill (`.github/copilot-skills/reports/`) for automated workflows. Manual scripts are provided as alternatives.
 
 ## Quick Start
 

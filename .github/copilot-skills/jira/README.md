@@ -43,7 +43,7 @@ Add this skill to your `.vscode/settings.json`:
     "eso-log-aggregator-jira": {
       "command": "node",
       "args": [
-        "${workspaceFolder}\\.copilot-jira\\server.js"
+        "${workspaceFolder}\\.github\\copilot-skills\\jira\\server.js"
       ],
       "env": {
         "DEBUG": "false"

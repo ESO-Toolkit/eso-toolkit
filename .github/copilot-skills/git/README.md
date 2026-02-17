@@ -46,7 +46,7 @@ gh auth login
 ### 2. Install Skill Dependencies
 
 ```powershell
-cd .copilot-git
+cd .github/copilot-skills/git
 npm install
 ```
 
@@ -61,7 +61,7 @@ Add this skill to your `.vscode/settings.json`:
     "eso-log-aggregator-git": {
       "command": "node",
       "args": [
-        "${workspaceFolder}\\.copilot-git\\server.js"
+        "${workspaceFolder}\\.github\\copilot-skills\\git\\server.js"
       ],
       "env": {
         "DEBUG": "false"
