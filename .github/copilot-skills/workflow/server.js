@@ -78,7 +78,7 @@ function branchExists(branchName) {
 /**
  * Create feature branch
  */
-function createBranch(branchName, parentBranch = 'master') {
+function createBranch(branchName, parentBranch = 'main') {
   log('Creating branch:', branchName, 'from', parentBranch);
   
   // Ensure we're on parent branch
@@ -169,7 +169,7 @@ function ensureFeatureBranchTool(args) {
   const currentBranch = getCurrentBranch();
   const ticketId = args.ticket_id;
   const description = args.description;
-  const parentBranch = args.parent_branch || 'master';
+  const parentBranch = args.parent_branch || 'main';
   
   // If already on a feature branch, we're good
   if (!isProtectedBranch(currentBranch) && currentBranch.includes('/')) {
@@ -187,7 +187,7 @@ function ensureFeatureBranchTool(args) {
     if (!ticketId) {
       return {
         error: true,
-        message: '🚨 Cannot work on master branch without a ticket ID',
+        message: '🚨 Cannot work on main branch without a ticket ID',
         required: 'ticket_id',
         example: 'ESO-372',
         recommendation: 'Provide ticket_id parameter to create feature branch'
@@ -254,7 +254,7 @@ function ensureFeatureBranchTool(args) {
 }
 
 /**
- * Provide recovery steps if changes were made on master
+ * Provide recovery steps if changes were made on main
  */
 function recoverFromMasterCommitsTool() {
   const currentBranch = getCurrentBranch();
@@ -285,9 +285,9 @@ function recoverFromMasterCommitsTool() {
       },
       {
         step: 3,
-        action: 'Reset master to origin',
-        command: 'git checkout master && git reset --hard origin/master',
-        description: 'Clean up master branch'
+        action: 'Reset main to origin',
+        command: 'git checkout main && git reset --hard origin/main',
+        description: 'Clean up main branch'
       },
       {
         step: 4,
@@ -296,8 +296,8 @@ function recoverFromMasterCommitsTool() {
         description: 'Continue work on your feature'
       }
     ],
-    warning: '🚨 This will reset master to match origin - ensure changes are committed to feature branch first',
-    twig_note: hasTwig() ? 'After recovery, run: twig branch ESO-XXX/description --parent master' : null
+    warning: '🚨 This will reset main to match origin - ensure changes are committed to feature branch first',
+    twig_note: hasTwig() ? 'After recovery, run: twig branch ESO-XXX/description --parent main' : null
   };
 }
 
@@ -341,7 +341,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             ticket_id: {
               type: 'string',
-              description: 'Jira ticket ID (e.g., "ESO-372"). Required when on master/main branch.',
+              description: 'Jira ticket ID (e.g., "ESO-372"). Required when on main branch.',
               pattern: '^[A-Z]+-\\d+$',
             },
             description: {
@@ -351,8 +351,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             parent_branch: {
               type: 'string',
-              description: 'Parent branch name (default: "master"). Used when creating new branch.',
-              default: 'master',
+              description: 'Parent branch name (default: "main"). Used when creating new branch.',
+              default: 'main',
             },
           },
           required: [],
@@ -360,7 +360,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'recover_from_master_commits',
-        description: 'Provide step-by-step instructions to recover when changes were accidentally made on master/main. Returns commands to save work to feature branch and reset master.',
+        description: 'Provide step-by-step instructions to recover when changes were accidentally made on main. Returns commands to save work to feature branch and reset main.',
         inputSchema: {
           type: 'object',
           properties: {},

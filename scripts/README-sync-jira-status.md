@@ -6,7 +6,7 @@ Automatically synchronizes Jira ticket statuses with Git branch states to keep y
 
 This script analyzes your Git repository and updates Jira ticket statuses based on branch activity:
 - **Branch exists remotely** → Move ticket to "In Progress"
-- **Branch merged to master** → Move ticket to "Done"
+- **Branch merged to main** → Move ticket to "Done"
 - **Multiple branches for same ticket** → Use most recent branch
 - **Branch deleted** → No action (ticket stays in current state)
 
@@ -85,7 +85,7 @@ Shows additional debugging information including:
 | Branch State | Current Jira Status | New Status | Condition |
 |-------------|---------------------|------------|-----------|
 | Exists remotely | To Do, Backlog | **In Progress** | Branch pushed to remote |
-| Merged to master | In Progress, In Review | **Done** | Branch merged successfully |
+| Merged to main | In Progress, In Review | **Done** | Branch merged successfully |
 | Deleted | Any | No change | Branch removed from remote |
 | Stale (30+ days) | In Progress | **To Do** | No commits in 30 days |
 
@@ -101,9 +101,9 @@ git branch -r --format="%(refname:short)|%(committerdate:iso8601)"
 
 ### 2. **Merge Status Check**
 ```powershell
-git branch -r --merged origin/master
+git branch -r --merged origin/main
 ```
-- Checks if branch has been merged to master
+- Checks if branch has been merged to main
 - Handles both `master` and `main` branches
 
 ### 3. **Jira Status Query**
@@ -193,7 +193,7 @@ const STATUS_TRANSITIONS = {
 const STALE_DAYS = 30;
 
 // Default branch
-const DEFAULT_BRANCH = 'master';
+const DEFAULT_BRANCH = 'main';
 ```
 
 ## 🛡️ Safety Features
@@ -251,7 +251,7 @@ acli --server https://bkrupa.atlassian.net --user your-email --password your-api
 name: Sync Jira Statuses
 on:
   push:
-    branches: [master, main]
+    branches: [main]
   schedule:
     - cron: '0 9 * * 1'  # Every Monday at 9 AM
 

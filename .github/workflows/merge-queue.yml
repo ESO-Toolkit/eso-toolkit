@@ -82,7 +82,7 @@ jobs:
             const MERGE_QUEUE_LABEL = 'auto-merge'; // Changed from 'merge-queue' to 'auto-merge'
             const PRIORITY_LABELS = ['priority', 'hotfix', 'critical'];
             const BLOCK_LABELS = ['do not merge', 'do-not-merge', 'wip', 'work in progress', 'needs review'];
-            const REQUIRED_REVIEWS = 0; // Note: This is in addition to any branch protection rules
+            const REQUIRED_REVIEWS = 1; // Require at least 1 admin review
             const AUTO_MERGE_LABEL = 'auto-merge'; // Same as MERGE_QUEUE_LABEL for backwards compatibility
             
             // Note: Merge method is determined by repository settings (respects branch protection rules)
@@ -108,7 +108,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 state: 'open',
-                base: 'master',
+                base: 'main',
                 sort: 'created',
                 direction: 'asc',
                 per_page: 100
@@ -250,6 +250,20 @@ jobs:
               return results;
             }
 
+            async function getReviewerPermission(username) {
+              try {
+                const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  username: username
+                });
+                return data.permission; // 'admin', 'maintain', 'write', 'triage', 'read'
+              } catch (error) {
+                await log(`Error checking permission for ${username}: ${error.message}`);
+                return 'read';
+              }
+            }
+
             async function hasRequiredReviews(pr) {
               const reviews = await getReviews(pr);
               
@@ -263,10 +277,21 @@ jobs:
                 }
               });
               
-              // Count approved reviews (excluding the PR author)
-              const approvedReviews = Object.values(reviewerLatestReviews).filter(review => 
+              // Only count approved reviews from admins (excluding the PR author)
+              const allApprovedReviews = Object.values(reviewerLatestReviews).filter(review => 
                 review.state === 'APPROVED' && review.user.id !== pr.user.id
               );
+              
+              // Check permissions for each approved reviewer
+              const approvedReviews = [];
+              for (const review of allApprovedReviews) {
+                const permission = await getReviewerPermission(review.user.login);
+                if (permission === 'admin') {
+                  approvedReviews.push(review);
+                } else {
+                  await log(`Skipping review from ${review.user.login} (permission: ${permission}, required: admin)`);
+                }
+              }
               
               const hasChangesRequested = Object.values(reviewerLatestReviews).some(review => 
                 review.state === 'CHANGES_REQUESTED'
@@ -302,12 +327,12 @@ jobs:
                 return { mergeable: false, reason: 'Merge status being computed by GitHub, will retry shortly' };
               }
               
-              // Check required reviews (in addition to branch protection rules)
+              // Check required reviews from admins (in addition to branch protection rules)
               const reviewStatus = await hasRequiredReviews(pr);
               if (!reviewStatus.hasRequired) {
                 return { 
                   mergeable: false, 
-                  reason: `PR needs ${REQUIRED_REVIEWS - reviewStatus.approvedCount} more approved review(s)` 
+                  reason: `PR needs ${REQUIRED_REVIEWS - reviewStatus.approvedCount} more approved admin review(s)` 
                 };
               }
               

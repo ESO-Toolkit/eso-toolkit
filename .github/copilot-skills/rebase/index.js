@@ -99,7 +99,7 @@ async function getChildBranches(parentBranch) {
 /**
  * Get unique commits in a branch that aren't in master
  */
-async function getUniqueCommits(branchName, baseBranch = 'master') {
+async function getUniqueCommits(branchName, baseBranch = 'main') {
   const result = await executeGit(`log --oneline ${baseBranch}..origin/${branchName}`);
   if (!result.success) {
     return [];
@@ -121,7 +121,7 @@ async function getUniqueCommits(branchName, baseBranch = 'master') {
  * Automates rebasing branch tree after a squashed merge
  */
 async function rebaseAfterSquash(args) {
-  const { mergedBranch, targetBranch = 'master', dryRun = false } = args;
+  const { mergedBranch, targetBranch = 'main', dryRun = false } = args;
   
   const steps = [];
   const errors = [];
@@ -255,7 +255,7 @@ async function rebaseAfterSquash(args) {
  * Identifies which branches need attention after a squash merge
  */
 async function identifySquashConflicts(args) {
-  const { mergedBranch, targetBranch = 'master' } = args;
+  const { mergedBranch, targetBranch = 'main' } = args;
   
   const analysis = {
     mergedBranch,
@@ -345,7 +345,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'rebase_after_squash',
         description: 
-          'Automates the process of rebasing a branch tree after a squashed merge into master. ' +
+          'Automates the process of rebasing a branch tree after a squashed merge into main. ' +
           'This handles: 1) Deleting the merged branch, 2) Identifying child branches, ' +
           '3) Recreating each child with only unique commits, 4) Setting twig dependencies, ' +
           '5) Force pushing, 6) Running cascade for remaining branches. ' +
@@ -359,8 +359,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             targetBranch: {
               type: 'string',
-              description: 'The target branch that received the merge (default: "master")',
-              default: 'master'
+              description: 'The target branch that received the merge (default: "main")',
+              default: 'main'
             },
             dryRun: {
               type: 'boolean',
@@ -386,8 +386,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             targetBranch: {
               type: 'string',
-              description: 'The target branch that received the merge (default: "master")',
-              default: 'master'
+              description: 'The target branch that received the merge (default: "main")',
+              default: 'main'
             }
           },
           required: ['mergedBranch']

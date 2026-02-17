@@ -7,7 +7,7 @@
  * 
  * Logic:
  * - Branch exists on remote → "In Progress" (if currently "To Do")
- * - Branch merged to master → "Done" (if not already done)
+ * - Branch merged to main → "Done" (if not already done)
  * - Branch deleted → No action (ticket stays in current state)
  * - Multiple branches for same ticket → Use most recent branch
  * 
@@ -29,7 +29,7 @@ import { resolve } from 'path';
 // Configuration
 const PROJECT_KEY = 'ESO';
 const JIRA_BOARD_URL = 'https://bkrupa.atlassian.net';
-const DEFAULT_BRANCH = 'master';
+const DEFAULT_BRANCH = 'main';
 
 // Status transitions
 const STATUS_TRANSITIONS = {
@@ -195,7 +195,7 @@ function getBranches(): BranchInfo[] {
     const isRemote = name.startsWith('origin/');
     const cleanName = isRemote ? name.replace('origin/', '') : name;
 
-    // Check if merged to master
+    // Check if merged to main
     let isMerged = false;
     try {
       const mergedCheck = exec(
@@ -281,7 +281,7 @@ function determineStatusChange(
 ): StatusChange | null {
   const currentStatus = ticket.status;
 
-  // Rule 1: Branch merged to master → Should be "Done"
+  // Rule 1: Branch merged to main → Should be "Done"
   if (branch.isMerged) {
     if (currentStatus !== STATUS_TRANSITIONS.DONE) {
       return {

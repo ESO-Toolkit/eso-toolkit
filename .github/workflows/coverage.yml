@@ -3,10 +3,10 @@ name: Coverage Report and Badges
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
   # Allow manual triggering
   workflow_dispatch:
 
@@ -50,7 +50,7 @@ jobs:
 
       - name: Upload Coverage to GitHub Gist
         run: node scripts/upload-coverage-to-gist.cjs
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GIST_TOKEN || secrets.GITHUB_TOKEN }}

@@ -230,7 +230,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: 'git_create_branch',
-        description: 'Create a new Git branch using twig with automatic parent branch detection. If creating for a Jira ticket, include ticket ID in branch name (e.g., ESO-123/description). Automatically sets parent branch: if parentBranch is provided, uses it; otherwise defaults to master.',
+        description: 'Create a new Git branch using twig with automatic parent branch detection. If creating for a Jira ticket, include ticket ID in branch name (e.g., ESO-123/description). Automatically sets parent branch: if parentBranch is provided, uses it; otherwise defaults to main.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -240,7 +240,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             parentBranch: {
               type: 'string',
-              description: 'Parent branch name (optional). If not provided, defaults to "master". Use when creating a child branch that depends on another feature branch.',
+              description: 'Parent branch name (optional). If not provided, defaults to "main". Use when creating a child branch that depends on another feature branch.',
             },
             switchToBranch: {
               type: 'boolean',
@@ -346,7 +346,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (name) {
       case 'git_create_branch': {
-        const { branchName, parentBranch = 'master', switchToBranch = true } = args;
+        const { branchName, parentBranch = 'main', switchToBranch = true } = args;
         
         // Validate branch name
         const branchValidation = validateBranchName(branchName);

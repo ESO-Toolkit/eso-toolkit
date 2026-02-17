@@ -38,7 +38,7 @@ npm run lint:fix         # Auto-fix linting issues
 
 **Manual fallback (if skill unavailable):**
 ```bash
-# Step 1: Check current branch (must NOT be master)
+# Step 1: Check current branch (must NOT be main)
 git branch --show-current
 
 # Step 2: Create feature branch with Jira ticket format
@@ -47,12 +47,12 @@ git checkout -b ESO-XXX/description-here
 # Step 3: Now you can start coding
 ```
 
-**❌ NEVER commit directly to master**  
+**❌ NEVER commit directly to main**  
 **✅ ALWAYS work on feature branches**
 
-**If you've already made changes on master:**
+**If you've already made changes on main:**
 ```
-@workspace Recover from master commits
+@workspace Recover from main commits
 ```
 
 ---

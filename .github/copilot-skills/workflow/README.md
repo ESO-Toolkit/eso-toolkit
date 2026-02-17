@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Agent Skill provides a Model Context Protocol (MCP) server that **enforces** the Git workflow by ensuring feature branches are created before any code changes. The skill actively prevents direct commits to master and automates branch creation for Jira tickets.
+This Agent Skill provides a Model Context Protocol (MCP) server that **enforces** the Git workflow by ensuring feature branches are created before any code changes. The skill actively prevents direct commits to main and automates branch creation for Jira tickets.
 
 **Compatible With:**
 - GitHub Copilot (VS Code) via Agent Skills standard
@@ -15,12 +15,12 @@ This Agent Skill provides a Model Context Protocol (MCP) server that **enforces*
 - **Master Protection**: Prevents work from starting on master/main branches
 - **Smart Detection**: Recognizes when user is about to start work on a ticket
 - **Twig Integration**: Sets up branch dependencies automatically
-- **Recovery Guidance**: Provides clear steps if changes were made on master
+- **Recovery Guidance**: Provides clear steps if changes were made on main
 - **Validation**: Ensures branch names follow project conventions
 
 ## Why This Skill?
 
-**Problem:** Agents frequently commit directly to master instead of creating feature branches, even with documentation warnings.
+**Problem:** Agents frequently commit directly to main instead of creating feature branches, even with documentation warnings.
 
 **Solution:** This skill **proactively intervenes** at the start of work, not after changes are made.
 
@@ -108,7 +108,7 @@ The skill is designed to be invoked automatically by agents when they detect wor
 
 **Agent will:**
 1. Check current branch
-2. If on master → Stop and guide branch creation
+2. If on main → Stop and guide branch creation
 3. If on feature branch → Confirm and proceed
 4. If branch doesn't exist → Create it
 
@@ -143,7 +143,7 @@ The skill is designed to be invoked automatically by agents when they detect wor
 **Example:**
 ```json
 {
-  "branch": "master",
+  "branch": "main",
   "is_protected": true,
   "is_feature_branch": false,
   "recommendation": "Create a feature branch before making changes"
@@ -156,37 +156,37 @@ The skill is designed to be invoked automatically by agents when they detect wor
 **Parameters:**
 - `ticket_id` (optional): Jira ticket like "ESO-372"
 - `description` (optional): Branch description for the ticket
-- `parent_branch` (optional): Parent branch (default: "master")
+- `parent_branch` (optional): Parent branch (default: "main")
 
 **Auto-detects if:**
 - Already on a feature branch → Returns current branch
-- On master with ticket_id → Creates `ESO-XXX/description`
-- On master without ticket_id → Prompts for info
+- On main with ticket_id → Creates `ESO-XXX/description`
+- On main without ticket_id → Prompts for info
 
 **Example:**
 ```json
 {
   "branch": "ESO-372/add-dashboard",
   "action": "created",
-  "parent": "master",
+  "parent": "main",
   "ready": true
 }
 ```
 
 ### `recover_from_master_commits`
-**Purpose:** Fix situation where changes were already made on master
+**Purpose:** Fix situation where changes were already made on main
 
 **Returns:**
 - Step-by-step recovery instructions
 - Commands to save changes to feature branch
-- Commands to reset master to origin
+- Commands to reset main to origin
 
 **Example Output:**
 ```
 🚨 Recovery Steps:
 1. Create branch from current state: git checkout -b ESO-XXX/description
 2. Commit your changes: git add . && git commit -m "ESO-XXX: Description"
-3. Reset master: git checkout master && git reset --hard origin/master
+3. Reset main: git checkout main && git reset --hard origin/main
 4. Return to feature branch: git checkout ESO-XXX/description
 ```
 
@@ -194,8 +194,8 @@ The skill is designed to be invoked automatically by agents when they detect wor
 
 This skill works alongside the pre-commit hook:
 
-- **Skill**: Proactive - prevents starting work on master
-- **Hook**: Reactive - blocks commits to master if skill is bypassed
+- **Skill**: Proactive - prevents starting work on main
+- **Hook**: Reactive - blocks commits to main if skill is bypassed
 
 Both layers provide defense-in-depth protection.
 
@@ -207,7 +207,7 @@ Both layers provide defense-in-depth protection.
 
 **Agent action:**
 1. Call `ensure_feature_branch` with `ticket_id: "ESO-372"`
-2. Skill checks current branch (master)
+2. Skill checks current branch (main)
 3. Skill creates `ESO-372/add-dashboard`
 4. Agent proceeds with implementation
 
@@ -220,15 +220,15 @@ Both layers provide defense-in-depth protection.
 2. Skill returns `ESO-372/add-dashboard` (feature branch ✅)
 3. Agent proceeds with changes
 
-### Example 3: Caught on Master (Recovery)
+### Example 3: Caught on Main (Recovery)
 
-**Agent detects:** Already made changes on master
+**Agent detects:** Already made changes on main
 
 **Agent action:**
 1. Call `recover_from_master_commits`
 2. Skill provides recovery steps
 3. Agent executes commands to save work
-4. Master is reset, work preserved on feature branch
+4. Main is reset, work preserved on feature branch
 
 ## Debug Logging
 
@@ -256,7 +256,7 @@ The skill provides clear error messages and recovery suggestions:
 |-------|----------|
 | Not in a Git repository | Navigate to project root |
 | Invalid branch name | Use format: `ESO-XXX/description` |
-| No ticket ID on master | Provide ticket ID or branch name |
+| No ticket ID on main | Provide ticket ID or branch name |
 | Uncommitted changes | Commit or stash before switching |
 | Branch already exists | Switch to existing branch |
 
@@ -265,14 +265,14 @@ The skill provides clear error messages and recovery suggestions:
 Verify the skill is working:
 
 ```powershell
-# Start on master
-git checkout master
+# Start on main
+git checkout main
 
 # Ask agent to implement a ticket
 # Agent should automatically create feature branch
 ```
 
-The skill should detect master and create a feature branch before allowing work to proceed.
+The skill should detect main and create a feature branch before allowing work to proceed.
 
 ## Troubleshooting
 

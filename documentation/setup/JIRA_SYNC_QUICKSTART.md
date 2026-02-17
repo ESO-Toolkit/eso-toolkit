@@ -42,7 +42,7 @@ Get API token: https://id.atlassian.com/manage-profile/security/api-tokens
 | Branch State | Jira Status | Action |
 |-------------|-------------|--------|
 | Remote branch exists | To Do/Backlog | → **In Progress** |
-| Branch merged to master | In Progress/Review | → **Done** |
+| Branch merged to main | In Progress/Review | → **Done** |
 | No activity for 30+ days | In Progress | → **To Do** |
 | Branch deleted | Any | No change |
 
