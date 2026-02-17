@@ -50,6 +50,7 @@ help:
 	@$(COLOR) color brightRed "  clean-cache   - Clear npm cache"
 	@$(COLOR) color brightRed "  clean-modules - Remove node_modules"
 	@$(COLOR) color brightRed "  clean-all     - Remove all generated files"
+	@$(COLOR) color brightRed "  clean-test-data - Clean test artifacts and old test data"
 	@$(COLOR) color brightRed "  reinstall     - Clean and reinstall dependencies"
 	@$(COLOR) info "Workflow Commands:"
 	@$(COLOR) color brightMagenta "  setup         - Initial project setup for new developers"
@@ -230,6 +231,16 @@ clean-all: clean clean-modules
 # Reinstall everything from scratch
 reinstall: clean-modules install
 	@$(COLOR) success "Dependencies reinstalled!"
+
+# Clean test data and artifacts
+clean-test-data:
+	@$(COLOR) subheader "Cleaning Test Data and Artifacts"
+	@$(COLOR) info "Running cleanup script..."
+ifeq ($(OS),Windows_NT)
+	pwsh -File scripts/cleanup-test-data.ps1 -Force
+else
+	pwsh scripts/cleanup-test-data.ps1 -Force
+endif
 
 # Screen Size Testing Commands
 test-screen-sizes:

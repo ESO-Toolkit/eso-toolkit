@@ -129,6 +129,8 @@
     "cache:stats": "node scripts/manage-cache-simple.js stats",
     "cache:clean": "node scripts/manage-cache-simple.js clean",
     "cache:clear": "node scripts/manage-cache-simple.js clear",
+    "clean:test-data": "pwsh -File scripts/cleanup-test-data.ps1",
+    "clean:test-data:force": "pwsh -File scripts/cleanup-test-data.ps1 -Force",
     "analyze-scribing-recipes:no-cache": "ts-node --project tsconfig.node.json scripts/scribing-analysis-runner.ts --no-optimize --clear-cache",
     "analyze-scribing-recipes:config": "ts-node --project tsconfig.node.json scripts/scribing-analysis-runner.ts --config",
     "build": "npm run prebuild && cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" vite build",

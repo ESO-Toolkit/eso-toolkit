@@ -83,6 +83,8 @@
 | `npm run coverage:badges` | Generate coverage badges | For README |
 | `npm run fetch-abilities` | Fetch ESO abilities data | Update abilities.json |
 | `npm run download-report-data` | Download report data | For debugging |
+| `npm run clean:test-data` | Clean test artifacts | Interactive cleanup |
+| `npm run clean:test-data:force` | Clean test artifacts (no prompt) | Automated cleanup |
 | `npm run health-check` | System health validation | Pre-deployment check |
 | `node scripts/generate-version.cjs` | Generate version info | Build metadata |
 | `node scripts/clean-version.cjs` | Clean version files | Cleanup |
@@ -99,6 +101,7 @@
 | `.\make.ps1 test` | Run tests |
 | `.\make.ps1 build` | Production build |
 | `.\make.ps1 clean` | Clean artifacts |
+| `.\make.ps1 clean-test-data` | Clean test data |
 
 ### Unix/Linux/macOS
 | Command | Description |
@@ -108,6 +111,7 @@
 | `make test` | Run tests |
 | `make build` | Production build |
 | `make clean` | Clean artifacts |
+| `make clean-test-data` | Clean test data |
 
 ---
 

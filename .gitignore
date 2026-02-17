@@ -145,3 +145,14 @@ Icon?
 *.pid
 .playwright-mcp/
 tmp/
+
+# Debug and test files in root
+/debug-*.js
+/debug-*.json
+/test-*.js
+/test-*.txt
+/error-logs-*.txt
+/*.log
+/*-snapshot.md
+/*-failure.md
+/missing-*.txt
