@@ -2,7 +2,9 @@ import { createWorkerTaskSlice } from './workerTaskSliceFactory';
 
 // Create touch of z'en stacks slice
 export const touchOfZenStacksSlice = createWorkerTaskSlice('calculateTouchOfZenStacks', (input) => {
-  const debuffIntervalsCount = input.debuffsLookup?.buffIntervals ? Object.keys(input.debuffsLookup.buffIntervals).length : 0;
+  const debuffIntervalsCount = input.debuffsLookup?.buffIntervals
+    ? Object.keys(input.debuffsLookup.buffIntervals).length
+    : 0;
   const damageEventsCount = input.damageEvents?.length ?? 0;
   const fightStart = input.fightStartTime ?? 0;
   const fightEnd = input.fightEndTime ?? 0;

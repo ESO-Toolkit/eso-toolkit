@@ -4,7 +4,9 @@ import { createWorkerTaskSlice } from './workerTaskSliceFactory';
 export const elementalWeaknessStacksSlice = createWorkerTaskSlice(
   'calculateElementalWeaknessStacks',
   (input) => {
-    const debuffIntervalsCount = input.debuffsLookup?.buffIntervals ? Object.keys(input.debuffsLookup.buffIntervals).length : 0;
+    const debuffIntervalsCount = input.debuffsLookup?.buffIntervals
+      ? Object.keys(input.debuffsLookup.buffIntervals).length
+      : 0;
     const fightStart = input.fightStartTime ?? 0;
     const fightEnd = input.fightEndTime ?? 0;
     return `elem-weakness-${debuffIntervalsCount}-${fightStart}-${fightEnd}`;

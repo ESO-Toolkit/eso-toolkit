@@ -115,16 +115,12 @@ export const createWorkerTaskSlice = <T extends SharedComputationWorkerTaskType>
           return taskState.resultCache[inputHash];
         }
 
-        const result = await workerManager.executeTask(
-          taskName,
-          input,
-          (progress: number) => {
-            // Only dispatch progress updates if the task hasn't been aborted
-            if (!signal.aborted) {
-              dispatch({ type: `${taskName}/updateProgress`, payload: { progress } });
-            }
-          },
-        );
+        const result = await workerManager.executeTask(taskName, input, (progress: number) => {
+          // Only dispatch progress updates if the task hasn't been aborted
+          if (!signal.aborted) {
+            dispatch({ type: `${taskName}/updateProgress`, payload: { progress } });
+          }
+        });
 
         // If the task was aborted while the worker was running, discard result
         if (signal.aborted) {

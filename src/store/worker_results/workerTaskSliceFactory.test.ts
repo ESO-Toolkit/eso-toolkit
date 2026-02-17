@@ -546,7 +546,8 @@ describe('workerTaskSliceFactory', () => {
         })) as SharedWorkerInputType<typeof mockTaskName>[];
 
         const results = inputs.map(
-          (_, i) => ({ positions: [{ x: i, y: i }] }) as SharedWorkerResultType<typeof mockTaskName>,
+          (_, i) =>
+            ({ positions: [{ x: i, y: i }] }) as SharedWorkerResultType<typeof mockTaskName>,
         );
 
         results.forEach((r) => mockWorkerManager.executeTask.mockResolvedValueOnce(r));

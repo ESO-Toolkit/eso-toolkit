@@ -2,9 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../graphql/gql/graphql';
-import {
-  executeElementalWeaknessStacksTask,
-} from '../../store/worker_results';
+import { executeElementalWeaknessStacksTask } from '../../store/worker_results';
 import {
   selectElementalWeaknessStacksResult,
   selectWorkerTaskLoading,

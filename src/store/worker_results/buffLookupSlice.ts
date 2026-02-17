@@ -4,7 +4,8 @@ import { createWorkerTaskSlice } from './workerTaskSliceFactory';
 export const buffLookupSlice = createWorkerTaskSlice('calculateBuffLookup', (input) => {
   const eventsCount = input.buffEvents?.length ?? 0;
   const fightEndTime = input.fightEndTime ?? 0;
-  const firstEventId = eventsCount > 0 ? (input.buffEvents[0] as { timestamp?: number }).timestamp ?? 0 : 0;
+  const firstEventId =
+    eventsCount > 0 ? ((input.buffEvents[0] as { timestamp?: number }).timestamp ?? 0) : 0;
   return `buff-lookup-${eventsCount}-${fightEndTime}-${firstEventId}`;
 });
 
