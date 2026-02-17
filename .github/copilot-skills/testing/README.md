@@ -255,7 +255,7 @@ Rebase child branches in a tree structure after parent is squashed into main. Au
 
 **Parameters:**
 - `parentBranch` (required): Branch that was squashed
-- `targetBranch` (optional): Branch to rebase onto (default: "master")
+- `targetBranch` (optional): Branch to rebase onto (default: "main")
 - `childBranches` (optional): Specific children to rebase (default: auto-detect)
 - `dryRun` (optional): Preview changes without executing (default: false)
 - `autoStash` (optional): Automatically stash/pop changes (default: true)

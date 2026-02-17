@@ -574,8 +574,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             targetBranch: {
               type: 'string',
-              description: 'The base branch to rebase onto (typically "master" or "main")',
-              default: 'master',
+              description: 'The base branch to rebase onto (typically "main")',
+              default: 'main',
             },
             childBranches: {
               type: 'array',
@@ -1366,7 +1366,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'git_rebase_tree': {
-        const { parentBranch, targetBranch = 'master', childBranches, dryRun = false, autoStash = true } = args;
+        const { parentBranch, targetBranch = 'main', childBranches, dryRun = false, autoStash = true } = args;
         
         console.error(`Rebasing tree after ${parentBranch} was squashed into ${targetBranch}...`);
         

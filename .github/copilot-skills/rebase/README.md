@@ -1,10 +1,10 @@
 # Post-Squash Rebase Skill for GitHub Copilot
 
-Automates the process of rebasing a branch tree after a squashed merge into master. This skill handles the tedious process of recreating branches, cherry-picking unique commits, and resolving conflicts that arise from squash merges.
+Automates the process of rebasing a branch tree after a squashed merge into main. This skill handles the tedious process of recreating branches, cherry-picking unique commits, and resolving conflicts that arise from squash merges.
 
 ## 🎯 Purpose
 
-When a feature branch is merged into master with squash, all its commits are combined into a single commit. This creates conflicts for any child branches that were built on top of the merged branch, since they contain duplicate commits. This skill automates the resolution of these conflicts.
+When a feature branch is merged into main with squash, all its commits are combined into a single commit. This creates conflicts for any child branches that were built on top of the merged branch, since they contain duplicate commits. This skill automates the resolution of these conflicts.
 
 ## 🚀 Quick Start
 
@@ -44,7 +44,7 @@ Analyzes the impact of a squashed merge and identifies which branches need atten
 # Squash Conflict Analysis
 
 **Merged Branch:** ESO-449/structure-redux-state
-**Target Branch:** master
+**Target Branch:** main
 **Child Branches Found:** 2
 
 ## Branch Analysis:
@@ -66,7 +66,7 @@ Automatically rebases the entire branch tree after a squashed merge.
 
 **Usage:**
 ```
-@workspace Rebase branch tree after ESO-449/structure-redux-state was squashed into master
+@workspace Rebase branch tree after ESO-449/structure-redux-state was squashed into main
 ```
 
 **With dry run (recommended first):**
@@ -76,15 +76,15 @@ Automatically rebases the entire branch tree after a squashed merge.
 
 **Parameters:**
 - `mergedBranch` (required): The branch that was squashed and merged
-- `targetBranch` (optional): Target branch, defaults to "master"
+- `targetBranch` (optional): Target branch, defaults to "main"
 - `dryRun` (optional): If true, shows what would be done without making changes
 
 **What it does:**
-1. Switches to target branch (master) and pulls latest
+1. Switches to target branch (main) and pulls latest
 2. Identifies all child branches of the merged branch
 3. Deletes the merged branch locally
 4. For each child branch:
-   - Identifies unique commits (not in master)
+   - Identifies unique commits (not in main)
    - Deletes the old local branch
    - Creates a new branch from appropriate parent
    - Cherry-picks only unique commits
@@ -99,7 +99,7 @@ Automatically rebases the entire branch tree after a squashed merge.
 # Post-Squash Rebase Complete
 
 ## Steps Executed:
-Switching to master...
+Switching to main...
 Finding child branches of ESO-449/structure-redux-state...
 Found 2 child branches: ESO-461/establish-multi-fight-redux-foundations, ESO-465/worker-results
 
@@ -115,7 +115,7 @@ Running twig cascade to update remaining branches...
 
 ## Summary
 - Merged branch: ESO-449/structure-redux-state
-- Target branch: master
+- Target branch: main
 - Child branches processed: 2
 - Errors encountered: 0
 ```
@@ -163,7 +163,7 @@ If the automatic process encounters conflicts:
 
 ### Example 1: Basic Usage
 ```
-User: ESO-449 just landed in master as a squash merge. Can you rebase our tree?
+User: ESO-449 just landed in main as a squash merge. Can you rebase our tree?
 
 @workspace Rebase branch tree after ESO-449/structure-redux-state was squashed
 ```
@@ -189,24 +189,24 @@ User: Can you show me what would happen if we rebase after ESO-449?
 When you squash merge a branch:
 ```
 Before:
-master --- A --- B
+main --- A --- B
            └─ ESO-449 --- C --- D --- E
                           └─ ESO-461 --- F --- G
 
 After squash merge:
-master --- A --- B --- [CDE]
+main --- A --- B --- [CDE]
            └─ ESO-449 --- C --- D --- E (deleted on remote)
                           └─ ESO-461 --- F --- G
 ```
 
-ESO-461 now has commits C, D, E that are duplicates of [CDE] in master, causing conflicts when rebasing.
+ESO-461 now has commits C, D, E that are duplicates of [CDE] in main, causing conflicts when rebasing.
 
 ### The Solution
 
 This skill recreates branches with only unique commits:
 ```
 After skill execution:
-master --- A --- B --- [CDE]
+main --- A --- B --- [CDE]
            └─ ESO-461 --- F' --- G' (only unique commits)
 ```
 
@@ -223,7 +223,7 @@ master --- A --- B --- [CDE]
 
 ## 📝 Notes
 
-- **Force push warning**: This tool uses `git push --force`, which rewrites history. Only use it on feature branches, never on shared branches like master.
+- **Force push warning**: This tool uses `git push --force`, which rewrites history. Only use it on feature branches, never on shared branches like main.
 - **Backup recommendation**: Before running, ensure your work is committed and pushed.
 - **Twig dependency**: The tool assumes you're using twig for branch dependency management.
 - **Remote branches**: The tool analyzes `origin/<branch>` to find unique commits.
@@ -234,7 +234,7 @@ master --- A --- B --- [CDE]
 Make sure the merged branch name is correct. Include the full branch name as it appears in `git branch -a`.
 
 ### "No unique commits found"
-This means all commits in the child branch are already in master. The branch might just need its parent dependency updated.
+This means all commits in the child branch are already in main. The branch might just need its parent dependency updated.
 
 ### "Failed to cherry-pick"
 Some commits may have genuine conflicts. The tool will skip the branch and report the error. Resolve these manually.

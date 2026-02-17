@@ -65,7 +65,7 @@
     },
     "targetBranch": {
       "type": "string",
-      "default": "master",
+      "default": "main",
       "description": "Target branch for merging PRs"
     },
     "processingInterval": {

@@ -6,7 +6,7 @@ This guide covers production deployment options for the ESO Log Aggregator scrib
 
 ### 1. GitHub Pages (Current Default)
 
-The application is automatically deployed to GitHub Pages on push to the `master` branch.
+The application is automatically deployed to GitHub Pages on push to the `main` branch.
 
 **Pros:**
 - Automatic deployment via GitHub Actions

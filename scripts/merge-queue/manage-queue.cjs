@@ -146,7 +146,7 @@ class MergeQueueManager {
       owner: this.owner,
       repo: this.repo,
       state: 'open',
-      base: 'master',
+      base: 'main',
       sort: 'created',
       direction: 'asc',
       per_page: 100
@@ -222,7 +222,7 @@ class MergeQueueManager {
         owner: this.owner,
         repo: this.repo,
         workflow_id: 'merge-queue.yml',
-        ref: 'master',
+        ref: 'main',
         inputs: {
           force_process: true
         }

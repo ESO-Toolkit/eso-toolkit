@@ -93,12 +93,12 @@ After installing dependencies and configuring, reload the VS Code window:
 ```
 @workspace Create branch ESO-569/implement-feature
 @workspace Create branch ESO-569/implement-feature with parent ESO-449
-@workspace Create branch fix/bug-in-parser with parent master
+@workspace Create branch fix/bug-in-parser with parent main
 @workspace Show branch tree
 @workspace Set ESO-488 to depend on ESO-449
 @workspace Cascade branch changes with force push
 @workspace Cascade branch changes (dry run)
-@workspace Start interactive rebase on master
+@workspace Start interactive rebase on main
 @workspace Check PR status for current branch
 @workspace Check PR status for PR #123
 ```
@@ -113,7 +113,7 @@ Create a new Git branch using twig with automatic parent branch management.
 - `branchName` (string, required): Name of the new branch
   - For Jira tickets: Use format `ESO-123/description-here`
   - Otherwise: Use descriptive kebab-case name
-- `parentBranch` (string, optional): Parent branch name (default: "master")
+- `parentBranch` (string, optional): Parent branch name (default: "main")
   - Use when creating a child branch that depends on another feature branch
 - `switchToBranch` (boolean, optional): Switch to new branch after creation (default: true)
 
@@ -212,7 +212,7 @@ Get instructions for interactive rebase on a target branch.
 **Example:**
 ```json
 {
-  "targetBranch": "master",
+  "targetBranch": "main",
   "autoSquash": true
 }
 ```
@@ -306,9 +306,9 @@ Cascade branch changes through dependent branches with non-interactive mode.
 
 ```
 1. @workspace Create branch ESO-569/implement-replay-system
-   - Automatically creates branch from master
+   - Automatically creates branch from main
    - Switches to new branch
-   - Sets up twig dependency on master
+   - Sets up twig dependency on main
 2. Make code changes
 3. git commit -m "Implement replay system"
 4. git push -u origin ESO-569/implement-replay-system
@@ -330,7 +330,7 @@ Cascade branch changes through dependent branches with non-interactive mode.
 
 ```
 1. @workspace Create branch fix/parser-crash-on-invalid-log
-   - Creates from master (default)
+   - Creates from main (default)
    - Uses descriptive name
 2. Fix the bug
 3. git commit -m "Fix parser crash on invalid log"
@@ -349,7 +349,7 @@ Cascade branch changes through dependent branches with non-interactive mode.
 ### Clean Up Commit History Before PR
 
 ```
-1. @workspace Start interactive rebase on master with autoSquash
+1. @workspace Start interactive rebase on main with autoSquash
 2. Run the provided command in terminal
 3. Follow instructions to squash/reorder commits
 4. @workspace Check PR status (verify CI passes)
@@ -369,7 +369,7 @@ Cascade branch changes through dependent branches with non-interactive mode.
 ```
 1. @workspace Show branch tree
 2. Identify orphaned branch (shows under "Orphaned branches")
-3. @workspace Set orphaned-branch to depend on master
+3. @workspace Set orphaned-branch to depend on main
 4. @workspace Show branch tree (verify fix)
 ```
 
@@ -378,7 +378,7 @@ Cascade branch changes through dependent branches with non-interactive mode.
 ### Understanding Twig Tree Output
 
 ```
-master
+main
 ├── * ESO-449/parent-feature
 │   └── ESO-488/child-feature
 └── ESO-500/other-feature
@@ -395,7 +395,7 @@ Orphaned branches:
 
 For the replay system work:
 ```
-master
+main
 └── ESO-449 (structure redux state)
     └── ESO-488 (multiplayer path)
         └── ESO-463 (replay system UI)

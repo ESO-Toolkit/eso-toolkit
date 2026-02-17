@@ -19,7 +19,7 @@
     ]
   },
   "mergeMethod": "squash",
-  "targetBranch": "master",
+  "targetBranch": "main",
   "processingInterval": 300,
   "notifications": {
     "onMerge": true,
