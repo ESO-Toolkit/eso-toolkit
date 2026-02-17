@@ -279,4 +279,40 @@ The merge queue integrates seamlessly with your existing CI/CD:
 
 ---
 
+## 🛠️ Initial Setup
+
+### 1. Add Labels to Repository
+
+Create these labels in your GitHub repository (Settings → Labels):
+
+| Label Name | Color | Description |
+|------------|-------|-------------|
+| `merge-queue` | `#0e8a16` | PR is in the standard merge queue |
+| `auto-merge` | `#d73a49` | PR is in the priority merge queue |
+| `priority` | `#ff6b6b` | High priority PR |
+| `hotfix` | `#ff9f43` | Urgent hotfix |
+| `critical` | `#ee5a24` | Critical issue fix |
+
+### 2. Set Environment Variables (for CLI)
+
+```bash
+# Windows PowerShell
+$env:GITHUB_TOKEN = "your_github_personal_access_token"
+
+# Linux/macOS
+export GITHUB_TOKEN="your_github_personal_access_token"
+```
+
+The `GITHUB_TOKEN` needs: read access to repository, write access to pull requests, issues (for comments), and contents (for merging).
+
+### 3. Repository Settings
+
+Ensure your repository has:
+- Branch protection enabled on main/master branch
+- Required status checks configured
+- Merge methods enabled (squash, merge, or rebase)
+- Actions permissions set to allow workflows
+
+---
+
 *For issues or feature requests, please create a GitHub issue or contact the development team.*

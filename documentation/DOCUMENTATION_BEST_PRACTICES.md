@@ -40,9 +40,9 @@
 
 | Scenario | Decision Criteria | Location |
 |----------|-------------------|----------|
-| Bug fix | Is root cause non-obvious? | `documentation/fixes/` |
+| Bug fix | Is root cause non-obvious? | Jira ticket comment |
 | Refactoring | Does it change patterns? | Update existing docs |
-| Optimization | Is impact measurable? | `documentation/implementation/` |
+| Optimization | Is impact measurable? | Feature docs or code comments |
 | Configuration | Is setup complex? | README in config dir |
 
 ### Never Document
@@ -103,10 +103,10 @@ Add these when relevant:
 ```
 documentation/
 ├── INDEX.md                    # Master index
-├── OPTIMIZATION_GUIDE.md       # General guides
+├── DOCUMENTATION_BEST_PRACTICES.md
 │
 ├── ai-agents/                  # AI-specific guides
-│   ├── TOKEN_OPTIMIZATION_GUIDE.md
+│   ├── AI_AGENT_GUIDELINES.md
 │   └── [feature]/
 │       ├── AI_[FEATURE]_INSTRUCTIONS.md
 │       └── AI_[FEATURE]_QUICK_REFERENCE.md
@@ -119,13 +119,13 @@ documentation/
 │       ├── README.md
 │       └── [specific-guides].md
 │
-├── implementation/             # Jira implementations
-│   └── ESO-###_IMPLEMENTATION_SUMMARY.md
+├── testing/                    # Testing guides
+│   └── [testing-topic].md
 │
-├── fixes/                      # Bug fix documentation
-│   └── [COMPONENT]_[ISSUE]_FIX.md
+├── setup/                      # Setup & deployment
+│   └── [setup-topic].md
 │
-└── archive/                    # Historical docs
+└── item-links/                 # Reference material
     └── README.md
 ```
 
@@ -392,40 +392,6 @@ Only delete documentation if:
 ## Related Documentation
 
 - [Architecture](../architecture/[aspect].md)
-- [Implementation](../implementation/ESO-###_IMPLEMENTATION_SUMMARY.md)
-```
-
-### Fix Documentation Template
-
-```markdown
-# [Component] [Issue] Fix
-
-**Date**: [Date]  
-**Issue**: [Jira ticket or description]  
-**Status**: Fixed
-
----
-
-## Problem
-
-[1-2 paragraphs describing the issue]
-
-## Root Cause
-
-[What was causing the problem]
-
-## Solution
-
-[What was changed to fix it]
-
-## Files Changed
-
-- `[file1]` - [change description]
-- `[file2]` - [change description]
-
-## Testing
-
-[How to verify the fix]
 ```
 
 ### AI Quick Reference Template
@@ -485,7 +451,6 @@ Only delete documentation if:
 ### Internal
 
 - [Documentation Index](./INDEX.md)
-- [Token Optimization Guide](./ai-agents/TOKEN_OPTIMIZATION_GUIDE.md)
 - [AI Agent Guidelines](./ai-agents/AI_AGENT_GUIDELINES.md)
 
 ### External

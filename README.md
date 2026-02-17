@@ -45,26 +45,19 @@ Generates TypeScript types and hooks from GraphQL queries:
 npm run codegen
 ```
 
-### Running the Application (UI)
+### Running the Application
 
 ```powershell
-cd apps/ui/eso-log-aggregator
-npm start
+npm run dev
 ```
 
 ### Building the Application
 
-The project uses SWC (Speedy Web Compiler) instead of the default TypeScript compiler for faster builds:
+Built with Vite and SWC for fast compilation:
 
 ```powershell
 npm run build
 ```
-
-**Build Performance:**
-
-- **SWC Compiler**: Fast TypeScript/JSX compilation with Rust-based SWC
-- **Configuration**: Managed through `craco.config.js` with environment-specific settings
-- **Benefits**: Faster build times, smaller bundle sizes, and better optimization
 
 ### Running Tests
 
@@ -164,8 +157,8 @@ npm run build
 - **Local Development**: Run `npm run download-test-data` for offline testing locally
 
 For detailed testing documentation, see [tests/README.md](tests/README.md).
-For screen size testing, see [documentation/SCREEN_SIZE_TESTING.md](documentation/SCREEN_SIZE_TESTING.md).
-For offline testing, see [OFFLINE_TESTING.md](OFFLINE_TESTING.md).
+For screen size testing, see [documentation/testing/SCREEN_SIZE_TESTING.md](documentation/testing/SCREEN_SIZE_TESTING.md).
+For offline testing, see [documentation/testing/OFFLINE_TESTING.md](documentation/testing/OFFLINE_TESTING.md).
 
 **Coverage System Features:**
 
@@ -177,7 +170,7 @@ For offline testing, see [OFFLINE_TESTING.md](OFFLINE_TESTING.md).
 
 **Coverage Badges:** ![Coverage](coverage/badges/coverage-overall.svg)
 
-For detailed coverage documentation, see [docs/COVERAGE.md](docs/COVERAGE.md).
+For detailed coverage documentation, see [documentation/testing/COVERAGE.md](documentation/testing/COVERAGE.md).
 
 ### Linting & Formatting
 
@@ -191,7 +184,6 @@ npm run format
 Run Storybook for UI component development:
 
 ```powershell
-cd apps/ui/eso-log-aggregator
 npm run storybook
 ```
 
@@ -249,7 +241,7 @@ For detailed architecture documentation, see:
 ### Debugging the UI
 
 - Use VS Code's built-in debugger for React/TypeScript.
-- Set breakpoints in `apps/ui/eso-log-aggregator/src`.
+- Set breakpoints in `src/`.
 - Start the app and attach the debugger.
 
 ### Debugging Tests
@@ -295,10 +287,4 @@ The `sample-data/` folder is automatically ignored by Git to prevent accidental 
 
 ---
 
-For more details, see individual README files in subfolders or ask for help!
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+For more details, see the [documentation index](documentation/INDEX.md) or individual README files in subfolders.
