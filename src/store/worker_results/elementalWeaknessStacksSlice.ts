@@ -1,21 +1,14 @@
-import memoizeOne from 'memoize-one';
-import { v4 as uuidV4 } from 'uuid';
-
 import { createWorkerTaskSlice } from './workerTaskSliceFactory';
-
-const computeElementalWeaknessStacksHash = memoizeOne((..._args) => {
-  return `${uuidV4()}-${Date.now().toLocaleString()}`;
-});
 
 // Create elemental weakness stacks slice
 export const elementalWeaknessStacksSlice = createWorkerTaskSlice(
   'calculateElementalWeaknessStacks',
-  (input) =>
-    computeElementalWeaknessStacksHash(
-      input.debuffsLookup,
-      input.fightStartTime,
-      input.fightEndTime,
-    ),
+  (input) => {
+    const debuffIntervalsCount = input.debuffsLookup?.buffIntervals ? Object.keys(input.debuffsLookup.buffIntervals).length : 0;
+    const fightStart = input.fightStartTime ?? 0;
+    const fightEnd = input.fightEndTime ?? 0;
+    return `elem-weakness-${debuffIntervalsCount}-${fightStart}-${fightEnd}`;
+  },
 );
 
 // Export actions, thunk, and reducer

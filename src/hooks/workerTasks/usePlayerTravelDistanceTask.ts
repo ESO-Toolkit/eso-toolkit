@@ -86,7 +86,7 @@ export function usePlayerTravelDistanceTask(
       return;
     }
 
-    dispatch(
+    const promise = dispatch(
       executePlayerTravelDistancesTask({
         fight: {
           id: fight.id,
@@ -97,6 +97,9 @@ export function usePlayerTravelDistanceTask(
         playerIds,
       }),
     );
+    return () => {
+      promise.abort();
+    };
   }, [dispatch, fight, events, playerIds, isAnyDependencyLoading]);
 
   const taskResult = useSelector(

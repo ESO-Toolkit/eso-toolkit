@@ -9,6 +9,9 @@ import {
 
 import { RootState } from '../storeWithHistory';
 
+/** Maximum number of results to keep in the per-task LRU cache. */
+const MAX_RESULT_CACHE_SIZE = 3;
+
 export interface WorkerTaskState<T> {
   result: T | null;
   isLoading: boolean;
@@ -22,6 +25,11 @@ export interface WorkerTaskState<T> {
   };
   // Track the latest request ID to prevent race conditions
   latestRequestId: string | null;
+  /** LRU result cache – keeps the last N results keyed by input hash
+   *  so that navigating between fights doesn't re-run expensive workers. */
+  resultCache: Record<string, T>;
+  /** Insertion order for LRU eviction (most-recent first). */
+  cacheOrder: string[];
 }
 
 export interface WorkerTaskProgressPayload {
@@ -47,6 +55,8 @@ const createInitialTaskState = <T>(): WorkerTaskState<T> => ({
     lastExecutedTimestamp: null,
   },
   latestRequestId: null,
+  resultCache: {},
+  cacheOrder: [],
 });
 
 // Define the return type separately to avoid circular reference
@@ -94,16 +104,33 @@ export const createWorkerTaskSlice = <T extends SharedComputationWorkerTaskType>
     }
   >(
     `${taskName}/executeTask`,
-    async (input: InputType, { rejectWithValue }) => {
+    async (input: InputType, { getState, dispatch, signal, rejectWithValue }) => {
       try {
+        // Check result cache before spawning a worker
+        const inputHash = createInputHash(input);
+        const state = getState() as RootState;
+        const taskState = state.workerResults[taskName] as WorkerTaskState<ResultType>;
+
+        if (taskState?.resultCache?.[inputHash]) {
+          return taskState.resultCache[inputHash];
+        }
+
         const result = await workerManager.executeTask(
           taskName,
           input,
-          // Progress callback will be handled by the slice's updateProgress action
-          () => {
-            // Progress updates are handled separately
+          (progress: number) => {
+            // Only dispatch progress updates if the task hasn't been aborted
+            if (!signal.aborted) {
+              dispatch({ type: `${taskName}/updateProgress`, payload: { progress } });
+            }
           },
         );
+
+        // If the task was aborted while the worker was running, discard result
+        if (signal.aborted) {
+          return rejectWithValue('Task was aborted');
+        }
+
         return result as ResultType;
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown worker error';
@@ -180,10 +207,14 @@ export const createWorkerTaskSlice = <T extends SharedComputationWorkerTaskType>
         const lastUpdated = state.lastUpdated;
         const cacheMetadata = state.cacheMetadata;
         const latestRequestId = state.latestRequestId;
+        const resultCache = state.resultCache;
+        const cacheOrder = [...state.cacheOrder];
         Object.assign(state, createInitialTaskState<ResultType>());
         state.lastUpdated = lastUpdated;
         state.cacheMetadata = cacheMetadata;
         state.latestRequestId = latestRequestId;
+        state.resultCache = resultCache;
+        state.cacheOrder = cacheOrder;
       },
     },
     extraReducers: (builder) => {
@@ -206,6 +237,19 @@ export const createWorkerTaskSlice = <T extends SharedComputationWorkerTaskType>
             state.error = null;
             state.lastUpdated = Date.now();
             state.cacheMetadata.lastExecutedTimestamp = Date.now();
+
+            // Store in LRU result cache
+            const inputHash = createInputHash(action.meta.arg);
+            state.resultCache[inputHash] = action.payload as (typeof state.resultCache)[string];
+
+            // Move to front of cache order
+            state.cacheOrder = [inputHash, ...state.cacheOrder.filter((h) => h !== inputHash)];
+
+            // Evict oldest entries if over limit
+            while (state.cacheOrder.length > MAX_RESULT_CACHE_SIZE) {
+              const evicted = state.cacheOrder.pop()!;
+              delete state.resultCache[evicted];
+            }
           }
           // If this is not the latest request, ignore the result to prevent stale data overwrites
         })
@@ -214,7 +258,10 @@ export const createWorkerTaskSlice = <T extends SharedComputationWorkerTaskType>
           if (action.meta.requestId === state.latestRequestId) {
             state.isLoading = false;
             state.progress = null;
-            state.error = action.payload || action.error.message || 'Unknown error';
+            // Don't set error state for intentionally aborted tasks
+            if (!action.meta.aborted) {
+              state.error = action.payload || action.error.message || 'Unknown error';
+            }
             // Don't clear cache metadata on error - might want to retry with same input
           }
         });

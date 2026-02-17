@@ -68,6 +68,8 @@ describe('workerTaskSliceFactory', () => {
           lastExecutedTimestamp: null,
         },
         latestRequestId: null,
+        resultCache: {},
+        cacheOrder: [],
       });
     });
 
@@ -223,6 +225,8 @@ describe('workerTaskSliceFactory', () => {
             lastExecutedTimestamp: null,
           },
           latestRequestId: null,
+          resultCache: {},
+          cacheOrder: [],
         });
       });
     });
@@ -474,6 +478,159 @@ describe('workerTaskSliceFactory', () => {
         expect(finalState.workerResults[mockTaskName].result).toBeTruthy();
         expect(finalState.workerResults[mockTaskName].isLoading).toBe(false);
         expect(finalState.workerResults[mockTaskName].error).toBeNull();
+      });
+    });
+
+    describe('result cache', () => {
+      it('should populate result cache on fulfilled', async () => {
+        mockWorkerManager.executeTask.mockResolvedValueOnce(mockResult);
+
+        await store.dispatch(workerSlice.executeTask(mockInput));
+
+        const state = store.getState() as {
+          workerResults: {
+            [mockTaskName]: WorkerTaskState<SharedWorkerResultType<typeof mockTaskName>>;
+          };
+        };
+
+        const inputHash = createInputHash(mockInput);
+        expect(state.workerResults[mockTaskName].resultCache[inputHash]).toEqual(mockResult);
+        expect(state.workerResults[mockTaskName].cacheOrder).toEqual([inputHash]);
+      });
+
+      it('should return cached result without calling worker', async () => {
+        const firstInput = { reportCode: 'first', fightId: 1 } as SharedWorkerInputType<
+          typeof mockTaskName
+        >;
+        const secondInput = { reportCode: 'second', fightId: 2 } as SharedWorkerInputType<
+          typeof mockTaskName
+        >;
+        const firstResult = { positions: [{ x: 1, y: 1 }] } as SharedWorkerResultType<
+          typeof mockTaskName
+        >;
+        const secondResult = { positions: [{ x: 2, y: 2 }] } as SharedWorkerResultType<
+          typeof mockTaskName
+        >;
+
+        mockWorkerManager.executeTask
+          .mockResolvedValueOnce(firstResult)
+          .mockResolvedValueOnce(secondResult);
+
+        // First execution with input A
+        await store.dispatch(workerSlice.executeTask(firstInput));
+        // Second execution with input B
+        await store.dispatch(workerSlice.executeTask(secondInput));
+
+        expect(mockWorkerManager.executeTask).toHaveBeenCalledTimes(2);
+
+        // Third execution with input A again – should hit cache
+        await store.dispatch(workerSlice.executeTask(firstInput));
+
+        // Worker should NOT have been called a third time
+        expect(mockWorkerManager.executeTask).toHaveBeenCalledTimes(2);
+
+        const state = store.getState() as {
+          workerResults: {
+            [mockTaskName]: WorkerTaskState<SharedWorkerResultType<typeof mockTaskName>>;
+          };
+        };
+
+        // Active result should now be the cached first result
+        expect(state.workerResults[mockTaskName].result).toEqual(firstResult);
+      });
+
+      it('should evict oldest cache entry when over limit', async () => {
+        const inputs = Array.from({ length: 4 }, (_, i) => ({
+          reportCode: `report-${i}`,
+          fightId: i,
+        })) as SharedWorkerInputType<typeof mockTaskName>[];
+
+        const results = inputs.map(
+          (_, i) => ({ positions: [{ x: i, y: i }] }) as SharedWorkerResultType<typeof mockTaskName>,
+        );
+
+        results.forEach((r) => mockWorkerManager.executeTask.mockResolvedValueOnce(r));
+
+        // Execute 4 tasks (cache limit is 3)
+        for (const input of inputs) {
+          await store.dispatch(workerSlice.executeTask(input));
+        }
+
+        const state = store.getState() as {
+          workerResults: {
+            [mockTaskName]: WorkerTaskState<SharedWorkerResultType<typeof mockTaskName>>;
+          };
+        };
+
+        // Cache should only have 3 entries (oldest evicted)
+        expect(state.workerResults[mockTaskName].cacheOrder).toHaveLength(3);
+        // First input should have been evicted
+        const firstHash = createInputHash(inputs[0]);
+        expect(state.workerResults[mockTaskName].resultCache[firstHash]).toBeUndefined();
+      });
+
+      it('should preserve cache on resetTask', async () => {
+        mockWorkerManager.executeTask.mockResolvedValueOnce(mockResult);
+
+        await store.dispatch(workerSlice.executeTask(mockInput));
+        store.dispatch(workerSlice.actions.resetTask());
+
+        const state = store.getState() as {
+          workerResults: {
+            [mockTaskName]: WorkerTaskState<SharedWorkerResultType<typeof mockTaskName>>;
+          };
+        };
+
+        // Result should be cleared but cache preserved
+        expect(state.workerResults[mockTaskName].result).toBeNull();
+        const inputHash = createInputHash(mockInput);
+        expect(state.workerResults[mockTaskName].resultCache[inputHash]).toEqual(mockResult);
+      });
+
+      it('should clear cache on clearResult', async () => {
+        mockWorkerManager.executeTask.mockResolvedValueOnce(mockResult);
+
+        await store.dispatch(workerSlice.executeTask(mockInput));
+        store.dispatch(workerSlice.actions.clearResult());
+
+        const state = store.getState() as {
+          workerResults: {
+            [mockTaskName]: WorkerTaskState<SharedWorkerResultType<typeof mockTaskName>>;
+          };
+        };
+
+        expect(state.workerResults[mockTaskName].resultCache).toEqual({});
+        expect(state.workerResults[mockTaskName].cacheOrder).toEqual([]);
+      });
+    });
+
+    describe('abort handling', () => {
+      it('should not set error state when task is aborted', async () => {
+        // Create a promise that we can control
+        let resolveWorker: (value: unknown) => void;
+        const workerPromise = new Promise((resolve) => {
+          resolveWorker = resolve;
+        });
+        mockWorkerManager.executeTask.mockReturnValueOnce(workerPromise as any);
+
+        const promise = store.dispatch(workerSlice.executeTask(mockInput));
+
+        // Abort the task
+        promise.abort();
+
+        // Resolve the worker (but result should be discarded)
+        resolveWorker!(mockResult);
+        await promise.catch(() => {});
+
+        const state = store.getState() as {
+          workerResults: {
+            [mockTaskName]: WorkerTaskState<SharedWorkerResultType<typeof mockTaskName>>;
+          };
+        };
+
+        // Error should NOT be set for aborted tasks
+        expect(state.workerResults[mockTaskName].error).toBeNull();
+        expect(state.workerResults[mockTaskName].isLoading).toBe(false);
       });
     });
   });

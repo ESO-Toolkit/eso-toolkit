@@ -1,16 +1,12 @@
-import memoizeOne from 'memoize-one';
-import { v4 as uuidV4 } from 'uuid';
-
 import { createWorkerTaskSlice } from './workerTaskSliceFactory';
 
-const computeHostileBuffLookupHash = memoizeOne((..._args) => {
-  return `${uuidV4()}-${Date.now().toLocaleString()}`;
-});
-
 // Create hostile buff lookup slice
-export const hostileBuffLookupSlice = createWorkerTaskSlice('calculateHostileBuffLookup', (input) =>
-  computeHostileBuffLookupHash(input.buffEvents, input.fightEndTime),
-);
+export const hostileBuffLookupSlice = createWorkerTaskSlice('calculateHostileBuffLookup', (input) => {
+  const eventsCount = input.buffEvents?.length ?? 0;
+  const fightEndTime = input.fightEndTime ?? 0;
+  const firstEventId = eventsCount > 0 ? (input.buffEvents[0] as { timestamp?: number }).timestamp ?? 0 : 0;
+  return `hostile-buff-lookup-${eventsCount}-${fightEndTime}-${firstEventId}`;
+});
 
 // Export actions, thunk, and reducer
 export const hostileBuffLookupActions = hostileBuffLookupSlice.actions;

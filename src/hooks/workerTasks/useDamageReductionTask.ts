@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { executeDamageReductionTask, damageReductionActions } from '@/store/worker_results';
+import { executeDamageReductionTask } from '@/store/worker_results';
 
 import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
@@ -38,11 +38,6 @@ export function useDamageReductionTask(options?: UseDamageReductionTaskOptions):
   const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask(options);
   const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask(options);
 
-  // Clear any existing result when dependencies change to force fresh calculation
-  React.useEffect(() => {
-    dispatch(damageReductionActions.clearResult());
-  }, [dispatch, selectedFight, playerData, combatantInfoRecord, buffLookupData, debuffLookupData]);
-
   // Execute task only when ALL dependencies are completely ready
   React.useEffect(() => {
     // Check that all dependencies are completely loaded with data available
@@ -58,7 +53,7 @@ export function useDamageReductionTask(options?: UseDamageReductionTaskOptions):
       debuffLookupData !== null;
 
     if (allDependenciesReady) {
-      dispatch(
+      const promise = dispatch(
         executeDamageReductionTask({
           fight: selectedFight,
           players: playerData.playersById,
@@ -67,6 +62,9 @@ export function useDamageReductionTask(options?: UseDamageReductionTaskOptions):
           debuffsLookup: debuffLookupData,
         }),
       );
+      return () => {
+        promise.abort();
+      };
     }
   }, [
     dispatch,

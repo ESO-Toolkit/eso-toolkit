@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../graphql/gql/graphql';
-import { executeTouchOfZenStacksTask, touchOfZenStacksActions } from '../../store/worker_results';
+import { executeTouchOfZenStacksTask } from '../../store/worker_results';
 import {
   selectTouchOfZenStacksResult,
   selectWorkerTaskLoading,
@@ -28,11 +28,6 @@ export function useTouchOfZenStacksTask(): {
   const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
 
-  // Clear any existing result when dependencies change to force fresh calculation
-  React.useEffect(() => {
-    dispatch(touchOfZenStacksActions.clearResult());
-  }, [dispatch, selectedFight, debuffLookupData, damageEvents]);
-
   // Execute task only when ALL dependencies are completely ready
   React.useEffect(() => {
     // Check that all dependencies are completely loaded with data available
@@ -44,7 +39,7 @@ export function useTouchOfZenStacksTask(): {
       damageEvents !== null;
 
     if (allDependenciesReady) {
-      dispatch(
+      const promise = dispatch(
         executeTouchOfZenStacksTask({
           debuffsLookup: debuffLookupData,
           damageEvents: damageEvents,
@@ -52,6 +47,9 @@ export function useTouchOfZenStacksTask(): {
           fightEndTime: selectedFight?.endTime,
         }),
       );
+      return () => {
+        promise.abort();
+      };
     }
   }, [
     dispatch,

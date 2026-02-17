@@ -32,12 +32,15 @@ export function useBuffLookupTask(options?: UseBuffLookupTaskOptions): {
 
   React.useEffect(() => {
     if (friendlyBuffEvents && !isFriendlyBuffEventsLoading) {
-      dispatch(
+      const promise = dispatch(
         executeBuffLookupTask({
           buffEvents: friendlyBuffEvents,
           fightEndTime: selectedFight?.endTime,
         }),
       );
+      return () => {
+        promise.abort();
+      };
     }
   }, [dispatch, selectedFight, friendlyBuffEvents, isFriendlyBuffEventsLoading]);
 

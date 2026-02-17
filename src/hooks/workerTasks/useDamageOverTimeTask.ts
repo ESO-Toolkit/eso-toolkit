@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { executeDamageOverTimeTask, damageOverTimeActions } from '@/store/worker_results';
+import { executeDamageOverTimeTask } from '@/store/worker_results';
 
 import { FightFragment } from '../../graphql/gql/graphql';
 import type { ReportFightContextInput } from '../../store/contextTypes';
@@ -33,11 +33,6 @@ export function useDamageOverTimeTask(options?: UseDamageOverTimeTaskOptions): {
   const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: options?.context });
   const { playerData, isPlayerDataLoading } = usePlayerData({ context: options?.context });
 
-  // Clear any existing result when dependencies change to force fresh calculation
-  React.useEffect(() => {
-    dispatch(damageOverTimeActions.clearResult());
-  }, [dispatch, selectedFight, playerData, damageEvents]);
-
   // Execute task only when ALL dependencies are completely ready
   React.useEffect(() => {
     // Check that all dependencies are completely loaded with data available
@@ -49,7 +44,7 @@ export function useDamageOverTimeTask(options?: UseDamageOverTimeTaskOptions): {
       damageEvents !== null;
 
     if (allDependenciesReady) {
-      dispatch(
+      const promise = dispatch(
         executeDamageOverTimeTask({
           fight: selectedFight,
           players: playerData.playersById,
@@ -57,6 +52,9 @@ export function useDamageOverTimeTask(options?: UseDamageOverTimeTaskOptions): {
           bucketSizeMs: 1000, // 1 second buckets
         }),
       );
+      return () => {
+        promise.abort();
+      };
     }
   }, [
     dispatch,
