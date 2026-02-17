@@ -67,8 +67,8 @@ await page.reload();
 
 ### Required .env Variables
 ```properties
-OAUTH_CLIENT_ID=9ffe9fe3-b873-459a-9d78-acc9f168d79f
-OAUTH_CLIENT_SECRET=R8B71E3qbUmdFlVnUdQiZkUKkbW6wZ1dXjuVTUE4
+OAUTH_CLIENT_ID=your_client_id_here
+OAUTH_CLIENT_SECRET=your_client_secret_here
 ```
 
 ### Load .env in Scripts

@@ -38,8 +38,8 @@ Generate a fresh token using the client credentials from `.env`:
 **Step 1: Read OAuth credentials from .env**
 ```typescript
 // .env contains:
-// OAUTH_CLIENT_ID=9ffe9fe3-b873-459a-9d78-acc9f168d79f
-// OAUTH_CLIENT_SECRET=R8B71E3qbUmdFlVnUdQiZkUKkbW6wZ1dXjuVTUE4
+// OAUTH_CLIENT_ID=your_client_id_here
+// OAUTH_CLIENT_SECRET=your_client_secret_here
 
 const clientId = process.env.OAUTH_CLIENT_ID;
 const clientSecret = process.env.OAUTH_CLIENT_SECRET;
@@ -293,8 +293,8 @@ await page.evaluate(() => {
 cat .env
 
 # Verify credentials are present
-# OAUTH_CLIENT_ID=9ffe9fe3-b873-459a-9d78-acc9f168d79f
-# OAUTH_CLIENT_SECRET=R8B71E3qbUmdFlVnUdQiZkUKkbW6wZ1dXjuVTUE4
+# OAUTH_CLIENT_ID=your_client_id_here
+# OAUTH_CLIENT_SECRET=your_client_secret_here
 
 # Load .env in your script
 import * as dotenv from 'dotenv';
