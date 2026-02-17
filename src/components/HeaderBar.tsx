@@ -645,6 +645,11 @@ export const HeaderBar: React.FC = () => {
       path: '/roster-builder',
     },
     {
+      text: "What's New",
+      icon: '🆕',
+      path: '/whats-new',
+    },
+    {
       text: 'About',
       icon: 'ℹ️',
       path: '/about',

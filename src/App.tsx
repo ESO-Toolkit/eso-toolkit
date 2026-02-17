@@ -126,6 +126,10 @@ const RaidDashboardPage = React.lazy(() =>
   import('./pages/RaidDashboardPage').then((module) => ({ default: module.RaidDashboardPage })),
 );
 
+const WhatsNewPage = React.lazy(() =>
+  import('./pages/WhatsNewPage').then((module) => ({ default: module.WhatsNewPage })),
+);
+
 // Lazy load the feedback FAB to improve initial page load performance
 const LazyModernFeedbackFab = React.lazy(() =>
   import('./components/BugReportDialog').then((module) => ({ default: module.ModernFeedbackFab })),
@@ -517,6 +521,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <AboutPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/whats-new"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <WhatsNewPage />
                   </Suspense>
                 </ErrorBoundary>
               }
