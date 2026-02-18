@@ -190,6 +190,12 @@ async function globalSetup(config: FullConfig) {
     );
     console.log('   - ESO_LOGS_API_KEY (recommended for testing)');
     console.log('   - OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET (for OAuth flow)');
+    // Write empty auth state so projects with hardcoded storageState don't fail with ENOENT
+    ensureTestsDir();
+    if (!fs.existsSync(AUTH_STATE_PATH)) {
+      fs.writeFileSync(AUTH_STATE_PATH, JSON.stringify({ cookies: [], origins: [] }, null, 2));
+      console.log('📝 Empty auth state file created (unauthenticated mode)');
+    }
     return;
   }
 
@@ -230,6 +236,12 @@ async function globalSetup(config: FullConfig) {
   if (!accessToken) {
     clearAuthMetadata();
     console.log('⚠️  No authentication token available - tests will run in unauthenticated mode');
+    // Write empty auth state so projects with hardcoded storageState don't fail with ENOENT
+    ensureTestsDir();
+    if (!fs.existsSync(AUTH_STATE_PATH)) {
+      fs.writeFileSync(AUTH_STATE_PATH, JSON.stringify({ cookies: [], origins: [] }, null, 2));
+      console.log('📝 Empty auth state file created (unauthenticated mode)');
+    }
   }
 
   // Pre-cache getCurrentUser response to avoid spamming the API during tests
