@@ -2,10 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../graphql/gql/graphql';
-import {
-  executeElementalWeaknessStacksTask,
-  elementalWeaknessStacksActions,
-} from '../../store/worker_results';
+import { executeElementalWeaknessStacksTask } from '../../store/worker_results';
 import {
   selectElementalWeaknessStacksResult,
   selectWorkerTaskLoading,
@@ -33,16 +30,16 @@ export function useElementalWeaknessStacksTask(): {
     const allDependenciesReady = selectedFight && !isDebuffEventsLoading && debuffsLookup !== null;
 
     if (allDependenciesReady) {
-      // Clear any existing result when dependencies change to force fresh calculation
-      dispatch(elementalWeaknessStacksActions.clearResult());
-
-      dispatch(
+      const promise = dispatch(
         executeElementalWeaknessStacksTask({
           debuffsLookup: debuffsLookup,
           fightStartTime: selectedFight.startTime,
           fightEndTime: selectedFight?.endTime,
         }),
       );
+      return () => {
+        promise.abort();
+      };
     }
   }, [dispatch, selectedFight, debuffsLookup, isDebuffEventsLoading]);
 

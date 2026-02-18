@@ -2,18 +2,6 @@ import { proxy, releaseProxy } from 'comlink';
 
 import { ILogger } from '../utils/logger';
 
-import { ActorPositionsCalculationTask } from './calculations/CalculateActorPositions';
-import { BuffCalculationTask } from './calculations/CalculateBuffLookups';
-import { CriticalDamageCalculationTask } from './calculations/CalculateCriticalDamage';
-import { DamageOverTimeCalculationTask } from './calculations/CalculateDamageOverTime';
-import { DamageReductionCalculationTask } from './calculations/CalculateDamageReduction';
-import { ElementalWeaknessStacksCalculationTask } from './calculations/CalculateElementalWeaknessStacks';
-import { PenetrationCalculationTask } from './calculations/CalculatePenetration';
-import { PlayerTravelDistanceTaskInput } from './calculations/CalculatePlayerTravelDistances';
-import { ScribingDetectionsTaskInput } from './calculations/CalculateScribingDetections';
-import { StaggerStacksCalculationTask } from './calculations/CalculateStaggerStacks';
-import { StatusEffectUptimesCalculationTask } from './calculations/CalculateStatusEffectUptimes';
-import { TouchOfZenStacksCalculationTask } from './calculations/CalculateTouchOfZenStacks';
 import { SharedComputationWorkerTaskType } from './SharedWorker';
 import type { WorkerPoolConfig, WorkerTask, WorkerInfo, WorkerStats } from './types';
 import { OnProgressCallback } from './Utils';
@@ -246,94 +234,13 @@ export class WorkerPool {
     }
 
     try {
-      switch (task.type) {
-        case 'calculateBuffLookup':
-          result = await workerInfo.worker.calculateBuffLookup(
-            task.data as BuffCalculationTask,
-            onProgress,
-          );
-          break;
-        case 'calculateDebuffLookup':
-          result = await workerInfo.worker.calculateDebuffLookup(
-            task.data as BuffCalculationTask,
-            onProgress,
-          );
-          break;
-        case 'calculateDamageReductionData':
-          result = await workerInfo.worker.calculateDamageReductionData(
-            task.data as DamageReductionCalculationTask,
-            onProgress,
-          );
-          break;
-        case 'calculateCriticalDamageData':
-          result = await workerInfo.worker.calculateCriticalDamageData(
-            task.data as CriticalDamageCalculationTask,
-            onProgress,
-          );
-          break;
-        case 'calculateDamageOverTimeData':
-          result = await workerInfo.worker.calculateDamageOverTimeData(
-            task.data as DamageOverTimeCalculationTask,
-            onProgress,
-          );
-          break;
-        case 'calculateHostileBuffLookup':
-          result = await workerInfo.worker.calculateHostileBuffLookup(
-            task.data as BuffCalculationTask,
-            onProgress,
-          );
-          break;
-        case 'calculatePenetrationData':
-          result = await workerInfo.worker.calculatePenetrationData(
-            task.data as PenetrationCalculationTask,
-            onProgress,
-          );
-          break;
-        case 'calculateStatusEffectUptimes':
-          result = await workerInfo.worker.calculateStatusEffectUptimes(
-            task.data as StatusEffectUptimesCalculationTask,
-            onProgress,
-          );
-          break;
-        case 'calculateActorPositions':
-          result = await workerInfo.worker.calculateActorPositions(
-            task.data as ActorPositionsCalculationTask,
-            onProgress,
-          );
-          break;
-        case 'calculateTouchOfZenStacks':
-          result = await workerInfo.worker.calculateTouchOfZenStacks(
-            task.data as TouchOfZenStacksCalculationTask,
-            onProgress,
-          );
-          break;
-        case 'calculateStaggerStacks':
-          result = await workerInfo.worker.calculateStaggerStacks(
-            task.data as StaggerStacksCalculationTask,
-            onProgress,
-          );
-          break;
-        case 'calculateElementalWeaknessStacks':
-          result = await workerInfo.worker.calculateElementalWeaknessStacks(
-            task.data as ElementalWeaknessStacksCalculationTask,
-            onProgress,
-          );
-          break;
-        case 'calculatePlayerTravelDistances':
-          result = await workerInfo.worker.calculatePlayerTravelDistances(
-            task.data as PlayerTravelDistanceTaskInput,
-            onProgress,
-          );
-          break;
-        case 'calculateScribingDetections':
-          result = await workerInfo.worker.calculateScribingDetections(
-            task.data as ScribingDetectionsTaskInput,
-            onProgress,
-          );
-          break;
-        default:
-          throw new Error(`Unknown task type: ${task.type}`);
+      // Dynamic dispatch: invoke the worker method matching the task type
+      const workerMethod = workerInfo.worker[task.type];
+      if (!workerMethod) {
+        throw new Error(`Unknown task type: ${task.type}`);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      result = await (workerMethod as any).call(workerInfo.worker, task.data, onProgress);
 
       this.handleTaskComplete(task.id, result);
     } catch (err) {

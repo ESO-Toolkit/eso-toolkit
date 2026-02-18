@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useAppDispatch } from '@/store/useAppDispatch';
-import { executePenetrationDataTask, penetrationDataActions } from '@/store/worker_results';
+import { executePenetrationDataTask } from '@/store/worker_results';
 
 import type { FightFragment } from '../../graphql/gql/graphql';
 import type { ReportFightContextInput } from '../../store/contextTypes';
@@ -42,20 +42,6 @@ export function usePenetrationDataTask(_options?: UsePenetrationDataTaskOptions)
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const selectedTargetIds = useSelectedTargetIds();
 
-  // Clear any existing result when dependencies change to force fresh calculation
-  React.useEffect(() => {
-    dispatch(penetrationDataActions.clearResult());
-  }, [
-    dispatch,
-    selectedFight,
-    playerData,
-    combatantInfoRecord,
-    buffLookupData,
-    debuffLookupData,
-    damageEvents,
-    selectedTargetIds,
-  ]);
-
   // Execute task only when ALL dependencies are completely ready
   React.useEffect(() => {
     // Check that all dependencies are completely loaded with data available
@@ -73,7 +59,7 @@ export function usePenetrationDataTask(_options?: UsePenetrationDataTaskOptions)
       damageEvents.length > 0;
 
     if (allDependenciesReady) {
-      dispatch(
+      const promise = dispatch(
         executePenetrationDataTask({
           fight: selectedFight,
           players: playerData.playersById,
@@ -84,6 +70,9 @@ export function usePenetrationDataTask(_options?: UsePenetrationDataTaskOptions)
           selectedTargetIds: Array.from(selectedTargetIds),
         }),
       );
+      return () => {
+        promise.abort();
+      };
     }
   }, [
     dispatch,

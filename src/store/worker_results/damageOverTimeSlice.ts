@@ -1,16 +1,14 @@
-import memoizeOne from 'memoize-one';
-import { v4 as uuidV4 } from 'uuid';
-
 import { createWorkerTaskSlice } from './workerTaskSliceFactory';
 
-const computeDamageOverTimeHash = memoizeOne((..._args) => {
-  return `${uuidV4()}-${Date.now().toLocaleString()}`;
-});
-
 // Create damage over time slice
-export const damageOverTimeSlice = createWorkerTaskSlice('calculateDamageOverTimeData', (input) =>
-  computeDamageOverTimeHash(input.fight, input.players, input.damageEvents, input.bucketSizeMs),
-);
+export const damageOverTimeSlice = createWorkerTaskSlice('calculateDamageOverTimeData', (input) => {
+  const fightStart = input.fight?.startTime ?? 0;
+  const fightEnd = input.fight?.endTime ?? 0;
+  const playersCount = input.players ? Object.keys(input.players).length : 0;
+  const damageEventsCount = input.damageEvents?.length ?? 0;
+  const bucketSize = input.bucketSizeMs ?? 1000;
+  return `dmg-over-time-${fightStart}-${fightEnd}-${playersCount}-${damageEventsCount}-${bucketSize}`;
+});
 
 // Export actions, thunk, and reducer
 export const damageOverTimeActions = damageOverTimeSlice.actions;

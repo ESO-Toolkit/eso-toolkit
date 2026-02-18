@@ -1,16 +1,12 @@
-import memoizeOne from 'memoize-one';
-import { v4 as uuidV4 } from 'uuid';
-
 import { createWorkerTaskSlice } from './workerTaskSliceFactory';
 
-const computeStaggerStacksHash = memoizeOne((..._args) => {
-  return `${uuidV4()}-${Date.now().toLocaleString()}`;
-});
-
 // Create stagger stacks slice
-export const staggerStacksSlice = createWorkerTaskSlice('calculateStaggerStacks', (input) =>
-  computeStaggerStacksHash(input.damageEvents, input.fightStartTime, input.fightEndTime),
-);
+export const staggerStacksSlice = createWorkerTaskSlice('calculateStaggerStacks', (input) => {
+  const damageEventsCount = input.damageEvents?.length ?? 0;
+  const fightStart = input.fightStartTime ?? 0;
+  const fightEnd = input.fightEndTime ?? 0;
+  return `stagger-${damageEventsCount}-${fightStart}-${fightEnd}`;
+});
 
 // Export actions, thunk, and reducer
 export const staggerStacksActions = staggerStacksSlice.actions;

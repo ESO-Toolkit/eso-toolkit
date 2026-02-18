@@ -32,12 +32,15 @@ export function useDebuffLookupTask(options?: UseDebuffLookupTaskOptions): {
 
   React.useEffect(() => {
     if (selectedFight && debuffEvents.length > 0 && !isDebuffEventsLoading) {
-      dispatch(
+      const promise = dispatch(
         executeDebuffLookupTask({
           buffEvents: debuffEvents,
           fightEndTime: selectedFight.endTime,
         }),
       );
+      return () => {
+        promise.abort();
+      };
     }
   }, [dispatch, selectedFight, debuffEvents, isDebuffEventsLoading]);
 

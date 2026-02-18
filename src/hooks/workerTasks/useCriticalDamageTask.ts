@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { executeCriticalDamageTask, criticalDamageActions } from '@/store/worker_results';
+import { executeCriticalDamageTask } from '@/store/worker_results';
 import { SharedWorkerResultType } from '@/workers/SharedWorker';
 
 import type { ReportFightContextInput } from '../../store/contextTypes';
@@ -57,9 +57,7 @@ export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): 
       const hasDebuffData = debuffLookupData !== null || !isDebuffLookupLoading;
 
       if (hasDebuffData) {
-        // Clear any existing result to start fresh
-        dispatch(criticalDamageActions.clearResult());
-        dispatch(
+        const promise = dispatch(
           executeCriticalDamageTask({
             fight: selectedFight,
             players: playerData.playersById,
@@ -70,6 +68,9 @@ export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): 
             selectedTargetIds: Array.from(selectedTargetIds),
           }),
         );
+        return () => {
+          promise.abort();
+        };
       }
     }
   }, [

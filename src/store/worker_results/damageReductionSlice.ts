@@ -1,21 +1,23 @@
-import memoizeOne from 'memoize-one';
-import { v4 as uuidV4 } from 'uuid';
-
 import { createWorkerTaskSlice } from './workerTaskSliceFactory';
 
-const computeDamageReductionHash = memoizeOne((..._args) => {
-  return `${uuidV4()}-${Date.now().toLocaleString()}`;
-});
-
 // Create damage reduction slice
-export const damageReductionSlice = createWorkerTaskSlice('calculateDamageReductionData', (input) =>
-  computeDamageReductionHash(
-    input.fight,
-    input.players,
-    input.combatantInfoRecord,
-    input.friendlyBuffsLookup,
-    input.debuffsLookup,
-  ),
+export const damageReductionSlice = createWorkerTaskSlice(
+  'calculateDamageReductionData',
+  (input) => {
+    const fightStart = input.fight?.startTime ?? 0;
+    const fightEnd = input.fight?.endTime ?? 0;
+    const playersCount = input.players ? Object.keys(input.players).length : 0;
+    const combatantInfoCount = input.combatantInfoRecord
+      ? Object.keys(input.combatantInfoRecord).length
+      : 0;
+    const buffIntervalsCount = input.friendlyBuffsLookup?.buffIntervals
+      ? Object.keys(input.friendlyBuffsLookup.buffIntervals).length
+      : 0;
+    const debuffIntervalsCount = input.debuffsLookup?.buffIntervals
+      ? Object.keys(input.debuffsLookup.buffIntervals).length
+      : 0;
+    return `dmg-reduction-${fightStart}-${fightEnd}-${playersCount}-${combatantInfoCount}-${buffIntervalsCount}-${debuffIntervalsCount}`;
+  },
 );
 
 // Export actions, thunk, and reducer
