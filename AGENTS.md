@@ -73,7 +73,6 @@ git checkout -b ESO-XXX/description-here
 - **Auth / OAuth**: [.github/copilot-skills/auth/](.github/copilot-skills/auth/) - Browser session authentication
 - **Skill Data Regen**: [.github/copilot-skills/skill-data-regen/](.github/copilot-skills/skill-data-regen/) - ESO skill line data regeneration
 - **UESP Data**: [.github/copilot-skills/uesp-data/](.github/copilot-skills/uesp-data/) - Item icon management
-- **Documentation**: [.github/copilot-skills/documentation/](.github/copilot-skills/documentation/) - Doc placement advisor
 
 ### Feature & Architecture Docs
 - **Features**: [documentation/features/](documentation/features/)
@@ -89,7 +88,59 @@ git checkout -b ESO-XXX/description-here
 - 💬 **Be concise** - ask before extensive work
 - 📝 **Use code comments** and clear commit messages for simple changes
 
+### Documentation Placement
+
+Use this routing table when creating documentation files:
+
+| Filename pattern | Location |
+|-----------------|----------|
+| `AI_*_INSTRUCTIONS.md`, `AI_*_QUICK_REFERENCE.md` | `documentation/ai-agents/[feature]/` |
+| `*ARCHITECTURE*.md`, `DESIGN.md`, `*_PATTERNS.md` | `documentation/architecture/` |
+| `ESO-XXX*IMPLEMENTATION*.md`, `EPIC*.md` | `documentation/implementation/` |
+| Feature README / implementation guides | `documentation/features/[feature-name]/` |
+| `FIX*.md`, `*_FIX.md`, `RESOLUTION*.md` | `documentation/fixes/` |
+| `*TEST*.md`, `PLAYWRIGHT*.md`, `SMOKE*.md` | `documentation/testing/` |
+| `README-*.md` (script docs) | `scripts/` (next to the script) |
+| `SESSION*.md`, `HANDOFF*.md`, `YYYY-MM-DD*.md` | `documentation/sessions/` |
+| Top-level quickstarts / deployment / coverage | `documentation/` |
+
+Always check `documentation/INDEX.md` after creating a new file — add a row if the file belongs in the index. Full guidelines: [documentation/DOCUMENTATION_BEST_PRACTICES.md](documentation/DOCUMENTATION_BEST_PRACTICES.md)
+
 ### Tool Usage Patterns
+
+**PowerShell — Commit Messages and PR Bodies**:
+
+PowerShell treats `` ` `` as an escape character inside double-quoted strings, so passing markdown bodies via `-m "..."` or `--body "..."` silently strips backticks (`` `code` `` becomes `\code\`).
+
+✅ **Always use a PowerShell here-string piped to `--file`/`--body-file -`** for any message containing backticks, bold, or multi-line content:
+
+```powershell
+# git commit
+@"
+feat: my subject line
+
+Body with `backticks` and **bold** works fine here.
+"@ | Set-Content "$env:TEMP\msg.txt"; git commit --file "$env:TEMP\msg.txt"
+
+# gh pr create
+$body = @'
+## Summary
+Uses `keep_files: true` to preserve existing content.
+'@
+$body | gh pr create --title "my title" --body-file -
+
+# gh pr edit
+$body = @'
+Updated body with `backticks`.
+'@
+$body | gh pr edit 123 --body-file -
+```
+
+❌ **Never** pass markdown bodies as inline arguments on PowerShell:
+```powershell
+git commit -m "feat: fix `code`"          # backticks get eaten
+gh pr create --body "Uses `keep_files`"    # same problem
+```
 
 **Testing**:
 - Structured: VS Code MCP Playwright tool (`.github/copilot-skills/playwright/`) - **Machine-readable results**
