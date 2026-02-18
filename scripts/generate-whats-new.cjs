@@ -99,8 +99,17 @@ function cleanDescription(body) {
     cleaned = cleaned.replace(pattern, '');
   }
 
-  // Remove HTML comments
-  cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, '');
+  // Remove HTML comments, including nested or malformed ones
+  // First remove complete comment blocks, then escape remaining comment starts
+  // to prevent HTML injection (convert to &lt;!-- so they render as text)
+  let previous;
+  do {
+    previous = cleaned;
+    cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, '');
+  } while (cleaned !== previous);
+
+  // Escape any remaining HTML comment starts to prevent HTML injection
+  cleaned = cleaned.replace(/<!--/g, '&lt;!--');
 
   // Remove consecutive blank lines (collapse to single)
   cleaned = cleaned.replace(/\n{3,}/g, '\n\n');

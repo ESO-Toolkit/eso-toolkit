@@ -95,8 +95,9 @@ const generate = async () => {
 
   const exportLines = sortedEntries.map((entry) => {
     const { id, recipeId, category, name, quality, type } = entry;
-    const safeName = name.replace(/'/g, "\\'");
-    const safeCategory = category.replace(/'/g, "\\'");
+    // Escape backslashes first, then single quotes, to avoid incomplete sanitization
+    const safeName = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    const safeCategory = category.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     return `  { id: ${id}, recipeId: ${recipeId}, category: '${safeCategory}', name: '${safeName}', quality: ${quality}, type: '${type}' },`;
   }).join('\n');
 

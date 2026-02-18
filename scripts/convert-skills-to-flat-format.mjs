@@ -218,10 +218,11 @@ function generateSkillLineFile(skillLineData, className, fileName) {
   for (const skill of skillLineData.allSkills) {
     content += `    {\n`;
     content += `      id: ${skill.id},\n`;
-    content += `      name: '${skill.name.replace(/'/g, "\\'")}',\n`;
+    // Escape backslashes first, then quotes, to avoid incomplete sanitization
+    content += `      name: '${skill.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}',\n`;
     content += `      type: '${skill.type}',\n`;
     content += `      baseAbilityId: ${skill.baseAbilityId},\n`;
-    content += `      description: \`${skill.description.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`,\n`;
+    content += `      description: \`${skill.description.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/'/g, "\\'")}\`,\n`;
     content += `    },\n`;
   }
   
