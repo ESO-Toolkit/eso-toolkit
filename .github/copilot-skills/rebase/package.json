@@ -15,7 +15,7 @@
     "twig"
   ],
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.7.0"
+    "@modelcontextprotocol/sdk": "^1.26.0"
   },
   "engines": {
     "node": ">=20.0.0"
