@@ -4,14 +4,14 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   upload-sourcemaps:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           # Sentry needs access to commit history for better release tracking
           fetch-depth: 0
