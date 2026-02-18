@@ -73,7 +73,6 @@ git checkout -b ESO-XXX/description-here
 - **Auth / OAuth**: [.github/copilot-skills/auth/](.github/copilot-skills/auth/) - Browser session authentication
 - **Skill Data Regen**: [.github/copilot-skills/skill-data-regen/](.github/copilot-skills/skill-data-regen/) - ESO skill line data regeneration
 - **UESP Data**: [.github/copilot-skills/uesp-data/](.github/copilot-skills/uesp-data/) - Item icon management
-- **Documentation**: [.github/copilot-skills/documentation/](.github/copilot-skills/documentation/) - Doc placement advisor
 
 ### Feature & Architecture Docs
 - **Features**: [documentation/features/](documentation/features/)
@@ -88,6 +87,24 @@ git checkout -b ESO-XXX/description-here
 - ✅ **Only** document significant features/architecture changes
 - 💬 **Be concise** - ask before extensive work
 - 📝 **Use code comments** and clear commit messages for simple changes
+
+### Documentation Placement
+
+Use this routing table when creating documentation files:
+
+| Filename pattern | Location |
+|-----------------|----------|
+| `AI_*_INSTRUCTIONS.md`, `AI_*_QUICK_REFERENCE.md` | `documentation/ai-agents/[feature]/` |
+| `*ARCHITECTURE*.md`, `DESIGN.md`, `*_PATTERNS.md` | `documentation/architecture/` |
+| `ESO-XXX*IMPLEMENTATION*.md`, `EPIC*.md` | `documentation/implementation/` |
+| Feature README / implementation guides | `documentation/features/[feature-name]/` |
+| `FIX*.md`, `*_FIX.md`, `RESOLUTION*.md` | `documentation/fixes/` |
+| `*TEST*.md`, `PLAYWRIGHT*.md`, `SMOKE*.md` | `documentation/testing/` |
+| `README-*.md` (script docs) | `scripts/` (next to the script) |
+| `SESSION*.md`, `HANDOFF*.md`, `YYYY-MM-DD*.md` | `documentation/sessions/` |
+| Top-level quickstarts / deployment / coverage | `documentation/` |
+
+Always check `documentation/INDEX.md` after creating a new file — add a row if the file belongs in the index. Full guidelines: [documentation/DOCUMENTATION_BEST_PRACTICES.md](documentation/DOCUMENTATION_BEST_PRACTICES.md)
 
 ### Tool Usage Patterns
 
