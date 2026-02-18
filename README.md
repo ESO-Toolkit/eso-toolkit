@@ -2,17 +2,17 @@
 
 <!-- Status Badges -->
 
-[![Build Status](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/pr-checks.yml/badge.svg?branch=master)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/pr-checks.yml)
-[![Deploy Status](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy.yml/badge.svg?branch=master)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy.yml)
-[![Coverage Workflow](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml/badge.svg?branch=master)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
+[![Build Status](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/pr-checks.yml/badge.svg?branch=main)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/pr-checks.yml)
+[![Deploy Status](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy.yml)
+[![Coverage & Reports](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml/badge.svg?branch=main)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml)
 [![Nightly Tests](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/nightly-tests.yml/badge.svg)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/nightly-tests.yml)
 
 <!-- Coverage Badges -->
 
-[![Coverage](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-overall.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
-[![Lines](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-lines.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
-[![Functions](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-functions.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
-[![Branches](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-branches.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-overall.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml)
+[![Lines](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-lines.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml)
+[![Functions](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-functions.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml)
+[![Branches](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-branches.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml)
 
 <!-- Additional Info Badges -->
 
@@ -21,7 +21,7 @@
 [![Node Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen?style=flat&logo=node.js)](package.json)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 
-> **Note**: Coverage badges are automatically generated and deployed to [eso-log-aggregator-reports](https://github.com/ESO-Toolkit/eso-log-aggregator-reports) via the Coverage Workflow. They show real-time coverage from the dedicated [Coverage Workflow](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml). Detailed coverage reports and PR comments are available in the workflow runs.
+> **Note**: Coverage badges are automatically generated and deployed to [eso-log-aggregator-reports](https://github.com/ESO-Toolkit/eso-log-aggregator-reports) via the Coverage & Reports Workflow. They show real-time coverage from the dedicated [Coverage & Reports Workflow](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml). Detailed coverage reports and PR comments are available in the workflow runs.
 
 This project contains only the web application, built with React, TypeScript, GraphQL, Apollo Client, Material UI, Storybook, Jest, and Playwright.
 
