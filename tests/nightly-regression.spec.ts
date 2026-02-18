@@ -755,7 +755,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       // Check for failed network requests (simplified monitoring)
       const failedRequests: any[] = [];
       page.on('response', (response) => {
-        if (response.status() >= 400 && response.url().includes('esologs.com')) {
+        if (response.status() >= 400 && /^https?:\/\/(?:[\w.-]+\.)?esologs\.com(?:\/|$)/.test(response.url())) {
           failedRequests.push({
             url: response.url(),
             status: response.status(),

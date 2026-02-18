@@ -44,8 +44,8 @@ filesToUpdate.forEach(file => {
   
   // For each found skill, replace id: 0 with the correct ID
   idMap.forEach((id, skillName) => {
-    // Escape single quotes for regex
-    const escapedName = skillName.replace(/'/g, '\\\'');
+    // Escape backslashes then single quotes to avoid incomplete sanitization
+    const escapedName = skillName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     
     // Match pattern: { id: 0, name: 'SkillName'
     const pattern = new RegExp(

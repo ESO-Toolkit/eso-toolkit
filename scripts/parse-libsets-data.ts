@@ -666,8 +666,9 @@ function generateTypeScriptFile(itemMap: Record<number, ItemInfo>): string {
 
   const itemEntries = entries
     .map(([id, info]) => {
-      const name = info.name.replace(/'/g, "\\'");
-      const setName = info.setName.replace(/'/g, "\\'");
+      // Escape backslashes first, then single quotes, to avoid double-escaping
+      const name = info.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const setName = info.setName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
       
       // Build the object with conditional properties
       const parts = [

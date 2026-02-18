@@ -44,7 +44,8 @@ missingSkills.forEach(skillName => {
   const searchTerms = [
     skillName.toLowerCase(),
     skillName.toLowerCase().replace(/'/g, ''),
-    skillName.toLowerCase().replace(/'/g, '\''),
+    // Normalize Unicode apostrophes/curly quotes to a standard apostrophe
+    skillName.toLowerCase().replace(/['\u2018\u2019\u02bc]/g, "'"),
   ];
   
   // Find partial matches

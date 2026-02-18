@@ -99,8 +99,9 @@ function cleanDescription(body) {
     cleaned = cleaned.replace(pattern, '');
   }
 
-  // Remove HTML comments
+  // Remove HTML comments (two passes to handle residual `<!--` after nested/unclosed comments)
   cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, '');
+  cleaned = cleaned.replace(/<!--/g, '');
 
   // Remove consecutive blank lines (collapse to single)
   cleaned = cleaned.replace(/\n{3,}/g, '\n\n');

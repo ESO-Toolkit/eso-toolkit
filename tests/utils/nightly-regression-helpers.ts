@@ -290,7 +290,7 @@ export async function monitorNetworkRequests(page: Page): Promise<{ failed: any[
   page.on('response', (response) => {
     const requestTime = Date.now();
     
-    if (response.status() >= 400 && response.url().includes('esologs.com')) {
+    if (response.status() >= 400 && /^https?:\/\/(?:[\w.-]+\.)?esologs\.com(?:\/|$)/.test(response.url())) {
       failedRequests.push({
         url: response.url(),
         status: response.status(),

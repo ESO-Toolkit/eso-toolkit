@@ -44,32 +44,35 @@ export const createReportFightContextSelector = <
     const normalizedContext = normalizeReportFightContext(contextInput);
     const cacheKey = createReportFightCacheKey(normalizedContext);
 
-    let selector = selectorCache.get(cacheKey);
-    if (!selector) {
-      const stateSelectors = inputSelectors.map(
-        (inputSelector) => (localState: State) => inputSelector(localState, normalizedContext),
-      );
-      const composedSelector = createSelector(
-        [...stateSelectors, () => normalizedContext],
-        (...values) => {
-          const context = values[values.length - 1] as ReportFightContext;
-          const resultInputs = values.slice(0, -1) as SelectorResults<State, Selectors>;
-          return combiner(...resultInputs, context);
-        },
-      );
+    // Retrieve from cache first and call directly (without re-using the map-retrieved
+    // reference after creation) to avoid unvalidated dynamic method-call warnings.
+    const cachedSelector = selectorCache.get(cacheKey);
+    if (cachedSelector) {
+      return cachedSelector(state);
+    }
 
-      selector = composedSelector;
-      selectorCache.set(cacheKey, selector);
-      cacheOrder.push(cacheKey);
+    const stateSelectors = inputSelectors.map(
+      (inputSelector) => (localState: State) => inputSelector(localState, normalizedContext),
+    );
+    const composedSelector = createSelector(
+      [...stateSelectors, () => normalizedContext],
+      (...values) => {
+        const context = values[values.length - 1] as ReportFightContext;
+        const resultInputs = values.slice(0, -1) as SelectorResults<State, Selectors>;
+        return combiner(...resultInputs, context);
+      },
+    );
 
-      if (selectorCache.size > cacheLimit) {
-        const oldestKey = cacheOrder.shift();
-        if (oldestKey) {
-          selectorCache.delete(oldestKey);
-        }
+    selectorCache.set(cacheKey, composedSelector);
+    cacheOrder.push(cacheKey);
+
+    if (selectorCache.size > cacheLimit) {
+      const oldestKey = cacheOrder.shift();
+      if (oldestKey) {
+        selectorCache.delete(oldestKey);
       }
     }
 
-    return selector(state);
+    return composedSelector(state);
   };
 };

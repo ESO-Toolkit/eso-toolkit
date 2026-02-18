@@ -30,12 +30,17 @@ if (!fs.existsSync(libSetsNamesPath)) {
 }
 
 function decodeLuaString(raw: string): string {
-  return raw
-    .replace(/\\n/g, '\n')
-    .replace(/\\r/g, '\r')
-    .replace(/\\t/g, '\t')
-    .replace(/\\\\/g, '\\')
-    .replace(/\\"/g, '"');
+  // Single-pass decode to avoid double-unescaping when replacements interact
+  return raw.replace(/\\(n|r|t|"|\\)/g, (_, c: string) => {
+    switch (c) {
+      case 'n': return '\n';
+      case 'r': return '\r';
+      case 't': return '\t';
+      case '"': return '"';
+      case '\\': return '\\';
+      default: return `\\${c}`;
+    }
+  });
 }
 
 function parseSetNames(content: string): Record<string, LanguageMap> {
@@ -46,7 +51,8 @@ function parseSetNames(content: string): Record<string, LanguageMap> {
   while ((entryMatch = entryRegex.exec(content)) !== null) {
     const setId = entryMatch[1];
     const block = entryMatch[2];
-    const langRegex = /\["([A-Za-z-]+)"\]\s*=\s*"((?:\\"|\\\\|[^"])*)"/g;
+    // Use [^"\\]|\\.  to avoid exponential backtracking (ReDoS) on inputs with many backslashes
+    const langRegex = /\["([A-Za-z-]+)"\]\s*=\s*"((?:[^"\\]|\\.)*)"/g;
     const languages: LanguageMap = {};
     let langMatch: RegExpExecArray | null;
 
