@@ -251,8 +251,8 @@ For CLI usage, set these environment variables:
 
 ```bash
 export GITHUB_TOKEN="your_github_token"
-export GITHUB_REPOSITORY_OWNER="bkrupa"
-export GITHUB_REPOSITORY_NAME="eso-log-aggregator"
+export GITHUB_REPOSITORY_OWNER="ESO-Toolkit"
+export GITHUB_REPOSITORY_NAME="eso-toolkit"
 ```
 
 Or the script will attempt to detect them from git remotes automatically.

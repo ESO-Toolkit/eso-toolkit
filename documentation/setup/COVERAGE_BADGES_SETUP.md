@@ -63,7 +63,7 @@ The default `GITHUB_TOKEN` in GitHub Actions doesn't have permission to modify g
 Replace `YOUR_GIST_ID` in the README badges with your actual Gist ID:
 
 ```markdown
-[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bkrupa/YOUR_GIST_ID/raw/coverage-overall.json&style=flat)](...)
+[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_GIST_ID/raw/coverage-overall.json&style=flat)](...)
 ```
 
 ## Testing
@@ -113,10 +113,10 @@ This error occurs when the GitHub token doesn't have gist permissions:
 
 Once set up, your badges will be available at:
 
-- Overall: `https://gist.githubusercontent.com/bkrupa/YOUR_GIST_ID/raw/coverage-overall.json`
-- Lines: `https://gist.githubusercontent.com/bkrupa/YOUR_GIST_ID/raw/coverage-lines.json`
-- Functions: `https://gist.githubusercontent.com/bkrupa/YOUR_GIST_ID/raw/coverage-functions.json`
-- Branches: `https://gist.githubusercontent.com/bkrupa/YOUR_GIST_ID/raw/coverage-branches.json`
+- Overall: `https://gist.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_GIST_ID/raw/coverage-overall.json`
+- Lines: `https://gist.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_GIST_ID/raw/coverage-lines.json`
+- Functions: `https://gist.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_GIST_ID/raw/coverage-functions.json`
+- Branches: `https://gist.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_GIST_ID/raw/coverage-branches.json`
 
 ## Maintenance
 

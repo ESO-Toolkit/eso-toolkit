@@ -5,7 +5,7 @@ Thank you for your interest in contributing! This is a community tool built for 
 ## Before You Start
 
 - Read the [CLA](CLA.md) — you'll need to sign it when you open your first pull request.
-- Check [open issues](https://github.com/bkrupa/eso-log-aggregator/issues) before starting new work to avoid duplicating effort.
+- Check [open issues](https://github.com/ESO-Toolkit/eso-toolkit/issues) before starting new work to avoid duplicating effort.
 - For significant changes, open an issue first to discuss the approach.
 
 ## Development Setup
@@ -48,7 +48,7 @@ See [README.md](README.md) for full setup and testing instructions.
 
 ## Reporting Bugs
 
-Open a [GitHub issue](https://github.com/bkrupa/eso-log-aggregator/issues/new) with:
+Open a [GitHub issue](https://github.com/ESO-Toolkit/eso-toolkit/issues/new) with:
 - Steps to reproduce
 - Expected vs. actual behaviour
 - Browser/OS and any relevant console errors

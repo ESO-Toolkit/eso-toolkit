@@ -34,7 +34,7 @@ This Code of Conduct applies within all community spaces — GitHub issues, pull
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behaviour may be reported by opening a [GitHub issue](https://github.com/bkrupa/eso-log-aggregator/issues/new) or contacting a maintainer directly via GitHub. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behaviour may be reported by opening a [GitHub issue](https://github.com/ESO-Toolkit/eso-toolkit/issues/new) or contacting a maintainer directly via GitHub. All complaints will be reviewed and investigated promptly and fairly.
 
 Maintainers who do not follow or enforce the Code of Conduct in good faith may face temporary or permanent repercussions as determined by other members of the project leadership.
 

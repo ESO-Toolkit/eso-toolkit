@@ -11,7 +11,7 @@ import { calculateOptimalWorkers } from './tests/utils/worker-config';
  * Run with: npx playwright test --config=playwright.nightly.config.ts
  *
  * Production Testing:
- * - Tests run against https://bkrupa.github.io/eso-log-aggregator/ by default
+ * - Tests run against https://esotk.com/ by default
  * - No local web server is started - tests use the live production site
  * - To test against a local development server, set NIGHTLY_BASE_URL=http://localhost:3000
  *
@@ -25,7 +25,7 @@ import { calculateOptimalWorkers } from './tests/utils/worker-config';
  * - OAUTH_CLIENT_SECRET: ESO Logs OAuth client secret (optional)
  * - ESO_LOGS_TEST_EMAIL: Test user email for browser-based auth (optional)
  * - ESO_LOGS_TEST_PASSWORD: Test user password for browser-based auth (optional)
- * - NIGHTLY_BASE_URL: Override base URL (defaults to production: https://bkrupa.github.io/eso-log-aggregator/)
+ * - NIGHTLY_BASE_URL: Override base URL (defaults to production: https://esotk.com/)
  */
 
 const nightlyBaseUrl = process.env.NIGHTLY_BASE_URL || process.env.BASE_URL || 'https://esotk.com/';

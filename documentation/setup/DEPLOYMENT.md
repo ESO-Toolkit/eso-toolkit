@@ -29,7 +29,7 @@ For full-featured deployment with potential backend API support.
 #### Quick Start
 ```bash
 # Clone repository
-git clone https://github.com/bkrupa/eso-log-aggregator.git
+git clone https://github.com/ESO-Toolkit/eso-toolkit.git
 cd eso-log-aggregator
 
 # Set environment variables

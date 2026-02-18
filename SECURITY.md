@@ -8,7 +8,7 @@ We apply security fixes to the latest version of the application. Older versions
 
 Please **do not** open a public GitHub issue for security vulnerabilities.
 
-Use [GitHub's private vulnerability reporting](https://github.com/bkrupa/eso-log-aggregator/security/advisories/new) to submit a security advisory directly on the repository.
+Use [GitHub's private vulnerability reporting](https://github.com/ESO-Toolkit/eso-toolkit/security/advisories/new) to submit a security advisory directly on the repository.
 
 ### What to include
 
