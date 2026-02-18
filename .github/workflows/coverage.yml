@@ -3,10 +3,10 @@ name: Coverage Report and Badges
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
   # Allow manual triggering
   workflow_dispatch:
 

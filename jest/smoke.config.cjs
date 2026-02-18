@@ -1,8 +1,13 @@
 const baseConfig = require('../jest.config.cjs');
+const path = require('path');
 
 /** @type {import('jest').Config} */
 module.exports = {
   ...baseConfig,
+  
+  // Set root directory to project root (parent of jest/ directory)
+  rootDir: path.resolve(__dirname, '..'),
+  
   // Override test patterns to only run smoke tests
   testMatch: [
     // Critical utility tests - core functionality
