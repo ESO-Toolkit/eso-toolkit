@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-import { calculateOptimalWorkers } from './tests/utils/worker-config';
+import { calculateOptimalWorkers } from '../tests/utils/worker-config';
+import { ciBlockExternalHeaders } from '../tests/utils/playwright-shared';
 
 const rawSmokePort = process.env.SMOKE_PORT || process.env.PORT || '3000';
 const parsedSmokePort = Number.parseInt(rawSmokePort, 10);
@@ -12,7 +13,7 @@ const smokeBaseUrl = process.env.SMOKE_BASE_URL || `http://localhost:${smokePort
  * @see https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: './tests',
+  testDir: '../tests',
 
   // Only run smoke test files
   testMatch: ['**/home.spec.ts', '**/*.smoke.spec.ts'],
@@ -63,11 +64,7 @@ export default defineConfig({
     actionTimeout: process.env.CI ? 30000 : 15000, // 30 seconds in CI, 15 seconds locally
 
     /* Block external requests in CI environment */
-    ...(process.env.CI && {
-      extraHTTPHeaders: {
-        'X-Block-External-Requests': 'true',
-      },
-    }),
+    ...ciBlockExternalHeaders,
   },
 
   /* Configure projects for smoke tests - only Chromium for speed */

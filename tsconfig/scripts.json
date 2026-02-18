@@ -1,0 +1,28 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "moduleResolution": "bundler",
+    "noEmit": false,
+    "declaration": false,
+    "outDir": "../dist",
+    "rootDir": "..",
+    // Support ES modules for scripts
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "allowImportingTsExtensions": false
+  },
+  "include": [
+    "../scripts/**/*",
+    "../src/**/*"
+  ],
+  "exclude": [
+    "../node_modules",
+    "../build",
+    "../coverage",
+    "../tests",
+    "**/*.test.*",
+    "**/*.spec.*",
+    "**/*.stories.*"
+  ]
+}

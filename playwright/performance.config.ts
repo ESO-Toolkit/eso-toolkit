@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+import { BASE_URL, devWebServer } from '../tests/utils/playwright-shared';
+
 /**
  * Playwright configuration for performance testing
  * 
@@ -20,13 +22,13 @@ import { defineConfig, devices } from '@playwright/test';
  * View report: npm run test:performance:report
  */
 export default defineConfig({
-  testDir: './tests',
+  testDir: '../tests',
   
   /* Only run performance tests */
   testMatch: '**/performance.spec.ts',
   
   /* Output directory for test results */
-  outputDir: 'test-results-performance',
+  outputDir: '../test-results-performance',
   
   /* Performance tests need clean, sequential runs for accurate measurements */
   fullyParallel: false,
@@ -46,17 +48,17 @@ export default defineConfig({
   /* Reporter to use */
   reporter: [
     ['html', { 
-      outputFolder: 'playwright-report-performance',
+      outputFolder: '../playwright-report-performance',
       open: 'never',
     }],
-    ['json', { outputFile: 'playwright-report-performance/results.json' }],
+    ['json', { outputFile: '../playwright-report-performance/results.json' }],
     ['list'],
   ],
   
   /* Shared settings for all the projects below */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    baseURL: BASE_URL,
     
     /* Collect trace for performance analysis */
     trace: 'on',
@@ -104,11 +106,7 @@ export default defineConfig({
   
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000, // 2 minutes to start
-    stdout: 'ignore',
-    stderr: 'pipe',
+    ...devWebServer,
+    stdout: 'ignore', // suppress noisy output during performance benchmarks
   },
 });

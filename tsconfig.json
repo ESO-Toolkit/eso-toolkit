@@ -43,9 +43,7 @@
   },
   "include": [
     "src",
-    "playwright.config.ts",
-    "playwright.smoke.config.ts",
-    "playwright.*.config.ts"
+    "playwright/*.config.ts"
   ],
   "exclude": [
     "node_modules",
