@@ -52,8 +52,6 @@ on:
 # Note: The following secrets should be configured in repository settings:
 # - OAUTH_CLIENT_ID: ESO Logs OAuth client ID
 # - OAUTH_CLIENT_SECRET: ESO Logs OAuth client secret
-# - ESO_LOGS_TEST_EMAIL: Test user email (optional)
-# - ESO_LOGS_TEST_PASSWORD: Test user password (optional)
 
 jobs:
   # Job to determine matrix configuration
@@ -251,9 +249,6 @@ jobs:
           # ESO Logs OAuth credentials for authenticated tests
           OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
           OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
-          # Optional test user credentials for browser flow testing
-          ESO_LOGS_TEST_EMAIL: ${{ secrets.ESO_LOGS_TEST_EMAIL }}
-          ESO_LOGS_TEST_PASSWORD: ${{ secrets.ESO_LOGS_TEST_PASSWORD }}
           # Playwright optimizations
           PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: 'true'
 
