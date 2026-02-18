@@ -91,6 +91,40 @@ git checkout -b ESO-XXX/description-here
 
 ### Tool Usage Patterns
 
+**PowerShell — Commit Messages and PR Bodies**:
+
+PowerShell treats `` ` `` as an escape character inside double-quoted strings, so passing markdown bodies via `-m "..."` or `--body "..."` silently strips backticks (`` `code` `` becomes `\code\`).
+
+✅ **Always use a PowerShell here-string piped to `--file`/`--body-file -`** for any message containing backticks, bold, or multi-line content:
+
+```powershell
+# git commit
+@"
+feat: my subject line
+
+Body with `backticks` and **bold** works fine here.
+"@ | Set-Content "$env:TEMP\msg.txt"; git commit --file "$env:TEMP\msg.txt"
+
+# gh pr create
+$body = @'
+## Summary
+Uses `keep_files: true` to preserve existing content.
+'@
+$body | gh pr create --title "my title" --body-file -
+
+# gh pr edit
+$body = @'
+Updated body with `backticks`.
+'@
+$body | gh pr edit 123 --body-file -
+```
+
+❌ **Never** pass markdown bodies as inline arguments on PowerShell:
+```powershell
+git commit -m "feat: fix `code`"          # backticks get eaten
+gh pr create --body "Uses `keep_files`"    # same problem
+```
+
 **Testing**:
 - Structured: VS Code MCP Playwright tool (`.github/copilot-skills/playwright/`) - **Machine-readable results**
 - Exploratory: Agent Skills (`.github/copilot-skills/testing/`)
