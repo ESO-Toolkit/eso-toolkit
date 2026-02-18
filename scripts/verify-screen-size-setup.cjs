@@ -44,7 +44,7 @@ const coreFiles = [
 ];
 
 // External repository deployment (no separate index workflow needed)
-console.log('✅ Reports Deployment: External repository (bkrupa/eso-log-aggregator-reports)');
+console.log('✅ Reports Deployment: External repository (ESO-Toolkit/eso-log-aggregator-reports)');
 
 let allCoreFilesExist = true;
 coreFiles.forEach(([filePath, description]) => {

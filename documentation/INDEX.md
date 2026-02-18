@@ -77,9 +77,8 @@ Infrastructure and configuration — [setup/](./setup/)
 
 | Document | Description |
 |----------|-------------|
-| [Deployment](./setup/DEPLOYMENT.md) | GitHub Pages, Docker, manual deployment |
+| [Deployment](./setup/DEPLOYMENT.md) | GitHub Pages, manual deployment |
 | [GitHub Actions](./setup/GITHUB_ACTION_SETUP.md) | CI/CD pipeline setup |
-| [Merge Queue](./setup/MERGE_QUEUE.md) | Automated merge queue system |
 | [Jira Sync](./setup/JIRA_SYNC_QUICKSTART.md) | Jira-branch status sync |
 | [Coverage Badges](./setup/COVERAGE_BADGES_SETUP.md) | Badge configuration |
 | [Documentation Skill](./setup/DOCUMENTATION_SKILL_SETUP.md) | MCP doc management |

@@ -128,7 +128,7 @@ export const CalculationKnowledgeBasePage: React.FC = () => {
         >
           This content mirrors the internal documentation in{' '}
           <Link
-            href="https://github.com/bkrupa/eso-log-aggregator"
+            href="https://github.com/ESO-Toolkit/eso-toolkit"
             target="_blank"
             rel="noopener noreferrer"
           >

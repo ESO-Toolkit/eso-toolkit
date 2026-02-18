@@ -21,10 +21,9 @@ dotenv.config();
 const AUTH_STATE_PATH = path.resolve('tests', 'auth-state.json');
 const AUTH_METADATA_PATH = path.resolve('tests', 'auth-metadata.json');
 const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000; // refresh 5 minutes before expiry
-const DEFAULT_BROWSER_TOKEN_TTL_MS = 55 * 60 * 1000; // fallback TTL when expiry unknown
 const MAX_TOKEN_CACHE_TTL_MS = 45 * 60 * 1000; // never cache tokens for longer than 45 minutes
 
-type AuthTokenSource = 'client_credentials' | 'browser' | 'api_key';
+type AuthTokenSource = 'client_credentials' | 'api_key';
 
 interface AuthMetadata {
   accessToken: string;
@@ -183,8 +182,6 @@ async function globalSetup(config: FullConfig) {
   const clientId = process.env.OAUTH_CLIENT_ID;
   const clientSecret = process.env.OAUTH_CLIENT_SECRET;
   const apiKey = process.env.ESO_LOGS_API_KEY;
-  const testUserEmail = process.env.ESO_LOGS_TEST_EMAIL;
-  const testUserPassword = process.env.ESO_LOGS_TEST_PASSWORD;
 
   if (!clientId && !apiKey) {
     console.log('⚠️  No authentication credentials found - tests will run without authentication');
@@ -193,7 +190,6 @@ async function globalSetup(config: FullConfig) {
     );
     console.log('   - ESO_LOGS_API_KEY (recommended for testing)');
     console.log('   - OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET (for OAuth flow)');
-    console.log('   - ESO_LOGS_TEST_EMAIL and ESO_LOGS_TEST_PASSWORD (for browser flow)');
     return;
   }
 
@@ -228,35 +224,10 @@ async function globalSetup(config: FullConfig) {
     } catch (error) {
       clearAuthMetadata();
       console.error('❌ Failed to get client credentials token:', error);
-      console.log(
-        '💡 Falling back to browser-based authentication if user credentials are available',
-      );
     }
   }
 
-  // Method 3: Browser-based login (fallback when other methods failed and user creds available)
-  if (!accessToken && testUserEmail && testUserPassword) {
-    try {
-      console.log('🔐 Attempting browser-based authentication as fallback...');
-      const browserToken = await performBrowserLogin(testUserEmail, testUserPassword, accessToken);
-      if (browserToken) {
-        accessToken = browserToken;
-        tokenMetadata = loadAuthMetadata();
-      }
-      console.log('✅ Successfully completed browser-based authentication');
-    } catch (error) {
-      console.error('❌ Failed browser-based authentication:', error);
-      console.log('⚠️  Authentication setup failed - tests will run without authentication');
-      clearAuthMetadata();
-    }
-  } else if (!accessToken) {
-    if (!testUserEmail || !testUserPassword) {
-      console.log('ℹ️  No fallback user credentials available');
-      console.log('💡 For comprehensive authentication testing, consider setting:');
-      console.log('   - ESO_LOGS_API_KEY (recommended for testing)');
-      console.log('   - OAUTH_CLIENT_SECRET (for automatic OAuth token acquisition)');
-      console.log('   - ESO_LOGS_TEST_EMAIL and ESO_LOGS_TEST_PASSWORD (for browser flow testing)');
-    }
+  if (!accessToken) {
     clearAuthMetadata();
     console.log('⚠️  No authentication token available - tests will run in unauthenticated mode');
   }
@@ -424,138 +395,11 @@ async function getClientCredentialsToken(
 }
 
 /**
- * Perform browser-based login to save authentication state
- * This is used as a fallback when client credentials are not available
- * or when you want to test the full OAuth browser flow
- */
-async function performBrowserLogin(
-  email: string,
-  password: string,
-  existingToken?: string | null,
-): Promise<string | null> {
-  console.log('🌐 Starting browser-based authentication...');
-
-  const browser = await chromium.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  let resolvedToken: string | null = existingToken ?? null;
-
-  try {
-    // Navigate to the app
-    const baseUrl = getBaseUrl();
-    await page.goto(`${baseUrl}/login`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-
-    // If we have an existing token from client credentials, inject it
-    if (existingToken) {
-      console.log('💉 Injecting existing OAuth token into browser...');
-
-      await page.evaluate((token) => {
-        localStorage.setItem('access_token', token);
-      }, existingToken);
-
-      // Reload to activate the token
-      await page.reload({ waitUntil: 'domcontentloaded' });
-
-      // Wait a bit for the app to process the token
-      await page.waitForTimeout(2000);
-
-      // Check if we're now authenticated
-      const isAuthenticated = await page.evaluate(() => {
-        return !!localStorage.getItem('access_token');
-      });
-
-      if (isAuthenticated) {
-        console.log('✅ OAuth token injected successfully');
-
-        // Save authentication state
-        if (!existingToken) {
-          resolvedToken = await page.evaluate(() => localStorage.getItem('access_token'));
-          if (resolvedToken) {
-            saveAuthMetadata({
-              accessToken: resolvedToken,
-              obtainedAt: Date.now(),
-              expiresAt: Date.now() + DEFAULT_BROWSER_TOKEN_TTL_MS,
-              source: 'browser',
-            });
-          }
-        }
-
-        await context.storageState({ path: AUTH_STATE_PATH });
-        console.log(`💾 Authentication state saved to ${AUTH_STATE_PATH}`);
-        return resolvedToken;
-      }
-    }
-
-    // If no existing token or injection failed, try manual login
-    console.log('🔐 Attempting manual OAuth flow...');
-
-    // Look for ESO Logs login button
-    const loginButton = page.locator(
-      'button:has-text("Connect to ESO Logs"), a:has-text("Connect to ESO Logs")',
-    );
-
-    if (await loginButton.isVisible({ timeout: 10000 })) {
-      await loginButton.click();
-
-      // Wait for ESO Logs login page
-      await page.waitForURL(/esologs\.com.*login/, { timeout: 15000 });
-
-      // Fill in credentials if we reach the login form
-      const emailField = page.locator('input[type="email"], input[name="email"]');
-      const passwordField = page.locator('input[type="password"], input[name="password"]');
-
-      if (await emailField.isVisible({ timeout: 10000 })) {
-        console.log('📝 Filling in login credentials...');
-        await emailField.fill(email);
-        await passwordField.fill(password);
-
-        // Submit the form
-        const submitButton = page.locator('button[type="submit"], input[type="submit"]');
-        await submitButton.click();
-
-        // Wait for redirect back to our app
-        await page.waitForURL(new RegExp(baseUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), {
-          timeout: 45000,
-        });
-
-        console.log('✅ Manual OAuth flow completed');
-
-        // Save authentication state
-        const browserToken = await page.evaluate(() => localStorage.getItem('access_token'));
-        if (browserToken) {
-          resolvedToken = browserToken;
-          saveAuthMetadata({
-            accessToken: browserToken,
-            obtainedAt: Date.now(),
-            expiresAt: Date.now() + DEFAULT_BROWSER_TOKEN_TTL_MS,
-            source: 'browser',
-          });
-        }
-
-        await context.storageState({ path: AUTH_STATE_PATH });
-        console.log(`💾 Authentication state saved to ${AUTH_STATE_PATH}`);
-        return resolvedToken;
-      } else {
-        throw new Error('Login form not found on ESO Logs page');
-      }
-    } else {
-      throw new Error('Login button not found on app page');
-    }
-  } catch (error) {
-    console.error('❌ Browser-based authentication failed:', error);
-    throw error;
-  } finally {
-    await browser.close();
-  }
-
-  return resolvedToken;
-}
-
-/**
  * Pre-cache getCurrentUser response to avoid API spam during tests
  * This creates a mock response in the cache without making an API call
  */
 async function preCacheCurrentUser(accessToken: string): Promise<void> {
+  console.log('💾 Pre-caching getCurrentUser response...');
   console.log('💾 Pre-caching getCurrentUser response...');
   
   try {

@@ -417,7 +417,7 @@ jobs:
               "updateSnapshots": "${{ github.event.inputs.update_snapshots }}",
               "screenshotCount": $SCREENSHOT_COUNT
             },
-            "reportUrl": "https://bkrupa.github.io/eso-log-aggregator-reports/screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}/index.html"
+            "reportUrl": "https://ESO-Toolkit.github.io/eso-log-aggregator-reports/screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}/index.html"
           }
           EOF
           elif [ -d "playwright-report" ]; then
@@ -444,7 +444,7 @@ jobs:
               "screenshotCount": $SCREENSHOT_COUNT,
               "note": "Report generated from fallback playwright-report directory"
             },
-            "reportUrl": "https://bkrupa.github.io/eso-log-aggregator-reports/screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}/index.html"
+            "reportUrl": "https://ESO-Toolkit.github.io/eso-log-aggregator-reports/screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}/index.html"
           }
           EOF
           else
@@ -475,22 +475,22 @@ jobs:
           path: screen-size-reports/
           retention-days: 90
 
-      - name: Generate GitHub App Token
+      - name: Generate Deploy Token
         if: always()
-        id: generate-token
+        id: generate-deploy-token
         uses: actions/create-github-app-token@v2
         with:
-          app-id: ${{ secrets.MERGE_QUEUE_APP_ID }}
-          private-key: ${{ secrets.MERGE_QUEUE_APP_PRIVATE_KEY }}
-          owner: bkrupa
+          app-id: ${{ secrets.DEPLOY_APP_ID }}
+          private-key: ${{ secrets.DEPLOY_APP_PRIVATE_KEY }}
+          owner: ESO-Toolkit
           repositories: eso-log-aggregator-reports
 
       - name: Deploy Reports to GitHub Pages
         if: always()
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ steps.generate-token.outputs.token }}
-          external_repository: bkrupa/eso-log-aggregator-reports
+          github_token: ${{ steps.generate-deploy-token.outputs.token }}
+          external_repository: ESO-Toolkit/eso-log-aggregator-reports
           publish_dir: screen-size-reports
           destination_dir: screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}
           keep_files: true
@@ -510,7 +510,7 @@ jobs:
           echo "## 🔗 View Results" >> $GITHUB_STEP_SUMMARY
           
           BRANCH_NAME="${{ github.ref_name }}"
-          REPORT_URL="https://bkrupa.github.io/eso-log-aggregator-reports/screen-size-tests/${BRANCH_NAME}/${{ github.run_number }}/"
+          REPORT_URL="https://ESO-Toolkit.github.io/eso-log-aggregator-reports/screen-size-tests/${BRANCH_NAME}/${{ github.run_number }}/"
           ARTIFACTS_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
           echo "📊 **[Interactive Report: ${REPORT_URL}](${REPORT_URL})**" >> $GITHUB_STEP_SUMMARY
