@@ -4,7 +4,7 @@
 
 This guide enables AI agents to debug production issues in ESO Logs reports by analyzing downloaded report data. The data download process captures comprehensive event data, metadata, and combat logs from live reports for local analysis.
 
-**IMPORTANT**: Use the Report Debugging Agent Skill (`.github/copilot-skills/reports/`) for automated workflows. Manual scripts are provided as alternatives.
+**IMPORTANT**: Use the **Download and Analyze Reports** skill (`.github/skills/reports/SKILL.md`) for automated workflows. Manual scripts are provided as alternatives.
 
 ## Quick Start
 
@@ -364,7 +364,7 @@ acli jira workitem transition --key ESO-XXX --status "Done"
 
 **Document findings in Jira comments** (not separate markdown files).
 
-Use the Jira Agent Skill (`.github/copilot-skills/jira/`) for Jira integration.
+Use the **Jira Work Items** skill (`.github/skills/jira/SKILL.md`) for Jira integration.
 
 ## Related Documentation
 

@@ -12,7 +12,7 @@ git checkout -b ESO-XXX/description
 
 Branch naming: `ESO-<issue-number>/<kebab-case-description>`
 
-Use the Workflow Agent Skill (`.github/copilot-skills/workflow/`) to automate branch creation.
+Use the **Ensure Feature Branch** skill (`.github/skills/workflow/SKILL.md`) to automate branch creation.
 
 ---
 
@@ -40,7 +40,7 @@ Use the Workflow Agent Skill (`.github/copilot-skills/workflow/`) to automate br
 
 ## Agent Skills
 
-All agent skills live in `.github/copilot-skills/`. Use natural language in chat:
+All agent skills are `SKILL.md` files in `.github/skills/`. Use natural language in chat:
 
 | Skill | Usage |
 |-------|-------|
@@ -53,9 +53,8 @@ All agent skills live in `.github/copilot-skills/`. Use natural language in chat
 | **Auth** | `@workspace Generate a fresh OAuth token` |
 | **Skill Data Regen** | `@workspace List all ESO skill lines` |
 | **UESP Data** | `@workspace Fetch latest item icons from UESP` |
-| **Documentation** | `@workspace Where should I put this doc?` |
 
-Each skill has its own `README.md` in its directory.
+See [AGENTS.md](../../AGENTS.md) for the full skill list and invocation examples.
 
 ---
 
@@ -74,217 +73,19 @@ npm test            # Unit tests
 
 ### Commit Messages
 ```
-<<<<<<< HEAD
 feat(Component): brief description [ESO-XXX]
-=======
-@workspace Set up branch stack for ESO-488
-
-Steps (guided by skill):
-1. Show current branch tree
-2. Create feature branch ESO-488
-3. Set dependency: ESO-488 depends on ESO-449
-4. Verify tree structure
-5. Work on feature
-6. Check PR status before merging
-```
-
-### Prerequisites
-
-**Install twig globally:**
-```powershell
-npm install -g @gittwig/twig
-```
-
-**Install and authenticate GitHub CLI** (for PR status):
-```powershell
-winget install GitHub.cli
-gh auth login
-```
-
-### Setup
-
-The Git Workflow skill is configured in `.vscode/settings.json`:
-
-```json
-{
-  "github.copilot.chat.mcp.servers": {
-    "eso-log-aggregator-git": {
-      "command": "node",
-      "args": ["${workspaceFolder}\\.copilot-git\\server.js"]
-    }
-  }
-}
-```
-
-**Documentation**: [.copilot-git/README.md](../../.copilot-git/README.md)
-
-**Branch Stacking Strategy**: ESO-449 → ESO-488 → ESO-463 (unless instructed otherwise)
-
----
-
-- Always confirm branch stacking with `@workspace Show branch tree` before and after creating feature branches.
-- If a branch appears under *Orphaned branches*, fix it immediately with `@workspace Set <child> to depend on <parent>`.
-- Keep replay-system work aligned: `ESO-449` → `ESO-488` → `ESO-463` unless instructed otherwise.
-- Document any intentional deviations in the relevant Jira ticket/comment so reviewers understand the stack layout.
-
-## Testing Requirements
-
-### Running Tests
-
-- Run unit tests before committing: `npm test`
-- Run linting: `npm run lint`
-- For UI changes, verify in browser
-- Update tests if behavior changed
-
-### Testing Tools Strategy
-
-**Three-Tier Testing Approach**:
-
-1. **Structured Test Suites** → Use **VS Code MCP Playwright Tool**
-   - Running existing Playwright test suites
-   - Viewing test results and reports
-   - Managing test files within VS Code
-   - CI/CD integration validation
-
-2. **Ad-hoc Exploratory Testing** → Use **Claude Skill** (`.claude/`)
-   - Quick feature verification without writing test files
-   - Interactive testing with AI guidance
-   - Visual inspection via screenshots
-   - Debugging specific UI issues
-   - Rapid test prototyping
-   - **Setup**: See [../../.claude/README.md](../../.claude/README.md)
-
-3. **Unit/Component Testing** → Use **Jest + Testing Library**
-   - Component unit tests
-   - Utility function tests
-   - Integration tests
-
-**Avoid**: One-off CLI commands like `npx playwright test` for ad-hoc testing. Use the Claude Skill instead.
-
-## TypeScript Practices
-
-- Trust the existing TypeScript types—avoid redundant runtime type checks for properties that are already strongly typed.
-- Prefer refining or extending type definitions when you need different guarantees, instead of sprinkling `typeof` or defensive checks.
-- Use narrow type guards only when interacting with truly unknown input (e.g., external APIs) and document the rationale in code comments.
-
-## Communication Style
-
-- **Be concise** - Short explanations unless asked for details
-- **Ask before extensive work** - Confirm approach for major changes
-- **Provide options** - When multiple solutions exist, present choices
-- **Show, don't tell** - Code examples over lengthy explanations
-
-## Complete Development Workflow
-
-⚠️ **CRITICAL FIRST STEP**: Create a feature branch BEFORE making ANY code changes! Do not work on main.
-
-### Pre-Implementation Checklist
-
-Before writing ANY code, complete these steps in order:
-
-1. ✅ View Jira task: `acli jira workitem view ESO-XXX`
-2. ✅ Transition to "In Progress": `acli jira workitem transition --key ESO-XXX --status "In Progress"`
-3. ✅ Check current branch: `git branch --show-current`
-4. ✅ Create feature branch: `git checkout -b ESO-XXX/description`
-5. ✅ **NOW you can start implementing**
-
-**If you realize you've already made changes without creating a branch:**
-```powershell
-# Save your work by creating a branch from current state
-git checkout -b ESO-XXX/description
-
-# Stage and commit the changes
-git add <files>
-git commit -m "feat: description [ESO-XXX]"
-```
-
-### 1. Start Work on a Jira Task
-
-**Use Jira Agent Skill** (preferred):
-```
-@workspace View ESO-XXX
-@workspace Move ESO-XXX to "In Progress"
-```
-
-**Alternative (Manual)**:
-```powershell
-# View the task details
-acli jira workitem view ESO-XXX
-
-# Transition to In Progress
-acli jira workitem transition --key ESO-XXX --status "In Progress"
-```
-
-**Common Error**: The command is `transition --key ESO-XXX --status "In Progress"` (NOT `--to`)
-
-### 2. Create Feature Branch **IMMEDIATELY** ⚠️
-
-**MANDATORY**: Create a feature branch as the FIRST action before implementing anything!
-
-Follow the branch naming convention:
-
-```powershell
-# Check current branch
-git branch --show-current
-
-# Create branch from main (or appropriate parent branch)
-git checkout -b ESO-XXX/brief-kebab-case-description
-
-# Examples:
-git checkout -b ESO-516/add-my-reports-link
-git checkout -b ESO-566/remove-local-storage-for-selected-player
-```
-
-**Branch Naming Pattern**: `ESO-<issue-number>/<kebab-case-description>`
-
-**⚠️ DO NOT commit directly to main!** Always work on a feature branch.
-
-### 3. Implement Changes
-
-- Make code changes
-- Follow existing code patterns and conventions
-- Ensure TypeScript types are correct
-
-### 4. Validate Changes
-
-```powershell
-# Run linting (will auto-fix some issues)
-npm run lint
-
-# Check TypeScript compilation
-npm run typecheck
-
-# Run tests
-npm test
-
-# Or run all validation
-npm run validate
-```
-
-**Important**: Fix all linting errors before committing. The project uses ESLint 9 with strict rules including trailing commas.
-
-### 5. Commit Changes
-
-```powershell
-# Stage changes
-git add <files>
-
-# Commit with descriptive message
-git commit -m "feat(Component): brief description [ESO-XXX]
->>>>>>> e15988d2 (ESO-597: harden branch protection and migrate default branch to main)
-
-- Detailed change 1
-- Detailed change 2
 ```
 
 Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
 
-### Push & PR
-```bash
-git push -u origin ESO-XXX/description
-```
+## Testing
 
-PR should include: summary, changes list, testing status, Jira reference.
+- Run unit tests before committing: `npm test`
+- Run all validation before committing: `npm run validate`
+- For E2E tests, use the **Run Playwright Tests** skill (`.github/skills/playwright/SKILL.md`)
+- For dev server and build tools, use the **Dev and Testing Tools** skill (`.github/skills/testing/SKILL.md`)
+
+See [playwright/AI_PLAYWRIGHT_INSTRUCTIONS.md](./playwright/AI_PLAYWRIGHT_INSTRUCTIONS.md) for Playwright visual testing patterns (skeleton detection, screenshot timing).
 
 ---
 

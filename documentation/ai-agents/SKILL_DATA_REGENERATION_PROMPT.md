@@ -1,6 +1,6 @@
 # Task: Recreate All ESO Skill Line Data Files
 
-> **Skill Available**: Use the Skill Data Regeneration skill (`.github/copilot-skills/skill-data-regen/`) for automated `lookup_ability`, `validate_skill_module`, and `generate_validation_report` workflows. This document serves as the detailed reference.
+> **Skill Available**: Use the **ESO Skill Data Regeneration** skill (`.github/skills/skill-data-regen/SKILL.md`) for automated `lookup_ability`, `validate_skill_module`, and `generate_validation_report` workflows. This document serves as the detailed reference.
 
 ## Objective
 Regenerate all TypeScript skill line data files in `src/features/loadout-manager/data/` by scraping current skill information from ESO-Hub.com. The existing files contain outdated data with missing IDs and incorrect skill hierarchies.

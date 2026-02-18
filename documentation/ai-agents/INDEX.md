@@ -4,26 +4,25 @@ Documentation for AI agents working on the ESO Log Aggregator codebase.
 
 ---
 
-## Agent Skills (MCP Servers)
+## Agent Skills
 
-All agent skills are implemented as MCP servers in `.github/copilot-skills/`:
+All agent skills are `SKILL.md` files in `.github/skills/`. See [AGENTS.md](../../AGENTS.md) for the full list and invocation patterns.
 
-| Skill | Directory | Purpose |
-|-------|-----------|---------|
-| Workflow | `.github/copilot-skills/workflow/` | Branch creation and git workflow enforcement |
-| Jira | `.github/copilot-skills/jira/` | Jira ticket management |
-| Playwright | `.github/copilot-skills/playwright/` | E2E test execution |
-| Testing | `.github/copilot-skills/testing/` | Dev workflow (unit tests, lint, format, build) |
-| Reports | `.github/copilot-skills/reports/` | Production report debugging |
-| Git | `.github/copilot-skills/git/` | Branch tree and twig operations |
-| Sentry | `.github/copilot-skills/sentry/` | Error tracking |
-| Rebase | `.github/copilot-skills/rebase/` | Post-squash rebase |
-| Auth | `.github/copilot-skills/auth/` | Browser session OAuth authentication |
-| Skill Data Regen | `.github/copilot-skills/skill-data-regen/` | ESO skill line data regeneration |
-| UESP Data | `.github/copilot-skills/uesp-data/` | Item icon management |
-| Documentation | `.github/copilot-skills/documentation/` | Documentation file placement advisor |
-
-Each skill has its own `README.md` with usage instructions.
+| Skill | File | Purpose |
+|-------|------|---------|
+| Workflow | [.github/skills/workflow/SKILL.md](../../.github/skills/workflow/SKILL.md) | Branch creation and git workflow enforcement |
+| Jira | [.github/skills/jira/SKILL.md](../../.github/skills/jira/SKILL.md) | Jira ticket management |
+| Playwright | [.github/skills/playwright/SKILL.md](../../.github/skills/playwright/SKILL.md) | E2E test execution |
+| Write Playwright Tests | [.github/skills/write-playwright-tests/SKILL.md](../../.github/skills/write-playwright-tests/SKILL.md) | Authoring visual/E2E tests (skeleton detection, pre-loading, mocking) |
+| Testing | [.github/skills/testing/SKILL.md](../../.github/skills/testing/SKILL.md) | Dev workflow (unit tests, lint, format, build) |
+| Reports | [.github/skills/reports/SKILL.md](../../.github/skills/reports/SKILL.md) | Production report debugging |
+| Git | [.github/skills/git/SKILL.md](../../.github/skills/git/SKILL.md) | Branch tree and twig operations |
+| Sentry | [.github/skills/sentry/SKILL.md](../../.github/skills/sentry/SKILL.md) | Error tracking |
+| Rebase | [.github/skills/rebase/SKILL.md](../../.github/skills/rebase/SKILL.md) | Post-squash rebase |
+| Auth | [.github/skills/auth/SKILL.md](../../.github/skills/auth/SKILL.md) | Browser session OAuth authentication |
+| Skill Data Regen | [.github/skills/skill-data-regen/SKILL.md](../../.github/skills/skill-data-regen/SKILL.md) | ESO skill line data regeneration |
+| UESP Data | [.github/skills/uesp-data/SKILL.md](../../.github/skills/uesp-data/SKILL.md) | Item icon management |
+| Create Skill | [.github/skills/create-skill/SKILL.md](../../.github/skills/create-skill/SKILL.md) | Add a new skill to the project |
 
 ---
 
@@ -42,13 +41,14 @@ Each skill has its own `README.md` with usage instructions.
 
 **Key insight**: Check ALL event types (cast, damage, healing, buff, debuff, **resource**) for signature scripts.
 
-### Playwright Testing — [`playwright/`](./playwright/)
-- [Instructions](./playwright/AI_PLAYWRIGHT_INSTRUCTIONS.md) — Setup, best practices, CI/CD
-- [Quick Reference](./playwright/AI_PLAYWRIGHT_QUICK_REFERENCE.md) — Commands and patterns
+### Playwright — Writing Tests
+Use the **Write Playwright Tests** skill: [.github/skills/write-playwright-tests/SKILL.md](../../.github/skills/write-playwright-tests/SKILL.md)
 
-### Data Preloading — [`preloading/`](./preloading/)
-- [Instructions](./preloading/AI_PRELOADING_INSTRUCTIONS.md) — Pre-loading workflow for visual tests
-- [Quick Reference](./preloading/AI_PRELOADING_QUICK_REFERENCE.md) — Copy-paste templates
+Covers: skeleton detection system, data pre-loading for fast visual tests, defensive vs strict validation split, GraphQL mocking patterns.
+
+Reference docs (supplemental detail):
+- [playwright/AI_PLAYWRIGHT_INSTRUCTIONS.md](./playwright/AI_PLAYWRIGHT_INSTRUCTIONS.md) — Skeleton detection deep dive
+- [preloading/AI_PRELOADING_INSTRUCTIONS.md](./preloading/AI_PRELOADING_INSTRUCTIONS.md) — Pre-loading detailed reference
 
 ### MCP Browser Tools — [`mcp-tools/`](./mcp-tools/)
 - [Index](./mcp-tools/INDEX.md) — Overview of MCP tool integrations

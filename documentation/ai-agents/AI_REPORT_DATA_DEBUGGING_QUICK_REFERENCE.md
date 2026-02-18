@@ -185,5 +185,5 @@ See [AI_REPORT_DATA_DEBUGGING.md](AI_REPORT_DATA_DEBUGGING.md) for complete guid
 
 - [Scribing Detection](scribing/AI_SCRIBING_DETECTION_INSTRUCTIONS.md)
 - [Scribing Quick Ref](scribing/AI_SCRIBING_QUICK_REFERENCE.md)
-- Jira: Use the Jira Agent Skill (`.github/copilot-skills/jira/`)
+- Jira: Use the **Jira Work Items** skill (`.github/skills/jira/SKILL.md`)
 - [AI Guidelines](AI_AGENT_GUIDELINES.md)

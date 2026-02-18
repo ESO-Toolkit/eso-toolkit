@@ -61,18 +61,20 @@ git checkout -b ESO-XXX/description-here
 
 **Full Index**: [documentation/INDEX.md](documentation/INDEX.md)
 
-### Agent Skills (MCP Servers)
-- **Git Workflow Enforcement**: [.github/copilot-skills/workflow/](.github/copilot-skills/workflow/) - **Use this FIRST**
-- **Playwright Testing**: [.github/copilot-skills/playwright/](.github/copilot-skills/playwright/) - **Machine-readable E2E test results**
-- **Testing & Dev**: [.github/copilot-skills/testing/](.github/copilot-skills/testing/)
-- **Jira Integration**: [.github/copilot-skills/jira/](.github/copilot-skills/jira/)
-- **Sentry Integration**: [.github/copilot-skills/sentry/](.github/copilot-skills/sentry/)
-- **Report Debugging**: [.github/copilot-skills/reports/](.github/copilot-skills/reports/)
-- **Git Operations**: [.github/copilot-skills/git/](.github/copilot-skills/git/)
-- **Post-Squash Rebase**: [.github/copilot-skills/rebase/](.github/copilot-skills/rebase/)
-- **Auth / OAuth**: [.github/copilot-skills/auth/](.github/copilot-skills/auth/) - Browser session authentication
-- **Skill Data Regen**: [.github/copilot-skills/skill-data-regen/](.github/copilot-skills/skill-data-regen/) - ESO skill line data regeneration
-- **UESP Data**: [.github/copilot-skills/uesp-data/](.github/copilot-skills/uesp-data/) - Item icon management
+### Agent Skills (SKILL.md files in `.github/skills/`)
+- **Git Workflow Enforcement**: [.github/skills/workflow/SKILL.md](.github/skills/workflow/SKILL.md) - **Use this FIRST**
+- **Playwright Testing**: [.github/skills/playwright/SKILL.md](.github/skills/playwright/SKILL.md) - **E2E test execution**
+- **Write Playwright Tests**: [.github/skills/write-playwright-tests/SKILL.md](.github/skills/write-playwright-tests/SKILL.md) - Authoring visual/E2E tests (skeleton detection, pre-loading, mocking)
+- **Testing & Dev**: [.github/skills/testing/SKILL.md](.github/skills/testing/SKILL.md)
+- **Jira Integration**: [.github/skills/jira/SKILL.md](.github/skills/jira/SKILL.md)
+- **Sentry Integration**: [.github/skills/sentry/SKILL.md](.github/skills/sentry/SKILL.md)
+- **Report Debugging**: [.github/skills/reports/SKILL.md](.github/skills/reports/SKILL.md)
+- **Git Operations**: [.github/skills/git/SKILL.md](.github/skills/git/SKILL.md)
+- **Post-Squash Rebase**: [.github/skills/rebase/SKILL.md](.github/skills/rebase/SKILL.md)
+- **Auth / OAuth**: [.github/skills/auth/SKILL.md](.github/skills/auth/SKILL.md) - Browser session authentication
+- **Skill Data Regen**: [.github/skills/skill-data-regen/SKILL.md](.github/skills/skill-data-regen/SKILL.md) - ESO skill line data regeneration
+- **UESP Data**: [.github/skills/uesp-data/SKILL.md](.github/skills/uesp-data/SKILL.md) - Item icon management
+- **Create New Skill**: [.github/skills/create-skill/SKILL.md](.github/skills/create-skill/SKILL.md) - Add a new SKILL.md to the project
 
 ### Feature & Architecture Docs
 - **Features**: [documentation/features/](documentation/features/)
@@ -143,11 +145,12 @@ gh pr create --body "Uses `keep_files`"    # same problem
 ```
 
 **Testing**:
-- Structured: VS Code MCP Playwright tool (`.github/copilot-skills/playwright/`) - **Machine-readable results**
-- Exploratory: Agent Skills (`.github/copilot-skills/testing/`)
-- Avoid: Ad-hoc CLI commands
+- Playwright E2E (running): use the `Run Playwright Tests` skill (`.github/skills/playwright/SKILL.md`)
+- Playwright E2E (writing): use the `Write Playwright Tests` skill (`.github/skills/write-playwright-tests/SKILL.md`)
+- Dev tools & unit tests: use the `Dev and Testing Tools` skill (`.github/skills/testing/SKILL.md`)
+- Avoid: Ad-hoc CLI commands without structure
 
-**Playwright Testing** (E2E Tests):
+**Playwright — Running Tests**:
 ```
 @workspace Run smoke tests
 @workspace Run full tests in headed mode
@@ -155,7 +158,15 @@ gh pr create --body "Uses `keep_files`"    # same problem
 @workspace Run the RosterBuilderPage test
 @workspace Show me the last test results
 ```
-See: [.github/copilot-skills/playwright/](.github/copilot-skills/playwright/)
+See: [.github/skills/playwright/SKILL.md](.github/skills/playwright/SKILL.md)
+
+**Playwright — Writing Tests**:
+```
+@workspace Write a Playwright visual regression test for the damage tab
+@workspace Add a strict validation test for the report list page
+@workspace Write a visual test with pre-loaded data for the players view
+```
+See: [.github/skills/write-playwright-tests/SKILL.md](.github/skills/write-playwright-tests/SKILL.md)
 
 **Jira** (Work Item Management):
 ```
@@ -163,7 +174,7 @@ See: [.github/copilot-skills/playwright/](.github/copilot-skills/playwright/)
 @workspace Move ESO-569 to "In Progress"
 @workspace Create a new task for fixing the scribing bug
 ```
-See: [.github/copilot-skills/jira/](.github/copilot-skills/jira/)
+See: [.github/skills/jira/SKILL.md](.github/skills/jira/SKILL.md)
 
 **Sentry** (Error Tracking):
 ```
@@ -171,14 +182,14 @@ See: [.github/copilot-skills/jira/](.github/copilot-skills/jira/)
 @workspace View Sentry issue 1234567890
 @workspace Resolve Sentry issue 1234567890 in release 1.2.3
 ```
-See: [.github/copilot-skills/sentry/](.github/copilot-skills/sentry/)
+See: [.github/skills/sentry/SKILL.md](.github/skills/sentry/SKILL.md)
 
 **Report Debugging** (Production Issues):
 ```
 @workspace Download report 3gjVGWB2dxCL8XAw
 @workspace Analyze structure of report 3gjVGWB2dxCL8XAw
 ```
-See: [.github/copilot-skills/reports/](.github/copilot-skills/reports/)
+See: [.github/skills/reports/SKILL.md](.github/skills/reports/SKILL.md)
 
 **Git Workflow** (Branch Management):
 ```
@@ -186,13 +197,13 @@ See: [.github/copilot-skills/reports/](.github/copilot-skills/reports/)
 @workspace Cascade branch changes with force push
 ```
 Requires: twig (`npm install -g @gittwig/twig`)  
-See: [.github/copilot-skills/git/](.github/copilot-skills/git/)
+See: [.github/skills/git/SKILL.md](.github/skills/git/SKILL.md)
 
 **Post-Squash Rebase**:
 ```
 @workspace Rebase branch tree after ESO-449 was squashed
 ```
-See: [.github/copilot-skills/rebase/](.github/copilot-skills/rebase/)
+See: [.github/skills/rebase/SKILL.md](.github/skills/rebase/SKILL.md)
 
 **UESP Data** (Item Icons):
 ```
@@ -200,7 +211,7 @@ See: [.github/copilot-skills/rebase/](.github/copilot-skills/rebase/)
 @workspace Check icon coverage for our gear data
 @workspace Look up item 147237
 ```
-See: [.github/copilot-skills/uesp-data/](.github/copilot-skills/uesp-data/)
+See: [.github/skills/uesp-data/SKILL.md](.github/skills/uesp-data/SKILL.md)
 
 **Auth** (Browser Authentication):
 ```
@@ -208,7 +219,7 @@ See: [.github/copilot-skills/uesp-data/](.github/copilot-skills/uesp-data/)
 @workspace Generate a fresh OAuth token
 @workspace Get the auth injection script
 ```
-See: [.github/copilot-skills/auth/](.github/copilot-skills/auth/)
+See: [.github/skills/auth/SKILL.md](.github/skills/auth/SKILL.md)
 
 **Skill Data Regeneration** (ESO Skill Lines):
 ```
@@ -217,7 +228,7 @@ See: [.github/copilot-skills/auth/](.github/copilot-skills/auth/)
 @workspace Get skill data regeneration instructions
 @workspace Generate validation report for all skill modules
 ```
-See: [.github/copilot-skills/skill-data-regen/](.github/copilot-skills/skill-data-regen/)
+See: [.github/skills/skill-data-regen/SKILL.md](.github/skills/skill-data-regen/SKILL.md)
 
 ---
 
