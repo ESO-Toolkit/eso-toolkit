@@ -50,6 +50,10 @@ All agent skills live in `.github/copilot-skills/`. Use natural language in chat
 | **Workflow** | `@workspace Ensure I'm on a feature branch for ESO-XXX` |
 | **Playwright** | `@workspace Run smoke tests` |
 | **Sentry** | `@workspace Search for unresolved TypeErrors` |
+| **Auth** | `@workspace Generate a fresh OAuth token` |
+| **Skill Data Regen** | `@workspace List all ESO skill lines` |
+| **UESP Data** | `@workspace Fetch latest item icons from UESP` |
+| **Documentation** | `@workspace Where should I put this doc?` |
 
 Each skill has its own `README.md` in its directory.
 

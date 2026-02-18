@@ -364,7 +364,7 @@ acli jira workitem transition --key ESO-XXX --status "Done"
 
 **Document findings in Jira comments** (not separate markdown files).
 
-See [jira/AI_JIRA_INTEGRATION_GUIDE.md](jira/AI_JIRA_INTEGRATION_GUIDE.md) for complete Jira workflow.
+Use the Jira Agent Skill (`.github/copilot-skills/jira/`) for Jira integration.
 
 ## Related Documentation
 

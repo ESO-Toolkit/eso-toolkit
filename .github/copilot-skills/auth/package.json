@@ -1,0 +1,28 @@
+{
+  "name": "@eso-log-aggregator/copilot-auth",
+  "version": "1.0.0",
+  "description": "GitHub Copilot Agent Skill for authenticating MCP browser sessions with ESO Logs OAuth",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "github-copilot",
+    "agent-skill",
+    "eso",
+    "authentication",
+    "oauth"
+  ],
+  "author": "ESO Log Aggregator Team",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.7.0",
+    "dotenv": "^16.4.7"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
