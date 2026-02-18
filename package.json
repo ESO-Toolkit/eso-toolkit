@@ -1,7 +1,4 @@
 {
-  "workspaces": [
-    ".github/copilot-skills/*"
-  ],
   "browserslist": {
     "development": [
       "last 1 chrome version",
@@ -161,6 +158,7 @@
     "shrinkwrap:update": "node scripts/scribing-shrinkwrap.js update",
     "lint": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" eslint ./src --max-warnings 0",
     "lint:fix": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" eslint ./src --fix",
+    "lint:skills": "python scripts/lint-skills.py",
     "postbuild": "echo Build completed with cache-busting enabled",
     "prebuild": "node scripts/generate-version.cjs && node scripts/update-manifest.cjs",
     "preview": "vite preview",
