@@ -46,9 +46,9 @@ export default defineConfig({
   /* Run tests in files in parallel, but limit workers to avoid overloading APIs */
   fullyParallel: true,
   workers: process.env.CI ? calculateOptimalWorkers({ 
-    maxWorkers: 3, // Slightly more aggressive for nightly tests
-    memoryPerWorker: 900, // Lower memory per worker since tests are optimized
-    minWorkers: 2, // Ensure reasonable parallelization
+    maxWorkers: 2, // Reduced to limit concurrent esologs API calls and avoid rate limiting
+    memoryPerWorker: 900,
+    minWorkers: 1, // Allow single-worker operation when memory is constrained
   }) : 4, // Fewer workers to be respectful to APIs
 
   /* Enable sharding for faster parallel execution */
@@ -57,8 +57,8 @@ export default defineConfig({
       ? { current: parseInt(process.env.SHARD_INDEX), total: parseInt(process.env.SHARD_TOTAL) }
       : undefined,
 
-  /* Retry failed tests */
-  retries: process.env.CI ? 2 : 1,
+  /* Retry failed tests - keep low to reduce redundant API calls on transient failures */
+  retries: process.env.CI ? 1 : 0,
 
   /* Extended timeouts for real data loading */
   timeout: 180000, // 3 minutes per test
@@ -145,7 +145,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Safari'],
         viewport: { width: 1920, height: 1080 },
-        storageState: '../tests/auth-state.json', // Use auth state for report access
+        storageState: getOptionalAuthState(),
         // WebKit doesn't support the same launch args as Chromium, keep minimal config
       },
       testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
@@ -157,7 +157,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1920, height: 1080 },
-        storageState: '../tests/auth-state.json', // Use auth state for report access
+        storageState: getOptionalAuthState(),
         launchOptions: {
           args: [
             '--disable-web-security',
@@ -174,7 +174,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Firefox'],
         viewport: { width: 1920, height: 1080 },
-        storageState: '../tests/auth-state.json', // Use auth state for report access
+        storageState: getOptionalAuthState(),
         launchOptions: {
           firefoxUserPrefs: {
             'dom.security.https_only_mode': false,
@@ -191,7 +191,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Safari'],
         viewport: { width: 1920, height: 1080 },
-        storageState: '../tests/auth-state.json', // Use auth state for report access
+        storageState: getOptionalAuthState(),
         // WebKit doesn't support the same launch args as Chromium, keep minimal config
       },
       testMatch: '**/nightly-regression-auth.spec.ts',
