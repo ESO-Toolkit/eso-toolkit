@@ -255,11 +255,10 @@ npm test          # Unit tests (changed files)
 - **Post-Squash Rebase** - Automated branch tree rebasing
 
 ### Implementations
-- **GitHub Copilot (VS Code)**: `.github/copilot-skills/*/` directories - MCP servers for Agent Skills
+- **GitHub Copilot (VS Code)**: `.github/skills/*/SKILL.md` files — agent skills invoked via natural language in chat
 
 ### Documentation
-- Each skill has README.md with setup and usage instructions
-- See [AGENTS.md](AGENTS.md) for quick reference
+- See [AGENTS.md](AGENTS.md) for the full skill list and invocation examples
 
 ---
 
