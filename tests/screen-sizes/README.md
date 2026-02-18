@@ -46,13 +46,9 @@ npx playwright test --config playwright.screen-sizes.config.ts --update-snapshot
 npx playwright show-report screen-size-report
 ```
 
-## Cross-Platform Commands
+## Running via Make
 
 ```bash
-# PowerShell (Windows)
-.\make.ps1 test-screen-sizes
-
-# Unix/Linux/macOS
 make test-screen-sizes
 ```
 
