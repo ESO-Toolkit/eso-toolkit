@@ -108,6 +108,9 @@ function cleanDescription(body) {
     cleaned = cleaned.replace(/<!--/g, '');
   } while (cleaned !== previous);
 
+  // Final safety pass: ensure all HTML comment starts are removed to satisfy CodeQL
+  cleaned = cleaned.replace(/<!--/g, '');
+
   // Remove consecutive blank lines (collapse to single)
   cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
 
