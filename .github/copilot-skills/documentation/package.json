@@ -13,6 +13,6 @@
     "copilot"
   ],
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.7.0"
+    "@modelcontextprotocol/sdk": "^1.26.0"
   }
 }
