@@ -191,8 +191,8 @@ setup: install codegen fetch-abilities
 # Create a pull request using twig
 pr:
 	@$(COLOR) subheader "Creating Pull Request"
-	@$(COLOR) info "Running twig github pr create-pr..."
-	twig github pr create-pr
+	@$(COLOR) info "Running gh pr create..."
+	gh pr create --fill
 
 # Cross-platform npm cache clear
 clear-cache:
