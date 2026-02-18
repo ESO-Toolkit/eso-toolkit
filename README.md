@@ -2,9 +2,9 @@
 
 <!-- Status Badges -->
 
-[![Build Status](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/pr-checks.yml/badge.svg?branch=main)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/pr-checks.yml)
-[![Deploy Status](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy.yml)
-[![Coverage Workflow](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml/badge.svg?branch=main)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
+[![Build Status](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/pr-checks.yml/badge.svg?branch=master)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/pr-checks.yml)
+[![Deploy Status](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy.yml/badge.svg?branch=master)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy.yml)
+[![Coverage Workflow](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml/badge.svg?branch=master)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
 [![Nightly Tests](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/nightly-tests.yml/badge.svg)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/nightly-tests.yml)
 
 <!-- Coverage Badges -->
