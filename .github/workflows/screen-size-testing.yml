@@ -475,11 +475,21 @@ jobs:
           path: screen-size-reports/
           retention-days: 90
 
+      - name: Generate Deploy Token
+        if: always()
+        id: generate-deploy-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.DEPLOY_APP_ID }}
+          private-key: ${{ secrets.DEPLOY_APP_PRIVATE_KEY }}
+          owner: ESO-Toolkit
+          repositories: eso-toolkit-reports
+
       - name: Deploy Reports to GitHub Pages
         if: always()
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ secrets.REPORTS_DEPLOY_TOKEN }}
+          github_token: ${{ steps.generate-deploy-token.outputs.token }}
           external_repository: ESO-Toolkit/eso-toolkit-reports
           publish_dir: screen-size-reports
           destination_dir: screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}
