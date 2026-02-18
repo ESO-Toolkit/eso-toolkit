@@ -1,8 +1,13 @@
 const baseConfig = require('../jest.config.cjs');
+const path = require('path');
 
 /** @type {import('jest').Config} */
 module.exports = {
   ...baseConfig,
+  
+  // Set root directory to project root (parent of jest/ directory)
+  rootDir: path.resolve(__dirname, '..'),
+  
   displayName: 'integration',
   testMatch: [
     '<rootDir>/src/**/__tests__/integration/**/*.test.{js,jsx,ts,tsx}',
