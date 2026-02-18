@@ -150,6 +150,7 @@
     "format": "prettier --write ./src/**/*.{ts,tsx,js,jsx,json,css,md,graphql}",
     "format:check": "prettier --check ./src/**/*.{ts,tsx,js,jsx,json,css,md,graphql}",
     "generate-version": "node scripts/generate-version.cjs",
+    "generate-whats-new": "node scripts/generate-whats-new.cjs",
     "health-check": "node scripts/health-check.cjs",
     "deploy": "node scripts/deploy.cjs deploy",
     "deploy:validate": "node scripts/deploy.cjs validate",
