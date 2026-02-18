@@ -11,7 +11,13 @@ const STORAGE_KEY = 'eso-toolkit-whats-new-last-seen';
  * - Tracks the last-seen timestamp in localStorage
  * - Provides a count of unseen entries for badge display
  */
-export function useWhatsNew() {
+export function useWhatsNew(): {
+  data: WhatsNewData | null;
+  loading: boolean;
+  error: string | null;
+  unseenCount: number;
+  markSeen: () => void;
+} {
   const [data, setData] = useState<WhatsNewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +32,7 @@ export function useWhatsNew() {
   useEffect(() => {
     let cancelled = false;
 
-    const fetchData = async () => {
+    const fetchData = async (): Promise<void> => {
       try {
         const response = await fetch('/whats-new.json');
         if (!response.ok) {

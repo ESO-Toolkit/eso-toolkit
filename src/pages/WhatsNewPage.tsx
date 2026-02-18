@@ -32,7 +32,9 @@ const LABEL_COLORS: Record<string, 'success' | 'info' | 'warning' | 'error' | 'p
   performance: 'primary',
 };
 
-function labelColor(name: string): 'success' | 'info' | 'warning' | 'error' | 'primary' | 'default' {
+function labelColor(
+  name: string,
+): 'success' | 'info' | 'warning' | 'error' | 'primary' | 'default' {
   const lower = name.toLowerCase();
   for (const [key, color] of Object.entries(LABEL_COLORS)) {
     if (lower.includes(key)) return color;
