@@ -11,11 +11,11 @@ import { defineConfig, devices } from '@playwright/test';
  * - Single worker for sequential execution
  */
 export default defineConfig({
-  testDir: './tests',
+  testDir: '../tests',
   testMatch: '**/debug-*.spec.ts',
   
   /* Run global setup to handle authentication */
-  globalSetup: './tests/global-setup.ts',
+  globalSetup: '../tests/global-setup.ts',
   
   /* Run tests in headed mode */
   use: {

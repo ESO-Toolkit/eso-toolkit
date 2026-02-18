@@ -114,10 +114,10 @@ Configured in `tsconfig.json` and `vite.config.mjs`:
 - **Location**: `src/**/*.test.ts(x)`
 - **Configs**: 
   - `jest.config.cjs` - Main configuration
-  - `jest.ci.config.cjs` - CI-optimized settings
-  - `jest.smoke.config.cjs` - Quick validation
-  - `jest.scribing.config.cjs` - Scribing-specific tests
-  - `jest.integration.config.cjs` - Integration tests
+  - `jest/ci.config.cjs` - CI-optimized settings
+  - `jest/smoke.config.cjs` - Quick validation
+  - `jest/scribing.config.cjs` - Scribing-specific tests
+  - `jest/integration.config.cjs` - Integration tests
 
 ### Integration Tests (Testing Library)
 - **Target**: Component integration and interaction
@@ -127,11 +127,11 @@ Configured in `tsconfig.json` and `vite.config.mjs`:
 - **Target**: Full user workflows
 - **Execution**: VS Code MCP Playwright tool (preferred) or CLI
 - **Configs**:
-  - `playwright.nightly.config.ts` - Comprehensive cross-browser
-  - `playwright.smoke.config.ts` - Critical paths
-  - `playwright.full.config.ts` - All non-nightly tests
-  - `playwright.performance.config.ts` - Performance benchmarks
-  - `playwright.screen-sizes.config.ts` - Responsive testing
+  - `playwright/nightly.config.ts` - Comprehensive cross-browser
+  - `playwright/smoke.config.ts` - Critical paths
+  - `playwright/full.config.ts` - All non-nightly tests
+  - `playwright/performance.config.ts` - Performance benchmarks
+  - `playwright/screen-sizes.config.ts` - Responsive testing
 - **Features**: Sharding support, parallel execution
 
 ---

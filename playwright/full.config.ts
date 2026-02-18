@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-import { calculateOptimalWorkers } from './tests/utils/worker-config';
+import { calculateOptimalWorkers } from '../tests/utils/worker-config';
 
 /**
  * Playwright configuration for comprehensive full test suite
@@ -27,7 +27,7 @@ import { calculateOptimalWorkers } from './tests/utils/worker-config';
  * View report: npm run test:full:report
  */
 export default defineConfig({
-  testDir: './tests',
+  testDir: '../tests',
   
   /* Run ALL tests EXCEPT nightly, debug, and screen-size tests */
   testIgnore: [
@@ -51,7 +51,7 @@ export default defineConfig({
   ],
   
   /* Output directory for test results */
-  outputDir: 'test-results-full',
+  outputDir: '../test-results-full',
   
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -78,10 +78,10 @@ export default defineConfig({
   /* Reporter to use */
   reporter: [
     ['html', { 
-      outputFolder: 'playwright-report-full',
+      outputFolder: '../playwright-report-full',
       open: 'never',
     }],
-    ['json', { outputFile: 'playwright-report-full/results.json' }],
+    ['json', { outputFile: '../playwright-report-full/results.json' }],
     ['list'],
     ...(process.env.CI ? [['github'] as const] : []),
   ],

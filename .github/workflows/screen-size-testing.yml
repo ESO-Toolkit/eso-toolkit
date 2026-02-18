@@ -240,7 +240,7 @@ jobs:
           ls -la tests/screen-sizes/*.spec.ts
           echo ""
           echo "Available configuration:"
-          ls -la playwright.screen-sizes.config.ts
+          ls -la playwright/screen-sizes.config.ts
           echo ""
           echo "Worker configuration will limit parallel execution to prevent API rate limiting"
 
@@ -263,10 +263,10 @@ jobs:
           
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots (manual: ${{ github.event.inputs.update_snapshots }}, auto: ${{ steps.check_snapshots.outputs.snapshots_exist == 'false' }})"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
             echo "Running visual regression comparison against baseline snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts tests/screen-sizes/comprehensive-visual-regression.spec.ts
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
           
           echo "✅ Screen size tests completed with optimized performance"
@@ -315,10 +315,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Android*" --project="iPhone*" --project="Mobile*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Android*" --project="iPhone*" --project="Mobile*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Android*" --project="iPhone*" --project="Mobile*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Android*" --project="iPhone*" --project="Mobile*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
         env:
           CI: true
@@ -333,10 +333,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="*Tablet*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="*Tablet*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="*Tablet*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="*Tablet*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
         env:
           CI: true
@@ -351,10 +351,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Desktop*" --project="Laptop*" --project="Surface*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Desktop*" --project="Laptop*" --project="Surface*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Desktop*" --project="Laptop*" --project="Surface*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Desktop*" --project="Laptop*" --project="Surface*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
         env:
           CI: true
@@ -369,10 +369,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Breakpoint*" --project="Ultrawide*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Breakpoint*" --project="Ultrawide*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Breakpoint*" --project="Ultrawide*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Breakpoint*" --project="Ultrawide*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
         env:
           CI: true

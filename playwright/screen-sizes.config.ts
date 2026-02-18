@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-import { calculateOptimalWorkers } from './tests/utils/worker-config';
+import { calculateOptimalWorkers } from '../tests/utils/worker-config';
+import { BASE_URL, ciBlockExternalHeaders, devWebServer } from '../tests/utils/playwright-shared';
 
 /**
  * Configuration for screen size validation testing
@@ -8,9 +9,9 @@ import { calculateOptimalWorkers } from './tests/utils/worker-config';
  * @see https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: './tests/screen-sizes',
+  testDir: '../tests/screen-sizes',
   /* Output directory for test results */
-  outputDir: 'test-results-screen-sizes',
+  outputDir: '../test-results-screen-sizes',
   /* Run tests in files in parallel */
   fullyParallel: !process.env.CI,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -40,24 +41,24 @@ export default defineConfig({
   /* Enhanced reporter for screen size validation */
   reporter: [
     ['html', { 
-      outputFolder: 'screen-size-report',
+      outputFolder: '../screen-size-report',
       open: process.env.CI ? 'never' : 'on-failure',
       host: '0.0.0.0',
       port: 9323,
     }],
-    ['json', { outputFile: 'screen-size-report/results.json' }],
+    ['json', { outputFile: '../screen-size-report/results.json' }],
     ...(process.env.CI ? [['github'] as const] : []),
   ],
   /* Use OS-agnostic snapshot paths for cross-platform compatibility */
   snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
   
   /* Global setup to authenticate once before running the test suite */
-  globalSetup: './tests/global-setup.ts',
+  globalSetup: '../tests/global-setup.ts',
   
   /* Shared settings for all the projects below */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    baseURL: BASE_URL,
     
     /* Collect trace when retrying the failed test */
     trace: 'retain-on-failure',
@@ -75,14 +76,10 @@ export default defineConfig({
     actionTimeout: process.env.CI ? 75000 : 35000,
     
     /* Use shared authentication state from global setup */
-    storageState: 'tests/auth-state.json',
+    storageState: '../tests/auth-state.json',
     
     /* Block external requests in CI to improve reliability */
-    ...(process.env.CI && {
-      extraHTTPHeaders: {
-        'X-Block-External-Requests': 'true',
-      },
-    }),
+    ...ciBlockExternalHeaders,
   },
 
   /* Configure projects for different screen sizes and devices */
@@ -255,12 +252,5 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000, // Increased timeout for server startup
-    stderr: 'pipe',
-    stdout: 'pipe',
-  },
+  webServer: devWebServer,
 });

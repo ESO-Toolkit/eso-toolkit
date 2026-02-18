@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-import { calculateOptimalWorkers } from './tests/utils/worker-config';
+import { calculateOptimalWorkers } from '../tests/utils/worker-config';
+import { getOptionalAuthState } from '../tests/utils/playwright-shared';
 
 /**
  * Playwright configuration specifically for nightly regression tests
@@ -34,10 +35,10 @@ const nightlyExtraHeaders = (process.env.PLAYWRIGHT_SEND_NIGHTLY_HEADER ?? '').t
   : undefined;
 
 export default defineConfig({
-  testDir: './tests',
+  testDir: '../tests',
 
   /* Global setup for authentication */
-  globalSetup: './tests/global-setup.ts',
+  globalSetup: '../tests/global-setup.ts',
 
   /* Only run nightly regression tests */
   testMatch: '**/nightly-regression*.spec.ts',
@@ -68,12 +69,12 @@ export default defineConfig({
   /* Comprehensive reporting for nightly runs */
   reporter: [
     ['line'], // Primary reporter for console output
-    ['json', { outputFile: 'test-results/nightly-results.json' }],
-    ['junit', { outputFile: 'test-results/nightly-junit.xml' }],
+    ['json', { outputFile: '../test-results/nightly-results.json' }],
+    ['junit', { outputFile: '../test-results/nightly-junit.xml' }],
     [
       'html',
       {
-        outputFolder: 'playwright-report-nightly',
+        outputFolder: '../playwright-report-nightly',
         open: 'never', // Never auto-open HTML report
       },
     ],
@@ -94,18 +95,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
 
     /* Use saved authentication state if available - gracefully handle missing auth */
-    storageState: (() => {
-      if (process.env.CI) return undefined;
-      
-      // Check if auth state file exists before using it
-      try {
-        const fs = require('fs');
-        const authStatePath = 'tests/auth-state.json';
-        return fs.existsSync(authStatePath) ? authStatePath : undefined;
-      } catch {
-        return undefined;
-      }
-    })(),
+    storageState: getOptionalAuthState(),
 
     /* Real network requests - MSW service worker removed from public folder to prevent interference */
     extraHTTPHeaders: nightlyExtraHeaders,
@@ -121,15 +111,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1920, height: 1080 },
-        storageState: (() => {
-          try {
-            const fs = require('fs');
-            const authStatePath = 'tests/auth-state.json';
-            return fs.existsSync(authStatePath) ? authStatePath : undefined;
-          } catch {
-            return undefined;
-          }
-        })(),
+        storageState: getOptionalAuthState(),
         launchOptions: {
           args: [
             '--disable-web-security',
@@ -146,15 +128,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Firefox'],
         viewport: { width: 1920, height: 1080 },
-        storageState: (() => {
-          try {
-            const fs = require('fs');
-            const authStatePath = 'tests/auth-state.json';
-            return fs.existsSync(authStatePath) ? authStatePath : undefined;
-          } catch {
-            return undefined;
-          }
-        })(),
+        storageState: getOptionalAuthState(),
         launchOptions: {
           firefoxUserPrefs: {
             'dom.security.https_only_mode': false,
@@ -171,7 +145,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Safari'],
         viewport: { width: 1920, height: 1080 },
-        storageState: 'tests/auth-state.json', // Use auth state for report access
+        storageState: '../tests/auth-state.json', // Use auth state for report access
         // WebKit doesn't support the same launch args as Chromium, keep minimal config
       },
       testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
@@ -183,7 +157,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1920, height: 1080 },
-        storageState: 'tests/auth-state.json', // Use auth state for report access
+        storageState: '../tests/auth-state.json', // Use auth state for report access
         launchOptions: {
           args: [
             '--disable-web-security',
@@ -200,7 +174,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Firefox'],
         viewport: { width: 1920, height: 1080 },
-        storageState: 'tests/auth-state.json', // Use auth state for report access
+        storageState: '../tests/auth-state.json', // Use auth state for report access
         launchOptions: {
           firefoxUserPrefs: {
             'dom.security.https_only_mode': false,
@@ -217,7 +191,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Safari'],
         viewport: { width: 1920, height: 1080 },
-        storageState: 'tests/auth-state.json', // Use auth state for report access
+        storageState: '../tests/auth-state.json', // Use auth state for report access
         // WebKit doesn't support the same launch args as Chromium, keep minimal config
       },
       testMatch: '**/nightly-regression-auth.spec.ts',
@@ -256,7 +230,7 @@ export default defineConfig({
   ],
 
   /* Output directories */
-  outputDir: 'test-results-nightly/',
+  outputDir: '../test-results-nightly/',
 
   /* Global timeout for the entire test run */
   globalTimeout: process.env.CI ? 7200000 : 3600000, // 2 hours in CI, 1 hour locally

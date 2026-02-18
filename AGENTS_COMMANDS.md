@@ -143,7 +143,7 @@
 | `package.json` | Dependencies and scripts | npm |
 | `vite.config.mjs` | Build configuration | Vite |
 | `jest.config.cjs` | Unit test configuration | Jest |
-| `playwright.nightly.config.ts` | E2E test configuration | Playwright |
+| `playwright/nightly.config.ts` | E2E test configuration | Playwright |
 | `eslint.config.js` | Linting rules | ESLint 9 |
 | `tsconfig.json` | TypeScript configuration | TypeScript compiler |
 | `codegen.yml` | GraphQL code generation | GraphQL Code Generator |
