@@ -18,46 +18,7 @@ The application is automatically deployed to GitHub Pages on push to the `main` 
 - Static hosting only (no server-side API)
 - Limited to public repositories (unless GitHub Pro)
 
-### 2. Docker Container Deployment
-
-For full-featured deployment with potential backend API support.
-
-#### Prerequisites
-- Docker 20.10+
-- Docker Compose 2.0+
-
-#### Quick Start
-```bash
-# Clone repository
-git clone https://github.com/ESO-Toolkit/eso-toolkit.git
-cd eso-log-aggregator
-
-# Set environment variables
-cp .env.example .env
-# Edit .env with your configuration
-
-# Build and start
-docker-compose up -d --build
-
-# Check health
-curl http://localhost/health
-```
-
-#### Environment Variables
-```bash
-# Required
-VITE_BASE_URL=/
-VITE_RELEASE_VERSION=1.0.0
-NODE_ENV=production
-
-# Optional
-PORT=80
-DOMAIN=yourdomain.com
-SENTRY_DSN=your_sentry_dsn
-GRAFANA_PASSWORD=secure_password
-```
-
-### 3. Manual Deployment
+### 2. Manual Deployment
 
 For custom deployment scenarios or integration with existing infrastructure.
 
@@ -86,9 +47,6 @@ server {
     root /var/www/eso-log-aggregator/build;
     index index.html;
 
-    # Include the nginx.conf from docker/nginx.conf
-    # for complete security headers and caching rules
-    
     location / {
         try_files $uri $uri/ /index.html;
     }
@@ -188,12 +146,12 @@ Application logs are output in JSON format suitable for log aggregation systems.
 ## Scaling Considerations
 
 ### Horizontal Scaling
-- Deploy multiple container instances behind a load balancer
+- Deploy multiple instances behind a load balancer
 - Use sticky sessions if needed for user state
 - Consider CDN for static asset distribution
 
 ### Vertical Scaling
-- Increase container memory for large log processing
+- Increase server memory for large log processing
 - Optimize build process for faster deployments
 - Enable HTTP/2 for better resource loading
 
@@ -204,14 +162,6 @@ Currently uses static JSON files. For high-volume usage:
 - Add database connection pooling
 
 ## Security Hardening
-
-### Container Security
-```dockerfile
-# Use non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-USER nextjs
-```
 
 ### Network Security
 - Use HTTPS in production (TLS 1.3 minimum)
@@ -268,12 +218,6 @@ npm run build
 
 **Health Check Failures:**
 ```bash
-# Check container logs
-docker logs eso-log-aggregator
-
-# Check nginx configuration
-docker exec eso-log-aggregator nginx -t
-
 # Manual health check
 curl -v http://localhost/health
 ```
