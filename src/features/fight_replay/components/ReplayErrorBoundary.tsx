@@ -257,7 +257,7 @@ const WebGLFallbackUI: React.FC<{
           <Typography variant="body2" color="text.secondary">
             Need help?{' '}
             <Link
-              href="https://github.com/bkrupa/eso-log-aggregator/wiki/WebGL-Troubleshooting"
+              href="https://github.com/ESO-Toolkit/eso-toolkit/wiki/WebGL-Troubleshooting"
               target="_blank"
               rel="noopener"
             >
@@ -451,7 +451,7 @@ const ErrorFallbackUI: React.FC<{
           <Typography variant="body2" color="text.secondary">
             If this problem persists, please{' '}
             <Link
-              href="https://github.com/bkrupa/eso-log-aggregator/issues"
+              href="https://github.com/ESO-Toolkit/eso-toolkit/issues"
               target="_blank"
               rel="noopener"
             >

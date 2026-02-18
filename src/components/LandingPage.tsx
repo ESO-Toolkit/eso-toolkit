@@ -1366,7 +1366,7 @@ export const LandingPage: React.FC = () => {
               <ToolAction
                 onClick={() =>
                   window.open(
-                    'https://github.com/bkrupa/eso-log-aggregator',
+                    'https://github.com/ESO-Toolkit/eso-toolkit',
                     '_blank',
                     'noopener,noreferrer',
                   )
