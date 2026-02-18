@@ -13,11 +13,15 @@ All agent skills are implemented as MCP servers in `.github/copilot-skills/`:
 | Workflow | `.github/copilot-skills/workflow/` | Branch creation and git workflow enforcement |
 | Jira | `.github/copilot-skills/jira/` | Jira ticket management |
 | Playwright | `.github/copilot-skills/playwright/` | E2E test execution |
-| Testing | `.github/copilot-skills/testing/` | Test management |
+| Testing | `.github/copilot-skills/testing/` | Dev workflow (unit tests, lint, format, build) |
 | Reports | `.github/copilot-skills/reports/` | Production report debugging |
 | Git | `.github/copilot-skills/git/` | Branch tree and twig operations |
 | Sentry | `.github/copilot-skills/sentry/` | Error tracking |
 | Rebase | `.github/copilot-skills/rebase/` | Post-squash rebase |
+| Auth | `.github/copilot-skills/auth/` | Browser session OAuth authentication |
+| Skill Data Regen | `.github/copilot-skills/skill-data-regen/` | ESO skill line data regeneration |
+| UESP Data | `.github/copilot-skills/uesp-data/` | Item icon management |
+| Documentation | `.github/copilot-skills/documentation/` | Documentation file placement advisor |
 
 Each skill has its own `README.md` with usage instructions.
 
@@ -48,11 +52,11 @@ Each skill has its own `README.md` with usage instructions.
 
 ### MCP Browser Tools — [`mcp-tools/`](./mcp-tools/)
 - [Index](./mcp-tools/INDEX.md) — Overview of MCP tool integrations
-- [Playwright Auth Setup](./mcp-tools/AI_MCP_PLAYWRIGHT_AUTH_SETUP.md) — Application OAuth authentication
+- [Playwright Auth Setup](./mcp-tools/AI_MCP_PLAYWRIGHT_AUTH_SETUP.md) — Reference for OAuth auth (use Auth skill for automated workflows)
 - [Quick Reference](./mcp-tools/AI_MCP_QUICK_REFERENCE.md) — Tool usage reference
 
 ### Data Generation
-- [Skill Data Regeneration Prompt](./SKILL_DATA_REGENERATION_PROMPT.md) — Prompt for regenerating skill line data from ESO-Hub
+- [Skill Data Regeneration Prompt](./SKILL_DATA_REGENERATION_PROMPT.md) — Reference for skill line data regeneration (use Skill Data Regen skill for automated workflows)
 
 ### Wireframes — [`wireframes/`](./wireframes/)
 - UI design wireframes for features

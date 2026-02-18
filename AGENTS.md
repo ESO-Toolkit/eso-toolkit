@@ -70,6 +70,10 @@ git checkout -b ESO-XXX/description-here
 - **Report Debugging**: [.github/copilot-skills/reports/](.github/copilot-skills/reports/)
 - **Git Operations**: [.github/copilot-skills/git/](.github/copilot-skills/git/)
 - **Post-Squash Rebase**: [.github/copilot-skills/rebase/](.github/copilot-skills/rebase/)
+- **Auth / OAuth**: [.github/copilot-skills/auth/](.github/copilot-skills/auth/) - Browser session authentication
+- **Skill Data Regen**: [.github/copilot-skills/skill-data-regen/](.github/copilot-skills/skill-data-regen/) - ESO skill line data regeneration
+- **UESP Data**: [.github/copilot-skills/uesp-data/](.github/copilot-skills/uesp-data/) - Item icon management
+- **Documentation**: [.github/copilot-skills/documentation/](.github/copilot-skills/documentation/) - Doc placement advisor
 
 ### Feature & Architecture Docs
 - **Features**: [documentation/features/](documentation/features/)
@@ -145,7 +149,24 @@ See: [.github/copilot-skills/rebase/](.github/copilot-skills/rebase/)
 @workspace Check icon coverage for our gear data
 @workspace Look up item 147237
 ```
-See: [.copilot/uesp-data/](.copilot/uesp-data/)
+See: [.github/copilot-skills/uesp-data/](.github/copilot-skills/uesp-data/)
+
+**Auth** (Browser Authentication):
+```
+@workspace Check if I have a valid auth token
+@workspace Generate a fresh OAuth token
+@workspace Get the auth injection script
+```
+See: [.github/copilot-skills/auth/](.github/copilot-skills/auth/)
+
+**Skill Data Regeneration** (ESO Skill Lines):
+```
+@workspace List all ESO skill lines
+@workspace Look up ability "Runeblades" in abilities.json
+@workspace Get skill data regeneration instructions
+@workspace Generate validation report for all skill modules
+```
+See: [.github/copilot-skills/skill-data-regen/](.github/copilot-skills/skill-data-regen/)
 
 ---
 

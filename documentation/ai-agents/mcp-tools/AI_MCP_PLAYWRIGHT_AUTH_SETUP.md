@@ -1,5 +1,7 @@
 # Microsoft Playwright MCP Browser Tool - Application Authentication Guide
 
+> **Skill Available**: Use the Auth skill (`.github/copilot-skills/auth/`) for automated token generation and injection. This document serves as the detailed reference with troubleshooting.
+
 **Last Updated**: November 12, 2025  
 **Purpose**: Guide for AI agents to authenticate with the ESO Log Aggregator application when using the Microsoft Playwright MCP browser automation tool
 

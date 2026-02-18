@@ -1,0 +1,27 @@
+{
+  "name": "@eso-log-aggregator/copilot-skill-data-regen",
+  "version": "1.0.0",
+  "description": "GitHub Copilot Agent Skill for regenerating ESO skill line data files by scraping ESO-Hub",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "github-copilot",
+    "agent-skill",
+    "eso",
+    "skill-data",
+    "regeneration"
+  ],
+  "author": "ESO Log Aggregator Team",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
