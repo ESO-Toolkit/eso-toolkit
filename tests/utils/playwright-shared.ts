@@ -37,14 +37,18 @@ export const ciBlockExternalHeaders = process.env.CI
   : {};
 
 /**
- * Returns the path to the Playwright auth-state file when it exists locally,
- * or `undefined` in CI (where auth is handled differently) or when the file
- * has not yet been generated.
+ * Returns the path to the Playwright auth-state file when it exists,
+ * or `undefined` when the file has not yet been generated (e.g. auth failed
+ * or credentials are not available).
+ *
+ * Works in both CI and local environments: if global-setup successfully
+ * obtained an OAuth token the file will be present; if auth failed global-setup
+ * writes an empty fallback and this returns the path to that file so tests can
+ * run in unauthenticated mode rather than crashing with ENOENT.
  *
  * Use this wherever a `storageState` option accepts `string | undefined`.
  */
 export function getOptionalAuthState(): string | undefined {
-  if (process.env.CI) return undefined;
   try {
     const authStatePath = 'tests/auth-state.json';
     return fs.existsSync(authStatePath) ? authStatePath : undefined;

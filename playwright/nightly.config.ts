@@ -145,7 +145,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Safari'],
         viewport: { width: 1920, height: 1080 },
-        storageState: '../tests/auth-state.json', // Use auth state for report access
+        storageState: getOptionalAuthState(),
         // WebKit doesn't support the same launch args as Chromium, keep minimal config
       },
       testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
@@ -157,7 +157,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1920, height: 1080 },
-        storageState: '../tests/auth-state.json', // Use auth state for report access
+        storageState: getOptionalAuthState(),
         launchOptions: {
           args: [
             '--disable-web-security',
@@ -174,7 +174,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Firefox'],
         viewport: { width: 1920, height: 1080 },
-        storageState: '../tests/auth-state.json', // Use auth state for report access
+        storageState: getOptionalAuthState(),
         launchOptions: {
           firefoxUserPrefs: {
             'dom.security.https_only_mode': false,
@@ -191,7 +191,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Safari'],
         viewport: { width: 1920, height: 1080 },
-        storageState: '../tests/auth-state.json', // Use auth state for report access
+        storageState: getOptionalAuthState(),
         // WebKit doesn't support the same launch args as Chromium, keep minimal config
       },
       testMatch: '**/nightly-regression-auth.spec.ts',
