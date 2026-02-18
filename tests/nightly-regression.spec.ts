@@ -398,7 +398,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
   test.describe('Experimental Tabs', () => {
     test(`should load experimental tabs for report with fights`, async ({ page }) => {
       // Use a report that we know has fights - skip the first one if it has no fights
-      const reportId = REAL_REPORT_IDS[1]; // qdxpGgyQ92A31LBr - confirmed to have fights
+      const reportId = REAL_REPORT_IDS[0]; // prV8jWb1NqFJc97Z - Rockgrove with 17 fights
 
       // Navigate to report and get first fight
       await page.goto(`/report/${reportId}`, {
@@ -520,42 +520,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
   test.describe('Interactive Features', () => {
     test('should test player selection and filtering', async ({ page }, testInfo) => {
       const reportId = REAL_REPORT_IDS[0];
-
-      // Navigate to players tab - use direct navigation to avoid fight button issues
-      await page.goto(`/report/${reportId}`, {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
-
-      // Wait for network idle before checking content (needed for Firefox/WebKit)
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-
-      // Additional wait for WebKit to ensure JavaScript has fully executed
-      if (testInfo.project.name.includes('webkit')) {
-        await page.waitForTimeout(3000);
-      }
-
-      // Check if the page loaded successfully
-      const bodyContent = await page.locator('body').textContent();
-      const contentLength = bodyContent?.length || 0;
-      
-      if (contentLength < 100) {
-        throw new Error(`Report ${reportId} appears to have minimal content (${contentLength} characters)`);
-      }
-
-      console.log(`✅ Report ${reportId} loaded with ${contentLength} characters of content`);
-
-      // Try to click fight button, but use fallback if it fails
-      const firstFightButton = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
-      let fightId = '1'; // Default fallback
-
-      try {
-        await firstFightButton.click({ timeout: 10000, force: true });
-        await page.waitForURL(/\/fight\/\d+/, { timeout: TEST_TIMEOUTS.navigation });
-        fightId = page.url().match(/\/fight\/(\d+)/)?.[1] || '1';
-      } catch (clickError) {
-        console.log('Fight button click failed, using direct navigation to fight 1');
-      }
+      const fightId = TEST_DATA.KNOWN_FIGHT_ID;
 
       // Navigate directly to players tab
       await page.goto(`/report/${reportId}/fight/${fightId}/players`, {
@@ -665,13 +630,6 @@ test.describe('Nightly Regression Tests - Real Data', () => {
         console.log('Screenshot failed but continuing test:', (screenshotError as Error).message);
       }
 
-      await page.goto(`/report/${reportId}/fight/${fightId}/damage-done`, {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
-
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-
       // Target selector functionality is working if we got this far
       console.log('✅ Target selector page loaded successfully');
     });
@@ -756,48 +714,10 @@ test.describe('Nightly Regression Tests - Real Data', () => {
   test.describe('Performance and Error Monitoring', () => {
     test('should monitor load times and network requests', async ({ page }, testInfo) => {
       const reportId = REAL_REPORT_IDS[0];
+      const performanceFightId = TEST_DATA.KNOWN_FIGHT_ID;
 
       // Track performance metrics
       const startTime = Date.now();
-
-      await page.goto(`/report/${reportId}`, {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
-
-      // Try networkidle but fallback to content check if it times out
-      try {
-        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
-      } catch (error) {
-        console.log('⚠️ NetworkIdle timeout for performance test, checking for content instead...');
-        await page.waitForTimeout(3000);
-      }
-
-      // Additional wait for WebKit to ensure JavaScript has fully executed
-      if (testInfo.project.name.includes('webkit')) {
-        await page.waitForTimeout(3000);
-      }
-
-      // Check if the page loaded successfully
-      const bodyContent = await page.locator('body').textContent();
-      const contentLength = bodyContent?.length || 0;
-      
-      if (contentLength < 100) {
-        throw new Error(`Report ${reportId} appears to have minimal content (${contentLength} characters)`);
-      }
-
-      console.log(`✅ Report ${reportId} loaded with ${contentLength} characters of content`);
-
-      const firstFightButton = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
-      let performanceFightId = '1'; // Default fallback
-
-      try {
-        await firstFightButton.click({ timeout: 10000, force: true });
-        await page.waitForURL(/\/fight\/\d+/, { timeout: TEST_TIMEOUTS.navigation });
-        performanceFightId = page.url().match(/\/fight\/(\d+)/)?.[1] || '1';
-      } catch (clickError) {
-        console.log('Fight button click failed, using direct navigation to fight 1');
-      }
 
       // Navigate to insights tab and measure load time
       const insightsStartTime = Date.now();

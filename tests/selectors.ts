@@ -113,6 +113,14 @@ export const TEST_DATA = {
   REAL_REPORT_IDS: [
     'prV8jWb1NqFJc97Z', // Current valid report (updated 2026-01-21) - Rockgrove with 17 fights
   ],
+
+  /**
+   * A known valid fight ID within REAL_REPORT_IDS[0].
+   * Used for direct URL navigation in tests that don't need to exercise the
+   * fight-selection UI, eliminating unnecessary landing-page round-trips to
+   * the esologs API.
+   */
+  KNOWN_FIGHT_ID: '5',
   
   MAIN_TABS: [
     'insights',

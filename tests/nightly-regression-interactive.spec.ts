@@ -529,16 +529,8 @@ test.describe('Nightly Regression - Interactive Features', () => {
     test('should test location heatmap visualization', async ({ page }) => {
       const reportId = REPORT_WITH_FIGHTS;
 
-      // Navigate to report and get fight
-      await page.goto(`/report/${reportId}`, {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
-
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-
-      // Use the robust fight detection helper function
-      const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
+      // Use known fight ID directly — avoids an extra landing-page API round-trip
+      const fightId = TEST_DATA.KNOWN_FIGHT_ID;
 
       console.log(`ℹ️  Using fight ${fightId} for heatmap visualization test`);
 
@@ -625,27 +617,8 @@ test.describe('Nightly Regression - Interactive Features', () => {
     test('should test rotation analysis visualization', async ({ page }, testInfo) => {
       const reportId = REPORT_WITH_FIGHTS;
 
-      // Get fight ID
-      await page.goto(`/report/${reportId}`, {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
-
-      // Try networkidle but fallback to content check if it times out
-      try {
-        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
-      } catch (error) {
-        console.log('⚠️ NetworkIdle timeout for rotation analysis, checking for content instead...');
-        await page.waitForTimeout(3000);
-      }
-
-      // Additional wait for WebKit to ensure JavaScript has fully executed
-      if (testInfo.project.name.includes('webkit')) {
-        await page.waitForTimeout(3000);
-      }
-
-      // Use the robust fight detection helper
-      const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
+      // Use known fight ID directly — avoids an extra landing-page API round-trip
+      const fightId = TEST_DATA.KNOWN_FIGHT_ID;
 
       console.log(`ℹ️  Using fight ${fightId} for rotation analysis test`);
 
@@ -700,22 +673,8 @@ test.describe('Nightly Regression - Interactive Features', () => {
     test('should test talents grid visualization', async ({ page }) => {
       const reportId = REPORT_WITH_FIGHTS;
 
-      // Get fight ID
-      await page.goto(`/report/${reportId}`, {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
-
-      // Try networkidle but fallback to content check if it times out
-      try {
-        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
-      } catch (error) {
-        console.log('⚠️ NetworkIdle timeout for talents grid, checking for content instead...');
-        await page.waitForTimeout(3000);
-      }
-
-      // Use the robust fight detection helper function
-      const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
+      // Use known fight ID directly — avoids an extra landing-page API round-trip
+      const fightId = TEST_DATA.KNOWN_FIGHT_ID;
 
       console.log(`ℹ️  Using fight ${fightId} for talents grid test`);
 
@@ -766,16 +725,8 @@ test.describe('Nightly Regression - Interactive Features', () => {
     test('should test advanced filtering functionality', async ({ page }) => {
       const reportId = REPORT_WITH_FIGHTS;
 
-      // Get fight ID and navigate to damage done tab
-      await page.goto(`/report/${reportId}`, {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
-
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-
-      // Use the robust fight detection helper function
-      const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
+      // Use known fight ID directly — avoids an extra landing-page API round-trip
+      const fightId = TEST_DATA.KNOWN_FIGHT_ID;
 
       console.log(`ℹ️  Using fight ${fightId} for advanced filtering test`);
 
@@ -826,16 +777,8 @@ test.describe('Nightly Regression - Interactive Features', () => {
     test('should test search functionality across tabs', async ({ page }) => {
       const reportId = REPORT_WITH_FIGHTS;
 
-      // Test search in events tab
-      await page.goto(`/report/${reportId}`, {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
-
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-
-      // Use the robust fight detection helper function
-      const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
+      // Use known fight ID directly — avoids an extra landing-page API round-trip
+      const fightId = TEST_DATA.KNOWN_FIGHT_ID;
 
       console.log(`ℹ️  Using fight ${fightId} for search functionality test`);
 
@@ -880,22 +823,8 @@ test.describe('Nightly Regression - Interactive Features', () => {
     test('should handle rapid tab switching', async ({ page }) => {
       const reportId = REPORT_WITH_FIGHTS;
 
-      // Get fight ID
-      await page.goto(`/report/${reportId}`, {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
-
-      // Try networkidle but fallback to content check if it times out
-      try {
-        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
-      } catch (error) {
-        console.log('⚠️ NetworkIdle timeout for rapid tab switching, checking for content instead...');
-        await page.waitForTimeout(3000);
-      }
-
-      // Use the robust fight detection helper function
-      const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
+      // Use known fight ID directly — avoids an extra landing-page API round-trip
+      const fightId = TEST_DATA.KNOWN_FIGHT_ID;
 
       console.log(`ℹ️  Using fight ${fightId} for rapid tab switching test`);
 
@@ -933,16 +862,8 @@ test.describe('Nightly Regression - Interactive Features', () => {
     test('should handle large datasets in data grids', async ({ page }) => {
       const reportId = REPORT_WITH_FIGHTS;
 
-      // Navigate to raw events which typically has the most data
-      await page.goto(`/report/${reportId}`, {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
-
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-
-      // Use the robust fight detection helper function
-      const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
+      // Use known fight ID directly — avoids an extra landing-page API round-trip
+      const fightId = TEST_DATA.KNOWN_FIGHT_ID;
 
       console.log(`ℹ️  Using fight ${fightId} for large datasets test`);
 

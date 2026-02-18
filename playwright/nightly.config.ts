@@ -46,9 +46,9 @@ export default defineConfig({
   /* Run tests in files in parallel, but limit workers to avoid overloading APIs */
   fullyParallel: true,
   workers: process.env.CI ? calculateOptimalWorkers({ 
-    maxWorkers: 3, // Slightly more aggressive for nightly tests
-    memoryPerWorker: 900, // Lower memory per worker since tests are optimized
-    minWorkers: 2, // Ensure reasonable parallelization
+    maxWorkers: 2, // Reduced to limit concurrent esologs API calls and avoid rate limiting
+    memoryPerWorker: 900,
+    minWorkers: 1, // Allow single-worker operation when memory is constrained
   }) : 4, // Fewer workers to be respectful to APIs
 
   /* Enable sharding for faster parallel execution */
@@ -57,8 +57,8 @@ export default defineConfig({
       ? { current: parseInt(process.env.SHARD_INDEX), total: parseInt(process.env.SHARD_TOTAL) }
       : undefined,
 
-  /* Retry failed tests */
-  retries: process.env.CI ? 2 : 1,
+  /* Retry failed tests - keep low to reduce redundant API calls on transient failures */
+  retries: process.env.CI ? 1 : 0,
 
   /* Extended timeouts for real data loading */
   timeout: 180000, // 3 minutes per test
