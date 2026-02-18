@@ -48,7 +48,7 @@
 ### Code Quality
 - **ESLint 9** - Flat config format
   - Plugins: React, TypeScript, Import resolution
-  - Config: `eslint.config.js`
+  - Config: `eslint.config.mjs`
 - **Prettier** - Code formatting
 - **TypeScript** - Static type checking
   - Configs: main, node, scripts, typecheck
@@ -173,7 +173,7 @@ npm test          # Unit tests (changed files)
 - **Strict Mode**: Enabled
 - **Path Mapping**: Configured for aliases
 
-### ESLint (`eslint.config.js`)
+### ESLint (`eslint.config.mjs`)
 - **Format**: Flat config (ESLint 9+)
 - **Plugins**: React, TypeScript, Import
 - **Rules**: React Hooks, TypeScript-specific
