@@ -50,10 +50,10 @@ jobs:
 
       - name: Generate Coverage Badge JSON
         run: npm run coverage:badge-json
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
 
       - name: Generate Deploy Token
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
         id: generate-deploy-token
         uses: actions/create-github-app-token@v2
         with:
@@ -63,7 +63,7 @@ jobs:
           repositories: eso-log-aggregator-reports
 
       - name: Deploy Coverage Badges to GitHub Pages
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
         uses: peaceiris/actions-gh-pages@v4
         with:
           # Use personal_token (not github_token) when pushing to an external repository.
