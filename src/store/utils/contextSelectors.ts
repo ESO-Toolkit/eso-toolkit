@@ -44,10 +44,10 @@ export const createReportFightContextSelector = <
     const normalizedContext = normalizeReportFightContext(contextInput);
     const cacheKey = createReportFightCacheKey(normalizedContext);
 
-    // Retrieve from cache first and call directly (without re-using the map-retrieved
-    // reference after creation) to avoid unvalidated dynamic method-call warnings.
+    // Retrieve from cache first. Validate it is a function before calling to satisfy
+    // static analysis (CodeQL: unvalidated dynamic method call).
     const cachedSelector = selectorCache.get(cacheKey);
-    if (cachedSelector) {
+    if (typeof cachedSelector === 'function') {
       return cachedSelector(state);
     }
 
