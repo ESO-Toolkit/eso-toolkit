@@ -9,10 +9,10 @@
 
 <!-- Coverage Badges -->
 
-[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bkrupa/845FAC04DEF12C179B425A5699EC6ABC/raw/coverage-overall.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
-[![Lines](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bkrupa/845FAC04DEF12C179B425A5699EC6ABC/raw/coverage-lines.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
-[![Functions](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bkrupa/845FAC04DEF12C179B425A5699EC6ABC/raw/coverage-functions.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
-[![Branches](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bkrupa/845FAC04DEF12C179B425A5699EC6ABC/raw/coverage-branches.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-overall.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
+[![Lines](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-lines.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
+[![Functions](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-functions.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
+[![Branches](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-branches.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml)
 
 <!-- Additional Info Badges -->
 
@@ -20,7 +20,7 @@
 [![Node Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen?style=flat&logo=node.js)](package.json)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 
-> **Note**: Coverage badges are automatically generated and updated via GitHub Gist endpoints. They show real-time coverage from the dedicated [Coverage Workflow](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml). Detailed coverage reports and PR comments are available in the workflow runs.
+> **Note**: Coverage badges are automatically generated and deployed to [eso-log-aggregator-reports](https://github.com/ESO-Toolkit/eso-log-aggregator-reports) via the Coverage Workflow. They show real-time coverage from the dedicated [Coverage Workflow](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/coverage.yml). Detailed coverage reports and PR comments are available in the workflow runs.
 
 This project contains only the web application, built with React, TypeScript, GraphQL, Apollo Client, Material UI, Storybook, Jest, and Playwright.
 

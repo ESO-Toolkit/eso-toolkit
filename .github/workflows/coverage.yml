@@ -48,13 +48,29 @@ jobs:
         run: npm run coverage:badges
         if: always()
 
-      - name: Upload Coverage to GitHub Gist
-        run: node scripts/upload-coverage-to-gist.cjs
+      - name: Generate Coverage Badge JSON
+        run: npm run coverage:badge-json
         if: github.ref == 'refs/heads/main'
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GIST_TOKEN || secrets.GITHUB_TOKEN }}
-          COVERAGE_GIST_ID: ${{ secrets.COVERAGE_GIST_ID }}
+
+      - name: Generate Deploy Token
+        if: github.ref == 'refs/heads/main'
+        id: generate-deploy-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.DEPLOY_APP_ID }}
+          private-key: ${{ secrets.DEPLOY_APP_PRIVATE_KEY }}
+          owner: ESO-Toolkit
+          repositories: eso-log-aggregator-reports
+
+      - name: Deploy Coverage Badges to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ steps.generate-deploy-token.outputs.token }}
+          external_repository: ESO-Toolkit/eso-log-aggregator-reports
+          publish_dir: coverage/badge-json
+          destination_dir: badges
+          keep_files: true
 
       - name: Upload Coverage Badges
         uses: actions/upload-artifact@v6
