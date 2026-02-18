@@ -7,11 +7,11 @@
 # the merge button directly after getting a non-owner review.
 
 # Default owner for everything
-* @bkrupa @BraydenPB
+* @ESO-Toolkit/admins
 
-# Critical paths - explicit ownership for visibility
-/.github/ @bkrupa
-/.github/workflows/ @bkrupa
+# Critical paths - any member of the admins team can approve
+/.github/ @ESO-Toolkit/admins
+/.github/workflows/ @ESO-Toolkit/admins
 
 # CODEOWNERS itself - only @bkrupa can approve changes
 /.github/CODEOWNERS @bkrupa
