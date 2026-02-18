@@ -91,19 +91,8 @@
 
 ---
 
-## Cross-Platform Make Commands
+## Make Commands
 
-### PowerShell (Windows)
-| Command | Description |
-|---------|-------------|
-| `.\make.ps1 help` | Show all commands |
-| `.\make.ps1 dev` | Start dev server |
-| `.\make.ps1 test` | Run tests |
-| `.\make.ps1 build` | Production build |
-| `.\make.ps1 clean` | Clean artifacts |
-| `.\make.ps1 clean-test-data` | Clean test data |
-
-### Unix/Linux/macOS
 | Command | Description |
 |---------|-------------|
 | `make help` | Show all commands |

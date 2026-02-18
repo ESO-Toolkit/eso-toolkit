@@ -81,13 +81,9 @@ npm run test:screen-sizes:report
 npm run test:screen-sizes:debug
 ```
 
-### Cross-Platform Commands
+### Make Command
 ```bash
-# PowerShell (Windows)
-.\make.ps1 test:screen-sizes
-
-# Unix/Linux/macOS
-make test:screen-sizes
+make test-screen-sizes
 ```
 
 ## Test Types

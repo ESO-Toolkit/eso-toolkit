@@ -257,13 +257,10 @@ You can download real ESO logs data for testing and debugging using the report d
 
 ```powershell
 # Download all fights from a report
-npx ts-node --esm scripts/download-report-data.ts ABC123DEF
+npm run script -- scripts/download-report-data.ts ABC123DEF
 
 # Download specific fight only
-npx ts-node --esm scripts/download-report-data.ts ABC123DEF 1
-
-# Analyze scribing skills in downloaded data
-npx ts-node --esm scripts/examples/analyze-scribing-skills.ts ABC123DEF
+npm run script -- scripts/download-report-data.ts ABC123DEF 1
 ```
 
 **Requirements:**

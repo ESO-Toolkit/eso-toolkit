@@ -18,7 +18,7 @@ else
 	RM_ESLINT := rm -rf .eslintcache
 endif
 
-.PHONY: help install build test test-all lint lint-fix format fmt clean dev codegen fetch-abilities all os-info clean-cache clear-cache clean-modules clean-all reinstall pre-commit pc check prod-build setup test-watch typecheck pr
+.PHONY: help install build test test-all lint lint-fix format fmt clean dev codegen fetch-abilities all os-info clear-cache clean-modules clean-all reinstall pre-commit pc check prod-build setup test-watch typecheck pr clean-test-data test-screen-sizes test-screen-sizes-mobile test-screen-sizes-tablet test-screen-sizes-desktop test-screen-sizes-report test-screen-sizes-update
 
 # Default target
 help:
@@ -37,7 +37,7 @@ help:
 	@$(COLOR) color brightYellow "  format        - Format code with Prettier"
 	@$(COLOR) color brightYellow "  fmt           - Alias for format"
 	@$(COLOR) color brightYellow "  check         - Quick code quality checks (lint + test)"
-	@$(COLOR) color brightYellow "  pre-commit    - Run full CI pipeline (lint-fix, format, typecheck)"
+	@$(COLOR) color brightYellow "  pre-commit    - Run full CI pipeline (lint-fix, typecheck, format)"
 	@$(COLOR) color brightYellow "  pc            - Alias for pre-commit"
 	@$(COLOR) info "Build Commands:"
 	@$(COLOR) color brightGreen "  install       - Install dependencies"
@@ -47,7 +47,7 @@ help:
 	@$(COLOR) color brightGreen "  fetch-abilities - Fetch abilities data"
 	@$(COLOR) info "Cleanup Commands:"
 	@$(COLOR) color brightRed "  clean         - Clean build artifacts"
-	@$(COLOR) color brightRed "  clean-cache   - Clear npm cache"
+	@$(COLOR) color brightRed \"  clear-cache   - Clear npm cache\"
 	@$(COLOR) color brightRed "  clean-modules - Remove node_modules"
 	@$(COLOR) color brightRed "  clean-all     - Remove all generated files"
 	@$(COLOR) color brightRed "  clean-test-data - Clean test artifacts and old test data"
@@ -56,9 +56,6 @@ help:
 	@$(COLOR) color brightMagenta "  setup         - Initial project setup for new developers"
 	@$(COLOR) color brightMagenta "  all           - Run clean, install, lint, test, and build"
 	@$(COLOR) color brightMagenta "  pr            - Create a pull request using twig"
-	@$(COLOR) info "Affix Script Analysis Commands:"
-	@$(COLOR) color brightCyan "  analyze-affix-scripts     - Analyze affix scripts in combat logs"
-	@$(COLOR) color brightCyan "  analyze-affix-scripts-all - Analyze all downloaded combat logs"
 	@$(COLOR) info "Screen Size Testing Commands:"
 	@$(COLOR) color brightBlue "  test-screen-sizes         - Run all screen size validation tests"
 	@$(COLOR) color brightBlue "  test-screen-sizes-mobile  - Test mobile device screen sizes"
@@ -98,7 +95,7 @@ test-all:
 test-watch:
 	@$(COLOR) subheader "Running Tests in Watch Mode"
 	@$(COLOR) info "Starting test watcher..."
-	npm test
+	npm run test:watch
 
 # Run linting
 lint:
@@ -128,7 +125,7 @@ pc: pre-commit
 dev:
 	@$(COLOR) subheader "Starting Development Server"
 	@$(COLOR) info "Launching local development environment..."
-	npm start
+	npm run dev
 
 # Clean build artifacts
 clean:
@@ -196,17 +193,6 @@ pr:
 	@$(COLOR) subheader "Creating Pull Request"
 	@$(COLOR) info "Running twig github pr create-pr..."
 	twig github pr create-pr
-
-# Affix script detection commands  
-analyze-affix-scripts:
-	@$(COLOR) subheader "Analyzing Affix Scripts in Combat Logs"
-	@$(COLOR) info "Running affix script detection..."
-	npm run analyze-affix-scripts
-
-analyze-affix-scripts-all:
-	@$(COLOR) subheader "Analyzing All Downloaded Combat Logs"
-	@$(COLOR) info "Running batch affix script analysis..."
-	npm run analyze-affix-scripts:all
 
 # Cross-platform npm cache clear
 clear-cache:

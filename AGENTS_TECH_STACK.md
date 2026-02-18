@@ -114,9 +114,10 @@ Configured in `tsconfig.json` and `vite.config.mjs`:
 - **Location**: `src/**/*.test.ts(x)`
 - **Configs**: 
   - `jest.config.cjs` - Main configuration
-  - `jest.coverage.config.cjs` - With coverage thresholds
+  - `jest.ci.config.cjs` - CI-optimized settings
   - `jest.smoke.config.cjs` - Quick validation
   - `jest.scribing.config.cjs` - Scribing-specific tests
+  - `jest.integration.config.cjs` - Integration tests
 
 ### Integration Tests (Testing Library)
 - **Target**: Component integration and interaction
@@ -197,10 +198,8 @@ npm test          # Unit tests (changed files)
 - macOS
 - Linux
 
-### Cross-Platform Scripts
-- **Makefile** - Unix/Linux/macOS
-- **make.ps1** - PowerShell (Windows)
-- **make.bat** - Command Prompt (Windows)
+### Build Tool
+- **Makefile** - Cross-platform (requires `make`)
 
 ---
 

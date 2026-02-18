@@ -65,17 +65,12 @@ npm run coverage:analyze:watch
 
 ## 🔧 Configuration Files
 
-### `jest.coverage.config.js`
+### `jest.config.cjs`
 
-Main Jest coverage configuration with environment-specific settings:
+Main Jest configuration with built-in coverage settings:
 
-- **Development**: Lenient thresholds for faster iteration
-- **Production/CI**: Standard thresholds for quality gates
-- **Strict**: High thresholds for quality-critical code
-
-### `craco.coverage.config.js`
-
-CRACO integration for seamless Jest coverage with Create React App.
+- Coverage thresholds configured in the base config
+- CI-specific overrides in `jest.ci.config.cjs`
 
 ### Environment Variables
 
