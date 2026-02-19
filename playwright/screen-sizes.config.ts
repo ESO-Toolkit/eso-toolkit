@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 import { calculateOptimalWorkers } from '../tests/utils/worker-config';
-import { BASE_URL, ciBlockExternalHeaders, devWebServer } from '../tests/utils/playwright-shared';
+import { BASE_URL, ciBlockExternalHeaders, devWebServer, getOptionalAuthState } from '../tests/utils/playwright-shared';
 
 /**
  * Configuration for screen size validation testing
@@ -75,8 +75,8 @@ export default defineConfig({
     /* Action timeout - extended for complex data processing + actions */
     actionTimeout: process.env.CI ? 75000 : 35000,
     
-    /* Use shared authentication state from global setup */
-    storageState: '../tests/auth-state.json',
+    /* Use shared authentication state from global setup - gracefully handle missing auth */
+    storageState: getOptionalAuthState(),
     
     /* Block external requests in CI to improve reliability */
     ...ciBlockExternalHeaders,
