@@ -59,4 +59,11 @@ Please do **not** open a public issue for security vulnerabilities. See [SECURIT
 
 ## License
 
-By contributing you agree that your contributions will be licensed under the same terms as this project. See [LICENSE](LICENSE) and [CLA.md](CLA.md).
+This project uses the **Business Source License 1.1 (BUSL-1.1)**, which is _not_ an OSI-approved open source license. Key points for contributors:
+
+- Your contributions will be distributed under the same BUSL-1.1 terms (see [LICENSE](LICENSE)).
+- Non-production and non-commercial use is freely permitted.
+- Production / commercial use requires a separate agreement with the licensor until the code converts to Apache 2.0 (four years after each public release).
+- By signing the [CLA](CLA.md), you grant the project the right to distribute your contributions under these terms.
+
+If you have questions about how this affects your contribution, open a [discussion](https://github.com/ESO-Toolkit/eso-toolkit/discussions) before submitting your PR.
