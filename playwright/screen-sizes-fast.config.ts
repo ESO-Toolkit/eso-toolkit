@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 import { calculateOptimalWorkers } from '../tests/utils/worker-config';
-import { BASE_URL, ciBlockExternalHeaders, devWebServer } from '../tests/utils/playwright-shared';
+import { BASE_URL, ciBlockExternalHeaders, devWebServer, getOptionalAuthState } from '../tests/utils/playwright-shared';
 
 // Set fast mode environment variable for test utilities
 process.env.PLAYWRIGHT_FAST_MODE = 'true';
@@ -74,8 +74,8 @@ export default defineConfig({
     navigationTimeout: process.env.CI ? 90000 : 45000, // Extended for heavy client-side processing + network issues
     actionTimeout: process.env.CI ? 60000 : 30000, // Extended for complex data processing + actions
     
-    /* Use shared authentication state from global setup */
-    storageState: '../tests/auth-state.json',
+    /* Use shared authentication state from global setup - gracefully handle missing auth */
+    storageState: getOptionalAuthState(),
     
     /* Block external requests in CI to improve reliability */
     ...ciBlockExternalHeaders,
