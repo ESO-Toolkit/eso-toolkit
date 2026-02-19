@@ -1,4 +1,7 @@
 <!-- AI Context: Primary reference for AI agents. Load feature-specific docs only when working on those features. -->
+
+> **Note for contributors**: This file is an operational reference for **project maintainers** and **AI coding agents** (GitHub Copilot, Claude, etc.). It references internal tools and private services that are not available to external contributors. For contributor guidance, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 # ESO Log Aggregator - AI Agent Quick Reference
 
 **React-based ESO combat log analyzer** with data visualization, real-time analytics, and comprehensive testing.

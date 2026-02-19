@@ -27,9 +27,9 @@ This project contains only the web application, built with React, TypeScript, Gr
 
 ## Useful Links
 
-- [Deployment](https://esotk.com/#/)
-- [Jira](https://bkrupa.atlassian.net/jira/software/projects/ESO/boards/1/)
-- [Sentry](https://bkrupa.sentry.io/dashboards/)
+- [Live Site](https://esotk.com/#/)
+- [Issue Tracker](https://github.com/ESO-Toolkit/eso-toolkit/issues)
+- [Storybook](https://eso-toolkit.github.io/eso-log-aggregator-reports/storybook/)
 
 ## Getting Started
 
@@ -282,6 +282,16 @@ The `sample-data/` folder is automatically ignored by Git to prevent accidental 
 - If you see module resolution errors, try deleting `node_modules` and `package-lock.json`, then run `npm ci`.
 - Ensure all required dependencies are installed.
 - For GraphQL errors, re-run `npm run codegen`.
+
+## License
+
+This project is licensed under the [Business Source License 1.1 (BUSL-1.1)](LICENSE).
+
+- **Non-production / non-commercial use** is permitted.
+- **Production and commercial use** requires a separate agreement with [Alcova AI](https://github.com/ESO-Toolkit).
+- Each portion of the code **automatically converts to [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)** four years after it is first publicly released.
+
+See the [LICENSE](LICENSE) file for full terms. If you have questions about permitted use, open a [discussion](https://github.com/ESO-Toolkit/eso-toolkit/discussions) or contact the maintainers.
 
 ---
 
