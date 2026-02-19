@@ -29,6 +29,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Node.js and Install Dependencies
+        uses: ./.github/actions/setup-node-with-cache
+
       - name: Generate What's New data
         run: node scripts/generate-whats-new.cjs
         env:
