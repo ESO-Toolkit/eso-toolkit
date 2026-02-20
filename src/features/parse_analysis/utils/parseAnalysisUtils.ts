@@ -15,6 +15,7 @@ import {
   WITCHES_BREW,
   EXPERIENCE_BOOST_FOOD,
   KnownAbilities,
+  MundusStones,
   SYNERGY_ABILITY_IDS,
 } from '../../../types/abilities';
 import {
@@ -23,9 +24,11 @@ import {
   CastEvent,
   CombatantInfoEvent,
   DamageEvent,
+  ResourceChangeEvent,
   UnifiedCastEvent,
 } from '../../../types/combatlogEvents';
 import { Logger, LogLevel } from '../../../utils/logger';
+import { GearTrait } from '../../../types/playerDetails';
 import { TRIAL_DUMMY_BUFF_IDS, TRIAL_DUMMY_BUFF_NAMES } from '../constants/trialDummyConstants';
 
 // Logger used for detailed parse analysis diagnostics
@@ -57,22 +60,66 @@ export interface FoodDetectionResult {
 }
 
 /**
- * Light attack ability IDs - different weapons have different light attack IDs
- * TODO: This list is incomplete. Add more light attack ability IDs as they are discovered
- * from combat logs. Known weapons include: bow, staff, sword & board, etc.
+ * Light attack ability IDs - comprehensive list covering all weapon types.
+ * Sourced from abilities.json data. Name-based fallback (`isLightAttackAbility`)
+ * handles any IDs not listed here.
  */
 export const LIGHT_ATTACK_ABILITY_IDS = new Set([
-  15279, // Generic/melee light attack
-  16037, // Two-handed light attack
-  16499, // Dual wield light attack
+  7880, // Light Attack (generic)
+  15435, // Light Attack (One Handed / Sword & Board)
+  16037, // Light Attack (Two Handed)
+  16145, // Light Attack (Restoration Staff)
+  16165, // Light Attack (Inferno Staff)
+  16277, // Light Attack (Ice Staff)
+  16499, // Light Attack (Dual Wield)
+  16688, // Light Attack (Bow)
+  18350, // Light Attack (Lightning Staff)
+  23604, // Light Attack (Unarmed)
+  24792, // Light Attack (Overload)
+  26111, // Light Attack (Overload)
+  26112, // Light Attack (Overload)
+  27786, // Light Attack (Overload)
+  32464, // Light Attack (Werewolf)
+  114769, // Light Attack (Power Overload)
+  114770, // Light Attack (Power Overload)
+  114773, // Light Attack (Energy Overload)
+  114774, // Light Attack (Energy Overload)
+  116762, // Light Attack (Volendrung)
 ]);
 
 /**
- * Heavy attack ability IDs (basic heavy attacks, can be expanded)
+ * Heavy attack ability IDs - comprehensive list covering all weapon types.
+ * Sourced from abilities.json data. Name-based fallback (`isHeavyAttackAbility`)
+ * handles any IDs not listed here.
  */
 export const HEAVY_ATTACK_ABILITY_IDS = new Set([
-  16041, // Two-handed heavy
-  15279, // Other heavy attacks may have different IDs
+  7095, // Heavy Attack (generic)
+  15279, // Heavy Attack (One Handed)
+  15282, // Heavy Attack (One Handed)
+  15383, // Heavy Attack (Inferno Staff)
+  15385, // Heavy Attack (Inferno Staff)
+  15829, // Heavy Attack (One Handed)
+  16041, // Heavy Attack (Two Handed)
+  16212, // Heavy Attack (Restoration Staff)
+  16261, // Heavy Attack (Ice Staff)
+  16321, // Heavy Attack (Inferno Staff)
+  16420, // Heavy Attack (Dual Wield)
+  16691, // Heavy Attack (Bow)
+  17162, // Heavy Attack (Two Handed)
+  17169, // Heavy Attack (Dual Wield)
+  17173, // Heavy Attack (Bow)
+  18396, // Heavy Attack (Lightning Staff)
+  18405, // Heavy Attack (Ice Staff)
+  18406, // Heavy Attack (Ice Staff)
+  18429, // Heavy Attack (Unarmed)
+  18430, // Heavy Attack (Unarmed)
+  18431, // Heavy Attack (Unarmed)
+  18622, // Heavy Attack (Dual Wield)
+  19277, // Heavy Attack (Lightning Staff)
+  24794, // Heavy Attack (Overload)
+  24798, // Heavy Attack (Overload)
+  32477, // Heavy Attack (Werewolf)
+  32479, // Heavy Attack (Werewolf)
 ]);
 
 // Ability name substrings that should not count toward CPM or activity uptime
@@ -1371,4 +1418,608 @@ export function detectTrialDummyBuffs(
   });
 
   return result;
+}
+
+// ─── Bar Swap Analysis ─────────────────────────────────────────────────────────
+
+/**
+ * Bar swap analysis result
+ */
+export interface BarSwapAnalysisResult {
+  totalSwaps: number;
+  swapsPerMinute: number;
+  averageTimeBetweenSwaps: number; // milliseconds
+  longestTimeOnOneBar: number; // milliseconds
+  /** True if the player stayed on one bar for more than 15 seconds at any point */
+  barCampingDetected: boolean;
+  barCampingInstances: number;
+}
+
+/**
+ * Analyze bar swap frequency and detect bar camping.
+ * ESO rotations typically swap every 5-8 GCDs (~5-8 seconds).
+ * Staying on one bar for >15s is considered "bar camping."
+ */
+export function analyzeBarSwaps(
+  castEvents: UnifiedCastEvent[],
+  playerId: number,
+  fightStartTime: number,
+  fightEndTime: number,
+): BarSwapAnalysisResult {
+  const BAR_CAMPING_THRESHOLD_MS = 15000;
+
+  const swapEvents = castEvents
+    .filter(
+      (event) =>
+        event.sourceID === playerId &&
+        event.sourceIsFriendly &&
+        event.abilityGameID === KnownAbilities.SWAP_WEAPONS &&
+        event.timestamp >= fightStartTime &&
+        event.timestamp <= fightEndTime,
+    )
+    .sort((a, b) => a.timestamp - b.timestamp);
+
+  const totalSwaps = swapEvents.length;
+  const durationMinutes = (fightEndTime - fightStartTime) / 60000;
+
+  if (totalSwaps === 0) {
+    const totalDuration = fightEndTime - fightStartTime;
+    return {
+      totalSwaps: 0,
+      swapsPerMinute: 0,
+      averageTimeBetweenSwaps: 0,
+      longestTimeOnOneBar: totalDuration,
+      barCampingDetected: totalDuration > BAR_CAMPING_THRESHOLD_MS,
+      barCampingInstances: totalDuration > BAR_CAMPING_THRESHOLD_MS ? 1 : 0,
+    };
+  }
+
+  const intervals: number[] = [];
+  let longestTimeOnOneBar = swapEvents[0].timestamp - fightStartTime;
+  let barCampingInstances = longestTimeOnOneBar > BAR_CAMPING_THRESHOLD_MS ? 1 : 0;
+
+  for (let i = 1; i < swapEvents.length; i++) {
+    const interval = swapEvents[i].timestamp - swapEvents[i - 1].timestamp;
+    intervals.push(interval);
+    if (interval > longestTimeOnOneBar) {
+      longestTimeOnOneBar = interval;
+    }
+    if (interval > BAR_CAMPING_THRESHOLD_MS) {
+      barCampingInstances++;
+    }
+  }
+
+  // Also check time from last swap to fight end
+  const lastInterval = fightEndTime - swapEvents[swapEvents.length - 1].timestamp;
+  if (lastInterval > longestTimeOnOneBar) {
+    longestTimeOnOneBar = lastInterval;
+  }
+  if (lastInterval > BAR_CAMPING_THRESHOLD_MS) {
+    barCampingInstances++;
+  }
+
+  const averageTimeBetweenSwaps =
+    intervals.length > 0 ? intervals.reduce((a, b) => a + b, 0) / intervals.length : 0;
+
+  return {
+    totalSwaps,
+    swapsPerMinute: durationMinutes > 0 ? totalSwaps / durationMinutes : 0,
+    averageTimeBetweenSwaps,
+    longestTimeOnOneBar,
+    barCampingDetected: longestTimeOnOneBar > BAR_CAMPING_THRESHOLD_MS,
+    barCampingInstances,
+  };
+}
+
+// ─── Ultimate Usage Analysis ────────────────────────────────────────────────────
+
+/**
+ * Ultimate usage analysis result
+ */
+export interface UltimateUsageResult {
+  totalUltimateCasts: number;
+  ultimateAbilities: Array<{
+    abilityId: number;
+    abilityName: string;
+    castCount: number;
+    timestamps: number[];
+  }>;
+  averageTimeBetweenUltimates: number; // milliseconds
+  fightDurationSeconds: number;
+}
+
+/** Known ultimate cost threshold — abilities costing >= this are ultimates */
+const ULTIMATE_COST_THRESHOLD = 75;
+
+/**
+ * Well-known ultimate ability IDs from ESO.
+ * This set covers popular ultimates used in PvE content.
+ */
+const KNOWN_ULTIMATE_ABILITY_IDS = new Set([
+  // Nightblade
+  33398, // Incapacitating Strike
+  36508, // Soul Harvest
+  61907, // Toxic Barrage
+  61919, // Ballista
+  // Dragonknight
+  32958, // Standard of Might
+  32947, // Shifting Standard
+  32715, // Ferocious Leap
+  32719, // Take Flight
+  // Sorcerer
+  24785, // Greater Storm Atronach
+  24799, // Suppression Field
+  27706, // Absorption Field
+  // Templar
+  22223, // Crescent Sweep
+  22226, // Radiant Glory (morph ult)
+  22139, // Flawless Dawnbreaker
+  40161, // Flawless Dawnbreaker (morph)
+  // Necromancer
+  115238, // Pestilent Colossus
+  122174, // Glacial Colossus
+  122388, // Ruinous Colossus
+  // Warden
+  85982, // Feral Guardian
+  85986, // Eternal Guardian
+  85990, // Wild Guardian
+  // Arcanist
+  183006, // Tide King's Gaze
+  183623, // Exhausting Fatecarver
+  183625, // Pragmatic Fatecarver
+  // Weapon skill lines
+  22139, // Flawless Dawnbreaker
+  40161, // Flawless Dawnbreaker (morph)
+  40158, // Dawnbreaker of Smiting
+  // Fighters Guild
+  35713, // Flawless Dawnbreaker
+  // Mages Guild
+  40468, // Shooting Star
+  63430, // Ice Comet
+  // Undaunted
+  39489, // Aggressive Horn
+  40223, // Aggressive Warhorn
+  // Assault
+  38563, // Aggressive Horn
+  40220, // Sturdy Horn
+]);
+
+/**
+ * Analyze ultimate ability usage during a fight.
+ * Uses a combination of known ultimate IDs and name-based heuristics.
+ */
+export function analyzeUltimateUsage(
+  castEvents: UnifiedCastEvent[],
+  playerId: number,
+  fightStartTime: number,
+  fightEndTime: number,
+  abilityMapper?: AbilityNameMapper,
+): UltimateUsageResult {
+  const fightDurationSeconds = (fightEndTime - fightStartTime) / 1000;
+
+  // Filter to player's casts
+  const playerCasts = castEvents.filter(
+    (event) =>
+      event.sourceID === playerId &&
+      event.sourceIsFriendly &&
+      event.type === 'cast' &&
+      event.timestamp >= fightStartTime &&
+      event.timestamp <= fightEndTime,
+  );
+
+  // Identify ultimate casts by known IDs or name heuristics
+  const ultimateCasts = playerCasts.filter((cast) => {
+    if (KNOWN_ULTIMATE_ABILITY_IDS.has(cast.abilityGameID)) return true;
+
+    // Name-based fallback — check for common ultimate keywords
+    const name = getAbilityNameFromMapper(cast.abilityGameID, abilityMapper);
+    if (!name) return false;
+    const lower = name.toLowerCase();
+    return (
+      lower.includes('ultimate') ||
+      lower.includes('colossus') ||
+      lower.includes('atronach') ||
+      lower.includes('dawnbreaker') ||
+      lower.includes('warhorn') ||
+      lower.includes('aggressive horn')
+    );
+  });
+
+  // Group by ability
+  const abilityMap = new Map<
+    number,
+    { abilityName: string; castCount: number; timestamps: number[] }
+  >();
+
+  for (const cast of ultimateCasts) {
+    const existing = abilityMap.get(cast.abilityGameID);
+    const name =
+      getAbilityNameFromMapper(cast.abilityGameID, abilityMapper) ||
+      `Unknown (${cast.abilityGameID})`;
+    if (existing) {
+      existing.castCount++;
+      existing.timestamps.push(cast.timestamp);
+    } else {
+      abilityMap.set(cast.abilityGameID, {
+        abilityName: name,
+        castCount: 1,
+        timestamps: [cast.timestamp],
+      });
+    }
+  }
+
+  // Calculate average time between ultimates
+  const allUltTimestamps = ultimateCasts.map((c) => c.timestamp).sort((a, b) => a - b);
+  let averageTimeBetweenUltimates = 0;
+  if (allUltTimestamps.length > 1) {
+    const intervals: number[] = [];
+    for (let i = 1; i < allUltTimestamps.length; i++) {
+      intervals.push(allUltTimestamps[i] - allUltTimestamps[i - 1]);
+    }
+    averageTimeBetweenUltimates = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+  }
+
+  return {
+    totalUltimateCasts: ultimateCasts.length,
+    ultimateAbilities: Array.from(abilityMap.entries()).map(([abilityId, data]) => ({
+      abilityId,
+      ...data,
+    })),
+    averageTimeBetweenUltimates,
+    fightDurationSeconds,
+  };
+}
+
+// ─── DoT Uptime Analysis ────────────────────────────────────────────────────────
+
+/**
+ * DoT uptime result for a single ability
+ */
+export interface DotUptimeEntry {
+  abilityId: number;
+  abilityName: string;
+  uptimePercentage: number;
+  totalActiveMs: number;
+  tickCount: number;
+}
+
+/**
+ * Overall DoT uptime analysis result
+ */
+export interface DotUptimeResult {
+  dotAbilities: DotUptimeEntry[];
+  overallDotUptimePercentage: number;
+  totalDotDamage: number;
+  totalDirectDamage: number;
+  dotDamagePercentage: number;
+}
+
+/**
+ * Analyze DoT uptime and direct vs DoT damage breakdown.
+ * DoTs are identified by `tick: true` on damage events.
+ * Uptime is estimated by finding the active windows for each DoT ability
+ * where ticks occur within a reasonable gap threshold.
+ */
+export function analyzeDotUptime(
+  damageEvents: DamageEvent[],
+  playerId: number,
+  fightStartTime: number,
+  fightEndTime: number,
+  abilityMapper?: AbilityNameMapper,
+): DotUptimeResult {
+  const DOT_GAP_THRESHOLD_MS = 3000; // If no tick for 3s, DoT is considered down
+  const fightDurationMs = fightEndTime - fightStartTime;
+
+  const playerDamage = damageEvents.filter(
+    (event) =>
+      event.sourceID === playerId &&
+      event.sourceIsFriendly &&
+      event.timestamp >= fightStartTime &&
+      event.timestamp <= fightEndTime,
+  );
+
+  // Split into DoT and direct damage
+  const dotEvents = playerDamage.filter((event) => event.tick);
+  const directEvents = playerDamage.filter((event) => !event.tick);
+
+  const totalDotDamage = dotEvents.reduce((sum, e) => sum + e.amount, 0);
+  const totalDirectDamage = directEvents.reduce((sum, e) => sum + e.amount, 0);
+  const totalDamage = totalDotDamage + totalDirectDamage;
+
+  // Group DoT ticks by ability
+  const dotTicksByAbility = new Map<number, DamageEvent[]>();
+  for (const event of dotEvents) {
+    const existing = dotTicksByAbility.get(event.abilityGameID) || [];
+    existing.push(event);
+    dotTicksByAbility.set(event.abilityGameID, existing);
+  }
+
+  const dotAbilities: DotUptimeEntry[] = [];
+
+  for (const [abilityId, ticks] of dotTicksByAbility.entries()) {
+    ticks.sort((a, b) => a.timestamp - b.timestamp);
+
+    // Calculate active windows
+    let totalActiveMs = 0;
+    let windowStart = ticks[0].timestamp;
+    let lastTick = ticks[0].timestamp;
+
+    for (let i = 1; i < ticks.length; i++) {
+      const gap = ticks[i].timestamp - lastTick;
+      if (gap > DOT_GAP_THRESHOLD_MS) {
+        // Window ended; add a grace period after the last tick
+        totalActiveMs += lastTick - windowStart + DOT_GAP_THRESHOLD_MS;
+        windowStart = ticks[i].timestamp;
+      }
+      lastTick = ticks[i].timestamp;
+    }
+
+    // Close last window
+    totalActiveMs += lastTick - windowStart + DOT_GAP_THRESHOLD_MS;
+
+    // Clamp to fight duration
+    totalActiveMs = Math.min(totalActiveMs, fightDurationMs);
+
+    const uptimePercentage = fightDurationMs > 0 ? (totalActiveMs / fightDurationMs) * 100 : 0;
+    const name =
+      getAbilityNameFromMapper(abilityId, abilityMapper) || `Unknown (${abilityId})`;
+
+    dotAbilities.push({
+      abilityId,
+      abilityName: name,
+      uptimePercentage,
+      totalActiveMs,
+      tickCount: ticks.length,
+    });
+  }
+
+  // Sort by tick count descending (most used DoTs first)
+  dotAbilities.sort((a, b) => b.tickCount - a.tickCount);
+
+  // Overall DoT uptime: merge all DoT windows
+  const allDotTicks = dotEvents.sort((a, b) => a.timestamp - b.timestamp);
+  let overallActiveMs = 0;
+  if (allDotTicks.length > 0) {
+    let windowStart = allDotTicks[0].timestamp;
+    let lastTick = allDotTicks[0].timestamp;
+    for (let i = 1; i < allDotTicks.length; i++) {
+      const gap = allDotTicks[i].timestamp - lastTick;
+      if (gap > DOT_GAP_THRESHOLD_MS) {
+        overallActiveMs += lastTick - windowStart + DOT_GAP_THRESHOLD_MS;
+        windowStart = allDotTicks[i].timestamp;
+      }
+      lastTick = allDotTicks[i].timestamp;
+    }
+    overallActiveMs += lastTick - windowStart + DOT_GAP_THRESHOLD_MS;
+    overallActiveMs = Math.min(overallActiveMs, fightDurationMs);
+  }
+
+  return {
+    dotAbilities,
+    overallDotUptimePercentage:
+      fightDurationMs > 0 ? (overallActiveMs / fightDurationMs) * 100 : 0,
+    totalDotDamage,
+    totalDirectDamage,
+    dotDamagePercentage: totalDamage > 0 ? (totalDotDamage / totalDamage) * 100 : 0,
+  };
+}
+
+// ─── Mundus Stone Detection ─────────────────────────────────────────────────────
+
+/**
+ * Mundus stone detection result
+ */
+export interface MundusStoneResult {
+  hasMundus: boolean;
+  mundusName: string | null;
+  mundusAbilityId: number | null;
+}
+
+/** Map of mundus stone ability IDs to display names */
+const MUNDUS_STONE_NAMES: Record<number, string> = {
+  [MundusStones.THE_WARRIOR]: 'The Warrior (Weapon Damage)',
+  [MundusStones.THE_MAGE]: 'The Mage (Spell Damage)',
+  [MundusStones.THE_SERPENT]: 'The Serpent (Stamina Recovery)',
+  [MundusStones.THE_THIEF]: 'The Thief (Critical Chance)',
+  [MundusStones.THE_LADY]: 'The Lady (Resistance)',
+  [MundusStones.THE_STEED]: 'The Steed (Movement Speed)',
+  [MundusStones.THE_LORD]: 'The Lord (Max Health)',
+  [MundusStones.THE_APPRENTICE]: 'The Apprentice (Max Magicka)',
+  [MundusStones.THE_RITUAL]: 'The Ritual (Healing Done)',
+  [MundusStones.THE_LOVER]: 'The Lover (Penetration)',
+  [MundusStones.THE_ATRONACH]: 'The Atronach (Magicka Recovery)',
+  [MundusStones.THE_SHADOW]: 'The Shadow (Critical Damage)',
+  [MundusStones.THE_TOWER]: 'The Tower (Max Stamina)',
+};
+
+const MUNDUS_STONE_IDS = new Set(
+  Object.values(MundusStones).filter((v): v is number => typeof v === 'number'),
+);
+
+/**
+ * Detect equipped mundus stone from combatant info auras.
+ */
+export function detectMundusStone(
+  combatantInfoEvents: CombatantInfoEvent[],
+  playerId: number,
+): MundusStoneResult {
+  const playerCombatantInfo = combatantInfoEvents.find((e) => e.sourceID === playerId);
+  if (!playerCombatantInfo?.auras) {
+    return { hasMundus: false, mundusName: null, mundusAbilityId: null };
+  }
+
+  for (const aura of playerCombatantInfo.auras) {
+    if (MUNDUS_STONE_IDS.has(aura.ability)) {
+      return {
+        hasMundus: true,
+        mundusName: MUNDUS_STONE_NAMES[aura.ability] || `Mundus Stone (${aura.ability})`,
+        mundusAbilityId: aura.ability,
+      };
+    }
+  }
+
+  return { hasMundus: false, mundusName: null, mundusAbilityId: null };
+}
+
+// ─── Resource Sustain Analysis ──────────────────────────────────────────────────
+
+/**
+ * Resource sustain analysis result
+ */
+export interface ResourceSustainResult {
+  /** Average stamina % during the fight */
+  averageStaminaPercent: number;
+  /** Average magicka % during the fight */
+  averageMagickaPercent: number;
+  /** Seconds spent below 30% on primary resource */
+  secondsBelowThreshold: number;
+  /** Total resource snapshots sampled */
+  sampleCount: number;
+  /** Primary resource type detected */
+  primaryResource: 'stamina' | 'magicka' | 'unknown';
+}
+
+/**
+ * Analyze resource sustain over the fight duration using sourceResources from damage events.
+ * Determines whether the player is stamina or magicka-based from max resource pools.
+ */
+export function analyzeResourceSustain(
+  damageEvents: DamageEvent[],
+  playerId: number,
+  fightStartTime: number,
+  fightEndTime: number,
+): ResourceSustainResult {
+  const LOW_RESOURCE_THRESHOLD = 0.3;
+  const BUCKET_SIZE_MS = 1000;
+  const fightDurationMs = fightEndTime - fightStartTime;
+
+  const playerDamage = damageEvents.filter(
+    (event) =>
+      event.sourceID === playerId &&
+      event.sourceIsFriendly &&
+      event.sourceResources != null &&
+      event.timestamp >= fightStartTime &&
+      event.timestamp <= fightEndTime,
+  );
+
+  if (playerDamage.length === 0) {
+    return {
+      averageStaminaPercent: 0,
+      averageMagickaPercent: 0,
+      secondsBelowThreshold: 0,
+      sampleCount: 0,
+      primaryResource: 'unknown',
+    };
+  }
+
+  // Determine primary resource from max pools (first available snapshot)
+  const firstRes = playerDamage[0].sourceResources;
+  const primaryResource =
+    firstRes.maxStamina > firstRes.maxMagicka ? 'stamina' : 'magicka';
+
+  // Bucket by 1-second intervals, take last snapshot per bucket
+  const bucketCount = Math.ceil(fightDurationMs / BUCKET_SIZE_MS);
+  const bucketSnapshots = new Array<{ stamPct: number; magPct: number } | null>(
+    bucketCount,
+  ).fill(null);
+
+  for (const event of playerDamage) {
+    const bucketIndex = Math.min(
+      Math.floor((event.timestamp - fightStartTime) / BUCKET_SIZE_MS),
+      bucketCount - 1,
+    );
+    const res = event.sourceResources;
+    bucketSnapshots[bucketIndex] = {
+      stamPct: res.maxStamina > 0 ? res.stamina / res.maxStamina : 1,
+      magPct: res.maxMagicka > 0 ? res.magicka / res.maxMagicka : 1,
+    };
+  }
+
+  // Forward-fill empty buckets
+  for (let i = 1; i < bucketSnapshots.length; i++) {
+    if (bucketSnapshots[i] === null) {
+      bucketSnapshots[i] = bucketSnapshots[i - 1];
+    }
+  }
+
+  const filledBuckets = bucketSnapshots.filter(
+    (b): b is { stamPct: number; magPct: number } => b !== null,
+  );
+
+  if (filledBuckets.length === 0) {
+    return {
+      averageStaminaPercent: 0,
+      averageMagickaPercent: 0,
+      secondsBelowThreshold: 0,
+      sampleCount: 0,
+      primaryResource,
+    };
+  }
+
+  const avgStamPct =
+    (filledBuckets.reduce((sum, b) => sum + b.stamPct, 0) / filledBuckets.length) * 100;
+  const avgMagPct =
+    (filledBuckets.reduce((sum, b) => sum + b.magPct, 0) / filledBuckets.length) * 100;
+
+  const secondsBelowThreshold = filledBuckets.filter((b) => {
+    const pct = primaryResource === 'stamina' ? b.stamPct : b.magPct;
+    return pct < LOW_RESOURCE_THRESHOLD;
+  }).length; // Each bucket = 1 second
+
+  return {
+    averageStaminaPercent: avgStamPct,
+    averageMagickaPercent: avgMagPct,
+    secondsBelowThreshold,
+    sampleCount: filledBuckets.length,
+    primaryResource,
+  };
+}
+
+// ─── Penetration & Critical Damage Cap Estimation ───────────────────────────────
+
+/**
+ * Simplified penetration estimate for parse analysis (lightweight, no worker needed)
+ */
+export interface PenCritCapResult {
+  /** Estimated penetration from gear/CP (static, from combatant info) */
+  estimatedPenetration: number;
+  /** Whether the player likely exceeds the 18,200 cap without group support */
+  likelyOverPenCap: boolean;
+  /** Whether the player has The Lover mundus (pen mundus) */
+  hasLoverMundus: boolean;
+}
+
+/**
+ * Estimate penetration from gear traits and mundus.
+ * This is a quick estimate — the full worker calculation is more accurate,
+ * but isn't available in the standalone parse analysis page.
+ */
+export function estimatePenCritCap(
+  combatantInfoEvents: CombatantInfoEvent[],
+  playerId: number,
+): PenCritCapResult {
+  const PEN_CAP = 18200;
+
+  const mundusResult = detectMundusStone(combatantInfoEvents, playerId);
+  const hasLoverMundus = mundusResult.mundusAbilityId === MundusStones.THE_LOVER;
+
+  // Look for Sharpened trait on gear
+  const playerInfo = combatantInfoEvents.find((e) => e.sourceID === playerId);
+  let sharpenedCount = 0;
+  if (playerInfo?.gear) {
+    for (const gear of playerInfo.gear) {
+      if (gear.trait === GearTrait.SHARPENED) {
+        sharpenedCount++;
+      }
+    }
+  }
+
+  // Rough estimation: each Sharpened weapon ≈ 1638 pen, Lover ≈ 2752 pen
+  const estimatedPenetration = sharpenedCount * 1638 + (hasLoverMundus ? 2752 : 0);
+
+  return {
+    estimatedPenetration,
+    likelyOverPenCap: estimatedPenetration > PEN_CAP,
+    hasLoverMundus,
+  };
 }
