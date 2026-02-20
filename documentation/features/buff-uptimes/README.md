@@ -161,6 +161,32 @@ npm run typecheck
 npm run storybook
 ```
 
+## Calculation Methodology
+
+### Buff Uptimes — Per-Player Averaging
+
+Buff uptimes are calculated as the **average of individual player uptimes**, not as a combined/union uptime. For each buff:
+
+1. Compute the uptime duration for **each player** individually
+2. Divide each player's duration by the fight duration (or their active time when Exclude Downtime is enabled)
+3. Average those per-player percentages across all players in the group (or DPS-only when that filter is active)
+
+This means a self-buff like Major Savagery that only one player has will show as `(100% + 0% + 0% + … ) / N` rather than 100%. This is intentional — it reflects **group-wide coverage** rather than individual uptime.
+
+**Why this approach?** In a trial setting, what matters is not whether *someone* has a buff, but how well the group as a whole maintains it. A buff showing 30% across the group tells the raid leader that coverage needs improvement, even if the one player who provides it has 100% personal uptime.
+
+### Debuff Uptimes — Target-Averaged
+
+Debuff uptimes use the same averaging logic but keyed on **targets** (enemy entities). When "All Bosses" is selected, the uptime is averaged across all boss target IDs. Selecting a single boss target shows the true uptime on that specific entity — useful for fights where debuffs only apply to the primary boss.
+
+### DPS Only Filter
+
+When enabled, buff uptimes are recalculated using only players identified as DPS (excludes tanks and healers). This removes support players who are not expected to maintain certain self-buffs, giving a more accurate picture of DPS group performance.
+
+### Exclude Downtime Filter
+
+When enabled, each player's uptime denominator changes from the full fight duration to their **active time** — calculated by counting cast events and applying the global cooldown (GCD) duration. Periods where a player is dead, out of range, or otherwise inactive are excluded from the denominator, preventing downtime from artificially deflating uptime percentages.
+
 ## Performance
 
 - **Group Average**: O(n) where n = buff intervals
