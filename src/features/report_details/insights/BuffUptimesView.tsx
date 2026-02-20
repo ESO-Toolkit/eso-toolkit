@@ -47,9 +47,7 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
   const filteredBuffUptimes = React.useMemo(() => {
     if (!nameFilter.trim()) return buffUptimes;
     const normalizedFilter = nameFilter.trim().toLowerCase();
-    return buffUptimes.filter((buff) =>
-      buff.abilityName.toLowerCase().includes(normalizedFilter),
-    );
+    return buffUptimes.filter((buff) => buff.abilityName.toLowerCase().includes(normalizedFilter));
   }, [buffUptimes, nameFilter]);
 
   if (isLoading) {
