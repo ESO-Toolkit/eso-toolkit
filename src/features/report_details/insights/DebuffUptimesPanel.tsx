@@ -34,7 +34,7 @@ interface DebuffUptimesPanelProps {
 }
 
 // Define the specific status effect debuff abilities to track
-const IMPORTANT_DEBUFF_ABILITIES = new Set([
+export const IMPORTANT_DEBUFF_ABILITIES = new Set([
   KnownAbilities.BURNING,
   KnownAbilities.CRUSHER,
   KnownAbilities.ENGULFING_FLAMES_BUFF,
@@ -45,6 +45,7 @@ const IMPORTANT_DEBUFF_ABILITIES = new Set([
   KnownAbilities.MINOR_BRITTLE,
   KnownAbilities.MINOR_LIFESTEAL,
   KnownAbilities.MINOR_VULNERABILITY,
+  KnownAbilities.NAZARAY_DEBUFF,
   KnownAbilities.OFF_BALANCE,
   KnownAbilities.RUNIC_SUNDER_DEBUFF,
   KnownAbilities.STAGGER,

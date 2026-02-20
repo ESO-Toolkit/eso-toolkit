@@ -336,6 +336,9 @@ export enum KnownAbilities {
   ENGULFING_FLAMES_SKILL = 44432,
   WINTERS_REVENGE = 62912,
 
+  // Monster Set Debuffs
+  NAZARAY_DEBUFF = 167065, // Nazaray monster set debuff (reduces target damage done)
+
   // Specific Named Buffs and Debuffs
   // Note: CRUSHER_ENCHANT = 17906 is defined above
   EMPOWER = 61737,
