@@ -77,6 +77,7 @@ git checkout -b ESO-XXX/description-here
 - **Auth / OAuth**: [.github/skills/auth/SKILL.md](.github/skills/auth/SKILL.md) - Browser session authentication
 - **Skill Data Regen**: [.github/skills/skill-data-regen/SKILL.md](.github/skills/skill-data-regen/SKILL.md) - ESO skill line data regeneration
 - **UESP Data**: [.github/skills/uesp-data/SKILL.md](.github/skills/uesp-data/SKILL.md) - Item icon management
+- **UI Updates**: [.github/skills/ui-updates/SKILL.md](.github/skills/ui-updates/SKILL.md) - Theme-consistent UI changes (glassmorphism, colors, typography, patterns)
 - **Create New Skill**: [.github/skills/create-skill/SKILL.md](.github/skills/create-skill/SKILL.md) - Add a new SKILL.md to the project
 
 ### Feature & Architecture Docs
