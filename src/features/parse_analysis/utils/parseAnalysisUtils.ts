@@ -170,17 +170,8 @@ function isHeavyAttackAbility(abilityId: number, abilityMapper?: AbilityNameMapp
   return abilityName.toLowerCase().includes('heavy attack');
 }
 
-function isSynergyAbility(abilityId: number, abilityMapper?: AbilityNameMapper): boolean {
-  if (SYNERGY_ABILITY_IDS.has(abilityId)) {
-    return true;
-  }
-
-  const abilityName = getAbilityNameFromMapper(abilityId, abilityMapper);
-  if (!abilityName) {
-    return false;
-  }
-
-  return abilityName.toLowerCase().includes('synergy');
+function isSynergyAbility(abilityId: number): boolean {
+  return SYNERGY_ABILITY_IDS.has(abilityId);
 }
 
 function isIgnoredAbility(abilityId: number, abilityMapper?: AbilityNameMapper): boolean {
@@ -249,7 +240,7 @@ function filterPlayerCasts(
     const abilityId = event.abilityGameID;
 
     if (excludeWeaponSwap && abilityId === KnownAbilities.SWAP_WEAPONS) continue;
-    if (excludeSynergies && isSynergyAbility(abilityId, abilityMapper)) continue;
+    if (excludeSynergies && isSynergyAbility(abilityId)) continue;
     if (excludeLightAttacks && isLightAttackAbility(abilityId, abilityMapper)) continue;
     if (excludeHeavyAttacks && isHeavyAttackAbility(abilityId, abilityMapper)) continue;
     if (isIgnoredAbility(abilityId, abilityMapper)) continue;
@@ -820,7 +811,7 @@ export function analyzeRotation(
     if (isLightAttackAbility(event.abilityGameID, abilityMapper)) return false;
     if (isHeavyAttackAbility(event.abilityGameID, abilityMapper)) return false;
     if (event.abilityGameID === KnownAbilities.SWAP_WEAPONS) return false;
-    if (isSynergyAbility(event.abilityGameID, abilityMapper)) return false;
+    if (isSynergyAbility(event.abilityGameID)) return false;
 
     return true;
   });
