@@ -8,7 +8,6 @@
  */
 
 import { KnownAbilities } from '../../../types/abilities';
-import { BuffLookupData } from '../../../utils/BuffLookupUtils';
 import { computeBuffUptimes } from '../../../utils/buffUptimeCalculator';
 import { createDebuffLookup } from '../../../utils/BuffLookupUtils';
 import { DebuffEvent } from '../../../types/combatlogEvents';
