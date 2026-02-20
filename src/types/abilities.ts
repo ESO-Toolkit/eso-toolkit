@@ -346,7 +346,9 @@ export enum KnownAbilities {
   ENLIVENING_OVERFLOW_BUFF = 156011,
   GRAND_REJUVENATION = 99781,
   OFF_BALANCE = 62988,
+  OZEZANS_PLATING = 188471, // Ozezan the Inferno / Ozezan's Plating damage mitigation proc buff
   PEARLESCENT_WARD = 172621,
+  PILLAGERS_PROFIT_BUFF = 172055, // Pillager's Profit healing set proc buff
   POWERFUL_ASSAULT = 61771,
   STAGGER = 134336,
   STONE_GIANT = 133027,
