@@ -1039,3 +1039,25 @@ export const SYNERGY_ABILITY_IDS = Object.freeze(
 export const AURA_EXCLUDED_ABILITIES = Object.freeze(
   new Set<number>([KnownAbilities.UNNERVING_BONEYARD]),
 );
+
+// Major Maim debuff ability IDs (mitigation debuff: -10% damage done by enemy)
+// Multiple IDs exist because each skill that applies Major Maim uses its own effect ID.
+// All entries in abilities.json are named "Major Maim" with icon "ability_debuff_major_maim".
+export const MAJOR_MAIM_ABILITY_IDS = Object.freeze(
+  new Set<number>([
+    21754, 21760, 61725, 94277, 94285, 94293, 133214, 133292, 134444, 141927, 147746, 159664,
+    163064, 183389, 212073,
+  ]),
+);
+
+// Minor Maim debuff ability IDs (mitigation debuff: -5% damage done by enemy)
+// Multiple IDs exist because each skill that applies Minor Maim uses its own effect ID.
+// All entries in abilities.json are named "Minor Maim" with icon "ability_debuff_minor_maim".
+export const MINOR_MAIM_ABILITY_IDS = Object.freeze(
+  new Set<number>([
+    31899, 33228, 33512, 37472, 38068, 38072, 38076, 46204, 46246, 51558, 61723, 61854, 61855,
+    61856, 62492, 62493, 62494, 62500, 62501, 62503, 62507, 62509, 62511, 68368, 79083, 79085,
+    79280, 79282, 88469, 102097, 108939, 118313, 121517, 123946, 124808, 127162, 130815, 137311,
+    196187, 213304, 221722, 224389, 238229,
+  ]),
+);
