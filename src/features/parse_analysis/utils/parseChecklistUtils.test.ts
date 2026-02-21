@@ -115,7 +115,7 @@ describe('buildParseChecklist', () => {
         activeTimeResult: {
           activePercentage: 97,
           activeSeconds: 97,
-          fightDurationSeconds: 100,
+          fightDurationMs: 100000,
           totalCasts: 50,
           baseActiveSeconds: 50,
           channelExtraSeconds: 0,
@@ -131,7 +131,7 @@ describe('buildParseChecklist', () => {
         activeTimeResult: {
           activePercentage: 90,
           activeSeconds: 90,
-          fightDurationSeconds: 100,
+          fightDurationMs: 100000,
           totalCasts: 50,
           baseActiveSeconds: 50,
           channelExtraSeconds: 0,
@@ -147,7 +147,7 @@ describe('buildParseChecklist', () => {
         activeTimeResult: {
           activePercentage: 70,
           activeSeconds: 70,
-          fightDurationSeconds: 100,
+          fightDurationMs: 100000,
           totalCasts: 30,
           baseActiveSeconds: 30,
           channelExtraSeconds: 0,
@@ -254,7 +254,7 @@ describe('buildParseChecklist', () => {
         activeTimeResult: {
           activePercentage: 95,
           activeSeconds: 180,
-          fightDurationSeconds: 180,
+          fightDurationMs: 180000,
           totalCasts: 50,
           baseActiveSeconds: 50,
           channelExtraSeconds: 0,
@@ -273,7 +273,7 @@ describe('buildParseChecklist', () => {
         activeTimeResult: {
           activePercentage: 95,
           activeSeconds: 180,
-          fightDurationSeconds: 180,
+          fightDurationMs: 180000,
           totalCasts: 50,
           baseActiveSeconds: 50,
           channelExtraSeconds: 0,
@@ -292,7 +292,7 @@ describe('buildParseChecklist', () => {
         activeTimeResult: {
           activePercentage: 95,
           activeSeconds: 180,
-          fightDurationSeconds: 180,
+          fightDurationMs: 180000,
           totalCasts: 50,
           baseActiveSeconds: 50,
           channelExtraSeconds: 0,
@@ -557,7 +557,7 @@ describe('buildParseChecklist', () => {
         activeTimeResult: {
           activePercentage: 96,
           activeSeconds: 96,
-          fightDurationSeconds: 100,
+          fightDurationMs: 100000,
           totalCasts: 50,
           baseActiveSeconds: 50,
           channelExtraSeconds: 0,

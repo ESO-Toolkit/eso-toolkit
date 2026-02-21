@@ -18,6 +18,7 @@ import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
 import { KnownAbilities } from '../../../types/abilities';
 import { calculateActivePercentages } from '../../../utils/activePercentageUtils';
+import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import type { DamageOverTimeResult } from '../../../workers/calculations/CalculateDamageOverTime';
 
@@ -202,9 +203,9 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
     return calculateActivePercentages(fight, filteredDamageEventsByPlayer);
   }, [fight, damageEventsByPlayer, selectedTargetIds]);
 
-  const fightDuration = useMemo(() => {
+  const fightDurationMs = useMemo(() => {
     if (fight && fight.startTime != null && fight.endTime != null) {
-      return (Number(fight.endTime) - Number(fight.startTime)) / 1000;
+      return Number(fight.endTime) - Number(fight.startTime);
     }
     return 1;
   }, [fight]);
@@ -339,7 +340,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
           id,
           name,
           total: totalDamage,
-          dps: fightDuration > 0 ? totalDamage / fightDuration : 0,
+          dps: fightDurationMs > 0 ? totalDamage / msToSeconds(fightDurationMs) : 0,
           activePercentage,
           criticalDamagePercent,
           criticalDamageTotal,
@@ -356,7 +357,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
     damageStatistics.criticalDamageByPlayer,
     isPlayerActor,
     masterData.actorsById,
-    fightDuration,
+    fightDurationMs,
     getPlayerRole,
     activePercentages,
     deathsByPlayer,

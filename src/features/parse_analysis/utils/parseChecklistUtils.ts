@@ -200,14 +200,14 @@ export function buildParseChecklist({
     });
 
     const hasExecute = rotationResult.skillIntervals?.some((skill) => skill.isExecute) ?? false;
-    const fightDuration = activeTimeResult?.fightDurationSeconds ?? 0;
+    const fightDurationMs = activeTimeResult?.fightDurationMs ?? 0;
     items.push({
       id: 'execute',
       title: 'Execute skill usage in late fight',
-      status: hasExecute ? 'pass' : fightDuration > 20 ? 'warn' : 'info',
+      status: hasExecute ? 'pass' : fightDurationMs > 20000 ? 'warn' : 'info',
       detail: hasExecute
         ? 'Execute phase casts detected'
-        : fightDuration > 20
+        : fightDurationMs > 20000
           ? 'No execute usage detected'
           : 'Fight too short to evaluate',
     });
@@ -323,7 +323,7 @@ export function buildParseChecklist({
 
   // ─── Potion Uptime ───────────────────────────────────────────────────────────
   if (potionUse != null && activeTimeResult) {
-    const fightDuration = activeTimeResult.fightDurationSeconds;
+    const fightDuration = activeTimeResult.fightDurationMs / 1000;
     const expectedPotions = Math.max(1, Math.floor(fightDuration / 45));
     const potionRatio = potionUse / expectedPotions;
     items.push({

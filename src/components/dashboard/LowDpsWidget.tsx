@@ -6,6 +6,7 @@ import { useDamageEventsLookup } from '../../hooks/events/useDamageEvents';
 import { usePlayerData } from '../../hooks/usePlayerData';
 import { WidgetScope } from '../../store/dashboard/dashboardSlice';
 import { DamageEvent } from '../../types/combatlogEvents';
+import { msToSeconds } from '../../utils/fightDuration';
 
 import { BaseWidget } from './BaseWidget';
 
@@ -104,8 +105,8 @@ export const LowDpsWidget: React.FC<LowDpsWidgetProps> = ({
     relevantFights.forEach(({ fight, damage }) => {
       if (!fight || !damage) return;
 
-      const fightDuration = ((fight.endTime ?? fight.startTime) - fight.startTime) / 1000;
-      if (fightDuration <= 0) return;
+      const fightDurationMs = (fight.endTime ?? fight.startTime) - fight.startTime;
+      if (fightDurationMs <= 0) return;
 
       Object.values(playerData.playersById).forEach((player) => {
         if (player.role !== 'dps') return;
@@ -119,12 +120,12 @@ export const LowDpsWidget: React.FC<LowDpsWidgetProps> = ({
         const existing = playerDpsMap.get(player.id);
         if (existing) {
           existing.totalDamage += totalDamage;
-          existing.totalDuration += fightDuration;
+          existing.totalDuration += fightDurationMs;
         } else {
           playerDpsMap.set(player.id, {
             name: player.name,
             totalDamage,
-            totalDuration: fightDuration,
+            totalDuration: fightDurationMs,
           });
         }
       });
@@ -133,7 +134,7 @@ export const LowDpsWidget: React.FC<LowDpsWidgetProps> = ({
     const lowPerformers: LowDpsPlayer[] = [];
     playerDpsMap.forEach((data) => {
       if (data.totalDuration <= 0) return;
-      const avgDps = data.totalDamage / data.totalDuration;
+      const avgDps = data.totalDamage / msToSeconds(data.totalDuration);
 
       if (avgDps < DPS_THRESHOLD) {
         lowPerformers.push({
