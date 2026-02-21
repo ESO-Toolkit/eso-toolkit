@@ -316,17 +316,18 @@ const ParseAnalysisPageContent: React.FC = () => {
   const [weaveDetailsOpen, setWeaveDetailsOpen] = useState(false);
 
   const [state, setState] = useState<ParseAnalysisState>(() => createInitialParseState());
-  const fightDurationSeconds =
-    state.activeTimeResult?.fightDurationSeconds ??
+  const fightDurationMs =
+    state.activeTimeResult?.fightDurationMs ??
     (state.fightStartTime != null && state.fightEndTime != null
-      ? Math.max(0, (state.fightEndTime - state.fightStartTime) / 1000)
+      ? Math.max(0, state.fightEndTime - state.fightStartTime)
       : null);
 
-  const formatDuration = React.useCallback((totalSeconds: number): string => {
-    if (!Number.isFinite(totalSeconds) || totalSeconds < 0) {
+  const formatDuration = React.useCallback((ms: number): string => {
+    if (!Number.isFinite(ms) || ms < 0) {
       return 'Unknown';
     }
 
+    const totalSeconds = ms / 1000;
     const roundedSeconds = Math.floor(totalSeconds);
     const hours = Math.floor(roundedSeconds / 3600);
     const minutes = Math.floor((roundedSeconds % 3600) / 60);
@@ -1010,7 +1011,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     const {
       activePercentage,
       activeSeconds,
-      fightDurationSeconds,
+      fightDurationMs,
       totalCasts,
       baseActiveSeconds,
       channelExtraSeconds,
@@ -1068,7 +1069,8 @@ const ParseAnalysisPageContent: React.FC = () => {
                 Active Time
               </Typography>
               <Typography variant="caption" fontWeight={600}>
-                {activeSeconds.toFixed(1)}s / {fightDurationSeconds.toFixed(1)}s
+                {activeSeconds.toFixed(1)}s /{' '}
+                {fightDurationMs != null ? (fightDurationMs / 1000).toFixed(1) : '?'}s
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1182,7 +1184,7 @@ const ParseAnalysisPageContent: React.FC = () => {
   const renderDPSAnalysis = (): React.ReactElement | null => {
     if (state.dpsResult === null) return null;
 
-    const { totalDamage, dps, duration } = state.dpsResult;
+    const { totalDamage, dps, durationMs } = state.dpsResult;
 
     return (
       <Card
@@ -1225,7 +1227,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                 Fight Duration
               </Typography>
               <Typography variant="caption" fontWeight={600}>
-                {(duration / 60).toFixed(1)} min
+                {(durationMs / 60000).toFixed(1)} min
               </Typography>
             </Box>
           </Stack>
@@ -1693,9 +1695,9 @@ const ParseAnalysisPageContent: React.FC = () => {
                     />
                     <Chip label={`Report: ${state.reportCode}`} size="small" variant="outlined" />
                     <Chip label={`Fight #${state.fightId}`} size="small" variant="outlined" />
-                    {fightDurationSeconds != null && (
+                    {fightDurationMs != null && (
                       <Chip
-                        label={formatDuration(fightDurationSeconds)}
+                        label={formatDuration(fightDurationMs)}
                         size="small"
                         icon={<AccessTimeIcon />}
                         variant="outlined"

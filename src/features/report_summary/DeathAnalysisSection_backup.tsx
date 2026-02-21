@@ -348,9 +348,10 @@ function formatDamage(damage: number): string {
   return damage.toString();
 }
 
-function formatTime(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
+function formatTime(ms: number): string {
+  const totalSeconds = ms / 1000;
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainingSeconds = Math.floor(totalSeconds % 60);
   return `${minutes}m ${remainingSeconds}s`;
 }
 

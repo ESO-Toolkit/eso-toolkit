@@ -34,6 +34,7 @@ import {
   CriticalDamageSource,
   CriticalDamageSourceWithActiveState,
 } from '../../../utils/CritDamageUtils';
+import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 // Register Chart.js components
@@ -120,7 +121,7 @@ interface PlayerCriticalDamageDetailsViewProps {
   toggleableSourceNames?: Set<string>;
   onSourceToggle?: (sourceId: string, nextValue: boolean) => void;
   criticalMultiplier: CriticalMultiplierInfo | null;
-  fightDurationSeconds: number;
+  fightDurationMs: number;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   phaseTransitionInfo?: PhaseTransitionInfo;
 }
@@ -135,7 +136,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   toggleableSourceNames,
   onSourceToggle,
   criticalMultiplier,
-  fightDurationSeconds,
+  fightDurationMs,
   player,
   onExpandChange,
   phaseTransitionInfo,
@@ -607,7 +608,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                         type: 'linear',
                         display: true,
                         min: 0,
-                        max: fightDurationSeconds,
+                        max: msToSeconds(fightDurationMs),
                         title: {
                           display: true,
                           text: 'Time (seconds)',
