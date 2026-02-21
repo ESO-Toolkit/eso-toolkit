@@ -20,6 +20,7 @@ export enum TabId {
   CRITICAL_DAMAGE = 'critical-damage',
   PENETRATION = 'penetration',
   DAMAGE_REDUCTION = 'damage-reduction',
+  SYNERGIES = 'synergies',
   LOCATION_HEATMAP = 'location-heatmap',
   RAW_EVENTS = 'raw-events',
   TARGET_EVENTS = 'target-events',
@@ -409,6 +410,8 @@ export const getSkeletonForTab = (
         ) : (
           <DamageReductionSkeleton />
         );
+      case TabId.SYNERGIES:
+        return <GenericTabSkeleton title="Synergies" showTable={true} tableRows={8} />;
       case TabId.LOCATION_HEATMAP:
         return (
           <GenericTabSkeleton

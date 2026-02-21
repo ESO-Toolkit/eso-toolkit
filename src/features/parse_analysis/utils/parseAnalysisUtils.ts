@@ -174,13 +174,11 @@ function isSynergyAbility(abilityId: number, abilityMapper?: AbilityNameMapper):
   if (SYNERGY_ABILITY_IDS.has(abilityId)) {
     return true;
   }
-
   const abilityName = getAbilityNameFromMapper(abilityId, abilityMapper);
-  if (!abilityName) {
-    return false;
+  if (abilityName) {
+    return abilityName.trim().toLowerCase().includes('synergy');
   }
-
-  return abilityName.toLowerCase().includes('synergy');
+  return false;
 }
 
 function isIgnoredAbility(abilityId: number, abilityMapper?: AbilityNameMapper): boolean {
@@ -820,7 +818,7 @@ export function analyzeRotation(
     if (isLightAttackAbility(event.abilityGameID, abilityMapper)) return false;
     if (isHeavyAttackAbility(event.abilityGameID, abilityMapper)) return false;
     if (event.abilityGameID === KnownAbilities.SWAP_WEAPONS) return false;
-    if (isSynergyAbility(event.abilityGameID, abilityMapper)) return false;
+    if (isSynergyAbility(event.abilityGameID)) return false;
 
     return true;
   });

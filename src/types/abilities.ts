@@ -1028,10 +1028,23 @@ export const EXPERIENCE_BOOST_FOOD = Object.freeze(new Set([91368, 91369])); // 
 // Synergies (abilities that should not count as player-initiated casts)
 export const SYNERGY_ABILITY_IDS = Object.freeze(
   new Set([
-    7916, // Restore Magicka (Necrotic Orb synergy)
-    17323, // Restore Magicka (variant)
-    26832, // Blessed Shards (Luminous Shards synergy)
-    45223, // Restore Magicka (another variant)
+    41963, // Blood Feast
+    41994, // Black Widow
+    41838, // Radiate
+    42194, // Spinal Surge
+    39301, // Combustion
+    63507, // Healing Combustion
+    32910, // Shackle
+    32974, // Ignite
+    48076, // Charged Lightning
+    23196, // Conduit
+    37729, // Hidden Refresh
+    26832, // Blessed Shards
+    95922, // Holy Shards
+    22269, // Purify
+    115548, // Grave Robber
+    85572, // Harvest
+    191078, // Runebreak
   ]),
 );
 

@@ -5,6 +5,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import FlareIcon from '@mui/icons-material/Flare';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
+import HandshakeIcon from '@mui/icons-material/Handshake';
 import HealingIcon from '@mui/icons-material/Healing';
 import InsightsIcon from '@mui/icons-material/Insights';
 import ListIcon from '@mui/icons-material/List';
@@ -106,6 +107,9 @@ const RotationAnalysisPanel = React.lazy(() =>
   import('./rotation/RotationAnalysisPanel').then((module) => ({
     default: module.RotationAnalysisPanel,
   })),
+);
+const SynergyPanel = React.lazy(() =>
+  import('./synergy/SynergyPanel').then((module) => ({ default: module.SynergyPanel })),
 );
 const TalentsGridPanel = React.lazy(() =>
   import('./talents/TalentsGridPanel').then((module) => ({ default: module.TalentsGridPanel })),
@@ -543,6 +547,14 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               </Tooltip>
             }
           />
+          <Tab
+            value={TabId.SYNERGIES}
+            icon={
+              <Tooltip title="Synergies">
+                <HandshakeIcon />
+              </Tooltip>
+            }
+          />
 
           {/* Always render experimental tabs, but hide them when disabled */}
           <Tab
@@ -729,6 +741,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           {validSelectedTabId === TabId.DAMAGE_REDUCTION && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_REDUCTION} />}>
               <DamageReductionPanel phaseTransitionInfo={phaseTransitionInfo} />
+            </Suspense>
+          )}
+          {validSelectedTabId === TabId.SYNERGIES && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.SYNERGIES} />}>
+              <SynergyPanel />
             </Suspense>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.LOCATION_HEATMAP && (
