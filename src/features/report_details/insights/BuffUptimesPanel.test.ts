@@ -52,6 +52,7 @@ describe('BuffUptimesPanel', () => {
         KnownAbilities.MAJOR_BERSERK,
         KnownAbilities.PILLAGERS_PROFIT_BUFF,
         KnownAbilities.OZEZANS_PLATING,
+        KnownAbilities.AGGRESSIVE_HORN_BUFF,
       ];
 
       expectedBuffs.forEach((buff) => {

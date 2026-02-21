@@ -56,6 +56,7 @@ export const IMPORTANT_BUFF_ABILITIES = new Set([
 
   KnownAbilities.PILLAGERS_PROFIT_BUFF,
   KnownAbilities.OZEZANS_PLATING,
+  KnownAbilities.AGGRESSIVE_HORN_BUFF,
 ]);
 
 /**
