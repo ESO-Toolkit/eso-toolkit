@@ -137,9 +137,7 @@ describe('Aggressive Horn Buff Tracking (ESO-607)', () => {
     });
 
     it('should return empty results when Horn was never applied', () => {
-      const intervals = new Map<number, BuffInterval[]>([
-        [AGGRESSIVE_HORN_BUFF_ID, []],
-      ]);
+      const intervals = new Map<number, BuffInterval[]>([[AGGRESSIVE_HORN_BUFF_ID, []]]);
       const buffLookup = createBuffLookup(intervals);
 
       const result = computeBuffUptimes(buffLookup, baseOptions);
@@ -150,10 +148,7 @@ describe('Aggressive Horn Buff Tracking (ESO-607)', () => {
 
     it('should use hostilityType 0 for Horn (friendly buff)', () => {
       const intervals = new Map([
-        [
-          AGGRESSIVE_HORN_BUFF_ID,
-          [createBuffInterval(FIGHT_START, FIGHT_END, PLAYER_ID_1)],
-        ],
+        [AGGRESSIVE_HORN_BUFF_ID, [createBuffInterval(FIGHT_START, FIGHT_END, PLAYER_ID_1)]],
       ]);
       const buffLookup = createBuffLookup(intervals);
 
