@@ -14,6 +14,9 @@ on:
       - reopened
       - labeled
       - unlabeled
+  merge_group:
+    branches:
+      - main
 
 jobs:
   check-do-not-merge-label:
@@ -41,8 +44,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    # Only run on code changes, not label changes
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
@@ -51,8 +54,8 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    # Only run on code changes, not label changes
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
@@ -61,8 +64,8 @@ jobs:
 
   format:
     runs-on: ubuntu-latest
-    # Only run on code changes, not label changes
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
@@ -71,7 +74,7 @@ jobs:
 
   lint-skills:
     runs-on: ubuntu-latest
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -84,8 +87,8 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    # Only run on code changes, not label changes
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
@@ -129,8 +132,8 @@ jobs:
 
   typecheck:
     runs-on: ubuntu-latest
-    # Only run on code changes, not label changes
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
@@ -139,8 +142,8 @@ jobs:
 
   build-storybook:
     runs-on: ubuntu-latest
-    # Only run on code changes, not label changes
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
@@ -151,8 +154,8 @@ jobs:
 
   playwright-smoke:
     runs-on: ubuntu-latest
-    # Only run on code changes, not label changes
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
