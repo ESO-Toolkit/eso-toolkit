@@ -304,7 +304,7 @@ export function detectWebGLCapabilities(): WebGLCapabilities {
 
   const supportsRequiredAttributes = Boolean(
     (webgl2Result.context && webgl2Result.supportsRequiredAttributes) ||
-    (webgl1Result.context && webgl1Result.supportsRequiredAttributes),
+      (webgl1Result.context && webgl1Result.supportsRequiredAttributes),
   );
 
   let recommendedVersion: 1 | 2 | null = null;

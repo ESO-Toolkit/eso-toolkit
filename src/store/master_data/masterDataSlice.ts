@@ -158,8 +158,8 @@ export const fetchReportMasterData = createAsyncThunk<
       const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp ?? null;
       const isCached = Boolean(
         entry &&
-        Object.keys(entry.abilitiesById).length > 0 &&
-        Object.keys(entry.actorsById).length > 0,
+          Object.keys(entry.abilitiesById).length > 0 &&
+          Object.keys(entry.actorsById).length > 0,
       );
       const isFresh =
         typeof lastFetchedTimestamp === 'number' &&
