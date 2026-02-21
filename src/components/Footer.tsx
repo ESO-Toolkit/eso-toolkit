@@ -43,13 +43,13 @@ export const Footer: React.FC = React.memo(() => {
     () => [
       { label: 'Home', href: '/' },
 
-      { label: 'Latest Reports', href: '/latest-reports' },
-
       { label: 'My Reports', href: '/my-reports' },
 
-      { label: 'Join Discord', href: 'https://discord.gg/mMjwcQYFdc', external: true },
+      { label: 'Calculation Knowledge Base', href: '/docs/calculations' },
 
-      { label: 'GitHub', href: 'https://github.com/ESO-Toolkit/eso-toolkit', external: true },
+      { label: "What's New", href: '/whats-new' },
+
+      { label: 'About', href: '/about' },
     ],
 
     [],
