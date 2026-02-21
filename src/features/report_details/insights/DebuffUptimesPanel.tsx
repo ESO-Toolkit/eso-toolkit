@@ -14,7 +14,11 @@ import {
   selectSelectedTargetId,
   selectSelectedFriendlyPlayerId,
 } from '../../../store/ui/uiSelectors';
-import { KnownAbilities, MAJOR_MAIM_ABILITY_IDS, MINOR_MAIM_ABILITY_IDS } from '../../../types/abilities';
+import {
+  KnownAbilities,
+  MAJOR_MAIM_ABILITY_IDS,
+  MINOR_MAIM_ABILITY_IDS,
+} from '../../../types/abilities';
 import type { BuffLookupData } from '../../../utils/BuffLookupUtils';
 import type { BuffUptime } from '../../../utils/buffUptimeCalculator';
 import {
