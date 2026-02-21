@@ -1,5 +1,5 @@
 /**
- * Tests for BuffUptimesPanel - Gear set proc buff tracking (ESO-608)
+ * Tests for BuffUptimesPanel - Gear set proc buff tracking (ESO-608, ESO-612)
  *
  * Verifies that:
  * 1. IMPORTANT_BUFF_ABILITIES includes Pillager's Profit proc buff (172055)
@@ -32,6 +32,7 @@ describe('BuffUptimesPanel', () => {
         KnownAbilities.LUCENT_ECHOES_WEARER,
         KnownAbilities.MAJOR_COURAGE,
         KnownAbilities.MAJOR_RESOLVE,
+        KnownAbilities.MINOR_RESOLVE,
         KnownAbilities.ENLIVENING_OVERFLOW_BUFF,
         KnownAbilities.MINOR_BERSERK,
         KnownAbilities.MINOR_COURAGE,
