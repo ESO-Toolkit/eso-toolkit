@@ -21,6 +21,12 @@ import { useSelector } from 'react-redux';
 import { getArmorWeightCounts } from '@/utils/armorUtils';
 import { toClassKey } from '@/utils/classNameUtils';
 import { abbreviateFood, detectFoodFromAuras, getFoodColor } from '@/utils/foodDetectionUtils';
+import {
+  abbreviatePotion,
+  describePotionType,
+  detectPotionType,
+  getPotionColor,
+} from '@/utils/potionDetectionUtils';
 import { createGearSetTooltipProps } from '@/utils/gearSetTooltipMapper';
 import { buildVariantSx, getGearChipProps } from '@/utils/playerCardStyleUtils';
 
@@ -367,6 +373,18 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         color: getFoodColor(foodAura.id),
       };
     }, [foodAura]);
+
+    // Memoize potion information
+    const potionInfo = React.useMemo(() => {
+      const potionType = detectPotionType(auras, player.potionUse ?? 0);
+      return {
+        type: potionType,
+        count: player.potionUse ?? 0,
+        display: abbreviatePotion(potionType),
+        color: getPotionColor(potionType),
+        tooltip: describePotionType(potionType),
+      };
+    }, [auras, player.potionUse]);
 
     const resolvedPlayerName = resolveActorName(player);
     const normalizedDisplayName = resolvedPlayerName.trim();
@@ -1104,6 +1122,34 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             }}
                           >
                             {foodInfo.display}
+                          </Box>
+                        </span>
+                      </Tooltip>{' '}
+                      ·{' '}
+                      <Tooltip
+                        title={`Potion (${potionInfo.count}x): ${potionInfo.tooltip}`}
+                        enterTouchDelay={0}
+                        leaveTouchDelay={3000}
+                      >
+                        <span
+                          style={{ display: 'inline-flex', alignItems: 'center' }}
+                          data-testid={`potion-${player.id}`}
+                        >
+                          <span role="img" aria-label="potion">
+                            ⚗️
+                          </span>
+                          <span style={{ margin: '0 1px' }}></span>
+                          <Box
+                            component="span"
+                            sx={{
+                              display: 'inline',
+                              fontWeight: 700,
+                              fontSize: { xs: 8, sm: 9, md: 10 },
+                              letterSpacing: '.01em',
+                              color: potionInfo.color,
+                            }}
+                          >
+                            {potionInfo.count}×{potionInfo.display}
                           </Box>
                         </span>
                       </Tooltip>{' '}

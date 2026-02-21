@@ -1026,6 +1026,16 @@ export const WITCHES_BREW = Object.freeze(
 ); // Witches' Brew event items
 export const EXPERIENCE_BOOST_FOOD = Object.freeze(new Set([91368, 91369])); // Jester's Experience Boost Pie
 
+// Potion Buffs
+// Stamina Potion Restore Effect - appears in auras when a stamina potion is used
+export const STAMINA_POTION_RESTORE_EFFECT = Object.freeze(new Set([6119]));
+// Magicka Potion Restore Effect - appears in auras when a magicka potion is used
+export const MAGICKA_POTION_RESTORE_EFFECT = Object.freeze(new Set([6118]));
+// Potion Timer (cooldown/immunity) auras - appear after ANY potion use
+export const POTION_TIMER_IDS = Object.freeze(
+  new Set([63551, 63631, 63653, 63654, 63673, 66255, 72985, 81733, 82679, 82680]),
+);
+
 // Synergies (abilities that should not count as player-initiated casts)
 export const SYNERGY_ABILITY_IDS = Object.freeze(
   new Set([
