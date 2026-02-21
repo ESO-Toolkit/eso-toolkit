@@ -291,9 +291,10 @@ export function buildTooltipPropsFromAbilityId(
   if (found) {
     const { node, skillLineName, skillLineData, parent } = found;
     const className = getClassKey(skillLineData);
+    const labelSource = skillLineData as { class?: string; weapon?: string };
 
     return mapSkillToTooltipProps({
-      className: skillLineData.class || skillLineData.weapon || capitalCase(className),
+      className: labelSource.class || labelSource.weapon || capitalCase(className),
       skillLineName,
       node,
       inheritFrom: parent,
@@ -363,11 +364,12 @@ export function buildTooltipPropsFromClassAndName(
   if (found) {
     const { node, skillLineName, skillLineData, parent } = found;
     const className = getClassKey(skillLineData);
+    const labelSource = skillLineData as { class?: string; weapon?: string };
 
     // abilityData is already defined above, use it for ability ID and icon
 
     return mapSkillToTooltipProps({
-      className: skillLineData.class || skillLineData.weapon || capitalCase(className),
+      className: labelSource.class || labelSource.weapon || capitalCase(className),
       skillLineName,
       node,
       inheritFrom: parent,

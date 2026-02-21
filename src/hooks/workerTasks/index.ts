@@ -1,5 +1,6 @@
 // Worker task hooks for retrieving computation results
 export { useBuffLookupTask } from './useBuffLookupTask';
+export { useMultiFightBuffLookup, type FightScope } from './useMultiFightBuffLookup';
 export { useDebuffLookupTask } from './useDebuffLookupTask';
 export { useHostileBuffLookupTask } from './useHostileBuffLookupTask';
 export { useCriticalDamageTask } from './useCriticalDamageTask';

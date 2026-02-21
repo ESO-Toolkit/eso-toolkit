@@ -45,23 +45,43 @@ export const PlaybackButtons: React.FC<PlaybackButtonsProps> = ({
 }) => {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-      <IconButton onClick={onSkipToStart} size="small" title="Skip to start">
+      <IconButton
+        onClick={onSkipToStart}
+        size="small"
+        title="Skip to start"
+        aria-label="Skip to start"
+      >
         <SkipPrevious />
       </IconButton>
 
-      <IconButton onClick={onSkipBackward10} size="small" title="Skip backward 10 seconds">
+      <IconButton
+        onClick={onSkipBackward10}
+        size="small"
+        title="Skip backward 10 seconds"
+        aria-label="Skip backward 10 seconds"
+      >
         <Replay10 />
       </IconButton>
 
-      <IconButton onClick={onPlayPause} size="large" title={isPlaying ? 'Pause' : 'Play'}>
+      <IconButton
+        onClick={onPlayPause}
+        size="large"
+        title={isPlaying ? 'Pause' : 'Play'}
+        aria-label={isPlaying ? 'Pause' : 'Play'}
+      >
         {isPlaying ? <Pause /> : <PlayArrow />}
       </IconButton>
 
-      <IconButton onClick={onSkipForward10} size="small" title="Skip forward 10 seconds">
+      <IconButton
+        onClick={onSkipForward10}
+        size="small"
+        title="Skip forward 10 seconds"
+        aria-label="Skip forward 10 seconds"
+      >
         <Forward10 />
       </IconButton>
 
-      <IconButton onClick={onSkipToEnd} size="small" title="Skip to end">
+      <IconButton onClick={onSkipToEnd} size="small" title="Skip to end" aria-label="Skip to end">
         <SkipNext />
       </IconButton>
     </Box>

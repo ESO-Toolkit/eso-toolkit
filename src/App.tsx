@@ -5,6 +5,7 @@ import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { AnalyticsListener } from './components/AnalyticsListener';
+import { CookieConsent } from './components/CookieConsent';
 import { MemoizedLoadingSpinner } from './components/CustomLoadingSpinner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HashRouteRedirect } from './components/HashRouteRedirect';
@@ -94,11 +95,39 @@ const CalculationKnowledgeBasePage = React.lazy(() =>
     default: module.CalculationKnowledgeBasePage,
   })),
 );
+const FoodSelectorKnowledgeBasePage = React.lazy(() =>
+  import('./pages/FoodSelectorKnowledgeBasePage').then((module) => ({
+    default: module.FoodSelectorKnowledgeBasePage,
+  })),
+);
 const WhoAmIPage = React.lazy(() =>
   import('./pages/WhoAmIPage').then((module) => ({ default: module.WhoAmIPage })),
 );
+const LoadoutManager = React.lazy(() =>
+  import('./features/loadout-manager').then((module) => ({ default: module.LoadoutManager })),
+);
 const SampleReportPage = React.lazy(() =>
   import('./pages/SampleReportPage').then((module) => ({ default: module.SampleReportPage })),
+);
+const RosterBuilderPage = React.lazy(() =>
+  import('./pages/RosterBuilderPage').then((module) => ({ default: module.RosterBuilderPage })),
+);
+const AboutPage = React.lazy(() =>
+  import('./pages/AboutPage').then((module) => ({ default: module.AboutPage })),
+);
+
+const ReportSummaryPage = React.lazy(() =>
+  import('./features/report_summary/ReportSummaryPage').then((module) => ({
+    default: module.ReportSummaryPage,
+  })),
+);
+
+const RaidDashboardPage = React.lazy(() =>
+  import('./pages/RaidDashboardPage').then((module) => ({ default: module.RaidDashboardPage })),
+);
+
+const WhatsNewPage = React.lazy(() =>
+  import('./pages/WhatsNewPage').then((module) => ({ default: module.WhatsNewPage })),
 );
 
 // Lazy load the feedback FAB to improve initial page load performance
@@ -141,6 +170,26 @@ const App: React.FC = () => {
     });
   }, []);
 
+  // Listen for consent changes and reinitialize analytics
+  React.useEffect(() => {
+    const handleStorageChange = (e: StorageEvent): void => {
+      if (e.key === 'eso-log-aggregator-cookie-consent' && e.newValue) {
+        try {
+          const consent = JSON.parse(e.newValue);
+          if (consent.accepted) {
+            // User has accepted consent, reinitialize analytics
+            initializeAnalytics();
+          }
+        } catch {
+          // Ignore parsing errors
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // Check if we're on the landing page to conditionally load components
   const isLandingPage = window.location.pathname === '/' || window.location.pathname === '';
 
@@ -167,6 +216,8 @@ const App: React.FC = () => {
               )}
               {/* Update notification for new versions */}
               <UpdateNotification />
+              {/* Cookie consent banner */}
+              <CookieConsent />
             </AuthProvider>
           </EsoLogsClientProvider>
         </PersistGate>
@@ -277,6 +328,30 @@ const AppRoutes: React.FC = () => {
                       <LiveLog>
                         <ReportFightDetails />
                       </LiveLog>
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/report/:reportId/summary"
+              element={
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ReportSummaryPage />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/report/:reportId/dashboard"
+              element={
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <RaidDashboardPage />
                     </Suspense>
                   </ErrorBoundary>
                 </AuthenticatedRoute>
@@ -401,11 +476,61 @@ const AppRoutes: React.FC = () => {
               }
             />
             <Route
+              path="/loadout-manager"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <LoadoutManager />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/docs/loadout/food-selector"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <FoodSelectorKnowledgeBasePage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
               path="/docs/calculations"
               element={
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <CalculationKnowledgeBasePage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/roster-builder"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <RosterBuilderPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <AboutPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/whats-new"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <WhatsNewPage />
                   </Suspense>
                 </ErrorBoundary>
               }

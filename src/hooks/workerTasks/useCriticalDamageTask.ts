@@ -1,10 +1,10 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { executeCriticalDamageTask, criticalDamageActions } from '@/store/worker_results';
+import { executeCriticalDamageTask } from '@/store/worker_results';
 import { SharedWorkerResultType } from '@/workers/SharedWorker';
 
-import { FightFragment } from '../../graphql/gql/graphql';
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
   selectCriticalDamageResult,
   selectWorkerTaskLoading,
@@ -12,25 +12,33 @@ import {
   selectWorkerTaskProgress,
 } from '../../store/worker_results/selectors';
 import { useCombatantInfoRecord } from '../events/useCombatantInfoRecord';
+import { useDamageEvents } from '../events/useDamageEvents';
 import { usePlayerData } from '../usePlayerData';
+import { useSelectedTargetIds } from '../useSelectedTargetIds';
 
 import { useBuffLookupTask } from './useBuffLookupTask';
 import { useDebuffLookupTask } from './useDebuffLookupTask';
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
 // Hook for critical damage calculation
-export function useCriticalDamageTask(): {
+interface UseCriticalDamageTaskOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): {
   criticalDamageData: SharedWorkerResultType<'calculateCriticalDamageData'> | null;
   isCriticalDamageLoading: boolean;
   criticalDamageError: string | null;
   criticalDamageProgress: number | null;
-  selectedFight: FightFragment | null;
+  selectedFight: ReturnType<typeof useWorkerTaskDependencies>['selectedFight'];
 } {
   const { dispatch, selectedFight } = useWorkerTaskDependencies();
   const { combatantInfoRecord, isCombatantInfoEventsLoading } = useCombatantInfoRecord();
   const { playerData, isPlayerDataLoading } = usePlayerData();
   const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask();
   const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const selectedTargetIds = useSelectedTargetIds();
 
   // For now, we'll use placeholder data until the dependencies are properly integrated
   React.useEffect(() => {
@@ -41,23 +49,28 @@ export function useCriticalDamageTask(): {
       !isCombatantInfoEventsLoading &&
       combatantInfoRecord !== null &&
       !isPlayerDataLoading &&
-      playerData?.playersById
+      playerData?.playersById &&
+      !isDamageEventsLoading &&
+      damageEvents.length > 0
     ) {
       // Only require debuff data if it's actually loading or available
       const hasDebuffData = debuffLookupData !== null || !isDebuffLookupLoading;
 
       if (hasDebuffData) {
-        // Clear any existing result to start fresh
-        dispatch(criticalDamageActions.clearResult());
-        dispatch(
+        const promise = dispatch(
           executeCriticalDamageTask({
             fight: selectedFight,
             players: playerData.playersById,
             combatantInfoEvents: combatantInfoRecord,
             friendlyBuffsLookup: buffLookupData,
             debuffsLookup: debuffLookupData || { buffIntervals: {} },
+            damageEvents: damageEvents,
+            selectedTargetIds: Array.from(selectedTargetIds),
           }),
         );
+        return () => {
+          promise.abort();
+        };
       }
     }
   }, [
@@ -68,6 +81,9 @@ export function useCriticalDamageTask(): {
     combatantInfoRecord,
     buffLookupData,
     debuffLookupData,
+    damageEvents,
+    isDamageEventsLoading,
+    selectedTargetIds,
     isBuffLookupLoading,
     isDebuffLookupLoading,
     isCombatantInfoEventsLoading,

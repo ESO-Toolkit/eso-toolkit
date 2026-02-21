@@ -395,6 +395,8 @@ export const FightReplay: React.FC = () => {
         markersState={markersState}
         onAddMarker={handleAddMarkerAt}
         onRemoveMarker={handleRemoveMarker}
+        showPlayerPaths={true}
+        initialSelectedPlayerIds={[]} // Empty initially, user can select via HUD
       />
 
       {copySnackbar && (

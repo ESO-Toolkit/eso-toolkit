@@ -35,6 +35,9 @@ jest.mock('./logger', () => {
     ...actualLogger,
     Logger: jest.fn().mockImplementation(() => ({
       error: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
     })),
   };
 });
@@ -61,10 +64,19 @@ describe('analytics', () => {
     getEnvVarSpy = jest.spyOn(envUtils, 'getEnvVar');
     mockGetBuildInfo.mockReturnValue(mockBuildInfo);
     mockGetBuildInfoAsync.mockResolvedValue(mockBuildInfo);
+
+    // Set up consent in localStorage
+    const consent = {
+      accepted: true,
+      version: '1',
+      timestamp: new Date().toISOString(),
+    };
+    localStorage.setItem('eso-log-aggregator-cookie-consent', JSON.stringify(consent));
   });
 
   afterEach(() => {
     getEnvVarSpy.mockRestore();
+    localStorage.clear();
   });
 
   describe('initializeAnalytics', () => {
@@ -155,6 +167,51 @@ describe('analytics', () => {
           page: '/test-path',
           title: undefined,
           location: expect.stringContaining('/test-path'),
+        }),
+      );
+    });
+
+    it('should normalize report paths and extract report code', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      trackPageView('/report/abc123/insights');
+
+      expect(ReactGA.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hitType: 'pageview',
+          page: '/report/[code]/insights',
+          report_code: 'abc123',
+          location: expect.stringContaining('/report/[code]/insights'),
+        }),
+      );
+    });
+
+    it('should normalize report and fight paths', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      trackPageView('/report/xyz789/fight/5/damage');
+
+      expect(ReactGA.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hitType: 'pageview',
+          page: '/report/[code]/fight/[fightId]/damage',
+          report_code: 'xyz789',
+          fight_id: '5',
+          location: expect.stringContaining('/report/[code]/fight/[fightId]/damage'),
+        }),
+      );
+    });
+
+    it('should handle report path without trailing segments', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      trackPageView('/report/test123');
+
+      expect(ReactGA.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hitType: 'pageview',
+          page: '/report/[code]',
+          report_code: 'test123',
         }),
       );
     });

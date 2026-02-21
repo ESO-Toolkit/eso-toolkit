@@ -9,9 +9,11 @@ on:
 jobs:
   upload-sourcemaps:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           # Sentry needs access to commit history for better release tracking
           fetch-depth: 0
@@ -34,7 +36,7 @@ jobs:
           export GENERATE_SOURCEMAP=true
 
           # Build the project
-          if [ "${{ github.ref }}" = "refs/heads/master" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             REPO_NAME=$(echo "${GITHUB_REPOSITORY}" | cut -d'/' -f2)
             VITE_BASE_URL="/$REPO_NAME/" npm run build
           else
@@ -49,12 +51,19 @@ jobs:
           curl -sL https://sentry.io/get-cli/ | bash
 
       - name: Create Sentry release
+        id: create_release
         run: |
           # Create a new release
-          sentry-cli releases new "${{ env.RELEASE_VERSION }}"
+          sentry-cli releases new "${{ env.RELEASE_VERSION }}" || {
+            echo "❌ Failed to create Sentry release"
+            echo "This might indicate an authentication issue or incorrect Sentry configuration"
+            exit 1
+          }
 
           # Associate commits with the release
-          sentry-cli releases set-commits "${{ env.RELEASE_VERSION }}" --auto
+          sentry-cli releases set-commits "${{ env.RELEASE_VERSION }}" --auto || {
+            echo "⚠️ Warning: Failed to associate commits with release (non-fatal)"
+          }
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
@@ -62,20 +71,29 @@ jobs:
 
       - name: Upload sourcemaps to Sentry
         run: |
-          # Upload sourcemaps
-          sentry-cli releases files "${{ env.RELEASE_VERSION }}" upload-sourcemaps \
-            --url-prefix "~/" \
-            --validate \
-            --strip-common-prefix \
-            ./build/static/js/
-
-          # Upload CSS sourcemaps if they exist
-          if [ -d "./build/static/css" ] && [ "$(ls -A ./build/static/css/*.map 2>/dev/null)" ]; then
-            sentry-cli releases files "${{ env.RELEASE_VERSION }}" upload-sourcemaps \
-              --url-prefix "~/static/css/" \
+          # Check if sourcemap files exist
+          echo "Checking for sourcemap files..."
+          if [ ! -d "./build" ]; then
+            echo "❌ Error: build directory does not exist"
+            exit 1
+          fi
+          
+          # List all .map files for debugging
+          echo "Found sourcemap files:"
+          find ./build -name "*.map" -type f || echo "No .map files found"
+          
+          # Upload all sourcemaps from build/assets directory
+          if [ -d "./build/assets" ] && [ "$(find ./build/assets -name "*.map" -type f 2>/dev/null)" ]; then
+            echo "Uploading sourcemaps from ./build/assets/..."
+            sentry-cli sourcemaps upload \
+              --release "${{ env.RELEASE_VERSION }}" \
+              --url-prefix "~/assets/" \
               --validate \
               --strip-common-prefix \
-              ./build/static/css/
+              ./build/assets/
+          else
+            echo "❌ Error: No sourcemaps found in ./build/assets/"
+            exit 1
           fi
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

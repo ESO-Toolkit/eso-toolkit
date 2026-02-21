@@ -1,16 +1,16 @@
 import React from 'react';
 
-import { FightFragment } from '../../../graphql/gql/graphql';
-import { usePlayerData } from '../../../hooks';
+import { usePlayerData, useResolvedReportFightContext, useFightForContext } from '../../../hooks';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { useDamageReductionTask } from '../../../hooks/workerTasks/useDamageReductionTask';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 import { PlayerDamageReductionData } from '../../../workers/calculations/CalculateDamageReduction';
 
 import { DamageReductionPanelView } from './DamageReductionPanelView';
 
 interface DamageReductionPanelProps {
-  fight: FightFragment;
+  context?: ReportFightContextInput;
   phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
@@ -18,19 +18,29 @@ interface DamageReductionPanelProps {
  * Smart component that handles data processing and state management for damage reduction panel
  */
 export const DamageReductionPanel: React.FC<DamageReductionPanelProps> = ({
-  fight,
+  context,
   phaseTransitionInfo,
 }) => {
-  const { playerData, isPlayerDataLoading } = usePlayerData();
+  const resolvedContext = useResolvedReportFightContext(context);
+  const fight = useFightForContext(resolvedContext);
+  const reportId = resolvedContext.reportCode ?? '';
+  const resolvedFightId = resolvedContext.fightId ?? undefined;
+
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
 
   // Use the worker-based damage reduction calculation
   const { damageReductionData: allPlayersDamageReductionData, isDamageReductionLoading } =
-    useDamageReductionTask();
+    useDamageReductionTask({ context: resolvedContext });
 
   const isLoading = isDamageReductionLoading || isPlayerDataLoading;
 
   // Only show details when all loading is complete AND we have data
-  const hasCompleteData = !isLoading && allPlayersDamageReductionData && playerData?.playersById;
+  const hasCompleteData =
+    !isLoading &&
+    allPlayersDamageReductionData &&
+    playerData?.playersById &&
+    fight &&
+    resolvedFightId != null;
 
   // Track which panels are expanded
   const [expandedPanels, setExpandedPanels] = React.useState<Record<string, boolean>>({});
@@ -61,12 +71,15 @@ export const DamageReductionPanel: React.FC<DamageReductionPanelProps> = ({
     return getSkeletonForTab(TabId.DAMAGE_REDUCTION, false, false);
   }
 
+  const fightIdForView = resolvedFightId as number;
+  const fightForView = fight as NonNullable<typeof fight>;
+
   return (
     <DamageReductionPanelView
-      reportId={''} // TODO: Get report ID from context
-      fightId={fight.id}
+      reportId={reportId}
+      fightId={fightIdForView}
       players={players}
-      fight={fight}
+      fight={fightForView}
       expandedPanels={expandedPanels}
       onExpandChange={handleExpandChange}
       damageReductionData={

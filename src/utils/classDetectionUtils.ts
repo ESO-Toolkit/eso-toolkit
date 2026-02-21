@@ -8,15 +8,10 @@
  */
 
 // Import skillset data
-import { KnownAbilities } from '@/types/abilities';
+import { KnownAbilities, AURA_EXCLUDED_ABILITIES } from '@/types/abilities';
 
-import { arcanistData } from '../data/skillsets/arcanist';
-import { dragonknightData } from '../data/skillsets/dragonknight';
-import { necromancerData } from '../data/skillsets/necromancer';
-import { nightbladeData } from '../data/skillsets/nightblade';
-import { sorcererData } from '../data/skillsets/sorcerer';
-import { templarData } from '../data/skillsets/templar';
-import { wardenData } from '../data/skillsets/warden';
+import * as classSkillLines from '../data/skill-lines/class';
+import type { SkillLineData } from '../data/types/skill-line-types';
 // Import types
 import { ReportAbilityFragment } from '../graphql/gql/graphql';
 import {
@@ -35,16 +30,67 @@ const SKILL_NAME_ID_REQUIREMENTS = Object.freeze<Record<string, KnownAbilities>>
   Combustion: KnownAbilities.COMBUSTION,
 });
 
-// Collect all skillset data
-const allSkillsets = [
-  arcanistData,
-  dragonknightData,
-  necromancerData,
-  nightbladeData,
-  sorcererData,
-  templarData,
-  wardenData,
+const SKIP_NAME_PATTERNS = [
+  'light attack',
+  'heavy attack',
+  'block',
+  'bash',
+  'dodge',
+  'sprint',
+  'synergy',
+  'weapon',
+  'armor',
+  'enchant',
+  'food',
+  'drink',
+  'mundus',
+  'set bonus',
+  'vampire',
+  'werewolf',
+  'guild',
+  'world',
+  'alliance',
+  'generic',
+  'basic',
+  'common',
 ];
+
+const CLASS_SKILL_LINES = Object.values(classSkillLines) as SkillLineData[];
+
+interface SkillLineMeta {
+  className: string;
+  skillLineName: string;
+}
+
+const ABILITY_ID_TO_SKILL_LINE = new Map<number, SkillLineMeta>();
+const ABILITY_NAME_TO_SKILL_LINE = new Map<string, SkillLineMeta>();
+
+function normalizeName(value?: string | null): string {
+  return value?.toLowerCase().trim() ?? '';
+}
+
+function registerSkillLineMeta(): void {
+  for (const skillLine of CLASS_SKILL_LINES) {
+    if (!skillLine?.skills) continue;
+    const meta: SkillLineMeta = {
+      className: skillLine.class || 'Unknown',
+      skillLineName: skillLine.name,
+    };
+
+    for (const skill of skillLine.skills) {
+      if (typeof skill.id === 'number' && !ABILITY_ID_TO_SKILL_LINE.has(skill.id)) {
+        ABILITY_ID_TO_SKILL_LINE.set(skill.id, meta);
+      }
+
+      const normalizedSkillName = normalizeName(skill.name);
+      if (normalizedSkillName && !ABILITY_NAME_TO_SKILL_LINE.has(normalizedSkillName)) {
+        ABILITY_NAME_TO_SKILL_LINE.set(normalizedSkillName, meta);
+      }
+    }
+  }
+}
+
+registerSkillLineMeta();
 
 // Type definitions
 export interface GameAbility {
@@ -68,12 +114,18 @@ export interface ClassAnalysisResult {
     skillLine: string;
     className: string;
     count: number;
+    skillIds: Set<number>;
   }>;
 }
 
-function shouldSkipAbility(abilityName: string, abilityId: number): boolean {
+function shouldSkipAbility(abilityName: string | undefined | null, abilityId: number): boolean {
+  const normalizedName = normalizeName(abilityName);
+  if (!normalizedName) {
+    return false;
+  }
+
   const requirementKey = Object.keys(SKILL_NAME_ID_REQUIREMENTS).find(
-    (name) => name.toLowerCase() === abilityName.toLowerCase(),
+    (name) => name.toLowerCase() === normalizedName,
   );
 
   // This handles the situation where multiple skills have the same name
@@ -95,7 +147,7 @@ export function extractPlayerAbilityIds(
   playerId: string,
   combatantInfoEvents: CombatantInfoEvent[],
   castEvents: UnifiedCastEvent[],
-  damageEvents: DamageEvent[],
+  _damageEvents: DamageEvent[],
   friendlyBuffEvents: BuffEvent[],
   debuffEvents: DebuffEvent[],
   talents?: PlayerTalent[],
@@ -111,7 +163,7 @@ export function extractPlayerAbilityIds(
   combatantInfoEventsForPlayer.forEach((cie) => {
     const auras = cie.auras || [];
     auras.forEach((aura) => {
-      if (typeof aura.ability === 'number') {
+      if (typeof aura.ability === 'number' && !AURA_EXCLUDED_ABILITIES.has(aura.ability)) {
         abilityIds.add(aura.ability);
       }
     });
@@ -129,15 +181,8 @@ export function extractPlayerAbilityIds(
   });
 
   // Add abilities from damage events
-  damageEvents.forEach((event) => {
-    if (
-      event.type === 'damage' &&
-      String(event.sourceID) === playerId &&
-      typeof event.abilityGameID === 'number'
-    ) {
-      abilityIds.add(event.abilityGameID);
-    }
-  });
+  // Damage events routinely report class skills cast by other combatants (synergies, companions, etc.)
+  // and create false positives, so they are intentionally ignored.
 
   // Add abilities from friendly buff events (only apply events)
   friendlyBuffEvents.forEach((event) => {
@@ -182,152 +227,33 @@ export function createSkillLineAbilityMapping(
 ): Record<number, { className: string; skillLineName: string }> {
   const skillLineMapping: Record<number, { className: string; skillLineName: string }> = {};
 
-  // Build mapping by matching ability names to skillset data
   for (const [abilityIdStr, ability] of Object.entries(abilitiesData)) {
-    const abilityId = parseInt(String(abilityIdStr), 10);
+    const abilityId = Number(abilityIdStr);
+    if (!Number.isFinite(abilityId)) {
+      continue;
+    }
 
-    // Handle both GameAbility and ReportAbilityFragment types
-    const abilityName = 'name' in ability && ability.name ? ability.name.toLowerCase() : '';
+    const abilityName = 'name' in ability ? ability.name : undefined;
 
-    // This handles the situation where multiple skills have the same name
-    // For example, the DK passive combustion shares a name with the undaunted orb synergy "combustion"
     if (shouldSkipAbility(abilityName, abilityId)) {
       continue;
     }
 
-    if (!abilityName) continue;
+    const normalizedAbilityName = normalizeName(abilityName);
 
-    // Skip obvious non-class abilities
-    const skipPatterns = [
-      'light attack',
-      'heavy attack',
-      'block',
-      'bash',
-      'dodge',
-      'sprint',
-      'synergy',
-      'weapon',
-      'armor',
-      'enchant',
-      'food',
-      'drink',
-      'mundus',
-      'set bonus',
-      'vampire',
-      'werewolf',
-      'guild',
-      'world',
-      'alliance',
-      'generic',
-      'basic',
-      'common',
-    ];
-
-    if (skipPatterns.some((pattern) => ability.name?.toLowerCase().includes(pattern))) {
+    if (
+      normalizedAbilityName &&
+      SKIP_NAME_PATTERNS.some((pattern) => normalizedAbilityName.includes(pattern))
+    ) {
       continue;
     }
 
-    // Check each class skillset for matching ability names
-    for (const skillset of allSkillsets) {
-      let found = false;
+    const meta =
+      ABILITY_ID_TO_SKILL_LINE.get(abilityId) ||
+      (normalizedAbilityName ? ABILITY_NAME_TO_SKILL_LINE.get(normalizedAbilityName) : undefined);
 
-      // Check each skill line in the skillset
-      for (const [skillLineKey, skillLine] of Object.entries(skillset.skillLines)) {
-        // Check activeAbilities
-        if (skillLine.activeAbilities) {
-          for (const [key, activeAbility] of Object.entries(skillLine.activeAbilities)) {
-            if (
-              key.toLowerCase() === abilityName ||
-              activeAbility.name.toLowerCase() === abilityName
-            ) {
-              // Use the skill line name if available, otherwise use the skill line key
-              const skillLineName = skillLine.name || skillLineKey;
-              const className = skillset.class || 'Unknown';
-              skillLineMapping[abilityId] = { className, skillLineName };
-              found = true;
-              break;
-            }
-
-            // Check morphs of activeAbilities
-            if (activeAbility.morphs) {
-              for (const [morphKey, morph] of Object.entries(activeAbility.morphs)) {
-                if (
-                  morphKey.toLowerCase() === abilityName ||
-                  morph.name.toLowerCase() === abilityName
-                ) {
-                  const skillLineName = skillLine.name || skillLineKey;
-                  const className = skillset.class || 'Unknown';
-                  skillLineMapping[abilityId] = { className, skillLineName };
-                  found = true;
-                  break;
-                }
-              }
-            }
-            if (found) break;
-          }
-        }
-
-        // Check ultimates
-        if (!found && skillLine.ultimates) {
-          for (const [key, ultimate] of Object.entries(skillLine.ultimates)) {
-            if (key.toLowerCase() === abilityName || ultimate.name.toLowerCase() === abilityName) {
-              const skillLineName = skillLine.name || skillLineKey;
-              const className = skillset.class || 'Unknown';
-              skillLineMapping[abilityId] = { className, skillLineName };
-              found = true;
-              break;
-            }
-
-            // Check morphs of ultimates
-            if (ultimate.morphs) {
-              for (const [morphKey, morph] of Object.entries(ultimate.morphs)) {
-                if (
-                  morphKey.toLowerCase() === abilityName ||
-                  morph.name.toLowerCase() === abilityName
-                ) {
-                  const skillLineName = skillLine.name || skillLineKey;
-                  const className = skillset.class || 'Unknown';
-                  skillLineMapping[abilityId] = { className, skillLineName };
-                  found = true;
-                  break;
-                }
-              }
-            }
-            if (found) break;
-          }
-        }
-
-        // Check passives
-        if (!found && skillLine.passives) {
-          // Handle both object format { [key: string]: Passive } and array format Passive[]
-          if (Array.isArray(skillLine.passives)) {
-            // Array format
-            for (const passive of skillLine.passives) {
-              if (passive.name.toLowerCase() === abilityName) {
-                const skillLineName = skillLine.name || skillLineKey;
-                const className = skillset.class || 'Unknown';
-                skillLineMapping[abilityId] = { className, skillLineName };
-                found = true;
-                break;
-              }
-            }
-          } else {
-            // Object format
-            for (const [key, passive] of Object.entries(skillLine.passives)) {
-              if (key.toLowerCase() === abilityName || passive.name.toLowerCase() === abilityName) {
-                const skillLineName = skillLine.name || skillLineKey;
-                const className = skillset.class || 'Unknown';
-                skillLineMapping[abilityId] = { className, skillLineName };
-                found = true;
-                break;
-              }
-            }
-          }
-        }
-
-        if (found) break;
-      }
-      if (found) break;
+    if (meta) {
+      skillLineMapping[abilityId] = meta;
     }
   }
 

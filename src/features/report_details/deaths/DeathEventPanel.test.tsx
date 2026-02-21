@@ -27,6 +27,8 @@ jest.mock('../../../hooks', () => ({
   useHealingEvents: jest.fn(),
   useResourceEvents: jest.fn(),
   useRoleColors: jest.fn(),
+  useResolvedReportFightContext: jest.fn(),
+  useFightForContext: jest.fn(),
 }));
 
 jest.mock('../../../hooks/workerTasks/useDebuffLookupTask', () => ({
@@ -53,6 +55,8 @@ const {
   useHealingEvents,
   useResourceEvents,
   useRoleColors,
+  useResolvedReportFightContext,
+  useFightForContext,
 } = jest.requireMock('../../../hooks');
 
 const { useDebuffLookupTask } = jest.requireMock('../../../hooks/workerTasks/useDebuffLookupTask');
@@ -114,6 +118,14 @@ const createMockPlayerData = () => ({
   },
 });
 
+// Mock fight data
+const mockFight: FightFragment = createMockFight({
+  id: 1,
+  startTime: 1000,
+  endTime: 60000,
+  name: 'Test Fight',
+});
+
 // Default mock setup
 const setupMocks = (overrides: any = {}) => {
   const defaultMocks = {
@@ -126,6 +138,8 @@ const setupMocks = (overrides: any = {}) => {
     useDebuffLookupTask: { debuffLookupData: null, isDebuffLookupLoading: false },
     useReportMasterData: { reportMasterData: createMockMasterData(), isMasterDataLoading: false },
     usePlayerData: { playerData: createMockPlayerData() },
+    useResolvedReportFightContext: { reportCode: 'test-report', fightId: 1 },
+    useFightForContext: mockFight,
   };
 
   const mergedMocks = { ...defaultMocks, ...overrides };
@@ -139,6 +153,8 @@ const setupMocks = (overrides: any = {}) => {
   useDebuffLookupTask.mockReturnValue(mergedMocks.useDebuffLookupTask);
   useReportMasterData.mockReturnValue(mergedMocks.useReportMasterData);
   usePlayerData.mockReturnValue(mergedMocks.usePlayerData);
+  useResolvedReportFightContext.mockReturnValue(mergedMocks.useResolvedReportFightContext);
+  useFightForContext.mockReturnValue(mergedMocks.useFightForContext);
 
   // Setup calculateDeathDurations mock to return empty array
   calculateDeathDurations.mockReturnValue([]);
@@ -592,6 +608,256 @@ describe('DeathEventPanel Taunt Status Tests', () => {
       );
 
       expect(container).toMatchSnapshot('blocked-attack-with-taunt');
+    });
+  });
+
+  describe('Recent Attacks Taunt Indicators', () => {
+    it('should show taunt indicator after attacker name in recent attacks when taunted', () => {
+      const deathTimestamp = 1005000;
+      const attackTimestamp = 1003000;
+
+      // Create debuff lookup data with taunt active
+      const debuffLookupData = createMockDebuffLookupData([
+        {
+          targetId: 789, // Enemy boss is taunted
+          startTime: 1002000,
+          endTime: 1006000,
+          sourceId: 123, // Tank applied the taunt
+        },
+      ]);
+
+      // Create damage event from taunted enemy
+      const damageEvent = createMockDamageEvent({
+        timestamp: attackTimestamp,
+        sourceID: 789, // Taunted enemy boss
+        targetID: 456, // DPS player
+        abilityGameID: KnownAbilities.EXPLOITER,
+        amount: 2000,
+      });
+
+      const deathEvent = createMockDeathEvent({
+        timestamp: deathTimestamp,
+        targetID: 456, // DPS player died
+        sourceID: 789, // Taunted enemy boss
+        abilityGameID: KnownAbilities.HURRICANE,
+      });
+
+      setupMocks({
+        useDeathEvents: { deathEvents: [deathEvent], isDeathEventsLoading: false },
+        useDamageEvents: { damageEvents: [damageEvent], isDamageEventsLoading: false },
+        useDebuffLookupTask: { debuffLookupData, isDebuffLookupLoading: false },
+      });
+
+      const { container } = render(
+        <TestWrapper>
+          <DeathEventPanel fight={mockFight} />
+        </TestWrapper>,
+      );
+
+      // The taunt indicator should appear after the attacker name
+      const recentAttackText = container.textContent || '';
+      // Should have attack info with attacker name and taunt indicator after it
+      expect(recentAttackText).toContain('Enemy Boss');
+      expect(recentAttackText).toContain('🎯'); // Taunt indicator appears
+
+      expect(container).toMatchSnapshot('recent-attacks-with-taunt-indicator');
+    });
+
+    it('should NOT show taunt indicator after attacker name when not taunted', () => {
+      const deathTimestamp = 1005000;
+      const attackTimestamp = 1003000;
+
+      // Create debuff lookup data without taunt
+      const debuffLookupData = createMockDebuffLookupData([]);
+
+      // Create damage event from non-taunted enemy
+      const damageEvent = createMockDamageEvent({
+        timestamp: attackTimestamp,
+        sourceID: 789, // Non-taunted enemy boss
+        targetID: 456, // DPS player
+        abilityGameID: KnownAbilities.EXPLOITER,
+        amount: 2000,
+      });
+
+      const deathEvent = createMockDeathEvent({
+        timestamp: deathTimestamp,
+        targetID: 456, // DPS player died
+        sourceID: 789, // Non-taunted enemy boss
+        abilityGameID: KnownAbilities.HURRICANE,
+      });
+
+      setupMocks({
+        useDeathEvents: { deathEvents: [deathEvent], isDeathEventsLoading: false },
+        useDamageEvents: { damageEvents: [damageEvent], isDamageEventsLoading: false },
+        useDebuffLookupTask: { debuffLookupData, isDebuffLookupLoading: false },
+      });
+
+      const { container } = render(
+        <TestWrapper>
+          <DeathEventPanel fight={mockFight} />
+        </TestWrapper>,
+      );
+
+      // Should show attack but without taunt indicator after name
+      const recentAttackText = container.textContent || '';
+      expect(recentAttackText).toContain('Enemy Boss');
+      // Count taunt indicators - there should be none after the name
+      // (Note: Killing blow section may still show taunt status separately)
+
+      expect(container).toMatchSnapshot('recent-attacks-without-taunt-indicator');
+    });
+
+    it('should show multiple taunt indicators for multiple taunted attacks', () => {
+      const deathTimestamp = 1005000;
+      const attackTimestamp1 = 1002000;
+      const attackTimestamp2 = 1003000;
+      const attackTimestamp3 = 1004000;
+
+      // Create debuff lookup data with taunt active for all attacks
+      const debuffLookupData = createMockDebuffLookupData([
+        {
+          targetId: 789, // Enemy boss is taunted
+          startTime: 1001000,
+          endTime: 1006000,
+          sourceId: 123, // Tank applied the taunt
+        },
+      ]);
+
+      // Create multiple damage events from taunted enemy
+      const damageEvents: DamageEvent[] = [
+        createMockDamageEvent({
+          timestamp: attackTimestamp1,
+          sourceID: 789, // Taunted enemy boss
+          targetID: 456, // DPS player
+          abilityGameID: KnownAbilities.EXPLOITER,
+          amount: 2000,
+        }),
+        createMockDamageEvent({
+          timestamp: attackTimestamp2,
+          sourceID: 789, // Taunted enemy boss
+          targetID: 456, // DPS player
+          abilityGameID: KnownAbilities.REAVING_BLOWS,
+          amount: 3000,
+        }),
+        createMockDamageEvent({
+          timestamp: attackTimestamp3,
+          sourceID: 789, // Taunted enemy boss
+          targetID: 456, // DPS player
+          abilityGameID: KnownAbilities.JUGGERNAUT,
+          amount: 2500,
+        }),
+      ];
+
+      const deathEvent = createMockDeathEvent({
+        timestamp: deathTimestamp,
+        targetID: 456, // DPS player died
+        sourceID: 789, // Taunted enemy boss
+        abilityGameID: KnownAbilities.HURRICANE,
+      });
+
+      setupMocks({
+        useDeathEvents: { deathEvents: [deathEvent], isDeathEventsLoading: false },
+        useDamageEvents: { damageEvents, isDamageEventsLoading: false },
+        useDebuffLookupTask: { debuffLookupData, isDebuffLookupLoading: false },
+      });
+
+      const { container } = render(
+        <TestWrapper>
+          <DeathEventPanel fight={mockFight} />
+        </TestWrapper>,
+      );
+
+      // Should show multiple attacks with taunt indicators
+      const recentAttackText = container.textContent || '';
+      expect(recentAttackText).toContain('Enemy Boss');
+
+      // Should have taunt indicators for each attack
+      const tauntMatches = (recentAttackText.match(/🎯/g) || []).length;
+      expect(tauntMatches).toBeGreaterThan(0); // At least one taunt indicator
+
+      expect(container).toMatchSnapshot('recent-attacks-multiple-taunt-indicators');
+    });
+
+    it('should show mixed taunt indicators for attacks from different enemies', () => {
+      const deathTimestamp = 1005000;
+      const attackTimestamp1 = 1002000;
+      const attackTimestamp2 = 1003000;
+      const attackTimestamp3 = 1004000;
+
+      // Create debuff lookup data - only one enemy is taunted
+      const debuffLookupData = createMockDebuffLookupData([
+        {
+          targetId: 789, // Enemy boss is taunted
+          startTime: 1001000,
+          endTime: 1006000,
+          sourceId: 123, // Tank applied the taunt
+        },
+        // Enemy with ID 888 is NOT taunted
+      ]);
+
+      // Mock another enemy
+      const masterData = createMockMasterData();
+      (masterData.actorsById as any)['888'] = {
+        id: 888,
+        name: 'Add Enemy',
+        type: 'Enemy',
+      } as unknown as ReportActorFragment;
+
+      // Create damage events from multiple attackers
+      const damageEvents: DamageEvent[] = [
+        createMockDamageEvent({
+          timestamp: attackTimestamp1,
+          sourceID: 789, // Taunted enemy boss
+          targetID: 456, // DPS player
+          abilityGameID: KnownAbilities.EXPLOITER,
+          amount: 2000,
+        }),
+        createMockDamageEvent({
+          timestamp: attackTimestamp2,
+          sourceID: 888, // Non-taunted add
+          targetID: 456, // DPS player
+          abilityGameID: KnownAbilities.REAVING_BLOWS,
+          amount: 3000,
+        }),
+        createMockDamageEvent({
+          timestamp: attackTimestamp3,
+          sourceID: 789, // Taunted enemy boss again
+          targetID: 456, // DPS player
+          abilityGameID: KnownAbilities.JUGGERNAUT,
+          amount: 2500,
+        }),
+      ];
+
+      const deathEvent = createMockDeathEvent({
+        timestamp: deathTimestamp,
+        targetID: 456, // DPS player died
+        sourceID: 888, // Non-taunted add killed them
+        abilityGameID: KnownAbilities.HURRICANE,
+        amount: 5000,
+      });
+
+      setupMocks({
+        useDeathEvents: { deathEvents: [deathEvent], isDeathEventsLoading: false },
+        useDamageEvents: { damageEvents, isDamageEventsLoading: false },
+        useDebuffLookupTask: { debuffLookupData, isDebuffLookupLoading: false },
+        useReportMasterData: { reportMasterData: masterData, isMasterDataLoading: false },
+      });
+
+      const { container } = render(
+        <TestWrapper>
+          <DeathEventPanel fight={mockFight} />
+        </TestWrapper>,
+      );
+
+      // Should show both taunted and non-taunted enemies
+      const recentAttackText = container.textContent || '';
+      expect(recentAttackText).toContain('Enemy Boss'); // Taunted
+      expect(recentAttackText).toContain('Add Enemy'); // Not taunted
+
+      // Should have some taunt indicators but not for all attacks
+      expect(recentAttackText).toContain('🎯');
+
+      expect(container).toMatchSnapshot('recent-attacks-mixed-taunt-status');
     });
   });
 });

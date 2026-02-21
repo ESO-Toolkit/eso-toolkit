@@ -96,6 +96,23 @@ const mockStore = configureStore({
     workerResults: () => ({
       calculateScribingDetections: mockWorkerTaskState,
     }),
+    report: () => ({
+      entries: {},
+      accessOrder: [],
+      reportId: '',
+      data: null,
+      loading: false,
+      error: null,
+      cacheMetadata: {
+        lastFetchedReportId: null,
+        lastFetchedTimestamp: null,
+      },
+      activeContext: {
+        reportId: null,
+        fightId: null,
+      },
+      fightIndexByReport: {},
+    }),
   },
 });
 

@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref || github.ref }}
 
@@ -48,7 +48,7 @@ jobs:
           node-version: '20'
 
       - name: Cache Playwright Browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -58,15 +58,46 @@ jobs:
             playwright-browsers-${{ runner.os }}-
 
       - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps
+        run: |
+          echo "🔄 Installing Playwright browsers..."
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "⚡ Cache hit - installing system dependencies and verifying browsers..."
+            npx playwright install-deps
+            # Verify browsers are available, install if missing
+            if ! npx playwright install --dry-run 2>/dev/null; then
+              echo "🔧 Some browsers missing despite cache hit - installing..."
+              npx playwright install
+            fi
+          else
+            echo "🔄 Cache miss - installing browsers and dependencies..."
+            npx playwright install --with-deps
+          fi
 
-      - name: Install System Dependencies Only
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps
+      - name: Verify Playwright Installation
+        run: |
+          echo "🔍 Verifying Playwright installation..."
+          npx playwright --version
+
+          # Verify browsers are available
+          if [ -d ~/.cache/ms-playwright ]; then
+            echo "✅ Browser cache directory exists"
+            echo "Installed browsers:"
+            find ~/.cache/ms-playwright -name "chrome-*" -o -name "chromium-*" -o -name "firefox-*" -o -name "webkit-*" | head -5
+          else
+            echo "❌ No browser cache found"
+            exit 1
+          fi
+
+          # Test browser launch capability
+          echo "🛠️ Testing browser launch capability..."
+          if ! timeout 30s npx playwright install --dry-run; then
+            echo "❌ Browser installation verification failed"
+            exit 1
+          fi
+          echo "✅ All browsers verified and ready"
 
       - name: Cache ESO Logs API Responses
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: api-cache
         with:
           path: cache/eso-logs-api/
@@ -82,7 +113,7 @@ jobs:
           echo "✅ ESO Logs API cache cleared"
 
       - name: Cache Test Data
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: test-data-cache
         with:
           path: data-downloads/
@@ -134,7 +165,7 @@ jobs:
           fi
 
       - name: Cache Build Output
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: build-cache
         with:
           path: |
@@ -209,7 +240,7 @@ jobs:
           ls -la tests/screen-sizes/*.spec.ts
           echo ""
           echo "Available configuration:"
-          ls -la playwright.screen-sizes.config.ts
+          ls -la playwright/screen-sizes.config.ts
           echo ""
           echo "Worker configuration will limit parallel execution to prevent API rate limiting"
 
@@ -232,10 +263,10 @@ jobs:
           
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots (manual: ${{ github.event.inputs.update_snapshots }}, auto: ${{ steps.check_snapshots.outputs.snapshots_exist == 'false' }})"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
             echo "Running visual regression comparison against baseline snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts tests/screen-sizes/comprehensive-visual-regression.spec.ts
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
           
           echo "✅ Screen size tests completed with optimized performance"
@@ -284,10 +315,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Android*" --project="iPhone*" --project="Mobile*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Android*" --project="iPhone*" --project="Mobile*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Android*" --project="iPhone*" --project="Mobile*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Android*" --project="iPhone*" --project="Mobile*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
         env:
           CI: true
@@ -302,10 +333,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="*Tablet*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="*Tablet*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="*Tablet*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="*Tablet*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
         env:
           CI: true
@@ -320,10 +351,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Desktop*" --project="Laptop*" --project="Surface*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Desktop*" --project="Laptop*" --project="Surface*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Desktop*" --project="Laptop*" --project="Surface*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Desktop*" --project="Laptop*" --project="Surface*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
         env:
           CI: true
@@ -338,10 +369,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Breakpoint*" --project="Ultrawide*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Breakpoint*" --project="Ultrawide*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Breakpoint*" --project="Ultrawide*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
+            npx playwright test --config=playwright/screen-sizes-fast.config.ts --project="Breakpoint*" --project="Ultrawide*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
         env:
           CI: true
@@ -386,7 +417,7 @@ jobs:
               "updateSnapshots": "${{ github.event.inputs.update_snapshots }}",
               "screenshotCount": $SCREENSHOT_COUNT
             },
-            "reportUrl": "https://bkrupa.github.io/eso-log-aggregator-reports/screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}/index.html"
+            "reportUrl": "https://ESO-Toolkit.github.io/eso-log-aggregator-reports/screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}/index.html"
           }
           EOF
           elif [ -d "playwright-report" ]; then
@@ -413,7 +444,7 @@ jobs:
               "screenshotCount": $SCREENSHOT_COUNT,
               "note": "Report generated from fallback playwright-report directory"
             },
-            "reportUrl": "https://bkrupa.github.io/eso-log-aggregator-reports/screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}/index.html"
+            "reportUrl": "https://ESO-Toolkit.github.io/eso-log-aggregator-reports/screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}/index.html"
           }
           EOF
           else
@@ -436,20 +467,44 @@ jobs:
           EOF
           fi
 
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: screen-size-test-results-${{ github.run_id }}
+          path: |
+            test-results-screen-sizes/
+            screen-size-report/
+          retention-days: 30
+
       - name: Upload Test Report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: screen-size-test-report-complete
           path: screen-size-reports/
           retention-days: 90
 
+      - name: Generate Deploy Token
+        if: always()
+        id: generate-deploy-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.DEPLOY_APP_ID }}
+          private-key: ${{ secrets.DEPLOY_APP_PRIVATE_KEY }}
+          owner: ESO-Toolkit
+          repositories: eso-log-aggregator-reports
+
       - name: Deploy Reports to GitHub Pages
         if: always()
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ secrets.MERGE_QUEUE_TOKEN }}
-          external_repository: bkrupa/eso-log-aggregator-reports
+          # Use personal_token (not github_token) when pushing to an external repository.
+          # Despite the name, personal_token accepts any token with sufficient permissions,
+          # including tokens generated by a GitHub App. github_token is reserved for the
+          # built-in GITHUB_TOKEN, which cannot push to external repositories.
+          personal_token: ${{ steps.generate-deploy-token.outputs.token }}
+          external_repository: ESO-Toolkit/eso-log-aggregator-reports
           publish_dir: screen-size-reports
           destination_dir: screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}
           keep_files: true
@@ -469,7 +524,7 @@ jobs:
           echo "## 🔗 View Results" >> $GITHUB_STEP_SUMMARY
           
           BRANCH_NAME="${{ github.ref_name }}"
-          REPORT_URL="https://bkrupa.github.io/eso-log-aggregator-reports/screen-size-tests/${BRANCH_NAME}/${{ github.run_number }}/"
+          REPORT_URL="https://ESO-Toolkit.github.io/eso-log-aggregator-reports/screen-size-tests/${BRANCH_NAME}/${{ github.run_number }}/"
           ARTIFACTS_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
           echo "📊 **[Interactive Report: ${REPORT_URL}](${REPORT_URL})**" >> $GITHUB_STEP_SUMMARY

@@ -4,7 +4,7 @@
 Replace the existing color picker implementation in `src/components/TextEditor.tsx` with a modern, accessible, mobile-friendly solution using React-Colorful and Material UI's Popper component.
 
 ## Current Repository Context
-- **Repository**: bkrupa/eso-log-aggregator
+- **Repository**: ESO-Toolkit/eso-toolkit
 - **Target File**: `src/components/TextEditor.tsx`
 - **Current Implementation**: Has issues with Pickr-based color picker (canvas rendering, positioning, accessibility)
 - **Theme System**: Uses Material UI with custom light/dark theme integration

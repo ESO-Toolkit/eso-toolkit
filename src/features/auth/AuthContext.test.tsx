@@ -169,7 +169,11 @@ describe('AuthContext', () => {
 
     return waitFor(() => {
       expect(mockSetUserProperties).toHaveBeenCalledWith(
-        expect.objectContaining({ auth_state: 'guest', has_token_subject: false }),
+        expect.objectContaining({
+          auth_state: 'guest',
+          has_user_subject: false,
+          username: undefined,
+        }),
       );
     });
   });
@@ -214,8 +218,9 @@ describe('AuthContext', () => {
       expect(mockSetUserProperties).toHaveBeenCalledWith(
         expect.objectContaining({
           auth_state: 'authenticated',
-          has_token_subject: true,
+          has_user_subject: true,
           account_region: 'multi',
+          username: 'testuser',
         }),
       );
     });
@@ -230,7 +235,11 @@ describe('AuthContext', () => {
 
     await waitFor(() => {
       expect(mockSetUserProperties).toHaveBeenCalledWith(
-        expect.objectContaining({ auth_state: 'guest', has_token_subject: false }),
+        expect.objectContaining({
+          auth_state: 'guest',
+          has_user_subject: false,
+          username: undefined,
+        }),
       );
     });
   });

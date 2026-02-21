@@ -1,0 +1,17 @@
+# CODEOWNERS - Defines code ownership for required review enforcement
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# When "Require review from Code Owners" is enabled in branch protection,
+# GitHub will require an approving review from a code owner before merging.
+# This prevents non-admin users from bypassing the merge queue by clicking
+# the merge button directly after getting a non-owner review.
+
+# Default owner for everything
+* @ESO-Toolkit/admins
+
+# Critical paths - any member of the admins team can approve
+/.github/ @ESO-Toolkit/admins
+/.github/workflows/ @ESO-Toolkit/admins
+
+# CODEOWNERS itself - only @bkrupa can approve changes
+/.github/CODEOWNERS @bkrupa

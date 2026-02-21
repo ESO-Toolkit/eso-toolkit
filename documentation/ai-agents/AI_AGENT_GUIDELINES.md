@@ -1,76 +1,106 @@
 # AI Agent Guidelines
 
+## Git Workflow
+
+**⚠️ CREATE A FEATURE BRANCH BEFORE ANY CODE CHANGES ⚠️**
+
+**Rule**: NEVER commit to main. ALWAYS create a feature branch first.
+
+```bash
+git checkout -b ESO-XXX/description
+```
+
+Branch naming: `ESO-<issue-number>/<kebab-case-description>`
+
+Use the **Ensure Feature Branch** skill (`.github/skills/workflow/SKILL.md`) to automate branch creation.
+
+---
+
 ## Documentation Policy
 
-### ❌ Do NOT Create Documentation For:
-- Minor bug fixes
-- Small adjustments (tweaking constants, scaling factors, etc.)
-- Code refactoring without behavior changes
-- CSS/styling tweaks
+### Do NOT Create Documentation For:
+- Minor bug fixes, tweaks, or refactoring
+- CSS/styling changes
 - Simple variable renames
+- Work completion summaries (use Jira comments instead)
 
-### ✅ DO Create Documentation For:
-- **New features** or significant feature changes
-- **Architectural changes** that affect multiple components
-- **Breaking changes** that alter APIs or interfaces
-- **Complex bug fixes** that require explanation of root cause
-- **Performance optimizations** with measurable impact
-- **Integration of new systems** (e.g., new libraries, APIs)
-- **Major refactoring** that changes code structure
+### DO Create Documentation For:
+- New features or significant feature changes
+- Architectural changes affecting multiple components
+- Complex bug fixes requiring root cause explanation
+- Performance optimizations with measurable impact
 
-### Documentation Guidelines
+### Guidelines:
+- Keep docs concise — focus on "why" not "what"
+- Use code comments for non-obvious logic
+- Use Jira ticket comments for implementation details and work summaries
+- Follow [Documentation Best Practices](../DOCUMENTATION_BEST_PRACTICES.md)
 
-When documentation IS warranted:
+---
 
-1. **Keep it concise** - Focus on the "why" not the "what"
-2. **Location**:
-   - Major features → `documentation/features/[feature-name]/`
-   - Fixes → `documentation/fixes/` (only if complex)
-   - Architecture → `documentation/architecture/`
-   - AI-specific → `documentation/ai-agents/`
-3. **Format**: Brief markdown with:
-   - Problem statement (2-3 sentences)
-   - Solution overview (1-2 paragraphs)
-   - Key files changed (list)
-   - Testing notes (if applicable)
+## Agent Skills
 
-### Instead of Documentation
+All agent skills are `SKILL.md` files in `.github/skills/`. Use natural language in chat:
 
-For simple changes, use:
-- **Clear commit messages** with context
-- **Code comments** explaining non-obvious logic
-- **Jira ticket updates** for tracked work
-- **Inline documentation** in complex functions
+| Skill | Usage |
+|-------|-------|
+| **Jira** | `@workspace View ESO-372` |
+| **Reports** | `@workspace Download report 3gjVGWB2dxCL8XAw` |
+| **Git** | `@workspace Show branch tree` |
+| **Workflow** | `@workspace Ensure I'm on a feature branch for ESO-XXX` |
+| **Playwright** | `@workspace Run smoke tests` |
+| **Sentry** | `@workspace Search for unresolved TypeErrors` |
+| **Auth** | `@workspace Generate a fresh OAuth token` |
+| **Skill Data Regen** | `@workspace List all ESO skill lines` |
+| **UESP Data** | `@workspace Fetch latest item icons from UESP` |
 
-## Jira Integration
+See [AGENTS.md](../../AGENTS.md) for the full skill list and invocation examples.
 
-**REQUIRED**: Use `acli` for Jira work item management.
+---
 
-See: [jira/AI_JIRA_ACLI_INSTRUCTIONS.md](jira/AI_JIRA_ACLI_INSTRUCTIONS.md)
+## Development Workflow
 
-## Branch Management (Twig)
+### Pre-Implementation
+1. View Jira task and transition to "In Progress"
+2. Create feature branch (see above)
+3. Implement changes
 
-- Always confirm branch stacking with `twig tree` before and after creating feature branches.
-- If a branch appears under *Orphaned branches*, fix it immediately with `twig branch depend <child> <parent>` (or the appropriate `twig branch` command).
-- Keep replay-system work aligned: `ESO-449` → `ESO-488` → `ESO-463` unless instructed otherwise.
-- Document any intentional deviations in the relevant Jira ticket/comment so reviewers understand the stack layout.
+### Validation
+```bash
+npm run validate    # TypeScript + ESLint + Prettier
+npm test            # Unit tests
+```
 
-## Testing Requirements
+### Commit Messages
+```
+feat(Component): brief description [ESO-XXX]
+```
 
-- Run tests before committing: `npm test`
-- Run linting: `npm run lint`
-- For UI changes, verify in browser
-- Update tests if behavior changed
+Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
+
+## Testing
+
+- Run unit tests before committing: `npm test`
+- Run all validation before committing: `npm run validate`
+- For E2E tests, use the **Run Playwright Tests** skill (`.github/skills/playwright/SKILL.md`)
+- For dev server and build tools, use the **Dev and Testing Tools** skill (`.github/skills/testing/SKILL.md`)
+
+See [playwright/AI_PLAYWRIGHT_INSTRUCTIONS.md](./playwright/AI_PLAYWRIGHT_INSTRUCTIONS.md) for Playwright visual testing patterns (skeleton detection, screenshot timing).
+
+---
 
 ## TypeScript Practices
 
-- Trust the existing TypeScript types—avoid redundant runtime type checks for properties that are already strongly typed.
-- Prefer refining or extending type definitions when you need different guarantees, instead of sprinkling `typeof` or defensive checks.
-- Use narrow type guards only when interacting with truly unknown input (e.g., external APIs) and document the rationale in code comments.
+- Trust existing TypeScript types — avoid redundant runtime type checks for strongly-typed properties
+- Prefer refining or extending type definitions over defensive checks
+- Use type guards only for truly unknown input (e.g., external APIs)
+- ESLint requires trailing commas — run `npm run lint:fix` to auto-fix
+
+---
 
 ## Communication Style
 
-- **Be concise** - Short explanations unless asked for details
-- **Ask before extensive work** - Confirm approach for major changes
-- **Provide options** - When multiple solutions exist, present choices
-- **Show, don't tell** - Code examples over lengthy explanations
+- **Be concise** — short explanations unless asked for details
+- **Ask before extensive work** — confirm approach for major changes
+- **Show, don't tell** — code examples over lengthy explanations
+

@@ -1,0 +1,96 @@
+---
+name: workflow
+description: Enforce git workflow by checking the current branch before starting Jira ticket work. Creates properly-formatted ESO-XXX/description feature branches and prevents commits directly to main.
+---
+
+You are enforcing the ESO Log Aggregator git workflow. Follow these steps precisely.
+
+## Step 1 — Check Current Branch
+
+Run this command and capture the output:
+
+```powershell
+git rev-parse --abbrev-ref HEAD
+```
+
+## Step 2 — Evaluate Branch State
+
+**If branch is `main` or `master`:**
+- Do NOT start or continue any implementation work
+- Tell the user they are on a protected branch
+- Ask for the Jira ticket number (e.g. `ESO-569`) and a short description
+- Proceed to Step 3
+
+**If branch is already an `ESO-XXX/...` feature branch:**
+- Confirm the branch name to the user
+- Confirm it is safe to proceed with work
+- Stop — no branch creation needed
+
+**If branch is some other non-main branch:**
+- Show the user the current branch name
+- Ask if this is the intended working branch or if they need a new one
+
+## Step 3 — Create Feature Branch (if needed)
+
+Branch naming convention: `ESO-XXX/short-description-in-kebab-case`
+
+Examples of valid names:
+- `ESO-569/remove-duplicate-roles`
+- `ESO-449/structure-redux-state`
+- `ESO-372/fix-aria-labels`
+
+Run these commands in sequence:
+
+```powershell
+# Switch to main and pull latest
+git checkout main
+git pull origin main
+
+# Create and switch to the feature branch
+git checkout -b ESO-XXX/your-description
+```
+
+## Step 4 — Set Up Twig Parent (if twig is available)
+
+Check if twig is installed:
+```powershell
+twig --version
+```
+
+If twig is available, set the parent branch dependency:
+```powershell
+twig branch ESO-XXX/your-description --parent main
+```
+
+If the new branch depends on another feature branch (not main), use that branch as the parent instead.
+
+## Step 5 — Confirm and Report
+
+Tell the user:
+- The new branch name
+- That they are now safe to begin implementation
+- Any twig setup that was performed
+
+## Recovery: If Changes Were Made on Main
+
+If the user has already made changes directly on `main`, guide them through this recovery:
+
+```powershell
+# 1. Create the feature branch from current position (preserves commits)
+git checkout -b ESO-XXX/your-description
+
+# 2. Reset main back to origin
+git checkout main
+git reset --hard origin/main
+
+# 3. Switch back to feature branch
+git checkout ESO-XXX/your-description
+```
+
+## Project Context
+
+- Jira project key: `ESO`
+- Jira board: https://bkrupa.atlassian.net
+- Branch format: `ESO-XXX/kebab-case-description`
+- Protected branches: `main`, `master`
+- Twig is used for branch stacking/dependencies

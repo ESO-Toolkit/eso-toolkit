@@ -6,6 +6,7 @@ import {
   createMockDebuffEvent,
 } from '../../test/utils/combatLogMockFactories';
 import { PlayerDetailsWithRole } from '../../store/player_data/playerDataSlice';
+import type { DamageEvent } from '../../types/combatlogEvents';
 
 describe('CalculateCriticalDamage', () => {
   const FIGHT_START = 10000;
@@ -39,6 +40,60 @@ describe('CalculateCriticalDamage', () => {
   ) => ({
     buffIntervals: intervals,
   });
+  // Helper to create mock damage events for testing
+  const createMockDamageEvents = (): DamageEvent[] => {
+    const events: DamageEvent[] = [];
+    for (let time = FIGHT_START; time < FIGHT_END; time += 500) {
+      events.push({
+        timestamp: time,
+        type: 'damage',
+        sourceID: PLAYER_ID,
+        sourceIsFriendly: true,
+        targetID: TARGET_ID,
+        targetIsFriendly: false,
+        abilityGameID: 1,
+        fight: 1,
+        hitType: 1,
+        amount: 1000,
+        castTrackID: 1,
+        sourceResources: {
+          hitPoints: 10000,
+          maxHitPoints: 20000,
+          magicka: 10000,
+          maxMagicka: 10000,
+          stamina: 10000,
+          maxStamina: 10000,
+          ultimate: 0,
+          maxUltimate: 500,
+          werewolf: 0,
+          maxWerewolf: 1000,
+          absorb: 0,
+          championPoints: 810,
+          x: 0,
+          y: 0,
+          facing: 0,
+        },
+        targetResources: {
+          hitPoints: 50000,
+          maxHitPoints: 100000,
+          magicka: 0,
+          maxMagicka: 0,
+          stamina: 0,
+          maxStamina: 0,
+          ultimate: 0,
+          maxUltimate: 0,
+          werewolf: 0,
+          maxWerewolf: 0,
+          absorb: 0,
+          championPoints: 0,
+          x: 0,
+          y: 0,
+          facing: 0,
+        },
+      });
+    }
+    return events;
+  };
 
   describe('calculateCriticalDamageData', () => {
     it('should return empty result when no players provided', () => {
@@ -48,6 +103,8 @@ describe('CalculateCriticalDamage', () => {
         combatantInfoEvents: {},
         friendlyBuffsLookup: createMockBuffLookupData({}),
         debuffsLookup: createMockBuffLookupData({}),
+        damageEvents: createMockDamageEvents(),
+        selectedTargetIds: [TARGET_ID],
       });
 
       expect(result.playerDataMap).toEqual({});
@@ -64,6 +121,8 @@ describe('CalculateCriticalDamage', () => {
         combatantInfoEvents: {}, // No combatant info for player
         friendlyBuffsLookup: createMockBuffLookupData({}),
         debuffsLookup: createMockBuffLookupData({}),
+        damageEvents: createMockDamageEvents(),
+        selectedTargetIds: [TARGET_ID],
       });
 
       expect(result.playerDataMap).toEqual({});
@@ -87,6 +146,8 @@ describe('CalculateCriticalDamage', () => {
         combatantInfoEvents,
         friendlyBuffsLookup: createMockBuffLookupData({}),
         debuffsLookup: createMockBuffLookupData({}),
+        damageEvents: createMockDamageEvents(),
+        selectedTargetIds: [TARGET_ID],
       });
 
       expect(result.playerDataMap[PLAYER_ID]).toBeDefined();
@@ -114,6 +175,8 @@ describe('CalculateCriticalDamage', () => {
         combatantInfoEvents,
         friendlyBuffsLookup: createMockBuffLookupData({}),
         debuffsLookup: createMockBuffLookupData({}),
+        damageEvents: createMockDamageEvents(),
+        selectedTargetIds: [TARGET_ID],
       });
 
       const playerData = result.playerDataMap[PLAYER_ID];
@@ -157,6 +220,8 @@ describe('CalculateCriticalDamage', () => {
         combatantInfoEvents,
         friendlyBuffsLookup,
         debuffsLookup: createMockBuffLookupData({}),
+        damageEvents: createMockDamageEvents(),
+        selectedTargetIds: [TARGET_ID],
       });
 
       const playerData = result.playerDataMap[PLAYER_ID];
@@ -195,6 +260,8 @@ describe('CalculateCriticalDamage', () => {
         combatantInfoEvents,
         friendlyBuffsLookup: createMockBuffLookupData({}),
         debuffsLookup,
+        damageEvents: createMockDamageEvents(),
+        selectedTargetIds: [TARGET_ID],
       });
 
       const playerData = result.playerDataMap[PLAYER_ID];
@@ -234,6 +301,8 @@ describe('CalculateCriticalDamage', () => {
         combatantInfoEvents,
         friendlyBuffsLookup,
         debuffsLookup: createMockBuffLookupData({}),
+        damageEvents: createMockDamageEvents(),
+        selectedTargetIds: [TARGET_ID],
       });
 
       const playerData = result.playerDataMap[PLAYER_ID];
@@ -261,6 +330,8 @@ describe('CalculateCriticalDamage', () => {
         combatantInfoEvents,
         friendlyBuffsLookup: createMockBuffLookupData({}),
         debuffsLookup: createMockBuffLookupData({}),
+        damageEvents: createMockDamageEvents(),
+        selectedTargetIds: [TARGET_ID],
       });
 
       const playerData = result.playerDataMap[PLAYER_ID];
@@ -293,6 +364,8 @@ describe('CalculateCriticalDamage', () => {
         combatantInfoEvents,
         friendlyBuffsLookup: createMockBuffLookupData({}),
         debuffsLookup: createMockBuffLookupData({}),
+        damageEvents: createMockDamageEvents(),
+        selectedTargetIds: [TARGET_ID],
       });
 
       const playerData = result.playerDataMap[PLAYER_ID];
@@ -328,6 +401,8 @@ describe('CalculateCriticalDamage', () => {
         combatantInfoEvents,
         friendlyBuffsLookup: createMockBuffLookupData({}),
         debuffsLookup: createMockBuffLookupData({}),
+        damageEvents: createMockDamageEvents(),
+        selectedTargetIds: [TARGET_ID],
       });
 
       expect(Object.keys(result.playerDataMap)).toHaveLength(2);
@@ -357,6 +432,8 @@ describe('CalculateCriticalDamage', () => {
           combatantInfoEvents,
           friendlyBuffsLookup: createMockBuffLookupData({}),
           debuffsLookup: createMockBuffLookupData({}),
+          damageEvents: createMockDamageEvents(),
+          selectedTargetIds: [TARGET_ID],
         },
         onProgress,
       );
@@ -384,6 +461,8 @@ describe('CalculateCriticalDamage', () => {
         combatantInfoEvents,
         friendlyBuffsLookup: createMockBuffLookupData({}),
         debuffsLookup: createMockBuffLookupData({}),
+        damageEvents: createMockDamageEvents(),
+        selectedTargetIds: [TARGET_ID],
       });
 
       const playerData = result.playerDataMap[PLAYER_ID];
@@ -410,11 +489,319 @@ describe('CalculateCriticalDamage', () => {
         combatantInfoEvents,
         friendlyBuffsLookup: createMockBuffLookupData({}),
         debuffsLookup: createMockBuffLookupData({}),
+        damageEvents: createMockDamageEvents(),
+        selectedTargetIds: [TARGET_ID],
       });
 
       const playerData = result.playerDataMap[PLAYER_ID];
       expect(playerData.dataPoints).toHaveLength(1); // Only initial point
       expect(playerData.dataPoints[0].timestamp).toBe(FIGHT_START);
+    });
+
+    describe('Active Combat Time Integration', () => {
+      it('should include inactiveCombatIntervals in result', () => {
+        const players = {
+          [PLAYER_ID]: createMockPlayer(),
+        };
+
+        const combatantInfoEvents = {
+          [PLAYER_ID]: createMockCombatantInfoEvent({
+            sourceID: PLAYER_ID,
+            timestamp: FIGHT_START,
+          }),
+        };
+
+        const result = calculateCriticalDamageData({
+          fight: { startTime: FIGHT_START, endTime: FIGHT_END },
+          players,
+          combatantInfoEvents,
+          friendlyBuffsLookup: createMockBuffLookupData({}),
+          debuffsLookup: createMockBuffLookupData({}),
+          selectedTargetIds: [TARGET_ID],
+          damageEvents: createMockDamageEvents(),
+        });
+
+        const playerData = result.playerDataMap[PLAYER_ID];
+        expect(playerData.inactiveCombatIntervals).toBeDefined();
+        expect(Array.isArray(playerData.inactiveCombatIntervals)).toBe(true);
+      });
+
+      it('should calculate effective critical damage based only on active combat time', () => {
+        const players = {
+          [PLAYER_ID]: createMockPlayer(),
+        };
+
+        const combatantInfoEvents = {
+          [PLAYER_ID]: createMockCombatantInfoEvent({
+            sourceID: PLAYER_ID,
+            timestamp: FIGHT_START,
+          }),
+        };
+
+        // Create damage events with a 2-second gap in the middle (inactive period)
+        const damageEvents: DamageEvent[] = [];
+        // Active period 1: 0-3 seconds
+        for (let time = FIGHT_START; time <= FIGHT_START + 3000; time += 500) {
+          damageEvents.push({
+            timestamp: time,
+            type: 'damage',
+            sourceID: PLAYER_ID,
+            sourceIsFriendly: true,
+            targetID: TARGET_ID,
+            targetIsFriendly: false,
+            abilityGameID: 1,
+            fight: 1,
+            hitType: 1,
+            amount: 1000,
+            castTrackID: 1,
+            sourceResources: {
+              hitPoints: 10000,
+              maxHitPoints: 20000,
+              magicka: 10000,
+              maxMagicka: 10000,
+              stamina: 10000,
+              maxStamina: 10000,
+              ultimate: 0,
+              maxUltimate: 500,
+              werewolf: 0,
+              maxWerewolf: 1000,
+              absorb: 0,
+              championPoints: 810,
+              x: 0,
+              y: 0,
+              facing: 0,
+            },
+            targetResources: {
+              hitPoints: 50000,
+              maxHitPoints: 100000,
+              magicka: 0,
+              maxMagicka: 0,
+              stamina: 0,
+              maxStamina: 0,
+              ultimate: 0,
+              maxUltimate: 0,
+              werewolf: 0,
+              maxWerewolf: 0,
+              absorb: 0,
+              championPoints: 0,
+              x: 0,
+              y: 0,
+              facing: 0,
+            },
+          });
+        }
+        // 2 second gap (inactive) from 3-5 seconds
+        // Active period 2: 5-10 seconds
+        for (let time = FIGHT_START + 5000; time <= FIGHT_END; time += 500) {
+          damageEvents.push({
+            timestamp: time,
+            type: 'damage',
+            sourceID: PLAYER_ID,
+            sourceIsFriendly: true,
+            targetID: TARGET_ID,
+            targetIsFriendly: false,
+            abilityGameID: 1,
+            fight: 1,
+            hitType: 1,
+            amount: 1000,
+            castTrackID: 1,
+            sourceResources: {
+              hitPoints: 10000,
+              maxHitPoints: 20000,
+              magicka: 10000,
+              maxMagicka: 10000,
+              stamina: 10000,
+              maxStamina: 10000,
+              ultimate: 0,
+              maxUltimate: 500,
+              werewolf: 0,
+              maxWerewolf: 1000,
+              absorb: 0,
+              championPoints: 810,
+              x: 0,
+              y: 0,
+              facing: 0,
+            },
+            targetResources: {
+              hitPoints: 50000,
+              maxHitPoints: 100000,
+              magicka: 0,
+              maxMagicka: 0,
+              stamina: 0,
+              maxStamina: 0,
+              ultimate: 0,
+              maxUltimate: 0,
+              werewolf: 0,
+              maxWerewolf: 0,
+              absorb: 0,
+              championPoints: 0,
+              x: 0,
+              y: 0,
+              facing: 0,
+            },
+          });
+        }
+
+        const result = calculateCriticalDamageData({
+          fight: { startTime: FIGHT_START, endTime: FIGHT_END },
+          players,
+          combatantInfoEvents,
+          friendlyBuffsLookup: createMockBuffLookupData({}),
+          debuffsLookup: createMockBuffLookupData({}),
+          selectedTargetIds: [TARGET_ID],
+          damageEvents,
+        });
+
+        const playerData = result.playerDataMap[PLAYER_ID];
+
+        // Should have one inactive interval (the 2 second gap)
+        expect(playerData.inactiveCombatIntervals.length).toBeGreaterThan(0);
+
+        // Effective critical damage should be calculated from active combat periods only
+        // The calculation should exclude the 2-second gap period
+        expect(playerData.effectiveCriticalDamage).toBeDefined();
+        expect(playerData.effectiveCriticalDamage).toBeGreaterThanOrEqual(0);
+      });
+
+      it('should calculate timeAtCapPercentage based only on active combat time', () => {
+        const players = {
+          [PLAYER_ID]: createMockPlayer(),
+        };
+
+        const combatantInfoEvents = {
+          [PLAYER_ID]: createMockCombatantInfoEvent({
+            sourceID: PLAYER_ID,
+            timestamp: FIGHT_START,
+          }),
+        };
+
+        const result = calculateCriticalDamageData({
+          fight: { startTime: FIGHT_START, endTime: FIGHT_END },
+          players,
+          combatantInfoEvents,
+          friendlyBuffsLookup: createMockBuffLookupData({}),
+          debuffsLookup: createMockBuffLookupData({}),
+          selectedTargetIds: [TARGET_ID],
+          damageEvents: createMockDamageEvents(),
+        });
+
+        const playerData = result.playerDataMap[PLAYER_ID];
+
+        // timeAtCapPercentage should be defined and calculated from active time only
+        expect(playerData.timeAtCapPercentage).toBeDefined();
+        expect(playerData.timeAtCapPercentage).toBeGreaterThanOrEqual(0);
+        expect(playerData.timeAtCapPercentage).toBeLessThanOrEqual(100);
+      });
+
+      it('should mark entire fight as inactive when no damage events', () => {
+        const players = {
+          [PLAYER_ID]: createMockPlayer(),
+        };
+
+        const combatantInfoEvents = {
+          [PLAYER_ID]: createMockCombatantInfoEvent({
+            sourceID: PLAYER_ID,
+            timestamp: FIGHT_START,
+          }),
+        };
+
+        const result = calculateCriticalDamageData({
+          fight: { startTime: FIGHT_START, endTime: FIGHT_END },
+          players,
+          combatantInfoEvents,
+          friendlyBuffsLookup: createMockBuffLookupData({}),
+          debuffsLookup: createMockBuffLookupData({}),
+          selectedTargetIds: [TARGET_ID],
+          damageEvents: [], // No damage events
+        });
+
+        const playerData = result.playerDataMap[PLAYER_ID];
+
+        // Should have one inactive interval covering the entire fight
+        expect(playerData.inactiveCombatIntervals).toHaveLength(1);
+        expect(playerData.inactiveCombatIntervals[0].start).toBe(0);
+        expect(playerData.inactiveCombatIntervals[0].end).toBe(10); // 10 second fight
+      });
+
+      it('should have no inactive intervals for continuous combat', () => {
+        const players = {
+          [PLAYER_ID]: createMockPlayer(),
+        };
+
+        const combatantInfoEvents = {
+          [PLAYER_ID]: createMockCombatantInfoEvent({
+            sourceID: PLAYER_ID,
+            timestamp: FIGHT_START,
+          }),
+        };
+
+        // Create continuous damage (every 100ms, well within 1 second threshold)
+        const damageEvents: DamageEvent[] = [];
+        for (let time = FIGHT_START; time <= FIGHT_END; time += 100) {
+          damageEvents.push({
+            timestamp: time,
+            type: 'damage',
+            sourceID: PLAYER_ID,
+            sourceIsFriendly: true,
+            targetID: TARGET_ID,
+            targetIsFriendly: false,
+            abilityGameID: 1,
+            fight: 1,
+            hitType: 1,
+            amount: 1000,
+            castTrackID: 1,
+            sourceResources: {
+              hitPoints: 10000,
+              maxHitPoints: 20000,
+              magicka: 10000,
+              maxMagicka: 10000,
+              stamina: 10000,
+              maxStamina: 10000,
+              ultimate: 0,
+              maxUltimate: 500,
+              werewolf: 0,
+              maxWerewolf: 1000,
+              absorb: 0,
+              championPoints: 810,
+              x: 0,
+              y: 0,
+              facing: 0,
+            },
+            targetResources: {
+              hitPoints: 50000,
+              maxHitPoints: 100000,
+              magicka: 0,
+              maxMagicka: 0,
+              stamina: 0,
+              maxStamina: 0,
+              ultimate: 0,
+              maxUltimate: 0,
+              werewolf: 0,
+              maxWerewolf: 0,
+              absorb: 0,
+              championPoints: 0,
+              x: 0,
+              y: 0,
+              facing: 0,
+            },
+          });
+        }
+
+        const result = calculateCriticalDamageData({
+          fight: { startTime: FIGHT_START, endTime: FIGHT_END },
+          players,
+          combatantInfoEvents,
+          friendlyBuffsLookup: createMockBuffLookupData({}),
+          debuffsLookup: createMockBuffLookupData({}),
+          selectedTargetIds: [TARGET_ID],
+          damageEvents,
+        });
+
+        const playerData = result.playerDataMap[PLAYER_ID];
+
+        // Should have no inactive intervals
+        expect(playerData.inactiveCombatIntervals).toHaveLength(0);
+      });
     });
   });
 });

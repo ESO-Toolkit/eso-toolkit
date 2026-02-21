@@ -132,7 +132,12 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   return (
     <>
       <Tooltip title="Share current replay time">
-        <IconButton onClick={handleShareUrl} size="small" color="secondary">
+        <IconButton
+          onClick={handleShareUrl}
+          size="small"
+          color="secondary"
+          aria-label="Share current replay time"
+        >
           <Share />
         </IconButton>
       </Tooltip>

@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../graphql/gql/graphql';
-import { executeStaggerStacksTask, staggerStacksActions } from '../../store/worker_results';
+import { executeStaggerStacksTask } from '../../store/worker_results';
 import {
   selectStaggerStacksResult,
   selectWorkerTaskLoading,
@@ -30,16 +30,16 @@ export function useStaggerStacksTask(): {
     const allDependenciesReady = selectedFight && !isDamageEventsLoading && damageEvents !== null;
 
     if (allDependenciesReady) {
-      // Clear any existing result when dependencies change to force fresh calculation
-      dispatch(staggerStacksActions.clearResult());
-
-      dispatch(
+      const promise = dispatch(
         executeStaggerStacksTask({
           damageEvents: damageEvents,
           fightStartTime: selectedFight.startTime,
           fightEndTime: selectedFight?.endTime,
         }),
       );
+      return () => {
+        promise.abort();
+      };
     }
   }, [dispatch, selectedFight, damageEvents, isDamageEventsLoading]);
 

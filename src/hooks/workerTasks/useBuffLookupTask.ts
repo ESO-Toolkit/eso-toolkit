@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
   selectBuffLookupResult,
   selectWorkerTaskLoading,
@@ -14,23 +15,32 @@ import { useFriendlyBuffEvents } from '../events/useFriendlyBuffEvents';
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
 // Hook for buff lookup data
-export function useBuffLookupTask(): {
+interface UseBuffLookupTaskOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useBuffLookupTask(options?: UseBuffLookupTaskOptions): {
   buffLookupData: BuffLookupData | null;
   isBuffLookupLoading: boolean;
   buffLookupError: string | null;
   buffLookupProgress: number | null;
 } {
-  const { dispatch, selectedFight } = useWorkerTaskDependencies();
-  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
+  const { dispatch, selectedFight } = useWorkerTaskDependencies(options);
+  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents({
+    context: options?.context,
+  });
 
   React.useEffect(() => {
     if (friendlyBuffEvents && !isFriendlyBuffEventsLoading) {
-      dispatch(
+      const promise = dispatch(
         executeBuffLookupTask({
           buffEvents: friendlyBuffEvents,
           fightEndTime: selectedFight?.endTime,
         }),
       );
+      return () => {
+        promise.abort();
+      };
     }
   }, [dispatch, selectedFight, friendlyBuffEvents, isFriendlyBuffEventsLoading]);
 

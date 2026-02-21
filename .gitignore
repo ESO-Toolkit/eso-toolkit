@@ -5,6 +5,10 @@
 /.pnp
 .pnp.js
 
+# Agent skill dependencies (MCP servers)
+/.github/copilot-skills/*/node_modules/
+/.claude/*/node_modules/
+
 # Cache directories
 /cache/
 
@@ -22,6 +26,7 @@
 /playwright/.cache/
 /tests/auth-state.json
 /tests/auth-metadata.json
+/.playwright-mcp/
 
 # Screen size test report directories and artifacts (keep baseline screenshots)
 /tests/screen-sizes/**/test-results/
@@ -98,8 +103,10 @@ public/mockServiceWorker.js
 # Vite cache directory
 /.vite/
 
-# Claude AI assistant local settings
-/.claude/
+# Claude AI assistant local settings (keep skill but protect sensitive data)
+/.claude/node_modules/
+/.claude/mcp-config.json
+/.claude/screenshots/
 /.claude-rules.md
 
 # Build cache and temporary directories
@@ -136,3 +143,16 @@ Icon?
 *.temp
 *.lock
 *.pid
+.playwright-mcp/
+tmp/
+
+# Debug and test files in root
+/debug-*.js
+/debug-*.json
+/test-*.js
+/test-*.txt
+/error-logs-*.txt
+/*.log
+/*-snapshot.md
+/*-failure.md
+/missing-*.txt

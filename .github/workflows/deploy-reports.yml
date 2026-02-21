@@ -1,0 +1,226 @@
+name: Coverage and Storybook Reports
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  # Allow manual triggering
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  # ─── Build: Coverage ─────────────────────────────────────────────────────────
+  # Runs on every push and PR. Uploads badge-json artifact only on main so the
+  # deploy job (which runs only on main) can consume it.
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node-with-cache
+
+      - name: Run Tests with Coverage
+        run: npm run test:coverage:ci
+        env:
+          # Increase Node.js memory limit to prevent OOM errors
+          NODE_OPTIONS: '--max-old-space-size=8192'
+          # Prevent external network requests during testing
+          NO_PROXY: '*'
+          HTTP_PROXY: 'http://127.0.0.1:9999'
+          HTTPS_PROXY: 'http://127.0.0.1:9999'
+          # Block known external services
+          BLOCK_EXTERNAL_REQUESTS: 'true'
+          # Override external service URLs to localhost (will fail if not mocked)
+          ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
+          SENTRY_DSN: ''
+          CI: true
+          NODE_ENV: test
+
+      - name: Generate Coverage Badges
+        run: npm run coverage:badges
+        if: always()
+
+      - name: Generate Coverage Badge JSON
+        run: npm run coverage:badge-json
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+      # Consumed by the deploy job for the combined gh-pages push.
+      # Short retention since this is an intermediate build artifact.
+      - name: Upload Coverage Badge JSON
+        uses: actions/upload-artifact@v6
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        with:
+          name: coverage-badge-json
+          path: coverage/badge-json/
+          retention-days: 1
+
+      - name: Upload Coverage Badges (SVG)
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: coverage-badges-${{ github.run_number }}
+          path: coverage/badges/*.svg
+          retention-days: 90
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: coverage-report-${{ github.run_number }}
+          path: |
+            coverage/lcov-report/
+            coverage/coverage-final.json
+            coverage/coverage-status.json
+          retention-days: 30
+
+      - name: Comment Coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Read coverage summary if it exists
+            let coverageComment = '## 📊 Coverage Report\n\n';
+
+            try {
+              if (fs.existsSync('coverage/coverage-status.json')) {
+                const coverageStatusData = JSON.parse(fs.readFileSync('coverage/coverage-status.json', 'utf8'));
+                const coverage = coverageStatusData.coverage;
+
+                coverageComment += `| Metric | Coverage |\n`;
+                coverageComment += `|--------|----------|\n`;
+                coverageComment += `| **Overall** | **${coverage.overall.percentage.toFixed(1)}%** |\n`;
+                coverageComment += `| Lines | ${coverage.lines.percentage.toFixed(1)}% (${coverage.lines.covered}/${coverage.lines.total}) |\n`;
+                coverageComment += `| Functions | ${coverage.functions.percentage.toFixed(1)}% (${coverage.functions.covered}/${coverage.functions.total}) |\n`;
+                coverageComment += `| Branches | ${coverage.branches.percentage.toFixed(1)}% (${coverage.branches.covered}/${coverage.branches.total}) |\n`;
+                coverageComment += `| Statements | ${coverage.statements.percentage.toFixed(1)}% (${coverage.statements.covered}/${coverage.statements.total}) |\n\n`;
+                coverageComment += `📁 [Download detailed coverage report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+              } else {
+                coverageComment += '⚠️ Coverage data not found.';
+              }
+            } catch (error) {
+              coverageComment += `❌ Error reading coverage data: ${error.message}`;
+            }
+
+            // Find existing coverage comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existingComment = comments.data.find(comment =>
+              comment.user.login === 'github-actions[bot]' &&
+              comment.body.includes('📊 Coverage Report')
+            );
+
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: coverageComment
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: coverageComment
+              });
+            }
+
+  # ─── Build: Storybook ────────────────────────────────────────────────────────
+  # Only runs on main (and workflow_dispatch). PRs do not build storybook.
+  build-storybook:
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node-with-cache
+
+      - name: Build Storybook
+        run: npm run build-storybook
+        env:
+          NODE_OPTIONS: '--max-old-space-size=8192'
+          CI: true
+
+      # Consumed by the deploy job for the combined gh-pages push.
+      # Short retention since this is an intermediate build artifact.
+      - name: Upload Storybook
+        uses: actions/upload-artifact@v6
+        with:
+          name: storybook-static
+          path: storybook-static/
+          retention-days: 1
+
+  # ─── Deploy ──────────────────────────────────────────────────────────────────
+  # Downloads both build artifacts, stages them into the layout expected by the
+  # reports repo, then does a single gh-pages push. Running both directories in
+  # one push eliminates the race condition that occurred when coverage and
+  # storybook workflows each pushed concurrently.
+  #
+  # concurrency cancel-in-progress: true means a new main push supersedes an
+  # in-flight deploy rather than queuing behind it.
+  deploy:
+    needs: [coverage, build-storybook]
+    if: |
+      (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') &&
+      needs.coverage.result == 'success' &&
+      needs.build-storybook.result == 'success'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-reports-gh-pages
+      cancel-in-progress: true
+    steps:
+      - name: Download Coverage Badge JSON
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-badge-json
+          path: deploy-staging/badges/
+
+      - name: Download Storybook
+        uses: actions/download-artifact@v4
+        with:
+          name: storybook-static
+          path: deploy-staging/storybook/
+
+      - name: Generate Deploy Token
+        id: generate-deploy-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.DEPLOY_APP_ID }}
+          private-key: ${{ secrets.DEPLOY_APP_PRIVATE_KEY }}
+          owner: ESO-Toolkit
+          repositories: eso-log-aggregator-reports
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          # Use personal_token (not github_token) when pushing to an external repository.
+          # Despite the name, personal_token accepts any token with sufficient permissions,
+          # including tokens generated by a GitHub App. github_token is reserved for the
+          # built-in GITHUB_TOKEN, which cannot push to external repositories.
+          personal_token: ${{ steps.generate-deploy-token.outputs.token }}
+          external_repository: ESO-Toolkit/eso-log-aggregator-reports
+          publish_dir: deploy-staging
+          keep_files: true

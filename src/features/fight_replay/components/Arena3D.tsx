@@ -65,6 +65,14 @@ interface Arena3DProps {
   onRemoveMarker?: (markerId: string) => void;
   /** Fight data for zone/map information (required for map markers coordinate transformation) */
   fight: FightFragment;
+  /** Selected player IDs for path visualization */
+  selectedPlayerIds?: Set<number>;
+  /** Callback when player selection changes */
+  onPlayerSelectionChange?: (selectedIds: Set<number>) => void;
+  /** Whether to show player paths HUD */
+  showPlayerPathsHUD?: boolean;
+  /** Whether to show player trail paths */
+  showPlayerTrails?: boolean;
 }
 
 export const Arena3D: React.FC<Arena3DProps> = ({
@@ -79,6 +87,10 @@ export const Arena3D: React.FC<Arena3DProps> = ({
   onAddMarker,
   onRemoveMarker,
   fight,
+  selectedPlayerIds,
+  onPlayerSelectionChange,
+  showPlayerPathsHUD = false,
+  showPlayerTrails = false,
 }) => {
   const { lookup, isActorPositionsLoading } = useActorPositionsTask();
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
@@ -607,8 +619,16 @@ export const Arena3D: React.FC<Arena3DProps> = ({
             onMarkerContextMenu={handleMarkerContextMenu}
             fight={fight}
             initialTarget={initialCameraTarget}
+            selectedPlayerIds={selectedPlayerIds}
+            onPlayerSelectionChange={onPlayerSelectionChange}
+            showPlayerPathsHUD={showPlayerPathsHUD}
+            showPlayerTrails={showPlayerTrails}
           />
         </Canvas>
+
+        {/* HTML Overlay HUD - DISABLED: Can cause conflicts with 3D scene interactions */}
+        {/* Using 3D canvas-based HUD instead for better integration */}
+
         {contextMenu && (
           <ClickAwayListener onClickAway={handleCloseContextMenu}>
             <div>

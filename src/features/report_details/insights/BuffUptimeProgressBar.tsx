@@ -1,4 +1,15 @@
-import { Box, Typography, LinearProgress, Avatar, useTheme, Chip } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import {
+  Box,
+  Typography,
+  LinearProgress,
+  Avatar,
+  useTheme,
+  IconButton,
+  Collapse,
+} from '@mui/material';
 import React from 'react';
 
 export interface BuffUptime {
@@ -21,7 +32,9 @@ export interface BuffUptime {
     uptime: number;
     uptimePercentage: number;
     applications: number;
+    groupAverageUptimePercentage?: number; // Per-stack group average for stagger
   }>; // All stack data for Touch of Z'en to enable switching
+  groupAverageUptimePercentage?: number; // Group average uptime percentage for delta calculation
 }
 
 interface BuffUptimeProgressBarProps {
@@ -78,28 +91,101 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
   selectedTargetId,
 }) => {
   const theme = useTheme();
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  const stacksContentId = React.useId();
 
-  // State to track currently selected stack for Touch of Z'en
-  const [selectedStack, setSelectedStack] = React.useState(buff.stackLevel || buff.maxStacks || 5);
+  // Helper function to get stack gradient
+  const getStackGradient = React.useCallback(
+    (stackLevel: number): string => {
+      const isDark = theme.palette.mode === 'dark';
+      // Use gradients from primary (red) through warm colors to blue/purple
+      // Matches the app's color scheme and the single-bar gradient style
+      const gradients = isDark
+        ? [
+            // Stack 1: Red gradient
+            'linear-gradient(90deg, rgba(211, 47, 47, 0.7) 0%, rgba(244, 67, 54, 0.75) 100%)',
+            // Stack 2: Orange gradient
+            'linear-gradient(90deg, rgba(255, 87, 34, 0.75) 0%, rgba(255, 112, 67, 0.8) 100%)',
+            // Stack 3: Amber gradient
+            'linear-gradient(90deg, rgba(255, 152, 0, 0.8) 0%, rgba(255, 179, 0, 0.85) 100%)',
+            // Stack 4: Blue gradient (from single bar)
+            'linear-gradient(90deg, rgba(59, 130, 246, 0.8) 0%, rgba(96, 165, 250, 0.85) 100%)',
+            // Stack 5: Purple gradient (from single bar)
+            'linear-gradient(90deg, rgba(139, 92, 246, 0.85) 0%, rgba(167, 139, 250, 0.9) 100%)',
+          ]
+        : [
+            // Stack 1: Light red gradient
+            'linear-gradient(90deg, rgba(211, 47, 47, 0.5) 0%, rgba(244, 67, 54, 0.6) 100%)',
+            // Stack 2: Light orange gradient
+            'linear-gradient(90deg, rgba(255, 87, 34, 0.55) 0%, rgba(255, 112, 67, 0.65) 100%)',
+            // Stack 3: Light amber gradient
+            'linear-gradient(90deg, rgba(255, 152, 0, 0.6) 0%, rgba(255, 179, 0, 0.7) 100%)',
+            // Stack 4: Cyan gradient (from single bar)
+            'linear-gradient(90deg, rgba(103, 232, 249, 0.65) 0%, rgba(147, 197, 253, 0.75) 100%)',
+            // Stack 5: Light purple gradient (from single bar)
+            'linear-gradient(90deg, rgba(196, 181, 253, 0.7) 0%, rgba(216, 180, 254, 0.8) 100%)',
+          ];
+      return gradients[Math.min(stackLevel - 1, gradients.length - 1)];
+    },
+    [theme.palette.mode],
+  );
 
-  // Get current data based on selected stack
+  // Get current data for text display (use highest stack for multi-stack abilities)
   const currentData = React.useMemo(() => {
-    if (buff.allStacksData) {
-      const stackData = buff.allStacksData.find((stack) => stack.stackLevel === selectedStack);
-      return stackData || buff.allStacksData[buff.allStacksData.length - 1]; // Fallback to highest stack
+    if (buff.allStacksData && buff.allStacksData.length > 0) {
+      // Use the highest stack level for display
+      return buff.allStacksData[buff.allStacksData.length - 1];
     }
     return {
       totalDuration: buff.totalDuration,
       uptime: buff.uptime,
       uptimePercentage: buff.uptimePercentage,
       applications: buff.applications,
+      groupAverageUptimePercentage: buff.groupAverageUptimePercentage,
     };
-  }, [buff, selectedStack]);
+  }, [buff]);
 
   const pct = Math.max(0, Math.min(100, currentData.uptimePercentage));
 
-  const onMainClick = React.useCallback((): void => {
-    const url = createEsoLogsUrl(
+  // Calculate delta from group average if available
+  // For stacked abilities (e.g., Stagger), use the per-stack group average from currentData
+  // Otherwise, use the buff-level group average
+  const delta = React.useMemo(() => {
+    const groupAverage =
+      currentData.groupAverageUptimePercentage ?? buff.groupAverageUptimePercentage;
+    if (groupAverage !== undefined) {
+      return currentData.uptimePercentage - groupAverage;
+    }
+    return null;
+  }, [
+    currentData.uptimePercentage,
+    currentData.groupAverageUptimePercentage,
+    buff.groupAverageUptimePercentage,
+  ]);
+
+  const onMainClick = React.useCallback(
+    (e?: React.MouseEvent): void => {
+      // If multi-stack, toggle expansion instead of opening link
+      if (buff.allStacksData && buff.allStacksData.length > 0) {
+        if (e) e.stopPropagation();
+        setIsExpanded((prev) => !prev);
+        return;
+      }
+
+      // For single-stack abilities, open ESO Logs link
+      const url = createEsoLogsUrl(
+        reportId,
+        fightId,
+        buff.abilityGameID,
+        selectedTargetId,
+        buff.isDebuff,
+        buff.hostilityType,
+        buff.dotAbilityIds,
+      );
+
+      window.open(url, '_blank');
+    },
+    [
       reportId,
       fightId,
       buff.abilityGameID,
@@ -107,28 +193,8 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
       buff.isDebuff,
       buff.hostilityType,
       buff.dotAbilityIds,
-    );
-
-    window.open(url, '_blank');
-  }, [
-    reportId,
-    fightId,
-    buff.abilityGameID,
-    selectedTargetId,
-    buff.isDebuff,
-    buff.hostilityType,
-    buff.dotAbilityIds,
-  ]);
-
-  const onStackClick = React.useCallback(
-    (e: React.MouseEvent): void => {
-      e.stopPropagation(); // Prevent the main click from firing
-      if (buff.allStacksData && buff.maxStacks) {
-        const nextStack = selectedStack >= buff.maxStacks ? 1 : selectedStack + 1;
-        setSelectedStack(nextStack);
-      }
-    },
-    [buff.allStacksData, buff.maxStacks, selectedStack],
+      buff.allStacksData,
+    ],
   );
 
   return (
@@ -143,12 +209,11 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
       }}
       onClick={onMainClick}
     >
-      {/* Background progress bar */}
-      <LinearProgress
-        variant="determinate"
-        value={pct}
+      {/* Progress bars container */}
+      <Box
         sx={{
-          height: 48,
+          position: 'relative',
+          height: buff.allStacksData ? 56 : 48, // Taller for multi-stack abilities
           borderRadius: 2,
           bgcolor:
             theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(203, 213, 225, 0.3)',
@@ -157,19 +222,61 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
             theme.palette.mode === 'dark'
               ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)'
               : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
-          '& .MuiLinearProgress-bar': {
-            borderRadius: 2,
-            background:
-              theme.palette.mode === 'dark'
-                ? 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)'
-                : 'linear-gradient(90deg, #67e8f9 0%, #93c5fd 25%, #c4b5fd 75%, #f9a8d4 100%)',
-            boxShadow:
-              theme.palette.mode === 'dark'
-                ? '0 2px 8px rgba(59, 130, 246, 0.3), 0 0 20px rgba(139, 92, 246, 0.2)'
-                : '0 1px 3px rgba(103, 232, 249, 0.3), 0 0 8px rgba(147, 197, 253, 0.2)',
-          },
+          overflow: 'hidden',
         }}
-      />
+      >
+        {/* Multi-stack progress bars (if available) */}
+        {buff.allStacksData
+          ? buff.allStacksData
+              .slice()
+              .sort((a, b) => a.stackLevel - b.stackLevel) // Sort lowest to highest so highest renders last (on top)
+              .map((stackData) => {
+                const stackPct = Math.max(0, Math.min(100, stackData.uptimePercentage));
+                return (
+                  <Box
+                    key={stackData.stackLevel}
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      height: '100%',
+                      width: `${stackPct}%`,
+                      background: getStackGradient(stackData.stackLevel),
+                      borderRadius: 2,
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? '0 1px 4px rgba(0, 0, 0, 0.3)'
+                          : '0 1px 2px rgba(0, 0, 0, 0.1)',
+                      transition: 'width 0.3s ease-in-out, background 0.3s ease-in-out',
+                    }}
+                  />
+                );
+              })
+          : // Single progress bar (non-stacked abilities)
+            null}
+        {!buff.allStacksData && (
+          <LinearProgress
+            variant="determinate"
+            value={pct}
+            sx={{
+              height: '100%',
+              borderRadius: 2,
+              bgcolor: 'transparent',
+              '& .MuiLinearProgress-bar': {
+                borderRadius: 2,
+                background:
+                  theme.palette.mode === 'dark'
+                    ? 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)'
+                    : 'linear-gradient(90deg, #67e8f9 0%, #93c5fd 25%, #c4b5fd 75%, #f9a8d4 100%)',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 2px 8px rgba(59, 130, 246, 0.3), 0 0 20px rgba(139, 92, 246, 0.2)'
+                    : '0 1px 3px rgba(103, 232, 249, 0.3), 0 0 8px rgba(147, 197, 253, 0.2)',
+              },
+            }}
+          />
+        )}
+      </Box>
 
       {/* Content overlay */}
       <Box
@@ -178,7 +285,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           top: 0,
           left: 0,
           right: 0,
-          bottom: 0,
+          height: buff.allStacksData ? 56 : 48, // Match the progress bar container height
           display: 'flex',
           alignItems: 'center',
           px: 2,
@@ -252,71 +359,8 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           </Typography>
         </Box>
 
-        {/* Right side: Stack badge and Percentage */}
+        {/* Right side: Percentage */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-          {buff.maxStacks && (
-            <Chip
-              label={`${selectedStack}/${buff.maxStacks}`}
-              icon={
-                buff.allStacksData ? (
-                  <Box
-                    sx={{
-                      width: 4,
-                      height: 4,
-                      borderRadius: '50%',
-                      backgroundColor:
-                        theme.palette.mode === 'dark' ? '#fbbf24' : 'rgba(255,255,255,0.9)',
-                      mr: 0.5,
-                      boxShadow: '0 0 3px rgba(0,0,0,0.3)',
-                    }}
-                  />
-                ) : undefined
-              }
-              size="small"
-              onClick={onStackClick}
-              sx={{
-                height: 24,
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                background:
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, #d97706 0%, #dc2626 100%)'
-                    : 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)',
-                color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
-                border: 'none',
-                boxShadow:
-                  theme.palette.mode === 'dark'
-                    ? '0 2px 8px rgba(59, 130, 246, 0.5), inset 0 1px 0 rgba(255,255,255,0.25)'
-                    : '0 2px 6px rgba(96, 165, 250, 0.4), inset 0 1px 0 rgba(255,255,255,0.5)',
-                backdropFilter: 'blur(8px)',
-                cursor: buff.allStacksData ? 'pointer' : 'default',
-                transition: 'all 0.15s ease-in-out',
-                '&:hover': buff.allStacksData
-                  ? {
-                      transform: 'scale(1.08)',
-                      boxShadow:
-                        theme.palette.mode === 'dark'
-                          ? '0 4px 12px rgba(59, 130, 246, 0.6), inset 0 1px 0 rgba(255,255,255,0.35)'
-                          : '0 3px 8px rgba(96, 165, 250, 0.5), inset 0 1px 0 rgba(255,255,255,0.6)',
-                    }
-                  : {},
-                '&:active': buff.allStacksData
-                  ? {
-                      transform: 'scale(0.95)',
-                    }
-                  : {},
-                '& .MuiChip-label': {
-                  px: buff.allStacksData ? 1 : 1.5,
-                  textShadow: theme.palette.mode === 'dark' ? '0 1px 2px rgba(0,0,0,0.6)' : 'none',
-                  fontWeight: 800,
-                },
-                '& .MuiChip-icon': {
-                  marginLeft: '4px',
-                  marginRight: '-2px',
-                },
-              }}
-            />
-          )}
           <Typography
             variant="body2"
             sx={{
@@ -330,8 +374,395 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           >
             {Math.round(pct)}%
           </Typography>
+          {/* Delta indicator - only show if groupAverage is provided */}
+          {delta !== null && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                ml: 0.5,
+              }}
+            >
+              {/* Show neutral indicator for very close to average (within ±2%) */}
+              {Math.abs(delta) < 2 ? (
+                <>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                      color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                      textShadow:
+                        theme.palette.mode === 'dark'
+                          ? '1px 1px 2px rgba(0,0,0,0.8)'
+                          : '1px 1px 1px rgba(255,255,255,0.9)',
+                    }}
+                  >
+                    ≈
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: '0.7rem',
+                      color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                      textShadow:
+                        theme.palette.mode === 'dark'
+                          ? '1px 1px 2px rgba(0,0,0,0.8), 0 0 6px rgba(0,0,0,0.6)'
+                          : '1px 1px 1px rgba(255,255,255,0.9), 0 0 3px rgba(255,255,255,0.7)',
+                    }}
+                  >
+                    {delta > 0 ? '+' : ''}
+                    {Math.round(delta)}%
+                  </Typography>
+                </>
+              ) : (
+                <>
+                  {delta > 0 ? (
+                    <TrendingUpIcon
+                      sx={{
+                        fontSize: '1rem',
+                        color: '#10b981',
+                        filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
+                      }}
+                    />
+                  ) : (
+                    <TrendingDownIcon
+                      sx={{
+                        fontSize: '1rem',
+                        color: '#ef4444',
+                        filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
+                      }}
+                    />
+                  )}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: '0.7rem',
+                      color: delta > 0 ? '#10b981' : '#ef4444',
+                      textShadow:
+                        theme.palette.mode === 'dark'
+                          ? '1px 1px 2px rgba(0,0,0,0.8), 0 0 6px rgba(0,0,0,0.6)'
+                          : '1px 1px 1px rgba(255,255,255,0.9), 0 0 3px rgba(255,255,255,0.7)',
+                    }}
+                  >
+                    {delta > 0 ? '+' : ''}
+                    {Math.round(delta)}%
+                  </Typography>
+                </>
+              )}
+            </Box>
+          )}
+          {/* Expand/Collapse icon for multi-stack */}
+          {buff.allStacksData && buff.allStacksData.length > 0 && (
+            <IconButton
+              size="small"
+              aria-label={`Toggle ${buff.abilityName} stacks`}
+              aria-expanded={isExpanded}
+              aria-controls={stacksContentId}
+              sx={{
+                ml: 0.5,
+                padding: 0.5,
+                color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
+                transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.3s ease-in-out',
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded((prev) => !prev);
+              }}
+            >
+              <ExpandMoreIcon fontSize="small" />
+            </IconButton>
+          )}
         </Box>
       </Box>
+
+      {/* Segmented stack labels (below bar for multi-stack abilities when collapsed) */}
+      {buff.allStacksData && buff.allStacksData.length > 0 && !isExpanded && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
+            mt: 0.5,
+            flexWrap: 'wrap',
+          }}
+        >
+          {buff.allStacksData.map((stackData, index) => (
+            <React.Fragment key={stackData.stackLevel}>
+              {index > 0 && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: theme.palette.mode === 'dark' ? '#64748b' : '#94a3b8',
+                    fontSize: '0.7rem',
+                    fontWeight: 500,
+                  }}
+                >
+                  |
+                </Typography>
+              )}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '2px',
+                    background: getStackGradient(stackData.stackLevel),
+                    flexShrink: 0,
+                  }}
+                />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: theme.palette.mode === 'dark' ? '#e2e8f0' : '#475569',
+                  }}
+                >
+                  {Math.round(stackData.uptimePercentage)}%
+                </Typography>
+              </Box>
+            </React.Fragment>
+          ))}
+        </Box>
+      )}
+
+      {/* Expanded view - individual bars for each stack (highest on top) */}
+      {buff.allStacksData && (
+        <Collapse in={isExpanded} timeout={300} id={stacksContentId}>
+          <Box sx={{ width: '100%', mt: 1 }}>
+            {buff.allStacksData
+              .slice()
+              .sort((a, b) => b.uptimePercentage - a.uptimePercentage) // Sort highest first
+              .map((stackData) => {
+                const stackPct = Math.max(0, Math.min(100, stackData.uptimePercentage));
+                const stackDelta =
+                  stackData.groupAverageUptimePercentage !== undefined
+                    ? stackData.uptimePercentage - stackData.groupAverageUptimePercentage
+                    : null;
+
+                return (
+                  <Box
+                    key={stackData.stackLevel}
+                    sx={{
+                      width: '100%',
+                      mb: 0.75,
+                      cursor: 'pointer',
+                      animation: 'fadeIn 0.3s ease-in-out',
+                      '@keyframes fadeIn': {
+                        from: {
+                          opacity: 0,
+                          transform: 'translateY(-10px)',
+                        },
+                        to: {
+                          opacity: 1,
+                          transform: 'translateY(0)',
+                        },
+                      },
+                      '&:hover': {
+                        opacity: 0.9,
+                      },
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const url = createEsoLogsUrl(
+                        reportId,
+                        fightId,
+                        buff.abilityGameID,
+                        selectedTargetId,
+                        buff.isDebuff,
+                        buff.hostilityType,
+                        buff.dotAbilityIds,
+                      );
+                      window.open(url, '_blank');
+                    }}
+                  >
+                    {/* Individual stack progress bar */}
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        height: 32,
+                        borderRadius: 1.5,
+                        bgcolor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255,255,255,0.05)'
+                            : 'rgba(203, 213, 225, 0.2)',
+                        border:
+                          theme.palette.mode === 'dark'
+                            ? 'none'
+                            : '1px solid rgba(15, 23, 42, 0.08)',
+                        boxShadow:
+                          theme.palette.mode === 'dark'
+                            ? 'inset 0 1px 2px rgba(0, 0, 0, 0.3)'
+                            : 'inset 0 1px 1px rgba(15, 23, 42, 0.05)',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {/* Progress fill */}
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          height: '100%',
+                          width: `${stackPct}%`,
+                          background: getStackGradient(stackData.stackLevel),
+                          borderRadius: 1.5,
+                          transition: 'width 0.3s ease-in-out',
+                        }}
+                      />
+
+                      {/* Content overlay */}
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          px: 1.5,
+                          gap: 1,
+                        }}
+                      >
+                        {/* Stack indicator */}
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: '2px',
+                            background: getStackGradient(stackData.stackLevel),
+                            flexShrink: 0,
+                            border:
+                              theme.palette.mode === 'dark'
+                                ? '1px solid rgba(255,255,255,0.2)'
+                                : '1px solid rgba(0,0,0,0.1)',
+                          }}
+                        />
+
+                        {/* Stack label */}
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            fontSize: '0.8rem',
+                            color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
+                            textShadow:
+                              theme.palette.mode === 'dark'
+                                ? '1px 1px 2px rgba(0,0,0,0.8)'
+                                : '1px 1px 1px rgba(255,255,255,0.8)',
+                            flex: 1,
+                          }}
+                        >
+                          Stack {stackData.stackLevel}
+                        </Typography>
+
+                        {/* Applications */}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(255,255,255,0.7)'
+                                : 'rgba(30, 41, 59, 0.7)',
+                            textShadow:
+                              theme.palette.mode === 'dark'
+                                ? '1px 1px 1px rgba(0,0,0,0.8)'
+                                : '1px 1px 1px rgba(255,255,255,0.7)',
+                            fontSize: '0.7rem',
+                          }}
+                        >
+                          {stackData.applications}x
+                        </Typography>
+
+                        {/* Percentage */}
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '0.85rem',
+                            color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
+                            textShadow:
+                              theme.palette.mode === 'dark'
+                                ? '1px 1px 2px rgba(0,0,0,0.8)'
+                                : '1px 1px 1px rgba(255,255,255,0.8)',
+                          }}
+                        >
+                          {Math.round(stackPct)}%
+                        </Typography>
+
+                        {/* Delta indicator */}
+                        {stackDelta !== null && (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                            }}
+                          >
+                            {Math.abs(stackDelta) < 2 ? (
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  fontWeight: 700,
+                                  fontSize: '0.7rem',
+                                  color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                                }}
+                              >
+                                ≈
+                              </Typography>
+                            ) : (
+                              <>
+                                {stackDelta > 0 ? (
+                                  <TrendingUpIcon
+                                    sx={{
+                                      fontSize: '0.9rem',
+                                      color: '#10b981',
+                                    }}
+                                  />
+                                ) : (
+                                  <TrendingDownIcon
+                                    sx={{
+                                      fontSize: '0.9rem',
+                                      color: '#ef4444',
+                                    }}
+                                  />
+                                )}
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.65rem',
+                                    color: stackDelta > 0 ? '#10b981' : '#ef4444',
+                                  }}
+                                >
+                                  {stackDelta > 0 ? '+' : ''}
+                                  {Math.round(stackDelta)}%
+                                </Typography>
+                              </>
+                            )}
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+                  </Box>
+                );
+              })}
+          </Box>
+        </Collapse>
+      )}
     </Box>
   );
 };

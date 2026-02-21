@@ -1,0 +1,96 @@
+import { SkillLineData } from '../../types';
+import { AbilityId } from '../ability-ids';
+
+export const scrying: SkillLineData = {
+  id: 0,
+  name: 'Scrying',
+  class: 'world',
+  category: 'world',
+  icon: 'https://eso-hub.com/storage/icons/ability_world_scrying_001.png',
+  skills: [
+    {
+      id: AbilityId.SCRY,
+      name: 'Scry',
+      icon: 'https://eso-hub.com/storage/icons/ability_world_scrying_001.png',
+      maxRank: 1,
+      isUltimate: false,
+      isPassive: true,
+      description:
+        'Adds the selected contiguous group of facets to your area of control. Consumes 1 turn.',
+      skillStyles: [],
+    },
+    {
+      id: AbilityId.ANTIQUARIAN_INSIGHT,
+      name: 'Antiquarian Insight',
+      icon: 'https://eso-hub.com/storage/icons/ability_world_scrying_002.png',
+      maxRank: 10,
+      isUltimate: false,
+      isPassive: true,
+      description: 'Allows you to scry for Antiquities of up to Ultimate difficulty.',
+      skillStyles: [],
+    },
+    {
+      id: AbilityId.SCRIERS_PATIENCE,
+      name: "Scrier's Patience",
+      icon: 'https://eso-hub.com/storage/icons/ability_world_scrying_003.png',
+      maxRank: 3,
+      isUltimate: false,
+      isPassive: true,
+      description: 'Grants you two additional turns of Scrying.',
+      skillStyles: [],
+    },
+    {
+      id: AbilityId.COALESCENCE,
+      name: 'Coalescence',
+      icon: 'https://eso-hub.com/storage/icons/ability_world_scrying_004.png',
+      maxRank: 2,
+      isUltimate: false,
+      isPassive: true,
+      description:
+        "Unites a hexagonal cluster of facets in the Antiquarian's Eye, converting the symbols to match that of the central facet. New Effect: The ability's range increases by one facet, creating a snowflake-like pattern. Consumes 1 Magicka Charge.",
+      skillStyles: [],
+    },
+    {
+      id: AbilityId.FUTURE_FOCUS,
+      name: 'Future Focus',
+      icon: 'https://eso-hub.com/storage/icons/ability_world_scrying_005.png',
+      maxRank: 4,
+      isUltimate: false,
+      isPassive: true,
+      description: 'Grants you two additional Magicka Charges for use in Scrying.',
+      skillStyles: [],
+    },
+    {
+      id: AbilityId.DILATION,
+      name: 'Dilation',
+      icon: 'https://eso-hub.com/storage/icons/ability_world_scrying_006.png',
+      maxRank: 2,
+      isUltimate: false,
+      isPassive: true,
+      description:
+        'Claim all facets of the selected type that touch your area of control, as well as matching facets directly adjacent. New Effect: Dilation now claims ALL contiguous facets of the same type. Consumes 1 Magicka Charge.',
+      skillStyles: [],
+    },
+    {
+      id: AbilityId.FARSIGHT,
+      name: 'Farsight',
+      icon: 'https://eso-hub.com/storage/icons/ability_world_scrying_007.png',
+      maxRank: 2,
+      isUltimate: false,
+      isPassive: true,
+      description:
+        'Claim a line of facets, stretching out from your area of control. New Effect: Range increased from 4 facets to 6. Consumes 1 Magicka Charge.',
+      skillStyles: [],
+    },
+    {
+      id: AbilityId.PREEMPTIVE_POWER,
+      name: 'Preemptive Power',
+      icon: 'https://eso-hub.com/storage/icons/ability_world_scrying_008.png',
+      maxRank: 1,
+      isUltimate: false,
+      isPassive: true,
+      description: 'Start each Scrying attempt with an additional row of facets already claimed.',
+      skillStyles: [],
+    },
+  ],
+};

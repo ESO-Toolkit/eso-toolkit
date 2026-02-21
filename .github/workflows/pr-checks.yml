@@ -1,9 +1,13 @@
 name: PR Checks
 
+permissions:
+  contents: read
+  pull-requests: read
+
 on:
   pull_request:
     branches:
-      - master
+      - main
     types:
       - opened
       - synchronize
@@ -37,32 +41,53 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    # Only run on code changes, not label changes
+    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
       - name: Build
         run: npm run build
 
   lint:
     runs-on: ubuntu-latest
+    # Only run on code changes, not label changes
+    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
       - name: Lint
         run: npm run lint
 
   format:
     runs-on: ubuntu-latest
+    # Only run on code changes, not label changes
+    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
       - name: Check formatting
         run: npm run format:check
 
+  lint-skills:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install skills-ref
+        run: pip install skills-ref==0.1.1
+      - name: Validate agent skills
+        run: python scripts/lint-skills.py
+
   test:
     runs-on: ubuntu-latest
+    # Only run on code changes, not label changes
+    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
       - name: Block external network access
         run: |
@@ -104,16 +129,20 @@ jobs:
 
   typecheck:
     runs-on: ubuntu-latest
+    # Only run on code changes, not label changes
+    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
       - name: Typecheck
         run: npm run typecheck
 
   build-storybook:
     runs-on: ubuntu-latest
+    # Only run on code changes, not label changes
+    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
       - name: Build Storybook
         run: npm run build-storybook
@@ -122,8 +151,10 @@ jobs:
 
   playwright-smoke:
     runs-on: ubuntu-latest
+    # Only run on code changes, not label changes
+    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
 
       - name: Get Playwright version
@@ -139,7 +170,7 @@ jobs:
           echo "Playwright version: ${PLAYWRIGHT_VERSION}"
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: playwright-cache
         with:
           path: |
@@ -164,16 +195,20 @@ jobs:
           fi
 
       - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: |
-          echo "🔄 Cache miss - installing Playwright browsers and dependencies..."
-          npx playwright install --with-deps
-
-      - name: Install Playwright Dependencies Only
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: |
-          echo "⚡ Cache hit - installing only system dependencies..."
-          npx playwright install-deps
+          echo "🔄 Installing Playwright browsers..."
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "⚡ Cache hit - installing system dependencies and verifying browsers..."
+            npx playwright install-deps
+            # Verify browsers are available, install if missing
+            if ! npx playwright install --dry-run 2>/dev/null; then
+              echo "🔧 Some browsers missing despite cache hit - installing..."
+              npx playwright install
+            fi
+          else
+            echo "🔄 Cache miss - installing browsers and dependencies..."
+            npx playwright install --with-deps
+          fi
 
       - name: Verify Playwright Installation
         run: |
@@ -189,6 +224,14 @@ jobs:
             echo "❌ No browser cache found"
             exit 1
           fi
+
+          # Test browser launch capability
+          echo "🛠️ Testing browser launch capability..."
+          if ! timeout 30s npx playwright install --dry-run; then
+            echo "❌ Browser installation verification failed"
+            exit 1
+          fi
+          echo "✅ All browsers verified and ready"
       - name: Block external network access
         run: |
           # Block access to known external services during testing
@@ -247,7 +290,7 @@ jobs:
           # Playwright memory optimization
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       - name: Upload Playwright Report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: playwright-smoke-report

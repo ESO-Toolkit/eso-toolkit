@@ -57,6 +57,7 @@ export interface PlayerPenetrationData {
   max: number;
   effective: number;
   timeAtCapPercentage: number;
+  inactiveCombatIntervals: Array<{ start: number; end: number }>;
 }
 
 interface PenetrationSource {
@@ -140,6 +141,42 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
       xValueFormatter: (relativeSeconds: number) => Number(relativeSeconds.toFixed(1)),
     });
   }, [phaseTransitionInfo]);
+
+  // Create annotations for inactive combat periods (downtime)
+  const inactiveTimeAnnotations = React.useMemo(() => {
+    if (
+      !penetrationData?.inactiveCombatIntervals ||
+      penetrationData.inactiveCombatIntervals.length === 0
+    ) {
+      return null;
+    }
+
+    const annotations: Record<string, unknown> = {};
+
+    penetrationData.inactiveCombatIntervals.forEach(
+      (interval: { start: number; end: number }, index: number) => {
+        annotations[`inactive_${index}`] = {
+          type: 'box',
+          xMin: interval.start,
+          xMax: interval.end,
+          backgroundColor: 'rgba(128, 128, 128, 0.15)',
+          borderWidth: 0,
+          label: {
+            display: interval.end - interval.start > 2, // Only show label if gap is > 2 seconds
+            content: 'Inactive',
+            position: 'center',
+            color: 'rgba(128, 128, 128, 0.7)',
+            font: {
+              size: 10,
+              weight: 'bold',
+            },
+          },
+        };
+      },
+    );
+
+    return annotations;
+  }, [penetrationData?.inactiveCombatIntervals]);
 
   if (!penetrationData) {
     return (
@@ -254,7 +291,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                 size="md"
               />
               <MetricPill
-                label="Effective"
+                label="Active"
                 value={penetrationData.effective.toFixed(0)}
                 intent={penetrationData.effective > 18200 ? 'info' : 'warning'}
                 size="md"
@@ -298,7 +335,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                   size="sm"
                 />
                 <MetricPill
-                  label="Effective"
+                  label="Active"
                   value={penetrationData.effective.toFixed(0)}
                   intent={penetrationData.effective > 18200 ? 'info' : 'warning'}
                   size="sm"
@@ -388,6 +425,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                       },
                       annotation: {
                         annotations: {
+                          ...(inactiveTimeAnnotations ?? {}),
                           goalLine: {
                             type: 'line',
                             yMin: 18200,

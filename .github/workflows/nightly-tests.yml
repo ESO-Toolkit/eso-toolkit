@@ -52,8 +52,6 @@ on:
 # Note: The following secrets should be configured in repository settings:
 # - OAUTH_CLIENT_ID: ESO Logs OAuth client ID
 # - OAUTH_CLIENT_SECRET: ESO Logs OAuth client secret
-# - ESO_LOGS_TEST_EMAIL: Test user email (optional)
-# - ESO_LOGS_TEST_PASSWORD: Test user password (optional)
 
 jobs:
   # Job to determine matrix configuration
@@ -102,7 +100,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
@@ -121,7 +119,7 @@ jobs:
           echo "Playwright version: ${PLAYWRIGHT_VERSION}"
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: playwright-cache
         with:
           path: |
@@ -133,16 +131,20 @@ jobs:
             playwright-nightly-${{ runner.os }}-
 
       - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: |
-          echo "🔄 Cache miss - installing Playwright browsers and dependencies..."
-          npx playwright install --with-deps
-
-      - name: Install Playwright Dependencies Only
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: |
-          echo "⚡ Cache hit - installing only system dependencies..."
-          npx playwright install-deps
+          echo "🔄 Installing Playwright browsers..."
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "⚡ Cache hit - installing system dependencies and verifying browsers..."
+            npx playwright install-deps
+            # Verify browsers are available, install if missing
+            if ! npx playwright install --dry-run 2>/dev/null; then
+              echo "🔧 Some browsers missing despite cache hit - installing..."
+              npx playwright install
+            fi
+          else
+            echo "🔄 Cache miss - installing browsers and dependencies..."
+            npx playwright install --with-deps
+          fi
 
       - name: Verify Playwright Installation
         run: |
@@ -158,6 +160,14 @@ jobs:
             echo "❌ No browser cache found"
             exit 1
           fi
+
+          # Test browser launch capability
+          echo "🛠️ Testing browser launch capability..."
+          if ! timeout 30s npx playwright install --dry-run; then
+            echo "❌ Browser installation verification failed"
+            exit 1
+          fi
+          echo "✅ All browsers verified and ready"
 
       # No build step needed - testing against production website
 
@@ -239,14 +249,11 @@ jobs:
           # ESO Logs OAuth credentials for authenticated tests
           OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
           OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
-          # Optional test user credentials for browser flow testing
-          ESO_LOGS_TEST_EMAIL: ${{ secrets.ESO_LOGS_TEST_EMAIL }}
-          ESO_LOGS_TEST_PASSWORD: ${{ secrets.ESO_LOGS_TEST_PASSWORD }}
           # Playwright optimizations
           PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: 'true'
 
       - name: Upload Test Results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: nightly-test-results-shard-${{ matrix.shard }}-${{ github.run_id }}
@@ -256,7 +263,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Test Report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: nightly-playwright-report-shard-${{ matrix.shard }}-${{ github.run_id }}
@@ -311,10 +318,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [setup, nightly-tests]
     if: always()
+    permissions: {}
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           path: ./artifacts
           pattern: nightly-*-shard-*-${{ github.run_id }}
@@ -377,7 +385,7 @@ jobs:
           echo "✅ Consolidation complete"
 
       - name: Upload Consolidated Results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: nightly-consolidated-results-${{ github.run_id }}
@@ -440,10 +448,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: [setup, nightly-tests, consolidate-results]
     if: failure() && github.event_name == 'schedule'
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 

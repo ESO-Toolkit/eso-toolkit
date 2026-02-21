@@ -93,6 +93,7 @@ export interface PlayerCriticalDamageData {
   maximumCriticalDamage: number;
   timeAtCapPercentage: number;
   criticalDamageAlerts: CriticalDamageAlert[];
+  inactiveCombatIntervals: Array<{ start: number; end: number }>;
 }
 
 interface CriticalMultiplierInfo {
@@ -191,6 +192,42 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
       xValueFormatter: (relativeSeconds: number) => Number(relativeSeconds.toFixed(1)),
     });
   }, [phaseTransitionInfo]);
+
+  // Create annotations for inactive combat periods (downtime)
+  const inactiveTimeAnnotations = React.useMemo(() => {
+    if (
+      !criticalDamageData?.inactiveCombatIntervals ||
+      criticalDamageData.inactiveCombatIntervals.length === 0
+    ) {
+      return null;
+    }
+
+    const annotations: Record<string, unknown> = {};
+
+    criticalDamageData.inactiveCombatIntervals.forEach(
+      (interval: { start: number; end: number }, index: number) => {
+        annotations[`inactive_${index}`] = {
+          type: 'box',
+          xMin: interval.start,
+          xMax: interval.end,
+          backgroundColor: 'rgba(128, 128, 128, 0.15)',
+          borderWidth: 0,
+          label: {
+            display: interval.end - interval.start > 2, // Only show label if gap is > 2 seconds
+            content: 'Inactive',
+            position: 'center',
+            color: 'rgba(128, 128, 128, 0.7)',
+            font: {
+              size: 10,
+              weight: 'bold',
+            },
+          },
+        };
+      },
+    );
+
+    return annotations;
+  }, [criticalDamageData?.inactiveCombatIntervals]);
 
   if (!criticalDamageData) {
     return (
@@ -311,7 +348,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 size="md"
               />
               <MetricPill
-                label="Effective"
+                label="Active"
                 value={criticalDamageData.effectiveCriticalDamage.toFixed(1)}
                 suffix="%"
                 intent={
@@ -363,7 +400,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                   size="sm"
                 />
                 <MetricPill
-                  label="Effective"
+                  label="Active"
                   value={criticalDamageData.effectiveCriticalDamage.toFixed(1)}
                   suffix="%"
                   intent={
@@ -541,6 +578,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                       },
                       annotation: {
                         annotations: {
+                          ...(inactiveTimeAnnotations ?? {}),
                           target: {
                             type: 'line',
                             yMin: 125,

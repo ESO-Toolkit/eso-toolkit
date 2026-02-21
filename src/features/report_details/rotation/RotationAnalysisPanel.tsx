@@ -1,12 +1,13 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
+import { ReportActorFragment } from '../../../graphql/gql/graphql';
 import {
   selectCastEvents,
   selectResourceEvents,
   selectEventPlayers,
 } from '../../../store/events_data/actions';
-import { selectMasterData } from '../../../store/master_data/masterDataSelectors';
+import { selectCombinedMasterData } from '../../../store/master_data/masterDataSelectors';
 import { ResourceChangeEvent, UnifiedCastEvent } from '../../../types/combatlogEvents';
 
 import { RotationAnalysisPanelView } from './RotationAnalysisPanelView';
@@ -284,13 +285,13 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
   const castEvents = useSelector(selectCastEvents);
   const resourceEvents = useSelector(selectResourceEvents);
   const playersArray = useSelector(selectEventPlayers);
-  const masterData = useSelector(selectMasterData);
+  const masterData = useSelector(selectCombinedMasterData);
 
   // Convert players array to record for efficient lookup
   const playersById = React.useMemo(() => {
-    const result: Record<string, unknown> = {};
+    const result: Record<string, ReportActorFragment> = {};
     playersArray.forEach((player) => {
-      if (player?.id) {
+      if (player && player.id !== undefined && player.id !== null) {
         result[String(player.id)] = player;
       }
     });

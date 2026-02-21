@@ -2,10 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../graphql/gql/graphql';
-import {
-  executeStatusEffectUptimesTask,
-  statusEffectUptimesActions,
-} from '../../store/worker_results';
+import { executeStatusEffectUptimesTask } from '../../store/worker_results';
 import {
   selectStatusEffectUptimesResult,
   selectWorkerTaskLoading,
@@ -30,11 +27,6 @@ export function useStatusEffectUptimesTask(): {
   const { hostileBuffLookupData, isHostileBuffLookupLoading } = useHostileBuffLookupTask();
   const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
 
-  // Clear any existing result when dependencies change to force fresh calculation
-  React.useEffect(() => {
-    dispatch(statusEffectUptimesActions.clearResult());
-  }, [dispatch, selectedFight, hostileBuffLookupData, debuffLookupData]);
-
   // Execute task only when ALL dependencies are completely ready
   React.useEffect(() => {
     // Check that all dependencies are completely loaded with data available
@@ -46,14 +38,19 @@ export function useStatusEffectUptimesTask(): {
       debuffLookupData !== null;
 
     if (allDependenciesReady) {
-      dispatch(
+      const promise = dispatch(
         executeStatusEffectUptimesTask({
           hostileBuffsLookup: hostileBuffLookupData,
           debuffsLookup: debuffLookupData,
           fightStartTime: selectedFight.startTime,
           fightEndTime: selectedFight?.endTime,
+          friendlyPlayerIds:
+            selectedFight.friendlyPlayers?.filter((id): id is number => id !== null) || [],
         }),
       );
+      return () => {
+        promise.abort();
+      };
     }
   }, [
     dispatch,

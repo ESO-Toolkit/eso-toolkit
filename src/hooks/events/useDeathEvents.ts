@@ -3,44 +3,51 @@ import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '@/EsoLogsClientContext';
 import { FightFragment } from '@/graphql/gql/graphql';
-import { useSelectedReportAndFight } from '@/ReportFightContext';
+import type { ReportFightContextInput } from '@/store/contextTypes';
+import {
+  selectDeathEventsEntryForContext,
+  selectDeathEventsForContext,
+} from '@/store/events_data/deathEventsSelectors';
 import { fetchDeathEvents } from '@/store/events_data/deathEventsSlice';
-import { selectReportFights } from '@/store/report/reportSelectors';
-import { selectDeathEvents, selectDeathEventsLoading } from '@/store/selectors/eventsSelectors';
+import type { RootState } from '@/store/storeWithHistory';
 import { useAppDispatch } from '@/store/useAppDispatch';
 import { DeathEvent } from '@/types/combatlogEvents';
 
-export function useDeathEvents(): {
+import { useFightForContext } from '../useFightForContext';
+import { useResolvedReportFightContext } from '../useResolvedReportFightContext';
+
+interface UseDeathEventsOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useDeathEvents(options?: UseDeathEventsOptions): {
   deathEvents: DeathEvent[];
   isDeathEventsLoading: boolean;
   selectedFight: FightFragment | null;
 } {
   const client = useEsoLogsClientInstance();
   const dispatch = useAppDispatch();
-  const { reportId, fightId } = useSelectedReportAndFight();
-  const fights = useSelector(selectReportFights);
-
-  // Get the specific fight from the report data
-  const selectedFight = React.useMemo(() => {
-    if (!fightId || !fights) return null;
-    const fightIdNumber = parseInt(fightId, 10);
-    return fights.find((fight) => fight && fight.id === fightIdNumber) || null;
-  }, [fightId, fights]);
+  const context = useResolvedReportFightContext(options?.context);
+  const selectedFight = useFightForContext(context);
+  const deathEvents = useSelector((state: RootState) =>
+    selectDeathEventsForContext(state, context),
+  );
+  const deathEntry = useSelector((state: RootState) =>
+    selectDeathEventsEntryForContext(state, context),
+  );
+  const isDeathEventsLoading = deathEntry?.status === 'loading';
 
   React.useEffect(() => {
-    if (reportId && selectedFight && client) {
+    if (context.reportCode && selectedFight && client) {
       dispatch(
         fetchDeathEvents({
-          reportCode: reportId,
+          reportCode: context.reportCode,
           fight: selectedFight,
           client,
         }),
       );
     }
-  }, [dispatch, reportId, selectedFight, client]);
-
-  const deathEvents = useSelector(selectDeathEvents);
-  const isDeathEventsLoading = useSelector(selectDeathEventsLoading);
+  }, [dispatch, context.reportCode, context.fightId, selectedFight, client]);
 
   return React.useMemo(
     () => ({ deathEvents, isDeathEventsLoading, selectedFight }),

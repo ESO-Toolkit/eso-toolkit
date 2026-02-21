@@ -37,6 +37,7 @@ export const LoggerDebugButton: React.FC<LoggerDebugButtonProps> = ({
           color="secondary"
           size="small"
           onClick={() => setOpen(true)}
+          aria-label={tooltip}
           sx={{
             position: 'fixed',
             zIndex: 1300,

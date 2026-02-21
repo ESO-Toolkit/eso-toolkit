@@ -1,5 +1,14 @@
 import * as Sentry from '@sentry/react';
 
+import {
+  selectMasterDataErrorState,
+  selectMasterDataLoadingState,
+} from '@/store/master_data/masterDataSelectors';
+import {
+  selectActivePlayerDataError,
+  selectActivePlayerDataStatus,
+} from '@/store/player_data/playerDataSelectors';
+
 import { SENTRY_CONFIG, ManualBugReport } from '../config/sentryConfig';
 import { RootState } from '../store/storeWithHistory';
 
@@ -144,12 +153,12 @@ export const captureApplicationContext = (store?: {
         error: state.report.error,
       },
       masterData: {
-        loading: state.masterData.loading,
-        error: state.masterData.error,
+        loading: selectMasterDataLoadingState(state as RootState),
+        error: selectMasterDataErrorState(state as RootState),
       },
       playerData: {
-        loading: state.playerData.loading,
-        error: state.playerData.error,
+        loading: selectActivePlayerDataStatus(state as RootState),
+        error: selectActivePlayerDataError(state as RootState),
       },
     };
   }

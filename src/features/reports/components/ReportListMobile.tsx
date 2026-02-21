@@ -11,7 +11,7 @@ import {
 
 interface ReportListMobileProps {
   reports: UserReportSummaryFragment[];
-  onSelect: (code: string) => void;
+  onSelect: (code: string, event?: React.MouseEvent) => void;
   showOwner?: boolean;
 }
 
@@ -32,7 +32,14 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
         <Paper
           key={report.code}
           variant="outlined"
-          onClick={() => onSelect(report.code)}
+          onClick={(e) => onSelect(report.code, e)}
+          onMouseDown={(e) => {
+            // Handle middle-click
+            if (e.button === 1) {
+              e.preventDefault();
+              onSelect(report.code, e);
+            }
+          }}
           sx={{
             p: 2,
             borderRadius: 2,

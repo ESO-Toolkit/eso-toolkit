@@ -18,6 +18,7 @@ interface InsightsPanelViewProps {
   abilityEquipped: Partial<Record<KnownAbilities, string[]>>;
   buffActors: Partial<Record<KnownAbilities, Set<string>>>;
   firstDamageDealer: string | null;
+  selectedPlayerId: number | null;
   isLoading: boolean;
 }
 
@@ -70,6 +71,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
   abilityEquipped,
   buffActors,
   firstDamageDealer,
+  selectedPlayerId,
   isLoading,
 }) => {
   const theme = useTheme();
@@ -347,7 +349,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
-            <StatusEffectUptimesPanel fight={fight} />
+            <StatusEffectUptimesPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
 
@@ -361,7 +363,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
-            <BuffUptimesPanel fight={fight} />
+            <BuffUptimesPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
 
@@ -375,7 +377,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
-            <DebuffUptimesPanel fight={fight} />
+            <DebuffUptimesPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
 

@@ -2,14 +2,16 @@ import { Box, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 
 import { HealingDoneTableSkeleton } from '../../../components/HealingDoneTableSkeleton';
-import { FightFragment } from '../../../graphql/gql/graphql';
 import {
   useCastEvents,
   useHealingEvents,
   useReportMasterData,
   usePlayerData,
   useDeathEvents,
+  useResolvedReportFightContext,
+  useFightForContext,
 } from '../../../hooks';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { KnownAbilities } from '../../../types/abilities';
 import { HealEvent } from '../../../types/combatlogEvents';
 import { resolveActorName } from '../../../utils/resolveActorName';
@@ -17,19 +19,23 @@ import { resolveActorName } from '../../../utils/resolveActorName';
 import { HealingDonePanelView } from './HealingDonePanelView';
 
 interface HealingDonePanelProps {
-  fight: FightFragment;
+  context?: ReportFightContextInput;
 }
 
 /**
  * Smart component that handles data processing and state management for healing done panel
  */
-export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => {
+export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ context }) => {
+  const resolvedContext = useResolvedReportFightContext(context);
+  const fight = useFightForContext(resolvedContext);
   // Use hooks to get data
-  const { healingEvents, isHealingEventsLoading } = useHealingEvents();
-  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-  const { castEvents, isCastEventsLoading } = useCastEvents();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
+  const { healingEvents, isHealingEventsLoading } = useHealingEvents({ context: resolvedContext });
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData({
+    context: resolvedContext,
+  });
+  const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
+  const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context: resolvedContext });
 
   const masterData = useMemo(
     () => reportMasterData || { actorsById: {}, abilitiesById: {} },

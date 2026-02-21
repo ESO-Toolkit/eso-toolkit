@@ -634,25 +634,61 @@ export const HeaderBar: React.FC = () => {
       icon: '📚',
       path: '/docs/calculations',
     },
+    {
+      text: 'Loadout Manager',
+      icon: '⚔️',
+      path: '/loadout-manager',
+    },
+    {
+      text: 'Roster Builder',
+      icon: '👥',
+      path: '/roster-builder',
+    },
+    {
+      text: "What's New",
+      icon: '🆕',
+      path: '/whats-new',
+    },
+    {
+      text: 'About',
+      icon: 'ℹ️',
+      path: '/about',
+    },
   ];
 
-  const reportsItems = [
-    {
-      text: 'Sample Report',
-      icon: '🎲',
-      action: handleSampleReport,
-    },
-    {
-      text: 'Latest Report',
-      icon: '📊',
-      path: '/latest-reports',
-    },
-    {
-      text: 'Leaderboards',
-      icon: '🏆',
-      path: '/leaderboards',
-    },
-  ];
+  const reportsItems = React.useMemo(() => {
+    const items = [];
+
+    // Add "My Reports" if user is logged in
+    if (isLoggedIn) {
+      items.push({
+        text: 'My Reports',
+        icon: '📁',
+        path: '/my-reports',
+      });
+    }
+
+    // Always show these items
+    items.push(
+      {
+        text: 'Sample Report',
+        icon: '🎲',
+        action: handleSampleReport,
+      },
+      {
+        text: 'Latest Report',
+        icon: '📊',
+        path: '/latest-reports',
+      },
+      {
+        text: 'Leaderboards',
+        icon: '🏆',
+        path: '/leaderboards',
+      },
+    );
+
+    return items;
+  }, [isLoggedIn, handleSampleReport]);
 
   const accountItems = React.useMemo(() => {
     const items: Array<{
@@ -975,7 +1011,7 @@ export const HeaderBar: React.FC = () => {
                 </Tooltip>
               ) : (
                 <Tooltip title="Log in" arrow placement="bottom">
-                  <AuthIconButton onClick={handleLogin}>
+                  <AuthIconButton onClick={handleLogin} aria-label="Log in">
                     <Login />
                   </AuthIconButton>
                 </Tooltip>

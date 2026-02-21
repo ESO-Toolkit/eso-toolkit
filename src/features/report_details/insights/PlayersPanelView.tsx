@@ -57,7 +57,7 @@ type SortOption =
   | 'hp-low'
   | 'magicka-high'
   | 'magicka-low';
-type RoleFilter = 'all' | 'dps' | 'tank' | 'healer';
+type RoleFilter = 'all' | 'dps' | 'tank' | 'healer' | 'supports';
 
 export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
   ({
@@ -161,7 +161,13 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
 
       // Apply role filter
       if (roleFilter !== 'all') {
-        filtered = filtered.filter((playerData) => playerData.player.role === roleFilter);
+        if (roleFilter === 'supports') {
+          // Filter for non-DPS (tanks and healers)
+          filtered = filtered.filter((playerData) => playerData.player.role !== 'dps');
+        } else {
+          // Filter for specific role
+          filtered = filtered.filter((playerData) => playerData.player.role === roleFilter);
+        }
       }
 
       // Apply sorting
@@ -373,6 +379,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
               <MenuItem value="dps">DPS</MenuItem>
               <MenuItem value="tank">Tank</MenuItem>
               <MenuItem value="healer">Healer</MenuItem>
+              <MenuItem value="supports">Supports (Tanks & Healers)</MenuItem>
             </Select>
           </FormControl>
         </Stack>
@@ -391,7 +398,9 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           )}
           {roleFilter !== 'all' && (
             <Chip
-              label={`Role: ${roleFilter.toUpperCase()}`}
+              label={`Role: ${
+                roleFilter === 'supports' ? 'Supports (Tanks & Healers)' : roleFilter.toUpperCase()
+              }`}
               size="small"
               onDelete={() => setRoleFilter('all')}
             />

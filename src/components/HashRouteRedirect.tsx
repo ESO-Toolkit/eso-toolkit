@@ -1,6 +1,38 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { safeHistoryReplaceState } from '@/utils/safeHistory';
+import { safeSessionStorageGet, safeSessionStorageRemove } from '@/utils/safeStorage';
+
+/**
+ * Validates that a redirect path is safe to use with React Router's history API.
+ * Ensures the path is a relative path (starts with /) and doesn't contain
+ * protocol schemes that could cause SecurityError.
+ */
+function isValidRedirectPath(path: string): boolean {
+  // Must start with exactly one forward slash
+  if (!path.startsWith('/')) {
+    return false;
+  }
+
+  // Must not start with // (protocol-relative URL)
+  if (path.startsWith('//')) {
+    return false;
+  }
+
+  // Must not contain protocol schemes
+  if (path.includes('://')) {
+    return false;
+  }
+
+  // Must not be empty after the leading slash
+  if (path.length <= 1) {
+    return false;
+  }
+
+  return true;
+}
+
 /**
  * HashRouteRedirect component handles the migration from hash-based routing to browser routing.
  *
@@ -18,10 +50,15 @@ export const HashRouteRedirect: React.FC = () => {
 
   useEffect(() => {
     // Check if there's a redirect path from 404.html
-    const redirectPath = sessionStorage.getItem('redirectPath');
+    const redirectPath = safeSessionStorageGet('redirectPath');
     if (redirectPath) {
-      sessionStorage.removeItem('redirectPath');
-      navigate(redirectPath, { replace: true });
+      safeSessionStorageRemove('redirectPath');
+
+      // Validate the redirect path before navigation
+      if (isValidRedirectPath(redirectPath)) {
+        navigate(redirectPath, { replace: true });
+      }
+      // If invalid, silently ignore and let the app stay on the home page
       return;
     }
 
@@ -29,10 +66,36 @@ export const HashRouteRedirect: React.FC = () => {
     const params = new URLSearchParams(window.location.search);
     const redirectParam = params.get('redirect');
     if (redirectParam) {
-      // Clean up the URL parameter
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, '', cleanUrl);
-      navigate(redirectParam, { replace: true });
+      // Normalize the redirect path to prevent protocol-relative URLs
+      // Remove leading slashes beyond the first one (e.g., //path -> /path)
+      const normalizedPath = redirectParam.replace(/^\/+/, '/');
+
+      // Validate that the normalized path starts with / to ensure it's a relative path
+      if (!normalizedPath.startsWith('/')) {
+        // Invalid redirect path - ignore it to prevent navigation errors
+        // eslint-disable-next-line no-console
+        console.warn('Invalid redirect path detected:', redirectParam);
+        return;
+      }
+
+      // Additional validation to prevent malformed URLs
+      if (!isValidRedirectPath(normalizedPath)) {
+        // Malformed path - silently ignore to prevent SecurityError
+        return;
+      }
+
+      // Clean up the URL to remove the redirect parameter before navigation
+      // This prevents SecurityError when React Router tries to use history.replaceState
+      // with a malformed URL still in the address bar
+      const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+      const cleanupSucceeded = safeHistoryReplaceState({}, '', cleanUrl);
+
+      // Only navigate if we successfully cleaned up the URL
+      // If cleanup failed (e.g., SecurityError in restricted context),
+      // don't attempt navigation to prevent cascading errors
+      if (cleanupSucceeded) {
+        navigate(normalizedPath, { replace: true });
+      }
       return;
     }
 
@@ -41,8 +104,8 @@ export const HashRouteRedirect: React.FC = () => {
     if (hash && hash.startsWith('#/')) {
       // Extract the path after #/
       const hashPath = hash.substring(1); // Remove the # to get /path
-      // Remove the hash from URL and navigate to the clean path
-      window.history.replaceState({}, '', window.location.pathname);
+      // Remove the hash from URL and navigate to the clean path (safe history operation)
+      safeHistoryReplaceState({}, '', window.location.pathname);
       navigate(hashPath, { replace: true });
     }
   }, [navigate]);

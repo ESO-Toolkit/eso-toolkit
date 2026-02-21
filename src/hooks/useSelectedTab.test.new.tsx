@@ -38,7 +38,9 @@ const createMockStore = (
       showExperimentalTabs: false,
       selectedTargetIds: [],
       selectedPlayerId: null,
+      selectedFriendlyPlayerId: null,
       selectedTabId: null,
+      myReportsPage: 1,
       ...(initialState.ui || {}),
     },
   });

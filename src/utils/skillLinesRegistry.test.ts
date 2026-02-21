@@ -3,58 +3,130 @@ import {
   ALL_SKILL_LINES,
   findSkillByName,
   getClassKey,
-  type SkillNode,
-  type SkillSearchResult,
 } from './skillLinesRegistry';
-import { type SkillsetData, type SkillLine } from '../data/skillsets/Skillset';
+import type { SkillLineData } from '../data/types/skill-line-types';
 
-// Mock the imported skill line data modules
-jest.mock('../data/skill-lines/Alliance/assault', () => ({
-  assaultData: {
-    class: 'Alliance War',
-    skillLines: {
-      assault: {
-        name: 'Assault',
-        ultimates: [
-          {
-            name: 'War Horn',
-            description: 'Sound a war horn',
-            cost: '250',
-            morphs: [
-              { name: 'Aggressive Horn', description: 'Morph 1' },
-              { name: 'Sturdy Horn', description: 'Morph 2' },
-            ],
-          },
-        ],
-        actives: [
-          {
-            name: 'Rapid Maneuver',
-            description: 'Increase movement speed',
-            cost: '100',
-          },
-        ],
-        passives: [
-          {
-            name: 'Continuous Attack',
-            description: 'Passive ability',
-          },
-        ],
+jest.mock('../data/skill-lines/class', () => ({
+  ardentFlame: {
+    id: 'class.ardent-flame',
+    name: 'Ardent Flame',
+    class: 'Dragonknight',
+    category: 'class',
+    icon: 'icon-ardent-flame',
+    skills: [
+      {
+        id: 1,
+        name: 'Dragonknight Standard',
+        type: 'ultimate',
+        description: 'Ultimate ability',
       },
-    },
+      {
+        id: 2,
+        name: 'Lava Whip',
+        type: 'active',
+        description: 'Active ability',
+      },
+      {
+        id: 3,
+        name: 'Combustion',
+        type: 'passive',
+        description: 'Passive ability',
+      },
+    ],
+  },
+  heraldOfTheTome: {
+    id: 'class.herald-of-the-tome',
+    name: 'Herald of the Tome',
+    class: 'Arcanist',
+    category: 'class',
+    icon: 'icon-herald',
+    skills: [
+      {
+        id: 10,
+        name: 'The Imperfect Ring',
+        type: 'ultimate',
+        description: 'Arcanist ultimate',
+      },
+      {
+        id: 11,
+        name: 'Runic Jolt',
+        type: 'active',
+        description: 'Arcanist active ability',
+      },
+    ],
   },
 }));
 
-jest.mock('../data/skill-lines/Alliance/support', () => ({
-  supportData: {
+// Mock the imported skill line data modules
+jest.mock('../data/skill-lines/alliance-war/assault', () => ({
+  assault: {
+    id: 'alliance.assault',
+    name: 'Assault',
     class: 'Alliance War',
-    skillLines: {
-      support: {
-        name: 'Support',
-        ultimates: [],
-        actives: [],
-        passives: [],
+    category: 'alliance',
+    icon: 'assault-icon',
+    skills: [
+      {
+        id: 1000,
+        name: 'War Horn',
+        type: 'ultimate',
+        description: 'Sound a war horn',
+        baseAbilityId: 1000,
       },
-    },
+      {
+        id: 1001,
+        name: 'Aggressive Horn',
+        type: 'ultimate',
+        description: 'Morph 1',
+        baseAbilityId: 1000,
+      },
+      {
+        id: 1002,
+        name: 'Sturdy Horn',
+        type: 'ultimate',
+        description: 'Morph 2',
+        baseAbilityId: 1000,
+      },
+      {
+        id: 1010,
+        name: 'Rapid Maneuver',
+        type: 'active',
+        description: 'Increase movement speed',
+      },
+      {
+        id: 1020,
+        name: 'Continuous Attack',
+        type: 'passive',
+        description: 'Passive ability',
+        isPassive: true,
+      },
+    ],
+  },
+}));
+
+jest.mock('../data/skill-lines/alliance-war/support', () => ({
+  support: {
+    id: 'alliance.support',
+    name: 'Support',
+    class: 'Alliance War',
+    category: 'alliance',
+    icon: 'support-icon',
+    skills: [
+      {
+        id: 1100,
+        name: 'Support Aura',
+        type: 'active',
+        description: 'Provide group buffs',
+        baseAbilityId: 1100,
+      },
+      {
+        id: 1101,
+        name: 'Empowered Support Aura',
+        type: 'active',
+        description: 'Morph ability',
+        baseAbilityId: 1100,
+      },
+    ],
   },
 }));
 
@@ -114,74 +186,141 @@ jest.mock('../data/skill-lines/class/dragonknight', () => ({
   },
 }));
 
-jest.mock('../data/skill-lines/weapons/bow', () => ({
-  bowData: {
-    weapon: 'Bow',
-    skillLines: {
-      bow: {
-        name: 'Bow',
-        ultimates: [
-          {
-            name: 'Ballista',
-            description: 'Bow ultimate',
-            cost: '200',
-          },
-        ],
-        actives: [
-          {
-            name: 'Snipe',
-            description: 'Bow ability',
-            cost: '75',
-          },
-        ],
-        passives: [],
+jest.mock('../data/skill-lines/weapon/bow', () => ({
+  bowSkillLine: {
+    id: 'weapon.bow',
+    name: 'Bow',
+    class: 'Weapon',
+    category: 'weapon',
+    icon: 'bow-icon',
+    skills: [
+      {
+        id: 2000,
+        name: 'Ballista',
+        type: 'ultimate',
+        description: 'Bow ultimate',
+        baseAbilityId: 2000,
       },
-    },
+      {
+        id: 2001,
+        name: 'Snipe',
+        type: 'active',
+        description: 'Bow ability',
+      },
+    ],
   },
 }));
 
 // Mock all other skill line imports with minimal data
-jest.mock('../data/skill-lines/class/necromancer', () => ({
-  necromancerData: { class: 'Necromancer', skillLines: {} },
-}));
-jest.mock('../data/skill-lines/class/nightblade', () => ({
-  nightbladeData: { class: 'Nightblade', skillLines: {} },
-}));
-jest.mock('../data/skill-lines/class/sorcerer', () => ({
-  sorcererData: { class: 'Sorcerer', skillLines: {} },
-}));
-jest.mock('../data/skill-lines/class/templar', () => ({
-  templarData: { class: 'Templar', skillLines: {} },
-}));
-jest.mock('../data/skill-lines/class/warden', () => ({
-  wardenData: { class: 'Warden', skillLines: {} },
-}));
 jest.mock('../data/skill-lines/guild/darkBrotherhood', () => ({
-  darkBrotherhoodData: { skillLines: {} },
+  darkBrotherhood: {
+    id: 'guild.darkBrotherhood',
+    name: 'Dark Brotherhood',
+    class: 'Guild',
+    category: 'guild',
+    icon: 'dark-brotherhood-icon',
+    skills: [],
+  },
 }));
 jest.mock('../data/skill-lines/guild/fightersGuild', () => ({
-  fightersGuildData: { skillLines: {} },
+  fightersGuild: {
+    id: 'guild.fighters',
+    name: 'Fighters Guild',
+    class: 'Guild',
+    category: 'guild',
+    icon: 'fighters-icon',
+    skills: [],
+  },
 }));
-jest.mock('../data/skill-lines/guild/magesGuild', () => ({ magesGuildData: { skillLines: {} } }));
-jest.mock('../data/skill-lines/guild/psijicOrder', () => ({ psijicOrderData: { skillLines: {} } }));
+jest.mock('../data/skill-lines/guild/magesGuild', () => ({
+  magesGuild: {
+    id: 'guild.mages',
+    name: 'Mages Guild',
+    class: 'Guild',
+    category: 'guild',
+    icon: 'mages-icon',
+    skills: [],
+  },
+}));
+jest.mock('../data/skill-lines/guild/psijicOrder', () => ({
+  psijicOrder: {
+    id: 'guild.psijic',
+    name: 'Psijic Order',
+    class: 'Guild',
+    category: 'guild',
+    icon: 'psijic-icon',
+    skills: [],
+  },
+}));
 jest.mock('../data/skill-lines/guild/thievesGuild', () => ({
-  thievesGuildData: { skillLines: {} },
+  thievesGuild: {
+    id: 'guild.thieves',
+    name: 'Thieves Guild',
+    class: 'Guild',
+    category: 'guild',
+    icon: 'thieves-icon',
+    skills: [],
+  },
 }));
-jest.mock('../data/skill-lines/guild/undaunted', () => ({ undauntedData: { skillLines: {} } }));
-jest.mock('../data/skill-lines/weapons/destructionStaff', () => ({
-  destructionStaffData: { weapon: 'Destruction Staff', skillLines: {} },
+jest.mock('../data/skill-lines/guild/undaunted', () => ({
+  undaunted: {
+    id: 'guild.undaunted',
+    name: 'Undaunted',
+    class: 'Guild',
+    category: 'guild',
+    icon: 'undaunted-icon',
+    skills: [],
+  },
 }));
-jest.mock('../data/skill-lines/weapons/dualWield', () => ({
-  dualWieldData: { weapon: 'Dual Wield', skillLines: {} },
+jest.mock('../data/skill-lines/weapon/destructionStaff', () => ({
+  destructionStaffSkillLine: {
+    id: 'weapon.destructionStaff',
+    name: 'Destruction Staff',
+    class: 'Weapon',
+    category: 'weapon',
+    icon: 'destruction-icon',
+    skills: [],
+  },
 }));
-jest.mock('../data/skill-lines/weapons/oneHand', () => ({
-  oneHandAndShieldData: { weapon: 'One Hand and Shield', skillLines: {} },
+jest.mock('../data/skill-lines/weapon/dualWield', () => ({
+  dualWieldSkillLine: {
+    id: 'weapon.dualWield',
+    name: 'Dual Wield',
+    class: 'Weapon',
+    category: 'weapon',
+    icon: 'dual-wield-icon',
+    skills: [],
+  },
 }));
-jest.mock('../data/skill-lines/weapons/restoration', () => ({
-  restorationStaffData: { weapon: 'Restoration Staff', skillLines: {} },
+jest.mock('../data/skill-lines/weapon/oneHandAndShield', () => ({
+  oneHandAndShieldSkillLine: {
+    id: 'weapon.oneHandAndShield',
+    name: 'One Hand and Shield',
+    class: 'Weapon',
+    category: 'weapon',
+    icon: 'one-hand-icon',
+    skills: [],
+  },
 }));
-jest.mock('../data/skill-lines/weapons/twoHanded', () => ({
-  twoHandedData: { weapon: 'Two Handed', skillLines: {} },
+jest.mock('../data/skill-lines/weapon/restorationStaff', () => ({
+  restorationStaff: {
+    id: 'weapon.restorationStaff',
+    name: 'Restoration Staff',
+    class: 'Weapon',
+    category: 'weapon',
+    icon: 'restoration-icon',
+    skills: [],
+  },
+}));
+jest.mock('../data/skill-lines/weapon/twoHanded', () => ({
+  twoHandedSkillLine: {
+    id: 'weapon.twoHanded',
+    name: 'Two Handed',
+    class: 'Weapon',
+    category: 'weapon',
+    icon: 'two-handed-icon',
+    skills: [],
+  },
 }));
 
 describe('skillLinesRegistry', () => {
@@ -196,11 +335,6 @@ describe('skillLinesRegistry', () => {
     it('should contain expected class skill lines', () => {
       expect(SKILL_LINES_REGISTRY.classes).toHaveProperty('arcanist');
       expect(SKILL_LINES_REGISTRY.classes).toHaveProperty('dragonknight');
-      expect(SKILL_LINES_REGISTRY.classes).toHaveProperty('necromancer');
-      expect(SKILL_LINES_REGISTRY.classes).toHaveProperty('nightblade');
-      expect(SKILL_LINES_REGISTRY.classes).toHaveProperty('sorcerer');
-      expect(SKILL_LINES_REGISTRY.classes).toHaveProperty('templar');
-      expect(SKILL_LINES_REGISTRY.classes).toHaveProperty('warden');
     });
 
     it('should contain expected weapon skill lines', () => {
@@ -234,9 +368,9 @@ describe('skillLinesRegistry', () => {
     });
 
     it('should contain skill line data from all categories', () => {
-      const hasClasses = ALL_SKILL_LINES.some((sl) => sl.class === 'Arcanist');
-      const hasWeapons = ALL_SKILL_LINES.some((sl) => sl.weapon === 'Bow');
-      const hasAlliance = ALL_SKILL_LINES.some((sl) => sl.class === 'Alliance War');
+      const hasClasses = ALL_SKILL_LINES.some((sl) => sl.class?.toLowerCase() === 'arcanist');
+      const hasWeapons = ALL_SKILL_LINES.some((sl) => sl.category === 'weapon');
+      const hasAlliance = ALL_SKILL_LINES.some((sl) => sl.category === 'alliance');
 
       expect(hasClasses).toBe(true);
       expect(hasWeapons).toBe(true);
@@ -276,13 +410,13 @@ describe('skillLinesRegistry', () => {
       expect(allianceAbility?.category).toBe('alliance');
     });
 
-    it('should find abilities using activeAbilities collection', () => {
-      const result = findSkillByName('Runic Jolt');
+    it('should find abilities defined as actives', () => {
+      const result = findSkillByName('Support Aura');
 
       expect(result).toBeDefined();
-      expect(result?.node.name).toBe('Runic Jolt');
-      expect(result?.abilityType).toBe('activeAbilities');
-      expect(result?.category).toBe('classes');
+      expect(result?.node.name).toBe('Support Aura');
+      expect(result?.abilityType).toBe('actives');
+      expect(result?.category).toBe('alliance');
     });
 
     it('should find morphs and include parent reference', () => {
@@ -295,12 +429,12 @@ describe('skillLinesRegistry', () => {
     });
 
     it('should find morphs with object structure', () => {
-      const morphResult = findSkillByName('Runic Sunder');
+      const morphResult = findSkillByName('Empowered Support Aura');
 
       expect(morphResult).toBeDefined();
-      expect(morphResult?.node.name).toBe('Runic Sunder');
-      expect(morphResult?.parent?.name).toBe('Runic Jolt');
-      expect(morphResult?.category).toBe('classes');
+      expect(morphResult?.node.name).toBe('Empowered Support Aura');
+      expect(morphResult?.parent?.name).toBe('Support Aura');
+      expect(morphResult?.category).toBe('alliance');
     });
 
     it('should handle case-insensitive search', () => {
@@ -347,9 +481,13 @@ describe('skillLinesRegistry', () => {
 
   describe('getClassKey', () => {
     it('should return class key for class data', () => {
-      const classData: SkillsetData = {
+      const classData: SkillLineData = {
+        id: 'class.dk',
+        name: 'Ardent Flame',
         class: 'Dragonknight',
-        skillLines: {},
+        category: 'class',
+        icon: 'icon',
+        skills: [],
       };
 
       const result = getClassKey(classData);
@@ -357,21 +495,38 @@ describe('skillLinesRegistry', () => {
       expect(result).toBe('dragonknight');
     });
 
+    it('should return class key for SkillLineData entries', () => {
+      const skillLineData: SkillLineData = {
+        id: 'class.mock-line',
+        name: 'Mock Line',
+        class: 'Templar',
+        category: 'class',
+        icon: 'icon',
+        skills: [],
+      };
+
+      const result = getClassKey(skillLineData);
+
+      expect(result).toBe('templar');
+    });
+
     it('should return weapon key for weapon data', () => {
-      const weaponData: SkillsetData = {
-        weapon: 'Destruction Staff',
-        skillLines: {},
+      const weaponData: SkillLineData = {
+        id: 'weapon.destro',
+        name: 'Destruction Staff',
+        class: 'Weapon',
+        category: 'weapon',
+        icon: 'icon',
+        skills: [],
       };
 
       const result = getClassKey(weaponData);
 
-      expect(result).toBe('destruction staff');
+      expect(result).toBe('weapon');
     });
 
     it('should return "unknown" for data without class or weapon', () => {
-      const unknownData: SkillsetData = {
-        skillLines: {},
-      };
+      const unknownData = {} as SkillLineData;
 
       const result = getClassKey(unknownData);
 
@@ -385,9 +540,13 @@ describe('skillLinesRegistry', () => {
     });
 
     it('should convert keys to lowercase', () => {
-      const mixedCaseData: SkillsetData = {
+      const mixedCaseData: SkillLineData = {
+        id: 'class.templar',
+        name: 'Aedric Spear',
         class: 'TEMPLAR',
-        skillLines: {},
+        category: 'class',
+        icon: 'icon',
+        skills: [],
       };
 
       const result = getClassKey(mixedCaseData);
@@ -408,6 +567,7 @@ describe('skillLinesRegistry', () => {
         'Lava Whip',
         'Ballista',
         'Snipe',
+        'Support Aura',
       ];
 
       abilityNames.forEach((name) => {
@@ -418,7 +578,7 @@ describe('skillLinesRegistry', () => {
     });
 
     it('should find all morph variations', () => {
-      const morphNames = ['Aggressive Horn', 'Sturdy Horn', 'Runic Sunder', 'Runic Embrace'];
+      const morphNames = ['Aggressive Horn', 'Sturdy Horn', 'Empowered Support Aura'];
 
       morphNames.forEach((name) => {
         const result = findSkillByName(name);
@@ -438,14 +598,12 @@ describe('skillLinesRegistry', () => {
       expect(morph2?.parent?.name).toBe('War Horn');
     });
 
-    it('should handle different ability collection types', () => {
-      // Test arrays (assault data)
-      const arrayResult = findSkillByName('War Horn');
-      expect(arrayResult).toBeDefined();
+    it('should handle multiple abilities within the same skill line', () => {
+      const warHorn = findSkillByName('War Horn');
+      const supportAura = findSkillByName('Support Aura');
 
-      // Test objects (arcanist data)
-      const objectResult = findSkillByName('Runic Jolt');
-      expect(objectResult).toBeDefined();
+      expect(warHorn).toBeDefined();
+      expect(supportAura).toBeDefined();
     });
   });
 
@@ -465,7 +623,7 @@ describe('skillLinesRegistry', () => {
     });
 
     it('should have valid ability type classifications', () => {
-      const validTypes = ['ultimates', 'actives', 'activeAbilities', 'passives'];
+      const validTypes = ['ultimates', 'actives', 'passives'];
       const result = findSkillByName('War Horn');
 
       expect(validTypes).toContain(result?.abilityType);
@@ -478,8 +636,7 @@ describe('skillLinesRegistry', () => {
         expect.objectContaining({
           name: 'War Horn',
           description: 'Sound a war horn',
-          cost: '250',
-          morphs: expect.any(Array),
+          type: 'ultimate',
         }),
       );
     });

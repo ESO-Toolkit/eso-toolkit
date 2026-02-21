@@ -1,14 +1,19 @@
 import React from 'react';
 
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import { CombatantInfoEvent } from '../../types/combatlogEvents';
 
 import { useCombatantInfoEvents } from './useCombatantInfoEvents';
 
-export function useCombatantInfoRecord(): {
+interface UseCombatantInfoRecordOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useCombatantInfoRecord(options?: UseCombatantInfoRecordOptions): {
   combatantInfoRecord: Record<number, CombatantInfoEvent>;
   isCombatantInfoEventsLoading: boolean;
 } {
-  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
+  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents(options);
 
   const combatantInfoRecord = React.useMemo(() => {
     const record: Record<number, CombatantInfoEvent> = {};

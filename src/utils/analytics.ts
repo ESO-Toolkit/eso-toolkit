@@ -20,10 +20,39 @@ type EventPayload = {
 } & Record<string, unknown>;
 
 /**
+ * Check if user has consented to cookies/analytics
+ * This is a lazy import to avoid circular dependencies
+ */
+const hasUserConsented = (): boolean => {
+  try {
+    const consentStr = localStorage.getItem('eso-log-aggregator-cookie-consent');
+    if (!consentStr) return false;
+    const consent = JSON.parse(consentStr);
+    return consent.accepted === true;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Initialize Google Analytics with the measurement ID from environment variables
- * Only initializes if VITE_GA_MEASUREMENT_ID is set
+ * Only initializes if VITE_GA_MEASUREMENT_ID is set, not in test mode, and user has consented
  */
 export const initializeAnalytics = (): void => {
+  // Skip initialization if in Playwright test mode
+  if (
+    typeof window !== 'undefined' &&
+    (window as Window & { __PLAYWRIGHT_TEST_MODE__?: boolean }).__PLAYWRIGHT_TEST_MODE__
+  ) {
+    return;
+  }
+
+  // Skip initialization if user has not consented to cookies
+  if (!hasUserConsented()) {
+    logger.info('Analytics not initialized - user has not consented to cookies');
+    return;
+  }
+
   const measurementId = getEnvVar('VITE_GA_MEASUREMENT_ID');
 
   if (measurementId && typeof measurementId === 'string') {
@@ -64,16 +93,76 @@ export const initializeAnalytics = (): void => {
 };
 
 /**
+ * Normalize path by replacing report codes with [code] placeholder
+ * Also extracts the report code for separate tracking
+ *
+ * Examples:
+ * - /report/abc123/insights -> { path: /report/[code]/insights, reportCode: abc123 }
+ * - /report/xyz789/fight/1/damage -> { path: /report/[code]/fight/[fightId]/damage, reportCode: xyz789, fightId: 1 }
+ */
+function normalizeReportPath(path: string): {
+  normalizedPath: string;
+  reportCode?: string;
+  fightId?: string;
+} {
+  // Match /report/{code}/... pattern
+  const reportMatch = path.match(/^\/report\/([^/]+)(\/.*)?$/);
+
+  if (reportMatch) {
+    const reportCode = reportMatch[1];
+    let remainingPath = reportMatch[2] || '';
+
+    // Also normalize fight IDs: /fight/{id}/...
+    const fightMatch = remainingPath.match(/^\/fight\/(\d+)(\/.*)?$/);
+    if (fightMatch) {
+      const fightId = fightMatch[1];
+      const afterFight = fightMatch[2] || '';
+      return {
+        normalizedPath: `/report/[code]/fight/[fightId]${afterFight}`,
+        reportCode,
+        fightId,
+      };
+    }
+
+    return {
+      normalizedPath: `/report/[code]${remainingPath}`,
+      reportCode,
+    };
+  }
+
+  return { normalizedPath: path };
+}
+
+/**
  * Track a page view
- * @param path - The path to track (e.g., '/report/123')
+ * @param path - The path to track (e.g., '/report/abc123/insights')
  * @param title - Optional page title
  */
 export const trackPageView = (path: string, title?: string): void => {
+  // Skip tracking if in Playwright test mode
+  if (
+    typeof window !== 'undefined' &&
+    (window as Window & { __PLAYWRIGHT_TEST_MODE__?: boolean }).__PLAYWRIGHT_TEST_MODE__
+  ) {
+    return;
+  }
+
+  // Skip tracking if user has not consented
+  if (!hasUserConsented()) {
+    return;
+  }
+
   const measurementId = getEnvVar('VITE_GA_MEASUREMENT_ID');
 
   if (measurementId && typeof measurementId === 'string') {
     try {
       const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+      const {
+        normalizedPath: templatePath,
+        reportCode,
+        fightId,
+      } = normalizeReportPath(normalizedPath);
+
       let locationOverride: string | undefined;
 
       if (typeof window !== 'undefined') {
@@ -82,10 +171,10 @@ export const trackPageView = (path: string, title?: string): void => {
         const baseUrl = `${origin}${basePath}`;
 
         try {
-          const virtualPath = normalizedPath.replace(/^\//, '');
+          const virtualPath = templatePath.replace(/^\//, '');
           locationOverride = new URL(virtualPath, baseUrl).toString();
         } catch {
-          locationOverride = `${baseUrl}${normalizedPath.replace(/^\//, '')}`;
+          locationOverride = `${baseUrl}${templatePath.replace(/^\//, '')}`;
         }
       }
 
@@ -94,14 +183,24 @@ export const trackPageView = (path: string, title?: string): void => {
         page: string;
         title?: string;
         location?: string;
+        report_code?: string;
+        fight_id?: string;
       } = {
         hitType: 'pageview',
-        page: normalizedPath,
+        page: templatePath, // Use normalized path with [code] placeholder
         title,
       };
 
       if (locationOverride) {
         payload.location = locationOverride;
+      }
+
+      // Add report code and fight ID as custom dimensions
+      if (reportCode) {
+        payload.report_code = reportCode;
+      }
+      if (fightId) {
+        payload.fight_id = fightId;
       }
 
       ReactGA.send(payload);
@@ -125,6 +224,19 @@ export const trackEvent = (
   value?: number,
   params?: Record<string, unknown>,
 ): void => {
+  // Skip tracking if in Playwright test mode
+  if (
+    typeof window !== 'undefined' &&
+    (window as Window & { __PLAYWRIGHT_TEST_MODE__?: boolean }).__PLAYWRIGHT_TEST_MODE__
+  ) {
+    return;
+  }
+
+  // Skip tracking if user has not consented
+  if (!hasUserConsented()) {
+    return;
+  }
+
   const measurementId = getEnvVar('VITE_GA_MEASUREMENT_ID');
 
   if (measurementId && typeof measurementId === 'string') {
@@ -163,6 +275,19 @@ export const trackEvent = (
  * @param params - Additional GA4 parameters to attach to the event
  */
 export const trackConversion = (name: string, params?: Record<string, unknown>): void => {
+  // Skip tracking if in Playwright test mode
+  if (
+    typeof window !== 'undefined' &&
+    (window as Window & { __PLAYWRIGHT_TEST_MODE__?: boolean }).__PLAYWRIGHT_TEST_MODE__
+  ) {
+    return;
+  }
+
+  // Skip tracking if user has not consented
+  if (!hasUserConsented()) {
+    return;
+  }
+
   const measurementId = getEnvVar('VITE_GA_MEASUREMENT_ID');
 
   if (measurementId && typeof measurementId === 'string') {
@@ -178,6 +303,19 @@ export const trackConversion = (name: string, params?: Record<string, unknown>):
  * Set the GA4 user_id field for authenticated sessions
  */
 export const setAnalyticsUserId = (userId: string | null): void => {
+  // Skip tracking if in Playwright test mode
+  if (
+    typeof window !== 'undefined' &&
+    (window as Window & { __PLAYWRIGHT_TEST_MODE__?: boolean }).__PLAYWRIGHT_TEST_MODE__
+  ) {
+    return;
+  }
+
+  // Skip tracking if user has not consented
+  if (!hasUserConsented()) {
+    return;
+  }
+
   const measurementId = getEnvVar('VITE_GA_MEASUREMENT_ID');
 
   if (measurementId && typeof measurementId === 'string') {
@@ -199,6 +337,19 @@ export const setAnalyticsUserId = (userId: string | null): void => {
 export const setUserProperties = (
   properties: Record<string, string | number | boolean | undefined | null>,
 ): void => {
+  // Skip tracking if in Playwright test mode
+  if (
+    typeof window !== 'undefined' &&
+    (window as Window & { __PLAYWRIGHT_TEST_MODE__?: boolean }).__PLAYWRIGHT_TEST_MODE__
+  ) {
+    return;
+  }
+
+  // Skip tracking if user has not consented
+  if (!hasUserConsented()) {
+    return;
+  }
+
   const measurementId = getEnvVar('VITE_GA_MEASUREMENT_ID');
 
   if (measurementId && typeof measurementId === 'string') {

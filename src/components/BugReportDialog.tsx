@@ -1512,6 +1512,7 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
             <Fab
               size="small"
               onClick={handleFeedbackClick}
+              aria-label="General feedback"
               sx={{
                 // Blue gradient for feedback button
                 background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
@@ -1548,6 +1549,7 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
             <Fab
               size="small"
               onClick={handleLoggerDebugClick}
+              aria-label="Logger debug"
               sx={{
                 // Green gradient for logger debug button
                 background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
@@ -1584,6 +1586,7 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
             <Fab
               size="small"
               onClick={handleBugReportClick}
+              aria-label="Report a bug"
               sx={{
                 // Red gradient for bug report button
                 background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
@@ -1623,6 +1626,7 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
         <Zoom in={!dialogOpen && !loggerPanelOpen}>
           <Fab
             onClick={toggleExpanded}
+            aria-label={isExpanded ? 'Close feedback menu' : 'Open feedback menu'}
             sx={{
               width: { xs: 56, sm: 64 },
               height: { xs: 56, sm: 64 },

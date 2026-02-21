@@ -149,33 +149,37 @@ export function createAuthTestUtils(page: Page): AuthTestUtils {
      * Verify that authentication is required (login prompt is shown)
      */
     async verifyAuthenticationRequired(): Promise<void> {
-      // Check for login button or authentication prompt
+      // Check for login button or authentication prompt (case-insensitive)
       const hasLoginButton = await page
-        .locator('button:has-text(Login)')
+        .locator('button')
+        .filter({ hasText: /login/i })
         .isVisible()
         .catch(() => false);
       const hasLoginLink = await page
-        .locator('a:has-text(Login)')
+        .locator('a')
+        .filter({ hasText: /login/i })
         .isVisible()
         .catch(() => false);
       const hasConnectButton = await page
-        .locator('button:has-text(Connect to ESO Logs)')
+        .locator('button')
+        .filter({ hasText: /connect.*eso.*logs/i })
         .isVisible()
         .catch(() => false);
       const hasConnectLink = await page
-        .locator('a:has-text(Connect to ESO Logs)')
+        .locator('a')
+        .filter({ hasText: /connect.*eso.*logs/i })
         .isVisible()
         .catch(() => false);
 
       const hasAuthElements = hasLoginButton || hasLoginLink || hasConnectButton || hasConnectLink;
 
-      // Also check for text patterns
+      // Also check for text patterns (case-insensitive)
       const hasLoginText = await page
         .getByText(/log.*in/i)
         .isVisible()
         .catch(() => false);
       const hasConnectText = await page
-        .getByText(/connect.*account/i)
+        .getByText(/connect.*(account|eso.*logs)/i)
         .isVisible()
         .catch(() => false);
       const hasAuthText = await page

@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
@@ -10,43 +10,63 @@ import {
 } from '../../graphql/gql/graphql';
 import { BeginCastEvent, CastEvent, UnifiedCastEvent } from '../../types/combatlogEvents';
 import { Logger, LogLevel } from '../../utils/logger';
-import { RootState } from '../storeWithHistory';
+import {
+  KeyedCacheState,
+  removeFromCache,
+  resolveCacheKey,
+  resetCacheState,
+  touchAccessOrder,
+  trimCache,
+} from '../utils/keyedCacheState';
 
-import { EVENT_PAGE_LIMIT } from './constants';
+import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'CastEvents' });
 
-export interface CastEventsState {
+type CastEventsRequest = ReturnType<typeof createCurrentRequest> | null;
+
+export interface CastEventsEntry {
   events: UnifiedCastEvent[];
-  loading: boolean;
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
-  // Cache metadata for better cache management
   cacheMetadata: {
-    lastFetchedReportId: string | null;
-    lastFetchedFightId: number | null;
     lastFetchedTimestamp: number | null;
-    lastRestrictToFightWindow: boolean | null;
+    restrictToFightWindow: boolean | null;
   };
-  currentRequest: {
-    reportId: string;
-    fightId: number;
-    requestId: string;
-    restrictToFightWindow: boolean;
-  } | null;
+  currentRequest: CastEventsRequest;
 }
 
-const initialState: CastEventsState = {
+export type CastEventsState = KeyedCacheState<CastEventsEntry>;
+
+// Local interface to avoid circular dependency with RootState
+interface LocalRootState {
+  events: {
+    casts: CastEventsState;
+  };
+}
+
+const createEmptyEntry = (): CastEventsEntry => ({
   events: [],
-  loading: false,
+  status: 'idle',
   error: null,
   cacheMetadata: {
-    lastFetchedReportId: null,
-    lastFetchedFightId: null,
     lastFetchedTimestamp: null,
-    lastRestrictToFightWindow: null,
+    restrictToFightWindow: null,
   },
   currentRequest: null,
+});
+
+const ensureEntry = (state: CastEventsState, key: string): CastEventsEntry => {
+  if (!state.entries[key]) {
+    state.entries[key] = createEmptyEntry();
+  }
+  return state.entries[key];
+};
+
+const initialState: CastEventsState = {
+  entries: {},
+  accessOrder: [],
 };
 
 export const fetchCastEvents = createAsyncThunk<
@@ -62,7 +82,7 @@ export const fetchCastEvents = createAsyncThunk<
      */
     restrictToFightWindow?: boolean;
   },
-  { state: RootState; rejectValue: string }
+  { state: LocalRootState; rejectValue: string }
 >(
   'castEvents/fetchCastEvents',
   async ({ reportCode, fight, client, restrictToFightWindow = true }) => {
@@ -132,42 +152,38 @@ export const fetchCastEvents = createAsyncThunk<
   {
     condition: ({ reportCode, fight, restrictToFightWindow = true }, { getState }) => {
       const state = getState().events.casts;
-      const requestedReportId = reportCode;
-      const requestedFightId = Number(fight.id);
+      const { key } = resolveCacheKey({ reportCode, fightId: Number(fight.id) });
+      const entry = state.entries[key];
 
-      const cachedRestrict = state.cacheMetadata.lastRestrictToFightWindow ?? true;
+      const cachedRestrict = entry?.cacheMetadata.restrictToFightWindow ?? true;
       const restrictMatches = cachedRestrict === restrictToFightWindow;
 
-      // Check if cast events are already cached for this fight
-      const isCached =
-        state.cacheMetadata.lastFetchedReportId === requestedReportId &&
-        state.cacheMetadata.lastFetchedFightId === requestedFightId;
+      const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
+      const isCached = Boolean(entry?.events.length);
       const isFresh =
-        state.cacheMetadata.lastFetchedTimestamp &&
-        Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
+        typeof lastFetchedTimestamp === 'number' &&
+        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
       if (isCached && isFresh && restrictMatches) {
         logger.info('Using cached cast events', {
-          reportCode: requestedReportId,
-          fightId: requestedFightId,
-          cacheAge: state.cacheMetadata.lastFetchedTimestamp
-            ? Date.now() - state.cacheMetadata.lastFetchedTimestamp
-            : 0,
+          reportCode,
+          fightId: Number(fight.id),
+          cacheAge: lastFetchedTimestamp ? Date.now() - lastFetchedTimestamp : 0,
           restrictToFightWindow,
         });
         return false; // Prevent thunk execution
       }
 
-      const inFlight = state.currentRequest;
+      const inFlight = entry?.currentRequest;
       if (
         inFlight &&
-        inFlight.reportId === requestedReportId &&
-        inFlight.fightId === requestedFightId &&
+        inFlight.reportId === reportCode &&
+        inFlight.fightId === Number(fight.id) &&
         inFlight.restrictToFightWindow === restrictToFightWindow
       ) {
         logger.info('Cast events fetch already in progress for requested fight, skipping', {
-          reportCode: requestedReportId,
-          fightId: requestedFightId,
+          reportCode,
+          fightId: Number(fight.id),
           restrictToFightWindow,
         });
         return false; // Prevent duplicate execution for same fight
@@ -183,34 +199,61 @@ const castEventsSlice = createSlice({
   initialState,
   reducers: {
     clearCastEvents(state) {
-      state.events = [];
-      state.loading = false;
-      state.error = null;
-      state.cacheMetadata = {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-        lastRestrictToFightWindow: null,
-      };
-      state.currentRequest = null;
+      resetCacheState(state);
+    },
+    resetCastEventsLoading(state) {
+      Object.values(state.entries).forEach((entry) => {
+        if (entry.status === 'loading') {
+          entry.status = 'idle';
+        }
+        entry.error = null;
+        entry.currentRequest = null;
+      });
+    },
+    clearCastEventsForContext(
+      state,
+      action: PayloadAction<{ reportCode?: string | null; fightId?: number | string | null }>,
+    ) {
+      const { context, key } = resolveCacheKey(action.payload);
+      if (!context.reportCode) {
+        resetCacheState(state);
+        return;
+      }
+      removeFromCache(state, key);
+    },
+    trimCastEventsCache(state, action: PayloadAction<{ maxEntries?: number } | undefined>) {
+      const limit = action?.payload?.maxEntries ?? EVENT_CACHE_MAX_ENTRIES;
+      trimCache(state, limit);
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchCastEvents.pending, (state, action) => {
-        state.loading = true;
-        state.error = null;
-        state.currentRequest = createCurrentRequest(
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
+        entry.status = 'loading';
+        entry.error = null;
+        entry.currentRequest = createCurrentRequest(
           action.meta.arg.reportCode,
           Number(action.meta.arg.fight.id),
           action.meta.requestId,
           action.meta.arg.restrictToFightWindow ?? true,
         );
+        entry.cacheMetadata.restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
+        touchAccessOrder(state, key);
       })
       .addCase(fetchCastEvents.fulfilled, (state, action) => {
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
         if (
           isStaleResponse(
-            state.currentRequest,
+            entry.currentRequest,
             action.meta.requestId,
             action.meta.arg.reportCode,
             Number(action.meta.arg.fight.id),
@@ -222,22 +265,24 @@ const castEventsSlice = createSlice({
           });
           return;
         }
-        state.events = action.payload;
-        state.loading = false;
-        state.error = null;
-        // Update cache metadata
-        state.cacheMetadata = {
-          lastFetchedReportId: action.meta.arg.reportCode,
-          lastFetchedFightId: Number(action.meta.arg.fight.id),
-          lastFetchedTimestamp: Date.now(),
-          lastRestrictToFightWindow: action.meta.arg.restrictToFightWindow ?? true,
-        };
-        state.currentRequest = null;
+        entry.events = action.payload;
+        entry.status = 'succeeded';
+        entry.error = null;
+        entry.cacheMetadata.lastFetchedTimestamp = Date.now();
+        entry.cacheMetadata.restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
+        entry.currentRequest = null;
+        touchAccessOrder(state, key);
+        trimCache(state, EVENT_CACHE_MAX_ENTRIES);
       })
       .addCase(fetchCastEvents.rejected, (state, action) => {
+        const { key } = resolveCacheKey({
+          reportCode: action.meta.arg.reportCode,
+          fightId: Number(action.meta.arg.fight.id),
+        });
+        const entry = ensureEntry(state, key);
         if (
           isStaleResponse(
-            state.currentRequest,
+            entry.currentRequest,
             action.meta.requestId,
             action.meta.arg.reportCode,
             Number(action.meta.arg.fight.id),
@@ -249,12 +294,18 @@ const castEventsSlice = createSlice({
           });
           return;
         }
-        state.loading = false;
-        state.error = action.error.message || 'Failed to fetch cast events';
-        state.currentRequest = null;
+        entry.status = 'failed';
+        entry.error = action.error.message || 'Failed to fetch cast events';
+        entry.currentRequest = null;
+        touchAccessOrder(state, key);
       });
   },
 });
 
-export const { clearCastEvents } = castEventsSlice.actions;
+export const {
+  clearCastEvents,
+  resetCastEventsLoading,
+  clearCastEventsForContext,
+  trimCastEventsCache,
+} = castEventsSlice.actions;
 export default castEventsSlice.reducer;

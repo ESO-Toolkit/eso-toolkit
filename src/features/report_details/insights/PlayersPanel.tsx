@@ -19,20 +19,21 @@ import type { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import {
   useCastEvents,
   useCombatantInfoEvents,
-  useCurrentFight,
   useDamageEvents,
   useDeathEvents,
+  useFightForContext,
   useFriendlyBuffEvents,
   useHostileBuffEvents,
   useHealingEvents,
   usePlayerData,
   useReportMasterData,
+  useResolvedReportFightContext,
   useResourceEvents,
 } from '../../../hooks';
 import { useDebuffEvents } from '../../../hooks/events/useDebuffEvents';
 import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
 import { usePlayerTravelDistanceTask } from '../../../hooks/workerTasks/usePlayerTravelDistanceTask';
-import { useSelectedReportAndFight } from '../../../ReportFightContext';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
 import {
   KnownAbilities,
   MundusStones,
@@ -87,11 +88,19 @@ import { PlayersPanelView } from './PlayersPanelView';
 
 // This panel now uses report actors from masterData
 
-export const PlayersPanel: React.FC = () => {
+interface PlayersPanelProps {
+  context?: ReportFightContextInput;
+}
+
+export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOverride }) => {
   const logger = useLogger('PlayersPanel');
   const dispatch = useAppDispatch();
   const scribingTaskState = useSelector(selectScribingDetectionsTask);
   const scribingResult = useSelector(selectScribingDetectionsResult);
+  const resolvedContext = useResolvedReportFightContext(contextOverride);
+  const fight = useFightForContext(resolvedContext);
+  const reportId = resolvedContext.reportCode;
+  const fightId = resolvedContext.fightId !== null ? String(resolvedContext.fightId) : null;
 
   // State for storing scribing recipe information
   const [scribingRecipes, setScribingRecipes] = React.useState<
@@ -112,30 +121,29 @@ export const PlayersPanel: React.FC = () => {
     >
   >({});
 
-  // Get report/fight context for CPM and deeplink
-  const { reportId, fightId } = useSelectedReportAndFight();
-
   // Use hooks to get data
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
-  const { castEvents, isCastEventsLoading } = useCastEvents();
-  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
-  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
-  const { hostileBuffEvents, isHostileBuffEventsLoading } = useHostileBuffEvents();
-  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents();
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
-  const { healingEvents, isHealingEventsLoading } = useHealingEvents();
-  const { resourceEvents, isResourceEventsLoading } = useResourceEvents();
-  const { fight, isFightLoading } = useCurrentFight();
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
+  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents({
+    context: resolvedContext,
+  });
+  const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
+  const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context: resolvedContext });
+  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents({
+    context: resolvedContext,
+  });
+  const { hostileBuffEvents, isHostileBuffEventsLoading } = useHostileBuffEvents({
+    context: resolvedContext,
+  });
+  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents({ context: resolvedContext });
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: resolvedContext });
+  const { healingEvents, isHealingEventsLoading } = useHealingEvents({ context: resolvedContext });
+  const { resourceEvents, isResourceEventsLoading } = useResourceEvents({
+    context: resolvedContext,
+  });
+  const isFightLoading = resolvedContext.fightId !== null && !fight;
 
-  const fightIdNumber = React.useMemo(() => {
-    if (!fightId) {
-      return null;
-    }
-    const parsed = Number(fightId);
-    return Number.isFinite(parsed) ? parsed : null;
-  }, [fightId]);
+  const fightIdNumber = resolvedContext.fightId;
 
   const allBuffEvents = React.useMemo(
     () => [...friendlyBuffEvents, ...hostileBuffEvents],
@@ -219,8 +227,12 @@ export const PlayersPanel: React.FC = () => {
   }, [scribingPlayerAbilities, existingScribingAbilities]);
 
   // Get friendly buff lookup data for build issues detection
-  const { buffLookupData: friendlyBuffLookup, isBuffLookupLoading } = useBuffLookupTask();
-  const { playerTravelDistances, isPlayerTravelDistancesLoading } = usePlayerTravelDistanceTask();
+  const { buffLookupData: friendlyBuffLookup, isBuffLookupLoading } = useBuffLookupTask({
+    context: resolvedContext,
+  });
+  const { playerTravelDistances, isPlayerTravelDistancesLoading } = usePlayerTravelDistanceTask({
+    context: resolvedContext,
+  });
   const distanceByPlayer = React.useMemo(() => {
     if (!playerTravelDistances?.distancesByPlayerId) {
       return {} as Record<string, number>;

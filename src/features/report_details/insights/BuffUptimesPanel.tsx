@@ -1,11 +1,16 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { useReportMasterData } from '../../../hooks';
 import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
+import { selectSelectedFriendlyPlayerId } from '../../../store/ui/uiSelectors';
 import { KnownAbilities } from '../../../types/abilities';
-import { computeBuffUptimes } from '../../../utils/buffUptimeCalculator';
+import {
+  computeBuffUptimes,
+  computeBuffUptimesWithGroupAverage,
+} from '../../../utils/buffUptimeCalculator';
 
 import { BuffUptimesView } from './BuffUptimesView';
 import { EffectUptimeTimelineModal } from './EffectUptimeTimelineModal';
@@ -13,6 +18,7 @@ import { buildUptimeTimelineSeries } from './utils/buildUptimeTimeline';
 
 interface BuffUptimesPanelProps {
   fight: FightFragment;
+  selectedPlayerId?: number | null; // Optional: if provided, show per-player uptimes with group average deltas
 }
 
 // Define the specific status effect debuff abilities to track
@@ -44,11 +50,23 @@ const IMPORTANT_BUFF_ABILITIES = new Set([
   KnownAbilities.MAJOR_BERSERK,
 ]);
 
-export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => {
+/**
+ * BUFF SEMANTICS (hostility=0):
+ * Buffs are effects applied BY friendly players TO other friendly players.
+ * In BuffTimeInterval data structure:
+ *   - sourceID = Player ID applying the buff
+ *   - targetID = Player ID receiving the buff
+ *
+ * Filtering:
+ *   - Player Selector (dropdown at top) → filters by source player IDs (who is applying buffs)
+ */
+export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selectedPlayerId }) => {
   const { reportId, fightId } = useSelectedReportAndFight();
   const { buffLookupData: friendlyBuffsLookup, isBuffLookupLoading: isFriendlyBuffEventsLoading } =
     useBuffLookupTask();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+  // Selected friendly player to filter buffs by (shows only buffs applied BY this player)
+  const selectedFriendlyPlayerId = useSelector(selectSelectedFriendlyPlayerId);
 
   // State for toggling between important buffs only and all buffs
   const [showAllBuffs, setShowAllBuffs] = React.useState(false);
@@ -112,16 +130,37 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
       });
     }
 
-    return computeBuffUptimes(friendlyBuffsLookup, {
+    const baseOptions = {
       abilityIds: buffAbilityIds,
       targetIds: friendlyPlayerIds,
+      // When no player is selected, don't filter by source
+      sourceIds: undefined,
       fightStartTime,
       fightEndTime,
       fightDuration,
       abilitiesById: reportMasterData?.abilitiesById || {},
       isDebuff: false,
-      hostilityType: 0,
-    });
+      hostilityType: 0 as const,
+    };
+
+    // If a specific player is selected, calculate their uptimes with group average comparison
+    // Use selectedPlayerId (which is actually selectedFriendlyPlayerId from parent) for comparison
+    // and selectedFriendlyPlayerId for source filtering
+    if (selectedPlayerId && friendlyPlayerIds.size > 1) {
+      return computeBuffUptimesWithGroupAverage(friendlyBuffsLookup, baseOptions, selectedPlayerId);
+    }
+
+    // When selectedFriendlyPlayerId is set, filter by that player's buffs
+    if (selectedFriendlyPlayerId) {
+      const filteredOptions = {
+        ...baseOptions,
+        sourceIds: new Set([selectedFriendlyPlayerId]),
+      };
+      return computeBuffUptimes(friendlyBuffsLookup, filteredOptions);
+    }
+
+    // Otherwise, calculate group average uptimes without delta
+    return computeBuffUptimes(friendlyBuffsLookup, baseOptions);
   }, [
     friendlyBuffsLookup,
     fightDuration,
@@ -129,6 +168,8 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
     fightEndTime,
     reportMasterData?.abilitiesById,
     friendlyPlayerIds,
+    selectedPlayerId,
+    selectedFriendlyPlayerId,
   ]);
 
   // Filter buff uptimes based on showAllBuffs state

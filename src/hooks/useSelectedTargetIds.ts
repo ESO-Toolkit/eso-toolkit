@@ -2,20 +2,27 @@ import * as React from 'react';
 import { useSelector } from 'react-redux';
 
 import type { ReportActorFragment } from '../graphql/gql/graphql';
+import type { ReportFightContextInput } from '../store/contextTypes';
 import { selectSelectedTargetIds } from '../store/ui/uiSelectors';
 
-import { useCurrentFight } from './useCurrentFight';
+import { useFightForContext } from './useFightForContext';
 import { useReportMasterData } from './useReportMasterData';
+import { useResolvedReportFightContext } from './useResolvedReportFightContext';
 
 // Sentinel value for "select all targets"
 export const ALL_TARGETS_SENTINEL = -1;
 // Sentinel value for "select all enemies" (including non-bosses)
 export const ALL_ENEMIES_SENTINEL = -2;
 
-export function useSelectedTargetIds(): Set<number> {
+interface UseSelectedTargetIdsOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useSelectedTargetIds(options?: UseSelectedTargetIdsOptions): Set<number> {
   const selectedTargetIds = useSelector(selectSelectedTargetIds);
-  const { fight } = useCurrentFight();
-  const { reportMasterData } = useReportMasterData();
+  const resolvedContext = useResolvedReportFightContext(options?.context);
+  const fight = useFightForContext(resolvedContext);
+  const { reportMasterData } = useReportMasterData({ context: resolvedContext });
 
   const allTargets = React.useMemo(() => {
     if (!fight?.enemyNPCs) {
@@ -73,9 +80,9 @@ export function useSelectedTargetIds(): Set<number> {
 
   const selectedTargetsSet = React.useMemo(() => {
     const filteredIds = selectedTargetIds.filter(
-      (id) => id !== ALL_TARGETS_SENTINEL && id !== ALL_ENEMIES_SENTINEL,
+      (id: number) => id !== ALL_TARGETS_SENTINEL && id !== ALL_ENEMIES_SENTINEL,
     );
-    return new Set(filteredIds);
+    return new Set<number>(filteredIds);
   }, [selectedTargetIds]);
 
   const hasAllTargetsSelected = React.useMemo(() => {
@@ -93,7 +100,7 @@ export function useSelectedTargetIds(): Set<number> {
   const allTargetsSet = React.useMemo(() => new Set(allTargets), [allTargets]);
   const bossTargetsSet = React.useMemo(() => new Set(bossTargets), [bossTargets]);
 
-  return React.useMemo(() => {
+  return React.useMemo<Set<number>>(() => {
     if (hasAllEnemiesSelected) {
       return allTargetsSet;
     }

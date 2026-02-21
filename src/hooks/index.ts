@@ -18,6 +18,8 @@ export { useReportFightParams } from './useReportFightParams';
 export { useCurrentFight } from './useCurrentFight';
 export { useSelectedTab, useSelectedTabId } from './useSelectedTab';
 export { useSelectedTargetIds } from './useSelectedTargetIds';
+export { useResolvedReportFightContext } from './useResolvedReportFightContext';
+export { useFightForContext } from './useFightForContext';
 
 // URL parameter sync hooks
 export { useUrlParamSync, useUrlParams } from './useUrlParamSync';

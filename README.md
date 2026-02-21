@@ -2,82 +2,38 @@
 
 <!-- Status Badges -->
 
-[![Build Status](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/pr-checks.yml/badge.svg?branch=master)](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/pr-checks.yml)
-[![Deploy Status](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/deploy.yml/badge.svg?branch=master)](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/deploy.yml)
-[![Coverage Workflow](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/coverage.yml/badge.svg?branch=master)](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/coverage.yml)
-[![Nightly Tests](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/nightly-tests.yml/badge.svg)](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/nightly-tests.yml)
+[![Build Status](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/pr-checks.yml/badge.svg?branch=main)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/pr-checks.yml)
+[![Deploy Status](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy.yml)
+[![Coverage & Reports](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml/badge.svg?branch=main)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml)
+[![Nightly Tests](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/nightly-tests.yml/badge.svg)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/nightly-tests.yml)
 
 <!-- Coverage Badges -->
 
-[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bkrupa/845FAC04DEF12C179B425A5699EC6ABC/raw/coverage-overall.json&style=flat)](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/coverage.yml)
-[![Lines](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bkrupa/845FAC04DEF12C179B425A5699EC6ABC/raw/coverage-lines.json&style=flat)](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/coverage.yml)
-[![Functions](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bkrupa/845FAC04DEF12C179B425A5699EC6ABC/raw/coverage-functions.json&style=flat)](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/coverage.yml)
-[![Branches](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bkrupa/845FAC04DEF12C179B425A5699EC6ABC/raw/coverage-branches.json&style=flat)](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/coverage.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-overall.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml)
+[![Lines](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-lines.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml)
+[![Functions](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-functions.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml)
+[![Branches](https://img.shields.io/endpoint?url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/badges/coverage-branches.json&style=flat)](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml)
 
 <!-- Additional Info Badges -->
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-blue?style=flat&logo=github)](https://esotk.com/#/)
+[![Storybook](https://img.shields.io/badge/Storybook-View%20Components-FF4785?style=flat&logo=storybook&logoColor=white)](https://eso-toolkit.github.io/eso-log-aggregator-reports/storybook/)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen?style=flat&logo=node.js)](package.json)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 
-> **Note**: Coverage badges are automatically generated and updated via GitHub Gist endpoints. They show real-time coverage from the dedicated [Coverage Workflow](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/coverage.yml). Detailed coverage reports and PR comments are available in the workflow runs.
+> **Note**: Coverage badges are automatically generated and deployed to [eso-log-aggregator-reports](https://github.com/ESO-Toolkit/eso-log-aggregator-reports) via the Coverage & Reports Workflow. They show real-time coverage from the dedicated [Coverage & Reports Workflow](https://github.com/ESO-Toolkit/eso-toolkit/actions/workflows/deploy-reports.yml). Detailed coverage reports and PR comments are available in the workflow runs.
 
 This project contains only the web application, built with React, TypeScript, GraphQL, Apollo Client, Material UI, Storybook, Jest, and Playwright.
 
 ## Useful Links
 
-- [Deployment](https://esotk.com/#/)
-- [Jira](https://bkrupa.atlassian.net/jira/software/projects/ESO/boards/1/)
-- [Sentry](https://bkrupa.sentry.io/dashboards/)
+- [Live Site](https://esotk.com/#/)
+- [Issue Tracker](https://github.com/ESO-Toolkit/eso-toolkit/issues)
+- [Storybook](https://eso-toolkit.github.io/eso-log-aggregator-reports/storybook/)
 
 ## Getting Started
 
 ### Install Dependencies
-```
-
-<!-- Additional Info Badges -->
-
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-blue?style=flat&logo=github)](https://bkrupa.github.io/eso-log-aggregator/#/)
-[![Node Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen?style=flat&logo=node.js)](package.json)
-[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-
-> **Note**: Coverage badges are automatically generated and updated via GitHub Gist endpoints. They show real-time coverage from the dedicated [Coverage Workflow](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/coverage.yml). Detailed coverage reports and PR comments are available in the workflow runs.
-
-This project contains only the web application, built with React, TypeScript, GraphQL, Apollo Client, Material UI, Storybook, Jest, and Playwright.
-
-## 📚 Documentation
-
-**[Complete Documentation Index →](documentation/INDEX.md)**
-
-### Quick Links
-
-- **[AI Agent Documentation](documentation/ai-agents/)** - Guides for AI agents (Scribing, Playwright, Jira, Preloading)
-- **[Feature Documentation](documentation/features/)** - Feature-specific implementation guides
-- **[Architecture](documentation/architecture/)** - System design and architectural patterns
-- **[Fixes & Resolutions](documentation/fixes/)** - Bug fixes and issue resolutions
-- **[Implementation Summaries](documentation/implementation/)** - Jira ticket implementations
-- **[Developer Guide](documentation/AGENTS.md)** - Complete development workflows
-
-### For Developers
-- Start with [AGENTS.md](documentation/AGENTS.md) for development workflows
-- Review [Architecture Overview](documentation/architecture/system-architecture.md) for system design
-- Check [Feature Documentation](documentation/features/) for specific features
-
-### For AI Agents
-- See [AI Agent Documentation](documentation/ai-agents/) for comprehensive guides
-- Use Quick Reference cards for rapid lookups
-- Follow workflows in [Jira Integration](documentation/ai-agents/jira/)
-
-## Useful Links
-
-- [Deployment](https://bkrupa.github.io/eso-log-aggregator/#/)
-- [Jira](https://bkrupa.atlassian.net/jira/software/projects/ESO/boards/1/)
-- [Sentry](https://bkrupa.sentry.io/dashboards/)
-
-## Getting Started
-
-### Install Dependencies
-
 ```powershell
 npm ci
 ```
@@ -90,26 +46,19 @@ Generates TypeScript types and hooks from GraphQL queries:
 npm run codegen
 ```
 
-### Running the Application (UI)
+### Running the Application
 
 ```powershell
-cd apps/ui/eso-log-aggregator
-npm start
+npm run dev
 ```
 
 ### Building the Application
 
-The project uses SWC (Speedy Web Compiler) instead of the default TypeScript compiler for faster builds:
+Built with Vite and SWC for fast compilation:
 
 ```powershell
 npm run build
 ```
-
-**Build Performance:**
-
-- **SWC Compiler**: Fast TypeScript/JSX compilation with Rust-based SWC
-- **Configuration**: Managed through `craco.config.js` with environment-specific settings
-- **Benefits**: Faster build times, smaller bundle sizes, and better optimization
 
 ### Running Tests
 
@@ -209,8 +158,8 @@ npm run build
 - **Local Development**: Run `npm run download-test-data` for offline testing locally
 
 For detailed testing documentation, see [tests/README.md](tests/README.md).
-For screen size testing, see [documentation/SCREEN_SIZE_TESTING.md](documentation/SCREEN_SIZE_TESTING.md).
-For offline testing, see [OFFLINE_TESTING.md](OFFLINE_TESTING.md).
+For screen size testing, see [documentation/testing/SCREEN_SIZE_TESTING.md](documentation/testing/SCREEN_SIZE_TESTING.md).
+For offline testing, see [documentation/testing/OFFLINE_TESTING.md](documentation/testing/OFFLINE_TESTING.md).
 
 **Coverage System Features:**
 
@@ -222,7 +171,7 @@ For offline testing, see [OFFLINE_TESTING.md](OFFLINE_TESTING.md).
 
 **Coverage Badges:** ![Coverage](coverage/badges/coverage-overall.svg)
 
-For detailed coverage documentation, see [docs/COVERAGE.md](docs/COVERAGE.md).
+For detailed coverage documentation, see [documentation/testing/COVERAGE.md](documentation/testing/COVERAGE.md).
 
 ### Linting & Formatting
 
@@ -236,7 +185,6 @@ npm run format
 Run Storybook for UI component development:
 
 ```powershell
-cd apps/ui/eso-log-aggregator
 npm run storybook
 ```
 
@@ -294,7 +242,7 @@ For detailed architecture documentation, see:
 ### Debugging the UI
 
 - Use VS Code's built-in debugger for React/TypeScript.
-- Set breakpoints in `apps/ui/eso-log-aggregator/src`.
+- Set breakpoints in `src/`.
 - Start the app and attach the debugger.
 
 ### Debugging Tests
@@ -310,13 +258,10 @@ You can download real ESO logs data for testing and debugging using the report d
 
 ```powershell
 # Download all fights from a report
-npx ts-node --esm scripts/download-report-data.ts ABC123DEF
+npm run script -- scripts/download-report-data.ts ABC123DEF
 
 # Download specific fight only
-npx ts-node --esm scripts/download-report-data.ts ABC123DEF 1
-
-# Analyze scribing skills in downloaded data
-npx ts-node --esm scripts/examples/analyze-scribing-skills.ts ABC123DEF
+npm run script -- scripts/download-report-data.ts ABC123DEF 1
 ```
 
 **Requirements:**
@@ -338,12 +283,16 @@ The `sample-data/` folder is automatically ignored by Git to prevent accidental 
 - Ensure all required dependencies are installed.
 - For GraphQL errors, re-run `npm run codegen`.
 
+## License
+
+This project is licensed under the [Business Source License 1.1 (BUSL-1.1)](LICENSE).
+
+- **Non-production / non-commercial use** is permitted.
+- **Production and commercial use** requires a separate agreement with the [ESOTK team](https://github.com/ESO-Toolkit).
+- Each portion of the code **automatically converts to [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)** four years after it is first publicly released.
+
+See the [LICENSE](LICENSE) file for full terms. If you have questions about permitted use, open a [discussion](https://github.com/ESO-Toolkit/eso-toolkit/discussions) or contact the maintainers.
+
 ---
 
-For more details, see individual README files in subfolders or ask for help!
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+For more details, see the [documentation index](documentation/INDEX.md) or individual README files in subfolders.

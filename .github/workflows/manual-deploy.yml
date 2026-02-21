@@ -23,10 +23,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
       
+      - name: Setup Node.js and Install Dependencies
+        uses: ./.github/actions/setup-node-with-cache
+      
+      - name: Generate What's New data
+        run: node scripts/generate-whats-new.cjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and Deploy
         id: build-and-deploy
         uses: ./.github/actions/build-and-deploy

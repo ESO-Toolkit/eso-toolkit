@@ -36,10 +36,12 @@ import React, { Suspense } from 'react';
 
 import { AnimatedTabContent } from '../../components/AnimatedTabContent';
 import { FightFragment } from '../../graphql/gql/graphql';
+import { useReportMasterData } from '../../hooks';
 import { usePhaseTransitions } from '../../hooks/usePhaseTransitions';
 import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
+import { BuffSourcePlayerSelector } from './insights/BuffSourcePlayerSelector';
 import { TargetSelector } from './insights/TargetSelector';
 import { useFightNavigation } from './ReportFightHeader';
 
@@ -174,6 +176,22 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
+  // Generate player list for the buff source selector
+  const { reportMasterData } = useReportMasterData();
+  const playerList = React.useMemo(() => {
+    if (!fight?.friendlyPlayers || !reportMasterData?.actorsById) {
+      return [];
+    }
+
+    return fight.friendlyPlayers
+      .filter((id): id is number => id !== null)
+      .map((id) => ({
+        id,
+        name: reportMasterData.actorsById[id]?.name || `Player ${id}`,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [fight?.friendlyPlayers, reportMasterData?.actorsById]);
+
   return (
     <React.Fragment>
       {/* Target Selection and Navigation Row */}
@@ -184,18 +202,39 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: { xs: 'wrap', md: 'nowrap' },
-          gap: { xs: 2, md: 0 },
+          gap: { xs: 2, md: 2 },
         }}
       >
-        <FormControl
+        {/* Selectors Group */}
+        <Box
           sx={{
-            minWidth: { xs: '100%', sm: 180, md: 200 },
-            maxWidth: { xs: '100%', md: 'none' },
-            overflow: 'visible',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            flexWrap: { xs: 'wrap', md: 'nowrap' },
+            flex: { xs: '1 1 100%', md: '0 1 auto' },
           }}
         >
-          <TargetSelector />
-        </FormControl>
+          <FormControl
+            sx={{
+              minWidth: { xs: '100%', sm: 180, md: 200 },
+              maxWidth: { xs: '100%', md: 'none' },
+              overflow: 'visible',
+            }}
+          >
+            <TargetSelector />
+          </FormControl>
+
+          <FormControl
+            sx={{
+              minWidth: { xs: '100%', sm: 180, md: 200 },
+              maxWidth: { xs: '100%', md: 'none' },
+              overflow: 'visible',
+            }}
+          >
+            <BuffSourcePlayerSelector players={playerList} />
+          </FormControl>
+        </Box>
 
         {/* Fight Navigation - aligned with target selector */}
         <Box
@@ -221,6 +260,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             onClick={navigateToPrevious}
             disabled={!navigationData.previousFight}
             size="small"
+            aria-label="Previous fight"
             sx={{
               width: { xs: 32, md: 28 },
               height: { xs: 32, md: 28 },
@@ -339,6 +379,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             onClick={navigateToNext}
             disabled={!navigationData.nextFight}
             size="small"
+            aria-label="Next fight"
             sx={{
               width: { xs: 32, md: 28 },
               height: { xs: 32, md: 28 },
@@ -667,12 +708,12 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           )}
           {validSelectedTabId === TabId.HEALING_DONE && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.HEALING_DONE} />}>
-              <HealingDonePanel fight={fight} />
+              <HealingDonePanel />
             </Suspense>
           )}
           {validSelectedTabId === TabId.DEATHS && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEATHS} />}>
-              <DeathEventPanel fight={fight} />
+              <DeathEventPanel />
             </Suspense>
           )}
           {validSelectedTabId === TabId.CRITICAL_DAMAGE && (
@@ -682,17 +723,17 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           )}
           {validSelectedTabId === TabId.PENETRATION && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.PENETRATION} />}>
-              <PenetrationPanel fight={fight} phaseTransitionInfo={phaseTransitionInfo} />
+              <PenetrationPanel phaseTransitionInfo={phaseTransitionInfo} />
             </Suspense>
           )}
           {validSelectedTabId === TabId.DAMAGE_REDUCTION && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_REDUCTION} />}>
-              <DamageReductionPanel fight={fight} phaseTransitionInfo={phaseTransitionInfo} />
+              <DamageReductionPanel phaseTransitionInfo={phaseTransitionInfo} />
             </Suspense>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.LOCATION_HEATMAP && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.LOCATION_HEATMAP} />}>
-              <LocationHeatmapPanel fight={fight} />
+              <LocationHeatmapPanel />
             </Suspense>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.RAW_EVENTS && (

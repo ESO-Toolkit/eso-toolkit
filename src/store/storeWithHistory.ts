@@ -16,17 +16,22 @@ import {
   PURGE,
   REGISTER,
   REHYDRATE,
+  createTransform,
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 
 import type { EsoLogsClient } from '@/esologsClient';
 
+import loadoutReducer from '../features/loadout-manager/store/loadoutSlice';
+
+import dashboardReducer from './dashboard/dashboardSlice';
 import { eventsReducer } from './events_data';
 import masterDataReducer from './master_data/masterDataSlice';
 import parseAnalysisReducer from './parse_analysis/parseAnalysisSlice';
 import playerDataReducer from './player_data/playerDataSlice';
 import reportReducer from './report/reportSlice';
-import uiReducer from './ui/uiSlice';
+import uiReducer, { UIState } from './ui/uiSlice';
+import userReportsReducer from './user_reports';
 import { workerResultsReducer } from './worker_results';
 
 // Create history
@@ -37,32 +42,72 @@ const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHisto
 
 // Root reducer - adding essential slices
 const rootReducer = combineReducers({
+  dashboard: dashboardReducer,
+  events: eventsReducer,
+  loadout: loadoutReducer,
+  masterData: masterDataReducer,
+  parseAnalysis: parseAnalysisReducer,
+  playerData: playerDataReducer,
+  report: reportReducer,
   router: routerReducer,
   ui: uiReducer,
-  report: reportReducer,
-  masterData: masterDataReducer,
-  playerData: playerDataReducer,
-  parseAnalysis: parseAnalysisReducer,
-  events: eventsReducer,
+  userReports: userReportsReducer,
   workerResults: workerResultsReducer,
 });
+
+// Transform to exclude report/fight-specific UI state from persistence
+// Only persist user preferences, not report-specific selections
+const uiTransform = createTransform<UIState, Partial<UIState>>(
+  // Transform state on its way to being serialized and persisted
+  (inboundState) => {
+    const { darkMode, showExperimentalTabs, sidebarOpen, myReportsPage } = inboundState;
+    return {
+      darkMode,
+      showExperimentalTabs,
+      sidebarOpen,
+      myReportsPage,
+    };
+  },
+  // Transform state being rehydrated
+  (outboundState) => {
+    // Get the initial state values for non-persisted fields
+    const initialUIState: UIState = {
+      darkMode: true,
+      selectedPlayerId: null,
+      selectedTabId: null,
+      selectedTargetIds: [],
+      selectedFriendlyPlayerId: null,
+      showExperimentalTabs: false,
+      sidebarOpen: false,
+      myReportsPage: 1,
+    };
+
+    // Merge persisted preferences with initial report-specific state
+    return {
+      ...initialUIState,
+      ...outboundState,
+    } as UIState;
+  },
+  { whitelist: ['ui'] },
+);
+
+// Define RootState type from the root reducer (before persist config)
+export type RootState = ReturnType<typeof rootReducer>;
 
 // Persist config
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['ui'], // Persist essential data, but not events (too large)
+  transforms: [uiTransform], // Apply transform to exclude report-specific UI state
+  whitelist: ['ui', 'loadout', 'dashboard'], // Persist essential data and loadout, but not events (too large)
 };
 
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+const persistedReducer = persistReducer<RootState>(persistConfig, rootReducer);
 
 // Define thunk extra argument interface
 export interface ThunkExtraArgument {
   esoLogsClient: EsoLogsClient;
 }
-
-// Define RootState type from the root reducer
-export type RootState = ReturnType<typeof rootReducer>;
 
 // Define store type
 type AppStore = ReturnType<typeof configureStore>;

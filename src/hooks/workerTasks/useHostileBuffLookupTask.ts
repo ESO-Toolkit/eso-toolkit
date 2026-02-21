@@ -27,12 +27,15 @@ export function useHostileBuffLookupTask(): {
 
   React.useEffect(() => {
     if (selectedFight && !isHostileBuffEventsLoading) {
-      dispatch(
+      const promise = dispatch(
         executeHostileBuffLookupTask({
           buffEvents: hostileBuffEvents,
           fightEndTime: selectedFight.endTime,
         }),
       );
+      return () => {
+        promise.abort();
+      };
     }
   }, [dispatch, selectedFight, hostileBuffEvents, isHostileBuffEventsLoading]);
 

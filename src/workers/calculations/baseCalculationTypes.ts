@@ -23,8 +23,9 @@ export interface CalculationFightContext {
 /**
  * Base calculation task with common required data
  */
-export interface BaseWorkerCalculationTask<TAdditionalData = Record<string, unknown>>
-  extends BaseCalculationTask<TAdditionalData> {
+export interface BaseWorkerCalculationTask<
+  TAdditionalData = Record<string, unknown>,
+> extends BaseCalculationTask<TAdditionalData> {
   fight: CalculationFightContext;
   players: Record<number, PlayerDetailsWithRole>;
 }
@@ -32,8 +33,9 @@ export interface BaseWorkerCalculationTask<TAdditionalData = Record<string, unkn
 /**
  * Extended calculation task that includes combat info and buff lookups
  */
-export interface ExtendedWorkerCalculationTask<TAdditionalData = Record<string, unknown>>
-  extends BaseWorkerCalculationTask<TAdditionalData> {
+export interface ExtendedWorkerCalculationTask<
+  TAdditionalData = Record<string, unknown>,
+> extends BaseWorkerCalculationTask<TAdditionalData> {
   combatantInfoEvents?: Record<number, CombatantInfoEvent>;
   friendlyBuffsLookup?: BuffLookupData;
   debuffsLookup?: BuffLookupData;
@@ -58,8 +60,9 @@ export interface BasePlayerData {
 /**
  * Base calculation result with player data
  */
-export interface BasePlayerCalculationResult<TPlayerData extends BasePlayerData>
-  extends BaseCalculationResult<Record<string, TPlayerData>> {
+export interface BasePlayerCalculationResult<
+  TPlayerData extends BasePlayerData,
+> extends BaseCalculationResult<Record<string, TPlayerData>> {
   /** Number of players processed in the calculation */
   playerCount?: number;
 }

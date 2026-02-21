@@ -32,6 +32,8 @@ export const Footer: React.FC = React.memo(() => {
       { label: 'Text Editor', href: '/text-editor' },
 
       { label: 'Log Analyzer', href: '/logs' },
+
+      { label: 'Roster Builder', href: '/roster-builder' },
     ],
 
     [],
@@ -47,7 +49,7 @@ export const Footer: React.FC = React.memo(() => {
 
       { label: 'Join Discord', href: 'https://discord.gg/mMjwcQYFdc', external: true },
 
-      { label: 'GitHub', href: 'https://github.com/bkrupa/eso-log-aggregator', external: true },
+      { label: 'GitHub', href: 'https://github.com/ESO-Toolkit/eso-toolkit', external: true },
     ],
 
     [],
@@ -761,7 +763,7 @@ export const Footer: React.FC = React.memo(() => {
 
             <Button
               component="a"
-              href="https://github.com/bkrupa/eso-log-aggregator"
+              href="https://github.com/ESO-Toolkit/eso-toolkit"
               target="_blank"
               rel="noopener noreferrer"
               sx={secondaryButtonSx}

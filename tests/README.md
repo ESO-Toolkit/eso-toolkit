@@ -2,6 +2,22 @@
 
 This directory contains Playwright end-to-end tests for the ESO Log Aggregator application.
 
+## 🧪 Testing Tools
+
+**For AI Agents**: Choose the right tool for your testing needs:
+
+- **Running Existing Tests** → Use the **Run Playwright Tests** skill (`.github/skills/playwright/SKILL.md`)
+  - Execute test suites and get machine-readable results
+  - Smoke, full, nightly, screen-size, and performance configs
+
+- **Ad-hoc Exploratory Testing** → Use the **Dev and Testing Tools** skill (`.github/skills/testing/SKILL.md`)
+  - Quick feature verification without writing test files
+  - Dev server management, unit tests, lint, format, build
+
+- **Writing New Tests** → Follow this guide
+  - Create test files following existing patterns
+  - Use npm scripts from root package.json
+
 ## Overview
 
 The test suite includes:

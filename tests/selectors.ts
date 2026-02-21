@@ -12,9 +12,12 @@ export const SELECTORS = {
   FIRST_FIGHT_BUTTON: '[data-testid^="fight-button-"]:first-of-type',
   ANY_FIGHT_BUTTON: '[data-testid^="fight-button-"]',
   
-  // Loading states
-  LOADING_INDICATOR: '[data-testid="loading-indicator"]',
-  FIGHT_LIST_OR_LOADING: '[data-testid="fight-list"], [data-testid="loading-indicator"]',
+  // Loading states - with fallbacks for live site
+  LOADING_INDICATOR: '[data-testid="loading-indicator"], .loading, .spinner, [aria-label*="loading"], [aria-busy="true"], .MuiCircularProgress-root, .MuiLinearProgress-root',
+  FIGHT_LIST_OR_LOADING: '[data-testid="fight-list"], [data-testid="loading-indicator"], .loading, .spinner, [aria-label*="loading"], [aria-busy="true"], .MuiAccordion-root, [data-testid*="trial-accordion"], .fight-button, button[id^="fight-button-"]',
+  
+  // More resilient content detection for reports
+  REPORT_CONTENT: '[data-testid="fight-list"], .MuiAccordion-root, [data-testid*="trial-accordion"], .content, .report-content, .fight-list, .MuiContainer-root, .main-content, [role="main"], main, section[class*="content"]',
   
   // Trial and encounter structure
   TRIAL_ACCORDION: (trialId: string) => `[data-testid="trial-accordion-${trialId}"]`,
@@ -91,23 +94,33 @@ export const SELECTOR_HELPERS = {
  * Test timeouts used across test files
  */
 export const TEST_TIMEOUTS = {
-  navigation: 30000,
-  dataLoad: 60000,
-  screenshot: 10000,
-  interaction: 15000,
+  navigation: 45000, // Increased for production sites
+  dataLoad: 120000, // Increased for sites with ongoing API requests
+  screenshot: 30000,
+  interaction: 20000, // Increased for complex interactions
   shortWait: 5000,
-  longWait: 120000,
+  longWait: 150000, // Increased for very slow operations
+  networkIdle: 90000, // Increased timeout for networkidle waits
 } as const;
 
 /**
  * Common test data
+ * 
+ * NOTE: ESO Logs reports expire/get deleted over time. Update these IDs periodically
+ * with valid public reports from https://esotk.com/latest-reports
  */
 export const TEST_DATA = {
   REAL_REPORT_IDS: [
-    'nbKdDtT4NcZyVrvX', // Report with fight-117 (confirmed)
-    'qdxpGgyQ92A31LBr', // Report with fight-5 (confirmed)
-    'QrXtM3W2CZ1yazDq', // Report with fight-69 and fight-74 (confirmed)
+    'prV8jWb1NqFJc97Z', // Current valid report (updated 2026-01-21) - Rockgrove with 17 fights
   ],
+
+  /**
+   * A known valid fight ID within REAL_REPORT_IDS[0].
+   * Used for direct URL navigation in tests that don't need to exercise the
+   * fight-selection UI, eliminating unnecessary landing-page round-trips to
+   * the esologs API.
+   */
+  KNOWN_FIGHT_ID: '5',
   
   MAIN_TABS: [
     'insights',
