@@ -12,6 +12,7 @@ import {
 import { SENTRY_CONFIG, ManualBugReport } from '../config/sentryConfig';
 import { RootState } from '../store/storeWithHistory';
 
+import { hasErrorTrackingConsent } from './consentManager';
 import { Logger, LogLevel } from './logger';
 
 // Create a logger instance for Sentry utilities
@@ -39,12 +40,19 @@ interface ExtendedPerformance extends Performance {
 }
 
 /**
- * Initialize Sentry with comprehensive configuration
+ * Initialize Sentry with comprehensive configuration.
+ * Only initializes in production builds AND when the user has consented to error tracking.
  */
 export const initializeSentry = (): void => {
   // Only initialize Sentry in production builds
   if (process.env.NODE_ENV !== 'production') {
     logger.info('Sentry disabled - not in production build');
+    return;
+  }
+
+  // GDPR: Only initialize if user has consented to error tracking
+  if (!hasErrorTrackingConsent()) {
+    logger.info('Sentry disabled - user has not consented to error tracking');
     return;
   }
 
@@ -202,8 +210,8 @@ export const reportError = (
   context?: Record<string, unknown>,
   store?: { getState: () => RootState },
 ): void => {
-  // Only report errors to Sentry in production builds
-  if (process.env.NODE_ENV !== 'production') {
+  // Only report errors to Sentry in production builds with consent
+  if (process.env.NODE_ENV !== 'production' || !hasErrorTrackingConsent()) {
     // In development, just log to console
     const errorObj = error instanceof Error ? error : new Error(String(error));
     logger.error('Error (not sent to Sentry in development)', errorObj, { context });
@@ -242,10 +250,10 @@ export const submitManualBugReport = (
   bugReport: ManualBugReport,
   store?: { getState: () => RootState },
 ): void => {
-  // Only submit bug reports to Sentry in production builds
-  if (process.env.NODE_ENV !== 'production') {
-    // In development, just log to console
-    logger.warn('Manual bug report (not sent to Sentry in development)', { bugReport });
+  // Only submit bug reports to Sentry in production builds with consent
+  if (process.env.NODE_ENV !== 'production' || !hasErrorTrackingConsent()) {
+    // In development or without consent, just log to console
+    logger.warn('Manual bug report (not sent to Sentry)', { bugReport });
     return;
   }
 
@@ -300,29 +308,29 @@ export const submitManualBugReport = (
 };
 
 /**
- * Set user context for all subsequent error reports
+ * Set user context for all subsequent error reports.
+ * GDPR: Only sends PII to Sentry when user has consented to error tracking.
  */
 export const setUserContext = (userId: string, email?: string, username?: string): void => {
-  // Only set user context in Sentry for production builds
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production' && hasErrorTrackingConsent()) {
     Sentry.setUser({
       id: userId,
-      email,
+      // Never send email to Sentry — not needed for error triage
       username,
     });
   }
 };
 
 /**
- * Add breadcrumb for user actions
+ * Add breadcrumb for user actions.
+ * GDPR: Only records breadcrumbs when user has consented to error tracking.
  */
 export const addBreadcrumb = (
   message: string,
   category: string,
   data?: Record<string, unknown>,
 ): void => {
-  // Only add breadcrumbs in production builds
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production' && hasErrorTrackingConsent()) {
     Sentry.addBreadcrumb({
       message,
       category,
@@ -340,8 +348,8 @@ export const measurePerformance = async <T>(
   operation: () => Promise<T> | T,
   context?: Record<string, unknown>,
 ): Promise<T> => {
-  // Only use Sentry performance monitoring in production builds
-  if (process.env.NODE_ENV === 'production') {
+  // Only use Sentry performance monitoring in production builds with consent
+  if (process.env.NODE_ENV === 'production' && hasErrorTrackingConsent()) {
     return Sentry.startSpan({ name }, async () => {
       try {
         const result = await operation();
