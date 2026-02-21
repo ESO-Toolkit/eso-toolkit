@@ -71,9 +71,27 @@ Tell the user:
 - That they are now safe to begin implementation
 - Any twig setup that was performed
 
-## Step 6 — Update Ticket Status When Work Is Complete
+## Step 6 — Pre-PR Quality Gate (MANDATORY)
 
-When implementation is finished and changes are committed/pushed, update the Jira ticket status to reflect completion:
+**Before creating a PR or marking a ticket as In Review**, run all quality checks and ensure they pass:
+
+```powershell
+# 1. Type-check, lint, and format — must all pass with zero errors/warnings
+npm run validate
+
+# 2. Unit tests — must all pass
+npm test -- --watchAll=false
+```
+
+**Do NOT create a PR if either command exits with a non-zero code.**
+
+- Fix any TypeScript errors before continuing.
+- Run `npm run lint:fix` and `npm run format` to auto-fix lint/format issues, then re-run `npm run validate`.
+- Fix any failing unit tests before continuing.
+
+## Step 7 — Update Ticket Status When Work Is Complete
+
+When implementation is finished, all quality checks pass, and changes are committed/pushed, update the Jira ticket status:
 
 ```
 @workspace Move ESO-XXX to "In Review"
