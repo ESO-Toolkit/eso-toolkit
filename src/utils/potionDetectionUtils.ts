@@ -9,10 +9,7 @@
  * This mirrors the approach used by BTV Tools.
  */
 
-import {
-  MAGICKA_POTION_RESTORE_EFFECT,
-  STAMINA_POTION_RESTORE_EFFECT,
-} from '../types/abilities';
+import { MAGICKA_POTION_RESTORE_EFFECT, STAMINA_POTION_RESTORE_EFFECT } from '../types/abilities';
 
 // --------------------------------------------------------------------------
 // Types
@@ -51,10 +48,7 @@ function hasAuraById(
 }
 
 /** Returns true when the aura list contains an entry whose name matches the pattern. */
-function hasAuraByName(
-  auras: Array<{ name: string; id: number }>,
-  nameRegexp: RegExp,
-): boolean {
+function hasAuraByName(auras: Array<{ name: string; id: number }>, nameRegexp: RegExp): boolean {
   return auras.some((a) => nameRegexp.test(a.name ?? ''));
 }
 

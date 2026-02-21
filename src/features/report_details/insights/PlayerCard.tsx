@@ -21,14 +21,14 @@ import { useSelector } from 'react-redux';
 import { getArmorWeightCounts } from '@/utils/armorUtils';
 import { toClassKey } from '@/utils/classNameUtils';
 import { abbreviateFood, detectFoodFromAuras, getFoodColor } from '@/utils/foodDetectionUtils';
+import { createGearSetTooltipProps } from '@/utils/gearSetTooltipMapper';
+import { buildVariantSx, getGearChipProps } from '@/utils/playerCardStyleUtils';
 import {
   abbreviatePotion,
   describePotionType,
   detectPotionType,
   getPotionColor,
 } from '@/utils/potionDetectionUtils';
-import { createGearSetTooltipProps } from '@/utils/gearSetTooltipMapper';
-import { buildVariantSx, getGearChipProps } from '@/utils/playerCardStyleUtils';
 
 import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
