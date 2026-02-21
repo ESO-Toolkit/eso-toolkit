@@ -14,7 +14,8 @@ import {
   selectSelectedTargetId,
   selectSelectedFriendlyPlayerId,
 } from '../../../store/ui/uiSelectors';
-import { KnownAbilities } from '../../../types/abilities';
+import { KnownAbilities, MAJOR_MAIM_ABILITY_IDS, MINOR_MAIM_ABILITY_IDS } from '../../../types/abilities';
+import type { BuffLookupData } from '../../../utils/BuffLookupUtils';
 import type { BuffUptime } from '../../../utils/buffUptimeCalculator';
 import {
   computeBuffUptimes,
@@ -51,6 +52,87 @@ export const IMPORTANT_DEBUFF_ABILITIES = new Set([
   KnownAbilities.STAGGER,
   KnownAbilities.TOUCH_OF_ZEN,
 ]);
+
+/**
+ * Computes the merged debuff uptime for a group of ability IDs that all represent the same
+ * logical debuff (e.g., Major Maim applied by different source skills).
+ * Properly merges overlapping intervals to avoid double-counting.
+ */
+function computeGroupedMaimUptime(params: {
+  debuffsLookup: BuffLookupData;
+  abilityIds: ReadonlySet<number>;
+  displayName: string;
+  icon: string;
+  targetIds?: Set<number>;
+  fightStartTime: number;
+  fightEndTime: number;
+  fightDuration: number;
+}): (BuffUptime & { uniqueKey: string }) | null {
+  const {
+    debuffsLookup,
+    abilityIds,
+    displayName,
+    icon,
+    targetIds,
+    fightStartTime,
+    fightEndTime,
+    fightDuration,
+  } = params;
+
+  if (!fightDuration) return null;
+
+  // Collect all intervals from all ability IDs in the group
+  const allIntervals: { start: number; end: number }[] = [];
+
+  abilityIds.forEach((abilityId) => {
+    const intervalList = debuffsLookup.buffIntervals[String(abilityId)];
+    if (!intervalList) return;
+    intervalList.forEach((interval) => {
+      // For debuffs, targetID is the enemy receiving the debuff — filter by enemy target if provided
+      if (targetIds && !targetIds.has(interval.targetID)) return;
+      const start = Math.max(interval.start, fightStartTime);
+      const end = Math.min(interval.end, fightEndTime);
+      if (end > start) {
+        allIntervals.push({ start, end });
+      }
+    });
+  });
+
+  if (allIntervals.length === 0) return null;
+
+  // Sort by start time
+  allIntervals.sort((a, b) => a.start - b.start);
+
+  // Merge overlapping intervals to avoid double-counting
+  const merged: { start: number; end: number }[] = [];
+  for (const interval of allIntervals) {
+    if (merged.length === 0 || interval.start > merged[merged.length - 1].end) {
+      merged.push({ start: interval.start, end: interval.end });
+    } else {
+      merged[merged.length - 1].end = Math.max(merged[merged.length - 1].end, interval.end);
+    }
+  }
+
+  const totalDuration = merged.reduce((sum, i) => sum + (i.end - i.start), 0);
+  const uptimePercentage = (totalDuration / fightDuration) * 100;
+
+  if (uptimePercentage <= 0) return null;
+
+  const groupKey = `grouped_maim_${displayName.toLowerCase().replace(/\s+/g, '_')}`;
+
+  return {
+    abilityGameID: groupKey, // Use a synthetic ID so it doesn't collide with individual ability entries
+    abilityName: displayName,
+    icon,
+    totalDuration,
+    uptime: totalDuration / 1000,
+    uptimePercentage,
+    applications: allIntervals.length,
+    isDebuff: true,
+    hostilityType: 1,
+    uniqueKey: groupKey,
+  };
+}
 
 /**
  * DEBUFF SEMANTICS (hostility=1):
@@ -775,7 +857,37 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
           })
       : stackedDebuffs;
 
-    const combinedDebuffs = [...mappedDebuffUptimes, ...filteredStackedDebuffs];
+    // Compute merged Major Maim and Minor Maim uptimes from all contributing ability IDs
+    const maimTargetIds = realTargetIds.size > 0 ? realTargetIds : undefined;
+    const majorMaimEntry = debuffsLookup
+      ? computeGroupedMaimUptime({
+          debuffsLookup,
+          abilityIds: MAJOR_MAIM_ABILITY_IDS,
+          displayName: 'Major Maim',
+          icon: 'ability_debuff_major_maim',
+          targetIds: maimTargetIds,
+          fightStartTime,
+          fightEndTime,
+          fightDuration,
+        })
+      : null;
+    const minorMaimEntry = debuffsLookup
+      ? computeGroupedMaimUptime({
+          debuffsLookup,
+          abilityIds: MINOR_MAIM_ABILITY_IDS,
+          displayName: 'Minor Maim',
+          icon: 'ability_debuff_minor_maim',
+          targetIds: maimTargetIds,
+          fightStartTime,
+          fightEndTime,
+          fightDuration,
+        })
+      : null;
+    const maimEntries = [majorMaimEntry, minorMaimEntry].filter(
+      (entry): entry is NonNullable<typeof majorMaimEntry> => entry !== null,
+    );
+
+    const combinedDebuffs = [...mappedDebuffUptimes, ...filteredStackedDebuffs, ...maimEntries];
     return combinedDebuffs.sort((a, b) => b.uptimePercentage - a.uptimePercentage);
   }, [
     debuffsLookup,
@@ -801,6 +913,9 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
 
     // Filter to show only important debuffs
     return allDebuffUptimes.filter((debuff) => {
+      // Always include merged Maim group entries (they have synthetic non-numeric abilityGameIDs)
+      if (debuff.uniqueKey?.startsWith('grouped_maim_')) return true;
+
       // Convert ability ID to number for comparison with enum values
       const abilityIdNum = parseInt(debuff.abilityGameID, 10);
 
