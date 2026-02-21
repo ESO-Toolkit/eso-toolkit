@@ -8,6 +8,10 @@ jest.mock('react-redux', () => ({
   Provider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+jest.mock('./ReduxThemeProvider', () => ({
+  ReduxThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 jest.mock('redux-persist/integration/react', () => ({
   PersistGate: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
