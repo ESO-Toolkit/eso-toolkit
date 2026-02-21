@@ -38,7 +38,12 @@ export const IMPORTANT_BUFF_ABILITIES = new Set([
   KnownAbilities.MINOR_COURAGE,
   KnownAbilities.EMPOWER,
 
+  KnownAbilities.MAJOR_HEROISM,
   KnownAbilities.MINOR_HEROISM,
+  KnownAbilities.MAJOR_EVASION,
+  KnownAbilities.MINOR_EVASION,
+  KnownAbilities.MAJOR_EXPEDITION,
+  KnownAbilities.MINOR_EXPEDITION,
   KnownAbilities.POWERFUL_ASSAULT,
   KnownAbilities.MINOR_BRUTALITY,
   KnownAbilities.MAJOR_BRUTALITY,
