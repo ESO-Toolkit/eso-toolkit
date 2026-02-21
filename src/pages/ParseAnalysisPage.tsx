@@ -1494,10 +1494,7 @@ const ParseAnalysisPageContent: React.FC = () => {
             sx={{ mb: 1.5 }}
           >
             <Stack direction="row" spacing={1} alignItems="center">
-              <FlashOnIcon
-                color={isGoodWeaving ? 'success' : 'warning'}
-                fontSize="small"
-              />
+              <FlashOnIcon color={isGoodWeaving ? 'success' : 'warning'} fontSize="small" />
               <Typography variant="subtitle2" fontWeight={600}>
                 Weave Accuracy
               </Typography>
@@ -1694,16 +1691,8 @@ const ParseAnalysisPageContent: React.FC = () => {
                       color="primary"
                       variant="outlined"
                     />
-                    <Chip
-                      label={`Report: ${state.reportCode}`}
-                      size="small"
-                      variant="outlined"
-                    />
-                    <Chip
-                      label={`Fight #${state.fightId}`}
-                      size="small"
-                      variant="outlined"
-                    />
+                    <Chip label={`Report: ${state.reportCode}`} size="small" variant="outlined" />
+                    <Chip label={`Fight #${state.fightId}`} size="small" variant="outlined" />
                     {fightDurationSeconds != null && (
                       <Chip
                         label={formatDuration(fightDurationSeconds)}
@@ -1780,29 +1769,29 @@ const ParseAnalysisPageContent: React.FC = () => {
                 </AccordionDetails>
               </Accordion>
             )}
-            {!state.buildIssues || state.buildIssues.length === 0 ? (
-              state.buildIssues && (
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'success.main',
-                    borderLeftWidth: 4,
-                    backgroundColor: roleColors.isDarkMode
-                      ? 'rgba(46, 125, 50, 0.08)'
-                      : 'rgba(46, 125, 50, 0.04)',
-                  }}
-                >
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <CheckCircleIcon color="success" fontSize="small" />
-                    <Typography variant="body2" fontWeight={500}>
-                      No build issues detected
-                    </Typography>
-                  </Stack>
-                </Box>
-              )
-            ) : null}
+            {!state.buildIssues || state.buildIssues.length === 0
+              ? state.buildIssues && (
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      border: '1px solid',
+                      borderColor: 'success.main',
+                      borderLeftWidth: 4,
+                      backgroundColor: roleColors.isDarkMode
+                        ? 'rgba(46, 125, 50, 0.08)'
+                        : 'rgba(46, 125, 50, 0.04)',
+                    }}
+                  >
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <CheckCircleIcon color="success" fontSize="small" />
+                      <Typography variant="body2" fontWeight={500}>
+                        No build issues detected
+                      </Typography>
+                    </Stack>
+                  </Box>
+                )
+              : null}
 
             {state.buffChecklist && (
               <Accordion

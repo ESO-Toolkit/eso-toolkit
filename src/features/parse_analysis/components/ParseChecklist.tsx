@@ -52,12 +52,7 @@ export const ParseChecklist: React.FC<ParseChecklistProps> = ({ items }) => {
   return (
     <Box sx={{ mb: 3 }}>
       {/* Summary bar */}
-      <Stack
-        direction="row"
-        spacing={2}
-        alignItems="center"
-        sx={{ mb: 1.5 }}
-      >
+      <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1.5 }}>
         <Typography variant="subtitle2" fontWeight={600}>
           Checklist
         </Typography>

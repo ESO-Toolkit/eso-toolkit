@@ -41,10 +41,7 @@ export const BuildIssuesPanel: React.FC<BuildIssuesPanelProps> = ({ issues }) =>
             backgroundColor: isDark ? 'rgba(255, 152, 0, 0.06)' : 'rgba(255, 152, 0, 0.04)',
           }}
         >
-          <WarningAmberIcon
-            color="warning"
-            sx={{ fontSize: 16, mt: 0.25, flexShrink: 0 }}
-          />
+          <WarningAmberIcon color="warning" sx={{ fontSize: 16, mt: 0.25, flexShrink: 0 }} />
           <Typography variant="caption" fontWeight={500}>
             {issue.message}
           </Typography>

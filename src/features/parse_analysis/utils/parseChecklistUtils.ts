@@ -309,7 +309,7 @@ export function buildParseChecklist({
       title: 'Mundus stone equipped',
       status: mundusResult.hasMundus ? 'pass' : 'fail',
       detail: mundusResult.hasMundus
-        ? mundusResult.mundusName ?? 'Mundus stone detected'
+        ? (mundusResult.mundusName ?? 'Mundus stone detected')
         : 'No mundus stone detected',
     });
   } else {

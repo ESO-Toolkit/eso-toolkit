@@ -24,11 +24,10 @@ import {
   CastEvent,
   CombatantInfoEvent,
   DamageEvent,
-  ResourceChangeEvent,
   UnifiedCastEvent,
 } from '../../../types/combatlogEvents';
-import { Logger, LogLevel } from '../../../utils/logger';
 import { GearTrait } from '../../../types/playerDetails';
+import { Logger, LogLevel } from '../../../utils/logger';
 import { TRIAL_DUMMY_BUFF_IDS, TRIAL_DUMMY_BUFF_NAMES } from '../constants/trialDummyConstants';
 
 // Logger used for detailed parse analysis diagnostics
@@ -1529,7 +1528,7 @@ export interface UltimateUsageResult {
 }
 
 /** Known ultimate cost threshold — abilities costing >= this are ultimates */
-const ULTIMATE_COST_THRESHOLD = 75;
+const _ULTIMATE_COST_THRESHOLD = 75;
 
 /**
  * Well-known ultimate ability IDs from ESO.
@@ -1761,8 +1760,7 @@ export function analyzeDotUptime(
     totalActiveMs = Math.min(totalActiveMs, fightDurationMs);
 
     const uptimePercentage = fightDurationMs > 0 ? (totalActiveMs / fightDurationMs) * 100 : 0;
-    const name =
-      getAbilityNameFromMapper(abilityId, abilityMapper) || `Unknown (${abilityId})`;
+    const name = getAbilityNameFromMapper(abilityId, abilityMapper) || `Unknown (${abilityId})`;
 
     dotAbilities.push({
       abilityId,
@@ -1796,8 +1794,7 @@ export function analyzeDotUptime(
 
   return {
     dotAbilities,
-    overallDotUptimePercentage:
-      fightDurationMs > 0 ? (overallActiveMs / fightDurationMs) * 100 : 0,
+    overallDotUptimePercentage: fightDurationMs > 0 ? (overallActiveMs / fightDurationMs) * 100 : 0,
     totalDotDamage,
     totalDirectDamage,
     dotDamagePercentage: totalDamage > 0 ? (totalDotDamage / totalDamage) * 100 : 0,
@@ -1914,14 +1911,13 @@ export function analyzeResourceSustain(
 
   // Determine primary resource from max pools (first available snapshot)
   const firstRes = playerDamage[0].sourceResources;
-  const primaryResource =
-    firstRes.maxStamina > firstRes.maxMagicka ? 'stamina' : 'magicka';
+  const primaryResource = firstRes.maxStamina > firstRes.maxMagicka ? 'stamina' : 'magicka';
 
   // Bucket by 1-second intervals, take last snapshot per bucket
   const bucketCount = Math.ceil(fightDurationMs / BUCKET_SIZE_MS);
-  const bucketSnapshots = new Array<{ stamPct: number; magPct: number } | null>(
-    bucketCount,
-  ).fill(null);
+  const bucketSnapshots = new Array<{ stamPct: number; magPct: number } | null>(bucketCount).fill(
+    null,
+  );
 
   for (const event of playerDamage) {
     const bucketIndex = Math.min(
