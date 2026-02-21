@@ -21,6 +21,7 @@ on:
 jobs:
   check-do-not-merge-label:
     runs-on: ubuntu-latest
+    if: github.event_name != 'merge_group'
     steps:
       - name: Check for Do Not Merge or Waiting on Parent labels
         uses: actions/github-script@v8
