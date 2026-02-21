@@ -22,7 +22,7 @@ interface BuffUptimesPanelProps {
 }
 
 // Define the specific status effect debuff abilities to track
-const IMPORTANT_BUFF_ABILITIES = new Set([
+export const IMPORTANT_BUFF_ABILITIES = new Set([
   KnownAbilities.MINOR_SAVAGERY,
   KnownAbilities.MAJOR_SAVAGERY,
   KnownAbilities.MINOR_SORCERY,
@@ -48,6 +48,9 @@ const IMPORTANT_BUFF_ABILITIES = new Set([
 
   KnownAbilities.GRAND_REJUVENATION,
   KnownAbilities.MAJOR_BERSERK,
+
+  KnownAbilities.PILLAGERS_PROFIT_BUFF,
+  KnownAbilities.OZEZANS_PLATING,
 ]);
 
 /**
