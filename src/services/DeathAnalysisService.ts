@@ -257,7 +257,7 @@ export class DeathAnalysisService {
 
         // Time alive is from fight start to first death
         const firstDeathTime = Math.min(...deaths.map((d) => d.timestamp));
-        const timeAlive = Math.max(0, (firstDeathTime - fightStartTime) / 1000); // Convert to seconds
+        const timeAlive = Math.max(0, firstDeathTime - fightStartTime);
 
         fightDeaths.push({
           fightId,

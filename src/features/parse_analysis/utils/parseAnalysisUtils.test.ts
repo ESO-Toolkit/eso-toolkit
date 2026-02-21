@@ -325,7 +325,7 @@ describe('parseAnalysisUtils', () => {
       // 30000 damage in 60 seconds = 500 DPS
       expect(result.totalDamage).toBe(30000);
       expect(result.dps).toBe(500);
-      expect(result.duration).toBe(60);
+      expect(result.durationMs).toBe(60000);
     });
 
     describe('calculateActivePercentage', () => {
@@ -585,7 +585,7 @@ describe('parseAnalysisUtils', () => {
       const result = calculateDPS(damageEvents, PLAYER_ID, FIGHT_START, FIGHT_START);
       expect(result.totalDamage).toBe(10000);
       expect(result.dps).toBe(0);
-      expect(result.duration).toBe(0);
+      expect(result.durationMs).toBe(0);
     });
 
     it('should return 0 damage when no damage events for player', () => {
@@ -611,7 +611,7 @@ describe('parseAnalysisUtils', () => {
 
       expect(result.totalDamage).toBe(0);
       expect(result.dps).toBe(0);
-      expect(result.duration).toBe(60);
+      expect(result.durationMs).toBe(60000);
     });
   });
 

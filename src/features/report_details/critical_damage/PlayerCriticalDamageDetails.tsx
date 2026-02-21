@@ -49,8 +49,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     return playerData.playersById[id] || null;
   }, [playerData, id]);
 
-  const fightDurationSeconds =
-    fight?.endTime && fight?.startTime ? (fight.endTime - fight.startTime) / 1000 : 1;
+  const fightDurationMs = fight?.endTime && fight?.startTime ? fight.endTime - fight.startTime : 1;
 
   const fightingFinesseSource = React.useMemo(() => {
     return criticalDamageData?.criticalDamageSources?.find(
@@ -161,7 +160,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
       toggleableSourceNames={toggleableSourceNames}
       onSourceToggle={handleSourceToggle}
       criticalMultiplier={null}
-      fightDurationSeconds={fightDurationSeconds}
+      fightDurationMs={fightDurationMs}
       onExpandChange={onExpandChange}
       phaseTransitionInfo={phaseTransitionInfo}
     />

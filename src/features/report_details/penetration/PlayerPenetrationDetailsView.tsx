@@ -29,6 +29,7 @@ import { useRoleColors } from '../../../hooks';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { buildPhaseBoundaryAnnotations } from '../../../utils/chartPhaseAnnotationUtils';
+import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 // Register Chart.js components
@@ -81,7 +82,7 @@ interface PlayerPenetrationDetailsViewProps {
   penetrationData: PlayerPenetrationData | null;
   penetrationSources: PenetrationSourceWithActiveState[];
   playerBasePenetration: number;
-  fightDurationSeconds: number;
+  fightDurationMs: number;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   phaseTransitionInfo?: PhaseTransitionInfo;
 }
@@ -95,7 +96,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
   penetrationSources,
   player,
   playerBasePenetration,
-  fightDurationSeconds,
+  fightDurationMs,
   onExpandChange,
   phaseTransitionInfo,
 }) => {
@@ -473,7 +474,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                         type: 'linear',
                         display: true,
                         min: 0,
-                        max: fightDurationSeconds,
+                        max: msToSeconds(fightDurationMs),
                         title: {
                           display: true,
                           text: 'Time (seconds)',

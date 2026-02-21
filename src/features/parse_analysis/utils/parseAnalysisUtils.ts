@@ -521,7 +521,7 @@ export function calculateCPM(
 export interface ActivePercentageResult {
   activePercentage: number;
   activeSeconds: number;
-  fightDurationSeconds: number;
+  fightDurationMs: number;
   totalCasts: number;
   baseActiveSeconds: number;
   channelExtraSeconds: number;
@@ -580,7 +580,7 @@ export function calculateActivePercentage(
     return {
       activePercentage: 0,
       activeSeconds: 0,
-      fightDurationSeconds: 0,
+      fightDurationMs: 0,
       totalCasts: 0,
       baseActiveSeconds: 0,
       channelExtraSeconds: 0,
@@ -649,7 +649,7 @@ export function calculateActivePercentage(
   return {
     activePercentage,
     activeSeconds: totalActiveMs / 1000,
-    fightDurationSeconds: fightDurationMs / 1000,
+    fightDurationMs,
     totalCasts: relevantCasts.length,
     baseActiveSeconds: baseActiveMs / 1000,
     channelExtraSeconds: channelExtraMs / 1000,
@@ -663,7 +663,7 @@ export function calculateActivePercentage(
 export interface DPSResult {
   totalDamage: number;
   dps: number;
-  duration: number; // in seconds
+  durationMs: number;
 }
 
 /**
@@ -682,7 +682,7 @@ export function calculateDPS(
 
   const totalDamage = playerDamageEvents.reduce((sum, event) => sum + event.amount, 0);
 
-  // Calculate fight duration in seconds
+  // Calculate fight duration
   const durationMs = fightEndTime - fightStartTime;
   const durationSeconds = durationMs > 0 ? durationMs / 1000 : 0;
 
@@ -691,7 +691,7 @@ export function calculateDPS(
   return {
     totalDamage,
     dps,
-    duration: durationSeconds,
+    durationMs: durationMs > 0 ? durationMs : 0,
   };
 }
 

@@ -171,7 +171,7 @@ function intervalsToTimelinePoints(
   }
 
   const points: UptimeTimelinePoint[] = [];
-  const fightDurationSeconds = (fightEndTime - fightStartTime) / 1000;
+  const fightDurationMs = fightEndTime - fightStartTime;
 
   points.push({ x: 0, y: 0 });
 
@@ -185,7 +185,7 @@ function intervalsToTimelinePoints(
     appendPoint(points, endSeconds, 0);
   });
 
-  appendPoint(points, fightDurationSeconds, 0);
+  appendPoint(points, fightDurationMs / 1000, 0);
 
   return dedupePoints(points);
 }

@@ -58,12 +58,11 @@ function isFalsePositiveWipe(fight: FightFragment): boolean {
   }
 
   const durationMs = fight.endTime - fight.startTime;
-  const durationSeconds = durationMs / 1000;
 
   // More aggressive heuristics for false positive detection:
 
   // 1. Very short fights (< 45 seconds) with high boss health are likely false positives
-  if (durationSeconds < 45 && fight.bossPercentage >= 95) {
+  if (durationMs < 45000 && fight.bossPercentage >= 95) {
     return true;
   }
 
@@ -73,7 +72,7 @@ function isFalsePositiveWipe(fight: FightFragment): boolean {
   }
 
   // 3. Any fight with 100% that lasted more than 10 seconds but less than 5 minutes
-  if (fight.bossPercentage >= 99.9 && durationSeconds > 10 && durationSeconds < 300) {
+  if (fight.bossPercentage >= 99.9 && durationMs > 10000 && durationMs < 300000) {
     return true;
   }
 
@@ -83,8 +82,8 @@ function isFalsePositiveWipe(fight: FightFragment): boolean {
     fight.difficulty >= 1 &&
     fight.difficulty < 10 &&
     fight.bossPercentage >= 98 &&
-    durationSeconds > 15 &&
-    durationSeconds < 600
+    durationMs > 15000 &&
+    durationMs < 600000
   ) {
     return true;
   }

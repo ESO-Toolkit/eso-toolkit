@@ -36,7 +36,7 @@ const CHAMPION_POINT_MAPPINGS: Record<number, KnownAbilities> = {
 };
 
 export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) => {
-  const durationSeconds = (fight.endTime - fight.startTime) / 1000;
+  const durationMs = fight.endTime - fight.startTime;
   const selectedFriendlyPlayerId = useSelector(selectSelectedFriendlyPlayerId);
 
   const resolvedContext = useResolvedReportFightContext(context);
@@ -147,7 +147,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) 
   return (
     <InsightsPanelView
       fight={fight}
-      durationSeconds={durationSeconds}
+      durationMs={durationMs}
       abilityEquipped={abilityEquipped}
       buffActors={buffActors}
       firstDamageDealer={firstDamageDealer}
