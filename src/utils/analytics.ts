@@ -6,6 +6,7 @@
 import ReactGA from 'react-ga4';
 
 import { getBuildInfo, getBuildInfoAsync } from './cacheBusting';
+import { hasAnalyticsConsent } from './consentManager';
 import { getEnvVar } from './envUtils';
 import { Logger, LogLevel } from './logger';
 
@@ -20,18 +21,11 @@ type EventPayload = {
 } & Record<string, unknown>;
 
 /**
- * Check if user has consented to cookies/analytics
- * This is a lazy import to avoid circular dependencies
+ * Check if user has consented to analytics tracking.
+ * Delegates to the central consentManager.
  */
 const hasUserConsented = (): boolean => {
-  try {
-    const consentStr = localStorage.getItem('eso-log-aggregator-cookie-consent');
-    if (!consentStr) return false;
-    const consent = JSON.parse(consentStr);
-    return consent.accepted === true;
-  } catch {
-    return false;
-  }
+  return hasAnalyticsConsent();
 };
 
 /**
