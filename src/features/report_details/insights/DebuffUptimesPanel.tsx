@@ -863,30 +863,26 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
 
     // Compute merged Major Maim and Minor Maim uptimes from all contributing ability IDs
     const maimTargetIds = realTargetIds.size > 0 ? realTargetIds : undefined;
-    const majorMaimEntry = debuffsLookup
-      ? computeGroupedMaimUptime({
-          debuffsLookup,
-          abilityIds: MAJOR_MAIM_ABILITY_IDS,
-          displayName: 'Major Maim',
-          icon: 'ability_debuff_major_maim',
-          targetIds: maimTargetIds,
-          fightStartTime,
-          fightEndTime,
-          fightDuration,
-        })
-      : null;
-    const minorMaimEntry = debuffsLookup
-      ? computeGroupedMaimUptime({
-          debuffsLookup,
-          abilityIds: MINOR_MAIM_ABILITY_IDS,
-          displayName: 'Minor Maim',
-          icon: 'ability_debuff_minor_maim',
-          targetIds: maimTargetIds,
-          fightStartTime,
-          fightEndTime,
-          fightDuration,
-        })
-      : null;
+    const majorMaimEntry = computeGroupedMaimUptime({
+      debuffsLookup,
+      abilityIds: MAJOR_MAIM_ABILITY_IDS,
+      displayName: 'Major Maim',
+      icon: 'ability_debuff_major_maim',
+      targetIds: maimTargetIds,
+      fightStartTime,
+      fightEndTime,
+      fightDuration,
+    });
+    const minorMaimEntry = computeGroupedMaimUptime({
+      debuffsLookup,
+      abilityIds: MINOR_MAIM_ABILITY_IDS,
+      displayName: 'Minor Maim',
+      icon: 'ability_debuff_minor_maim',
+      targetIds: maimTargetIds,
+      fightStartTime,
+      fightEndTime,
+      fightDuration,
+    });
     const maimEntries = [majorMaimEntry, minorMaimEntry].filter(
       (entry): entry is NonNullable<typeof majorMaimEntry> => entry !== null,
     );
