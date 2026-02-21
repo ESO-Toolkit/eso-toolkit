@@ -29,6 +29,7 @@ import {
   DeathPatternType,
 } from '../../../types/reportSummaryTypes';
 import { cleanArray } from '../../../utils/cleanArray';
+import { msToSeconds } from '../../../utils/fightDuration';
 
 interface UseReportSummaryDataReturn {
   summaryData?: ReportSummaryData;
@@ -376,9 +377,8 @@ async function performDamageAnalysis(
   // Process damage events from each fight
   for (const fightData of aggregatedData) {
     const { fight, damageEvents } = fightData;
-    const fightDuration = (fight.endTime - fight.startTime) / 1000; // Convert to seconds
     const fightDurationMs = fight.endTime - fight.startTime;
-    reportTotalDuration += fightDuration;
+    reportTotalDuration += fightDurationMs;
 
     for (const damageEvent of damageEvents) {
       const sourceId = damageEvent.sourceID?.toString() || 'unknown';
@@ -418,7 +418,8 @@ async function performDamageAnalysis(
         playerData.fightBreakdown.push(fightBreakdown);
       }
       fightBreakdown.damage += damageEvent.amount || 0;
-      fightBreakdown.dps = fightBreakdown.damage / fightDuration;
+      fightBreakdown.dps =
+        msToSeconds(fightDurationMs) > 0 ? fightBreakdown.damage / msToSeconds(fightDurationMs) : 0;
     }
   }
 
@@ -426,7 +427,7 @@ async function performDamageAnalysis(
   const playerBreakdown: PlayerDamageBreakdown[] = Array.from(playerDamageMap.values())
     .map((player) => ({
       ...player,
-      dps: reportTotalDuration > 0 ? player.totalDamage / reportTotalDuration : 0,
+      dps: reportTotalDuration > 0 ? player.totalDamage / msToSeconds(reportTotalDuration) : 0,
       damagePercentage: reportTotalDamage > 0 ? (player.totalDamage / reportTotalDamage) * 100 : 0,
     }))
     .sort((a, b) => b.totalDamage - a.totalDamage);
@@ -437,7 +438,7 @@ async function performDamageAnalysis(
 
   return {
     totalDamage: reportTotalDamage,
-    dps: reportTotalDuration > 0 ? reportTotalDamage / reportTotalDuration : 0,
+    dps: reportTotalDuration > 0 ? reportTotalDamage / msToSeconds(reportTotalDuration) : 0,
     playerBreakdown,
     abilityTypeBreakdown: [
       {
@@ -555,7 +556,7 @@ async function performDeathAnalysis(
           fightId: Number(fight.id),
           fightName: fight.name || `Fight ${fight.id}`,
           deathCount: 1,
-          timeAlive: (deathEvent.timestamp - fight.startTime) / 1000,
+          timeAlive: deathEvent.timestamp - fight.startTime,
           deathTimestamps: [deathEvent.timestamp],
         });
       } else {

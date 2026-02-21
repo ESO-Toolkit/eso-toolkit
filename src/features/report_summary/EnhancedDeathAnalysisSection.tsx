@@ -479,7 +479,7 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                         </TableCell>
                         <TableCell align="right">
                           <Typography variant="body2" color="text.secondary">
-                            {Math.round(player.averageTimeAlive)}s
+                            {Math.round(player.averageTimeAlive / 1000)}s
                           </Typography>
                         </TableCell>
                         <TableCell>

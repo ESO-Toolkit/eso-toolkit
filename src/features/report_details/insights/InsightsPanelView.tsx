@@ -14,7 +14,7 @@ import { StatusEffectUptimesPanel } from './StatusEffectUptimesPanel';
 
 interface InsightsPanelViewProps {
   fight: FightFragment;
-  durationSeconds: number;
+  durationMs: number;
   abilityEquipped: Partial<Record<KnownAbilities, string[]>>;
   buffActors: Partial<Record<KnownAbilities, Set<string>>>;
   firstDamageDealer: string | null;
@@ -52,8 +52,9 @@ const CHAMPION_POINT_DATA = [
   { name: 'From the Brink', emoji: '🛡️', knownAbility: KnownAbilities.FROM_THE_BRINK },
 ];
 
-// Helper function to format duration into minutes and seconds
-const formatDuration = (totalSeconds: number): string => {
+// Helper function to format duration from milliseconds into minutes and seconds
+const formatDuration = (ms: number): string => {
+  const totalSeconds = ms / 1000;
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = Math.floor(totalSeconds % 60);
   const decimals = Math.round((totalSeconds % 1) * 10);
@@ -67,7 +68,7 @@ const formatDuration = (totalSeconds: number): string => {
 
 export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
   fight,
-  durationSeconds,
+  durationMs,
   abilityEquipped,
   buffActors,
   firstDamageDealer,
@@ -139,7 +140,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 }}
               >
                 <strong>Duration: </strong>
-                <span>{formatDuration(durationSeconds)}</span>
+                <span>{formatDuration(durationMs)}</span>
               </Typography>
             </Box>
 

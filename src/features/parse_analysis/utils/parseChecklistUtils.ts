@@ -200,14 +200,14 @@ export function buildParseChecklist({
     });
 
     const hasExecute = rotationResult.skillIntervals?.some((skill) => skill.isExecute) ?? false;
-    const fightDuration = activeTimeResult?.fightDurationSeconds ?? 0;
+    const fightDurationMs = activeTimeResult?.fightDurationMs ?? 0;
     items.push({
       id: 'execute',
       title: 'Execute skill usage in late fight',
-      status: hasExecute ? 'pass' : fightDuration > 20 ? 'warn' : 'info',
+      status: hasExecute ? 'pass' : fightDurationMs > 20000 ? 'warn' : 'info',
       detail: hasExecute
         ? 'Execute phase casts detected'
-        : fightDuration > 20
+        : fightDurationMs > 20000
           ? 'No execute usage detected'
           : 'Fight too short to evaluate',
     });
