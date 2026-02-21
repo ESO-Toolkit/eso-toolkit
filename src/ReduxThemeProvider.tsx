@@ -236,6 +236,11 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                     ? '0 6px 25px rgba(56, 189, 248, 0.35)'
                     : '0 6px 25px rgba(3, 105, 161, 0.35)',
                 },
+                '&.Mui-disabled': {
+                  background: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
+                  color: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.26)',
+                  boxShadow: 'none',
+                },
               },
               outlined: {
                 borderColor: darkMode ? 'rgba(56, 189, 248, 0.5)' : 'rgba(3, 105, 161, 0.5)',
