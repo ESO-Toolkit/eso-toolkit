@@ -47,6 +47,8 @@ interface PlayersPanelViewProps {
   playerGear: Record<number, PlayerGearSetRecord[]>;
   fightStartTime?: number;
   fightEndTime?: number;
+  /** DPS value (damage/second) per player ID, used to identify the top DPS player */
+  dpsValueByPlayer?: Record<string, number>;
 }
 
 type SortOption =
@@ -81,10 +83,27 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     playerGear,
     fightStartTime: _fightStartTime,
     fightEndTime: _fightEndTime,
+    dpsValueByPlayer,
   }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState<SortOption>('alphabetical');
     const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
+
+    // Identify the top DPS player (highest DPS value among DPS-role players)
+    const { topDpsPlayerId, topDpsValue } = useMemo(() => {
+      if (!dpsValueByPlayer || !playerActors) return { topDpsPlayerId: null, topDpsValue: 0 };
+      let bestId: string | null = null;
+      let bestDps = 0;
+      for (const [id, dps] of Object.entries(dpsValueByPlayer)) {
+        const player = playerActors[id];
+        if (player?.role === 'dps' && dps > bestDps) {
+          bestDps = dps;
+          bestId = id;
+        }
+      }
+      return { topDpsPlayerId: bestId, topDpsValue: bestDps };
+    }, [dpsValueByPlayer, playerActors]);
+
     // Memoize player data transformations to prevent recreating objects on each render
     const playerCards = React.useMemo(() => {
       if (!playerActors) return [];
@@ -108,6 +127,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           .sort((a, b) => b.count - a.count)
           .filter((s) => s.count > 0);
 
+        const isTopDps = topDpsPlayerId !== null && String(player.id) === topDpsPlayerId;
+
         return {
           key: player.id,
           player,
@@ -125,6 +146,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           maxMagicka,
           distanceTraveled,
           playerGear: playerGearSets,
+          isTopDps,
+          totalDps: isTopDps ? topDpsValue : undefined,
         };
       });
     }, [
@@ -143,6 +166,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       maxStaminaByPlayer,
       maxMagickaByPlayer,
       distanceByPlayer,
+      topDpsPlayerId,
+      topDpsValue,
     ]);
 
     // Filter, search, and sort players
@@ -457,6 +482,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 reportId={reportId}
                 fightId={fightId}
                 playerGear={playerData.playerGear}
+                isTopDps={playerData.isTopDps}
+                totalDps={playerData.totalDps}
               />
             </Box>
           ))}

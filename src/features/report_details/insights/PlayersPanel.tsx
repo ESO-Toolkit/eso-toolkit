@@ -246,6 +246,27 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     return byPlayer;
   }, [playerTravelDistances]);
 
+  // Compute DPS per player (total outgoing damage to enemies / fight duration in seconds)
+  const dpsValueByPlayer = React.useMemo(() => {
+    if (!fight || !damageEvents || damageEvents.length === 0) return {};
+    const durationSecs = (fight.endTime - fight.startTime) / 1000;
+    if (durationSecs <= 0) return {};
+
+    const damageByPlayer: Record<string, number> = {};
+    for (const event of damageEvents) {
+      if (event.sourceIsFriendly && !event.targetIsFriendly) {
+        const id = String(event.sourceID);
+        damageByPlayer[id] = (damageByPlayer[id] ?? 0) + (event.amount ?? 0);
+      }
+    }
+
+    const result: Record<string, number> = {};
+    for (const [id, totalDamage] of Object.entries(damageByPlayer)) {
+      result[id] = totalDamage / durationSecs;
+    }
+    return result;
+  }, [fight, damageEvents]);
+
   const { abilitiesById } = reportMasterData;
 
   // Calculate loading state - include ALL data dependencies this panel needs
@@ -1191,6 +1212,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         playerGear={playerGear}
         fightStartTime={fight?.startTime}
         fightEndTime={fight?.endTime}
+        dpsValueByPlayer={dpsValueByPlayer}
       />
     </div>
   );
