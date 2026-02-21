@@ -127,6 +127,7 @@ export interface PlayerCardProps {
   isTopDps?: boolean;
   /** The player's total DPS value (used in the badge label) */
   totalDps?: number;
+  critDamageSummary?: { avg: number; max: number };
   /** Test ID for testing */
   'data-testid'?: string;
 }

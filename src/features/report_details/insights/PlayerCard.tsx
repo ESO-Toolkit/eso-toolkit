@@ -115,6 +115,7 @@ interface PlayerCardProps {
   isTopDps?: boolean;
   /** The player's total DPS value (used in the badge label) */
   totalDps?: number;
+  critDamageSummary?: { avg: number; max: number };
 }
 
 // Helper function to consolidate build issues
@@ -185,6 +186,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     playerGear,
     isTopDps,
     totalDps,
+    critDamageSummary,
   }) => {
     const theme = useTheme();
 
@@ -1276,6 +1278,38 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       )}
                     </Typography>
                   </Box>
+
+                  {critDamageSummary && player.role === 'dps' && (
+                    <Box
+                      sx={{
+                        mb: 1,
+                        px: 0.5,
+                      }}
+                    >
+                      <Tooltip
+                        title="Critical Damage: avg is the time-weighted average crit damage multiplier; max is the highest recorded value during the fight"
+                        enterTouchDelay={0}
+                        leaveTouchDelay={3000}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color:
+                              critDamageSummary.avg >= 125
+                                ? 'success.main'
+                                : critDamageSummary.avg >= 100
+                                  ? 'warning.main'
+                                  : 'error.main',
+                            fontWeight: 600,
+                            fontSize: { xs: '0.68rem', sm: '0.72rem' },
+                            cursor: 'help',
+                          }}
+                        >
+                          ⚔️ Crit: {critDamageSummary.avg.toFixed(0)}% avg ({critDamageSummary.max.toFixed(0)}% max)
+                        </Typography>
+                      </Tooltip>
+                    </Box>
+                  )}
 
                   {(maxHealth > 0 || maxStamina > 0 || maxMagicka > 0) && (
                     <Box
