@@ -377,7 +377,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         sensitivity: 'base',
       }) !== 0;
 
-  
     return (
       <Box sx={{ minWidth: 0, display: 'flex', height: '100%' }}>
         <Card
