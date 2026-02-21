@@ -323,7 +323,7 @@ export function buildParseChecklist({
 
   // ─── Potion Uptime ───────────────────────────────────────────────────────────
   if (potionUse != null && activeTimeResult) {
-    const fightDuration = activeTimeResult.fightDurationSeconds;
+    const fightDuration = activeTimeResult.fightDurationMs / 1000;
     const expectedPotions = Math.max(1, Math.floor(fightDuration / 45));
     const potionRatio = potionUse / expectedPotions;
     items.push({

@@ -236,11 +236,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
             userSelect: 'none',
             fontSize: '0.75rem',
             color:
-              sortField === 'rawHps'
-                ? '#38bdf8'
-                : roleColors.isDarkMode
-                  ? '#ecf0f1'
-                  : '#334155',
+              sortField === 'rawHps' ? '#38bdf8' : roleColors.isDarkMode ? '#ecf0f1' : '#334155',
             transition: 'all 0.2s ease',
             '&:hover': {
               backgroundColor: 'rgba(56, 181, 248, 0.15)',
