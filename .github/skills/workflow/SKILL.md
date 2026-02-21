@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: Enforce git workflow by checking the current branch before starting Jira ticket work. Creates properly-formatted ESO-XXX/description feature branches and prevents commits directly to main.
+description: Enforce git workflow by checking the current branch before starting Jira ticket work. Creates properly-formatted ESO-XXX/description feature branches, prevents commits directly to main, and updates the Jira ticket status as work progresses.
 ---
 
 You are enforcing the ESO Log Aggregator git workflow. Follow these steps precisely.
@@ -70,6 +70,21 @@ Tell the user:
 - The new branch name
 - That they are now safe to begin implementation
 - Any twig setup that was performed
+
+## Step 6 — Update Ticket Status When Work Is Complete
+
+When implementation is finished and changes are committed/pushed, update the Jira ticket status to reflect completion:
+
+```
+@workspace Move ESO-XXX to "In Review"
+```
+
+Use the appropriate status based on state:
+- **Starting work**: Move ticket to `In Progress`
+- **Implementation done, PR open**: Move ticket to `In Review`
+- **Merged and deployed**: Move ticket to `Done`
+
+See the Jira skill for full transition commands: [.github/skills/jira/SKILL.md](.github/skills/jira/SKILL.md)
 
 ## Recovery: If Changes Were Made on Main
 
