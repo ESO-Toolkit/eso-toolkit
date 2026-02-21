@@ -1430,6 +1430,40 @@ export interface BarSwapAnalysisResult {
   /** True if the player stayed on one bar for more than 15 seconds at any point */
   barCampingDetected: boolean;
   barCampingInstances: number;
+  /**
+   * Compact bar-rotation pattern label, e.g. "FB", "FFB", "FFBS".
+   * Each letter represents one bar-trip between swaps:
+   *   F = front bar full trip  B = back bar full trip  S = setup trip (≤2 skill casts)
+   * Undefined when there are no swaps or too few segments to detect a pattern.
+   */
+  barSetupPattern?: string;
+}
+
+/**
+ * Derives a compact bar-pattern label from per-segment cast counts.
+ * Uses the first 2–4 segments to find the shortest repeating cycle.
+ */
+function deriveBarSetupPattern(
+  segments: Array<{ bar: 'F' | 'B'; skillCasts: number }>,
+): string | undefined {
+  if (segments.length < 2) return undefined;
+  // Classify each segment: ≤2 skill casts between swaps = setup (S)
+  const letters = segments.map((s) => (s.skillCasts <= 2 ? 'S' : s.bar));
+  const cycleStr = letters.join('');
+  // Find the shortest repeating unit of length 2–4
+  for (let len = 2; len <= Math.min(4, Math.floor(cycleStr.length / 2)); len++) {
+    const candidate = cycleStr.slice(0, len);
+    let isRepeating = true;
+    for (let i = len; i + len <= cycleStr.length; i += len) {
+      if (cycleStr.slice(i, i + len) !== candidate) {
+        isRepeating = false;
+        break;
+      }
+    }
+    if (isRepeating) return candidate;
+  }
+  // Return the first complete cycle (up to 4 segments)
+  return cycleStr.slice(0, Math.min(4, cycleStr.length));
 }
 
 /**
@@ -1498,6 +1532,31 @@ export function analyzeBarSwaps(
   const averageTimeBetweenSwaps =
     intervals.length > 0 ? intervals.reduce((a, b) => a + b, 0) / intervals.length : 0;
 
+  // ── Bar setup pattern ────────────────────────────────────────────────────────
+  // Count non-swap skill casts per bar-segment to classify each segment as
+  // F (front bar), B (back bar), or S (setup / quick buff trip ≤2 casts).
+  const skillCasts = castEvents.filter(
+    (e) =>
+      e.sourceID === playerId &&
+      e.sourceIsFriendly &&
+      e.type === 'cast' &&
+      e.abilityGameID !== KnownAbilities.SWAP_WEAPONS &&
+      e.timestamp >= fightStartTime &&
+      e.timestamp <= fightEndTime,
+  );
+
+  // Build segment boundaries: fightStart, swap0, swap1, ..., fightEnd
+  const boundaries = [fightStartTime, ...swapEvents.map((e) => e.timestamp), fightEndTime];
+  const segments: Array<{ bar: 'F' | 'B'; skillCasts: number }> = [];
+  for (let i = 0; i < boundaries.length - 1; i++) {
+    const segStart = boundaries[i];
+    const segEnd = boundaries[i + 1];
+    const count = skillCasts.filter((c) => c.timestamp > segStart && c.timestamp <= segEnd).length;
+    segments.push({ bar: i % 2 === 0 ? 'F' : 'B', skillCasts: count });
+  }
+
+  const barSetupPattern = deriveBarSetupPattern(segments);
+
   return {
     totalSwaps,
     swapsPerMinute: durationMinutes > 0 ? totalSwaps / durationMinutes : 0,
@@ -1505,6 +1564,7 @@ export function analyzeBarSwaps(
     longestTimeOnOneBar,
     barCampingDetected: longestTimeOnOneBar > BAR_CAMPING_THRESHOLD_MS,
     barCampingInstances,
+    barSetupPattern,
   };
 }
 

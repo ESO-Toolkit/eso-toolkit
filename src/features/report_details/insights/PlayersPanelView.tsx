@@ -20,6 +20,7 @@ import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import { resolveActorName } from '../../../utils/resolveActorName';
+import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 
 import { LazyPlayerCard as PlayerCard } from './LazyPlayerCard';
 
@@ -50,6 +51,8 @@ interface PlayersPanelViewProps {
   /** DPS value (damage/second) per player ID, used to identify the top DPS player */
   dpsValueByPlayer?: Record<string, number>;
   criticalDamageByPlayer?: Record<string, { avg: number; max: number }>;
+  /** Bar swap analysis results per player ID, used to show bar setup pattern on DPS cards */
+  barSwapByPlayer?: Record<string, BarSwapAnalysisResult>;
 }
 
 type SortOption =
@@ -86,6 +89,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     fightEndTime: _fightEndTime,
     dpsValueByPlayer,
     criticalDamageByPlayer,
+    barSwapByPlayer,
   }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState<SortOption>('alphabetical');
@@ -131,6 +135,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         const critDamageSummary = criticalDamageByPlayer?.[String(player.id)];
 
         const isTopDps = topDpsPlayerId !== null && String(player.id) === topDpsPlayerId;
+        const barSwapResult = barSwapByPlayer?.[String(player.id)];
 
         return {
           key: player.id,
@@ -152,6 +157,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           isTopDps,
           totalDps: isTopDps ? topDpsValue : undefined,
           critDamageSummary,
+          barSwapResult,
         };
       });
     }, [
@@ -173,6 +179,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       topDpsPlayerId,
       topDpsValue,
       criticalDamageByPlayer,
+      barSwapByPlayer,
     ]);
 
     // Filter, search, and sort players
@@ -490,6 +497,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 isTopDps={playerData.isTopDps}
                 totalDps={playerData.totalDps}
                 critDamageSummary={playerData.critDamageSummary}
+                barSwapResult={playerData.barSwapResult}
               />
             </Box>
           ))}

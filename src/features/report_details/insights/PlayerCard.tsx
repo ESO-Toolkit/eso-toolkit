@@ -56,6 +56,7 @@ import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
 import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
+import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 import { ScribedSkillData } from '../../scribing/types';
 // TODO: Implement proper scribing detection services
 // Temporary stubs to prevent compilation errors
@@ -116,6 +117,8 @@ interface PlayerCardProps {
   /** The player's total DPS value (used in the badge label) */
   totalDps?: number;
   critDamageSummary?: { avg: number; max: number };
+  /** Bar swap analysis result, used to display bar setup pattern on DPS cards */
+  barSwapResult?: BarSwapAnalysisResult;
 }
 
 // Helper function to consolidate build issues
@@ -187,6 +190,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     isTopDps,
     totalDps,
     critDamageSummary,
+    barSwapResult,
   }) => {
     const theme = useTheme();
 
@@ -1272,6 +1276,34 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               </span>
                               <span style={{ margin: '0 1px' }}></span>
                               {distanceDisplay}
+                            </span>
+                          </Tooltip>
+                        </>
+                      )}
+                      {player.role === 'dps' && barSwapResult?.barSetupPattern && (
+                        <>
+                          {' '}
+                          ·{' '}
+                          <Tooltip
+                            title={`Bar rotation pattern — each letter is one bar-trip between swaps: F = front bar, B = back bar, S = setup trip`}
+                            enterTouchDelay={0}
+                            leaveTouchDelay={3000}
+                          >
+                            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                              <span role="img" aria-label="bar pattern">
+                                🔄
+                              </span>
+                              <span style={{ margin: '0 1px' }}></span>
+                              <Box
+                                component="span"
+                                sx={{
+                                  fontWeight: 700,
+                                  letterSpacing: '0.05em',
+                                  fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                                }}
+                              >
+                                {barSwapResult.barSetupPattern}
+                              </Box>
                             </span>
                           </Tooltip>
                         </>
