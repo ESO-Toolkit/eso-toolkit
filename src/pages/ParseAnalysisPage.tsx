@@ -15,6 +15,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FastfoodIcon from '@mui/icons-material/Fastfood';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import InfoIcon from '@mui/icons-material/Info';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import RotateRightIcon from '@mui/icons-material/RotateRight';
 import SpeedIcon from '@mui/icons-material/Speed';
 import {
@@ -36,6 +37,7 @@ import {
   Divider,
   IconButton,
   LinearProgress,
+  Link,
   Paper,
   Stack,
   Table,
@@ -106,6 +108,7 @@ import { useReportMasterData } from '../hooks/useReportMasterData';
 import { useRoleColors } from '../hooks/useRoleColors';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { setParseReport, clearParseReport } from '../store/parse_analysis/parseAnalysisSlice';
+import { setReportData } from '../store/report/reportSlice';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { createBuffLookup } from '../utils/BuffLookupUtils';
 import { detectBuildIssues, type BuildIssue } from '../utils/detectBuildIssues';
@@ -217,6 +220,9 @@ const extractReportInfo = (url: string): { reportId: string; fightId: string | n
   return { reportId, fightId };
 };
 
+/** How often to poll for new fights added to the report while the page is open */
+const POLL_INTERVAL_MS = 15_000;
+
 const logger = new Logger({
   level: LogLevel.DEBUG,
   contextPrefix: 'ParseAnalysisPage',
@@ -234,7 +240,9 @@ const ParseAnalysisPageContent: React.FC = () => {
   const { reportId: contextReportId, fightId: contextFightId } = useSelectedReportAndFight();
   const [logUrl, setLogUrl] = useState('');
   const abilityMapper = useAbilityIdMapper();
-  const { castEvents, isCastEventsLoading } = useCastEvents({ restrictToFightWindow: false });
+  const { castEvents, isCastEventsLoading, isCastEventsLoaded } = useCastEvents({
+    restrictToFightWindow: false,
+  });
   const { damageEvents, isDamageEventsLoading } = useDamageEvents({ restrictToFightWindow: false });
   const { friendlyBuffEvents } = useFriendlyBuffEvents({ restrictToFightWindow: false });
   const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents({
@@ -353,6 +361,9 @@ const ParseAnalysisPageContent: React.FC = () => {
     dummyId: number; // Trial dummy ID for buff analysis
   } | null>(null);
 
+  /** Supported dummy fights found in the current report — drives the navigation strip and polling */
+  const [availableFights, setAvailableFights] = useState<Array<{ id: number; name: string }>>([]);
+
   // Core analysis function - fetches fight/player data and triggers event loading
   const analyzeReport = useCallback(
     async (reportId: string, fightId: string | null): Promise<void> => {
@@ -386,6 +397,15 @@ const ParseAnalysisPageContent: React.FC = () => {
         }));
         return;
       }
+
+      // Collect all supported dummy fights in this report for fight navigation
+      const allSupportedFights = (report.fights ?? []).filter(
+        (f): f is NonNullable<typeof f> =>
+          f != null && TRIAL_DUMMY_TARGET_NAMES.some((name) => f.name?.includes(name)),
+      );
+      setAvailableFights(
+        allSupportedFights.map((f) => ({ id: f.id, name: f.name ?? `Fight ${f.id}` })),
+      );
 
       // Get the latest fight (or the specified fight)
       let selectedFight;
@@ -435,7 +455,20 @@ const ParseAnalysisPageContent: React.FC = () => {
         }),
       );
 
-      // Note: Master data and ability mapper are automatically managed by context providers
+      // CRITICAL: Push the freshly-fetched report data into the report slice so that
+      // useFightForContext can resolve the fight (including any newly-added fight).
+      // Without this the event hooks see selectedFight=null and never fetch events.
+      dispatch(setReportData(report));
+
+      // CRITICAL: Ensure the URL reflects the resolved fight ID so event hooks
+      // (useCastEvents, useDamageEvents, etc.) can resolve the correct fight context.
+      // Without this, when fightId was absent or non-numeric (e.g. #fight=last),
+      // useFightForContext returns null and no events are ever fetched.
+      const targetPath = `/parse-analysis/${reportId}/${selectedFight.id}`;
+      if (window.location.pathname !== targetPath) {
+        logger.debug('Updating URL to fight-specific path', { targetPath });
+        navigate(targetPath, { replace: true });
+      }
 
       // Step 2: Fetch player data to get the main player
       const playersResponse = await client.query<GetPlayersForReportQuery>({
@@ -549,7 +582,7 @@ const ParseAnalysisPageContent: React.FC = () => {
         dummyId,
       });
     },
-    [client, dispatch, logUrl, isReady, isLoggedIn],
+    [client, dispatch, logUrl, isReady, isLoggedIn, navigate],
   );
 
   // Effect to run analysis once events are loaded
@@ -557,6 +590,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     logger.debug('Parse analysis effect status', {
       hasPendingAnalysis: !!pendingAnalysis,
       isCastEventsLoading,
+      isCastEventsLoaded,
       isDamageEventsLoading,
       isCombatantInfoEventsLoading,
       isDebuffEventsLoading,
@@ -578,10 +612,10 @@ const ParseAnalysisPageContent: React.FC = () => {
       return;
     }
 
-    // IMPORTANT: We need cast events to run weave analysis
-    // Don't wait for both - cast events are sufficient
-    if (castEvents.length === 0) {
-      // Cast events haven't loaded yet, wait for next render
+    // IMPORTANT: We need cast events to be fully loaded before running analysis.
+    // castEvents may legitimately be empty (e.g. no cast data for a fight),
+    // so we check isCastEventsLoaded (succeeded/failed) rather than castEvents.length.
+    if (!isCastEventsLoaded) {
       logger.debug('Cast events not yet available; delaying analysis until next update');
       return;
     }
@@ -781,6 +815,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     combatantInfoEvents,
     debuffEvents,
     isCastEventsLoading,
+    isCastEventsLoaded,
     isDamageEventsLoading,
     isCombatantInfoEventsLoading,
     isDebuffEventsLoading,
@@ -923,6 +958,85 @@ const ParseAnalysisPageContent: React.FC = () => {
     }
   }, [logUrl, analyzeReport, navigate]);
 
+  /** Seconds until the next poll fires — shown in the navigation strip */
+  const [pollCountdown, setPollCountdown] = useState(POLL_INTERVAL_MS / 1000);
+
+  // Poll for new fights added to the report while the page is open.
+  // Restarts when the report changes or loading state flips; uses closure-captured values
+  // so the interval always reflects the latest fight count.
+  useEffect(() => {
+    if (!state.reportCode || !client || !isReady || !isLoggedIn) return;
+
+    const reportCode = state.reportCode;
+    const currentFightCount = availableFights.length;
+    const intervalSec = POLL_INTERVAL_MS / 1000;
+
+    setPollCountdown(intervalSec);
+
+    // 1-second countdown tick
+    const countdownId = setInterval(() => {
+      setPollCountdown((prev) => (prev <= 1 ? intervalSec : prev - 1));
+    }, 1000);
+
+    const timerId = setInterval(() => {
+      if (state.loading) {
+        setPollCountdown(intervalSec); // reset visual while loading
+        return;
+      }
+      void (async () => {
+        try {
+          const response = await client.query<GetReportByCodeQuery>({
+            query: GetReportByCodeDocument,
+            variables: { code: reportCode },
+            fetchPolicy: 'no-cache',
+          });
+          const fights = response.reportData?.report?.fights ?? [];
+          const supported = fights.filter(
+            (f): f is NonNullable<typeof f> =>
+              f != null && TRIAL_DUMMY_TARGET_NAMES.some((n) => f.name?.includes(n)),
+          );
+          if (supported.length > currentFightCount) {
+            logger.debug('New fight detected via polling', {
+              previous: currentFightCount,
+              current: supported.length,
+            });
+            setAvailableFights(
+              supported.map((f) => ({ id: f.id, name: f.name ?? `Fight ${f.id}` })),
+            );
+            const newFight = supported[supported.length - 1];
+            if (newFight) {
+              logger.info(`Auto-analyzing new fight #${newFight.id}`);
+              void handleAnalyzeFromParams(reportCode, newFight.id.toString());
+            }
+          }
+        } catch (err) {
+          logger.debug('Fight poll error (ignored)', { error: err });
+        }
+      })();
+    }, POLL_INTERVAL_MS);
+
+    return () => {
+      clearInterval(countdownId);
+      clearInterval(timerId);
+    };
+  }, [
+    state.reportCode,
+    state.loading,
+    availableFights.length,
+    client,
+    isReady,
+    isLoggedIn,
+    handleAnalyzeFromParams,
+  ]);
+
+  const handleSelectFight = useCallback(
+    (fightId: number): void => {
+      if (!state.reportCode || fightId === state.fightId || state.loading) return;
+      void handleAnalyzeFromParams(state.reportCode, fightId.toString());
+    },
+    [state.reportCode, state.fightId, state.loading, handleAnalyzeFromParams],
+  );
+
   const handleLogUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setLogUrl(e.target.value);
   };
@@ -930,6 +1044,7 @@ const ParseAnalysisPageContent: React.FC = () => {
   const handleReset = useCallback((): void => {
     setState(createInitialParseState());
     setPendingAnalysis(null);
+    setAvailableFights([]);
     setLogUrl('');
     setWeaveDetailsOpen(false);
     dispatch(clearParseReport());
@@ -1646,10 +1761,162 @@ const ParseAnalysisPageContent: React.FC = () => {
         </Card>
       )}
 
+      {/* Setup instructions — shown only when no report is loaded */}
+      {!state.reportCode && !state.loading && (
+        <Card
+          sx={{
+            mb: 4,
+            ...roleColors.getAccordionStyles(),
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+          }}
+        >
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="subtitle1" fontWeight={700} gutterBottom>
+              How to set up a live parse
+            </Typography>
+            <Stack spacing={2.5}>
+              {(
+                [
+                  {
+                    step: 1,
+                    title: 'Download the ESOLogs uploader',
+                    body: (
+                      <>
+                        Download and install the desktop client from{' '}
+                        <Link
+                          href="https://www.esologs.com/client/download"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25 }}
+                        >
+                          esologs.com/client/download
+                          <OpenInNewIcon sx={{ fontSize: 12 }} />
+                        </Link>
+                        .
+                      </>
+                    ),
+                  },
+                  {
+                    step: 2,
+                    title: 'Start a Live Log',
+                    body: 'Open the uploader, select your ESO Logs directory and guild, then click Go! to begin uploading.',
+                  },
+                  {
+                    step: 3,
+                    title: 'Copy your report URL',
+                    body: 'Once the upload starts you will see a View Report button. Click it to open your live report, then copy the URL from your browser and paste it into the field above.',
+                  },
+                  {
+                    step: 4,
+                    title: 'Enable encounter logging in-game',
+                    body: (
+                      <>
+                        In the ESO chat box run the command{' '}
+                        <Box
+                          component="code"
+                          sx={{
+                            px: 0.75,
+                            py: 0.25,
+                            borderRadius: 1,
+                            bgcolor: 'action.hover',
+                            fontFamily: 'monospace',
+                            fontSize: '0.8rem',
+                          }}
+                        >
+                          /encounterlog
+                        </Box>
+                        . You should see the message{' '}
+                        <Box component="em">Encounter log enabled.</Box>
+                      </>
+                    ),
+                  },
+                  {
+                    step: 5,
+                    title: 'Parse on a 21M trial dummy',
+                    body: 'Attack a 21,000,000 HP trial dummy. Make sure your gear and food are set up as you intend to parse.',
+                  },
+                  {
+                    step: 6,
+                    title: 'Wait for automatic upload',
+                    body: 'Logs upload automatically ~10 seconds after combat ends (the ESO combat status timer). This page will poll for new fights and refresh automatically once your parse is available.',
+                  },
+                ] as { step: number; title: string; body: React.ReactNode }[]
+              ).map(({ step, title, body }) => (
+                <Stack key={step} direction="row" spacing={2} alignItems="flex-start">
+                  <Box
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      bgcolor: 'primary.main',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      mt: 0.25,
+                    }}
+                  >
+                    <Typography variant="caption" fontWeight={700} color="primary.contrastText">
+                      {step}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" fontWeight={600}>
+                      {title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {body}
+                    </Typography>
+                  </Box>
+                </Stack>
+              ))}
+            </Stack>
+          </CardContent>
+        </Card>
+      )}
+
       {state.error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {state.error}
         </Alert>
+      )}
+
+      {/* Fight navigation — visible whenever multiple supported fights are available, even while loading */}
+      {availableFights.length > 0 && !!state.reportCode && (
+        <Card
+          sx={{
+            mb: 2,
+            ...roleColors.getAccordionStyles(),
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+          }}
+        >
+          <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+              <RotateRightIcon fontSize="small" color="action" />
+              <Typography variant="caption" fontWeight={600}>
+                {availableFights.length === 1 ? 'Latest Fight' : 'Available Fights'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                — next check in {pollCountdown}s
+              </Typography>
+            </Stack>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {availableFights.map((fight) => (
+                <Chip
+                  key={fight.id}
+                  label={`#${fight.id} — ${fight.name}`}
+                  onClick={() => handleSelectFight(fight.id)}
+                  color={state.fightId === fight.id ? 'primary' : 'default'}
+                  variant={state.fightId === fight.id ? 'filled' : 'outlined'}
+                  size="small"
+                  disabled={state.loading}
+                />
+              ))}
+            </Box>
+          </CardContent>
+        </Card>
       )}
 
       {state.loading && (
