@@ -1,4 +1,5 @@
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoIcon from '@mui/icons-material/Info';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
@@ -79,6 +80,13 @@ const buildEnhancedScribingTooltipProps = (options: {
   isScribingSkill: false,
 });
 
+/** Formats a DPS value as an abbreviated string (e.g. 106234 → "106k") */
+function formatDpsValue(dps: number): string {
+  if (dps >= 1_000_000) return `${(dps / 1_000_000).toFixed(1)}m`;
+  if (dps >= 1_000) return `${Math.round(dps / 1_000)}k`;
+  return String(Math.round(dps));
+}
+
 interface PlayerCardProps {
   player: PlayerDetailsWithRole;
   mundusBuffs: Array<{ name: string; id: number }>;
@@ -97,6 +105,10 @@ interface PlayerCardProps {
   reportId?: string | null;
   fightId?: string | null;
   playerGear: PlayerGearSetRecord[];
+  /** Whether this player is the top DPS in the fight */
+  isTopDps?: boolean;
+  /** The player's total DPS value (used in the badge label) */
+  totalDps?: number;
 }
 
 // Helper function to consolidate build issues
@@ -165,6 +177,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     reportId,
     fightId,
     playerGear,
+    isTopDps,
+    totalDps,
   }) => {
     const theme = useTheme();
 
@@ -528,6 +542,45 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     </Tooltip>
                   </Box>
                 </Box>
+
+                {/* Top DPS badge */}
+                {isTopDps && totalDps !== undefined && (
+                  <Box sx={{ mb: 0.75 }}>
+                    <Chip
+                      icon={
+                        <EmojiEventsIcon
+                          sx={{
+                            fontSize: '0.85rem !important',
+                            color: '#b45309 !important',
+                          }}
+                        />
+                      }
+                      label={`Top DPS (Total): ${formatDpsValue(totalDps)}`}
+                      size="small"
+                      data-testid="top-dps-badge"
+                      sx={{
+                        height: 22,
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        letterSpacing: 0.3,
+                        background: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'linear-gradient(135deg, rgba(180,83,9,0.25) 0%, rgba(245,158,11,0.15) 100%)'
+                            : 'linear-gradient(135deg, rgba(251,191,36,0.25) 0%, rgba(245,158,11,0.15) 100%)',
+                        border: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? '1px solid rgba(245,158,11,0.4)'
+                            : '1px solid rgba(180,83,9,0.35)',
+                        '& .MuiChip-label': {
+                          color: (theme) => (theme.palette.mode === 'dark' ? '#fbbf24' : '#92400e'),
+                          px: 0.75,
+                        },
+                        '& .MuiChip-icon': { ml: 0.5 },
+                      }}
+                    />
+                  </Box>
+                )}
+
                 <Box>
                   <Box
                     sx={{

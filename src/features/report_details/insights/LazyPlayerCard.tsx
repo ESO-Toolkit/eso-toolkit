@@ -123,6 +123,10 @@ export interface PlayerCardProps {
   reportId?: string | null;
   fightId?: string | null;
   playerGear: PlayerGearSetRecord[];
+  /** Whether this player is the top DPS in the fight */
+  isTopDps?: boolean;
+  /** The player's total DPS value (used in the badge label) */
+  totalDps?: number;
   /** Test ID for testing */
   'data-testid'?: string;
 }
