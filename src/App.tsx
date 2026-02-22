@@ -95,6 +95,11 @@ const PrivacyPolicyPage = React.lazy(() =>
     default: module.PrivacyPolicyPage,
   })),
 );
+const PrivacySettingsPage = React.lazy(() =>
+  import('./pages/PrivacySettingsPage').then((module) => ({
+    default: module.PrivacySettingsPage,
+  })),
+);
 const CalculationKnowledgeBasePage = React.lazy(() =>
   import('./pages/CalculationKnowledgeBasePage').then((module) => ({
     default: module.CalculationKnowledgeBasePage,
@@ -543,6 +548,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <PrivacyPolicyPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/privacy-settings"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PrivacySettingsPage />
                   </Suspense>
                 </ErrorBoundary>
               }

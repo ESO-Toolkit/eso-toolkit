@@ -654,6 +654,11 @@ export const HeaderBar: React.FC = () => {
       icon: 'ℹ️',
       path: '/about',
     },
+    {
+      text: 'Privacy Settings',
+      icon: '🔒',
+      path: '/privacy-settings',
+    },
   ];
 
   const reportsItems = React.useMemo(() => {
