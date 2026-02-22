@@ -34,6 +34,8 @@ export const Footer: React.FC = React.memo(() => {
       { label: 'Log Analyzer', href: '/logs' },
 
       { label: 'Roster Builder', href: '/roster-builder' },
+
+      { label: 'My Reports', href: '/my-reports' },
     ],
 
     [],
@@ -42,8 +44,6 @@ export const Footer: React.FC = React.memo(() => {
   const quickLinks = React.useMemo<FooterLink[]>(
     () => [
       { label: 'Home', href: '/' },
-
-      { label: 'My Reports', href: '/my-reports' },
 
       { label: 'Privacy Settings', href: '/privacy-settings' },
 
