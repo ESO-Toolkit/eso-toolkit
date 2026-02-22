@@ -1305,7 +1305,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             cursor: 'help',
                           }}
                         >
-                          ⚔️ Crit: {critDamageSummary.avg.toFixed(0)}% avg ({critDamageSummary.max.toFixed(0)}% max)
+                          ⚔️ Crit: {critDamageSummary.avg.toFixed(0)}% avg (
+                          {critDamageSummary.max.toFixed(0)}% max)
                         </Typography>
                       </Tooltip>
                     </Box>
