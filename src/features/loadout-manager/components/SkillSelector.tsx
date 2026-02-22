@@ -1,6 +1,7 @@
 /**
  * Skill Selector Component
  * Allows selection and management of skills for front and back bars
+ * Now uses the new visual AbilityPicker for improved UX
  */
 
 import { Close as CloseIcon } from '@mui/icons-material';
@@ -11,19 +12,15 @@ import {
   Stack,
   Tooltip,
   IconButton,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
 } from '@mui/material';
-import Autocomplete, { AutocompleteInputChangeReason } from '@mui/material/Autocomplete';
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { useLogger } from '@/hooks/useLogger';
 
+import { AbilityPicker } from './AbilityPicker';
 import type { SkillData } from '../../../data/types/skill-line-types';
-import { getSkillById, searchSkills, getSkillStats } from '../data/skillLineSkills';
+import { getSkillById, preloadSkillData, getSkillStats } from '../data/skillLineSkills';
 import { updateSkills } from '../store/loadoutSlice';
 import { SkillsConfig } from '../types/loadout.types';
 
@@ -38,11 +35,6 @@ interface SkillSelectorProps {
 const SKILL_SLOTS = [3, 4, 5, 6, 7]; // Regular abilities
 const ULTIMATE_SLOT = 8;
 
-// Minimum characters required to trigger search
-const MIN_SEARCH_LENGTH = 2;
-// Maximum number of search results to display
-const MAX_SEARCH_RESULTS = 100;
-
 export const SkillSelector: React.FC<SkillSelectorProps> = ({
   skills,
   trialId,
@@ -51,6 +43,15 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
 }): React.ReactElement => {
   const dispatch = useDispatch();
   const logger = useLogger('SkillSelector');
+
+  // Initialize skill cache on mount
+  useEffect(() => {
+    preloadSkillData();
+    if (process.env.NODE_ENV === 'development') {
+      const stats = getSkillStats();
+      logger.debug('Skill line data loaded', stats);
+    }
+  }, [logger]);
 
   // Log skill statistics on mount (dev mode only)
   React.useEffect(() => {
@@ -189,9 +190,7 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
   onSkillChange,
   onSkillRemove,
 }) => {
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [inputValue, setInputValue] = useState('');
-  const [searchResults, setSearchResults] = useState<SkillData[]>([]);
+  const [isPickerOpen, setIsPickerOpen] = React.useState(false);
 
   // Find current skill info
   const currentSkill = currentSkillId !== undefined ? getSkillById(currentSkillId) : undefined;
@@ -199,47 +198,18 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
   const iconSize = isUltimate ? 52 : 44;
 
   // Handle skill selection
-  const handleSelect = useCallback(
-    (skill: SkillData | null) => {
-      if (!skill) {
-        onSkillRemove(barIndex, slotIndex);
-      } else {
-        onSkillChange(barIndex, slotIndex, skill.id);
-      }
-      setIsSelecting(false);
-      setInputValue('');
-      setSearchResults([]);
+  const handleSelectSkill = useCallback(
+    (skill: SkillData) => {
+      onSkillChange(barIndex, slotIndex, skill.id);
+      setIsPickerOpen(false);
     },
-    [barIndex, slotIndex, onSkillChange, onSkillRemove],
+    [barIndex, slotIndex, onSkillChange],
   );
 
-  // Handle input change with search
-  const handleInputChange = useCallback(
-    (_event: React.SyntheticEvent, value: string, reason: AutocompleteInputChangeReason) => {
-      setInputValue(value);
-
-      if (reason === 'reset' || reason === 'clear') {
-        setSearchResults([]);
-        return;
-      }
-
-      // Only search if we have enough characters
-      if (value.trim().length >= MIN_SEARCH_LENGTH) {
-        const results = searchSkills(value, MAX_SEARCH_RESULTS);
-        setSearchResults(results);
-      } else {
-        setSearchResults([]);
-      }
-    },
-    [],
-  );
-
-  const noOptionsText = useMemo(() => {
-    if (inputValue.trim().length < MIN_SEARCH_LENGTH) {
-      return `Enter at least ${MIN_SEARCH_LENGTH} characters to search`;
-    }
-    return 'No skills match your search';
-  }, [inputValue]);
+  // Handle skill remove
+  const handleRemoveSkill = useCallback(() => {
+    onSkillRemove(barIndex, slotIndex);
+  }, [barIndex, slotIndex, onSkillRemove]);
 
   return (
     <Box sx={{ position: 'relative', display: 'inline-block' }}>
@@ -271,7 +241,7 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
               borderColor: isUltimate ? 'secondary.light' : 'primary.main',
             },
           }}
-          onClick={() => setIsSelecting(true)}
+          onClick={() => setIsPickerOpen(true)}
         >
           {currentSkill?.icon ? (
             <Box
@@ -314,74 +284,22 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
           }}
           onClick={(e) => {
             e.stopPropagation();
-            onSkillRemove(barIndex, slotIndex);
+            handleRemoveSkill();
           }}
         >
           <CloseIcon sx={{ fontSize: 12 }} />
         </IconButton>
       )}
 
-      {/* Selection Dialog */}
-      <Dialog
-        open={isSelecting}
-        onClose={() => {
-          setIsSelecting(false);
-          setInputValue('');
-          setSearchResults([]);
-        }}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          {slotLabel} - {isUltimate ? 'Ultimate' : 'Ability'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1 }}>
-            <Autocomplete
-              options={searchResults}
-              value={currentSkill || null}
-              inputValue={inputValue}
-              onInputChange={handleInputChange}
-              onChange={(_event, skill) => handleSelect(skill)}
-              getOptionLabel={(option) => option.name}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              noOptionsText={noOptionsText}
-              autoHighlight
-              clearOnBlur={false}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Search for a skill"
-                  placeholder={`Type at least ${MIN_SEARCH_LENGTH} characters...`}
-                  autoFocus
-                  fullWidth
-                />
-              )}
-              renderOption={(props, option) => {
-                const { key, ...optionProps } = props;
-                return (
-                  <Box component="li" key={key} {...optionProps}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      {option.icon && (
-                        <Box
-                          component="img"
-                          src={`https://eso-hub.com/storage/icons/${option.icon}.png`}
-                          alt={option.name}
-                          sx={{ width: 24, height: 24, borderRadius: 0.5 }}
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      )}
-                      <Typography>{option.name}</Typography>
-                    </Stack>
-                  </Box>
-                );
-              }}
-            />
-          </Box>
-        </DialogContent>
-      </Dialog>
+      {/* New Ability Picker Dialog */}
+      <AbilityPicker
+        open={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onSelect={handleSelectSkill}
+        currentSkillId={currentSkillId}
+        slotLabel={`${slotLabel} - ${isUltimate ? 'Ultimate' : 'Ability'}`}
+        isUltimateSlot={isUltimate}
+      />
     </Box>
   );
 };
