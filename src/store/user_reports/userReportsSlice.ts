@@ -40,6 +40,10 @@ export interface UserReportsState {
   error: string | null;
   // Cache timestamp for invalidation
   lastFetched: number | null;
+  // Whether the initial bulk-fetch has been attempted (success or failure).
+  // Prevents the data-loading useEffect from re-dispatching after an error or
+  // when the user genuinely has zero reports (ESO-595).
+  hasFetchedAll: boolean;
 }
 
 const initialState: UserReportsState = {
@@ -60,6 +64,7 @@ const initialState: UserReportsState = {
   isFetchingAll: false,
   error: null,
   lastFetched: null,
+  hasFetchedAll: false,
 };
 
 // Async thunk to fetch a page of user reports
@@ -185,6 +190,7 @@ const userReportsSlice = createSlice({
       state.pages = {};
       state.totalCount = 0;
       state.lastFetched = null;
+      state.hasFetchedAll = false;
     },
     resetFilters: (state) => {
       state.filters = initialState.filters;
@@ -226,9 +232,11 @@ const userReportsSlice = createSlice({
       })
       .addCase(fetchAllUserReports.fulfilled, (state) => {
         state.isFetchingAll = false;
+        state.hasFetchedAll = true;
       })
       .addCase(fetchAllUserReports.rejected, (state, action) => {
         state.isFetchingAll = false;
+        state.hasFetchedAll = true;
         state.error = action.payload || 'Failed to fetch all reports';
       });
   },

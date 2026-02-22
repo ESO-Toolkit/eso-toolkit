@@ -30,6 +30,10 @@ export const selectIsFetchingAll = (state: RootState): boolean => state.userRepo
 
 export const selectError = (state: RootState): string | null => state.userReports.error;
 
+export const selectHasFetchedAll = (state: RootState): boolean => state.userReports.hasFetchedAll;
+
+export const selectLastFetched = (state: RootState): number | null => state.userReports.lastFetched;
+
 // Get all cached reports as an array
 export const selectAllReportsArray = createSelector([selectAllReports], (reportsMap) =>
   Object.values(reportsMap),
@@ -142,15 +146,19 @@ export const selectHasActiveFilters = createSelector([selectFilters], (filters) 
   return filters.searchText !== '' || filters.visibility !== 'all';
 });
 
-// Get cache status
+// Get cache status.
+// NOTE: intentionally does NOT depend on selectUserReportsState (the whole slice) —
+// doing so would cause a new object to be returned on every Redux action, triggering
+// unnecessary re-renders in all consumers (ESO-595).
 export const selectCacheInfo = createSelector(
-  [selectAllReports, selectPages, selectUserReportsState],
-  (reports, pages, state) => ({
+  [selectAllReports, selectPages, selectHasFetchedAll, selectLastFetched],
+  (reports, pages, hasFetchedAll, lastFetched) => ({
     totalCachedReports: Object.keys(reports).length,
     cachedPages: Object.keys(pages)
       .map(Number)
       .sort((a, b) => a - b),
-    lastFetched: state.lastFetched,
-    isStale: state.lastFetched ? Date.now() - state.lastFetched > 5 * 60 * 1000 : true, // 5 minutes
+    lastFetched,
+    hasFetchedAll,
+    isStale: lastFetched ? Date.now() - lastFetched > 5 * 60 * 1000 : true, // 5 minutes
   }),
 );
