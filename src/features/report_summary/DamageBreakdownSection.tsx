@@ -66,6 +66,27 @@ const DAMAGE_TYPE_COLORS: Record<string, string> = {
   'Status Effects': '#F59E0B',
 };
 
+// Gradient mapping for damage types (saturated → deep shade)
+const DAMAGE_TYPE_GRADIENTS: Record<string, string> = {
+  'Direct Damage': 'linear-gradient(90deg, #f59e0b 0%, #92400e 100%)',
+  Direct: 'linear-gradient(90deg, #f59e0b 0%, #92400e 100%)',
+  'Damage over Time': 'linear-gradient(90deg, #10b981 0%, #064e3b 100%)',
+  DOT: 'linear-gradient(90deg, #10b981 0%, #064e3b 100%)',
+  'Area of Effect': 'linear-gradient(90deg, #ef4444 0%, #b91c1c 100%)',
+  AOE: 'linear-gradient(90deg, #ef4444 0%, #b91c1c 100%)',
+  'Single Target': 'linear-gradient(90deg, #3b82f6 0%, #1e3a8a 100%)',
+  Magic: 'linear-gradient(90deg, #6366f1 0%, #312e81 100%)',
+  Martial: 'linear-gradient(90deg, #92591e 0%, #3b1f0a 100%)',
+  Physical: 'linear-gradient(90deg, #92591e 0%, #3b1f0a 100%)',
+  Fire: 'linear-gradient(90deg, #ef4444 0%, #b91c1c 100%)',
+  Frost: 'linear-gradient(90deg, #3b82f6 0%, #1e3a8a 100%)',
+  Shock: 'linear-gradient(90deg, #8b5cf6 0%, #4c1d95 100%)',
+  Poison: 'linear-gradient(90deg, #10b981 0%, #064e3b 100%)',
+  Disease: 'linear-gradient(90deg, #8b5cf6 0%, #4c1d95 100%)',
+  Bleed: 'linear-gradient(90deg, #ef4444 0%, #991b1b 100%)',
+  'Status Effects': 'linear-gradient(90deg, #f59e0b 0%, #92400e 100%)',
+};
+
 interface DamageBreakdownSectionProps {
   damageBreakdown?: ReportDamageBreakdown;
   isLoading: boolean;
@@ -186,6 +207,9 @@ const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
               {damageBreakdown.abilityTypeBreakdown.map((type, index) => {
                 const icon = DAMAGE_TYPE_ICONS[type.abilityType] || '💥';
                 const color = DAMAGE_TYPE_COLORS[type.abilityType] || '#6B7280';
+                const gradient =
+                  DAMAGE_TYPE_GRADIENTS[type.abilityType] ||
+                  `linear-gradient(90deg, ${color}88 0%, ${color} 100%)`; // Fallback
 
                 return (
                   <React.Fragment key={type.abilityType}>
@@ -212,7 +236,7 @@ const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
                               left: 0,
                               height: '100%',
                               width: `${Math.max(0, Math.min(100, type.percentage))}%`,
-                              bgcolor: color,
+                              background: gradient,
                               borderRadius: 2,
                               transition: 'width 0.3s ease-in-out',
                             }}

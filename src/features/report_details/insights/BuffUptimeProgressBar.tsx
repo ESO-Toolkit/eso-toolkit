@@ -95,37 +95,44 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
   const stacksContentId = React.useId();
 
   // Helper function to get stack gradient
+  // Colors are ordered warm-to-cool (red → orange → amber → blue → purple).
+  // We pick from the END of the list based on maxStacks so that abilities with fewer
+  // stacks always use the blue/purple side, only extending into warm colors when
+  // there are more stacks (e.g. 3-stack: amber→blue→purple; 5-stack: red→…→purple).
   const getStackGradient = React.useCallback(
-    (stackLevel: number): string => {
+    (stackLevel: number, maxStacks: number): string => {
       const isDark = theme.palette.mode === 'dark';
-      // Use gradients from primary (red) through warm colors to blue/purple
-      // Matches the app's color scheme and the single-bar gradient style
+      // Each gradient uses strongly contrasting hue stops so the transition reads clearly
+      // even in narrow bands. Light tint → deep shade within each hue family.
       const gradients = isDark
         ? [
-            // Stack 1: Red gradient
-            'linear-gradient(90deg, rgba(211, 47, 47, 0.7) 0%, rgba(244, 67, 54, 0.75) 100%)',
-            // Stack 2: Orange gradient
-            'linear-gradient(90deg, rgba(255, 87, 34, 0.75) 0%, rgba(255, 112, 67, 0.8) 100%)',
-            // Stack 3: Amber gradient
-            'linear-gradient(90deg, rgba(255, 152, 0, 0.8) 0%, rgba(255, 179, 0, 0.85) 100%)',
-            // Stack 4: Blue gradient (from single bar)
-            'linear-gradient(90deg, rgba(59, 130, 246, 0.8) 0%, rgba(96, 165, 250, 0.85) 100%)',
-            // Stack 5: Purple gradient (from single bar)
-            'linear-gradient(90deg, rgba(139, 92, 246, 0.85) 0%, rgba(167, 139, 250, 0.9) 100%)',
+            // Index 0: Red — vivid red to deep crimson
+            'linear-gradient(90deg, #ef4444 0%, #b91c1c 100%)',
+            // Index 1: Orange — vivid orange to burnt orange
+            'linear-gradient(90deg, #f97316 0%, #c2410c 100%)',
+            // Index 2: Amber — vivid amber to deep amber
+            'linear-gradient(90deg, #f59e0b 0%, #92400e 100%)',
+            // Index 3: Blue — vivid blue to deep blue
+            'linear-gradient(90deg, #3b82f6 0%, #1e3a8a 100%)',
+            // Index 4: Purple — vivid violet to deep violet
+            'linear-gradient(90deg, #8b5cf6 0%, #4c1d95 100%)',
           ]
         : [
-            // Stack 1: Light red gradient
-            'linear-gradient(90deg, rgba(211, 47, 47, 0.5) 0%, rgba(244, 67, 54, 0.6) 100%)',
-            // Stack 2: Light orange gradient
-            'linear-gradient(90deg, rgba(255, 87, 34, 0.55) 0%, rgba(255, 112, 67, 0.65) 100%)',
-            // Stack 3: Light amber gradient
-            'linear-gradient(90deg, rgba(255, 152, 0, 0.6) 0%, rgba(255, 179, 0, 0.7) 100%)',
-            // Stack 4: Cyan gradient (from single bar)
-            'linear-gradient(90deg, rgba(103, 232, 249, 0.65) 0%, rgba(147, 197, 253, 0.75) 100%)',
-            // Stack 5: Light purple gradient (from single bar)
-            'linear-gradient(90deg, rgba(196, 181, 253, 0.7) 0%, rgba(216, 180, 254, 0.8) 100%)',
+            // Index 0: Red — vivid red to deep red
+            'linear-gradient(90deg, #ef4444 0%, #b91c1c 100%)',
+            // Index 1: Orange — vivid orange to deep orange
+            'linear-gradient(90deg, #f97316 0%, #c2410c 100%)',
+            // Index 2: Amber — vivid amber to deep amber
+            'linear-gradient(90deg, #f59e0b 0%, #92400e 100%)',
+            // Index 3: Cyan→blue — vivid cyan to deep blue
+            'linear-gradient(90deg, #06b6d4 0%, #1e3a8a 100%)',
+            // Index 4: Purple — vivid violet to deep violet
+            'linear-gradient(90deg, #8b5cf6 0%, #4c1d95 100%)',
           ];
-      return gradients[Math.min(stackLevel - 1, gradients.length - 1)];
+      // Offset so the highest stack always maps to the purple end
+      const offset = gradients.length - maxStacks;
+      const index = Math.max(0, Math.min(offset + stackLevel - 1, gradients.length - 1));
+      return gradients[index];
     },
     [theme.palette.mode],
   );
@@ -232,6 +239,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
               .sort((a, b) => a.stackLevel - b.stackLevel) // Sort lowest to highest so highest renders last (on top)
               .map((stackData) => {
                 const stackPct = Math.max(0, Math.min(100, stackData.uptimePercentage));
+                const maxStacks = buff.allStacksData!.length;
                 return (
                   <Box
                     key={stackData.stackLevel}
@@ -241,7 +249,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                       left: 0,
                       height: '100%',
                       width: `${stackPct}%`,
-                      background: getStackGradient(stackData.stackLevel),
+                      background: getStackGradient(stackData.stackLevel, maxStacks),
                       borderRadius: 2,
                       boxShadow:
                         theme.palette.mode === 'dark'
@@ -518,7 +526,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                     width: 8,
                     height: 8,
                     borderRadius: '2px',
-                    background: getStackGradient(stackData.stackLevel),
+                    background: getStackGradient(stackData.stackLevel, buff.allStacksData!.length),
                     flexShrink: 0,
                   }}
                 />
@@ -617,7 +625,10 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                           left: 0,
                           height: '100%',
                           width: `${stackPct}%`,
-                          background: getStackGradient(stackData.stackLevel),
+                          background: getStackGradient(
+                            stackData.stackLevel,
+                            buff.allStacksData!.length,
+                          ),
                           borderRadius: 1.5,
                           transition: 'width 0.3s ease-in-out',
                         }}
@@ -643,7 +654,10 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                             width: 10,
                             height: 10,
                             borderRadius: '2px',
-                            background: getStackGradient(stackData.stackLevel),
+                            background: getStackGradient(
+                              stackData.stackLevel,
+                              buff.allStacksData!.length,
+                            ),
                             flexShrink: 0,
                             border:
                               theme.palette.mode === 'dark'

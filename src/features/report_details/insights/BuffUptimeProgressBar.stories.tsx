@@ -240,7 +240,7 @@ export const MultiStackStagger: Story = {
           Overlaid colored bars with segmented labels below: 85% | 60% | 35%
         </div>
         <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '4px' }}>
-          Color gradient: Primary red → Orange → Amber (matches app theme)
+          Color gradient: Amber → Blue → Purple (blue/purple side for 3-stack)
         </div>
       </Box>
       <BuffUptimeProgressBar {...args} />
