@@ -15,6 +15,7 @@ import {
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { setContext } from '@apollo/client/link/context';
 import { onError, ErrorLink } from '@apollo/client/link/error';
+import { RetryLink } from '@apollo/client/link/retry';
 import { getOperationAST } from 'graphql';
 
 import { refreshAccessToken } from './features/auth/auth';
@@ -87,6 +88,29 @@ export class EsoLogsClient {
   }
 
   private createApolloClient(accessToken: string): ApolloClient {
+    // Retry link: automatically retries requests that fail with HTTP 429 (rate limit)
+    // Uses exponential backoff with jitter to avoid thundering-herd retries.
+    const retryLink = new RetryLink({
+      delay: {
+        initial: 1000, // wait 1 s before the first retry
+        max: 15000, // cap at 15 s
+        jitter: true, // randomise to spread concurrent retries
+      },
+      attempts: {
+        max: 3,
+        retryIf: (error: unknown) => {
+          const statusCode = (error as { statusCode?: number })?.statusCode;
+          if (statusCode === 429) {
+            logger.warn('API rate limit hit (429) — retrying with backoff', {
+              operation: 'pending',
+            });
+            return true;
+          }
+          return false;
+        },
+      },
+    });
+
     // Error handling link for 401 responses
     const errorLink: ErrorLink = onError(({ error, operation, forward }) => {
       // Check if this is a GraphQL error with authentication issues
@@ -181,7 +205,8 @@ export class EsoLogsClient {
     });
 
     return new ApolloClient({
-      link: from([errorLink, authLink, customHttpLink]),
+      // retryLink must come first so it intercepts 429s before errorLink logs them
+      link: from([retryLink, errorLink, authLink, customHttpLink]),
       cache: EsoLogsClient.CACHE,
     });
   }
@@ -212,7 +237,20 @@ export class EsoLogsClient {
   public async query<TData = unknown, TVariables extends OperationVariables = OperationVariables>(
     options: QueryOptions<TVariables, TData>,
   ): Promise<TData> {
-    const result = await this.client.query(options);
+    let result;
+    try {
+      result = await this.client.query(options);
+    } catch (networkError) {
+      // Convert 429 (rate limit) errors to a human-readable message so that UI
+      // components can surface actionable feedback instead of an opaque stack trace.
+      const statusCode = (networkError as { statusCode?: number })?.statusCode;
+      if (statusCode === 429) {
+        throw new Error(
+          'API rate limit exceeded. Too many requests were sent in a short period — please wait a moment and try again.',
+        );
+      }
+      throw networkError;
+    }
 
     // Check for GraphQL errors and reject if they exist
     if (result.error) {
