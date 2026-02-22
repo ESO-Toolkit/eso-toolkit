@@ -61,6 +61,10 @@ import {
   PlayerGearItemData,
   PlayerGearSetRecord,
 } from '../../../utils/gearUtilities';
+import {
+  analyzeBarSwaps,
+  type BarSwapAnalysisResult,
+} from '../../parse_analysis/utils/parseAnalysisUtils';
 // TODO: Implement proper scribing detection services
 // Temporary stubs to prevent compilation errors
 const analyzeAllPlayersScribingSkills = (..._args: unknown[]): Record<string, never> => ({});
@@ -267,6 +271,23 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     }
     return result;
   }, [fight, damageEvents]);
+
+  // Compute bar swap analysis (including bar setup pattern) per player
+  const barSwapByPlayer = React.useMemo(() => {
+    const result: Record<string, BarSwapAnalysisResult> = {};
+    if (!fight || !castEvents || !playerData?.playersById) return result;
+    const { startTime, endTime } = fight;
+    for (const player of Object.values(playerData.playersById)) {
+      if (!player?.id) continue;
+      result[String(player.id)] = analyzeBarSwaps(
+        castEvents,
+        Number(player.id),
+        startTime,
+        endTime,
+      );
+    }
+    return result;
+  }, [fight, castEvents, playerData?.playersById]);
 
   const { abilitiesById } = reportMasterData;
 
@@ -1230,6 +1251,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         fightEndTime={fight?.endTime}
         dpsValueByPlayer={dpsValueByPlayer}
         criticalDamageByPlayer={criticalDamageByPlayer}
+        barSwapByPlayer={barSwapByPlayer}
       />
     </div>
   );

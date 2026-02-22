@@ -6,6 +6,7 @@ import type { PlayerDetailsWithRole } from '../../../store/player_data/playerDat
 import type { ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import type { BuildIssue } from '../../../utils/detectBuildIssues';
 import type { PlayerGearSetRecord } from '../../../utils/gearUtilities';
+import type { BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 
 // Lazy load the PlayerCard component
 const PlayerCard = React.lazy(() =>
@@ -128,6 +129,8 @@ export interface PlayerCardProps {
   /** The player's total DPS value (used in the badge label) */
   totalDps?: number;
   critDamageSummary?: { avg: number; max: number };
+  /** Bar swap analysis result, used to display bar setup pattern on DPS cards */
+  barSwapResult?: BarSwapAnalysisResult;
   /** Test ID for testing */
   'data-testid'?: string;
 }
