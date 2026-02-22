@@ -47,6 +47,8 @@ export const Footer: React.FC = React.memo(() => {
 
       { label: 'My Reports', href: '/my-reports' },
 
+      { label: 'Privacy Settings', href: '/privacy-settings' },
+
       { label: 'Join Discord', href: 'https://discord.gg/mMjwcQYFdc', external: true },
 
       { label: 'GitHub', href: 'https://github.com/ESO-Toolkit/eso-toolkit', external: true },
