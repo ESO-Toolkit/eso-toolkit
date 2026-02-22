@@ -45,6 +45,8 @@ export const Footer: React.FC = React.memo(() => {
 
       { label: 'My Reports', href: '/my-reports' },
 
+      { label: 'Privacy Settings', href: '/privacy-settings' },
+
       { label: 'Calculation Knowledge Base', href: '/docs/calculations' },
 
       { label: "What's New", href: '/whats-new' },
