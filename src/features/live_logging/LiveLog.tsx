@@ -15,6 +15,7 @@ import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { GetReportByCodeDocument } from '../../graphql/gql/graphql';
 import { ReportFightContext } from '../../ReportFightContext';
 import { TabId } from '../../utils/getSkeletonForTab';
+import { reportError } from '../../utils/sentryUtils';
 
 const REFETCH_INTERVAL = 30 * 1000; // 30 seconds
 
@@ -29,9 +30,6 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
   // Local state for tab selection and experimental flag (not URL-driven for live log)
   const [selectedTabId, setSelectedTabId] = React.useState<TabId>(TabId.INSIGHTS);
   const [showExperimentalTabs, setShowExperimentalTabs] = React.useState<boolean>(false);
-
-  // Error state: a non-null message stops the polling interval and shows a message to the user
-  const [fetchError, setFetchError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     dispatch(
@@ -56,11 +54,17 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
         },
         fetchPolicy: 'no-cache',
       });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch report data';
-      setFetchError(message);
+    } catch (networkError) {
+      // Network errors during live-log polling (e.g. temporarily offline, CORS
+      // block, or API downtime) should not crash the page or produce an unhandled
+      // rejection. The interval will retry in 30 seconds automatically.
+      reportError(
+        networkError instanceof Error ? networkError : new Error(String(networkError)),
+        { context: 'LiveLog.fetchLatestFightId', reportId },
+      );
       return;
     }
+
     const lastFight =
       response.reportData?.report?.fights &&
       response.reportData?.report?.fights[response.reportData.report.fights.length - 1];
@@ -86,11 +90,6 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
   }, [reportId, client, latestFightId, dispatch]);
 
   React.useEffect(() => {
-    // Don't start/continue polling if we already have a permanent error
-    if (fetchError) {
-      return;
-    }
-
     void fetchLatestFightId();
 
     const interval = setInterval(() => {
@@ -98,7 +97,7 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
     }, REFETCH_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [fetchLatestFightId, fetchError]);
+  }, [fetchLatestFightId]);
 
   const reportFightCtxValue = React.useMemo(
     () => ({
@@ -112,10 +111,6 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
     }),
     [reportId, latestFightId, selectedTabId, showExperimentalTabs],
   );
-
-  if (fetchError) {
-    return <Typography color="error">{fetchError}</Typography>;
-  }
 
   if (!latestFightId) {
     return <Typography>Waiting for fights to be uploaded...</Typography>;
