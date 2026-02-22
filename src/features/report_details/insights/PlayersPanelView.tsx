@@ -49,6 +49,7 @@ interface PlayersPanelViewProps {
   fightEndTime?: number;
   /** DPS value (damage/second) per player ID, used to identify the top DPS player */
   dpsValueByPlayer?: Record<string, number>;
+  criticalDamageByPlayer?: Record<string, { avg: number; max: number }>;
 }
 
 type SortOption =
@@ -84,6 +85,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     fightStartTime: _fightStartTime,
     fightEndTime: _fightEndTime,
     dpsValueByPlayer,
+    criticalDamageByPlayer,
   }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState<SortOption>('alphabetical');
@@ -126,6 +128,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         const playerGearSets = (playerDataSet ?? [])
           .sort((a, b) => b.count - a.count)
           .filter((s) => s.count > 0);
+        const critDamageSummary = criticalDamageByPlayer?.[String(player.id)];
 
         const isTopDps = topDpsPlayerId !== null && String(player.id) === topDpsPlayerId;
 
@@ -148,6 +151,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           playerGear: playerGearSets,
           isTopDps,
           totalDps: isTopDps ? topDpsValue : undefined,
+          critDamageSummary,
         };
       });
     }, [
@@ -168,6 +172,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       distanceByPlayer,
       topDpsPlayerId,
       topDpsValue,
+      criticalDamageByPlayer,
     ]);
 
     // Filter, search, and sort players
@@ -484,6 +489,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 playerGear={playerData.playerGear}
                 isTopDps={playerData.isTopDps}
                 totalDps={playerData.totalDps}
+                critDamageSummary={playerData.critDamageSummary}
               />
             </Box>
           ))}

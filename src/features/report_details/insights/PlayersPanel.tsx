@@ -19,6 +19,7 @@ import type { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import {
   useCastEvents,
   useCombatantInfoEvents,
+  useCriticalDamageTask,
   useDamageEvents,
   useDeathEvents,
   useFightForContext,
@@ -268,6 +269,21 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   }, [fight, damageEvents]);
 
   const { abilitiesById } = reportMasterData;
+
+  // Fetch critical damage data for the inline crit summary on DPS player cards
+  const { criticalDamageData } = useCriticalDamageTask({ context: resolvedContext });
+
+  const criticalDamageByPlayer = React.useMemo(() => {
+    if (!criticalDamageData?.playerDataMap) return undefined;
+    const result: Record<string, { avg: number; max: number }> = {};
+    Object.entries(criticalDamageData.playerDataMap).forEach(([playerId, data]) => {
+      result[String(playerId)] = {
+        avg: data.effectiveCriticalDamage,
+        max: data.maximumCriticalDamage,
+      };
+    });
+    return result;
+  }, [criticalDamageData?.playerDataMap]);
 
   // Calculate loading state - include ALL data dependencies this panel needs
   const isLoading =
@@ -1213,6 +1229,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         fightStartTime={fight?.startTime}
         fightEndTime={fight?.endTime}
         dpsValueByPlayer={dpsValueByPlayer}
+        criticalDamageByPlayer={criticalDamageByPlayer}
       />
     </div>
   );
