@@ -7,6 +7,9 @@ on:
   pull_request:
     branches:
       - main
+  merge_group:
+    branches:
+      - main
   # Allow manual triggering
   workflow_dispatch:
 
@@ -22,15 +25,24 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     steps:
+      - name: Skip coverage in merge queue (already verified on PR)
+        # The job must still run so the required status check reports back to GitHub
+        # instead of timing out and ejecting the PR from the merge queue.
+        if: github.event_name == 'merge_group'
+        run: echo "✅ Coverage check skipped in merge queue — already verified on the PR."
+
       - name: Checkout Repository
+        if: github.event_name != 'merge_group'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
+        if: github.event_name != 'merge_group'
         uses: ./.github/actions/setup-node-with-cache
 
       - name: Run Tests with Coverage
+        if: github.event_name != 'merge_group'
         run: npm run test:coverage:ci
         env:
           # Increase Node.js memory limit to prevent OOM errors
@@ -49,17 +61,17 @@ jobs:
 
       - name: Generate Coverage Badges
         run: npm run coverage:badges
-        if: always()
+        if: always() && github.event_name != 'merge_group'
 
       - name: Generate Coverage Badge JSON
         run: npm run coverage:badge-json
-        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && github.event_name != 'merge_group'
 
       # Consumed by the deploy job for the combined gh-pages push.
       # Short retention since this is an intermediate build artifact.
       - name: Upload Coverage Badge JSON
         uses: actions/upload-artifact@v6
-        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && github.event_name != 'merge_group'
         with:
           name: coverage-badge-json
           path: coverage/badge-json/
@@ -67,7 +79,7 @@ jobs:
 
       - name: Upload Coverage Badges (SVG)
         uses: actions/upload-artifact@v6
-        if: always()
+        if: always() && github.event_name != 'merge_group'
         with:
           name: coverage-badges-${{ github.run_number }}
           path: coverage/badges/*.svg
@@ -75,7 +87,7 @@ jobs:
 
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v6
-        if: always()
+        if: always() && github.event_name != 'merge_group'
         with:
           name: coverage-report-${{ github.run_number }}
           path: |
