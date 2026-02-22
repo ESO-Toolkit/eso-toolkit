@@ -4,8 +4,32 @@ import '@testing-library/jest-dom';
 
 import App from './App';
 
+jest.mock('./store/storeWithHistory', () => {
+  const configureStoreMock = require('redux-mock-store').default;
+  const store = configureStoreMock([])({});
+  return {
+    __esModule: true,
+    default: store,
+    persistor: {
+      subscribe: jest.fn((cb) => {
+        cb();
+        return jest.fn();
+      }),
+      getState: () => ({ bootstrapped: true }),
+      purge: jest.fn(),
+      flush: jest.fn(),
+      pause: jest.fn(),
+    },
+    history: { listen: jest.fn(() => jest.fn()), location: { pathname: '/' } },
+  };
+});
+
 jest.mock('react-redux', () => ({
   Provider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+jest.mock('./ReduxThemeProvider', () => ({
+  ReduxThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 jest.mock('redux-persist/integration/react', () => ({

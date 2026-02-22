@@ -346,7 +346,9 @@ export enum KnownAbilities {
   ENLIVENING_OVERFLOW_BUFF = 156011,
   GRAND_REJUVENATION = 99781,
   OFF_BALANCE = 62988,
+  OZEZANS_PLATING = 188471, // Ozezan the Inferno / Ozezan's Plating damage mitigation proc buff
   PEARLESCENT_WARD = 172621,
+  PILLAGERS_PROFIT_BUFF = 172055, // Pillager's Profit healing set proc buff
   POWERFUL_ASSAULT = 61771,
   STAGGER = 134336,
   STONE_GIANT = 133027,
@@ -363,6 +365,9 @@ export enum KnownAbilities {
   MAJOR_FORCE = 61747,
   MAJOR_PROPHECY = 61689,
   MAJOR_PROPHECY_AND_SAVAGERY = 217672, // Combined Major Prophecy and Savagery buff
+  MAJOR_EVASION = 61716,
+  MAJOR_EXPEDITION = 61736,
+  MAJOR_HEROISM = 61709,
   MAJOR_RESOLVE = 61694,
   MAJOR_SAVAGERY = 61667, // Fixed: was incorrectly 61898 (which is Minor Savagery)
   MAJOR_SLAYER = 93109,
@@ -375,6 +380,8 @@ export enum KnownAbilities {
   MINOR_BRITTLE = 146697,
   MINOR_BRUTALITY = 61662,
   MINOR_COURAGE = 121878,
+  MINOR_EVASION = 61715,
+  MINOR_EXPEDITION = 61735,
   MINOR_FORCE = 61746,
   MINOR_HEROISM = 61708,
   MINOR_LIFESTEAL = 86304,
@@ -387,6 +394,7 @@ export enum KnownAbilities {
   GLACIAL_COLOSSUS = 122388,
   SUMMON_CHARGED_ATRONACH = 23495,
   AGGRESSIVE_HORN = 40223,
+  AGGRESSIVE_HORN_BUFF = 40224,
   REPLENISHING_BARRIER = 40239,
   REVIVING_BARRIER = 40237,
 
@@ -1018,17 +1026,62 @@ export const WITCHES_BREW = Object.freeze(
 ); // Witches' Brew event items
 export const EXPERIENCE_BOOST_FOOD = Object.freeze(new Set([91368, 91369])); // Jester's Experience Boost Pie
 
+// Potion Buffs
+// Stamina Potion Restore Effect - appears in auras when a stamina potion is used
+export const STAMINA_POTION_RESTORE_EFFECT = Object.freeze(new Set([6119]));
+// Magicka Potion Restore Effect - appears in auras when a magicka potion is used
+export const MAGICKA_POTION_RESTORE_EFFECT = Object.freeze(new Set([6118]));
+// Potion Timer (cooldown/immunity) auras - appear after ANY potion use
+export const POTION_TIMER_IDS = Object.freeze(
+  new Set([63551, 63631, 63653, 63654, 63673, 66255, 72985, 81733, 82679, 82680]),
+);
+
 // Synergies (abilities that should not count as player-initiated casts)
 export const SYNERGY_ABILITY_IDS = Object.freeze(
   new Set([
-    7916, // Restore Magicka (Necrotic Orb synergy)
-    17323, // Restore Magicka (variant)
-    26832, // Blessed Shards (Luminous Shards synergy)
-    45223, // Restore Magicka (another variant)
+    41963, // Blood Feast
+    41994, // Black Widow
+    41838, // Radiate
+    42194, // Spinal Surge
+    39301, // Combustion
+    63507, // Healing Combustion
+    32910, // Shackle
+    32974, // Ignite
+    48076, // Charged Lightning
+    23196, // Conduit
+    37729, // Hidden Refresh
+    26832, // Blessed Shards
+    95922, // Holy Shards
+    22269, // Purify
+    115548, // Grave Robber
+    85572, // Harvest
+    191078, // Runebreak
   ]),
 );
 
 // Aura ability IDs that should be ignored for class detection to prevent false positives
 export const AURA_EXCLUDED_ABILITIES = Object.freeze(
   new Set<number>([KnownAbilities.UNNERVING_BONEYARD]),
+);
+
+// Major Maim debuff ability IDs (mitigation debuff: -10% damage done by enemy)
+// Multiple IDs exist because each skill that applies Major Maim uses its own effect ID.
+// All entries in abilities.json are named "Major Maim" with icon "ability_debuff_major_maim".
+export const MAJOR_MAIM_ABILITY_IDS = Object.freeze(
+  new Set<number>([
+    21754, 21760, 61725, 94277, 94285, 94293, 133214, 133292, 134444, 141927, 147746, 159664,
+    163064, 183389, 212073,
+  ]),
+);
+
+// Minor Maim debuff ability IDs (mitigation debuff: -5% damage done by enemy)
+// Multiple IDs exist because each skill that applies Minor Maim uses its own effect ID.
+// All entries in abilities.json are named "Minor Maim" with icon "ability_debuff_minor_maim".
+export const MINOR_MAIM_ABILITY_IDS = Object.freeze(
+  new Set<number>([
+    31899, 33228, 33512, 37472, 38068, 38072, 38076, 46204, 46246, 51558, 61723, 61854, 61855,
+    61856, 62492, 62493, 62494, 62500, 62501, 62503, 62507, 62509, 62511, 68368, 79083, 79085,
+    79280, 79282, 88469, 102097, 108939, 118313, 121517, 123946, 124808, 127162, 130815, 137311,
+    196187, 213304, 221722, 224389, 238229,
+  ]),
 );

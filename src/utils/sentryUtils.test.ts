@@ -12,6 +12,16 @@ import { SENTRY_CONFIG, ManualBugReport, BugReportCategory } from '../config/sen
 import { Logger } from './logger';
 import { RootState } from '../store/storeWithHistory';
 
+// Mock consentManager — default: consent granted
+jest.mock('./consentManager', () => ({
+  hasErrorTrackingConsent: jest.fn(() => true),
+}));
+
+import { hasErrorTrackingConsent } from './consentManager';
+const mockHasErrorTrackingConsent = hasErrorTrackingConsent as jest.MockedFunction<
+  typeof hasErrorTrackingConsent
+>;
+
 // Mock the enum since TypeScript enums can cause issues in Jest
 const BUG_REPORT_CATEGORIES: Record<string, BugReportCategory> = {
   UI_BUG: 'ui-bug' as BugReportCategory,
@@ -60,6 +70,9 @@ describe('sentryUtils', () => {
     originalEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = 'development';
 
+    // Default: consent granted for production tests
+    mockHasErrorTrackingConsent.mockReturnValue(true);
+
     // Mock the scope object that Sentry.withScope provides
     mockScope = {
       setContext: jest.fn(),
@@ -90,8 +103,9 @@ describe('sentryUtils', () => {
   });
 
   describe('initializeSentry', () => {
-    it('should initialize Sentry in production environment', () => {
+    it('should initialize Sentry in production environment with consent', () => {
       process.env.NODE_ENV = 'production';
+      mockHasErrorTrackingConsent.mockReturnValue(true);
 
       initializeSentry();
 
@@ -108,6 +122,15 @@ describe('sentryUtils', () => {
 
     it('should not initialize Sentry in development environment', () => {
       process.env.NODE_ENV = 'development';
+
+      initializeSentry();
+
+      expect(Sentry.init).not.toHaveBeenCalled();
+    });
+
+    it('should not initialize Sentry in production without consent', () => {
+      process.env.NODE_ENV = 'production';
+      mockHasErrorTrackingConsent.mockReturnValue(false);
 
       initializeSentry();
 
@@ -377,14 +400,14 @@ describe('sentryUtils', () => {
   });
 
   describe('setUserContext', () => {
-    it('should set user context in Sentry in production', () => {
+    it('should set user context in Sentry in production with consent', () => {
       process.env.NODE_ENV = 'production';
+      mockHasErrorTrackingConsent.mockReturnValue(true);
 
       setUserContext('user123', 'user@example.com', 'testuser');
 
       expect(Sentry.setUser).toHaveBeenCalledWith({
         id: 'user123',
-        email: 'user@example.com',
         username: 'testuser',
       });
     });
@@ -397,16 +420,35 @@ describe('sentryUtils', () => {
       expect(Sentry.setUser).not.toHaveBeenCalled();
     });
 
+    it('should not set user context in production without consent', () => {
+      process.env.NODE_ENV = 'production';
+      mockHasErrorTrackingConsent.mockReturnValue(false);
+
+      setUserContext('user123', 'user@example.com', 'testuser');
+
+      expect(Sentry.setUser).not.toHaveBeenCalled();
+    });
+
     it('should handle optional parameters', () => {
       process.env.NODE_ENV = 'production';
+      mockHasErrorTrackingConsent.mockReturnValue(true);
 
       setUserContext('user123');
 
       expect(Sentry.setUser).toHaveBeenCalledWith({
         id: 'user123',
-        email: undefined,
         username: undefined,
       });
+    });
+
+    it('should never send email to Sentry', () => {
+      process.env.NODE_ENV = 'production';
+      mockHasErrorTrackingConsent.mockReturnValue(true);
+
+      setUserContext('user123', 'user@example.com', 'testuser');
+
+      const call = (Sentry.setUser as jest.Mock).mock.calls[0][0];
+      expect(call).not.toHaveProperty('email');
     });
   });
 

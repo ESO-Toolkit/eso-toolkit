@@ -20,6 +20,7 @@ import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import { resolveActorName } from '../../../utils/resolveActorName';
+import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 
 import { LazyPlayerCard as PlayerCard } from './LazyPlayerCard';
 
@@ -47,6 +48,11 @@ interface PlayersPanelViewProps {
   playerGear: Record<number, PlayerGearSetRecord[]>;
   fightStartTime?: number;
   fightEndTime?: number;
+  /** DPS value (damage/second) per player ID, used to identify the top DPS player */
+  dpsValueByPlayer?: Record<string, number>;
+  criticalDamageByPlayer?: Record<string, { avg: number; max: number }>;
+  /** Bar swap analysis results per player ID, used to show bar setup pattern on DPS cards */
+  barSwapByPlayer?: Record<string, BarSwapAnalysisResult>;
 }
 
 type SortOption =
@@ -81,10 +87,29 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     playerGear,
     fightStartTime: _fightStartTime,
     fightEndTime: _fightEndTime,
+    dpsValueByPlayer,
+    criticalDamageByPlayer,
+    barSwapByPlayer,
   }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState<SortOption>('alphabetical');
     const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
+
+    // Identify the top DPS player (highest DPS value among DPS-role players)
+    const { topDpsPlayerId, topDpsValue } = useMemo(() => {
+      if (!dpsValueByPlayer || !playerActors) return { topDpsPlayerId: null, topDpsValue: 0 };
+      let bestId: string | null = null;
+      let bestDps = 0;
+      for (const [id, dps] of Object.entries(dpsValueByPlayer)) {
+        const player = playerActors[id];
+        if (player?.role === 'dps' && dps > bestDps) {
+          bestDps = dps;
+          bestId = id;
+        }
+      }
+      return { topDpsPlayerId: bestId, topDpsValue: bestDps };
+    }, [dpsValueByPlayer, playerActors]);
+
     // Memoize player data transformations to prevent recreating objects on each render
     const playerCards = React.useMemo(() => {
       if (!playerActors) return [];
@@ -107,6 +132,10 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         const playerGearSets = (playerDataSet ?? [])
           .sort((a, b) => b.count - a.count)
           .filter((s) => s.count > 0);
+        const critDamageSummary = criticalDamageByPlayer?.[String(player.id)];
+
+        const isTopDps = topDpsPlayerId !== null && String(player.id) === topDpsPlayerId;
+        const barSwapResult = barSwapByPlayer?.[String(player.id)];
 
         return {
           key: player.id,
@@ -125,6 +154,10 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           maxMagicka,
           distanceTraveled,
           playerGear: playerGearSets,
+          isTopDps,
+          totalDps: isTopDps ? topDpsValue : undefined,
+          critDamageSummary,
+          barSwapResult,
         };
       });
     }, [
@@ -143,6 +176,10 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       maxStaminaByPlayer,
       maxMagickaByPlayer,
       distanceByPlayer,
+      topDpsPlayerId,
+      topDpsValue,
+      criticalDamageByPlayer,
+      barSwapByPlayer,
     ]);
 
     // Filter, search, and sort players
@@ -457,6 +494,10 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 reportId={reportId}
                 fightId={fightId}
                 playerGear={playerData.playerGear}
+                isTopDps={playerData.isTopDps}
+                totalDps={playerData.totalDps}
+                critDamageSummary={playerData.critDamageSummary}
+                barSwapResult={playerData.barSwapResult}
               />
             </Box>
           ))}

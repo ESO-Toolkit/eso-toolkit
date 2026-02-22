@@ -28,6 +28,7 @@ import React from 'react';
 
 import { LineChart } from '../../../components/LazyCharts';
 import type { BuffLookupData } from '../../../utils/BuffLookupUtils';
+import { msToSeconds } from '../../../utils/fightDuration';
 
 import type { BuffUptime } from './BuffUptimeProgressBar';
 import { buildUptimeTimelineSeries, type UptimeTimelineSeries } from './utils/buildUptimeTimeline';
@@ -116,12 +117,12 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
     });
   }, [prefetchedSeries, uptimes, lookup, fightStartTime, fightEndTime, targetFilter]);
 
-  const fightDurationSeconds = React.useMemo(() => {
+  const fightDurationMs = React.useMemo(() => {
     if (!fightStartTime || !fightEndTime || fightEndTime <= fightStartTime) {
       return 0;
     }
 
-    return (fightEndTime - fightStartTime) / 1000;
+    return fightEndTime - fightStartTime;
   }, [fightStartTime, fightEndTime]);
 
   const chartData = React.useMemo<ChartData<'line'>>(() => {
@@ -231,7 +232,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
         x: {
           type: 'linear',
           min: 0,
-          max: fightDurationSeconds || undefined,
+          max: msToSeconds(fightDurationMs) || undefined,
           ticks: {
             callback: (value) => {
               const numeric = typeof value === 'number' ? value : Number(value);
@@ -256,7 +257,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
         },
       },
     }),
-    [fightDurationSeconds, formatSeconds, handleLegendClick],
+    [fightDurationMs, formatSeconds, handleLegendClick],
   );
 
   const categoryBadge = React.useMemo(() => {

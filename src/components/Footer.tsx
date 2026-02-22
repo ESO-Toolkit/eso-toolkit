@@ -1065,6 +1065,20 @@ export const Footer: React.FC = React.memo(() => {
             Studios, Bethesda, or esologs.com. All trademarks are the property of their respective
             owners.
           </Typography>
+          <Link
+            component={RouterLink}
+            to="/privacy"
+            sx={{
+              fontSize: '0.8rem',
+              opacity: 0.6,
+              color: 'inherit',
+              textDecoration: 'none',
+              transition: 'opacity 0.2s ease',
+              '&:hover': { opacity: 1, color: accentColor },
+            }}
+          >
+            Privacy Policy
+          </Link>
         </Box>
       </Container>
     </Box>

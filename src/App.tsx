@@ -90,6 +90,16 @@ const ParseAnalysisPage = React.lazy(() =>
     default: module.ParseAnalysisPage,
   })),
 );
+const PrivacyPolicyPage = React.lazy(() =>
+  import('./pages/PrivacyPolicyPage').then((module) => ({
+    default: module.PrivacyPolicyPage,
+  })),
+);
+const PrivacySettingsPage = React.lazy(() =>
+  import('./pages/PrivacySettingsPage').then((module) => ({
+    default: module.PrivacySettingsPage,
+  })),
+);
 const CalculationKnowledgeBasePage = React.lazy(() =>
   import('./pages/CalculationKnowledgeBasePage').then((module) => ({
     default: module.CalculationKnowledgeBasePage,
@@ -170,24 +180,29 @@ const App: React.FC = () => {
     });
   }, []);
 
-  // Listen for consent changes and reinitialize analytics
+  // Listen for consent changes and reinitialize services
   React.useEffect(() => {
-    const handleStorageChange = (e: StorageEvent): void => {
-      if (e.key === 'eso-log-aggregator-cookie-consent' && e.newValue) {
-        try {
-          const consent = JSON.parse(e.newValue);
-          if (consent.accepted) {
-            // User has accepted consent, reinitialize analytics
-            initializeAnalytics();
-          }
-        } catch {
-          // Ignore parsing errors
-        }
-      }
+    const handleConsentChanged = (): void => {
+      // Re-evaluate consent and reinitialize services accordingly
+      initializeAnalytics();
+      initializeSentry();
     };
 
+    // Listen for custom consent-changed event from CookieConsent component
+    window.addEventListener('consent-changed', handleConsentChanged);
+
+    // Also listen for cross-tab storage changes (legacy support)
+    const handleStorageChange = (e: StorageEvent): void => {
+      if (e.key === 'eso-log-aggregator-cookie-consent') {
+        handleConsentChanged();
+      }
+    };
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('consent-changed', handleConsentChanged);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Check if we're on the landing page to conditionally load components
@@ -205,21 +220,23 @@ const App: React.FC = () => {
     >
       <ReduxProvider store={store}>
         <PersistGate loading={<LoadingFallback />} persistor={persistor}>
-          <EsoLogsClientProvider>
-            <AuthProvider>
-              <AppRoutes />
-              {/* Add floating bug report button - lazy loaded for non-landing pages */}
-              {!isLandingPage && (
-                <Suspense fallback={null}>
-                  <LazyModernFeedbackFab />
-                </Suspense>
-              )}
-              {/* Update notification for new versions */}
-              <UpdateNotification />
-              {/* Cookie consent banner */}
-              <CookieConsent />
-            </AuthProvider>
-          </EsoLogsClientProvider>
+          <ReduxThemeProvider>
+            <EsoLogsClientProvider>
+              <AuthProvider>
+                <AppRoutes />
+                {/* Add floating bug report button - lazy loaded for non-landing pages */}
+                {!isLandingPage && (
+                  <Suspense fallback={null}>
+                    <LazyModernFeedbackFab />
+                  </Suspense>
+                )}
+                {/* Update notification for new versions */}
+                <UpdateNotification />
+                {/* Cookie consent banner */}
+                <CookieConsent />
+              </AuthProvider>
+            </EsoLogsClientProvider>
+          </ReduxThemeProvider>
         </PersistGate>
       </ReduxProvider>
     </LoggerProvider>
@@ -521,6 +538,26 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <AboutPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/privacy"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PrivacyPolicyPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/privacy-settings"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PrivacySettingsPage />
                   </Suspense>
                 </ErrorBoundary>
               }

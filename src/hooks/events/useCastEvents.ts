@@ -24,6 +24,7 @@ interface UseCastEventsOptions {
 export function useCastEvents(options?: UseCastEventsOptions): {
   castEvents: UnifiedCastEvent[];
   isCastEventsLoading: boolean;
+  isCastEventsLoaded: boolean;
   selectedFight: FightFragment | null;
 } {
   const dispatch = useAppDispatch();
@@ -37,6 +38,7 @@ export function useCastEvents(options?: UseCastEventsOptions): {
     selectCastEventsEntryForContext(state, context),
   );
   const isCastEventsLoading = castEntry?.status === 'loading';
+  const isCastEventsLoaded = castEntry?.status === 'succeeded' || castEntry?.status === 'failed';
 
   const restrictToFightWindow = options?.restrictToFightWindow ?? true;
 
@@ -64,7 +66,7 @@ export function useCastEvents(options?: UseCastEventsOptions): {
   ]);
 
   return React.useMemo(
-    () => ({ castEvents, isCastEventsLoading, selectedFight }),
-    [castEvents, isCastEventsLoading, selectedFight],
+    () => ({ castEvents, isCastEventsLoading, isCastEventsLoaded, selectedFight }),
+    [castEvents, isCastEventsLoading, isCastEventsLoaded, selectedFight],
   );
 }

@@ -51,6 +51,7 @@ jest.mock('../hooks/events/useCastEvents', () => ({
   useCastEvents: () => ({
     castEvents: [],
     isCastEventsLoading: false,
+    isCastEventsLoaded: true,
     selectedFight: null,
   }),
 }));

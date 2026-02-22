@@ -44,6 +44,19 @@ const DAMAGE_TYPE_COLORS: Record<DamageTypeFlags, string> = {
   [DamageTypeFlags.SHOCK]: '#FBBF24', // Shock - Yellow
 };
 
+// Gradient mapping for different damage types (saturated → deep shade)
+const DAMAGE_TYPE_GRADIENTS: Record<DamageTypeFlags, string> = {
+  [DamageTypeFlags.BLEED]: 'linear-gradient(90deg, #ef4444 0%, #991b1b 100%)', // Bleed - vivid red → deep red
+  [DamageTypeFlags.DISEASE]: 'linear-gradient(90deg, #8b5cf6 0%, #4c1d95 100%)', // Disease - vivid violet → deep violet
+  [DamageTypeFlags.FIRE]: 'linear-gradient(90deg, #ef4444 0%, #b91c1c 100%)', // Fire - vivid red → deep red
+  [DamageTypeFlags.FROST]: 'linear-gradient(90deg, #3b82f6 0%, #1e3a8a 100%)', // Frost - vivid blue → deep blue
+  [DamageTypeFlags.GENERIC]: 'linear-gradient(90deg, #6b7280 0%, #1f2937 100%)', // Generic - mid gray → dark
+  [DamageTypeFlags.MAGIC]: 'linear-gradient(90deg, #6366f1 0%, #312e81 100%)', // Magic - vivid indigo → deep indigo
+  [DamageTypeFlags.PHYSICAL]: 'linear-gradient(90deg, #92591e 0%, #3b1f0a 100%)', // Physical - mid brown → dark brown
+  [DamageTypeFlags.POISON]: 'linear-gradient(90deg, #10b981 0%, #064e3b 100%)', // Poison - vivid green → deep green
+  [DamageTypeFlags.SHOCK]: 'linear-gradient(90deg, #f59e0b 0%, #92400e 100%)', // Shock - vivid amber → deep amber
+};
+
 // Color mapping for custom damage categories by display name
 const CUSTOM_DAMAGE_TYPE_COLORS: Record<string, string> = {
   Magic: '#6366F1', // Magic - Purple
@@ -54,6 +67,18 @@ const CUSTOM_DAMAGE_TYPE_COLORS: Record<string, string> = {
   'Area of Effect': '#8B5CF6', // AOE - Violet
   'Status Effects': '#EC4899', // Status Effects - Pink
   Fire: '#EF4444', // Fire - Red
+};
+
+// Gradient mapping for custom damage categories by display name (saturated → deep shade)
+const CUSTOM_DAMAGE_TYPE_GRADIENTS: Record<string, string> = {
+  Magic: 'linear-gradient(90deg, #6366f1 0%, #312e81 100%)', // Magic - vivid indigo → deep indigo
+  Martial: 'linear-gradient(90deg, #92591e 0%, #3b1f0a 100%)', // Martial - mid brown → dark brown
+  Direct: 'linear-gradient(90deg, #f59e0b 0%, #92400e 100%)', // Direct - vivid amber → deep amber
+  Poison: 'linear-gradient(90deg, #10b981 0%, #064e3b 100%)', // Poison - vivid green → deep green
+  'Damage over Time': 'linear-gradient(90deg, #ef4444 0%, #b91c1c 100%)', // DOT - vivid red → deep red
+  'Area of Effect': 'linear-gradient(90deg, #8b5cf6 0%, #4c1d95 100%)', // AOE - vivid violet → deep violet
+  'Status Effects': 'linear-gradient(90deg, #ec4899 0%, #831843 100%)', // Status Effects - vivid pink → deep pink
+  Fire: 'linear-gradient(90deg, #ef4444 0%, #b91c1c 100%)', // Fire - vivid red → deep red
 };
 
 // Icon mapping for different damage types
@@ -210,6 +235,10 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
                 CUSTOM_DAMAGE_TYPE_COLORS[damageType.displayName] ||
                 DAMAGE_TYPE_COLORS[damageType.damageType] ||
                 '#6B7280'; // Default gray
+              const gradient =
+                CUSTOM_DAMAGE_TYPE_GRADIENTS[damageType.displayName] ||
+                DAMAGE_TYPE_GRADIENTS[damageType.damageType] ||
+                `linear-gradient(90deg, ${color}88 0%, ${color} 100%)`; // Fallback
               const icon =
                 CUSTOM_DAMAGE_TYPE_ICONS[damageType.displayName] ||
                 DAMAGE_TYPE_ICONS[damageType.damageType] ||
@@ -239,7 +268,7 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
                           left: 0,
                           height: '100%',
                           width: `${Math.max(0, Math.min(100, percentage))}%`,
-                          bgcolor: color,
+                          background: gradient,
                           borderRadius: 2,
                           transition: 'width 0.3s ease-in-out',
                         }}

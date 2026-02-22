@@ -19,6 +19,8 @@ npm run typecheck        # TypeScript compilation check
 npm run lint:fix         # Auto-fix linting issues
 ```
 
+> **⚠️ Before creating any PR**: run `npm run validate` AND `npm test -- --watchAll=false` — both must pass with zero errors/warnings. Do not open a PR or move a ticket to "In Review" until they do.
+
 **E2E Testing**: Use VS Code MCP Playwright tool (structured testing) or Agent Skills (exploratory)  
 **Full Command Reference**: See [AGENTS_COMMANDS.md](AGENTS_COMMANDS.md)
 
