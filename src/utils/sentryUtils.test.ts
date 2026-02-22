@@ -199,6 +199,92 @@ describe('sentryUtils', () => {
       // Should add performance information to extra (if available)
       expect(enhancedEvent.extra).toBeDefined();
     });
+
+    it('should drop events with stack frames from chrome extensions (ESO-559)', () => {
+      process.env.NODE_ENV = 'production';
+      initializeSentry();
+      const { beforeSend } = (Sentry.init as jest.Mock).mock.calls[0][0];
+
+      const extensionEvent = {
+        exception: {
+          values: [
+            {
+              value: 'Invalid call to runtime.sendMessage(). Tab not found.',
+              stacktrace: {
+                frames: [
+                  { filename: 'chrome-extension://abcdef/content.js', lineno: 1 },
+                ],
+              },
+            },
+          ],
+        },
+      };
+
+      expect(beforeSend(extensionEvent)).toBeNull();
+    });
+
+    it('should drop events with stack frames from firefox extensions (ESO-559)', () => {
+      process.env.NODE_ENV = 'production';
+      initializeSentry();
+      const { beforeSend } = (Sentry.init as jest.Mock).mock.calls[0][0];
+
+      const extensionEvent = {
+        exception: {
+          values: [
+            {
+              value: 'Some extension error',
+              stacktrace: {
+                frames: [{ filename: 'moz-extension://xyz/background.js', lineno: 5 }],
+              },
+            },
+          ],
+        },
+      };
+
+      expect(beforeSend(extensionEvent)).toBeNull();
+    });
+
+    it('should drop events matching runtime.sendMessage error message even without extension frames (ESO-559)', () => {
+      process.env.NODE_ENV = 'production';
+      initializeSentry();
+      const { beforeSend } = (Sentry.init as jest.Mock).mock.calls[0][0];
+
+      const messageEvent = {
+        exception: {
+          values: [
+            {
+              value: 'Invalid call to runtime.sendMessage(). Tab not found.',
+              stacktrace: { frames: [] },
+            },
+          ],
+        },
+      };
+
+      expect(beforeSend(messageEvent)).toBeNull();
+    });
+
+    it('should NOT drop normal application errors (ESO-559)', () => {
+      process.env.NODE_ENV = 'production';
+      initializeSentry();
+      const { beforeSend } = (Sentry.init as jest.Mock).mock.calls[0][0];
+
+      const appEvent = {
+        exception: {
+          values: [
+            {
+              value: 'TypeError: Cannot read properties of undefined',
+              stacktrace: {
+                frames: [{ filename: 'https://esotk.com/assets/main.js', lineno: 10 }],
+              },
+            },
+          ],
+        },
+        tags: {},
+        extra: {},
+      };
+
+      expect(beforeSend(appEvent)).not.toBeNull();
+    });
   });
 
   describe('captureApplicationContext', () => {
