@@ -385,9 +385,10 @@ export const UserReports: React.FC = () => {
       return;
     }
 
-    // Fetch all reports when user is logged in and we have currentUser data
-    // Only fetch if we haven't cached any reports yet and we're not already fetching
-    if (currentUser?.id && cacheInfo.totalCachedReports === 0 && !isFetchingAll && !loading) {
+    // Fetch all reports when user is logged in and we have currentUser data.
+    // Guard with hasFetchedAll (not totalCachedReports) so we don't re-dispatch
+    // after a failed fetch or when the user genuinely has zero reports (ESO-595).
+    if (currentUser?.id && !cacheInfo.hasFetchedAll && !isFetchingAll) {
       dispatch(
         fetchAllUserReports({
           client,
@@ -408,16 +409,15 @@ export const UserReports: React.FC = () => {
     } else if (currentUser === null && !userLoading) {
       // Handle case where user is logged in but currentUser is null
       setInitialLoading(false);
-    } else if (cacheInfo.totalCachedReports > 0) {
+    } else if (cacheInfo.hasFetchedAll) {
       setInitialLoading(false);
     }
   }, [
     isLoggedIn,
     currentUser,
     userLoading,
-    cacheInfo.totalCachedReports,
+    cacheInfo.hasFetchedAll,
     isFetchingAll,
-    loading,
     dispatch,
     client,
     logger,
