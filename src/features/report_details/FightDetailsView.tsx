@@ -17,6 +17,7 @@ import SecurityIcon from '@mui/icons-material/Security';
 import ShieldIcon from '@mui/icons-material/Shield';
 import StarIcon from '@mui/icons-material/Star';
 import TerrainIcon from '@mui/icons-material/Terrain';
+import TrackChangesIcon from '@mui/icons-material/TrackChanges';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import {
   Box,
@@ -111,6 +112,11 @@ const RotationAnalysisPanel = React.lazy(() =>
 const SynergyPanel = React.lazy(() =>
   import('./synergy/SynergyPanel').then((module) => ({ default: module.SynergyPanel })),
 );
+const DamageAccuracyPanel = React.lazy(() =>
+  import('./damage_accuracy/DamageAccuracyPanel').then((module) => ({
+    default: module.DamageAccuracyPanel,
+  })),
+);
 const TalentsGridPanel = React.lazy(() =>
   import('./talents/TalentsGridPanel').then((module) => ({ default: module.TalentsGridPanel })),
 );
@@ -151,6 +157,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
     TabId.BUFFS_OVERVIEW,
     TabId.DEBUFFS_OVERVIEW,
     TabId.MAPS,
+    TabId.DAMAGE_ACCURACY,
   ];
 
   // Ensure we have a valid selectedTabId based on what tabs are actually rendered
@@ -661,6 +668,15 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             }
             sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
           />
+          <Tab
+            value={TabId.DAMAGE_ACCURACY}
+            icon={
+              <Tooltip title="Damage Accuracy">
+                <TrackChangesIcon />
+              </Tooltip>
+            }
+            sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
+          />
         </Tabs>
 
         {/* Experimental Toggle */}
@@ -670,7 +686,8 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               <Box>Toggle experimental features</Box>
               <Box sx={{ fontSize: '0.8em', opacity: 0.8, mt: 0.5 }}>
                 Includes: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents,
-                Rotation Analysis, Auras Overview, Buffs Overview, and Debuffs Overview
+                Rotation Analysis, Auras Overview, Buffs Overview, Debuffs Overview, and Damage
+                Accuracy
               </Box>
             </Box>
           }
@@ -801,6 +818,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           {showExperimentalTabs && validSelectedTabId === TabId.MAPS && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.MAPS} />}>
               <MapsPanel fight={fight} />
+            </Suspense>
+          )}
+          {showExperimentalTabs && validSelectedTabId === TabId.DAMAGE_ACCURACY && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_ACCURACY} />}>
+              <DamageAccuracyPanel />
             </Suspense>
           )}
         </AnimatedTabContent>

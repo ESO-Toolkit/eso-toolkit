@@ -32,6 +32,7 @@ export enum TabId {
   BUFFS_OVERVIEW = 'buffs-overview',
   DEBUFFS_OVERVIEW = 'debuffs-overview',
   MAPS = 'maps',
+  DAMAGE_ACCURACY = 'damage-accuracy',
 }
 
 // Shared header skeleton for FightDetailsView
@@ -448,6 +449,8 @@ export const getSkeletonForTab = (
         return <GenericTabSkeleton title="Debuffs Overview" showTable={true} tableRows={15} />;
       case TabId.MAPS:
         return <GenericTabSkeleton title="Maps" showTable={false} />;
+      case TabId.DAMAGE_ACCURACY:
+        return <GenericTabSkeleton title="Damage Accuracy" showTable={true} tableRows={10} />;
       default:
         return <GenericTabSkeleton title="Loading..." />;
     }
