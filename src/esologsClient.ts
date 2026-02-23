@@ -89,7 +89,9 @@ export class EsoLogsClient {
 
   private createApolloClient(accessToken: string): ApolloClient {
     // Retry link: automatically retries requests that fail with HTTP 429 (rate limit)
-    // Uses exponential backoff with jitter to avoid thundering-herd retries.
+    // or transient network errors (status 0 / no statusCode — CORS block, DNS failure,
+    // dropped connection, etc.). Uses exponential backoff with jitter to avoid
+    // thundering-herd retries.
     const retryLink = new RetryLink({
       delay: {
         initial: 1000, // wait 1 s before the first retry
@@ -104,6 +106,12 @@ export class EsoLogsClient {
             logger.warn('API rate limit hit (429) — retrying with backoff', {
               operation: 'pending',
             });
+            return true;
+          }
+          // Also retry on network-level errors (no statusCode means the request
+          // never reached the server — transient connectivity failure).
+          if (error != null && statusCode === undefined) {
+            logger.warn('Network error — retrying with backoff');
             return true;
           }
           return false;
@@ -241,12 +249,19 @@ export class EsoLogsClient {
     try {
       result = await this.client.query(options);
     } catch (networkError) {
-      // Convert 429 (rate limit) errors to a human-readable message so that UI
+      // Convert well-known network failures to human-readable messages so that UI
       // components can surface actionable feedback instead of an opaque stack trace.
       const statusCode = (networkError as { statusCode?: number })?.statusCode;
       if (statusCode === 429) {
         throw new Error(
           'API rate limit exceeded. Too many requests were sent in a short period — please wait a moment and try again.',
+        );
+      }
+      // statusCode === undefined (or 0) means the request never got a response —
+      // this is the NetworkError case captured in sentry as ESO-LOGS-8J / ESO-589.
+      if (statusCode === undefined || statusCode === 0) {
+        throw new Error(
+          'Network error: Could not connect to the ESO Logs API. Please check your internet connection and try again.',
         );
       }
       throw networkError;
