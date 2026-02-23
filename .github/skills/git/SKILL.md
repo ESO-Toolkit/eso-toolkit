@@ -20,10 +20,12 @@ Install twig if missing: `npm install -g @gittwig/twig`
 
 ## Branch Naming Conventions
 
-- Jira tickets: `ESO-XXX/short-description-in-kebab-case`
+- Jira tickets: `ESO-XXX/short-description-in-kebab-case` ← **required for Jira sync**
 - Features: `feature/descriptive-name`
 - Bug fixes: `fix/bug-description`
 - Refactors: `refactor/what-changed`
+
+> **Jira sync requirement**: The `npm run sync-jira` script detects ticket status from remote branches by matching branch names that **start with `ESO-\d+`** (e.g. `ESO-569/...`). Branches that use the `feature/`, `fix/`, or `refactor/` prefixes are not recognised and will not trigger any Jira status updates. Always use the `ESO-XXX/description` format when working on a tracked ticket.
 
 ## Creating a Branch (with twig)
 
