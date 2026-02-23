@@ -34,6 +34,8 @@ export const Footer: React.FC = React.memo(() => {
       { label: 'Log Analyzer', href: '/logs' },
 
       { label: 'Roster Builder', href: '/roster-builder' },
+
+      { label: 'My Reports', href: '/my-reports' },
     ],
 
     [],
@@ -43,17 +45,13 @@ export const Footer: React.FC = React.memo(() => {
     () => [
       { label: 'Home', href: '/' },
 
-      { label: 'Latest Reports', href: '/latest-reports' },
-
-      { label: 'My Reports', href: '/my-reports' },
-
       { label: 'Privacy Settings', href: '/privacy-settings' },
 
-      { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Calculation Knowledge Base', href: '/docs/calculations' },
 
-      { label: 'Join Discord', href: 'https://discord.gg/mMjwcQYFdc', external: true },
+      { label: "What's New", href: '/whats-new' },
 
-      { label: 'GitHub', href: 'https://github.com/ESO-Toolkit/eso-toolkit', external: true },
+      { label: 'About', href: '/about' },
     ],
 
     [],

@@ -620,19 +620,9 @@ export const HeaderBar: React.FC = () => {
       path: '/calculator',
     },
     {
-      text: 'Logs',
-      icon: '📋',
-      path: '/logs',
-    },
-    {
       text: 'Parse Analysis',
       icon: '📈',
       path: '/parse-analysis',
-    },
-    {
-      text: 'Calculation Knowledge Base',
-      icon: '📚',
-      path: '/docs/calculations',
     },
     {
       text: 'Loadout Manager',
@@ -643,21 +633,6 @@ export const HeaderBar: React.FC = () => {
       text: 'Roster Builder',
       icon: '👥',
       path: '/roster-builder',
-    },
-    {
-      text: "What's New",
-      icon: '🆕',
-      path: '/whats-new',
-    },
-    {
-      text: 'About',
-      icon: 'ℹ️',
-      path: '/about',
-    },
-    {
-      text: 'Privacy Settings',
-      icon: '🔒',
-      path: '/privacy-settings',
     },
   ];
 
