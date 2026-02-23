@@ -50,7 +50,7 @@ jobs:
     # Only run on code changes, not label changes (always run for merge_group)
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Build
         run: npm run build
@@ -60,7 +60,7 @@ jobs:
     # Only run on code changes, not label changes (always run for merge_group)
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Lint
         run: npm run lint
@@ -70,7 +70,7 @@ jobs:
     # Only run on code changes, not label changes (always run for merge_group)
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Check formatting
         run: npm run format:check
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -93,7 +93,7 @@ jobs:
     # Only run on code changes, not label changes (always run for merge_group)
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Block external network access
         run: |
@@ -138,7 +138,7 @@ jobs:
     # Only run on code changes, not label changes (always run for merge_group)
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Typecheck
         run: npm run typecheck
@@ -148,7 +148,7 @@ jobs:
     # Only run on code changes, not label changes (always run for merge_group)
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Build Storybook
         run: npm run build-storybook
@@ -160,7 +160,7 @@ jobs:
     # Only run on code changes, not label changes (always run for merge_group)
     if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
 
       - name: Get Playwright version
