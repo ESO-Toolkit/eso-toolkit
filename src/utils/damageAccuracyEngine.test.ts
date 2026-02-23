@@ -8,6 +8,7 @@ import {
   generatePlayerAccuracyReport,
   generateFightAccuracyReport,
   type DamageEventAnalysis,
+  type DamageDoneBreakdown,
 } from './damageAccuracyEngine';
 
 // ─── Test Helpers ────────────────────────────────────────────────────────────
@@ -67,6 +68,15 @@ function makeDamageEvent(overrides: Partial<DamageEvent> = {}): DamageEvent {
 
 const emptyBuffLookup: BuffLookupData = { buffIntervals: {} };
 const emptyDebuffLookup: BuffLookupData = { buffIntervals: {} };
+
+/** Default damageDone breakdown with no buffs active (1.0 multiplier) */
+const defaultDamageDone: DamageDoneBreakdown = {
+  damageDonePercent: 0,
+  damageTakenPercent: 0,
+  empowerPercent: 0,
+  totalMultiplier: 1,
+  activeSources: [],
+};
 
 // Minimal combatant info (no gear or auras)
 const minimalCombatantInfo: CombatantInfoEvent = {
@@ -209,7 +219,9 @@ describe('damageAccuracyEngine', () => {
             isCritical: false,
             damageReductionPercent: 0,
             critMultiplier: 1.0,
+            damageDone: defaultDamageDone,
             totalMultiplier: 1.0,
+            buffValidation: null,
           },
           inferredTooltipDamage: 1000,
           relativeTimestamp: 1,
@@ -222,7 +234,9 @@ describe('damageAccuracyEngine', () => {
             isCritical: false,
             damageReductionPercent: 0,
             critMultiplier: 1.0,
+            damageDone: defaultDamageDone,
             totalMultiplier: 1.0,
+            buffValidation: null,
           },
           inferredTooltipDamage: 1010,
           relativeTimestamp: 2,
@@ -235,7 +249,9 @@ describe('damageAccuracyEngine', () => {
             isCritical: false,
             damageReductionPercent: 0,
             critMultiplier: 1.0,
+            damageDone: defaultDamageDone,
             totalMultiplier: 1.0,
+            buffValidation: null,
           },
           inferredTooltipDamage: 990,
           relativeTimestamp: 3,
@@ -264,7 +280,9 @@ describe('damageAccuracyEngine', () => {
             isCritical: false,
             damageReductionPercent: 0,
             critMultiplier: 1.0,
+            damageDone: defaultDamageDone,
             totalMultiplier: 1.0,
+            buffValidation: null,
           },
           inferredTooltipDamage: 1000,
           relativeTimestamp: 1,
@@ -277,7 +295,9 @@ describe('damageAccuracyEngine', () => {
             isCritical: false,
             damageReductionPercent: 0,
             critMultiplier: 1.0,
+            damageDone: defaultDamageDone,
             totalMultiplier: 1.0,
+            buffValidation: null,
           },
           inferredTooltipDamage: 1000,
           relativeTimestamp: 2,
@@ -291,7 +311,9 @@ describe('damageAccuracyEngine', () => {
             isCritical: true,
             damageReductionPercent: 0,
             critMultiplier: 1.5,
+            damageDone: defaultDamageDone,
             totalMultiplier: 1.5,
+            buffValidation: null,
           },
           inferredTooltipDamage: 1000, // 1500 / 1.5 = 1000
           relativeTimestamp: 3,
@@ -465,6 +487,236 @@ describe('damageAccuracyEngine', () => {
       expect(report.playerReports).toHaveLength(0);
       expect(report.totalEvents).toBe(0);
       expect(report.overallAccuracy).toBe(0);
+    });
+  });
+
+  describe('damage-done multipliers', () => {
+    it('should include damageDone with 1.0 multiplier when no buffs active', () => {
+      const event = makeDamageEvent();
+      const modifiers = computeModifiersForEvent(
+        event,
+        emptyBuffLookup,
+        emptyDebuffLookup,
+        null,
+        undefined,
+        0,
+      );
+
+      expect(modifiers.damageDone.damageDonePercent).toBe(0);
+      expect(modifiers.damageDone.damageTakenPercent).toBe(0);
+      expect(modifiers.damageDone.empowerPercent).toBe(0);
+      expect(modifiers.damageDone.totalMultiplier).toBe(1);
+    });
+
+    it('should detect Minor Berserk buff on attacker', () => {
+      const event = makeDamageEvent({ sourceID: 1, timestamp: FIGHT_START + 5000 });
+      const buffLookup: BuffLookupData = {
+        buffIntervals: {
+          '61744': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 1, sourceID: 1 },
+          ],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event,
+        buffLookup,
+        emptyDebuffLookup,
+        null,
+        undefined,
+        0,
+      );
+
+      expect(modifiers.damageDone.damageDonePercent).toBe(5);
+      expect(modifiers.damageDone.totalMultiplier).toBeCloseTo(1.05, 4);
+      // totalMultiplier should include damageDone
+      expect(modifiers.totalMultiplier).toBeCloseTo(1.05, 4);
+    });
+
+    it('should detect Major Vulnerability debuff on target', () => {
+      const event = makeDamageEvent({ targetID: 100, timestamp: FIGHT_START + 5000 });
+      const debuffLookup: BuffLookupData = {
+        buffIntervals: {
+          '106754': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 100, sourceID: 1 },
+          ],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event,
+        emptyBuffLookup,
+        debuffLookup,
+        null,
+        undefined,
+        0,
+      );
+
+      expect(modifiers.damageDone.damageTakenPercent).toBe(10);
+      expect(modifiers.damageDone.totalMultiplier).toBeCloseTo(1.10, 4);
+    });
+
+    it('should combine Berserk and Vulnerability multiplicatively', () => {
+      const event = makeDamageEvent({
+        sourceID: 1,
+        targetID: 100,
+        timestamp: FIGHT_START + 5000,
+      });
+
+      // Minor Berserk (+5%) on attacker
+      const buffLookup: BuffLookupData = {
+        buffIntervals: {
+          '61744': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 1, sourceID: 1 },
+          ],
+        },
+      };
+
+      // Minor Vulnerability (+5%) on target
+      const debuffLookup: BuffLookupData = {
+        buffIntervals: {
+          '79717': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 100, sourceID: 1 },
+          ],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event,
+        buffLookup,
+        debuffLookup,
+        null,
+        undefined,
+        0,
+      );
+
+      // (1 + 0.05) × (1 + 0.05) = 1.1025
+      expect(modifiers.damageDone.totalMultiplier).toBeCloseTo(1.1025, 4);
+      expect(modifiers.totalMultiplier).toBeCloseTo(1.1025, 4);
+    });
+
+    it('should not apply Empower to DoT ticks', () => {
+      const dotEvent = makeDamageEvent({
+        sourceID: 1,
+        timestamp: FIGHT_START + 5000,
+        tick: true,
+      });
+
+      // Empower active on attacker
+      const buffLookup: BuffLookupData = {
+        buffIntervals: {
+          '61737': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 1, sourceID: 1 },
+          ],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        dotEvent,
+        buffLookup,
+        emptyDebuffLookup,
+        null,
+        undefined,
+        0,
+      );
+
+      expect(modifiers.damageDone.empowerPercent).toBe(0);
+    });
+
+    it('should include damageDoneMultiplierRange in ModifierSummary', () => {
+      const damageEvents = [
+        makeDamageEvent({ sourceID: 1, amount: 5000, abilityGameID: 100 }),
+        makeDamageEvent({
+          sourceID: 1,
+          amount: 5100,
+          abilityGameID: 100,
+          timestamp: FIGHT_START + 6000,
+        }),
+      ];
+
+      const report = generatePlayerAccuracyReport(
+        1,
+        'TestPlayer',
+        damageEvents,
+        emptyBuffLookup,
+        emptyDebuffLookup,
+        null,
+        undefined,
+        0,
+        FIGHT_START,
+      );
+
+      expect(report.modifierSummary.damageDoneMultiplierRange).toBeDefined();
+      expect(report.modifierSummary.damageDoneMultiplierRange.mean).toBe(1);
+    });
+  });
+
+  describe('buff validation', () => {
+    it('should return null buffValidation when event has no buffs field', () => {
+      const event = makeDamageEvent(); // no buffs field
+      const modifiers = computeModifiersForEvent(
+        event,
+        emptyBuffLookup,
+        emptyDebuffLookup,
+        null,
+        undefined,
+        0,
+      );
+
+      expect(modifiers.buffValidation).toBeNull();
+    });
+
+    it('should validate buff snapshot against BuffLookup', () => {
+      // Event reports Minor Berserk (61744) in its buffs
+      const event = makeDamageEvent({
+        sourceID: 1,
+        timestamp: FIGHT_START + 5000,
+        buffs: '61744.12345',
+      });
+
+      // BuffLookup also has Minor Berserk active
+      const buffLookup: BuffLookupData = {
+        buffIntervals: {
+          '61744': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 1, sourceID: 1 },
+          ],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event,
+        buffLookup,
+        emptyDebuffLookup,
+        null,
+        undefined,
+        0,
+      );
+
+      expect(modifiers.buffValidation).not.toBeNull();
+      expect(modifiers.buffValidation!.matchedCount).toBe(1);
+      expect(modifiers.buffValidation!.missingFromLookup).toHaveLength(0);
+      expect(modifiers.buffValidation!.extraInLookup).toHaveLength(0);
+    });
+
+    it('should detect buffs in event but missing from lookup', () => {
+      const event = makeDamageEvent({
+        sourceID: 1,
+        timestamp: FIGHT_START + 5000,
+        buffs: '61744', // Minor Berserk in event buffs
+      });
+
+      // But NOT in BuffLookup
+      const modifiers = computeModifiersForEvent(
+        event,
+        emptyBuffLookup,
+        emptyDebuffLookup,
+        null,
+        undefined,
+        0,
+      );
+
+      expect(modifiers.buffValidation).not.toBeNull();
+      expect(modifiers.buffValidation!.missingFromLookup).toContain(61744);
     });
   });
 });

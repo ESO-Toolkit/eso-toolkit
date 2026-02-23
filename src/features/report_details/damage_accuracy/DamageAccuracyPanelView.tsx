@@ -223,7 +223,7 @@ const PlayerAccuracyAccordion: React.FC<PlayerAccuracyAccordionProps> = ({
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
               gap: 2,
             }}
           >
@@ -250,6 +250,14 @@ const PlayerAccuracyAccordion: React.FC<PlayerAccuracyAccordionProps> = ({
               mean={playerReport.modifierSummary.damageReductionRange.mean}
               format={(v) => formatPercent(v)}
               maxPossible={50}
+            />
+            <ModifierRange
+              label="Damage Done Multiplier"
+              min={(playerReport.modifierSummary.damageDoneMultiplierRange.min - 1) * 100}
+              max={(playerReport.modifierSummary.damageDoneMultiplierRange.max - 1) * 100}
+              mean={(playerReport.modifierSummary.damageDoneMultiplierRange.mean - 1) * 100}
+              format={(v) => `+${formatPercent(v)}`}
+              maxPossible={30}
             />
           </Box>
         </Paper>

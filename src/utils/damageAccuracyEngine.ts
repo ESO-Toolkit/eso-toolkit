@@ -6,8 +6,13 @@
  * us to identify missing modifier sources, validate our buff/debuff tracking, and quantify
  * prediction accuracy.
  *
- * ESO Damage Formula (simplified):
- *   final_damage = tooltip_damage × (1 - damage_reduction%) × crit_multiplier
+ * ESO Damage Formula:
+ *   final_damage = tooltip_damage
+ *     × (1 + damageDone%)            -- Berserk, Slayer buffs on attacker
+ *     × (1 + damageTaken%)           -- Vulnerability debuffs on target
+ *     × (1 + empowerBonus%)          -- Empower (direct damage only)
+ *     × (1 - damage_reduction%)      -- Resistance after penetration
+ *     × crit_multiplier              -- Critical hit bonus
  *
  * Where:
  *   effective_resistance = max(0, target_resistance - min(penetration, 18200))
@@ -26,6 +31,10 @@ import type { BuffLookupData } from './BuffLookupUtils';
 import {
   calculateCriticalDamageAtTimestamp,
 } from './CritDamageUtils';
+import {
+  type DamageDoneBreakdown,
+  calculateDamageDoneAtTimestamp,
+} from './DamageDoneUtils';
 import {
   MAX_RESISTANCE,
   RESISTANCE_TO_DAMAGE_REDUCTION_RATIO,
@@ -47,8 +56,12 @@ export interface DamageModifiers {
   damageReductionPercent: number;
   /** The multiplier applied by crits: (1 + critDamageBonus) for crits, 1.0 for normals */
   critMultiplier: number;
-  /** Combined modifier multiplier: (1 - damageReduction) × critMultiplier */
+  /** Damage-done breakdown (Berserk, Slayer, Vulnerability, Empower) */
+  damageDone: DamageDoneBreakdown;
+  /** Combined modifier multiplier: damageDone × (1 - damageReduction) × critMultiplier */
   totalMultiplier: number;
+  /** Buff validation: IDs from event.buffs that we also found via BuffLookup */
+  buffValidation: BuffValidation | null;
 }
 
 export interface DamageEventAnalysis {
@@ -125,6 +138,19 @@ export interface ModifierSummary {
   penetrationRange: { min: number; max: number; mean: number };
   critDamageBonusRange: { min: number; max: number; mean: number };
   damageReductionRange: { min: number; max: number; mean: number };
+  damageDoneMultiplierRange: { min: number; max: number; mean: number };
+}
+
+/** Cross-validation between event.buffs snapshot and BuffLookup-derived active buffs */
+export interface BuffValidation {
+  /** Buff ability IDs from the event.buffs field */
+  eventBuffIds: number[];
+  /** How many of the known damage-modifier buffs appear in both event.buffs and BuffLookup */
+  matchedCount: number;
+  /** Buffs found in event.buffs but NOT detected by BuffLookup at this timestamp */
+  missingFromLookup: number[];
+  /** Buffs detected by BuffLookup but NOT present in event.buffs */
+  extraInLookup: number[];
 }
 
 export interface FightAccuracyReport {
@@ -146,6 +172,72 @@ const PENETRATION_CAP = 18200;
 
 // Minimum events needed for an ability to produce meaningful stats
 const MIN_EVENTS_FOR_STATS = 2;
+
+/**
+ * Known buff ability IDs that affect damage output.
+ * Used to cross-validate event.buffs snapshots against BuffLookup data.
+ * Includes both attacker buffs (Berserk, Slayer, Empower) checked on source
+ * and effects like Vulnerability checked via debuffLookup on target.
+ */
+const KNOWN_DAMAGE_BUFF_IDS = new Set<number>([
+  61744, // Minor Berserk
+  61745, // Major Berserk
+  147226, // Minor Slayer
+  93109, // Major Slayer
+  61737, // Empower
+]);
+
+// ─── Helpers ────────────────────────────────────────────────────────────────────
+
+/**
+ * Parse the event.buffs dot-separated string into an array of buff ability IDs.
+ * Returns an empty array if the field is missing or empty.
+ */
+function parseEventBuffs(event: DamageEvent): number[] {
+  if (!event.buffs) return [];
+  return event.buffs
+    .split('.')
+    .map((id) => parseInt(id, 10))
+    .filter((id) => !isNaN(id));
+}
+
+/**
+ * Cross-validate event.buffs snapshot against BuffLookup-derived active buffs.
+ * Only checks the known damage-modifier buffs (not every possible buff).
+ */
+function validateBuffSnapshot(
+  event: DamageEvent,
+  buffLookup: BuffLookupData,
+): BuffValidation | null {
+  if (!event.buffs) return null;
+
+  const eventBuffIds = parseEventBuffs(event);
+  const eventBuffSet = new Set(eventBuffIds);
+
+  const missingFromLookup: number[] = [];
+  const extraInLookup: number[] = [];
+  let matchedCount = 0;
+
+  for (const knownId of KNOWN_DAMAGE_BUFF_IDS) {
+    const inEventBuffs = eventBuffSet.has(knownId);
+    const inLookup = buffLookup.buffIntervals[knownId.toString()]?.some(
+      (interval) =>
+        event.timestamp >= interval.start &&
+        event.timestamp <= interval.end &&
+        interval.targetID === event.sourceID,
+    ) ?? false;
+
+    if (inEventBuffs && inLookup) {
+      matchedCount++;
+    } else if (inEventBuffs && !inLookup) {
+      missingFromLookup.push(knownId);
+    } else if (!inEventBuffs && inLookup) {
+      extraInLookup.push(knownId);
+    }
+  }
+
+  return { eventBuffIds, matchedCount, missingFromLookup, extraInLookup };
+}
 
 // ─── Core Computation ───────────────────────────────────────────────────────────
 
@@ -197,10 +289,24 @@ export function computeModifiersForEvent(
       ) / 100;
   }
 
-  // 5. Multipliers
+  // 5. Damage-done multiplier (Berserk, Slayer, Vulnerability, Empower)
+  const isDirectDamage = !event.tick;
+  const damageDone = calculateDamageDoneAtTimestamp(
+    buffLookup,
+    debuffLookup,
+    event.timestamp,
+    event.sourceID,
+    event.targetID,
+    isDirectDamage,
+  );
+
+  // 6. Buff validation (cross-check event.buffs against BuffLookup)
+  const buffValidation = validateBuffSnapshot(event, buffLookup);
+
+  // 7. Multipliers
   const critMultiplier = isCritical ? 1 + critDamageBonus : 1.0;
   const resistanceMultiplier = 1 - damageReductionPercent / 100;
-  const totalMultiplier = resistanceMultiplier * critMultiplier;
+  const totalMultiplier = damageDone.totalMultiplier * resistanceMultiplier * critMultiplier;
 
   return {
     penetration,
@@ -208,7 +314,9 @@ export function computeModifiersForEvent(
     isCritical,
     damageReductionPercent,
     critMultiplier,
+    damageDone,
     totalMultiplier,
+    buffValidation,
   };
 }
 
@@ -426,6 +534,17 @@ export function generatePlayerAccuracyReport(
           ? Math.max(...allModifiers.map((m) => m.damageReductionPercent))
           : 0,
       mean: mean(allModifiers.map((m) => m.damageReductionPercent)),
+    },
+    damageDoneMultiplierRange: {
+      min:
+        allModifiers.length > 0
+          ? Math.min(...allModifiers.map((m) => m.damageDone.totalMultiplier))
+          : 1,
+      max:
+        allModifiers.length > 0
+          ? Math.max(...allModifiers.map((m) => m.damageDone.totalMultiplier))
+          : 1,
+      mean: mean(allModifiers.map((m) => m.damageDone.totalMultiplier)),
     },
   };
 
