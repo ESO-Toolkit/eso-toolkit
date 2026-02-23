@@ -204,40 +204,47 @@ jobs:
   # in-flight deploy rather than queuing behind it.
   deploy:
     needs: [coverage, build-storybook]
+    # Must always evaluate to true so the required status check reports back to
+    # GitHub. Without this, skipped jobs report nothing and the merge queue
+    # times out waiting for a status that never arrives.
     if: |
-      github.event_name == 'merge_group' ||
+      always() &&
       (
-        (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') &&
-        needs.coverage.result == 'success' &&
-        needs.build-storybook.result == 'success'
+        github.event_name == 'merge_group' ||
+        github.event_name == 'pull_request' ||
+        (
+          (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') &&
+          needs.coverage.result == 'success' &&
+          needs.build-storybook.result == 'success'
+        )
       )
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-reports-gh-pages
       cancel-in-progress: true
     steps:
-      - name: Skip deploy in merge queue (only needed on main)
+      - name: Skip deploy (non-deployment context)
         # The job must still run so the required status check reports back to GitHub
         # instead of timing out and ejecting the PR from the merge queue.
-        if: github.event_name == 'merge_group'
-        run: echo "✅ Deploy skipped in merge queue — only runs on main push."
+        if: github.event_name == 'merge_group' || github.event_name == 'pull_request'
+        run: echo "✅ Deploy skipped — only runs on main push."
 
       - name: Download Coverage Badge JSON
-        if: github.event_name != 'merge_group'
+        if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
         uses: actions/download-artifact@v4
         with:
           name: coverage-badge-json
           path: deploy-staging/badges/
 
       - name: Download Storybook
-        if: github.event_name != 'merge_group'
+        if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
         uses: actions/download-artifact@v4
         with:
           name: storybook-static
           path: deploy-staging/storybook/
 
       - name: Generate Deploy Token
-        if: github.event_name != 'merge_group'
+        if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
         id: generate-deploy-token
         uses: actions/create-github-app-token@v2
         with:
@@ -247,7 +254,7 @@ jobs:
           repositories: eso-log-aggregator-reports
 
       - name: Deploy to GitHub Pages
-        if: github.event_name != 'merge_group'
+        if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
         uses: peaceiris/actions-gh-pages@v4
         with:
           # Use personal_token (not github_token) when pushing to an external repository.
