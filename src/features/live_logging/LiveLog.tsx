@@ -30,6 +30,9 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
   const [selectedTabId, setSelectedTabId] = React.useState<TabId>(TabId.INSIGHTS);
   const [showExperimentalTabs, setShowExperimentalTabs] = React.useState<boolean>(false);
 
+  // Error state: a non-null message stops the polling interval and shows a message to the user
+  const [fetchError, setFetchError] = React.useState<string | null>(null);
+
   React.useEffect(() => {
     dispatch(
       setActiveReportContext({
@@ -44,13 +47,20 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
       return;
     }
 
-    const response = await client.query({
-      query: GetReportByCodeDocument,
-      variables: {
-        code: reportId,
-      },
-      fetchPolicy: 'no-cache',
-    });
+    let response;
+    try {
+      response = await client.query({
+        query: GetReportByCodeDocument,
+        variables: {
+          code: reportId,
+        },
+        fetchPolicy: 'no-cache',
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch report data';
+      setFetchError(message);
+      return;
+    }
     const lastFight =
       response.reportData?.report?.fights &&
       response.reportData?.report?.fights[response.reportData.report.fights.length - 1];
@@ -76,14 +86,19 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
   }, [reportId, client, latestFightId, dispatch]);
 
   React.useEffect(() => {
-    fetchLatestFightId();
+    // Don't start/continue polling if we already have a permanent error
+    if (fetchError) {
+      return;
+    }
+
+    void fetchLatestFightId();
 
     const interval = setInterval(() => {
-      fetchLatestFightId();
+      void fetchLatestFightId();
     }, REFETCH_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [fetchLatestFightId]);
+  }, [fetchLatestFightId, fetchError]);
 
   const reportFightCtxValue = React.useMemo(
     () => ({
@@ -97,6 +112,10 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
     }),
     [reportId, latestFightId, selectedTabId, showExperimentalTabs],
   );
+
+  if (fetchError) {
+    return <Typography color="error">{fetchError}</Typography>;
+  }
 
   if (!latestFightId) {
     return <Typography>Waiting for fights to be uploaded...</Typography>;
