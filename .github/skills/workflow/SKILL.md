@@ -39,6 +39,8 @@ Examples of valid names:
 - `ESO-449/structure-redux-state`
 - `ESO-372/fix-aria-labels`
 
+> **Why this matters**: The `npm run sync-jira` script reads all remote branches and moves Jira tickets to *In Progress* or *Done* automatically. It only detects branches whose name **starts with the Jira ticket key** (`ESO-\d+`). A branch named `feature/remove-duplicate-roles` will be invisible to the sync and its ticket will never be updated.
+
 Run these commands in sequence:
 
 ```powershell
