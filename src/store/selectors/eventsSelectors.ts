@@ -165,21 +165,11 @@ export const selectResourceEventsError = createSelector(
   },
 );
 
-// Selector to get the currently selected fight ID from router state
+// Selector to get the currently selected fight ID from the active report context.
+// Uses state.report.activeContext which is kept in sync by ReportFightProvider.
 export const selectSelectedFightId = (state: RootState): string | null => {
-  const location = state.router?.location;
-  if (!location?.pathname) return null;
-
-  // Parse the pathname to extract fightId
-  // Expected format: /report/:reportId/fight/:fightId
-  const pathParts = location.pathname.split('/').filter(Boolean);
-  const fightIndex = pathParts.indexOf('fight');
-
-  if (fightIndex !== -1 && fightIndex + 1 < pathParts.length) {
-    return pathParts[fightIndex + 1];
-  }
-
-  return null;
+  const fightId = state.report.activeContext.fightId;
+  return fightId !== null ? String(fightId) : null;
 };
 
 // Helper selector to get the currently selected fight from Redux state

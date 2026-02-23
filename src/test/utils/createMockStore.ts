@@ -1,6 +1,4 @@
 import { configureStore, type EnhancedStore } from '@reduxjs/toolkit';
-import { createMemoryHistory } from 'history';
-import { createReduxHistoryContext } from 'redux-first-history';
 import { FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE } from 'redux-persist';
 
 import { eventsReducer } from '../../store/events_data';
@@ -19,11 +17,6 @@ export interface MockStoreOptions {
     ui?: Partial<UIState>;
     // Add other slice initial states as needed
   };
-  /**
-   * Initial URL entries for the memory router
-   * @default ['/']
-   */
-  initialEntries?: string[];
   /**
    * Whether to disable serializable check completely
    * @default false (uses production-like configuration)
@@ -48,25 +41,7 @@ export interface MockStoreOptions {
  * consistent store configuration across all testing environments.
  */
 export function createMockStore(options: MockStoreOptions = {}): EnhancedStore {
-  const {
-    initialState = {},
-    initialEntries = ['/'],
-    disableSerializableCheck = false,
-    enableReduxDevTools = true,
-  } = options;
-
-  // Create redux-first-history context with memory history for testing
-  const { routerMiddleware, routerReducer } = createReduxHistoryContext({
-    history: createMemoryHistory({
-      initialEntries,
-    }),
-    // Same batching strategy as production
-    batch: (callback: () => void) => {
-      callback();
-    },
-    // Redux devtools time travel for debugging
-    reduxTravelling: enableReduxDevTools,
-  });
+  const { initialState = {}, disableSerializableCheck = false } = options;
 
   const serializableCheckConfig = disableSerializableCheck
     ? false
@@ -77,7 +52,6 @@ export function createMockStore(options: MockStoreOptions = {}): EnhancedStore {
 
   return configureStore({
     reducer: {
-      router: routerReducer, // Include router reducer like production
       events: eventsReducer,
       ui: uiReducer, // Use plain reducer (no persistence in testing)
       masterData: masterDataReducer,
@@ -89,7 +63,7 @@ export function createMockStore(options: MockStoreOptions = {}): EnhancedStore {
       const defaultMiddleware = getDefaultMiddleware({
         serializableCheck: serializableCheckConfig,
       });
-      return defaultMiddleware.concat(routerMiddleware);
+      return defaultMiddleware;
     },
     preloadedState: {
       ui: {

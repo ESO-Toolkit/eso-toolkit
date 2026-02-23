@@ -89,6 +89,7 @@ const createMockState = (overrides: Partial<RootState> = {}): RootState => {
       accessOrder: [],
     },
     router: {
+      // Will be stripped by 'as RootState' but kept for override use
       location: {
         pathname: '/report/test-report/fight/1',
         search: '',
@@ -243,56 +244,34 @@ describe('Buff Lookup Selectors', () => {
     });
   });
 
-  describe('Router-based selectors', () => {
-    it('should extract fight ID from router state', () => {
+  describe('ActiveContext-based selectors', () => {
+    it('should extract fight ID from activeContext', () => {
       const state = createMockState({
-        router: {
-          location: {
-            pathname: '/report/test-report/fight/123',
-            search: '',
-            hash: '',
-            state: {},
-            key: 'test-key',
-          },
-          action: null,
+        report: {
+          ...createMockState().report,
+          activeContext: { reportId: 'test-report', fightId: 123 },
         },
-      });
+      } as any);
 
       const fightId = selectSelectedFightId(state);
       expect(fightId).toBe('123');
     });
 
-    it('should return null for invalid paths', () => {
+    it('should return null when activeContext has no fightId', () => {
       const state = createMockState({
-        router: {
-          location: {
-            pathname: '/report/test-report',
-            search: '',
-            hash: '',
-            state: {},
-            key: 'test-key',
-          },
-          action: null,
+        report: {
+          ...createMockState().report,
+          activeContext: { reportId: 'test-report', fightId: null },
         },
-      });
+      } as any);
 
       const fightId = selectSelectedFightId(state);
       expect(fightId).toBeNull();
     });
 
-    it('should select current fight using router state', () => {
-      const state = createMockState({
-        router: {
-          location: {
-            pathname: '/report/test-report/fight/1',
-            search: '',
-            hash: '',
-            state: {},
-            key: 'test-key',
-          },
-          action: null,
-        },
-      });
+    it('should select current fight using activeContext', () => {
+      // Default mock state has activeContext.fightId = 1 and fight id 1 in the report
+      const state = createMockState();
 
       const currentFight = selectCurrentFight(state);
       expect(currentFight).toEqual({

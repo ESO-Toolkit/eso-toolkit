@@ -1,8 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { push, replace } from 'redux-first-history';
+import { useSearchParams } from 'react-router-dom';
 
-import { RootState } from '../store/storeWithHistory';
 import {
   selectSelectedTargetIds,
   selectSelectedPlayerId,
@@ -25,13 +24,10 @@ export interface UrlParams {
 }
 
 /**
- * Parse URL search params and hash fragments to extract our tracked parameters
+ * Parse URLSearchParams to extract our tracked parameters
  */
-function parseUrlParams(location: { search: string; hash: string }): Partial<UrlParams> {
+function parseUrlSearchParams(searchParams: URLSearchParams): Partial<UrlParams> {
   const params: Partial<UrlParams> = {};
-
-  // Parse search params from URL search (browser routing)
-  const searchParams = new URLSearchParams(location.search);
 
   // Parse selectedTargetIds (comma-separated string)
   const targetIds = searchParams.get('selectedTargetIds');
@@ -77,7 +73,7 @@ function parseUrlParams(location: { search: string; hash: string }): Partial<Url
 }
 
 /**
- * Build URL search params string from current state
+ * Build URL search params string from given params
  */
 function buildUrlParams(params: Partial<UrlParams>): string {
   const searchParams = new URLSearchParams();
@@ -102,60 +98,47 @@ function buildUrlParams(params: Partial<UrlParams>): string {
 }
 
 /**
- * Update URL with current state while preserving other search params
+ * Apply param changes to a URLSearchParams instance (mutates a copy)
  */
-function updateUrl(
-  currentLocation: { pathname: string; search: string; hash: string },
-  newParams: Partial<UrlParams>,
-): string {
-  // Extract current search params from location.search (browser routing)
-  const currentSearchParams = new URLSearchParams(currentLocation.search);
+function applyParamsUpdate(prev: URLSearchParams, newParams: Partial<UrlParams>): URLSearchParams {
+  const next = new URLSearchParams(prev);
 
-  // Update our tracked params
   if (newParams.selectedTargetIds !== undefined) {
     if (newParams.selectedTargetIds.length === 0) {
-      currentSearchParams.delete('selectedTargetIds');
+      next.delete('selectedTargetIds');
     } else {
-      currentSearchParams.set('selectedTargetIds', newParams.selectedTargetIds.join(','));
+      next.set('selectedTargetIds', newParams.selectedTargetIds.join(','));
     }
   }
-
   if (newParams.selectedPlayerId !== undefined) {
     if (newParams.selectedPlayerId === null) {
-      currentSearchParams.delete('selectedPlayerId');
+      next.delete('selectedPlayerId');
     } else {
-      currentSearchParams.set('selectedPlayerId', newParams.selectedPlayerId.toString());
+      next.set('selectedPlayerId', newParams.selectedPlayerId.toString());
     }
   }
-
   if (newParams.selectedTab !== undefined) {
     if (newParams.selectedTab === null) {
-      currentSearchParams.delete('selectedTab');
+      next.delete('selectedTab');
     } else {
-      currentSearchParams.set('selectedTab', newParams.selectedTab.toString());
+      next.set('selectedTab', newParams.selectedTab.toString());
     }
   }
-
   if (newParams.showExperimentalTabs !== undefined) {
-    currentSearchParams.set('showExperimentalTabs', newParams.showExperimentalTabs.toString());
+    next.set('showExperimentalTabs', newParams.showExperimentalTabs.toString());
   }
 
-  // Build new URL with search params
-  const searchString = currentSearchParams.toString();
-  const newUrl = searchString
-    ? `${currentLocation.pathname}?${searchString}`
-    : currentLocation.pathname;
-
-  return newUrl;
+  return next;
 }
 
 /**
- * Hook that syncs URL parameters with Redux state using redux-first-history
+ * Hook that syncs URL search parameters with Redux state using React Router v6.
  *
- * Key performance optimizations:
- * - Only updates when values actually change (change detection)
- * - Uses React 18's automatic batching
- * - Debounced URL parsing to prevent excessive updates
+ * Key behaviours:
+ * - URL is the source of truth on initial load / navigation
+ * - Redux is updated from URL params via a debounced effect
+ * - URL is updated via setSearchParams (no redux-first-history dependency)
+ * - Uses a ref for initial-sync tracking to avoid setState re-render loops
  */
 export function useUrlParamSync(): {
   selectedTargetIds: number[];
@@ -171,7 +154,7 @@ export function useUrlParamSync(): {
   buildUrlParams: (params: Partial<UrlParams>) => string;
 } {
   const dispatch = useAppDispatch();
-  const location = useSelector((state: RootState) => state.router.location);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Get current Redux state
   const selectedTargetIds = useSelector(selectSelectedTargetIds);
@@ -179,113 +162,102 @@ export function useUrlParamSync(): {
   const selectedTabId = useSelector(selectSelectedTabId);
   const showExperimentalTabs = useSelector(selectShowExperimentalTabs);
 
-  // Track if we've done the initial sync from URL to avoid race conditions
-  const [hasInitialSync, setHasInitialSync] = React.useState(false);
+  // Use a ref to avoid re-render loops — setState inside a useEffect that lists the state
+  // as a dependency would cause infinite re-renders with the old approach.
+  const hasInitialSyncRef = React.useRef(false);
 
-  // Sync URL params to Redux state on location change
-  // Use a delayed approach to avoid race conditions with redux-persist
+  // Sync URL params → Redux state whenever searchParams changes.
+  // Small delay on first load only, to let redux-persist rehydration settle.
   React.useEffect(() => {
-    if (!location) return;
+    const delay = hasInitialSyncRef.current ? 0 : 100;
+    const timeoutId = setTimeout(() => {
+      const urlParams = parseUrlSearchParams(searchParams);
 
-    // Small delay to ensure redux-persist has completed rehydration
-    const timeoutId = setTimeout(
-      () => {
-        const urlParams = parseUrlParams(location);
+      // Batch all updates together using React 18 automatic batching
+      const updates: Array<() => void> = [];
 
-        // Batch all updates together using React 18 automatic batching
-        const updates: Array<() => void> = [];
+      if (urlParams.selectedTargetIds !== undefined) {
+        const value = urlParams.selectedTargetIds;
+        updates.push(() => dispatch(setSelectedTargetIds(value)));
+      }
+      if (urlParams.selectedPlayerId !== undefined) {
+        const value = urlParams.selectedPlayerId;
+        updates.push(() => dispatch(setSelectedPlayerId(value)));
+      }
+      if (urlParams.selectedTab !== undefined) {
+        const value = urlParams.selectedTab;
+        updates.push(() => dispatch(setSelectedTabId(value)));
+      }
+      if (urlParams.showExperimentalTabs !== undefined) {
+        const value = urlParams.showExperimentalTabs;
+        updates.push(() => dispatch(setShowExperimentalTabs(value)));
+      }
 
-        // Always apply URL params on initial load/location change
-        // Don't compare to Redux state to avoid timing issues
-        if (urlParams.selectedTargetIds !== undefined) {
-          const value = urlParams.selectedTargetIds;
-          updates.push(() => dispatch(setSelectedTargetIds(value)));
-          setHasInitialSync(true);
-        }
-
-        if (urlParams.selectedPlayerId !== undefined) {
-          const value = urlParams.selectedPlayerId;
-          updates.push(() => dispatch(setSelectedPlayerId(value)));
-          setHasInitialSync(true);
-        }
-
-        if (urlParams.selectedTab !== undefined) {
-          const value = urlParams.selectedTab;
-          updates.push(() => dispatch(setSelectedTabId(value)));
-          setHasInitialSync(true);
-        }
-
-        if (urlParams.showExperimentalTabs !== undefined) {
-          const value = urlParams.showExperimentalTabs;
-          updates.push(() => dispatch(setShowExperimentalTabs(value)));
-          setHasInitialSync(true);
-        }
-
-        // Execute all updates - React 18 will batch them automatically
-        updates.forEach((update) => update());
-      },
-      hasInitialSync ? 0 : 100,
-    ); // Small delay only on first sync
+      updates.forEach((update) => update());
+      hasInitialSyncRef.current = true;
+    }, delay);
 
     return () => clearTimeout(timeoutId);
-  }, [location, dispatch, hasInitialSync, setHasInitialSync]);
+  }, [searchParams, dispatch]);
 
-  // Update functions - optimized with change detection
+  // Update functions — dispatch Redux action + update URL search params atomically
   const updateSelectedTargetIds = React.useCallback(
     (targetIds: number[], replaceHistory = true) => {
-      // Only update if value actually changed (deep comparison for array)
       const areEqual =
         targetIds.length === selectedTargetIds.length &&
         targetIds.every((id, index) => id === selectedTargetIds[index]);
 
-      if (!areEqual && location) {
+      if (!areEqual) {
         dispatch(setSelectedTargetIds(targetIds));
-        const newUrl = updateUrl(location, { selectedTargetIds: targetIds });
-        dispatch(replaceHistory ? replace(newUrl) : push(newUrl));
+        setSearchParams((prev) => applyParamsUpdate(prev, { selectedTargetIds: targetIds }), {
+          replace: replaceHistory,
+        });
       }
     },
-    [dispatch, location, selectedTargetIds],
+    [dispatch, selectedTargetIds, setSearchParams],
   );
 
   const updateSelectedPlayerId = React.useCallback(
     (playerId: number | null, replaceHistory = true) => {
-      if (playerId !== selectedPlayerId && location) {
+      if (playerId !== selectedPlayerId) {
         dispatch(setSelectedPlayerId(playerId));
-        const newUrl = updateUrl(location, { selectedPlayerId: playerId });
-        dispatch(replaceHistory ? replace(newUrl) : push(newUrl));
+        setSearchParams((prev) => applyParamsUpdate(prev, { selectedPlayerId: playerId }), {
+          replace: replaceHistory,
+        });
       }
     },
-    [dispatch, location, selectedPlayerId],
+    [dispatch, selectedPlayerId, setSearchParams],
   );
 
   const updateSelectedTab = React.useCallback(
     (tab: number | null, replaceHistory = true) => {
-      if (tab !== selectedTabId && location) {
+      if (tab !== selectedTabId) {
         dispatch(setSelectedTabId(tab));
-        const newUrl = updateUrl(location, { selectedTab: tab });
-        dispatch(replaceHistory ? replace(newUrl) : push(newUrl));
+        setSearchParams((prev) => applyParamsUpdate(prev, { selectedTab: tab }), {
+          replace: replaceHistory,
+        });
       }
     },
-    [dispatch, location, selectedTabId],
+    [dispatch, selectedTabId, setSearchParams],
   );
 
   const updateShowExperimentalTabs = React.useCallback(
     (show: boolean, replaceHistory = true) => {
-      if (show !== showExperimentalTabs && location) {
+      if (show !== showExperimentalTabs) {
         dispatch(setShowExperimentalTabs(show));
-        const newUrl = updateUrl(location, { showExperimentalTabs: show });
-        dispatch(replaceHistory ? replace(newUrl) : push(newUrl));
+        setSearchParams((prev) => applyParamsUpdate(prev, { showExperimentalTabs: show }), {
+          replace: replaceHistory,
+        });
       }
     },
-    [dispatch, location, showExperimentalTabs],
+    [dispatch, showExperimentalTabs, setSearchParams],
   );
 
-  // Bulk update function - most efficient for multiple changes
+  // Bulk update — most efficient when changing multiple params at once
   const updateParams = React.useCallback(
     (params: Partial<UrlParams>, replaceHistory = true) => {
       let hasChanges = false;
 
-      // Check what actually changed and batch Redux updates
       if (params.selectedTargetIds !== undefined) {
         const areEqual =
           params.selectedTargetIds.length === selectedTargetIds.length &&
@@ -311,39 +283,39 @@ export function useUrlParamSync(): {
         hasChanges = true;
       }
 
-      // Only update URL if there were actual changes
-      if (hasChanges && location) {
-        const newUrl = updateUrl(location, params);
-        dispatch(replaceHistory ? replace(newUrl) : push(newUrl));
+      if (hasChanges) {
+        setSearchParams((prev) => applyParamsUpdate(prev, params), { replace: replaceHistory });
       }
     },
-    [dispatch, location, selectedTargetIds, selectedPlayerId, selectedTabId, showExperimentalTabs],
+    [
+      dispatch,
+      selectedTargetIds,
+      selectedPlayerId,
+      selectedTabId,
+      showExperimentalTabs,
+      setSearchParams,
+    ],
   );
 
-  // Helper functions
-  const parseCurrentUrlParams = React.useCallback(() => {
-    return location ? parseUrlParams(location) : {};
-  }, [location]);
+  const parseCurrentUrlParams = React.useCallback(
+    () => parseUrlSearchParams(searchParams),
+    [searchParams],
+  );
   const buildCurrentUrlParams = React.useCallback(
     (params: Partial<UrlParams>) => buildUrlParams(params),
     [],
   );
 
   return {
-    // Current values (from Redux state)
     selectedTargetIds,
     selectedPlayerId,
     selectedTabId,
     showExperimentalTabs,
-
-    // Update functions
     updateSelectedTargetIds,
     updateSelectedPlayerId,
     updateSelectedTab,
     updateShowExperimentalTabs,
     updateParams,
-
-    // URL parsing helpers
     parseUrlParams: parseCurrentUrlParams,
     buildUrlParams: buildCurrentUrlParams,
   };
