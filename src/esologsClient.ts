@@ -176,7 +176,16 @@ export class EsoLogsClient {
         });
       }
 
-      // Log the error for debugging
+      // Log the error for debugging — skip noisy 429 logs since RetryLink already
+      // warned on each attempt and the query() catch block will surface a
+      // human-readable message to the UI.
+      const networkStatusCode = (error as { statusCode?: number })?.statusCode;
+      if (networkStatusCode === 429) {
+        logger.warn('API rate limit (429) — all retries exhausted', {
+          operation: operation.operationName,
+        });
+        return;
+      }
       logger.error('GraphQL operation error', error, {
         operation: operation.operationName,
       });
@@ -251,7 +260,16 @@ export class EsoLogsClient {
     } catch (networkError) {
       // Convert well-known network failures to human-readable messages so that UI
       // components can surface actionable feedback instead of an opaque stack trace.
-      const statusCode = (networkError as { statusCode?: number })?.statusCode;
+      //
+      // When ApolloClient.query() throws, it always wraps low-level errors inside
+      // an ApolloError.  The HTTP status code therefore lives at:
+      //   error.networkError.statusCode  (ApolloError → ServerError)
+      // NOT at the top-level error.statusCode (which is always undefined).
+      // We check both locations for robustness.
+      const innerNetworkError = (networkError as { networkError?: { statusCode?: number } })
+        ?.networkError;
+      const statusCode =
+        innerNetworkError?.statusCode ?? (networkError as { statusCode?: number })?.statusCode;
       if (statusCode === 429) {
         throw new Error(
           'API rate limit exceeded. Too many requests were sent in a short period — please wait a moment and try again.',
