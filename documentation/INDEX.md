@@ -53,6 +53,7 @@ Feature-specific documentation — [features/](./features/)
 | [Markers](./features/markers/) | 3D map markers |
 | [Buff Uptimes](./features/buff-uptimes/) | Buff uptime tracking |
 | [Calculations](./features/calculations/) | Worker formulas |
+| [Damage Accuracy Limitations](./features/calculations/DAMAGE_ACCURACY_LIMITATIONS.md) | Backward inference method, blind spots, error floor |
 | [Logger](./features/logger/) | Logging system |
 | [Performance](./features/performance/) | Performance monitoring |
 

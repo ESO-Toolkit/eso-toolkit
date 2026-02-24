@@ -305,7 +305,10 @@ export function computeModifiersForEvent(
     cappedResistance / RESISTANCE_TO_DAMAGE_REDUCTION_RATIO,
   );
 
-  // 4. Critical damage bonus
+  // 4. Parse event.buffs snapshot once (used by DamageDone, TooltipScaling, and CritDamage)
+  const eventBuffIds = event.buffs ? new Set(parseEventBuffs(event)) : null;
+
+  // 5. Critical damage bonus
   const isCritical = event.hitType === HitType.Critical;
   let critDamageBonus = 0;
   if (isCritical && combatantInfo && playerData) {
@@ -317,11 +320,9 @@ export function computeModifiersForEvent(
         combatantInfo,
         playerData,
         event.timestamp,
+        eventBuffIds,
       ) / 100;
   }
-
-  // 5. Parse event.buffs snapshot once (used by DamageDone and TooltipScaling)
-  const eventBuffIds = event.buffs ? new Set(parseEventBuffs(event)) : null;
 
   // 6. Damage-done multiplier (Berserk, Slayer, Vulnerability, Empower, CP stars, sets, Engulfing Flames, Touch of Z'en)
   const isDirectDamage = !event.tick;

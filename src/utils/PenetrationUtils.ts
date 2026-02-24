@@ -111,6 +111,8 @@ export interface PenetrationBuffSource extends BasePenetrationSource {
 export interface PenetrationDebuffSource extends BasePenetrationSource {
   value: PenetrationValues;
   ability: KnownAbilities;
+  /** Alternate ability IDs for the same debuff effect from different sources */
+  alternateAbilityIds?: ReadonlyArray<KnownAbilities>;
   source: 'debuff';
 }
 
@@ -228,10 +230,64 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
     description: '620 penetration per stack per Herald of the Tome ability slotted',
     source: 'computed',
   },
+  // Status Effect Debuffs — Wrath of Nature (Force of Nature) CP
+  // Each active status effect on target provides 660 pen to attackers with the CP.
+  // We assume all DPS have Wrath of Nature slotted (standard endgame build).
   {
-    name: 'Force of Nature',
-    description: '660 penetration per status effect — cannot detect from API (CP not in auras)',
-    source: 'not_implemented',
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.BURNING,
+    name: 'Burning (Status Effect)',
+    description: 'Wrath of Nature: 660 pen when Burning is active on target',
+    source: 'debuff',
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.CHILL,
+    name: 'Chilled (Status Effect)',
+    description: 'Wrath of Nature: 660 pen when Chilled is active on target',
+    source: 'debuff',
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.CONCUSSION,
+    name: 'Concussion (Status Effect)',
+    description: 'Wrath of Nature: 660 pen when Concussion is active on target',
+    source: 'debuff',
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.OVERCHARGED,
+    name: 'Overcharged (Status Effect)',
+    description: 'Wrath of Nature: 660 pen when Overcharged is active on target',
+    source: 'debuff',
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.SUNDERED,
+    name: 'Sundered (Status Effect)',
+    description: 'Wrath of Nature: 660 pen when Sundered is active on target',
+    source: 'debuff',
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.POISONED,
+    name: 'Poisoned (Status Effect)',
+    description: 'Wrath of Nature: 660 pen when Poisoned is active on target',
+    source: 'debuff',
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.DISEASED,
+    name: 'Diseased (Status Effect)',
+    description: 'Wrath of Nature: 660 pen when Diseased is active on target',
+    source: 'debuff',
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.HEMMORRHAGING,
+    name: 'Hemorrhaging (Status Effect)',
+    description: 'Wrath of Nature: 660 pen when Hemorrhaging is active on target',
+    source: 'debuff',
   },
   {
     name: 'Piercing',
@@ -284,6 +340,7 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
   {
     value: PenetrationValues.MAJOR_BREACH,
     ability: KnownAbilities.MAJOR_BREACH,
+    alternateAbilityIds: [KnownAbilities.MAJOR_BREACH_ALT_1],
     name: 'Major Breach',
     description: 'Debuff reducing target resistance by 5948 penetration',
     source: 'debuff',
@@ -291,6 +348,7 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
   {
     value: PenetrationValues.MINOR_BREACH,
     ability: KnownAbilities.MINOR_BREACH,
+    alternateAbilityIds: [KnownAbilities.MINOR_BREACH_ALT_1, KnownAbilities.MINOR_BREACH_ALT_2],
     name: 'Minor Breach',
     description: 'Debuff reducing target resistance by 2974 penetration',
     source: 'debuff',
@@ -325,7 +383,8 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
   },
   {
     value: PenetrationValues.ROAR_OF_ALKOSH,
-    ability: KnownAbilities.ROAR_OF_ALKOSH,
+    ability: KnownAbilities.ROAR_OF_ALKOSH_DEBUFF,
+    alternateAbilityIds: [KnownAbilities.LINE_BREAKER, KnownAbilities.ROAR_OF_ALKOSH],
     name: 'Roar of Alkosh',
     description: 'Set bonus reducing target resistance by 6000 penetration',
     source: 'debuff',
@@ -391,7 +450,7 @@ function isComputedSourceActive(
       return splinteredSecretsAuras.length > 0;
     }
     case PenetrationComputedSourceKey.FORCE_OF_NATURE:
-      // Force of Nature CP does not appear in ESO Logs API auras — cannot detect
+      // Force of Nature now implemented as individual status effect debuff sources
       return false;
     case PenetrationComputedSourceKey.PIERCING:
       // TODO: Implement proper conditions - assume inactive until implemented
@@ -497,7 +556,7 @@ function getPenetrationFromComputedSource(
     }
 
     case PenetrationComputedSourceKey.FORCE_OF_NATURE:
-      // Force of Nature CP does not appear in ESO Logs API auras — cannot detect
+      // Force of Nature now implemented as individual status effect debuff sources
       return 0;
 
     case PenetrationComputedSourceKey.PIERCING:
@@ -592,8 +651,23 @@ export function getAllPenetrationSourcesWithActiveState(
             wasActive = targetIds.some((targetId) =>
               isBuffActiveOnTarget(debuffLookup, source.ability, undefined, targetId),
             );
+            // Check alternate ability IDs if primary is not active
+            if (!wasActive && source.alternateAbilityIds) {
+              for (const altId of source.alternateAbilityIds) {
+                wasActive = targetIds.some((targetId) =>
+                  isBuffActiveOnTarget(debuffLookup, altId, undefined, targetId),
+                );
+                if (wasActive) break;
+              }
+            }
           } else {
             wasActive = isBuffActiveAtTimestamp(debuffLookup, source.ability);
+            if (!wasActive && source.alternateAbilityIds) {
+              for (const altId of source.alternateAbilityIds) {
+                wasActive = isBuffActiveAtTimestamp(debuffLookup, altId);
+                if (wasActive) break;
+              }
+            }
           }
         }
         value = source.value;
@@ -692,13 +766,22 @@ export function calculateDynamicPenetrationAtTimestamp(
         break;
       case 'debuff':
         // Debuffs: Check if active on the selected target (enemy who has reduced resistances)
+        // Check primary ability ID and any alternate IDs for the same debuff effect
         if (debuffLookup) {
+          const targetIdParam = targetId !== null ? targetId : undefined;
           isActive = isBuffActiveOnTarget(
             debuffLookup,
             source.ability,
             timestamp,
-            targetId !== null ? targetId : undefined,
+            targetIdParam,
           );
+          // Check alternate ability IDs if primary is not active
+          if (!isActive && source.alternateAbilityIds) {
+            for (const altId of source.alternateAbilityIds) {
+              isActive = isBuffActiveOnTarget(debuffLookup, altId, timestamp, targetIdParam);
+              if (isActive) break;
+            }
+          }
         }
         if (isActive) {
           debuffPenetration += source.value;

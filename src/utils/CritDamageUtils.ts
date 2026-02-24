@@ -81,6 +81,8 @@ export interface CriticalDamageBuffSource extends BaseCriticalDamageSource {
 export interface CriticalDamageDebuffSource extends BaseCriticalDamageSource {
   value: CriticalDamageValues;
   ability: KnownAbilities;
+  /** Alternate ability IDs for the same debuff effect from different sources */
+  alternateAbilityIds?: ReadonlyArray<KnownAbilities>;
   source: 'debuff';
 }
 
@@ -186,7 +188,7 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
   },
   {
     name: 'Backstabber',
-    description: 'Critical damage from Backstabber champion point (10%)',
+    description: 'Critical damage from Backstabber champion point (10%) — requires positional data not available from API',
     source: 'not_implemented',
   },
   {
@@ -239,6 +241,7 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
   },
   {
     ability: KnownAbilities.MINOR_BRITTLE,
+    alternateAbilityIds: [KnownAbilities.MINOR_BRITTLE_ALT_1],
     value: CriticalDamageValues.MINOR_BRITTLE,
     name: 'Minor Brittle',
     description: 'Critical damage from Minor Brittle debuff (10%)',
@@ -270,9 +273,17 @@ export function isBuffActive(buffLookup: BuffLookupData, abilityId: KnownAbiliti
   });
 }
 
-export function isDebuffActive(debuffLookup: BuffLookupData, abilityId: KnownAbilities): boolean {
+export function isDebuffActive(debuffLookup: BuffLookupData, abilityId: KnownAbilities, alternateAbilityIds?: ReadonlyArray<KnownAbilities>): boolean {
   const intervals = debuffLookup.buffIntervals[abilityId.toString()];
-  return intervals !== undefined && intervals.length > 0;
+  if (intervals !== undefined && intervals.length > 0) return true;
+  // Check alternate IDs
+  if (alternateAbilityIds) {
+    for (const altId of alternateAbilityIds) {
+      const altIntervals = debuffLookup.buffIntervals[altId.toString()];
+      if (altIntervals !== undefined && altIntervals.length > 0) return true;
+    }
+  }
+  return false;
 }
 
 export function isBuffActiveAtTimestamp(
@@ -289,8 +300,16 @@ export function isDebuffActiveAtTimestamp(
   debuffLookup: BuffLookupData,
   abilityId: KnownAbilities,
   timestamp: number,
+  alternateAbilityIds?: ReadonlyArray<KnownAbilities>,
 ): boolean {
-  return checkBuffActiveAtTimestamp(debuffLookup, abilityId, timestamp);
+  if (checkBuffActiveAtTimestamp(debuffLookup, abilityId, timestamp)) return true;
+  // Check alternate IDs
+  if (alternateAbilityIds) {
+    for (const altId of alternateAbilityIds) {
+      if (checkBuffActiveAtTimestamp(debuffLookup, altId, timestamp)) return true;
+    }
+  }
+  return false;
 }
 
 export function isGearSourceActive(
@@ -326,7 +345,9 @@ export function isComputedSourceActive(
     case ComputedCriticalDamageSources.TWO_HANDED_BATTLE_AXE:
       return hasTwoHandedAxeEquipped(combatantInfo);
     case ComputedCriticalDamageSources.BACKSTABBER:
-      // TODO Detect if the backstabber CP is equipped
+      // Backstabber CP (+10% crit damage when attacking from behind) cannot be reliably
+      // detected. Using Exploiter aura as a proxy over-predicts because players aren't
+      // always behind the target. Left as not active until positional data is available.
       return false;
     case ComputedCriticalDamageSources.ELEMENTAL_CATALYST:
       return timestamp
@@ -361,7 +382,7 @@ export function getEnabledCriticalDamageSources(
         isActive = isBuffActive(buffLookup, source.ability);
         break;
       case 'debuff':
-        isActive = isDebuffActive(debuffLookup, source.ability);
+        isActive = isDebuffActive(debuffLookup, source.ability, source.alternateAbilityIds);
         break;
       case 'gear':
         isActive = isGearSourceActive(combatantInfo, source.set, source.numberOfPieces);
@@ -400,7 +421,7 @@ export function getAllCriticalDamageSourcesWithActiveState(
         wasActive = isBuffActive(buffLookup, source.ability);
         break;
       case 'debuff':
-        wasActive = isDebuffActive(debuffLookup, source.ability);
+        wasActive = isDebuffActive(debuffLookup, source.ability, source.alternateAbilityIds);
         break;
       case 'gear':
         wasActive = isGearSourceActive(combatantInfo, source.set, source.numberOfPieces);
@@ -428,6 +449,7 @@ export function calculateCriticalDamageAtTimestamp(
   combatantInfo: CombatantInfoEvent,
   playerData: PlayerDetailsWithRole,
   timestamp: number,
+  eventBuffIds?: ReadonlySet<number> | null,
 ): number {
   const baseCriticalDamage = 50; // Base critical damage percentage
 
@@ -449,13 +471,15 @@ export function calculateCriticalDamageAtTimestamp(
         }
         break;
       case 'buff':
-        isActive = isBuffActiveAtTimestamp(buffLookup, source.ability, timestamp);
+        isActive = eventBuffIds
+          ? eventBuffIds.has(source.ability)
+          : isBuffActiveAtTimestamp(buffLookup, source.ability, timestamp);
         if (isActive) {
           buffCriticalDamage += source.value;
         }
         break;
       case 'debuff':
-        isActive = isDebuffActiveAtTimestamp(debuffLookup, source.ability, timestamp);
+        isActive = isDebuffActiveAtTimestamp(debuffLookup, source.ability, timestamp, source.alternateAbilityIds);
         if (isActive) {
           debuffCriticalDamage += source.value;
         }

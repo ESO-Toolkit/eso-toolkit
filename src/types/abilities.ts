@@ -213,7 +213,7 @@ export enum KnownAbilities {
   CRIMSON_OATH = 155150,
 
   // Roar of Alkosh - Monster set that reduces target resistance
-  ROAR_OF_ALKOSH = 102094,
+  ROAR_OF_ALKOSH = 102094, // Legacy ID — actual debuff on target uses 76667 (ROAR_OF_ALKOSH_DEBUFF)
 
   // Velothi Ur-Mage's Amulet - Mythic set buff
   VELOTHI_UR_MAGE_BUFF = 193447,
@@ -390,6 +390,19 @@ export enum KnownAbilities {
   MINOR_SLAYER = 147226,
   MINOR_SORCERY = 61685, // Was previously incorrectly labeled as MAJOR_SORCERY
   MINOR_VULNERABILITY = 79717,
+
+  // ── Alternate debuff ability IDs ──
+  // Many ESO buffs/debuffs appear under multiple ability IDs from different sources.
+  // These alternate IDs represent the same gameplay effect but come from different abilities.
+  MINOR_VULNERABILITY_ALT_1 = 228115, // Alternate source (e.g., Dark Convergence, Entropy morph)
+  MINOR_VULNERABILITY_ALT_2 = 68359, // Alternate source (e.g., Low Slash morph)
+  MINOR_VULNERABILITY_ALT_3 = 228118, // Alternate source
+  MINOR_BREACH_ALT_1 = 190180, // Alternate source (e.g., Arcanist ability)
+  MINOR_BREACH_ALT_2 = 148803, // Alternate source (e.g., combat ability morph)
+  MAJOR_BREACH_ALT_1 = 117818, // Alternate source (e.g., Unnerving Boneyard morph)
+  MINOR_BRITTLE_ALT_1 = 145975, // Alternate source (e.g., Winter's Revenge morph)
+  ROAR_OF_ALKOSH_DEBUFF = 76667, // Actual debuff ID that appears on targets in combat logs
+  LINE_BREAKER = 75753, // Alkosh Line-Breaker debuff (penetration component)
 
   GLACIAL_COLOSSUS = 122388,
   SUMMON_CHARGED_ATRONACH = 23495,

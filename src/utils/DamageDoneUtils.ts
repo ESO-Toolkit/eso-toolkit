@@ -132,11 +132,18 @@ const DAMAGE_DONE_BUFF_SOURCES: ReadonlyArray<{
 const DAMAGE_TAKEN_DEBUFF_SOURCES: ReadonlyArray<{
   name: string;
   abilityId: KnownAbilities;
+  /** Alternate ability IDs for the same debuff effect from different sources */
+  alternateAbilityIds?: ReadonlyArray<KnownAbilities>;
   value: number;
 }> = [
   {
     name: 'Minor Vulnerability',
     abilityId: KnownAbilities.MINOR_VULNERABILITY,
+    alternateAbilityIds: [
+      KnownAbilities.MINOR_VULNERABILITY_ALT_1,
+      KnownAbilities.MINOR_VULNERABILITY_ALT_2,
+      KnownAbilities.MINOR_VULNERABILITY_ALT_3,
+    ],
     value: DamageDoneValues.MINOR_VULNERABILITY,
   },
   {
@@ -344,7 +351,14 @@ export function calculateDamageDoneAtTimestamp(
   // 5. Check damage-taken debuffs on the target (always use debuffLookup)
   let damageTakenPercent = 0;
   for (const source of DAMAGE_TAKEN_DEBUFF_SOURCES) {
-    const isActive = isBuffActiveOnTarget(debuffLookup, source.abilityId, timestamp, targetID);
+    let isActive = isBuffActiveOnTarget(debuffLookup, source.abilityId, timestamp, targetID);
+    // Check alternate ability IDs if primary is not active
+    if (!isActive && source.alternateAbilityIds) {
+      for (const altId of source.alternateAbilityIds) {
+        isActive = isBuffActiveOnTarget(debuffLookup, altId, timestamp, targetID);
+        if (isActive) break;
+      }
+    }
     activeSources.push({
       name: source.name,
       sourceId: source.abilityId,
