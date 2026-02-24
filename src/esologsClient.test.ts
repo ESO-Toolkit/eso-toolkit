@@ -273,7 +273,27 @@ describe('EsoLogsClient', () => {
       );
     });
 
-    it('should surface a user-friendly message when a 429 rate-limit error occurs', async () => {
+    it('converts an ApolloError with nested networkError.statusCode 429 to a human-readable message (ESO-582)', async () => {
+      // ApolloClient.query() throws an ApolloError whose .networkError is the
+      // ServerError — the statusCode sits one level deeper than the raw thrown error.
+      const client = new EsoLogsClient(mockAccessToken);
+      const apolloClient = client.getClient();
+
+      const apolloError = Object.assign(
+        new Error('Response not successful: Received status code 429'),
+        {
+          networkError: { statusCode: 429, message: 'Too Many Requests' },
+          graphQLErrors: [],
+        },
+      );
+      apolloClient.query = jest.fn().mockRejectedValue(apolloError);
+
+      await expect(client.query({ query: {} as DocumentNode })).rejects.toThrow(
+        'API rate limit exceeded',
+      );
+    });
+
+    it('should surface a user-friendly message when a 429 rate-limit error occurs (direct statusCode)', async () => {
       const client = new EsoLogsClient(mockAccessToken);
       const apolloClient = client.getClient();
 
@@ -281,7 +301,7 @@ describe('EsoLogsClient', () => {
       apolloClient.query = jest.fn().mockRejectedValue(rateLimitError);
 
       await expect(client.query({ query: {} as DocumentNode })).rejects.toThrow(
-        'API rate limit exceeded.',
+        'API rate limit exceeded',
       );
     });
 
