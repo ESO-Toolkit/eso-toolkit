@@ -129,12 +129,17 @@ const DAMAGE_TAKEN_DEBUFF_SOURCES: ReadonlyArray<{
 /**
  * Calculate the damage-done multiplier at a specific timestamp for a damage event.
  *
- * @param buffLookup - Buff lookup data (for attacker buffs: Berserk, Slayer, Empower)
+ * Uses event.buffs snapshot as primary source for attacker-side buffs (Berserk, Slayer,
+ * Empower) when available, with BuffLookup as fallback. Target-side debuffs (Vulnerability)
+ * always use debuffLookup since event.buffs only contains attacker buffs.
+ *
+ * @param buffLookup - Buff lookup data (fallback for attacker buffs: Berserk, Slayer, Empower)
  * @param debuffLookup - Debuff lookup data (for target debuffs: Vulnerability)
  * @param timestamp - The timestamp of the damage event
  * @param sourceID - The attacker's ID (buffs are checked on this target)
  * @param targetID - The target's ID (debuffs are checked on this target)
  * @param isDirectDamage - Whether this is direct damage (not a DoT tick). Empower only applies to direct damage.
+ * @param eventBuffIds - Optional set of buff ability IDs from event.buffs snapshot (preferred for attacker buffs)
  * @returns DamageDoneBreakdown with the computed multiplier and active sources
  */
 export function calculateDamageDoneAtTimestamp(
@@ -144,13 +149,16 @@ export function calculateDamageDoneAtTimestamp(
   sourceID: number,
   targetID: number,
   isDirectDamage: boolean,
+  eventBuffIds?: ReadonlySet<number> | null,
 ): DamageDoneBreakdown {
   const activeSources: DamageDoneSource[] = [];
 
-  // 1. Check damage-done buffs on the attacker
+  // 1. Check damage-done buffs on the attacker (use event.buffs when available)
   let damageDonePercent = 0;
   for (const source of DAMAGE_DONE_BUFF_SOURCES) {
-    const isActive = isBuffActiveOnTarget(buffLookup, source.abilityId, timestamp, sourceID);
+    const isActive = eventBuffIds
+      ? eventBuffIds.has(source.abilityId)
+      : isBuffActiveOnTarget(buffLookup, source.abilityId, timestamp, sourceID);
     activeSources.push({
       name: source.name,
       abilityId: source.abilityId,
@@ -163,7 +171,7 @@ export function calculateDamageDoneAtTimestamp(
     }
   }
 
-  // 2. Check damage-taken debuffs on the target
+  // 2. Check damage-taken debuffs on the target (always use debuffLookup)
   let damageTakenPercent = 0;
   for (const source of DAMAGE_TAKEN_DEBUFF_SOURCES) {
     const isActive = isBuffActiveOnTarget(debuffLookup, source.abilityId, timestamp, targetID);
@@ -182,11 +190,9 @@ export function calculateDamageDoneAtTimestamp(
   // 3. Check Empower (buff on attacker, only applies to direct damage)
   let empowerPercent = 0;
   if (isDirectDamage) {
-    const empowerActive = isBuffActiveAtTimestamp(
-      buffLookup,
-      KnownAbilities.EMPOWER,
-      timestamp,
-    );
+    const empowerActive = eventBuffIds
+      ? eventBuffIds.has(KnownAbilities.EMPOWER)
+      : isBuffActiveAtTimestamp(buffLookup, KnownAbilities.EMPOWER, timestamp);
     activeSources.push({
       name: 'Empower',
       abilityId: KnownAbilities.EMPOWER,

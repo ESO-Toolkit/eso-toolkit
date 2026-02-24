@@ -10,6 +10,7 @@ import {
   type DamageEventAnalysis,
   type DamageDoneBreakdown,
 } from './damageAccuracyEngine';
+import type { TooltipScalingBreakdown } from './TooltipScalingUtils';
 
 // ─── Test Helpers ────────────────────────────────────────────────────────────
 
@@ -78,6 +79,17 @@ const defaultDamageDone: DamageDoneBreakdown = {
   activeSources: [],
 };
 
+/** Default tooltip scaling breakdown with no buffs active (1.0 multiplier) */
+const defaultTooltipScaling: TooltipScalingBreakdown = {
+  hasMajorBrutalitySorcery: false,
+  hasMinorBrutalitySorcery: false,
+  hasMajorCourage: false,
+  hasMinorCourage: false,
+  hasPowerfulAssault: false,
+  estimatedMultiplier: 1,
+  activeSources: [],
+};
+
 // Minimal combatant info (no gear or auras)
 const minimalCombatantInfo: CombatantInfoEvent = {
   timestamp: FIGHT_START,
@@ -125,6 +137,7 @@ describe('damageAccuracyEngine', () => {
       expect(modifiers.penetration).toBe(0);
       expect(modifiers.isCritical).toBe(false);
       expect(modifiers.critMultiplier).toBe(1.0);
+      expect(modifiers.tooltipScaling.estimatedMultiplier).toBe(1);
       // Damage reduction: 18200 / 660 = 27.57%
       expect(modifiers.damageReductionPercent).toBeCloseTo(27.575, 1);
       expect(modifiers.totalMultiplier).toBeCloseTo(0.7242, 2);
@@ -220,6 +233,7 @@ describe('damageAccuracyEngine', () => {
             damageReductionPercent: 0,
             critMultiplier: 1.0,
             damageDone: defaultDamageDone,
+            tooltipScaling: defaultTooltipScaling,
             totalMultiplier: 1.0,
             buffValidation: null,
           },
@@ -235,6 +249,7 @@ describe('damageAccuracyEngine', () => {
             damageReductionPercent: 0,
             critMultiplier: 1.0,
             damageDone: defaultDamageDone,
+            tooltipScaling: defaultTooltipScaling,
             totalMultiplier: 1.0,
             buffValidation: null,
           },
@@ -250,6 +265,7 @@ describe('damageAccuracyEngine', () => {
             damageReductionPercent: 0,
             critMultiplier: 1.0,
             damageDone: defaultDamageDone,
+            tooltipScaling: defaultTooltipScaling,
             totalMultiplier: 1.0,
             buffValidation: null,
           },
@@ -281,6 +297,7 @@ describe('damageAccuracyEngine', () => {
             damageReductionPercent: 0,
             critMultiplier: 1.0,
             damageDone: defaultDamageDone,
+            tooltipScaling: defaultTooltipScaling,
             totalMultiplier: 1.0,
             buffValidation: null,
           },
@@ -296,6 +313,7 @@ describe('damageAccuracyEngine', () => {
             damageReductionPercent: 0,
             critMultiplier: 1.0,
             damageDone: defaultDamageDone,
+            tooltipScaling: defaultTooltipScaling,
             totalMultiplier: 1.0,
             buffValidation: null,
           },
@@ -312,6 +330,7 @@ describe('damageAccuracyEngine', () => {
             damageReductionPercent: 0,
             critMultiplier: 1.5,
             damageDone: defaultDamageDone,
+            tooltipScaling: defaultTooltipScaling,
             totalMultiplier: 1.5,
             buffValidation: null,
           },
@@ -648,6 +667,194 @@ describe('damageAccuracyEngine', () => {
 
       expect(report.modifierSummary.damageDoneMultiplierRange).toBeDefined();
       expect(report.modifierSummary.damageDoneMultiplierRange.mean).toBe(1);
+      expect(report.modifierSummary.tooltipScalingRange).toBeDefined();
+      expect(report.modifierSummary.tooltipScalingRange.mean).toBe(1);
+    });
+  });
+
+  describe('tooltip scaling', () => {
+    it('should include tooltipScaling with 1.0 multiplier when no buffs active', () => {
+      const event = makeDamageEvent();
+      const modifiers = computeModifiersForEvent(
+        event,
+        emptyBuffLookup,
+        emptyDebuffLookup,
+        null,
+        undefined,
+        0,
+      );
+
+      expect(modifiers.tooltipScaling.estimatedMultiplier).toBe(1);
+      expect(modifiers.tooltipScaling.hasMajorBrutalitySorcery).toBe(false);
+      expect(modifiers.tooltipScaling.hasMinorBrutalitySorcery).toBe(false);
+      expect(modifiers.tooltipScaling.hasMajorCourage).toBe(false);
+      expect(modifiers.tooltipScaling.hasMinorCourage).toBe(false);
+      expect(modifiers.tooltipScaling.hasPowerfulAssault).toBe(false);
+    });
+
+    it('should detect Major Brutality on attacker and increase totalMultiplier', () => {
+      const event = makeDamageEvent({ sourceID: 1, timestamp: FIGHT_START + 5000 });
+      const buffLookup: BuffLookupData = {
+        buffIntervals: {
+          '61665': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 1, sourceID: 1 },
+          ],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event,
+        buffLookup,
+        emptyDebuffLookup,
+        null,
+        undefined,
+        0,
+      );
+
+      expect(modifiers.tooltipScaling.hasMajorBrutalitySorcery).toBe(true);
+      expect(modifiers.tooltipScaling.estimatedMultiplier).toBeGreaterThan(1.1);
+      // totalMultiplier should include tooltip scaling
+      expect(modifiers.totalMultiplier).toBeCloseTo(modifiers.tooltipScaling.estimatedMultiplier, 4);
+    });
+
+    it('should detect Major Sorcery as equivalent to Major Brutality', () => {
+      const event = makeDamageEvent({ sourceID: 1, timestamp: FIGHT_START + 5000 });
+      const buffLookup: BuffLookupData = {
+        buffIntervals: {
+          '61687': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 1, sourceID: 1 },
+          ],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event,
+        buffLookup,
+        emptyDebuffLookup,
+        null,
+        undefined,
+        0,
+      );
+
+      expect(modifiers.tooltipScaling.hasMajorBrutalitySorcery).toBe(true);
+    });
+
+    it('should detect combined Major Brutality & Sorcery buff (219246)', () => {
+      const event = makeDamageEvent({ sourceID: 1, timestamp: FIGHT_START + 5000 });
+      const buffLookup: BuffLookupData = {
+        buffIntervals: {
+          '219246': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 1, sourceID: 1 },
+          ],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event,
+        buffLookup,
+        emptyDebuffLookup,
+        null,
+        undefined,
+        0,
+      );
+
+      expect(modifiers.tooltipScaling.hasMajorBrutalitySorcery).toBe(true);
+    });
+
+    it('should detect Major Courage on attacker', () => {
+      const event = makeDamageEvent({ sourceID: 1, timestamp: FIGHT_START + 5000 });
+      const buffLookup: BuffLookupData = {
+        buffIntervals: {
+          '109966': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 1, sourceID: 1 },
+          ],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event,
+        buffLookup,
+        emptyDebuffLookup,
+        null,
+        undefined,
+        0,
+      );
+
+      expect(modifiers.tooltipScaling.hasMajorCourage).toBe(true);
+      expect(modifiers.tooltipScaling.estimatedMultiplier).toBeGreaterThan(1.04);
+    });
+
+    it('should stack all tooltip scaling sources additively', () => {
+      const event = makeDamageEvent({ sourceID: 1, timestamp: FIGHT_START + 5000 });
+      const buffLookup: BuffLookupData = {
+        buffIntervals: {
+          // Major Brutality (+20% WD)
+          '61665': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 1, sourceID: 1 },
+          ],
+          // Minor Sorcery (+10% SD)
+          '61685': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 1, sourceID: 1 },
+          ],
+          // Major Courage (+430 flat)
+          '109966': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 1, sourceID: 1 },
+          ],
+          // Minor Courage (+215 flat)
+          '121878': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 1, sourceID: 1 },
+          ],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event,
+        buffLookup,
+        emptyDebuffLookup,
+        null,
+        undefined,
+        0,
+      );
+
+      expect(modifiers.tooltipScaling.hasMajorBrutalitySorcery).toBe(true);
+      expect(modifiers.tooltipScaling.hasMinorBrutalitySorcery).toBe(true);
+      expect(modifiers.tooltipScaling.hasMajorCourage).toBe(true);
+      expect(modifiers.tooltipScaling.hasMinorCourage).toBe(true);
+      // All stacking: should be > 1.20 (at least +20% from brut/sorc alone)
+      expect(modifiers.tooltipScaling.estimatedMultiplier).toBeGreaterThan(1.20);
+    });
+
+    it('should combine tooltip scaling with damageDone multipliers', () => {
+      const event = makeDamageEvent({ sourceID: 1, timestamp: FIGHT_START + 5000 });
+      const buffLookup: BuffLookupData = {
+        buffIntervals: {
+          // Major Brutality
+          '61665': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 1, sourceID: 1 },
+          ],
+          // Minor Berserk (+5% damage done)
+          '61744': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 1, sourceID: 1 },
+          ],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event,
+        buffLookup,
+        emptyDebuffLookup,
+        null,
+        undefined,
+        0, // no resistance
+      );
+
+      // Total should be tooltipScaling × damageDone × resistance × crit
+      const expected =
+        modifiers.tooltipScaling.estimatedMultiplier *
+        modifiers.damageDone.totalMultiplier *
+        1.0 * // no resistance
+        1.0;  // no crit
+      expect(modifiers.totalMultiplier).toBeCloseTo(expected, 4);
     });
   });
 

@@ -521,6 +521,9 @@ function printPlayerReport(
   console.log(
     `  │    Damage Done Mult:  ×${ms.damageDoneMultiplierRange.mean.toFixed(4)} avg (×${ms.damageDoneMultiplierRange.min.toFixed(4)} – ×${ms.damageDoneMultiplierRange.max.toFixed(4)})`,
   );
+  console.log(
+    `  │    Tooltip Scaling:   ×${ms.tooltipScalingRange.mean.toFixed(4)} avg (×${ms.tooltipScalingRange.min.toFixed(4)} – ×${ms.tooltipScalingRange.max.toFixed(4)})`,
+  );
   console.log('  │');
 
   // Ability table header
@@ -569,6 +572,18 @@ function printAbilityRow(
     if (activeSources.length > 0) {
       const sourceNames = activeSources.map((s) => `${s.name} (+${s.value}%)`).join(', ');
       console.log(`  │    └─ Damage Done: ${sourceNames} → ×${dd.totalMultiplier.toFixed(4)}`);
+    }
+
+    // Show tooltip scaling breakdown from first event
+    const ts = sample.tooltipScaling;
+    const activeTooltipSources = ts.activeSources.filter((s) => s.isActive);
+    if (activeTooltipSources.length > 0) {
+      const sourceNames = activeTooltipSources
+        .map((s) => `${s.name} (+${s.tooltipEffectPercent.toFixed(1)}%)`)
+        .join(', ');
+      console.log(
+        `  │    └─ Tooltip Scaling: ${sourceNames} → ×${ts.estimatedMultiplier.toFixed(4)}`,
+      );
     }
 
     // Buff validation summary (aggregate across events)

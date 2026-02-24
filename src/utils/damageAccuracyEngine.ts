@@ -42,6 +42,10 @@ import {
 import {
   calculatePenetrationAtTimestamp,
 } from './PenetrationUtils';
+import {
+  type TooltipScalingBreakdown,
+  calculateTooltipScalingAtTimestamp,
+} from './TooltipScalingUtils';
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -58,7 +62,9 @@ export interface DamageModifiers {
   critMultiplier: number;
   /** Damage-done breakdown (Berserk, Slayer, Vulnerability, Empower) */
   damageDone: DamageDoneBreakdown;
-  /** Combined modifier multiplier: damageDone × (1 - damageReduction) × critMultiplier */
+  /** Tooltip scaling breakdown (Brutality, Sorcery, Courage, Powerful Assault) */
+  tooltipScaling: TooltipScalingBreakdown;
+  /** Combined modifier multiplier: tooltipScaling × damageDone × (1 - damageReduction) × critMultiplier */
   totalMultiplier: number;
   /** Buff validation: IDs from event.buffs that we also found via BuffLookup */
   buffValidation: BuffValidation | null;
@@ -139,6 +145,7 @@ export interface ModifierSummary {
   critDamageBonusRange: { min: number; max: number; mean: number };
   damageReductionRange: { min: number; max: number; mean: number };
   damageDoneMultiplierRange: { min: number; max: number; mean: number };
+  tooltipScalingRange: { min: number; max: number; mean: number };
 }
 
 /** Cross-validation between event.buffs snapshot and BuffLookup-derived active buffs */
@@ -176,15 +183,35 @@ const MIN_EVENTS_FOR_STATS = 2;
 /**
  * Known buff ability IDs that affect damage output.
  * Used to cross-validate event.buffs snapshots against BuffLookup data.
- * Includes both attacker buffs (Berserk, Slayer, Empower) checked on source
- * and effects like Vulnerability checked via debuffLookup on target.
+ * Includes attacker buffs checked on source and effects checked via debuffLookup on target.
+ *
+ * Categories:
+ *   - Damage Done: Berserk, Slayer (buff on source)
+ *   - Damage Taken: Vulnerability (debuff on target, not in event.buffs)
+ *   - Empower: direct damage multiplier (buff on source)
+ *   - Tooltip Scaling: Brutality, Sorcery, Courage, Powerful Assault (buff on source)
+ *   - Critical Damage: Force, Brittle (buff/debuff)
+ *   - Penetration: Breach (debuff on target, not in event.buffs)
  */
 const KNOWN_DAMAGE_BUFF_IDS = new Set<number>([
+  // Damage Done multipliers (buff on attacker)
   61744, // Minor Berserk
   61745, // Major Berserk
   147226, // Minor Slayer
   93109, // Major Slayer
   61737, // Empower
+  // Tooltip Scaling (buff on attacker)
+  61665, // Major Brutality
+  61687, // Major Sorcery
+  219246, // Major Brutality & Sorcery (combined)
+  61662, // Minor Brutality
+  61685, // Minor Sorcery
+  109966, // Major Courage
+  121878, // Minor Courage
+  61771, // Powerful Assault
+  // Critical Damage (buff on attacker)
+  61746, // Minor Force
+  61747, // Major Force
 ]);
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
@@ -289,7 +316,10 @@ export function computeModifiersForEvent(
       ) / 100;
   }
 
-  // 5. Damage-done multiplier (Berserk, Slayer, Vulnerability, Empower)
+  // 5. Parse event.buffs snapshot once (used by DamageDone and TooltipScaling)
+  const eventBuffIds = event.buffs ? new Set(parseEventBuffs(event)) : null;
+
+  // 6. Damage-done multiplier (Berserk, Slayer, Vulnerability, Empower)
   const isDirectDamage = !event.tick;
   const damageDone = calculateDamageDoneAtTimestamp(
     buffLookup,
@@ -298,15 +328,27 @@ export function computeModifiersForEvent(
     event.sourceID,
     event.targetID,
     isDirectDamage,
+    eventBuffIds,
   );
 
-  // 6. Buff validation (cross-check event.buffs against BuffLookup)
+  // 7. Tooltip scaling (Brutality, Sorcery, Courage, Powerful Assault)
+  const tooltipScaling = calculateTooltipScalingAtTimestamp(
+    buffLookup,
+    event.timestamp,
+    event.sourceID,    eventBuffIds,  );
+
+  // 7. Buff validation (cross-check event.buffs against BuffLookup)
   const buffValidation = validateBuffSnapshot(event, buffLookup);
 
-  // 7. Multipliers
+  // 9. Multipliers
+  // Full chain: tooltip × tooltipScaling × damageDone × (1 - damageReduction) × critMultiplier
   const critMultiplier = isCritical ? 1 + critDamageBonus : 1.0;
   const resistanceMultiplier = 1 - damageReductionPercent / 100;
-  const totalMultiplier = damageDone.totalMultiplier * resistanceMultiplier * critMultiplier;
+  const totalMultiplier =
+    tooltipScaling.estimatedMultiplier *
+    damageDone.totalMultiplier *
+    resistanceMultiplier *
+    critMultiplier;
 
   return {
     penetration,
@@ -315,6 +357,7 @@ export function computeModifiersForEvent(
     damageReductionPercent,
     critMultiplier,
     damageDone,
+    tooltipScaling,
     totalMultiplier,
     buffValidation,
   };
@@ -545,6 +588,17 @@ export function generatePlayerAccuracyReport(
           ? Math.max(...allModifiers.map((m) => m.damageDone.totalMultiplier))
           : 1,
       mean: mean(allModifiers.map((m) => m.damageDone.totalMultiplier)),
+    },
+    tooltipScalingRange: {
+      min:
+        allModifiers.length > 0
+          ? Math.min(...allModifiers.map((m) => m.tooltipScaling.estimatedMultiplier))
+          : 1,
+      max:
+        allModifiers.length > 0
+          ? Math.max(...allModifiers.map((m) => m.tooltipScaling.estimatedMultiplier))
+          : 1,
+      mean: mean(allModifiers.map((m) => m.tooltipScaling.estimatedMultiplier)),
     },
   };
 
