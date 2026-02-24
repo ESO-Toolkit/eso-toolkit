@@ -70,8 +70,38 @@ export const initializeSentry = (): void => {
     // Performance monitoring
     tracesSampleRate: SENTRY_CONFIG.tracesSampleRate,
 
+    // Drop errors originating from browser extension scripts (ESO-559)
+    denyUrls: [
+      // Chrome extensions
+      /chrome-extension:\/\//i,
+      // Firefox extensions
+      /moz-extension:\/\//i,
+      // Safari extensions
+      /safari-extension:\/\//i,
+      /safari-web-extension:\/\//i,
+    ],
+
     // Automatically capture console logs
     beforeSend(event) {
+      // Drop errors from browser extensions — they are injected third-party code
+      // and not caused by our application (ESO-559: runtime.sendMessage Tab not found)
+      const frames = event.exception?.values?.flatMap((v) => v.stacktrace?.frames ?? []) ?? [];
+      const isExtensionError = frames.some((frame) =>
+        /^(chrome|moz|safari)-extension:\/\//i.test(frame.filename ?? ''),
+      );
+      if (isExtensionError) {
+        return null;
+      }
+
+      // Also filter by error message patterns known to be extension-only
+      const errorMessage = event.exception?.values?.[0]?.value ?? '';
+      if (
+        /Invalid call to runtime\.sendMessage\(\)/.test(errorMessage) ||
+        /Tab not found/.test(errorMessage)
+      ) {
+        return null;
+      }
+
       // Add additional context to all events
       if (event.exception) {
         // Add browser info
