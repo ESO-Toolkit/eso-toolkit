@@ -25,13 +25,15 @@
  * Empower is applied separately as another multiplier on top of direct-damage abilities.
  */
 
-import { KnownAbilities } from '../types/abilities';
+import { KnownAbilities, KnownSetIDs } from '../types/abilities';
+import type { CombatantInfoEvent } from '../types/combatlogEvents';
 
 import {
   type BuffLookupData,
   isBuffActive as isBuffActiveAtTimestamp,
   isBuffActiveOnTarget,
 } from './BuffLookupUtils';
+import { getSetCount } from './gearUtilities';
 
 // ─── Constants ──────────────────────────────────────────────────────────────────
 
@@ -51,6 +53,25 @@ export const DamageDoneValues = {
   MAJOR_VULNERABILITY: 10,
   /** Empower: +80% light/heavy attack damage */
   EMPOWER: 80,
+  // ── Champion Point sources ──
+  /** Deadly Aim: +10% direct damage done */
+  DEADLY_AIM: 10,
+  /** Thaumaturge: +10% DoT damage done */
+  THAUMATURGE: 10,
+  /** Master-at-Arms: +5% direct damage done */
+  MASTER_AT_ARMS: 5,
+  /** Biting Aura: +3% damage done to nearby enemies */
+  BITING_AURA: 3,
+  /** Exploiter: +10% damage done vs Off Balance targets */
+  EXPLOITER: 10,
+  // ── Set bonus sources ──
+  /** Deadly Strike (5pc): +15% DoT damage done */
+  DEADLY_STRIKE: 15,
+  // ── Target debuff sources ──
+  /** Engulfing Flames: +10% Flame damage taken (applied to all damage when active — no type detection) */
+  ENGULFING_FLAMES: 10,
+  /** Touch of Z'en: +1% damage taken per DoT stack, max 5 stacks (assume max in trials) */
+  TOUCH_OF_ZEN: 5,
 } as const;
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
@@ -70,9 +91,10 @@ export interface DamageDoneBreakdown {
 
 export interface DamageDoneSource {
   name: string;
-  abilityId: KnownAbilities;
+  /** Ability ID, CP ID, or set ID depending on the source type */
+  sourceId: number;
   value: number;
-  type: 'damage_done' | 'damage_taken' | 'empower';
+  type: 'damage_done' | 'damage_taken' | 'empower' | 'cp_damage_done' | 'set_damage_done';
   isActive: boolean;
 }
 
@@ -122,7 +144,90 @@ const DAMAGE_TAKEN_DEBUFF_SOURCES: ReadonlyArray<{
     abilityId: KnownAbilities.MAJOR_VULNERABILITY,
     value: DamageDoneValues.MAJOR_VULNERABILITY,
   },
+  {
+    name: 'Engulfing Flames',
+    abilityId: KnownAbilities.ENGULFING_FLAMES_BUFF,
+    value: DamageDoneValues.ENGULFING_FLAMES,
+  },
+  {
+    name: 'Touch of Z\'en',
+    abilityId: KnownAbilities.TOUCH_OF_ZEN,
+    value: DamageDoneValues.TOUCH_OF_ZEN,
+  },
 ];
+
+/**
+ * Champion Point slottable stars that increase damage done.
+ *
+ * These CPs do NOT appear in the ESO Logs API auras — they're baked into the
+ * server-side damage formula. We assume DPS players have the standard meta CPs
+ * slotted (Deadly Aim, Thaumaturge, Biting Aura, Master-at-Arms). This is a
+ * valid assumption for organized trial content.
+ *
+ * Exploiter is handled separately since it DOES appear as aura 63880.
+ */
+const CP_DAMAGE_DONE_SOURCES: ReadonlyArray<{
+  name: string;
+  value: number;
+  /** 'direct' = only non-tick, 'dot' = only tick, 'always' = both */
+  condition: 'direct' | 'dot' | 'always';
+}> = [
+  {
+    name: 'Deadly Aim',
+    value: DamageDoneValues.DEADLY_AIM,
+    condition: 'direct',
+  },
+  {
+    name: 'Thaumaturge',
+    value: DamageDoneValues.THAUMATURGE,
+    condition: 'dot',
+  },
+  {
+    name: 'Master-at-Arms',
+    value: DamageDoneValues.MASTER_AT_ARMS,
+    condition: 'direct',
+  },
+  {
+    name: 'Biting Aura',
+    value: DamageDoneValues.BITING_AURA,
+    condition: 'always',
+  },
+];
+
+/** Set bonuses that increase damage done (checked from combatantInfo.gear) */
+const SET_DAMAGE_DONE_SOURCES: ReadonlyArray<{
+  name: string;
+  setId: KnownSetIDs;
+  requiredPieces: number;
+  value: number;
+  condition: 'direct' | 'dot' | 'always';
+}> = [
+  {
+    name: 'Deadly Strike',
+    setId: KnownSetIDs.DEADLY_STRIKE,
+    requiredPieces: 5,
+    value: DamageDoneValues.DEADLY_STRIKE,
+    condition: 'dot',
+  },
+];
+
+// ─── Helpers ────────────────────────────────────────────────────────────────────
+
+/** Check if a specific aura ability ID is present in combatantInfo.auras */
+function hasAura(combatantInfo: CombatantInfoEvent | null, abilityId: number): boolean {
+  if (!combatantInfo?.auras) return false;
+  return combatantInfo.auras.some((aura) => aura.ability === abilityId);
+}
+
+/** Check if a set bonus is active (has enough pieces equipped) */
+function isSetActive(
+  combatantInfo: CombatantInfoEvent | null,
+  setId: KnownSetIDs,
+  requiredPieces: number,
+): boolean {
+  if (!combatantInfo?.gear) return false;
+  return getSetCount(combatantInfo.gear, setId) >= requiredPieces;
+}
 
 // ─── Core Computation ───────────────────────────────────────────────────────────
 
@@ -140,6 +245,8 @@ const DAMAGE_TAKEN_DEBUFF_SOURCES: ReadonlyArray<{
  * @param targetID - The target's ID (debuffs are checked on this target)
  * @param isDirectDamage - Whether this is direct damage (not a DoT tick). Empower only applies to direct damage.
  * @param eventBuffIds - Optional set of buff ability IDs from event.buffs snapshot (preferred for attacker buffs)
+ * @param combatantInfo - Optional combatant info for aura and set bonus detection
+ * @param playerRole - Player role ('dps', 'healer', 'tank') for role-based CP assumptions
  * @returns DamageDoneBreakdown with the computed multiplier and active sources
  */
 export function calculateDamageDoneAtTimestamp(
@@ -150,6 +257,8 @@ export function calculateDamageDoneAtTimestamp(
   targetID: number,
   isDirectDamage: boolean,
   eventBuffIds?: ReadonlySet<number> | null,
+  combatantInfo?: CombatantInfoEvent | null,
+  playerRole?: 'dps' | 'healer' | 'tank' | null,
 ): DamageDoneBreakdown {
   const activeSources: DamageDoneSource[] = [];
 
@@ -161,7 +270,7 @@ export function calculateDamageDoneAtTimestamp(
       : isBuffActiveOnTarget(buffLookup, source.abilityId, timestamp, sourceID);
     activeSources.push({
       name: source.name,
-      abilityId: source.abilityId,
+      sourceId: source.abilityId,
       value: source.value,
       type: 'damage_done',
       isActive,
@@ -171,13 +280,74 @@ export function calculateDamageDoneAtTimestamp(
     }
   }
 
-  // 2. Check damage-taken debuffs on the target (always use debuffLookup)
+  // 2. Check Champion Point damage-done stars (assumed active for DPS role)
+  //    These CPs don't appear in the ESO Logs API auras — they're baked into the
+  //    server-side damage formula. We assume all DPS players have them slotted.
+  const isDps = playerRole === 'dps';
+  for (const source of CP_DAMAGE_DONE_SOURCES) {
+    const meetsCondition =
+      source.condition === 'always' ||
+      (source.condition === 'direct' && isDirectDamage) ||
+      (source.condition === 'dot' && !isDirectDamage);
+    const isActive = meetsCondition && isDps;
+    activeSources.push({
+      name: `${source.name} (CP)`,
+      sourceId: 0, // No real ESO ability ID — these CPs don't appear in API data
+      value: source.value,
+      type: 'cp_damage_done',
+      isActive,
+    });
+    if (isActive) {
+      damageDonePercent += source.value;
+    }
+  }
+
+  // 3. Check Exploiter CP (+10% vs Off Balance targets)
+  //    Exploiter DOES appear as aura 63880 in the ESO Logs API.
+  {
+    const hasExploiterCp = hasAura(combatantInfo ?? null, KnownAbilities.EXPLOITER);
+    const targetOffBalance = isBuffActiveOnTarget(
+      debuffLookup, KnownAbilities.OFF_BALANCE, timestamp, targetID,
+    );
+    const isActive = hasExploiterCp && targetOffBalance;
+    activeSources.push({
+      name: 'Exploiter (CP)',
+      sourceId: KnownAbilities.EXPLOITER,
+      value: DamageDoneValues.EXPLOITER,
+      type: 'cp_damage_done',
+      isActive,
+    });
+    if (isActive) {
+      damageDonePercent += DamageDoneValues.EXPLOITER;
+    }
+  }
+
+  // 4. Check set bonus damage-done sources (from combatantInfo.gear)
+  for (const source of SET_DAMAGE_DONE_SOURCES) {
+    const meetsCondition =
+      source.condition === 'always' ||
+      (source.condition === 'direct' && isDirectDamage) ||
+      (source.condition === 'dot' && !isDirectDamage);
+    const isActive = meetsCondition && isSetActive(combatantInfo ?? null, source.setId, source.requiredPieces);
+    activeSources.push({
+      name: `${source.name} (Set)`,
+      sourceId: source.setId,
+      value: source.value,
+      type: 'set_damage_done',
+      isActive,
+    });
+    if (isActive) {
+      damageDonePercent += source.value;
+    }
+  }
+
+  // 5. Check damage-taken debuffs on the target (always use debuffLookup)
   let damageTakenPercent = 0;
   for (const source of DAMAGE_TAKEN_DEBUFF_SOURCES) {
     const isActive = isBuffActiveOnTarget(debuffLookup, source.abilityId, timestamp, targetID);
     activeSources.push({
       name: source.name,
-      abilityId: source.abilityId,
+      sourceId: source.abilityId,
       value: source.value,
       type: 'damage_taken',
       isActive,
@@ -187,7 +357,7 @@ export function calculateDamageDoneAtTimestamp(
     }
   }
 
-  // 3. Check Empower (buff on attacker, only applies to direct damage)
+  // 6. Check Empower (buff on attacker, only applies to direct damage)
   let empowerPercent = 0;
   if (isDirectDamage) {
     const empowerActive = eventBuffIds
@@ -195,7 +365,7 @@ export function calculateDamageDoneAtTimestamp(
       : isBuffActiveAtTimestamp(buffLookup, KnownAbilities.EMPOWER, timestamp);
     activeSources.push({
       name: 'Empower',
-      abilityId: KnownAbilities.EMPOWER,
+      sourceId: KnownAbilities.EMPOWER,
       value: DamageDoneValues.EMPOWER,
       type: 'empower',
       isActive: empowerActive,
@@ -205,7 +375,7 @@ export function calculateDamageDoneAtTimestamp(
     }
   }
 
-  // 4. Combine: (1 + damageDone%) × (1 + damageTaken%) × (1 + empower%)
+  // 7. Combine: (1 + damageDone%) × (1 + damageTaken%) × (1 + empower%)
   const totalMultiplier =
     (1 + damageDonePercent / 100) *
     (1 + damageTakenPercent / 100) *

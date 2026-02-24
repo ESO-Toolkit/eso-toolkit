@@ -230,7 +230,7 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
   },
   {
     name: 'Force of Nature',
-    description: '660 penetration per status effect',
+    description: '660 penetration per status effect — cannot detect from API (CP not in auras)',
     source: 'not_implemented',
   },
   {
@@ -391,7 +391,7 @@ function isComputedSourceActive(
       return splinteredSecretsAuras.length > 0;
     }
     case PenetrationComputedSourceKey.FORCE_OF_NATURE:
-      // TODO: Implement proper status effect tracking - assume inactive until implemented
+      // Force of Nature CP does not appear in ESO Logs API auras — cannot detect
       return false;
     case PenetrationComputedSourceKey.PIERCING:
       // TODO: Implement proper conditions - assume inactive until implemented
@@ -497,9 +497,8 @@ function getPenetrationFromComputedSource(
     }
 
     case PenetrationComputedSourceKey.FORCE_OF_NATURE:
-      // TODO: Implement proper status effect counting
-      // For now, assume 1 status effect (660 penetration)
-      return PenetrationValues.FORCE_OF_NATURE_PER_STATUS * 1;
+      // Force of Nature CP does not appear in ESO Logs API auras — cannot detect
+      return 0;
 
     case PenetrationComputedSourceKey.PIERCING:
       // TODO: Implement proper conditions

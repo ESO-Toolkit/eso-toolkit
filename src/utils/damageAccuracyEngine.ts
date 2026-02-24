@@ -212,6 +212,10 @@ const KNOWN_DAMAGE_BUFF_IDS = new Set<number>([
   // Critical Damage (buff on attacker)
   61746, // Minor Force
   61747, // Major Force
+  // Target debuffs tracked via debuffLookup (not in event.buffs, but validated for completeness)
+  // 31104, // Engulfing Flames (debuff on target)
+  // 126597, // Touch of Z'en (debuff on target)
+  // 62988, // Off Balance (debuff on target)
 ]);
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
@@ -319,7 +323,7 @@ export function computeModifiersForEvent(
   // 5. Parse event.buffs snapshot once (used by DamageDone and TooltipScaling)
   const eventBuffIds = event.buffs ? new Set(parseEventBuffs(event)) : null;
 
-  // 6. Damage-done multiplier (Berserk, Slayer, Vulnerability, Empower)
+  // 6. Damage-done multiplier (Berserk, Slayer, Vulnerability, Empower, CP stars, sets, Engulfing Flames, Touch of Z'en)
   const isDirectDamage = !event.tick;
   const damageDone = calculateDamageDoneAtTimestamp(
     buffLookup,
@@ -329,6 +333,8 @@ export function computeModifiersForEvent(
     event.targetID,
     isDirectDamage,
     eventBuffIds,
+    combatantInfo,
+    playerData?.role ?? null,
   );
 
   // 7. Tooltip scaling (Brutality, Sorcery, Courage, Powerful Assault)
@@ -337,7 +343,7 @@ export function computeModifiersForEvent(
     event.timestamp,
     event.sourceID,    eventBuffIds,  );
 
-  // 7. Buff validation (cross-check event.buffs against BuffLookup)
+  // 8. Buff validation (cross-check event.buffs against BuffLookup)
   const buffValidation = validateBuffSnapshot(event, buffLookup);
 
   // 9. Multipliers

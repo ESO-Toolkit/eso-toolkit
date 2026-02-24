@@ -1,4 +1,5 @@
-import { HitType, type DamageEvent, type CombatantInfoEvent } from '../types/combatlogEvents';
+import { KnownAbilities } from '../types/abilities';
+import { HitType, type DamageEvent, type CombatantInfoEvent, type CombatantAura } from '../types/combatlogEvents';
 import type { PlayerDetailsWithRole } from '../store/player_data/playerDataSlice';
 import type { BuffLookupData } from './BuffLookupUtils';
 import {
@@ -100,6 +101,55 @@ const minimalCombatantInfo: CombatantInfoEvent = {
   auras: [],
 };
 
+/** Create combatantInfo with specific aura ability IDs (real ESO ability IDs) */
+function makeCombatantInfoWithAuras(
+  abilityIds: number[],
+  overrides: Partial<CombatantInfoEvent> = {},
+): CombatantInfoEvent {
+  return {
+    ...minimalCombatantInfo,
+    auras: abilityIds.map((abilityId) => ({
+      source: 1,
+      ability: abilityId,
+      stacks: 1,
+      icon: '',
+      name: `Aura ${abilityId}`,
+    } as CombatantAura)),
+    ...overrides,
+  };
+}
+
+/** Create combatantInfo with a gear set equipped */
+function makeCombatantInfoWithSet(
+  setID: number,
+  pieces: number = 5,
+  auraIds: number[] = [],
+): CombatantInfoEvent {
+  const gear = Array.from({ length: pieces }, (_, i) => ({
+    id: 100 + i,
+    slot: i,
+    quality: 5,
+    icon: '',
+    championPoints: 160,
+    trait: 0,
+    enchantType: 0,
+    enchantQuality: 0,
+    setID,
+    type: 0,
+  }));
+  return {
+    ...minimalCombatantInfo,
+    gear: gear as CombatantInfoEvent['gear'],
+    auras: auraIds.map((abilityId) => ({
+      source: 1,
+      ability: abilityId,
+      stacks: 1,
+      icon: '',
+      name: `Aura ${abilityId}`,
+    } as CombatantAura)),
+  };
+}
+
 const minimalPlayerData: PlayerDetailsWithRole = {
   name: 'TestPlayer',
   id: 1,
@@ -123,13 +173,15 @@ describe('damageAccuracyEngine', () => {
     it('should compute basic modifiers for a normal hit with no buffs', () => {
       const event = makeDamageEvent();
       const targetResistance = 18200;
+      // Use tank role to isolate from role-based CP assumptions
+      const tankPlayer: PlayerDetailsWithRole = { ...minimalPlayerData, role: 'tank' };
 
       const modifiers = computeModifiersForEvent(
         event,
         emptyBuffLookup,
         emptyDebuffLookup,
         minimalCombatantInfo,
-        minimalPlayerData,
+        tankPlayer,
         targetResistance,
       );
 
@@ -669,6 +721,237 @@ describe('damageAccuracyEngine', () => {
       expect(report.modifierSummary.damageDoneMultiplierRange.mean).toBe(1);
       expect(report.modifierSummary.tooltipScalingRange).toBeDefined();
       expect(report.modifierSummary.tooltipScalingRange.mean).toBe(1);
+    });
+  });
+
+  describe('champion point damage modifiers (role-based)', () => {
+    const dpsPlayerData: PlayerDetailsWithRole = { ...minimalPlayerData, role: 'dps' };
+    const tankPlayerData: PlayerDetailsWithRole = { ...minimalPlayerData, role: 'tank' };
+
+    it('should apply Deadly Aim (+10%) and Biting Aura (+3%) and Master-at-Arms (+5%) on direct damage for DPS', () => {
+      const event = makeDamageEvent({ sourceID: 1, timestamp: FIGHT_START + 5000 });
+
+      const modifiers = computeModifiersForEvent(
+        event,
+        emptyBuffLookup,
+        emptyDebuffLookup,
+        minimalCombatantInfo,
+        dpsPlayerData,
+        0,
+      );
+
+      // Deadly Aim +10% (direct) + Master-at-Arms +5% (direct) + Biting Aura +3% (always) = 18%
+      expect(modifiers.damageDone.damageDonePercent).toBe(18);
+      expect(modifiers.damageDone.totalMultiplier).toBeCloseTo(1.18, 4);
+    });
+
+    it('should apply Thaumaturge (+10%) and Biting Aura (+3%) on DoT ticks for DPS', () => {
+      const event = makeDamageEvent({ sourceID: 1, timestamp: FIGHT_START + 5000, tick: true });
+
+      const modifiers = computeModifiersForEvent(
+        event,
+        emptyBuffLookup,
+        emptyDebuffLookup,
+        minimalCombatantInfo,
+        dpsPlayerData,
+        0,
+      );
+
+      // Thaumaturge +10% (dot) + Biting Aura +3% (always) = 13%
+      expect(modifiers.damageDone.damageDonePercent).toBe(13);
+    });
+
+    it('should NOT apply CP damage modifiers to non-DPS roles', () => {
+      const event = makeDamageEvent({ sourceID: 1, timestamp: FIGHT_START + 5000 });
+
+      const modifiers = computeModifiersForEvent(
+        event,
+        emptyBuffLookup,
+        emptyDebuffLookup,
+        minimalCombatantInfo,
+        tankPlayerData,
+        0,
+      );
+
+      expect(modifiers.damageDone.damageDonePercent).toBe(0);
+    });
+
+    it('should NOT apply CP damage modifiers when no playerData', () => {
+      const event = makeDamageEvent({ sourceID: 1, timestamp: FIGHT_START + 5000 });
+
+      const modifiers = computeModifiersForEvent(
+        event,
+        emptyBuffLookup,
+        emptyDebuffLookup,
+        minimalCombatantInfo,
+        undefined,
+        0,
+      );
+
+      expect(modifiers.damageDone.damageDonePercent).toBe(0);
+    });
+
+    it('should detect Exploiter CP (+10%) when aura 63880 present and target is Off Balance', () => {
+      const event = makeDamageEvent({ sourceID: 1, targetID: 100, timestamp: FIGHT_START + 5000 });
+      const combatant = makeCombatantInfoWithAuras([KnownAbilities.EXPLOITER]); // 63880
+
+      // Off Balance debuff (62988) on the target
+      const debuffLookup: BuffLookupData = {
+        buffIntervals: {
+          '62988': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 100, sourceID: 1 },
+          ],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event, emptyBuffLookup, debuffLookup, combatant, undefined, 0,
+      );
+
+      // Only Exploiter (no role-based CPs since no playerData)
+      expect(modifiers.damageDone.damageDonePercent).toBe(10);
+    });
+
+    it('should NOT apply Exploiter when target is NOT Off Balance', () => {
+      const event = makeDamageEvent({ sourceID: 1, targetID: 100, timestamp: FIGHT_START + 5000 });
+      const combatant = makeCombatantInfoWithAuras([KnownAbilities.EXPLOITER]);
+
+      const modifiers = computeModifiersForEvent(
+        event, emptyBuffLookup, emptyDebuffLookup, combatant, undefined, 0,
+      );
+
+      expect(modifiers.damageDone.damageDonePercent).toBe(0);
+    });
+
+    it('should stack Exploiter with role-based CPs for DPS', () => {
+      const event = makeDamageEvent({ sourceID: 1, targetID: 100, timestamp: FIGHT_START + 5000 });
+      const combatant = makeCombatantInfoWithAuras([KnownAbilities.EXPLOITER]);
+
+      const debuffLookup: BuffLookupData = {
+        buffIntervals: {
+          '62988': [{ start: FIGHT_START, end: FIGHT_START + 10000, targetID: 100, sourceID: 1 }],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event, emptyBuffLookup, debuffLookup, combatant, dpsPlayerData, 0,
+      );
+
+      // Direct: Deadly Aim 10% + Master-at-Arms 5% + Biting Aura 3% + Exploiter 10% = 28%
+      expect(modifiers.damageDone.damageDonePercent).toBe(28);
+    });
+  });
+
+  describe('set bonus damage modifiers', () => {
+    it('should detect Deadly Strike 5pc (+15%) on DoT ticks', () => {
+      const event = makeDamageEvent({ sourceID: 1, tick: true });
+      const combatant = makeCombatantInfoWithSet(127, 5); // KnownSetIDs.DEADLY_STRIKE = 127
+
+      const modifiers = computeModifiersForEvent(
+        event, emptyBuffLookup, emptyDebuffLookup, combatant, undefined, 0,
+      );
+
+      expect(modifiers.damageDone.damageDonePercent).toBe(15);
+    });
+
+    it('should NOT apply Deadly Strike to direct damage', () => {
+      const event = makeDamageEvent({ sourceID: 1 });
+      const combatant = makeCombatantInfoWithSet(127, 5);
+
+      const modifiers = computeModifiersForEvent(
+        event, emptyBuffLookup, emptyDebuffLookup, combatant, undefined, 0,
+      );
+
+      expect(modifiers.damageDone.damageDonePercent).toBe(0);
+    });
+
+    it('should NOT apply Deadly Strike with fewer than 5 pieces', () => {
+      const event = makeDamageEvent({ sourceID: 1, tick: true });
+      const combatant = makeCombatantInfoWithSet(127, 4);
+
+      const modifiers = computeModifiersForEvent(
+        event, emptyBuffLookup, emptyDebuffLookup, combatant, undefined, 0,
+      );
+
+      expect(modifiers.damageDone.damageDonePercent).toBe(0);
+    });
+  });
+
+  describe('target debuff damage modifiers', () => {
+    it('should detect Engulfing Flames debuff (+10%) on target', () => {
+      const event = makeDamageEvent({ targetID: 100, timestamp: FIGHT_START + 5000 });
+      const debuffLookup: BuffLookupData = {
+        buffIntervals: {
+          '31104': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 100, sourceID: 1 },
+          ],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event, emptyBuffLookup, debuffLookup, null, undefined, 0,
+      );
+
+      expect(modifiers.damageDone.damageTakenPercent).toBe(10);
+    });
+
+    it('should detect Touch of Zen debuff (+5%) on target', () => {
+      const event = makeDamageEvent({ targetID: 100, timestamp: FIGHT_START + 5000 });
+      const debuffLookup: BuffLookupData = {
+        buffIntervals: {
+          '126597': [
+            { start: FIGHT_START, end: FIGHT_START + 10000, targetID: 100, sourceID: 1 },
+          ],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event, emptyBuffLookup, debuffLookup, null, undefined, 0,
+      );
+
+      expect(modifiers.damageDone.damageTakenPercent).toBe(5);
+    });
+
+    it('should stack all damage-taken debuffs additively', () => {
+      const event = makeDamageEvent({ targetID: 100, timestamp: FIGHT_START + 5000 });
+      // Minor Vulnerability (79717) + Engulfing Flames (31104) + Touch of Z'en (126597)
+      const debuffLookup: BuffLookupData = {
+        buffIntervals: {
+          '79717': [{ start: FIGHT_START, end: FIGHT_START + 10000, targetID: 100, sourceID: 1 }],
+          '31104': [{ start: FIGHT_START, end: FIGHT_START + 10000, targetID: 100, sourceID: 1 }],
+          '126597': [{ start: FIGHT_START, end: FIGHT_START + 10000, targetID: 100, sourceID: 1 }],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event, emptyBuffLookup, debuffLookup, null, undefined, 0,
+      );
+
+      // 5% + 10% + 5% = 20%
+      expect(modifiers.damageDone.damageTakenPercent).toBe(20);
+      expect(modifiers.damageDone.totalMultiplier).toBeCloseTo(1.20, 4);
+    });
+
+    it('should combine CP damage-done and target damage-taken multiplicatively', () => {
+      const event = makeDamageEvent({ sourceID: 1, targetID: 100, timestamp: FIGHT_START + 5000 });
+      const dpsPlayerData: PlayerDetailsWithRole = { ...minimalPlayerData, role: 'dps' };
+
+      // Engulfing Flames (+10%) on target
+      const debuffLookup: BuffLookupData = {
+        buffIntervals: {
+          '31104': [{ start: FIGHT_START, end: FIGHT_START + 10000, targetID: 100, sourceID: 1 }],
+        },
+      };
+
+      const modifiers = computeModifiersForEvent(
+        event, emptyBuffLookup, debuffLookup, minimalCombatantInfo, dpsPlayerData, 0,
+      );
+
+      // damageDone (DPS role direct): Deadly Aim 10% + MasterAtArms 5% + Biting Aura 3% = 18%, taken: 10%
+      // (1.18) × (1.10) = 1.298
+      expect(modifiers.damageDone.damageDonePercent).toBe(18);
+      expect(modifiers.damageDone.damageTakenPercent).toBe(10);
+      expect(modifiers.damageDone.totalMultiplier).toBeCloseTo(1.298, 3);
     });
   });
 
