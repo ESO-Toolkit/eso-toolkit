@@ -211,9 +211,7 @@ describe('sentryUtils', () => {
             {
               value: 'Invalid call to runtime.sendMessage(). Tab not found.',
               stacktrace: {
-                frames: [
-                  { filename: 'chrome-extension://abcdef/content.js', lineno: 1 },
-                ],
+                frames: [{ filename: 'chrome-extension://abcdef/content.js', lineno: 1 }],
               },
             },
           ],
