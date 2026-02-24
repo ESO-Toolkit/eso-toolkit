@@ -1,0 +1,31 @@
+ESOLogAugment
+=============
+
+A minimal ESO Lua addon to snapshot player stats for log accuracy analysis.
+
+Features:
+- Snapshots weapon/spell damage, max magicka/stamina, penetration, crit bonus, crit chance, CP stars every second during combat
+- Captures ability names and descriptions as used
+- Stores all data in SavedVariables (ESOLogAugment_Data)
+
+Install:
+1. Copy ESOLogAugment.lua to a new folder in your ESO AddOns directory (e.g. Documents\Elder Scrolls Online\live\AddOns\ESOLogAugment)
+2. Create ESOLogAugment.txt manifest file:
+
+```
+## Title: ESOLogAugment
+## Author: GitHub Copilot
+## Version: 0.1
+## APIVersion: 101041
+## SavedVariables: ESOLogAugment_Data
+ESOLogAugment.lua
+```
+
+3. Enable the addon in-game
+
+Usage:
+- Enter combat; stats are snapshotted every second
+- Use abilities; their names/descriptions are captured
+- After combat, upload your SavedVariables file (ESOLogAugment_Data.lua) alongside your log for analysis
+
+Tested on API version 101041 (2026 Q1).
