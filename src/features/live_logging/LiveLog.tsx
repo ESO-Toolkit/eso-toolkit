@@ -58,10 +58,10 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
       // Network errors during live-log polling (e.g. temporarily offline, CORS
       // block, or API downtime) should not crash the page or produce an unhandled
       // rejection. The interval will retry in 30 seconds automatically.
-      reportError(
-        networkError instanceof Error ? networkError : new Error(String(networkError)),
-        { context: 'LiveLog.fetchLatestFightId', reportId },
-      );
+      reportError(networkError instanceof Error ? networkError : new Error(String(networkError)), {
+        context: 'LiveLog.fetchLatestFightId',
+        reportId,
+      });
       return;
     }
 
