@@ -105,7 +105,7 @@ describe('detectPotionType', () => {
       const auras = [
         { name: 'Major Fortitude', id: 68405 },
         { name: 'Major Endurance', id: 68408 },
-        { name: 'Major Heroism', id: 61709 },  // real HEROISM_POTION_BUFF_IDS member
+        { name: 'Major Heroism', id: 61709 }, // real HEROISM_POTION_BUFF_IDS member
       ];
       expect(detectPotionType(auras, 2)).toBe('tri-stat');
     });
@@ -356,22 +356,22 @@ describe('classifyPotionEventsFromBuffStream', () => {
   /** Ability name lookup used across tests. */
   const abilitiesById: Readonly<Record<number, { name: string }>> = {
     61709: { name: 'Major Heroism' },
-    125027: { name: 'Minor Heroism' },   // NOT in HEROISM_POTION_BUFF_IDS (excluded to avoid false positives)
+    125027: { name: 'Minor Heroism' }, // NOT in HEROISM_POTION_BUFF_IDS (excluded to avoid false positives)
     100: { name: 'Major Brutality' },
     101: { name: 'Major Savagery' },
     102: { name: 'Major Sorcery' },
     103: { name: 'Major Prophecy' },
-    68405: { name: 'Major Fortitude' },  // TRI_STAT_POTION_BUFF_GROUP_A
+    68405: { name: 'Major Fortitude' }, // TRI_STAT_POTION_BUFF_GROUP_A
     68406: { name: 'Major Intellect' },
     68408: { name: 'Major Endurance' },
-    45226: { name: 'Major Endurance' },  // TRI_STAT_POTION_BUFF_GROUP_B
+    45226: { name: 'Major Endurance' }, // TRI_STAT_POTION_BUFF_GROUP_B
   };
 
   // ── returns {} when no potion resource events ─────────────────────────────
 
   it('returns {} when there are no potion restore resource events', () => {
     const result = classifyPotionEventsFromBuffStream(
-      [buffEv(1000, 1, 100)],          // applybuff only — not a potion anchor
+      [buffEv(1000, 1, 100)], // applybuff only — not a potion anchor
       [resEv(1000, 1, 12345, 1, 7500)], // resourcechange with non-potion ID
       abilitiesById,
     );
@@ -403,9 +403,9 @@ describe('classifyPotionEventsFromBuffStream', () => {
     const result = classifyPotionEventsFromBuffStream(
       [],
       [
-        resEv(1000, 1, 17328, 1, 6066),   // use 1
-        resEv(46000, 1, 17328, 1, 6066),  // use 2 (~45 s cooldown)
-        resEv(91000, 1, 17328, 1, 6066),  // use 3
+        resEv(1000, 1, 17328, 1, 6066), // use 1
+        resEv(46000, 1, 17328, 1, 6066), // use 2 (~45 s cooldown)
+        resEv(91000, 1, 17328, 1, 6066), // use 3
       ],
       abilitiesById,
     );
@@ -416,9 +416,9 @@ describe('classifyPotionEventsFromBuffStream', () => {
     const result = classifyPotionEventsFromBuffStream(
       [],
       [
-        resEv(1000, 1, 45225, 1, 7500),  // tick A
-        resEv(1050, 1, 45225, 1, 7500),  // same tick A
-        resEv(1100, 1, 45225, 1, 7500),  // same tick A
+        resEv(1000, 1, 45225, 1, 7500), // tick A
+        resEv(1050, 1, 45225, 1, 7500), // same tick A
+        resEv(1100, 1, 45225, 1, 7500), // same tick A
       ],
       abilitiesById,
     );
@@ -429,8 +429,8 @@ describe('classifyPotionEventsFromBuffStream', () => {
     const result = classifyPotionEventsFromBuffStream(
       [],
       [
-        resEv(1000, 1, 45225, 1, 7500),  // tick A
-        resEv(1300, 1, 45225, 1, 7500),  // tick B (300 ms later)
+        resEv(1000, 1, 45225, 1, 7500), // tick A
+        resEv(1300, 1, 45225, 1, 7500), // tick B (300 ms later)
       ],
       abilitiesById,
     );
@@ -473,10 +473,7 @@ describe('classifyPotionEventsFromBuffStream', () => {
     // Lorkhan\'s Tears (Major Heroism Potion) restores both stamina and magicka.
     const result = classifyPotionEventsFromBuffStream(
       [],
-      [
-        resEv(1000, 1, 45225, 1, 7582),
-        resEv(1000, 1, 45223, 0, 2160),
-      ],
+      [resEv(1000, 1, 45225, 1, 7582), resEv(1000, 1, 45223, 0, 2160)],
       abilitiesById,
     );
     expect(result['1'].type).toBe('heroism');
@@ -486,10 +483,7 @@ describe('classifyPotionEventsFromBuffStream', () => {
   it('detects tri-stat via 68409 (stamina) + 68407 (magicka) restores at the same ms', () => {
     const result = classifyPotionEventsFromBuffStream(
       [],
-      [
-        resEv(1000, 1, 68409, 1, 7064),
-        resEv(1000, 1, 68407, 0, 4545),
-      ],
+      [resEv(1000, 1, 68409, 1, 7064), resEv(1000, 1, 68407, 0, 4545)],
       abilitiesById,
     );
     expect(result['1'].type).toBe('tri-stat');
@@ -499,9 +493,9 @@ describe('classifyPotionEventsFromBuffStream', () => {
   it('detects tri-stat via Group A buff cluster (68405+68406+68408) co-occurring with restore', () => {
     const result = classifyPotionEventsFromBuffStream(
       [
-        buffEv(1000, 1, 68405),  // Major Fortitude
-        buffEv(1000, 1, 68406),  // Major Intellect
-        buffEv(1000, 1, 68408),  // Major Endurance
+        buffEv(1000, 1, 68405), // Major Fortitude
+        buffEv(1000, 1, 68406), // Major Intellect
+        buffEv(1000, 1, 68408), // Major Endurance
       ],
       [resEv(1000, 1, 68409, 1, 7064)],
       abilitiesById,
@@ -511,7 +505,7 @@ describe('classifyPotionEventsFromBuffStream', () => {
 
   it('detects heroism via HEROISM_POTION_BUFF_IDS co-occurring with stamina restore', () => {
     const result = classifyPotionEventsFromBuffStream(
-      [buffEv(1000, 1, 61709)],   // Major Heroism buff (HEROISM_POTION_BUFF_IDS member)
+      [buffEv(1000, 1, 61709)], // Major Heroism buff (HEROISM_POTION_BUFF_IDS member)
       [resEv(1000, 1, 45225, 1, 7500)],
       abilitiesById,
     );
@@ -522,7 +516,7 @@ describe('classifyPotionEventsFromBuffStream', () => {
   it('does NOT classify Minor Heroism buff (125027) with stamina restore as heroism', () => {
     // Confirmed by fight-17 P5 empirical data: 125027 co-occurs on plain stamina potions.
     const result = classifyPotionEventsFromBuffStream(
-      [buffEv(1000, 1, 125027)],   // Minor Heroism — NOT in HEROISM_POTION_BUFF_IDS
+      [buffEv(1000, 1, 125027)], // Minor Heroism — NOT in HEROISM_POTION_BUFF_IDS
       [resEv(1000, 1, 45225, 1, 7500)],
       abilitiesById,
     );
@@ -531,7 +525,7 @@ describe('classifyPotionEventsFromBuffStream', () => {
 
   it('detects heroism via Major Heroism name co-occurring with stamina restore', () => {
     const result = classifyPotionEventsFromBuffStream(
-      [buffEv(1000, 1, 61709)],    // Major Heroism (name known via abilitiesById)
+      [buffEv(1000, 1, 61709)], // Major Heroism (name known via abilitiesById)
       [resEv(1000, 1, 45225, 1, 7500)],
       abilitiesById,
     );
@@ -541,8 +535,8 @@ describe('classifyPotionEventsFromBuffStream', () => {
   it('detects weapon-power via Major Brutality + Major Savagery buffs', () => {
     const result = classifyPotionEventsFromBuffStream(
       [
-        buffEv(1000, 1, 100),  // Major Brutality
-        buffEv(1000, 1, 101),  // Major Savagery
+        buffEv(1000, 1, 100), // Major Brutality
+        buffEv(1000, 1, 101), // Major Savagery
       ],
       [resEv(1000, 1, 45225, 1, 7500)],
       abilitiesById,
@@ -554,8 +548,8 @@ describe('classifyPotionEventsFromBuffStream', () => {
   it('detects spell-power via Major Sorcery + Major Prophecy buffs', () => {
     const result = classifyPotionEventsFromBuffStream(
       [
-        buffEv(1000, 1, 102),  // Major Sorcery
-        buffEv(1000, 1, 103),  // Major Prophecy
+        buffEv(1000, 1, 102), // Major Sorcery
+        buffEv(1000, 1, 103), // Major Prophecy
       ],
       [resEv(1000, 1, 45223, 0, 5000)],
       abilitiesById,
@@ -570,11 +564,7 @@ describe('classifyPotionEventsFromBuffStream', () => {
     // First use: tri-stat cluster fires, reveals type.
     // Second use (45 s later): only the resource restore fires (buff already active).
     const result = classifyPotionEventsFromBuffStream(
-      [
-        buffEv(1000, 1, 68405),
-        buffEv(1000, 1, 68406),
-        buffEv(1000, 1, 68408),
-      ],
+      [buffEv(1000, 1, 68405), buffEv(1000, 1, 68406), buffEv(1000, 1, 68408)],
       [
         resEv(1000, 1, 68409, 1, 7064),
         resEv(1000, 1, 68407, 0, 4545),
@@ -623,9 +613,9 @@ describe('classifyPotionEventsFromBuffStream', () => {
         buffEv(1000, 2, 68408), // P2: tri-stat buff
       ],
       [
-        resEv(1000, 1, 45225, 1, 7500),  // P1 stamina restore
-        resEv(1000, 2, 68409, 1, 7064),  // P2 tri-stat stamina restore
-        resEv(1000, 2, 68407, 0, 4545),  // P2 tri-stat magicka restore
+        resEv(1000, 1, 45225, 1, 7500), // P1 stamina restore
+        resEv(1000, 2, 68409, 1, 7064), // P2 tri-stat stamina restore
+        resEv(1000, 2, 68407, 0, 4545), // P2 tri-stat magicka restore
       ],
       abilitiesById,
     );
@@ -640,8 +630,8 @@ describe('classifyPotionEventsFromBuffStream', () => {
         buffEv(1000, 2, 103), // P2: Major Prophecy
       ],
       [
-        resEv(1000, 1, 17328, 1, 6066),  // P1 — no identifying buffs
-        resEv(1000, 2, 45223, 0, 5000),  // P2 magicka restore
+        resEv(1000, 1, 17328, 1, 6066), // P1 — no identifying buffs
+        resEv(1000, 2, 45223, 0, 5000), // P2 magicka restore
       ],
       abilitiesById,
     );
@@ -663,7 +653,7 @@ describe('classifyPotionEventsFromBuffStream', () => {
     const result = classifyPotionEventsFromBuffStream(
       [],
       [resEv(1000, 1, 17328, 1, 6066)],
-      {},  // empty abilitiesById — no buff names resolvable
+      {}, // empty abilitiesById — no buff names resolvable
     );
     expect(result['1'].type).toBe('stamina');
     expect(result['1'].count).toBe(1);
@@ -678,7 +668,7 @@ describe('describeResourceRestored', () => {
     ['magicka', /magicka/i],
     ['stamina', /stamina/i],
     ['all', /health|magicka|stamina/i],
-    ['none', /.+/],           // any non-empty string is acceptable
+    ['none', /.+/], // any non-empty string is acceptable
   ];
 
   test.each(cases)('returns a non-empty string matching %s', (resource, pattern) => {
