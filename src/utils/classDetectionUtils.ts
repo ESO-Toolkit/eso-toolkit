@@ -155,15 +155,25 @@ export function extractPlayerAbilityIds(
   const abilityIds = new Set<number>();
 
   // Add abilities from combatant info auras (player as source)
+  // Only include auras the player placed themselves (aura.source === player).
+  // Pre-buff AoE zones placed by *other* players register on all nearby players at fight start;
+  // filtering by source prevents cross-player effects from polluting class detection.
+  // Known active-skill pre-buff residuals (e.g. Standard of Might ground zone, Lightning Flood
+  // puddle) that slip through as self-sourced auras are excluded via AURA_EXCLUDED_ABILITIES.
   const combatantInfoEventsForPlayer = combatantInfoEvents.filter(
     (event) =>
       event.type === 'combatantinfo' && 'sourceID' in event && String(event.sourceID) === playerId,
   );
 
+  const playerIdNum = Number(playerId);
   combatantInfoEventsForPlayer.forEach((cie) => {
     const auras = cie.auras || [];
     auras.forEach((aura) => {
-      if (typeof aura.ability === 'number' && !AURA_EXCLUDED_ABILITIES.has(aura.ability)) {
+      if (
+        typeof aura.ability === 'number' &&
+        !AURA_EXCLUDED_ABILITIES.has(aura.ability) &&
+        aura.source === playerIdNum
+      ) {
         abilityIds.add(aura.ability);
       }
     });

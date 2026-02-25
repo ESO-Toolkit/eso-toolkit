@@ -1133,9 +1133,19 @@ export const SYNERGY_ABILITY_IDS = Object.freeze(
   ]),
 );
 
-// Aura ability IDs that should be ignored for class detection to prevent false positives
+// Aura ability IDs that should be ignored for class detection to prevent false positives.
+// These are active skills whose lingering pre-buff zones/effects appear in CIE self-auras
+// even though the player never used that skill line during the actual fight.
 export const AURA_EXCLUDED_ABILITIES = Object.freeze(
-  new Set<number>([KnownAbilities.UNNERVING_BONEYARD]),
+  new Set<number>([
+    KnownAbilities.UNNERVING_BONEYARD, // 117815 — Necro Grave Lord (Avid Boneyard morph)
+    117860, // Avid Boneyard zone (alternate ID for Necro Grave Lord pre-buff)
+    23206, // Lightning Flood puddle (Sorc Storm Calling pre-buff AoE)
+    23203, // Liquid Lightning variant (Sorc Storm Calling pre-buff AoE)
+    102329, // Summon Charged Atronach zone (Sorc ultimate pre-buff zone effect)
+    32950, // Standard of Might zone (DK ultimate pre-buff ground effect)
+    32956, // Standard of Might zone variant (DK ultimate pre-buff)
+  ]),
 );
 
 // Major Maim debuff ability IDs (mitigation debuff: -10% damage done by enemy)
