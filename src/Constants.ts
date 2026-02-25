@@ -1,5 +1,5 @@
 export const DATA_FETCH_CACHE_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
-export const ERROR_TRACKING_TOKEN = 'e16d21b030946d9b71ab90784548a2ac';
+export const ERROR_TRACKING_TOKEN = '9eba53324bf5455db004638013efbb9064b4c8a84f605a7b0fc53cd482f4f2e2961c75a7d9d1a4a615b0536f861d8ab3';
 
 export const APPLICATION_NAME = 'ESO Toolkit';
