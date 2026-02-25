@@ -62,6 +62,10 @@ import {
   PlayerGearSetRecord,
 } from '../../../utils/gearUtilities';
 import {
+  classifyPotionEventsFromBuffStream,
+  type PotionStreamResult,
+} from '../../../utils/potionDetectionUtils';
+import {
   analyzeBarSwaps,
   type BarSwapAnalysisResult,
 } from '../../parse_analysis/utils/parseAnalysisUtils';
@@ -432,6 +436,16 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
 
     return result;
   }, [combatantInfoEvents, abilitiesById, playerData, friendlyBuffEvents]);
+
+  // Classify each player's potion usage from the live fight event stream (Path B detection).
+  const potionResultsByPlayer = React.useMemo((): Record<string, PotionStreamResult> => {
+    if (!friendlyBuffEvents || !abilitiesById) return {};
+    return classifyPotionEventsFromBuffStream(
+      friendlyBuffEvents,
+      resourceEvents ?? [],
+      abilitiesById,
+    );
+  }, [friendlyBuffEvents, resourceEvents, abilitiesById]);
 
   // Calculate champion points per player using champion point constants from combatantinfo auras
   const championPointsByPlayer = React.useMemo(() => {
@@ -1252,6 +1266,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         dpsValueByPlayer={dpsValueByPlayer}
         criticalDamageByPlayer={criticalDamageByPlayer}
         barSwapByPlayer={barSwapByPlayer}
+        potionResultsByPlayer={potionResultsByPlayer}
       />
     </div>
   );

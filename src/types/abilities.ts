@@ -1026,15 +1026,89 @@ export const WITCHES_BREW = Object.freeze(
 ); // Witches' Brew event items
 export const EXPERIENCE_BOOST_FOOD = Object.freeze(new Set([91368, 91369])); // Jester's Experience Boost Pie
 
-// Potion Buffs
-// Stamina Potion Restore Effect - appears in auras when a stamina potion is used
-export const STAMINA_POTION_RESTORE_EFFECT = Object.freeze(new Set([6119]));
-// Magicka Potion Restore Effect - appears in auras when a magicka potion is used
-export const MAGICKA_POTION_RESTORE_EFFECT = Object.freeze(new Set([6118]));
-// Potion Timer (cooldown/immunity) auras - appear after ANY potion use
-export const POTION_TIMER_IDS = Object.freeze(
-  new Set([63551, 63631, 63653, 63654, 63673, 66255, 72985, 81733, 82679, 82680]),
+// ── Potion Detection IDs ─────────────────────────────────────────────────────
+//
+// All IDs below were empirically validated from real ESO Logs report data:
+//   prV8jWb1NqFJc97Z fights 5 & 17, YArFDbq7BdhwL691 fight 72.
+//
+// ESO Logs does NOT expose a "Potion Cooldown Timer" buff.  Potion use is
+// detected instead via self-applied RESOURCE RESTORE events and co-occurring
+// buff clusters that fire at the same millisecond.
+//
+// Detection strategy:
+//   1. Anchor on a resource-change event whose abilityGameID is in
+//      POTION_RESOURCE_RESTORE_IDS (sourceID === targetID, large change).
+//   2. Classify by inspecting buff events within ±150 ms of the anchor and by
+//      checking whether both a stamina-restore and a magicka-restore fired for
+//      the same player at the same millisecond.
+
+/** Stamina resource-restore ability IDs emitted exclusively by potion use. */
+export const POTION_STAMINA_RESTORE_IDS = Object.freeze(
+  new Set([
+    45225, // Restore Stamina – Stamina / Minor-Heroism potion variants
+    17328, // Restore Stamina – lower-stat Stamina potion variant
+    68409, // Restore Stamina – Tri-Stat potion variant
+  ]),
 );
+
+/** Magicka resource-restore ability IDs emitted exclusively by potion use. */
+export const POTION_MAGICKA_RESTORE_IDS = Object.freeze(
+  new Set([
+    45223, // Restore Magicka – Heroism (Lorkhan's Tears) potion variant
+    68407, // Restore Magicka – Tri-Stat potion variant
+  ]),
+);
+
+/**
+ * Union of {@link POTION_STAMINA_RESTORE_IDS} and {@link POTION_MAGICKA_RESTORE_IDS}.
+ * Use this set to locate any potion-use anchor event in the resource stream.
+ */
+export const POTION_RESOURCE_RESTORE_IDS = Object.freeze(
+  new Set([45225, 17328, 68409, 45223, 68407]),
+);
+
+/**
+ * Buff IDs emitted by Tri-Stat potion Variant A (Major Fortitude / Intellect /
+ * Endurance cluster, IDs 68405–68408).  At least 2 of the 3 must co-occur at
+ * the same millisecond to classify as Tri-Stat.
+ */
+export const TRI_STAT_POTION_BUFF_GROUP_A = Object.freeze(new Set([68405, 68406, 68408]));
+
+/**
+ * Buff IDs emitted by Tri-Stat potion Variant B / Wellbeing (Major Fortitude /
+ * Intellect / Endurance cluster, IDs 45222–45226).  At least 2 of the 3 must
+ * co-occur at the same millisecond to classify as Tri-Stat.
+ */
+export const TRI_STAT_POTION_BUFF_GROUP_B = Object.freeze(new Set([45222, 45224, 45226]));
+
+/**
+ * Major Heroism buff IDs.  Presence alongside a resource restore event
+ * indicates a Heroism-type potion (Lorkhan's Tears or Essence of Heroism).
+ *
+ * Note: Minor Heroism (125027) was intentionally excluded — it co-occurs on
+ * plain stamina/combo potions and caused false "heroism" classifications.
+ * The primary heroism signal is the dual 45225+45223 resource restore.
+ */
+export const HEROISM_POTION_BUFF_IDS = Object.freeze(new Set([61708, 61709]));
+
+/**
+ * @deprecated These IDs were never observed in real ESO Logs event streams.
+ * The "Potion Cooldown Timer" concept does not map to any real ESO Logs ability
+ * ID.  Use {@link POTION_RESOURCE_RESTORE_IDS} instead.
+ */
+export const POTION_TIMER_IDS = Object.freeze(new Set<number>());
+
+/**
+ * @deprecated ID 6119 was not found in real ESO Logs data.
+ * Use {@link POTION_STAMINA_RESTORE_IDS} instead.
+ */
+export const STAMINA_POTION_RESTORE_EFFECT = Object.freeze(new Set<number>());
+
+/**
+ * @deprecated ID 6118 was not found in real ESO Logs data.
+ * Use {@link POTION_MAGICKA_RESTORE_IDS} instead.
+ */
+export const MAGICKA_POTION_RESTORE_EFFECT = Object.freeze(new Set<number>());
 
 // Synergies (abilities that should not count as player-initiated casts)
 export const SYNERGY_ABILITY_IDS = Object.freeze(

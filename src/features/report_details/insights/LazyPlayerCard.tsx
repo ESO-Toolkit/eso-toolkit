@@ -6,6 +6,7 @@ import type { PlayerDetailsWithRole } from '../../../store/player_data/playerDat
 import type { ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import type { BuildIssue } from '../../../utils/detectBuildIssues';
 import type { PlayerGearSetRecord } from '../../../utils/gearUtilities';
+import type { PotionStreamResult } from '../../../utils/potionDetectionUtils';
 import type { BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 
 // Lazy load the PlayerCard component
@@ -131,6 +132,8 @@ export interface PlayerCardProps {
   critDamageSummary?: { avg: number; max: number };
   /** Bar swap analysis result, used to display bar setup pattern on DPS cards */
   barSwapResult?: BarSwapAnalysisResult;
+  /** Per-player potion classification from the live fight event stream (Path B detection) */
+  potionStreamResult?: PotionStreamResult;
   /** Test ID for testing */
   'data-testid'?: string;
 }

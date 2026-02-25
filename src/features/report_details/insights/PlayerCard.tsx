@@ -27,8 +27,10 @@ import { buildVariantSx, getGearChipProps } from '@/utils/playerCardStyleUtils';
 import {
   abbreviatePotion,
   describePotionType,
+  describeResourceRestored,
   detectPotionType,
   getPotionColor,
+  type PotionStreamResult,
 } from '@/utils/potionDetectionUtils';
 
 import mundusIcon from '../../../assets/MundusStone.png';
@@ -119,6 +121,8 @@ interface PlayerCardProps {
   critDamageSummary?: { avg: number; max: number };
   /** Bar swap analysis result, used to display bar setup pattern on DPS cards */
   barSwapResult?: BarSwapAnalysisResult;
+  /** Per-player potion classification from the live fight event stream (Path B detection) */
+  potionStreamResult?: PotionStreamResult;
 }
 
 // Helper function to consolidate build issues
@@ -191,6 +195,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     totalDps,
     critDamageSummary,
     barSwapResult,
+    potionStreamResult,
   }) => {
     const theme = useTheme();
 
@@ -394,8 +399,21 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       };
     }, [foodAura]);
 
-    // Memoize potion information
+    // Memoize potion information — prefer the live-stream result (Path B) when available.
     const potionInfo = React.useMemo(() => {
+      if (potionStreamResult) {
+        const resourceDesc =
+          potionStreamResult.resourceRestored !== 'none'
+            ? ` — Restores: ${describeResourceRestored(potionStreamResult.resourceRestored)}`
+            : '';
+        return {
+          type: potionStreamResult.type,
+          count: potionStreamResult.count,
+          display: abbreviatePotion(potionStreamResult.type),
+          color: getPotionColor(potionStreamResult.type),
+          tooltip: `${describePotionType(potionStreamResult.type)}${resourceDesc}`,
+        };
+      }
       const potionType = detectPotionType(auras, player.potionUse ?? 0);
       return {
         type: potionType,
@@ -404,7 +422,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         color: getPotionColor(potionType),
         tooltip: describePotionType(potionType),
       };
-    }, [auras, player.potionUse]);
+    }, [auras, player.potionUse, potionStreamResult]);
 
     const resolvedPlayerName = resolveActorName(player);
     const normalizedDisplayName = resolvedPlayerName.trim();
