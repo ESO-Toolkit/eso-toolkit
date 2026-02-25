@@ -19,6 +19,7 @@ import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlic
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
+import { type PotionStreamResult } from '../../../utils/potionDetectionUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 
@@ -53,6 +54,8 @@ interface PlayersPanelViewProps {
   criticalDamageByPlayer?: Record<string, { avg: number; max: number }>;
   /** Bar swap analysis results per player ID, used to show bar setup pattern on DPS cards */
   barSwapByPlayer?: Record<string, BarSwapAnalysisResult>;
+  /** Per-player potion classification from the live fight event stream (Path B detection) */
+  potionResultsByPlayer?: Record<string, PotionStreamResult>;
 }
 
 type SortOption =
@@ -90,6 +93,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     dpsValueByPlayer,
     criticalDamageByPlayer,
     barSwapByPlayer,
+    potionResultsByPlayer,
   }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState<SortOption>('alphabetical');
@@ -136,6 +140,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
 
         const isTopDps = topDpsPlayerId !== null && String(player.id) === topDpsPlayerId;
         const barSwapResult = barSwapByPlayer?.[String(player.id)];
+        const potionStreamResult = potionResultsByPlayer?.[String(player.id)];
 
         return {
           key: player.id,
@@ -158,6 +163,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           totalDps: isTopDps ? topDpsValue : undefined,
           critDamageSummary,
           barSwapResult,
+          potionStreamResult,
         };
       });
     }, [
@@ -180,6 +186,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       topDpsValue,
       criticalDamageByPlayer,
       barSwapByPlayer,
+      potionResultsByPlayer,
     ]);
 
     // Filter, search, and sort players
@@ -498,6 +505,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 totalDps={playerData.totalDps}
                 critDamageSummary={playerData.critDamageSummary}
                 barSwapResult={playerData.barSwapResult}
+                potionStreamResult={playerData.potionStreamResult}
               />
             </Box>
           ))}
