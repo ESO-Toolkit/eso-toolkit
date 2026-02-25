@@ -1,9 +1,9 @@
 import { KnownSetIDs } from '../types/abilities';
-import * as sentryUtils from './sentryUtils';
+import * as errorTracking from './errorTracking';
 import { getSetDisplayName, findSetIdByName, isUnsupportedSet } from './setNameUtils';
 
-// Mock sentryUtils
-jest.mock('./sentryUtils', () => ({
+// Mock errorTracking
+jest.mock('./errorTracking', () => ({
   reportError: jest.fn(),
 }));
 
@@ -16,19 +16,19 @@ describe('setNameUtils', () => {
     it('should return empty string for undefined setId', () => {
       const result = getSetDisplayName(undefined);
       expect(result).toBe('');
-      expect(sentryUtils.reportError).not.toHaveBeenCalled();
+      expect(errorTracking.reportError).not.toHaveBeenCalled();
     });
 
     it('should return empty string for null setId', () => {
       const result = getSetDisplayName(null);
       expect(result).toBe('');
-      expect(sentryUtils.reportError).not.toHaveBeenCalled();
+      expect(errorTracking.reportError).not.toHaveBeenCalled();
     });
 
     it('should return correct display name for known set', () => {
       const result = getSetDisplayName(KnownSetIDs.ROARING_OPPORTUNIST);
       expect(result).toBe('Roaring Opportunist');
-      expect(sentryUtils.reportError).not.toHaveBeenCalled();
+      expect(errorTracking.reportError).not.toHaveBeenCalled();
     });
 
     it('should return "Unknown Set" message for unknown set ID', () => {
@@ -37,12 +37,12 @@ describe('setNameUtils', () => {
       expect(result).toBe('Unknown Set (99999)');
     });
 
-    it('should report error to Sentry when unknown set is detected', () => {
+    it('should report error to error tracking when unknown set is detected', () => {
       const unknownSetId = 99999 as KnownSetIDs;
       getSetDisplayName(unknownSetId);
 
-      expect(sentryUtils.reportError).toHaveBeenCalledTimes(1);
-      expect(sentryUtils.reportError).toHaveBeenCalledWith(
+      expect(errorTracking.reportError).toHaveBeenCalledTimes(1);
+      expect(errorTracking.reportError).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'Unknown set ID detected: 99999',
         }),
@@ -56,11 +56,11 @@ describe('setNameUtils', () => {
       );
     });
 
-    it('should include context data in Sentry error', () => {
+    it('should include context data in error tracking report', () => {
       const unknownSetId = 12345 as KnownSetIDs;
       getSetDisplayName(unknownSetId);
 
-      const errorCall = (sentryUtils.reportError as jest.Mock).mock.calls[0];
+      const errorCall = (errorTracking.reportError as jest.Mock).mock.calls[0];
       const context = errorCall[1];
 
       expect(context).toHaveProperty('setId', 12345);
@@ -75,7 +75,7 @@ describe('setNameUtils', () => {
     it('should not report error for known Unknown Set IDs', () => {
       const result = getSetDisplayName(KnownSetIDs.UNKNOWN_SET_845);
       expect(result).toBe('Unknown');
-      expect(sentryUtils.reportError).not.toHaveBeenCalled();
+      expect(errorTracking.reportError).not.toHaveBeenCalled();
     });
 
     it('should handle multiple calls to unknown sets independently', () => {
@@ -83,9 +83,9 @@ describe('setNameUtils', () => {
       getSetDisplayName(22222 as KnownSetIDs);
       getSetDisplayName(33333 as KnownSetIDs);
 
-      expect(sentryUtils.reportError).toHaveBeenCalledTimes(3);
+      expect(errorTracking.reportError).toHaveBeenCalledTimes(3);
 
-      const calls = (sentryUtils.reportError as jest.Mock).mock.calls;
+      const calls = (errorTracking.reportError as jest.Mock).mock.calls;
       expect(calls[0][1].setId).toBe(11111);
       expect(calls[1][1].setId).toBe(22222);
       expect(calls[2][1].setId).toBe(33333);

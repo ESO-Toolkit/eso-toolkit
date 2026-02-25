@@ -19,22 +19,8 @@ jest.mock('../../../utils/webglDetection', () => {
 
 import { ReplayErrorBoundary } from './ReplayErrorBoundary';
 
-// Mock Sentry
-jest.mock('@sentry/react', () => ({
-  withScope: jest.fn((callback) =>
-    callback({
-      setTag: jest.fn(),
-      setLevel: jest.fn(),
-      setContext: jest.fn(),
-      setExtra: jest.fn(),
-    }),
-  ),
-  captureException: jest.fn(() => 'test-event-id'),
-  showReportDialog: jest.fn(),
-}));
-
-// Mock sentryUtils
-jest.mock('../../../utils/sentryUtils', () => ({
+// Mock errorTracking
+jest.mock('../../../utils/errorTracking', () => ({
   reportError: jest.fn(),
   addBreadcrumb: jest.fn(),
 }));

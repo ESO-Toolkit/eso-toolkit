@@ -55,7 +55,7 @@ jobs:
           BLOCK_EXTERNAL_REQUESTS: 'true'
           # Override external service URLs to localhost (will fail if not mocked)
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
-          SENTRY_DSN: ''
+          ERROR_TRACKING_TOKEN: ''
           CI: true
           NODE_ENV: test
 

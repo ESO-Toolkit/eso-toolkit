@@ -49,7 +49,7 @@ All agent skills are `SKILL.md` files in `.github/skills/`. Use natural language
 | **Git** | `@workspace Show branch tree` |
 | **Workflow** | `@workspace Ensure I'm on a feature branch for ESO-XXX` |
 | **Playwright** | `@workspace Run smoke tests` |
-| **Sentry** | `@workspace Search for unresolved TypeErrors` |
+| **Rollbar** | `@workspace Search for unresolved TypeErrors` |
 | **Auth** | `@workspace Generate a fresh OAuth token` |
 | **Skill Data Regen** | `@workspace List all ESO skill lines` |
 | **UESP Data** | `@workspace Fetch latest item icons from UESP` |

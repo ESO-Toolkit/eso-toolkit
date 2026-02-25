@@ -1,6 +1,6 @@
 import { KnownSetIDs } from '../types/abilities';
 
-import { reportError } from './sentryUtils';
+import { reportError } from './errorTracking';
 
 /**
  * Sets that are not currently supported for calculations due to missing verified API IDs.
@@ -308,7 +308,7 @@ export function getSetDisplayName(setId: KnownSetIDs | undefined | null): string
 
   const displayName = SET_DISPLAY_NAMES[setId];
 
-  // If set is not found, report to Sentry
+  // If set is not found, report to error tracking
   if (!displayName) {
     reportError(new Error(`Unknown set ID detected: ${setId}`), {
       setId,

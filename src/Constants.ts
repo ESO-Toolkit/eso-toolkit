@@ -1,6 +1,5 @@
 export const DATA_FETCH_CACHE_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
-export const SENTRY_DSN =
-  'https://2fecc82b1e85c33a943a5b69e0a9feba@o4509922239315968.ingest.us.sentry.io/4509922240364544';
+export const ERROR_TRACKING_TOKEN = 'e16d21b030946d9b71ab90784548a2ac';
 
 export const APPLICATION_NAME = 'ESO Toolkit';

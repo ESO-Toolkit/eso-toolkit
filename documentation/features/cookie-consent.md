@@ -29,7 +29,7 @@ The application uses browser storage for:
 1. **User Preferences**: Theme settings, layout preferences, application state
 2. **Authentication**: ESO Logs OAuth tokens (localStorage)
 3. **Analytics**: Google Analytics 4 (only if consented)
-4. **Error Tracking**: Sentry monitoring (only if consented)
+4. **Error Tracking**: Rollbar monitoring (only if consented)
 
 ### Privacy Principles
 - ✅ **No server-side storage** of personal data

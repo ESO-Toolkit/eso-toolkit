@@ -325,7 +325,7 @@ export const PrivacySettingsPage: React.FC = () => {
             <Box sx={consentRowSx}>
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  Error Tracking (Sentry)
+                  Error Tracking (Rollbar)
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Crash reports, performance metrics, bug reports
@@ -415,7 +415,7 @@ export const PrivacySettingsPage: React.FC = () => {
             <Box sx={consentRowSx}>
               <Box sx={{ flex: 1, pr: 1 }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  Error Tracking (Sentry)
+                  Error Tracking (Rollbar)
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Crash reports and performance metrics help us fix bugs faster.

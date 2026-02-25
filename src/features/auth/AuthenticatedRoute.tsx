@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { useEsoLogsClientContext } from '@/EsoLogsClientContext';
-import { addBreadcrumb } from '@/utils/sentryUtils';
+import { addBreadcrumb } from '@/utils/errorTracking';
 
 import { setIntendedDestination } from './auth';
 import { useAuth } from './AuthContext';

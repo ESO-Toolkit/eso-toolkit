@@ -18,8 +18,8 @@ const BLOCKED_DOMAINS = [
   'doubleclick.net',
   'stats.g.doubleclick.net',
   // Add other analytics services as needed
-  'sentry.io',
-  'browser.sentry-cdn.com',
+  'rollbar.com',
+  'api.rollbar.com',
 ];
 
 /**
