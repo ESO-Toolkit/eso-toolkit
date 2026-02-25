@@ -104,7 +104,7 @@ export default defineConfig(({ command, mode }) => {
     // Build configuration
     build: {
       outDir: 'build',
-      sourcemap: env.GENERATE_SOURCEMAP === 'true' ? 'hidden' : false, // Enable hidden sourcemaps for Sentry, disable for normal builds
+      sourcemap: env.GENERATE_SOURCEMAP === 'true' ? 'hidden' : false, // Enable hidden sourcemaps for error tracking, disable for normal builds
       target: 'es2020',
       minify: 'esbuild', // Use esbuild for faster, less memory-intensive minification
       rollupOptions: {

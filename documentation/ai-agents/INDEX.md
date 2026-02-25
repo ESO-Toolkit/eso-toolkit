@@ -17,7 +17,7 @@ All agent skills are `SKILL.md` files in `.github/skills/`. See [AGENTS.md](../.
 | Testing | [.github/skills/testing/SKILL.md](../../.github/skills/testing/SKILL.md) | Dev workflow (unit tests, lint, format, build) |
 | Reports | [.github/skills/reports/SKILL.md](../../.github/skills/reports/SKILL.md) | Production report debugging |
 | Git | [.github/skills/git/SKILL.md](../../.github/skills/git/SKILL.md) | Branch tree and twig operations |
-| Sentry | [.github/skills/sentry/SKILL.md](../../.github/skills/sentry/SKILL.md) | Error tracking |
+| Rollbar | [.github/skills/rollbar/SKILL.md](../../.github/skills/rollbar/SKILL.md) | Error tracking |
 | Rebase | [.github/skills/rebase/SKILL.md](../../.github/skills/rebase/SKILL.md) | Post-squash rebase |
 | Auth | [.github/skills/auth/SKILL.md](../../.github/skills/auth/SKILL.md) | Browser session OAuth authentication |
 | Skill Data Regen | [.github/skills/skill-data-regen/SKILL.md](../../.github/skills/skill-data-regen/SKILL.md) | ESO skill line data regeneration |

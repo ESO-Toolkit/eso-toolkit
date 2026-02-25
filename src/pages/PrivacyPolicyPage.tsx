@@ -151,7 +151,7 @@ export const PrivacyPolicyPage: React.FC = () => {
               upload or store it on our servers.
             </Typography>
             <Typography component="li" variant="body2" color="text.secondary">
-              We use third-party services (Google Analytics, Sentry){' '}
+              We use third-party services (Google Analytics, Rollbar){' '}
               <strong>only with your explicit consent</strong>.
             </Typography>
             <Typography component="li" variant="body2" color="text.secondary">
@@ -272,7 +272,7 @@ export const PrivacyPolicyPage: React.FC = () => {
                 <strong>Legal basis:</strong> Consent (GDPR Article 6(1)(a)).
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                <strong>Service:</strong> Sentry (provided by Functional Software, Inc.)
+                <strong>Service:</strong> Rollbar (provided by Rollbar, Inc.)
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
                 <strong>What is collected when enabled:</strong>
@@ -297,7 +297,7 @@ export const PrivacyPolicyPage: React.FC = () => {
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 See{' '}
                 <Link
-                  href="https://sentry.io/privacy/"
+                  href="https://rollbar.com/privacy/"
                   target="_blank"
                   rel="noopener noreferrer"
                   underline="hover"
@@ -307,7 +307,7 @@ export const PrivacyPolicyPage: React.FC = () => {
                     '&:hover': { color: 'var(--accent-2)' },
                   }}
                 >
-                  Sentry&apos;s Privacy Policy
+                  Rollbar&apos;s Privacy Policy
                 </Link>
                 .
               </Typography>
@@ -481,7 +481,7 @@ export const PrivacyPolicyPage: React.FC = () => {
             >
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  Error Tracking (Sentry)
+                  Error Tracking (Rollbar)
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Crash reports, performance metrics, bug reports
@@ -601,8 +601,8 @@ export const PrivacyPolicyPage: React.FC = () => {
             servers.
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
-            <strong>Sentry:</strong> Error events are retained for 90 days by default per
-            Sentry&apos;s data retention policy.
+            <strong>Rollbar:</strong> Error events are retained per Rollbar&apos;s data retention
+            policy (configurable per plan).
           </Typography>
         </Box>
 

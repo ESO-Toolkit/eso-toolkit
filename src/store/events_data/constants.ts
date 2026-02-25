@@ -1,4 +1,4 @@
-// Smaller chunk size prevents Sentry from flagging oversized responses
+// Smaller chunk size prevents Rollbar from flagging oversized responses
 export const EVENT_PAGE_LIMIT = 20000;
 
 // Default number of cached report/fight entries to retain per event slice before evicting oldest

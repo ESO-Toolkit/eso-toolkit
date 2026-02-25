@@ -3,7 +3,7 @@ import React, { createContext, useContext, useMemo, ReactNode, useState, useCall
 
 import { useLogger } from './contexts/LoggerContext';
 import { EsoLogsClient } from './esologsClient';
-import { addBreadcrumb } from './utils/sentryUtils';
+import { addBreadcrumb } from './utils/errorTracking';
 
 interface EsoLogsClientContextType {
   client: EsoLogsClient | null;

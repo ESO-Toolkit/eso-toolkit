@@ -31,10 +31,10 @@ import { NotFound } from './pages/NotFound';
 import { ReduxThemeProvider } from './ReduxThemeProvider';
 import store, { persistor } from './store/storeWithHistory';
 import { initializeAnalytics } from './utils/analytics';
-import { initializeSentry, addBreadcrumb } from './utils/sentryUtils';
+import { initializeErrorTracking, addBreadcrumb } from './utils/errorTracking';
 
-// Initialize Sentry before the app starts
-initializeSentry();
+// Initialize error tracking before the app starts
+initializeErrorTracking();
 
 // Initialize Google Analytics
 initializeAnalytics();
@@ -185,7 +185,7 @@ const App: React.FC = () => {
     const handleConsentChanged = (): void => {
       // Re-evaluate consent and reinitialize services accordingly
       initializeAnalytics();
-      initializeSentry();
+      initializeErrorTracking();
     };
 
     // Listen for custom consent-changed event from CookieConsent component

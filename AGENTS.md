@@ -72,7 +72,7 @@ git checkout -b ESO-XXX/description-here
 - **Write Playwright Tests**: [.github/skills/write-playwright-tests/SKILL.md](.github/skills/write-playwright-tests/SKILL.md) - Authoring visual/E2E tests (skeleton detection, pre-loading, mocking)
 - **Testing & Dev**: [.github/skills/testing/SKILL.md](.github/skills/testing/SKILL.md)
 - **Jira Integration**: [.github/skills/jira/SKILL.md](.github/skills/jira/SKILL.md)
-- **Sentry Integration**: [.github/skills/sentry/SKILL.md](.github/skills/sentry/SKILL.md)
+- **Rollbar Integration**: [.github/skills/rollbar/SKILL.md](.github/skills/rollbar/SKILL.md)
 - **Report Debugging**: [.github/skills/reports/SKILL.md](.github/skills/reports/SKILL.md)
 - **Git Operations**: [.github/skills/git/SKILL.md](.github/skills/git/SKILL.md)
 - **Post-Squash Rebase**: [.github/skills/rebase/SKILL.md](.github/skills/rebase/SKILL.md)
@@ -182,13 +182,13 @@ See: [.github/skills/write-playwright-tests/SKILL.md](.github/skills/write-playw
 ```
 See: [.github/skills/jira/SKILL.md](.github/skills/jira/SKILL.md)
 
-**Sentry** (Error Tracking):
+**Rollbar** (Error Tracking):
 ```
-@workspace Search for unresolved TypeErrors in Sentry
-@workspace View Sentry issue 1234567890
-@workspace Resolve Sentry issue 1234567890 in release 1.2.3
+@workspace Search for unresolved TypeErrors in Rollbar
+@workspace View Rollbar item 1234567890
+@workspace Resolve Rollbar item 1234567890
 ```
-See: [.github/skills/sentry/SKILL.md](.github/skills/sentry/SKILL.md)
+See: [.github/skills/rollbar/SKILL.md](.github/skills/rollbar/SKILL.md)
 
 **Report Debugging** (Production Issues):
 ```

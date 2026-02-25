@@ -14,8 +14,8 @@ import { useAppDispatch } from '@/store/useAppDispatch';
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { GetReportByCodeDocument } from '../../graphql/gql/graphql';
 import { ReportFightContext } from '../../ReportFightContext';
+import { reportError } from '../../utils/errorTracking';
 import { TabId } from '../../utils/getSkeletonForTab';
-import { reportError } from '../../utils/sentryUtils';
 
 const REFETCH_INTERVAL = 30 * 1000; // 30 seconds
 

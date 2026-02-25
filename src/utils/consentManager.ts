@@ -4,7 +4,7 @@
  * Manages user consent preferences for different categories of data processing:
  * - Essential: localStorage for app preferences (always allowed)
  * - Analytics: Google Analytics 4 tracking
- * - ErrorTracking: Sentry error monitoring and performance tracking
+ * - ErrorTracking: Rollbar error monitoring and performance tracking
  *
  * GDPR-compliant: No non-essential tracking occurs until explicit user consent.
  */
@@ -18,7 +18,7 @@ export interface ConsentPreferences {
   essential: true;
   /** Google Analytics 4 page views, events, and user properties */
   analytics: boolean;
-  /** Sentry error tracking, performance monitoring, and session replay */
+  /** Rollbar error tracking and performance monitoring */
   errorTracking: boolean;
 }
 

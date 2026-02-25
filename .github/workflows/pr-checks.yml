@@ -102,7 +102,7 @@ jobs:
           echo "127.0.0.1 www.esologs.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 rpglogs.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 assets.rpglogs.com" | sudo tee -a /etc/hosts
-          echo "127.0.0.1 sentry.io" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 api.rollbar.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 fonts.googleapis.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 fonts.gstatic.com" | sudo tee -a /etc/hosts
           echo "Blocked external services in /etc/hosts:"
@@ -120,7 +120,7 @@ jobs:
           BLOCK_EXTERNAL_REQUESTS: 'true'
           # Override external service URLs to localhost (will fail if not mocked)
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
-          SENTRY_DSN: ''
+          ERROR_TRACKING_TOKEN: ''
 
       - name: Scribing E2E Tests
         run: npm run test:scribing
@@ -131,7 +131,7 @@ jobs:
           HTTPS_PROXY: 'http://127.0.0.1:9999'
           BLOCK_EXTERNAL_REQUESTS: 'true'
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
-          SENTRY_DSN: ''
+          ERROR_TRACKING_TOKEN: ''
 
   typecheck:
     runs-on: ubuntu-latest
@@ -245,7 +245,7 @@ jobs:
           echo "127.0.0.1 www.esologs.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 rpglogs.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 assets.rpglogs.com" | sudo tee -a /etc/hosts
-          echo "127.0.0.1 sentry.io" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 api.rollbar.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 fonts.googleapis.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 fonts.gstatic.com" | sudo tee -a /etc/hosts
           echo "Blocked external services in /etc/hosts:"
@@ -292,7 +292,7 @@ jobs:
           BLOCK_EXTERNAL_REQUESTS: 'true'
           # Override external service URLs to localhost (will fail if not mocked)
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
-          SENTRY_DSN: ''
+          ERROR_TRACKING_TOKEN: ''
           # Playwright memory optimization
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       - name: Upload Playwright Report

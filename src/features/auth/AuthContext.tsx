@@ -12,8 +12,8 @@ import { GetCurrentUserQuery, GetCurrentUserDocument } from '../../graphql/gql/g
 import { setAnalyticsUserId, setUserProperties } from '../../utils/analytics';
 import { checkUserBan, DEFAULT_BAN_REASON } from '../../utils/banlist';
 import { isDevelopment } from '../../utils/envUtils';
+import { addBreadcrumb, setUserContext } from '../../utils/errorTracking';
 import { Logger, LogLevel } from '../../utils/logger';
-import { addBreadcrumb, setUserContext } from '../../utils/sentryUtils';
 
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './auth';
 import {

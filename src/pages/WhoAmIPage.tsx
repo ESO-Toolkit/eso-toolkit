@@ -17,7 +17,7 @@ import React from 'react';
 
 import { useAuth } from '@/features/auth/AuthContext';
 import { trackEvent, trackPageView } from '@/utils/analytics';
-import { addBreadcrumb } from '@/utils/sentryUtils';
+import { addBreadcrumb } from '@/utils/errorTracking';
 
 const fieldFallback = 'N/A';
 

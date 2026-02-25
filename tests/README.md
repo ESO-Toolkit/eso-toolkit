@@ -35,7 +35,7 @@ The test suite includes:
 - ESO Logs GraphQL API calls are intercepted and return mock data
 - OAuth endpoints (authorize & token) are fully mocked
 - Asset requests (ability icons from rpglogs.com) are mocked
-- Analytics services (Sentry, Google Analytics) are mocked
+- Analytics services (Rollbar, Google Analytics) are mocked
 - No actual network requests are made to external services
 
 ### ✅ **Comprehensive OAuth Testing**
@@ -171,7 +171,7 @@ The tests mock these external services:
 
 - ✅ ESO Logs GraphQL API (`/api/v2/client`)
 - ✅ Generic REST APIs (`/api/**`)
-- ✅ Sentry error reporting
+- ✅ Rollbar error reporting
 - ✅ CDN resources
 - ✅ External analytics services
 

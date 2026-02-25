@@ -56,7 +56,7 @@
 
 ### Documentation & Monitoring
 - **Storybook** - Component documentation (`.storybook/`)
-- **Sentry** - Error tracking and monitoring
+- **Rollbar** - Error tracking and monitoring
 
 ### Deployment
 - **GitHub Pages** - Production hosting

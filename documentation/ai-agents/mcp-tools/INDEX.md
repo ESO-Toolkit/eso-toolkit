@@ -34,16 +34,15 @@ This project integrates with several MCP servers for enhanced AI agent capabilit
 - [Application Authentication Setup](./AI_MCP_PLAYWRIGHT_AUTH_SETUP.md)
 - [Playwright Testing Guide](../playwright/AI_PLAYWRIGHT_INSTRUCTIONS.md)
 
-### 2. **Sentry MCP Server**
-**Package**: `@modelcontextprotocol/server-sentry`  
+### 2. **Rollbar** (via REST API skill)
 **Purpose**: Error tracking and monitoring  
-**Status**: ✅ Available
+**Status**: ✅ Available via `.github/skills/rollbar/SKILL.md`
 
 **Key Features**:
-- Issue search and analysis
-- Error details retrieval
-- Release management
-- Performance monitoring
+- Item (error) search and analysis
+- Error details and stack trace retrieval
+- Status management (resolve, mute, reopen)
+- Filter by environment and code version
 
 ### 3. **GitKraken MCP Server**
 **Purpose**: Git operations and PR management  
@@ -99,7 +98,7 @@ This project integrates with several MCP servers for enhanced AI agent capabilit
 → [Jira ACLI Instructions](../jira/AI_JIRA_ACLI_INSTRUCTIONS.md)
 
 **Need to track errors?**
-→ Use Sentry MCP tools directly
+→ Use the Rollbar skill: `@workspace Search for unresolved TypeErrors in Rollbar`
 
 **Need to manage Git operations?**
 → Use GitKraken MCP tools or CLI

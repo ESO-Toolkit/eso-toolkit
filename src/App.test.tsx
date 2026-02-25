@@ -60,8 +60,8 @@ jest.mock('./utils/analytics', () => ({
   trackEvent: jest.fn(),
 }));
 
-jest.mock('./utils/sentryUtils', () => ({
-  initializeSentry: jest.fn(),
+jest.mock('./utils/errorTracking', () => ({
+  initializeErrorTracking: jest.fn(),
   addBreadcrumb: jest.fn(),
 }));
 

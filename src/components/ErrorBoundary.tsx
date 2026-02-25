@@ -1,10 +1,9 @@
 import { ErrorOutline, Refresh, BugReport } from '@mui/icons-material';
 import { Box, Button, Paper, Typography, Stack, Alert, Collapse } from '@mui/material';
-import * as Sentry from '@sentry/react';
 import React, { Component, ReactNode } from 'react';
 
+import { reportError, addBreadcrumb } from '../utils/errorTracking';
 import { Logger, LogLevel } from '../utils/logger';
-import { reportError, addBreadcrumb } from '../utils/sentryUtils';
 
 // Create a logger instance for ErrorBoundary
 const logger = new Logger({
@@ -69,27 +68,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       });
     }
 
-    // Only report error to Sentry in production builds
+    // Report error to tracking service in production
     if (process.env.NODE_ENV === 'production') {
-      // Report error to Sentry with comprehensive context
-      Sentry.withScope((scope) => {
-        scope.setTag('errorBoundary', true);
-        scope.setLevel('error');
-        scope.setContext('errorBoundary', {
-          componentStack: errorInfo.componentStack,
-          errorBoundaryName: this.constructor.name,
-        });
-
-        // Set error details
-        scope.setExtra('errorMessage', error.message);
-        scope.setExtra('errorStack', error.stack);
-        scope.setExtra('componentStack', errorInfo.componentStack);
-
-        const eventId = Sentry.captureException(error);
-        this.setState({ eventId });
-      });
-
-      // Also use our custom reportError function
       reportError(error, {
         componentStack: errorInfo.componentStack,
         errorBoundary: true,
@@ -138,10 +118,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       eventId: this.state.eventId,
     });
 
-    // Only show Sentry report dialog in production builds
-    if (process.env.NODE_ENV === 'production' && this.state.eventId) {
-      Sentry.showReportDialog({ eventId: this.state.eventId });
-    }
+    // Open issue tracker so users can file a report with the error details
+    window.open('https://github.com/ESO-Toolkit/eso-toolkit/issues', '_blank', 'noopener');
   };
 
   render(): ReactNode {
@@ -210,7 +188,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 >
                   Reload Page
                 </Button>
-                {eventId && (
+                {
                   <Button
                     variant="outlined"
                     color="secondary"
@@ -219,7 +197,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   >
                     Report Issue
                   </Button>
-                )}
+                }
               </Stack>
 
               {process.env.NODE_ENV === 'development' && (
@@ -332,11 +310,10 @@ export const withErrorBoundary = <P extends object>(
   return WrappedComponent;
 };
 
-// Sentry Error Boundary (alternative implementation using Sentry's built-in component)
-export const SentryErrorBoundary = Sentry.withErrorBoundary(
-  ({ children }: { children: ReactNode }) => <>{children}</>,
-  {
-    fallback: ({ error, resetError }) => (
+/** Top-level app error boundary with a full-page fallback UI. */
+export const AppErrorBoundary: React.FC<{ children: ReactNode }> = ({ children }) => (
+  <ErrorBoundary
+    fallback={
       <Box
         display="flex"
         justifyContent="center"
@@ -358,15 +335,16 @@ export const SentryErrorBoundary = Sentry.withErrorBoundary(
               Application Error
             </Typography>
             <Typography variant="body1" textAlign="center" color="text.secondary">
-              {(error as Error)?.message || 'An unexpected error occurred'}
+              An unexpected error occurred. Please reload the page.
             </Typography>
-            <Button variant="contained" onClick={resetError}>
-              Try Again
+            <Button variant="contained" onClick={() => window.location.reload()}>
+              Reload
             </Button>
           </Stack>
         </Paper>
       </Box>
-    ),
-    showDialog: true,
-  },
+    }
+  >
+    {children}
+  </ErrorBoundary>
 );
