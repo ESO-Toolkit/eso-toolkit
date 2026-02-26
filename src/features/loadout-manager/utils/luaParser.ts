@@ -17,6 +17,10 @@ import {
   type AlphaGearCharacterData,
 } from './alphaGearConverter';
 import { parseLuaAssignments } from './wizardsWardrobeSavedVariables';
+import {
+  parseWizardsWardrobeSavedVariables,
+  type WizardWardrobeSavedVariables,
+} from './wizardsWardrobeSavedVariables';
 
 export {
   detectAlphaGearData,
@@ -26,10 +30,6 @@ export {
   serializeAlphaGearToLua,
   type AlphaGearCharacterData,
 };
-import {
-  parseWizardsWardrobeSavedVariables,
-  type WizardWardrobeSavedVariables,
-} from './wizardsWardrobeSavedVariables';
 
 const luaParserLogger = new Logger({ contextPrefix: 'LuaParser' });
 

@@ -29,7 +29,10 @@ import { useLogger } from '@/hooks/useLogger';
 import { TRIALS } from '../data/trialConfigs';
 import { selectCurrentTrial, selectCurrentSetups, selectLoadoutState } from '../store/selectors';
 import { WizardWardrobeExport } from '../types/loadout.types';
-import { convertLoadoutStateToAlphaGear, serializeAlphaGearToLua } from '../utils/alphaGearConverter';
+import {
+  convertLoadoutStateToAlphaGear,
+  serializeAlphaGearToLua,
+} from '../utils/alphaGearConverter';
 import { validateGearConfig } from '../utils/itemSlotValidator';
 
 interface ExportDialogProps {
@@ -231,7 +234,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
               </MenuItem>
               <MenuItem value="wizard">
                 <Stack>
-                  <Typography variant="body1">Wizard's Wardrobe (ESO Addon)</Typography>
+                  <Typography variant="body1">Wizard&apos;s Wardrobe (ESO Addon)</Typography>
                   <Typography variant="caption" color="text.secondary">
                     Compatible with in-game addon
                   </Typography>
@@ -282,7 +285,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
                 <strong>To use in-game:</strong> Save this file to your ESO folder at:
                 <br />
                 <code style={{ fontSize: '0.85em', display: 'block', marginTop: '4px' }}>
-                  {getESOSavedVarsPath()}{exportFormat === 'alphagear' ? 'AlphaGear.lua' : 'WizardWardrobe.lua'}
+                  {getESOSavedVarsPath()}
+                  {exportFormat === 'alphagear' ? 'AlphaGear.lua' : 'WizardWardrobe.lua'}
                 </code>
                 <br />
                 Then use <code>/reloadui</code> in-game to load your changes.
