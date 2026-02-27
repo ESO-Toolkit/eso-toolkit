@@ -13,6 +13,7 @@ import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
 import { ScrollRestoration } from './components/ScrollRestoration';
+import { SiteBackground } from './components/shared';
 import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
 import { TextEditorSkeleton } from './components/TextEditorSkeleton';
 import { UpdateNotification } from './components/UpdateNotification';
@@ -207,6 +208,8 @@ const App: React.FC = () => {
         <PersistGate loading={<LoadingFallback />} persistor={persistor}>
           <EsoLogsClientProvider>
             <AuthProvider>
+              {/* Global cosmic/nebula background */}
+              <SiteBackground />
               <AppRoutes />
               {/* Add floating bug report button - lazy loaded for non-landing pages */}
               {!isLandingPage && (

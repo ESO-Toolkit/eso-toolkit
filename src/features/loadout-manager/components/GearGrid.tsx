@@ -6,13 +6,14 @@
  */
 
 import { Box, Grid, Stack, Tooltip, Typography } from '@mui/material';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { getItemInfo } from '../data/itemIdMap';
+import type { GearConfig, GearPiece } from '../types/loadout.types';
 import { fetchItemIconUrl } from '../utils/itemIconResolver';
 import { getItemIdFromLink } from '../utils/itemLinkParser';
+
 import { equippedHighlightEnhanced } from './styles/textureStyles';
-import type { GearConfig, GearPiece } from '../types/loadout.types';
 
 // ESO gear slot indices
 const APPAREL_SLOTS = [0, 2, 3, 6, 8, 9, 16]; // Head, Chest, Shoulders, Belt, Legs, Feet, Hands

@@ -2,11 +2,9 @@ import {
   Add as AddIcon,
   ArrowBack,
   DeleteSweep,
-  Edit,
   FileDownload,
   FileUpload,
   MoreVert,
-  Search as SearchIcon,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -18,16 +16,13 @@ import {
   DialogContentText,
   DialogTitle,
   Divider,
-  Drawer,
   FormControl,
   IconButton,
-  InputAdornment,
   InputLabel,
   ListItemIcon,
   ListItemText,
   Menu,
   MenuItem,
-  Paper,
   Select,
   Snackbar,
   Stack,
@@ -44,7 +39,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import { WorkInProgressDisclaimer } from '@/components/WorkInProgressDisclaimer';
 import type { RootState } from '@/store/storeWithHistory';
 
 import { preloadChampionPointData } from '../data/championPointData';
@@ -80,14 +74,10 @@ import {
   clearWizardWardrobeSlotRegistry,
 } from '../utils/wizardWardrobeSlotRegistry';
 
-import { CharacterSelector } from './CharacterSelector';
 import { ExportDialog } from './ExportDialog';
 import { LoadoutDetails } from './LoadoutDetails';
 import { LoadoutSidebar } from './LoadoutSidebar';
-import { NebulaBackground } from './NebulaBackground';
-import { SetupEditor } from './SetupEditor';
-import { SVGFilters } from './styles/SVGFilters';
-import { blendOverlayMultiply, blendOverlayScreen, globalKeyframesEnhanced, metallicPanelEnhanced } from './styles/textureStyles';
+import { metallicPanelEnhanced } from './styles/textureStyles';
 
 const MIN_PAGES = 1;
 
@@ -117,7 +107,7 @@ export const LoadoutManager: React.FC = () => {
   const currentCharacter = useSelector((state: RootState) => state.loadout.currentCharacter);
 
   const [selectedSetupIndex, setSelectedSetupIndex] = useState<number | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [_drawerOpen, setDrawerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -208,7 +198,7 @@ export const LoadoutManager: React.FC = () => {
     [selectedSetupIndex, setups],
   );
 
-  const headerSubtitle = useMemo(() => {
+  const _headerSubtitle = useMemo(() => {
     if (!currentTrial) {
       return 'Select a trial to start organizing your loadouts.';
     }
@@ -339,11 +329,11 @@ export const LoadoutManager: React.FC = () => {
     }
   };
 
-  const handleOpenDetails = (index: number): void => {
+  const _handleOpenDetails = (index: number): void => {
     handleSelectSetup(index);
   };
 
-  const handleAddPage = (): void => {
+  const _handleAddPage = (): void => {
     if (!ensureTrialSelected()) {
       return;
     }
@@ -353,7 +343,7 @@ export const LoadoutManager: React.FC = () => {
     showSnackbar('Page added.', 'success');
   };
 
-  const handleOpenRename = (index: number): void => {
+  const _handleOpenRename = (index: number): void => {
     const page = allPages[index];
     if (!page) {
       return;
@@ -444,7 +434,7 @@ export const LoadoutManager: React.FC = () => {
     setExportDialogOpen(true);
   };
 
-  const renameDisabled = !(currentTrial && allPages.length > 0);
+  const _renameDisabled = !(currentTrial && allPages.length > 0);
 
   // Overflow menu for Import / Export / Clear
   const [overflowAnchor, setOverflowAnchor] = React.useState<HTMLElement | null>(null);
@@ -452,21 +442,7 @@ export const LoadoutManager: React.FC = () => {
 
   // Mockup-matching layout with centered container
   return (
-    <>
-      {/* Inject SVG filter definitions */}
-      <SVGFilters />
-
-      {/* Inject enhanced keyframes */}
-      <style>{globalKeyframesEnhanced}</style>
-
-      {/* Background layers */}
-      <NebulaBackground />
-
-      {/* Blend mode overlay layer */}
-      <Box sx={{ ...blendOverlayScreen }} />
-      <Box sx={{ ...blendOverlayMultiply }} />
-
-      <Box
+    <Box
         sx={{
           minHeight: '100vh',
           backgroundColor: 'transparent',
@@ -967,7 +943,6 @@ export const LoadoutManager: React.FC = () => {
           </Alert>
         </Snackbar>
       </Box>
-      </Box>
-    </>
+    </Box>
   );
 };

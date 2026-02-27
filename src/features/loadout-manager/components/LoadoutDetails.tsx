@@ -10,10 +10,9 @@ import { useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
 
-import type { LoadoutSetup } from '../types/loadout.types';
 import { selectLoadoutState } from '../store/selectors';
+import type { LoadoutSetup } from '../types/loadout.types';
 
-import { CharacterPortrait } from './CharacterPortrait';
 import { GearGrid } from './GearGrid';
 import { LoadoutTabs, LoadoutTabValue } from './LoadoutTabs';
 import { SetupEditor } from './SetupEditor';
@@ -64,7 +63,7 @@ export const LoadoutDetails: React.FC<LoadoutDetailsProps> = ({
   const currentCharacter = loadoutState.currentCharacter;
   const characters = loadoutState.characters;
   const currentCharacterInfo = characters.find(
-    (c) => c.id === currentCharacter
+    (c) => c.id === currentCharacter,
   );
 
   const handleTabChange = (_event: SyntheticEvent, value: LoadoutTabValue): void => {

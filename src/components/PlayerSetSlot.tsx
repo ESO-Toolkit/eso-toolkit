@@ -72,7 +72,7 @@ export const PlayerSetSlot: React.FC<PlayerSetSlotProps> = ({
   currentSet,
   slotType,
   role,
-  onSet,
+  onSet: _onSet,
   onClear,
   disabled = false,
   sx = {},
@@ -250,4 +250,4 @@ export const PlayerSetSlot: React.FC<PlayerSetSlotProps> = ({
   );
 };
 
-export default PlayerSetSlot;
+// Named export only - prefer named exports for consistency

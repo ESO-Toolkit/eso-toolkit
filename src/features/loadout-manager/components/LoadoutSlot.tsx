@@ -18,13 +18,12 @@ import {
   Menu,
   MenuItem,
   Stack,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
 
-import { getSetupProgressSections, formatProgressSection } from '../utils/setupDisplay';
 import type { LoadoutSetup } from '../types/loadout.types';
+import { getSetupProgressSections, formatProgressSection } from '../utils/setupDisplay';
 
 import { SkillBarGrid } from './SkillBarGrid';
 import { StatusBadge } from './StatusBadge';

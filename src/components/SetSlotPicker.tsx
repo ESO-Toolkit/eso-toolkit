@@ -19,7 +19,6 @@ import {
   Button,
   Typography,
   Chip,
-  Stack,
   Divider,
   InputAdornment,
   Paper,
@@ -46,7 +45,8 @@ import {
   ALL_5PIECE_SETS,
 } from '../types/roster';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
-import { getSetDisplayName, getSetIdsSortedByName } from '../utils/setNameUtils';
+import { getSetDisplayName } from '../utils/setNameUtils';
+
 import { SetSlotRole, SetSlotType } from './PlayerSetSlot';
 
 interface SetOption {
@@ -463,7 +463,7 @@ export const SetSlotPicker: React.FC<SetSlotPickerProps> = ({
               color: 'text.secondary',
             }}
           >
-            <Typography variant="body2">No sets found matching "{searchQuery}"</Typography>
+            <Typography variant="body2">No sets found matching &ldquo;{searchQuery}&rdquo;</Typography>
           </Box>
         ) : (
           <Paper variant="outlined" sx={{ maxHeight: 400, overflow: 'auto' }}>
@@ -502,4 +502,4 @@ export const SetSlotPicker: React.FC<SetSlotPickerProps> = ({
   );
 };
 
-export default SetSlotPicker;
+// Named export only - prefer named exports for consistency

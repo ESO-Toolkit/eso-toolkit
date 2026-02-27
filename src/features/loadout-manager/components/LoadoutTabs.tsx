@@ -4,8 +4,7 @@
  * Active tab has cyan underline and bold text
  */
 
-import { Box, Stack, Tab, Tabs } from '@mui/material';
-import { alpha } from '@mui/material/styles';
+import { Box, Tab, Tabs } from '@mui/material';
 import React, { SyntheticEvent } from 'react';
 
 export type LoadoutTabValue = 'skills' | 'cpFood' | 'gear';
