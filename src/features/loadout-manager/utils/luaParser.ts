@@ -101,35 +101,43 @@ export function extractWizardWardrobeData(
 
     luaParserLogger.debug('Default data keys', { keys: Object.keys(defaultData) });
 
-    // Find the first account (usually only one)
+    // Iterate all accounts (a saved variables file may contain multiple ESO accounts)
     const accountKeys = Object.keys(defaultData);
     if (accountKeys.length === 0) {
       luaParserLogger.warn('No account keys found in Wizard Wardrobe data');
       return null;
     }
 
-    const accountKey = accountKeys[0];
-    luaParserLogger.debug('Using account for extraction', { accountKey });
-
-    const accountData = defaultData[accountKey];
-    luaParserLogger.debug('Account data keys', { keys: Object.keys(accountData) });
-
     const allCharacterData: Record<string, WizardWardrobeExport> = {};
 
-    // Check $AccountWide first
-    if (accountData.$AccountWide && accountData.$AccountWide.setups) {
-      luaParserLogger.debug('Account-wide data keys', {
-        keys: Object.keys(accountData.$AccountWide),
-      });
-      allCharacterData['$AccountWide'] = accountData.$AccountWide as WizardWardrobeExport;
-    }
+    for (const accountKey of accountKeys) {
+      luaParserLogger.debug('Processing account', { accountKey });
 
-    // Look through all character IDs with setups
-    for (const key of Object.keys(accountData)) {
-      if (key !== '$AccountWide' && accountData[key] && typeof accountData[key] === 'object') {
-        if (accountData[key].setups) {
-          luaParserLogger.debug('Found setups in character data', { characterKey: key });
-          allCharacterData[key] = accountData[key] as WizardWardrobeExport;
+      const accountData = defaultData[accountKey];
+      if (!accountData || typeof accountData !== 'object') {
+        continue;
+      }
+
+      luaParserLogger.debug('Account data keys', { keys: Object.keys(accountData) });
+
+      // Check $AccountWide first
+      if (accountData.$AccountWide && accountData.$AccountWide.setups) {
+        luaParserLogger.debug('Account-wide data keys', {
+          keys: Object.keys(accountData.$AccountWide),
+        });
+        allCharacterData['$AccountWide'] = accountData.$AccountWide as WizardWardrobeExport;
+      }
+
+      // Look through all character IDs with setups
+      for (const key of Object.keys(accountData)) {
+        if (key !== '$AccountWide' && accountData[key] && typeof accountData[key] === 'object') {
+          if (accountData[key].setups) {
+            luaParserLogger.debug('Found setups in character data', {
+              accountKey,
+              characterKey: key,
+            });
+            allCharacterData[key] = accountData[key] as WizardWardrobeExport;
+          }
         }
       }
     }

@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { addBreadcrumb, measurePerformance, setUserContext } from '../utils/sentryUtils';
+import { addBreadcrumb, measurePerformance, setUserContext } from '../utils/errorTracking';
 
 /**
  * Hook to automatically track page views and route changes
@@ -263,7 +263,7 @@ export const useErrorTracking = (): {
 /**
  * Comprehensive hook that provides all tracking functionality
  */
-export const useSentryTracking = (): ReturnType<typeof useInteractionTracking> &
+export const useTracking = (): ReturnType<typeof useInteractionTracking> &
   ReturnType<typeof usePerformanceTracking> &
   ReturnType<typeof useUserTracking> &
   ReturnType<typeof useErrorTracking> => {

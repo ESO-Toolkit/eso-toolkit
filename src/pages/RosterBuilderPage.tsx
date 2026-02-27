@@ -71,6 +71,7 @@ import { KnownAbilities, KnownSetIDs } from '../types/abilities';
 import {
   RaidRoster,
   TankSetup,
+  TankGearSet,
   HealerSetup,
   DPSSlot,
   SupportUltimate,
@@ -79,6 +80,7 @@ import {
   JailDDType,
   CLASS_SKILL_LINES,
   SkillLineConfig,
+  PlayerGroup,
   createDefaultRoster,
   defaultTankSetup,
   defaultHealerSetup,
@@ -170,27 +172,447 @@ const GET_PLAYERS_FOR_REPORT = gql`
 /**
  * Encode roster to base64 for URL sharing
  */
-const encodeRosterToURL = (roster: RaidRoster): string => {
+// ============================================================
+// COMPACT URL ENCODING (v2)
+// Short key names + deflate-raw compression = smallest possible URL
+// Backwards compatible: falls back to v1 (plain base64 JSON) on decode
+// ============================================================
+
+interface CompactSkills {
+  l1?: number | string; // line1: CLASS_SKILL_LINES index or custom string
+  l2?: number | string; // line2: CLASS_SKILL_LINES index or custom string
+  l3?: number | string; // line3: CLASS_SKILL_LINES index or custom string
+  fl?: 1; // isFlex (only stored when true)
+  no?: string; // notes
+}
+
+interface CompactGear {
+  s1?: number; // set1
+  s2?: number; // set2
+  ms?: number; // monsterSet
+  a?: number[]; // additionalSets
+  no?: string; // notes
+}
+
+interface CompactGroup {
+  g?: string; // groupName
+  n?: number; // groupNumber
+}
+
+interface CompactTank {
+  pn?: string; // playerName
+  pi?: number; // playerNumber
+  rl?: string; // roleLabel
+  rn?: string; // roleNotes
+  lb?: string[]; // labels
+  gs?: CompactGear; // gearSets
+  sl?: CompactSkills; // skillLines
+  ul?: number | string; // ultimate: SupportUltimate index or custom string
+  ss?: string[]; // specificSkills
+  gr?: CompactGroup; // group
+  no?: string; // notes
+}
+
+interface CompactHealer {
+  pn?: string; // playerName
+  pi?: number; // playerNumber
+  rl?: string; // roleLabel
+  rn?: string; // roleNotes
+  lb?: string[]; // labels
+  s1?: number; // set1
+  s2?: number; // set2
+  ms?: number; // monsterSet
+  a?: number[]; // additionalSets
+  sl?: CompactSkills; // skillLines
+  hb?: number; // healerBuff: HealerBuff index
+  cp?: number; // championPoint: HealerChampionPoint index
+  ul?: number | string; // ultimate: SupportUltimate index or custom string
+  gr?: CompactGroup; // group
+  no?: string; // notes
+}
+
+interface CompactDPS {
+  sn: number; // slotNumber (required)
+  pn?: string; // playerName
+  pi?: number; // playerNumber
+  rn?: string; // roleNotes
+  lb?: string[]; // labels
+  gs?: number[]; // gearSets
+  sl?: CompactSkills; // skillLines
+  gr?: CompactGroup; // group
+  no?: string; // notes
+  jt?: number; // jailDDType index
+  cd?: string; // customDescription
+}
+
+interface CompactRoster {
+  v: 2; // version marker
+  n?: string; // rosterName
+  t1?: CompactTank;
+  t2?: CompactTank;
+  h1?: CompactHealer;
+  h2?: CompactHealer;
+  dp?: CompactDPS[]; // only filled DPS slots
+  ag?: string[]; // availableGroups
+  no?: string; // notes
+}
+
+// Lookup tables for encoding/decoding fixed-vocabulary strings as integers
+const SKILL_LINE_TO_IDX = new Map(CLASS_SKILL_LINES.map((sl, i) => [sl, i] as const));
+const ULTIMATE_LIST = Object.values(SupportUltimate); // 4 preset ultimates
+const ULTIMATE_TO_IDX = new Map(ULTIMATE_LIST.map((u, i) => [u, i] as const));
+const HEALER_BUFF_LIST = Object.values(HealerBuff); // 2 values
+const HEALER_BUFF_TO_IDX = new Map(HEALER_BUFF_LIST.map((b, i) => [b, i] as const));
+const CHAMPION_POINT_LIST = Object.values(HealerChampionPoint); // 2 values
+const CHAMPION_POINT_TO_IDX = new Map(CHAMPION_POINT_LIST.map((cp, i) => [cp, i] as const));
+const JAIL_DD_TYPE_LIST: JailDDType[] = ['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'];
+const JAIL_DD_TYPE_TO_IDX = new Map(JAIL_DD_TYPE_LIST.map((t, i) => [t, i] as const));
+
+/** Encode a skill line string: known index or raw string for custom values */
+function encodeSkillLine(s?: string): number | string | undefined {
+  if (!s) return undefined;
+  const idx = SKILL_LINE_TO_IDX.get(s as (typeof CLASS_SKILL_LINES)[number]);
+  return idx !== undefined ? idx : s;
+}
+
+/** Decode a skill line: index → lookup, string → pass-through */
+function decodeSkillLine(v?: number | string): string {
+  if (v == null) return '';
+  if (typeof v === 'number') return CLASS_SKILL_LINES[v] ?? '';
+  return v;
+}
+
+/** Encode an ultimate: known SupportUltimate index or raw string for custom */
+function encodeUltimate(u?: string | null): number | string | undefined {
+  if (!u) return undefined;
+  const idx = ULTIMATE_TO_IDX.get(u as SupportUltimate);
+  return idx !== undefined ? idx : u;
+}
+
+/** Decode an ultimate */
+function decodeUltimate(v?: number | string): string | null {
+  if (v == null) return null;
+  if (typeof v === 'number') return ULTIMATE_LIST[v] ?? null;
+  return v;
+}
+
+function compactSkills(sl: SkillLineConfig): CompactSkills | undefined {
+  const c: CompactSkills = {};
+  const l1 = encodeSkillLine(sl.line1);
+  if (l1 != null) c.l1 = l1;
+  const l2 = encodeSkillLine(sl.line2);
+  if (l2 != null) c.l2 = l2;
+  const l3 = encodeSkillLine(sl.line3);
+  if (l3 != null) c.l3 = l3;
+  if (sl.isFlex) c.fl = 1;
+  if (sl.notes) c.no = sl.notes;
+  return Object.keys(c).length > 0 ? c : undefined;
+}
+
+function expandSkills(c?: CompactSkills): SkillLineConfig {
+  return {
+    line1: decodeSkillLine(c?.l1),
+    line2: decodeSkillLine(c?.l2),
+    line3: decodeSkillLine(c?.l3),
+    isFlex: c?.fl === 1,
+    notes: c?.no,
+  };
+}
+
+function compactGear(gs: TankGearSet): CompactGear | undefined {
+  const c: CompactGear = {};
+  if (gs.set1 != null) c.s1 = gs.set1 as number;
+  if (gs.set2 != null) c.s2 = gs.set2 as number;
+  if (gs.monsterSet != null) c.ms = gs.monsterSet as number;
+  if (gs.additionalSets?.length) c.a = gs.additionalSets as number[];
+  if (gs.notes) c.no = gs.notes;
+  return Object.keys(c).length > 0 ? c : undefined;
+}
+
+function expandGear(c?: CompactGear): TankGearSet {
+  return {
+    set1: c?.s1 as KnownSetIDs | undefined,
+    set2: c?.s2 as KnownSetIDs | undefined,
+    monsterSet: c?.ms as KnownSetIDs | undefined,
+    additionalSets: c?.a as KnownSetIDs[] | undefined,
+    notes: c?.no,
+  };
+}
+
+function compactGroup(gr?: PlayerGroup): CompactGroup | undefined {
+  if (!gr?.groupName) return undefined;
+  const c: CompactGroup = { g: gr.groupName };
+  if (gr.groupNumber != null) c.n = gr.groupNumber;
+  return c;
+}
+
+function expandGroup(c?: CompactGroup): PlayerGroup | undefined {
+  if (!c?.g) return undefined;
+  return { groupName: c.g, groupNumber: c.n };
+}
+
+function compactTank(t: TankSetup): CompactTank {
+  const c: CompactTank = {};
+  if (t.playerName) c.pn = t.playerName;
+  if (t.playerNumber != null) c.pi = t.playerNumber;
+  if (t.roleLabel) c.rl = t.roleLabel;
+  if (t.roleNotes) c.rn = t.roleNotes;
+  if (t.labels?.length) c.lb = t.labels;
+  const gs = compactGear(t.gearSets);
+  if (gs) c.gs = gs;
+  const sl = compactSkills(t.skillLines);
+  if (sl) c.sl = sl;
+  const ul = encodeUltimate(t.ultimate);
+  if (ul != null) c.ul = ul;
+  if (t.specificSkills?.length) c.ss = t.specificSkills;
+  const gr = compactGroup(t.group);
+  if (gr) c.gr = gr;
+  if (t.notes) c.no = t.notes;
+  return c;
+}
+
+function expandTank(c?: CompactTank): TankSetup {
+  return {
+    ...defaultTankSetup(),
+    playerName: c?.pn,
+    playerNumber: c?.pi,
+    roleLabel: c?.rl,
+    roleNotes: c?.rn,
+    labels: c?.lb,
+    gearSets: expandGear(c?.gs),
+    skillLines: expandSkills(c?.sl),
+    ultimate: decodeUltimate(c?.ul),
+    specificSkills: c?.ss ?? [],
+    group: expandGroup(c?.gr),
+    notes: c?.no,
+  };
+}
+
+function compactHealer(h: HealerSetup): CompactHealer {
+  const c: CompactHealer = {};
+  if (h.playerName) c.pn = h.playerName;
+  if (h.playerNumber != null) c.pi = h.playerNumber;
+  if (h.roleLabel) c.rl = h.roleLabel;
+  if (h.roleNotes) c.rn = h.roleNotes;
+  if (h.labels?.length) c.lb = h.labels;
+  if (h.set1 != null) c.s1 = h.set1 as number;
+  if (h.set2 != null) c.s2 = h.set2 as number;
+  if (h.monsterSet != null) c.ms = h.monsterSet as number;
+  if (h.additionalSets?.length) c.a = h.additionalSets as number[];
+  const sl = compactSkills(h.skillLines);
+  if (sl) c.sl = sl;
+  if (h.healerBuff != null) {
+    const idx = HEALER_BUFF_TO_IDX.get(h.healerBuff);
+    if (idx !== undefined) c.hb = idx;
+  }
+  if (h.championPoint != null) {
+    const idx = CHAMPION_POINT_TO_IDX.get(h.championPoint);
+    if (idx !== undefined) c.cp = idx;
+  }
+  const ul = encodeUltimate(h.ultimate);
+  if (ul != null) c.ul = ul;
+  const gr = compactGroup(h.group);
+  if (gr) c.gr = gr;
+  if (h.notes) c.no = h.notes;
+  return c;
+}
+
+function expandHealer(c?: CompactHealer): HealerSetup {
+  return {
+    ...defaultHealerSetup(),
+    playerName: c?.pn,
+    playerNumber: c?.pi,
+    roleLabel: c?.rl,
+    roleNotes: c?.rn,
+    labels: c?.lb,
+    set1: c?.s1 as KnownSetIDs | undefined,
+    set2: c?.s2 as KnownSetIDs | undefined,
+    monsterSet: c?.ms as KnownSetIDs | undefined,
+    additionalSets: c?.a as KnownSetIDs[] | undefined,
+    skillLines: expandSkills(c?.sl),
+    healerBuff: c?.hb != null ? ((HEALER_BUFF_LIST[c.hb] as HealerBuff) ?? null) : null,
+    championPoint:
+      c?.cp != null ? ((CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint) ?? null) : null,
+    ultimate: decodeUltimate(c?.ul),
+    group: expandGroup(c?.gr),
+    notes: c?.no,
+  };
+}
+
+function compactDPS(d: DPSSlot): CompactDPS {
+  const c: CompactDPS = { sn: d.slotNumber };
+  if (d.playerName) c.pn = d.playerName;
+  if (d.playerNumber != null) c.pi = d.playerNumber;
+  if (d.roleNotes) c.rn = d.roleNotes;
+  if (d.labels?.length) c.lb = d.labels;
+  if (d.gearSets?.length) c.gs = d.gearSets as number[];
+  const sl = d.skillLines ? compactSkills(d.skillLines) : undefined;
+  if (sl) c.sl = sl;
+  const gr = compactGroup(d.group);
+  if (gr) c.gr = gr;
+  if (d.notes) c.no = d.notes;
+  if (d.jailDDType) {
+    const idx = JAIL_DD_TYPE_TO_IDX.get(d.jailDDType);
+    if (idx !== undefined) c.jt = idx;
+  }
+  if (d.customDescription) c.cd = d.customDescription;
+  return c;
+}
+
+function expandDPS(c: CompactDPS): DPSSlot {
+  return {
+    slotNumber: c.sn,
+    playerName: c.pn,
+    playerNumber: c.pi,
+    roleNotes: c.rn,
+    labels: c.lb,
+    gearSets: c.gs as KnownSetIDs[] | undefined,
+    skillLines: c.sl ? expandSkills(c.sl) : undefined,
+    group: expandGroup(c.gr),
+    notes: c.no,
+    jailDDType: c.jt != null ? JAIL_DD_TYPE_LIST[c.jt] : undefined,
+    customDescription: c.cd,
+  };
+}
+
+function compactifyRoster(roster: RaidRoster): CompactRoster {
+  const c: CompactRoster = { v: 2 };
+  if (roster.rosterName && roster.rosterName !== 'New Roster') c.n = roster.rosterName;
+  c.t1 = compactTank(roster.tank1);
+  c.t2 = compactTank(roster.tank2);
+  c.h1 = compactHealer(roster.healer1);
+  c.h2 = compactHealer(roster.healer2);
+  const filledSlots = roster.dpsSlots.filter(
+    (slot) =>
+      slot.playerName ||
+      slot.playerNumber != null ||
+      slot.roleNotes ||
+      slot.labels?.length ||
+      slot.gearSets?.length ||
+      slot.jailDDType ||
+      slot.notes ||
+      slot.group ||
+      slot.skillLines,
+  );
+  if (filledSlots.length) c.dp = filledSlots.map(compactDPS);
+  if (roster.availableGroups?.length) c.ag = roster.availableGroups;
+  if (roster.notes) c.no = roster.notes;
+  return c;
+}
+
+function expandCompactRoster(c: CompactRoster): RaidRoster {
+  const dpsSlots = createDefaultDPSSlots();
+  if (c.dp) {
+    for (const compactSlot of c.dp) {
+      const idx = compactSlot.sn - 1;
+      if (idx >= 0 && idx < 8) {
+        dpsSlots[idx] = expandDPS(compactSlot);
+      }
+    }
+  }
+  return {
+    rosterName: c.n ?? 'New Roster',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    tank1: expandTank(c.t1),
+    tank2: expandTank(c.t2),
+    healer1: expandHealer(c.h1),
+    healer2: expandHealer(c.h2),
+    dpsSlots,
+    availableGroups: c.ag ?? [],
+    notes: c.no,
+  };
+}
+
+/** Base64url encode a byte array (URL-safe, no padding) */
+function toBase64Url(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/** Base64url decode back to byte array */
+function fromBase64Url(str: string): Uint8Array {
+  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+async function readAllChunks(readable: ReadableStream<Uint8Array>): Promise<Uint8Array> {
+  const chunks: Uint8Array[] = [];
+  const reader = readable.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  const total = chunks.reduce((s, c) => s + c.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return out;
+}
+
+async function deflateString(str: string): Promise<Uint8Array> {
+  const input = new TextEncoder().encode(str);
+  const stream = new CompressionStream('deflate-raw');
+  const writer = stream.writable.getWriter();
+  writer.write(input);
+  writer.close();
+  return readAllChunks(stream.readable);
+}
+
+async function inflateBytes(bytes: Uint8Array): Promise<string> {
+  const stream = new DecompressionStream('deflate-raw');
+  const writer = stream.writable.getWriter();
+  writer.write(bytes as Uint8Array<ArrayBuffer>);
+  writer.close();
+  const output = await readAllChunks(stream.readable);
+  return new TextDecoder().decode(output);
+}
+
+/**
+ * Encode roster to a compact, deflate-compressed, URL-safe base64 string (v2).
+ */
+const encodeRosterToURL = async (roster: RaidRoster): Promise<string> => {
   try {
-    const json = JSON.stringify(roster);
-    const base64 = btoa(encodeURIComponent(json));
-    return base64;
+    const compact = compactifyRoster(roster);
+    const json = JSON.stringify(compact);
+    const compressed = await deflateString(json);
+    return toBase64Url(compressed);
   } catch {
-    // Failed to encode roster
     return '';
   }
 };
 
 /**
- * Decode roster from base64 URL
+ * Decode roster from URL hash. Supports v2 (deflate + compact) and v1 (plain base64 JSON).
  */
-const decodeRosterFromURL = (encoded: string): RaidRoster | null => {
+const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster | null> => {
+  // Try v2: deflate-raw + compact format
+  try {
+    const bytes = fromBase64Url(encoded);
+    const json = await inflateBytes(bytes);
+    const parsed = JSON.parse(json) as { v?: number };
+    if (parsed.v === 2) {
+      return expandCompactRoster(parsed as CompactRoster);
+    }
+  } catch {
+    // fall through to v1
+  }
+  // Try v1: btoa(encodeURIComponent(json))
   try {
     const json = decodeURIComponent(atob(encoded));
-    const roster = JSON.parse(json) as RaidRoster;
-    return roster;
+    return JSON.parse(json) as RaidRoster;
   } catch {
-    // Failed to decode roster
     return null;
   }
 };
@@ -541,40 +963,61 @@ export const RosterBuilderPage: React.FC = () => {
     }
   };
 
-  // Load roster from URL on mount
+  // Gate URL sync until the initial load has settled so we don't clobber the incoming ?r= param
+  const urlSyncReady = React.useRef(false);
+
+  // Load roster from URL on mount (supports ?r= query param and legacy #hash)
   React.useEffect(() => {
-    const hash = window.location.hash.substring(1); // Remove #
-    if (hash) {
-      const decoded = decodeRosterFromURL(hash);
-      if (decoded) {
-        setRoster(decoded);
-        setSnackbar({
-          open: true,
-          message: 'Roster loaded from shared link!',
-          severity: 'success',
-        });
-      }
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get('r') || window.location.hash.substring(1);
+    if (encoded) {
+      void decodeRosterFromURL(encoded).then((decoded) => {
+        if (decoded) {
+          setRoster(decoded);
+          setSnackbar({
+            open: true,
+            message: 'Roster loaded from shared link!',
+            severity: 'success',
+          });
+        }
+        urlSyncReady.current = true;
+      });
+    } else {
+      urlSyncReady.current = true;
     }
   }, []);
 
+  // Keep ?r= query param in sync with the current roster so the URL is always shareable
+  React.useEffect(() => {
+    if (!urlSyncReady.current) return;
+    void encodeRosterToURL(roster).then((encoded) => {
+      if (!encoded) return;
+      const url = new URL(window.location.href);
+      url.search = `?r=${encoded}`;
+      url.hash = '';
+      window.history.replaceState(null, '', url.toString());
+    });
+  }, [roster]);
+
   // Generate shareable link
   const handleCopyLink = useCallback(() => {
-    const encoded = encodeRosterToURL(roster);
-    if (encoded) {
-      const url = `${window.location.origin}${window.location.pathname}#${encoded}`;
-      navigator.clipboard
-        .writeText(url)
-        .then(() => {
-          setSnackbar({
-            open: true,
-            message: 'Shareable link copied to clipboard!',
-            severity: 'success',
+    void encodeRosterToURL(roster).then((encoded) => {
+      if (encoded) {
+        const url = `${window.location.origin}${window.location.pathname}?r=${encoded}`;
+        navigator.clipboard
+          .writeText(url)
+          .then(() => {
+            setSnackbar({
+              open: true,
+              message: 'Shareable link copied to clipboard!',
+              severity: 'success',
+            });
+          })
+          .catch(() => {
+            setSnackbar({ open: true, message: 'Failed to copy link', severity: 'error' });
           });
-        })
-        .catch(() => {
-          setSnackbar({ open: true, message: 'Failed to copy link', severity: 'error' });
-        });
-    }
+      }
+    });
   }, [roster]);
 
   // Update roster name

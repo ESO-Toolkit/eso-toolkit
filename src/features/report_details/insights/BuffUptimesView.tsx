@@ -1,3 +1,5 @@
+import ClearIcon from '@mui/icons-material/Clear';
+import SearchIcon from '@mui/icons-material/Search';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import {
   Box,
@@ -9,6 +11,8 @@ import {
   Stack,
   IconButton,
   Tooltip,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import React from 'react';
 
@@ -38,6 +42,13 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
   canOpenTimeline = false,
 }) => {
   const descriptionId = React.useId();
+  const [nameFilter, setNameFilter] = React.useState('');
+
+  const filteredBuffUptimes = React.useMemo(() => {
+    if (!nameFilter.trim()) return buffUptimes;
+    const normalizedFilter = nameFilter.trim().toLowerCase();
+    return buffUptimes.filter((buff) => buff.abilityName.toLowerCase().includes(normalizedFilter));
+  }, [buffUptimes, nameFilter]);
 
   if (isLoading) {
     return (
@@ -143,10 +154,42 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
         Logs.
       </Typography>
 
-      {buffUptimes.length > 0 ? (
+      {buffUptimes.length > 0 && (
+        <TextField
+          size="small"
+          fullWidth
+          placeholder="Filter by name..."
+          value={nameFilter}
+          onChange={(e) => setNameFilter(e.target.value)}
+          sx={{ mb: 1 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: nameFilter && (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => setNameFilter('')}
+                    edge="end"
+                    aria-label="clear filter"
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+      )}
+
+      {filteredBuffUptimes.length > 0 ? (
         <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
           <List disablePadding>
-            {buffUptimes.map((buff) => {
+            {filteredBuffUptimes.map((buff) => {
               return (
                 <ListItem
                   key={buff.abilityGameID}
@@ -172,9 +215,11 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
         </Box>
       ) : (
         <Typography variant="body2" color="text.secondary">
-          {showAllBuffs
-            ? 'No friendly buff events found.'
-            : 'No important buff events found. Try showing all buffs.'}
+          {nameFilter
+            ? `No buffs matching "${nameFilter}" found.`
+            : showAllBuffs
+              ? 'No friendly buff events found.'
+              : 'No important buff events found. Try showing all buffs.'}
         </Typography>
       )}
     </Box>

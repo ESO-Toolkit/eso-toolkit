@@ -6,8 +6,14 @@ import type { ParseChecklistItem } from '../types/parseChecklist';
 
 import type {
   ActivePercentageResult,
+  BarSwapAnalysisResult,
+  DotUptimeResult,
   FoodDetectionResult,
+  MundusStoneResult,
+  PenCritCapResult,
+  ResourceSustainResult,
   RotationAnalysisResult,
+  UltimateUsageResult,
   WeaveAnalysisResult,
 } from './parseAnalysisUtils';
 
@@ -21,6 +27,13 @@ interface BuildParseChecklistInput {
   buffChecklist: BuffChecklistResult | null;
   debuffChecklist: DebuffChecklistResult | null;
   buildIssues: BuildIssue[] | null;
+  mundusResult: MundusStoneResult | null;
+  barSwapResult: BarSwapAnalysisResult | null;
+  ultimateResult: UltimateUsageResult | null;
+  dotUptimeResult: DotUptimeResult | null;
+  penCritCapResult: PenCritCapResult | null;
+  resourceSustainResult: ResourceSustainResult | null;
+  potionUse: number | null;
 }
 
 const MAJOR_BUFF_NAMES = new Set([
@@ -56,6 +69,13 @@ export function buildParseChecklist({
   buffChecklist,
   debuffChecklist,
   buildIssues,
+  mundusResult,
+  barSwapResult,
+  ultimateResult,
+  dotUptimeResult,
+  penCritCapResult,
+  resourceSustainResult,
+  potionUse,
 }: BuildParseChecklistInput): ParseChecklistItem[] {
   const items: ParseChecklistItem[] = [];
 
@@ -180,14 +200,14 @@ export function buildParseChecklist({
     });
 
     const hasExecute = rotationResult.skillIntervals?.some((skill) => skill.isExecute) ?? false;
-    const fightDuration = activeTimeResult?.fightDurationSeconds ?? 0;
+    const fightDurationMs = activeTimeResult?.fightDurationMs ?? 0;
     items.push({
       id: 'execute',
       title: 'Execute skill usage in late fight',
-      status: hasExecute ? 'pass' : fightDuration > 20 ? 'warn' : 'info',
+      status: hasExecute ? 'pass' : fightDurationMs > 20000 ? 'warn' : 'info',
       detail: hasExecute
         ? 'Execute phase casts detected'
-        : fightDuration > 20
+        : fightDurationMs > 20000
           ? 'No execute usage detected'
           : 'Fight too short to evaluate',
     });
@@ -282,19 +302,188 @@ export function buildParseChecklist({
       : 'Build issue data unavailable',
   });
 
-  items.push({
-    id: 'potions',
-    title: 'Potion uptime (Major buffs)',
-    status: 'info',
-    detail: 'Verify potion use every ~45s (not directly tracked)',
-  });
+  // ─── Mundus Stone ────────────────────────────────────────────────────────────
+  if (mundusResult) {
+    items.push({
+      id: 'mundus-stone',
+      title: 'Mundus stone equipped',
+      status: mundusResult.hasMundus ? 'pass' : 'fail',
+      detail: mundusResult.hasMundus
+        ? (mundusResult.mundusName ?? 'Mundus stone detected')
+        : 'No mundus stone detected',
+    });
+  } else {
+    items.push({
+      id: 'mundus-stone',
+      title: 'Mundus stone equipped',
+      status: 'info',
+      detail: 'Mundus detection unavailable',
+    });
+  }
 
-  items.push({
-    id: 'pen-crit-cap',
-    title: 'Penetration and critical damage caps',
-    status: 'info',
-    detail: 'Confirm pen/crit caps in build planner (not directly tracked)',
-  });
+  // ─── Potion Uptime ───────────────────────────────────────────────────────────
+  if (potionUse != null && activeTimeResult) {
+    const fightDuration = activeTimeResult.fightDurationMs / 1000;
+    const expectedPotions = Math.max(1, Math.floor(fightDuration / 45));
+    const potionRatio = potionUse / expectedPotions;
+    items.push({
+      id: 'potions',
+      title: 'Potion uptime (Major buffs)',
+      status: potionRatio >= 0.8 ? 'pass' : potionRatio >= 0.5 ? 'warn' : 'fail',
+      detail: `${potionUse} potions used (expected ~${expectedPotions} for ${fightDuration.toFixed(0)}s fight)`,
+    });
+  } else {
+    items.push({
+      id: 'potions',
+      title: 'Potion uptime (Major buffs)',
+      status: 'info',
+      detail: 'Potion use data unavailable — verify potion use every ~45s',
+    });
+  }
+
+  // ─── Penetration & Crit Cap ──────────────────────────────────────────────────
+  if (penCritCapResult) {
+    items.push({
+      id: 'pen-crit-cap',
+      title: 'Penetration setup',
+      status: penCritCapResult.likelyOverPenCap
+        ? 'warn'
+        : penCritCapResult.estimatedPenetration > 0
+          ? 'pass'
+          : 'info',
+      detail: penCritCapResult.likelyOverPenCap
+        ? `~${penCritCapResult.estimatedPenetration.toLocaleString()} pen from gear alone may exceed 18,200 cap with group buffs`
+        : penCritCapResult.estimatedPenetration > 0
+          ? `~${penCritCapResult.estimatedPenetration.toLocaleString()} pen from gear/mundus${penCritCapResult.hasLoverMundus ? ' (Lover mundus)' : ''}`
+          : 'No significant pen from gear traits detected',
+    });
+  } else {
+    items.push({
+      id: 'pen-crit-cap',
+      title: 'Penetration setup',
+      status: 'info',
+      detail: 'Pen estimation unavailable',
+    });
+  }
+
+  // ─── Bar Swap Analysis ───────────────────────────────────────────────────────
+  if (barSwapResult) {
+    items.push({
+      id: 'bar-swap',
+      title: 'Bar swap cadence',
+      status: barSwapResult.barCampingDetected
+        ? 'warn'
+        : barSwapResult.totalSwaps > 0
+          ? 'pass'
+          : 'fail',
+      detail: barSwapResult.barCampingDetected
+        ? `${barSwapResult.barCampingInstances} bar camping instance(s) detected (${(barSwapResult.longestTimeOnOneBar / 1000).toFixed(1)}s longest)`
+        : barSwapResult.totalSwaps > 0
+          ? `${barSwapResult.swapsPerMinute.toFixed(1)} swaps/min, avg ${(barSwapResult.averageTimeBetweenSwaps / 1000).toFixed(1)}s between swaps`
+          : 'No bar swaps detected',
+    });
+  } else {
+    items.push({
+      id: 'bar-swap',
+      title: 'Bar swap cadence',
+      status: 'info',
+      detail: 'Bar swap analysis unavailable',
+    });
+  }
+
+  // ─── Ultimate Usage ──────────────────────────────────────────────────────────
+  if (ultimateResult) {
+    const fightDuration = ultimateResult.fightDurationSeconds;
+    const hasUltimates = ultimateResult.totalUltimateCasts > 0;
+    const ultNames = ultimateResult.ultimateAbilities
+      .map((u) => `${u.abilityName} ×${u.castCount}`)
+      .join(', ');
+
+    items.push({
+      id: 'ultimate-usage',
+      title: 'Ultimate ability usage',
+      status: hasUltimates ? 'pass' : fightDuration > 30 ? 'warn' : 'info',
+      detail: hasUltimates
+        ? `${ultimateResult.totalUltimateCasts} ult casts: ${ultNames}`
+        : fightDuration > 30
+          ? 'No ultimate casts detected'
+          : 'Fight too short to evaluate ultimate usage',
+    });
+  } else {
+    items.push({
+      id: 'ultimate-usage',
+      title: 'Ultimate ability usage',
+      status: 'info',
+      detail: 'Ultimate analysis unavailable',
+    });
+  }
+
+  // ─── DoT Uptime ──────────────────────────────────────────────────────────────
+  if (dotUptimeResult && dotUptimeResult.dotAbilities.length > 0) {
+    const topDots = dotUptimeResult.dotAbilities
+      .slice(0, 3)
+      .map((d) => `${d.abilityName}: ${d.uptimePercentage.toFixed(0)}%`)
+      .join(', ');
+
+    items.push({
+      id: 'dot-uptime',
+      title: 'DoT uptime',
+      status:
+        dotUptimeResult.overallDotUptimePercentage >= 80
+          ? 'pass'
+          : dotUptimeResult.overallDotUptimePercentage >= 60
+            ? 'warn'
+            : 'fail',
+      detail: `Overall ${dotUptimeResult.overallDotUptimePercentage.toFixed(0)}% DoT uptime. ${topDots}`,
+    });
+
+    items.push({
+      id: 'damage-composition',
+      title: 'Damage composition',
+      status: 'info',
+      detail: `DoT: ${dotUptimeResult.dotDamagePercentage.toFixed(0)}% / Direct: ${(100 - dotUptimeResult.dotDamagePercentage).toFixed(0)}%`,
+    });
+  } else if (dotUptimeResult) {
+    items.push({
+      id: 'dot-uptime',
+      title: 'DoT uptime',
+      status: 'info',
+      detail: 'No DoT abilities detected — build may be direct-damage focused',
+    });
+    items.push({
+      id: 'damage-composition',
+      title: 'Damage composition',
+      status: 'info',
+      detail: '100% direct damage',
+    });
+  }
+
+  // ─── Resource Sustain ────────────────────────────────────────────────────────
+  if (resourceSustainResult && resourceSustainResult.sampleCount > 0) {
+    const primary = resourceSustainResult.primaryResource;
+    const avgPct =
+      primary === 'stamina'
+        ? resourceSustainResult.averageStaminaPercent
+        : resourceSustainResult.averageMagickaPercent;
+    const lowSeconds = resourceSustainResult.secondsBelowThreshold;
+
+    items.push({
+      id: 'resource-sustain',
+      title: `${primary === 'stamina' ? 'Stamina' : 'Magicka'} sustain`,
+      status: lowSeconds === 0 ? 'pass' : lowSeconds <= 5 ? 'warn' : 'fail',
+      detail:
+        lowSeconds === 0
+          ? `Avg ${avgPct.toFixed(0)}% ${primary} — no sustain issues`
+          : `Avg ${avgPct.toFixed(0)}% ${primary}, ${lowSeconds}s below 30% threshold`,
+    });
+  } else {
+    items.push({
+      id: 'resource-sustain',
+      title: 'Resource sustain',
+      status: 'info',
+      detail: 'Resource data unavailable',
+    });
+  }
 
   return items;
 }

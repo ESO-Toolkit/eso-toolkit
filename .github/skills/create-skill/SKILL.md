@@ -110,7 +110,7 @@ After that, VS Code should pick up the new skill automatically (no restart neede
 | `playwright/` | Run Playwright Tests | E2E test execution |
 | `testing/` | Dev and Testing Tools | Dev server, unit tests, format/lint/build |
 | `jira/` | Jira Work Items | Jira ticket management via acli |
-| `sentry/` | Sentry Error Tracking | Production error triage via sentry-cli |
+| `rollbar/` | Rollbar Error Tracking | Production error triage via Rollbar REST API |
 | `reports/` | Download and Analyze Reports | ESO Logs report data debugging |
 | `git/` | Git Branch Management | Twig stacked branch workflows |
 | `rebase/` | Post-Squash Rebase | Post-squash branch tree recovery |

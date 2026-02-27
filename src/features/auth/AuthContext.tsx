@@ -12,8 +12,8 @@ import { GetCurrentUserQuery, GetCurrentUserDocument } from '../../graphql/gql/g
 import { setAnalyticsUserId, setUserProperties } from '../../utils/analytics';
 import { checkUserBan, DEFAULT_BAN_REASON } from '../../utils/banlist';
 import { isDevelopment } from '../../utils/envUtils';
+import { addBreadcrumb, setUserContext } from '../../utils/errorTracking';
 import { Logger, LogLevel } from '../../utils/logger';
-import { addBreadcrumb, setUserContext } from '../../utils/sentryUtils';
 
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './auth';
 import {
@@ -85,7 +85,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isBanned, setIsBanned] = useState<boolean>(false);
   const [banReason, setBanReason] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [userLoading, setUserLoading] = useState<boolean>(false);
+  // Initialize userLoading to true when a valid token exists in localStorage.
+  // This prevents child components (e.g. HeaderBar) from prematurely calling
+  // refetchUser() before AuthProvider's effects have synced the token to the
+  // EsoLogsClient — child effects run before parent effects in React.
+  const [userLoading, setUserLoading] = useState<boolean>(() => {
+    const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
+    return !!token && tokenHasUserSubject(token) && !isAccessTokenExpired(token);
+  });
   const [userError, setUserError] = useState<string | null>(null);
 
   const { client: esoLogsClient, setAuthToken, clearAuthToken } = useEsoLogsClientContext();

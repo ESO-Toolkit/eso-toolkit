@@ -34,6 +34,8 @@ export const Footer: React.FC = React.memo(() => {
       { label: 'Log Analyzer', href: '/logs' },
 
       { label: 'Roster Builder', href: '/roster-builder' },
+
+      { label: 'My Reports', href: '/my-reports' },
     ],
 
     [],
@@ -44,6 +46,8 @@ export const Footer: React.FC = React.memo(() => {
       { label: 'Home', href: '/' },
 
       { label: 'My Reports', href: '/my-reports' },
+
+      { label: 'Privacy Settings', href: '/privacy-settings' },
 
       { label: 'Calculation Knowledge Base', href: '/docs/calculations' },
 
@@ -1065,6 +1069,20 @@ export const Footer: React.FC = React.memo(() => {
             Studios, Bethesda, or esologs.com. All trademarks are the property of their respective
             owners.
           </Typography>
+          <Link
+            component={RouterLink}
+            to="/privacy"
+            sx={{
+              fontSize: '0.8rem',
+              opacity: 0.6,
+              color: 'inherit',
+              textDecoration: 'none',
+              transition: 'opacity 0.2s ease',
+              '&:hover': { opacity: 1, color: accentColor },
+            }}
+          >
+            Privacy Policy
+          </Link>
         </Box>
       </Container>
     </Box>

@@ -27,7 +27,7 @@ test.beforeEach(async ({ page }) => {
 - `google-analytics.com`
 - `googletagmanager.com`
 - `analytics.google.com`
-- `sentry.io` (optional monitoring)
+- `api.rollbar.com` (optional monitoring)
 
 ### 2. Application-Level Guards (`analytics.ts`)
 

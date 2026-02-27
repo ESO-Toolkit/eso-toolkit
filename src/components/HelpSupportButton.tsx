@@ -3,7 +3,7 @@ import { Button, IconButton, Menu, MenuItem, ListItemIcon, ListItemText } from '
 import React from 'react';
 
 import { useBugReport } from '../components/BugReportDialog';
-import { useSentryTracking } from '../hooks/useSentryTracking';
+import { useTracking } from '../hooks/useErrorTracking';
 
 /**
  * Help & Support button with bug reporting functionality
@@ -12,7 +12,7 @@ import { useSentryTracking } from '../hooks/useSentryTracking';
 export const HelpSupportButton: React.FC = () => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const { openBugReport, BugReportDialog } = useBugReport();
-  const { trackClick, trackFeatureUsage } = useSentryTracking();
+  const { trackClick, trackFeatureUsage } = useTracking();
 
   const handleClick = (event: React.MouseEvent<HTMLElement>): void => {
     setAnchorEl(event.currentTarget);
@@ -98,7 +98,7 @@ export const HelpSupportButton: React.FC = () => {
  */
 export const QuickBugReportButton: React.FC = () => {
   const { openBugReport, BugReportDialog } = useBugReport();
-  const { trackClick } = useSentryTracking();
+  const { trackClick } = useTracking();
 
   const handleClick = (): void => {
     trackClick('quick-bug-report');

@@ -15,6 +15,7 @@ import {
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { setContext } from '@apollo/client/link/context';
 import { onError, ErrorLink } from '@apollo/client/link/error';
+import { RetryLink } from '@apollo/client/link/retry';
 import { getOperationAST } from 'graphql';
 
 import { refreshAccessToken } from './features/auth/auth';
@@ -87,6 +88,37 @@ export class EsoLogsClient {
   }
 
   private createApolloClient(accessToken: string): ApolloClient {
+    // Retry link: automatically retries requests that fail with HTTP 429 (rate limit)
+    // or transient network errors (status 0 / no statusCode — CORS block, DNS failure,
+    // dropped connection, etc.). Uses exponential backoff with jitter to avoid
+    // thundering-herd retries.
+    const retryLink = new RetryLink({
+      delay: {
+        initial: 1000, // wait 1 s before the first retry
+        max: 15000, // cap at 15 s
+        jitter: true, // randomise to spread concurrent retries
+      },
+      attempts: {
+        max: 3,
+        retryIf: (error: unknown) => {
+          const statusCode = (error as { statusCode?: number })?.statusCode;
+          if (statusCode === 429) {
+            logger.warn('API rate limit hit (429) — retrying with backoff', {
+              operation: 'pending',
+            });
+            return true;
+          }
+          // Also retry on network-level errors (no statusCode means the request
+          // never reached the server — transient connectivity failure).
+          if (error != null && statusCode === undefined) {
+            logger.warn('Network error — retrying with backoff');
+            return true;
+          }
+          return false;
+        },
+      },
+    });
+
     // Error handling link for 401 responses
     const errorLink: ErrorLink = onError(({ error, operation, forward }) => {
       // Check if this is a GraphQL error with authentication issues
@@ -144,7 +176,16 @@ export class EsoLogsClient {
         });
       }
 
-      // Log the error for debugging
+      // Log the error for debugging — skip noisy 429 logs since RetryLink already
+      // warned on each attempt and the query() catch block will surface a
+      // human-readable message to the UI.
+      const networkStatusCode = (error as { statusCode?: number })?.statusCode;
+      if (networkStatusCode === 429) {
+        logger.warn('API rate limit (429) — all retries exhausted', {
+          operation: operation.operationName,
+        });
+        return;
+      }
       logger.error('GraphQL operation error', error, {
         operation: operation.operationName,
       });
@@ -181,7 +222,8 @@ export class EsoLogsClient {
     });
 
     return new ApolloClient({
-      link: from([errorLink, authLink, customHttpLink]),
+      // retryLink must come first so it intercepts 429s before errorLink logs them
+      link: from([retryLink, errorLink, authLink, customHttpLink]),
       cache: EsoLogsClient.CACHE,
     });
   }
@@ -212,7 +254,36 @@ export class EsoLogsClient {
   public async query<TData = unknown, TVariables extends OperationVariables = OperationVariables>(
     options: QueryOptions<TVariables, TData>,
   ): Promise<TData> {
-    const result = await this.client.query(options);
+    let result;
+    try {
+      result = await this.client.query(options);
+    } catch (networkError) {
+      // Convert well-known network failures to human-readable messages so that UI
+      // components can surface actionable feedback instead of an opaque stack trace.
+      //
+      // When ApolloClient.query() throws, it always wraps low-level errors inside
+      // an ApolloError.  The HTTP status code therefore lives at:
+      //   error.networkError.statusCode  (ApolloError → ServerError)
+      // NOT at the top-level error.statusCode (which is always undefined).
+      // We check both locations for robustness.
+      const innerNetworkError = (networkError as { networkError?: { statusCode?: number } })
+        ?.networkError;
+      const statusCode =
+        innerNetworkError?.statusCode ?? (networkError as { statusCode?: number })?.statusCode;
+      if (statusCode === 429) {
+        throw new Error(
+          'API rate limit exceeded. Too many requests were sent in a short period — please wait a moment and try again.',
+        );
+      }
+      // statusCode === undefined (or 0) means the request never got a response —
+      // this is the NetworkError case captured in sentry as ESO-LOGS-8J / ESO-589.
+      if (statusCode === undefined || statusCode === 0) {
+        throw new Error(
+          'Network error: Could not connect to the ESO Logs API. Please check your internet connection and try again.',
+        );
+      }
+      throw networkError;
+    }
 
     // Check for GraphQL errors and reject if they exist
     if (result.error) {

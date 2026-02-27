@@ -301,7 +301,7 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
   const rotationAnalyses = React.useMemo(() => {
     if (!fight?.startTime || !fight?.endTime || !castEvents || !resourceEvents) return [];
 
-    const fightDuration = (fight.endTime - fight.startTime) / 1000; // Duration in seconds
+    const fightDurationMs = fight.endTime - fight.startTime;
     const analysisMap: Record<string, RotationAnalysis> = {};
 
     // Get friendly player IDs for filtering
@@ -380,7 +380,7 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
     Object.values(analysisMap).forEach((analysis) => {
       // Calculate APM (Actions Per Minute)
       const totalCasts = analysis.abilities.reduce((sum, ability) => sum + ability.useCount, 0);
-      analysis.averageAPM = (totalCasts / fightDuration) * 60;
+      analysis.averageAPM = fightDurationMs > 0 ? (totalCasts / (fightDurationMs / 1000)) * 60 : 0;
 
       // Analyze skill priorities
       analysis.skillPriorities = analyzeSkillPriorities(analysis.abilities);

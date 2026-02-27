@@ -7,6 +7,9 @@ on:
   pull_request:
     branches:
       - main
+  merge_group:
+    branches:
+      - main
   # Allow manual triggering
   workflow_dispatch:
 
@@ -22,15 +25,24 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     steps:
+      - name: Skip coverage in merge queue (already verified on PR)
+        # The job must still run so the required status check reports back to GitHub
+        # instead of timing out and ejecting the PR from the merge queue.
+        if: github.event_name == 'merge_group'
+        run: echo "✅ Coverage check skipped in merge queue — already verified on the PR."
+
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        if: github.event_name != 'merge_group'
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
+        if: github.event_name != 'merge_group'
         uses: ./.github/actions/setup-node-with-cache
 
       - name: Run Tests with Coverage
+        if: github.event_name != 'merge_group'
         run: npm run test:coverage:ci
         env:
           # Increase Node.js memory limit to prevent OOM errors
@@ -43,23 +55,23 @@ jobs:
           BLOCK_EXTERNAL_REQUESTS: 'true'
           # Override external service URLs to localhost (will fail if not mocked)
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
-          SENTRY_DSN: ''
+          ERROR_TRACKING_TOKEN: ''
           CI: true
           NODE_ENV: test
 
       - name: Generate Coverage Badges
         run: npm run coverage:badges
-        if: always()
+        if: always() && github.event_name != 'merge_group'
 
       - name: Generate Coverage Badge JSON
         run: npm run coverage:badge-json
-        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && github.event_name != 'merge_group'
 
       # Consumed by the deploy job for the combined gh-pages push.
       # Short retention since this is an intermediate build artifact.
       - name: Upload Coverage Badge JSON
         uses: actions/upload-artifact@v6
-        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && github.event_name != 'merge_group'
         with:
           name: coverage-badge-json
           path: coverage/badge-json/
@@ -67,7 +79,7 @@ jobs:
 
       - name: Upload Coverage Badges (SVG)
         uses: actions/upload-artifact@v6
-        if: always()
+        if: always() && github.event_name != 'merge_group'
         with:
           name: coverage-badges-${{ github.run_number }}
           path: coverage/badges/*.svg
@@ -75,7 +87,7 @@ jobs:
 
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v6
-        if: always()
+        if: always() && github.event_name != 'merge_group'
         with:
           name: coverage-report-${{ github.run_number }}
           path: |
@@ -147,18 +159,26 @@ jobs:
   # ─── Build: Storybook ────────────────────────────────────────────────────────
   # Only runs on main (and workflow_dispatch). PRs do not build storybook.
   build-storybook:
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
+      - name: Skip storybook build in merge queue (only needed on main)
+        # The job must still run so the required status check reports back to GitHub
+        # instead of timing out and ejecting the PR from the merge queue.
+        if: github.event_name == 'merge_group'
+        run: echo "✅ Storybook build skipped in merge queue — only deployed on main push."
+
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        if: github.event_name != 'merge_group'
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
+        if: github.event_name != 'merge_group'
         uses: ./.github/actions/setup-node-with-cache
 
       - name: Build Storybook
+        if: github.event_name != 'merge_group'
         run: npm run build-storybook
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
@@ -167,6 +187,7 @@ jobs:
       # Consumed by the deploy job for the combined gh-pages push.
       # Short retention since this is an intermediate build artifact.
       - name: Upload Storybook
+        if: github.event_name != 'merge_group'
         uses: actions/upload-artifact@v6
         with:
           name: storybook-static
@@ -183,28 +204,47 @@ jobs:
   # in-flight deploy rather than queuing behind it.
   deploy:
     needs: [coverage, build-storybook]
+    # Must always evaluate to true so the required status check reports back to
+    # GitHub. Without this, skipped jobs report nothing and the merge queue
+    # times out waiting for a status that never arrives.
     if: |
-      (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') &&
-      needs.coverage.result == 'success' &&
-      needs.build-storybook.result == 'success'
+      always() &&
+      (
+        github.event_name == 'merge_group' ||
+        github.event_name == 'pull_request' ||
+        (
+          (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') &&
+          needs.coverage.result == 'success' &&
+          needs.build-storybook.result == 'success'
+        )
+      )
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-reports-gh-pages
       cancel-in-progress: true
     steps:
+      - name: Skip deploy (non-deployment context)
+        # The job must still run so the required status check reports back to GitHub
+        # instead of timing out and ejecting the PR from the merge queue.
+        if: github.event_name == 'merge_group' || github.event_name == 'pull_request'
+        run: echo "✅ Deploy skipped — only runs on main push."
+
       - name: Download Coverage Badge JSON
-        uses: actions/download-artifact@v4
+        if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
+        uses: actions/download-artifact@v7
         with:
           name: coverage-badge-json
           path: deploy-staging/badges/
 
       - name: Download Storybook
-        uses: actions/download-artifact@v4
+        if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
+        uses: actions/download-artifact@v7
         with:
           name: storybook-static
           path: deploy-staging/storybook/
 
       - name: Generate Deploy Token
+        if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
         id: generate-deploy-token
         uses: actions/create-github-app-token@v2
         with:
@@ -214,6 +254,7 @@ jobs:
           repositories: eso-log-aggregator-reports
 
       - name: Deploy to GitHub Pages
+        if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
         uses: peaceiris/actions-gh-pages@v4
         with:
           # Use personal_token (not github_token) when pushing to an external repository.

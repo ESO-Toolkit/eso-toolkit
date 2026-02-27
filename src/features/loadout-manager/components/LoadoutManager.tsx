@@ -382,16 +382,7 @@ export const LoadoutManager: React.FC = () => {
     showSnackbar('Loadouts cleared.', 'success');
   };
 
-  const handleImportClick = (): void => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
+  const processImportFile = async (file: File): Promise<void> => {
     try {
       const text = await file.text();
       const lowerName = file.name.toLowerCase();
@@ -425,9 +416,56 @@ export const LoadoutManager: React.FC = () => {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to import file.';
       showSnackbar(message, 'error');
-    } finally {
-      event.target.value = '';
     }
+  };
+
+  const handleImportClick = async (): Promise<void> => {
+    // Use the File System Access API when available so the picker opens
+    // directly in the user's Documents folder — where ESO stores SavedVariables
+    // (Documents\Elder Scrolls Online\live\SavedVariables\).
+    if ('showOpenFilePicker' in window) {
+      type OpenFilePickerFn = (options?: {
+        startIn?: string;
+        types?: { description?: string; accept: Record<string, string[]> }[];
+        multiple?: boolean;
+      }) => Promise<{ getFile: () => Promise<File> }[]>;
+      const showOpenFilePicker = (window as Window & { showOpenFilePicker: OpenFilePickerFn })
+        .showOpenFilePicker;
+      try {
+        const [fileHandle] = await showOpenFilePicker({
+          startIn: 'documents',
+          types: [
+            {
+              description: 'Loadout files (.lua, .json, .txt)',
+              accept: {
+                'text/plain': ['.lua', '.txt'],
+                'application/json': ['.json'],
+              },
+            },
+          ],
+          multiple: false,
+        });
+        const file = await fileHandle.getFile();
+        await processImportFile(file);
+      } catch (error) {
+        // User cancelled (AbortError) — ignore silently
+        if (error instanceof Error && error.name !== 'AbortError') {
+          showSnackbar('Failed to open file picker.', 'error');
+        }
+      }
+    } else {
+      // Fallback for browsers that don't support the File System Access API
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    await processImportFile(file);
+    event.target.value = '';
   };
 
   const handleExportClick = (): void => {

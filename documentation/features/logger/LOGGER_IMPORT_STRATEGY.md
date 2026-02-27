@@ -31,8 +31,8 @@ When **non-React files** (workers, utilities, services) import from a **React co
 - `src/utils/elmsMarkersDecoder.ts` ✅
 - `src/utils/mapTimelineUtils.ts` ✅
 - `src/utils/NestedError.ts` ✅
-- `src/utils/sentryUtils.ts` ✅
-- `src/utils/sentryUtils.test.ts` ✅
+- `src/utils/errorTracking.ts` ✅
+- `src/utils/errorTracking.test.ts` ✅
 
 **Service Files (3):**
 - `src/features/scribing/application/services/ScribingDetectionService.ts` ✅

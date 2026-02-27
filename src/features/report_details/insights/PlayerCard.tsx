@@ -1,4 +1,5 @@
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoIcon from '@mui/icons-material/Info';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
@@ -23,6 +24,14 @@ import { toClassKey } from '@/utils/classNameUtils';
 import { abbreviateFood, detectFoodFromAuras, getFoodColor } from '@/utils/foodDetectionUtils';
 import { createGearSetTooltipProps } from '@/utils/gearSetTooltipMapper';
 import { buildVariantSx, getGearChipProps } from '@/utils/playerCardStyleUtils';
+import {
+  abbreviatePotion,
+  describePotionType,
+  describeResourceRestored,
+  detectPotionType,
+  getPotionColor,
+  type PotionStreamResult,
+} from '@/utils/potionDetectionUtils';
 
 import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
@@ -49,6 +58,7 @@ import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
 import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
+import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 import { ScribedSkillData } from '../../scribing/types';
 // TODO: Implement proper scribing detection services
 // Temporary stubs to prevent compilation errors
@@ -79,6 +89,13 @@ const buildEnhancedScribingTooltipProps = (options: {
   isScribingSkill: false,
 });
 
+/** Formats a DPS value as an abbreviated string (e.g. 106234 → "106k") */
+function formatDpsValue(dps: number): string {
+  if (dps >= 1_000_000) return `${(dps / 1_000_000).toFixed(1)}m`;
+  if (dps >= 1_000) return `${Math.round(dps / 1_000)}k`;
+  return String(Math.round(dps));
+}
+
 interface PlayerCardProps {
   player: PlayerDetailsWithRole;
   mundusBuffs: Array<{ name: string; id: number }>;
@@ -97,6 +114,15 @@ interface PlayerCardProps {
   reportId?: string | null;
   fightId?: string | null;
   playerGear: PlayerGearSetRecord[];
+  /** Whether this player is the top DPS in the fight */
+  isTopDps?: boolean;
+  /** The player's total DPS value (used in the badge label) */
+  totalDps?: number;
+  critDamageSummary?: { avg: number; max: number };
+  /** Bar swap analysis result, used to display bar setup pattern on DPS cards */
+  barSwapResult?: BarSwapAnalysisResult;
+  /** Per-player potion classification from the live fight event stream (Path B detection) */
+  potionStreamResult?: PotionStreamResult;
 }
 
 // Helper function to consolidate build issues
@@ -165,6 +191,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     reportId,
     fightId,
     playerGear,
+    isTopDps,
+    totalDps,
+    critDamageSummary,
+    barSwapResult,
+    potionStreamResult,
   }) => {
     const theme = useTheme();
 
@@ -368,6 +399,31 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       };
     }, [foodAura]);
 
+    // Memoize potion information — prefer the live-stream result (Path B) when available.
+    const potionInfo = React.useMemo(() => {
+      if (potionStreamResult) {
+        const resourceDesc =
+          potionStreamResult.resourceRestored !== 'none'
+            ? ` — Restores: ${describeResourceRestored(potionStreamResult.resourceRestored)}`
+            : '';
+        return {
+          type: potionStreamResult.type,
+          count: potionStreamResult.count,
+          display: abbreviatePotion(potionStreamResult.type),
+          color: getPotionColor(potionStreamResult.type),
+          tooltip: `${describePotionType(potionStreamResult.type)}${resourceDesc}`,
+        };
+      }
+      const potionType = detectPotionType(auras, player.potionUse ?? 0);
+      return {
+        type: potionType,
+        count: player.potionUse ?? 0,
+        display: abbreviatePotion(potionType),
+        color: getPotionColor(potionType),
+        tooltip: describePotionType(potionType),
+      };
+    }, [auras, player.potionUse, potionStreamResult]);
+
     const resolvedPlayerName = resolveActorName(player);
     const normalizedDisplayName = resolvedPlayerName.trim();
     const trimmedCharacterName = player.name?.trim() ?? '';
@@ -520,6 +576,45 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     </Tooltip>
                   </Box>
                 </Box>
+
+                {/* Top DPS badge */}
+                {isTopDps && totalDps !== undefined && (
+                  <Box sx={{ mb: 0.75 }}>
+                    <Chip
+                      icon={
+                        <EmojiEventsIcon
+                          sx={{
+                            fontSize: '0.85rem !important',
+                            color: '#b45309 !important',
+                          }}
+                        />
+                      }
+                      label={`Top DPS (Total): ${formatDpsValue(totalDps)}`}
+                      size="small"
+                      data-testid="top-dps-badge"
+                      sx={{
+                        height: 22,
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        letterSpacing: 0.3,
+                        background: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'linear-gradient(135deg, rgba(180,83,9,0.25) 0%, rgba(245,158,11,0.15) 100%)'
+                            : 'linear-gradient(135deg, rgba(251,191,36,0.25) 0%, rgba(245,158,11,0.15) 100%)',
+                        border: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? '1px solid rgba(245,158,11,0.4)'
+                            : '1px solid rgba(180,83,9,0.35)',
+                        '& .MuiChip-label': {
+                          color: (theme) => (theme.palette.mode === 'dark' ? '#fbbf24' : '#92400e'),
+                          px: 0.75,
+                        },
+                        '& .MuiChip-icon': { ml: 0.5 },
+                      }}
+                    />
+                  </Box>
+                )}
+
                 <Box>
                   <Box
                     sx={{
@@ -1101,6 +1196,34 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       </Tooltip>{' '}
                       ·{' '}
                       <Tooltip
+                        title={`Potion (${potionInfo.count}x): ${potionInfo.tooltip}`}
+                        enterTouchDelay={0}
+                        leaveTouchDelay={3000}
+                      >
+                        <span
+                          style={{ display: 'inline-flex', alignItems: 'center' }}
+                          data-testid={`potion-${player.id}`}
+                        >
+                          <span role="img" aria-label="potion">
+                            ⚗️
+                          </span>
+                          <span style={{ margin: '0 1px' }}></span>
+                          <Box
+                            component="span"
+                            sx={{
+                              display: 'inline',
+                              fontWeight: 700,
+                              fontSize: { xs: 8, sm: 9, md: 10 },
+                              letterSpacing: '.01em',
+                              color: potionInfo.color,
+                            }}
+                          >
+                            {potionInfo.count}×{potionInfo.display}
+                          </Box>
+                        </span>
+                      </Tooltip>{' '}
+                      ·{' '}
+                      <Tooltip
                         title="Deaths in this fight"
                         enterTouchDelay={0}
                         leaveTouchDelay={3000}
@@ -1167,8 +1290,69 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           </Tooltip>
                         </>
                       )}
+                      {player.role === 'dps' && barSwapResult?.barSetupPattern && (
+                        <>
+                          {' '}
+                          ·{' '}
+                          <Tooltip
+                            title={`Bar rotation pattern — each letter is one bar-trip between swaps: F = front bar, B = back bar, S = setup trip`}
+                            enterTouchDelay={0}
+                            leaveTouchDelay={3000}
+                          >
+                            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                              <span role="img" aria-label="bar pattern">
+                                🔄
+                              </span>
+                              <span style={{ margin: '0 1px' }}></span>
+                              <Box
+                                component="span"
+                                sx={{
+                                  fontWeight: 700,
+                                  letterSpacing: '0.05em',
+                                  fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                                }}
+                              >
+                                {barSwapResult.barSetupPattern}
+                              </Box>
+                            </span>
+                          </Tooltip>
+                        </>
+                      )}
                     </Typography>
                   </Box>
+
+                  {critDamageSummary && player.role === 'dps' && (
+                    <Box
+                      sx={{
+                        mb: 1,
+                        px: 0.5,
+                      }}
+                    >
+                      <Tooltip
+                        title="Critical Damage: avg is the time-weighted average crit damage multiplier; max is the highest recorded value during the fight"
+                        enterTouchDelay={0}
+                        leaveTouchDelay={3000}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color:
+                              critDamageSummary.avg >= 125
+                                ? 'success.main'
+                                : critDamageSummary.avg >= 100
+                                  ? 'warning.main'
+                                  : 'error.main',
+                            fontWeight: 600,
+                            fontSize: { xs: '0.68rem', sm: '0.72rem' },
+                            cursor: 'help',
+                          }}
+                        >
+                          ⚔️ Crit: {critDamageSummary.avg.toFixed(0)}% avg (
+                          {critDamageSummary.max.toFixed(0)}% max)
+                        </Typography>
+                      </Tooltip>
+                    </Box>
+                  )}
 
                   {(maxHealth > 0 || maxStamina > 0 || maxMagicka > 0) && (
                     <Box

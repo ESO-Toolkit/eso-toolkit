@@ -6,22 +6,10 @@
  * - Summary of buff coverage
  */
 
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import InfoIcon from '@mui/icons-material/Info';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import WarningIcon from '@mui/icons-material/Warning';
-import {
-  Box,
-  Card,
-  CardContent,
-  Checkbox,
-  Chip,
-  FormControlLabel,
-  FormGroup,
-  Stack,
-  Typography,
-  Alert,
-  Tooltip,
-} from '@mui/material';
+import { Box, Chip, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 import React from 'react';
 
 import { BuffChecklistResult } from '../types/buffChecklist';
@@ -32,9 +20,33 @@ interface BuffChecklistProps {
 
 export const BuffChecklist: React.FC<BuffChecklistProps> = ({ checklistData }) => {
   const { majorBuffs, minorBuffs, supportBuffs, redundantBuffs, summary } = checklistData;
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
   const dummySupportBuffs = React.useMemo(
     () => supportBuffs.filter((buff) => buff.isProvidedByDummy),
     [supportBuffs],
+  );
+
+  const StatusDot: React.FC<{ active: boolean; label: string }> = ({ active, label }) => (
+    <Tooltip title={label}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {active ? (
+          <CheckCircleOutlineIcon sx={{ fontSize: 14, color: 'success.main' }} />
+        ) : (
+          <RadioButtonUncheckedIcon
+            sx={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)' }}
+          />
+        )}
+        <Typography
+          variant="caption"
+          color={active ? 'text.primary' : 'text.secondary'}
+          sx={{ fontSize: '0.65rem' }}
+        >
+          {label}
+        </Typography>
+      </Box>
+    </Tooltip>
   );
 
   const renderBuffItem = (
@@ -50,46 +62,43 @@ export const BuffChecklist: React.FC<BuffChecklistProps> = ({ checklistData }) =
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          py: 1,
-          px: 2,
+          py: 0.75,
+          px: 1.5,
           borderRadius: 1,
+          borderLeft: isRedundant ? '3px solid' : '3px solid transparent',
+          borderLeftColor: isRedundant ? 'warning.main' : 'transparent',
+          backgroundColor: isRedundant
+            ? isDark
+              ? 'rgba(255, 152, 0, 0.06)'
+              : 'rgba(255, 152, 0, 0.04)'
+            : 'transparent',
           '&:hover': {
-            backgroundColor: 'action.hover',
+            backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
           },
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-          <Typography variant="body2" sx={{ minWidth: 180 }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1 }}>
+          <Typography variant="caption" fontWeight={500}>
             {buffName}
           </Typography>
           {isRedundant && (
-            <Tooltip title="This buff is provided by both the dummy and your character. Consider removing it from your build.">
+            <Tooltip title="Both dummy and player provide this buff. Consider removing from your build.">
               <Chip
-                icon={<WarningIcon />}
+                icon={<WarningIcon sx={{ fontSize: '12px !important' }} />}
                 label="Redundant"
                 size="small"
                 color="warning"
-                sx={{ fontSize: '0.7rem' }}
+                variant="outlined"
+                sx={{ height: 18, fontSize: '0.6rem', '& .MuiChip-icon': { ml: 0.5 } }}
               />
             </Tooltip>
           )}
-        </Box>
+        </Stack>
 
-        <FormGroup row>
-          <Tooltip title="Provided by the trial dummy">
-            <FormControlLabel
-              control={<Checkbox checked={isProvidedByDummy} disabled size="small" />}
-              label={<Typography variant="caption">Trial Dummy</Typography>}
-              sx={{ mr: 2 }}
-            />
-          </Tooltip>
-          <Tooltip title="Provided by your character (skills, sets, or passives)">
-            <FormControlLabel
-              control={<Checkbox checked={isProvidedByPlayer} disabled size="small" />}
-              label={<Typography variant="caption">Player</Typography>}
-            />
-          </Tooltip>
-        </FormGroup>
+        <Stack direction="row" spacing={1.5}>
+          <StatusDot active={isProvidedByDummy} label="Dummy" />
+          <StatusDot active={isProvidedByPlayer} label="Player" />
+        </Stack>
       </Box>
     );
   };
@@ -102,108 +111,87 @@ export const BuffChecklist: React.FC<BuffChecklistProps> = ({ checklistData }) =
     if (buffs.length === 0) return null;
 
     return (
-      <Box sx={{ mb: 3 }}>
-        <Typography
-          variant="h6"
-          gutterBottom
-          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-        >
-          {title}
-          <Chip label={buffs.length} size="small" color={color} />
-        </Typography>
-        <Card variant="outlined">
-          <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
-            {buffs.map((buff) =>
-              renderBuffItem(
-                buff.buffName,
-                buff.isProvidedByDummy,
-                buff.isProvidedByPlayer,
-                buff.isRedundant,
-              ),
-            )}
-          </CardContent>
-        </Card>
+      <Box sx={{ mb: 2 }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+          <Chip
+            label={title}
+            color={color}
+            size="small"
+            variant="outlined"
+            sx={{ height: 20, fontSize: '0.65rem' }}
+          />
+          <Typography variant="caption" color="text.secondary">
+            {buffs.length}
+          </Typography>
+        </Stack>
+        <Stack spacing={0}>
+          {buffs.map((buff) =>
+            renderBuffItem(
+              buff.buffName,
+              buff.isProvidedByDummy,
+              buff.isProvidedByPlayer,
+              buff.isRedundant,
+            ),
+          )}
+        </Stack>
       </Box>
     );
   };
 
   return (
     <Box>
-      {/* Summary Section */}
-      <Card sx={{ mb: 3, backgroundColor: 'background.default' }}>
-        <CardContent>
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-          >
-            <InfoIcon color="primary" />
-            Buff Coverage Summary
-          </Typography>
-          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-            <Chip
-              icon={<CheckCircleIcon />}
-              label={`${summary.totalDummyBuffs} Dummy Buffs`}
-              color="primary"
-              variant="outlined"
-            />
-            <Chip
-              label={`${summary.totalPlayerBuffs} Player Buffs`}
-              color="secondary"
-              variant="outlined"
-            />
-            {summary.totalRedundantBuffs > 0 && (
-              <Chip
-                icon={<WarningIcon />}
-                label={`${summary.totalRedundantBuffs} Redundant`}
-                color="warning"
-              />
-            )}
-          </Stack>
-        </CardContent>
-      </Card>
+      {/* Summary chips */}
+      <Stack direction="row" spacing={1} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
+        <Chip
+          label={`${summary.totalDummyBuffs} Dummy`}
+          size="small"
+          color="primary"
+          variant="outlined"
+          sx={{ height: 22, fontSize: '0.7rem' }}
+        />
+        <Chip
+          label={`${summary.totalPlayerBuffs} Player`}
+          size="small"
+          color="secondary"
+          variant="outlined"
+          sx={{ height: 22, fontSize: '0.7rem' }}
+        />
+        {summary.totalRedundantBuffs > 0 && (
+          <Chip
+            icon={<WarningIcon sx={{ fontSize: '14px !important' }} />}
+            label={`${summary.totalRedundantBuffs} Redundant`}
+            size="small"
+            color="warning"
+            sx={{ height: 22, fontSize: '0.7rem' }}
+          />
+        )}
+      </Stack>
 
-      {/* Redundancy Warning */}
+      {/* Redundancy callout */}
       {redundantBuffs.length > 0 && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Redundant Buffs Detected
+        <Box
+          sx={{
+            mb: 2,
+            p: 1.5,
+            borderRadius: 1.5,
+            borderLeft: '3px solid',
+            borderLeftColor: 'warning.main',
+            backgroundColor: isDark ? 'rgba(255, 152, 0, 0.06)' : 'rgba(255, 152, 0, 0.04)',
+          }}
+        >
+          <Typography variant="caption" fontWeight={600} color="warning.main">
+            Redundant Buffs
           </Typography>
-          <Typography variant="body2">
-            The following buffs are provided by both the trial dummy and your character:{' '}
-            <strong>{redundantBuffs.join(', ')}</strong>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.25 }}>
+            {redundantBuffs.join(', ')} — already provided by the trial dummy
           </Typography>
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            Consider removing these from your build to optimize your setup, as the trial dummy
-            already provides them.
-          </Typography>
-        </Alert>
+        </Box>
       )}
 
-      {/* Buff Categories */}
-      {renderBuffCategory('Major Buffs', majorBuffs, 'primary')}
-      {renderBuffCategory('Minor Buffs', minorBuffs, 'secondary')}
-      {renderBuffCategory('Support Buffs', dummySupportBuffs, 'info')}
-
-      {/* Help Text */}
-      <Box sx={{ mt: 3, p: 2, backgroundColor: 'action.hover', borderRadius: 1 }}>
-        <Typography variant="caption" color="text.secondary">
-          <strong>How to read this checklist:</strong>
-          <ul style={{ marginTop: 8, marginBottom: 0, paddingLeft: 20 }}>
-            <li>
-              <strong>Trial Dummy</strong> checkbox: The buff is provided by the trial dummy
-            </li>
-            <li>
-              <strong>Player</strong> checkbox: The buff is provided by your character (skills,
-              sets, or passives)
-            </li>
-            <li>
-              <strong>Redundant</strong> (⚠️): Both sources provide the same buff - consider
-              removing it from your build
-            </li>
-          </ul>
-        </Typography>
-      </Box>
+      {/* Buff categories */}
+      {renderBuffCategory('Major', majorBuffs, 'primary')}
+      {renderBuffCategory('Minor', minorBuffs, 'secondary')}
+      {renderBuffCategory('Support', dummySupportBuffs, 'info')}
     </Box>
   );
 };

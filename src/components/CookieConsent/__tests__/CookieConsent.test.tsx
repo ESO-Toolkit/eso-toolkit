@@ -1,14 +1,18 @@
 /**
- * CookieConsent Component Tests
+ * CookieConsent Component Tests (GDPR granular consent)
  */
 
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import React from 'react';
 
-import { CookieConsent, hasAcceptedCookies, getConsentState, clearConsent } from '../CookieConsent';
-
-const COOKIE_CONSENT_KEY = 'eso-log-aggregator-cookie-consent';
-const COOKIE_CONSENT_VERSION = '1';
+import {
+  acceptAllConsent,
+  clearConsent,
+  getConsentPreferences,
+  getConsentState,
+  CURRENT_CONSENT_VERSION,
+} from '../../../utils/consentManager';
+import { CookieConsent } from '../CookieConsent';
 
 describe('CookieConsent', () => {
   beforeEach(() => {
@@ -21,19 +25,13 @@ describe('CookieConsent', () => {
     expect(screen.getByText('We Value Your Privacy')).toBeInTheDocument();
   });
 
-  it('should not show banner when consent has been accepted', async () => {
-    const consent = {
-      accepted: true,
-      version: COOKIE_CONSENT_VERSION,
-      timestamp: new Date().toISOString(),
-    };
-    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent));
+  it('should not show banner when valid consent exists', async () => {
+    acceptAllConsent();
 
     await act(async () => {
       render(<CookieConsent />);
     });
 
-    // Component should not render the banner
     await waitFor(
       () => {
         expect(screen.queryByText('We Value Your Privacy')).not.toBeInTheDocument();
@@ -43,27 +41,22 @@ describe('CookieConsent', () => {
   });
 
   it('should show banner when consent version is outdated', () => {
-    const consent = {
-      accepted: true,
-      version: '0', // Old version
-      timestamp: new Date().toISOString(),
-    };
-    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent));
+    // Legacy v1 format
+    localStorage.setItem(
+      'eso-log-aggregator-cookie-consent',
+      JSON.stringify({ accepted: true, version: '1', timestamp: new Date().toISOString() }),
+    );
 
     render(<CookieConsent />);
     expect(screen.getByText('We Value Your Privacy')).toBeInTheDocument();
   });
 
-  it('should hide banner when user accepts consent', async () => {
+  it('should hide banner and save all-accepted when Accept All is clicked', async () => {
     await act(async () => {
       render(<CookieConsent />);
     });
 
-    await waitFor(() => {
-      expect(screen.getByText('We Value Your Privacy')).toBeInTheDocument();
-    });
-
-    const acceptButton = screen.getByRole('button', { name: /^accept$/i });
+    const acceptButton = screen.getByRole('button', { name: /accept all/i });
 
     await act(async () => {
       fireEvent.click(acceptButton);
@@ -73,28 +66,17 @@ describe('CookieConsent', () => {
       expect(screen.queryByText('We Value Your Privacy')).not.toBeInTheDocument();
     });
 
-    // Check localStorage was updated
-    await waitFor(() => {
-      const consentStr = localStorage.getItem(COOKIE_CONSENT_KEY);
-      expect(consentStr).toBeTruthy();
-      if (consentStr) {
-        const consent = JSON.parse(consentStr);
-        expect(consent.accepted).toBe(true);
-        expect(consent.version).toBe(COOKIE_CONSENT_VERSION);
-      }
-    });
+    const prefs = getConsentPreferences();
+    expect(prefs.analytics).toBe(true);
+    expect(prefs.errorTracking).toBe(true);
   });
 
-  it('should hide banner when user declines consent', async () => {
+  it('should hide banner and save all-declined when Decline All is clicked', async () => {
     await act(async () => {
       render(<CookieConsent />);
     });
 
-    await waitFor(() => {
-      expect(screen.getByText('We Value Your Privacy')).toBeInTheDocument();
-    });
-
-    const declineButton = screen.getByRole('button', { name: /^decline$/i });
+    const declineButton = screen.getByRole('button', { name: /decline all/i });
 
     await act(async () => {
       fireEvent.click(declineButton);
@@ -104,182 +86,130 @@ describe('CookieConsent', () => {
       expect(screen.queryByText('We Value Your Privacy')).not.toBeInTheDocument();
     });
 
-    // Check localStorage was updated
-    await waitFor(() => {
-      const consentStr = localStorage.getItem(COOKIE_CONSENT_KEY);
-      expect(consentStr).toBeTruthy();
-      if (consentStr) {
-        const consent = JSON.parse(consentStr);
-        expect(consent.accepted).toBe(false);
-        expect(consent.version).toBe(COOKIE_CONSENT_VERSION);
-      }
-    });
+    const prefs = getConsentPreferences();
+    expect(prefs.analytics).toBe(false);
+    expect(prefs.errorTracking).toBe(false);
+    expect(prefs.essential).toBe(true);
   });
 
-  it('should open details dialog when clicking Learn more', async () => {
+  it('should open preferences dialog when Customize is clicked', async () => {
     render(<CookieConsent />);
 
-    const learnMoreLink = screen.getByRole('button', { name: /learn more/i });
+    // There are two "Customize" buttons in the banner — the link and the button.
+    // Use getAllByRole and pick the standalone button (not the inline link).
+    const customizeButtons = screen.getAllByRole('button', { name: /customize/i });
+    const customizeButton = customizeButtons[customizeButtons.length - 1];
 
     await act(async () => {
-      fireEvent.click(learnMoreLink);
+      fireEvent.click(customizeButton);
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Privacy & Cookie Policy')).toBeInTheDocument();
+      expect(screen.getByText('Privacy Preferences')).toBeInTheDocument();
     });
   });
 
-  it('should close details dialog when clicking Close', async () => {
-    await act(async () => {
-      render(<CookieConsent />);
-    });
-
-    // Open dialog
-    const learnMoreLink = screen.getByRole('button', { name: /learn more/i });
-
-    await act(async () => {
-      fireEvent.click(learnMoreLink);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('Privacy & Cookie Policy')).toBeInTheDocument();
-    });
-
-    // Close dialog
-    const closeButtons = screen.getAllByRole('button', { name: /close/i });
-
-    await act(async () => {
-      fireEvent.click(closeButtons[0]);
-    });
-
-    // Dialog uses keepMounted, so check for the dialog to be hidden via class
-    await waitFor(
-      () => {
-        const dialogs = screen.getAllByRole('presentation', { hidden: true });
-        const dialogRoot = dialogs.find((el) => el.classList.contains('MuiDialog-root'));
-        expect(dialogRoot).toHaveClass('MuiModal-hidden');
-      },
-      { timeout: 2000 },
-    );
-  });
-
-  it('should accept from details dialog', async () => {
+  it('should show Essential as always active in preferences dialog', async () => {
     render(<CookieConsent />);
 
-    // Open dialog
-    const learnMoreLink = screen.getByRole('button', { name: /learn more/i });
+    const customizeButtons = screen.getAllByRole('button', { name: /customize/i });
+    const customizeButton = customizeButtons[customizeButtons.length - 1];
 
     await act(async () => {
-      fireEvent.click(learnMoreLink);
+      fireEvent.click(customizeButton);
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Privacy & Cookie Policy')).toBeInTheDocument();
+      expect(screen.getByText('Always Active')).toBeInTheDocument();
+    });
+  });
+
+  it('should save granular preferences when Save Preferences is clicked', async () => {
+    render(<CookieConsent />);
+
+    // Open customization dialog
+    const customizeButtons = screen.getAllByRole('button', { name: /customize/i });
+    const customizeButton = customizeButtons[customizeButtons.length - 1];
+    await act(async () => {
+      fireEvent.click(customizeButton);
     });
 
-    // Accept from dialog (last Accept button)
-    const acceptButtons = screen.getAllByRole('button', { name: /accept/i });
-    const dialogAcceptButton = acceptButtons[acceptButtons.length - 1];
+    await waitFor(() => {
+      expect(screen.getByText('Privacy Preferences')).toBeInTheDocument();
+    });
 
+    // Toggle analytics on (find the first switch)
+    const switches = screen.getAllByRole('switch');
+    // First switch = analytics, second = error tracking
     await act(async () => {
-      fireEvent.click(dialogAcceptButton);
+      fireEvent.click(switches[0]); // Enable analytics
+    });
+
+    // Save
+    const saveButton = screen.getByRole('button', { name: /save preferences/i });
+    await act(async () => {
+      fireEvent.click(saveButton);
+    });
+
+    // Check saved state
+    const prefs = getConsentPreferences();
+    expect(prefs.analytics).toBe(true);
+    expect(prefs.errorTracking).toBe(false);
+  });
+
+  it('should dispatch consent-changed event on accept', async () => {
+    const handler = jest.fn();
+    window.addEventListener('consent-changed', handler);
+
+    render(<CookieConsent />);
+
+    const acceptButton = screen.getByRole('button', { name: /accept all/i });
+    await act(async () => {
+      fireEvent.click(acceptButton);
+    });
+
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    window.removeEventListener('consent-changed', handler);
+  });
+
+  it('should hide banner when close button is clicked (equals decline)', async () => {
+    render(<CookieConsent />);
+
+    const closeButton = screen.getByRole('button', { name: /close/i });
+    await act(async () => {
+      fireEvent.click(closeButton);
     });
 
     await waitFor(() => {
       expect(screen.queryByText('We Value Your Privacy')).not.toBeInTheDocument();
-      expect(screen.queryByText('Privacy & Cookie Policy')).not.toBeInTheDocument();
     });
+
+    const prefs = getConsentPreferences();
+    expect(prefs.analytics).toBe(false);
+  });
+
+  it('should include Privacy Policy link in banner', () => {
+    render(<CookieConsent />);
+    const link = screen.getByRole('link', { name: /privacy policy/i });
+    expect(link).toHaveAttribute('href', '/privacy');
   });
 });
 
-describe('hasAcceptedCookies', () => {
+describe('consentManager re-exports (via index)', () => {
   beforeEach(() => {
     localStorage.clear();
   });
 
-  it('should return false when no consent has been given', () => {
-    expect(hasAcceptedCookies()).toBe(false);
-  });
-
-  it('should return true when consent has been accepted', () => {
-    const consent = {
-      accepted: true,
-      version: COOKIE_CONSENT_VERSION,
-      timestamp: new Date().toISOString(),
-    };
-    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent));
-
-    // Verify it was stored correctly
-    const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
-    expect(stored).toBeTruthy();
-
-    const result = hasAcceptedCookies();
-    expect(result).toBe(true);
-  });
-
-  it('should return false when consent has been declined', () => {
-    const consent = {
-      accepted: false,
-      version: COOKIE_CONSENT_VERSION,
-      timestamp: new Date().toISOString(),
-    };
-    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent));
-    expect(hasAcceptedCookies()).toBe(false);
-  });
-
-  it('should return false when consent version is outdated', () => {
-    const consent = {
-      accepted: true,
-      version: '0',
-      timestamp: new Date().toISOString(),
-    };
-    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent));
-    expect(hasAcceptedCookies()).toBe(false);
-  });
-});
-
-describe('getConsentState', () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
-
-  it('should return null when no consent has been given', () => {
+  it('clearConsent removes consent', () => {
+    acceptAllConsent();
+    clearConsent();
     expect(getConsentState()).toBeNull();
   });
 
-  it('should return consent state when it exists', () => {
-    const consent = {
-      accepted: true,
-      version: COOKIE_CONSENT_VERSION,
-      timestamp: '2024-01-01T00:00:00.000Z',
-    };
-    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent));
-
-    // Verify storage worked
-    const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
-    expect(stored).toBeTruthy();
-
-    const result = getConsentState();
-    expect(result).toEqual(consent);
-  });
-});
-
-describe('clearConsent', () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
-
-  it('should clear consent from localStorage', () => {
-    const consent = {
-      accepted: true,
-      version: COOKIE_CONSENT_VERSION,
-      timestamp: new Date().toISOString(),
-    };
-    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent));
-
-    clearConsent();
-
-    expect(localStorage.getItem(COOKIE_CONSENT_KEY)).toBeNull();
+  it('getConsentState returns current version', () => {
+    acceptAllConsent();
+    const state = getConsentState();
+    expect(state?.version).toBe(CURRENT_CONSENT_VERSION);
   });
 });

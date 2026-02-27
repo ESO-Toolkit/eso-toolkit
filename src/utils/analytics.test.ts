@@ -65,10 +65,10 @@ describe('analytics', () => {
     mockGetBuildInfo.mockReturnValue(mockBuildInfo);
     mockGetBuildInfoAsync.mockResolvedValue(mockBuildInfo);
 
-    // Set up consent in localStorage
+    // Set up consent in localStorage (v2 granular format)
     const consent = {
-      accepted: true,
-      version: '1',
+      preferences: { essential: true, analytics: true, errorTracking: true },
+      version: '2',
       timestamp: new Date().toISOString(),
     };
     localStorage.setItem('eso-log-aggregator-cookie-consent', JSON.stringify(consent));

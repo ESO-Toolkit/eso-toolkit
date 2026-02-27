@@ -133,7 +133,7 @@ npm run build
 
 - ✅ Home page loading and navigation
 - ✅ Report page with fight details
-- ✅ API mocking (ESO Logs, Sentry, CDN)
+- ✅ API mocking (ESO Logs, Rollbar, CDN)
 - ✅ Error handling and edge cases
 - ✅ Cross-browser compatibility
 - ✅ **Screen size validation (22+ devices)**
