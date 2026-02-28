@@ -47,13 +47,14 @@ const CLASS_CATEGORIES = new Set([
   'Nightblade', 'Sorcerer', 'Templar', 'Warden',
 ]);
 
+const HTML_ENTITIES = { '&amp;': '&', '&#39;': "'", '&quot;': '"', '&lt;': '<', '&gt;': '>', '&nbsp;': ' ' };
+
 function stripHtml(html) {
   if (!html) return '';
   return html
     .replace(/<a\s[^>]*>|<\/a>/gi, '')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"')
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&(?:amp|#39|quot|lt|gt|nbsp);/g, (e) => HTML_ENTITIES[e] ?? e)
     .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
     .replace(/\r\n|\r|\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
 }
@@ -64,7 +65,7 @@ function extractIconName(iconUrl) {
 }
 
 function norm(s) {
-  return (s ?? '').replace(/\s+/g, ' ').replace(/['']/g, "'").replace(/[""]/g, '"').trim();
+  return (s ?? '').replace(/\s+/g, ' ').replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').trim();
 }
 
 async function fetchAllClassSkills() {

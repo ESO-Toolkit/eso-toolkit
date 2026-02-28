@@ -53,15 +53,10 @@ function stripHtml(html) {
       .map((line) =>
         line
           // Remove all remaining HTML tags
-          .replace(/<[^>]+>/g, '')
-          // Decode common HTML entities
-          .replace(/&amp;/g, '&')
-          .replace(/&#39;/g, "'")
-          .replace(/&quot;/g, '"')
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&nbsp;/g, ' ')
-          .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(n))
+          .replace(/<[^>]*>/g, '')
+          // Decode common HTML entities (single pass to avoid double-unescaping)
+          .replace(/&(?:amp|#39|quot|lt|gt|nbsp);/g, (e) => ({ '&amp;': '&', '&#39;': "'", '&quot;': '"', '&lt;': '<', '&gt;': '>', '&nbsp;': ' ' }[e] ?? e))
+          .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
           .trim(),
       )
       .filter(Boolean)
@@ -192,7 +187,7 @@ function bonusesEqual(a, b) {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
     // Normalise whitespace and smart quotes for comparison
-    const norm = (s) => s.replace(/\s+/g, ' ').replace(/['']/g, "'").trim();
+    const norm = (s) => s.replace(/\s+/g, ' ').replace(/[\u2018\u2019]/g, "'").trim();
     if (norm(a[i]) !== norm(b[i])) return false;
   }
   return true;

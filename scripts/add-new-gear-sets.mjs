@@ -22,7 +22,7 @@ const GEAR_DIR = resolve(ROOT, 'src/data/Gear Sets');
 
 function toCamelCase(name) {
   return name
-    .replace(/['']/g, '') // remove apostrophes (Belharza's → belharzas)
+    .replace(/['\u2019]/g, '') // remove apostrophes (Belharza's → belharzas)
     .replace(/[^a-zA-Z0-9]+(.)/g, (_, c) => c.toUpperCase()) // word boundaries → uppercase
     .replace(/^(.)/, (c) => c.toLowerCase()); // ensure first char lowercase
 }
@@ -50,46 +50,6 @@ function buildBlock(exportVar, name, setType, bonuses) {
 ${bonusLines}
   ],
 };\n`;
-}
-
-// ─── Insert a block alphabetically into a file ────────────────────────────────
-
-function insertAlphabetically(filepath, newBlock, exportVar) {
-  let content = readFileSync(filepath, 'utf-8');
-
-  // Collect all export const positions and their names
-  const re = /^export const (\w+): GearSetData/gm;
-  const entries = [];
-  let m;
-  while ((m = re.exec(content)) !== null) {
-    entries.push({ name: m[1], index: m.index });
-  }
-
-  if (entries.length === 0) {
-    // Append at end
-    content = content.trimEnd() + '\n\n' + newBlock;
-    return { content, position: 'end' };
-  }
-
-  // Find the right alphabetical position
-  let insertAt = content.length; // default: append at end
-  let insertedBefore = null;
-
-  for (const entry of entries) {
-    if (entry.name.toLowerCase() > exportVar.toLowerCase()) {
-      insertAt = entry.index;
-      insertedBefore = entry.name;
-      break;
-    }
-  }
-
-  if (insertedBefore) {
-    content = content.slice(0, insertAt) + newBlock + '\n' + content.slice(insertAt);
-  } else {
-    content = content.trimEnd() + '\n\n' + newBlock;
-  }
-
-  return { content, position: insertedBefore ? `before ${insertedBefore}` : 'end' };
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
