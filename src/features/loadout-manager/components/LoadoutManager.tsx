@@ -73,6 +73,8 @@ import type { ClipboardSetup, LoadoutSetup, LoadoutState } from '../types/loadou
 import {
   extractWizardWardrobeData,
   parseWizardWardrobeSavedVariablesWithFallback,
+  parseAlphaGearSavedVariables,
+  convertAlphaGearToLoadoutState,
 } from '../utils/luaParser';
 import { convertAllCharactersToLoadoutState } from '../utils/wizardWardrobeConverter';
 import {
@@ -417,10 +419,26 @@ export const LoadoutManager: React.FC = () => {
         }
       }
 
+      // Try AlphaGear format first (AGX2_Character table)
+      const alphaGearResult = parseAlphaGearSavedVariables(text);
+      if (alphaGearResult) {
+        const converted = convertAlphaGearToLoadoutState(alphaGearResult.characters);
+        dispatch(loadState(converted));
+        registerSlotsFromLoadoutState(converted, 'wizard-wardrobe', { reset: true });
+        setSelectedSetupIndex(null);
+        const characterCount = converted.characters.length;
+        showSnackbar(
+          `Imported AlphaGear loadouts for ${characterCount} ${characterCount === 1 ? 'character' : 'characters'}.`,
+          'success',
+        );
+        return;
+      }
+
+      // Fall back to Wizard's Wardrobe format
       const parsed = parseWizardWardrobeSavedVariablesWithFallback(text);
       const wizardData = extractWizardWardrobeData({ [parsed.tableName]: parsed.data });
       if (!wizardData) {
-        throw new Error("Could not find Wizard's Wardrobe data in file.");
+        throw new Error("Could not find Wizard's Wardrobe or AlphaGear data in file.");
       }
 
       const converted = convertAllCharactersToLoadoutState(wizardData);

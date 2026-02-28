@@ -27,8 +27,12 @@ import { useSelector } from 'react-redux';
 import { useLogger } from '@/hooks/useLogger';
 
 import { TRIALS } from '../data/trialConfigs';
-import { selectCurrentTrial, selectCurrentSetups } from '../store/selectors';
+import { selectCurrentTrial, selectCurrentSetups, selectLoadoutState } from '../store/selectors';
 import { WizardWardrobeExport } from '../types/loadout.types';
+import {
+  convertLoadoutStateToAlphaGear,
+  serializeAlphaGearToLua,
+} from '../utils/alphaGearConverter';
 import { validateGearConfig } from '../utils/itemSlotValidator';
 
 interface ExportDialogProps {
@@ -40,7 +44,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
   const logger = useLogger('ExportDialog');
   const currentTrialId = useSelector(selectCurrentTrial);
   const setups = useSelector(selectCurrentSetups);
-  const [exportFormat, setExportFormat] = useState<'json' | 'wizard'>('json');
+  const loadoutState = useSelector(selectLoadoutState);
+  const [exportFormat, setExportFormat] = useState<'json' | 'wizard' | 'alphagear'>('json');
   const [copied, setCopied] = useState(false);
 
   const currentTrial = TRIALS.find((t) => t.id === currentTrialId);
@@ -82,6 +87,11 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
     return JSON.stringify(exportData, null, 2);
   };
 
+  const generateAlphaGear = (): string => {
+    const agData = convertLoadoutStateToAlphaGear(loadoutState);
+    return serializeAlphaGearToLua(agData);
+  };
+
   const generateWizardWardrobe = (): string => {
     // Convert to Wizard's Wardrobe format
     const wizardData: WizardWardrobeExport = {
@@ -99,18 +109,28 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
     return JSON.stringify(wizardData, null, 2);
   };
 
+  const getExportData = (): string => {
+    if (exportFormat === 'alphagear') return generateAlphaGear();
+    if (exportFormat === 'wizard') return generateWizardWardrobe();
+    return generateJSON();
+  };
+
+  const getExportFilename = (): string => {
+    if (exportFormat === 'alphagear') return `AlphaGear.lua`;
+    if (exportFormat === 'wizard') return `wizard-wardrobe-${currentTrialId}-${Date.now()}.json`;
+    return `loadout-${currentTrialId}-${Date.now()}.json`;
+  };
+
   const handleExport = (): void => {
     if (exportBlocked) {
       return;
     }
-    const data = exportFormat === 'json' ? generateJSON() : generateWizardWardrobe();
-    const filename =
-      exportFormat === 'json'
-        ? `loadout-${currentTrialId}-${Date.now()}.json`
-        : `wizard-wardrobe-${currentTrialId}-${Date.now()}.json`;
+    const data = getExportData();
+    const filename = getExportFilename();
+    const mimeType = exportFormat === 'alphagear' ? 'text/plain' : 'application/json';
 
     // Create blob and download
-    const blob = new Blob([data], { type: 'application/json' });
+    const blob = new Blob([data], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -125,7 +145,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
     if (exportBlocked) {
       return;
     }
-    const data = exportFormat === 'json' ? generateJSON() : generateWizardWardrobe();
+    const data = getExportData();
     try {
       await navigator.clipboard.writeText(data);
       setCopied(true);
@@ -137,7 +157,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
   };
 
   const getPreview = (): string => {
-    const data = exportFormat === 'json' ? generateJSON() : generateWizardWardrobe();
+    const data = getExportData();
     // Show first 500 characters as preview
     return data.length > 500 ? data.substring(0, 500) + '\n...' : data;
   };
@@ -202,7 +222,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
             <Select
               value={exportFormat}
               label="Export Format"
-              onChange={(e) => setExportFormat(e.target.value as 'json' | 'wizard')}
+              onChange={(e) => setExportFormat(e.target.value as 'json' | 'wizard' | 'alphagear')}
             >
               <MenuItem value="json">
                 <Stack>
@@ -214,9 +234,17 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
               </MenuItem>
               <MenuItem value="wizard">
                 <Stack>
-                  <Typography variant="body1">Wizard’s Wardrobe (ESO Addon)</Typography>
+                  <Typography variant="body1">Wizard&apos;s Wardrobe (ESO Addon)</Typography>
                   <Typography variant="caption" color="text.secondary">
                     Compatible with in-game addon
+                  </Typography>
+                </Stack>
+              </MenuItem>
+              <MenuItem value="alphagear">
+                <Stack>
+                  <Typography variant="body1">AlphaGear 2 (ESO Addon)</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Lua saved variables for AlphaGear 2 addon
                   </Typography>
                 </Stack>
               </MenuItem>
@@ -250,14 +278,15 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
             </Alert>
           )}
 
-          {/* Help text for Wizard’s Wardrobe format */}
-          {exportFormat === 'wizard' && (
+          {/* Help text for Wizard's Wardrobe and AlphaGear formats */}
+          {(exportFormat === 'wizard' || exportFormat === 'alphagear') && (
             <Alert severity="info">
               <Typography variant="caption" component="div">
                 <strong>To use in-game:</strong> Save this file to your ESO folder at:
                 <br />
                 <code style={{ fontSize: '0.85em', display: 'block', marginTop: '4px' }}>
-                  {getESOSavedVarsPath()}WizardWardrobe.lua
+                  {getESOSavedVarsPath()}
+                  {exportFormat === 'alphagear' ? 'AlphaGear.lua' : 'WizardWardrobe.lua'}
                 </code>
                 <br />
                 Then use <code>/reloadui</code> in-game to load your changes.
