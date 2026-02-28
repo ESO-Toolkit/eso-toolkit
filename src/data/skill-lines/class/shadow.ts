@@ -20,7 +20,8 @@ export const shadow: SkillLineData = {
       name: 'Consuming Darkness',
       type: 'ultimate',
       icon: 'ability_nightblade_015',
-      description: 'Create a protective dome, granting Major Protection and snaring enemies.',
+      description:
+        'Conjure a ring of shadow, reducing the Movement Speed of enemies by 70% and granting you and your allies Major Protection, reducing your damage taken by 10%.\n\nAllies in the area can activate the Hidden Refresh synergy, granting them invisibility, increasing their Movement Speed by 70%, and healing them for 9110 Health over 4 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_CONSUMING_DARKNESS,
     },
@@ -29,7 +30,8 @@ export const shadow: SkillLineData = {
       name: 'Bolstering Darkness',
       type: 'ultimate',
       icon: 'ability_nightblade_015_a',
-      description: 'Increases duration, allies take less damage inside.',
+      description:
+        'Conjure a ring of shadow, reducing the Movement Speed of enemies by 70% and granting you and your allies Major Protection for 10 seconds, reducing your damage taken by 10%.\n\nAllies in the area can activate the Hidden Refresh synergy, granting them invisibility, increasing their Movement Speed by 70%, and healing them for 9110 Health over 4 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_CONSUMING_DARKNESS,
     },
@@ -38,7 +40,8 @@ export const shadow: SkillLineData = {
       name: 'Veil of Blades',
       type: 'ultimate',
       icon: 'ability_nightblade_015_b',
-      description: 'Dome deals Magic Damage over time to enemies.',
+      description:
+        'Conjure a ring of shadow, reducing the Movement Speed of enemies by 70%, dealing 1438 Magic Damage to them every 1 second, and granting you and your allies Major Protection, reducing your damage taken by 10%. \n\nAllies in the area can activate the Hidden Refresh synergy, granting them invisibility, increasing their Movement Speed by 70%, and healing them for 9110 Health over 4 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_CONSUMING_DARKNESS,
     },
@@ -47,7 +50,8 @@ export const shadow: SkillLineData = {
       name: 'Shadow Cloak',
       type: 'active',
       icon: 'ability_nightblade_004',
-      description: 'Become invisible for a short duration.',
+      description:
+        'Cloak yourself in shadow to become invisible. When moving your Magicka Recovery is disabled and when not moving Shadow Cloak is half cost.\n\nWhen Shadow Cloak begins or ends, you gain Born From Shadow for 10 seconds, increasing your damage done to monsters by 10%.\n\nWhile slotted on either bar, you gain Minor Protection, reducing your damage taken by 5%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SHADOW_CLOAK,
     },
     {
@@ -55,7 +59,8 @@ export const shadow: SkillLineData = {
       name: 'Shadowy Disguise',
       type: 'active',
       icon: 'ability_nightblade_004_a',
-      description: 'Next attack crits.',
+      description:
+        'Cloak yourself in shadow to become invisible. When moving your Magicka Recovery is disabled and when not moving Shadowy Disguise is half cost. Your next direct damage attack will Critically Strike.\n\nWhen Shadowy Disguise begins or ends, you gain Born From Shadow for 10 seconds, increasing your damage done to monsters by 10%.\n\nWhile slotted on either bar, you gain Minor Protection, reducing your damage taken by 5%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SHADOW_CLOAK,
     },
     {
@@ -63,7 +68,8 @@ export const shadow: SkillLineData = {
       name: 'Dark Cloak',
       type: 'active',
       icon: 'ability_nightblade_004_b',
-      description: 'Converts to a HoT that scales off Max Health.',
+      description:
+        'Shroud yourself in protective shadow to heal for 853 Health every 1 second, over 3 seconds, increasing by an additional 150% while Bracing. This portion of the ability scales off your Max Health.\n\nWhile slotted on either bar, you gain Minor Protection, reducing your damage taken by 5%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SHADOW_CLOAK,
     },
     {
@@ -71,7 +77,8 @@ export const shadow: SkillLineData = {
       name: 'Blur',
       type: 'active',
       icon: 'ability_nightblade_009',
-      description: 'Surrounds you in shadows, reducing area attack damage.',
+      description:
+        'Surround yourself in a phantasmic aura to gain Major Evasion, reducing damage from area attacks by 20% for 20 seconds.\n\nWhile active, taking direct damage reduces the cost of your next Roll Dodge by 10%, up to a maximum of 100%. This effect can stack up to once every half second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_BLUR,
     },
     {
@@ -79,7 +86,8 @@ export const shadow: SkillLineData = {
       name: 'Mirage',
       type: 'active',
       icon: 'ability_nightblade_009_a',
-      description: 'Grants Minor Resolve alongside Major Evasion.',
+      description:
+        'Surround yourself in a phantasmic aura to gain Major Evasion and Minor Resolve, reducing damage from area attacks by 20% and increasing your Physical and Spell Resistance by 2974 for 20 seconds.\n\nWhile active, taking direct damage reduces the cost of your next Roll Dodge by 10%, up to a maximum of 100%. This effect can stack up to once every half second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_BLUR,
     },
     {
@@ -87,15 +95,17 @@ export const shadow: SkillLineData = {
       name: 'Phantasmal Escape',
       type: 'active',
       icon: 'ability_nightblade_009_b',
-      description: 'Grants snare/immobilization immunity.',
+      description:
+        'Surround yourself in a phantasmic aura to gain Major Evasion, reducing damage from area attacks by 20% for 20 seconds.\n\nActivating this ability removes all snares and immobilizations from you and grants immunity to them for 4 seconds.\n\nWhile active, taking direct damage reduces the cost of your next Roll Dodge by 10%, up to a maximum of 100%. This effect can stack up to once every half second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_BLUR,
     },
     {
       id: ClassSkillId.NIGHTBLADE_ASPECT_OF_TERROR,
       name: 'Aspect of Terror',
       type: 'active',
-      icon: 'death_recap_magic_ranged',
-      description: 'Frighten enemies, causing them to flee in fear.',
+      icon: 'ability_nightblade_016',
+      description:
+        'Summon a dark spirit to terrify nearby enemies, causing them to cower in fear for 2 seconds and be afflicted with Major Cowardice for 10 seconds, reducing their Weapon and Spell Damage by 430.',
       baseSkillId: ClassSkillId.NIGHTBLADE_ASPECT_OF_TERROR,
     },
     {
@@ -103,7 +113,8 @@ export const shadow: SkillLineData = {
       name: 'Mass Hysteria',
       type: 'active',
       icon: 'ability_nightblade_016_a',
-      description: 'Longer fear duration.',
+      description:
+        'Summon a dark spirit to terrify all nearby enemies, causing them to cower in fear for 3 seconds and be afflicted with Major Cowardice for 10 seconds, reducing their Weapon and Spell Damage by 430.',
       baseSkillId: ClassSkillId.NIGHTBLADE_ASPECT_OF_TERROR,
     },
     {
@@ -111,7 +122,8 @@ export const shadow: SkillLineData = {
       name: 'Manifestation of Terror',
       type: 'active',
       icon: 'ability_nightblade_016_b',
-      description: 'Places traps that trigger fear when enemies approach.',
+      description:
+        'Conceal a sinister trap at the target location, which takes 2 seconds to arm and lasts for 20 seconds.\n\nWhen the trap is triggered, up to 6 enemies in the area become terrified, causing them to cower in fear for 2 seconds and be afflicted with Major Cowardice for 10 seconds, reducing their Weapon and Spell Damage by 430.',
       baseSkillId: ClassSkillId.NIGHTBLADE_ASPECT_OF_TERROR,
     },
     {
@@ -119,7 +131,8 @@ export const shadow: SkillLineData = {
       name: 'Summon Shade',
       type: 'active',
       icon: 'ability_nightblade_001',
-      description: 'Summons a shadow to attack and weaken enemies.',
+      description:
+        "Summon a shade version of yourself to attack an enemy and fight at your side for 20 seconds. \n\nThe shade slashes at an enemy, dealing 462 Magic Damage once every 2 seconds, and inflicts Minor Maim for 4 seconds, reducing the enemy's damage done by 5%.",
       baseSkillId: ClassSkillId.NIGHTBLADE_SUMMON_SHADE,
     },
     {
@@ -127,7 +140,8 @@ export const shadow: SkillLineData = {
       name: 'Dark Shade',
       type: 'active',
       icon: 'ability_nightblade_001_a',
-      description: 'Deals stronger damage.',
+      description:
+        'Summon a shade version of yourself to attack an enemy and fight at your side for 20 seconds. \n\nThe shade attacks nearby enemies within 9 meters of it, dealing 623 Magic Damage once every 2 seconds and afflicting them with Minor Maim for 4 seconds, reducing their damage done by 5%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SUMMON_SHADE,
     },
     {
@@ -135,7 +149,8 @@ export const shadow: SkillLineData = {
       name: 'Shadow Image',
       type: 'active',
       icon: 'ability_nightblade_001_b',
-      description: 'Allows teleport to shade.',
+      description:
+        "Summon a shade version of yourself to stay in place and attack an enemy from range for 20 seconds. \n\nThe shade shoots at an enemy, dealing 478 Magic Damage every 2 seconds, and inflicts Minor Maim for 4 seconds, reducing the enemy's damage done by 5%.\n\nWhile the shade is summoned, you can activate this ability again for no cost to teleport to the shade's location.",
       baseSkillId: ClassSkillId.NIGHTBLADE_SUMMON_SHADE,
     },
     {
@@ -143,7 +158,8 @@ export const shadow: SkillLineData = {
       name: 'Path of Darkness',
       type: 'active',
       icon: 'ability_nightblade_010',
-      description: 'Create a shadow path that grants Major Expedition.',
+      description:
+        'Create a corridor of shadows for 10 seconds, granting you and allies in the area Major Expedition, increasing Movement Speed by 30%. Effect persists for 4 seconds after leaving the path.',
       baseSkillId: ClassSkillId.NIGHTBLADE_PATH_OF_DARKNESS,
     },
     {
@@ -151,7 +167,8 @@ export const shadow: SkillLineData = {
       name: 'Twisting Path',
       type: 'active',
       icon: 'ability_nightblade_010_b',
-      description: 'Damages enemies in the area.',
+      description:
+        'Create a corridor of shadows for 10 seconds, granting you and allies in the area Major Expedition, increasing Movement Speed by 30% which persists for 4 seconds after leaving the path.\n\nDeals 377 Magic Damage to enemies in the target area every 1 second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_PATH_OF_DARKNESS,
     },
     {
@@ -159,7 +176,8 @@ export const shadow: SkillLineData = {
       name: 'Refreshing Path',
       type: 'active',
       icon: 'ability_nightblade_010_a',
-      description: 'Heals allies along the path.',
+      description:
+        'Create a corridor of shadows for 10 seconds, granting you and allies in the area Major Expedition, Minor Endurance, and Minor Intellect, increasing Movement Speed by 30%, as well as Stamina and Magicka Recovery by 15%. Effect persists for 4 seconds after leaving the path.\n\nHeals 435 Health to you and allies in the area every 1 second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_PATH_OF_DARKNESS,
     },
     {
@@ -193,7 +211,7 @@ export const shadow: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_022',
       description:
-        'Casting a Shadow ability grants you Major Resolve for 12 seconds, increasing your Physical and Spell Resistance by 5948. This duration is increased by 2 seconds for each piece of Heavy Armor equipped.',
+        'Casting a Shadow ability grants you Major Resolve for 12 seconds, increasing your Physical and Spell Resistance by 5948. This duration is increased by 2 seconds for each piece of Heavy Armor equipped.\n\nCurrent duration: 12 seconds',
       isPassive: true,
     },
   ],

@@ -20,7 +20,8 @@ export const siphoning: SkillLineData = {
       name: 'Soul Shred',
       type: 'ultimate',
       icon: 'ability_nightblade_018',
-      description: 'Stuns enemies around you and deals Magic Damage.',
+      description:
+        "Ravage nearby enemies' souls with a night rune, dealing 3486 Magic Damage and stunning them for 4 seconds. \n\nAn ally can target a ravaged enemy and activate the Soul Leech synergy, dealing 3122 Magic Damage to them and healing for the damage caused.",
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_SOUL_SHRED,
     },
@@ -29,7 +30,8 @@ export const siphoning: SkillLineData = {
       name: 'Soul Tether',
       type: 'ultimate',
       icon: 'ability_nightblade_018_a',
-      description: 'Heals you for damage dealt, tethers nearby enemies.',
+      description:
+        "Ravage nearby enemies' souls with a night rune, dealing 3600 Magic Damage, healing for half the damage, and stunning them for 4 seconds. \n\nRavaged enemies are tethered to you for 8 seconds, and while they remain within 10 meters, you siphon 627 Health from them every second.\n\nAn ally can target a ravaged enemy and activate the Soul Leech synergy, dealing 3122 Magic Damage to them and healing for the damage caused.",
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_SOUL_SHRED,
     },
@@ -38,7 +40,8 @@ export const siphoning: SkillLineData = {
       name: 'Soul Siphon',
       type: 'ultimate',
       icon: 'ability_nightblade_018_b',
-      description: 'Heals allies in a large area.',
+      description:
+        'Sanctify your soul and the souls of nearby allies with a night rune, healing for 3600 Health and an additional 9384 Health over 4 seconds.\n\nYou and your allies will also receive Major Vitality, increasing your healing received and damage shield strength by 12% for 4 seconds.\n\nAn ally can target a nearby enemy and activate the Soul Leech synergy, dealing 3122 Magic Damage to them and healing for the damage caused.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_SOUL_SHRED,
     },
@@ -47,7 +50,8 @@ export const siphoning: SkillLineData = {
       name: 'Strife',
       type: 'active',
       icon: 'ability_nightblade_012',
-      description: 'Deals Magic Damage and heals you for a portion.',
+      description:
+        "Steal an enemy's life force, dealing 1548 Magic Damage and healing you or a nearby ally for 50% of the damage inflicted every 2 seconds for 10 seconds.",
       baseSkillId: ClassSkillId.NIGHTBLADE_STRIFE,
     },
     {
@@ -55,7 +59,8 @@ export const siphoning: SkillLineData = {
       name: 'Swallow Soul',
       type: 'active',
       icon: 'ability_nightblade_012_a',
-      description: 'Higher initial damage, self-healing only.',
+      description:
+        "Steal an enemy's life force, dealing 2160 Magic Damage and healing you for 35% of the damage inflicted every 2 seconds for 10 seconds.",
       baseSkillId: ClassSkillId.NIGHTBLADE_STRIFE,
     },
     {
@@ -63,7 +68,8 @@ export const siphoning: SkillLineData = {
       name: 'Funnel Health',
       type: 'active',
       icon: 'ability_nightblade_012_b',
-      description: 'Also heals nearby allies.',
+      description:
+        "Steal an enemy's life force, dealing 1600 Magic Damage and healing you or 3 other nearby allies for 50% of the damage inflicted every 2 seconds for 10 seconds.",
       baseSkillId: ClassSkillId.NIGHTBLADE_STRIFE,
     },
     {
@@ -71,7 +77,8 @@ export const siphoning: SkillLineData = {
       name: 'Cripple',
       type: 'active',
       icon: 'ability_nightblade_006',
-      description: 'Snares and damages an enemy over time.',
+      description:
+        "Sap an enemy's agility and wrack them with pain, dealing 4631 Magic Damage over 20 seconds and reducing their Movement Speed by 30% for 4 seconds.",
       baseSkillId: ClassSkillId.NIGHTBLADE_CRIPPLE,
     },
     {
@@ -79,7 +86,8 @@ export const siphoning: SkillLineData = {
       name: 'Crippling Grasp',
       type: 'active',
       icon: 'ability_nightblade_006_b',
-      description: 'Adds immobilization and initial damage.',
+      description:
+        "Sap an enemy's agility and wrack them with pain, dealing 1199 Magic Damage and an additional 4350 Magic Damage over 20 seconds, immobilizing them for 2 seconds, and reducing their Movement Speed by 30% for 4 seconds.",
       baseSkillId: ClassSkillId.NIGHTBLADE_CRIPPLE,
     },
     {
@@ -87,7 +95,8 @@ export const siphoning: SkillLineData = {
       name: 'Debilitate',
       type: 'active',
       icon: 'ability_nightblade_006_a',
-      description: 'Stronger snare, higher chance for Overcharged status.',
+      description:
+        "Sap an enemy's agility and wrack them with pain, dealing 4785 Magic Damage over 20 seconds and reducing their Movement Speed by 50% for 4 seconds.\n\nThis ability has a higher chance of applying the Overcharged status effect.",
       baseSkillId: ClassSkillId.NIGHTBLADE_CRIPPLE,
     },
     {
@@ -95,7 +104,8 @@ export const siphoning: SkillLineData = {
       name: 'Siphoning Strikes',
       type: 'active',
       icon: 'ability_nightblade_003',
-      description: 'Light/Heavy Attacks restore Health and resources.',
+      description:
+        'Channel a portion of your soul to convert Health to 2000 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 1250 Health, up to once every 1 second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SIPHONING_STRIKES,
     },
     {
@@ -104,7 +114,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_003_a',
       description:
-        'More healing, reduces cost of next cast by 10% per damage dealt (up to 10 stacks).',
+        'Channel a portion of your soul to convert Health to 2000 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 1800 Health and reduces the cost of your next Leeching Strikes by 10%, stacking up to 10 times. This effect can occur once every 1 second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SIPHONING_STRIKES,
     },
     {
@@ -112,7 +122,8 @@ export const siphoning: SkillLineData = {
       name: 'Siphoning Attacks',
       type: 'active',
       icon: 'ability_nightblade_003_b',
-      description: 'Stronger resource sustain.',
+      description:
+        'Channel a portion of your soul to convert Health to 2600 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 1250 Health and restores 200 Magicka and Stamina, up to once every 1 second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SIPHONING_STRIKES,
     },
     {
@@ -120,7 +131,8 @@ export const siphoning: SkillLineData = {
       name: 'Drain Power',
       type: 'active',
       icon: 'ability_nightblade_013',
-      description: 'Deals Magic Damage to nearby enemies and grants Major Brutality/Sorcery.',
+      description:
+        "Siphon the vigor from your enemies' blood, dealing 1742 Magic Damage to all nearby enemies.\n\nIf an enemy is hit, you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds.",
       baseSkillId: ClassSkillId.NIGHTBLADE_DRAIN_POWER,
     },
     {
@@ -128,7 +140,8 @@ export const siphoning: SkillLineData = {
       name: 'Power Extraction',
       type: 'active',
       icon: 'ability_nightblade_013_b',
-      description: 'Stamina morph, applies Minor Cowardice to enemies.',
+      description:
+        "Siphon the vigor from your enemies' blood, dealing 1742 Disease Damage to all nearby enemies.\n\nIf an enemy is hit you gain Major Brutality and Sorcery, and Minor Courage increasing your Weapon and Spell Damage by 20% and 215 for 30 seconds. Enemies hit have Minor Cowardice applied to them for 10 seconds, reducing their Weapon and Spell Damage by 215.",
       baseSkillId: ClassSkillId.NIGHTBLADE_DRAIN_POWER,
     },
     {
@@ -136,7 +149,8 @@ export const siphoning: SkillLineData = {
       name: 'Sap Essence',
       type: 'active',
       icon: 'ability_nightblade_013_a',
-      description: 'Heals for each enemy hit.',
+      description:
+        "Siphon the vigor from your enemies' blood, dealing 1742 Magic Damage to all nearby enemies and healing you and your allies for 599 plus 20% more for each enemy hit.\n\nIf an enemy is hit, you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds.",
       baseSkillId: ClassSkillId.NIGHTBLADE_DRAIN_POWER,
     },
     {
@@ -144,7 +158,8 @@ export const siphoning: SkillLineData = {
       name: 'Malevolent Offering',
       type: 'active',
       icon: 'ability_nightblade_011',
-      description: 'Heals ally but drains your Health.',
+      description:
+        'Pour out your lifesblood and channel the arcane, healing yourself or an ally in front of you for 3486 Health, while draining 1080 Health from yourself over 3 seconds.',
       baseSkillId: ClassSkillId.NIGHTBLADE_MALEVOLENT_OFFERING,
     },
     {
@@ -152,7 +167,8 @@ export const siphoning: SkillLineData = {
       name: 'Healthy Offering',
       type: 'active',
       icon: 'ability_nightblade_011_a',
-      description: 'Grants Minor Mending after casting.',
+      description:
+        'Pour out your lifesblood and channel the arcane, healing yourself or an ally in front of you for 3600 Health, while draining 1080 Health from yourself over 3 seconds.\n\nAfter casting, gain Minor Mending for 10 seconds, increasing your healing done by 8%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_MALEVOLENT_OFFERING,
     },
     {
@@ -160,7 +176,8 @@ export const siphoning: SkillLineData = {
       name: 'Shrewd Offering',
       type: 'active',
       icon: 'ability_nightblade_011_b',
-      description: 'Reduced cost and health drain.',
+      description:
+        'Pour out your lifesblood and channel the arcane, healing yourself or an ally in front of you for 3485 Health, while draining 810 Health from yourself over 2 seconds.',
       baseSkillId: ClassSkillId.NIGHTBLADE_MALEVOLENT_OFFERING,
     },
     {

@@ -20,7 +20,8 @@ export const animalCompanions: SkillLineData = {
       name: 'Feral Guardian',
       type: 'ultimate',
       icon: 'ability_warden_018',
-      description: 'Rouse a grizzly to fight by your side with special attacks.',
+      description:
+        "Rouse a grizzly to fight by your side. The grizzly swipes at an enemy, dealing 580 Magic Damage, and sometimes swipes all enemies in front of it, dealing 2323 Magic Damage and stunning them for 2 seconds.\n\nOnce summoned you can activate Guardian's Wrath for 75 Ultimate, causing the grizzly to maul an enemy for 3253 Magic Damage. Deals 100% more damage to enemies below 25% Health.",
       isUltimate: true,
       baseSkillId: ClassSkillId.WARDEN_FERAL_GUARDIAN,
     },
@@ -29,7 +30,8 @@ export const animalCompanions: SkillLineData = {
       name: 'Eternal Guardian',
       type: 'ultimate',
       icon: 'ability_warden_018_b',
-      description: 'Grizzly respawns once per minute when killed.',
+      description:
+        "Rouse a grizzly to fight by your side. The grizzly swipes an enemy, dealing 599 Magic Damage, and sometimes swipes all enemies in front of it, dealing 2399 Magic Damage and stunning them for 2 seconds.\n\nOnce summoned you can activate Guardian's Wrath for 75 Ultimate, causing the grizzly to maul an enemy for 3360 Magic Damage. Deals 150% more damage to enemies below 25% Health.\n\n The grizzly respawns when killed, once per minute.",
       isUltimate: true,
       baseSkillId: ClassSkillId.WARDEN_FERAL_GUARDIAN,
     },
@@ -38,7 +40,8 @@ export const animalCompanions: SkillLineData = {
       name: 'Wild Guardian',
       type: 'ultimate',
       icon: 'ability_warden_018_c',
-      description: 'Deals Bleed Damage with higher Hemorrhaging chance.',
+      description:
+        "Rouse a grizzly to fight by your side. The grizzly swipes at an enemy, dealing 659 Bleed Damage, and sometimes swipes all enemies in front of it, dealing 2640 Bleed Damage and stunning them for 2 seconds.\n\nOnce summoned you can activate Guardian's Savagery for 75 Ultimate, to maul an enemy for 3697 Bleed Damage. Deals 100% more damage to enemies below 25% Health.\n\nThe damage has a higher chance to apply the Hemorrhaging status effect.",
       isUltimate: true,
       baseSkillId: ClassSkillId.WARDEN_FERAL_GUARDIAN,
       alternateIds: [92160, 92161, 92162, 92163],
@@ -48,7 +51,8 @@ export const animalCompanions: SkillLineData = {
       name: 'Betty Netch',
       type: 'active',
       icon: 'ability_warden_017_a',
-      description: 'Call a netch granting Major Brutality/Sorcery and cleansing debuffs.',
+      description:
+        'Call a betty netch to your side, which grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 22 seconds.\n\nEvery 5 seconds, the netch removes 1 negative effect from you. If no negative effects are removed you instead increase your damage done by 5% for 5 seconds.',
       baseSkillId: ClassSkillId.WARDEN_BETTY_NETCH,
     },
     {
@@ -56,7 +60,8 @@ export const animalCompanions: SkillLineData = {
       name: 'Blue Betty',
       type: 'active',
       icon: 'ability_warden_017',
-      description: 'Extended duration with Magicka restoration.',
+      description:
+        'Call a betty netch to your side, which restores 4416 Magicka to you over 25 seconds and grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.\n\nEvery 5 seconds, the netch removes 1 negative effect from you. If no negative effects are removed you instead increase your damage done by 5% for 5 seconds.',
       baseSkillId: ClassSkillId.WARDEN_BETTY_NETCH,
     },
     {
@@ -64,15 +69,17 @@ export const animalCompanions: SkillLineData = {
       name: 'Bull Netch',
       type: 'active',
       icon: 'ability_warden_017_b',
-      description: 'Extended duration with Stamina restoration.',
+      description:
+        'Call a bull netch to your side, which restores 4416 Stamina to you over 25 seconds and grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.\n\nEvery 5 seconds, the netch removes 1 negative effect from you. If no negative effects are removed you instead increase your damage done by 5% for 5 seconds',
       baseSkillId: ClassSkillId.WARDEN_BETTY_NETCH,
     },
     {
       id: ClassSkillId.WARDEN_DIVE,
       name: 'Dive',
       type: 'active',
-      icon: 'ability_mage_065',
-      description: 'Command a cliff racer to dive bomb an enemy.',
+      icon: 'ability_warden_013',
+      description:
+        'Command a cliff racer to dive bomb an enemy, dealing 2090 Magic Damage.\n\nIf you are more than 7 meters away from the target, you set them Off Balance for 7 seconds.',
       baseSkillId: ClassSkillId.WARDEN_DIVE,
     },
     {
@@ -80,7 +87,8 @@ export const animalCompanions: SkillLineData = {
       name: 'Screaming Cliff Racer',
       type: 'active',
       icon: 'ability_warden_013_a',
-      description: 'Increases Weapon/Spell Damage, quadruples on Off Balance enemies.',
+      description:
+        'Command a cliff racer to dive bomb an enemy, dealing 2160 Magic Damage.\n\nIf you are more than 7 meters away from the target, you set them Off Balance for 7 seconds.\n\nAfter dealing damage you increase your Weapon and Spell Damage by 100 for 10 seconds, which quadruples after damaging Off Balance enemies.',
       baseSkillId: ClassSkillId.WARDEN_DIVE,
     },
     {
@@ -88,15 +96,17 @@ export const animalCompanions: SkillLineData = {
       name: 'Cutting Dive',
       type: 'active',
       icon: 'ability_warden_013_b',
-      description: 'Stamina morph dealing Bleed Damage over time.',
+      description:
+        'Command a cliff racer to dive bomb an enemy, dealing 2091 Bleed Damage immediately and then causing them to bleed for 2140 Bleed Damage over 10 seconds.\n\nIf you are more than 7 meters away from the target, you set them Off Balance for 7 seconds.',
       baseSkillId: ClassSkillId.WARDEN_DIVE,
     },
     {
       id: ClassSkillId.WARDEN_SCORCH,
       name: 'Scorch',
       type: 'active',
-      icon: 'death_recap_fire_ranged',
-      description: 'Stir shalk for delayed double attack with underground phase.',
+      icon: 'ability_warden_015',
+      description:
+        'Stir a group of shalk that attack after 3 seconds, dealing 2509 Magic Damage to enemies in front of you.\n\nAfter the shalk complete their attack, they burrow underground for 6 seconds and then resurface again, dealing 3486 Magic Damage to enemies in front of you.',
       baseSkillId: ClassSkillId.WARDEN_SCORCH,
     },
     {
@@ -104,7 +114,8 @@ export const animalCompanions: SkillLineData = {
       name: 'Deep Fissure',
       type: 'active',
       icon: 'ability_warden_015_a',
-      description: 'Applies Major and Minor Breach to enemies hit.',
+      description:
+        'Stir a group of shalk that attack after 3 seconds, dealing 2591 Magic Damage to enemies in front of you.\n\nAfter the shalk complete their attack, they burrow underground for 6 seconds and then resurface again, dealing 3600 Magic Damage to enemies in front of you.\n\nEnemies damaged are afflicted with Major and Minor Breach, reducing their Physical and Spell Resistance by 5948 and 2974 for 10 seconds.',
       baseSkillId: ClassSkillId.WARDEN_SCORCH,
     },
     {
@@ -112,7 +123,8 @@ export const animalCompanions: SkillLineData = {
       name: 'Subterranean Assault',
       type: 'active',
       icon: 'ability_warden_015_b',
-      description: 'Stamina morph with faster second attack.',
+      description:
+        'Stir a group of shalk that attack after 3 seconds, dealing 2591 Poison Damage to enemies in front of you.\n\nAfter the shalk complete their attack, they burrow underground for 3 seconds and then resurface again, dealing 2591 Poison Damage to enemies in front of you.',
       baseSkillId: ClassSkillId.WARDEN_SCORCH,
       alternateIds: [86019],
     },
@@ -120,8 +132,9 @@ export const animalCompanions: SkillLineData = {
       id: ClassSkillId.WARDEN_SWARM,
       name: 'Swarm',
       type: 'active',
-      icon: 'ability_mage_065',
-      description: 'Unleash fetcherflies for damage over time with Minor Vulnerability.',
+      icon: 'ability_warden_014',
+      description:
+        "Unleash a swarm of fetcherflies to relentlessly attack an enemy, dealing 4631 Magic Damage over 20 seconds.  \n\nThe fetcherflies rip through the enemy's flesh, afflicting them with Minor Vulnerability for the duration, increasing their damage taken by 5%.",
       baseSkillId: ClassSkillId.WARDEN_SWARM,
     },
     {
@@ -129,7 +142,8 @@ export const animalCompanions: SkillLineData = {
       name: 'Fetcher Infection',
       type: 'active',
       icon: 'ability_warden_014_a',
-      description: 'Every second cast deals 60% increased damage.',
+      description:
+        "Unleash a swarm of fetcherflies to relentlessly attack an enemy, dealing 4785 Magic Damage over 20 seconds.\n\nEvery second cast of this ability deals 60% increased damage.\n\nThe fetcherflies rip through the enemy's flesh, afflicting them with Minor Vulnerability for the duration, increasing their damage taken by 5%.",
       baseSkillId: ClassSkillId.WARDEN_SWARM,
     },
     {
@@ -137,7 +151,8 @@ export const animalCompanions: SkillLineData = {
       name: 'Growing Swarm',
       type: 'active',
       icon: 'ability_warden_014_b',
-      description: 'Stamina morph with AoE spread to nearby enemies.',
+      description:
+        "Unleash a swarm of fetcherflies to relentlessly attack an enemy, causing them to bleed for 4785 Bleed Damage over 20 seconds. \n\nThe fetcherflies rip through the original enemy's flesh, afflicting them with Minor Vulnerability for the duration, increasing their damage taken by 5%.\n\nEnemies near the carrier take 435 Bleed Damage every 2 seconds for the duration.\n\nYou can only have one Growing Swarm active at a time.",
       baseSkillId: ClassSkillId.WARDEN_SWARM,
     },
     {
@@ -145,7 +160,8 @@ export const animalCompanions: SkillLineData = {
       name: "Falcon's Swiftness",
       type: 'active',
       icon: 'ability_warden_016',
-      description: 'Invoke agility spirit for Major Expedition and snare immunity.',
+      description:
+        'Invoke the spirit of agility to gain Major Expedition for 6 seconds, increasing your Movement Speed by 30%.\n\nGain immunity to snares and immobilizations for 4 seconds.',
       baseSkillId: ClassSkillId.WARDEN_FALCON_S_SWIFTNESS,
     },
     {
@@ -153,7 +169,8 @@ export const animalCompanions: SkillLineData = {
       name: 'Bird of Prey',
       type: 'active',
       icon: 'ability_warden_016_a',
-      description: 'Grants Minor Berserk while slotted.',
+      description:
+        'Invoke the spirit of agility to gain Major Expedition for 6 seconds, increasing your Movement Speed by 30%.\n\nGain immunity to snares and immobilizations for 4 seconds.\n\nWhile slotted you gain Minor Berserk, increasing your damage done by 5%.',
       baseSkillId: ClassSkillId.WARDEN_FALCON_S_SWIFTNESS,
     },
     {
@@ -161,7 +178,8 @@ export const animalCompanions: SkillLineData = {
       name: 'Deceptive Predator',
       type: 'active',
       icon: 'ability_warden_016_b',
-      description: 'Grants Minor Evasion while slotted.',
+      description:
+        'Invoke the spirit of agility to gain Major Expedition for 6 seconds, increasing your Movement Speed by 30%.\n\nGain immunity to snares and immobilizations for 4 seconds.\n\nWhile slotted you gain Minor Evasion, reducing damage from area attacks by 10%.',
       baseSkillId: ClassSkillId.WARDEN_FALCON_S_SWIFTNESS,
     },
     {

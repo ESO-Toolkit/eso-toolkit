@@ -20,7 +20,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Bone Goliath Transformation',
       type: 'ultimate',
       icon: 'ability_necromancer_012',
-      description: 'Become horrific Bone Goliath with massive Health boost.',
+      description:
+        'Become a horrific Bone Goliath, increasing your Max Health by 30000 for 20 seconds and immediately restoring 30000 Health. \n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. This ability scales off your Max Health.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_BONE_GOLIATH_TRANSFORMATION,
     },
@@ -29,7 +30,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Pummeling Goliath',
       type: 'ultimate',
       icon: 'ability_necromancer_012_a',
-      description: 'Bash attacks hit multiple targets for Physical Damage.',
+      description:
+        'Become a destructive Pummeling Goliath, increasing your Max Health by 30000 for 20 seconds and immediately restoring 30000 Health. \n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. This ability scales off your Max Health. \n\nYour Bash attacks can hit multiple targets in front of you and deal 1799 Physical Damage.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_BONE_GOLIATH_TRANSFORMATION,
     },
@@ -38,7 +40,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Ravenous Goliath',
       type: 'ultimate',
       icon: 'ability_necromancer_012_b',
-      description: 'Deals AoE Magic Damage to nearby enemies while healing.',
+      description:
+        'Become a horrific Ravenous Goliath, increasing your Max Health by 30000 for 20 seconds and immediately restoring 30000 Health. \n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. You deal 826 Magic Damage to nearby enemies every second and heal for that amount. These abilities scale off your Max Health.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_BONE_GOLIATH_TRANSFORMATION,
     },
@@ -47,7 +50,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Bone Armor',
       type: 'active',
       icon: 'ability_necromancer_008',
-      description: 'Wrap in hardened bone for Major and Minor Resolve.',
+      description:
+        'Wrap yourself in hardened bone, granting you Major Resolve and Minor Resolve for 20 seconds, increasing your Physical Resistance and Spell Resistance by 5948 and 2974.\n\nIf cast during combat, you can cast a corpse consuming ability on yourself. This effect can occur once every 10 seconds.',
       baseSkillId: ClassSkillId.NECROMANCER_BONE_ARMOR,
     },
     {
@@ -55,7 +59,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Beckoning Armor',
       type: 'active',
       icon: 'ability_necromancer_008_a',
-      description: 'Pulls ranged attackers and taunts them.',
+      description:
+        'Wrap yourself in hardened bone, granting you Major Resolve and Minor Resolve for 20 seconds, increasing your Physical Resistance and Spell Resistance by 5948 and 2974.\n\nWhile active, ranged attackers will be pulled to you once every 2 seconds and become taunted for 15 seconds if they are not already taunted.\n\nIf cast during combat, you can cast a corpse consuming ability on yourself. This effect can occur once every 10 seconds.',
       baseSkillId: ClassSkillId.NECROMANCER_BONE_ARMOR,
     },
     {
@@ -63,7 +68,8 @@ export const boneTyrant: SkillLineData = {
       name: "Summoner's Armor",
       type: 'active',
       icon: 'ability_necromancer_008_b',
-      description: 'Extended duration with reduced minion costs.',
+      description:
+        'Wrap yourself in hardened bone, granting you Major Resolve and Minor Resolve for 30 seconds, increasing your Physical Resistance and Spell Resistance by 5948 and 2974.\n\nWhile active, reduce the cost of Blastbones, Skeletal Mage, and Spirit Mender by 15%.\n\nIf cast during combat, you can cast a corpse consuming ability on yourself. This effect can occur once every 10 seconds.',
       baseSkillId: ClassSkillId.NECROMANCER_BONE_ARMOR,
     },
     {
@@ -71,7 +77,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Bitter Harvest',
       type: 'active',
       icon: 'ability_necromancer_011',
-      description: 'Consume corpses for Ultimate and healing over time.',
+      description:
+        'Sap the lingering life from fresh corpses, granting you 2 Ultimate and healing 660 Health every 1 second for 2 seconds per corpse consumed. This ability scales off your Max Health.\n\nWhile slotted, your damage taken is reduced by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_BITTER_HARVEST,
     },
     {
@@ -79,7 +86,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Deaden Pain',
       type: 'active',
       icon: 'ability_necromancer_011_a',
-      description: 'Extended healing duration with Major Protection.',
+      description:
+        'Sap the lingering life from fresh corpses, granting you 2 Ultimate and healing 682 Health every 1 second for 4 seconds per corpse consumed. While you have the heal effect, you gain Major Protection, reducing the damage you take by 10%. This ability scales off your Max Health.\n\nWhile slotted, your damage taken is reduced by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_BITTER_HARVEST,
     },
     {
@@ -87,7 +95,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Necrotic Potency',
       type: 'active',
       icon: 'ability_necromancer_011_b',
-      description: 'Grants more Ultimate per corpse consumed.',
+      description:
+        'Sap the lingering life from fresh corpses, granting you 6 Ultimate and healing 682 Health every 1 second for 2 seconds per additional corpse. This ability scales off your Max Health.\n\nWhile slotted, your damage taken is reduced by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_BITTER_HARVEST,
     },
     {
@@ -95,7 +104,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Bone Totem',
       type: 'active',
       icon: 'ability_necromancer_010',
-      description: 'Summon effigy granting Minor Protection and fearing enemies.',
+      description:
+        'Summon an effigy of bone at your feet for 11 seconds that grants Minor Protection to you and your allies, reducing damage taken by 5%. Enemies in the area are afflicted with Major Cowardice, reducing their Weapon and Spell Damage by 430.\n\nAfter 2 seconds, the totem begins fearing nearby enemies every 2 seconds, causing them to cower in place for 4 seconds.',
       baseSkillId: ClassSkillId.NECROMANCER_BONE_TOTEM,
     },
     {
@@ -103,7 +113,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Agony Totem',
       type: 'active',
       icon: 'ability_necromancer_010_b',
-      description: 'Extended duration with enhanced synergy.',
+      description:
+        'Summon an effigy of bone at your feet for 13 seconds that grants Minor Protection to you and your allies, reducing damage taken by 5%. Enemies in the area are afflicted with Major Cowardice.\n\nAfter 2 seconds, the totem begins fearing nearby enemies every 2 seconds, causing them to cower in place for 4 seconds.\n\nAllies can activate the Pure Agony synergy, dealing 2100 Magic Damage over 5 seconds to enemies.',
       baseSkillId: ClassSkillId.NECROMANCER_BONE_TOTEM,
     },
     {
@@ -111,7 +122,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Remote Totem',
       type: 'active',
       icon: 'ability_necromancer_010_a',
-      description: 'Can be placed at range rather than at your feet.',
+      description:
+        'Summon an effigy of bone for 11 seconds that grants Minor Protection to you and your allies, reducing damage taken by 5%. Enemies in the area are afflicted with Major Cowardice, reducing their Weapon and Spell Damage by 430.\n\nAfter 2 seconds, the totem begins fearing nearby enemies every 2 seconds, causing them to cower in place for 4 seconds.',
       baseSkillId: ClassSkillId.NECROMANCER_BONE_TOTEM,
     },
     {
@@ -119,7 +131,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Death Scythe',
       type: 'active',
       icon: 'ability_necromancer_007',
-      description: 'Slice enemies for Magic Damage with scaling healing.',
+      description:
+        "Slice into your enemy's life force, dealing 1742 Magic Damage.\n\nYou heal for 2400 Health for the first enemy hit, and an additional 800 for each additional enemy hit, up to five times. The healing of this ability scales off your Max Health.",
       baseSkillId: ClassSkillId.NECROMANCER_DEATH_SCYTHE,
     },
     {
@@ -127,7 +140,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Hungry Scythe',
       type: 'active',
       icon: 'ability_necromancer_007_a',
-      description: 'Additional healing over time after initial hit.',
+      description:
+        "Slice into your enemy's life force, dealing 1742 Magic Damage.  \n\nYou heal for 2400 Health for the first enemy hit, and an additional 800 for each additional enemy, up to five times. After dealing damage, you heal for 991 Health every 2 seconds over 10 seconds. The healing of this ability scales off your Max Health.",
       baseSkillId: ClassSkillId.NECROMANCER_DEATH_SCYTHE,
     },
     {
@@ -135,7 +149,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Ruinous Scythe',
       type: 'active',
       icon: 'ability_necromancer_007_b',
-      description: 'Stamina morph dealing Bleed Damage and setting Off Balance.',
+      description:
+        "Slice into your enemy's life force, dealing 1799 Bleed Damage, applying the Hemorrhaging status effect, and setting them Off Balance for 7 seconds.\n\nYou heal for 2400 Health for the first enemy hit, and an additional 800 for each additional enemy, up to five times. The healing of this ability scales off your Max Health.",
       baseSkillId: ClassSkillId.NECROMANCER_DEATH_SCYTHE,
     },
     {
@@ -143,7 +158,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Grave Grasp',
       type: 'active',
       icon: 'ability_necromancer_009',
-      description: 'Summon three patches of skeletal claws with escalating crowd control.',
+      description:
+        'Summon three patches of skeletal claws from the ground in front of you. Enemies in the first area are snared by 30% for 5 seconds, immobilized in the second area for 4 seconds, and stunned in the final area for 3 seconds.\n\nEach patch applies Minor Maim to enemies hit for 10 seconds, reducing their damage done by 5%.',
       baseSkillId: ClassSkillId.NECROMANCER_GRAVE_GRASP,
     },
     {
@@ -151,7 +167,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Empowering Grasp',
       type: 'active',
       icon: 'ability_necromancer_009_a',
-      description: 'Applies Major Maim to enemies and Empower to allies.',
+      description:
+        'Summon three patches of skeletal claws from the ground in front of you. Enemies in the first area are snared by 30% for 5 seconds, immobilized in the second area for 4 seconds, and stunned in the final area for 3 seconds.\n\nEach area applies Major Maim to enemies and Empower to your allies for 10 seconds, reducing enemy damage done by 10% and allied Heavy Attack Damage against monsters by 70%.',
       baseSkillId: ClassSkillId.NECROMANCER_GRAVE_GRASP,
     },
     {
@@ -159,7 +176,8 @@ export const boneTyrant: SkillLineData = {
       name: 'Ghostly Embrace',
       type: 'active',
       icon: 'ability_necromancer_009_b',
-      description: 'Deals Frost Damage and creates corpse if enemies hit.',
+      description:
+        'Summon three patches of skeletal claws from the ground in front of you, each dealing 898 Frost Damage.\n\nThe first area applies the Chilled status effect, the second area deals an additional 1635 Frost Damage over 5 seconds, and the final area creates a corpse if at least one enemy was hit.',
       baseSkillId: ClassSkillId.NECROMANCER_GRAVE_GRASP,
     },
     {

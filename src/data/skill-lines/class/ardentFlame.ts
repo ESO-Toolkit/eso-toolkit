@@ -21,7 +21,7 @@ export const ardentFlame: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_006',
       description:
-        'Call down a battle standard, dealing Flame Damage over time to enemies and reducing their healing received.',
+        'Call down a battle standard, dealing 870 Flame Damage every 1 second for 16 seconds to enemies and applying Major Defile to them, reducing their healing received and damage shield strength by 12%. \n\nAn ally near the standard can activate the Shackle synergy, dealing 3375 Flame Damage to enemies in the area and immobilizing them for 5 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGONKNIGHT_STANDARD,
     },
@@ -30,7 +30,8 @@ export const ardentFlame: SkillLineData = {
       name: 'Shifting Standard',
       type: 'ultimate',
       icon: 'ability_dragonknight_006_a',
-      description: 'Duration increases. You can move the standard at will.',
+      description:
+        'Call down a battle standard, dealing 898 Flame Damage every 1 second for 25 seconds to enemies and applying Major Defile to them, reducing their healing received and damage shield strength by 12%. \n\nActivating this ability again allows you to move the standard to your location.\n\nAn ally near the standard can activate the Shackle synergy, dealing 3375 Flame Damage to enemies in the area and immobilizing them for 5 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGONKNIGHT_STANDARD,
     },
@@ -39,7 +40,8 @@ export const ardentFlame: SkillLineData = {
       name: 'Standard of Might',
       type: 'ultimate',
       icon: 'ability_dragonknight_006_b',
-      description: 'You deal more damage and take less damage while standing in your standard.',
+      description:
+        'Call down a battle standard, dealing 870 Flame Damage every 1 second for 16 seconds to enemies and applying Major Defile to them, reducing their healing received and damage shield strength by 12%. \n\nStanding in the area increases your damage done and reduces damage taken by 15%.\n\nAn ally near the standard can activate the Shackle synergy, dealing 3375 Flame Damage to enemies in the area and immobilizing them for 5 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGONKNIGHT_STANDARD,
     },
@@ -47,8 +49,9 @@ export const ardentFlame: SkillLineData = {
       id: ClassSkillId.DRAGONKNIGHT_FIERY_BREATH,
       name: 'Fiery Breath',
       type: 'active',
-      icon: 'ability_mage_065',
-      description: 'Exhale flame in a cone, dealing Flame Damage over time.',
+      icon: 'ability_dragonknight_004',
+      description:
+        'Exhale a flaming blast to enemies in front of you, dealing 1742 Flame Damage and an additional 2900 Flame Damage over 20 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_BREATH,
     },
     {
@@ -56,7 +59,8 @@ export const ardentFlame: SkillLineData = {
       name: 'Noxious Breath',
       type: 'active',
       icon: 'ability_dragonknight_004_a',
-      description: 'Converts to Poison Damage, applies Major Breach.',
+      description:
+        'Exhale a corrosive blast to enemies in front of you, dealing 1799 Poison Damage immediately, applying the Poisoned status effect, and an additional 2980 Poison Damage over 20 seconds. \n\nThe initial hit applies the Major Breach to enemies for the duration, reducing their Physical and Spell Resistance by 5948.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_BREATH,
     },
     {
@@ -64,7 +68,8 @@ export const ardentFlame: SkillLineData = {
       name: 'Engulfing Flames',
       type: 'active',
       icon: 'ability_dragonknight_004_b',
-      description: 'Increases Flame Damage enemies take.',
+      description:
+        'Exhale a flaming blast to enemies in front of you, dealing 1799 Flame Damage and an additional 2980 Flame Damage over 20 seconds. \n\nAffected enemies take more damage from all Flame Damage attacks based on your Weapon or Spell Damage, and Max Magicka or Stamina, with a maximum of 6% bonus damage taken.\n\nCurrent value 2%.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_BREATH,
     },
     {
@@ -72,7 +77,8 @@ export const ardentFlame: SkillLineData = {
       name: 'Searing Strike',
       type: 'active',
       icon: 'ability_dragonknight_003',
-      description: 'Burns the target, dealing Flame Damage over time.',
+      description:
+        'Slash an enemy with flame, dealing 1161 Flame Damage and an additional 3470 Flame Damage over 20 seconds.\n\nEnemies hit by the initial hit are afflicted with the Burning status effect.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_SEARING_STRIKE,
     },
     {
@@ -80,7 +86,8 @@ export const ardentFlame: SkillLineData = {
       name: 'Venomous Claw',
       type: 'active',
       icon: 'ability_dragonknight_003_a',
-      description: 'Converts to Poison Damage, increasing in power over time.',
+      description:
+        'Rake an enemy with your claw, dealing 1161 Poison Damage and an additional 3470 Poison Damage over 20 seconds.\n\nThe poison seeps into the target and deals increased damage the longer it lasts, dealing 12% more damage every 2 seconds.\n\nEnemies hit by the initial hit are afflicted with the Poisoned status effect.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_SEARING_STRIKE,
     },
     {
@@ -88,7 +95,8 @@ export const ardentFlame: SkillLineData = {
       name: 'Burning Embers',
       type: 'active',
       icon: 'ability_dragonknight_003_b',
-      description: 'Deals strong DoT, heals you for the damage dealt when the effect ends.',
+      description:
+        'Slash an enemy with flame, dealing 1161 Flame Damage and an additional 3470 Flame Damage over 20 seconds. \n\nYou heal for 100% of the damage done with this ability.  \n\nEnemies hit by the initial hit are afflicted with the Burning status effect.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_SEARING_STRIKE,
     },
     {
@@ -96,7 +104,8 @@ export const ardentFlame: SkillLineData = {
       name: 'Fiery Grip',
       type: 'active',
       icon: 'ability_dragonknight_005',
-      description: 'Pull an enemy to you, dealing Flame Damage.',
+      description:
+        'Launch a fiery chain to grasp and pull an enemy to you, dealing 1392 Flame Damage and taunting them for 15 seconds if they are not already taunted.\n\nHitting the target grants you Major Expedition, increasing your Movement Speed by 30% for 4 seconds.\n\nThis attack cannot be dodged or reflected.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_GRIP,
     },
     {
@@ -104,7 +113,8 @@ export const ardentFlame: SkillLineData = {
       name: 'Unrelenting Grip',
       type: 'active',
       icon: 'ability_dragonknight_005_a',
-      description: 'If target cannot be pulled, the cost is refunded.',
+      description:
+        "Launch a fiery chain to grasp and pull an enemy to you, dealing 1438 Flame Damage and taunting them for 15 seconds if they are not already taunted.\n\nHitting the target grants you Major Expedition, increasing your Movement Speed by 30% for 4 seconds.\n\nIf the target cannot be pulled, you restore 100% of the ability's cost as Magicka.\n\nThis attack cannot be dodged or reflected.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_GRIP,
     },
     {
@@ -112,7 +122,8 @@ export const ardentFlame: SkillLineData = {
       name: 'Chains of Devastation',
       type: 'active',
       icon: 'ability_dragonknight_005_b',
-      description: 'Grants you Empower after pulling. Pull yourself to enemy instead.',
+      description:
+        'Launch a fiery chain to grasp and pull yourself to an enemy, dealing 1438 Flame Damage.\n\nHitting the target grants you Major Expedition and Major Berserk, increasing your Movement Speed by 30% and your damage done by 10% for 4 seconds.\n\nThis attack cannot be dodged or reflected.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_GRIP,
     },
     {
@@ -120,7 +131,8 @@ export const ardentFlame: SkillLineData = {
       name: 'Lava Whip',
       type: 'active',
       icon: 'ability_dragonknight_001',
-      description: 'Lash an enemy with fire, dealing instant Flame Damage.',
+      description:
+        'Lash an enemy with flame, dealing 2323 Flame Damage.\n\nIf you strike an enemy that is immobilized or stunned, you set them Off Balance.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_LAVA_WHIP,
     },
     {
@@ -128,7 +140,8 @@ export const ardentFlame: SkillLineData = {
       name: 'Molten Whip',
       type: 'active',
       icon: 'ability_dragonknight_001_b',
-      description: 'Increases damage of next whip per Ardent Flame ability used.',
+      description:
+        'Lash an enemy with flame, dealing 2323 Flame Damage.\n\nIf you strike an enemy that is is immobilized or stunned, you set them Off Balance.\n\nWhenever you activate a different Ardent Flame ability while in combat, you gain a stack of Seething Fury, increasing the damage of your next Molten Whip by 20% and your Weapon and Spell Damage by 100 for 15 seconds. This effect stacks up to 3 times.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_LAVA_WHIP,
     },
     {
@@ -136,16 +149,17 @@ export const ardentFlame: SkillLineData = {
       name: 'Flame Lash',
       type: 'active',
       icon: 'ability_dragonknight_001_a',
-      description: 'Can be reactivated for free when hitting Off Balance enemies, healing you.',
+      description:
+        'Lash an enemy with flame, dealing 2323 Flame Damage.\n\nIf you strike an enemy that is immobilized or stunned, you set them Off Balance.\n\nTargeting an Off Balance or immobilized enemy changes this ability into Power Lash, allowing you to lash an enemy at half cost to deal 2760 Flame Damage and healing you for 2760 Health.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_LAVA_WHIP,
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_INFERNO,
       name: 'Inferno',
       type: 'active',
-      icon: 'ability_mage_065',
+      icon: 'ability_dragonknight_002',
       description:
-        'Summons a flaming orb around you, passively increasing Spell Critical. Can activate to deal Flame Damage to enemies.',
+        'Activate an aura of flames which launches a fireball at the nearest enemy every 5 seconds, dealing 1742 Flame Damage.\n\nWhile slotted on either bar, you gain Major Prophecy and Savagery, increasing your Spell and Weapon Critical rating by 2629.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_INFERNO,
     },
     {
@@ -153,7 +167,8 @@ export const ardentFlame: SkillLineData = {
       name: 'Flames of Oblivion',
       type: 'active',
       icon: 'ability_dragonknight_002_a',
-      description: 'Now shoots fireballs automatically at enemies.',
+      description:
+        'Activate an aura of flames which launches a fireball at 3 enemies every 5 seconds, dealing 1799 Flame Damage.\n\nWhile slotted on either bar, you gain Major Prophecy and Savagery, increasing your Spell and Weapon Critical rating by 2629.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_INFERNO,
     },
     {
@@ -161,14 +176,15 @@ export const ardentFlame: SkillLineData = {
       name: 'Cauterize',
       type: 'active',
       icon: 'ability_dragonknight_002_b',
-      description: 'Shoots healing fireballs that heal you or allies instead of dealing damage.',
+      description:
+        'Activate an aura of embers which cauterizes the wounds of you or up to 4 nearby allies every 3 seconds, healing for 1199 Health.\n\nWhile slotted on either bar, you gain Major Prophecy and Savagery, increasing your Spell and Weapon Critical rating by 2629.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_INFERNO,
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_COMBUSTION,
       name: 'Combustion',
       type: 'passive',
-      icon: 'death_recap_fire_aoe',
+      icon: 'ability_sorcerer_011',
       description:
         'Increases the damage of your Burning and Poisoned status effects by 33%. When you apply Burning or Poisoned to an enemy, you restore 423 Magicka and Stamina. This effect can occur once every 3 seconds.',
       isPassive: true,

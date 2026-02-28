@@ -21,7 +21,7 @@ export const earthenHeart: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_018',
       description:
-        'Reduce all incoming damage to a small percentage of your Max Health for a duration.',
+        'Ignite the molten lava in your veins, limiting incoming damage to 3% of your Max Health and dealing 336 Flame Damage to nearby enemies each second for 10 seconds.\n\nWhile active, you cannot generate Ultimate.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MAGMA_ARMOR,
     },
@@ -30,7 +30,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Magma Shell',
       type: 'ultimate',
       icon: 'ability_dragonknight_018_a',
-      description: 'Nearby allies gain a powerful damage shield.',
+      description:
+        'Ignite the molten lava in your veins, limiting incoming damage to 3% of your Max Health and dealing 347 Flame Damage to nearby enemies each second for 10 seconds. \n\nWhen activated, nearby allies gain a damage shield for 100% of their Max Health for 10 seconds.\n\nWhile active, you cannot generate Ultimate.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MAGMA_ARMOR,
     },
@@ -39,7 +40,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Corrosive Armor',
       type: 'ultimate',
       icon: 'ability_dragonknight_018_b',
-      description: 'Enemies hit take increased damage from your attacks.',
+      description:
+        'Oxidize the green Dragon blood in your veins, limiting incoming damage to 3% of your Max Health and dealing 347 Poison Damage to nearby enemies each second for 10 seconds. \n\nWhile active, this ability and your direct damage attacks ignore enemy Physical and Spell Resistance, but you cannot generate Ultimate.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MAGMA_ARMOR,
     },
@@ -48,7 +50,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Stonefist',
       type: 'active',
       icon: 'ability_dragonknight_013',
-      description: 'Hurl a chunk of stone at an enemy, dealing Physical Damage.',
+      description:
+        'Crush the earth beneath you, dealing 2323 Physical Damage to all enemies within 6 meters of you. Debris ripped from the ground is held around you for 10 seconds.\n\nActivating the ability again allows you to launch part of the debris at an enemy, dealing 2323 Physical Damage, up to 3 times. The final cast stuns enemies hit for 2.5 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_STONEFIST,
     },
     {
@@ -56,7 +59,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Stone Giant',
       type: 'active',
       icon: 'ability_dragonknight_013_a',
-      description: 'Applies stacks of Stagger, increasing enemy damage taken.',
+      description:
+        'Crush the earth beneath you, dealing 2323 Physical Damage to all enemies within 6 meters of you. Debris ripped from the ground is held around you for 10 seconds.\n\nActivating the ability again allows you to launch part of the debris at an enemy, dealing 2323 Physical Damage, up to 3 times. The final cast stuns for 2.5 seconds.\n\nEach hit applies Stagger, increasing damage taken by 65 per stack for 5 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_STONEFIST,
     },
     {
@@ -64,7 +68,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Obsidian Shard',
       type: 'active',
       icon: 'ability_dragonknight_013_b',
-      description: 'Converts to Magicka, heals allies near the target.',
+      description:
+        'Slam an enemy with molten rock, dealing 448 Flame Damage and causing the rock to explode, splashing magma around.\n\nYou then pull back on the magma to heal yourself or up to 2 allies near the enemy for 3240 Health.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_STONEFIST,
     },
     {
@@ -72,7 +77,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Molten Weapons',
       type: 'active',
       icon: 'ability_dragonknight_015',
-      description: 'Grant yourself and allies bonus Weapon/Spell Damage.',
+      description:
+        "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MOLTEN_WEAPONS,
     },
     {
@@ -80,7 +86,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Igneous Weapons',
       type: 'active',
       icon: 'ability_dragonknight_015_a',
-      description: 'Increases duration.',
+      description:
+        "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 1 minute.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MOLTEN_WEAPONS,
     },
     {
@@ -88,7 +95,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Molten Armaments',
       type: 'active',
       icon: 'ability_dragonknight_015_b',
-      description: 'Increases Heavy Attack damage.',
+      description:
+        "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds.\n\nYou also gain Empower for the duration, increasing the damage of your Heavy Attacks against monsters by 70%.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MOLTEN_WEAPONS,
     },
     {
@@ -96,7 +104,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Obsidian Shield',
       type: 'active',
       icon: 'ability_dragonknight_017',
-      description: 'Grants you and allies a damage shield.',
+      description:
+        'Call the earth to your defense, granting a damage shield for you and nearby allies that absorbs 1321 damage. This portion of the ability scales off your Max Health.\n\nYou also gain Major Mending, increasing your healing done by 16% for 2.5 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_OBSIDIAN_SHIELD,
     },
     {
@@ -104,7 +113,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Fragmented Shield',
       type: 'active',
       icon: 'ability_dragonknight_017a',
-      description: 'Grants Major Mending for a longer duration.',
+      description:
+        'Call the earth to your defense, creating a damage shield for you and nearby allies that absorbs 1365 damage. This portion of the ability scales off your Max Health.\n\nYou also gain Major Mending, increasing your healing done by 16% for 6.7 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_OBSIDIAN_SHIELD,
     },
     {
@@ -112,7 +122,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Igneous Shield',
       type: 'active',
       icon: 'ability_dragonknight_017b',
-      description: 'Stronger shield on yourself, restores Stamina when cast.',
+      description:
+        'Call the earth to your defense, granting a damage shield for nearby allies that absorbs 1365 damage. Your own damage shield absorbs 3414 damage. This portion of the ability scales off your Max Health.\n\nYou also gain Major Mending, increasing your healing done by 16% for 2.5 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_OBSIDIAN_SHIELD,
     },
     {
@@ -120,7 +131,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Petrify',
       type: 'active',
       icon: 'ability_dragonknight_014',
-      description: 'Stuns a target enemy, cannot be blocked.',
+      description:
+        'Encase an enemy in molten rock, stunning them for 2.5 seconds. When the stun ends, they take 1161 Flame Damage.\n\nThis stun cannot be blocked or dodged.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PETRIFY,
     },
     {
@@ -128,7 +140,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Fossilize',
       type: 'active',
       icon: 'ability_dragonknight_014_a',
-      description: 'Immobilizes target after stun ends.',
+      description:
+        'Encase an enemy in molten rock, stunning them for 2.5 seconds. When the stun ends, they take 1199 Flame Damage and are immobilized for 3 seconds.\n\nThis stun cannot be blocked or dodged.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PETRIFY,
     },
     {
@@ -136,7 +149,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Shattering Rocks',
       type: 'active',
       icon: 'ability_dragonknight_014b',
-      description: 'Heals you when the target is damaged after being stunned.',
+      description:
+        'Encase an enemy in molten rock, stunning them for 2.5 seconds.\n\nWhen the stun ends, they take 1199 Flame Damage and you are healed for 2323 Health.\n\nThis stun cannot be blocked or dodged.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PETRIFY,
     },
     {
@@ -144,7 +158,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Ash Cloud',
       type: 'active',
       icon: 'ability_dragonknight_016',
-      description: 'Create a choking cloud, reducing enemy movement speed.',
+      description:
+        'Summon a scorching cloud of ash at the target location for 15 seconds, reducing enemy Movement Speed by 70% and healing you and your allies for 434 Health every 1 second.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_ASH_CLOUD,
     },
     {
@@ -152,7 +167,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Cinder Storm',
       type: 'active',
       icon: 'ability_dragonknight_016a',
-      description: 'Increases healing and duration.',
+      description:
+        'Summon a scorching cloud of ash at the target location for 15 seconds, reducing enemy Movement Speed by 70% and healing you and your allies for 674 every 1 second.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_ASH_CLOUD,
     },
     {
@@ -160,7 +176,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Eruption',
       type: 'active',
       icon: 'ability_dragonknight_016b',
-      description: 'Larger radius, initial burst of Flame Damage, then DoT.',
+      description:
+        'Summon a scorching cloud of ash at the target location for 15 seconds, dealing 1799 Flame Damage immediately, reducing enemy Movement Speed by 70%, and dealing 319 Flame Damage in the area every 1 second.\n\nThe eruptive damage can occur once every 10 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_ASH_CLOUD,
       alternateIds: [32710],
     },
@@ -170,7 +187,7 @@ export const earthenHeart: SkillLineData = {
       type: 'passive',
       icon: 'ability_dragonknight_031',
       description:
-        'When you cast an Ultimate ability, you restore 37 Health, 37 Magicka, and 37 Stamina for each point of the Ultimate spent.',
+        'When you cast an Ultimate ability, you restore 37 Health 37 Magicka, and 37 Stamina for each point of the Ultimate spent.',
       isPassive: true,
     },
     {

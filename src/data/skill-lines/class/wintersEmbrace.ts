@@ -20,7 +20,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Sleet Storm',
       type: 'ultimate',
       icon: 'ability_warden_006',
-      description: 'Twist violent storm around you for ongoing Frost Damage.',
+      description:
+        'Twist a violent storm around you, dealing 1161 Frost Damage every 1 second for 8 seconds to enemies around you and reducing their Movement Speed by 40%.  \n\nYou and nearby allies gain Major Protection, reducing your damage taken by 10%.',
       isUltimate: true,
       baseSkillId: ClassSkillId.WARDEN_SLEET_STORM,
     },
@@ -29,7 +30,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Northern Storm',
       type: 'ultimate',
       icon: 'ability_warden_006_a',
-      description: 'Stacking damage buff and Major Protection for allies.',
+      description:
+        'Twist a violent storm around you, dealing 1199 Frost Damage every 1 second for 8 seconds to enemies around you and reducing their Movement Speed by 40%. As the storm holds, your damage done increases by 2% every 1 second for 12 seconds, up to 9 stacks max.\n\nYou and nearby allies gain Major Protection, reducing your damage taken by 10%.',
       isUltimate: true,
       baseSkillId: ClassSkillId.WARDEN_SLEET_STORM,
     },
@@ -37,8 +39,9 @@ export const wintersEmbrace: SkillLineData = {
       id: ClassSkillId.WARDEN_PERMAFROST,
       name: 'Permafrost',
       type: 'ultimate',
-      icon: 'ability_rogue_067',
-      description: 'Extended duration with stronger snare and Chilled effect.',
+      icon: 'ability_warden_006_b',
+      description:
+        'Twist a violent storm around you, dealing 158 Frost Damage every 1 second for 13 seconds to enemies around you and reducing their Movement Speed by 70% and applying the Chilled status effect.\n\nYou and nearby allies gain Major Protection, reducing your damage taken by 10%.',
       isUltimate: true,
       baseSkillId: ClassSkillId.WARDEN_SLEET_STORM,
       alternateIds: [86117],
@@ -48,7 +51,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Arctic Wind',
       type: 'active',
       icon: 'ability_warden_003',
-      description: 'Envelop in winter winds for self-healing over time.',
+      description:
+        'Envelop yourself in winter winds, instantly healing for 4958 Health and an additional 990 Health every 2 seconds over 10 seconds. This ability scales off your Max Health.',
       baseSkillId: ClassSkillId.WARDEN_ARCTIC_WIND,
     },
     {
@@ -56,7 +60,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Arctic Blast',
       type: 'active',
       icon: 'ability_warden_003_b',
-      description: 'Deals AoE damage, heals if no enemies hit, stuns after delay.',
+      description:
+        'Envelop yourself in winter winds, instantly dealing 1799 Frost Damage to nearby enemies. If no enemies are hit, you heal for 2323 Health.\n\nThe winds persist for 20 seconds and chill your foes to the bone, dealing 298 Frost Damage every 2 seconds, after 2 seconds. The damage has a higher chance to apply the Chilled status effect.\n\nStuns enemies after the delay for 3 seconds.',
       baseSkillId: ClassSkillId.WARDEN_ARCTIC_WIND,
     },
     {
@@ -64,7 +69,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Polar Wind',
       type: 'active',
       icon: 'ability_warden_003_a',
-      description: 'Also heals nearby ally with larger radius.',
+      description:
+        'Envelop yourself in winter winds, instantly healing for 4958 Health and healing for an additional 1365 Health every 2 seconds over 10 seconds. You also heal a nearby ally for 3305 Health. This ability scales off your Max Health.',
       baseSkillId: ClassSkillId.WARDEN_ARCTIC_WIND,
     },
     {
@@ -72,7 +78,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Crystallized Shield',
       type: 'active',
       icon: 'ability_warden_002',
-      description: 'Spin ice shield absorbing projectiles and gaining Ultimate.',
+      description:
+        'Spin a shield of ice around you, absorbing up to 16528 damage from 3 projectiles. \n\nEach time you absorb a projectile you gain 2 Ultimate.',
       baseSkillId: ClassSkillId.WARDEN_CRYSTALLIZED_SHIELD,
     },
     {
@@ -80,7 +87,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Crystallized Slab',
       type: 'active',
       icon: 'ability_warden_002_a',
-      description: 'Launches icy bolts back at attackers with stuns.',
+      description:
+        'Spin a shield of ice around you, absorbing up to 24791 damage from 3 projectiles. \n\nEach time you absorb a projectile you launch an icy bolt back at the enemy, dealing 1199 Frost Damage and stunning them for 3 seconds.',
       baseSkillId: ClassSkillId.WARDEN_CRYSTALLIZED_SHIELD,
     },
     {
@@ -88,7 +96,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Shimmering Shield',
       type: 'active',
       icon: 'ability_warden_002_b',
-      description: 'Grants Major Heroism for ongoing Ultimate generation.',
+      description:
+        'Spin a shield of ice around you, absorbing up to 16527 damage from 3 projectiles. \n\nEach time you absorb a projectile you gain 2 Ultimate and gain Major Heroism for 6 seconds, granting you 3 Ultimate every 1.5 seconds.',
       baseSkillId: ClassSkillId.WARDEN_CRYSTALLIZED_SHIELD,
     },
     {
@@ -96,7 +105,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Frost Cloak',
       type: 'active',
       icon: 'ability_warden_001',
-      description: 'Wrap allies in ice for Major Resolve protection.',
+      description:
+        'Wrap a thick cloak of ice around you and your grouped allies. The ice grants Major Resolve, increasing your Physical and Spell Resistance by 5948 for 20 seconds.',
       baseSkillId: ClassSkillId.WARDEN_FROST_CLOAK,
     },
     {
@@ -104,7 +114,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Expansive Frost Cloak',
       type: 'active',
       icon: 'ability_warden_001_a',
-      description: 'Massive 36-meter radius for group buffing.',
+      description:
+        'Wrap a thick cloak of ice around you and your grouped allies. The ice grants Major Resolve, increasing your Physical and Spell Resistance by 5948 for 20 seconds.',
       baseSkillId: ClassSkillId.WARDEN_FROST_CLOAK,
     },
     {
@@ -112,7 +123,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Ice Fortress',
       type: 'active',
       icon: 'ability_warden_001_b',
-      description: 'Extended duration with Minor Protection for self.',
+      description:
+        'Wrap a thick cloak of ice around you and your grouped allies. The ice grants Major Resolve, increasing your Physical and Spell Resistance by 5948 for 30 seconds.\n\nYou gain Minor Protection, reducing your damage taken by 5% for 30 seconds.',
       baseSkillId: ClassSkillId.WARDEN_FROST_CLOAK,
     },
     {
@@ -120,7 +132,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Frozen Gate',
       type: 'active',
       icon: 'ability_warden_005',
-      description: 'Summon portal that teleports and immobilizes enemies.',
+      description:
+        'Summon an ancient portal, which arms after 1.5 seconds and lasts for 15 seconds.\n\nWhen triggered the enemy is teleported to you if within range, immobilized for 3 seconds, and dealt 1742 Frost Damage.\n\nYou can have up to 3 Frozen Gates active at a time.',
       baseSkillId: ClassSkillId.WARDEN_FROZEN_GATE,
     },
     {
@@ -128,7 +141,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Frozen Device',
       type: 'active',
       icon: 'ability_warden_005_a',
-      description: 'Can have 3 active, applies Major Maim.',
+      description:
+        'Summon an ancient portal, which arms after 1.5 seconds.\n\nWhen triggered the enemy is teleported to you if within range, immobilized for 3 seconds, dealt 1799 Frost Damage, and afflicted with Major Maim, reducing their damage done by 10% for 4 seconds.\n\nYou can have up to 3 Frozen Devices active at a time.',
       baseSkillId: ClassSkillId.WARDEN_FROZEN_GATE,
     },
     {
@@ -136,7 +150,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Frozen Retreat',
       type: 'active',
       icon: 'ability_warden_005_b',
-      description: 'Ally synergy for teleportation and Major Expedition.',
+      description:
+        'Summon an ancient portal, which arms after 1.5 seconds.\n\nWhen triggered the enemy is teleported to you if within range, immobilized for 3 seconds, and dealt 1799 Frost Damage.\n\nAn ally in the portal can activate the Icy Escape synergy, teleporting them to you and granting them Major Expedition, increasing their Movement Speed by 30% for 8 seconds.\n\nYou can have up to 3 Frozen Retreats active at a time.',
       baseSkillId: ClassSkillId.WARDEN_FROZEN_GATE,
     },
     {
@@ -144,7 +159,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Impaling Shards',
       type: 'active',
       icon: 'ability_warden_004',
-      description: 'Conjure icy shards for ongoing area damage.',
+      description:
+        'Conjure icy shards around you to skewer enemies in the area, dealing 405 Frost Damage every 1 second for 12 seconds.\n\nEnemies hit are overcome with bitter cold, reducing their Movement Speed by 30% for 3 seconds.\n\nDamage done is based on your Max Health, and has a higher chance to apply the Chilled status effect.',
       baseSkillId: ClassSkillId.WARDEN_IMPALING_SHARDS,
     },
     {
@@ -152,7 +168,8 @@ export const wintersEmbrace: SkillLineData = {
       name: 'Gripping Shards',
       type: 'active',
       icon: 'ability_warden_004_a',
-      description: 'Immobilizes enemies initially, scales off Max Health.',
+      description:
+        'Conjure icy shards around you to skewer enemies in the area, immobilizing them for 3 seconds and dealing 419 Frost Damage every 1 second for 12 seconds.\n\nEnemies hit are overcome with bitter cold, reducing their Movement Speed by 30% for 3 seconds.\n\nDamage done is based on your Max Health and has a higher chance to apply the Chilled status effect.',
       baseSkillId: ClassSkillId.WARDEN_IMPALING_SHARDS,
     },
     {
@@ -160,7 +177,8 @@ export const wintersEmbrace: SkillLineData = {
       name: "Winter's Revenge",
       type: 'active',
       icon: 'ability_warden_004_b',
-      description: 'Ground-targeted with 30% more damage when using Destruction Staff.',
+      description:
+        'Conjure icy shards at the target location to skewer enemies in the area, dealing 294 Frost Damage every 1 second for 12 seconds. This damage increases by 30% if cast with a Destruction Staff equipped.\n\nEnemies hit are overcome with bitter cold, reducing their Movement Speed by 30% for 3 seconds.\n\nThis ability has a higher chance to apply the Chilled status effect.',
       baseSkillId: ClassSkillId.WARDEN_IMPALING_SHARDS,
     },
     {

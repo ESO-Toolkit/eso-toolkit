@@ -78,6 +78,8 @@ git checkout -b ESO-XXX/description-here
 - **Post-Squash Rebase**: [.github/skills/rebase/SKILL.md](.github/skills/rebase/SKILL.md)
 - **Auth / OAuth**: [.github/skills/auth/SKILL.md](.github/skills/auth/SKILL.md) - Browser session authentication
 - **Skill Data Regen**: [.github/skills/skill-data-regen/SKILL.md](.github/skills/skill-data-regen/SKILL.md) - ESO skill line data regeneration
+- **Class Skill Regen**: [.github/skills/class-skill-regen/SKILL.md](.github/skills/class-skill-regen/SKILL.md) - Refresh class skill descriptions/icons from ESO-Hub API
+- **Gear Data Regen**: [.github/skills/gear-data-regen/SKILL.md](.github/skills/gear-data-regen/SKILL.md) - Gear set bonus/tooltip data from ESO-Hub
 - **UESP Data**: [.github/skills/uesp-data/SKILL.md](.github/skills/uesp-data/SKILL.md) - Item icon management
 - **UI Updates**: [.github/skills/ui-updates/SKILL.md](.github/skills/ui-updates/SKILL.md) - Theme-consistent UI changes (glassmorphism, colors, typography, patterns)
 - **Create New Skill**: [.github/skills/create-skill/SKILL.md](.github/skills/create-skill/SKILL.md) - Add a new SKILL.md to the project
@@ -235,6 +237,23 @@ See: [.github/skills/auth/SKILL.md](.github/skills/auth/SKILL.md)
 @workspace Generate validation report for all skill modules
 ```
 See: [.github/skills/skill-data-regen/SKILL.md](.github/skills/skill-data-regen/SKILL.md)
+
+**Gear Data Regeneration** (Gear Set Bonuses):
+```
+@workspace Update Turning Tide set bonuses from ESO-Hub
+@workspace Add the new set from https://eso-hub.com/en/sets/mothers-sorrow
+@workspace Refresh all Dungeon set bonuses
+```
+See: [.github/skills/gear-data-regen/SKILL.md](.github/skills/gear-data-regen/SKILL.md)
+
+**Class Skill Refresh** (Class Skill Descriptions & Icons):
+```
+@workspace Refresh class skill descriptions from ESO-Hub
+@workspace Update Dragonknight Ardent Flame skill descriptions
+@workspace Apply class skill icon changes from ESO-Hub
+@workspace Dry-run class skill refresh for nightblade siphoning
+```
+See: [.github/skills/class-skill-regen/SKILL.md](.github/skills/class-skill-regen/SKILL.md)
 
 ---
 
