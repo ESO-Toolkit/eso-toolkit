@@ -26,13 +26,7 @@ export const SVGFilters: React.FC = () => {
     >
       <defs>
         {/* Metallic border with realistic specular highlight */}
-        <filter
-          id="metallicShine"
-          x="-50%"
-          y="-50%"
-          width="200%"
-          height="200%"
-        >
+        <filter id="metallicShine" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
           <feSpecularLighting
             in="blur"
@@ -60,12 +54,7 @@ export const SVGFilters: React.FC = () => {
         {/* Gem glow with organic turbulence */}
         <filter id="gemGlow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
-          <feColorMatrix
-            in="blur"
-            type="saturate"
-            values="1.5"
-            result="saturated"
-          />
+          <feColorMatrix in="blur" type="saturate" values="1.5" result="saturated" />
           <feMerge>
             <feMergeNode in="saturated" />
             <feMergeNode in="SourceGraphic" />
@@ -105,7 +94,15 @@ export const SVGFilters: React.FC = () => {
             <fePointLight x="-500" y="-1000" z="1500" />
           </feSpecularLighting>
           <feComposite in="specular" in2="SourceAlpha" operator="in" result="specular" />
-          <feComposite in="SourceGraphic" in2="specular" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
+          <feComposite
+            in="SourceGraphic"
+            in2="specular"
+            operator="arithmetic"
+            k1="0"
+            k2="1"
+            k3="1"
+            k4="0"
+          />
         </filter>
 
         {/* Ambient glow for equipped items */}

@@ -55,11 +55,7 @@ interface GearGridProps {
   selectedSlot?: number | null;
 }
 
-export const GearGrid: React.FC<GearGridProps> = ({
-  gear,
-  onSlotClick,
-  selectedSlot,
-}) => {
+export const GearGrid: React.FC<GearGridProps> = ({ gear, onSlotClick, selectedSlot }) => {
   return (
     <Stack spacing={2}>
       {SECTIONS.map((section) => (

@@ -29,10 +29,7 @@ const resolveAbilityIconUrl = (icon?: string): string | null => {
   return `https://eso-hub.com/storage/icons/${sanitized}.png`;
 };
 
-export const SkillBarGrid: React.FC<SkillBarGridProps> = ({
-  skills,
-  iconSize = 22,
-}) => {
+export const SkillBarGrid: React.FC<SkillBarGridProps> = ({ skills, iconSize = 22 }) => {
   const frontBar = skills?.[0];
   const backBar = skills?.[1];
 
@@ -94,11 +91,7 @@ interface AbilityIconProps {
   isUltimate?: boolean;
 }
 
-const AbilityIcon: React.FC<AbilityIconProps> = ({
-  abilityId,
-  size,
-  isUltimate = false,
-}) => {
+const AbilityIcon: React.FC<AbilityIconProps> = ({ abilityId, size, isUltimate = false }) => {
   const skill = abilityId ? getSkillById(abilityId) : undefined;
   const iconUrl = resolveAbilityIconUrl(skill?.icon);
   const [loadFailed, setLoadFailed] = useState(false);

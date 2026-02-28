@@ -63,7 +63,7 @@ export const NebulaBackground: React.FC<NebulaBackgroundProps> = ({ darkMode = t
       top: Math.random() * 100,
       duration: 8 + Math.random() * 15,
       delay: Math.random() * 8,
-      opacity: darkMode ? (0.15 + Math.random() * 0.6) : (0.1 + Math.random() * 0.3),
+      opacity: darkMode ? 0.15 + Math.random() * 0.6 : 0.1 + Math.random() * 0.3,
       hasGlow: Math.random() > 0.7, // 30% of particles have glow
     }));
   }, [darkMode]);

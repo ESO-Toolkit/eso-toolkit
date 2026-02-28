@@ -131,9 +131,7 @@ export const PlayerSetSlot: React.FC<PlayerSetSlotProps> = ({
     '&:hover': !disabled
       ? {
           transform: 'scale(1.02)',
-          boxShadow: hasSet
-            ? `0 2px 8px ${roleColor}40`
-            : `0 1px 4px ${theme.palette.divider}`,
+          boxShadow: hasSet ? `0 2px 8px ${roleColor}40` : `0 1px 4px ${theme.palette.divider}`,
           borderColor: roleColor,
         }
       : {},

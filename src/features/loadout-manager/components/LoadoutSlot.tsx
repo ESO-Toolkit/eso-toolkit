@@ -77,12 +77,8 @@ export const LoadoutSlot: React.FC<LoadoutSlotProps> = ({
           gap: 0.75,
           cursor: 'pointer',
           borderRadius: 2,
-          border: selected
-            ? '1px solid #00d9ff'
-            : '1px solid rgba(0, 217, 255, 0.15)',
-          backgroundColor: selected
-            ? 'rgba(0, 217, 255, 0.08)'
-            : 'transparent',
+          border: selected ? '1px solid #00d9ff' : '1px solid rgba(0, 217, 255, 0.15)',
+          backgroundColor: selected ? 'rgba(0, 217, 255, 0.08)' : 'transparent',
           transition: 'all 0.2s ease-in-out',
           opacity: setup.disabled ? 0.5 : 1,
           // Subtle glow for selected state
@@ -94,9 +90,7 @@ export const LoadoutSlot: React.FC<LoadoutSlotProps> = ({
             : 'none',
           '&:hover': {
             borderColor: selected ? '#00d9ff' : 'rgba(0, 217, 255, 0.4)',
-            backgroundColor: selected
-              ? 'rgba(0, 217, 255, 0.12)'
-              : 'rgba(0, 217, 255, 0.05)',
+            backgroundColor: selected ? 'rgba(0, 217, 255, 0.12)' : 'rgba(0, 217, 255, 0.05)',
             boxShadow: selected
               ? `
                   0 0 15px rgba(0, 217, 255, 0.3),
@@ -140,7 +134,8 @@ export const LoadoutSlot: React.FC<LoadoutSlotProps> = ({
                   position: 'absolute',
                   inset: 0,
                   borderRadius: 'inherit',
-                  background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.4), transparent 50%)',
+                  background:
+                    'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.4), transparent 50%)',
                   pointerEvents: 'none',
                 },
               }),
@@ -205,10 +200,7 @@ export const LoadoutSlot: React.FC<LoadoutSlotProps> = ({
           {progressSections
             .filter((s) => s.type !== 'cp')
             .map((section, idx) => (
-              <StatusBadge
-                key={`${section.type}-${idx}`}
-                value={formatProgressSection(section)}
-              />
+              <StatusBadge key={`${section.type}-${idx}`} value={formatProgressSection(section)} />
             ))}
         </Stack>
       </Box>

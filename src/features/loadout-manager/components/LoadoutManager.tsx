@@ -481,37 +481,37 @@ export const LoadoutManager: React.FC = () => {
   // Mockup-matching layout with centered container
   return (
     <Box
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: 'transparent',
+        p: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        zIndex: 10,
+      }}
+    >
+      <Box
         sx={{
-          minHeight: '100vh',
-          backgroundColor: 'transparent',
-          p: 2,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          zIndex: 10,
+          width: '100%',
+          maxWidth: 1400,
+          ...metallicPanelEnhanced,
+          // Animated shine effect
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: -1000,
+            width: 2000,
+            height: '100%',
+            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)',
+            transform: 'skewX(-20deg)',
+            animation: 'borderShineEnhanced 10s ease-in-out infinite',
+            pointerEvents: 'none',
+          },
         }}
       >
-        <Box
-          sx={{
-            width: '100%',
-            maxWidth: 1400,
-            ...metallicPanelEnhanced,
-            // Animated shine effect
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: -1000,
-              width: 2000,
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)',
-              transform: 'skewX(-20deg)',
-              animation: 'borderShineEnhanced 10s ease-in-out infinite',
-              pointerEvents: 'none',
-            },
-          }}
-        >
         <Stack spacing={2}>
           {/* Compact Header */}
           <Box
@@ -573,14 +573,14 @@ export const LoadoutManager: React.FC = () => {
                     fontSize: '0.8rem',
                     '.MuiOutlinedInput-notchedOutline': {
                       borderColor: 'rgba(0, 217, 255, 0.25)',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'rgba(0, 217, 255, 0.4)',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#00d9ff',
-                  },
-                }}
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 217, 255, 0.4)',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#00d9ff',
+                    },
+                  }}
                 >
                   {TRIALS.map((trial) => (
                     <MenuItem key={trial.id} value={trial.id}>
@@ -972,9 +972,7 @@ export const LoadoutManager: React.FC = () => {
               width: '100%',
               backgroundColor: 'rgba(10, 18, 35, 0.95)',
               backdropFilter: 'blur(10px)',
-              border: `1px solid ${
-                snackbar.severity === 'success' ? '#22c55e' : '#ef4444'
-              }`,
+              border: `1px solid ${snackbar.severity === 'success' ? '#22c55e' : '#ef4444'}`,
             }}
           >
             {snackbar.message}

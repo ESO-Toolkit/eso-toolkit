@@ -5,7 +5,7 @@
  * Supports both dark and light mode themes.
  */
 
-import { Box } from '@mui/material';
+import { Box, useTheme } from '@mui/material';
 import React from 'react';
 
 import { NebulaBackground } from '../../features/loadout-manager/components/NebulaBackground';
@@ -15,7 +15,6 @@ import {
   blendOverlayScreen,
   globalKeyframesEnhanced,
 } from '../../features/loadout-manager/components/styles/textureStyles';
-import { usePersistentDarkMode } from '../../hooks/usePersistentDarkMode';
 
 /**
  * SiteBackground - Global cosmic/nebula background for the entire site
@@ -30,7 +29,9 @@ import { usePersistentDarkMode } from '../../hooks/usePersistentDarkMode';
  * Place this component at the root level of the app, inside the theme provider.
  */
 export const SiteBackground: React.FC = () => {
-  const { darkMode } = usePersistentDarkMode();
+  // Use MUI's theme hook which works without Redux
+  const theme = useTheme();
+  const darkMode = theme.palette.mode === 'dark';
 
   return (
     <>
