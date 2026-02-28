@@ -4,7 +4,7 @@
  * Features header with "SETUPS" title and count, metallic border effect
  */
 
-import { Box, Stack, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 
 import type { LoadoutSetup } from '../types/loadout.types';
@@ -123,7 +123,7 @@ export const LoadoutSidebar: React.FC<LoadoutSidebarProps> = ({
             </Typography>
           </Box>
         ) : (
-          filteredSetups.map((setup, index) => {
+          filteredSetups.map((setup) => {
             // Find original index for callbacks
             const originalIndex = setups.indexOf(setup);
             return (

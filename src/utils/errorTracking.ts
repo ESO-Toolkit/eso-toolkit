@@ -22,7 +22,8 @@ const logger = new Logger({
 });
 
 // Stub type declaration for build (rollbar package not installed)
-interface Rollbar {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+interface _Rollbar {
   new (config: any): void;
   error(err: Error): void;
   critical(message: string, extra?: any): void;
@@ -36,6 +37,7 @@ let rollbar: any = null;
 
 /** Returns the active Rollbar instance, or null if not initialized. */
 export const getTracker = (): any => rollbar;
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // Extended Navigator interface for connection info
 interface ExtendedNavigator extends Navigator {
@@ -47,7 +49,7 @@ interface ExtendedNavigator extends Navigator {
 }
 
 // Extended Performance interface for memory info
-interface ExtendedPerformance extends Performance {
+interface _ExtendedPerformance extends Performance {
   memory?: {
     usedJSHeapSize: number;
     totalJSHeapSize: number;

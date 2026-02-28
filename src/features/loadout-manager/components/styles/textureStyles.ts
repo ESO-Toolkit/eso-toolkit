@@ -545,7 +545,7 @@ export const globalKeyframes = `
 `;
 
 // Panel container with metallic border and shine
-export const metallicPanel = (accentColor: string = '#00d9ff'): SxProps<Theme> => ({
+export const metallicPanel = (_accentColor: string = '#00d9ff'): SxProps<Theme> => ({
   backgroundColor: 'rgba(15, 25, 45, 0.95)',
   borderRadius: 4,
   border: '2px solid transparent',

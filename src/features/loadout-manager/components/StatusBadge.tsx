@@ -3,19 +3,18 @@
  * Displays CP values like "+12" with cyan styling matching the mockup
  */
 
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
 interface StatusBadgeProps {
   value: string;
-  label?: string;
   color?: string;
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ value, label, color = '#00d9ff' }) => {
+export const StatusBadge: React.FC<StatusBadgeProps> = ({ value, color = '#00d9ff' }) => {
   return (
     <Box
-      sx={(theme) => ({
+      sx={() => ({
         display: 'inline-flex',
         alignItems: 'center',
         gap: 0.25,

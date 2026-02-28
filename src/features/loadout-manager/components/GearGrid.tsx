@@ -6,7 +6,7 @@
  */
 
 import { Box, Grid, Stack, Tooltip, Typography } from '@mui/material';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { getItemInfo } from '../data/itemIdMap';
 import type { GearConfig, GearPiece } from '../types/loadout.types';
