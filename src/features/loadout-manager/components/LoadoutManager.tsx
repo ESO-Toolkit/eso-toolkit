@@ -2,33 +2,27 @@ import {
   Add as AddIcon,
   ArrowBack,
   DeleteSweep,
-  Edit,
   FileDownload,
   FileUpload,
   MoreVert,
-  Search as SearchIcon,
 } from '@mui/icons-material';
 import {
   Alert,
   Box,
   Button,
-  Container,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
   Divider,
-  Drawer,
   FormControl,
   IconButton,
-  InputAdornment,
   InputLabel,
   ListItemIcon,
   ListItemText,
   Menu,
   MenuItem,
-  Paper,
   Select,
   Snackbar,
   Stack,
@@ -45,7 +39,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import { WorkInProgressDisclaimer } from '@/components/WorkInProgressDisclaimer';
 import type { RootState } from '@/store/storeWithHistory';
 
 import { preloadChampionPointData } from '../data/championPointData';
@@ -81,10 +74,10 @@ import {
   clearWizardWardrobeSlotRegistry,
 } from '../utils/wizardWardrobeSlotRegistry';
 
-import { CharacterSelector } from './CharacterSelector';
 import { ExportDialog } from './ExportDialog';
-import { SetupEditor } from './SetupEditor';
-import { SetupList } from './SetupList';
+import { LoadoutDetails } from './LoadoutDetails';
+import { LoadoutSidebar } from './LoadoutSidebar';
+import { metallicPanelEnhanced } from './styles/textureStyles';
 
 const MIN_PAGES = 1;
 
@@ -114,7 +107,7 @@ export const LoadoutManager: React.FC = () => {
   const currentCharacter = useSelector((state: RootState) => state.loadout.currentCharacter);
 
   const [selectedSetupIndex, setSelectedSetupIndex] = useState<number | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [_drawerOpen, setDrawerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -205,7 +198,7 @@ export const LoadoutManager: React.FC = () => {
     [selectedSetupIndex, setups],
   );
 
-  const headerSubtitle = useMemo(() => {
+  const _headerSubtitle = useMemo(() => {
     if (!currentTrial) {
       return 'Select a trial to start organizing your loadouts.';
     }
@@ -336,11 +329,11 @@ export const LoadoutManager: React.FC = () => {
     }
   };
 
-  const handleOpenDetails = (index: number): void => {
+  const _handleOpenDetails = (index: number): void => {
     handleSelectSetup(index);
   };
 
-  const handleAddPage = (): void => {
+  const _handleAddPage = (): void => {
     if (!ensureTrialSelected()) {
       return;
     }
@@ -350,7 +343,7 @@ export const LoadoutManager: React.FC = () => {
     showSnackbar('Page added.', 'success');
   };
 
-  const handleOpenRename = (index: number): void => {
+  const _handleOpenRename = (index: number): void => {
     const page = allPages[index];
     if (!page) {
       return;
@@ -479,57 +472,138 @@ export const LoadoutManager: React.FC = () => {
     setExportDialogOpen(true);
   };
 
-  const renameDisabled = !(currentTrial && allPages.length > 0);
+  const _renameDisabled = !(currentTrial && allPages.length > 0);
 
   // Overflow menu for Import / Export / Clear
   const [overflowAnchor, setOverflowAnchor] = React.useState<HTMLElement | null>(null);
   const overflowOpen = Boolean(overflowAnchor);
 
+  // Mockup-matching layout with centered container
   return (
-    <Container maxWidth="xl" sx={{ py: 2, pb: 6 }}>
-      <WorkInProgressDisclaimer featureName="Loadout Manager" sx={{ mb: 2 }} />
-
-      <Stack spacing={2}>
-        {/* ── Unified toolbar ─────────────────────────────────── */}
-        <Paper
-          variant="outlined"
-          sx={{
-            px: { xs: 1.5, md: 2 },
-            py: { xs: 1.25, md: 1.5 },
-            borderRadius: 2,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1.5,
-          }}
-        >
-          {/* Row 1: title + global actions */}
-          <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: 'transparent',
+        p: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        zIndex: 10,
+      }}
+    >
+      <Box
+        sx={{
+          width: '100%',
+          maxWidth: 1400,
+          ...metallicPanelEnhanced,
+          // Animated shine effect
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: -1000,
+            width: 2000,
+            height: '100%',
+            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)',
+            transform: 'skewX(-20deg)',
+            animation: 'borderShineEnhanced 10s ease-in-out infinite',
+            pointerEvents: 'none',
+          },
+        }}
+      >
+        <Stack spacing={2}>
+          {/* Compact Header */}
+          <Box
+            sx={{
+              px: 2,
+              py: 1.5,
+              borderBottom: '1px solid rgba(0, 217, 255, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
               <Tooltip title="Back" arrow>
-                <IconButton onClick={handleBack} size="small">
+                <IconButton
+                  onClick={handleBack}
+                  size="small"
+                  sx={{
+                    color: 'rgba(0, 217, 255, 0.7)',
+                    '&:hover': {
+                      color: '#00d9ff',
+                      backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                    },
+                  }}
+                >
                   <ArrowBack fontSize="small" />
                 </IconButton>
               </Tooltip>
-              <Typography variant="h6" sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
-                Loadout Manager
-              </Typography>
               <Typography
-                variant="body2"
-                color="text.secondary"
                 sx={{
-                  display: { xs: 'none', md: 'block' },
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  fontWeight: 700,
+                  fontSize: '1rem',
+                  color: '#00d9ff',
+                  letterSpacing: 1.5,
+                  textTransform: 'uppercase',
                 }}
               >
-                {headerSubtitle}
+                Loadouts
               </Typography>
             </Stack>
 
-            <Stack direction="row" spacing={0.5} sx={{ flexShrink: 0 }}>
-              <Tooltip title="Import data" arrow>
-                <IconButton size="small" onClick={handleImportClick}>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel
+                  sx={{
+                    color: '#7a8599',
+                    fontSize: '0.8rem',
+                    '&.Mui-focused': { color: '#00d9ff' },
+                  }}
+                >
+                  Trial
+                </InputLabel>
+                <Select
+                  value={currentTrial ?? ''}
+                  label="Trial"
+                  onChange={handleTrialChange}
+                  sx={{
+                    color: '#ffffff',
+                    fontSize: '0.8rem',
+                    '.MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 217, 255, 0.25)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 217, 255, 0.4)',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#00d9ff',
+                    },
+                  }}
+                >
+                  {TRIALS.map((trial) => (
+                    <MenuItem key={trial.id} value={trial.id}>
+                      <Typography sx={{ fontWeight: 500, color: '#ffffff', fontSize: '0.8rem' }}>
+                        {trial.name}
+                      </Typography>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <Tooltip title="Import" arrow>
+                <IconButton
+                  size="small"
+                  onClick={handleImportClick}
+                  sx={{
+                    color: 'rgba(0, 217, 255, 0.7)',
+                    '&:hover': {
+                      color: '#00d9ff',
+                      backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                    },
+                  }}
+                >
                   <FileUpload fontSize="small" />
                 </IconButton>
               </Tooltip>
@@ -539,310 +613,372 @@ export const LoadoutManager: React.FC = () => {
                     size="small"
                     onClick={handleExportClick}
                     disabled={setups.length === 0}
+                    sx={{
+                      color: 'rgba(0, 217, 255, 0.7)',
+                      '&:hover': {
+                        color: '#00d9ff',
+                        backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                      },
+                    }}
                   >
                     <FileDownload fontSize="small" />
                   </IconButton>
                 </span>
               </Tooltip>
-              <Tooltip title="More actions" arrow>
-                <IconButton size="small" onClick={(e) => setOverflowAnchor(e.currentTarget)}>
+              <Tooltip title="More" arrow>
+                <IconButton
+                  size="small"
+                  onClick={(e) => setOverflowAnchor(e.currentTarget)}
+                  sx={{
+                    color: 'rgba(0, 217, 255, 0.7)',
+                    '&:hover': {
+                      color: '#00d9ff',
+                      backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                    },
+                  }}
+                >
                   <MoreVert fontSize="small" />
                 </IconButton>
               </Tooltip>
             </Stack>
-          </Stack>
-
-          {/* Row 2: character + role + trial dropdowns */}
-          <Stack
-            direction={{ xs: 'column', md: 'row' }}
-            spacing={1.5}
-            alignItems={{ md: 'center' }}
-          >
-            <CharacterSelector />
-
-            <FormControl sx={{ minWidth: 180 }} size="small">
-              <InputLabel id="trial-select-label">Trial / Activity</InputLabel>
-              <Select
-                labelId="trial-select-label"
-                value={currentTrial ?? ''}
-                label="Trial / Activity"
-                onChange={handleTrialChange}
-              >
-                {TRIALS.map((trial) => (
-                  <MenuItem key={trial.id} value={trial.id}>
-                    <Stack spacing={0.15}>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {trial.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {trial.type === 'trial'
-                          ? 'Trial'
-                          : trial.type === 'arena'
-                            ? 'Arena'
-                            : trial.type === 'substitute'
-                              ? 'Substitute'
-                              : 'General'}
-                      </Typography>
-                    </Stack>
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
-
-          {/* Row 3: page tabs — full width */}
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <Tabs
-              value={Math.min(currentPage, Math.max(allPages.length - 1, 0))}
-              onChange={handlePageChange}
-              variant="scrollable"
-              scrollButtons="auto"
-              allowScrollButtonsMobile
-              sx={{ flex: 1, minHeight: 36, '& .MuiTab-root': { minHeight: 36, py: 0.5 } }}
-            >
-              {allPages.map((page, index) => (
-                <Tab key={`${page.name}-${index}`} label={page.name} value={index} />
-              ))}
-            </Tabs>
-            <Tooltip title="Rename page" arrow>
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={() => handleOpenRename(currentPage)}
-                  disabled={renameDisabled}
-                >
-                  <Edit fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title="Add page" arrow>
-              <IconButton size="small" color="primary" onClick={handleAddPage}>
-                <AddIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-
-          {/* Row 4: search + new setup */}
-          <Stack direction="row" spacing={1} alignItems="center">
-            <TextField
-              value={searchTerm}
-              onChange={handleSearchChange}
-              placeholder="Search setups..."
-              size="small"
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ '& .MuiInputBase-root': { height: 36 } }}
-            />
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={handleAddSetup}
-              disabled={!currentTrial}
-              sx={{ flexShrink: 0, whiteSpace: 'nowrap', height: 36 }}
-            >
-              New
-            </Button>
-          </Stack>
-        </Paper>
-
-        {/* ── Main content: list + editor ───────────────────── */}
-        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="stretch">
-          {/* Setup list — narrower on desktop */}
-          <Box
-            sx={{
-              width: { xs: '100%', lg: '38%' },
-              flexShrink: 0,
-              minWidth: 0,
-              maxHeight: { lg: 'calc(100vh - 280px)' },
-              display: 'flex',
-            }}
-          >
-            <SetupList
-              setups={setups}
-              selectedIndex={selectedSetupIndex}
-              filterText={searchTerm}
-              onOpenDetails={handleOpenDetails}
-              onDuplicateSetup={handleDuplicateSetup}
-              onDeleteSetup={handleDeleteSetup}
-              onCopySetup={handleCopySetup}
-            />
           </Box>
 
-          {/* Editor — wider on desktop */}
-          {!isMdDown && (
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              {selectedSetup ? (
-                <SetupEditor
-                  setup={selectedSetup}
-                  setupIndex={selectedSetupIndex ?? 0}
-                  trialId={currentTrial ?? 'GEN'}
-                  pageIndex={currentPage}
-                  variant="page"
-                />
-              ) : (
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    height: '100%',
-                    minHeight: 200,
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    textAlign: 'center',
-                    px: 3,
-                    py: 4,
-                    color: 'text.secondary',
-                  }}
-                >
-                  <Stack spacing={1} alignItems="center">
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      Select a setup
-                    </Typography>
-                    <Typography variant="body2">
-                      Choose a loadout from the list to review gear, skills, and CP.
-                    </Typography>
-                  </Stack>
-                </Paper>
-              )}
-            </Box>
-          )}
+          {/* Page tabs + Search row */}
+          <Box sx={{ px: 2 }}>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Tabs
+                value={Math.min(currentPage, Math.max(allPages.length - 1, 0))}
+                onChange={handlePageChange}
+                variant="scrollable"
+                scrollButtons="auto"
+                sx={{
+                  flex: 1,
+                  minHeight: 36,
+                  '& .MuiTabs-indicator': {
+                    backgroundColor: '#00d9ff',
+                    height: 2,
+                  },
+                  '& .MuiTab-root': {
+                    minHeight: 36,
+                    py: 0.5,
+                    px: 1.5,
+                    fontSize: '0.8rem',
+                    color: '#7a8599',
+                    fontWeight: 500,
+                    '&:hover': {
+                      color: '#00d9ff',
+                    },
+                    '&.Mui-selected': {
+                      color: '#00d9ff',
+                    },
+                  },
+                }}
+              >
+                {allPages.map((page, index) => (
+                  <Tab key={`${page.name}-${index}`} label={page.name} value={index} />
+                ))}
+              </Tabs>
+
+              <TextField
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Search..."
+                size="small"
+                sx={{
+                  width: 140,
+                  '& .MuiInputBase-root': {
+                    height: 32,
+                    fontSize: '0.8rem',
+                    color: '#ffffff',
+                    backgroundColor: 'rgba(10, 18, 35, 0.8)',
+                    '.MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 217, 255, 0.25)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 217, 255, 0.4)',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#00d9ff',
+                    },
+                  },
+                }}
+              />
+
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={handleAddSetup}
+                disabled={!currentTrial}
+                sx={{
+                  height: 32,
+                  minWidth: 'auto',
+                  px: 1.5,
+                  fontSize: '0.75rem',
+                  background: '#00d9ff',
+                  color: '#0a0f1e',
+                  fontWeight: 700,
+                  '&:hover': {
+                    background: '#00c4e6',
+                  },
+                  '&:disabled': {
+                    background: 'rgba(0, 217, 255, 0.15)',
+                    color: 'rgba(0, 217, 255, 0.4)',
+                  },
+                }}
+              >
+                New
+              </Button>
+            </Stack>
+          </Box>
+
+          {/* Main content: Two-column layout */}
+          <Box sx={{ px: 2, pb: 2 }}>
+            <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems="stretch">
+              {/* Left Sidebar - Loadout Slots List (30%) */}
+              <LoadoutSidebar
+                setups={setups}
+                selectedIndex={selectedSetupIndex}
+                filterText={searchTerm}
+                onSelectSetup={handleSelectSetup}
+                onCopySetup={handleCopySetup}
+                onDuplicateSetup={handleDuplicateSetup}
+                onDeleteSetup={handleDeleteSetup}
+              />
+
+              {/* Right Panel - Loadout Details (70%) */}
+              <LoadoutDetails
+                setup={selectedSetup}
+                setupIndex={selectedSetupIndex}
+                trialId={currentTrial ?? 'GEN'}
+                pageIndex={currentPage}
+              />
+            </Stack>
+          </Box>
         </Stack>
-      </Stack>
 
-      {/* Hidden file input */}
-      <input
-        type="file"
-        accept=".lua,.json,.txt"
-        hidden
-        ref={fileInputRef}
-        onChange={handleFileChange}
-      />
+        {/* Hidden file input */}
+        <input
+          type="file"
+          accept=".lua,.json,.txt"
+          hidden
+          ref={fileInputRef}
+          onChange={handleFileChange}
+        />
 
-      {/* Mobile drawer */}
-      <Drawer
-        anchor="right"
-        open={drawerOpen && Boolean(selectedSetup)}
-        onClose={() => setDrawerOpen(false)}
-        ModalProps={{ keepMounted: true }}
-        PaperProps={{ sx: { width: { xs: '100%', sm: 440 } } }}
-      >
-        {selectedSetup && (
-          <SetupEditor
-            setup={selectedSetup}
-            setupIndex={selectedSetupIndex ?? 0}
-            trialId={currentTrial ?? 'GEN'}
-            pageIndex={currentPage}
-            variant="drawer"
-          />
-        )}
-      </Drawer>
+        {/* Export dialog */}
+        <ExportDialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} />
 
-      {/* Export dialog */}
-      <ExportDialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} />
-
-      {/* Overflow menu */}
-      <Menu
-        anchorEl={overflowAnchor}
-        open={overflowOpen}
-        onClose={() => setOverflowAnchor(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <MenuItem
-          onClick={() => {
-            handleImportClick();
-            setOverflowAnchor(null);
+        {/* Overflow menu */}
+        <Menu
+          anchorEl={overflowAnchor}
+          open={overflowOpen}
+          onClose={() => setOverflowAnchor(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          slotProps={{
+            paper: {
+              sx: {
+                backgroundColor: 'rgba(10, 18, 35, 0.95)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(0, 217, 255, 0.2)',
+                borderRadius: 2,
+              },
+            },
           }}
         >
-          <ListItemIcon>
-            <FileUpload fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Import</ListItemText>
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleExportClick();
-            setOverflowAnchor(null);
+          <MenuItem
+            onClick={() => {
+              handleImportClick();
+              setOverflowAnchor(null);
+            }}
+            sx={{
+              color: '#e5e7eb',
+              fontSize: '0.85rem',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                color: '#ffffff',
+              },
+            }}
+          >
+            <ListItemIcon>
+              <FileUpload fontSize="small" sx={{ color: '#e5e7eb' }} />
+            </ListItemIcon>
+            <ListItemText>Import</ListItemText>
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleExportClick();
+              setOverflowAnchor(null);
+            }}
+            disabled={setups.length === 0}
+            sx={{
+              color: '#e5e7eb',
+              fontSize: '0.85rem',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                color: '#ffffff',
+              },
+            }}
+          >
+            <ListItemIcon>
+              <FileDownload fontSize="small" sx={{ color: '#e5e7eb' }} />
+            </ListItemIcon>
+            <ListItemText>Export</ListItemText>
+          </MenuItem>
+          <Divider sx={{ borderColor: 'rgba(0, 217, 255, 0.15)' }} />
+          <MenuItem
+            onClick={() => {
+              setClearDialogOpen(true);
+              setOverflowAnchor(null);
+            }}
+            sx={{ color: '#ef4444', fontSize: '0.85rem' }}
+          >
+            <ListItemIcon>
+              <DeleteSweep fontSize="small" color="error" />
+            </ListItemIcon>
+            <ListItemText>Clear All Data</ListItemText>
+          </MenuItem>
+        </Menu>
+
+        {/* Rename page dialog */}
+        <Dialog
+          open={renameDialogOpen}
+          onClose={() => setRenameDialogOpen(false)}
+          PaperProps={{
+            sx: {
+              backgroundColor: 'rgba(10, 18, 35, 0.95)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(0, 217, 255, 0.2)',
+              borderRadius: 3,
+            },
           }}
-          disabled={setups.length === 0}
         >
-          <ListItemIcon>
-            <FileDownload fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Export</ListItemText>
-        </MenuItem>
-        <Divider />
-        <MenuItem
-          onClick={() => {
-            setClearDialogOpen(true);
-            setOverflowAnchor(null);
+          <DialogTitle sx={{ color: '#ffffff', fontSize: '1rem' }}>Rename Page</DialogTitle>
+          <DialogContent>
+            <TextField
+              value={renameValue}
+              onChange={(event) => setRenameValue(event.target.value)}
+              autoFocus
+              fullWidth
+              margin="dense"
+              label="Page name"
+              sx={{
+                '& .MuiInputBase-root': {
+                  color: '#ffffff',
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'rgba(0, 217, 255, 0.7)',
+                  '&.Mui-focused': {
+                    color: '#00d9ff',
+                  },
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 217, 255, 0.3)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 217, 255, 0.5)',
+                },
+                '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#00d9ff',
+                },
+              }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setRenameDialogOpen(false)}
+              sx={{
+                color: 'rgba(0, 217, 255, 0.7)',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmitRename}
+              variant="contained"
+              sx={{
+                background: '#00d9ff',
+                color: '#0a0f1e',
+                fontWeight: 700,
+              }}
+            >
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Clear all dialog */}
+        <Dialog
+          open={clearDialogOpen}
+          onClose={() => setClearDialogOpen(false)}
+          PaperProps={{
+            sx: {
+              backgroundColor: 'rgba(10, 18, 35, 0.95)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(0, 217, 255, 0.2)',
+              borderRadius: 3,
+            },
           }}
-          sx={{ color: 'error.main' }}
         >
-          <ListItemIcon>
-            <DeleteSweep fontSize="small" color="error" />
-          </ListItemIcon>
-          <ListItemText>Clear All Data</ListItemText>
-        </MenuItem>
-      </Menu>
+          <DialogTitle sx={{ color: '#ffffff', fontSize: '1rem' }}>Clear all loadouts?</DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+              This removes every character, page, and setup. You can re-import data at any time.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setClearDialogOpen(false)}
+              sx={{
+                color: 'rgba(0, 217, 255, 0.7)',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="error"
+              variant="contained"
+              onClick={handleClearAll}
+              sx={{
+                backgroundColor: '#ef4444',
+                '&:hover': {
+                  backgroundColor: '#dc2626',
+                },
+              }}
+            >
+              Clear everything
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-      {/* Rename page dialog */}
-      <Dialog open={renameDialogOpen} onClose={() => setRenameDialogOpen(false)}>
-        <DialogTitle>Rename Page</DialogTitle>
-        <DialogContent>
-          <TextField
-            value={renameValue}
-            onChange={(event) => setRenameValue(event.target.value)}
-            autoFocus
-            fullWidth
-            margin="dense"
-            label="Page name"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRenameDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleSubmitRename} variant="contained">
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Clear all dialog */}
-      <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)}>
-        <DialogTitle>Clear all loadouts?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            This removes every character, page, and setup. You can re-import data from Wizard&apos;s
-            Wardrobe at any time.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setClearDialogOpen(false)}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={handleClearAll}>
-            Clear everything
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity={snackbar.severity} onClose={handleSnackbarClose} sx={{ width: '100%' }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Container>
+        {/* Snackbar */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={handleSnackbarClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert
+            severity={snackbar.severity}
+            onClose={handleSnackbarClose}
+            sx={{
+              width: '100%',
+              backgroundColor: 'rgba(10, 18, 35, 0.95)',
+              backdropFilter: 'blur(10px)',
+              border: `1px solid ${snackbar.severity === 'success' ? '#22c55e' : '#ef4444'}`,
+            }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </Box>
   );
 };
