@@ -61,6 +61,18 @@ const base64UrlEncode = (str: ArrayBuffer): string => {
 };
 
 const generateCodeChallenge = async (verifier: string): Promise<string> => {
+  if (!window.crypto?.subtle) {
+    const origin = window.location.origin;
+    throw new Error(
+      `Web Crypto API is unavailable on "${origin}". ` +
+        `Browsers only allow cryptographic login on localhost or HTTPS. ` +
+        `To test on a phone over a local network, either:\n` +
+        `  1. Use a tunnel (e.g. "npx localtunnel --port 5173" or ngrok)\n` +
+        `  2. Enable HTTPS on the dev server (vite --https)\n` +
+        `  3. In Chrome on Android, go to chrome://flags and add "${origin}" to ` +
+        `"Insecure origins treated as secure"`,
+    );
+  }
   const encoder = new TextEncoder();
   const data = encoder.encode(verifier);
   const digest = await window.crypto.subtle.digest('SHA-256', data);
@@ -80,8 +92,21 @@ export async function startPKCEAuth(): Promise<void> {
   const verifier = generateCodeVerifier();
   setPkceCodeVerifier(verifier);
 
-  const authUrl = await buildAuthUrl(verifier);
-  window.location.href = authUrl;
+  let authUrl: string | undefined;
+  try {
+    authUrl = await buildAuthUrl(verifier);
+    window.location.href = authUrl;
+  } catch (err) {
+    logger.error(
+      'Failed to start PKCE auth redirect',
+      err instanceof Error ? err : new Error(String(err)),
+      { authUrl },
+    );
+    const urlInfo = authUrl ? `\n\nURL attempted:\n${authUrl}` : '';
+    alert(
+      `Login redirect failed: ${err instanceof Error ? err.message : String(err)}${urlInfo}`,
+    );
+  }
 }
 
 const OAUTH_TOKEN_URL = 'https://www.esologs.com/oauth/token';
