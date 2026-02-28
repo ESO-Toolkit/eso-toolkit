@@ -17,29 +17,6 @@ export const getRedirectUri = (): string => {
 };
 // Replace with your actual ESO Logs client ID
 export const CLIENT_ID = '9fd28ffc-300a-44ce-8a0e-6167db47a7e1';
-
-/**
- * The full list of OAuth redirect URIs registered with ESO Logs.
- * Covers local development (all common Vite dev-server ports), LAN access,
- * and the production domain.  Keep this in sync with the registered URIs on
- * the ESO Logs OAuth application settings page.
- */
-export const ALLOWED_OAUTH_REDIRECT_URIS: readonly string[] = [
-  'http://192.168.0.156:3000/oauth-redirect',
-  'http://192.168.0.156/oauth-redirect',
-  'http://localhost:3000/oauth-redirect',
-  'http://localhost:3001/oauth-redirect',
-  'http://localhost:3002/oauth-redirect',
-  'http://localhost:3003/oauth-redirect',
-  'http://localhost:3004/oauth-redirect',
-  'http://localhost:3005/oauth-redirect',
-  'http://localhost:3006/oauth-redirect',
-  'http://localhost:3007/oauth-redirect',
-  'http://localhost:3008/oauth-redirect',
-  'http://localhost:3009/oauth-redirect',
-  'https://esotk.com/oauth-redirect',
-] as const;
-
 export const PKCE_CODE_VERIFIER_KEY = 'eso_code_verifier';
 export const INTENDED_DESTINATION_KEY = 'eso_intended_destination';
 
