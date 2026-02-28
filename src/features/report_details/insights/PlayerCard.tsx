@@ -15,7 +15,7 @@ import {
   AccordionDetails,
   Tooltip,
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -95,6 +95,28 @@ function formatDpsValue(dps: number): string {
   if (dps >= 1_000) return `${Math.round(dps / 1_000)}k`;
   return String(Math.round(dps));
 }
+
+// Styled component for metrics scroll container with thin scrollbar
+const MetricsScrollContainer = styled(Box)(({ theme }) => ({
+  overflowX: 'auto',
+  overflowY: 'hidden',
+  // Firefox: thin scrollbar
+  scrollbarWidth: 'thin',
+  // WebKit: thin horizontal scrollbar (8px vs default ~17px)
+  '&::-webkit-scrollbar': {
+    height: '8px',
+  },
+  '&::-webkit-scrollbar-track': {
+    background: theme.palette.grey[200],
+  },
+  '&::-webkit-scrollbar-thumb': {
+    background: theme.palette.grey[500],
+    borderRadius: '4px',
+  },
+  '&::-webkit-scrollbar-thumb:hover': {
+    background: theme.palette.grey[700],
+  },
+}));
 
 interface PlayerCardProps {
   player: PlayerDetailsWithRole;
@@ -259,6 +281,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     // State for gear details panel
     const [gearDetailsOpen, setGearDetailsOpen] = useState(false);
     const [currentGearPlayerId, setCurrentGearPlayerId] = useState<string | number>(player.id);
+
+    // State for metrics auto-scroll and drag functionality
 
     const activeReportContext = useSelector(selectActiveReportContext);
 
@@ -1126,7 +1150,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       minHeight: 28,
                     }}
                   >
-                    <Box
+                    <MetricsScrollContainer
                       sx={{
                         display: 'flex',
                         flexWrap: 'nowrap',
@@ -1134,22 +1158,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         minHeight: 24,
                         flex: '1 1 auto',
                         minWidth: 0,
-                        overflowX: 'auto',
-                        overflowY: 'hidden',
                         mr: 0.5,
-                        '&::-webkit-scrollbar': {
-                          height: 4,
-                        },
-                        '&::-webkit-scrollbar-track': {
-                          background: 'transparent',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                          backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                          borderRadius: 2,
-                        },
-                        '&::-webkit-scrollbar-thumb:hover': {
-                          backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                        },
                       }}
                     >
                       <Typography
@@ -1321,7 +1330,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         </>
                       )}
                       </Typography>
-                    </Box>
+                    </MetricsScrollContainer>
                   </Box>
 
                   {critDamageSummary && player.role === 'dps' && (
