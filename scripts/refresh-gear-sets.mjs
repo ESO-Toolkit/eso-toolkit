@@ -52,7 +52,8 @@ function stripHtml(html) {
       .split(/<br\s*\/?>/i)
       .map((line) =>
         line
-          // Remove all remaining HTML tags
+          // Remove script blocks first, then remaining HTML tags
+          .replace(/<script\b[\s\S]*?<\/script>/gi, '')
           .replace(/<[^>]*>/g, '')
           // Decode common HTML entities (single pass to avoid double-unescaping)
           .replace(/&(?:amp|#39|quot|lt|gt|nbsp);/g, (e) => ({ '&amp;': '&', '&#39;': "'", '&quot;': '"', '&lt;': '<', '&gt;': '>', '&nbsp;': ' ' }[e] ?? e))

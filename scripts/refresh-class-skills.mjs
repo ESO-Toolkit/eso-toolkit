@@ -52,6 +52,7 @@ const HTML_ENTITIES = { '&amp;': '&', '&#39;': "'", '&quot;': '"', '&lt;': '<', 
 function stripHtml(html) {
   if (!html) return '';
   return html
+    .replace(/<script\b[\s\S]*?<\/script>/gi, '')
     .replace(/<a\s[^>]*>|<\/a>/gi, '')
     .replace(/<[^>]*>/g, '')
     .replace(/&(?:amp|#39|quot|lt|gt|nbsp);/g, (e) => HTML_ENTITIES[e] ?? e)
