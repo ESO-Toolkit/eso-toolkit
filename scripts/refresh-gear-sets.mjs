@@ -53,11 +53,12 @@ function stripHtml(html) {
       .map((line) =>
         line
           // Remove script blocks first, then remaining HTML tags
-          .replace(/<script\b[\s\S]*?<\/script>/gi, '')
+          .replace(/<script\b[\s\S]*?<\/script(?:\s[^>]*)?>/gi, '')
           .replace(/<[^>]*>/g, '')
           // Decode common HTML entities (single pass to avoid double-unescaping)
           .replace(/&(?:amp|#39|quot|lt|gt|nbsp);/g, (e) => ({ '&amp;': '&', '&#39;': "'", '&quot;': '"', '&lt;': '<', '&gt;': '>', '&nbsp;': ' ' }[e] ?? e))
           .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+          .replace(/[<>]/g, '')
           .trim(),
       )
       .filter(Boolean)

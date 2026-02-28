@@ -52,12 +52,15 @@ const HTML_ENTITIES = { '&amp;': '&', '&#39;': "'", '&quot;': '"', '&lt;': '<', 
 function stripHtml(html) {
   if (!html) return '';
   return html
-    .replace(/<script\b[\s\S]*?<\/script>/gi, '')
+    .replace(/<script\b[\s\S]*?<\/script[\s\S]*?>/gi, '')
     .replace(/<a\s[^>]*>|<\/a>/gi, '')
     .replace(/<[^>]*>/g, '')
     .replace(/&(?:amp|#39|quot|lt|gt|nbsp);/g, (e) => HTML_ENTITIES[e] ?? e)
     .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
-    .replace(/\r\n|\r|\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
+    .replace(/[<>]/g, '')
+    .replace(/\r\n|\r|\n/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 function extractIconName(iconUrl) {
