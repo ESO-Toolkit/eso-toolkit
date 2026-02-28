@@ -20,7 +20,15 @@ interface ElevatedTheme {
  * Hook for theme-aware glow values
  * Returns elevated glow colors based on current theme mode
  */
-export const useElevatedGlow = (): { glow: string } => {
+export const useElevatedGlow = (): {
+  glow: string;
+  glowSoft: string;
+  borderGlow: string;
+  gradientStart: string;
+  gradientEnd: string;
+  selectedGlow: string;
+  selectedBorder: string;
+} => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -128,7 +136,10 @@ export const getElevatedBackground = (theme: ElevatedTheme, selected: boolean = 
  * @param theme - MUI theme
  * @param selected - Whether the element is selected
  */
-export const getElevatedHoverStyles = (theme: ElevatedTheme, selected: boolean = false): {
+export const getElevatedHoverStyles = (
+  theme: ElevatedTheme,
+  selected: boolean = false,
+): {
   borderColor: string;
   backgroundColor: string;
   boxShadow: string;
