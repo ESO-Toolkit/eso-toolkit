@@ -89,7 +89,12 @@ import { LoadoutSidebar } from './LoadoutSidebar';
 import { NebulaBackground } from './NebulaBackground';
 import { SetupEditor } from './SetupEditor';
 import { SVGFilters } from './styles/SVGFilters';
-import { blendOverlayMultiply, blendOverlayScreen, globalKeyframesEnhanced, metallicPanelEnhanced } from './styles/textureStyles';
+import {
+  blendOverlayMultiply,
+  blendOverlayScreen,
+  globalKeyframesEnhanced,
+  metallicPanelEnhanced,
+} from './styles/textureStyles';
 
 const MIN_PAGES = 1;
 
@@ -509,114 +514,31 @@ export const LoadoutManager: React.FC = () => {
               left: -1000,
               width: 2000,
               height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)',
+              background:
+                'linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)',
               transform: 'skewX(-20deg)',
               animation: 'borderShineEnhanced 10s ease-in-out infinite',
               pointerEvents: 'none',
             },
           }}
         >
-        <Stack spacing={2}>
-          {/* Compact Header */}
-          <Box
-            sx={{
-              px: 2,
-              py: 1.5,
-              borderBottom: '1px solid rgba(0, 217, 255, 0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Tooltip title="Back" arrow>
-                <IconButton
-                  onClick={handleBack}
-                  size="small"
-                  sx={{
-                    color: 'rgba(0, 217, 255, 0.7)',
-                    '&:hover': {
-                      color: '#00d9ff',
-                      backgroundColor: 'rgba(0, 217, 255, 0.1)',
-                    },
-                  }}
-                >
-                  <ArrowBack fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Typography
-                sx={{
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  color: '#00d9ff',
-                  letterSpacing: 1.5,
-                  textTransform: 'uppercase',
-                }}
-              >
-                Loadouts
-              </Typography>
-            </Stack>
-
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <FormControl size="small" sx={{ minWidth: 140 }}>
-                <InputLabel
-                  sx={{
-                    color: '#7a8599',
-                    fontSize: '0.8rem',
-                    '&.Mui-focused': { color: '#00d9ff' },
-                  }}
-                >
-                  Trial
-                </InputLabel>
-                <Select
-                  value={currentTrial ?? ''}
-                  label="Trial"
-                  onChange={handleTrialChange}
-                  sx={{
-                    color: '#ffffff',
-                    fontSize: '0.8rem',
-                    '.MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(0, 217, 255, 0.25)',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'rgba(0, 217, 255, 0.4)',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#00d9ff',
-                  },
-                }}
-                >
-                  {TRIALS.map((trial) => (
-                    <MenuItem key={trial.id} value={trial.id}>
-                      <Typography sx={{ fontWeight: 500, color: '#ffffff', fontSize: '0.8rem' }}>
-                        {trial.name}
-                      </Typography>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <Tooltip title="Import" arrow>
-                <IconButton
-                  size="small"
-                  onClick={handleImportClick}
-                  sx={{
-                    color: 'rgba(0, 217, 255, 0.7)',
-                    '&:hover': {
-                      color: '#00d9ff',
-                      backgroundColor: 'rgba(0, 217, 255, 0.1)',
-                    },
-                  }}
-                >
-                  <FileUpload fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Export" arrow>
-                <span>
+          <Stack spacing={2}>
+            {/* Compact Header */}
+            <Box
+              sx={{
+                px: 2,
+                py: 1.5,
+                borderBottom: '1px solid rgba(0, 217, 255, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Tooltip title="Back" arrow>
                   <IconButton
+                    onClick={handleBack}
                     size="small"
-                    onClick={handleExportClick}
-                    disabled={setups.length === 0}
                     sx={{
                       color: 'rgba(0, 217, 255, 0.7)',
                       '&:hover': {
@@ -625,366 +547,450 @@ export const LoadoutManager: React.FC = () => {
                       },
                     }}
                   >
-                    <FileDownload fontSize="small" />
+                    <ArrowBack fontSize="small" />
                   </IconButton>
-                </span>
-              </Tooltip>
-              <Tooltip title="More" arrow>
-                <IconButton
-                  size="small"
-                  onClick={(e) => setOverflowAnchor(e.currentTarget)}
+                </Tooltip>
+                <Typography
                   sx={{
-                    color: 'rgba(0, 217, 255, 0.7)',
-                    '&:hover': {
-                      color: '#00d9ff',
-                      backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    color: '#00d9ff',
+                    letterSpacing: 1.5,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Loadouts
+                </Typography>
+              </Stack>
+
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel
+                    sx={{
+                      color: '#7a8599',
+                      fontSize: '0.8rem',
+                      '&.Mui-focused': { color: '#00d9ff' },
+                    }}
+                  >
+                    Trial
+                  </InputLabel>
+                  <Select
+                    value={currentTrial ?? ''}
+                    label="Trial"
+                    onChange={handleTrialChange}
+                    sx={{
+                      color: '#ffffff',
+                      fontSize: '0.8rem',
+                      '.MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(0, 217, 255, 0.25)',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(0, 217, 255, 0.4)',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#00d9ff',
+                      },
+                    }}
+                  >
+                    {TRIALS.map((trial) => (
+                      <MenuItem key={trial.id} value={trial.id}>
+                        <Typography sx={{ fontWeight: 500, color: '#ffffff', fontSize: '0.8rem' }}>
+                          {trial.name}
+                        </Typography>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <Tooltip title="Import" arrow>
+                  <IconButton
+                    size="small"
+                    onClick={handleImportClick}
+                    sx={{
+                      color: 'rgba(0, 217, 255, 0.7)',
+                      '&:hover': {
+                        color: '#00d9ff',
+                        backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                      },
+                    }}
+                  >
+                    <FileUpload fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Export" arrow>
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={handleExportClick}
+                      disabled={setups.length === 0}
+                      sx={{
+                        color: 'rgba(0, 217, 255, 0.7)',
+                        '&:hover': {
+                          color: '#00d9ff',
+                          backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                        },
+                      }}
+                    >
+                      <FileDownload fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title="More" arrow>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => setOverflowAnchor(e.currentTarget)}
+                    sx={{
+                      color: 'rgba(0, 217, 255, 0.7)',
+                      '&:hover': {
+                        color: '#00d9ff',
+                        backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                      },
+                    }}
+                  >
+                    <MoreVert fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+            </Box>
+
+            {/* Page tabs + Search row */}
+            <Box sx={{ px: 2 }}>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Tabs
+                  value={Math.min(currentPage, Math.max(allPages.length - 1, 0))}
+                  onChange={handlePageChange}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  sx={{
+                    flex: 1,
+                    minHeight: 36,
+                    '& .MuiTabs-indicator': {
+                      backgroundColor: '#00d9ff',
+                      height: 2,
+                    },
+                    '& .MuiTab-root': {
+                      minHeight: 36,
+                      py: 0.5,
+                      px: 1.5,
+                      fontSize: '0.8rem',
+                      color: '#7a8599',
+                      fontWeight: 500,
+                      '&:hover': {
+                        color: '#00d9ff',
+                      },
+                      '&.Mui-selected': {
+                        color: '#00d9ff',
+                      },
                     },
                   }}
                 >
-                  <MoreVert fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          </Box>
+                  {allPages.map((page, index) => (
+                    <Tab key={`${page.name}-${index}`} label={page.name} value={index} />
+                  ))}
+                </Tabs>
 
-          {/* Page tabs + Search row */}
-          <Box sx={{ px: 2 }}>
-            <Stack direction="row" spacing={1.5} alignItems="center">
-              <Tabs
-                value={Math.min(currentPage, Math.max(allPages.length - 1, 0))}
-                onChange={handlePageChange}
-                variant="scrollable"
-                scrollButtons="auto"
-                sx={{
-                  flex: 1,
-                  minHeight: 36,
-                  '& .MuiTabs-indicator': {
-                    backgroundColor: '#00d9ff',
-                    height: 2,
-                  },
-                  '& .MuiTab-root': {
-                    minHeight: 36,
-                    py: 0.5,
-                    px: 1.5,
-                    fontSize: '0.8rem',
-                    color: '#7a8599',
-                    fontWeight: 500,
-                    '&:hover': {
-                      color: '#00d9ff',
+                <TextField
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  placeholder="Search..."
+                  size="small"
+                  sx={{
+                    width: 140,
+                    '& .MuiInputBase-root': {
+                      height: 32,
+                      fontSize: '0.8rem',
+                      color: '#ffffff',
+                      backgroundColor: 'rgba(10, 18, 35, 0.8)',
+                      '.MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(0, 217, 255, 0.25)',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(0, 217, 255, 0.4)',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#00d9ff',
+                      },
                     },
-                    '&.Mui-selected': {
-                      color: '#00d9ff',
-                    },
-                  },
-                }}
-              >
-                {allPages.map((page, index) => (
-                  <Tab key={`${page.name}-${index}`} label={page.name} value={index} />
-                ))}
-              </Tabs>
+                  }}
+                />
 
-              <TextField
-                value={searchTerm}
-                onChange={handleSearchChange}
-                placeholder="Search..."
-                size="small"
-                sx={{
-                  width: 140,
-                  '& .MuiInputBase-root': {
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<AddIcon />}
+                  onClick={handleAddSetup}
+                  disabled={!currentTrial}
+                  sx={{
                     height: 32,
-                    fontSize: '0.8rem',
-                    color: '#ffffff',
-                    backgroundColor: 'rgba(10, 18, 35, 0.8)',
-                    '.MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(0, 217, 255, 0.25)',
+                    minWidth: 'auto',
+                    px: 1.5,
+                    fontSize: '0.75rem',
+                    background: '#00d9ff',
+                    color: '#0a0f1e',
+                    fontWeight: 700,
+                    '&:hover': {
+                      background: '#00c4e6',
                     },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(0, 217, 255, 0.4)',
+                    '&:disabled': {
+                      background: 'rgba(0, 217, 255, 0.15)',
+                      color: 'rgba(0, 217, 255, 0.4)',
                     },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#00d9ff',
-                    },
-                  },
-                }}
-              />
+                  }}
+                >
+                  New
+                </Button>
+              </Stack>
+            </Box>
 
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<AddIcon />}
-                onClick={handleAddSetup}
-                disabled={!currentTrial}
-                sx={{
-                  height: 32,
-                  minWidth: 'auto',
-                  px: 1.5,
-                  fontSize: '0.75rem',
-                  background: '#00d9ff',
-                  color: '#0a0f1e',
-                  fontWeight: 700,
-                  '&:hover': {
-                    background: '#00c4e6',
-                  },
-                  '&:disabled': {
-                    background: 'rgba(0, 217, 255, 0.15)',
-                    color: 'rgba(0, 217, 255, 0.4)',
-                  },
-                }}
-              >
-                New
-              </Button>
-            </Stack>
-          </Box>
+            {/* Main content: Two-column layout */}
+            <Box sx={{ px: 2, pb: 2 }}>
+              <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems="stretch">
+                {/* Left Sidebar - Loadout Slots List (30%) */}
+                <LoadoutSidebar
+                  setups={setups}
+                  selectedIndex={selectedSetupIndex}
+                  filterText={searchTerm}
+                  onSelectSetup={handleSelectSetup}
+                  onCopySetup={handleCopySetup}
+                  onDuplicateSetup={handleDuplicateSetup}
+                  onDeleteSetup={handleDeleteSetup}
+                />
 
-          {/* Main content: Two-column layout */}
-          <Box sx={{ px: 2, pb: 2 }}>
-            <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems="stretch">
-              {/* Left Sidebar - Loadout Slots List (30%) */}
-              <LoadoutSidebar
-                setups={setups}
-                selectedIndex={selectedSetupIndex}
-                filterText={searchTerm}
-                onSelectSetup={handleSelectSetup}
-                onCopySetup={handleCopySetup}
-                onDuplicateSetup={handleDuplicateSetup}
-                onDeleteSetup={handleDeleteSetup}
-              />
+                {/* Right Panel - Loadout Details (70%) */}
+                <LoadoutDetails
+                  setup={selectedSetup}
+                  setupIndex={selectedSetupIndex}
+                  trialId={currentTrial ?? 'GEN'}
+                  pageIndex={currentPage}
+                />
+              </Stack>
+            </Box>
+          </Stack>
 
-              {/* Right Panel - Loadout Details (70%) */}
-              <LoadoutDetails
-                setup={selectedSetup}
-                setupIndex={selectedSetupIndex}
-                trialId={currentTrial ?? 'GEN'}
-                pageIndex={currentPage}
-              />
-            </Stack>
-          </Box>
-        </Stack>
+          {/* Hidden file input */}
+          <input
+            type="file"
+            accept=".lua,.json,.txt"
+            hidden
+            ref={fileInputRef}
+            onChange={handleFileChange}
+          />
 
-        {/* Hidden file input */}
-        <input
-          type="file"
-          accept=".lua,.json,.txt"
-          hidden
-          ref={fileInputRef}
-          onChange={handleFileChange}
-        />
+          {/* Export dialog */}
+          <ExportDialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} />
 
-        {/* Export dialog */}
-        <ExportDialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} />
+          {/* Overflow menu */}
+          <Menu
+            anchorEl={overflowAnchor}
+            open={overflowOpen}
+            onClose={() => setOverflowAnchor(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            slotProps={{
+              paper: {
+                sx: {
+                  backgroundColor: 'rgba(10, 18, 35, 0.95)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(0, 217, 255, 0.2)',
+                  borderRadius: 2,
+                },
+              },
+            }}
+          >
+            <MenuItem
+              onClick={() => {
+                handleImportClick();
+                setOverflowAnchor(null);
+              }}
+              sx={{
+                color: '#e5e7eb',
+                fontSize: '0.85rem',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                  color: '#ffffff',
+                },
+              }}
+            >
+              <ListItemIcon>
+                <FileUpload fontSize="small" sx={{ color: '#e5e7eb' }} />
+              </ListItemIcon>
+              <ListItemText>Import</ListItemText>
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleExportClick();
+                setOverflowAnchor(null);
+              }}
+              disabled={setups.length === 0}
+              sx={{
+                color: '#e5e7eb',
+                fontSize: '0.85rem',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                  color: '#ffffff',
+                },
+              }}
+            >
+              <ListItemIcon>
+                <FileDownload fontSize="small" sx={{ color: '#e5e7eb' }} />
+              </ListItemIcon>
+              <ListItemText>Export</ListItemText>
+            </MenuItem>
+            <Divider sx={{ borderColor: 'rgba(0, 217, 255, 0.15)' }} />
+            <MenuItem
+              onClick={() => {
+                setClearDialogOpen(true);
+                setOverflowAnchor(null);
+              }}
+              sx={{ color: '#ef4444', fontSize: '0.85rem' }}
+            >
+              <ListItemIcon>
+                <DeleteSweep fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText>Clear All Data</ListItemText>
+            </MenuItem>
+          </Menu>
 
-        {/* Overflow menu */}
-        <Menu
-          anchorEl={overflowAnchor}
-          open={overflowOpen}
-          onClose={() => setOverflowAnchor(null)}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          slotProps={{
-            paper: {
+          {/* Rename page dialog */}
+          <Dialog
+            open={renameDialogOpen}
+            onClose={() => setRenameDialogOpen(false)}
+            PaperProps={{
               sx: {
                 backgroundColor: 'rgba(10, 18, 35, 0.95)',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(0, 217, 255, 0.2)',
-                borderRadius: 2,
-              },
-            },
-          }}
-        >
-          <MenuItem
-            onClick={() => {
-              handleImportClick();
-              setOverflowAnchor(null);
-            }}
-            sx={{
-              color: '#e5e7eb',
-              fontSize: '0.85rem',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 217, 255, 0.1)',
-                color: '#ffffff',
+                borderRadius: 3,
               },
             }}
           >
-            <ListItemIcon>
-              <FileUpload fontSize="small" sx={{ color: '#e5e7eb' }} />
-            </ListItemIcon>
-            <ListItemText>Import</ListItemText>
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              handleExportClick();
-              setOverflowAnchor(null);
-            }}
-            disabled={setups.length === 0}
-            sx={{
-              color: '#e5e7eb',
-              fontSize: '0.85rem',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 217, 255, 0.1)',
-                color: '#ffffff',
-              },
-            }}
-          >
-            <ListItemIcon>
-              <FileDownload fontSize="small" sx={{ color: '#e5e7eb' }} />
-            </ListItemIcon>
-            <ListItemText>Export</ListItemText>
-          </MenuItem>
-          <Divider sx={{ borderColor: 'rgba(0, 217, 255, 0.15)' }} />
-          <MenuItem
-            onClick={() => {
-              setClearDialogOpen(true);
-              setOverflowAnchor(null);
-            }}
-            sx={{ color: '#ef4444', fontSize: '0.85rem' }}
-          >
-            <ListItemIcon>
-              <DeleteSweep fontSize="small" color="error" />
-            </ListItemIcon>
-            <ListItemText>Clear All Data</ListItemText>
-          </MenuItem>
-        </Menu>
-
-        {/* Rename page dialog */}
-        <Dialog
-          open={renameDialogOpen}
-          onClose={() => setRenameDialogOpen(false)}
-          PaperProps={{
-            sx: {
-              backgroundColor: 'rgba(10, 18, 35, 0.95)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(0, 217, 255, 0.2)',
-              borderRadius: 3,
-            },
-          }}
-        >
-          <DialogTitle sx={{ color: '#ffffff', fontSize: '1rem' }}>Rename Page</DialogTitle>
-          <DialogContent>
-            <TextField
-              value={renameValue}
-              onChange={(event) => setRenameValue(event.target.value)}
-              autoFocus
-              fullWidth
-              margin="dense"
-              label="Page name"
-              sx={{
-                '& .MuiInputBase-root': {
-                  color: '#ffffff',
-                },
-                '& .MuiInputLabel-root': {
-                  color: 'rgba(0, 217, 255, 0.7)',
-                  '&.Mui-focused': {
-                    color: '#00d9ff',
+            <DialogTitle sx={{ color: '#ffffff', fontSize: '1rem' }}>Rename Page</DialogTitle>
+            <DialogContent>
+              <TextField
+                value={renameValue}
+                onChange={(event) => setRenameValue(event.target.value)}
+                autoFocus
+                fullWidth
+                margin="dense"
+                label="Page name"
+                sx={{
+                  '& .MuiInputBase-root': {
+                    color: '#ffffff',
                   },
-                },
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 217, 255, 0.3)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 217, 255, 0.5)',
-                },
-                '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#00d9ff',
-                },
-              }}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => setRenameDialogOpen(false)}
-              sx={{
-                color: 'rgba(0, 217, 255, 0.7)',
-                '&:hover': {
-                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
-                },
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmitRename}
-              variant="contained"
-              sx={{
-                background: '#00d9ff',
-                color: '#0a0f1e',
-                fontWeight: 700,
-              }}
-            >
-              Save
-            </Button>
-          </DialogActions>
-        </Dialog>
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(0, 217, 255, 0.7)',
+                    '&.Mui-focused': {
+                      color: '#00d9ff',
+                    },
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(0, 217, 255, 0.3)',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(0, 217, 255, 0.5)',
+                  },
+                  '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#00d9ff',
+                  },
+                }}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => setRenameDialogOpen(false)}
+                sx={{
+                  color: 'rgba(0, 217, 255, 0.7)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                  },
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmitRename}
+                variant="contained"
+                sx={{
+                  background: '#00d9ff',
+                  color: '#0a0f1e',
+                  fontWeight: 700,
+                }}
+              >
+                Save
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-        {/* Clear all dialog */}
-        <Dialog
-          open={clearDialogOpen}
-          onClose={() => setClearDialogOpen(false)}
-          PaperProps={{
-            sx: {
-              backgroundColor: 'rgba(10, 18, 35, 0.95)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(0, 217, 255, 0.2)',
-              borderRadius: 3,
-            },
-          }}
-        >
-          <DialogTitle sx={{ color: '#ffffff', fontSize: '1rem' }}>Clear all loadouts?</DialogTitle>
-          <DialogContent>
-            <DialogContentText sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-              This removes every character, page, and setup. You can re-import data at any time.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => setClearDialogOpen(false)}
-              sx={{
-                color: 'rgba(0, 217, 255, 0.7)',
-                '&:hover': {
-                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
-                },
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="error"
-              variant="contained"
-              onClick={handleClearAll}
-              sx={{
-                backgroundColor: '#ef4444',
-                '&:hover': {
-                  backgroundColor: '#dc2626',
-                },
-              }}
-            >
-              Clear everything
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Snackbar */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={4000}
-          onClose={handleSnackbarClose}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert
-            severity={snackbar.severity}
-            onClose={handleSnackbarClose}
-            sx={{
-              width: '100%',
-              backgroundColor: 'rgba(10, 18, 35, 0.95)',
-              backdropFilter: 'blur(10px)',
-              border: `1px solid ${
-                snackbar.severity === 'success' ? '#22c55e' : '#ef4444'
-              }`,
+          {/* Clear all dialog */}
+          <Dialog
+            open={clearDialogOpen}
+            onClose={() => setClearDialogOpen(false)}
+            PaperProps={{
+              sx: {
+                backgroundColor: 'rgba(10, 18, 35, 0.95)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(0, 217, 255, 0.2)',
+                borderRadius: 3,
+              },
             }}
           >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Box>
+            <DialogTitle sx={{ color: '#ffffff', fontSize: '1rem' }}>
+              Clear all loadouts?
+            </DialogTitle>
+            <DialogContent>
+              <DialogContentText sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                This removes every character, page, and setup. You can re-import data at any time.
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => setClearDialogOpen(false)}
+                sx={{
+                  color: 'rgba(0, 217, 255, 0.7)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                  },
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                color="error"
+                variant="contained"
+                onClick={handleClearAll}
+                sx={{
+                  backgroundColor: '#ef4444',
+                  '&:hover': {
+                    backgroundColor: '#dc2626',
+                  },
+                }}
+              >
+                Clear everything
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          {/* Snackbar */}
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={4000}
+            onClose={handleSnackbarClose}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert
+              severity={snackbar.severity}
+              onClose={handleSnackbarClose}
+              sx={{
+                width: '100%',
+                backgroundColor: 'rgba(10, 18, 35, 0.95)',
+                backdropFilter: 'blur(10px)',
+                border: `1px solid ${snackbar.severity === 'success' ? '#22c55e' : '#ef4444'}`,
+              }}
+            >
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
+        </Box>
       </Box>
     </>
   );

@@ -12,11 +12,7 @@ interface StatusBadgeProps {
   color?: string;
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({
-  value,
-  label,
-  color = '#00d9ff',
-}) => {
+export const StatusBadge: React.FC<StatusBadgeProps> = ({ value, label, color = '#00d9ff' }) => {
   return (
     <Box
       sx={(theme) => ({

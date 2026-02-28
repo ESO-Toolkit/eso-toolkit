@@ -23,7 +23,7 @@ const logger = new Logger({
 
 // Stub type declaration for build (rollbar package not installed)
 interface Rollbar {
-  new(config: any): void;
+  new (config: any): void;
   error(err: Error): void;
   critical(message: string, extra?: any): void;
   warning(message: string, extra?: any): void;

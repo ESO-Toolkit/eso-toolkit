@@ -25,12 +25,24 @@ export const useElevatedGlow = () => {
   const isDark = theme.palette.mode === 'dark';
 
   return {
-    glow: isDark ? alpha(theme.palette.primary.main, 0.15) : alpha(theme.palette.primary.main, 0.08),
-    glowSoft: isDark ? alpha(theme.palette.primary.main, 0.08) : alpha(theme.palette.primary.main, 0.04),
-    borderGlow: isDark ? alpha(theme.palette.primary.main, 0.25) : alpha(theme.palette.primary.main, 0.15),
-    gradientStart: isDark ? alpha(theme.palette.primary.main, 0.05) : alpha(theme.palette.primary.main, 0.03),
-    gradientEnd: isDark ? alpha(theme.palette.primary.main, 0.12) : alpha(theme.palette.primary.main, 0.06),
-    selectedGlow: isDark ? alpha(theme.palette.primary.main, 0.2) : alpha(theme.palette.primary.main, 0.1),
+    glow: isDark
+      ? alpha(theme.palette.primary.main, 0.15)
+      : alpha(theme.palette.primary.main, 0.08),
+    glowSoft: isDark
+      ? alpha(theme.palette.primary.main, 0.08)
+      : alpha(theme.palette.primary.main, 0.04),
+    borderGlow: isDark
+      ? alpha(theme.palette.primary.main, 0.25)
+      : alpha(theme.palette.primary.main, 0.15),
+    gradientStart: isDark
+      ? alpha(theme.palette.primary.main, 0.05)
+      : alpha(theme.palette.primary.main, 0.03),
+    gradientEnd: isDark
+      ? alpha(theme.palette.primary.main, 0.12)
+      : alpha(theme.palette.primary.main, 0.06),
+    selectedGlow: isDark
+      ? alpha(theme.palette.primary.main, 0.2)
+      : alpha(theme.palette.primary.main, 0.1),
     selectedBorder: isDark ? theme.palette.primary.main : alpha(theme.palette.primary.main, 0.5),
   };
 };
@@ -60,7 +72,9 @@ export const getElevatedBorder = (theme: ElevatedTheme, selected: boolean = fals
   const isDark = theme.palette.mode === 'dark';
 
   if (selected) {
-    const borderColor = isDark ? theme.palette.primary.main : alpha(theme.palette.primary.main, 0.6);
+    const borderColor = isDark
+      ? theme.palette.primary.main
+      : alpha(theme.palette.primary.main, 0.6);
     const glowColor = alpha(theme.palette.primary.main, isDark ? 0.2 : 0.1);
     return `1px solid ${borderColor}`;
   }
@@ -98,10 +112,7 @@ export const getElevatedShadow = (
  * @param theme - MUI theme
  * @param selected - Whether the element is selected
  */
-export const getElevatedBackground = (
-  theme: ElevatedTheme,
-  selected: boolean = false,
-): string => {
+export const getElevatedBackground = (theme: ElevatedTheme, selected: boolean = false): string => {
   const isDark = theme.palette.mode === 'dark';
 
   if (selected) {
@@ -123,8 +134,14 @@ export const getElevatedHoverStyles = (theme: ElevatedTheme, selected: boolean =
   const bgGlow = alpha(theme.palette.primary.main, isDark ? 0.12 : 0.08);
 
   return {
-    borderColor: selected ? (isDark ? theme.palette.primary.main : alpha(theme.palette.primary.main, 0.6)) : alpha(theme.palette.primary.main, 0.4),
+    borderColor: selected
+      ? isDark
+        ? theme.palette.primary.main
+        : alpha(theme.palette.primary.main, 0.6)
+      : alpha(theme.palette.primary.main, 0.4),
     backgroundColor: selected ? bgGlow : alpha(theme.palette.primary.main, isDark ? 0.05 : 0.03),
-    boxShadow: selected ? `0 0 12px ${glow}, inset 0 0 8px ${bgGlow}` : `0 0 6px ${glow}, inset 0 0 4px ${alpha(theme.palette.primary.main, isDark ? 0.04 : 0.02)}`,
+    boxShadow: selected
+      ? `0 0 12px ${glow}, inset 0 0 8px ${bgGlow}`
+      : `0 0 6px ${glow}, inset 0 0 4px ${alpha(theme.palette.primary.main, isDark ? 0.04 : 0.02)}`,
   };
 };

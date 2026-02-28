@@ -31,7 +31,7 @@ export const nebulaBackgroundBase: SxProps<Theme> = {
  * Screen blend mode overlay for brightening
  * Use on top of dark backgrounds to add luminous depth
  */
-export const blendOverlayScreen: SxProps<Theme> = ({
+export const blendOverlayScreen: SxProps<Theme> = {
   position: 'absolute',
   inset: 0,
   background: `
@@ -42,20 +42,20 @@ export const blendOverlayScreen: SxProps<Theme> = ({
   opacity: 0.7,
   pointerEvents: 'none',
   zIndex: 5,
-});
+};
 
 /**
  * Multiply blend mode overlay for darkening/depth
  * Use for ambient occlusion simulation
  */
-export const blendOverlayMultiply: SxProps<Theme> = ({
+export const blendOverlayMultiply: SxProps<Theme> = {
   position: 'absolute',
   inset: 0,
   background: 'radial-gradient(circle at 50% 80%, transparent 0%, rgba(0, 0, 0, 0.3) 100%)',
   mixBlendMode: 'multiply' as const,
   pointerEvents: 'none',
   zIndex: 5,
-});
+};
 
 // ============================================================================
 // SVG FILTER APPLICATORS
@@ -117,7 +117,8 @@ export const metallicPanelEnhanced: SxProps<Theme> = {
     inset: 0,
     borderRadius: 'inherit',
     padding: '3px',
-    background: 'linear-gradient(135deg, rgba(255,255,255,0.2), transparent 50%, rgba(255,255,255,0.1))',
+    background:
+      'linear-gradient(135deg, rgba(255,255,255,0.2), transparent 50%, rgba(255,255,255,0.1))',
     WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
     WebkitMaskComposite: 'xor',
     maskComposite: 'exclude',
@@ -482,7 +483,8 @@ export const emptyGemSlot = (isUltimate: boolean = false): SxProps<Theme> => {
 // Equipped item highlight with pulse
 export const equippedHighlight: SxProps<Theme> = {
   border: '2px solid #00d9ff',
-  background: 'radial-gradient(circle at 50% 50%, rgba(0, 217, 255, 0.15) 0%, rgba(10, 15, 30, 0.9) 100%)',
+  background:
+    'radial-gradient(circle at 50% 50%, rgba(0, 217, 255, 0.15) 0%, rgba(10, 15, 30, 0.9) 100%)',
   boxShadow: `
     0 0 15px rgba(0, 217, 255, 0.5),
     0 0 30px rgba(0, 217, 255, 0.3),
@@ -567,7 +569,7 @@ export const metallicPanel = (accentColor: string = '#00d9ff'): SxProps<Theme> =
 });
 
 // Sidebar panel with metallic border
-export const metallicSidebar: SxProps<Theme> = ({
+export const metallicSidebar: SxProps<Theme> = {
   backgroundColor: 'rgba(10, 18, 35, 0.95)',
   borderRadius: 3,
   border: '1px solid transparent',
@@ -582,10 +584,10 @@ export const metallicSidebar: SxProps<Theme> = ({
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
-});
+};
 
 // Details panel with subtle metallic border
-export const metallicDetails: SxProps<Theme> = ({
+export const metallicDetails: SxProps<Theme> = {
   backgroundColor: 'rgba(15, 25, 45, 0.9)',
   borderRadius: 3,
   border: '1px solid transparent',
@@ -600,4 +602,4 @@ export const metallicDetails: SxProps<Theme> = ({
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
-});
+};

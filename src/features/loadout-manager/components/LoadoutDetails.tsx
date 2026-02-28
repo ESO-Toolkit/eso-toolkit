@@ -33,11 +33,7 @@ interface TabPanelProps {
   currentValue: LoadoutTabValue;
 }
 
-const TabPanel: React.FC<TabPanelProps> = ({
-  children,
-  value,
-  currentValue,
-}) => {
+const TabPanel: React.FC<TabPanelProps> = ({ children, value, currentValue }) => {
   return (
     <div
       role="tabpanel"
@@ -63,9 +59,7 @@ export const LoadoutDetails: React.FC<LoadoutDetailsProps> = ({
   const loadoutState = useSelector((state: RootState) => selectLoadoutState(state));
   const currentCharacter = loadoutState.currentCharacter;
   const characters = loadoutState.characters;
-  const currentCharacterInfo = characters.find(
-    (c) => c.id === currentCharacter,
-  );
+  const currentCharacterInfo = characters.find((c) => c.id === currentCharacter);
 
   const handleTabChange = (_event: SyntheticEvent, value: LoadoutTabValue): void => {
     setTabValue(value);
