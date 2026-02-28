@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 import { useAuth } from '../features/auth/AuthContext';
 import { trackPageView } from '../utils/analytics';
-import { addBreadcrumb } from '../utils/sentryUtils';
+import { addBreadcrumb } from '../utils/errorTracking';
 
 /**
  * Hooks Google Analytics into React Router navigation events.

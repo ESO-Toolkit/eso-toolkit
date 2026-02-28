@@ -59,5 +59,16 @@
                 "DEBUG": "false"
             }
         }
-    }
+    },
+    "terminal.integrated.profiles.windows": {
+        "PowerShell (.env)": {
+            "source": "PowerShell",
+            "args": [
+                "-NoExit",
+                "-Command",
+                "if (Test-Path .env) { Get-Content .env | ForEach-Object { if ($_ -match '^([^#=][^=]*)=(.*)$') { [System.Environment]::SetEnvironmentVariable($Matches[1].Trim(), $Matches[2].Trim(), 'Process') } } }"
+            ]
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "PowerShell (.env)"
 }

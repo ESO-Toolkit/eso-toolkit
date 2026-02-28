@@ -54,7 +54,8 @@ export function buildPhaseBoundaryAnnotations(
       return;
     }
 
-    const relativeSeconds = (transition.startTime - fightStartTime) / 1000;
+    const relativeMs = transition.startTime - fightStartTime;
+    const relativeSeconds = relativeMs / 1000;
     if (!Number.isFinite(relativeSeconds) || relativeSeconds < 0) {
       return;
     }

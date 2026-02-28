@@ -58,7 +58,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
       penetrationData={penetrationData}
       penetrationSources={penetrationData?.penetrationSources || []}
       playerBasePenetration={penetrationData?.playerBasePenetration || 0}
-      fightDurationSeconds={(fight.endTime - fight.startTime) / 1000}
+      fightDurationMs={fight.endTime - fight.startTime}
       onExpandChange={onExpandChange}
       phaseTransitionInfo={phaseTransitionInfo}
     />

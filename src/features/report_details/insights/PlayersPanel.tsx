@@ -19,6 +19,7 @@ import type { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import {
   useCastEvents,
   useCombatantInfoEvents,
+  useCriticalDamageTask,
   useDamageEvents,
   useDeathEvents,
   useFightForContext,
@@ -60,6 +61,14 @@ import {
   PlayerGearItemData,
   PlayerGearSetRecord,
 } from '../../../utils/gearUtilities';
+import {
+  classifyPotionEventsFromBuffStream,
+  type PotionStreamResult,
+} from '../../../utils/potionDetectionUtils';
+import {
+  analyzeBarSwaps,
+  type BarSwapAnalysisResult,
+} from '../../parse_analysis/utils/parseAnalysisUtils';
 // TODO: Implement proper scribing detection services
 // Temporary stubs to prevent compilation errors
 const analyzeAllPlayersScribingSkills = (..._args: unknown[]): Record<string, never> => ({});
@@ -246,7 +255,60 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     return byPlayer;
   }, [playerTravelDistances]);
 
+  // Compute DPS per player (total outgoing damage to enemies / fight duration in seconds)
+  const dpsValueByPlayer = React.useMemo(() => {
+    if (!fight || !damageEvents || damageEvents.length === 0) return {};
+    const durationSecs = (fight.endTime - fight.startTime) / 1000;
+    if (durationSecs <= 0) return {};
+
+    const damageByPlayer: Record<string, number> = {};
+    for (const event of damageEvents) {
+      if (event.sourceIsFriendly && !event.targetIsFriendly) {
+        const id = String(event.sourceID);
+        damageByPlayer[id] = (damageByPlayer[id] ?? 0) + (event.amount ?? 0);
+      }
+    }
+
+    const result: Record<string, number> = {};
+    for (const [id, totalDamage] of Object.entries(damageByPlayer)) {
+      result[id] = totalDamage / durationSecs;
+    }
+    return result;
+  }, [fight, damageEvents]);
+
+  // Compute bar swap analysis (including bar setup pattern) per player
+  const barSwapByPlayer = React.useMemo(() => {
+    const result: Record<string, BarSwapAnalysisResult> = {};
+    if (!fight || !castEvents || !playerData?.playersById) return result;
+    const { startTime, endTime } = fight;
+    for (const player of Object.values(playerData.playersById)) {
+      if (!player?.id) continue;
+      result[String(player.id)] = analyzeBarSwaps(
+        castEvents,
+        Number(player.id),
+        startTime,
+        endTime,
+      );
+    }
+    return result;
+  }, [fight, castEvents, playerData?.playersById]);
+
   const { abilitiesById } = reportMasterData;
+
+  // Fetch critical damage data for the inline crit summary on DPS player cards
+  const { criticalDamageData } = useCriticalDamageTask({ context: resolvedContext });
+
+  const criticalDamageByPlayer = React.useMemo(() => {
+    if (!criticalDamageData?.playerDataMap) return undefined;
+    const result: Record<string, { avg: number; max: number }> = {};
+    Object.entries(criticalDamageData.playerDataMap).forEach(([playerId, data]) => {
+      result[String(playerId)] = {
+        avg: data.effectiveCriticalDamage,
+        max: data.maximumCriticalDamage,
+      };
+    });
+    return result;
+  }, [criticalDamageData?.playerDataMap]);
 
   // Calculate loading state - include ALL data dependencies this panel needs
   const isLoading =
@@ -374,6 +436,16 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
 
     return result;
   }, [combatantInfoEvents, abilitiesById, playerData, friendlyBuffEvents]);
+
+  // Classify each player's potion usage from the live fight event stream (Path B detection).
+  const potionResultsByPlayer = React.useMemo((): Record<string, PotionStreamResult> => {
+    if (!friendlyBuffEvents || !abilitiesById) return {};
+    return classifyPotionEventsFromBuffStream(
+      friendlyBuffEvents,
+      resourceEvents ?? [],
+      abilitiesById,
+    );
+  }, [friendlyBuffEvents, resourceEvents, abilitiesById]);
 
   // Calculate champion points per player using champion point constants from combatantinfo auras
   const championPointsByPlayer = React.useMemo(() => {
@@ -1191,6 +1263,10 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         playerGear={playerGear}
         fightStartTime={fight?.startTime}
         fightEndTime={fight?.endTime}
+        dpsValueByPlayer={dpsValueByPlayer}
+        criticalDamageByPlayer={criticalDamageByPlayer}
+        barSwapByPlayer={barSwapByPlayer}
+        potionResultsByPlayer={potionResultsByPlayer}
       />
     </div>
   );

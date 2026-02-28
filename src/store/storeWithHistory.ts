@@ -5,8 +5,6 @@ import {
   Action,
   ThunkDispatch,
 } from '@reduxjs/toolkit';
-import { createBrowserHistory } from 'history';
-import { createReduxHistoryContext, LOCATION_CHANGE } from 'redux-first-history';
 import {
   persistStore,
   persistReducer,
@@ -34,12 +32,6 @@ import uiReducer, { UIState } from './ui/uiSlice';
 import userReportsReducer from './user_reports';
 import { workerResultsReducer } from './worker_results';
 
-// Create history
-export const history = createBrowserHistory();
-const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
-  history,
-});
-
 // Root reducer - adding essential slices
 const rootReducer = combineReducers({
   dashboard: dashboardReducer,
@@ -49,7 +41,6 @@ const rootReducer = combineReducers({
   parseAnalysis: parseAnalysisReducer,
   playerData: playerDataReducer,
   report: reportReducer,
-  router: routerReducer,
   ui: uiReducer,
   userReports: userReportsReducer,
   workerResults: workerResultsReducer,
@@ -132,13 +123,13 @@ const createStoreWithClient = (esoLogsClient: EsoLogsClient): AppStore => {
         },
         serializableCheck: {
           // Only ignore Redux persist actions since thunk actions are now serializable
-          ignoredActions: [FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE, LOCATION_CHANGE],
+          ignoredActions: [FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE],
           // State paths that contain large datasets or computed data
           ignoredPaths: ['events', 'playerData.playersById', 'workerResults'],
           // Increase warning threshold for better performance
           warnAfter: 128,
         },
-      }).concat(routerMiddleware), // Add router middleware
+      }),
     devTools: process.env.NODE_ENV !== 'production' && {
       name: 'ESO Toolkit',
       trace: false,
@@ -160,8 +151,5 @@ export const initializeStoreWithClient = (esoLogsClient: EsoLogsClient): AppStor
 export const getStore = (): AppStore => store;
 
 export const persistor = persistStore(store);
-
-// Create the redux history instance
-export const reduxHistory = createReduxHistory(store);
 
 export default store;

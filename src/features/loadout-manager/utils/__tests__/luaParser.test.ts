@@ -231,6 +231,57 @@ describe('Lua Parser', () => {
 
       expect(wizardData).toBeNull();
     });
+
+    it('should extract characters from multiple accounts', () => {
+      const lua = `
+        WizardsWardrobeSV = {
+          ["Default"] = {
+            ["@Account1"] = {
+              ["char1"] = {
+                ["version"] = 1,
+                ["setups"] = {},
+                ["pages"] = {},
+                ["$LastCharacterName"] = "Character One",
+              },
+              ["$AccountWide"] = {
+                ["version"] = 1,
+              },
+            },
+            ["@Account2"] = {
+              ["char2"] = {
+                ["version"] = 1,
+                ["setups"] = { ["GEN"] = {} },
+                ["pages"] = {},
+                ["$LastCharacterName"] = "Character Two",
+              },
+              ["char3"] = {
+                ["version"] = 1,
+                ["setups"] = { ["SS"] = {} },
+                ["pages"] = {},
+                ["$LastCharacterName"] = "Character Three",
+              },
+              ["$AccountWide"] = {
+                ["version"] = 1,
+              },
+            },
+          },
+        }
+      `;
+
+      const parsed = parseLuaSavedVariables(lua);
+      const allWizardData = extractWizardWardrobeData(parsed);
+
+      expect(allWizardData).not.toBeNull();
+
+      // Should find characters from both accounts
+      expect(allWizardData?.['char1']).toBeDefined();
+      expect(allWizardData?.['char2']).toBeDefined();
+      expect(allWizardData?.['char3']).toBeDefined();
+
+      expect((allWizardData?.['char1'] as any).$LastCharacterName).toBe('Character One');
+      expect((allWizardData?.['char2'] as any).$LastCharacterName).toBe('Character Two');
+      expect((allWizardData?.['char3'] as any).$LastCharacterName).toBe('Character Three');
+    });
   });
 
   describe('isWizardWardrobeFormat', () => {

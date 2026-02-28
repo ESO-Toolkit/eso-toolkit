@@ -14,6 +14,7 @@ import {
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { KnownAbilities } from '../../../types/abilities';
 import { HealEvent } from '../../../types/combatlogEvents';
+import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 import { HealingDonePanelView } from './HealingDonePanelView';
@@ -103,9 +104,9 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ context }) =
     return counts;
   }, [deathEvents, fight]);
 
-  const fightDuration = useMemo(() => {
+  const fightDurationMs = useMemo(() => {
     if (fight && fight.startTime != null && fight.endTime != null) {
-      return (Number(fight.endTime) - Number(fight.startTime)) / 1000;
+      return Number(fight.endTime) - Number(fight.startTime);
     }
     return 1;
   }, [fight]);
@@ -158,8 +159,8 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ context }) =
           id,
           name,
           raw,
-          hps: fightDuration > 0 ? raw / fightDuration : 0,
-          overhealHps: fightDuration > 0 ? overheal / fightDuration : 0,
+          hps: fightDurationMs > 0 ? raw / msToSeconds(fightDurationMs) : 0,
+          rawHps: fightDurationMs > 0 ? (raw + overheal) / msToSeconds(fightDurationMs) : 0,
           overheal,
           overhealPercentage,
           iconUrl,
@@ -173,7 +174,7 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ context }) =
     healingStatistics,
     isPlayerActor,
     masterData.actorsById,
-    fightDuration,
+    fightDurationMs,
     resByPlayer,
     deathsByPlayer,
     getPlayerRole,

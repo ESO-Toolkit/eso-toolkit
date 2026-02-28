@@ -6,6 +6,8 @@ import type { PlayerDetailsWithRole } from '../../../store/player_data/playerDat
 import type { ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import type { BuildIssue } from '../../../utils/detectBuildIssues';
 import type { PlayerGearSetRecord } from '../../../utils/gearUtilities';
+import type { PotionStreamResult } from '../../../utils/potionDetectionUtils';
+import type { BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 
 // Lazy load the PlayerCard component
 const PlayerCard = React.lazy(() =>
@@ -123,6 +125,15 @@ export interface PlayerCardProps {
   reportId?: string | null;
   fightId?: string | null;
   playerGear: PlayerGearSetRecord[];
+  /** Whether this player is the top DPS in the fight */
+  isTopDps?: boolean;
+  /** The player's total DPS value (used in the badge label) */
+  totalDps?: number;
+  critDamageSummary?: { avg: number; max: number };
+  /** Bar swap analysis result, used to display bar setup pattern on DPS cards */
+  barSwapResult?: BarSwapAnalysisResult;
+  /** Per-player potion classification from the live fight event stream (Path B detection) */
+  potionStreamResult?: PotionStreamResult;
   /** Test ID for testing */
   'data-testid'?: string;
 }

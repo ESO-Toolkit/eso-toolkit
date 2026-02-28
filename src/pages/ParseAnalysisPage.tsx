@@ -11,12 +11,17 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FastfoodIcon from '@mui/icons-material/Fastfood';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import InfoIcon from '@mui/icons-material/Info';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import RotateRightIcon from '@mui/icons-material/RotateRight';
 import SpeedIcon from '@mui/icons-material/Speed';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Box,
   Button,
@@ -32,6 +37,7 @@ import {
   Divider,
   IconButton,
   LinearProgress,
+  Link,
   Paper,
   Stack,
   Table,
@@ -42,7 +48,6 @@ import {
   TableRow,
   TextField,
   Typography,
-  useTheme,
 } from '@mui/material';
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -68,11 +73,23 @@ import {
   calculateDPS,
   analyzeRotation,
   analyzeWeaving,
+  analyzeBarSwaps,
+  analyzeUltimateUsage,
+  analyzeDotUptime,
+  detectMundusStone,
+  analyzeResourceSustain,
+  estimatePenCritCap,
   type FoodDetectionResult,
   type WeaveAnalysisResult,
   type DPSResult,
   type RotationAnalysisResult,
   type ActivePercentageResult,
+  type BarSwapAnalysisResult,
+  type UltimateUsageResult,
+  type DotUptimeResult,
+  type MundusStoneResult,
+  type ResourceSustainResult,
+  type PenCritCapResult,
 } from '../features/parse_analysis/utils/parseAnalysisUtils';
 import { buildParseChecklist } from '../features/parse_analysis/utils/parseChecklistUtils';
 import {
@@ -88,8 +105,10 @@ import { useDebuffEvents } from '../hooks/events/useDebuffEvents';
 import { useFriendlyBuffEvents } from '../hooks/events/useFriendlyBuffEvents';
 import { useReportData } from '../hooks/useReportData';
 import { useReportMasterData } from '../hooks/useReportMasterData';
+import { useRoleColors } from '../hooks/useRoleColors';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { setParseReport, clearParseReport } from '../store/parse_analysis/parseAnalysisSlice';
+import { setReportData } from '../store/report/reportSlice';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { createBuffLookup } from '../utils/BuffLookupUtils';
 import { detectBuildIssues, type BuildIssue } from '../utils/detectBuildIssues';
@@ -115,6 +134,12 @@ interface ParseAnalysisState {
   activeTimeResult: ActivePercentageResult | null;
   buildIssues: BuildIssue[] | null;
   parseChecklist: ParseChecklistItem[] | null;
+  barSwapResult: BarSwapAnalysisResult | null;
+  ultimateResult: UltimateUsageResult | null;
+  dotUptimeResult: DotUptimeResult | null;
+  mundusResult: MundusStoneResult | null;
+  resourceSustainResult: ResourceSustainResult | null;
+  penCritCapResult: PenCritCapResult | null;
 }
 
 interface PlayerRoleEntry {
@@ -195,6 +220,9 @@ const extractReportInfo = (url: string): { reportId: string; fightId: string | n
   return { reportId, fightId };
 };
 
+/** How often to poll for new fights added to the report while the page is open */
+const POLL_INTERVAL_MS = 15_000;
+
 const logger = new Logger({
   level: LogLevel.DEBUG,
   contextPrefix: 'ParseAnalysisPage',
@@ -205,14 +233,16 @@ const logger = new Logger({
  * This must be rendered as a child of ReportFightProvider
  */
 const ParseAnalysisPageContent: React.FC = () => {
-  const theme = useTheme();
+  const roleColors = useRoleColors();
   const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { reportId: contextReportId, fightId: contextFightId } = useSelectedReportAndFight();
   const [logUrl, setLogUrl] = useState('');
   const abilityMapper = useAbilityIdMapper();
-  const { castEvents, isCastEventsLoading } = useCastEvents({ restrictToFightWindow: false });
+  const { castEvents, isCastEventsLoading, isCastEventsLoaded } = useCastEvents({
+    restrictToFightWindow: false,
+  });
   const { damageEvents, isDamageEventsLoading } = useDamageEvents({ restrictToFightWindow: false });
   const { friendlyBuffEvents } = useFriendlyBuffEvents({ restrictToFightWindow: false });
   const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents({
@@ -241,6 +271,12 @@ const ParseAnalysisPageContent: React.FC = () => {
       activeTimeResult: null,
       buildIssues: null,
       parseChecklist: null,
+      barSwapResult: null,
+      ultimateResult: null,
+      dotUptimeResult: null,
+      mundusResult: null,
+      resourceSustainResult: null,
+      penCritCapResult: null,
     }),
     [],
   );
@@ -288,17 +324,18 @@ const ParseAnalysisPageContent: React.FC = () => {
   const [weaveDetailsOpen, setWeaveDetailsOpen] = useState(false);
 
   const [state, setState] = useState<ParseAnalysisState>(() => createInitialParseState());
-  const fightDurationSeconds =
-    state.activeTimeResult?.fightDurationSeconds ??
+  const fightDurationMs =
+    state.activeTimeResult?.fightDurationMs ??
     (state.fightStartTime != null && state.fightEndTime != null
-      ? Math.max(0, (state.fightEndTime - state.fightStartTime) / 1000)
+      ? Math.max(0, state.fightEndTime - state.fightStartTime)
       : null);
 
-  const formatDuration = React.useCallback((totalSeconds: number): string => {
-    if (!Number.isFinite(totalSeconds) || totalSeconds < 0) {
+  const formatDuration = React.useCallback((ms: number): string => {
+    if (!Number.isFinite(ms) || ms < 0) {
       return 'Unknown';
     }
 
+    const totalSeconds = ms / 1000;
     const roundedSeconds = Math.floor(totalSeconds);
     const hours = Math.floor(roundedSeconds / 3600);
     const minutes = Math.floor((roundedSeconds % 3600) / 60);
@@ -323,6 +360,9 @@ const ParseAnalysisPageContent: React.FC = () => {
     fightEndTime: number;
     dummyId: number; // Trial dummy ID for buff analysis
   } | null>(null);
+
+  /** Supported dummy fights found in the current report — drives the navigation strip and polling */
+  const [availableFights, setAvailableFights] = useState<Array<{ id: number; name: string }>>([]);
 
   // Core analysis function - fetches fight/player data and triggers event loading
   const analyzeReport = useCallback(
@@ -357,6 +397,15 @@ const ParseAnalysisPageContent: React.FC = () => {
         }));
         return;
       }
+
+      // Collect all supported dummy fights in this report for fight navigation
+      const allSupportedFights = (report.fights ?? []).filter(
+        (f): f is NonNullable<typeof f> =>
+          f != null && TRIAL_DUMMY_TARGET_NAMES.some((name) => f.name?.includes(name)),
+      );
+      setAvailableFights(
+        allSupportedFights.map((f) => ({ id: f.id, name: f.name ?? `Fight ${f.id}` })),
+      );
 
       // Get the latest fight (or the specified fight)
       let selectedFight;
@@ -406,7 +455,20 @@ const ParseAnalysisPageContent: React.FC = () => {
         }),
       );
 
-      // Note: Master data and ability mapper are automatically managed by context providers
+      // CRITICAL: Push the freshly-fetched report data into the report slice so that
+      // useFightForContext can resolve the fight (including any newly-added fight).
+      // Without this the event hooks see selectedFight=null and never fetch events.
+      dispatch(setReportData(report));
+
+      // CRITICAL: Ensure the URL reflects the resolved fight ID so event hooks
+      // (useCastEvents, useDamageEvents, etc.) can resolve the correct fight context.
+      // Without this, when fightId was absent or non-numeric (e.g. #fight=last),
+      // useFightForContext returns null and no events are ever fetched.
+      const targetPath = `/parse-analysis/${reportId}/${selectedFight.id}`;
+      if (window.location.pathname !== targetPath) {
+        logger.debug('Updating URL to fight-specific path', { targetPath });
+        navigate(targetPath, { replace: true });
+      }
 
       // Step 2: Fetch player data to get the main player
       const playersResponse = await client.query<GetPlayersForReportQuery>({
@@ -520,7 +582,7 @@ const ParseAnalysisPageContent: React.FC = () => {
         dummyId,
       });
     },
-    [client, dispatch, logUrl, isReady, isLoggedIn],
+    [client, dispatch, logUrl, isReady, isLoggedIn, navigate],
   );
 
   // Effect to run analysis once events are loaded
@@ -528,6 +590,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     logger.debug('Parse analysis effect status', {
       hasPendingAnalysis: !!pendingAnalysis,
       isCastEventsLoading,
+      isCastEventsLoaded,
       isDamageEventsLoading,
       isCombatantInfoEventsLoading,
       isDebuffEventsLoading,
@@ -549,10 +612,10 @@ const ParseAnalysisPageContent: React.FC = () => {
       return;
     }
 
-    // IMPORTANT: We need cast events to run weave analysis
-    // Don't wait for both - cast events are sufficient
-    if (castEvents.length === 0) {
-      // Cast events haven't loaded yet, wait for next render
+    // IMPORTANT: We need cast events to be fully loaded before running analysis.
+    // castEvents may legitimately be empty (e.g. no cast data for a fight),
+    // so we check isCastEventsLoaded (succeeded/failed) rather than castEvents.length.
+    if (!isCastEventsLoaded) {
       logger.debug('Cast events not yet available; delaying analysis until next update');
       return;
     }
@@ -676,6 +739,31 @@ const ParseAnalysisPageContent: React.FC = () => {
       );
     }
 
+    // New analysis functions
+    const barSwapResult = analyzeBarSwaps(castEvents, playerId, fightStartTime, fightEndTime);
+    const ultimateResult = analyzeUltimateUsage(
+      castEvents,
+      playerId,
+      fightStartTime,
+      fightEndTime,
+      abilityMapper,
+    );
+    const dotUptimeResult = analyzeDotUptime(
+      damageEvents,
+      playerId,
+      fightStartTime,
+      fightEndTime,
+      abilityMapper,
+    );
+    const mundusResult = detectMundusStone(combatantInfoEvents, playerId);
+    const resourceSustainResult = analyzeResourceSustain(
+      damageEvents,
+      playerId,
+      fightStartTime,
+      fightEndTime,
+    );
+    const penCritCapResult = estimatePenCritCap(combatantInfoEvents, playerId);
+
     const parseChecklist = buildParseChecklist({
       fightName: state.fightName,
       foodResult,
@@ -686,6 +774,13 @@ const ParseAnalysisPageContent: React.FC = () => {
       buffChecklist,
       debuffChecklist,
       buildIssues,
+      mundusResult,
+      barSwapResult,
+      ultimateResult,
+      dotUptimeResult,
+      penCritCapResult,
+      resourceSustainResult,
+      potionUse: null, // TODO: Wire potionUse from player details when available
     });
 
     // Update state with analysis results
@@ -702,6 +797,12 @@ const ParseAnalysisPageContent: React.FC = () => {
       activeTimeResult,
       buildIssues,
       parseChecklist,
+      barSwapResult,
+      ultimateResult,
+      dotUptimeResult,
+      mundusResult,
+      resourceSustainResult,
+      penCritCapResult,
     }));
 
     // Clear pending analysis
@@ -714,6 +815,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     combatantInfoEvents,
     debuffEvents,
     isCastEventsLoading,
+    isCastEventsLoaded,
     isDamageEventsLoading,
     isCombatantInfoEventsLoading,
     isDebuffEventsLoading,
@@ -744,6 +846,12 @@ const ParseAnalysisPageContent: React.FC = () => {
         rotationResult: null,
         activeTimeResult: null,
         parseChecklist: null,
+        barSwapResult: null,
+        ultimateResult: null,
+        dotUptimeResult: null,
+        mundusResult: null,
+        resourceSustainResult: null,
+        penCritCapResult: null,
       }));
 
       try {
@@ -815,6 +923,12 @@ const ParseAnalysisPageContent: React.FC = () => {
       rotationResult: null,
       activeTimeResult: null,
       parseChecklist: null,
+      barSwapResult: null,
+      ultimateResult: null,
+      dotUptimeResult: null,
+      mundusResult: null,
+      resourceSustainResult: null,
+      penCritCapResult: null,
     }));
 
     try {
@@ -844,6 +958,85 @@ const ParseAnalysisPageContent: React.FC = () => {
     }
   }, [logUrl, analyzeReport, navigate]);
 
+  /** Seconds until the next poll fires — shown in the navigation strip */
+  const [pollCountdown, setPollCountdown] = useState(POLL_INTERVAL_MS / 1000);
+
+  // Poll for new fights added to the report while the page is open.
+  // Restarts when the report changes or loading state flips; uses closure-captured values
+  // so the interval always reflects the latest fight count.
+  useEffect(() => {
+    if (!state.reportCode || !client || !isReady || !isLoggedIn) return;
+
+    const reportCode = state.reportCode;
+    const currentFightCount = availableFights.length;
+    const intervalSec = POLL_INTERVAL_MS / 1000;
+
+    setPollCountdown(intervalSec);
+
+    // 1-second countdown tick
+    const countdownId = setInterval(() => {
+      setPollCountdown((prev) => (prev <= 1 ? intervalSec : prev - 1));
+    }, 1000);
+
+    const timerId = setInterval(() => {
+      if (state.loading) {
+        setPollCountdown(intervalSec); // reset visual while loading
+        return;
+      }
+      void (async () => {
+        try {
+          const response = await client.query<GetReportByCodeQuery>({
+            query: GetReportByCodeDocument,
+            variables: { code: reportCode },
+            fetchPolicy: 'no-cache',
+          });
+          const fights = response.reportData?.report?.fights ?? [];
+          const supported = fights.filter(
+            (f): f is NonNullable<typeof f> =>
+              f != null && TRIAL_DUMMY_TARGET_NAMES.some((n) => f.name?.includes(n)),
+          );
+          if (supported.length > currentFightCount) {
+            logger.debug('New fight detected via polling', {
+              previous: currentFightCount,
+              current: supported.length,
+            });
+            setAvailableFights(
+              supported.map((f) => ({ id: f.id, name: f.name ?? `Fight ${f.id}` })),
+            );
+            const newFight = supported[supported.length - 1];
+            if (newFight) {
+              logger.info(`Auto-analyzing new fight #${newFight.id}`);
+              void handleAnalyzeFromParams(reportCode, newFight.id.toString());
+            }
+          }
+        } catch (err) {
+          logger.debug('Fight poll error (ignored)', { error: err });
+        }
+      })();
+    }, POLL_INTERVAL_MS);
+
+    return () => {
+      clearInterval(countdownId);
+      clearInterval(timerId);
+    };
+  }, [
+    state.reportCode,
+    state.loading,
+    availableFights.length,
+    client,
+    isReady,
+    isLoggedIn,
+    handleAnalyzeFromParams,
+  ]);
+
+  const handleSelectFight = useCallback(
+    (fightId: number): void => {
+      if (!state.reportCode || fightId === state.fightId || state.loading) return;
+      void handleAnalyzeFromParams(state.reportCode, fightId.toString());
+    },
+    [state.reportCode, state.fightId, state.loading, handleAnalyzeFromParams],
+  );
+
   const handleLogUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setLogUrl(e.target.value);
   };
@@ -851,6 +1044,7 @@ const ParseAnalysisPageContent: React.FC = () => {
   const handleReset = useCallback((): void => {
     setState(createInitialParseState());
     setPendingAnalysis(null);
+    setAvailableFights([]);
     setLogUrl('');
     setWeaveDetailsOpen(false);
     dispatch(clearParseReport());
@@ -862,43 +1056,60 @@ const ParseAnalysisPageContent: React.FC = () => {
 
     const { hasFood, foodType } = state.foodResult;
 
-    return (
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-            <FastfoodIcon color={hasFood ? 'success' : 'error'} />
-            <Typography variant="h6">Food/Drink Analysis</Typography>
-          </Stack>
+    const foodLabel =
+      foodType === 'tri-stat'
+        ? 'Tri-Stat Food (Max Health, Magicka & Stamina)'
+        : foodType === 'stamina'
+          ? 'Stamina Recovery Food'
+          : foodType === 'magicka'
+            ? 'Magicka Recovery Food'
+            : foodType === 'health-stamina'
+              ? 'Health + Stamina Food'
+              : foodType === 'health-magicka'
+                ? 'Health + Magicka Food'
+                : foodType === 'magicka-stamina'
+                  ? 'Magicka + Stamina Food'
+                  : foodType === 'stamina-magicka-recovery'
+                    ? 'Max Stamina + Magicka Recovery Food'
+                    : foodType === 'health-regen'
+                      ? 'Health + Regeneration Food'
+                      : foodType === 'event'
+                        ? 'Event Food/Drink'
+                        : foodType === 'xp-boost'
+                          ? 'Experience Boost Food'
+                          : 'Other Food/Drink';
 
-          {hasFood ? (
-            <Alert severity="success" icon={<CheckCircleIcon />}>
-              <Typography variant="body2">
-                <strong>Food detected:</strong>{' '}
-                {foodType === 'tri-stat' && 'Tri-Stat Food (Max Health, Magicka & Stamina)'}
-                {foodType === 'stamina' && 'Stamina Recovery Food'}
-                {foodType === 'magicka' && 'Magicka Recovery Food'}
-                {foodType === 'health-stamina' && 'Health + Stamina Food'}
-                {foodType === 'health-magicka' && 'Health + Magicka Food'}
-                {foodType === 'magicka-stamina' && 'Magicka + Stamina Food'}
-                {foodType === 'stamina-magicka-recovery' && 'Max Stamina + Magicka Recovery Food'}
-                {foodType === 'health-regen' && 'Health + Regeneration Food'}
-                {foodType === 'event' && 'Event Food/Drink'}
-                {foodType === 'xp-boost' && 'Experience Boost Food'}
-                {foodType === 'other' && 'Other Food/Drink'}
-                {state.foodResult?.foodNames.length > 0 &&
-                  ` (${state.foodResult.foodNames.join(', ')})`}
-              </Typography>
-            </Alert>
-          ) : (
-            <Alert severity="error" icon={<ErrorIcon />}>
-              <Typography variant="body2">
-                <strong>No food detected!</strong> Using stamina or magicka recovery food is
-                recommended for parses.
-              </Typography>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
+    return (
+      <Box
+        sx={{
+          p: 2,
+          borderRadius: 2,
+          border: '1px solid',
+          borderColor: hasFood ? 'success.main' : 'error.main',
+          borderLeftWidth: 4,
+          backgroundColor: hasFood
+            ? roleColors.isDarkMode
+              ? 'rgba(46, 125, 50, 0.08)'
+              : 'rgba(46, 125, 50, 0.04)'
+            : roleColors.isDarkMode
+              ? 'rgba(211, 47, 47, 0.08)'
+              : 'rgba(211, 47, 47, 0.04)',
+        }}
+      >
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <FastfoodIcon color={hasFood ? 'success' : 'error'} />
+          <Box>
+            <Typography variant="body2" fontWeight={600}>
+              {hasFood ? 'Food Active' : 'No Food Detected'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {hasFood
+                ? `${foodLabel}${state.foodResult?.foodNames.length > 0 ? ` — ${state.foodResult.foodNames.join(', ')}` : ''}`
+                : 'Using food/drink is recommended for parses'}
+            </Typography>
+          </Box>
+        </Stack>
+      </Box>
     );
   };
 
@@ -915,7 +1126,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     const {
       activePercentage,
       activeSeconds,
-      fightDurationSeconds,
+      fightDurationMs,
       totalCasts,
       baseActiveSeconds,
       channelExtraSeconds,
@@ -929,52 +1140,77 @@ const ParseAnalysisPageContent: React.FC = () => {
     const progressColor = isExcellent ? 'success' : isGood ? 'warning' : 'error';
 
     return (
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-            <AccessTimeIcon color={progressColor} />
-            <Typography variant="h6">Activity Uptime</Typography>
+      <Card
+        sx={{
+          ...roleColors.getAccordionStyles(),
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        }}
+      >
+        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+            <AccessTimeIcon color={progressColor} fontSize="small" />
+            <Typography variant="subtitle2" fontWeight={600}>
+              Activity Uptime
+            </Typography>
           </Stack>
 
-          <Typography
-            variant="h4"
-            color={isExcellent ? 'success.main' : isGood ? 'warning.main' : 'error.main'}
-            sx={{ mb: 1 }}
-          >
-            {percentDisplay}% Active
-          </Typography>
+          <Stack direction="row" alignItems="baseline" spacing={0.5} sx={{ mb: 1 }}>
+            <Typography
+              variant="h4"
+              fontWeight={700}
+              color={isExcellent ? 'success.main' : isGood ? 'warning.main' : 'error.main'}
+            >
+              {percentDisplay}%
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Active
+            </Typography>
+          </Stack>
 
           <LinearProgress
             variant="determinate"
             value={progressValue}
             color={progressColor}
-            sx={{ height: 8, borderRadius: 4, mb: 2 }}
+            sx={{
+              ...roleColors.getProgressBarStyles(),
+              mb: 2,
+            }}
           />
 
-          <Stack spacing={1}>
+          <Stack spacing={0.75}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body2">Total Active Time:</Typography>
-              <Typography variant="body2" fontWeight="bold">
-                {activeSeconds.toFixed(1)}s / {fightDurationSeconds.toFixed(1)}s
+              <Typography variant="caption" color="text.secondary">
+                Active Time
+              </Typography>
+              <Typography variant="caption" fontWeight={600}>
+                {activeSeconds.toFixed(1)}s /{' '}
+                {fightDurationMs != null ? (fightDurationMs / 1000).toFixed(1) : '?'}s
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body2">Base (casts):</Typography>
-              <Typography variant="body2" fontWeight="bold">
-                {baseActiveSeconds.toFixed(1)}s ({totalCasts} casts)
+              <Typography variant="caption" color="text.secondary">
+                Casts
+              </Typography>
+              <Typography variant="caption" fontWeight={600}>
+                {totalCasts} ({baseActiveSeconds.toFixed(1)}s)
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body2">Channel Bonus:</Typography>
-              <Typography variant="body2" fontWeight="bold">
+              <Typography variant="caption" color="text.secondary">
+                Channel Bonus
+              </Typography>
+              <Typography variant="caption" fontWeight={600}>
                 +{channelExtraSeconds.toFixed(1)}s
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body2">Downtime:</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Downtime
+              </Typography>
               <Typography
-                variant="body2"
-                fontWeight="bold"
+                variant="caption"
+                fontWeight={600}
                 color={downtimeSeconds <= 5 ? 'success.main' : 'error.main'}
               >
                 {downtimeSeconds.toFixed(1)}s
@@ -983,12 +1219,21 @@ const ParseAnalysisPageContent: React.FC = () => {
           </Stack>
 
           {!isGood && (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              <Typography variant="body2">
-                Keep your rotation tight and avoid idle gaps longer than the 1 second global
-                cooldown to raise your uptime.
-              </Typography>
-            </Alert>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: 'block',
+                mt: 1.5,
+                p: 1,
+                borderRadius: 1,
+                backgroundColor: roleColors.isDarkMode
+                  ? 'rgba(255,255,255,0.03)'
+                  : 'rgba(0,0,0,0.02)',
+              }}
+            >
+              Keep your rotation tight and avoid idle gaps longer than the 1s GCD.
+            </Typography>
           )}
         </CardContent>
       </Card>
@@ -999,37 +1244,53 @@ const ParseAnalysisPageContent: React.FC = () => {
     if (state.cpm === null) return null;
 
     const cpm = state.cpm;
-    const isGoodCPM = cpm >= 50; // 50+ CPM is generally considered good
-    const isExcellentCPM = cpm >= 60; // 60+ CPM is excellent
+    const isGoodCPM = cpm >= 50;
+    const isExcellentCPM = cpm >= 60;
 
     return (
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-            <SpeedIcon color={isGoodCPM ? 'success' : 'warning'} />
-            <Typography variant="h6">Casts Per Minute (CPM)</Typography>
+      <Card
+        sx={{
+          ...roleColors.getAccordionStyles(),
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        }}
+      >
+        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+            <SpeedIcon color={isGoodCPM ? 'success' : 'warning'} fontSize="small" />
+            <Typography variant="subtitle2" fontWeight={600}>
+              Casts Per Minute
+            </Typography>
           </Stack>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Stack direction="row" alignItems="baseline" spacing={0.5} sx={{ mb: 1 }}>
             <Typography
-              variant="h3"
+              variant="h4"
+              fontWeight={700}
               color={isExcellentCPM ? 'success.main' : isGoodCPM ? 'warning.main' : 'error.main'}
             >
               {cpm.toFixed(1)}
             </Typography>
-            <Stack spacing={1} sx={{ flex: 1 }}>
-              <Typography variant="body2" color="text.secondary">
-                {isExcellentCPM && '🎯 Excellent! Your APM is very high.'}
-                {isGoodCPM && !isExcellentCPM && '✅ Good CPM. Room for improvement.'}
-                {!isGoodCPM && '⚠️ Low CPM. Try to cast more frequently.'}
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={Math.min((cpm / 70) * 100, 100)}
-                color={isExcellentCPM ? 'success' : isGoodCPM ? 'warning' : 'error'}
-              />
-            </Stack>
-          </Box>
+            <Typography variant="caption" color="text.secondary">
+              CPM
+            </Typography>
+          </Stack>
+
+          <LinearProgress
+            variant="determinate"
+            value={Math.min((cpm / 70) * 100, 100)}
+            color={isExcellentCPM ? 'success' : isGoodCPM ? 'warning' : 'error'}
+            sx={{
+              ...roleColors.getProgressBarStyles(),
+              mb: 1.5,
+            }}
+          />
+
+          <Typography variant="caption" color="text.secondary">
+            {isExcellentCPM && 'Excellent — very high APM'}
+            {isGoodCPM && !isExcellentCPM && 'Good — room for improvement'}
+            {!isGoodCPM && 'Low — try to cast more frequently'}
+          </Typography>
         </CardContent>
       </Card>
     );
@@ -1038,39 +1299,50 @@ const ParseAnalysisPageContent: React.FC = () => {
   const renderDPSAnalysis = (): React.ReactElement | null => {
     if (state.dpsResult === null) return null;
 
-    const { totalDamage, dps, duration } = state.dpsResult;
+    const { totalDamage, dps, durationMs } = state.dpsResult;
 
     return (
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-            <FlashOnIcon color="primary" />
-            <Typography variant="h6">Damage Per Second (DPS)</Typography>
+      <Card
+        sx={{
+          ...roleColors.getAccordionStyles(),
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        }}
+      >
+        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+            <FlashOnIcon color="primary" fontSize="small" />
+            <Typography variant="subtitle2" fontWeight={600}>
+              Damage Per Second
+            </Typography>
           </Stack>
 
-          <Stack spacing={2}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Typography variant="h3" color="primary.main">
-                {Math.round(dps).toLocaleString()}
-              </Typography>
-              <Stack spacing={0.5}>
-                <Typography variant="body2" color="text.secondary">
-                  DPS
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {(duration / 60).toFixed(1)} minute fight
-                </Typography>
-              </Stack>
-            </Box>
+          <Stack direction="row" alignItems="baseline" spacing={0.5}>
+            <Typography variant="h4" fontWeight={700} color="primary.main">
+              {Math.round(dps).toLocaleString()}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              DPS
+            </Typography>
+          </Stack>
 
-            <Divider />
+          <Divider sx={{ my: 1.5, opacity: 0.3 }} />
 
-            <Box>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Total Damage Dealt
+          <Stack spacing={0.5}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="caption" color="text.secondary">
+                Total Damage
               </Typography>
-              <Typography variant="h5" color="text.primary">
+              <Typography variant="caption" fontWeight={600}>
                 {totalDamage.toLocaleString()}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="caption" color="text.secondary">
+                Fight Duration
+              </Typography>
+              <Typography variant="caption" fontWeight={600}>
+                {(durationMs / 60000).toFixed(1)} min
               </Typography>
             </Box>
           </Stack>
@@ -1093,19 +1365,39 @@ const ParseAnalysisPageContent: React.FC = () => {
     } = state.rotationResult;
 
     return (
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-            <RotateRightIcon color="info" />
-            <Typography variant="h6">Rotation Analysis</Typography>
+      <Accordion
+        defaultExpanded={false}
+        sx={{
+          ...roleColors.getAccordionStyles(),
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          '&:before': { display: 'none' },
+        }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <RotateRightIcon color="info" fontSize="small" />
+            <Typography variant="subtitle2" fontWeight={600}>
+              Rotation Analysis
+            </Typography>
+            {spammableAbilities && spammableAbilities.length > 0 && (
+              <Chip
+                label={`${spammableAbilities.length} spammable${spammableAbilities.length > 1 ? 's' : ''}`}
+                size="small"
+                color="warning"
+                variant="outlined"
+                sx={{ height: 20, fontSize: '0.65rem' }}
+              />
+            )}
           </Stack>
-
+        </AccordionSummary>
+        <AccordionDetails>
           <Stack spacing={3}>
             {/* Opener */}
             {opener.length > 0 && (
               <Box>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
-                  Opener (First {Math.round(state.rotationResult.openerDuration)} seconds)
+                <Typography variant="subtitle2" gutterBottom fontWeight={600}>
+                  Opener (First {Math.round(state.rotationResult.openerDuration)}s)
                 </Typography>
                 <Box
                   sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mt: 1 }}
@@ -1113,7 +1405,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                   {opener.map((cast, index) => (
                     <React.Fragment key={`opener-${index}`}>
                       {index > 0 && (
-                        <ArrowForwardIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                        <ArrowForwardIcon sx={{ color: 'text.secondary', fontSize: 18 }} />
                       )}
                       <AbilityIcon abilityId={cast.abilityId} />
                     </React.Fragment>
@@ -1125,22 +1417,25 @@ const ParseAnalysisPageContent: React.FC = () => {
             {/* Recommended Rotation */}
             {recommendedRotation && recommendedRotation.length > 0 && (
               <Box>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
-                  Recommended Rotation Order
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    Recommended Order
+                  </Typography>
                   <Chip
-                    label="Based on skill intervals"
+                    label="Based on intervals"
                     size="small"
                     color="success"
-                    sx={{ ml: 1 }}
+                    variant="outlined"
+                    sx={{ height: 20, fontSize: '0.65rem' }}
                   />
-                </Typography>
+                </Stack>
                 <Box
                   sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mt: 1 }}
                 >
                   {recommendedRotation.map((cast, index) => (
                     <React.Fragment key={`recommended-${index}`}>
                       {index > 0 && (
-                        <ArrowForwardIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                        <ArrowForwardIcon sx={{ color: 'text.secondary', fontSize: 18 }} />
                       )}
                       <AbilityIcon abilityId={cast.abilityId} />
                     </React.Fragment>
@@ -1151,31 +1446,34 @@ const ParseAnalysisPageContent: React.FC = () => {
                   color="text.secondary"
                   sx={{ mt: 1, display: 'block' }}
                 >
-                  This rotation order maintains the optimal cast intervals for each skill
+                  Maintains optimal cast intervals for each skill
                 </Typography>
               </Box>
             )}
 
             {rotationPattern && rotationPattern.length > 0 && (
               <Box>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
-                  Detected Rotation Pattern
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    Detected Pattern
+                  </Typography>
                   {patternRepetitions && patternRepetitions > 1 && (
                     <Chip
-                      label={`Repeats ×${patternRepetitions}`}
+                      label={`×${patternRepetitions}`}
                       size="small"
                       color="info"
-                      sx={{ ml: 1 }}
+                      variant="outlined"
+                      sx={{ height: 20, fontSize: '0.65rem' }}
                     />
                   )}
-                </Typography>
+                </Stack>
                 <Box
                   sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mt: 1 }}
                 >
                   {rotationPattern.map((cast, index) => (
                     <React.Fragment key={`pattern-${index}`}>
                       {index > 0 && (
-                        <ArrowForwardIcon sx={{ color: 'text.secondary', fontSize: 18 }} />
+                        <ArrowForwardIcon sx={{ color: 'text.secondary', fontSize: 16 }} />
                       )}
                       <AbilityIcon abilityId={cast.abilityId} />
                     </React.Fragment>
@@ -1186,35 +1484,48 @@ const ParseAnalysisPageContent: React.FC = () => {
 
             {spammableAbilities && spammableAbilities.length > 0 && (
               <Box>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
-                  Frequently Used Abilities
+                <Typography variant="subtitle2" gutterBottom fontWeight={600}>
+                  Frequently Used
                 </Typography>
-                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
                   {spammableAbilities.map((ability) => (
                     <Chip
                       key={ability.abilityId}
-                      label={`${ability.abilityName} • ${ability.percentage}% of casts`}
+                      label={`${ability.abilityName} • ${ability.percentage}%`}
                       color="warning"
                       variant="outlined"
+                      size="small"
                     />
                   ))}
                 </Stack>
               </Box>
             )}
 
-            {/* Skill Intervals Table */}
+            {/* Skill Intervals */}
             {skillIntervals && skillIntervals.length > 0 && (
               <Box>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                <Typography variant="subtitle2" gutterBottom fontWeight={600}>
                   Skill Cast Intervals
                 </Typography>
-                <Box sx={{ mt: 1 }}>
+                <Stack spacing={0.5}>
                   {skillIntervals.slice(0, 10).map((skill) => (
                     <Box
                       key={skill.abilityId}
-                      sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 0.5 }}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        py: 0.5,
+                        px: 1,
+                        borderRadius: 1,
+                        '&:hover': {
+                          backgroundColor: roleColors.isDarkMode
+                            ? 'rgba(255,255,255,0.03)'
+                            : 'rgba(0,0,0,0.02)',
+                        },
+                      }}
                     >
-                      <Typography variant="body2" sx={{ minWidth: 200 }}>
+                      <Typography variant="caption" sx={{ minWidth: 160, fontWeight: 500 }}>
                         {skill.abilityName}
                       </Typography>
                       <Chip
@@ -1229,28 +1540,30 @@ const ParseAnalysisPageContent: React.FC = () => {
                                 ? 'warning'
                                 : 'default'
                         }
-                        sx={{ minWidth: 140 }}
+                        variant="outlined"
+                        sx={{ height: 20, fontSize: '0.65rem' }}
                       />
                       {skill.isExecute && (
                         <Chip
-                          label={`Execute (${skill.firstCastPercent}% into fight)`}
+                          label={`Execute ${skill.firstCastPercent}%`}
                           size="small"
                           color="error"
                           variant="outlined"
+                          sx={{ height: 20, fontSize: '0.65rem' }}
                         />
                       )}
                       <Typography variant="caption" color="text.secondary">
-                        ({skill.castCount} times)
+                        ×{skill.castCount}
                       </Typography>
                     </Box>
                   ))}
-                </Box>
+                </Stack>
                 <Typography
                   variant="caption"
                   color="text.secondary"
                   sx={{ mt: 1, display: 'block' }}
                 >
-                  Average number of other abilities cast between each use of this skill
+                  Average casts of other abilities between each use
                 </Typography>
               </Box>
             )}
@@ -1261,8 +1574,8 @@ const ParseAnalysisPageContent: React.FC = () => {
               </Typography>
             )}
           </Stack>
-        </CardContent>
-      </Card>
+        </AccordionDetails>
+      </Accordion>
     );
   };
 
@@ -1282,85 +1595,115 @@ const ParseAnalysisPageContent: React.FC = () => {
     const isExcellentWeaving = weaveAccuracy >= 90;
 
     return (
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
+      <Card
+        sx={{
+          ...roleColors.getAccordionStyles(),
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        }}
+      >
+        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
           <Stack
             direction="row"
             spacing={1}
             alignItems="center"
             justifyContent="space-between"
-            sx={{ mb: 2 }}
+            sx={{ mb: 1.5 }}
           >
             <Stack direction="row" spacing={1} alignItems="center">
-              <FlashOnIcon color={isGoodWeaving ? 'success' : 'warning'} />
-              <Typography variant="h6">Weave Accuracy</Typography>
+              <FlashOnIcon color={isGoodWeaving ? 'success' : 'warning'} fontSize="small" />
+              <Typography variant="subtitle2" fontWeight={600}>
+                Weave Accuracy
+              </Typography>
             </Stack>
             <IconButton
               size="small"
               onClick={() => setWeaveDetailsOpen(true)}
               title="View detailed cast breakdown"
               aria-label="View detailed cast breakdown"
+              sx={{ opacity: 0.7 }}
             >
-              <InfoIcon />
+              <InfoIcon fontSize="small" />
             </IconButton>
           </Stack>
 
-          <Box sx={{ mb: 2 }}>
+          <Stack direction="row" alignItems="baseline" spacing={0.5} sx={{ mb: 1 }}>
             <Typography
-              variant="h3"
+              variant="h4"
+              fontWeight={700}
               color={
                 isExcellentWeaving ? 'success.main' : isGoodWeaving ? 'warning.main' : 'error.main'
               }
             >
               {weaveAccuracy.toFixed(1)}%
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {properWeaves} out of {totalSkills} skills had a light attack before them
-            </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={weaveAccuracy}
-              color={isExcellentWeaving ? 'success' : isGoodWeaving ? 'warning' : 'error'}
-              sx={{ mt: 1 }}
-            />
-          </Box>
+          </Stack>
 
-          <Divider sx={{ my: 2 }} />
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+            {properWeaves} / {totalSkills} skills had a light attack before them
+          </Typography>
 
-          <Stack spacing={1}>
+          <LinearProgress
+            variant="determinate"
+            value={weaveAccuracy}
+            color={isExcellentWeaving ? 'success' : isGoodWeaving ? 'warning' : 'error'}
+            sx={{
+              ...roleColors.getProgressBarStyles(),
+              mb: 2,
+            }}
+          />
+
+          <Stack spacing={0.75}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body2">Total Light Attacks:</Typography>
-              <Typography variant="body2" fontWeight="bold">
+              <Typography variant="caption" color="text.secondary">
+                Light Attacks
+              </Typography>
+              <Typography variant="caption" fontWeight={600}>
                 {lightAttacks}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body2">Proper Weaves:</Typography>
-              <Typography variant="body2" fontWeight="bold" color="success.main">
+              <Typography variant="caption" color="text.secondary">
+                Proper Weaves
+              </Typography>
+              <Typography variant="caption" fontWeight={600} color="success.main">
                 {properWeaves}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body2">Missed Weaves:</Typography>
-              <Typography variant="body2" fontWeight="bold" color="error.main">
+              <Typography variant="caption" color="text.secondary">
+                Missed Weaves
+              </Typography>
+              <Typography variant="caption" fontWeight={600} color="error.main">
                 {missedWeaves}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body2">Avg. Weave Timing:</Typography>
-              <Typography variant="body2" fontWeight="bold">
+              <Typography variant="caption" color="text.secondary">
+                Avg. Timing
+              </Typography>
+              <Typography variant="caption" fontWeight={600}>
                 {averageWeaveTiming.toFixed(0)}ms
               </Typography>
             </Box>
           </Stack>
 
           {!isGoodWeaving && (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              <Typography variant="body2">
-                <strong>Tip:</strong> Practice weaving by pressing light attack immediately before
-                each skill. Aim for the pattern: Light Attack → Skill → Light Attack → Skill.
-              </Typography>
-            </Alert>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: 'block',
+                mt: 1.5,
+                p: 1,
+                borderRadius: 1,
+                backgroundColor: roleColors.isDarkMode
+                  ? 'rgba(255,255,255,0.03)'
+                  : 'rgba(0,0,0,0.02)',
+              }}
+            >
+              Practice: Light Attack → Skill → Light Attack → Skill
+            </Typography>
           )}
         </CardContent>
       </Card>
@@ -1370,23 +1713,29 @@ const ParseAnalysisPageContent: React.FC = () => {
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Parse Analysis Tool
+        <Typography variant="h4" fontWeight={700} gutterBottom>
+          Parse Analysis
         </Typography>
-        <Typography variant="body1" color="text.secondary" paragraph>
-          Analyze your ESO parse logs to check food usage, activity uptime, casts per minute, weave
-          accuracy, and buff sources.
-          {!state.reportCode && ' Paste your ESOLogs report URL below.'}
+        <Typography variant="body2" color="text.secondary">
+          Analyze your ESO parse logs — food, uptime, CPM, weaving, buffs, and rotation.
+          {!state.reportCode && ' Paste your ESOLogs report URL below to get started.'}
         </Typography>
       </Box>
 
       {/* Work in Progress Banner */}
       <WorkInProgressDisclaimer featureName="Parse Analysis" sx={{ mb: 3 }} />
 
-      {/* Only show URL input form if no report is loaded */}
+      {/* URL input form */}
       {!state.reportCode && !state.loading && (
-        <Card sx={{ mb: 4 }}>
-          <CardContent>
+        <Card
+          sx={{
+            mb: 4,
+            ...roleColors.getAccordionStyles(),
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+          }}
+        >
+          <CardContent sx={{ p: 3 }}>
             <Stack spacing={2}>
               <TextField
                 label="ESOLogs.com Report URL"
@@ -1396,6 +1745,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                 onChange={handleLogUrlChange}
                 placeholder="https://www.esologs.com/reports/ABC123XYZ"
                 disabled={state.loading}
+                size="small"
               />
               <Button
                 variant="contained"
@@ -1411,10 +1761,162 @@ const ParseAnalysisPageContent: React.FC = () => {
         </Card>
       )}
 
+      {/* Setup instructions — shown only when no report is loaded */}
+      {!state.reportCode && !state.loading && (
+        <Card
+          sx={{
+            mb: 4,
+            ...roleColors.getAccordionStyles(),
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+          }}
+        >
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="subtitle1" fontWeight={700} gutterBottom>
+              How to set up a live parse
+            </Typography>
+            <Stack spacing={2.5}>
+              {(
+                [
+                  {
+                    step: 1,
+                    title: 'Download the ESOLogs uploader',
+                    body: (
+                      <>
+                        Download and install the desktop client from{' '}
+                        <Link
+                          href="https://www.esologs.com/client/download"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25 }}
+                        >
+                          esologs.com/client/download
+                          <OpenInNewIcon sx={{ fontSize: 12 }} />
+                        </Link>
+                        .
+                      </>
+                    ),
+                  },
+                  {
+                    step: 2,
+                    title: 'Start a Live Log',
+                    body: 'Open the uploader, select your ESO Logs directory and guild, then click Go! to begin uploading.',
+                  },
+                  {
+                    step: 3,
+                    title: 'Copy your report URL',
+                    body: 'Once the upload starts you will see a View Report button. Click it to open your live report, then copy the URL from your browser and paste it into the field above.',
+                  },
+                  {
+                    step: 4,
+                    title: 'Enable encounter logging in-game',
+                    body: (
+                      <>
+                        In the ESO chat box run the command{' '}
+                        <Box
+                          component="code"
+                          sx={{
+                            px: 0.75,
+                            py: 0.25,
+                            borderRadius: 1,
+                            bgcolor: 'action.hover',
+                            fontFamily: 'monospace',
+                            fontSize: '0.8rem',
+                          }}
+                        >
+                          /encounterlog
+                        </Box>
+                        . You should see the message{' '}
+                        <Box component="em">Encounter log enabled.</Box>
+                      </>
+                    ),
+                  },
+                  {
+                    step: 5,
+                    title: 'Parse on a 21M trial dummy',
+                    body: 'Attack a 21,000,000 HP trial dummy. Make sure your gear and food are set up as you intend to parse.',
+                  },
+                  {
+                    step: 6,
+                    title: 'Wait for automatic upload',
+                    body: 'Logs upload automatically ~10 seconds after combat ends (the ESO combat status timer). This page will poll for new fights and refresh automatically once your parse is available.',
+                  },
+                ] as { step: number; title: string; body: React.ReactNode }[]
+              ).map(({ step, title, body }) => (
+                <Stack key={step} direction="row" spacing={2} alignItems="flex-start">
+                  <Box
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      bgcolor: 'primary.main',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      mt: 0.25,
+                    }}
+                  >
+                    <Typography variant="caption" fontWeight={700} color="primary.contrastText">
+                      {step}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" fontWeight={600}>
+                      {title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {body}
+                    </Typography>
+                  </Box>
+                </Stack>
+              ))}
+            </Stack>
+          </CardContent>
+        </Card>
+      )}
+
       {state.error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {state.error}
         </Alert>
+      )}
+
+      {/* Fight navigation — visible whenever multiple supported fights are available, even while loading */}
+      {availableFights.length > 0 && !!state.reportCode && (
+        <Card
+          sx={{
+            mb: 2,
+            ...roleColors.getAccordionStyles(),
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+          }}
+        >
+          <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+              <RotateRightIcon fontSize="small" color="action" />
+              <Typography variant="caption" fontWeight={600}>
+                {availableFights.length === 1 ? 'Latest Fight' : 'Available Fights'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                — next check in {pollCountdown}s
+              </Typography>
+            </Stack>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {availableFights.map((fight) => (
+                <Chip
+                  key={fight.id}
+                  label={`#${fight.id} — ${fight.name}`}
+                  onClick={() => handleSelectFight(fight.id)}
+                  color={state.fightId === fight.id ? 'primary' : 'default'}
+                  variant={state.fightId === fight.id ? 'filled' : 'outlined'}
+                  size="small"
+                  disabled={state.loading}
+                />
+              ))}
+            </Box>
+          </CardContent>
+        </Card>
       )}
 
       {state.loading && (
@@ -1425,8 +1927,22 @@ const ParseAnalysisPageContent: React.FC = () => {
 
       {state.reportCode && state.playerName && !state.loading && (
         <>
-          <Card sx={{ mb: 3, bgcolor: theme.palette.primary.main + '10' }}>
-            <CardContent>
+          {/* Fight Info Hero Header */}
+          <Card
+            sx={{
+              mb: 3,
+              background: roleColors.isDarkMode
+                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(147, 51, 234, 0.08) 50%, rgba(15, 23, 42, 0.95) 100%)'
+                : 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(147, 51, 234, 0.05) 50%, rgba(255, 255, 255, 0.98) 100%)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid',
+              borderColor: roleColors.isDarkMode
+                ? 'rgba(56, 189, 248, 0.15)'
+                : 'rgba(56, 189, 248, 0.2)',
+            }}
+          >
+            <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
               <Stack
                 direction={{ xs: 'column', sm: 'row' }}
                 spacing={2}
@@ -1434,74 +1950,179 @@ const ParseAnalysisPageContent: React.FC = () => {
                 alignItems={{ xs: 'flex-start', sm: 'center' }}
               >
                 <Box>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h5" fontWeight={700} gutterBottom>
                     {state.fightName}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Player: <strong>{state.playerName}</strong>
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Report: {state.reportCode} | Fight: {state.fightId}
-                  </Typography>
-                  {fightDurationSeconds != null && (
-                    <Typography variant="body2" color="text.secondary">
-                      Fight Length: {formatDuration(fightDurationSeconds)}
-                    </Typography>
-                  )}
+                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    <Chip
+                      label={state.playerName}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
+                    <Chip label={`Report: ${state.reportCode}`} size="small" variant="outlined" />
+                    <Chip label={`Fight #${state.fightId}`} size="small" variant="outlined" />
+                    {fightDurationMs != null && (
+                      <Chip
+                        label={formatDuration(fightDurationMs)}
+                        size="small"
+                        icon={<AccessTimeIcon />}
+                        variant="outlined"
+                      />
+                    )}
+                  </Stack>
                 </Box>
                 <Button
                   variant="outlined"
+                  size="small"
                   onClick={handleReset}
                   sx={{ alignSelf: { xs: 'stretch', sm: 'center' } }}
                 >
-                  Load Different Fight
+                  New Analysis
                 </Button>
               </Stack>
             </CardContent>
           </Card>
 
+          {/* Food Status (inline, not a full card) */}
           {renderFoodAnalysis()}
+
+          {/* Parse Checklist Summary */}
           {renderParseChecklist()}
-          {renderActiveTimeAnalysis()}
-          {renderCPMAnalysis()}
-          {renderDPSAnalysis()}
-          {renderRotationAnalysis()}
-          {renderWeaveAnalysis()}
 
-          {state.buildIssues && (
-            <Card sx={{ mb: 2 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Build Issues
-                </Typography>
-                <BuildIssuesPanel issues={state.buildIssues} />
-              </CardContent>
-            </Card>
-          )}
+          {/* Key Stats Grid */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+              gap: 2,
+              mb: 3,
+            }}
+          >
+            {renderDPSAnalysis()}
+            {renderCPMAnalysis()}
+            {renderActiveTimeAnalysis()}
+            {renderWeaveAnalysis()}
+          </Box>
 
-          {/* Buff Checklist - Shows which buffs are from dummy vs player */}
-          {state.buffChecklist && (
-            <Card sx={{ mb: 2 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Buff Source Analysis
-                </Typography>
-                <BuffChecklist checklistData={state.buffChecklist} />
-              </CardContent>
-            </Card>
-          )}
+          {/* Expandable Detail Sections */}
+          <Stack spacing={2} sx={{ mb: 3 }}>
+            {renderRotationAnalysis()}
 
-          {/* Debuff Checklist - Shows which debuffs are applied to the dummy */}
-          {state.debuffChecklist && (
-            <Card sx={{ mb: 2 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Debuffs Applied to Target
-                </Typography>
-                <DebuffChecklist checklistData={state.debuffChecklist} />
-              </CardContent>
-            </Card>
-          )}
+            {state.buildIssues && state.buildIssues.length > 0 && (
+              <Accordion
+                defaultExpanded={state.buildIssues.length > 0}
+                sx={{
+                  ...roleColors.getAccordionStyles(),
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  '&:before': { display: 'none' },
+                }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <ErrorIcon color="warning" fontSize="small" />
+                    <Typography variant="subtitle2" fontWeight={600}>
+                      Build Issues
+                    </Typography>
+                    <Chip
+                      label={state.buildIssues.length}
+                      size="small"
+                      color="warning"
+                      sx={{ height: 20, fontSize: '0.65rem' }}
+                    />
+                  </Stack>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <BuildIssuesPanel issues={state.buildIssues} />
+                </AccordionDetails>
+              </Accordion>
+            )}
+            {!state.buildIssues || state.buildIssues.length === 0
+              ? state.buildIssues && (
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      border: '1px solid',
+                      borderColor: 'success.main',
+                      borderLeftWidth: 4,
+                      backgroundColor: roleColors.isDarkMode
+                        ? 'rgba(46, 125, 50, 0.08)'
+                        : 'rgba(46, 125, 50, 0.04)',
+                    }}
+                  >
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <CheckCircleIcon color="success" fontSize="small" />
+                      <Typography variant="body2" fontWeight={500}>
+                        No build issues detected
+                      </Typography>
+                    </Stack>
+                  </Box>
+                )
+              : null}
+
+            {state.buffChecklist && (
+              <Accordion
+                sx={{
+                  ...roleColors.getAccordionStyles(),
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  '&:before': { display: 'none' },
+                }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <CheckCircleIcon color="primary" fontSize="small" />
+                    <Typography variant="subtitle2" fontWeight={600}>
+                      Buff Source Analysis
+                    </Typography>
+                    {state.buffChecklist.summary.totalRedundantBuffs > 0 && (
+                      <Chip
+                        label={`${state.buffChecklist.summary.totalRedundantBuffs} redundant`}
+                        size="small"
+                        color="warning"
+                        sx={{ height: 20, fontSize: '0.65rem' }}
+                      />
+                    )}
+                  </Stack>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <BuffChecklist checklistData={state.buffChecklist} />
+                </AccordionDetails>
+              </Accordion>
+            )}
+
+            {state.debuffChecklist && (
+              <Accordion
+                sx={{
+                  ...roleColors.getAccordionStyles(),
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  '&:before': { display: 'none' },
+                }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <InfoIcon color="info" fontSize="small" />
+                    <Typography variant="subtitle2" fontWeight={600}>
+                      Debuffs Applied to Target
+                    </Typography>
+                    <Chip
+                      label={`${state.debuffChecklist.summary.totalTrackedDebuffs} tracked`}
+                      size="small"
+                      color="info"
+                      variant="outlined"
+                      sx={{ height: 20, fontSize: '0.65rem' }}
+                    />
+                  </Stack>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <DebuffChecklist checklistData={state.debuffChecklist} />
+                </AccordionDetails>
+              </Accordion>
+            )}
+          </Stack>
         </>
       )}
 

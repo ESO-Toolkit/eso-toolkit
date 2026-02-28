@@ -21,9 +21,10 @@ export const AppLayout: React.FC = () => {
           sx={{
             position: 'relative',
             minHeight: '100vh',
-            bgcolor: 'background.default',
+            bgcolor: 'transparent',
             display: 'flex',
             flexDirection: 'column',
+            zIndex: 10,
           }}
         >
           <HeaderBar />

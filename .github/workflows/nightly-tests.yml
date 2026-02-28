@@ -100,7 +100,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
@@ -453,11 +453,11 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
-      - name: Create Sentry Issue for Test Failure
+      - name: Create Error Tracking Issue for Test Failure
         run: |
           # Prepare issue details
           TITLE="🚨 Nightly Tests Failed - $(date -u +%Y-%m-%d)"
@@ -482,23 +482,23 @@ jobs:
           WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           ARTIFACTS_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts"
 
-          # Create the Sentry issue using DSN-based reporting
-          node scripts/create-sentry-issue-dsn.cjs \
+          # Create the error tracking issue
+          node scripts/create-error-tracking-issue.cjs \
             --title "$TITLE" \
             --description "$DESCRIPTION" \
             --workflow-url "$WORKFLOW_URL" \
             --artifacts-url "$ARTIFACTS_URL" \
             --run-id "${{ github.run_id }}"
         env:
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          SENTRY_ENVIRONMENT: 'nightly-tests'
-          SENTRY_RELEASE: ${{ github.ref_name }}-${{ github.run_number }}
+          ERROR_TRACKING_TOKEN: ${{ secrets.ERROR_TRACKING_TOKEN }}
+          ERROR_TRACKING_ENVIRONMENT: 'nightly-tests'
+          ERROR_TRACKING_RELEASE: ${{ github.ref_name }}-${{ github.run_number }}
 
-      - name: Log Sentry Issue Creation
+      - name: Log Error Tracking Issue Creation
         if: success()
         run: |
-          echo "✅ Sentry issue created successfully via DSN"
-          echo "🔗 Check Sentry dashboard for the new issue"
+          echo "✅ Error tracking issue created successfully"
+          echo "🔗 Check the error tracking dashboard for the new issue"
           echo "📊 Run details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Fallback GitHub Comment on Failure
@@ -506,15 +506,14 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            // If Sentry issue creation fails, log the error but don't fail the workflow
-            console.log('⚠️ Failed to create Sentry issue via DSN - this may indicate:');
-            console.log('- Missing SENTRY_DSN secret');
-            console.log('- Invalid Sentry DSN configuration');
+            // If error tracking issue creation fails, log the error but don't fail the workflow
+            console.log('⚠️ Failed to create error tracking issue - this may indicate:');
+            console.log('- Missing ERROR_TRACKING_TOKEN secret');
+            console.log('- Invalid error tracking token configuration');
             console.log('- Network connectivity issues');
             console.log('');
             console.log('🔧 To fix this, ensure the following is configured:');
-            console.log('- SENTRY_DSN: Valid Sentry Data Source Name from your project settings');
-            console.log('  Example: https://your-key@o123456.ingest.sentry.io/123456');
+            console.log('- ERROR_TRACKING_TOKEN: Valid access token from your error tracking project settings');
             console.log('');
             console.log('💡 DSN-based reporting is simpler and more reliable than API tokens');
             console.log('📋 Test failure details logged above for manual review');

@@ -217,6 +217,28 @@ describe('classDetectionUtils', () => {
       expect(result).toEqual(new Set());
     });
 
+    it('should ignore auras sourced by other players', () => {
+      const crossPlayerAuraEvents = [
+        {
+          type: 'combatantinfo',
+          sourceID: 123,
+          auras: [
+            {
+              ability: 1001,
+              source: 999, // different player
+              stacks: 1,
+              icon: '',
+              name: '',
+            },
+          ],
+        },
+      ];
+
+      const result = extractPlayerAbilityIds(playerId, crossPlayerAuraEvents, [], [], [], []);
+
+      expect(result).toEqual(new Set());
+    });
+
     it('should extract ability IDs from cast events', () => {
       const result = extractPlayerAbilityIds(playerId, [], mockCastEvents, [], [], []);
 

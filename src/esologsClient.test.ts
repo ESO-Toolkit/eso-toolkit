@@ -245,4 +245,76 @@ describe('EsoLogsClient', () => {
       expect(mockQuery).toHaveBeenCalledWith(mockOperation);
     });
   });
+
+  describe('Network error handling', () => {
+    it('should surface a user-friendly message when a network error occurs (no statusCode)', async () => {
+      const client = new EsoLogsClient(mockAccessToken);
+      const apolloClient = client.getClient();
+
+      // Simulate a network-level failure (no HTTP response — statusCode undefined)
+      const networkError = new Error('NetworkError when attempting to fetch resource.');
+      apolloClient.query = jest.fn().mockRejectedValue(networkError);
+
+      await expect(client.query({ query: {} as DocumentNode })).rejects.toThrow(
+        'Network error: Could not connect to the ESO Logs API.',
+      );
+    });
+
+    it('should surface a user-friendly message when statusCode is 0', async () => {
+      const client = new EsoLogsClient(mockAccessToken);
+      const apolloClient = client.getClient();
+
+      // Simulate a status-0 network failure
+      const networkError = Object.assign(new Error('Network request failed'), { statusCode: 0 });
+      apolloClient.query = jest.fn().mockRejectedValue(networkError);
+
+      await expect(client.query({ query: {} as DocumentNode })).rejects.toThrow(
+        'Network error: Could not connect to the ESO Logs API.',
+      );
+    });
+
+    it('converts an ApolloError with nested networkError.statusCode 429 to a human-readable message (ESO-582)', async () => {
+      // ApolloClient.query() throws an ApolloError whose .networkError is the
+      // ServerError — the statusCode sits one level deeper than the raw thrown error.
+      const client = new EsoLogsClient(mockAccessToken);
+      const apolloClient = client.getClient();
+
+      const apolloError = Object.assign(
+        new Error('Response not successful: Received status code 429'),
+        {
+          networkError: { statusCode: 429, message: 'Too Many Requests' },
+          graphQLErrors: [],
+        },
+      );
+      apolloClient.query = jest.fn().mockRejectedValue(apolloError);
+
+      await expect(client.query({ query: {} as DocumentNode })).rejects.toThrow(
+        'API rate limit exceeded',
+      );
+    });
+
+    it('should surface a user-friendly message when a 429 rate-limit error occurs (direct statusCode)', async () => {
+      const client = new EsoLogsClient(mockAccessToken);
+      const apolloClient = client.getClient();
+
+      const rateLimitError = Object.assign(new Error('Too Many Requests'), { statusCode: 429 });
+      apolloClient.query = jest.fn().mockRejectedValue(rateLimitError);
+
+      await expect(client.query({ query: {} as DocumentNode })).rejects.toThrow(
+        'API rate limit exceeded',
+      );
+    });
+
+    it('should rethrow other errors unchanged', async () => {
+      const client = new EsoLogsClient(mockAccessToken);
+      const apolloClient = client.getClient();
+
+      const serverError = Object.assign(new Error('Internal Server Error'), { statusCode: 500 });
+      apolloClient.query = jest.fn().mockRejectedValue(serverError);
+
+      await expect(client.query({ query: {} as DocumentNode })).rejects.toThrow(
+        'Internal Server Error',
+      );
+    });
+  });
 });

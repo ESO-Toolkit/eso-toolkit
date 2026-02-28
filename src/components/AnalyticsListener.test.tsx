@@ -26,7 +26,7 @@ jest.mock('../utils/analytics', () => ({
   trackPageView: jest.fn(),
 }));
 
-jest.mock('../utils/sentryUtils', () => ({
+jest.mock('../utils/errorTracking', () => ({
   addBreadcrumb: jest.fn(),
 }));
 
@@ -42,7 +42,7 @@ const getTrackPageViewMock = (): jest.Mock => {
 };
 
 const getAddBreadcrumbMock = (): jest.Mock => {
-  return jest.requireMock('../utils/sentryUtils').addBreadcrumb as jest.Mock;
+  return jest.requireMock('../utils/errorTracking').addBreadcrumb as jest.Mock;
 };
 
 const NavigateOnMount: React.FC = () => {

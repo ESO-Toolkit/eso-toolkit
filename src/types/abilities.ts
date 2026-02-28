@@ -346,7 +346,9 @@ export enum KnownAbilities {
   ENLIVENING_OVERFLOW_BUFF = 156011,
   GRAND_REJUVENATION = 99781,
   OFF_BALANCE = 62988,
+  OZEZANS_PLATING = 188471, // Ozezan the Inferno / Ozezan's Plating damage mitigation proc buff
   PEARLESCENT_WARD = 172621,
+  PILLAGERS_PROFIT_BUFF = 172055, // Pillager's Profit healing set proc buff
   POWERFUL_ASSAULT = 61771,
   STAGGER = 134336,
   STONE_GIANT = 133027,
@@ -363,6 +365,9 @@ export enum KnownAbilities {
   MAJOR_FORCE = 61747,
   MAJOR_PROPHECY = 61689,
   MAJOR_PROPHECY_AND_SAVAGERY = 217672, // Combined Major Prophecy and Savagery buff
+  MAJOR_EVASION = 61716,
+  MAJOR_EXPEDITION = 61736,
+  MAJOR_HEROISM = 61709,
   MAJOR_RESOLVE = 61694,
   MAJOR_SAVAGERY = 61667, // Fixed: was incorrectly 61898 (which is Minor Savagery)
   MAJOR_SLAYER = 93109,
@@ -375,6 +380,8 @@ export enum KnownAbilities {
   MINOR_BRITTLE = 146697,
   MINOR_BRUTALITY = 61662,
   MINOR_COURAGE = 121878,
+  MINOR_EVASION = 61715,
+  MINOR_EXPEDITION = 61735,
   MINOR_FORCE = 61746,
   MINOR_HEROISM = 61708,
   MINOR_LIFESTEAL = 86304,
@@ -387,6 +394,7 @@ export enum KnownAbilities {
   GLACIAL_COLOSSUS = 122388,
   SUMMON_CHARGED_ATRONACH = 23495,
   AGGRESSIVE_HORN = 40223,
+  AGGRESSIVE_HORN_BUFF = 40224,
   REPLENISHING_BARRIER = 40239,
   REVIVING_BARRIER = 40237,
 
@@ -1018,17 +1026,146 @@ export const WITCHES_BREW = Object.freeze(
 ); // Witches' Brew event items
 export const EXPERIENCE_BOOST_FOOD = Object.freeze(new Set([91368, 91369])); // Jester's Experience Boost Pie
 
-// Synergies (abilities that should not count as player-initiated casts)
-export const SYNERGY_ABILITY_IDS = Object.freeze(
+// ── Potion Detection IDs ─────────────────────────────────────────────────────
+//
+// All IDs below were empirically validated from real ESO Logs report data:
+//   prV8jWb1NqFJc97Z fights 5 & 17, YArFDbq7BdhwL691 fight 72.
+//
+// ESO Logs does NOT expose a "Potion Cooldown Timer" buff.  Potion use is
+// detected instead via self-applied RESOURCE RESTORE events and co-occurring
+// buff clusters that fire at the same millisecond.
+//
+// Detection strategy:
+//   1. Anchor on a resource-change event whose abilityGameID is in
+//      POTION_RESOURCE_RESTORE_IDS (sourceID === targetID, large change).
+//   2. Classify by inspecting buff events within ±150 ms of the anchor and by
+//      checking whether both a stamina-restore and a magicka-restore fired for
+//      the same player at the same millisecond.
+
+/** Stamina resource-restore ability IDs emitted exclusively by potion use. */
+export const POTION_STAMINA_RESTORE_IDS = Object.freeze(
   new Set([
-    7916, // Restore Magicka (Necrotic Orb synergy)
-    17323, // Restore Magicka (variant)
-    26832, // Blessed Shards (Luminous Shards synergy)
-    45223, // Restore Magicka (another variant)
+    45225, // Restore Stamina – Stamina / Minor-Heroism potion variants
+    17328, // Restore Stamina – lower-stat Stamina potion variant
+    68409, // Restore Stamina – Tri-Stat potion variant
   ]),
 );
 
-// Aura ability IDs that should be ignored for class detection to prevent false positives
+/** Magicka resource-restore ability IDs emitted exclusively by potion use. */
+export const POTION_MAGICKA_RESTORE_IDS = Object.freeze(
+  new Set([
+    45223, // Restore Magicka – Heroism (Lorkhan's Tears) potion variant
+    68407, // Restore Magicka – Tri-Stat potion variant
+  ]),
+);
+
+/**
+ * Union of {@link POTION_STAMINA_RESTORE_IDS} and {@link POTION_MAGICKA_RESTORE_IDS}.
+ * Use this set to locate any potion-use anchor event in the resource stream.
+ */
+export const POTION_RESOURCE_RESTORE_IDS = Object.freeze(
+  new Set([45225, 17328, 68409, 45223, 68407]),
+);
+
+/**
+ * Buff IDs emitted by Tri-Stat potion Variant A (Major Fortitude / Intellect /
+ * Endurance cluster, IDs 68405–68408).  At least 2 of the 3 must co-occur at
+ * the same millisecond to classify as Tri-Stat.
+ */
+export const TRI_STAT_POTION_BUFF_GROUP_A = Object.freeze(new Set([68405, 68406, 68408]));
+
+/**
+ * Buff IDs emitted by Tri-Stat potion Variant B / Wellbeing (Major Fortitude /
+ * Intellect / Endurance cluster, IDs 45222–45226).  At least 2 of the 3 must
+ * co-occur at the same millisecond to classify as Tri-Stat.
+ */
+export const TRI_STAT_POTION_BUFF_GROUP_B = Object.freeze(new Set([45222, 45224, 45226]));
+
+/**
+ * Major Heroism buff IDs.  Presence alongside a resource restore event
+ * indicates a Heroism-type potion (Lorkhan's Tears or Essence of Heroism).
+ *
+ * Note: Minor Heroism (125027) was intentionally excluded — it co-occurs on
+ * plain stamina/combo potions and caused false "heroism" classifications.
+ * The primary heroism signal is the dual 45225+45223 resource restore.
+ */
+export const HEROISM_POTION_BUFF_IDS = Object.freeze(new Set([61708, 61709]));
+
+/**
+ * @deprecated These IDs were never observed in real ESO Logs event streams.
+ * The "Potion Cooldown Timer" concept does not map to any real ESO Logs ability
+ * ID.  Use {@link POTION_RESOURCE_RESTORE_IDS} instead.
+ */
+export const POTION_TIMER_IDS = Object.freeze(new Set<number>());
+
+/**
+ * @deprecated ID 6119 was not found in real ESO Logs data.
+ * Use {@link POTION_STAMINA_RESTORE_IDS} instead.
+ */
+export const STAMINA_POTION_RESTORE_EFFECT = Object.freeze(new Set<number>());
+
+/**
+ * @deprecated ID 6118 was not found in real ESO Logs data.
+ * Use {@link POTION_MAGICKA_RESTORE_IDS} instead.
+ */
+export const MAGICKA_POTION_RESTORE_EFFECT = Object.freeze(new Set<number>());
+
+// Synergies (abilities that should not count as player-initiated casts)
+export const SYNERGY_ABILITY_IDS = Object.freeze(
+  new Set([
+    41963, // Blood Feast
+    41994, // Black Widow
+    41838, // Radiate
+    42194, // Spinal Surge
+    39301, // Combustion
+    63507, // Healing Combustion
+    32910, // Shackle
+    32974, // Ignite
+    48076, // Charged Lightning
+    23196, // Conduit
+    37729, // Hidden Refresh
+    26832, // Blessed Shards
+    95922, // Holy Shards
+    22269, // Purify
+    115548, // Grave Robber
+    85572, // Harvest
+    191078, // Runebreak
+  ]),
+);
+
+// Aura ability IDs that should be ignored for class detection to prevent false positives.
+// These are active skills whose lingering pre-buff zones/effects appear in CIE self-auras
+// even though the player never used that skill line during the actual fight.
 export const AURA_EXCLUDED_ABILITIES = Object.freeze(
-  new Set<number>([KnownAbilities.UNNERVING_BONEYARD]),
+  new Set<number>([
+    KnownAbilities.UNNERVING_BONEYARD, // 117815 — Necro Grave Lord (Avid Boneyard morph)
+    117860, // Avid Boneyard zone (alternate ID for Necro Grave Lord pre-buff)
+    23206, // Lightning Flood puddle (Sorc Storm Calling pre-buff AoE)
+    23203, // Liquid Lightning variant (Sorc Storm Calling pre-buff AoE)
+    102329, // Summon Charged Atronach zone (Sorc ultimate pre-buff zone effect)
+    32950, // Standard of Might zone (DK ultimate pre-buff ground effect)
+    32956, // Standard of Might zone variant (DK ultimate pre-buff)
+  ]),
+);
+
+// Major Maim debuff ability IDs (mitigation debuff: -10% damage done by enemy)
+// Multiple IDs exist because each skill that applies Major Maim uses its own effect ID.
+// All entries in abilities.json are named "Major Maim" with icon "ability_debuff_major_maim".
+export const MAJOR_MAIM_ABILITY_IDS = Object.freeze(
+  new Set<number>([
+    21754, 21760, 61725, 94277, 94285, 94293, 133214, 133292, 134444, 141927, 147746, 159664,
+    163064, 183389, 212073,
+  ]),
+);
+
+// Minor Maim debuff ability IDs (mitigation debuff: -5% damage done by enemy)
+// Multiple IDs exist because each skill that applies Minor Maim uses its own effect ID.
+// All entries in abilities.json are named "Minor Maim" with icon "ability_debuff_minor_maim".
+export const MINOR_MAIM_ABILITY_IDS = Object.freeze(
+  new Set<number>([
+    31899, 33228, 33512, 37472, 38068, 38072, 38076, 46204, 46246, 51558, 61723, 61854, 61855,
+    61856, 62492, 62493, 62494, 62500, 62501, 62503, 62507, 62509, 62511, 68368, 79083, 79085,
+    79280, 79282, 88469, 102097, 108939, 118313, 121517, 123946, 124808, 127162, 130815, 137311,
+    196187, 213304, 221722, 224389, 238229,
+  ]),
 );

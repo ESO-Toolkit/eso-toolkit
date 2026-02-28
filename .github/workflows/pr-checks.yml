@@ -14,12 +14,18 @@ on:
       - reopened
       - labeled
       - unlabeled
+  merge_group:
+    branches:
+      - main
 
 jobs:
   check-do-not-merge-label:
     runs-on: ubuntu-latest
     steps:
       - name: Check for Do Not Merge or Waiting on Parent labels
+        # Skip label check in merge_group (labels already verified on PR) — job must still run
+        # so the required status check reports back to GitHub instead of timing out.
+        if: github.event_name != 'merge_group'
         uses: actions/github-script@v8
         with:
           script: |
@@ -41,40 +47,40 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    # Only run on code changes, not label changes
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Build
         run: npm run build
 
   lint:
     runs-on: ubuntu-latest
-    # Only run on code changes, not label changes
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Lint
         run: npm run lint
 
   format:
     runs-on: ubuntu-latest
-    # Only run on code changes, not label changes
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Check formatting
         run: npm run format:check
 
   lint-skills:
     runs-on: ubuntu-latest
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - name: Install skills-ref
@@ -84,10 +90,10 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    # Only run on code changes, not label changes
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Block external network access
         run: |
@@ -96,7 +102,7 @@ jobs:
           echo "127.0.0.1 www.esologs.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 rpglogs.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 assets.rpglogs.com" | sudo tee -a /etc/hosts
-          echo "127.0.0.1 sentry.io" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 api.rollbar.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 fonts.googleapis.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 fonts.gstatic.com" | sudo tee -a /etc/hosts
           echo "Blocked external services in /etc/hosts:"
@@ -114,7 +120,7 @@ jobs:
           BLOCK_EXTERNAL_REQUESTS: 'true'
           # Override external service URLs to localhost (will fail if not mocked)
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
-          SENTRY_DSN: ''
+          ERROR_TRACKING_TOKEN: ''
 
       - name: Scribing E2E Tests
         run: npm run test:scribing
@@ -125,24 +131,24 @@ jobs:
           HTTPS_PROXY: 'http://127.0.0.1:9999'
           BLOCK_EXTERNAL_REQUESTS: 'true'
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
-          SENTRY_DSN: ''
+          ERROR_TRACKING_TOKEN: ''
 
   typecheck:
     runs-on: ubuntu-latest
-    # Only run on code changes, not label changes
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Typecheck
         run: npm run typecheck
 
   build-storybook:
     runs-on: ubuntu-latest
-    # Only run on code changes, not label changes
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Build Storybook
         run: npm run build-storybook
@@ -151,10 +157,10 @@ jobs:
 
   playwright-smoke:
     runs-on: ubuntu-latest
-    # Only run on code changes, not label changes
-    if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
 
       - name: Get Playwright version
@@ -239,7 +245,7 @@ jobs:
           echo "127.0.0.1 www.esologs.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 rpglogs.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 assets.rpglogs.com" | sudo tee -a /etc/hosts
-          echo "127.0.0.1 sentry.io" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 api.rollbar.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 fonts.googleapis.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 fonts.gstatic.com" | sudo tee -a /etc/hosts
           echo "Blocked external services in /etc/hosts:"
@@ -286,7 +292,7 @@ jobs:
           BLOCK_EXTERNAL_REQUESTS: 'true'
           # Override external service URLs to localhost (will fail if not mocked)
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
-          SENTRY_DSN: ''
+          ERROR_TRACKING_TOKEN: ''
           # Playwright memory optimization
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       - name: Upload Playwright Report

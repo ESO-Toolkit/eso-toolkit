@@ -24,11 +24,10 @@ import {
   Divider,
   Chip,
 } from '@mui/material';
-import * as Sentry from '@sentry/react';
 import React, { Component, ReactNode } from 'react';
 
+import { addBreadcrumb, reportError } from '../../../utils/errorTracking';
 import { Logger, LogLevel } from '../../../utils/logger';
-import { addBreadcrumb, reportError } from '../../../utils/sentryUtils';
 import {
   detectWebGLCapabilities,
   getWebGLDescription,
@@ -434,7 +433,7 @@ const ErrorFallbackUI: React.FC<{
             <Button variant="outlined" onClick={onReload} size="large">
               Reload Page
             </Button>
-            {process.env.NODE_ENV === 'production' && eventId && (
+            {process.env.NODE_ENV === 'production' && (
               <Button
                 variant="outlined"
                 startIcon={<BugReport />}
@@ -534,40 +533,21 @@ export class ReplayErrorBoundary extends Component<
       });
     }
 
-    // Report to Sentry in production
+    // Report to error tracking in production
     if (process.env.NODE_ENV === 'production') {
-      Sentry.withScope((scope) => {
-        scope.setTag('errorBoundary', 'replay');
-        scope.setTag('feature', '3d_replay');
-        scope.setLevel('error');
-        scope.setContext('replayErrorBoundary', {
-          componentStack: errorInfo.componentStack,
-          errorBoundaryName: 'ReplayErrorBoundary',
-        });
-
-        // Add WebGL capabilities if available
-        if (this.state.webglCapabilities) {
-          scope.setContext('webgl', {
+      reportError(error, {
+        componentStack: errorInfo.componentStack,
+        errorBoundary: 'replay',
+        feature: '3d_replay',
+        ...(this.state.webglCapabilities && {
+          webgl: {
             hasWebGL1: this.state.webglCapabilities.hasWebGL1,
             hasWebGL2: this.state.webglCapabilities.hasWebGL2,
             performanceTier: this.state.webglCapabilities.performanceTier,
             isSufficient: this.state.webglCapabilities.isSufficient,
             insufficientReason: this.state.webglCapabilities.insufficientReason,
-          });
-        }
-
-        scope.setExtra('errorMessage', error.message);
-        scope.setExtra('errorStack', error.stack);
-        scope.setExtra('componentStack', errorInfo.componentStack);
-
-        const eventId = Sentry.captureException(error);
-        this.setState({ eventId });
-      });
-
-      reportError(error, {
-        componentStack: errorInfo.componentStack,
-        errorBoundary: 'replay',
-        feature: '3d_replay',
+          },
+        }),
       });
     }
   }
@@ -613,9 +593,8 @@ export class ReplayErrorBoundary extends Component<
       eventId: this.state.eventId,
     });
 
-    if (process.env.NODE_ENV === 'production' && this.state.eventId) {
-      Sentry.showReportDialog({ eventId: this.state.eventId });
-    }
+    // Open issue tracker for bug reports
+    window.open('https://github.com/ESO-Toolkit/eso-toolkit/issues', '_blank', 'noopener');
   };
 
   render(): ReactNode {

@@ -35,9 +35,13 @@ import {
 import type { SxProps } from '@mui/material/styles';
 import React, { useState, useCallback } from 'react';
 
-import { BUG_REPORT_CATEGORIES, ManualBugReport, BugReportCategory } from '../config/sentryConfig';
+import {
+  BUG_REPORT_CATEGORIES,
+  ManualBugReport,
+  BugReportCategory,
+} from '../config/errorTrackingConfig';
 import { useLogger } from '../contexts/LoggerContext';
-import { submitManualBugReport, addBreadcrumb } from '../utils/sentryUtils';
+import { submitManualBugReport, addBreadcrumb } from '../utils/errorTracking';
 
 import { LoggerDebugPanel } from './LoggerDebugPanel';
 
@@ -334,7 +338,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
         descriptionLength: reportData.description.length,
       });
 
-      // Submit to Sentry
+      // Submit to Rollbar
       submitManualBugReport(reportData);
 
       setSubmitted(true);

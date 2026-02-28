@@ -89,7 +89,7 @@ server {
 - [ ] Health check: `curl https://yourdomain.com/health`
 - [ ] Performance check: Load time < 2 seconds
 - [ ] Functionality check: Core features working
-- [ ] Monitor error rates in Sentry (if configured)
+- [ ] Monitor error rates in Rollbar (if configured)
 - [ ] Verify analytics tracking (if configured)
 
 ## Monitoring and Observability
@@ -124,8 +124,8 @@ Response: {
 
 ### Error Monitoring
 
-**Sentry Integration:**
-Set `SENTRY_DSN` environment variable to enable error tracking.
+**Error Tracking Integration:**
+Set `ERROR_TRACKING_TOKEN` environment variable to enable error tracking.
 
 **Log Aggregation:**
 Application logs are output in JSON format suitable for log aggregation systems.
