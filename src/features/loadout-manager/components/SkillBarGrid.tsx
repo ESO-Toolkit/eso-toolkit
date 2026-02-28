@@ -8,8 +8,9 @@ import { Box, Stack, Tooltip, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
 import { getSkillById } from '../data/skillLineSkills';
-import { emptyGemSlotEnhanced, gemIconEnhanced } from './styles/textureStyles';
 import { SkillBar, SkillsConfig } from '../types/loadout.types';
+
+import { emptyGemSlotEnhanced, gemIconEnhanced } from './styles/textureStyles';
 
 const SKILL_SLOTS = [3, 4, 5, 6, 7];
 const ULTIMATE_SLOT = 8;

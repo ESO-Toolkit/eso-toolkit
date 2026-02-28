@@ -7,8 +7,8 @@
 import { Box, Stack, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 
-import { getSetupTags } from '../utils/setupDisplay';
 import type { LoadoutSetup } from '../types/loadout.types';
+import { getSetupTags } from '../utils/setupDisplay';
 
 import { LoadoutSlot } from './LoadoutSlot';
 import { metallicSidebarEnhanced } from './styles/textureStyles';
