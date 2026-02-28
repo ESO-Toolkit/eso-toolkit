@@ -8,11 +8,28 @@ import { Logger } from '@/utils/logger';
 
 import type { WizardWardrobeExport } from '../types/loadout.types';
 
+import {
+  detectAlphaGearData,
+  extractAlphaGearCharacters,
+  convertAlphaGearToLoadoutState,
+  convertLoadoutStateToAlphaGear,
+  serializeAlphaGearToLua,
+  type AlphaGearCharacterData,
+} from './alphaGearConverter';
 import { parseLuaAssignments } from './wizardsWardrobeSavedVariables';
 import {
   parseWizardsWardrobeSavedVariables,
   type WizardWardrobeSavedVariables,
 } from './wizardsWardrobeSavedVariables';
+
+export {
+  detectAlphaGearData,
+  extractAlphaGearCharacters,
+  convertAlphaGearToLoadoutState,
+  convertLoadoutStateToAlphaGear,
+  serializeAlphaGearToLua,
+  type AlphaGearCharacterData,
+};
 
 const luaParserLogger = new Logger({ contextPrefix: 'LuaParser' });
 
@@ -169,4 +186,38 @@ export function isWizardWardrobeFormat(data: any): data is WizardWardrobeExport 
     typeof data.pages === 'object' &&
     typeof data.version === 'number',
   );
+}
+
+/**
+ * Parse AlphaGear 2 saved variables from Lua source.
+ * Returns the table name and extracted character data, or null if not AlphaGear format.
+ */
+export function parseAlphaGearSavedVariables(
+  luaContent: string,
+): { tableName: string; characters: Record<string, AlphaGearCharacterData> } | null {
+  try {
+    const assignments = parseLuaAssignments(luaContent);
+    const detected = detectAlphaGearData(assignments);
+    if (!detected) {
+      return null;
+    }
+
+    const characters = extractAlphaGearCharacters(detected.data);
+    if (Object.keys(characters).length === 0) {
+      luaParserLogger.warn('AlphaGear data found but no characters with sets');
+      return null;
+    }
+
+    luaParserLogger.info('Parsed AlphaGear data', {
+      tableName: detected.tableName,
+      characterCount: Object.keys(characters).length,
+      characterNames: Object.keys(characters),
+    });
+
+    return { tableName: detected.tableName, characters };
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    luaParserLogger.debug('Not an AlphaGear file', { error: err.message });
+    return null;
+  }
 }
