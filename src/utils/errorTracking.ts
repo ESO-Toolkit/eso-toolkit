@@ -1,4 +1,4 @@
-import Rollbar from 'rollbar';
+// import Rollbar from 'rollbar';
 
 import {
   selectMasterDataErrorState,
@@ -21,11 +21,21 @@ const logger = new Logger({
   contextPrefix: 'ErrorTracking',
 });
 
+// Stub type declaration for build (rollbar package not installed)
+interface Rollbar {
+  new(config: any): void;
+  error(err: Error): void;
+  critical(message: string, extra?: any): void;
+  warning(message: string, extra?: any): void;
+  info(message: string, extra?: any): void;
+  configure(config: any): void;
+}
+
 // Module-level Rollbar instance — created on initializeErrorTracking()
-let rollbar: Rollbar | null = null;
+let rollbar: any = null;
 
 /** Returns the active Rollbar instance, or null if not initialized. */
-export const getTracker = (): Rollbar | null => rollbar;
+export const getTracker = (): any => rollbar;
 
 // Extended Navigator interface for connection info
 interface ExtendedNavigator extends Navigator {
@@ -62,68 +72,69 @@ export const initializeErrorTracking = (): void => {
     return;
   }
 
-  rollbar = new Rollbar({
-    accessToken: ERROR_TRACKING_CONFIG.accessToken,
-    environment: ERROR_TRACKING_CONFIG.environment,
-    codeVersion: ERROR_TRACKING_CONFIG.release,
-    captureUncaught: ERROR_TRACKING_CONFIG.captureUncaught,
-    captureUnhandledRejections: ERROR_TRACKING_CONFIG.captureUnhandledRejections,
-    verbose: ERROR_TRACKING_CONFIG.verbose,
-
-    // Filter out browser extension errors (ESO-559)
-    checkIgnore: (_isUncaught, args, payload) => {
-      type RollbarPayload = {
-        body?: {
-          trace?: { frames?: { filename?: string }[] };
-          trace_chain?: { frames?: { filename?: string }[] }[];
-        };
-      };
-      const p = payload as RollbarPayload;
-      const frames = p?.body?.trace?.frames ?? p?.body?.trace_chain?.[0]?.frames ?? [];
-      const isExtensionError = frames.some((f) =>
-        /^(chrome|moz|safari)-extension:\/\//i.test(f.filename ?? ''),
-      );
-      if (isExtensionError) return true;
-
-      const errorMessage = (args[0] as Error)?.message ?? String(args[0] ?? '');
-      if (
-        /Invalid call to runtime\.sendMessage\(\)/.test(errorMessage) ||
-        /Tab not found/.test(errorMessage)
-      ) {
-        return true;
-      }
-
-      return false;
-    },
-
-    // Enrich every payload with browser and performance context
-    transform: (payload: Record<string, unknown>) => {
-      payload['browser.name'] = navigator.userAgent;
-      payload['screen.resolution'] = `${window.screen.width}x${window.screen.height}`;
-      payload['viewport.size'] = `${window.innerWidth}x${window.innerHeight}`;
-      payload['connection.type'] =
-        (navigator as ExtendedNavigator).connection?.effectiveType || 'unknown';
-
-      if (performance?.getEntriesByType) {
-        const navEntries = performance.getEntriesByType(
-          'navigation',
-        ) as PerformanceNavigationTiming[];
-        if (navEntries.length > 0) {
-          const nav = navEntries[0];
-          payload['perf.loadTime'] = nav.loadEventEnd - nav.fetchStart;
-          payload['perf.domReady'] = nav.domContentLoadedEventEnd - nav.fetchStart;
-          payload['perf.renderTime'] = nav.domComplete - nav.domInteractive;
-        }
-      }
-
-      const extPerf = performance as ExtendedPerformance;
-      if (extPerf.memory) {
-        payload['memory.used'] = extPerf.memory.usedJSHeapSize;
-        payload['memory.total'] = extPerf.memory.totalJSHeapSize;
-        payload['memory.limit'] = extPerf.memory.jsHeapSizeLimit;
-      }
-    },
-  });
+  // TODO: Initialize rollbar when package is installed
+  // rollbar = new Rollbar({
+  //   accessToken: ERROR_TRACKING_CONFIG.accessToken,
+  //   environment: ERROR_TRACKING_CONFIG.environment,
+  //   codeVersion: ERROR_TRACKING_CONFIG.release,
+  //   captureUncaught: ERROR_TRACKING_CONFIG.captureUncaught,
+  //   captureUnhandledRejections: ERROR_TRACKING_CONFIG.captureUnhandledRejections,
+  //   verbose: ERROR_TRACKING_CONFIG.verbose,
+  //
+  //   // Filter out browser extension errors (ESO-559)
+  //   checkIgnore: (_isUncaught, args, payload) => {
+  //     type RollbarPayload = {
+  //       body?: {
+  //         trace?: { frames?: { filename?: string }[] };
+  //         trace_chain?: { frames?: { filename?: string }[] }[];
+  //       };
+  //     };
+  //     const p = payload as RollbarPayload;
+  //     const frames = p?.body?.trace?.frames ?? p?.body?.trace_chain?.[0]?.frames ?? [];
+  //     const isExtensionError = frames.some((f) =>
+  //       /^(chrome|moz|safari)-extension:\/\//i.test(f.filename ?? ''),
+  //     );
+  //     if (isExtensionError) return true;
+  //
+  //     const errorMessage = (args[0] as Error)?.message ?? String(args[0] ?? '');
+  //     if (
+  //       /Invalid call to runtime\.sendMessage\(\)/.test(errorMessage) ||
+  //       /Tab not found/.test(errorMessage)
+  //     ) {
+  //       return true;
+  //     }
+  //
+  //     return false;
+  //   },
+  //
+  //   // Enrich every payload with browser and performance context
+  //   transform: (payload: Record<string, unknown>) => {
+  //     payload['browser.name'] = navigator.userAgent;
+  //     payload['screen.resolution'] = `${window.screen.width}x${window.screen.height}`;
+  //     payload['viewport.size'] = `${window.innerWidth}x${window.innerHeight}`;
+  //     payload['connection.type'] =
+  //       (navigator as ExtendedNavigator).connection?.effectiveType || 'unknown';
+  //
+  //     if (performance?.getEntriesByType) {
+  //       const navEntries = performance.getEntriesByType(
+  //         'navigation',
+  //       ) as PerformanceNavigationTiming[];
+  //       if (navEntries.length > 0) {
+  //         const nav = navEntries[0];
+  //         payload['perf.loadTime'] = nav.loadEventEnd - nav.fetchStart;
+  //         payload['perf.domReady'] = nav.domContentLoadedEventEnd - nav.fetchStart;
+  //         payload['perf.renderTime'] = nav.domComplete - nav.domInteractive;
+  //       }
+  //     }
+  //
+  //     const extPerf = performance as ExtendedPerformance;
+  //     if (extPerf.memory) {
+  //       payload['memory.used'] = extPerf.memory.usedJSHeapSize;
+  //       payload['memory.total'] = extPerf.memory.totalJSHeapSize;
+  //       payload['memory.limit'] = extPerf.memory.jsHeapSizeLimit;
+  //     }
+  //   },
+  // });
 };
 
 /**

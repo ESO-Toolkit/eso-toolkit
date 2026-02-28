@@ -172,6 +172,46 @@ function consolidateBuildIssues(buildIssues: BuildIssue[]): {
   return grouped;
 }
 
+interface MundusChipProps {
+  mundusBuffs: Array<{ name: string; id: number }>;
+}
+
+const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
+  if (mundusBuffs.length === 0) return null;
+
+  // Since players can only have 1 mundus at a time, get the first/only one
+  const mundusBuff = mundusBuffs[0];
+  const mundusName = mundusBuff.name
+    .replace(/^Boon:\s*/i, '')
+    .replace(/^The\s+/i, '');
+
+  return (
+    <Tooltip
+      title={`Mundus: ${mundusName}`}
+      enterTouchDelay={0}
+      leaveTouchDelay={3000}
+    >
+      <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+        <img src={mundusIcon} alt="" style={{ width: 12, height: 12 }} />
+        <span style={{ margin: '0 1px' }}></span>
+        <Box
+          component="span"
+          sx={{
+            display: 'inline',
+            fontWeight: 700,
+            fontSize: { xs: 8, sm: 9, md: 10 },
+            letterSpacing: '.01em',
+            color: 'primary.main',
+            textTransform: 'uppercase',
+          }}
+        >
+          {mundusName}
+        </Box>
+      </span>
+    </Tooltip>
+  );
+};
+
 export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
   ({
     player,
@@ -1094,79 +1134,41 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         minHeight: 24,
                         flex: '1 1 auto',
                         minWidth: 0,
-                        overflow: 'hidden',
+                        overflowX: 'auto',
+                        overflowY: 'hidden',
                         mr: 0.5,
+                        '&::-webkit-scrollbar': {
+                          height: 4,
+                        },
+                        '&::-webkit-scrollbar-track': {
+                          background: 'transparent',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                          backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                          borderRadius: 2,
+                        },
+                        '&::-webkit-scrollbar-thumb:hover': {
+                          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                        },
                       }}
                     >
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.25,
+                          whiteSpace: 'nowrap',
+                          fontSize: { xs: '0.7rem', sm: '0.75rem', md: 'body2.fontSize' },
+                        }}
+                      >
                       {mundusBuffs.length > 0 && (
-                        <div data-testid={`mundus-buffs-${player.id}`}>
-                          {mundusBuffs.map((buff, idx) => (
-                            <Box
-                              key={idx}
-                              component="span"
-                              title={`Ability ID: ${buff.id}`}
-                              sx={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                border: '1px solid',
-                                borderColor: 'var(--border)',
-                                borderRadius: 9999,
-                                pl: 0.5,
-                                pr: '14px',
-                                py: 0.25,
-                                gap: 0.5,
-                                fontSize: 10,
-                                lineHeight: 1,
-                                color: 'primary.main',
-                                whiteSpace: 'nowrap',
-                                verticalAlign: 'middle',
-                                textTransform: 'uppercase',
-                                fontWeight: 'bold',
-                              }}
-                            >
-                              <img
-                                src={mundusIcon}
-                                alt=""
-                                style={{
-                                  width: 12,
-                                  height: 12,
-                                  display: 'inline-block',
-                                }}
-                              />
-                              <Box
-                                component="span"
-                                sx={{
-                                  display: 'inline-block',
-                                  minWidth: 0,
-                                  maxWidth: '10ch',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {buff.name.replace(/^Boon:\s*/i, '').replace(/^The\s+/i, '')}
-                              </Box>
-                            </Box>
-                          ))}
-                        </div>
+                        <>
+                          <MundusChip mundusBuffs={mundusBuffs} />
+                          {' · '}
+                        </>
                       )}
-                    </Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        whiteSpace: 'nowrap',
-                        flex: '0 1 auto',
-                        flexShrink: 1,
-                        ml: 'auto',
-                        pr: 0.5,
-                        maxWidth: '100%',
-                        minWidth: 0,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        fontSize: { xs: '0.7rem', sm: '0.75rem', md: 'body2.fontSize' },
-                      }}
-                    >
                       <Tooltip
                         title={`Food/Drink: ${foodAura ? foodAura.name : 'None'}`}
                         enterTouchDelay={0}
@@ -1318,7 +1320,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           </Tooltip>
                         </>
                       )}
-                    </Typography>
+                      </Typography>
+                    </Box>
                   </Box>
 
                   {critDamageSummary && player.role === 'dps' && (

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(VITE_PORT=3002 npm run:*)",
+      "Bash(xargs -r taskkill /PID /F)",
+      "Bash(true:*)"
+    ]
+  }
+}
