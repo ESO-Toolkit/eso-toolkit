@@ -585,7 +585,6 @@ export const draugrHulk: GearSetData = {
   ],
 };
 
-
 export const drozakarsClaws: GearSetData = {
   name: "Dro'Zakar's Claws",
   icon: "Dro'Zakar's Claws",
