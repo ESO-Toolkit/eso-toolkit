@@ -1,21 +1,25 @@
-const path = require("path");
-const baseConfig = require("../jest.config.cjs");
-
-const rootDirForward = path.resolve(__dirname, "..").replace(/\\/g, '/');
+const path = require('path');
+const baseConfig = require('../jest.config.cjs');
 
 module.exports = {
   ...baseConfig,
 
-  rootDir: rootDirForward,
-  roots: [`${rootDirForward}/src`, `${rootDirForward}/tests`],
+  rootDir: path.resolve(__dirname, '..'),
+  // Remove tests directory from roots - it contains Playwright tests, not Jest tests
+  roots: ['<rootDir>/src'],
 
-  setupFilesAfterEnv: [`${rootDirForward}/src/setupTests.ts`],
+  setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
 
   testMatch: [
-    `${rootDirForward}/tests/**/*.(spec|test).{js,jsx,ts,tsx}`,
-    `${rootDirForward}/src/**/__tests__/**/*.(test|spec).{js,jsx,ts,tsx}`,
-    `${rootDirForward}/src/**/*.(test|spec).{js,jsx,ts,tsx}`,
+    // Patterns relative to each root directory (roots: ['<rootDir>/src'])
+    '**/__tests__/**/*.test.{js,jsx,ts,tsx}',
+    '**/__tests__/**/*.spec.{js,jsx,ts,tsx}',
+    '**/*.test.{js,jsx,ts,tsx}',
+    '**/*.spec.{js,jsx,ts,tsx}',
   ],
+
+  // Explicitly inherit testPathIgnorePatterns for clarity
+  testPathIgnorePatterns: baseConfig.testPathIgnorePatterns,
 
   maxWorkers: 1,
   testTimeout: 30000,
@@ -28,7 +32,7 @@ module.exports = {
   silent: false,
 
   collectCoverage: true,
-  coverageReporters: ["text", "lcov", "json"],
+  coverageReporters: ['text', 'lcov', 'json'],
   resolver: undefined,
   watchman: false,
 };
