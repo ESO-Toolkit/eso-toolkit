@@ -82,6 +82,7 @@ Infrastructure and configuration — [setup/](./setup/)
 | [Jira Sync](./setup/JIRA_SYNC_QUICKSTART.md) | Jira-branch status sync |
 | [Coverage Badges](./setup/COVERAGE_BADGES_SETUP.md) | Badge configuration |
 | [Documentation Skill](./setup/DOCUMENTATION_SKILL_SETUP.md) | MCP doc management |
+| [Mobile HTTPS Dev Server](./setup/MOBILE_HTTPS_QUICKSTART.md) | Test on phone over LAN with HTTPS + OAuth |
 
 ### AI Agent Guides
 AI-specific operational guides — [ai-agents/](./ai-agents/)
@@ -113,5 +114,6 @@ AI-specific operational guides — [ai-agents/](./ai-agents/)
 | Understanding architecture | [architecture/](./architecture/) |
 | Writing tests | [testing/](./testing/) |
 | Deploying | [setup/DEPLOYMENT.md](./setup/DEPLOYMENT.md) |
+| Testing on a phone | [setup/MOBILE_HTTPS_QUICKSTART.md](./setup/MOBILE_HTTPS_QUICKSTART.md) |
 | Working with AI agents | [ai-agents/](./ai-agents/) |
 | Feature reference | [features/](./features/) |
