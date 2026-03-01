@@ -1,17 +1,20 @@
 const path = require("path");
 const baseConfig = require("../jest.config.cjs");
 
+const rootDirForward = path.resolve(__dirname, "..").replace(/\\/g, '/');
+
 module.exports = {
   ...baseConfig,
 
-  rootDir: path.resolve(__dirname, ".."),
+  rootDir: rootDirForward,
+  roots: [`${rootDirForward}/src`, `${rootDirForward}/tests`],
 
-  setupFilesAfterEnv: ["<rootDir>/src/setupTests.ts"],
+  setupFilesAfterEnv: [`${rootDirForward}/src/setupTests.ts`],
 
   testMatch: [
-    "<rootDir>/tests/**/*.(spec|test).{js,jsx,ts,tsx}",
-    "<rootDir>/src/**/__tests__/**/*.(test|spec).{js,jsx,ts,tsx}",
-    "<rootDir>/src/**/*.(test|spec).{js,jsx,ts,tsx}",
+    `${rootDirForward}/tests/**/*.(spec|test).{js,jsx,ts,tsx}`,
+    `${rootDirForward}/src/**/__tests__/**/*.(test|spec).{js,jsx,ts,tsx}`,
+    `${rootDirForward}/src/**/*.(test|spec).{js,jsx,ts,tsx}`,
   ],
 
   maxWorkers: 1,

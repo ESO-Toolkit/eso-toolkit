@@ -1,5 +1,6 @@
 // jest-dom adds custom jest matchers for asserting on DOM nodes.
 import '@testing-library/jest-dom';
+import { TextEncoder, TextDecoder } from 'util';
 
 // Mock environment utilities to avoid import.meta issues in Jest
 jest.mock('./utils/envUtils');
@@ -16,11 +17,13 @@ jest.mock('./utils/logger', () => {
 });
 // Polyfill for TextEncoder and TextDecoder (required for MUI X DataGrid and other components)
 if (typeof global.TextEncoder === 'undefined') {
-  (global as typeof globalThis & { TextEncoder?: typeof TextEncoder }).TextEncoder = TextEncoder;
+  // @ts-expect-error - TextEncoder may not be defined in test environment
+  global.TextEncoder = TextEncoder;
 }
 
 if (typeof global.TextDecoder === 'undefined') {
-  (global as typeof globalThis & { TextDecoder?: typeof TextDecoder }).TextDecoder = TextDecoder;
+  // @ts-expect-error - TextDecoder may not be defined in test environment
+  global.TextDecoder = TextDecoder;
 }
 
 // Polyfill for ResizeObserver (required for Three.js Canvas and react-use-measure)
