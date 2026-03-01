@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(VITE_PORT=3002 npm run:*)",
+      "Bash(xargs -r taskkill /PID /F)",
+      "Bash(true:*)",
+      "Bash(cd:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd.exe:*)",
+      "mcp__perplexity-mcp__perplexity_ask",
+      "Bash(echo Server not ready yet:*)",
+      "mcp__chrome-devtools__start_chrome_and_connect",
+      "mcp__chrome-devtools__connect_to_browser",
+      "mcp__chrome-devtools__get_document",
+      "mcp__chrome-devtools__execute_javascript",
+      "mcp__chrome-devtools__navigate_to_url",
+      "mcp__chrome-devtools__get_page_info",
+      "mcp__chrome-devtools__search_elements",
+      "mcp__chrome-devtools__get_console_logs",
+      "mcp__chrome-devtools__disconnect_from_browser",
+      "Bash(git pull:*)",
+      "Bash(git push:*)",
+      "Bash(git log:*)",
+      "Bash(cross-env NODE_ENV=ci:*)"
+    ]
+  }
+}

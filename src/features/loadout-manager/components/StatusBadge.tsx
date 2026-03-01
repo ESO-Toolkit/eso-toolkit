@@ -8,18 +8,13 @@ import { alpha } from '@mui/material/styles';
 
 interface StatusBadgeProps {
   value: string;
-  label?: string;
   color?: string;
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({
-  value,
-  label: _label,
-  color = '#00d9ff',
-}) => {
+export const StatusBadge: React.FC<StatusBadgeProps> = ({ value, color = '#00d9ff' }) => {
   return (
     <Box
-      sx={(_theme) => ({
+      sx={() => ({
         display: 'inline-flex',
         alignItems: 'center',
         gap: 0.25,

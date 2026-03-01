@@ -123,7 +123,7 @@ export const LoadoutSidebar: React.FC<LoadoutSidebarProps> = ({
             </Typography>
           </Box>
         ) : (
-          filteredSetups.map((setup, _index) => {
+          filteredSetups.map((setup) => {
             // Find original index for callbacks
             const originalIndex = setups.indexOf(setup);
             return (
