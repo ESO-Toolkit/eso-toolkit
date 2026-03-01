@@ -8,7 +8,6 @@ import {
   Card,
   CardContent,
   Chip,
-  CircularProgress,
   Container,
   FormControl,
   IconButton,
@@ -35,7 +34,6 @@ import React, { useCallback, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { MemoizedLoadingSpinner } from '../../components/CustomLoadingSpinner';
 import { useLogger } from '../../contexts/LoggerContext';
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { useAppDispatch } from '../../store/useAppDispatch';
@@ -160,18 +158,14 @@ const ReportsTableSkeletonRow: React.FC<{ index: number }> = function ReportsTab
         />
       </TableCell>
       <TableCell>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Skeleton
-            variant="rounded"
-            height={24}
-            sx={{
-              width: { xs: '90%', md: '80%' },
-              maxWidth: 60,
-            }}
-          />
-          {/* Small loading indicator to show active loading state */}
-          <MemoizedLoadingSpinner size={16} thickness={2} />
-        </Box>
+        <Skeleton
+          variant="rounded"
+          height={24}
+          sx={{
+            width: { xs: '90%', md: '80%' },
+            maxWidth: 60,
+          }}
+        />
       </TableCell>
     </TableRow>
   );
@@ -184,55 +178,7 @@ ReportsTableSkeletonRow.displayName = 'ReportsTableSkeletonRow';
 const MemoizedSkeletonRow = React.memo(ReportsTableSkeletonRow);
 MemoizedSkeletonRow.displayName = 'MemoizedReportsTableSkeletonRow';
 
-// Memoized loading overlay component to prevent unnecessary re-renders and theme flashing
-const LoadingOverlayComponent: React.FC = () => {
-  // Get theme mode without React context to avoid re-renders during loading
-  const getThemeMode = (): 'dark' | 'light' => {
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    return 'dark';
-  };
-
-  const isDarkMode = getThemeMode();
-  // Make overlay more transparent to allow content to show through
-  const overlayBg = isDarkMode ? 'rgba(15, 23, 42, 0.3)' : 'rgba(255, 255, 255, 0.3)';
-
-  return (
-    <Box
-      sx={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        bgcolor: overlayBg,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 100,
-        isolation: 'isolate',
-        contain: 'strict',
-        transition: 'opacity 0.2s ease-in-out',
-        animation: 'none !important',
-        transform: 'translateZ(0)',
-        willChange: 'transform, opacity',
-        pointerEvents: 'none',
-        // Override any global transitions except opacity
-        '&, & *': {
-          transition: 'opacity 0.2s ease-in-out !important',
-          animation: 'none !important',
-        },
-      }}
-    >
-      <MemoizedLoadingSpinner size={30} thickness={3} forceTheme={isDarkMode} />
-    </Box>
-  );
-};
-
-const LoadingOverlay = React.memo(LoadingOverlayComponent);
-LoadingOverlay.displayName = 'LoadingOverlay';
-
+// Thin skeleton bar that sits at the top of the card during initial load
 export const UserReports: React.FC = () => {
   const logger = useLogger('UserReports');
   const theme = useTheme();
@@ -431,14 +377,123 @@ export const UserReports: React.FC = () => {
     );
   }
 
-  // Show user loading state - but not if we're already fetching reports (prevents double loading circles)
+  // Show user loading state — skeleton mirrors the actual page structure exactly
   if (userLoading && !loading) {
     return (
-      <Container maxWidth="md" sx={{ mt: 4, mb: 4, textAlign: 'center' }}>
-        <CircularProgress size={40} />
-        <Typography variant="h6" sx={{ mt: 2 }}>
-          Loading user information...
-        </Typography>
+      <Container maxWidth="lg" sx={{ py: isDesktop ? 4 : 2 }}>
+        <Card
+          elevation={isDesktop ? 4 : 1}
+          sx={{
+            ...cardSx,
+            background: (t) =>
+              t.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+                : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
+          }}
+        >
+          <CardContent sx={{ ...cardContentSx, position: 'relative' }}>
+            {/* Mobile: floating refresh button placeholder */}
+            {!isDesktop && (
+              <Skeleton
+                variant="circular"
+                width={40}
+                height={40}
+                sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1 }}
+              />
+            )}
+
+            {/* Header — uses same headerStackSx as real page */}
+            <Box sx={{ ...headerStackSx, mb: 3 }}>
+              <Box>
+                <Skeleton
+                  variant="text"
+                  width={isDesktop ? 200 : 160}
+                  height={isDesktop ? 52 : 40}
+                  sx={{ mb: 0.5 }}
+                />
+                <Skeleton variant="text" width={isDesktop ? 280 : 220} height={24} />
+              </Box>
+              {isDesktop && (
+                <Box sx={actionGroupSx}>
+                  <Skeleton variant="circular" width={40} height={40} />
+                </Box>
+              )}
+            </Box>
+
+            {/* Filter controls — Stack spacing={2} mb={3} */}
+            <Stack spacing={2} sx={{ mb: 3 }}>
+              <Stack direction={isDesktop ? 'row' : 'column'} spacing={2}>
+                <Skeleton variant="rounded" height={40} sx={{ flex: 1 }} />
+                <Skeleton
+                  variant="rounded"
+                  height={40}
+                  sx={{ width: isDesktop ? 220 : '100%', flexShrink: 0 }}
+                />
+              </Stack>
+              {/* "Total: X reports" count row */}
+              <Skeleton variant="text" width={120} height={20} />
+            </Stack>
+
+            {/* Desktop: full table with header columns at correct widths */}
+            {isDesktop ? (
+              <TableContainer component={Paper} elevation={0} sx={{ overflowX: 'hidden' }}>
+                <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ width: '37%' }}>
+                        <Skeleton variant="text" width={34} height={20} />
+                      </TableCell>
+                      <TableCell sx={{ width: '33%' }}>
+                        <Skeleton variant="text" width={32} height={20} />
+                      </TableCell>
+                      <TableCell sx={{ width: '15%' }}>
+                        <Skeleton variant="text" width={56} height={20} />
+                      </TableCell>
+                      <TableCell sx={{ width: '15%' }}>
+                        <Skeleton variant="text" width={66} height={20} />
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {Array.from({ length: REPORTS_PER_PAGE }).map((_, i) => (
+                      <MemoizedSkeletonRow key={`user-skel-${i}`} index={i} />
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              /* Mobile: card list matching ReportListMobile structure */
+              <Stack spacing={2} sx={{ mt: 2 }}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Paper
+                    key={i}
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 1.5,
+                      opacity: 1 - i * 0.1,
+                    }}
+                  >
+                    <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={1}>
+                      <Box flex={1} minWidth={0}>
+                        <Skeleton variant="text" width="72%" height={22} />
+                        <Skeleton variant="text" width="40%" height={16} sx={{ mt: 0.25 }} />
+                      </Box>
+                      <Skeleton variant="rounded" width={62} height={22} sx={{ flexShrink: 0 }} />
+                    </Box>
+                    <Box display="flex" gap={2}>
+                      <Skeleton variant="text" width="48%" height={18} />
+                      <Skeleton variant="text" width="28%" height={18} />
+                    </Box>
+                  </Paper>
+                ))}
+              </Stack>
+            )}
+          </CardContent>
+        </Card>
       </Container>
     );
   }
@@ -476,7 +531,6 @@ export const UserReports: React.FC = () => {
           transition: initialLoading ? 'none !important' : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           ...(initialLoading && {
             isolation: 'isolate',
-            contain: 'strict',
             '&, & *': {
               transition: 'none !important',
               animation: 'none !important',
@@ -817,8 +871,6 @@ export const UserReports: React.FC = () => {
             </>
           )}
 
-          {/* Loading overlay - only shows during initial load, not pagination */}
-          {initialLoading && <LoadingOverlay />}
         </CardContent>
       </Card>
 
@@ -834,7 +886,6 @@ export const UserReports: React.FC = () => {
               : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
             ...(initialLoading && {
               isolation: 'isolate',
-              contain: 'strict',
               '&, & *': {
                 transition: 'none !important',
                 animation: 'none !important',
