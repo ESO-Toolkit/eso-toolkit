@@ -43,20 +43,39 @@ const API_HEADERS = {
 };
 
 const CLASS_CATEGORIES = new Set([
-  'Arcanist', 'Dragonknight', 'Necromancer',
-  'Nightblade', 'Sorcerer', 'Templar', 'Warden',
+  'Arcanist',
+  'Dragonknight',
+  'Necromancer',
+  'Nightblade',
+  'Sorcerer',
+  'Templar',
+  'Warden',
 ]);
 
-const HTML_ENTITIES = { '&amp;': '&', '&#39;': "'", '&quot;': '"', '&lt;': '<', '&gt;': '>', '&nbsp;': ' ' };
+const HTML_ENTITIES = {
+  '&amp;': '&',
+  '&#39;': "'",
+  '&quot;': '"',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&nbsp;': ' ',
+};
 
 function stripHtml(html) {
   if (!html) return '';
-  return html
-    .replace(/<script\b[\s\S]*?<\/script[\s\S]*?>/gi, '')
+  // Decode entities first so encoded tags (e.g. &lt;script&gt;) are caught before stripping
+  let text = html
+    .replace(/&(?:amp|#39|quot|lt|gt|nbsp);/g, (e) => HTML_ENTITIES[e] ?? e)
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+  // Repeatedly remove <script> blocks until none remain (prevents re-introduction via nesting)
+  let prev;
+  do {
+    prev = text;
+    text = text.replace(/<script\b[\s\S]*?<\/script(?:\s[^>]*)?>/gi, '');
+  } while (text !== prev);
+  return text
     .replace(/<a\s[^>]*>|<\/a>/gi, '')
     .replace(/<[^>]*>/g, '')
-    .replace(/&(?:amp|#39|quot|lt|gt|nbsp);/g, (e) => HTML_ENTITIES[e] ?? e)
-    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
     .replace(/[<>]/g, '')
     .replace(/\r\n|\r|\n/g, ' ')
     .replace(/\s{2,}/g, ' ')
@@ -69,12 +88,17 @@ function extractIconName(iconUrl) {
 }
 
 function norm(s) {
-  return (s ?? '').replace(/\s+/g, ' ').replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').trim();
+  return (s ?? '')
+    .replace(/\s+/g, ' ')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201c\u201d]/g, '"')
+    .trim();
 }
 
 async function fetchAllClassSkills() {
   const allSkills = [];
-  let page = 1, totalPages = 1;
+  let page = 1,
+    totalPages = 1;
   while (page <= totalPages) {
     process.stdout.write(`  Fetching page ${page}/${totalPages}...\n`);
     const resp = await fetch(`${API_BASE}&page=${page}`, { headers: API_HEADERS });
@@ -90,7 +114,8 @@ async function fetchAllClassSkills() {
         description: stripHtml(item.html ?? ''),
         icon: extractIconName(item.icon ?? ''),
         type: (item.type ?? '').toLowerCase(),
-        skillLineSlug, skillLineUrl,
+        skillLineSlug,
+        skillLineUrl,
         baseName: item.base?.name ?? null,
         categoryName: item.category?.name ?? '',
       });
@@ -102,13 +127,17 @@ async function fetchAllClassSkills() {
 }
 
 function parseFiles(singleLine) {
-  const filenames = readdirSync(CLASS_DIR).filter(f => f.endsWith('.ts') && f !== 'index.ts');
+  const filenames = readdirSync(CLASS_DIR).filter((f) => f.endsWith('.ts') && f !== 'index.ts');
   const result = new Map();
 
   for (const filename of filenames) {
     const filepath = resolve(CLASS_DIR, filename);
     let content;
-    try { content = readFileSync(filepath, 'utf-8'); } catch { continue; }
+    try {
+      content = readFileSync(filepath, 'utf-8');
+    } catch {
+      continue;
+    }
 
     const sourceUrlMatch = content.match(/sourceUrl:\s*['"]([^'"]+)['"]/);
     const sourceUrl = sourceUrlMatch ? sourceUrlMatch[1] : '';
@@ -132,7 +161,13 @@ function parseFiles(singleLine) {
       let depth = 0;
       while (i < content.length) {
         if (content[i] === '{') depth++;
-        else if (content[i] === '}') { depth--; if (depth === 0) { i++; break; } }
+        else if (content[i] === '}') {
+          depth--;
+          if (depth === 0) {
+            i++;
+            break;
+          }
+        }
         i++;
       }
       const objEnd = i;
@@ -142,16 +177,29 @@ function parseFiles(singleLine) {
       if (!nameMatch) continue;
       const name = (nameMatch[1] ?? nameMatch[2]).replace(/\\'/g, "'").replace(/\\"/g, '"');
 
-      const descMatch = block.match(/\bdescription\s*:\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")/);
+      const descMatch = block.match(
+        /\bdescription\s*:\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")/,
+      );
       const description = descMatch
-        ? (descMatch[1] ?? descMatch[2]).replace(/\\'/g, "'").replace(/\\"/g, '"').replace(/\\n/g, '\n')
+        ? (descMatch[1] ?? descMatch[2])
+            .replace(/\\'/g, "'")
+            .replace(/\\"/g, '"')
+            .replace(/\\n/g, '\n')
         : null;
 
       const iconMatch = block.match(/\bicon\s*:\s*'([^']*)'|\bicon\s*:\s*"([^"]*)"/);
       const icon = iconMatch ? (iconMatch[1] ?? iconMatch[2]) : '';
 
       if (!skills.has(name)) {
-        skills.set(name, { name, description, icon, blockStart: objStart, blockEnd: objEnd, block, filepath });
+        skills.set(name, {
+          name,
+          description,
+          icon,
+          blockStart: objStart,
+          blockEnd: objEnd,
+          block,
+          filepath,
+        });
       }
     }
 
@@ -178,9 +226,7 @@ function applySkillUpdate(slug, skillName, newDescription, newIcon) {
       .replace(/\n/g, '\\n')
       .replace(/\r/g, '\\r');
     const needsDouble = newDescription.includes("'");
-    const escaped = needsDouble
-      ? `"${safeDesc.replace(/"/g, '\\"')}"`
-      : `'${safeDesc}'`;
+    const escaped = needsDouble ? `"${safeDesc.replace(/"/g, '\\"')}"` : `'${safeDesc}'`;
 
     if (freshSkill.description !== null) {
       newBlock = newBlock.replace(
@@ -201,7 +247,11 @@ function applySkillUpdate(slug, skillName, newDescription, newIcon) {
 
   if (newBlock === block) return false;
 
-  writeFileSync(freshSkill.filepath, content.slice(0, freshSkill.blockStart) + newBlock + content.slice(freshSkill.blockEnd), 'utf-8');
+  writeFileSync(
+    freshSkill.filepath,
+    content.slice(0, freshSkill.blockStart) + newBlock + content.slice(freshSkill.blockEnd),
+    'utf-8',
+  );
   return true;
 }
 
@@ -221,8 +271,11 @@ async function main() {
   console.log(`  Total class skills from API: ${apiSkills.length}\n`);
 
   if (singleLine) {
-    apiSkills = apiSkills.filter(s => s.skillLineSlug === singleLine);
-    if (apiSkills.length === 0) { console.error(`  ERROR: No skills for slug "${singleLine}"`); process.exit(1); }
+    apiSkills = apiSkills.filter((s) => s.skillLineSlug === singleLine);
+    if (apiSkills.length === 0) {
+      console.error(`  ERROR: No skills for slug "${singleLine}"`);
+      process.exit(1);
+    }
   }
 
   const apiBySlug = new Map();
@@ -236,11 +289,17 @@ async function main() {
   console.log(`  Skill-line files parsed: ${localFiles.size}\n`);
 
   console.log('Step 3  Comparing...\n');
-  const changedDesc = [], changedIcon = [], newSkills = [], unknownSlugs = [];
+  const changedDesc = [],
+    changedIcon = [],
+    newSkills = [],
+    unknownSlugs = [];
 
   for (const [slug, apiSkillList] of apiBySlug) {
     const localLine = localFiles.get(slug);
-    if (!localLine) { unknownSlugs.push(slug); continue; }
+    if (!localLine) {
+      unknownSlugs.push(slug);
+      continue;
+    }
 
     for (const apiSkill of apiSkillList) {
       const localSkill = localLine.skills.get(apiSkill.name);
@@ -248,11 +307,26 @@ async function main() {
         newSkills.push({ slug, filename: localLine.filename, skillName: apiSkill.name, apiSkill });
         continue;
       }
-      if (localSkill.description !== null && norm(localSkill.description) !== norm(apiSkill.description)) {
-        changedDesc.push({ slug, filename: localLine.filename, skillName: apiSkill.name, oldDesc: localSkill.description, newDesc: apiSkill.description });
+      if (
+        localSkill.description !== null &&
+        norm(localSkill.description) !== norm(apiSkill.description)
+      ) {
+        changedDesc.push({
+          slug,
+          filename: localLine.filename,
+          skillName: apiSkill.name,
+          oldDesc: localSkill.description,
+          newDesc: apiSkill.description,
+        });
       }
       if (localSkill.icon && apiSkill.icon && localSkill.icon !== apiSkill.icon) {
-        changedIcon.push({ slug, filename: localLine.filename, skillName: apiSkill.name, oldIcon: localSkill.icon, newIcon: apiSkill.icon });
+        changedIcon.push({
+          slug,
+          filename: localLine.filename,
+          skillName: apiSkill.name,
+          oldIcon: localSkill.icon,
+          newIcon: apiSkill.icon,
+        });
       }
     }
   }
@@ -274,7 +348,8 @@ async function main() {
   }
   if (changedIcon.length > 0) {
     console.log(' Changed Icons ');
-    for (const c of changedIcon) console.log(`  ${c.skillName}  [${c.filename}]: ${c.oldIcon}  ${c.newIcon}`);
+    for (const c of changedIcon)
+      console.log(`  ${c.skillName}  [${c.filename}]: ${c.oldIcon}  ${c.newIcon}`);
     console.log('');
   }
   if (newSkills.length > 0) {
@@ -292,38 +367,77 @@ async function main() {
   }
 
   mkdirSync(TMP_DIR, { recursive: true });
-  writeFileSync(resolve(TMP_DIR, 'class-skill-refresh-report.json'), JSON.stringify({
-    generatedAt: new Date().toISOString(),
-    summary: { changedDescriptions: changedDesc.length, changedIcons: changedIcon.length, newSkills: newSkills.length, unknownSlugs: unknownSlugs.length },
-    changedDescriptions: changedDesc, changedIcons: changedIcon, newSkills, unknownSlugs,
-  }, null, 2));
+  writeFileSync(
+    resolve(TMP_DIR, 'class-skill-refresh-report.json'),
+    JSON.stringify(
+      {
+        generatedAt: new Date().toISOString(),
+        summary: {
+          changedDescriptions: changedDesc.length,
+          changedIcons: changedIcon.length,
+          newSkills: newSkills.length,
+          unknownSlugs: unknownSlugs.length,
+        },
+        changedDescriptions: changedDesc,
+        changedIcons: changedIcon,
+        newSkills,
+        unknownSlugs,
+      },
+      null,
+      2,
+    ),
+  );
   console.log(' Report saved to: tmp/class-skill-refresh-report.json\n');
 
   if (!applyChanges) {
-    if (changedDesc.length + changedIcon.length > 0) console.log('Run with --apply to write these changes.\n');
+    if (changedDesc.length + changedIcon.length > 0)
+      console.log('Run with --apply to write these changes.\n');
     return;
   }
 
   const toUpdate = new Map();
   for (const c of changedDesc) {
     const key = `${c.slug}:::${c.skillName}`;
-    if (!toUpdate.has(key)) toUpdate.set(key, { slug: c.slug, filename: c.filename, skillName: c.skillName, newDesc: null, newIcon: null });
+    if (!toUpdate.has(key))
+      toUpdate.set(key, {
+        slug: c.slug,
+        filename: c.filename,
+        skillName: c.skillName,
+        newDesc: null,
+        newIcon: null,
+      });
     toUpdate.get(key).newDesc = c.newDesc;
   }
   for (const c of changedIcon) {
     const key = `${c.slug}:::${c.skillName}`;
-    if (!toUpdate.has(key)) toUpdate.set(key, { slug: c.slug, filename: c.filename, skillName: c.skillName, newDesc: null, newIcon: null });
+    if (!toUpdate.has(key))
+      toUpdate.set(key, {
+        slug: c.slug,
+        filename: c.filename,
+        skillName: c.skillName,
+        newDesc: null,
+        newIcon: null,
+      });
     toUpdate.get(key).newIcon = c.newIcon;
   }
 
-  if (toUpdate.size === 0) { console.log('No changes to apply.\n'); return; }
+  if (toUpdate.size === 0) {
+    console.log('No changes to apply.\n');
+    return;
+  }
 
   console.log(`Step 4  Applying ${toUpdate.size} updates...\n`);
-  let applied = 0, failed = 0;
+  let applied = 0,
+    failed = 0;
   for (const { slug, filename, skillName, newDesc, newIcon } of toUpdate.values()) {
     const ok = applySkillUpdate(slug, skillName, newDesc, newIcon);
-    if (ok) { applied++; console.log(`   ${skillName}  [${filename}]`); }
-    else { failed++; console.log(`   FAILED: ${skillName}  [${filename}]`); }
+    if (ok) {
+      applied++;
+      console.log(`   ${skillName}  [${filename}]`);
+    } else {
+      failed++;
+      console.log(`   FAILED: ${skillName}  [${filename}]`);
+    }
   }
 
   console.log(`\n  Applied: ${applied}  Failed: ${failed}`);
@@ -336,7 +450,12 @@ async function main() {
     );
   }
 
-  console.log(failed === 0 ? '\nDone! Run `npm run typecheck` to validate.\n' : '\nSome updates failed.\n');
+  console.log(
+    failed === 0 ? '\nDone! Run `npm run typecheck` to validate.\n' : '\nSome updates failed.\n',
+  );
 }
 
-main().catch(err => { console.error('Fatal error:', err); process.exit(1); });
+main().catch((err) => {
+  console.error('Fatal error:', err);
+  process.exit(1);
+});

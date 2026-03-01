@@ -44,23 +44,39 @@ const API_HEADERS = {
 
 // ─── HTML → plain text ───────────────────────────────────────────────────────
 
+const HTML_ENTITIES_GEAR = {
+  '&amp;': '&',
+  '&#39;': "'",
+  '&quot;': '"',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&nbsp;': ' ',
+};
+
 function stripHtml(html) {
+  if (!html) return [];
+  // Decode entities first so encoded tags (e.g. &lt;script&gt;) are caught before stripping
+  let decoded = html
+    .replace(/&(?:amp|#39|quot|lt|gt|nbsp);/g, (e) => HTML_ENTITIES_GEAR[e] ?? e)
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
   return (
-    html
+    decoded
       // Remove trailing <br> then split on <br>
       .replace(/<br\s*\/?>\s*$/i, '')
       .split(/<br\s*\/?>/i)
-      .map((line) =>
-        line
-          // Remove script blocks first, then remaining HTML tags
-          .replace(/<script\b[\s\S]*?<\/script(?:\s[^>]*)?>/gi, '')
+      .map((line) => {
+        // Repeatedly remove <script> blocks until none remain
+        let text = line;
+        let prev;
+        do {
+          prev = text;
+          text = text.replace(/<script\b[\s\S]*?<\/script(?:\s[^>]*)?>/gi, '');
+        } while (text !== prev);
+        return text
           .replace(/<[^>]*>/g, '')
-          // Decode common HTML entities (single pass to avoid double-unescaping)
-          .replace(/&(?:amp|#39|quot|lt|gt|nbsp);/g, (e) => ({ '&amp;': '&', '&#39;': "'", '&quot;': '"', '&lt;': '<', '&gt;': '>', '&nbsp;': ' ' }[e] ?? e))
-          .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
           .replace(/[<>]/g, '')
-          .trim(),
-      )
+          .trim();
+      })
       .filter(Boolean)
   );
 }
@@ -167,7 +183,10 @@ function buildTsBlock(exportVar, name, setType, bonuses) {
   // Also collapse embedded newlines (from API paragraph breaks) to spaces
   const quotedBonuses = bonuses
     .map((b) => {
-      const clean = b.replace(/\r?\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
+      const clean = b
+        .replace(/\r?\n/g, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
       if (clean.includes("'")) return `    "${clean}",`;
       return `    '${clean}',`;
     })
@@ -189,7 +208,11 @@ function bonusesEqual(a, b) {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
     // Normalise whitespace and smart quotes for comparison
-    const norm = (s) => s.replace(/\s+/g, ' ').replace(/[\u2018\u2019]/g, "'").trim();
+    const norm = (s) =>
+      s
+        .replace(/\s+/g, ' ')
+        .replace(/[\u2018\u2019]/g, "'")
+        .trim();
     if (norm(a[i]) !== norm(b[i])) return false;
   }
   return true;
@@ -277,9 +300,7 @@ async function main() {
   console.log(`📊 Summary`);
   console.log(`   Changed (bonuses differ): ${changed.length}`);
   console.log(`   New on ESO-Hub (not in local files): ${newOnHub.length}`);
-  console.log(
-    `   Local only (not on ESO-Hub, may be renamed/removed): ${notOnHub.length}\n`,
-  );
+  console.log(`   Local only (not on ESO-Hub, may be renamed/removed): ${notOnHub.length}\n`);
 
   if (changed.length > 0) {
     console.log('─── Changed Sets ───────────────────────────────────');
@@ -347,17 +368,19 @@ async function main() {
       // multiple sets in the same file are updated in sequence.
       const freshEntry = parseExistingFiles().get(apiSet.name);
       if (!freshEntry) {
-        console.log(`  SKIP: ${apiSet.name} (not found in re-parse, may have been already updated)`);
+        console.log(
+          `  SKIP: ${apiSet.name} (not found in re-parse, may have been already updated)`,
+        );
         continue;
       }
       applyUpdate(freshEntry, apiSet.bonuses);
       console.log(`  ✓ Updated: ${apiSet.name}  [${freshEntry.file}]`);
     }
     console.log('\nFormatting changed files...');
-    execSync(
-      `node node_modules/prettier/bin/prettier.cjs --write "src/data/Gear Sets/*.ts"`,
-      { stdio: 'inherit', cwd: ROOT },
-    );
+    execSync(`node node_modules/prettier/bin/prettier.cjs --write "src/data/Gear Sets/*.ts"`, {
+      stdio: 'inherit',
+      cwd: ROOT,
+    });
     console.log('\nDone! Run `npm run typecheck` to validate.\n');
   } else if (applyChanges && changed.length === 0) {
     console.log('No changes to apply — all local sets are up to date.\n');
