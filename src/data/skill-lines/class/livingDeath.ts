@@ -20,7 +20,8 @@ export const livingDeath: SkillLineData = {
       name: 'Reanimate',
       type: 'ultimate',
       icon: 'ability_necromancer_018',
-      description: 'Resurrect up to 3 allies at target location.',
+      description:
+        'Bring your allies back from the brink of death, resurrecting up to 3 allies at the target location.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_REANIMATE,
     },
@@ -29,7 +30,8 @@ export const livingDeath: SkillLineData = {
       name: 'Animate Blastbones',
       type: 'ultimate',
       icon: 'ability_necromancer_018_b',
-      description: 'Summons Blighted Blastbones for each corpse consumed.',
+      description:
+        'Bring your allies back from the brink of death, resurrecting up to 3 allies at the target location.\n\nYou consume up to 3 other corpses in the area and summon a Blighted Blastbones for each corpse consumed.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_REANIMATE,
     },
@@ -38,7 +40,8 @@ export const livingDeath: SkillLineData = {
       name: 'Renewing Animation',
       type: 'ultimate',
       icon: 'ability_necromancer_018_a',
-      description: 'Restores Magicka and Stamina for each ally resurrected.',
+      description:
+        'Bring your allies back from the brink of death, resurrecting up to 3 allies at the target location.\n\nYou restore 5300 Magicka and Stamina for each ally you successfully resurrect.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_REANIMATE,
     },
@@ -47,15 +50,17 @@ export const livingDeath: SkillLineData = {
       name: 'Render Flesh',
       type: 'active',
       icon: 'ability_necromancer_013',
-      description: 'Sacrifice your power to heal ally while applying Minor Defile to self.',
+      description:
+        'Sacrifice your own power to repair damaged flesh, healing you or an ally in front of you for 3486 Health but applying Minor Defile to yourself for 4 seconds, reducing your healing received and damage shield strength by 6%.',
       baseSkillId: ClassSkillId.NECROMANCER_RENDER_FLESH,
     },
     {
       id: ClassSkillId.NECROMANCER_BLOOD_SACRIFICE,
       name: 'Blood Sacrifice',
       type: 'active',
-      icon: 'ability_mage_065',
-      description: 'Can consume corpse to heal second target.',
+      icon: 'ability_necromancer_013_b',
+      description:
+        'Sacrifice your own power to repair damaged flesh, healing you or an ally in front of you for 3600 Health but applying Minor Defile to yourself for 4 seconds, reducing your healing received and damage shield strength by 6%.\n\nConsumes a corpse near you when cast to heal a second target.',
       baseSkillId: ClassSkillId.NECROMANCER_RENDER_FLESH,
     },
     {
@@ -63,7 +68,8 @@ export const livingDeath: SkillLineData = {
       name: 'Resistant Flesh',
       type: 'active',
       icon: 'ability_necromancer_013_a',
-      description: 'Grants target resistances equal to half healing amount.',
+      description:
+        'Sacrifice your own power to repair damaged flesh, healing you or an ally in front of you for 3600 Health but applying Minor Defile to yourself for 4 seconds, reducing your healing received and damage shield strength by 6%.\n\nYou grant the target Spell and Physical Resistance equal to half the amount healed for 3 seconds.',
       baseSkillId: ClassSkillId.NECROMANCER_RENDER_FLESH,
     },
     {
@@ -71,7 +77,8 @@ export const livingDeath: SkillLineData = {
       name: 'Life amid Death',
       type: 'active',
       icon: 'ability_necromancer_016',
-      description: 'Release soul fragments for area healing.',
+      description:
+        'Release residual fragments of fallen souls at the target location, healing you and your allies for 2323 Health.\n\nConsumes a corpse on cast to continue to heal you and your allies in the area for 2310 Health over 5 seconds.',
       baseSkillId: ClassSkillId.NECROMANCER_LIFE_AMID_DEATH,
     },
     {
@@ -79,7 +86,8 @@ export const livingDeath: SkillLineData = {
       name: 'Enduring Undeath',
       type: 'active',
       icon: 'ability_necromancer_016_b',
-      description: 'Can consume up to 5 additional corpses for extended duration.',
+      description:
+        'Release residual fragments of fallen souls at the target location, healing you and your allies for 2399 Health.\n\nConsumes a corpse on cast to continue to heal you and your allies in the area for 2390 Health over 5 seconds. You can consume up to 5 additional corpses on cast, with each corpse extending the duration of the heal over time by 5 seconds.',
       baseSkillId: ClassSkillId.NECROMANCER_LIFE_AMID_DEATH,
     },
     {
@@ -87,7 +95,8 @@ export const livingDeath: SkillLineData = {
       name: 'Renewing Undeath',
       type: 'active',
       icon: 'ability_necromancer_016_a',
-      description: 'Removes negative effects alongside healing.',
+      description:
+        'Release residual fragments of fallen souls at the target location, healing you and your allies for 2399 Health.\n\nConsumes a corpse on cast to immediately remove up to 3 negative effects and continue to heal you and your allies in the area for 2390 Health over 5 seconds.',
       baseSkillId: ClassSkillId.NECROMANCER_LIFE_AMID_DEATH,
     },
     {
@@ -95,7 +104,8 @@ export const livingDeath: SkillLineData = {
       name: 'Spirit Mender',
       type: 'active',
       icon: 'ability_necromancer_015',
-      description: 'Conjure ghostly spirit for ongoing healing support.',
+      description:
+        'Conjure a ghostly spirit to do your bidding and stay by your side for 16 seconds. The spirit heals you or the lowest Health ally around you every 2 seconds, restoring 695 Health.\n\nCreates a corpse on death if you are in combat.',
       baseSkillId: ClassSkillId.NECROMANCER_SPIRIT_MENDER,
     },
     {
@@ -103,7 +113,8 @@ export const livingDeath: SkillLineData = {
       name: 'Intensive Mender',
       type: 'active',
       icon: 'ability_necromancer_015_b',
-      description: 'Shorter duration but heals target plus 2 nearby allies.',
+      description:
+        'Conjure a ghostly spirit to do your bidding and stay by your side for 8 seconds. The spirit heals you or lowest Health ally around you every 2 seconds, restoring 1438 Health to the target and 2 allies nearby them.\n\nCreates a corpse on death if you are in combat.',
       baseSkillId: ClassSkillId.NECROMANCER_SPIRIT_MENDER,
     },
     {
@@ -111,7 +122,8 @@ export const livingDeath: SkillLineData = {
       name: 'Spirit Guardian',
       type: 'active',
       icon: 'ability_necromancer_015_a',
-      description: 'Extended duration with 10% damage transfer to spirit.',
+      description:
+        'Conjure a ghostly spirit to do your bidding and stay by your side for 16 seconds. The spirit heals you or the lowest Health ally around you every 2 seconds, restoring 718 Health.\n\nWhile active 10% of the damage you take is transferred to the spirit instead.\n\nCreates a corpse on death if you are in combat.',
       baseSkillId: ClassSkillId.NECROMANCER_SPIRIT_MENDER,
     },
     {
@@ -119,7 +131,8 @@ export const livingDeath: SkillLineData = {
       name: 'Restoring Tether',
       type: 'active',
       icon: 'ability_necromancer_017',
-      description: 'Siphon corpse for healing over time to you and allies.',
+      description:
+        'Siphon the last remnants of life from a corpse, healing for 5544 Health over 12 seconds to yourself and all allies between you and the corpse. \n\nWhile slotted, your healing done is increased by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_RESTORING_TETHER,
     },
     {
@@ -127,7 +140,8 @@ export const livingDeath: SkillLineData = {
       name: 'Braided Tether',
       type: 'active',
       icon: 'ability_necromancer_017_a',
-      description: 'Heals allies around you and between you and corpse.',
+      description:
+        'Siphon the last remnants of life from a corpse, healing for 5742 Health over 12 seconds to yourself, all allies around you, and all allies between you and the corpse. \n\nWhile slotted, your healing done is increased by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_RESTORING_TETHER,
     },
     {
@@ -135,15 +149,17 @@ export const livingDeath: SkillLineData = {
       name: 'Mortal Coil',
       type: 'active',
       icon: 'ability_necromancer_017_b',
-      description: 'Restores Magicka and Stamina while siphoning.',
+      description:
+        'Siphon the last remnants of life from a corpse, healing for 5562 Health over 12 seconds to yourself and all allies between you and the corpse.  \n\nYou also restore 170 Magicka and Stamina every 2 seconds while siphoning the corpse.\n\nWhile slotted, your healing done is increased by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_RESTORING_TETHER,
     },
     {
       id: ClassSkillId.NECROMANCER_EXPUNGE,
       name: 'Expunge',
       type: 'active',
-      icon: 'death_recap_melee_basic',
-      description: 'Remove negative effects from yourself at Health cost.',
+      icon: 'ability_necromancer_014',
+      description:
+        'Embrace the power of death, removing up to 2 negative effects from yourself.\n\nWhile slotted, the cost of all your abilities are reduced by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_EXPUNGE,
     },
     {
@@ -151,7 +167,8 @@ export const livingDeath: SkillLineData = {
       name: 'Expunge and Modify',
       type: 'active',
       icon: 'ability_necromancer_014_b',
-      description: 'Restores resources for each negative effect removed.',
+      description:
+        'Embrace the power of death, removing up to 2 negative effects from yourself and restoring 515 Magicka and Stamina for each negative effect removed.\n\nWhile slotted, the cost of all your abilities are reduced by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_EXPUNGE,
     },
     {
@@ -159,7 +176,8 @@ export const livingDeath: SkillLineData = {
       name: 'Hexproof',
       type: 'active',
       icon: 'ability_necromancer_014_a',
-      description: 'Removes up to 4 negative effects instead of 2.',
+      description:
+        'Embrace the power of death, removing up to 4 negative effects from yourself.\n\nWhile slotted, the cost of all your abilities are reduced by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_EXPUNGE,
     },
     {

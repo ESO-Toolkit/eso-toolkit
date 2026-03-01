@@ -19,8 +19,9 @@ export const soldierOfApocrypha: SkillLineData = {
       id: ClassSkillId.ARCANIST_GIBBERING_SHIELD,
       name: 'Gibbering Shield',
       type: 'ultimate',
-      icon: 'ability_mage_065',
-      description: 'Form protective tentacles absorbing damage, lash out when collapsed.',
+      icon: 'ability_arcanist_012',
+      description:
+        'Gather the true strength of Apocrypha around you, forming protective tentacles and a damage shield that absorbs 60% of all damage for 10 seconds, up to a max of 31732 damage, scaling off your Max Health.\n\nWhen the shield collapses you lash out, dealing all of the damage absorbed as Magic Damage to enemies within 5 meters over 10 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.ARCANIST_GIBBERING_SHIELD,
     },
@@ -29,7 +30,8 @@ export const soldierOfApocrypha: SkillLineData = {
       name: 'Gibbering Shelter',
       type: 'ultimate',
       icon: 'ability_arcanist_012_b',
-      description: 'Shares damage shields with nearby allies.',
+      description:
+        'Gather the true strength of Apocrypha, forming a tentacle damage shield that absorbs 60% of all damage for 10 seconds, up to a max of 31733 damage.\n\nWhen the shield absorbs damage, pseudopods cascade out at up to 11 allies within 15 meters, granting them a damage shield for 4 seconds that absorbs up to 5462 damage. These shields can be applied once every 4 seconds. Both shields scale off your Max Health.',
       isUltimate: true,
       baseSkillId: ClassSkillId.ARCANIST_GIBBERING_SHIELD,
     },
@@ -38,7 +40,8 @@ export const soldierOfApocrypha: SkillLineData = {
       name: 'Sanctum of the Abyssal Sea',
       type: 'ultimate',
       icon: 'ability_arcanist_012_a',
-      description: 'Stronger maximum damage absorption.',
+      description:
+        'Gather the true strength of Apocrypha as protective tentacles rise from the Abyssal Sea around you. The tentacles form a damage shield that absorbs 60% of all damage for 10 seconds, up to a max of 37697 damage, scaling off your Max Health.\n\nWhen the shield collapses you lash out, dealing all of the damage absorbed as Magic Damage to enemies within 5 meters over 10 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.ARCANIST_GIBBERING_SHIELD,
     },
@@ -46,8 +49,9 @@ export const soldierOfApocrypha: SkillLineData = {
       id: ClassSkillId.ARCANIST_FATEWOVEN_ARMOR,
       name: 'Fatewoven Armor',
       type: 'active',
-      icon: 'ability_mage_065',
-      description: 'Forge runic armor granting Major Resolve with Minor Breach retaliation.',
+      icon: 'ability_arcanist_009',
+      description:
+        'Forge defiant runic armor around you, granting Major Resolve for 20 seconds, increasing your Armor by 5948.\n\nWhile the armor persists, taking damage applies Minor Breach, reducing the Armor of your attacker by 2974 for 6 seconds.',
       baseSkillId: ClassSkillId.ARCANIST_FATEWOVEN_ARMOR,
       alternateIds: [183648],
     },
@@ -56,7 +60,8 @@ export const soldierOfApocrypha: SkillLineData = {
       name: 'Cruxweaver Armor',
       type: 'active',
       icon: 'ability_arcanist_009_a',
-      description: 'Extended duration, generates Crux when taking damage.',
+      description:
+        'Forge defiant runic armor around you, granting Major Resolve for 30 seconds, increasing your Armor by 5948.\n\nWhile the armor persists, taking damage applies Minor Breach, reducing the Armor of your attacker by 2974 for 6 seconds. Blows against your armor also generate Crux, up to once every 5 seconds.',
       baseSkillId: ClassSkillId.ARCANIST_FATEWOVEN_ARMOR,
     },
     {
@@ -64,15 +69,17 @@ export const soldierOfApocrypha: SkillLineData = {
       name: 'Unbreakable Fate',
       type: 'active',
       icon: 'ability_arcanist_009_b',
-      description: 'Grants block mitigation, consumes Crux for more mitigation.',
+      description:
+        'Forge defiant runic armor around you, granting 5% Block Mitigation and Major Resolve for 20 seconds, increasing your Armor by 5948 for 20 seconds.\n\nConsume Crux to gain 5% additional Block Mitigation per Crux spent.\n\nWhile the armor persists, taking damage applies Minor Breach, reducing the Armor of your attacker by 2974 for 6 seconds.',
       baseSkillId: ClassSkillId.ARCANIST_FATEWOVEN_ARMOR,
     },
     {
       id: ClassSkillId.ARCANIST_RUNE_OF_ELDRITCH_HORROR,
       name: 'Rune of Eldritch Horror',
       type: 'active',
-      icon: 'ability_mage_065',
-      description: "Etch rune on enemy's mind for delayed stun.",
+      icon: 'ability_arcanist_011',
+      description:
+        "Etch an incomprehensible rune on your enemy's mind, paralyzing them in fear after a 1 second delay, stunning them for 4 seconds. This terror applies Minor Vulnerability for 10 seconds, increasing their damage taken by 5%.\n\nIf used against a monster, the paralyze lasts for 8 seconds.\n\nThis ability cannot be dodged.",
       baseSkillId: ClassSkillId.ARCANIST_RUNE_OF_ELDRITCH_HORROR,
       alternateIds: [185918],
     },
@@ -81,7 +88,8 @@ export const soldierOfApocrypha: SkillLineData = {
       name: 'Rune of Uncanny Adoration',
       type: 'active',
       icon: 'ability_arcanist_011_a',
-      description: 'Charms enemy instead of stunning them.',
+      description:
+        "Etch a blasphemous rune on your enemy's mind, charming them after a 1 second delay for 4 seconds. This eldritch attraction causes them to move towards the player and applies Minor Vulnerability for 10 seconds, increasing their damage taken by 5%.\n\nIf used against a monster, the charm lasts for 8 seconds.\n\nThis ability cannot be dodged.",
       baseSkillId: ClassSkillId.ARCANIST_RUNE_OF_ELDRITCH_HORROR,
     },
     {
@@ -89,15 +97,17 @@ export const soldierOfApocrypha: SkillLineData = {
       name: 'Rune of the Colorless Pool',
       type: 'active',
       icon: 'ability_arcanist_011_b',
-      description: 'Adds Minor Brittle alongside Minor Vulnerability.',
+      description:
+        "Etch an amorphous rune on your enemy's mind, paralyzing them in fear after a 1 second delay, stunning them for 4 seconds. This undimensioned phenomenon applies Minor Vulnerability and Minor Brittle for 20 seconds, increasing their damage taken by 5% and their Critical Damage taken by 10%.\n\nIf used against a monster, the paralyze lasts for 8 seconds.\n\nThis ability cannot be dodged.",
       baseSkillId: ClassSkillId.ARCANIST_RUNE_OF_ELDRITCH_HORROR,
     },
     {
       id: ClassSkillId.ARCANIST_RUNIC_DEFENSE,
       name: 'Runic Defense',
       type: 'active',
-      icon: 'ability_mage_065',
-      description: 'Cast complex rune granting group Minor Resolve and self Minor Protection.',
+      icon: 'ability_arcanist_010',
+      description:
+        'Cast forth a complex rune granting you and your group members Minor Resolve for 20 seconds, increasing your Armor by 2974.\n\nYou gain Minor Protection for 20 seconds, reducing your damage taken by 5%.\n\nThe first time you are damaged while below 50% Health, the Minor Protection is consumed to heal you for 4800 Health, scaling off your Max Health.',
       baseSkillId: ClassSkillId.ARCANIST_RUNIC_DEFENSE,
       alternateIds: [185912],
     },
@@ -106,7 +116,8 @@ export const soldierOfApocrypha: SkillLineData = {
       name: 'Runeguard of Freedom',
       type: 'active',
       icon: 'ability_arcanist_010_b',
-      description: 'Grants crowd control immunity when healing triggers.',
+      description:
+        'Cast forth a complex rune granting you and your group members Minor Resolve for 20 seconds, increasing your Armor by 2974.\n\nYou gain Minor Protection for 20 seconds, reducing your damage taken by 5%.\n\nThe first time you are damaged while below 50% Health, Minor Protection is consumed to heal you for 2400 Health, scaling off your Max Health, and gain 3300 Armor and Crowd Control Immunity for 7 seconds. This immunity can occur once every 30 seconds.',
       baseSkillId: ClassSkillId.ARCANIST_RUNIC_DEFENSE,
     },
     {
@@ -114,15 +125,17 @@ export const soldierOfApocrypha: SkillLineData = {
       name: 'Runeguard of Still Waters',
       type: 'active',
       icon: 'ability_arcanist_010_a',
-      description: 'Immobilizes nearby enemies, stronger heal.',
+      description:
+        'Cast forth a complex rune granting you and your group members Minor Resolve for 20 seconds, increasing your Armor by 2974. After 1 second, the spellweave immobilizes enemies within 7 meters for 3 seconds.\n\nYou gain Minor Protection for 20 seconds, reducing your damage taken by 5%.\n\nThe first time you are damaged while below 50% Health, the Minor Protection is consumed to heal you for 4800 Health, scaling off your Max Health.',
       baseSkillId: ClassSkillId.ARCANIST_RUNIC_DEFENSE,
     },
     {
       id: ClassSkillId.ARCANIST_RUNIC_JOLT,
       name: 'Runic Jolt',
       type: 'active',
-      icon: 'ability_mage_065',
-      description: 'Craft defensive rune dealing damage, Minor Maim, and taunting.',
+      icon: 'ability_arcanist_007',
+      description:
+        'Craft a defensive Apocryphal rune that deals 1161 Magic Damage and applies Minor Maim for 15 seconds, reducing their damage done by 5%.\n\nThe rune also taunts for 15 seconds if it would not cause taunt immunity, and generates Crux. While slotted, damage taken is reduced by 2% per active Crux.',
       baseSkillId: ClassSkillId.ARCANIST_RUNIC_JOLT,
     },
     {
@@ -130,7 +143,8 @@ export const soldierOfApocrypha: SkillLineData = {
       name: 'Runic Embrace',
       type: 'active',
       icon: 'ability_arcanist_007_b',
-      description: 'Heals you and applies Minor Lifesteal to enemies.',
+      description:
+        'Craft a rune that deals 1161 Magic Damage and heals you for 1706 Health, scaling off your Max Health.\n\nYou apply Minor Maim and Minor Lifesteal for 15 seconds, reducing enemy damage done by 5%, and healing you and your allies for 600 Health every 1 second when damaging them.\n\nThe rune taunts for 15 seconds if it would not cause taunt immunity, and generates Crux. While slotted, damage taken is reduced by 2% per active Crux.',
       baseSkillId: ClassSkillId.ARCANIST_RUNIC_JOLT,
     },
     {
@@ -138,15 +152,17 @@ export const soldierOfApocrypha: SkillLineData = {
       name: 'Runic Sunder',
       type: 'active',
       icon: 'ability_arcanist_007_a',
-      description: 'Stamina morph that steals enemy armor.',
+      description:
+        'Craft a defensive Apocryphal rune that deals 1161 Physical Damage. The rune steals 2200 Armor and applies Minor Maim for 15 seconds, reducing their damage done by 5%.\n\nThe rune also taunts for 15 seconds if it would not cause taunt immunity, and generates Crux. While slotted, damage taken is reduced by 2% per active Crux.',
       baseSkillId: ClassSkillId.ARCANIST_RUNIC_JOLT,
     },
     {
       id: ClassSkillId.ARCANIST_RUNESPITE_WARD,
       name: 'Runespite Ward',
       type: 'active',
-      icon: 'ability_mage_065',
-      description: 'Summon retaliating damage shield that heals with Crux.',
+      icon: 'ability_arcanist_008',
+      description:
+        'Like the rune knights of old, summon a shield that absorbs 4800 damage for 6 seconds, scaling off your Max Health.\n\nThe first time you take direct damage, the shield retaliates and deals 0 Magic Damage to the attacker, scaling off your Armor.\n\nConsume Crux to heal yourself for 1600 Health, scaling off your Max Health, per Crux spent.',
       baseSkillId: ClassSkillId.ARCANIST_RUNESPITE_WARD,
     },
     {
@@ -154,7 +170,8 @@ export const soldierOfApocrypha: SkillLineData = {
       name: 'Impervious Runeward',
       type: 'active',
       icon: 'ability_arcanist_008_b',
-      description: 'Stronger initial shield for first second.',
+      description:
+        'Like the rune knights of old, summon a shield that absorbs 9916 damage for 1 second, and then 2203 damage for 5 seconds if the first shield persists. Both shields scale off your Max Health.\n\nThe first time you take direct damage, the shield retaliates and deals 0 Magic Damage to the attacker, scaling off your Armor.\n\nConsume Crux to heal yourself for 1600 Health, scaling off your Max Health, per Crux spent.',
       baseSkillId: ClassSkillId.ARCANIST_RUNESPITE_WARD,
     },
     {
@@ -162,7 +179,8 @@ export const soldierOfApocrypha: SkillLineData = {
       name: 'Spiteward of the Lucid Mind',
       type: 'active',
       icon: 'ability_arcanist_008_a',
-      description: 'Refunds ability cost based on Crux consumed.',
+      description:
+        'Like the rune knights of old, summon a shield that absorbs 4800 damage for 6 seconds, scaling off your Max Health.\n\nThe first time you take direct damage, the shield retaliates and deals 0 Magic Damage to the attacker, scaling off your Armor.\n\nConsume Crux to heal yourself 1600 Health, scaling off your Max Health, and refund 30% of Spiteward of the Lucid Mind cost per Crux spent.',
       baseSkillId: ClassSkillId.ARCANIST_RUNESPITE_WARD,
     },
     {
@@ -171,7 +189,7 @@ export const soldierOfApocrypha: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_05',
       description:
-        'While a beneficial Soldier of Apocrypha ability is active on you, increase your Armor by 3271.',
+        'Form a secret soldier within your mind, a defense against arcane forces without. While a beneficial Soldier of Apocrypha ability is active on you, increase your Armor by 3271.',
       isPassive: true,
     },
     {
@@ -189,7 +207,7 @@ export const soldierOfApocrypha: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_08',
       description:
-        'When you consume Crux, gain 4 Ultimate. This effect can occur once every 8 seconds.',
+        'The will of an Arcanist is absolute. When you consume Crux, gain 4 Ultimate. This effect can occur once every 8 seconds.',
       isPassive: true,
     },
     {

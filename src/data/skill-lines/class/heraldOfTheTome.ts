@@ -31,7 +31,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_arcanist_006_b',
       description:
-        "Beam damage increases over time, snares enemies, repositionable. Every 0.5 seconds, the beam's damage increases by 7%. Snares enemies by 50% for 3 seconds.",
+        "Tear open the fabric of the Aurbis to summon a scion of Hermaeus Mora. This being casts forth a beam that rends asunder reality for 6 seconds that deals 1115 Magic Damage to enemies within 5 meters every 0.5 seconds and snares them by 50% for 3 seconds. Every 0.5 seconds, the beam's damage increases by 7%.\n\nThe scion's beam can be repositioned by recasting The Languid Eye.",
       isUltimate: true,
       baseSkillId: ClassSkillId.ARCANIST_THE_UNBLINKING_EYE,
     },
@@ -41,7 +41,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_arcanist_006_a',
       description:
-        'Extended duration, beam automatically follows targets. Hunts for new target within 8 meters if initial target is slain.',
+        "Tear open the fabric of the Aurbis to summon a scion of Hermaeus Mora. This being casts forth a beam that rends asunder reality for 8 seconds that deals 1151 Magic Damage to enemies within 5 meters every 0.5 seconds. \n\nThe scion's beam automatically follows the initial target, and hunts for a new one within 8 meters if it is slain.",
       isUltimate: true,
       baseSkillId: ClassSkillId.ARCANIST_THE_UNBLINKING_EYE,
     },
@@ -50,7 +50,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: 'Abyssal Impact',
       type: 'active',
       icon: 'ability_arcanist_003',
-      description: 'Form tentacles that immobilize enemies and mark with Abyssal Ink.',
+      description:
+        'Infuse your arm with abyssal magic to form tentacles that lash out at your foes, dealing 1939 Physical Damage. Enemies are immobilized for 3 seconds and marked with Abyssal Ink for 20 seconds.\n\nYou deal 5% increased damage to enemies drenched in Abyssal Ink.',
       baseSkillId: ClassSkillId.ARCANIST_ABYSSAL_IMPACT,
     },
     {
@@ -58,7 +59,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: "Cephaliarch's Flail",
       type: 'active',
       icon: 'ability_arcanist_003_a',
-      description: 'Stamina morph that heals you when hitting enemies.',
+      description:
+        'Infuse your arm with abyssal magic to form tentacles that lash out at your foes dealing 1939 Physical Damage and generating Crux. Enemies are immobilized for 3 seconds and marked with Abyssal Ink for 20 seconds.\n\nIf an enemy is hit, you for heal for 1000 Health, once per cast.\n\nYou deal 5% increased damage to enemies drenched in Abyssal Ink.',
       baseSkillId: ClassSkillId.ARCANIST_ABYSSAL_IMPACT,
     },
     {
@@ -66,7 +68,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: 'Tentacular Dread',
       type: 'active',
       icon: 'ability_arcanist_003_b',
-      description: 'Consumes Crux for increased damage and Abyssal Ink bonus.',
+      description:
+        'Infuse your arm with abyssal magic to form tentacles that lash out at your foes, dealing 2002 Frost Damage. Enemies are immobilized for 3 seconds and marked with Abyssal Ink for 20 seconds.\n\nYou deal 5% increased damage to enemies drenched in Abyssal Ink.\n\nConsume all Crux and increase Tentacular Dread damage by 33% and damage to foes drenched in Abyssal Ink by 2% per Crux spent.',
       baseSkillId: ClassSkillId.ARCANIST_ABYSSAL_IMPACT,
     },
     {
@@ -74,7 +77,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: 'Runeblades',
       type: 'active',
       icon: 'ability_arcanist_001',
-      description: 'Launch series of runes dealing escalating damage.',
+      description:
+        'Craft a series of Apocryphal runes before launching them at a foe, dealing 695 Magic Damage three times and generating Crux.\n\nThis ability deals 3% increased damage for each active Crux when cast.',
       baseSkillId: ClassSkillId.ARCANIST_RUNEBLADES,
     },
     {
@@ -82,7 +86,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: 'Escalating Runeblades',
       type: 'active',
       icon: 'ability_arcanist_001_b',
-      description: 'Final rune explodes for AoE damage.',
+      description:
+        'Craft a series of Apocryphal runes before launching them at a foe, dealing 696 Magic Damage 766 Magic Damage, and 917 Magic Damage and generating Crux. The last rune explodes, dealing damage to all enemies within 8 meters of the target.\n\nThis ability deals 3% increased damage for each active Crux when cast.',
       baseSkillId: ClassSkillId.ARCANIST_RUNEBLADES,
       alternateIds: [188780],
     },
@@ -91,7 +96,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: 'Writhing Runeblades',
       type: 'active',
       icon: 'ability_arcanist_001_a',
-      description: 'Gains Critical rating based on active Crux.',
+      description:
+        'Craft a series of Apocryphal runes before launching them at a foe, dealing 718 Magic Damage three times and generating Crux. \n\nThis ability gains between 1095 and 2191 Weapon and Spell Critical rating and deals 3% increased damage for each active Crux when cast.',
       baseSkillId: ClassSkillId.ARCANIST_RUNEBLADES,
     },
     {
@@ -99,7 +105,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: 'Fatecarver',
       type: 'active',
       icon: 'ability_arcanist_002',
-      description: 'Channel beam of pure knowledge for sustained damage.',
+      description:
+        'Harness pure knowledge into a beam of energy that scars the world in front of you. Channel the beam for up to 4 seconds, dealing 879 Magic Damage every 0.3 seconds to up to 6 enemies.\n\nCasting Fatecarver consumes all Crux and increases damage done by 33% per Crux spent.\n\nThis ability is considered direct damage.',
       baseSkillId: ClassSkillId.ARCANIST_FATECARVER,
     },
     {
@@ -107,7 +114,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: 'Exhausting Fatecarver',
       type: 'active',
       icon: 'ability_arcanist_002_a',
-      description: 'Adds snare and extends duration per Crux.',
+      description:
+        'Harness pure knowledge into a beam of energy that scars the world in front of you. Channel the beam for up to 4 seconds, dealing 879 Magic Damage every 0.3 seconds to up to 6 enemies and snares them by 15%.\n\nCasting Exhausting Fatecarver consumes all Crux and increases damage done by 33%, duration by 0.3 seconds, and snare by 15% per Crux spent.\n\nThis ability is considered direct damage.',
       baseSkillId: ClassSkillId.ARCANIST_FATECARVER,
     },
     {
@@ -115,7 +123,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: 'Pragmatic Fatecarver',
       type: 'active',
       icon: 'ability_arcanist_002_b',
-      description: 'Grants damage shield and interrupt immunity.',
+      description:
+        'Channel a beam of energy in front of you for up to 4 seconds, dealing 879 Magic Damage every 0.3 seconds to up to 6 enemies, and gain a damage shield that absorbs up to 3137 damage and grants interrupt immunity.\n\nCasting Pragmatic Fatecarver consumes all Crux and increases damage done by 33%, and decreases cost by 16% per Crux spent.\n\nThis ability is considered direct damage.',
       baseSkillId: ClassSkillId.ARCANIST_FATECARVER,
       alternateIds: [193398],
     },
@@ -124,7 +133,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: 'The Imperfect Ring',
       type: 'active',
       icon: 'ability_arcanist_004',
-      description: 'Summon flawed rune for damage over time.',
+      description:
+        'Summon a flawed rune under an enemy that etches foes nearby with scrawled glyphs, dealing 4631 Magic Damage over 20 seconds.\n\nAn ally near the initial target can activate the Runebreak synergy, dealing 2698 Frost Damage to enemies within 7 meters.',
       baseSkillId: ClassSkillId.ARCANIST_THE_IMPERFECT_RING,
     },
     {
@@ -132,7 +142,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: 'Fulminating Rune',
       type: 'active',
       icon: 'ability_arcanist_004_b',
-      description: 'Rune detonates after delay for Frost AoE damage.',
+      description:
+        'Summon an explosive rune under an enemy that etches foes nearby with scrawled glyphs, dealing 4642 Magic Damage over 20 seconds.\n\nThe rune lingers on the initial target for 6 seconds before detonating, dealing 1438 Frost Damage to enemies within 7 meters. Rune detonation cannot be primed with Fulminating Rune again for 6 seconds.\n\nUp to 3 allies near the initial target can activate the Runebreak synergy, dealing 2698 Frost Damage to enemies within 7 meters.',
       baseSkillId: ClassSkillId.ARCANIST_THE_IMPERFECT_RING,
     },
     {
@@ -140,7 +151,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: 'Rune of Displacement',
       type: 'active',
       icon: 'ability_arcanist_004_a',
-      description: 'Pulls enemies in before applying damage over time.',
+      description:
+        'Summon a discharging rune under an enemy. After 2 seconds the rune pulses, pulling in foes between 2 to 10 meters and etching them with scrawled glyphs that deal 4780 Magic Damage over 18 seconds.\n\nAn ally near the initial target can activate the Runebreak synergy, dealing 2698 Frost Damage to enemies within 7 meters.',
       baseSkillId: ClassSkillId.ARCANIST_THE_IMPERFECT_RING,
     },
     {
@@ -148,7 +160,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: "Tome-Bearer's Inspiration",
       type: 'active',
       icon: 'ability_arcanist_005',
-      description: 'Enhance weapon with pulsing runes for class ability damage.',
+      description:
+        'Etch a series of runes onto your weapon that pulse with power once every 5 seconds. Each pulse enhances your class abilities, and striking an enemy with one deals an additional 1161 Magic Damage and generates Crux if you have none.\n\nWhile slotted on either ability bar, gain Major Brutality and Major Sorcery, increasing your Weapon and Spell Damage by 20%.',
       baseSkillId: ClassSkillId.ARCANIST_TOME_BEARER_S_INSPIRATION,
     },
     {
@@ -156,7 +169,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: 'Inspired Scholarship',
       type: 'active',
       icon: 'ability_arcanist_005_a',
-      description: 'Pulses every 3 seconds, generates Crux when none active.',
+      description:
+        'Etch a series of runes onto your weapon that pulse with power once every 3 seconds. Each pulse enhances your class abilities, and striking an enemy with one deals an additional 935 Magic Damage and generates Crux if you have none.\n\nWhile slotted on either ability bar, gain Major Brutality and Major Sorcery, increasing your Weapon and Spell Damage by 20%.',
       baseSkillId: ClassSkillId.ARCANIST_TOME_BEARER_S_INSPIRATION,
     },
     {
@@ -164,7 +178,8 @@ export const heraldOfTheTome: SkillLineData = {
       name: 'Recuperative Treatise',
       type: 'active',
       icon: 'ability_arcanist_005_b',
-      description: 'Pulses every 5 seconds, restores Magicka and Stamina.',
+      description:
+        'Etch a series of runes onto your weapon that pulse with power once every 5 seconds. Each pulse enhances your class abilities, and striking an enemy with one deals an additional 1161 Magic Damage, restores 600 Magicka and Stamina, and generates Crux if you have none.\n\nWhile slotted on either ability bar, gain Major Brutality and Major Sorcery, increasing your Weapon and Spell Damage by 20%.',
       baseSkillId: ClassSkillId.ARCANIST_TOME_BEARER_S_INSPIRATION,
     },
     {
@@ -182,7 +197,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_02',
       description:
-        'When you are restored Magicka or Stamina, increase your Weapon and Spell Damage by 284 for 10 seconds.',
+        'You master the warp and weft of your very soul. When you are restored Magicka or Stamina, increase your Weapon and Spell Damage by 284 for 10 seconds.',
       isPassive: true,
     },
     {
@@ -200,7 +215,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_01',
       description:
-        'Increase your Physical and Spell Penetration by 1240 per Herald of the Tome ability slotted.',
+        "What they don't know can kill them. Increase your Physical and Spell Penetration by 1240 per Herald of the Tome ability slotted.",
       isPassive: true,
     },
   ],
