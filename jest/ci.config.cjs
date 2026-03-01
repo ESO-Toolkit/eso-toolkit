@@ -1,40 +1,29 @@
-const baseConfig = require('../jest.config.cjs');
-const path = require('path');
+const baseConfig = require("../jest.config.cjs");
+const path = require("path");
 
-/** @type {import('jest').Config} */
 module.exports = {
   ...baseConfig,
-  
-  // Set root directory to project root (parent of jest/ directory)
-  rootDir: path.resolve(__dirname, '..'),
-  
-  // Conservative CI settings
-  maxWorkers: 1, // Single worker to prevent memory issues
-  testTimeout: 30000, // Longer timeout for CI
-  
-  // Memory optimization
+
+  rootDir: "<rootDir>",
+  roots: ["<rootDir>"],
+
+  setupFilesAfterEnv: ["<rootDir>/src/setupTests.ts"],
+
+  testMatch: [
+    "<rootDir>/tests/**/*.(spec|test).{js,jsx,ts,tsx}",
+    "<rootDir>/src/**/__tests__/**/*.(test|spec).{js,jsx,ts,tsx}",
+    "<rootDir>/src/**/*.(test|spec).{js,jsx,ts,tsx}",
+  ],
+
+  maxWorkers: 1,
+  testTimeout: 30000,
   logHeapUsage: true,
   detectOpenHandles: true,
   forceExit: true,
-  
-  // Minimal reporting for CI
   verbose: false,
   silent: false,
-
-  // Test match patterns - include tests/ directory for E2E tests
-  testMatch: [
-    '<rootDir>/tests/**/*.(spec|test).{js,jsx,ts,tsx}',
-    '<rootDir>/src/**/__tests__/**/*.(test|spec).{js,jsx,ts,tsx}',
-    '<rootDir>/src/**/*.(test|spec).{js,jsx,ts,tsx}',
-  ],
-
-  // Coverage settings optimized for CI
   collectCoverage: true,
-  coverageReporters: ['text', 'lcov', 'json'],
-  
-  // CI-specific module resolution
-  resolver: undefined, // Use default resolver
-  
-  // Prevent watch mode issues
+  coverageReporters: ["text", "lcov", "json"],
+  resolver: undefined,
   watchman: false,
 };
