@@ -20,7 +20,14 @@ module.exports = {
   // Minimal reporting for CI
   verbose: false,
   silent: false,
-  
+
+  // Test match patterns - include tests/ directory for E2E tests
+  testMatch: [
+    '<rootDir>/tests/**/*.(spec|test).{js,jsx,ts,tsx}',
+    '<rootDir>/src/**/__tests__/**/*.(test|spec).{js,jsx,ts,tsx}',
+    '<rootDir>/src/**/*.(test|spec).{js,jsx,ts,tsx}',
+  ],
+
   // Coverage settings optimized for CI
   collectCoverage: true,
   coverageReporters: ['text', 'lcov', 'json'],

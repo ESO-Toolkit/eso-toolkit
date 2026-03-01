@@ -21,7 +21,8 @@
       "mcp__chrome-devtools__disconnect_from_browser",
       "Bash(git pull:*)",
       "Bash(git push:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(cross-env NODE_ENV=ci:*)"
     ]
   }
 }
