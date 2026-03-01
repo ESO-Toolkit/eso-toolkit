@@ -214,8 +214,8 @@ export const NebulaBackground: React.FC<NebulaBackgroundProps> = ({ darkMode = t
           inset: 0,
           zIndex: 3,
           backgroundImage: `
-            linear-gradient(${colors.grid} 1px, transparent 1px),
-            linear-gradient(90deg, ${colors.grid} 1px, transparent 1px)
+            linear-gradient(transparent 24px, ${colors.grid} 24px, ${colors.grid} 25px, transparent 25px),
+            linear-gradient(90deg, transparent 24px, ${colors.grid} 24px, ${colors.grid} 25px, transparent 25px)
           `,
           backgroundSize: '50px 50px',
           opacity: darkMode ? 0.4 : 0.3,
