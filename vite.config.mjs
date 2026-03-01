@@ -1,7 +1,13 @@
+import fs from 'fs';
+import http from 'http';
+import https from 'https';
+import os from 'os';
 import path from 'path';
+import tls from 'tls';
 import { fileURLToPath } from 'url';
 
 import react from '@vitejs/plugin-react-swc';
+import mkcert from 'vite-plugin-mkcert';
 import { defineConfig, loadEnv } from 'vite';
 import svgr from 'vite-plugin-svgr';
 
@@ -23,9 +29,155 @@ export default defineConfig(({ command, mode }) => {
     .trim();
   const strictPortConfig = strictPortValue !== 'false' && strictPortValue !== '0';
 
+  const httpsEnabled = (env.VITE_HTTPS ?? process.env.VITE_HTTPS) === 'true';
+
+  /** Resolve the mkcert CA root certificate path for the current platform */
+  const getMkcertCaPath = () => {
+    // vite-plugin-mkcert stores files in ~/.vite-plugin-mkcert/
+    const vitePluginPath = path.join(os.homedir(), '.vite-plugin-mkcert', 'rootCA.pem');
+    if (fs.existsSync(vitePluginPath)) return vitePluginPath;
+
+    // Fallback: system mkcert install locations
+    const platform = os.platform();
+    if (platform === 'win32') {
+      return path.join(process.env.LOCALAPPDATA || '', 'mkcert', 'rootCA.pem');
+    }
+    if (platform === 'darwin') {
+      return path.join(os.homedir(), 'Library', 'Application Support', 'mkcert', 'rootCA.pem');
+    }
+    return path.join(os.homedir(), '.local', 'share', 'mkcert', 'rootCA.pem');
+  };
+
   return {
     base: process.env.VITE_BASE_URL || '/',
     plugins: [
+      ...( httpsEnabled ? [mkcert()] : []),
+      ...( httpsEnabled ? [{
+        name: 'serve-mkcert-ca',
+        configureServer() {
+          const caPort = serverPort; // HTTP proxy takes the user-facing port
+          const httpsPort = serverPort + 1; // Vite HTTPS moves to port+1
+
+          const buildHtml = (host) => {
+            const httpsOrigin = `https://${host.replace(`:${caPort}`, `:${httpsPort}`)}`;
+            const caPath = getMkcertCaPath();
+            // Embed cert as a base64 data: URI so Chrome on Android can't block it as an "insecure download"
+            let downloadBtn;
+            if (fs.existsSync(caPath)) {
+              const certB64 = fs.readFileSync(caPath).toString('base64');
+              const dataUri = `data:application/x-x509-ca-cert;base64,${certB64}`;
+              downloadBtn = `<a class="btn" href="${dataUri}" download="mkcert-rootCA.crt">⬇ Download Certificate</a>`;
+            } else {
+              downloadBtn = `<p style="color:red">CA file not found. Start the server once with <code>VITE_HTTPS=true</code> to generate it.</p>`;
+            }
+            return `<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Install Dev CA Certificate</title>
+<style>body{font-family:sans-serif;max-width:520px;margin:2rem auto;padding:0 1rem;line-height:1.6}
+h1{font-size:1.3rem}a.btn{display:inline-block;margin:1rem 0;padding:.75rem 1.5rem;background:#0ea5e9;color:#fff;border-radius:8px;text-decoration:none;font-weight:700}
+ol{padding-left:1.2rem}code{background:#f1f5f9;padding:.1em .4em;border-radius:4px}</style>
+</head><body>
+<h1>Install Dev HTTPS Certificate</h1>
+<p>Tap the button below to download the local CA certificate, then follow the steps for your device.</p>
+${downloadBtn}
+<h2>Android</h2><ol>
+<li>Open the downloaded <code>.crt</code> file</li>
+<li><b>Settings → Security → Install a certificate → CA certificate</b></li>
+<li>Confirm the warning and install it</li>
+</ol>
+<h2>iOS / iPadOS</h2><ol>
+<li>Open the downloaded <code>.pem</code> file — tap <b>Allow</b> when prompted</li>
+<li><b>Settings → General → VPN &amp; Device Management</b> → install the profile</li>
+<li><b>Settings → General → About → Certificate Trust Settings</b> → toggle full trust for <i>mkcert</i></li>
+</ol>
+<p>After installing, open <a href="${httpsOrigin}">${httpsOrigin}</a> — no cert warning and login will work.</p>
+</body></html>`;
+          };
+
+          // Load the mkcert CA cert once — used for both TLS proxy validation and cert download
+          const mkcertCaPath = getMkcertCaPath();
+          if (!fs.existsSync(mkcertCaPath)) {
+            throw new Error(
+              `mkcert CA not found at ${mkcertCaPath}. ` +
+                'Start the dev server once with VITE_HTTPS=true so mkcert can generate the local CA, then restart.',
+            );
+          }
+          const mkcertCa = fs.readFileSync(mkcertCaPath);
+          const trustOptions = { ca: mkcertCa };
+
+          const httpServer = http.createServer((req, res) => {
+            if (req.url === '/install-ca' || req.url === '/mkcert-ca.pem' || req.url === '/mkcert-ca.crt') {
+              if (req.url === '/mkcert-ca.pem' || req.url === '/mkcert-ca.crt') {
+                res.writeHead(200, {
+                  'Content-Type': 'application/x-x509-ca-cert',
+                  'Content-Disposition': 'attachment; filename="mkcert-rootCA.crt"',
+                });
+                res.end(mkcertCa);
+                return;
+              }
+              res.writeHead(200, { 'Content-Type': 'text/html' });
+              res.end(buildHtml(req.headers.host || `localhost:${caPort}`));
+              return;
+            }
+
+            // Everything else: reverse-proxy to the HTTPS Vite server
+            const proxyReq = https.request(
+              {
+                hostname: 'localhost',
+                port: httpsPort,
+                path: req.url,
+                method: req.method,
+                headers: { ...req.headers, host: `localhost:${httpsPort}` },
+                ...trustOptions,
+              },
+              (proxyRes) => {
+                res.writeHead(proxyRes.statusCode, proxyRes.headers);
+                proxyRes.pipe(res);
+              },
+            );
+            proxyReq.on('error', (err) => {
+              res.writeHead(502, { 'Content-Type': 'text/plain' });
+              res.end(`Proxy error: ${err.message}`);
+            });
+            req.pipe(proxyReq);
+          });
+
+          // Proxy WebSocket upgrades (Vite HMR) from ws:// to wss://
+          httpServer.on('upgrade', (req, socket, head) => {
+            const proxySocket = tls.connect(
+              {
+                host: 'localhost',
+                port: httpsPort,
+                ...trustOptions,
+              },
+              () => {
+                const reqHeaders = [
+                  `${req.method} ${req.url} HTTP/1.1`,
+                  `Host: localhost:${httpsPort}`,
+                  `Upgrade: websocket`,
+                  `Connection: Upgrade`,
+                  ...Object.entries(req.headers)
+                    .filter(([k]) => !['host', 'connection', 'upgrade'].includes(k.toLowerCase()))
+                    .map(([k, v]) => `${k}: ${v}`),
+                  '\r\n',
+                ].join('\r\n');
+                proxySocket.write(reqHeaders);
+                if (head && head.length) proxySocket.write(head);
+                socket.pipe(proxySocket);
+                proxySocket.pipe(socket);
+              },
+            );
+            proxySocket.on('error', () => socket.destroy());
+            socket.on('error', () => proxySocket.destroy());
+          });
+
+          httpServer.listen(caPort, '0.0.0.0', () => {
+            console.info(`\n  \x1b[36m➜\x1b[0m  HTTP dev proxy  (desktop):  \x1b[1mhttp://localhost:${caPort}/\x1b[0m`);
+            console.info(`  \x1b[36m➜\x1b[0m  CA install page (phone):    \x1b[1mhttp://192.x.x.x:${caPort}/install-ca\x1b[0m`);
+            console.info(`  \x1b[36m➜\x1b[0m  HTTPS (phone, after cert):  \x1b[1mhttps://192.x.x.x:${httpsPort}/\x1b[0m`);
+          });
+        },
+      }] : []),
       svgr({
         svgrOptions: {
           ref: true,
@@ -86,7 +238,7 @@ export default defineConfig(({ command, mode }) => {
 
     // Development server configuration
     server: {
-      port: serverPort,
+      port: httpsEnabled ? serverPort + 1 : serverPort,
       open: false,
       host: true,
       strictPort: strictPortConfig,
