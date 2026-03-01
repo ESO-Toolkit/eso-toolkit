@@ -4,7 +4,7 @@ const baseConfig = require("../jest.config.cjs");
 module.exports = {
   ...baseConfig,
 
-  rootDir: __dirname,
+  rootDir: path.resolve(__dirname, ".."),
 
   setupFilesAfterEnv: ["<rootDir>/src/setupTests.ts"],
 
