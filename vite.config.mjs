@@ -94,21 +94,25 @@ ${downloadBtn}
 </body></html>`;
           };
 
+          // Load the mkcert CA cert once — used for both TLS proxy validation and cert download
+          const mkcertCaPath = getMkcertCaPath();
+          if (!fs.existsSync(mkcertCaPath)) {
+            throw new Error(
+              `mkcert CA not found at ${mkcertCaPath}. ` +
+                'Start the dev server once with VITE_HTTPS=true so mkcert can generate the local CA, then restart.',
+            );
+          }
+          const mkcertCa = fs.readFileSync(mkcertCaPath);
+          const trustOptions = { ca: mkcertCa };
+
           const httpServer = http.createServer((req, res) => {
-            // Cert install page — served directly
             if (req.url === '/install-ca' || req.url === '/mkcert-ca.pem' || req.url === '/mkcert-ca.crt') {
               if (req.url === '/mkcert-ca.pem' || req.url === '/mkcert-ca.crt') {
-                const caPath = getMkcertCaPath();
-                if (!fs.existsSync(caPath)) {
-                  res.writeHead(404, { 'Content-Type': 'text/plain' });
-                  res.end(`CA file not found at ${caPath}. Start the server once with VITE_HTTPS=true to generate it.`);
-                  return;
-                }
                 res.writeHead(200, {
                   'Content-Type': 'application/x-x509-ca-cert',
                   'Content-Disposition': 'attachment; filename="mkcert-rootCA.crt"',
                 });
-                res.end(fs.readFileSync(caPath));
+                res.end(mkcertCa);
                 return;
               }
               res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -124,7 +128,7 @@ ${downloadBtn}
                 path: req.url,
                 method: req.method,
                 headers: { ...req.headers, host: `localhost:${httpsPort}` },
-                rejectUnauthorized: false,
+                ...trustOptions,
               },
               (proxyRes) => {
                 res.writeHead(proxyRes.statusCode, proxyRes.headers);
@@ -141,7 +145,11 @@ ${downloadBtn}
           // Proxy WebSocket upgrades (Vite HMR) from ws:// to wss://
           httpServer.on('upgrade', (req, socket, head) => {
             const proxySocket = tls.connect(
-              { host: 'localhost', port: httpsPort, rejectUnauthorized: false },
+              {
+                host: 'localhost',
+                port: httpsPort,
+                ...trustOptions,
+              },
               () => {
                 const reqHeaders = [
                   `${req.method} ${req.url} HTTP/1.1`,

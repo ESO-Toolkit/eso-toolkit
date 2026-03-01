@@ -103,9 +103,7 @@ export async function startPKCEAuth(): Promise<void> {
       { authUrl },
     );
     const urlInfo = authUrl ? `\n\nURL attempted:\n${authUrl}` : '';
-    alert(
-      `Login redirect failed: ${err instanceof Error ? err.message : String(err)}${urlInfo}`,
-    );
+    alert(`Login redirect failed: ${err instanceof Error ? err.message : String(err)}${urlInfo}`);
   }
 }
 
