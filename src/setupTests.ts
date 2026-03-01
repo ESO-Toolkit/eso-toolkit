@@ -18,11 +18,11 @@ jest.mock('./utils/logger', () => {
 // Polyfill for TextEncoder and TextDecoder (required for MUI X DataGrid and other components)
 
 if (typeof global.TextEncoder === 'undefined') {
-  (global as any).TextEncoder = TextEncoder;
+  (global as typeof globalThis & { TextEncoder?: typeof TextEncoder }).TextEncoder = TextEncoder;
 }
 
 if (typeof global.TextDecoder === 'undefined') {
-  (global as any).TextDecoder = TextDecoder;
+  (global as typeof globalThis & { TextDecoder?: typeof TextDecoder }).TextDecoder = TextDecoder;
 }
 
 // Polyfill for ResizeObserver (required for Three.js Canvas and react-use-measure)
@@ -32,7 +32,7 @@ if (typeof global.ResizeObserver === 'undefined') {
     unobserve(): void {}
     disconnect(): void {}
   }
-  (global as any).ResizeObserver = new ResizeObserver();
+  (global as typeof globalThis & { ResizeObserver?: typeof ResizeObserver }).ResizeObserver = ResizeObserver;
 }
 
 // Mock localStorage with a functional implementation
