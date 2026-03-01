@@ -170,8 +170,8 @@ export const NebulaBackground: React.FC = () => {
           inset: 0,
           zIndex: 3,
           backgroundImage: `
-            linear-gradient(rgba(0, 217, 255, 0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 217, 255, 0.025) 1px, transparent 1px)
+            linear-gradient(transparent 24px, rgba(0, 217, 255, 0.025) 24px, rgba(0, 217, 255, 0.025) 25px, transparent 25px),
+            linear-gradient(90deg, transparent 24px, rgba(0, 217, 255, 0.025) 24px, rgba(0, 217, 255, 0.025) 25px, transparent 25px)
           `,
           backgroundSize: '50px 50px',
           opacity: 0.4,
