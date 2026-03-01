@@ -247,8 +247,7 @@ describe('UserReports Component', () => {
         </Provider>,
       );
 
-      expect(screen.getByText('Loading user information...')).toBeInTheDocument();
-      expect(screen.getByRole('progressbar')).toBeInTheDocument();
+      expect(screen.getByTestId('user-loading-skeleton')).toBeInTheDocument();
     });
   });
 

@@ -1,5 +1,5 @@
 import { Link as LinkIcon, Assignment as AssignmentIcon } from '@mui/icons-material';
-import { Box, Button, TextField, Typography, CircularProgress, useTheme } from '@mui/material';
+import { Box, Button, TextField, Typography, Skeleton, useTheme } from '@mui/material';
 import { format } from 'date-fns';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -225,21 +225,7 @@ export const AuthenticatedLandingSection: React.FC = () => {
           }}
         >
           {latestReportLoading ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CircularProgress size={14} />
-              <Typography
-                variant="body2"
-                sx={{
-                  color:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(255, 255, 255, 0.7)'
-                      : 'rgba(51, 65, 85, 0.7)',
-                  fontSize: '0.875rem',
-                }}
-              >
-                ⚡ Loading...
-              </Typography>
-            </Box>
+            <Skeleton variant="text" width={190} height={22} sx={{ borderRadius: 1 }} />
           ) : latestReport ? (
             <Box
               onClick={() => navigate(`/report/${latestReport.code}`)}
@@ -360,21 +346,7 @@ export const AuthenticatedLandingSection: React.FC = () => {
       >
         {/* Latest Report */}
         {latestReportLoading ? (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <CircularProgress size={14} />
-            <Typography
-              variant="body2"
-              sx={{
-                color:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(255, 255, 255, 0.7)'
-                    : 'rgba(51, 65, 85, 0.7)',
-                fontSize: '0.875rem',
-              }}
-            >
-              ⚡ Loading...
-            </Typography>
-          </Box>
+          <Skeleton variant="text" width={190} height={22} sx={{ borderRadius: 1 }} />
         ) : latestReport ? (
           <Typography
             variant="body2"

@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, Container, Skeleton } from '@mui/material';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
@@ -6,7 +6,6 @@ import { PersistGate } from 'redux-persist/integration/react';
 
 import { AnalyticsListener } from './components/AnalyticsListener';
 import { CookieConsent } from './components/CookieConsent';
-import { MemoizedLoadingSpinner } from './components/CustomLoadingSpinner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HashRouteRedirect } from './components/HashRouteRedirect';
 import { HeaderBar } from './components/HeaderBar';
@@ -146,11 +145,16 @@ const LazyModernFeedbackFab = React.lazy(() =>
   import('./components/BugReportDialog').then((module) => ({ default: module.ModernFeedbackFab })),
 );
 
-// Loading fallback component - use custom spinner to prevent theme flashing
+// Generic page loading skeleton - used for lazy-loaded routes and PersistGate hydration
 const LoadingFallback: React.FC = () => (
-  <Box display="flex" justifyContent="center" alignItems="center" height="400px">
-    <MemoizedLoadingSpinner size={40} />
-  </Box>
+  <Container maxWidth="lg" sx={{ pt: 4, px: 2 }}>
+    <Skeleton variant="text" width="35%" height={52} sx={{ mb: 2, borderRadius: 1 }} />
+    <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 2, mb: 2 }} />
+    <Box sx={{ display: 'flex', gap: 2 }}>
+      <Skeleton variant="rectangular" height={160} sx={{ flex: 1, borderRadius: 2 }} />
+      <Skeleton variant="rectangular" height={160} sx={{ flex: 1, borderRadius: 2 }} />
+    </Box>
+  </Container>
 );
 
 // Text Editor specific loading fallback
