@@ -17,12 +17,11 @@ jest.mock('./utils/logger', () => {
 });
 // Polyfill for TextEncoder and TextDecoder (required for MUI X DataGrid and other components)
 if (typeof global.TextEncoder === 'undefined') {
-  // @ts-expect-error - TextEncoder may not be defined in test environment
   global.TextEncoder = TextEncoder;
 }
 
 if (typeof global.TextDecoder === 'undefined') {
-  // @ts-expect-error - TextDecoder may not be defined in test environment
+  // @ts-expect-error - type mismatch between Node util and global
   global.TextDecoder = TextDecoder;
 }
 
