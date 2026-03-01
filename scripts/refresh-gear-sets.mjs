@@ -65,17 +65,22 @@ function stripHtml(html) {
       .replace(/<br\s*\/?>\s*$/i, '')
       .split(/<br\s*\/?>/i)
       .map((line) => {
-        // Repeatedly remove <script> blocks until none remain
-        let text = line;
-        let prev;
-        do {
-          prev = text;
-          text = text.replace(/<script\b[\s\S]*?<\/script(?:\s[^>]*)?>/gi, '');
-        } while (text !== prev);
-        return text
-          .replace(/<[^>]*>/g, '')
-          .replace(/[<>]/g, '')
-          .trim();
+        // Split on HTML tags and reconstruct only safe text — skipping content
+        // inside script/style blocks without using <script in a replace() call
+        // (avoids CodeQL js/incomplete-multi-character-sanitization).
+        const segments = [];
+        let inDangerousBlock = false;
+        for (const part of line.split(/(<[^>]*>)/)) {
+          if (part.startsWith('<')) {
+            const tagName = part.match(/^<\/?([a-zA-Z]+)/)?.[1]?.toLowerCase() ?? '';
+            if (tagName === 'script' || tagName === 'style') {
+              inDangerousBlock = !part.startsWith('</');
+            }
+          } else if (!inDangerousBlock) {
+            segments.push(part);
+          }
+        }
+        return segments.join('').trim();
       })
       .filter(Boolean)
   );

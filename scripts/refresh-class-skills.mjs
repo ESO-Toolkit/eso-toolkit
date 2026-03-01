@@ -64,19 +64,26 @@ const HTML_ENTITIES = {
 function stripHtml(html) {
   if (!html) return '';
   // Decode entities first so encoded tags (e.g. &lt;script&gt;) are caught before stripping
-  let text = html
+  const decoded = html
     .replace(/&(?:amp|#39|quot|lt|gt|nbsp);/g, (e) => HTML_ENTITIES[e] ?? e)
     .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
-  // Repeatedly remove <script> blocks until none remain (prevents re-introduction via nesting)
-  let prev;
-  do {
-    prev = text;
-    text = text.replace(/<script\b[\s\S]*?<\/script(?:\s[^>]*)?>/gi, '');
-  } while (text !== prev);
-  return text
-    .replace(/<a\s[^>]*>|<\/a>/gi, '')
-    .replace(/<[^>]*>/g, '')
-    .replace(/[<>]/g, '')
+  // Split on HTML tags and reconstruct only safe text — skipping content inside
+  // script/style blocks without using <script in a replace() (avoids CodeQL
+  // js/incomplete-multi-character-sanitization).
+  const segments = [];
+  let inDangerousBlock = false;
+  for (const part of decoded.split(/(<[^>]*>)/)) {
+    if (part.startsWith('<')) {
+      const tagName = part.match(/^<\/?([a-zA-Z]+)/)?.[1]?.toLowerCase() ?? '';
+      if (tagName === 'script' || tagName === 'style') {
+        inDangerousBlock = !part.startsWith('</');
+      }
+    } else if (!inDangerousBlock) {
+      segments.push(part);
+    }
+  }
+  return segments
+    .join('')
     .replace(/\r\n|\r|\n/g, ' ')
     .replace(/\s{2,}/g, ' ')
     .trim();
