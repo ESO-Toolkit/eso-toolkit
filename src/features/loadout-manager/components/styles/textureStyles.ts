@@ -32,7 +32,7 @@ export const nebulaBackgroundBase: SxProps<Theme> = {
  * Use on top of dark backgrounds to add luminous depth
  */
 export const blendOverlayScreen: SxProps<Theme> = {
-  position: 'absolute',
+  position: 'fixed',
   inset: 0,
   background: `
     radial-gradient(circle at 30% 40%, rgba(167, 139, 250, 0.15) 0%, transparent 40%),
@@ -49,7 +49,7 @@ export const blendOverlayScreen: SxProps<Theme> = {
  * Use for ambient occlusion simulation
  */
 export const blendOverlayMultiply: SxProps<Theme> = {
-  position: 'absolute',
+  position: 'fixed',
   inset: 0,
   background: 'radial-gradient(circle at 50% 80%, transparent 0%, rgba(0, 0, 0, 0.3) 100%)',
   mixBlendMode: 'multiply' as const,
