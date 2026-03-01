@@ -13,6 +13,7 @@ import type { RootState } from '@/store/storeWithHistory';
 import { selectLoadoutState } from '../store/selectors';
 import type { LoadoutSetup } from '../types/loadout.types';
 
+import { CharacterPortrait as _CharacterPortrait } from './CharacterPortrait';
 import { GearGrid } from './GearGrid';
 import { LoadoutTabs, LoadoutTabValue } from './LoadoutTabs';
 import { SetupEditor } from './SetupEditor';

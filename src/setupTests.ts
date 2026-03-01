@@ -1,10 +1,6 @@
 // jest-dom adds custom jest matchers for asserting on DOM nodes.
-// allows you to do things like:
-// expect(element).toHaveTextContent(/react/i)
-// learn more: https://github.com/testing-library/jest-dom
-import { TextEncoder, TextDecoder } from 'util';
-
 import '@testing-library/jest-dom';
+import { TextEncoder, TextDecoder } from 'util';
 
 // Mock environment utilities to avoid import.meta issues in Jest
 jest.mock('./utils/envUtils');
@@ -19,33 +15,25 @@ jest.mock('./utils/logger', () => {
     Logger: MockLogger,
   };
 });
-
 // Polyfill for TextEncoder and TextDecoder (required for MUI X DataGrid and other components)
-
 if (typeof global.TextEncoder === 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (global as any).TextEncoder = TextEncoder;
+  global.TextEncoder = TextEncoder;
 }
 
 if (typeof global.TextDecoder === 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (global as any).TextDecoder = TextDecoder;
+  // @ts-expect-error - type mismatch between Node util and global
+  global.TextDecoder = TextDecoder;
 }
 
 // Polyfill for ResizeObserver (required for Three.js Canvas and react-use-measure)
 if (typeof global.ResizeObserver === 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (global as any).ResizeObserver = class ResizeObserver {
-    observe(): void {
-      // Mock implementation
-    }
-    unobserve(): void {
-      // Mock implementation
-    }
-    disconnect(): void {
-      // Mock implementation
-    }
-  };
+  class ResizeObserver {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  }
+  (global as typeof globalThis & { ResizeObserver?: typeof ResizeObserver }).ResizeObserver =
+    ResizeObserver;
 }
 
 // Mock localStorage with a functional implementation
@@ -77,42 +65,3 @@ Object.defineProperty(window, 'localStorage', {
   value: createLocalStorageMock(),
   writable: true,
 });
-
-// Mock fetch to prevent actual network requests
-global.fetch = jest.fn(() =>
-  Promise.resolve({
-    ok: true,
-    status: 200,
-    json: () =>
-      Promise.resolve({
-        version: '0.1.0',
-        buildTime: new Date().toISOString(),
-        gitCommit: 'dev-commit',
-        shortCommit: 'dev',
-        buildId: `0.1.0-dev-${Date.now()}`,
-        timestamp: Date.now(),
-        cacheBuster: `v=dev${Date.now()}`,
-      }),
-    text: () => Promise.resolve(''),
-    headers: new Headers(),
-    redirected: false,
-    statusText: 'OK',
-    type: 'basic' as ResponseType,
-    url: '',
-    clone: jest.fn(),
-    body: null,
-    bodyUsed: false,
-    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-    blob: () => Promise.resolve(new Blob()),
-    formData: () => Promise.resolve(new FormData()),
-    bytes: () => Promise.resolve(new Uint8Array()),
-  } as unknown as Response),
-);
-
-// JSDOM 26+ provides a working window.location by default
-// No need to mock window.location anymore
-
-// If tests need specific location methods, they can be mocked individually:
-// Object.defineProperty(window.location, 'assign', { value: jest.fn() });
-// Object.defineProperty(window.location, 'replace', { value: jest.fn() });
-// Object.defineProperty(window.location, 'reload', { value: jest.fn() });

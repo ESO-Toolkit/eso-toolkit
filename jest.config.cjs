@@ -1,5 +1,3 @@
-const { pathsToModuleNameMapper } = require('ts-jest');
-
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'jsdom',
@@ -94,14 +92,8 @@ module.exports = {
   },
 
   // Ignore patterns
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/build/',
-    'scribing-e2e\\.(test|spec)\\.(ts|tsx)$',
-  ],
-  transformIgnorePatterns: [
-    'node_modules/(?!(.*\\.mjs$|@?react-three-fiber|three))',
-  ],
+  testPathIgnorePatterns: ['node_modules', 'build', 'scribing-e2e\\.(test|spec)\\.(ts|tsx)$'],
+  transformIgnorePatterns: ['node_modules/(?!(.*\\.mjs$|@?react-three-fiber|three))'],
 
   // Watch plugins
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
@@ -113,7 +105,7 @@ module.exports = {
 
   // Timeout configuration
   testTimeout: process.env.CI ? 30000 : 10000, // 30s in CI, 10s locally
-  
+
   // Handle async operations better
   detectOpenHandles: true,
 };

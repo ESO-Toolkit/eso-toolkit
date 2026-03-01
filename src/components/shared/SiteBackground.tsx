@@ -41,8 +41,8 @@ export const SiteBackground: React.FC = () => {
       {/* Inject enhanced keyframes for animations */}
       <style>{globalKeyframesEnhanced}</style>
 
-      {/* Nebula background layers - theme aware */}
-      <NebulaBackground darkMode={darkMode} />
+      {/* Nebula background layers - theme awareness handled via blend overlays */}
+      <NebulaBackground />
 
       {/* Blend mode overlay layers for depth - reduced in light mode */}
       <Box

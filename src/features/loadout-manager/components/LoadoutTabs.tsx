@@ -5,6 +5,7 @@
  */
 
 import { Box, Tab, Tabs } from '@mui/material';
+import { alpha as _alpha } from '@mui/material/styles';
 import React, { SyntheticEvent } from 'react';
 
 export type LoadoutTabValue = 'skills' | 'cpFood' | 'gear';
