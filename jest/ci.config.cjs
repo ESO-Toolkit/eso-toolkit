@@ -1,11 +1,10 @@
-const baseConfig = require("../jest.config.cjs");
 const path = require("path");
+const baseConfig = require("../jest.config.cjs");
 
 module.exports = {
   ...baseConfig,
 
-  rootDir: "<rootDir>",
-  roots: ["<rootDir>"],
+  rootDir: __dirname,
 
   setupFilesAfterEnv: ["<rootDir>/src/setupTests.ts"],
 
@@ -17,11 +16,14 @@ module.exports = {
 
   maxWorkers: 1,
   testTimeout: 30000,
+
   logHeapUsage: true,
   detectOpenHandles: true,
   forceExit: true,
+
   verbose: false,
   silent: false,
+
   collectCoverage: true,
   coverageReporters: ["text", "lcov", "json"],
   resolver: undefined,
