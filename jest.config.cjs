@@ -1,5 +1,3 @@
-const { pathsToModuleNameMapper } = require('ts-jest');
-
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'jsdom',
