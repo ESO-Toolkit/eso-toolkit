@@ -161,7 +161,7 @@ const GET_PLAYERS_FOR_REPORT = gql`
     reportData {
       report(code: $code) {
         playerDetails(includeCombatantInfo: true, fightIDs: $fightIDs)
-        events(fightIDs: $fightIDs, dataType: CombatantInfo, useActorIDs: true, limit: 1000000) {
+        events(fightIDs: $fightIDs, dataType: CombatantInfo, useActorIDs: true, limit: 10000) {
           data
         }
       }
