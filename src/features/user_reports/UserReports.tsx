@@ -391,7 +391,10 @@ export const UserReports: React.FC = () => {
                 : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
           }}
         >
-          <CardContent sx={{ ...cardContentSx, position: 'relative' }}>
+          <CardContent
+            sx={{ ...cardContentSx, position: 'relative' }}
+            data-testid="user-loading-skeleton"
+          >
             {/* Mobile: floating refresh button placeholder */}
             {!isDesktop && (
               <Skeleton
@@ -477,7 +480,12 @@ export const UserReports: React.FC = () => {
                       opacity: 1 - i * 0.1,
                     }}
                   >
-                    <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={1}>
+                    <Box
+                      display="flex"
+                      alignItems="flex-start"
+                      justifyContent="space-between"
+                      gap={1}
+                    >
                       <Box flex={1} minWidth={0}>
                         <Skeleton variant="text" width="72%" height={22} />
                         <Skeleton variant="text" width="40%" height={16} sx={{ mt: 0.25 }} />
@@ -870,7 +878,6 @@ export const UserReports: React.FC = () => {
               )}
             </>
           )}
-
         </CardContent>
       </Card>
 
