@@ -638,38 +638,38 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                 {/* Top DPS badge */}
                 {isTopDps && totalDps !== undefined && (
                   <Box sx={{ mb: 0.75 }}>
-                    <Chip
-                      icon={
-                        <EmojiEventsIcon
-                          sx={{
-                            fontSize: '0.85rem !important',
-                            color: '#b45309 !important',
-                          }}
-                        />
-                      }
-                      label={`Top DPS (Total): ${formatDpsValue(totalDps)}`}
-                      size="small"
-                      data-testid="top-dps-badge"
-                      sx={{
-                        height: 22,
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        letterSpacing: 0.3,
-                        background: (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgba(180,83,9,0.25) 0%, rgba(245,158,11,0.15) 100%)'
-                            : 'linear-gradient(135deg, rgba(251,191,36,0.25) 0%, rgba(245,158,11,0.15) 100%)',
-                        border: (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? '1px solid rgba(245,158,11,0.4)'
-                            : '1px solid rgba(180,83,9,0.35)',
-                        '& .MuiChip-label': {
-                          color: (theme) => (theme.palette.mode === 'dark' ? '#fbbf24' : '#92400e'),
-                          px: 0.75,
-                        },
-                        '& .MuiChip-icon': { ml: 0.5 },
-                      }}
-                    />
+                    <Tooltip title={`Top DPS (Total): ${formatDpsValue(totalDps)}`} arrow>
+                      <Chip
+                        icon={
+                          <EmojiEventsIcon
+                            sx={{
+                              fontSize: '0.85rem !important',
+                              color: '#b45309 !important',
+                            }}
+                          />
+                        }
+                        label=""
+                        size="small"
+                        data-testid="top-dps-badge"
+                        sx={{
+                          height: 22,
+                          width: 22,
+                          borderRadius: '50%',
+                          background: (theme) =>
+                            theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgba(180,83,9,0.25) 0%, rgba(245,158,11,0.15) 100%)'
+                              : 'linear-gradient(135deg, rgba(251,191,36,0.25) 0%, rgba(245,158,11,0.15) 100%)',
+                          border: (theme) =>
+                            theme.palette.mode === 'dark'
+                              ? '1px solid rgba(245,158,11,0.4)'
+                              : '1px solid rgba(180,83,9,0.35)',
+                          '& .MuiChip-label': {
+                            display: 'none',
+                          },
+                          '& .MuiChip-icon': { ml: 0, mr: 0 },
+                        }}
+                      />
+                    </Tooltip>
                   </Box>
                 )}
 
