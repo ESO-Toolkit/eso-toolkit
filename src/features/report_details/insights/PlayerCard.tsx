@@ -15,7 +15,7 @@ import {
   AccordionDetails,
   Tooltip,
 } from '@mui/material';
-import { styled, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -33,11 +33,11 @@ import {
   type PotionStreamResult,
 } from '@/utils/potionDetectionUtils';
 
-import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
 import { GearDetailsPanel } from '../../../components/GearDetailsPanel';
 import { GearSetTooltip } from '../../../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillTooltip';
+import type { MetricIntent } from '../../../components/MetricPill';
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
@@ -60,6 +60,8 @@ import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
 import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
 import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 import { ScribedSkillData } from '../../scribing/types';
+
+import { CombatStatsStrip } from './CombatStatsStrip';
 // TODO: Implement proper scribing detection services
 // Temporary stubs to prevent compilation errors
 interface CombatEventData {
@@ -96,28 +98,6 @@ function formatDpsValue(dps: number): string {
   return String(Math.round(dps));
 }
 
-// Styled component for metrics scroll container with thin scrollbar
-const MetricsScrollContainer = styled(Box)(({ theme }) => ({
-  overflowX: 'auto',
-  overflowY: 'hidden',
-  // Firefox: thin scrollbar
-  scrollbarWidth: 'thin',
-  // WebKit: thin horizontal scrollbar (8px vs default ~17px)
-  '&::-webkit-scrollbar': {
-    height: '8px',
-  },
-  '&::-webkit-scrollbar-track': {
-    background: theme.palette.grey[200],
-  },
-  '&::-webkit-scrollbar-thumb': {
-    background: theme.palette.grey[500],
-    borderRadius: '4px',
-  },
-  '&::-webkit-scrollbar-thumb:hover': {
-    background: theme.palette.grey[700],
-  },
-}));
-
 interface PlayerCardProps {
   player: PlayerDetailsWithRole;
   mundusBuffs: Array<{ name: string; id: number }>;
@@ -140,6 +120,8 @@ interface PlayerCardProps {
   isTopDps?: boolean;
   /** The player's total DPS value (used in the badge label) */
   totalDps?: number;
+  /** The player's DPS value for display in combat stats */
+  dpsValue?: number;
   critDamageSummary?: { avg: number; max: number };
   /** Bar swap analysis result, used to display bar setup pattern on DPS cards */
   barSwapResult?: BarSwapAnalysisResult;
@@ -194,40 +176,6 @@ function consolidateBuildIssues(buildIssues: BuildIssue[]): {
   return grouped;
 }
 
-interface MundusChipProps {
-  mundusBuffs: Array<{ name: string; id: number }>;
-}
-
-const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
-  if (mundusBuffs.length === 0) return null;
-
-  // Since players can only have 1 mundus at a time, get the first/only one
-  const mundusBuff = mundusBuffs[0];
-  const mundusName = mundusBuff.name.replace(/^Boon:\s*/i, '').replace(/^The\s+/i, '');
-
-  return (
-    <Tooltip title={`Mundus: ${mundusName}`} enterTouchDelay={0} leaveTouchDelay={3000}>
-      <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-        <img src={mundusIcon} alt="" style={{ width: 12, height: 12 }} />
-        <span style={{ margin: '0 1px' }}></span>
-        <Box
-          component="span"
-          sx={{
-            display: 'inline',
-            fontWeight: 700,
-            fontSize: { xs: 8, sm: 9, md: 10 },
-            letterSpacing: '.01em',
-            color: 'primary.main',
-            textTransform: 'uppercase',
-          }}
-        >
-          {mundusName}
-        </Box>
-      </span>
-    </Tooltip>
-  );
-};
-
 export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
   ({
     player,
@@ -249,6 +197,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     playerGear,
     isTopDps,
     totalDps,
+    dpsValue,
     critDamageSummary,
     barSwapResult,
     potionStreamResult,
@@ -259,7 +208,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     const _CASTS_PINS =
       '2%24Off%24%23244F4B%24expression%24ability.id+NOT+IN%2816499%2C28541%2C16165%2C16145%2C18350%2C28549%2C45223%2C18396%2C16277%2C115548%2C85572%2C23196%2C95040%2C39301%2C63507%2C22269%2C95042%2C191078%2C32910%2C41963%2C16261%2C45221%2C48076%2C32974%2C21970%2C41838%2C16565%2C45227%2C118604%2C26832%2C15383%2C45382%2C16420%2C68401%2C47193%2C190583%2C16212%2C228524%2C186981%2C16037%2C15435%2C15279%2C72931%2C45228%2C16688%2C61875%2C61874%29';
 
-    const castsUrl = React.useCallback((rid?: string, fid?: string | null) => {
+    const _castsUrl = React.useCallback((rid?: string, fid?: string | null) => {
       if (!rid) return undefined;
       const fightParam = fid ? `&fight=${encodeURIComponent(fid)}` : '';
       return `https://www.esologs.com/reports/${encodeURIComponent(rid)}?type=casts${fightParam}`;
@@ -481,6 +430,158 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         tooltip: describePotionType(potionType),
       };
     }, [auras, player.potionUse, potionStreamResult]);
+
+    // Build consumable items for CombatStatsStrip
+    const consumableItems = React.useMemo(() => {
+      const items: Array<{
+        label: string;
+        emoji: string;
+        ariaLabel: string;
+        tooltip: string;
+        display: string;
+        color?: string;
+        isMundus?: boolean;
+        testId?: string;
+      }> = [];
+
+      if (mundusBuffs.length > 0) {
+        const mundusName = mundusBuffs[0].name.replace(/^Boon:\s*/i, '').replace(/^The\s+/i, '');
+        items.push({
+          label: 'mundus',
+          emoji: '',
+          ariaLabel: 'mundus',
+          tooltip: `Mundus: ${mundusName}`,
+          display: mundusName,
+          color: undefined, // uses primary.main via the component
+          isMundus: true,
+        });
+      }
+
+      items.push({
+        label: 'food',
+        emoji: '🍲',
+        ariaLabel: 'food',
+        tooltip: `Food/Drink: ${foodAura ? foodAura.name : 'None'}`,
+        display: foodInfo.display,
+        color: foodInfo.color,
+        testId: `food-drink-${player.id}`,
+      });
+
+      items.push({
+        label: 'potion',
+        emoji: '⚗️',
+        ariaLabel: 'potion',
+        tooltip: `Potion (${potionInfo.count}x): ${potionInfo.tooltip}`,
+        display: `${potionInfo.count}×${potionInfo.display}`,
+        color: potionInfo.color,
+        testId: `potion-${player.id}`,
+      });
+
+      return items;
+    }, [mundusBuffs, foodAura, foodInfo, potionInfo, player.id]);
+
+    // Build combat stat pills for CombatStatsStrip — role-adaptive
+    const combatStatPills = React.useMemo(() => {
+      const pills: Array<{
+        label: string;
+        value: string | number;
+        suffix?: string;
+        intent: MetricIntent;
+        tooltip: string;
+      }> = [];
+
+      // DPS-specific stats
+      if (player.role === 'dps') {
+        if (critDamageSummary) {
+          pills.push({
+            label: 'Crit Avg',
+            value: critDamageSummary.avg.toFixed(0),
+            suffix: '%',
+            intent:
+              critDamageSummary.avg >= 125
+                ? 'success'
+                : critDamageSummary.avg >= 100
+                  ? 'warning'
+                  : 'danger',
+            tooltip:
+              'Time-weighted average critical damage multiplier during the fight',
+          });
+          pills.push({
+            label: 'Crit Max',
+            value: critDamageSummary.max.toFixed(0),
+            suffix: '%',
+            intent: critDamageSummary.max >= 125 ? 'success' : 'danger',
+            tooltip: 'Highest recorded critical damage multiplier during the fight',
+          });
+        }
+        if (dpsValue != null && dpsValue > 0) {
+          pills.push({
+            label: 'DPS',
+            value: formatDpsValue(dpsValue),
+            intent: 'info',
+            tooltip: `Damage per second: ${Math.round(dpsValue).toLocaleString()}`,
+          });
+        }
+      }
+
+      // CPM — all roles
+      pills.push({
+        label: 'CPM',
+        value: cpm,
+        intent: 'neutral',
+        tooltip: 'Casts per Minute',
+      });
+
+      // Distance — all roles (if available)
+      if (distanceDisplay) {
+        pills.push({
+          label: 'Dist',
+          value: distanceDisplay,
+          intent: 'neutral',
+          tooltip: 'Distance traveled during this fight',
+        });
+      }
+
+      // Bar swap pattern — DPS only
+      if (player.role === 'dps' && barSwapResult?.barSetupPattern) {
+        pills.push({
+          label: 'Bars',
+          value: barSwapResult.barSetupPattern,
+          intent: 'neutral',
+          tooltip:
+            'Bar rotation pattern — each letter is one bar-trip between swaps: F = front bar, B = back bar, S = setup trip',
+        });
+      }
+
+      // Deaths — all roles
+      pills.push({
+        label: 'Deaths',
+        value: deaths,
+        intent: deaths > 0 ? 'danger' : 'success',
+        tooltip: 'Deaths in this fight',
+      });
+
+      // Resurrects — all roles
+      if (resurrects > 0) {
+        pills.push({
+          label: 'Res',
+          value: resurrects,
+          intent: 'success',
+          tooltip: 'Successful resurrects performed',
+        });
+      }
+
+      return pills;
+    }, [
+      player.role,
+      critDamageSummary,
+      dpsValue,
+      cpm,
+      distanceDisplay,
+      barSwapResult,
+      deaths,
+      resurrects,
+    ]);
 
     const resolvedPlayerName = resolveActorName(player);
     const normalizedDisplayName = resolvedPlayerName.trim();
@@ -1134,385 +1235,15 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         : 'rgb(167 199 220) 0px 2px 4px',
                   }}
                 >
-                  <Box
-                    sx={{
-                      mb: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'flex-start',
-                      minWidth: 0,
-                      minHeight: 28,
+                  <CombatStatsStrip
+                    consumables={consumableItems}
+                    combatStats={combatStatPills}
+                    resources={{
+                      maxMagicka,
+                      maxHealth,
+                      maxStamina,
                     }}
-                  >
-                    <MetricsScrollContainer
-                      sx={{
-                        display: 'flex',
-                        flexWrap: 'nowrap',
-                        gap: 0.5,
-                        minHeight: 24,
-                        flex: '1 1 auto',
-                        minWidth: 0,
-                        mr: 0.5,
-                      }}
-                    >
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 0.25,
-                          whiteSpace: 'nowrap',
-                          fontSize: { xs: '0.7rem', sm: '0.75rem', md: 'body2.fontSize' },
-                        }}
-                      >
-                        {mundusBuffs.length > 0 && (
-                          <>
-                            <MundusChip mundusBuffs={mundusBuffs} />
-                            {' · '}
-                          </>
-                        )}
-                        <Tooltip
-                          title={`Food/Drink: ${foodAura ? foodAura.name : 'None'}`}
-                          enterTouchDelay={0}
-                          leaveTouchDelay={3000}
-                        >
-                          <span
-                            style={{ display: 'inline-flex', alignItems: 'center' }}
-                            data-testid={`food-drink-${player.id}`}
-                          >
-                            <span role="img" aria-label="food">
-                              🍲
-                            </span>
-                            <span style={{ margin: '0 1px' }}></span>
-                            <Box
-                              component="span"
-                              sx={{
-                                display: 'inline',
-                                fontWeight: 700,
-                                fontSize: { xs: 8, sm: 9, md: 10 },
-                                letterSpacing: '.01em',
-                                color: foodInfo.color,
-                              }}
-                            >
-                              {foodInfo.display}
-                            </Box>
-                          </span>
-                        </Tooltip>{' '}
-                        ·{' '}
-                        <Tooltip
-                          title={`Potion (${potionInfo.count}x): ${potionInfo.tooltip}`}
-                          enterTouchDelay={0}
-                          leaveTouchDelay={3000}
-                        >
-                          <span
-                            style={{ display: 'inline-flex', alignItems: 'center' }}
-                            data-testid={`potion-${player.id}`}
-                          >
-                            <span role="img" aria-label="potion">
-                              ⚗️
-                            </span>
-                            <span style={{ margin: '0 1px' }}></span>
-                            <Box
-                              component="span"
-                              sx={{
-                                display: 'inline',
-                                fontWeight: 700,
-                                fontSize: { xs: 8, sm: 9, md: 10 },
-                                letterSpacing: '.01em',
-                                color: potionInfo.color,
-                              }}
-                            >
-                              {potionInfo.count}×{potionInfo.display}
-                            </Box>
-                          </span>
-                        </Tooltip>{' '}
-                        ·{' '}
-                        <Tooltip
-                          title="Deaths in this fight"
-                          enterTouchDelay={0}
-                          leaveTouchDelay={3000}
-                        >
-                          <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                            <span role="img" aria-label="deaths">
-                              💀
-                            </span>
-                            <span style={{ margin: '0 1px' }}></span>
-                            {deaths}
-                          </span>
-                        </Tooltip>{' '}
-                        ·{' '}
-                        <Tooltip
-                          title="Successful resurrects performed"
-                          enterTouchDelay={0}
-                          leaveTouchDelay={3000}
-                        >
-                          <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                            <span role="img" aria-label="resurrects">
-                              ❤️
-                            </span>
-                            <span style={{ margin: '0 1px' }}></span>
-                            {resurrects}
-                          </span>
-                        </Tooltip>{' '}
-                        ·{' '}
-                        <Tooltip
-                          title="Casts per Minute"
-                          enterTouchDelay={0}
-                          leaveTouchDelay={3000}
-                        >
-                          <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                            <span role="img" aria-label="cpm">
-                              🐭
-                            </span>
-                            <span style={{ margin: '0 1px' }}></span>
-                            {reportId ? (
-                              <a
-                                href={castsUrl(reportId, fightId)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ color: 'inherit', textDecoration: 'underline' }}
-                              >
-                                {cpm}
-                              </a>
-                            ) : (
-                              <>{cpm}</>
-                            )}
-                          </span>
-                        </Tooltip>
-                        {distanceDisplay && (
-                          <>
-                            {' '}
-                            ·{' '}
-                            <Tooltip
-                              title="Distance traveled during this fight"
-                              enterTouchDelay={0}
-                              leaveTouchDelay={3000}
-                            >
-                              <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                <span role="img" aria-label="distance">
-                                  🛤️
-                                </span>
-                                <span style={{ margin: '0 1px' }}></span>
-                                {distanceDisplay}
-                              </span>
-                            </Tooltip>
-                          </>
-                        )}
-                        {player.role === 'dps' && barSwapResult?.barSetupPattern && (
-                          <>
-                            {' '}
-                            ·{' '}
-                            <Tooltip
-                              title={`Bar rotation pattern — each letter is one bar-trip between swaps: F = front bar, B = back bar, S = setup trip`}
-                              enterTouchDelay={0}
-                              leaveTouchDelay={3000}
-                            >
-                              <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                <span role="img" aria-label="bar pattern">
-                                  🔄
-                                </span>
-                                <span style={{ margin: '0 1px' }}></span>
-                                <Box
-                                  component="span"
-                                  sx={{
-                                    fontWeight: 700,
-                                    letterSpacing: '0.05em',
-                                    fontSize: { xs: '0.65rem', sm: '0.7rem' },
-                                  }}
-                                >
-                                  {barSwapResult.barSetupPattern}
-                                </Box>
-                              </span>
-                            </Tooltip>
-                          </>
-                        )}
-                      </Typography>
-                    </MetricsScrollContainer>
-                  </Box>
-
-                  {critDamageSummary && player.role === 'dps' && (
-                    <Box
-                      sx={{
-                        mb: 1,
-                        px: 0.5,
-                      }}
-                    >
-                      <Tooltip
-                        title="Critical Damage: avg is the time-weighted average crit damage multiplier; max is the highest recorded value during the fight"
-                        enterTouchDelay={0}
-                        leaveTouchDelay={3000}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color:
-                              critDamageSummary.avg >= 125
-                                ? 'success.main'
-                                : critDamageSummary.avg >= 100
-                                  ? 'warning.main'
-                                  : 'error.main',
-                            fontWeight: 600,
-                            fontSize: { xs: '0.68rem', sm: '0.72rem' },
-                            cursor: 'help',
-                          }}
-                        >
-                          ⚔️ Crit: {critDamageSummary.avg.toFixed(0)}% avg (
-                          {critDamageSummary.max.toFixed(0)}% max)
-                        </Typography>
-                      </Tooltip>
-                    </Box>
-                  )}
-
-                  {(maxHealth > 0 || maxStamina > 0 || maxMagicka > 0) && (
-                    <Box
-                      sx={{
-                        mb: 1.5,
-                        p: 1,
-                        borderRadius: '10px',
-                        background:
-                          'linear-gradient(135deg, rgb(153 210 255 / 15%) 0%, rgb(255 210 210 / 33%) 55%, rgb(177 255 205 / 29%) 100%)',
-                        border:
-                          theme.palette.mode === 'dark'
-                            ? '1px solid rgba(255,255,255,0.05)'
-                            : '1px solid rgba(0,0,0,0.05)',
-                        backdropFilter: 'blur(10px)',
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 1,
-                        }}
-                      >
-                        {maxMagicka > 0 && (
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: 0.5,
-                              flex: 1,
-                            }}
-                          >
-                            <Tooltip title="Max Magicka" enterTouchDelay={0} leaveTouchDelay={3000}>
-                              <Box
-                                sx={{
-                                  width: 12,
-                                  height: 12,
-                                  borderRadius: '50%',
-                                  background:
-                                    theme.palette.mode === 'dark'
-                                      ? 'radial-gradient(circle at 30% 30%, #8cc8ff 0%, #74c0fc 50%, #339af0 100%)'
-                                      : 'radial-gradient(circle at 30% 30%, #60a5fa 0%, #2563eb 50%, #1d4ed8 100%)',
-                                  boxShadow:
-                                    theme.palette.mode === 'dark'
-                                      ? '0 0 8px rgba(116, 192, 252, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2)'
-                                      : '0 0 6px rgba(37, 99, 235, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.3)',
-                                  cursor: 'default',
-                                }}
-                              />
-                            </Tooltip>
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: theme.palette.mode === 'dark' ? '#ffffff' : '#374151',
-                                fontSize: '0.7rem',
-                                fontWeight: 600,
-                                letterSpacing: '0.02em',
-                              }}
-                            >
-                              {maxMagicka.toLocaleString()}
-                            </Typography>
-                          </Box>
-                        )}
-                        {maxHealth > 0 && (
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: 0.5,
-                              flex: 1,
-                            }}
-                          >
-                            <Tooltip title="Max Health" enterTouchDelay={0} leaveTouchDelay={3000}>
-                              <Box
-                                sx={{
-                                  width: 12,
-                                  height: 12,
-                                  borderRadius: '50%',
-                                  background:
-                                    theme.palette.mode === 'dark'
-                                      ? 'radial-gradient(circle at 30% 30%, #ff8a8a 0%, #ff6b6b 50%, #ee5a5a 100%)'
-                                      : 'radial-gradient(circle at 30% 30%, #f87171 0%, #dc2626 50%, #b91c1c 100%)',
-                                  boxShadow:
-                                    theme.palette.mode === 'dark'
-                                      ? '0 0 8px rgba(255, 107, 107, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2)'
-                                      : '0 0 6px rgba(220, 38, 38, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.3)',
-                                  cursor: 'default',
-                                }}
-                              />
-                            </Tooltip>
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: theme.palette.mode === 'dark' ? '#ffffff' : '#374151',
-                                fontSize: '0.7rem',
-                                fontWeight: 600,
-                                letterSpacing: '0.02em',
-                              }}
-                            >
-                              {maxHealth.toLocaleString()}
-                            </Typography>
-                          </Box>
-                        )}
-                        {maxStamina > 0 && (
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: 0.5,
-                              flex: 1,
-                            }}
-                          >
-                            <Tooltip title="Max Stamina" enterTouchDelay={0} leaveTouchDelay={3000}>
-                              <Box
-                                sx={{
-                                  width: 12,
-                                  height: 12,
-                                  borderRadius: '50%',
-                                  background:
-                                    theme.palette.mode === 'dark'
-                                      ? 'radial-gradient(circle at 30% 30%, #6bcf7f 0%, #51cf66 50%, #37b24d 100%)'
-                                      : 'radial-gradient(circle at 30% 30%, #34d399 0%, #059669 50%, #047857 100%)',
-                                  boxShadow:
-                                    theme.palette.mode === 'dark'
-                                      ? '0 0 8px rgba(81, 207, 102, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2)'
-                                      : '0 0 6px rgba(5, 150, 105, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.3)',
-                                  cursor: 'default',
-                                }}
-                              />
-                            </Tooltip>
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: theme.palette.mode === 'dark' ? '#ffffff' : '#374151',
-                                fontSize: '0.7rem',
-                                fontWeight: 600,
-                                letterSpacing: '0.02em',
-                              }}
-                            >
-                              {maxStamina.toLocaleString()}
-                            </Typography>
-                          </Box>
-                        )}
-                      </Box>
-                    </Box>
-                  )}
+                  />
 
                   {championPoints.length > 0 && (
                     <Box sx={{ mt: 1 }}>

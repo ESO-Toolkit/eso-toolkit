@@ -141,6 +141,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         const isTopDps = topDpsPlayerId !== null && String(player.id) === topDpsPlayerId;
         const barSwapResult = barSwapByPlayer?.[String(player.id)];
         const potionStreamResult = potionResultsByPlayer?.[String(player.id)];
+        const dpsValue = dpsValueByPlayer?.[String(player.id)];
 
         return {
           key: player.id,
@@ -164,6 +165,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           critDamageSummary,
           barSwapResult,
           potionStreamResult,
+          dpsValue,
         };
       });
     }, [
@@ -187,6 +189,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       criticalDamageByPlayer,
       barSwapByPlayer,
       potionResultsByPlayer,
+      dpsValueByPlayer,
     ]);
 
     // Filter, search, and sort players
@@ -506,6 +509,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 critDamageSummary={playerData.critDamageSummary}
                 barSwapResult={playerData.barSwapResult}
                 potionStreamResult={playerData.potionStreamResult}
+                dpsValue={playerData.dpsValue}
               />
             </Box>
           ))}

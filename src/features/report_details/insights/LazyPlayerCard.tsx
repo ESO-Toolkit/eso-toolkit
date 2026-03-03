@@ -129,6 +129,8 @@ export interface PlayerCardProps {
   isTopDps?: boolean;
   /** The player's total DPS value (used in the badge label) */
   totalDps?: number;
+  /** The player's DPS value for display in combat stats */
+  dpsValue?: number;
   critDamageSummary?: { avg: number; max: number };
   /** Bar swap analysis result, used to display bar setup pattern on DPS cards */
   barSwapResult?: BarSwapAnalysisResult;
