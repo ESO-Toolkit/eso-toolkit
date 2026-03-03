@@ -121,15 +121,14 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
   const accentGradient = `linear-gradient(135deg, ${accentColor} 0%, ${accentColorAlt} 100%)`;
 
   // ------- Glassmorphism tokens -------
-  // Use opaque backgrounds to avoid backdrop-filter corner rendering artifacts
   const panelBg = isDark
-    ? 'linear-gradient(180deg, #0f172a 0%, #060b14 100%)'
-    : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)';
+    ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.75) 0%, rgba(3, 7, 18, 0.85) 100%)'
+    : 'linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(248, 250, 252, 0.92) 100%)';
   const panelBorder = isDark
     ? `1px solid ${alpha('#38bdf8', 0.12)}`
     : `1px solid ${alpha('#0f172a', 0.08)}`;
   const panelShadow = isDark
-    ? '0 8px 30px rgba(0, 0, 0, 0.4)'
+    ? '0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
     : '0 4px 24px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04)';
 
   // ------- Keyframes (inlined for sx) -------
@@ -334,9 +333,10 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
       transitionDuration={{ enter: 250, exit: 200 }}
       PaperProps={{
         sx: {
-          backgroundColor: 'transparent',
           background: panelBg,
-          border: 'none',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: panelBorder,
           borderRadius: isMobile ? 0 : '14px',
           boxShadow: panelShadow,
           overflow: 'hidden',
@@ -351,7 +351,6 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             right: 0,
             height: '2px',
             background: accentGradient,
-            borderRadius: isMobile ? 0 : '14px 14px 0 0',
             zIndex: 1,
             ...shimmer,
             backgroundSize: '200% 100%',
@@ -473,8 +472,10 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           py: 2,
           borderTop: panelBorder,
           background: isDark
-            ? 'linear-gradient(180deg, #0f172a 0%, #0b1220 100%)'
-            : '#f8fafc',
+            ? `linear-gradient(180deg, ${alpha('#0f172a', 0.6)} 0%, ${alpha('#0b1220', 0.8)} 100%)`
+            : alpha('#f8fafc', 0.6),
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
           gap: 1.5,
         }}
       >
@@ -556,9 +557,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                 },
               }}
             >
-              {isSubmitting
-                ? 'Submitting…'
-                : `Submit ${isBugReport ? 'Bug Report' : 'Feedback'}`}
+              {isSubmitting ? 'Submitting…' : `Submit ${isBugReport ? 'Bug Report' : 'Feedback'}`}
             </Button>
           </>
         )}

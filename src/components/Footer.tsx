@@ -1070,7 +1070,15 @@ export const Footer: React.FC = React.memo(() => {
             Studios, Bethesda, or esologs.com. All trademarks are the property of their respective
             owners.
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+            }}
+          >
             <Link
               component={RouterLink}
               to="/privacy"
@@ -1089,7 +1097,9 @@ export const Footer: React.FC = React.memo(() => {
             <Button
               size="small"
               startIcon={<BugReport sx={{ fontSize: '0.9rem !important' }} />}
-              onClick={() => { openBugReport({ url: window.location.href }); }}
+              onClick={() => {
+                openBugReport({ url: window.location.href });
+              }}
               sx={{
                 fontSize: '0.8rem',
                 opacity: 0.6,
@@ -1110,7 +1120,6 @@ export const Footer: React.FC = React.memo(() => {
               Report a Bug
             </Button>
           </Box>
-
         </Box>
       </Container>
 

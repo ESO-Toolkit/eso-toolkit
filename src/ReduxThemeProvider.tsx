@@ -336,7 +336,6 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 borderTop: darkMode
                   ? '1px solid rgba(56, 189, 248, 0.1) !important'
                   : '1px solid rgba(15, 23, 42, 0.08) !important',
-                borderRadius: '0 0 24px 24px !important',
               },
             },
           },
