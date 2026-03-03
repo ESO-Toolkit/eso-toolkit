@@ -18,8 +18,8 @@ import React, { useMemo } from 'react';
 // Mote colour palette — soft pastels that feel luminous on white
 const MOTE_COLORS = [
   'rgba(147, 130, 220, 0.45)', // lavender
-  'rgba(56, 189, 248, 0.40)',  // sky blue
-  'rgba(94, 234, 212, 0.35)',  // teal
+  'rgba(56, 189, 248, 0.40)', // sky blue
+  'rgba(94, 234, 212, 0.35)', // teal
   'rgba(236, 172, 190, 0.35)', // rose
   'rgba(165, 180, 252, 0.40)', // periwinkle
 ] as const;
@@ -119,8 +119,7 @@ export const AuroraBackground: React.FC = () => {
             height: '65%',
             top: '10%',
             left: '5%',
-            background:
-              'radial-gradient(ellipse, rgba(165, 180, 252, 0.14), transparent 70%)',
+            background: 'radial-gradient(ellipse, rgba(165, 180, 252, 0.14), transparent 70%)',
             filter: 'blur(80px)',
             animation: 'aurCloudDriftA 42s ease-in-out infinite',
           }}
@@ -134,8 +133,7 @@ export const AuroraBackground: React.FC = () => {
             height: '55%',
             bottom: '10%',
             right: '5%',
-            background:
-              'radial-gradient(ellipse, rgba(56, 189, 248, 0.10), transparent 70%)',
+            background: 'radial-gradient(ellipse, rgba(56, 189, 248, 0.10), transparent 70%)',
             filter: 'blur(70px)',
             animation: 'aurCloudDriftB 34s ease-in-out infinite reverse',
           }}
@@ -149,8 +147,7 @@ export const AuroraBackground: React.FC = () => {
             height: '45%',
             top: '30%',
             right: '20%',
-            background:
-              'radial-gradient(ellipse, rgba(236, 172, 190, 0.10), transparent 70%)',
+            background: 'radial-gradient(ellipse, rgba(236, 172, 190, 0.10), transparent 70%)',
             filter: 'blur(65px)',
             animation: 'aurCloudDriftC 48s ease-in-out infinite',
           }}
@@ -164,8 +161,7 @@ export const AuroraBackground: React.FC = () => {
             height: '40%',
             bottom: '20%',
             left: '15%',
-            background:
-              'radial-gradient(ellipse, rgba(94, 234, 212, 0.08), transparent 70%)',
+            background: 'radial-gradient(ellipse, rgba(94, 234, 212, 0.08), transparent 70%)',
             filter: 'blur(60px)',
             animation: 'aurCloudDriftA 52s ease-in-out infinite reverse',
           }}
@@ -194,9 +190,7 @@ export const AuroraBackground: React.FC = () => {
               top: `${m.top}%`,
               animation: `aurMoteFloat ${m.duration}s ease-in-out infinite`,
               animationDelay: `${m.delay}s`,
-              boxShadow: m.hasGlow
-                ? `0 0 ${m.size * 4}px ${m.color}`
-                : 'none',
+              boxShadow: m.hasGlow ? `0 0 ${m.size * 4}px ${m.color}` : 'none',
             }}
           />
         ))}
