@@ -217,7 +217,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
   // =====================================================================
   const renderForm = (): React.JSX.Element => (
     <Fade in timeout={300}>
-      <Stack spacing={2.5}>
+      <Stack spacing={2.5} sx={{ pt: 1 }}>
         {!hasConsent && (
           <Alert
             severity="warning"
@@ -340,6 +340,9 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           borderRadius: isMobile ? 0 : '14px',
           boxShadow: panelShadow,
           overflow: 'hidden',
+          // Fix backdrop-filter rendering artifacts at rounded corners
+          WebkitMaskImage: isMobile ? undefined : '-webkit-radial-gradient(white, black)',
+          isolation: 'isolate',
           minHeight: isMobile ? '100dvh' : undefined,
           maxHeight: isMobile ? '100dvh' : '85vh',
           // Subtle animated top-edge accent
