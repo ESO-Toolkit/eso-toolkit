@@ -334,6 +334,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
       transitionDuration={{ enter: 250, exit: 200 }}
       PaperProps={{
         sx: {
+          backgroundColor: 'transparent',
           background: panelBg,
           border: 'none',
           borderRadius: isMobile ? 0 : '14px',
