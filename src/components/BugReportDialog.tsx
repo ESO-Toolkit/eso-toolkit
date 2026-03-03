@@ -472,10 +472,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           py: 2,
           borderTop: panelBorder,
           background: isDark
-            ? `linear-gradient(180deg, ${alpha('#0f172a', 0.6)} 0%, ${alpha('#0b1220', 0.8)} 100%)`
-            : alpha('#f8fafc', 0.6),
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
+            ? 'linear-gradient(180deg, #0f172a 0%, #0b1220 100%)'
+            : '#f8fafc',
           gap: 1.5,
         }}
       >
