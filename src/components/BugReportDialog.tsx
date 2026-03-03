@@ -1,5 +1,6 @@
 ﻿import { BugReport, Send, Feedback } from '@mui/icons-material';
 import {
+  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -21,6 +22,7 @@ import {
   BugReportCategory,
 } from '../config/errorTrackingConfig';
 import { useLogger } from '../contexts/LoggerContext';
+import { hasErrorTrackingConsent } from '../utils/consentManager';
 import { submitManualBugReport, addBreadcrumb } from '../utils/errorTracking';
 
 
@@ -231,6 +233,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
     }
   };
 
+  const hasConsent = hasErrorTrackingConsent();
   const isValid = description.trim().length > 0;
 
   const renderContent = (): React.JSX.Element => {
@@ -288,6 +291,26 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
 
     return (
       <Stack spacing={2}>
+        {!hasConsent && (
+          <Alert
+            severity="warning"
+            sx={{
+              backgroundColor: (theme) =>
+                theme.palette.mode === 'dark' ? 'rgba(120, 53, 15, 0.3)' : 'rgba(255, 237, 213, 0.9)',
+              border: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? '1px solid rgba(251, 146, 60, 0.4)'
+                  : '1px solid rgba(251, 146, 60, 0.5)',
+              color: (theme) => (theme.palette.mode === 'dark' ? '#fdba74' : '#9a3412'),
+              '& .MuiAlert-icon': {
+                color: (theme) => (theme.palette.mode === 'dark' ? '#fb923c' : '#ea580c'),
+              },
+            }}
+          >
+            Your privacy settings don&apos;t allow error tracking. Your report won&apos;t be
+            submitted until you enable <strong>Error Tracking</strong> in your cookie preferences.
+          </Alert>
+        )}
         <TextField
           fullWidth
           label={isBugReport ? 'Describe the issue' : 'Your feedback'}
