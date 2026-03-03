@@ -17,6 +17,19 @@ twig --version 2>$null
 if ($LASTEXITCODE -ne 0) { Write-Host "twig not installed — using plain git fallbacks" }
 ```
 
+## ⚠️ Worktree Awareness
+
+This project uses **git worktrees** — multiple branches checked out simultaneously in separate directories (e.g. `D:\code\eso-log-aggregator-635`). **Always check worktrees before any branch operation**:
+
+```powershell
+git worktree list
+```
+
+If the target branch is already checked out in another worktree:
+- **Navigate there directly** (`Set-Location <path>`) instead of using `git checkout`
+- Attempting `git checkout <branch>` when that branch is open in another worktree will fail with `"already used by worktree"` — but worse, you may have already stashed unrelated in-progress work unnecessarily before discovering the error
+- **Never stash to switch branches** when a worktree exists for that branch
+
 Install twig (optional): `npm install -g @gittwig/twig`
 
 ## Branch Naming Conventions

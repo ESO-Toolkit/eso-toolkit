@@ -19,6 +19,26 @@ Rebasing replays your branch's commits on top of another branch (usually `main`)
 - `twig cascade` (or manual branch cascade) hits conflicts
 - Developer is stuck mid-rebase and doesn't know how to continue
 
+## ⚠️ Worktree Check (Do First)
+
+**Always** run this before touching any branch:
+
+```powershell
+git worktree list
+```
+
+If the target branch is already checked out in another worktree (e.g. `D:\code\eso-log-aggregator-635`), **navigate there directly** — do NOT attempt `git checkout` in the current worktree:
+
+```powershell
+# Right: go to the worktree where the branch lives
+Set-Location D:\code\eso-log-aggregator-635
+
+# Wrong: git checkout ESO-635/... will fail with "already used by worktree"
+# and forces an unnecessary stash of unrelated in-progress work
+```
+
+---
+
 ## Prerequisites
 
 - Working directory is clean (`git status` shows no uncommitted changes)
@@ -59,6 +79,14 @@ This makes Git accept the default commit message without opening an editor.
 ---
 
 ## Step-by-Step: Simple Rebase
+
+### Step 0: Check Worktrees
+
+```powershell
+# Find which worktree has the branch already checked out
+git worktree list
+# If it appears in another worktree path, cd there and skip Step 1
+```
 
 ### Step 1: Ensure Clean Working Directory
 
