@@ -536,6 +536,8 @@ export const CombatStatsStrip: React.FC<CombatStatsStripProps> = React.memo(
                 label={gauges[0].label}
                 intent={gauges[0].intent}
                 tooltip={gauges[0].tooltip}
+                min={0}
+                max={100}
               />
             )}
             {heroes.map((h) => (
@@ -555,6 +557,8 @@ export const CombatStatsStrip: React.FC<CombatStatsStripProps> = React.memo(
                 label={gauges[1].label}
                 intent={gauges[1].intent}
                 tooltip={gauges[1].tooltip}
+                min={50}
+                max={175}
               />
             )}
           </Box>

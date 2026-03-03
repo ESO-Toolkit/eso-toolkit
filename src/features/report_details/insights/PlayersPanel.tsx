@@ -298,17 +298,36 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   // Fetch critical damage data for the inline crit summary on DPS player cards
   const { criticalDamageData } = useCriticalDamageTask({ context: resolvedContext });
 
+  // Compute crit chance per player (crits / total hits on enemy targets)
+  const critChanceByPlayer = React.useMemo(() => {
+    if (!damageEvents || damageEvents.length === 0) return {};
+    const stats: Record<string, { crits: number; total: number }> = {};
+    for (const event of damageEvents) {
+      if (event.sourceIsFriendly && !event.targetIsFriendly) {
+        const id = String(event.sourceID);
+        if (!stats[id]) stats[id] = { crits: 0, total: 0 };
+        stats[id].total++;
+        if (event.hitType === 2) stats[id].crits++;
+      }
+    }
+    const result: Record<string, number> = {};
+    for (const [id, s] of Object.entries(stats)) {
+      result[id] = s.total > 0 ? (s.crits / s.total) * 100 : 0;
+    }
+    return result;
+  }, [damageEvents]);
+
   const criticalDamageByPlayer = React.useMemo(() => {
     if (!criticalDamageData?.playerDataMap) return undefined;
-    const result: Record<string, { avg: number; max: number }> = {};
+    const result: Record<string, { critChance: number; critDamage: number }> = {};
     Object.entries(criticalDamageData.playerDataMap).forEach(([playerId, data]) => {
       result[String(playerId)] = {
-        avg: data.effectiveCriticalDamage,
-        max: data.maximumCriticalDamage,
+        critChance: critChanceByPlayer[String(playerId)] ?? 0,
+        critDamage: data.effectiveCriticalDamage,
       };
     });
     return result;
-  }, [criticalDamageData?.playerDataMap]);
+  }, [criticalDamageData?.playerDataMap, critChanceByPlayer]);
 
   // Calculate loading state - include ALL data dependencies this panel needs
   const isLoading =

@@ -122,7 +122,7 @@ interface PlayerCardProps {
   totalDps?: number;
   /** The player's DPS value for display in combat stats */
   dpsValue?: number;
-  critDamageSummary?: { avg: number; max: number };
+  critDamageSummary?: { critChance: number; critDamage: number };
   /** Bar swap analysis result, used to display bar setup pattern on DPS cards */
   barSwapResult?: BarSwapAnalysisResult;
   /** Per-player potion classification from the live fight event stream (Path B detection) */
@@ -472,7 +472,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         emoji: '⚗️',
         ariaLabel: 'potion',
         tooltip: `Potion (${potionInfo.count}x): ${potionInfo.tooltip}`,
-        display: `${potionInfo.count}×${potionInfo.display}`,
+        display: potionInfo.display,
         color: potionInfo.color,
         testId: `potion-${player.id}`,
       });
@@ -496,28 +496,34 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       if (player.role === 'dps') {
         if (critDamageSummary) {
           pills.push({
-            label: 'Crit Avg',
-            value: critDamageSummary.avg.toFixed(0),
+            label: 'Crit %',
+            value: critDamageSummary.critChance.toFixed(0),
             suffix: '%',
             intent:
-              critDamageSummary.avg >= 125
+              critDamageSummary.critChance >= 60
                 ? 'success'
-                : critDamageSummary.avg >= 100
+                : critDamageSummary.critChance >= 40
+                  ? 'warning'
+                  : 'danger',
+            tooltip:
+              'Average critical hit chance — percentage of damage hits that were critical strikes',
+            category: 'gauge',
+            numericValue: critDamageSummary.critChance,
+          });
+          pills.push({
+            label: 'Crit Dmg',
+            value: critDamageSummary.critDamage.toFixed(0),
+            suffix: '%',
+            intent:
+              critDamageSummary.critDamage >= 125
+                ? 'success'
+                : critDamageSummary.critDamage >= 100
                   ? 'warning'
                   : 'danger',
             tooltip:
               'Time-weighted average critical damage multiplier during the fight',
             category: 'gauge',
-            numericValue: critDamageSummary.avg,
-          });
-          pills.push({
-            label: 'Crit Max',
-            value: critDamageSummary.max.toFixed(0),
-            suffix: '%',
-            intent: critDamageSummary.max >= 125 ? 'success' : 'danger',
-            tooltip: 'Highest recorded critical damage multiplier during the fight',
-            category: 'gauge',
-            numericValue: critDamageSummary.max,
+            numericValue: critDamageSummary.critDamage,
           });
         }
         if (dpsValue != null && dpsValue > 0) {

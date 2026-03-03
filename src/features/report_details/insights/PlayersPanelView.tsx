@@ -51,7 +51,7 @@ interface PlayersPanelViewProps {
   fightEndTime?: number;
   /** DPS value (damage/second) per player ID, used to identify the top DPS player */
   dpsValueByPlayer?: Record<string, number>;
-  criticalDamageByPlayer?: Record<string, { avg: number; max: number }>;
+  criticalDamageByPlayer?: Record<string, { critChance: number; critDamage: number }>;
   /** Bar swap analysis results per player ID, used to show bar setup pattern on DPS cards */
   barSwapByPlayer?: Record<string, BarSwapAnalysisResult>;
   /** Per-player potion classification from the live fight event stream (Path B detection) */

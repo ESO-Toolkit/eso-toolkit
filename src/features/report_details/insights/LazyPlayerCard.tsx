@@ -131,7 +131,7 @@ export interface PlayerCardProps {
   totalDps?: number;
   /** The player's DPS value for display in combat stats */
   dpsValue?: number;
-  critDamageSummary?: { avg: number; max: number };
+  critDamageSummary?: { critChance: number; critDamage: number };
   /** Bar swap analysis result, used to display bar setup pattern on DPS cards */
   barSwapResult?: BarSwapAnalysisResult;
   /** Per-player potion classification from the live fight event stream (Path B detection) */
