@@ -379,29 +379,38 @@ SecondaryStatRow.displayName = 'SecondaryStatRow';
 /*  Resource Bars (horizontal gradient bars — ESO-style)               */
 /* ------------------------------------------------------------------ */
 
-const RESOURCE_CONFIG = [
+const RESOURCE_SEGMENTS = [
   {
     key: 'magicka' as const,
     label: 'Magicka',
+    colorDark: '#5eaef7',
+    colorLight: '#3b82f6',
     gradientDark: 'linear-gradient(90deg, #339af0, #74c0fc)',
     gradientLight: 'linear-gradient(90deg, #1d4ed8, #60a5fa)',
-    glowDark: '0 0 8px rgba(116, 192, 252, 0.3)',
   },
   {
     key: 'health' as const,
     label: 'Health',
+    colorDark: '#f87171',
+    colorLight: '#dc2626',
     gradientDark: 'linear-gradient(90deg, #ee5a5a, #ff8a8a)',
     gradientLight: 'linear-gradient(90deg, #b91c1c, #f87171)',
-    glowDark: '0 0 8px rgba(255, 107, 107, 0.3)',
   },
   {
     key: 'stamina' as const,
     label: 'Stamina',
+    colorDark: '#4ade80',
+    colorLight: '#16a34a',
     gradientDark: 'linear-gradient(90deg, #37b24d, #6bcf7f)',
     gradientLight: 'linear-gradient(90deg, #047857, #34d399)',
-    glowDark: '0 0 8px rgba(81, 207, 102, 0.3)',
   },
 ] as const;
+
+/** Abbreviate large numbers: 34745 → "34.7k" */
+const abbreviateResource = (val: number): string => {
+  if (val >= 1000) return `${(val / 1000).toFixed(1)}k`;
+  return val.toLocaleString();
+};
 
 const ResourceBars: React.FC<{
   maxMagicka: number;
@@ -410,74 +419,81 @@ const ResourceBars: React.FC<{
 }> = React.memo(({ maxMagicka, maxHealth, maxStamina }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const values = {
+  const values: Record<string, number> = {
     magicka: maxMagicka,
     health: maxHealth,
     stamina: maxStamina,
   };
-  const maxVal = Math.max(maxMagicka, maxHealth, maxStamina, 1);
+  const total = maxMagicka + maxHealth + maxStamina;
+  if (total <= 0) return null;
+
+  // Build segments with percentage widths
+  const segments = RESOURCE_SEGMENTS.map((cfg) => ({
+    ...cfg,
+    value: values[cfg.key],
+    pct: (values[cfg.key] / total) * 100,
+  })).filter((s) => s.value > 0);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-      {RESOURCE_CONFIG.map((cfg) => {
-        const val = values[cfg.key];
-        if (val <= 0) return null;
-        const pct = (val / maxVal) * 100;
-        return (
-          <Tooltip
-            key={cfg.key}
-            title={`${cfg.label}: ${val.toLocaleString()}`}
-            arrow
+    <Tooltip
+      title={segments
+        .map((s) => `${s.label}: ${s.value.toLocaleString()}`)
+        .join(' · ')}
+      arrow
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          width: '100%',
+          height: 18,
+          borderRadius: '9px',
+          overflow: 'hidden',
+          bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+        }}
+      >
+        {segments.map((seg, idx) => (
+          <Box
+            key={seg.key}
+            sx={{
+              width: `${seg.pct}%`,
+              height: '100%',
+              background: isDark ? seg.gradientDark : seg.gradientLight,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              // Subtle separator between segments
+              borderRight:
+                idx < segments.length - 1
+                  ? `1px solid ${isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)'}`
+                  : 'none',
+              transition: 'width 0.5s ease',
+              minWidth: 0,
+              overflow: 'hidden',
+            }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {/* bar track */}
-              <Box
-                sx={{
-                  flex: 1,
-                  height: 6,
-                  borderRadius: 3,
-                  bgcolor: isDark
-                    ? 'rgba(255,255,255,0.06)'
-                    : 'rgba(0,0,0,0.06)',
-                  overflow: 'hidden',
-                  position: 'relative',
-                }}
-              >
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    height: '100%',
-                    width: `${pct}%`,
-                    borderRadius: 3,
-                    background: isDark
-                      ? cfg.gradientDark
-                      : cfg.gradientLight,
-                    boxShadow: isDark ? cfg.glowDark : 'none',
-                    transition: 'width 0.5s ease',
-                  }}
-                />
-              </Box>
-              {/* value */}
+            {/* Value inside bar — only show if segment is wide enough */}
+            {seg.pct > 15 && (
               <Typography
                 variant="caption"
                 sx={{
-                  color: 'text.secondary',
-                  fontSize: '0.65rem',
-                  fontWeight: 600,
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  color: isDark ? 'rgba(255,255,255,0.95)' : '#fff',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.4)',
                   fontVariantNumeric: 'tabular-nums',
-                  minWidth: 42,
-                  textAlign: 'right',
+                  lineHeight: 1,
+                  whiteSpace: 'nowrap',
+                  userSelect: 'none',
                 }}
               >
-                {val.toLocaleString()}
+                {abbreviateResource(seg.value)}
               </Typography>
-            </Box>
-          </Tooltip>
-        );
-      })}
-    </Box>
+            )}
+          </Box>
+        ))}
+      </Box>
+    </Tooltip>
   );
 });
 ResourceBars.displayName = 'ResourceBars';
