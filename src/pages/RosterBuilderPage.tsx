@@ -3176,7 +3176,9 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
             multiple
             freeSolo
             size="small"
-            options={[...ALL_5PIECE_SETS, ...MONSTER_SETS].map((id) => getSetDisplayName(id)).sort()}
+            options={[...ALL_5PIECE_SETS, ...MONSTER_SETS]
+              .map((id) => getSetDisplayName(id))
+              .sort()}
             value={(slot.gearSets || []).map((id) => getSetDisplayName(id))}
             onChange={(_, value) =>
               onChange({
