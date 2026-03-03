@@ -106,11 +106,17 @@ describe('errorTracking', () => {
       );
     });
 
-    it('should not initialize Rollbar in development', () => {
+    it('should initialize Rollbar in development with auto-capture disabled', () => {
       process.env.NODE_ENV = 'development';
       initializeErrorTracking();
 
-      expect(Rollbar).not.toHaveBeenCalled();
+      expect(Rollbar).toHaveBeenCalledWith(
+        expect.objectContaining({
+          accessToken: ERROR_TRACKING_CONFIG.accessToken,
+          captureUncaught: false,
+          captureUnhandledRejections: false,
+        }),
+      );
     });
 
     it('should not initialize Rollbar in production without consent', () => {
@@ -389,12 +395,12 @@ describe('errorTracking', () => {
       );
     });
 
-    it('should not call rollbar in development', () => {
+    it('should call rollbar in development (manual reports always sent with consent)', () => {
       process.env.NODE_ENV = 'development';
+      initializeErrorTracking();
       submitManualBugReport(mockBugReport);
 
-      expect(mockRollbarInstance.error).not.toHaveBeenCalled();
-      expect(mockRollbarInstance.critical).not.toHaveBeenCalled();
+      expect(mockRollbarInstance.error).toHaveBeenCalled();
     });
 
     it('should not throw for minimal bug reports', () => {

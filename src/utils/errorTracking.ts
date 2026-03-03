@@ -47,27 +47,26 @@ interface ExtendedPerformance extends Performance {
 
 /**
  * Initialize Rollbar error tracking.
- * Only runs in production builds AND when the user has consented to error tracking.
+ * Always initializes when the user has consented, but automatic error capture
+ * (uncaught exceptions, unhandled rejections) is disabled outside production.
+ * Manual bug reports are always sent regardless of environment.
  */
 export const initializeErrorTracking = (): void => {
-  // Only initialize in production builds
-  if (process.env.NODE_ENV !== 'production') {
-    logger.info('Error tracking disabled - not in production build');
-    return;
-  }
-
   // GDPR: Only initialize if user has consented to error tracking
   if (!hasErrorTrackingConsent()) {
     logger.info('Error tracking disabled - user has not consented to error tracking');
     return;
   }
 
+  const isProduction = process.env.NODE_ENV === 'production';
+
   rollbar = new Rollbar({
     accessToken: ERROR_TRACKING_CONFIG.accessToken,
     environment: ERROR_TRACKING_CONFIG.environment,
     codeVersion: ERROR_TRACKING_CONFIG.release,
-    captureUncaught: ERROR_TRACKING_CONFIG.captureUncaught,
-    captureUnhandledRejections: ERROR_TRACKING_CONFIG.captureUnhandledRejections,
+    // Only auto-capture uncaught errors in production — manual reports always go through
+    captureUncaught: isProduction && ERROR_TRACKING_CONFIG.captureUncaught,
+    captureUnhandledRejections: isProduction && ERROR_TRACKING_CONFIG.captureUnhandledRejections,
     verbose: ERROR_TRACKING_CONFIG.verbose,
 
     // Filter out browser extension errors (ESO-559)
@@ -236,8 +235,9 @@ export const submitManualBugReport = (
   bugReport: ManualBugReport,
   store?: { getState: () => RootState },
 ): void => {
-  if (process.env.NODE_ENV !== 'production' || !hasErrorTrackingConsent()) {
-    logger.warn('Manual bug report (not reported in development)', { bugReport });
+  // Manual bug reports are always tracked (explicit user action) — only gate on consent
+  if (!hasErrorTrackingConsent()) {
+    logger.warn('Manual bug report (not reported, no error tracking consent)', { bugReport });
     return;
   }
 

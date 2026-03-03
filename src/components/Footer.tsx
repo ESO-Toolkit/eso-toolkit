@@ -1,4 +1,4 @@
-import { Launch, ChevronRight } from '@mui/icons-material';
+import { Launch, ChevronRight, BugReport } from '@mui/icons-material';
 import { Box, Button, Container, Typography, useTheme } from '@mui/material';
 import Link from '@mui/material/Link';
 import { alpha } from '@mui/material/styles';
@@ -7,6 +7,8 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
+
+import { useBugReport } from './BugReportDialog';
 
 type FooterLink = {
   label: string;
@@ -18,6 +20,7 @@ type FooterLink = {
 
 export const Footer: React.FC = React.memo(() => {
   const theme = useTheme();
+  const { openBugReport, BugReportDialog } = useBugReport();
 
   const accentColor = theme.palette.mode === 'dark' ? '#38bdf8' : '#2563eb';
 
@@ -1067,22 +1070,60 @@ export const Footer: React.FC = React.memo(() => {
             Studios, Bethesda, or esologs.com. All trademarks are the property of their respective
             owners.
           </Typography>
-          <Link
-            component={RouterLink}
-            to="/privacy"
+          <Box
             sx={{
-              fontSize: '0.8rem',
-              opacity: 0.6,
-              color: 'inherit',
-              textDecoration: 'none',
-              transition: 'opacity 0.2s ease',
-              '&:hover': { opacity: 1, color: accentColor },
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              flexWrap: 'wrap',
+              justifyContent: 'center',
             }}
           >
-            Privacy Policy
-          </Link>
+            <Link
+              component={RouterLink}
+              to="/privacy"
+              sx={{
+                fontSize: '0.8rem',
+                opacity: 0.6,
+                color: 'inherit',
+                textDecoration: 'none',
+                transition: 'opacity 0.2s ease',
+                '&:hover': { opacity: 1, color: accentColor },
+              }}
+            >
+              Privacy Policy
+            </Link>
+
+            <Button
+              size="small"
+              startIcon={<BugReport sx={{ fontSize: '0.9rem !important' }} />}
+              onClick={() => {
+                openBugReport({ url: window.location.href });
+              }}
+              sx={{
+                fontSize: '0.8rem',
+                opacity: 0.6,
+                color: 'inherit',
+                textTransform: 'none',
+                padding: '2px 8px',
+                minWidth: 0,
+                border: 'none',
+                background: 'none',
+                transition: 'opacity 0.2s ease',
+                '&:hover': {
+                  opacity: 1,
+                  color: accentColor,
+                  background: 'none',
+                },
+              }}
+            >
+              Report a Bug
+            </Button>
+          </Box>
         </Box>
       </Container>
+
+      <BugReportDialog />
     </Box>
   );
 });
