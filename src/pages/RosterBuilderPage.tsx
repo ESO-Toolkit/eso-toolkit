@@ -3153,6 +3153,37 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
             )}
           />
 
+          {/* Gear Sets */}
+          <Autocomplete
+            multiple
+            freeSolo
+            size="small"
+            options={[...ALL_5PIECE_SETS, ...MONSTER_SETS].map((id) => getSetDisplayName(id)).sort()}
+            value={(slot.gearSets || []).map((id) => getSetDisplayName(id))}
+            onChange={(_, value) =>
+              onChange({
+                gearSets: value
+                  .map((name) => findSetIdByName(name))
+                  .filter((id): id is KnownSetIDs => id !== undefined),
+              })
+            }
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
+              ))
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                size="small"
+                label="Gear Sets"
+                placeholder={slot.gearSets?.length ? undefined : 'Add set...'}
+                helperText="Sets worn by this player — click × to remove"
+              />
+            )}
+            renderOption={(props, option) => <li {...props}>{option}</li>}
+          />
+
           {/* Convert to Jail DD or back to regular DPS */}
           {!slot.jailDDType ? (
             <Box>
