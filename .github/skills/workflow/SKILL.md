@@ -52,16 +52,18 @@ git pull origin main
 git checkout -b ESO-XXX/your-description
 ```
 
-## Step 4 — Set Up Twig Parent (if twig is available)
+## Step 4 — Set Parent Branch Dependency
 
-Check if twig is installed:
-```powershell
-twig --version
-```
+Set the parent branch dependency (try twig, fall back to git config):
 
-If twig is available, set the parent branch dependency:
 ```powershell
-twig branch ESO-XXX/your-description --parent main
+$branch = git branch --show-current
+$parentBranch = "main"  # or another feature branch if stacking
+
+twig branch depend $branch $parentBranch 2>$null
+if ($LASTEXITCODE -ne 0) {
+    git config "branch.$branch.parent" $parentBranch
+}
 ```
 
 If the new branch depends on another feature branch (not main), use that branch as the parent instead.
@@ -71,7 +73,7 @@ If the new branch depends on another feature branch (not main), use that branch 
 Tell the user:
 - The new branch name
 - That they are now safe to begin implementation
-- Any twig setup that was performed
+- Whether twig or git config was used for the parent dependency
 
 ## Step 6 — Pre-PR Quality Gate (MANDATORY)
 
@@ -128,4 +130,4 @@ git checkout ESO-XXX/your-description
 - Jira board: https://bkrupa.atlassian.net
 - Branch format: `ESO-XXX/kebab-case-description`
 - Protected branches: `main`, `master`
-- Twig is used for branch stacking/dependencies
+- Twig is used for branch stacking/dependencies (optional — plain git fallback via `git config branch.<name>.parent` is supported)

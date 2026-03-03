@@ -5,6 +5,8 @@ description: Run Playwright E2E tests (smoke, full, nightly, screen-size, perfor
 
 You are an E2E testing assistant for the ESO Log Aggregator project. Run Playwright tests and summarize results clearly.
 
+> **Tip**: For interactive browser testing (clicking elements, taking screenshots, evaluating JS), use the VS Code MCP Playwright tool. This skill focuses on running the full test suites via CLI.
+
 ## Available Test Configurations
 
 | Name | Config File | When to Use |

@@ -1,6 +1,6 @@
 ---
 name: rebase
-description: Rebase a stacked branch tree after a feature branch was squash-merged into main. Handles cherry-picking unique commits, resolving squash conflicts, and re-establishing twig dependencies. Use this after a PR is merged with squash.
+description: Rebase a stacked branch tree after a feature branch was squash-merged into main. Handles cherry-picking unique commits, resolving squash conflicts, and re-establishing branch dependencies. Falls back to plain git when twig is not installed.
 ---
 
 You are a post-squash rebase assistant for ESO Log Aggregator. When a feature branch is squash-merged into main, all its commits become one, causing conflicts for child branches. This skill automates the recovery.
@@ -21,8 +21,13 @@ git pull origin main
 # List all local branches and their upstream bases
 git branch -vv
 
-# Show full twig tree to identify child branches
-twig
+# Show branch tree to identify child branches (twig with fallback)
+twig tree 2>$null
+if ($LASTEXITCODE -ne 0) {
+    # Plain git: list branches with parent metadata
+    git config --get-regexp 'branch\..*\.parent'
+    git log --oneline --graph --all --decorate --simplify-by-decoration
+}
 ```
 
 Identify:
@@ -62,8 +67,9 @@ git branch -D ESO-461/establish-multi-fight-redux-foundations
 git checkout main
 git checkout -b ESO-461/establish-multi-fight-redux-foundations
 
-# 4. Set twig parent
-twig branch ESO-461/establish-multi-fight-redux-foundations --parent main
+# 4. Set parent dependency (twig with fallback)
+twig branch depend ESO-461/establish-multi-fight-redux-foundations main 2>$null
+if ($LASTEXITCODE -ne 0) { git config "branch.ESO-461/establish-multi-fight-redux-foundations.parent" "main" }
 
 # 5. Cherry-pick each unique commit
 foreach ($commit in $commits) {
@@ -90,7 +96,19 @@ git cherry-pick --skip
 
 After rebasing all immediate children of the squashed branch, cascade to their children:
 ```powershell
-twig cascade --non-interactive --force-push
+twig cascade --non-interactive --force-push 2>$null
+if ($LASTEXITCODE -ne 0) {
+    # Plain git fallback: manually rebase each remaining child onto its parent
+    git config --get-regexp 'branch\..*\.parent' | ForEach-Object {
+        $parts = $_ -split ' '
+        $child = ($parts[0] -replace 'branch\.' -replace '\.parent')
+        $parentBranch = $parts[1]
+        Write-Host "Rebasing $child onto $parentBranch"
+        git checkout $child
+        git rebase $parentBranch
+        git push --force-with-lease origin HEAD
+    }
+}
 ```
 
 ## Step 7 — Delete the Squashed Branch
@@ -107,8 +125,9 @@ git remote prune origin
 ## Step 8 — Verify
 
 ```powershell
-# Show updated tree
-twig
+# Show updated tree (twig with fallback)
+twig tree 2>$null
+if ($LASTEXITCODE -ne 0) { git config --get-regexp 'branch\..*\.parent' }
 
 # Confirm each rebased branch is based on the right parent
 git log --oneline main..ESO-461/establish-multi-fight-redux-foundations
@@ -128,20 +147,26 @@ $commits = git log --reverse --format="%H" main..ESO-461/establish-multi-fight-r
 # 3. Recreate ESO-461 from main
 git branch -D ESO-461/establish-multi-fight-redux-foundations
 git checkout -b ESO-461/establish-multi-fight-redux-foundations
-twig branch ESO-461/establish-multi-fight-redux-foundations --parent main
 
-# 4. Cherry-pick unique commits
+# 4. Set parent dependency (twig with fallback)
+twig branch depend ESO-461/establish-multi-fight-redux-foundations main 2>$null
+if ($LASTEXITCODE -ne 0) { git config "branch.ESO-461/establish-multi-fight-redux-foundations.parent" "main" }
+
+# 5. Cherry-pick unique commits
 $commits | ForEach-Object { git cherry-pick $_ }
 
-# 5. Push
+# 6. Push
 git push --force-with-lease origin ESO-461/establish-multi-fight-redux-foundations
 
-# 6. Delete squashed branch
+# 7. Delete squashed branch
 git branch -D ESO-449/structure-redux-state
 git remote prune origin
 
-# 7. Cascade any remaining children
-twig cascade --non-interactive --force-push
+# 8. Cascade any remaining children (twig with fallback)
+twig cascade --non-interactive --force-push 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "twig not available — rebase remaining child branches manually"
+}
 ```
 
 ## Conflict Resolution

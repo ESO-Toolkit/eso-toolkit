@@ -37,8 +37,8 @@ Use when debugging a specific encounter. `fightId` is a number (e.g., `32`).
 # List fight directories
 Get-ChildItem "data-downloads/<reportCode>" -Directory | Select-Object Name
 
-# Check event counts in a fight
-Get-ChildItem "data-downloads/<reportCode>/fight-<id>" -File | Select-Object Name, Length
+# Check event files in a fight
+Get-ChildItem "data-downloads/<reportCode>/fight-<id>/events" -File | Select-Object Name, Length
 ```
 
 ### Read fight metadata
@@ -51,7 +51,7 @@ Get-Content "data-downloads/<reportCode>/fights.json" | ConvertFrom-Json | Selec
 ### Use PowerShell to search event files
 ```powershell
 # Search for a specific ability in damage events
-$data = Get-Content "data-downloads/<reportCode>/fight-<id>/damage.json" | ConvertFrom-Json
+$data = Get-Content "data-downloads/<reportCode>/fight-<id>/events/damage-events.json" | ConvertFrom-Json
 $data.events | Where-Object { $_.ability.name -like "*Anchorite*" }
 
 # Search for an actor
@@ -62,15 +62,15 @@ $data.events | Group-Object type | Sort-Object Count -Descending
 ```
 
 ### Event file types per fight
-Each fight directory contains JSON files for:
-- `damage.json` — damage dealt events
-- `healing.json` — healing events
-- `casts.json` — ability cast events
-- `buffs.json` — buff application/removal events
-- `debuffs.json` — debuff events
-- `resources.json` — resource gain/loss events
-- `deaths.json` — death events
-- `combatant-info.json` — player gear and stats
+Each fight directory contains an `events/` subdirectory with JSON files:
+- `damage-events.json` — damage dealt events
+- `healing-events.json` — healing events
+- `cast-events.json` — ability cast events
+- `buff-events.json` — buff application/removal events
+- `debuff-events.json` — debuff events
+- `resource-events.json` — resource gain/loss events
+- `death-events.json` — death events
+- `combatant-info-events.json` — player gear and stats
 
 ## Comparing Two Fights
 

@@ -9,7 +9,6 @@ You are a Jira integration assistant for the ESO Log Aggregator project.
 
 - **Project Key**: `ESO`
 - **Board**: https://bkrupa.atlassian.net
-- **Epic**: ESO-368 (Replay System Architecture Improvements)
 - **CLI Tool**: `acli jira` (Atlassian CLI)
 
 ## Prerequisites Check
@@ -25,7 +24,7 @@ If not authenticated: `acli jira auth login`
 ## Viewing a Work Item
 
 ```powershell
-acli jira issue view ESO-XXX
+acli jira workitem view ESO-XXX
 ```
 
 Returns: key, type, summary, status, description, assignee, story points, timestamps.
@@ -34,19 +33,16 @@ Returns: key, type, summary, status, description, assignee, story points, timest
 
 ```powershell
 # Task (default type)
-acli jira issue create --project ESO --summary "Your summary here" --type Task
+acli jira workitem create --project ESO --summary "Your summary here" --type Task
 
 # With description
-acli jira issue create --project ESO --summary "Summary" --type Task --description "Details..."
-
-# With parent epic
-acli jira issue create --project ESO --summary "Summary" --type Task --parent ESO-368
+acli jira workitem create --project ESO --summary "Summary" --type Task --description "Details..."
 
 # Assign to self
-acli jira issue create --project ESO --summary "Summary" --type Task --assignee "@me"
+acli jira workitem create --project ESO --summary "Summary" --type Task --assignee "@me"
 
 # Bug
-acli jira issue create --project ESO --summary "Bug description" --type Bug
+acli jira workitem create --project ESO --summary "Bug description" --type Bug
 ```
 
 ## Transitioning Status
@@ -55,86 +51,86 @@ Common transition names:
 - `"To Do"` → `"In Progress"` → `"In Review"` → `"Done"`
 
 ```powershell
-acli jira issue transition ESO-XXX --to "In Progress"
-acli jira issue transition ESO-XXX --to "In Review"
-acli jira issue transition ESO-XXX --to "Done"
+acli jira workitem transition --key ESO-XXX --status "In Progress"
+acli jira workitem transition --key ESO-XXX --status "In Review"
+acli jira workitem transition --key ESO-XXX --status "Done"
 ```
 
 ## Adding a Comment
 
 ```powershell
-acli jira issue comment add ESO-XXX --body "Your comment here"
+acli jira workitem comment create --key ESO-XXX --body "Your comment here"
 ```
 
 For multi-line comments, use a here-string:
 ```powershell
-$comment = @"
+$comment = @'
 Implementation complete.
 
 - Updated Redux state structure
 - Added unit tests
 - PR: https://github.com/...
-"@
-acli jira issue comment add ESO-XXX --body $comment
+'@
+acli jira workitem comment create --key ESO-XXX --body $comment
 ```
 
 ## Searching (JQL)
 
 ```powershell
 # All open ESO tasks
-acli jira issue list --jql "project = ESO AND status != Done ORDER BY created DESC"
+acli jira workitem search --jql "project = ESO AND status != Done ORDER BY created DESC"
 
 # Issues in an epic
-acli jira issue list --jql "\"Epic Link\" = ESO-368 AND status != Done"
+acli jira workitem search --jql "\"Epic Link\" = ESO-368 AND status != Done"
 
 # Unassigned issues
-acli jira issue list --jql "project = ESO AND assignee IS EMPTY AND status != Done"
+acli jira workitem search --jql "project = ESO AND assignee IS EMPTY AND status != Done"
 
 # My open issues
-acli jira issue list --jql "project = ESO AND assignee = currentUser() AND status != Done"
+acli jira workitem search --jql "project = ESO AND assignee = currentUser() AND status != Done"
 ```
 
 ## Linking Work Items
 
 ```powershell
-acli jira issue link ESO-XXX ESO-YYY --type "depends on"
-acli jira issue link ESO-XXX ESO-YYY --type "blocks"
-acli jira issue link ESO-XXX ESO-YYY --type "relates to"
+acli jira workitem link ESO-XXX ESO-YYY --type "depends on"
+acli jira workitem link ESO-XXX ESO-YYY --type "blocks"
+acli jira workitem link ESO-XXX ESO-YYY --type "relates to"
 ```
 
 ## Epic Status
 
 ```powershell
-acli jira issue list --jql "\"Epic Link\" = ESO-368" --fields summary,status,assignee
+acli jira workitem search --jql "\"Epic Link\" = ESO-368" --fields summary,status,assignee
 ```
 
 ## Assigning a Work Item
 
 ```powershell
 # Assign to self
-acli jira issue assign ESO-XXX --assignee "@me"
+acli jira workitem assign ESO-XXX --assignee "@me"
 
 # Unassign
-acli jira issue assign ESO-XXX --assignee ""
+acli jira workitem assign ESO-XXX --assignee ""
 ```
 
 ## Updating Story Points
 
 ```powershell
-acli jira issue update ESO-XXX --custom-field story_points=3
+acli jira workitem edit ESO-XXX --custom-field story_points=3
 ```
 
 ## Typical Workflow for a Jira Ticket
 
-1. View the ticket: `acli jira issue view ESO-XXX`
-2. Transition to In Progress: `acli jira issue transition ESO-XXX --to "In Progress"`
+1. View the ticket: `acli jira workitem view ESO-XXX`
+2. Transition to In Progress: `acli jira workitem transition --key ESO-XXX --status "In Progress"`
 3. [Do the work]
-4. Transition to In Review: `acli jira issue transition ESO-XXX --to "In Review"`
+4. Transition to In Review: `acli jira workitem transition --key ESO-XXX --status "In Review"`
 5. Add PR comment with link
-6. After merge, transition to Done: `acli jira issue transition ESO-XXX --to "Done"`
+6. After merge, transition to Done: `acli jira workitem transition --key ESO-XXX --status "Done"`
 
 ## Troubleshooting
 
 - `acli jira auth login` — re-authenticate if commands fail with 401
 - Jira keys must be `PROJECT-NUMBER` format (e.g., `ESO-372`)
-- Story type names: Task, Bug, Story (case-sensitive)
+- Work item type names: Task, Bug, Story (case-sensitive)
