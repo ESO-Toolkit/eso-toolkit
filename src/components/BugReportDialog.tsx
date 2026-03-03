@@ -457,7 +457,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
         sx={{
           flex: 1,
           px: { xs: 2.5, sm: 3 },
-          py: { xs: 2.5, sm: 3 },
+          pt: { xs: 3, sm: 3.5 },
+          pb: { xs: 2.5, sm: 3 },
           overflowY: 'auto',
         }}
       >
