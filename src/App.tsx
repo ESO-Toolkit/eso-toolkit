@@ -140,11 +140,6 @@ const WhatsNewPage = React.lazy(() =>
   import('./pages/WhatsNewPage').then((module) => ({ default: module.WhatsNewPage })),
 );
 
-// Lazy load the feedback FAB to improve initial page load performance
-const LazyModernFeedbackFab = React.lazy(() =>
-  import('./components/BugReportDialog').then((module) => ({ default: module.ModernFeedbackFab })),
-);
-
 // Generic page loading skeleton - used for lazy-loaded routes and PersistGate hydration
 const LoadingFallback: React.FC = () => (
   <Container maxWidth="lg" sx={{ pt: 4, px: 2 }}>
@@ -210,9 +205,6 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Check if we're on the landing page to conditionally load components
-  const isLandingPage = window.location.pathname === '/' || window.location.pathname === '';
-
   return (
     <LoggerProvider
       config={{
@@ -231,12 +223,6 @@ const App: React.FC = () => {
                 {/* Global cosmic/nebula background */}
                 <SiteBackground />
                 <AppRoutes />
-                {/* Add floating bug report button - lazy loaded for non-landing pages */}
-                {!isLandingPage && (
-                  <Suspense fallback={null}>
-                    <LazyModernFeedbackFab />
-                  </Suspense>
-                )}
                 {/* Update notification for new versions */}
                 <UpdateNotification />
                 {/* Cookie consent banner */}
