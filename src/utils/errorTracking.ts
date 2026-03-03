@@ -236,8 +236,9 @@ export const submitManualBugReport = (
   bugReport: ManualBugReport,
   store?: { getState: () => RootState },
 ): void => {
-  if (process.env.NODE_ENV !== 'production' || !hasErrorTrackingConsent()) {
-    logger.warn('Manual bug report (not reported in development)', { bugReport });
+  // Manual bug reports are always tracked (explicit user action) — only gate on consent
+  if (!hasErrorTrackingConsent()) {
+    logger.warn('Manual bug report (not reported, no error tracking consent)', { bugReport });
     return;
   }
 
