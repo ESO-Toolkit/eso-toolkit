@@ -128,12 +128,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
   const panelBorder = isDark
     ? `1px solid ${alpha('#38bdf8', 0.12)}`
     : `1px solid ${alpha('#0f172a', 0.08)}`;
-  // Use box-shadow instead of border on the Paper to avoid corner artifacts
-  const panelOutline = isDark
-    ? `0 0 0 1px ${alpha('#38bdf8', 0.12)}`
-    : `0 0 0 1px ${alpha('#0f172a', 0.08)}`;
   const panelShadow = isDark
-    ? '0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+    ? '0 8px 30px rgba(0, 0, 0, 0.4)'
     : '0 4px 24px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04)';
 
   // ------- Keyframes (inlined for sx) -------
@@ -341,7 +337,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           background: panelBg,
           border: 'none',
           borderRadius: isMobile ? 0 : '14px',
-          boxShadow: `${panelOutline}, ${panelShadow}`,
+          boxShadow: panelShadow,
           overflow: 'hidden',
           minHeight: isMobile ? '100dvh' : undefined,
           maxHeight: isMobile ? '100dvh' : '85vh',
