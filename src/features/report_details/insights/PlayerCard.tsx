@@ -217,15 +217,28 @@ const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
 
   return (
     <Tooltip title={`Mundus: ${mundusName}`} enterTouchDelay={0} leaveTouchDelay={3000}>
-      <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-        <img src={mundusIcon} alt="" style={{ width: 12, height: 12 }} />
-        <span style={{ margin: '0 1px' }}></span>
+      <Box
+        component="span"
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          minWidth: { xs: 44, sm: 'auto', md: 'auto' },
+          minHeight: { xs: 28, sm: 'auto', md: 'auto' },
+        }}
+      >
+        <Box
+          component="img"
+          src={mundusIcon}
+          alt=""
+          sx={{ width: { xs: 16, sm: 14, md: 12 }, height: { xs: 16, sm: 14, md: 12 } }}
+        />
+        <Box component="span" sx={{ margin: { xs: '0 4px', sm: '0 2px', md: '0 1px' } }}></Box>
         <Box
           component="span"
           sx={{
             display: 'inline',
             fontWeight: 700,
-            fontSize: { xs: 8, sm: 9, md: 10 },
+            fontSize: { xs: 11, sm: 10, md: 10 },
             letterSpacing: '.01em',
             color: 'primary.main',
             textTransform: 'uppercase',
@@ -233,7 +246,7 @@ const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
         >
           {mundusName}
         </Box>
-      </span>
+      </Box>
     </Tooltip>
   );
 };
@@ -1520,18 +1533,19 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       alignItems: 'center',
                       justifyContent: 'flex-start',
                       minWidth: 0,
-                      minHeight: 28,
+                      minHeight: { xs: 40, sm: 28, md: 28 },
                     }}
                   >
                     <MetricsScrollContainer
                       sx={{
                         display: 'flex',
-                        flexWrap: 'nowrap',
-                        gap: 0.5,
-                        minHeight: 24,
+                        flexWrap: { xs: 'wrap', sm: 'nowrap', md: 'nowrap' },
+                        gap: { xs: 0.75, sm: 0.5, md: 0.5 },
+                        minHeight: { xs: 40, sm: 24, md: 24 },
                         flex: '1 1 auto',
                         minWidth: 0,
                         mr: 0.5,
+                        overflowX: { xs: 'hidden', sm: 'auto', md: 'auto' },
                       }}
                     >
                       <Typography
@@ -1540,17 +1554,245 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 0.25,
-                          whiteSpace: 'nowrap',
-                          fontSize: { xs: '0.7rem', sm: '0.75rem', md: 'body2.fontSize' },
+                          gap: { xs: 0.75, sm: 0.5, md: 0.25 },
+                          whiteSpace: { xs: 'normal', sm: 'nowrap', md: 'nowrap' },
+                          fontSize: { xs: '0.85rem', sm: '0.8rem', md: 'body2.fontSize' },
                         }}
                       >
-                        {statChipEntries.map((entry, i) => (
-                          <React.Fragment key={entry.id}>
-                            {i > 0 && ' · '}
-                            {entry.node}
-                          </React.Fragment>
-                        ))}
+                        {mundusBuffs.length > 0 && (
+                          <>
+                            <MundusChip mundusBuffs={mundusBuffs} />
+                            {' · '}
+                          </>
+                        )}
+                        <Tooltip
+                          title={`Food/Drink: ${foodAura ? foodAura.name : 'None'}`}
+                          enterTouchDelay={0}
+                          leaveTouchDelay={3000}
+                        >
+                          <Box
+                            component="span"
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              minWidth: { xs: 44, sm: 'auto', md: 'auto' },
+                              minHeight: { xs: 28, sm: 'auto', md: 'auto' },
+                            }}
+                            data-testid={`food-drink-${player.id}`}
+                          >
+                            <span role="img" aria-label="food">
+                              🍲
+                            </span>
+                            <Box
+                              component="span"
+                              sx={{ margin: { xs: '0 4px', sm: '0 2px', md: '0 1px' } }}
+                            ></Box>
+                            <Box
+                              component="span"
+                              sx={{
+                                display: 'inline',
+                                fontWeight: 700,
+                                fontSize: { xs: 11, sm: 10, md: 10 },
+                                letterSpacing: '.01em',
+                                color: foodInfo.color,
+                              }}
+                            >
+                              {foodInfo.display}
+                            </Box>
+                          </Box>
+                        </Tooltip>{' '}
+                        ·{' '}
+                        <Tooltip
+                          title={`Potion (${potionInfo.count}x): ${potionInfo.tooltip}`}
+                          enterTouchDelay={0}
+                          leaveTouchDelay={3000}
+                        >
+                          <Box
+                            component="span"
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              minWidth: { xs: 44, sm: 'auto', md: 'auto' },
+                              minHeight: { xs: 28, sm: 'auto', md: 'auto' },
+                            }}
+                            data-testid={`potion-${player.id}`}
+                          >
+                            <span role="img" aria-label="potion">
+                              ⚗️
+                            </span>
+                            <Box
+                              component="span"
+                              sx={{ margin: { xs: '0 4px', sm: '0 2px', md: '0 1px' } }}
+                            ></Box>
+                            <Box
+                              component="span"
+                              sx={{
+                                display: 'inline',
+                                fontWeight: 700,
+                                fontSize: { xs: 11, sm: 10, md: 10 },
+                                letterSpacing: '.01em',
+                                color: potionInfo.color,
+                              }}
+                            >
+                              {potionInfo.count}×{potionInfo.display}
+                            </Box>
+                          </Box>
+                        </Tooltip>{' '}
+                        ·{' '}
+                        <Tooltip
+                          title="Deaths in this fight"
+                          enterTouchDelay={0}
+                          leaveTouchDelay={3000}
+                        >
+                          <Box
+                            component="span"
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              minWidth: { xs: 44, sm: 'auto', md: 'auto' },
+                              minHeight: { xs: 28, sm: 'auto', md: 'auto' },
+                            }}
+                          >
+                            <span role="img" aria-label="deaths">
+                              💀
+                            </span>
+                            <Box
+                              component="span"
+                              sx={{ margin: { xs: '0 4px', sm: '0 2px', md: '0 1px' } }}
+                            ></Box>
+                            {deaths}
+                          </Box>
+                        </Tooltip>{' '}
+                        ·{' '}
+                        <Tooltip
+                          title="Successful resurrects performed"
+                          enterTouchDelay={0}
+                          leaveTouchDelay={3000}
+                        >
+                          <Box
+                            component="span"
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              minWidth: { xs: 44, sm: 'auto', md: 'auto' },
+                              minHeight: { xs: 28, sm: 'auto', md: 'auto' },
+                            }}
+                          >
+                            <span role="img" aria-label="resurrects">
+                              ❤️
+                            </span>
+                            <Box
+                              component="span"
+                              sx={{ margin: { xs: '0 4px', sm: '0 2px', md: '0 1px' } }}
+                            ></Box>
+                            {resurrects}
+                          </Box>
+                        </Tooltip>{' '}
+                        ·{' '}
+                        <Tooltip
+                          title="Casts per Minute"
+                          enterTouchDelay={0}
+                          leaveTouchDelay={3000}
+                        >
+                          <Box
+                            component="span"
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              minWidth: { xs: 44, sm: 'auto', md: 'auto' },
+                              minHeight: { xs: 28, sm: 'auto', md: 'auto' },
+                            }}
+                          >
+                            <span role="img" aria-label="cpm">
+                              🐭
+                            </span>
+                            <Box
+                              component="span"
+                              sx={{ margin: { xs: '0 4px', sm: '0 2px', md: '0 1px' } }}
+                            ></Box>
+                            {reportId ? (
+                              <a
+                                href={castsUrl(reportId, fightId)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: 'inherit', textDecoration: 'underline' }}
+                              >
+                                {cpm}
+                              </a>
+                            ) : (
+                              <>{cpm}</>
+                            )}
+                          </Box>
+                        </Tooltip>
+                        {distanceDisplay && (
+                          <>
+                            {' '}
+                            ·{' '}
+                            <Tooltip
+                              title="Distance traveled during this fight"
+                              enterTouchDelay={0}
+                              leaveTouchDelay={3000}
+                            >
+                              <Box
+                                component="span"
+                                sx={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  minWidth: { xs: 44, sm: 'auto', md: 'auto' },
+                                  minHeight: { xs: 28, sm: 'auto', md: 'auto' },
+                                }}
+                              >
+                                <span role="img" aria-label="distance">
+                                  🛤️
+                                </span>
+                                <Box
+                                  component="span"
+                                  sx={{ margin: { xs: '0 4px', sm: '0 2px', md: '0 1px' } }}
+                                ></Box>
+                                {distanceDisplay}
+                              </Box>
+                            </Tooltip>
+                          </>
+                        )}
+                        {player.role === 'dps' && barSwapResult?.barSetupPattern && (
+                          <>
+                            {' '}
+                            ·{' '}
+                            <Tooltip
+                              title={`Bar rotation pattern — each letter is one bar-trip between swaps: F = front bar, B = back bar, S = setup trip`}
+                              enterTouchDelay={0}
+                              leaveTouchDelay={3000}
+                            >
+                              <Box
+                                component="span"
+                                sx={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  minWidth: { xs: 44, sm: 'auto', md: 'auto' },
+                                  minHeight: { xs: 28, sm: 'auto', md: 'auto' },
+                                }}
+                              >
+                                <span role="img" aria-label="bar pattern">
+                                  🔄
+                                </span>
+                                <Box
+                                  component="span"
+                                  sx={{ margin: { xs: '0 4px', sm: '0 2px', md: '0 1px' } }}
+                                ></Box>
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    fontWeight: 700,
+                                    letterSpacing: '0.05em',
+                                    fontSize: { xs: '0.75rem', sm: '0.7rem' },
+                                  }}
+                                >
+                                  {barSwapResult.barSetupPattern}
+                                </Box>
+                              </Box>
+                            </Tooltip>
+                          </>
+                        )}
                       </Typography>
                     </MetricsScrollContainer>
                   </Box>
