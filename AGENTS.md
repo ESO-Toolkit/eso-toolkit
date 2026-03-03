@@ -99,7 +99,7 @@ git checkout -b ESO-XXX/description-here
 - **UI Updates**: [.github/skills/ui-updates/SKILL.md](.github/skills/ui-updates/SKILL.md) - Theme-consistent UI changes (glassmorphism, colors, typography, patterns)
 
 **Workflow & Git:**
-- **Create PR**: [.github/skills/create-pr/SKILL.md](.github/skills/create-pr/SKILL.md) - PR creation with PowerShell-safe `--body-file` pattern
+- **Create PR**: [.github/skills/create-pr/SKILL.md](.github/skills/create-pr/SKILL.md) - PR creation with PowerShell-safe `--body-file` pattern and automatic UI screenshots
 - **Git Operations**: [.github/skills/git/SKILL.md](.github/skills/git/SKILL.md) - Branch management (twig with plain git fallbacks)
 - **Git Workflow Enforcement**: [.github/skills/workflow/SKILL.md](.github/skills/workflow/SKILL.md) - **Use this FIRST**
 - **Post-Squash Rebase**: [.github/skills/rebase/SKILL.md](.github/skills/rebase/SKILL.md) - Recovery after squash-merge of stacked branches
