@@ -57,11 +57,14 @@ const getIntentColor = (intent: MetricIntent, isDark: boolean): string =>
   isDark ? INTENT_COLORS[intent].dark : INTENT_COLORS[intent].light;
 
 /* ------------------------------------------------------------------ */
-/*  Consumables Row                                                    */
+/*  Consumables Row (chip badges)                                      */
 /* ------------------------------------------------------------------ */
 
 const ConsumablesRow: React.FC<{ items: ConsumableItem[] }> = React.memo(
   ({ items }) => {
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
+
     if (items.length === 0) return null;
     return (
       <Box
@@ -73,61 +76,59 @@ const ConsumablesRow: React.FC<{ items: ConsumableItem[] }> = React.memo(
           minHeight: 24,
         }}
       >
-        {items.map((item, idx) => (
-          <React.Fragment key={item.label}>
-            {idx > 0 && (
-              <Typography
-                component="span"
-                variant="caption"
-                sx={{ color: 'text.secondary', fontSize: '0.7rem', mx: 0.25 }}
-              >
-                ·
-              </Typography>
-            )}
-            <Tooltip
-              title={item.tooltip}
-              enterTouchDelay={0}
-              leaveTouchDelay={3000}
+        {items.map((item) => (
+          <Tooltip
+            key={item.label}
+            title={item.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
+            <Box
+              component="span"
+              data-testid={item.testId}
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '3px',
+                px: 0.75,
+                py: 0.25,
+                borderRadius: '6px',
+                background: isDark
+                  ? 'rgba(255,255,255,0.04)'
+                  : 'rgba(0,0,0,0.03)',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+              }}
             >
+              {item.isMundus ? (
+                <img
+                  src={mundusIcon}
+                  alt=""
+                  style={{ width: 11, height: 11 }}
+                />
+              ) : (
+                <span
+                  role="img"
+                  aria-label={item.ariaLabel}
+                  style={{ fontSize: '0.7rem' }}
+                >
+                  {item.emoji}
+                </span>
+              )}
               <Box
                 component="span"
-                data-testid={item.testId}
                 sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '2px',
+                  fontWeight: 700,
+                  fontSize: { xs: 8, sm: 9, md: 10 },
+                  letterSpacing: '.01em',
+                  color: item.color ?? 'text.secondary',
+                  textTransform: 'uppercase',
+                  lineHeight: 1,
                 }}
               >
-                {item.isMundus ? (
-                  <img
-                    src={mundusIcon}
-                    alt=""
-                    style={{ width: 12, height: 12 }}
-                  />
-                ) : (
-                  <span
-                    role="img"
-                    aria-label={item.ariaLabel}
-                    style={{ fontSize: '0.8rem' }}
-                  >
-                    {item.emoji}
-                  </span>
-                )}
-                <Box
-                  component="span"
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: { xs: 8, sm: 9, md: 10 },
-                    letterSpacing: '.01em',
-                    color: item.color ?? 'text.secondary',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {item.display}
-                </Box>
+                {item.display}
               </Box>
-            </Tooltip>
-          </React.Fragment>
+            </Box>
+          </Tooltip>
         ))}
       </Box>
     );
@@ -312,8 +313,226 @@ const HeroStat: React.FC<{
 HeroStat.displayName = 'HeroStat';
 
 /* ------------------------------------------------------------------ */
-/*  Secondary Stat Row (compact inline label + value pairs)            */
+/*  Stat Icons & Visual Badges                                         */
 /* ------------------------------------------------------------------ */
+
+const ICON_S = 12;
+
+/** Inline SVG icon resolved by stat label */
+const StatIconSvg: React.FC<{
+  label: string;
+  color: string;
+  isDark: boolean;
+}> = React.memo(({ label, color, isDark }) => {
+  const k = label.toLowerCase();
+  return (
+    <svg
+      width={ICON_S}
+      height={ICON_S}
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      style={{ flexShrink: 0, display: 'block' }}
+    >
+      {k === 'cpm' && (
+        <path d="M10.5 0 5 7.5h3L6.5 15 12 7.5H9z" fill={color} />
+      )}
+      {k === 'dist' && (
+        <>
+          <path
+            d="M8 1C5.5 1 3.5 3 3.5 5.5 3.5 9 8 15 8 15s4.5-6 4.5-9.5C12.5 3 10.5 1 8 1z"
+            fill={color}
+            opacity={0.9}
+          />
+          <circle
+            cx={8}
+            cy={5.5}
+            r={1.8}
+            fill={isDark ? '#0f172a' : '#fff'}
+          />
+        </>
+      )}
+      {k === 'res' && (
+        <path
+          d="M8 14C2 9.5 1 6 3.5 3.5 5 2 7 2.5 8 4c1-1.5 3-2 4.5-.5C15 6 14 9.5 8 14z"
+          fill={color}
+        />
+      )}
+    </svg>
+  );
+});
+StatIconSvg.displayName = 'StatIconSvg';
+
+/* ---- Bar Swap Badge (F/B/S color-coded letter blocks) ------------- */
+
+const BAR_SWAP_COLORS: Record<string, { dark: string; light: string }> = {
+  F: { dark: '#5eaef7', light: '#2563eb' },
+  B: { dark: '#fbbf24', light: '#d97706' },
+  S: { dark: '#64748b', light: '#94a3b8' },
+};
+
+const BarSwapBadge: React.FC<{
+  value: string;
+  tooltip: string;
+  isDark: boolean;
+}> = React.memo(({ value, tooltip, isDark }) => (
+  <Tooltip title={tooltip} arrow>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '2px',
+        px: 0.5,
+        py: 0.25,
+        borderRadius: '6px',
+        background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+      }}
+    >
+      {value.split('').map((ch, i) => {
+        const upper = ch.toUpperCase();
+        const colors = BAR_SWAP_COLORS[upper] ?? BAR_SWAP_COLORS.S;
+        const bg = isDark ? colors.dark : colors.light;
+        return (
+          <Box
+            key={`${upper}${i}`}
+            sx={{
+              width: 14,
+              height: 16,
+              borderRadius: '3px',
+              background: bg,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: isDark ? `0 0 4px ${bg}40` : 'none',
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: '0.55rem',
+                fontWeight: 800,
+                color: isDark ? '#0f172a' : '#fff',
+                lineHeight: 1,
+                userSelect: 'none',
+              }}
+            >
+              {upper}
+            </Typography>
+          </Box>
+        );
+      })}
+    </Box>
+  </Tooltip>
+));
+BarSwapBadge.displayName = 'BarSwapBadge';
+
+/* ---- Death / Survived Badge --------------------------------------- */
+
+const DeathBadge: React.FC<{
+  count: number;
+  tooltip: string;
+  isDark: boolean;
+  intent: MetricIntent;
+}> = React.memo(({ count, tooltip, isDark, intent }) => {
+  const color = getIntentColor(intent, isDark);
+  const survived = count === 0;
+
+  return (
+    <Tooltip title={tooltip} arrow>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.4,
+          px: 0.75,
+          py: 0.25,
+          borderRadius: '6px',
+          background: `${color}${isDark ? '12' : '0a'}`,
+          border: `1px solid ${color}30`,
+        }}
+      >
+        <svg
+          width={ICON_S}
+          height={ICON_S}
+          viewBox="0 0 16 16"
+          aria-hidden="true"
+          style={{ flexShrink: 0, display: 'block' }}
+        >
+          {survived ? (
+            <>
+              <path
+                d="M8 1 3 3.5v4c0 3.5 2.2 6.2 5 7.5 2.8-1.3 5-4 5-7.5v-4L8 1z"
+                fill={color}
+                opacity={0.85}
+              />
+              <path
+                d="M5.8 8l1.5 1.5 3-3"
+                stroke={isDark ? '#0f172a' : '#fff'}
+                strokeWidth={1.8}
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </>
+          ) : (
+            <>
+              <ellipse
+                cx={8}
+                cy={6.5}
+                rx={5}
+                ry={4.5}
+                fill={color}
+                opacity={0.9}
+              />
+              <circle
+                cx={6}
+                cy={5.8}
+                r={1.2}
+                fill={isDark ? '#0f172a' : '#fff'}
+              />
+              <circle
+                cx={10}
+                cy={5.8}
+                r={1.2}
+                fill={isDark ? '#0f172a' : '#fff'}
+              />
+              <rect
+                x={7.2}
+                y={10.5}
+                width={1.6}
+                height={3}
+                rx={0.5}
+                fill={color}
+                opacity={0.9}
+              />
+            </>
+          )}
+        </svg>
+        {count > 0 && (
+          <Typography
+            variant="caption"
+            sx={{
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              color,
+              fontVariantNumeric: 'tabular-nums',
+              lineHeight: 1,
+            }}
+          >
+            {count}
+          </Typography>
+        )}
+      </Box>
+    </Tooltip>
+  );
+});
+DeathBadge.displayName = 'DeathBadge';
+
+/* ------------------------------------------------------------------ */
+/*  Secondary Stat Row (visual icon badges)                            */
+/* ------------------------------------------------------------------ */
+
+const ICON_STAT_LABELS = new Set(['cpm', 'dist', 'res']);
 
 const SecondaryStatRow: React.FC<{ stats: CombatStatPill[] }> = React.memo(
   ({ stats }) => {
@@ -327,39 +546,77 @@ const SecondaryStatRow: React.FC<{ stats: CombatStatPill[] }> = React.memo(
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 1.5,
+          gap: 0.75,
           flexWrap: 'wrap',
         }}
       >
         {stats.map((stat) => {
           const color =
             stat.intent === 'neutral'
-              ? undefined
+              ? isDark
+                ? '#94a3b8'
+                : '#64748b'
               : getIntentColor(stat.intent, isDark);
+
+          /* Bar-swap → color-coded letter blocks */
+          if (stat.label === 'Bars') {
+            return (
+              <BarSwapBadge
+                key={stat.label}
+                value={String(stat.value)}
+                tooltip={stat.tooltip}
+                isDark={isDark}
+              />
+            );
+          }
+
+          /* Deaths → skull / shield-check icon */
+          if (stat.label === 'Deaths') {
+            return (
+              <DeathBadge
+                key={stat.label}
+                count={Number(stat.value)}
+                tooltip={stat.tooltip}
+                isDark={isDark}
+                intent={stat.intent}
+              />
+            );
+          }
+
+          /* Generic icon-badge (CPM, Dist, Res, …) */
+          const hasIcon = ICON_STAT_LABELS.has(stat.label.toLowerCase());
+
           return (
             <Tooltip key={stat.label} title={stat.tooltip} arrow>
               <Box
-                sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.4,
+                  px: 0.75,
+                  py: 0.25,
+                  borderRadius: '6px',
+                  background: isDark
+                    ? 'rgba(255,255,255,0.04)'
+                    : 'rgba(0,0,0,0.03)',
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+                }}
               >
+                {hasIcon && (
+                  <StatIconSvg
+                    label={stat.label}
+                    color={color}
+                    isDark={isDark}
+                  />
+                )}
                 <Typography
                   variant="caption"
                   sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 500,
-                    color: 'text.secondary',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.03em',
-                  }}
-                >
-                  {stat.label}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontSize: '0.75rem',
+                    fontSize: '0.7rem',
                     fontWeight: 700,
-                    color: color ?? 'text.primary',
+                    color,
                     fontVariantNumeric: 'tabular-nums',
+                    lineHeight: 1,
                   }}
                 >
                   {stat.value}
