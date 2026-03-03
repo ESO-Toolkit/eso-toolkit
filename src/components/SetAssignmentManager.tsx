@@ -1050,7 +1050,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <IconButton
                         size="small"
                         edge="end"
-                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'tank1', 'set1'); handleCloseMenu(); }}
+                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'tank1', 'set1'); }}
                         sx={{ ml: 1 }}
                       >
                         <ClearIcon fontSize="small" />
@@ -1072,7 +1072,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <IconButton
                         size="small"
                         edge="end"
-                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'tank1', 'set2'); handleCloseMenu(); }}
+                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'tank1', 'set2'); }}
                         sx={{ ml: 1 }}
                       >
                         <ClearIcon fontSize="small" />
@@ -1099,7 +1099,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     <IconButton
                       size="small"
                       edge="end"
-                      onClick={(e) => { e.stopPropagation(); onAssignSet('', 'tank1', 'monster'); handleCloseMenu(); }}
+                      onClick={(e) => { e.stopPropagation(); onAssignSet('', 'tank1', 'monster'); }}
                       sx={{ ml: 1 }}
                     >
                       <ClearIcon fontSize="small" />
@@ -1128,7 +1128,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <IconButton
                         size="small"
                         edge="end"
-                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'tank2', 'set1'); handleCloseMenu(); }}
+                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'tank2', 'set1'); }}
                         sx={{ ml: 1 }}
                       >
                         <ClearIcon fontSize="small" />
@@ -1150,7 +1150,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <IconButton
                         size="small"
                         edge="end"
-                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'tank2', 'set2'); handleCloseMenu(); }}
+                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'tank2', 'set2'); }}
                         sx={{ ml: 1 }}
                       >
                         <ClearIcon fontSize="small" />
@@ -1177,7 +1177,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     <IconButton
                       size="small"
                       edge="end"
-                      onClick={(e) => { e.stopPropagation(); onAssignSet('', 'tank2', 'monster'); handleCloseMenu(); }}
+                      onClick={(e) => { e.stopPropagation(); onAssignSet('', 'tank2', 'monster'); }}
                       sx={{ ml: 1 }}
                     >
                       <ClearIcon fontSize="small" />
@@ -1214,7 +1214,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <IconButton
                         size="small"
                         edge="end"
-                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'healer1', 'set1'); handleCloseMenu(); }}
+                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'healer1', 'set1'); }}
                         sx={{ ml: 1 }}
                       >
                         <ClearIcon fontSize="small" />
@@ -1234,7 +1234,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <IconButton
                         size="small"
                         edge="end"
-                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'healer1', 'set2'); handleCloseMenu(); }}
+                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'healer1', 'set2'); }}
                         sx={{ ml: 1 }}
                       >
                         <ClearIcon fontSize="small" />
@@ -1257,7 +1257,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     <IconButton
                       size="small"
                       edge="end"
-                      onClick={(e) => { e.stopPropagation(); onAssignSet('', 'healer1', 'monster'); handleCloseMenu(); }}
+                      onClick={(e) => { e.stopPropagation(); onAssignSet('', 'healer1', 'monster'); }}
                       sx={{ ml: 1 }}
                     >
                       <ClearIcon fontSize="small" />
@@ -1284,7 +1284,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <IconButton
                         size="small"
                         edge="end"
-                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'healer2', 'set1'); handleCloseMenu(); }}
+                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'healer2', 'set1'); }}
                         sx={{ ml: 1 }}
                       >
                         <ClearIcon fontSize="small" />
@@ -1304,7 +1304,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <IconButton
                         size="small"
                         edge="end"
-                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'healer2', 'set2'); handleCloseMenu(); }}
+                        onClick={(e) => { e.stopPropagation(); onAssignSet('', 'healer2', 'set2'); }}
                         sx={{ ml: 1 }}
                       >
                         <ClearIcon fontSize="small" />
@@ -1327,7 +1327,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     <IconButton
                       size="small"
                       edge="end"
-                      onClick={(e) => { e.stopPropagation(); onAssignSet('', 'healer2', 'monster'); handleCloseMenu(); }}
+                      onClick={(e) => { e.stopPropagation(); onAssignSet('', 'healer2', 'monster'); }}
                       sx={{ ml: 1 }}
                     >
                       <ClearIcon fontSize="small" />
