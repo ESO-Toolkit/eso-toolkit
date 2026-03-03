@@ -9,6 +9,8 @@ import type { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import type { PotionStreamResult } from '../../../utils/potionDetectionUtils';
 import type { BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 
+import type { StatChipId } from './statChipConfig';
+
 // Lazy load the PlayerCard component
 const PlayerCard = React.lazy(() =>
   import('./PlayerCard').then((module) => ({
@@ -129,13 +131,25 @@ export interface PlayerCardProps {
   isTopDps?: boolean;
   /** The player's total DPS value (used in the badge label) */
   totalDps?: number;
-  /** The player's DPS value for display in combat stats */
-  dpsValue?: number;
-  critDamageSummary?: { critChance: number; critDamage: number };
+  critDamageSummary?: { avg: number; max: number };
   /** Bar swap analysis result, used to display bar setup pattern on DPS cards */
   barSwapResult?: BarSwapAnalysisResult;
   /** Per-player potion classification from the live fight event stream (Path B detection) */
   potionStreamResult?: PotionStreamResult;
+  /** Player's DPS value */
+  dpsValue?: number;
+  /** Player's HPS value */
+  hpsValue?: number;
+  /** Player's total damage dealt */
+  totalDamage?: number;
+  /** Player's total critical hit damage */
+  totalCritDamage?: number;
+  /** Player's critical DPS (crit damage / duration) */
+  critDps?: number;
+  /** Player's critical hit chance percentage */
+  critChance?: number;
+  /** Ordered list of visible stat chip IDs (from customization preferences) */
+  visibleChips?: StatChipId[];
   /** Test ID for testing */
   'data-testid'?: string;
 }

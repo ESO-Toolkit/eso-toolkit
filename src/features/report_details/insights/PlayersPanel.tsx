@@ -256,25 +256,95 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   }, [playerTravelDistances]);
 
   // Compute DPS per player (total outgoing damage to enemies / fight duration in seconds)
-  const dpsValueByPlayer = React.useMemo(() => {
-    if (!fight || !damageEvents || damageEvents.length === 0) return {};
+  // Also computes totalDamage, totalCritDamage, critDps, and critChance per player
+  const damageStatsByPlayer = React.useMemo(() => {
+    if (!fight || !damageEvents || damageEvents.length === 0)
+      return {
+        dpsValueByPlayer: {} as Record<string, number>,
+        totalDamageByPlayer: {} as Record<string, number>,
+        totalCritDamageByPlayer: {} as Record<string, number>,
+        critDpsByPlayer: {} as Record<string, number>,
+        critChanceByPlayer: {} as Record<string, number>,
+      };
     const durationSecs = (fight.endTime - fight.startTime) / 1000;
-    if (durationSecs <= 0) return {};
+    if (durationSecs <= 0)
+      return {
+        dpsValueByPlayer: {} as Record<string, number>,
+        totalDamageByPlayer: {} as Record<string, number>,
+        totalCritDamageByPlayer: {} as Record<string, number>,
+        critDpsByPlayer: {} as Record<string, number>,
+        critChanceByPlayer: {} as Record<string, number>,
+      };
 
     const damageByPlayer: Record<string, number> = {};
+    const critDamageByPlayer: Record<string, number> = {};
+    const hitCountByPlayer: Record<string, number> = {};
+    const critHitCountByPlayer: Record<string, number> = {};
     for (const event of damageEvents) {
       if (event.sourceIsFriendly && !event.targetIsFriendly) {
         const id = String(event.sourceID);
-        damageByPlayer[id] = (damageByPlayer[id] ?? 0) + (event.amount ?? 0);
+        const amount = event.amount ?? 0;
+        damageByPlayer[id] = (damageByPlayer[id] ?? 0) + amount;
+        hitCountByPlayer[id] = (hitCountByPlayer[id] ?? 0) + 1;
+        if (event.hitType === 2) {
+          critDamageByPlayer[id] = (critDamageByPlayer[id] ?? 0) + amount;
+          critHitCountByPlayer[id] = (critHitCountByPlayer[id] ?? 0) + 1;
+        }
+      }
+    }
+
+    const dpsResult: Record<string, number> = {};
+    const totalDmgResult: Record<string, number> = {};
+    const totalCritDmgResult: Record<string, number> = {};
+    const critDpsResult: Record<string, number> = {};
+    const critChanceResult: Record<string, number> = {};
+    for (const [id, totalDamage] of Object.entries(damageByPlayer)) {
+      dpsResult[id] = totalDamage / durationSecs;
+      totalDmgResult[id] = totalDamage;
+      const critDmg = critDamageByPlayer[id] ?? 0;
+      totalCritDmgResult[id] = critDmg;
+      critDpsResult[id] = critDmg / durationSecs;
+      const hits = hitCountByPlayer[id] ?? 0;
+      const critHits = critHitCountByPlayer[id] ?? 0;
+      critChanceResult[id] = hits > 0 ? (critHits / hits) * 100 : 0;
+    }
+    return {
+      dpsValueByPlayer: dpsResult,
+      totalDamageByPlayer: totalDmgResult,
+      totalCritDamageByPlayer: totalCritDmgResult,
+      critDpsByPlayer: critDpsResult,
+      critChanceByPlayer: critChanceResult,
+    };
+  }, [fight, damageEvents]);
+
+  const {
+    dpsValueByPlayer,
+    totalDamageByPlayer,
+    totalCritDamageByPlayer,
+    critDpsByPlayer,
+    critChanceByPlayer,
+  } = damageStatsByPlayer;
+
+  // Compute HPS per player (total outgoing healing to friendlies / fight duration in seconds)
+  const hpsValueByPlayer = React.useMemo(() => {
+    if (!fight || !healingEvents || healingEvents.length === 0) return {};
+    const durationSecs = (fight.endTime - fight.startTime) / 1000;
+    if (durationSecs <= 0) return {};
+
+    const healingByPlayer: Record<string, number> = {};
+    for (const event of healingEvents) {
+      if (event.sourceIsFriendly) {
+        const id = String(event.sourceID);
+        healingByPlayer[id] = (healingByPlayer[id] ?? 0) + (event.amount ?? 0);
       }
     }
 
     const result: Record<string, number> = {};
-    for (const [id, totalDamage] of Object.entries(damageByPlayer)) {
-      result[id] = totalDamage / durationSecs;
+    for (const [id, totalHealing] of Object.entries(healingByPlayer)) {
+      result[id] = totalHealing / durationSecs;
     }
     return result;
-  }, [fight, damageEvents]);
+  }, [fight, healingEvents]);
 
   // Compute bar swap analysis (including bar setup pattern) per player
   const barSwapByPlayer = React.useMemo(() => {
@@ -298,36 +368,17 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   // Fetch critical damage data for the inline crit summary on DPS player cards
   const { criticalDamageData } = useCriticalDamageTask({ context: resolvedContext });
 
-  // Compute crit chance per player (crits / total hits on enemy targets)
-  const critChanceByPlayer = React.useMemo(() => {
-    if (!damageEvents || damageEvents.length === 0) return {};
-    const stats: Record<string, { crits: number; total: number }> = {};
-    for (const event of damageEvents) {
-      if (event.sourceIsFriendly && !event.targetIsFriendly) {
-        const id = String(event.sourceID);
-        if (!stats[id]) stats[id] = { crits: 0, total: 0 };
-        stats[id].total++;
-        if (event.hitType === 2) stats[id].crits++;
-      }
-    }
-    const result: Record<string, number> = {};
-    for (const [id, s] of Object.entries(stats)) {
-      result[id] = s.total > 0 ? (s.crits / s.total) * 100 : 0;
-    }
-    return result;
-  }, [damageEvents]);
-
   const criticalDamageByPlayer = React.useMemo(() => {
     if (!criticalDamageData?.playerDataMap) return undefined;
-    const result: Record<string, { critChance: number; critDamage: number }> = {};
+    const result: Record<string, { avg: number; max: number }> = {};
     Object.entries(criticalDamageData.playerDataMap).forEach(([playerId, data]) => {
       result[String(playerId)] = {
-        critChance: critChanceByPlayer[String(playerId)] ?? 0,
-        critDamage: data.effectiveCriticalDamage,
+        avg: data.effectiveCriticalDamage,
+        max: data.maximumCriticalDamage,
       };
     });
     return result;
-  }, [criticalDamageData?.playerDataMap, critChanceByPlayer]);
+  }, [criticalDamageData?.playerDataMap]);
 
   // Calculate loading state - include ALL data dependencies this panel needs
   const isLoading =
@@ -1283,6 +1334,11 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         fightStartTime={fight?.startTime}
         fightEndTime={fight?.endTime}
         dpsValueByPlayer={dpsValueByPlayer}
+        hpsValueByPlayer={hpsValueByPlayer}
+        totalDamageByPlayer={totalDamageByPlayer}
+        totalCritDamageByPlayer={totalCritDamageByPlayer}
+        critDpsByPlayer={critDpsByPlayer}
+        critChanceByPlayer={critChanceByPlayer}
         criticalDamageByPlayer={criticalDamageByPlayer}
         barSwapByPlayer={barSwapByPlayer}
         potionResultsByPlayer={potionResultsByPlayer}
