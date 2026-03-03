@@ -121,9 +121,10 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
   const accentGradient = `linear-gradient(135deg, ${accentColor} 0%, ${accentColorAlt} 100%)`;
 
   // ------- Glassmorphism tokens -------
+  // Use opaque backgrounds to avoid backdrop-filter corner rendering artifacts
   const panelBg = isDark
-    ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.75) 0%, rgba(3, 7, 18, 0.85) 100%)'
-    : 'linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(248, 250, 252, 0.92) 100%)';
+    ? 'linear-gradient(180deg, #0f172a 0%, #060b14 100%)'
+    : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)';
   const panelBorder = isDark
     ? `1px solid ${alpha('#38bdf8', 0.12)}`
     : `1px solid ${alpha('#0f172a', 0.08)}`;
@@ -217,7 +218,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
   // =====================================================================
   const renderForm = (): React.JSX.Element => (
     <Fade in timeout={300}>
-      <Stack spacing={2.5} sx={{ pt: 1 }}>
+      <Stack spacing={2.5} sx={{ pt: 1.5 }}>
         {!hasConsent && (
           <Alert
             severity="warning"
@@ -334,15 +335,10 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
       PaperProps={{
         sx: {
           background: panelBg,
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
           border: panelBorder,
           borderRadius: isMobile ? 0 : '14px',
           boxShadow: panelShadow,
           overflow: 'hidden',
-          // Fix backdrop-filter rendering artifacts at rounded corners
-          WebkitMaskImage: isMobile ? undefined : '-webkit-radial-gradient(white, black)',
-          isolation: 'isolate',
           minHeight: isMobile ? '100dvh' : undefined,
           maxHeight: isMobile ? '100dvh' : '85vh',
           // Subtle animated top-edge accent
