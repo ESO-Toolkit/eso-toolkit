@@ -42,7 +42,6 @@ import {
 } from '../config/errorTrackingConfig';
 import { useLogger } from '../contexts/LoggerContext';
 import { submitManualBugReport, addBreadcrumb } from '../utils/errorTracking';
-import { createJiraTicket } from '../utils/jiraReport';
 
 import { LoggerDebugPanel } from './LoggerDebugPanel';
 
@@ -339,11 +338,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
         descriptionLength: reportData.description.length,
       });
 
-      // Submit to Rollbar
+      // Submit to Rollbar (Rollbar's Jira integration will create the ticket)
       submitManualBugReport(reportData);
-
-      // Create a Jira ticket (fire-and-forget — a failure here doesn't block the user)
-      void createJiraTicket(reportData);
 
       setSubmitted(true);
       setActiveStep(steps.length); // Move to success step
