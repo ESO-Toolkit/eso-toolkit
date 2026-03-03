@@ -2,7 +2,6 @@ import { Box, Tooltip, Typography, useTheme } from '@mui/material';
 import React from 'react';
 
 import mundusIcon from '../../../assets/MundusStone.png';
-import { MetricPill } from '../../../components/MetricPill';
 import type { MetricIntent } from '../../../components/MetricPill';
 
 /* ------------------------------------------------------------------ */
@@ -14,13 +13,9 @@ interface ConsumableItem {
   emoji: string;
   ariaLabel: string;
   tooltip: string;
-  /** Bold display text (e.g. "THIEF", "DCT", "3×TRI") */
   display: string;
-  /** Optional color override for the display text */
   color?: string;
-  /** If true, render the mundus stone icon instead of an emoji */
   isMundus?: boolean;
-  /** Optional testId for the span */
   testId?: string;
 }
 
@@ -30,226 +25,462 @@ interface CombatStatPill {
   suffix?: string;
   intent: MetricIntent;
   tooltip: string;
+  /** Visual rendering category */
+  category?: 'gauge' | 'hero' | 'secondary';
+  /** Raw numeric value for gauge fill calculation */
+  numericValue?: number;
 }
 
 export interface CombatStatsStripProps {
-  /** Consumable items (mundus, food, potion) — rendered as a compact dot-separated row */
   consumables: ConsumableItem[];
-  /** Combat stat pills (crit dmg, CPM, deaths, etc.) — rendered as MetricPill components */
   combatStats: CombatStatPill[];
-  /** Resource pool values */
   resources?: {
     maxMagicka: number;
     maxHealth: number;
     maxStamina: number;
   };
-  /** Champion points */
-  championPoints?: Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>;
-  /** Activity counters — deaths, resurrects, and other encounter facts */
-  activity?: {
-    deaths: number;
-    resurrects: number;
-    /** Optional link URL for CPM */
-    cpmUrl?: string;
-  };
 }
 
 /* ------------------------------------------------------------------ */
-/*  Sub-components                                                     */
+/*  Shared helpers                                                     */
 /* ------------------------------------------------------------------ */
 
-const ConsumablesRow: React.FC<{ items: ConsumableItem[] }> = React.memo(({ items }) => {
-  if (items.length === 0) return null;
+const INTENT_COLORS: Record<MetricIntent, { dark: string; light: string }> = {
+  success: { dark: '#4cd964', light: '#059669' },
+  warning: { dark: '#ff9800', light: '#f97316' },
+  danger: { dark: '#ff6666', light: '#dc2626' },
+  info: { dark: '#7ee8ff', light: '#0ea5e9' },
+  neutral: { dark: '#94a3b8', light: '#64748b' },
+};
 
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 0.5,
-        flexWrap: 'wrap',
-        minHeight: 24,
-      }}
-    >
-      {items.map((item, idx) => (
-        <React.Fragment key={item.label}>
-          {idx > 0 && (
-            <Typography
-              component="span"
-              variant="caption"
-              sx={{ color: 'text.secondary', fontSize: '0.7rem', mx: 0.25 }}
+const getIntentColor = (intent: MetricIntent, isDark: boolean): string =>
+  isDark ? INTENT_COLORS[intent].dark : INTENT_COLORS[intent].light;
+
+/* ------------------------------------------------------------------ */
+/*  Consumables Row                                                    */
+/* ------------------------------------------------------------------ */
+
+const ConsumablesRow: React.FC<{ items: ConsumableItem[] }> = React.memo(
+  ({ items }) => {
+    if (items.length === 0) return null;
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.5,
+          flexWrap: 'wrap',
+          minHeight: 24,
+        }}
+      >
+        {items.map((item, idx) => (
+          <React.Fragment key={item.label}>
+            {idx > 0 && (
+              <Typography
+                component="span"
+                variant="caption"
+                sx={{ color: 'text.secondary', fontSize: '0.7rem', mx: 0.25 }}
+              >
+                ·
+              </Typography>
+            )}
+            <Tooltip
+              title={item.tooltip}
+              enterTouchDelay={0}
+              leaveTouchDelay={3000}
             >
-              ·
-            </Typography>
-          )}
-          <Tooltip title={item.tooltip} enterTouchDelay={0} leaveTouchDelay={3000}>
-            <Box
-              component="span"
-              data-testid={item.testId}
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '2px',
-              }}
-            >
-              {item.isMundus ? (
-                <img src={mundusIcon} alt="" style={{ width: 12, height: 12 }} />
-              ) : (
-                <span role="img" aria-label={item.ariaLabel} style={{ fontSize: '0.8rem' }}>
-                  {item.emoji}
-                </span>
-              )}
               <Box
                 component="span"
+                data-testid={item.testId}
                 sx={{
-                  fontWeight: 700,
-                  fontSize: { xs: 8, sm: 9, md: 10 },
-                  letterSpacing: '.01em',
-                  color: item.color ?? 'text.secondary',
-                  textTransform: 'uppercase',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '2px',
                 }}
               >
-                {item.display}
+                {item.isMundus ? (
+                  <img
+                    src={mundusIcon}
+                    alt=""
+                    style={{ width: 12, height: 12 }}
+                  />
+                ) : (
+                  <span
+                    role="img"
+                    aria-label={item.ariaLabel}
+                    style={{ fontSize: '0.8rem' }}
+                  >
+                    {item.emoji}
+                  </span>
+                )}
+                <Box
+                  component="span"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: { xs: 8, sm: 9, md: 10 },
+                    letterSpacing: '.01em',
+                    color: item.color ?? 'text.secondary',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {item.display}
+                </Box>
               </Box>
-            </Box>
-          </Tooltip>
-        </React.Fragment>
-      ))}
-    </Box>
-  );
-});
+            </Tooltip>
+          </React.Fragment>
+        ))}
+      </Box>
+    );
+  },
+);
 ConsumablesRow.displayName = 'ConsumablesRow';
 
-const CombatStatsPillRow: React.FC<{ stats: CombatStatPill[] }> = React.memo(({ stats }) => {
-  if (stats.length === 0) return null;
+/* ------------------------------------------------------------------ */
+/*  Mini Arc Gauge (SVG semicircle)                                    */
+/* ------------------------------------------------------------------ */
+
+const GAUGE_CX = 28;
+const GAUGE_CY = 30;
+const GAUGE_R = 22;
+const GAUGE_SW = 6;
+const GAUGE_ARC_LEN = Math.PI * GAUGE_R;
+const GAUGE_PATH = `M ${GAUGE_CX - GAUGE_R} ${GAUGE_CY} A ${GAUGE_R} ${GAUGE_R} 0 0 1 ${GAUGE_CX + GAUGE_R} ${GAUGE_CY}`;
+
+const MiniArcGauge: React.FC<{
+  value: number;
+  displayValue: string;
+  label: string;
+  intent: MetricIntent;
+  tooltip: string;
+  min?: number;
+  max?: number;
+}> = React.memo(
+  ({ value, displayValue, label, intent, tooltip, min = 80, max = 175 }) => {
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
+    const color = getIntentColor(intent, isDark);
+    const fillPct = Math.max(0, Math.min(1, (value - min) / (max - min)));
+    const fillLen = GAUGE_ARC_LEN * fillPct;
+    const trackColor = isDark
+      ? 'rgba(255,255,255,0.08)'
+      : 'rgba(0,0,0,0.08)';
+
+    return (
+      <Tooltip title={tooltip} arrow>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            minWidth: 60,
+          }}
+        >
+          <svg
+            width={56}
+            height={36}
+            viewBox="0 0 56 36"
+            aria-hidden="true"
+            style={{ overflow: 'visible' }}
+          >
+            {/* background track */}
+            <path
+              d={GAUGE_PATH}
+              fill="none"
+              stroke={trackColor}
+              strokeWidth={GAUGE_SW}
+              strokeLinecap="round"
+            />
+            {/* filled arc */}
+            {fillPct > 0 && (
+              <path
+                d={GAUGE_PATH}
+                fill="none"
+                stroke={color}
+                strokeWidth={GAUGE_SW}
+                strokeLinecap="round"
+                strokeDasharray={`${fillLen} ${GAUGE_ARC_LEN}`}
+                style={{
+                  filter: isDark
+                    ? `drop-shadow(0 0 4px ${color}66)`
+                    : 'none',
+                  transition: 'stroke-dasharray 0.6s ease',
+                }}
+              />
+            )}
+            {/* value text */}
+            <text
+              x={GAUGE_CX}
+              y={GAUGE_CY - 8}
+              textAnchor="middle"
+              dominantBaseline="auto"
+              fill={isDark ? '#ffffff' : '#1e293b'}
+              fontSize="13"
+              fontWeight="700"
+              fontFamily="Inter, system-ui, sans-serif"
+              style={{ fontVariantNumeric: 'tabular-nums' }}
+            >
+              {displayValue}
+            </text>
+          </svg>
+          <Typography
+            variant="caption"
+            sx={{
+              fontSize: '0.6rem',
+              fontWeight: 600,
+              color: 'text.secondary',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              mt: -0.75,
+              lineHeight: 1,
+            }}
+          >
+            {label}
+          </Typography>
+        </Box>
+      </Tooltip>
+    );
+  },
+);
+MiniArcGauge.displayName = 'MiniArcGauge';
+
+/* ------------------------------------------------------------------ */
+/*  Hero Stat (prominent value — DPS, HPS, etc.)                      */
+/* ------------------------------------------------------------------ */
+
+const HeroStat: React.FC<{
+  value: string | number;
+  suffix?: string;
+  label: string;
+  intent: MetricIntent;
+  tooltip: string;
+}> = React.memo(({ value, suffix, label, intent, tooltip }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const color = getIntentColor(intent, isDark);
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 1,
-        justifyContent: 'flex-start',
-      }}
-    >
-      {stats.map((stat) => (
-        <MetricPill
-          key={stat.label}
-          label={stat.label}
-          value={stat.value}
-          suffix={stat.suffix}
-          intent={stat.intent}
-          size="sm"
-          tooltip={stat.tooltip}
-        />
-      ))}
-    </Box>
+    <Tooltip title={tooltip} arrow>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          px: 2,
+          py: 0.25,
+          minWidth: 72,
+          borderRadius: '12px',
+          background: isDark
+            ? 'linear-gradient(180deg, rgba(15,23,42,0.6) 0%, rgba(3,7,18,0.4) 100%)'
+            : 'rgba(255,255,255,0.7)',
+          border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <Typography
+          component="div"
+          sx={{
+            fontSize: '1.3rem',
+            fontWeight: 800,
+            color,
+            letterSpacing: '-0.02em',
+            fontVariantNumeric: 'tabular-nums',
+            lineHeight: 1.1,
+            textShadow: isDark ? `0 0 16px ${color}30` : 'none',
+          }}
+        >
+          {value}
+          {suffix}
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            fontSize: '0.6rem',
+            fontWeight: 600,
+            color: 'text.secondary',
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            lineHeight: 1,
+          }}
+        >
+          {label}
+        </Typography>
+      </Box>
+    </Tooltip>
   );
 });
-CombatStatsPillRow.displayName = 'CombatStatsPillRow';
+HeroStat.displayName = 'HeroStat';
 
-const ResourcePoolsRow: React.FC<{
+/* ------------------------------------------------------------------ */
+/*  Secondary Stat Row (compact inline label + value pairs)            */
+/* ------------------------------------------------------------------ */
+
+const SecondaryStatRow: React.FC<{ stats: CombatStatPill[] }> = React.memo(
+  ({ stats }) => {
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
+
+    if (stats.length === 0) return null;
+
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          flexWrap: 'wrap',
+        }}
+      >
+        {stats.map((stat) => {
+          const color =
+            stat.intent === 'neutral'
+              ? undefined
+              : getIntentColor(stat.intent, isDark);
+          return (
+            <Tooltip key={stat.label} title={stat.tooltip} arrow>
+              <Box
+                sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 500,
+                    color: 'text.secondary',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.03em',
+                  }}
+                >
+                  {stat.label}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: color ?? 'text.primary',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {stat.value}
+                  {stat.suffix}
+                </Typography>
+              </Box>
+            </Tooltip>
+          );
+        })}
+      </Box>
+    );
+  },
+);
+SecondaryStatRow.displayName = 'SecondaryStatRow';
+
+/* ------------------------------------------------------------------ */
+/*  Resource Bars (horizontal gradient bars — ESO-style)               */
+/* ------------------------------------------------------------------ */
+
+const RESOURCE_CONFIG = [
+  {
+    key: 'magicka' as const,
+    label: 'Magicka',
+    gradientDark: 'linear-gradient(90deg, #339af0, #74c0fc)',
+    gradientLight: 'linear-gradient(90deg, #1d4ed8, #60a5fa)',
+    glowDark: '0 0 8px rgba(116, 192, 252, 0.3)',
+  },
+  {
+    key: 'health' as const,
+    label: 'Health',
+    gradientDark: 'linear-gradient(90deg, #ee5a5a, #ff8a8a)',
+    gradientLight: 'linear-gradient(90deg, #b91c1c, #f87171)',
+    glowDark: '0 0 8px rgba(255, 107, 107, 0.3)',
+  },
+  {
+    key: 'stamina' as const,
+    label: 'Stamina',
+    gradientDark: 'linear-gradient(90deg, #37b24d, #6bcf7f)',
+    gradientLight: 'linear-gradient(90deg, #047857, #34d399)',
+    glowDark: '0 0 8px rgba(81, 207, 102, 0.3)',
+  },
+] as const;
+
+const ResourceBars: React.FC<{
   maxMagicka: number;
   maxHealth: number;
   maxStamina: number;
 }> = React.memo(({ maxMagicka, maxHealth, maxStamina }) => {
   const theme = useTheme();
-
-  if (maxMagicka <= 0 && maxHealth <= 0 && maxStamina <= 0) return null;
-
-  const pools = [
-    {
-      key: 'magicka',
-      value: maxMagicka,
-      label: 'Max Magicka',
-      gradientDark:
-        'radial-gradient(circle at 30% 30%, #8cc8ff 0%, #74c0fc 50%, #339af0 100%)',
-      gradientLight:
-        'radial-gradient(circle at 30% 30%, #60a5fa 0%, #2563eb 50%, #1d4ed8 100%)',
-      shadowDark:
-        '0 0 8px rgba(116, 192, 252, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2)',
-      shadowLight:
-        '0 0 6px rgba(37, 99, 235, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.3)',
-    },
-    {
-      key: 'health',
-      value: maxHealth,
-      label: 'Max Health',
-      gradientDark:
-        'radial-gradient(circle at 30% 30%, #ff8a8a 0%, #ff6b6b 50%, #ee5a5a 100%)',
-      gradientLight:
-        'radial-gradient(circle at 30% 30%, #f87171 0%, #dc2626 50%, #b91c1c 100%)',
-      shadowDark:
-        '0 0 8px rgba(255, 107, 107, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2)',
-      shadowLight:
-        '0 0 6px rgba(220, 38, 38, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.3)',
-    },
-    {
-      key: 'stamina',
-      value: maxStamina,
-      label: 'Max Stamina',
-      gradientDark:
-        'radial-gradient(circle at 30% 30%, #6bcf7f 0%, #51cf66 50%, #37b24d 100%)',
-      gradientLight:
-        'radial-gradient(circle at 30% 30%, #34d399 0%, #059669 50%, #047857 100%)',
-      shadowDark:
-        '0 0 8px rgba(81, 207, 102, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2)',
-      shadowLight:
-        '0 0 6px rgba(5, 150, 105, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.3)',
-    },
-  ].filter((p) => p.value > 0);
-
   const isDark = theme.palette.mode === 'dark';
+  const values = {
+    magicka: maxMagicka,
+    health: maxHealth,
+    stamina: maxStamina,
+  };
+  const maxVal = Math.max(maxMagicka, maxHealth, maxStamina, 1);
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 1,
-      }}
-    >
-      {pools.map((pool) => (
-        <Box
-          key={pool.key}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 0.5,
-            flex: 1,
-          }}
-        >
-          <Tooltip title={pool.label} enterTouchDelay={0} leaveTouchDelay={3000}>
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: '50%',
-                background: isDark ? pool.gradientDark : pool.gradientLight,
-                boxShadow: isDark ? pool.shadowDark : pool.shadowLight,
-                cursor: 'default',
-              }}
-            />
-          </Tooltip>
-          <Typography
-            variant="caption"
-            sx={{
-              color: isDark ? '#ffffff' : '#374151',
-              fontSize: '0.7rem',
-              fontWeight: 600,
-              letterSpacing: '0.02em',
-            }}
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+      {RESOURCE_CONFIG.map((cfg) => {
+        const val = values[cfg.key];
+        if (val <= 0) return null;
+        const pct = (val / maxVal) * 100;
+        return (
+          <Tooltip
+            key={cfg.key}
+            title={`${cfg.label}: ${val.toLocaleString()}`}
+            arrow
           >
-            {pool.value.toLocaleString()}
-          </Typography>
-        </Box>
-      ))}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {/* bar track */}
+              <Box
+                sx={{
+                  flex: 1,
+                  height: 6,
+                  borderRadius: 3,
+                  bgcolor: isDark
+                    ? 'rgba(255,255,255,0.06)'
+                    : 'rgba(0,0,0,0.06)',
+                  overflow: 'hidden',
+                  position: 'relative',
+                }}
+              >
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    height: '100%',
+                    width: `${pct}%`,
+                    borderRadius: 3,
+                    background: isDark
+                      ? cfg.gradientDark
+                      : cfg.gradientLight,
+                    boxShadow: isDark ? cfg.glowDark : 'none',
+                    transition: 'width 0.5s ease',
+                  }}
+                />
+              </Box>
+              {/* value */}
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  fontVariantNumeric: 'tabular-nums',
+                  minWidth: 42,
+                  textAlign: 'right',
+                }}
+              >
+                {val.toLocaleString()}
+              </Typography>
+            </Box>
+          </Tooltip>
+        );
+      })}
     </Box>
   );
 });
-ResourcePoolsRow.displayName = 'ResourcePoolsRow';
+ResourceBars.displayName = 'ResourceBars';
 
 /* ------------------------------------------------------------------ */
 /*  Main component                                                     */
@@ -257,50 +488,78 @@ ResourcePoolsRow.displayName = 'ResourcePoolsRow';
 
 export const CombatStatsStrip: React.FC<CombatStatsStripProps> = React.memo(
   ({ consumables, combatStats, resources }) => {
-    const theme = useTheme();
+    // Group stats by rendering category
+    const gauges = combatStats.filter((s) => s.category === 'gauge');
+    const heroes = combatStats.filter((s) => s.category === 'hero');
+    const secondary = combatStats.filter(
+      (s) => !s.category || s.category === 'secondary',
+    );
+
+    const hasGaugesOrHeroes = gauges.length > 0 || heroes.length > 0;
 
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 1,
-        }}
-      >
-        {/* Consumables row */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {/* Consumables */}
         <ConsumablesRow items={consumables} />
 
-        {/* Combat stat pills */}
-        <CombatStatsPillRow stats={combatStats} />
+        {/* Performance gauges + hero stat */}
+        {hasGaugesOrHeroes && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+              py: 0.5,
+            }}
+          >
+            {gauges[0] && gauges[0].numericValue != null && (
+              <MiniArcGauge
+                value={gauges[0].numericValue}
+                displayValue={`${gauges[0].value}${gauges[0].suffix ?? ''}`}
+                label={gauges[0].label}
+                intent={gauges[0].intent}
+                tooltip={gauges[0].tooltip}
+              />
+            )}
+            {heroes.map((h) => (
+              <HeroStat
+                key={h.label}
+                value={h.value}
+                suffix={h.suffix}
+                label={h.label}
+                intent={h.intent}
+                tooltip={h.tooltip}
+              />
+            ))}
+            {gauges[1] && gauges[1].numericValue != null && (
+              <MiniArcGauge
+                value={gauges[1].numericValue}
+                displayValue={`${gauges[1].value}${gauges[1].suffix ?? ''}`}
+                label={gauges[1].label}
+                intent={gauges[1].intent}
+                tooltip={gauges[1].tooltip}
+              />
+            )}
+          </Box>
+        )}
 
-        {/* Resource pools */}
+        {/* Secondary stats */}
+        <SecondaryStatRow stats={secondary} />
+
+        {/* Resource bars */}
         {resources &&
           (resources.maxMagicka > 0 ||
             resources.maxHealth > 0 ||
             resources.maxStamina > 0) && (
-            <Box
-              sx={{
-                p: 1,
-                borderRadius: '10px',
-                background:
-                  'linear-gradient(135deg, rgb(153 210 255 / 15%) 0%, rgb(255 210 210 / 33%) 55%, rgb(177 255 205 / 29%) 100%)',
-                border:
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(255,255,255,0.05)'
-                    : '1px solid rgba(0,0,0,0.05)',
-                backdropFilter: 'blur(10px)',
-              }}
-            >
-              <ResourcePoolsRow
-                maxMagicka={resources.maxMagicka}
-                maxHealth={resources.maxHealth}
-                maxStamina={resources.maxStamina}
-              />
-            </Box>
+            <ResourceBars
+              maxMagicka={resources.maxMagicka}
+              maxHealth={resources.maxHealth}
+              maxStamina={resources.maxStamina}
+            />
           )}
       </Box>
     );
   },
 );
-
 CombatStatsStrip.displayName = 'CombatStatsStrip';

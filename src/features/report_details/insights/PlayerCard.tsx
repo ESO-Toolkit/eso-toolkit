@@ -488,6 +488,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         suffix?: string;
         intent: MetricIntent;
         tooltip: string;
+        category?: 'gauge' | 'hero' | 'secondary';
+        numericValue?: number;
       }> = [];
 
       // DPS-specific stats
@@ -505,6 +507,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                   : 'danger',
             tooltip:
               'Time-weighted average critical damage multiplier during the fight',
+            category: 'gauge',
+            numericValue: critDamageSummary.avg,
           });
           pills.push({
             label: 'Crit Max',
@@ -512,6 +516,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
             suffix: '%',
             intent: critDamageSummary.max >= 125 ? 'success' : 'danger',
             tooltip: 'Highest recorded critical damage multiplier during the fight',
+            category: 'gauge',
+            numericValue: critDamageSummary.max,
           });
         }
         if (dpsValue != null && dpsValue > 0) {
@@ -520,6 +526,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
             value: formatDpsValue(dpsValue),
             intent: 'info',
             tooltip: `Damage per second: ${Math.round(dpsValue).toLocaleString()}`,
+            category: 'hero',
           });
         }
       }
