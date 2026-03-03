@@ -341,7 +341,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           overflow: 'hidden',
           minHeight: isMobile ? '100dvh' : undefined,
           maxHeight: isMobile ? '100dvh' : '85vh',
-          // Subtle animated top-edge accent
+          // Subtle animated top-edge accent (rounded to match Paper corners)
           '&::before': {
             content: '""',
             position: 'absolute',
@@ -350,6 +350,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             right: 0,
             height: '2px',
             background: accentGradient,
+            borderRadius: isMobile ? 0 : '14px 14px 0 0',
             zIndex: 1,
             ...shimmer,
             backgroundSize: '200% 100%',
