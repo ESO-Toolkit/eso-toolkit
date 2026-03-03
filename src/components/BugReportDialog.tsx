@@ -1,10 +1,4 @@
-import {
-  BugReport,
-  Send,
-  Feedback,
-  ChatBubbleOutline,
-  BugReport as BugReportIcon,
-} from '@mui/icons-material';
+﻿import { BugReport, Send, Feedback } from '@mui/icons-material';
 import {
   Dialog,
   DialogTitle,
@@ -12,27 +6,15 @@ import {
   DialogActions,
   Button,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Typography,
   Stack,
-  Chip,
   Fab,
   Zoom,
   Box,
-  Alert,
-  Stepper,
-  Step,
-  StepLabel,
-  SelectChangeEvent,
   styled,
   useTheme,
   useMediaQuery,
-  Theme,
 } from '@mui/material';
-import type { SxProps } from '@mui/material/styles';
 import React, { useState, useCallback } from 'react';
 
 import {
@@ -61,12 +43,7 @@ interface BugReportDialogProps extends Omit<FeedbackDialogProps, 'initialType'> 
   initialDescription?: string;
 }
 
-const getBugSteps = (): string[] => ['Bug Details', 'Additional Information', 'Review & Submit'];
-const getFeedbackSteps = (): string[] => [
-  'Feedback Details',
-  'Additional Information',
-  'Review & Submit',
-];
+
 
 // Create styled components with forced dark mode styling
 const StyledDialog = styled(Dialog)(({ theme }) => ({
@@ -171,52 +148,18 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
 //   },
 // }));
 
-// Add global styles for Select dropdowns
-const getSelectMenuProps = (theme: Theme): { PaperProps: { sx: SxProps<Theme> } } => ({
-  PaperProps: {
-    sx: {
-      bgcolor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
-      color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
-      border:
-        theme.palette.mode === 'dark'
-          ? '1px solid rgba(56, 189, 248, 0.2)'
-          : '1px solid rgba(0, 0, 0, 0.23)',
-      boxShadow:
-        theme.palette.mode === 'dark'
-          ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
-          : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-      '& .MuiMenuItem-root': {
-        color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
-        '&:hover': {
-          bgcolor: theme.palette.mode === 'dark' ? '#1e293b' : '#f5f5f5',
-        },
-        '&.Mui-selected': {
-          bgcolor:
-            theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(25, 118, 210, 0.08)',
-          '&:hover': {
-            bgcolor:
-              theme.palette.mode === 'dark'
-                ? 'rgba(56, 189, 248, 0.2)'
-                : 'rgba(25, 118, 210, 0.12)',
-          },
-        },
-      },
-    },
-  },
-});
 
 export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
   open,
   onClose,
   initialType = 'bug',
   initialCategory = BUG_REPORT_CATEGORIES.OTHER,
-  initialTitle = '',
+  initialTitle: _initialTitle = '',
   initialDescription = '',
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const logger = useLogger();
-  const steps = initialType === 'bug' ? getBugSteps() : getFeedbackSteps();
   const isBugReport = initialType === 'bug';
 
   // Force override dialog background to be transparent and theme-neutral
@@ -245,665 +188,148 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
       setTimeout(applyTransparentStyles, 500);
     }
   }, [open, theme.palette.mode]);
-  const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [reportData, setReportData] = useState<ManualBugReport>({
-    title: initialTitle,
-    description: initialDescription,
-    category: initialCategory,
-    severity: 'medium',
-    steps: [''],
-    expectedBehavior: '',
-    actualBehavior: '',
-    userAgent: navigator.userAgent,
-    url: window.location.href,
-  });
+  const [description, setDescription] = useState(initialDescription);
 
   const handleClose = useCallback(() => {
     if (!isSubmitting) {
       addBreadcrumb('Bug report dialog closed', 'ui', { submitted });
       onClose();
-      // Reset form after a delay to allow dialog animation
       setTimeout(() => {
-        setActiveStep(0);
         setSubmitted(false);
-        setReportData({
-          title: '',
-          description: '',
-          category: BUG_REPORT_CATEGORIES.OTHER,
-          severity: 'medium',
-          steps: [''],
-          expectedBehavior: '',
-          actualBehavior: '',
-          userAgent: navigator.userAgent,
-          url: window.location.href,
-        });
+        setDescription('');
       }, 200);
     }
   }, [isSubmitting, submitted, onClose]);
 
-  const handleNext = (): void => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
-  };
-
-  const handleBack = (): void => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
-  };
-
-  const handleInputChange =
-    (field: keyof ManualBugReport) =>
-    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const value = event.target.value;
-      setReportData((prev) => ({ ...prev, [field]: value }));
-    };
-
-  const handleSelectChange =
-    (field: keyof ManualBugReport) => (event: SelectChangeEvent<string>) => {
-      const value = event.target.value as string;
-      setReportData((prev) => ({ ...prev, [field]: value }));
-    };
-
-  const handleStepsChange = (index: number, value: string): void => {
-    setReportData((prev) => {
-      const newSteps = [...(prev.steps || [])];
-      newSteps[index] = value;
-      return { ...prev, steps: newSteps };
-    });
-  };
-
-  const addStep = (): void => {
-    setReportData((prev) => ({
-      ...prev,
-      steps: [...(prev.steps || []), ''],
-    }));
-  };
-
-  const removeStep = (index: number): void => {
-    setReportData((prev) => ({
-      ...prev,
-      steps: prev.steps?.filter((_, i) => i !== index) || [],
-    }));
-  };
-
   const handleSubmit = async (): Promise<void> => {
     setIsSubmitting(true);
-
+    const trimmed = description.trim();
+    // Auto-derive a title from the first sentence / 80 chars of the description
+    const autoTitle = trimmed.length > 80 ? trimmed.slice(0, 80) + '…' : trimmed;
+    const report: ManualBugReport = {
+      title: autoTitle || (isBugReport ? 'Bug Report' : 'Feedback'),
+      description: trimmed,
+      category: initialCategory,
+      severity: 'medium',
+      userAgent: navigator.userAgent,
+      url: window.location.href,
+    };
     try {
-      // Add breadcrumb for bug report submission
       addBreadcrumb('Manual bug report submitted', 'user', {
-        category: reportData.category,
-        severity: reportData.severity,
-        titleLength: reportData.title.length,
-        descriptionLength: reportData.description.length,
+        category: report.category,
+        descriptionLength: trimmed.length,
       });
-
-      // Submit to Rollbar (Rollbar's Jira integration will create the ticket)
-      submitManualBugReport(reportData);
-
+      submitManualBugReport(report);
       setSubmitted(true);
-      setActiveStep(steps.length); // Move to success step
     } catch (error) {
       if (error instanceof Error) {
         logger.error('Error submitting bug report', error);
       } else if (typeof error === 'string') {
         logger.error('Error submitting bug report: ' + error);
       }
-      // Could add error handling UI here
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const isStepValid = (step: number): boolean => {
-    switch (step) {
-      case 0:
-        return reportData.title.trim().length > 0 && reportData.description.trim().length > 0;
-      case 1:
-        return true; // Optional fields
-      case 2:
-        return true; // Review step
-      default:
-        return false;
-    }
-  };
+  const isValid = description.trim().length > 0;
 
-  const renderStepContent = (step: number): React.JSX.Element => {
-    switch (step) {
-      case 0:
-        return (
-          <Stack spacing={3}>
-            <TextField
-              fullWidth
-              label={isBugReport ? 'Bug Title' : 'Feedback Title'}
-              value={reportData.title}
-              onChange={handleInputChange('title')}
-              placeholder={
-                isBugReport ? 'Brief description of the issue' : 'Brief summary of your feedback'
-              }
-              required
-              slotProps={{
-                input: {
-                  sx: {
-                    backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
-                    color: theme.palette.mode === 'dark' ? '#e5e7eb' : '#000000',
-                    '&::placeholder': {
-                      color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                      opacity: 1,
-                    },
-                    '& input::placeholder': {
-                      color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                      opacity: 1,
-                    },
-                  },
-                },
-                inputLabel: {
-                  sx: {
-                    color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                    '&.Mui-focused': {
-                      color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
-                    },
-                  },
-                },
-              }}
-            />
-
-            <TextField
-              fullWidth
-              label={isBugReport ? 'Bug Description' : 'Feedback Description'}
-              value={reportData.description}
-              onChange={handleInputChange('description')}
-              multiline
-              rows={4}
-              placeholder={
-                isBugReport
-                  ? 'Detailed description of what went wrong'
-                  : 'Share your thoughts, suggestions, or experience'
-              }
-              required
-              slotProps={{
-                input: {
-                  sx: {
-                    backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
-                    color: theme.palette.mode === 'dark' ? '#e5e7eb' : '#000000',
-                    '& textarea::placeholder': {
-                      color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                      opacity: 1,
-                    },
-                  },
-                },
-                inputLabel: {
-                  sx: {
-                    color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                    '&.Mui-focused': {
-                      color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
-                    },
-                  },
-                },
-              }}
-            />
-
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <FormControl fullWidth>
-                <InputLabel>{isBugReport ? 'Category' : 'Feedback Type'}</InputLabel>
-                <Select
-                  value={reportData.category}
-                  onChange={handleSelectChange('category')}
-                  label={isBugReport ? 'Category' : 'Feedback Type'}
-                  sx={{
-                    '& .MuiSelect-select': {
-                      color: (theme) =>
-                        theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
-                    },
-                  }}
-                  MenuProps={getSelectMenuProps(theme)}
-                >
-                  {isBugReport
-                    ? Object.entries(BUG_REPORT_CATEGORIES).map(([key, value]) => (
-                        <MenuItem key={key} value={value}>
-                          {key
-                            .replace(/_/g, ' ')
-                            .toLowerCase()
-                            .replace(/\b\w/g, (l) => l.toUpperCase())}
-                        </MenuItem>
-                      ))
-                    : [
-                        { key: 'FEATURE_REQUEST', label: 'Feature Request' },
-                        { key: 'IMPROVEMENT', label: 'Improvement Suggestion' },
-                        { key: 'USABILITY', label: 'Usability Feedback' },
-                        { key: 'DESIGN', label: 'Design Feedback' },
-                        { key: 'PERFORMANCE', label: 'Performance Feedback' },
-                        { key: 'GENERAL', label: 'General Feedback' },
-                        { key: 'COMPLIMENT', label: 'Compliment' },
-                      ].map(({ key, label }) => (
-                        <MenuItem key={key} value={key.toLowerCase()}>
-                          {label}
-                        </MenuItem>
-                      ))}
-                </Select>
-              </FormControl>
-
-              {isBugReport && (
-                <FormControl fullWidth>
-                  <InputLabel>Severity</InputLabel>
-                  <Select
-                    value={reportData.severity}
-                    onChange={handleSelectChange('severity')}
-                    label="Severity"
-                    MenuProps={getSelectMenuProps(theme)}
-                    sx={{
-                      backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
-                      '& .MuiSelect-select': {
-                        color:
-                          theme.palette.mode === 'dark'
-                            ? '#ffffff !important'
-                            : '#000000 !important',
-                        backgroundColor: 'transparent !important',
-                      },
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
-                      },
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.3) !important'
-                            : 'rgba(75, 85, 99, 0.5) !important',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.5) !important'
-                            : 'rgba(55, 65, 81, 0.7) !important',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.8) !important'
-                            : '#1976d2 !important',
-                      },
-                    }}
-                  >
-                    <MenuItem value="low">Low</MenuItem>
-                    <MenuItem value="medium">Medium</MenuItem>
-                    <MenuItem value="high">High</MenuItem>
-                    <MenuItem value="critical">Critical</MenuItem>
-                  </Select>
-                </FormControl>
-              )}
-              {!isBugReport && (
-                <FormControl fullWidth>
-                  <InputLabel>Priority</InputLabel>
-                  <Select
-                    value={reportData.severity}
-                    onChange={handleSelectChange('severity')}
-                    label="Priority"
-                    MenuProps={getSelectMenuProps(theme)}
-                    sx={{
-                      backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
-                      '& .MuiSelect-select': {
-                        color:
-                          theme.palette.mode === 'dark'
-                            ? '#ffffff !important'
-                            : '#000000 !important',
-                        backgroundColor: 'transparent !important',
-                      },
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
-                      },
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.3) !important'
-                            : 'rgba(75, 85, 99, 0.5) !important',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.5) !important'
-                            : 'rgba(55, 65, 81, 0.7) !important',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.8) !important'
-                            : '#1976d2 !important',
-                      },
-                    }}
-                  >
-                    <MenuItem value="low">Low Priority</MenuItem>
-                    <MenuItem value="medium">Medium Priority</MenuItem>
-                    <MenuItem value="high">High Priority</MenuItem>
-                  </Select>
-                </FormControl>
-              )}
-            </Stack>
-          </Stack>
-        );
-
-      case 1:
-        return (
-          <Stack spacing={3}>
+  const renderContent = (): React.JSX.Element => {
+    if (submitted) {
+      return (
+        <Stack spacing={4} alignItems="center" sx={{ py: 4 }}>
+          <Box
+            sx={{
+              width: 80,
+              height: 80,
+              borderRadius: '50%',
+              background: (theme) =>
+                `linear-gradient(135deg, ${theme.palette.success.main}20 0%, ${theme.palette.success.main}10 100%)`,
+              border: (theme) => `2px solid ${theme.palette.success.main}40`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+            }}
+          >
             <Typography
-              variant="h6"
-              sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 500 }}
+              variant="h3"
+              sx={{ color: 'success.main', filter: 'drop-shadow(0 0 8px currentColor)' }}
             >
-              {isBugReport ? 'Steps to Reproduce (Optional)' : 'Additional Context (Optional)'}
+              
             </Typography>
-            {reportData.steps?.map((step, index) => (
-              <Stack
-                key={index}
-                direction={{ xs: 'column', sm: 'row' }}
-                spacing={1}
-                alignItems={{ xs: 'stretch', sm: 'center' }}
-              >
-                <Chip label={index + 1} size="small" />
-                <TextField
-                  fullWidth
-                  value={step}
-                  onChange={(e) => handleStepsChange(index, e.target.value)}
-                  placeholder={`Step ${index + 1}`}
-                  slotProps={{
-                    input: {
-                      sx: {
-                        backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
-                        color: theme.palette.mode === 'dark' ? '#e5e7eb' : '#000000',
-                        '& input::placeholder': {
-                          color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                          opacity: 1,
-                        },
-                      },
-                    },
-                  }}
-                />
-                {(reportData.steps?.length || 0) > 1 && (
-                  <Button size="small" onClick={() => removeStep(index)} sx={{ minWidth: 'auto' }}>
-                    ✕
-                  </Button>
-                )}
-              </Stack>
-            ))}
-            <Button
-              variant="outlined"
-              onClick={addStep}
-              size="small"
+          </Box>
+
+          <Box textAlign="center">
+            <Typography
+              variant="h4"
               sx={{
-                borderRadius: 2,
-                border: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(148, 163, 184, 0.3)'
-                    : '1px solid rgba(15, 23, 42, 0.2)',
-                color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
-                background: (theme) =>
-                  theme.palette.mode === 'dark' ? '#0f172a' : 'rgba(255, 255, 255, 0.6)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
                 fontWeight: 500,
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  background: (theme) =>
-                    theme.palette.mode === 'dark' ? '#1e293b' : 'rgba(15, 23, 42, 0.05)',
-                  borderColor: (theme) => (theme.palette.mode === 'dark' ? '#94a3b8' : '#1e293b'),
-                  color: (theme) => (theme.palette.mode === 'dark' ? '#ffffff' : '#000000'),
-                  transform: 'translateY(-1px)',
-                  boxShadow: (theme) =>
-                    theme.palette.mode === 'dark'
-                      ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                      : '0 4px 12px rgba(15, 23, 42, 0.1)',
-                },
-              }}
-            >
-              Add Step
-            </Button>
-
-            <TextField
-              fullWidth
-              label={isBugReport ? 'Expected Behavior' : 'What would you like to see?'}
-              value={reportData.expectedBehavior}
-              onChange={handleInputChange('expectedBehavior')}
-              multiline
-              rows={2}
-              placeholder={
-                isBugReport
-                  ? 'What should have happened?'
-                  : 'Describe your ideal solution or outcome'
-              }
-              slotProps={{
-                input: {
-                  sx: {
-                    backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
-                    color: theme.palette.mode === 'dark' ? '#e5e7eb' : '#000000',
-                    '& textarea::placeholder': {
-                      color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                      opacity: 1,
-                    },
-                  },
-                },
-                inputLabel: {
-                  sx: {
-                    color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                    '&.Mui-focused': {
-                      color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
-                    },
-                  },
-                },
-              }}
-            />
-
-            <TextField
-              fullWidth
-              label={isBugReport ? 'Actual Behavior' : 'Current Experience'}
-              value={reportData.actualBehavior}
-              onChange={handleInputChange('actualBehavior')}
-              multiline
-              rows={2}
-              placeholder={
-                isBugReport
-                  ? 'What actually happened?'
-                  : 'Describe the current state or your experience'
-              }
-              slotProps={{
-                input: {
-                  sx: {
-                    backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
-                    color: theme.palette.mode === 'dark' ? '#e5e7eb' : '#000000',
-                    '& textarea::placeholder': {
-                      color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                      opacity: 1,
-                    },
-                  },
-                },
-                inputLabel: {
-                  sx: {
-                    color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                    '&.Mui-focused': {
-                      color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
-                    },
-                  },
-                },
-              }}
-            />
-          </Stack>
-        );
-
-      case 2:
-        return (
-          <Stack spacing={2}>
-            <Typography
-              variant="h6"
-              sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 500 }}
-            >
-              {isBugReport ? 'Review Your Bug Report' : 'Review Your Feedback'}
-            </Typography>
-
-            <Alert
-              severity="info"
-              sx={{
-                backgroundColor: (theme) => (theme.palette.mode === 'dark' ? '#1e293b' : '#f8fafc'),
-                border: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(148, 163, 184, 0.3)'
-                    : '1px solid rgba(148, 163, 184, 0.2)',
-                color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
-                '& .MuiAlert-icon': {
-                  color: (theme) => (theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b'),
-                },
-              }}
-            >
-              {isBugReport
-                ? 'Please review your bug report before submitting. This information will help our development team identify and fix the issue more quickly.'
-                : 'Please review your feedback before submitting. We value your input and will use it to improve the application.'}
-            </Alert>
-
-            <Box
-              sx={{
-                p: 2,
-                bgcolor: (theme) => (theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff'),
-                borderRadius: 1,
-                border: '1px solid',
-                borderColor: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(148, 163, 184, 0.3)'
-                    : 'rgba(15, 23, 42, 0.2)',
-                color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
-              }}
-            >
-              <Typography variant="subtitle1" gutterBottom>
-                <strong>{reportData.title}</strong>
-              </Typography>
-              <Typography variant="body2" paragraph>
-                {reportData.description}
-              </Typography>
-
-              <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap' }}>
-                <Chip label={reportData.category} size="small" color="primary" />
-                <Chip label={reportData.severity} size="small" color="secondary" />
-              </Stack>
-
-              {reportData.steps && reportData.steps.some((s) => s.trim()) && (
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    gutterBottom
-                    sx={{ fontFamily: 'Inter, system-ui', fontWeight: 500 }}
-                  >
-                    Steps to Reproduce:
-                  </Typography>
-                  <ol>
-                    {reportData.steps
-                      .filter((s) => s.trim())
-                      .map((step, index) => (
-                        <li key={index}>
-                          <Typography variant="body2">{step}</Typography>
-                        </li>
-                      ))}
-                  </ol>
-                </Box>
-              )}
-            </Box>
-          </Stack>
-        );
-
-      default:
-        return (
-          <Stack spacing={4} alignItems="center" sx={{ py: 4 }}>
-            <Box
-              sx={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
                 background: (theme) =>
-                  `linear-gradient(135deg, ${theme.palette.success.main}20 0%, ${theme.palette.success.main}10 100%)`,
-                border: (theme) => `2px solid ${theme.palette.success.main}40`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-                position: 'relative',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  inset: -4,
-                  borderRadius: '50%',
-                  background: (theme) =>
-                    `conic-gradient(from 0deg, ${theme.palette.success.main}40, transparent, ${theme.palette.success.main}40)`,
-                  animation: 'spin 3s linear infinite',
-                  '@keyframes spin': {
-                    '0%': { transform: 'rotate(0deg)' },
-                    '100%': { transform: 'rotate(360deg)' },
-                  },
-                  zIndex: -1,
-                },
+                  `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.light} 100%)`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                mb: 2,
               }}
             >
-              <Typography
-                variant="h3"
-                sx={{
-                  color: 'success.main',
-                  filter: 'drop-shadow(0 0 8px currentColor)',
-                }}
-              >
-                ✓
-              </Typography>
-            </Box>
-
-            <Box textAlign="center">
-              <Typography
-                variant="h4"
-                sx={{
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  fontWeight: 500,
-                  background: (theme) =>
-                    `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.light} 100%)`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  mb: 2,
-                }}
-              >
-                {isBugReport ? 'Bug Report' : 'Feedback'} Submitted!
-              </Typography>
-              <Typography
-                variant="body1"
-                color="text.secondary"
-                sx={{ maxWidth: 400, lineHeight: 1.6 }}
-              >
-                {isBugReport
-                  ? 'Thank you for reporting this issue. Our development team has been notified and will investigate the problem.'
-                  : 'Thank you for your feedback! We appreciate your input and will use it to improve the application.'}
-              </Typography>
-            </Box>
-
-            <Alert
-              severity="success"
-              sx={{
-                width: '100%',
-                borderRadius: 2,
-                backgroundColor: (theme) => (theme.palette.mode === 'dark' ? '#1e293b' : '#f8fafc'),
-                border: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(148, 163, 184, 0.3)'
-                    : '1px solid rgba(148, 163, 184, 0.2)',
-                color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-                '& .MuiAlert-icon': {
-                  color: (theme) => (theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b'),
-                },
-                '& .MuiAlert-message': {
-                  fontSize: '0.95rem',
-                  lineHeight: 1.5,
-                  color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
-                },
-              }}
-            >
+              {isBugReport ? 'Bug Report' : 'Feedback'} Submitted!
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 400, lineHeight: 1.6 }}>
               {isBugReport
-                ? 'Your bug report has been automatically tagged with relevant system information to help with debugging.'
-                : 'Your feedback has been recorded with relevant context information to help us understand your experience better.'}
-            </Alert>
-          </Stack>
-        );
+                ? 'Thank you for reporting this issue. Our team has been notified and will investigate.'
+                : 'Thank you for your feedback! We appreciate your input.'}
+            </Typography>
+          </Box>
+        </Stack>
+      );
     }
+
+    return (
+      <Stack spacing={2}>
+        <TextField
+          fullWidth
+          label={isBugReport ? 'Describe the issue' : 'Your feedback'}
+          value={description}
+          onChange={(e) => { setDescription(e.target.value); }}
+          multiline
+          rows={5}
+          placeholder={
+            isBugReport
+              ? 'What went wrong? What were you doing when it happened?'
+              : 'Share your thoughts or suggestions'
+          }
+          autoFocus
+          slotProps={{
+            input: {
+              sx: {
+                backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
+                color: theme.palette.mode === 'dark' ? '#e5e7eb' : '#000000',
+                '& textarea::placeholder': {
+                  color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                  opacity: 1,
+                },
+              },
+            },
+            inputLabel: {
+              sx: {
+                color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                '&.Mui-focused': {
+                  color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+                },
+              },
+            },
+          }}
+        />
+        <Typography variant="caption" color="text.secondary" sx={{ opacity: 0.7 }}>
+          We&apos;ll automatically include your current page URL and browser info to help with diagnosis.
+        </Typography>
+      </Stack>
+    );
   };
 
   return (
@@ -1052,149 +478,9 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           paddingLeft: { xs: 'max(16px, env(safe-area-inset-left))', sm: 4 },
           paddingRight: { xs: 'max(16px, env(safe-area-inset-right))', sm: 4 },
           // Ensure content doesn't get cut off by browser UI
-          minHeight: isMobile ? 'calc(100dvh - 160px)' : 'auto', // Account for title and actions with more space
+          minHeight: isMobile ? 'calc(100dvh - 160px)' : 'auto',
         }}
       >
-        {activeStep < steps.length && (
-          <Box
-            sx={{
-              mb: { xs: 2, sm: 4 },
-              mt: { xs: 2, sm: 2 }, // Add top margin on mobile
-              p: { xs: 2, sm: 3 },
-              borderRadius: 2,
-              background: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, #0f172a 0%, #0d1430 100%)'
-                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%)',
-              border: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? '1px solid rgba(56, 189, 248, 0.1)'
-                  : '1px solid rgba(15, 23, 42, 0.08)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-            }}
-          >
-            {isMobile ? (
-              // Compact mobile progress indicator
-              <Box>
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontSize: '0.85rem',
-                      fontFamily: 'Inter, system-ui',
-                      color: 'primary.main',
-                    }}
-                  >
-                    <Box component="span" sx={{ fontWeight: 300 }}>
-                      Step{' '}
-                    </Box>
-                    <Box component="span" sx={{ fontWeight: 700 }}>
-                      {activeStep + 1}
-                    </Box>
-                    <Box component="span" sx={{ fontWeight: 300 }}>
-                      {' '}
-                      of {steps.length}
-                    </Box>
-                  </Typography>
-                  <Box
-                    sx={{
-                      flex: 1,
-                      height: 4,
-                      borderRadius: 2,
-                      background: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(148, 163, 184, 0.3)'
-                          : 'rgba(148, 163, 184, 0.2)',
-                      position: 'relative',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        left: 0,
-                        top: 0,
-                        height: '100%',
-                        width: `${((activeStep + 1) / steps.length) * 100}%`,
-                        background: (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? 'linear-gradient(90deg, #e5e7eb 0%, #ffffff 100%)'
-                            : 'linear-gradient(90deg, #1e293b 0%, #000000 100%)',
-                        borderRadius: 2,
-                        transition: 'width 0.3s ease-in-out',
-                      }}
-                    />
-                  </Box>
-                </Stack>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontSize: '0.95rem',
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    fontWeight: 500,
-                    color: 'text.primary',
-                  }}
-                >
-                  {steps[activeStep]}
-                </Typography>
-              </Box>
-            ) : (
-              // Desktop stepper
-              <Stepper
-                activeStep={activeStep}
-                sx={{
-                  '& .MuiStepLabel-root': {
-                    fontFamily: 'Inter, system-ui',
-                  },
-                  '& .MuiStepIcon-root': {
-                    fontSize: '1.5rem',
-                    color: (theme) => (theme.palette.mode === 'dark' ? '#64748b' : '#94a3b8'),
-                    '&.Mui-active': {
-                      color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
-                      filter: 'none',
-                    },
-                    '&.Mui-completed': {
-                      color: (theme) => (theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b'),
-                    },
-                  },
-                  '& .MuiStepConnector-line': {
-                    borderColor: (theme) =>
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(148, 163, 184, 0.3)'
-                        : 'rgba(148, 163, 184, 0.2)',
-                  },
-                }}
-              >
-                {steps.map((label) => (
-                  <Step key={label}>
-                    <StepLabel
-                      sx={{
-                        '& .MuiStepLabel-label': {
-                          fontSize: '0.95rem',
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
-                          fontWeight: 500,
-                          color: (theme) => (theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b'),
-                        },
-                        '& .MuiStepLabel-label.Mui-active': {
-                          color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
-                          fontWeight: 500,
-                        },
-                        '& .MuiStepLabel-label.Mui-completed': {
-                          color: (theme) => (theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b'),
-                        },
-                      }}
-                    >
-                      {label}
-                    </StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-            )}
-          </Box>
-        )}
-
         <Box
           sx={{
             p: { xs: 2, sm: 3 },
@@ -1209,12 +495,9 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                 : '1px solid rgba(15, 23, 42, 0.08)',
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',
-            minHeight: { xs: 300, sm: 400 },
-            // Add extra margin bottom on mobile to ensure scrolling space
-            marginBottom: { xs: 3, sm: 0 },
           }}
         >
-          {renderStepContent(activeStep)}
+          {renderContent()}
         </Box>
       </DialogContent>
 
@@ -1257,33 +540,14 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
               py: { xs: 1.2, sm: 1.5 },
               background: (theme) =>
                 `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-              boxShadow: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? '0 4px 20px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-                  : '0 4px 20px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
               fontWeight: 500,
               fontSize: { xs: '0.95rem', sm: '1.05rem' },
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '0 6px 30px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
-                    : '0 6px 30px rgba(15, 23, 42, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
-              },
-              '&:active': {
-                transform: 'translateY(-1px)',
-              },
             }}
           >
             Close
           </Button>
         ) : (
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ width: '100%', justifyContent: 'space-between' }}
-          >
+          <Stack direction="row" spacing={2} sx={{ width: '100%', justifyContent: 'space-between' }}>
             <Button
               onClick={handleClose}
               disabled={isSubmitting}
@@ -1293,148 +557,33 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                 px: { xs: 2.5, sm: 3 },
                 py: { xs: 1.2, sm: 1.5 },
                 color: 'text.secondary',
-                fontSize: { xs: '0.9rem', sm: '1rem' },
                 fontWeight: 500,
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  background: (theme) =>
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(56, 189, 248, 0.1)'
-                      : 'rgba(15, 23, 42, 0.05)',
-                  color: (theme) => theme.palette.primary.main,
-                  transform: 'translateY(-1px)',
-                },
               }}
             >
               Cancel
             </Button>
 
-            <Stack direction="row" spacing={1}>
-              {activeStep > 0 && (
-                <Button
-                  onClick={handleBack}
-                  disabled={isSubmitting}
-                  variant="outlined"
-                  size="large"
-                  sx={{
-                    borderRadius: 2,
-                    px: { xs: 2.5, sm: 3 },
-                    py: { xs: 1.2, sm: 1.5 },
-                    border: (theme) =>
-                      theme.palette.mode === 'dark'
-                        ? '1px solid rgba(148, 163, 184, 0.3)'
-                        : '1px solid rgba(15, 23, 42, 0.2)',
-                    color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
-                    background: (theme) =>
-                      theme.palette.mode === 'dark' ? '#0f172a' : 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    fontSize: { xs: '0.9rem', sm: '1rem' },
-                    fontWeight: 500,
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    '&:hover': {
-                      background: (theme) =>
-                        theme.palette.mode === 'dark' ? '#1e293b' : 'rgba(15, 23, 42, 0.05)',
-                      borderColor: (theme) =>
-                        theme.palette.mode === 'dark' ? '#94a3b8' : '#1e293b',
-                      color: (theme) => (theme.palette.mode === 'dark' ? '#ffffff' : '#000000'),
-                      transform: 'translateY(-1px)',
-                      boxShadow: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? '0 4px 15px rgba(0, 0, 0, 0.3)'
-                          : '0 4px 15px rgba(15, 23, 42, 0.1)',
-                    },
-                  }}
-                >
-                  Back
-                </Button>
-              )}
-
-              {activeStep < steps.length - 1 ? (
-                <Button
-                  variant="contained"
-                  onClick={handleNext}
-                  disabled={!isStepValid(activeStep)}
-                  size="large"
-                  sx={{
-                    borderRadius: 2,
-                    px: { xs: 3, sm: 4 },
-                    py: { xs: 1.2, sm: 1.5 },
-                    background: (theme) =>
-                      `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                    boxShadow: (theme) =>
-                      theme.palette.mode === 'dark'
-                        ? '0 4px 20px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-                        : '0 4px 20px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-                    fontWeight: 500,
-                    fontSize: { xs: '0.95rem', sm: '1.05rem' },
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? '0 6px 30px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
-                          : '0 6px 30px rgba(15, 23, 42, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
-                    },
-                    '&:active': {
-                      transform: 'translateY(-1px)',
-                    },
-                    '&:disabled': {
-                      opacity: 0.6,
-                      transform: 'none',
-                    },
-                  }}
-                >
-                  Next
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  onClick={handleSubmit}
-                  disabled={!isStepValid(activeStep) || isSubmitting}
-                  startIcon={<Send sx={{ fontSize: 20 }} />}
-                  size="large"
-                  sx={{
-                    borderRadius: 2,
-                    px: { xs: 3, sm: 4 },
-                    py: { xs: 1.2, sm: 1.5 },
-                    background: (theme) =>
-                      isBugReport
-                        ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%)'
-                        : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                    boxShadow: (theme) =>
-                      isBugReport
-                        ? '0 4px 20px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-                        : theme.palette.mode === 'dark'
-                          ? '0 4px 20px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-                          : '0 4px 20px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-                    fontWeight: 500,
-                    fontSize: { xs: '0.95rem', sm: '1.05rem' },
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: (theme) =>
-                        isBugReport
-                          ? '0 6px 30px rgba(239, 68, 68, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
-                          : theme.palette.mode === 'dark'
-                            ? '0 6px 30px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
-                            : '0 6px 30px rgba(15, 23, 42, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
-                    },
-                    '&:active': {
-                      transform: 'translateY(-1px)',
-                    },
-                    '&:disabled': {
-                      opacity: 0.6,
-                      transform: 'none',
-                    },
-                  }}
-                >
-                  {isSubmitting
-                    ? 'Submitting...'
-                    : `Submit ${isBugReport ? 'Bug Report' : 'Feedback'}`}
-                </Button>
-              )}
-            </Stack>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={!isValid || isSubmitting}
+              startIcon={<Send sx={{ fontSize: 20 }} />}
+              size="large"
+              sx={{
+                borderRadius: 2,
+                px: { xs: 3, sm: 4 },
+                py: { xs: 1.2, sm: 1.5 },
+                background: (theme) =>
+                  isBugReport
+                    ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%)'
+                    : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                fontWeight: 500,
+                fontSize: { xs: '0.95rem', sm: '1.05rem' },
+                '&:disabled': { opacity: 0.6 },
+              }}
+            >
+              {isSubmitting ? 'Submitting…' : `Submit ${isBugReport ? 'Bug Report' : 'Feedback'}`}
+            </Button>
           </Stack>
         )}
       </DialogActions>
@@ -1547,7 +696,7 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
                 },
               }}
             >
-              <ChatBubbleOutline />
+              <Feedback />
             </Fab>
 
             <Fab
@@ -1584,7 +733,7 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
                 },
               }}
             >
-              <BugReportIcon />
+              <BugReport />
             </Fab>
 
             <Fab
