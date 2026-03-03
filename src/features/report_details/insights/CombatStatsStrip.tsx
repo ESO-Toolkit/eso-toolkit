@@ -514,9 +514,26 @@ export const CombatStatsStrip: React.FC<CombatStatsStripProps> = React.memo(
     const hasGaugesOrHeroes = gauges.length > 0 || heroes.length > 0;
 
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {/* Consumables */}
-        <ConsumablesRow items={consumables} />
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        {/* Consumables + secondary stats — unified single row */}
+        {(consumables.length > 0 || secondary.length > 0) && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 0.5,
+              minHeight: 24,
+            }}
+          >
+            {/* Left: consumables */}
+            <ConsumablesRow items={consumables} />
+
+            {/* Right: secondary stats */}
+            <SecondaryStatRow stats={secondary} />
+          </Box>
+        )}
 
         {/* Performance gauges + hero stat */}
         {hasGaugesOrHeroes && (
@@ -526,7 +543,6 @@ export const CombatStatsStrip: React.FC<CombatStatsStripProps> = React.memo(
               alignItems: 'center',
               justifyContent: 'center',
               gap: 1,
-              py: 0.5,
             }}
           >
             {gauges[0] && gauges[0].numericValue != null && (
@@ -563,9 +579,6 @@ export const CombatStatsStrip: React.FC<CombatStatsStripProps> = React.memo(
             )}
           </Box>
         )}
-
-        {/* Secondary stats */}
-        <SecondaryStatRow stats={secondary} />
 
         {/* Resource bars */}
         {resources &&
