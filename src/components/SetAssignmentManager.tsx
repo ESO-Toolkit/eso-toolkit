@@ -8,6 +8,7 @@ import {
   Shield as ShieldIcon,
   Favorite as FavoriteIcon,
   SwapHoriz as SwapHorizIcon,
+  Clear as ClearIcon,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -26,6 +27,7 @@ import {
   Tab,
   Button,
   ButtonGroup,
+  IconButton,
 } from '@mui/material';
 import React, { useMemo, useState, useCallback } from 'react';
 
@@ -1034,7 +1036,11 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             {/* Tank 1 slots */}
             {selectedSetId && canAssignToFivePieceSlot(selectedSetId) && (
               <>
-                <MenuItem dense onClick={() => handleAssignToRole('tank1', 'set1')}>
+                <MenuItem
+                  dense
+                  onClick={() => handleAssignToRole('tank1', 'set1')}
+                  sx={{ pr: 0.5 }}
+                >
                   <ListItemText
                     primary="Tank 1 - Set 1"
                     secondary={
@@ -1043,8 +1049,27 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
+                  {tank1.gearSets.set1 && (
+                    <Tooltip title="Remove set from this slot">
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAssignSet('', 'tank1', 'set1');
+                        }}
+                        sx={{ ml: 1 }}
+                      >
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </MenuItem>
-                <MenuItem dense onClick={() => handleAssignToRole('tank1', 'set2')}>
+                <MenuItem
+                  dense
+                  onClick={() => handleAssignToRole('tank1', 'set2')}
+                  sx={{ pr: 0.5 }}
+                >
                   <ListItemText
                     primary="Tank 1 - Set 2"
                     secondary={
@@ -1053,11 +1078,30 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
+                  {tank1.gearSets.set2 && (
+                    <Tooltip title="Remove set from this slot">
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAssignSet('', 'tank1', 'set2');
+                        }}
+                        sx={{ ml: 1 }}
+                      >
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </MenuItem>
               </>
             )}
             {selectedSetId && canAssignToMonsterSlot(selectedSetId) && (
-              <MenuItem dense onClick={() => handleAssignToRole('tank1', 'monster')}>
+              <MenuItem
+                dense
+                onClick={() => handleAssignToRole('tank1', 'monster')}
+                sx={{ pr: 0.5 }}
+              >
                 <ListItemText
                   primary="Tank 1 - Monster"
                   secondary={
@@ -1068,6 +1112,21 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                   primaryTypographyProps={{ fontSize: '0.875rem' }}
                   secondaryTypographyProps={{ fontSize: '0.75rem' }}
                 />
+                {tank1.gearSets.monsterSet && (
+                  <Tooltip title="Remove set from this slot">
+                    <IconButton
+                      size="small"
+                      edge="end"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAssignSet('', 'tank1', 'monster');
+                      }}
+                      sx={{ ml: 1 }}
+                    >
+                      <ClearIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
               </MenuItem>
             )}
 
@@ -1076,7 +1135,11 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             {/* Tank 2 slots */}
             {selectedSetId && canAssignToFivePieceSlot(selectedSetId) && (
               <>
-                <MenuItem dense onClick={() => handleAssignToRole('tank2', 'set1')}>
+                <MenuItem
+                  dense
+                  onClick={() => handleAssignToRole('tank2', 'set1')}
+                  sx={{ pr: 0.5 }}
+                >
                   <ListItemText
                     primary="Tank 2 - Set 1"
                     secondary={
@@ -1085,8 +1148,27 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
+                  {tank2.gearSets.set1 && (
+                    <Tooltip title="Remove set from this slot">
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAssignSet('', 'tank2', 'set1');
+                        }}
+                        sx={{ ml: 1 }}
+                      >
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </MenuItem>
-                <MenuItem dense onClick={() => handleAssignToRole('tank2', 'set2')}>
+                <MenuItem
+                  dense
+                  onClick={() => handleAssignToRole('tank2', 'set2')}
+                  sx={{ pr: 0.5 }}
+                >
                   <ListItemText
                     primary="Tank 2 - Set 2"
                     secondary={
@@ -1095,11 +1177,30 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
+                  {tank2.gearSets.set2 && (
+                    <Tooltip title="Remove set from this slot">
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAssignSet('', 'tank2', 'set2');
+                        }}
+                        sx={{ ml: 1 }}
+                      >
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </MenuItem>
               </>
             )}
             {selectedSetId && canAssignToMonsterSlot(selectedSetId) && (
-              <MenuItem dense onClick={() => handleAssignToRole('tank2', 'monster')}>
+              <MenuItem
+                dense
+                onClick={() => handleAssignToRole('tank2', 'monster')}
+                sx={{ pr: 0.5 }}
+              >
                 <ListItemText
                   primary="Tank 2 - Monster"
                   secondary={
@@ -1110,6 +1211,21 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                   primaryTypographyProps={{ fontSize: '0.875rem' }}
                   secondaryTypographyProps={{ fontSize: '0.75rem' }}
                 />
+                {tank2.gearSets.monsterSet && (
+                  <Tooltip title="Remove set from this slot">
+                    <IconButton
+                      size="small"
+                      edge="end"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAssignSet('', 'tank2', 'monster');
+                      }}
+                      sx={{ ml: 1 }}
+                    >
+                      <ClearIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
               </MenuItem>
             )}
           </Box>
@@ -1128,32 +1244,89 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             {/* Healer 1 slots */}
             {selectedSetId && canAssignToFivePieceSlot(selectedSetId) && (
               <>
-                <MenuItem dense onClick={() => handleAssignToRole('healer1', 'set1')}>
+                <MenuItem
+                  dense
+                  onClick={() => handleAssignToRole('healer1', 'set1')}
+                  sx={{ pr: 0.5 }}
+                >
                   <ListItemText
                     primary="Healer 1 - Set 1"
                     secondary={healer1.set1 ? getSetDisplayName(healer1.set1) : 'Empty'}
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
+                  {healer1.set1 && (
+                    <Tooltip title="Remove set from this slot">
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAssignSet('', 'healer1', 'set1');
+                        }}
+                        sx={{ ml: 1 }}
+                      >
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </MenuItem>
-                <MenuItem dense onClick={() => handleAssignToRole('healer1', 'set2')}>
+                <MenuItem
+                  dense
+                  onClick={() => handleAssignToRole('healer1', 'set2')}
+                  sx={{ pr: 0.5 }}
+                >
                   <ListItemText
                     primary="Healer 1 - Set 2"
                     secondary={healer1.set2 ? getSetDisplayName(healer1.set2) : 'Empty'}
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
+                  {healer1.set2 && (
+                    <Tooltip title="Remove set from this slot">
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAssignSet('', 'healer1', 'set2');
+                        }}
+                        sx={{ ml: 1 }}
+                      >
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </MenuItem>
               </>
             )}
             {selectedSetId && canAssignToMonsterSlot(selectedSetId) && (
-              <MenuItem dense onClick={() => handleAssignToRole('healer1', 'monster')}>
+              <MenuItem
+                dense
+                onClick={() => handleAssignToRole('healer1', 'monster')}
+                sx={{ pr: 0.5 }}
+              >
                 <ListItemText
                   primary="Healer 1 - Monster"
                   secondary={healer1.monsterSet ? getSetDisplayName(healer1.monsterSet) : 'Empty'}
                   primaryTypographyProps={{ fontSize: '0.875rem' }}
                   secondaryTypographyProps={{ fontSize: '0.75rem' }}
                 />
+                {healer1.monsterSet && (
+                  <Tooltip title="Remove set from this slot">
+                    <IconButton
+                      size="small"
+                      edge="end"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAssignSet('', 'healer1', 'monster');
+                      }}
+                      sx={{ ml: 1 }}
+                    >
+                      <ClearIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
               </MenuItem>
             )}
 
@@ -1162,32 +1335,89 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             {/* Healer 2 slots */}
             {selectedSetId && canAssignToFivePieceSlot(selectedSetId) && (
               <>
-                <MenuItem dense onClick={() => handleAssignToRole('healer2', 'set1')}>
+                <MenuItem
+                  dense
+                  onClick={() => handleAssignToRole('healer2', 'set1')}
+                  sx={{ pr: 0.5 }}
+                >
                   <ListItemText
                     primary="Healer 2 - Set 1"
                     secondary={healer2.set1 ? getSetDisplayName(healer2.set1) : 'Empty'}
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
+                  {healer2.set1 && (
+                    <Tooltip title="Remove set from this slot">
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAssignSet('', 'healer2', 'set1');
+                        }}
+                        sx={{ ml: 1 }}
+                      >
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </MenuItem>
-                <MenuItem dense onClick={() => handleAssignToRole('healer2', 'set2')}>
+                <MenuItem
+                  dense
+                  onClick={() => handleAssignToRole('healer2', 'set2')}
+                  sx={{ pr: 0.5 }}
+                >
                   <ListItemText
                     primary="Healer 2 - Set 2"
                     secondary={healer2.set2 ? getSetDisplayName(healer2.set2) : 'Empty'}
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                     secondaryTypographyProps={{ fontSize: '0.75rem' }}
                   />
+                  {healer2.set2 && (
+                    <Tooltip title="Remove set from this slot">
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAssignSet('', 'healer2', 'set2');
+                        }}
+                        sx={{ ml: 1 }}
+                      >
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </MenuItem>
               </>
             )}
             {selectedSetId && canAssignToMonsterSlot(selectedSetId) && (
-              <MenuItem dense onClick={() => handleAssignToRole('healer2', 'monster')}>
+              <MenuItem
+                dense
+                onClick={() => handleAssignToRole('healer2', 'monster')}
+                sx={{ pr: 0.5 }}
+              >
                 <ListItemText
                   primary="Healer 2 - Monster"
                   secondary={healer2.monsterSet ? getSetDisplayName(healer2.monsterSet) : 'Empty'}
                   primaryTypographyProps={{ fontSize: '0.875rem' }}
                   secondaryTypographyProps={{ fontSize: '0.75rem' }}
                 />
+                {healer2.monsterSet && (
+                  <Tooltip title="Remove set from this slot">
+                    <IconButton
+                      size="small"
+                      edge="end"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAssignSet('', 'healer2', 'monster');
+                      }}
+                      sx={{ ml: 1 }}
+                    >
+                      <ClearIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
               </MenuItem>
             )}
           </Box>
