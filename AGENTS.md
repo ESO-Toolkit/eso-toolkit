@@ -11,7 +11,7 @@
 ## 🚀 Essential Commands
 
 ```bash
-npm run dev              # Start development server
+npm run dev              # Start development server (port 3000, main worktree)
 npm test                 # Unit tests (changed files)
 npm run test:coverage    # Coverage report
 npm run validate         # Pre-commit: typecheck + lint + format
@@ -39,7 +39,7 @@ npm run lint:fix         # Auto-fix linting issues
 - ✅ Check if you're on master/main (and stop you)
 - ✅ Create feature branch `ESO-XXX/description` if needed
 - ✅ Switch to existing feature branch if it already exists
-- ✅ Set up twig parent branch dependencies
+- ✅ Set up branch parent dependencies (twig with plain git fallback)
 
 **Manual fallback (if skill unavailable):**
 ```bash
@@ -67,22 +67,43 @@ git checkout -b ESO-XXX/description-here
 **Full Index**: [documentation/INDEX.md](documentation/INDEX.md)
 
 ### Agent Skills (SKILL.md files in `.github/skills/`)
-- **Git Workflow Enforcement**: [.github/skills/workflow/SKILL.md](.github/skills/workflow/SKILL.md) - **Use this FIRST**
-- **Playwright Testing**: [.github/skills/playwright/SKILL.md](.github/skills/playwright/SKILL.md) - **E2E test execution**
-- **Write Playwright Tests**: [.github/skills/write-playwright-tests/SKILL.md](.github/skills/write-playwright-tests/SKILL.md) - Authoring visual/E2E tests (skeleton detection, pre-loading, mocking)
-- **Testing & Dev**: [.github/skills/testing/SKILL.md](.github/skills/testing/SKILL.md)
-- **Jira Integration**: [.github/skills/jira/SKILL.md](.github/skills/jira/SKILL.md)
-- **Rollbar Integration**: [.github/skills/rollbar/SKILL.md](.github/skills/rollbar/SKILL.md)
-- **Report Debugging**: [.github/skills/reports/SKILL.md](.github/skills/reports/SKILL.md)
-- **Git Operations**: [.github/skills/git/SKILL.md](.github/skills/git/SKILL.md)
-- **Post-Squash Rebase**: [.github/skills/rebase/SKILL.md](.github/skills/rebase/SKILL.md)
-- **Auth / OAuth**: [.github/skills/auth/SKILL.md](.github/skills/auth/SKILL.md) - Browser session authentication
-- **Skill Data Regen**: [.github/skills/skill-data-regen/SKILL.md](.github/skills/skill-data-regen/SKILL.md) - ESO skill line data regeneration
+
+**CI/CD & Debugging:**
+- **Debug CI Failure**: [.github/skills/debug-ci-failure/SKILL.md](.github/skills/debug-ci-failure/SKILL.md) - End-to-end CI failure debugging workflow
+- **GitHub Actions Logs**: [.github/skills/github-actions-logs/SKILL.md](.github/skills/github-actions-logs/SKILL.md) - Parse and analyze GH Actions logs
+- **Troubleshoot**: [.github/skills/troubleshoot/SKILL.md](.github/skills/troubleshoot/SKILL.md) - Quick-reference fixes for common dev issues
+
+**Data & Content:**
 - **Class Skill Regen**: [.github/skills/class-skill-regen/SKILL.md](.github/skills/class-skill-regen/SKILL.md) - Refresh class skill descriptions/icons from ESO-Hub API
 - **Gear Data Regen**: [.github/skills/gear-data-regen/SKILL.md](.github/skills/gear-data-regen/SKILL.md) - Gear set bonus/tooltip data from ESO-Hub
+- **No-Edit Generated**: [.github/skills/no-edit-generated/SKILL.md](.github/skills/no-edit-generated/SKILL.md) - Never manually edit generated files
+- **Skill Data Regen**: [.github/skills/skill-data-regen/SKILL.md](.github/skills/skill-data-regen/SKILL.md) - ESO skill line data regeneration
 - **UESP Data**: [.github/skills/uesp-data/SKILL.md](.github/skills/uesp-data/SKILL.md) - Item icon management
-- **UI Updates**: [.github/skills/ui-updates/SKILL.md](.github/skills/ui-updates/SKILL.md) - Theme-consistent UI changes (glassmorphism, colors, typography, patterns)
+
+**Integrations:**
+- **Auth / OAuth**: [.github/skills/auth/SKILL.md](.github/skills/auth/SKILL.md) - Browser session authentication
+- **Jira Integration**: [.github/skills/jira/SKILL.md](.github/skills/jira/SKILL.md)
+- **Report Debugging**: [.github/skills/reports/SKILL.md](.github/skills/reports/SKILL.md)
+- **Rollbar Integration**: [.github/skills/rollbar/SKILL.md](.github/skills/rollbar/SKILL.md)
+
+**Testing & Quality:**
+- **Fix Lint Errors**: [.github/skills/fix-lint/SKILL.md](.github/skills/fix-lint/SKILL.md) - Diagnose and fix ESLint errors after auto-fix
+- **Fix Type Errors**: [.github/skills/fix-types/SKILL.md](.github/skills/fix-types/SKILL.md) - Diagnose and fix TypeScript type errors
+- **Playwright Testing**: [.github/skills/playwright/SKILL.md](.github/skills/playwright/SKILL.md) - **E2E test execution**
+- **Testing & Dev**: [.github/skills/testing/SKILL.md](.github/skills/testing/SKILL.md)
+- **Write Playwright Tests**: [.github/skills/write-playwright-tests/SKILL.md](.github/skills/write-playwright-tests/SKILL.md) - Authoring visual/E2E tests (skeleton detection, pre-loading, mocking)
+
+**UI & Meta:**
 - **Create New Skill**: [.github/skills/create-skill/SKILL.md](.github/skills/create-skill/SKILL.md) - Add a new SKILL.md to the project
+- **Scratch Directory**: [.github/skills/scratch-dir/SKILL.md](.github/skills/scratch-dir/SKILL.md) - Gitignored directory for ad-hoc output files
+- **UI Updates**: [.github/skills/ui-updates/SKILL.md](.github/skills/ui-updates/SKILL.md) - Theme-consistent UI changes (glassmorphism, colors, typography, patterns)
+
+**Workflow & Git:**
+- **Create PR**: [.github/skills/create-pr/SKILL.md](.github/skills/create-pr/SKILL.md) - PR creation with PowerShell-safe `--body-file` pattern
+- **Git Operations**: [.github/skills/git/SKILL.md](.github/skills/git/SKILL.md) - Branch management (twig with plain git fallbacks)
+- **Git Workflow Enforcement**: [.github/skills/workflow/SKILL.md](.github/skills/workflow/SKILL.md) - **Use this FIRST**
+- **Post-Squash Rebase**: [.github/skills/rebase/SKILL.md](.github/skills/rebase/SKILL.md) - Recovery after squash-merge of stacked branches
+- **Rebase & Conflicts**: [.github/skills/rebase-conflicts/SKILL.md](.github/skills/rebase-conflicts/SKILL.md) - Rebase branches and resolve merge conflicts step-by-step
 
 ### Feature & Architecture Docs
 - **Features**: [documentation/features/](documentation/features/)
@@ -125,12 +146,13 @@ PowerShell treats `` ` `` as an escape character inside double-quoted strings, s
 ✅ **Always use a PowerShell here-string piped to `--file`/`--body-file -`** for any message containing backticks, bold, or multi-line content:
 
 ```powershell
-# git commit
-@"
+# git commit (use single-quote heredoc to preserve backticks)
+$msg = @'
 feat: my subject line
 
 Body with `backticks` and **bold** works fine here.
-"@ | Set-Content "$env:TEMP\msg.txt"; git commit --file "$env:TEMP\msg.txt"
+'@
+$msg | Set-Content "$env:TEMP\msg.txt"; git commit --file "$env:TEMP\msg.txt"
 
 # gh pr create
 $body = @'
@@ -158,6 +180,84 @@ gh pr create --body "Uses `keep_files`"    # same problem
 - Dev tools & unit tests: use the `Dev and Testing Tools` skill (`.github/skills/testing/SKILL.md`)
 - Avoid: Ad-hoc CLI commands without structure
 
+**Auth** (Browser Authentication):
+```
+@workspace Check if I have a valid auth token
+@workspace Generate a fresh OAuth token
+@workspace Get the auth injection script
+```
+See: [.github/skills/auth/SKILL.md](.github/skills/auth/SKILL.md)
+
+**Class Skill Refresh** (Class Skill Descriptions & Icons):
+```
+@workspace Refresh class skill descriptions from ESO-Hub
+@workspace Update Dragonknight Ardent Flame skill descriptions
+@workspace Apply class skill icon changes from ESO-Hub
+@workspace Dry-run class skill refresh for nightblade siphoning
+```
+See: [.github/skills/class-skill-regen/SKILL.md](.github/skills/class-skill-regen/SKILL.md)
+
+**Create PR**:
+```
+@workspace Create a PR for ESO-569
+@workspace Fix my mangled PR description
+```
+See: [.github/skills/create-pr/SKILL.md](.github/skills/create-pr/SKILL.md)
+
+**Debug CI Failure**:
+```
+@workspace CI failed on my PR, help me debug
+@workspace What went wrong in the last CI run?
+@workspace Classify the CI failure type
+```
+See: [.github/skills/debug-ci-failure/SKILL.md](.github/skills/debug-ci-failure/SKILL.md)
+
+**Fix Lint Errors**:
+```
+@workspace Fix the ESLint errors in my code
+@workspace I have floating promise errors, how do I fix them?
+```
+See: [.github/skills/fix-lint/SKILL.md](.github/skills/fix-lint/SKILL.md)
+
+**Fix Type Errors**:
+```
+@workspace Fix TypeScript errors in my code
+@workspace I'm getting "cannot find module" errors
+```
+See: [.github/skills/fix-types/SKILL.md](.github/skills/fix-types/SKILL.md)
+
+**Gear Data Regeneration** (Gear Set Bonuses):
+```
+@workspace Update Turning Tide set bonuses from ESO-Hub
+@workspace Add the new set from https://eso-hub.com/en/sets/mothers-sorrow
+@workspace Refresh all Dungeon set bonuses
+```
+See: [.github/skills/gear-data-regen/SKILL.md](.github/skills/gear-data-regen/SKILL.md)
+
+**Git Workflow** (Branch Management):
+```
+@workspace Show branch tree
+@workspace Cascade branch changes with force push
+```
+Optional: twig (`npm install -g @gittwig/twig`) — all commands have plain git fallbacks  
+See: [.github/skills/git/SKILL.md](.github/skills/git/SKILL.md)
+
+**GitHub Actions Logs**:
+```
+@workspace Show me the CI logs for this branch
+@workspace Find TypeScript errors in the failed CI run
+@workspace Save CI logs to a file for analysis
+```
+See: [.github/skills/github-actions-logs/SKILL.md](.github/skills/github-actions-logs/SKILL.md)
+
+**Jira** (Work Item Management):
+```
+@workspace View ESO-372
+@workspace Move ESO-569 to "In Progress"
+@workspace Create a new task for fixing the scribing bug
+```
+See: [.github/skills/jira/SKILL.md](.github/skills/jira/SKILL.md)
+
 **Playwright — Running Tests**:
 ```
 @workspace Run smoke tests
@@ -176,21 +276,19 @@ See: [.github/skills/playwright/SKILL.md](.github/skills/playwright/SKILL.md)
 ```
 See: [.github/skills/write-playwright-tests/SKILL.md](.github/skills/write-playwright-tests/SKILL.md)
 
-**Jira** (Work Item Management):
+**Post-Squash Rebase**:
 ```
-@workspace View ESO-372
-@workspace Move ESO-569 to "In Progress"
-@workspace Create a new task for fixing the scribing bug
+@workspace Rebase branch tree after ESO-449 was squashed
 ```
-See: [.github/skills/jira/SKILL.md](.github/skills/jira/SKILL.md)
+See: [.github/skills/rebase/SKILL.md](.github/skills/rebase/SKILL.md)
 
-**Rollbar** (Error Tracking):
+**Rebase & Conflicts**:
 ```
-@workspace Search for unresolved TypeErrors in Rollbar
-@workspace View Rollbar item 1234567890
-@workspace Resolve Rollbar item 1234567890
+@workspace Rebase my branch onto main
+@workspace Resolve merge conflicts
+@workspace I'm stuck mid-rebase, help me recover
 ```
-See: [.github/skills/rollbar/SKILL.md](.github/skills/rollbar/SKILL.md)
+See: [.github/skills/rebase-conflicts/SKILL.md](.github/skills/rebase-conflicts/SKILL.md)
 
 **Report Debugging** (Production Issues):
 ```
@@ -199,35 +297,13 @@ See: [.github/skills/rollbar/SKILL.md](.github/skills/rollbar/SKILL.md)
 ```
 See: [.github/skills/reports/SKILL.md](.github/skills/reports/SKILL.md)
 
-**Git Workflow** (Branch Management):
+**Rollbar** (Error Tracking):
 ```
-@workspace Show branch tree
-@workspace Cascade branch changes with force push
+@workspace Search for unresolved TypeErrors in Rollbar
+@workspace View Rollbar item 1234567890
+@workspace Resolve Rollbar item 1234567890
 ```
-Requires: twig (`npm install -g @gittwig/twig`)  
-See: [.github/skills/git/SKILL.md](.github/skills/git/SKILL.md)
-
-**Post-Squash Rebase**:
-```
-@workspace Rebase branch tree after ESO-449 was squashed
-```
-See: [.github/skills/rebase/SKILL.md](.github/skills/rebase/SKILL.md)
-
-**UESP Data** (Item Icons):
-```
-@workspace Fetch latest item icons from UESP
-@workspace Check icon coverage for our gear data
-@workspace Look up item 147237
-```
-See: [.github/skills/uesp-data/SKILL.md](.github/skills/uesp-data/SKILL.md)
-
-**Auth** (Browser Authentication):
-```
-@workspace Check if I have a valid auth token
-@workspace Generate a fresh OAuth token
-@workspace Get the auth injection script
-```
-See: [.github/skills/auth/SKILL.md](.github/skills/auth/SKILL.md)
+See: [.github/skills/rollbar/SKILL.md](.github/skills/rollbar/SKILL.md)
 
 **Skill Data Regeneration** (ESO Skill Lines):
 ```
@@ -238,22 +314,21 @@ See: [.github/skills/auth/SKILL.md](.github/skills/auth/SKILL.md)
 ```
 See: [.github/skills/skill-data-regen/SKILL.md](.github/skills/skill-data-regen/SKILL.md)
 
-**Gear Data Regeneration** (Gear Set Bonuses):
+**Troubleshoot**:
 ```
-@workspace Update Turning Tide set bonuses from ESO-Hub
-@workspace Add the new set from https://eso-hub.com/en/sets/mothers-sorrow
-@workspace Refresh all Dungeon set bonuses
+@workspace Port 3000 is already in use
+@workspace My GraphQL types are stale
+@workspace Nothing works, do a full reset
 ```
-See: [.github/skills/gear-data-regen/SKILL.md](.github/skills/gear-data-regen/SKILL.md)
+See: [.github/skills/troubleshoot/SKILL.md](.github/skills/troubleshoot/SKILL.md)
 
-**Class Skill Refresh** (Class Skill Descriptions & Icons):
+**UESP Data** (Item Icons):
 ```
-@workspace Refresh class skill descriptions from ESO-Hub
-@workspace Update Dragonknight Ardent Flame skill descriptions
-@workspace Apply class skill icon changes from ESO-Hub
-@workspace Dry-run class skill refresh for nightblade siphoning
+@workspace Fetch latest item icons from UESP
+@workspace Check icon coverage for our gear data
+@workspace Look up item 147237
 ```
-See: [.github/skills/class-skill-regen/SKILL.md](.github/skills/class-skill-regen/SKILL.md)
+See: [.github/skills/uesp-data/SKILL.md](.github/skills/uesp-data/SKILL.md)
 
 ---
 
@@ -281,8 +356,11 @@ data/          - Static data files
 ### Path Aliases
 - `@/` → `src/`
 - `@components/` → `src/components/`
-- `@utils/` → `src/utils/`
+- `@features/` → `src/features/`
+- `@graphql/` → `src/graphql/`
 - `@store/` → `src/store/`
+- `@types/` → `src/types/`
+- `@utils/` → `src/utils/`
 
 ---
 
@@ -304,7 +382,6 @@ data/          - Static data files
 **Docs**: [AI_SCRIBING_DETECTION_INSTRUCTIONS.md](documentation/ai-agents/scribing/AI_SCRIBING_DETECTION_INSTRUCTIONS.md)
 
 ### Jira Project Info
-- **Epic**: ESO-368 - Replay System Architecture Improvements
 - **Board**: https://bkrupa.atlassian.net
 - **Use**: Jira Agent Skill (required for all work item operations)
 
@@ -318,6 +395,7 @@ data/          - Static data files
 | Type errors | `npm run typecheck` |
 | Test failures | `npm run test:coverage` |
 | Build issues | `make clean` or manual cleanup |
+| Port in use | Kill process or use next worktree slot — see [.claude-rules.md](.claude-rules.md) |
 | Memory issues | Increase NODE_OPTIONS in package.json |
 
 ---

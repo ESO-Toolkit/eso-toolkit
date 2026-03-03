@@ -11,7 +11,7 @@ You are a development and testing assistant for ESO Log Aggregator. All commands
 ```powershell
 npm run dev
 ```
-The server runs at http://localhost:3000. It keeps running after the command is issued — check logs for "ready" status.
+The server runs at http://localhost:3000 (default). For additional worktrees, set the `PORT` env var: `$env:PORT = "3002" ; npm run dev`. See worktree port table in [.claude-rules.md](../../.claude-rules.md).
 
 ### Check if dev server is running
 ```powershell
@@ -66,19 +66,19 @@ npm run test:nightly:all  # runs once to create auth state
 ### Format (Prettier)
 ```powershell
 # Check formatting
-npx prettier --check "src/**/*.{ts,tsx,css}"
+npm run format:check
 
 # Fix formatting
-npx prettier --write "src/**/*.{ts,tsx,css}"
+npm run format
 ```
 
 ### Lint (ESLint)
 ```powershell
 # Check for issues
-npx eslint src --ext .ts,.tsx
+npm run lint
 
 # Auto-fix
-npx eslint src --ext .ts,.tsx --fix
+npm run lint:fix
 ```
 
 ### TypeScript Type Check
@@ -130,7 +130,7 @@ Opens an interactive bundle visualization.
 
 ## Troubleshooting
 
-- **Port 3000 in use**: Kill the process on port 3000 or change the port in `vite.config.mjs`
+- **Port in use**: Use the next worktree port slot (`$env:PORT = "3002" ; npm run dev`), or kill the existing process with `netstat -ano | findstr :<port>` then `taskkill /PID <PID> /F`
 - **Type errors**: Run `npm run codegen` first if errors mention generated types
-- **Test failures**: Ensure dev server is running if tests use `localhost:3000`
-- **Memory issues**: Node heap errors can be fixed by increasing `NODE_OPTIONS=--max-old-space-size=4096`
+- **Test failures**: Playwright configs auto-start the dev server via `webServer` — manual startup is only needed for the `debug` config
+- **Memory issues**: Node heap errors during lint/storybook can be fixed by increasing `--max-old-space-size` in package.json (currently 4096 for lint, 8192 for builds)

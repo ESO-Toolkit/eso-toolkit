@@ -16,7 +16,7 @@ All agent skills are `SKILL.md` files in `.github/skills/`. See [AGENTS.md](../.
 | Write Playwright Tests | [.github/skills/write-playwright-tests/SKILL.md](../../.github/skills/write-playwright-tests/SKILL.md) | Authoring visual/E2E tests (skeleton detection, pre-loading, mocking) |
 | Testing | [.github/skills/testing/SKILL.md](../../.github/skills/testing/SKILL.md) | Dev workflow (unit tests, lint, format, build) |
 | Reports | [.github/skills/reports/SKILL.md](../../.github/skills/reports/SKILL.md) | Production report debugging |
-| Git | [.github/skills/git/SKILL.md](../../.github/skills/git/SKILL.md) | Branch tree and twig operations |
+| Git | [.github/skills/git/SKILL.md](../../.github/skills/git/SKILL.md) | Branch management (twig with plain git fallbacks) |
 | Rollbar | [.github/skills/rollbar/SKILL.md](../../.github/skills/rollbar/SKILL.md) | Error tracking |
 | Rebase | [.github/skills/rebase/SKILL.md](../../.github/skills/rebase/SKILL.md) | Post-squash rebase |
 | Auth | [.github/skills/auth/SKILL.md](../../.github/skills/auth/SKILL.md) | Browser session OAuth authentication |

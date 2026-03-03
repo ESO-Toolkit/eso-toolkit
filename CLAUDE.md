@@ -7,12 +7,12 @@ React-based ESO combat log analyzer with 3D visualization, real-time analytics, 
 ## Essential Commands (Daily)
 
 ```bash
-npm run dev              # Start dev server (port 3000)
-VITE_PORT=3001 npm run dev  # Start dev server on alternate port (multi-instance)
-npm test                 # Unit tests (changed files)
-npm run validate         # Pre-commit: typecheck + lint + format
-npm run codegen          # Generate GraphQL types (required after schema changes)
-npm run test:smoke:e2e   # Quick E2E check
+npm run dev                          # Start dev server (port 3000, main worktree)
+$env:PORT = "3002" ; npm run dev     # Start dev server for worktree 1
+npm test                              # Unit tests (changed files)
+npm run validate                      # Pre-commit: typecheck + lint + format
+npm run codegen                       # Generate GraphQL types (required after schema changes)
+npm run test:smoke:e2e                # Quick E2E check
 ```
 
 **Full command reference**: [AGENTS_COMMANDS.md](AGENTS_COMMANDS.md)
@@ -23,19 +23,25 @@ npm run test:smoke:e2e   # Quick E2E check
 
 | Rule | Details |
 |------|---------|
-| **Dev server ports** | Default is 3000. For multi-instance (parallel branches), use `VITE_PORT`: `VITE_PORT=3001 npm run dev` — see [.claude-rules.md](.claude-rules.md) |
+| **Dev server ports** | Worktree port pairs 3000–3009 (even=HTTP, odd=HTTPS). Set via `PORT` env var: `$env:PORT = "3002" ; npm run dev` — see [.claude-rules.md](.claude-rules.md) |
 | **GraphQL codegen** | Run `npm run codegen` after any GraphQL schema changes |
 | **Named exports only** | No default exports — use named exports throughout |
 | **Tests required** | New features must include tests |
 | **Code style** | Follow [eslint.config.mjs](eslint.config.mjs) and [.prettierrc](.prettierrc) — tools enforce style |
 
-### Multi-Instance Port Allocation
+### Worktree Port Allocation (3000–3009)
 
-| Instance | Branch/Use Case | Port | Command Example |
-|----------|-----------------|------|-----------------|
-| Primary | main/develop | 3000 | `npm run dev` |
-| Secondary | feature branch | 3001 | `VITE_PORT=3001 npm run dev` |
-| Tertiary | PR review / A/B test | 3002 | `VITE_PORT=3002 npm run dev` |
+Each git worktree gets a dedicated port pair (even = HTTP, even + 1 = HTTPS):
+
+| Slot | Use Case | HTTP | HTTPS | Command Example |
+|------|----------|------|-------|-----------------|
+| 0 | main worktree | 3000 | 3001 | `npm run dev` |
+| 1 | worktree 1 | 3002 | 3003 | `$env:PORT = "3002" ; npm run dev` |
+| 2 | worktree 2 | 3004 | 3005 | `$env:PORT = "3004" ; npm run dev` |
+| 3 | worktree 3 | 3006 | 3007 | `$env:PORT = "3006" ; npm run dev` |
+| 4 | worktree 4 | 3008 | 3009 | `$env:PORT = "3008" ; npm run dev` |
+
+For HTTPS: `$env:PORT = "3002" ; $env:VITE_HTTPS = "true" ; npm run dev`
 
 ---
 
@@ -50,7 +56,7 @@ npm run test:smoke:e2e   # Quick E2E check
 **Rules**:
 - Work on feature branches only (`ESO-XXX/description` format)
 - NEVER commit directly to main
-- Use [twig](https://github.com/gittwig/twig) for branch stacking
+- Optional: [twig](https://github.com/gittwig/twig) for branch stacking (all commands have plain git fallbacks)
 
 **Complete workflow**: [AGENTS.md](AGENTS.md) — Git Workflow section
 
@@ -88,16 +94,25 @@ npm run test:smoke:e2e   # Quick E2E check
 
 ## Agent Skills (Specialized Workflows)
 
-**14 skills available** in [`.github/skills/`](.github/skills/):
+**25 skills available** in [`.github/skills/`](.github/skills/) (showing commonly-used subset):
 
 | Skill | Use When |
 |-------|----------|
-| `workflow` | **FIRST** — before starting any work (branch management) |
-| `playwright` | Running E2E tests |
-| `write-playwright-tests` | Authoring visual/E2E tests |
-| `testing` | Unit tests and dev tools |
+| `create-pr` | Creating pull requests (PowerShell-safe `--body-file` pattern) |
+| `debug-ci-failure` | End-to-end CI failure debugging |
+| `fix-lint` | Diagnosing and fixing ESLint errors |
+| `fix-types` | Diagnosing and fixing TypeScript type errors |
+| `github-actions-logs` | Parsing and analyzing GH Actions logs |
 | `jira` | Work item management |
+| `no-edit-generated` | Never manually edit generated files |
+| `playwright` | Running E2E tests |
+| `rebase-conflicts` | Rebasing branches and resolving merge conflicts |
+| `scratch-dir` | Gitignored directory for ad-hoc output files |
+| `testing` | Unit tests and dev tools |
+| `troubleshoot` | Quick-reference fixes for common dev issues |
 | `ui-updates` | Theme-consistent UI changes |
+| `workflow` | **FIRST** — before starting any work (branch management) |
+| `write-playwright-tests` | Authoring visual/E2E tests |
 
 **Full skills index**: [AGENTS.md](AGENTS.md) — Documentation Index section
 
@@ -123,7 +138,7 @@ npm run test:full             # Full E2E suite
 | Issue | Solution |
 |-------|----------|
 | GraphQL errors | Run `npm run codegen` |
-| Port 3000 occupied | Use `VITE_PORT=3001 npm run dev` for parallel instances, or `netstat -ano \| findstr :3000` → `taskkill /PID <PID> /F` to kill existing |
+| Port occupied | Kill the process (`netstat -ano \| findstr :<port>` → `taskkill /PID <PID> /F`) or use the next worktree slot — see [.claude-rules.md](.claude-rules.md) |
 | Type errors | Run `npm run typecheck` |
 | Build fails | Check `GENERATE_SOURCEMAP=true` for Sentry debugging |
 | Module errors | Delete `node_modules/`, run `npm ci` |

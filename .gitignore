@@ -12,6 +12,10 @@
 # Cache directories
 /cache/
 
+# Scratch directory for ad-hoc agent/debug output (keep .gitkeep)
+/scratch/*
+!/scratch/.gitkeep
+
 # testing
 /coverage
 /test-results/

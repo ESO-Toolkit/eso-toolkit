@@ -104,20 +104,33 @@ After that, VS Code should pick up the new skill automatically (no restart neede
 
 ## Existing Skills (for reference)
 
-| Folder | Skill Name | Purpose |
-|--------|-----------|---------|
-| `workflow/` | Ensure Feature Branch | Git branch enforcement before ticket work |
-| `playwright/` | Run Playwright Tests | E2E test execution |
-| `testing/` | Dev and Testing Tools | Dev server, unit tests, format/lint/build |
-| `jira/` | Jira Work Items | Jira ticket management via acli |
-| `rollbar/` | Rollbar Error Tracking | Production error triage via Rollbar REST API |
-| `reports/` | Download and Analyze Reports | ESO Logs report data debugging |
-| `git/` | Git Branch Management | Twig stacked branch workflows |
-| `rebase/` | Post-Squash Rebase | Post-squash branch tree recovery |
-| `auth/` | OAuth Auth Management | Token generation and browser injection |
-| `skill-data-regen/` | ESO Skill Data Regeneration | Skill line TypeScript data files |
-| `uesp-data/` | UESP Item Icon Data | Item icon database management |
-| `create-skill/` | Create New Agent Skill | This skill — creating new skills |
+| Folder | Purpose |
+|--------|---------|
+| `auth/` | OAuth token generation and browser injection |
+| `class-skill-regen/` | Refresh class skill descriptions/icons from ESO-Hub |
+| `create-pr/` | PR creation with PowerShell-safe `--body-file` pattern |
+| `create-skill/` | This skill — creating new skills |
+| `debug-ci-failure/` | End-to-end CI failure debugging |
+| `fix-lint/` | Diagnose and fix ESLint errors |
+| `fix-types/` | Diagnose and fix TypeScript type errors |
+| `gear-data-regen/` | Gear set bonus/tooltip data from ESO-Hub |
+| `git/` | Branch management (twig with plain git fallbacks) |
+| `github-actions-logs/` | Parse and analyze GitHub Actions logs |
+| `jira/` | Jira ticket management via acli |
+| `no-edit-generated/` | Never manually edit generated files |
+| `playwright/` | E2E test execution |
+| `rebase/` | Post-squash branch tree recovery |
+| `rebase-conflicts/` | Rebase branches and resolve merge conflicts |
+| `reports/` | ESO Logs report data debugging |
+| `rollbar/` | Production error triage via Rollbar |
+| `scratch-dir/` | Gitignored directory for ad-hoc output files |
+| `skill-data-regen/` | ESO skill line TypeScript data files |
+| `testing/` | Dev server, unit tests, format/lint/build |
+| `troubleshoot/` | Quick-reference fixes for common dev issues |
+| `uesp-data/` | Item icon database management |
+| `ui-updates/` | Theme-consistent UI changes |
+| `workflow/` | Git branch enforcement before ticket work |
+| `write-playwright-tests/` | Authoring visual/E2E tests |
 
 ## Good Skill Design
 

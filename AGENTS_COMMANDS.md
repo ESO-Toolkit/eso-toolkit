@@ -32,6 +32,7 @@
 | `npm run test:watch` | Watch mode | Auto-rerun on changes |
 | `npm run test:changed` | Only changed files | Git-based detection |
 | `npm run test:coverage` | Generate coverage report | With thresholds |
+| `npm run test:coverage:ci` | CI coverage (uses jest/ci.config.cjs) | Matches CI `test` job |
 | `npm run coverage:open` | Open coverage report | Opens in browser |
 | `npm run coverage:full` | Complete coverage workflow | Generate + open |
 | `npm run test:smoke:unit` | Quick unit validation | Smoke tests only |
@@ -104,23 +105,24 @@
 
 ---
 
-## Git Workflow (with twig)
+## Git Workflow (twig with plain git fallbacks)
 
 **Recommended**: Use Git Workflow Agent Skill instead
 
-| Command | Description | Notes |
-|---------|-------------|-------|
-| `twig tree` | Show branch tree | Visualize dependencies |
-| `twig depend <parent>` | Set branch dependency | Stack branches |
-| `twig cascade` | Cascade changes | Interactive mode |
-| `twig cascade --force` | Cascade with force push | Non-interactive |
-| `twig update` | Update twig cache | Refresh branch info |
+| Command | Description | Plain Git Fallback |
+|---------|-------------|-------------------|
+| `twig tree` | Show branch tree | `git config --get-regexp 'branch\..*\.parent'` + `git log --oneline --graph --all --decorate --simplify-by-decoration` |
+| `twig branch depend <child> <parent>` | Set branch dependency | `git config "branch.<child>.parent" "<parent>"` |
+| `twig branch parent` | Get parent branch | `git config "branch.$(git branch --show-current).parent"` |
+| `twig cascade` | Cascade changes | Manual rebase of each child onto its parent |
+| `twig cascade --non-interactive --force-push` | Cascade with force push | Manual rebase + `git push --force-with-lease` per child |
+| `twig update` | Update twig cache | (no equivalent needed) |
 | `gh pr status` | Check PR status | Requires GitHub CLI |
 | `gh pr checks` | View CI status | GitHub Actions status |
 
 **Prerequisites**: 
-- `npm install -g @gittwig/twig`
-- `gh auth login` (for PR operations)
+- twig (optional): `npm install -g @gittwig/twig`
+- GitHub CLI: `gh auth login` (for PR operations)
 
 ---
 
@@ -132,7 +134,7 @@
 |---------|-------------|
 | `acli jira workitem view <key>` | View ticket details |
 | `acli jira workitem transition --key <key> --status "In Progress"` | Change status |
-| `acli jira workitem comment --key <key> --comment "..."` | Add comment |
+| `acli jira workitem comment create --key <key> --body "..."` | Add comment |
 
 ---
 
@@ -169,9 +171,11 @@ npm run typecheck   # Verify no errors
 
 ### Before Creating PR
 ```bash
-npm run validate    # All checks
-npm run test:full   # Full E2E suite
-npm run build       # Verify production build
+npm run validate              # TypeScript + ESLint + Prettier (required)
+npm test -- --watchAll=false  # Unit tests (required)
+# Optional (CI runs these too):
+# npm run test:smoke:e2e      # Quick E2E validation
+# npm run build               # Verify production build
 ```
 
 ### Debugging Test Failures
@@ -187,7 +191,7 @@ npm run test:full:headed       # Visual debugging
 
 - **Node.js**: ≥20.0.0
 - **Package Manager**: npm (with package-lock.json)
-- **Memory**: --max-old-space-size=8192 (set in package.json)
+- **Memory**: --max-old-space-size varies by task (4096 for lint, 8192 for builds — set in package.json)
 - **Browsers**: Modern browsers (Chrome, Firefox, Safari, Edge)
 - **Platform**: Windows, macOS, Linux
 
