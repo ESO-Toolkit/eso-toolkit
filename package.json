@@ -139,6 +139,7 @@
     "coverage:badge-json:upload": "npm run coverage:badge-json",
     "coverage:open": "npx open-cli coverage/lcov-report/index.html",
     "dev": "node scripts/generate-version.cjs && vite",
+    "dev:https": "node scripts/dev-https.cjs",
     "download-report-data": "npm run script -- scripts/download-report-data.ts",
     "download-test-data": "npm run script -- scripts/download-test-data.ts",
     "fetch-abilities": "npm run script -- scripts/fetchAbilitiesToJson.ts",
