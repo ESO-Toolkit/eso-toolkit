@@ -558,7 +558,7 @@ export const CombatStatsStrip: React.FC<CombatStatsStripProps> = React.memo(
                 intent={gauges[1].intent}
                 tooltip={gauges[1].tooltip}
                 min={50}
-                max={175}
+                max={125}
               />
             )}
           </Box>
