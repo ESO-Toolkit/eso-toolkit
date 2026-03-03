@@ -891,6 +891,24 @@ export const RosterBuilderPage: React.FC = () => {
       // Convert 'monster' to 'monsterSet' for internal state
       const slotKey = (slot === 'monster' ? 'monsterSet' : slot) as 'set1' | 'set2' | 'monsterSet';
 
+      // Empty string means clear the slot
+      if (setName === '') {
+        if (isTankRole(role)) {
+          const currentTank = roster[role];
+          handleTankChange(roleNum, {
+            gearSets: {
+              ...currentTank.gearSets,
+              [slotKey]: undefined,
+            },
+          });
+        } else {
+          handleHealerChange(roleNum, {
+            [slotKey]: undefined,
+          });
+        }
+        return;
+      }
+
       // Convert set name to set ID for proper type safety
       const setId = findSetIdByName(setName);
       if (!setId) {
