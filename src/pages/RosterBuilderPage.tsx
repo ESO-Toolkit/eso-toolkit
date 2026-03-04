@@ -3565,6 +3565,15 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
+                    <Typography
+                      sx={{
+                        fontSize: '0.7rem',
+                        color: tankIsDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)',
+                        mb: 0.5,
+                      }}
+                    >
+                      Press Enter to add
+                    </Typography>
                     <Autocomplete
                       multiple
                       freeSolo
@@ -3599,7 +3608,6 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                           size="small"
                           label="Tags"
                           placeholder="Add tags"
-                          helperText="Press Enter to add"
                           sx={glassSx}
                         />
                       )}
@@ -4296,6 +4304,15 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
+                    <Typography
+                      sx={{
+                        fontSize: '0.7rem',
+                        color: healerIsDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)',
+                        mb: 0.5,
+                      }}
+                    >
+                      Press Enter to add
+                    </Typography>
                     <Autocomplete
                       multiple
                       freeSolo
@@ -4330,7 +4347,6 @@ const HealerCard: React.FC<HealerCardProps> = ({
                           size="small"
                           label="Tags"
                           placeholder="Add tags"
-                          helperText="Press Enter to add"
                           sx={glassSx}
                         />
                       )}
