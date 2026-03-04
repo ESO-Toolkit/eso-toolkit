@@ -2323,12 +2323,8 @@ export const RosterBuilderPage: React.FC = () => {
                       px: 0.75,
                       py: 0.125,
                       borderRadius: '6px',
-                      backgroundColor: isDarkMode
-                        ? 'rgba(255,255,255,0.06)'
-                        : 'rgba(0,0,0,0.05)',
-                      color: isDarkMode
-                        ? 'rgba(255,255,255,0.5)'
-                        : 'rgba(0,0,0,0.45)',
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                      color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
                       border: isDarkMode
                         ? '1px solid rgba(255,255,255,0.08)'
                         : '1px solid rgba(0,0,0,0.08)',
@@ -2828,9 +2824,7 @@ export const RosterBuilderPage: React.FC = () => {
               px: 1.5,
               py: 0.625,
               borderRadius: '8px',
-              border: isDarkMode
-                ? '1px solid rgba(255,255,255,0.08)'
-                : '1px solid rgba(0,0,0,0.1)',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.1)',
               cursor: 'pointer',
               fontFamily: 'inherit',
               fontSize: '0.8rem',
@@ -2932,9 +2926,7 @@ export const RosterBuilderPage: React.FC = () => {
               px: 1.5,
               py: 0.625,
               borderRadius: '8px',
-              border: isDarkMode
-                ? '1px solid rgba(255,255,255,0.08)'
-                : '1px solid rgba(0,0,0,0.1)',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.1)',
               cursor: 'pointer',
               fontFamily: 'inherit',
               fontSize: '0.8rem',
@@ -3048,9 +3040,7 @@ export const RosterBuilderPage: React.FC = () => {
               px: 1.5,
               py: 0.625,
               borderRadius: '8px',
-              border: isDarkMode
-                ? '1px solid rgba(255,255,255,0.08)'
-                : '1px solid rgba(0,0,0,0.1)',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.1)',
               cursor: 'pointer',
               fontFamily: 'inherit',
               fontSize: '0.8rem',
@@ -3135,9 +3125,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
       sx={{
         borderRadius: '10px',
         backgroundColor: tankIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
-        border: tankIsDark
-          ? '1px solid rgba(255,255,255,0.06)'
-          : '1px solid rgba(0,0,0,0.06)',
+        border: tankIsDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
         borderLeft: `3px solid ${tankRoleColors.tank}`,
         transition: 'border-color 0.15s ease',
         '&:hover': {
@@ -3184,7 +3172,12 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   })
                 }
                 renderInput={(params) => (
-                  <TextField {...params} label="Group" placeholder="e.g., Left Stack" sx={glassSx} />
+                  <TextField
+                    {...params}
+                    label="Group"
+                    placeholder="e.g., Left Stack"
+                    sx={glassSx}
+                  />
                 )}
               />
             </Box>
@@ -3511,9 +3504,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     size="small"
                     sx={{
                       borderRadius: '6px',
-                      backgroundColor: tankIsDark
-                        ? 'rgba(255,255,255,0.06)'
-                        : 'rgba(0,0,0,0.05)',
+                      backgroundColor: tankIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
                       border: tankIsDark
                         ? '1px solid rgba(255,255,255,0.1)'
                         : '1px solid rgba(0,0,0,0.1)',
@@ -3723,9 +3714,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
       sx={{
         borderRadius: '10px',
         backgroundColor: healerIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
-        border: healerIsDark
-          ? '1px solid rgba(255,255,255,0.06)'
-          : '1px solid rgba(0,0,0,0.06)',
+        border: healerIsDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
         borderLeft: `3px solid ${healerRoleColors.healer}`,
         transition: 'border-color 0.15s ease',
         '&:hover': {
@@ -3770,9 +3759,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     group: value ? { groupName: value } : undefined,
                   })
                 }
-                renderInput={(params) => (
-                  <TextField {...params} label="Group" sx={glassSx} />
-                )}
+                renderInput={(params) => <TextField {...params} label="Group" sx={glassSx} />}
               />
             </Box>
           </Box>
@@ -4121,9 +4108,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     size="small"
                     sx={{
                       borderRadius: '6px',
-                      backgroundColor: healerIsDark
-                        ? 'rgba(255,255,255,0.06)'
-                        : 'rgba(0,0,0,0.05)',
+                      backgroundColor: healerIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
                       border: healerIsDark
                         ? '1px solid rgba(255,255,255,0.1)'
                         : '1px solid rgba(0,0,0,0.1)',
@@ -4317,9 +4302,7 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
       sx={{
         borderRadius: '10px',
         backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
-        border: dpsIsDark
-          ? '1px solid rgba(255,255,255,0.06)'
-          : '1px solid rgba(0,0,0,0.06)',
+        border: dpsIsDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
         borderLeft: `3px solid ${dpsRoleColors.dps}`,
         cursor: isDragging ? 'grabbing' : 'default',
         transition: 'border-color 0.15s ease',
@@ -4404,9 +4387,7 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
                     group: value ? { groupName: value } : undefined,
                   })
                 }
-                renderInput={(params) => (
-                  <TextField {...params} label="Group" sx={glassSx} />
-                )}
+                renderInput={(params) => <TextField {...params} label="Group" sx={glassSx} />}
               />
             </Box>
           </Box>
@@ -4428,9 +4409,7 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
                   size="small"
                   sx={{
                     borderRadius: '6px',
-                    backgroundColor: dpsIsDark
-                      ? 'rgba(255,255,255,0.06)'
-                      : 'rgba(0,0,0,0.05)',
+                    backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
                     border: dpsIsDark
                       ? '1px solid rgba(255,255,255,0.1)'
                       : '1px solid rgba(0,0,0,0.1)',
