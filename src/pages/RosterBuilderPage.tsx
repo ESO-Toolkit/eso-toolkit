@@ -3538,7 +3538,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   Assignment
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  <Box sx={{ flex: '1 1 75%', minWidth: 150 }}>
+                  <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
                     <TextField
                       fullWidth
                       size="small"
@@ -3549,7 +3549,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       sx={glassSx}
                     />
                   </Box>
-                  <Box sx={{ flex: '1 1 20%', minWidth: 80 }}>
+                  <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
                     <TextField
                       fullWidth
                       size="small"
@@ -3564,6 +3564,47 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       sx={glassSx}
                     />
                   </Box>
+                  <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
+                    <Autocomplete
+                      multiple
+                      freeSolo
+                      size="small"
+                      options={[]}
+                      value={tank.labels || []}
+                      onChange={(_, value) => onChange({ labels: value })}
+                      renderTags={(value, getTagProps) =>
+                        value.map((option, index) => (
+                          <Chip
+                            {...getTagProps({ index })}
+                            key={option}
+                            label={option}
+                            size="small"
+                            sx={{
+                              borderRadius: '6px',
+                              backgroundColor: tankIsDark
+                                ? 'rgba(255,255,255,0.06)'
+                                : 'rgba(0,0,0,0.05)',
+                              border: tankIsDark
+                                ? '1px solid rgba(255,255,255,0.1)'
+                                : '1px solid rgba(0,0,0,0.1)',
+                              fontWeight: 500,
+                              fontSize: '0.75rem',
+                            }}
+                          />
+                        ))
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          label="Labels / Tags"
+                          placeholder="Add labels"
+                          helperText="Press Enter to add"
+                          sx={glassSx}
+                        />
+                      )}
+                    />
+                  </Box>
                 </Box>
                 <TextField
                   fullWidth
@@ -3573,45 +3614,6 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   value={tank.roleNotes || ''}
                   onChange={(e) => onChange({ roleNotes: e.target.value })}
                   sx={glassSx}
-                />
-                <Autocomplete
-                  multiple
-                  freeSolo
-                  size="small"
-                  options={[]}
-                  value={tank.labels || []}
-                  onChange={(_, value) => onChange({ labels: value })}
-                  renderTags={(value, getTagProps) =>
-                    value.map((option, index) => (
-                      <Chip
-                        {...getTagProps({ index })}
-                        key={option}
-                        label={option}
-                        size="small"
-                        sx={{
-                          borderRadius: '6px',
-                          backgroundColor: tankIsDark
-                            ? 'rgba(255,255,255,0.06)'
-                            : 'rgba(0,0,0,0.05)',
-                          border: tankIsDark
-                            ? '1px solid rgba(255,255,255,0.1)'
-                            : '1px solid rgba(0,0,0,0.1)',
-                          fontWeight: 500,
-                          fontSize: '0.75rem',
-                        }}
-                      />
-                    ))
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      size="small"
-                      label="Labels / Tags"
-                      placeholder="Add custom labels"
-                      helperText="Press Enter to add new label"
-                      sx={glassSx}
-                    />
-                  )}
                 />
 
                 {/* Extra Gear */}
@@ -4267,7 +4269,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                   Assignment
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  <Box sx={{ flex: '1 1 75%', minWidth: 150 }}>
+                  <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
                     <TextField
                       fullWidth
                       size="small"
@@ -4278,7 +4280,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       sx={glassSx}
                     />
                   </Box>
-                  <Box sx={{ flex: '1 1 20%', minWidth: 80 }}>
+                  <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
                     <TextField
                       fullWidth
                       size="small"
@@ -4293,6 +4295,47 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       sx={glassSx}
                     />
                   </Box>
+                  <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
+                    <Autocomplete
+                      multiple
+                      freeSolo
+                      size="small"
+                      options={[]}
+                      value={healer.labels || []}
+                      onChange={(_, value) => onChange({ labels: value })}
+                      renderTags={(value, getTagProps) =>
+                        value.map((option, index) => (
+                          <Chip
+                            {...getTagProps({ index })}
+                            key={option}
+                            label={option}
+                            size="small"
+                            sx={{
+                              borderRadius: '6px',
+                              backgroundColor: healerIsDark
+                                ? 'rgba(255,255,255,0.06)'
+                                : 'rgba(0,0,0,0.05)',
+                              border: healerIsDark
+                                ? '1px solid rgba(255,255,255,0.1)'
+                                : '1px solid rgba(0,0,0,0.1)',
+                              fontWeight: 500,
+                              fontSize: '0.75rem',
+                            }}
+                          />
+                        ))
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          label="Labels / Tags"
+                          placeholder="Add labels"
+                          helperText="Press Enter to add"
+                          sx={glassSx}
+                        />
+                      )}
+                    />
+                  </Box>
                 </Box>
                 <TextField
                   fullWidth
@@ -4302,45 +4345,6 @@ const HealerCard: React.FC<HealerCardProps> = ({
                   value={healer.roleNotes || ''}
                   onChange={(e) => onChange({ roleNotes: e.target.value })}
                   sx={glassSx}
-                />
-                <Autocomplete
-                  multiple
-                  freeSolo
-                  size="small"
-                  options={[]}
-                  value={healer.labels || []}
-                  onChange={(_, value) => onChange({ labels: value })}
-                  renderTags={(value, getTagProps) =>
-                    value.map((option, index) => (
-                      <Chip
-                        {...getTagProps({ index })}
-                        key={option}
-                        label={option}
-                        size="small"
-                        sx={{
-                          borderRadius: '6px',
-                          backgroundColor: healerIsDark
-                            ? 'rgba(255,255,255,0.06)'
-                            : 'rgba(0,0,0,0.05)',
-                          border: healerIsDark
-                            ? '1px solid rgba(255,255,255,0.1)'
-                            : '1px solid rgba(0,0,0,0.1)',
-                          fontWeight: 500,
-                          fontSize: '0.75rem',
-                        }}
-                      />
-                    ))
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      size="small"
-                      label="Labels / Tags"
-                      placeholder="Add custom labels"
-                      helperText="Press Enter to add new label"
-                      sx={glassSx}
-                    />
-                  )}
                 />
 
                 {/* Extra Gear */}
