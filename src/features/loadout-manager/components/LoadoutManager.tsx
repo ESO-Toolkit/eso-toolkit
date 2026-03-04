@@ -6,6 +6,7 @@ import {
   FileDownload,
   FileUpload,
   MoreVert,
+  Backpack as BackpackIcon,
   Search as SearchIcon,
 } from '@mui/icons-material';
 import {
@@ -526,15 +527,74 @@ export const LoadoutManager: React.FC = () => {
         >
           {/* Row 1: title + global actions */}
           <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
               <Tooltip title="Back" arrow>
                 <IconButton onClick={handleBack} size="small">
                   <ArrowBack fontSize="small" />
                 </IconButton>
               </Tooltip>
-              <Typography variant="h6" sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
-                Loadout Manager
-              </Typography>
+
+              {/* Icon lockup: icon + title + subtitle */}
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                    border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'}`,
+                    flexShrink: 0,
+                  }}
+                >
+                  <BackpackIcon
+                    sx={{
+                      fontSize: 20,
+                      background: isDarkMode
+                        ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                        : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  />
+                </Box>
+
+                <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 700,
+                      letterSpacing: 1,
+                      textTransform: 'uppercase',
+                      color: 'text.secondary',
+                      fontSize: '0.65rem',
+                    }}
+                  >
+                    Gear Manager
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      background: isDarkMode
+                        ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                        : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    Loadout Manager
+                  </Typography>
+                </Stack>
+              </Stack>
+
               <Typography
                 variant="body2"
                 color="text.secondary"
@@ -543,6 +603,7 @@ export const LoadoutManager: React.FC = () => {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
+                  ml: 1,
                 }}
               >
                 {headerSubtitle}
