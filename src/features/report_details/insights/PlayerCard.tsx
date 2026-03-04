@@ -1169,13 +1169,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     <MetricsScrollContainer
                       sx={{
                         display: 'flex',
-                        flexWrap: { xs: 'wrap', sm: 'nowrap', md: 'nowrap' },
+                        flexWrap: 'nowrap',
                         gap: { xs: 0.75, sm: 0.5, md: 0.5 },
                         minHeight: { xs: 40, sm: 24, md: 24 },
                         flex: '1 1 auto',
                         minWidth: 0,
                         mr: 0.5,
-                        overflowX: { xs: 'hidden', sm: 'auto', md: 'auto' },
                       }}
                     >
                       <Typography
