@@ -149,6 +149,7 @@ Icon?
 *.pid
 .playwright-mcp/
 tmp/
+.github/tmp-pr-body.md
 
 # Debug and test files in root
 /debug-*.js
