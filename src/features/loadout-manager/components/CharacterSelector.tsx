@@ -97,7 +97,7 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
           renderValue={(value) => {
             const char = sortedCharacters.find((c) => c.id === value);
             if (!char) return 'Select character';
-            return `${char.name} · ${formatRole(char.role)}`;
+            return char.name;
           }}
           MenuProps={{
             slotProps: {
