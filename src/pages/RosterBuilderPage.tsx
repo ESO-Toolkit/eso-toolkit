@@ -17,13 +17,18 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
+  AutoAwesome as AutoAwesomeIcon,
   Download as DownloadIcon,
   Upload as UploadIcon,
   ContentCopy as CopyIcon,
   ExpandMore as ExpandMoreIcon,
+  Favorite as FavoriteIcon,
+  Group as GroupIcon,
   Link as LinkIcon,
   PersonAdd as PersonAddIcon,
+  Shield as ShieldIcon,
   Star as GearIcon,
+  StickyNote2 as NotesIcon,
   DragIndicator as DragIndicatorIcon,
   Visibility as VisibilityIcon,
   Groups as GroupsIcon,
@@ -100,6 +105,7 @@ import {
   ALL_5PIECE_SETS,
   validateCompatibility,
 } from '../types/roster';
+import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
 
 /**
@@ -852,6 +858,21 @@ const validateImportedRoster = (data: unknown): RaidRoster => {
 export const RosterBuilderPage: React.FC = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+  const roleColors = isDarkMode ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
+
+  const glassTextField = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '10px',
+      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+      '& fieldset': {
+        borderColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
+      },
+      '&:hover fieldset': {
+        borderColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
+      },
+    },
+  };
+
   const [roster, setRoster] = useState<RaidRoster>(createDefaultRoster());
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [snackbar, setSnackbar] = useState<{
@@ -2209,7 +2230,15 @@ export const RosterBuilderPage: React.FC = () => {
           </Tooltip>
         </Box>
 
-        <Divider sx={{ my: 3 }} />
+        <Box
+          sx={{
+            my: 3,
+            height: '1px',
+            background: isDarkMode
+              ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%)'
+              : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+          }}
+        />
 
         {/* Simple Mode: Set Assignment Manager */}
         {mode === 'simple' && (
@@ -2230,9 +2259,86 @@ export const RosterBuilderPage: React.FC = () => {
         {mode === 'advanced' && (
           <>
             {/* Player Groups Management */}
-            <Typography variant="h5" gutterBottom>
-              Player Groups
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
+                    : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.08)',
+                }}
+              >
+                <GroupIcon
+                  sx={{
+                    fontSize: '1rem',
+                    color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                  }}
+                />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
+                  }}
+                >
+                  Groups
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontWeight: 700,
+                      fontSize: '1.05rem',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: isDarkMode
+                        ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                        : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    Player Groups
+                  </Typography>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      px: 0.75,
+                      py: 0.125,
+                      borderRadius: '6px',
+                      backgroundColor: isDarkMode
+                        ? 'rgba(255,255,255,0.06)'
+                        : 'rgba(0,0,0,0.05)',
+                      color: isDarkMode
+                        ? 'rgba(255,255,255,0.5)'
+                        : 'rgba(0,0,0,0.45)',
+                      border: isDarkMode
+                        ? '1px solid rgba(255,255,255,0.08)'
+                        : '1px solid rgba(0,0,0,0.08)',
+                    }}
+                  >
+                    {roster.availableGroups.length}
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
             <Stack spacing={2} mb={3}>
               <Autocomplete
                 multiple
@@ -2273,12 +2379,80 @@ export const RosterBuilderPage: React.FC = () => {
               />
             </Stack>
 
-            <Divider sx={{ my: 3 }} />
+            <Box
+              sx={{
+                my: 3,
+                height: '1px',
+                background: isDarkMode
+                  ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%)'
+                  : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+              }}
+            />
 
             {/* Tanks Section */}
-            <Typography variant="h5" gutterBottom>
-              Tanks
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${roleColors.tank}20 0%, ${roleColors.tank}08 100%)`,
+                  border: `1px solid ${roleColors.tank}25`,
+                }}
+              >
+                <ShieldIcon sx={{ fontSize: '1rem', color: roleColors.tank }} />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
+                  }}
+                >
+                  Role
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontWeight: 700,
+                      fontSize: '1.05rem',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: `linear-gradient(135deg, ${roleColors.tank} 0%, ${roleColors.tank}99 100%)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    Tanks
+                  </Typography>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      px: 0.75,
+                      py: 0.125,
+                      borderRadius: '6px',
+                      backgroundColor: `${roleColors.tank}12`,
+                      color: roleColors.tank,
+                      border: `1px solid ${roleColors.tank}25`,
+                    }}
+                  >
+                    2
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
             <Stack spacing={2} mb={3}>
               {[1, 2].map((num) => (
                 <TankCard
@@ -2291,12 +2465,80 @@ export const RosterBuilderPage: React.FC = () => {
               ))}
             </Stack>
 
-            <Divider sx={{ my: 3 }} />
+            <Box
+              sx={{
+                my: 3,
+                height: '1px',
+                background: isDarkMode
+                  ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%)'
+                  : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+              }}
+            />
 
             {/* Healers Section */}
-            <Typography variant="h5" gutterBottom>
-              Healers
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${roleColors.healer}20 0%, ${roleColors.healer}08 100%)`,
+                  border: `1px solid ${roleColors.healer}25`,
+                }}
+              >
+                <FavoriteIcon sx={{ fontSize: '1rem', color: roleColors.healer }} />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
+                  }}
+                >
+                  Role
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontWeight: 700,
+                      fontSize: '1.05rem',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: `linear-gradient(135deg, ${roleColors.healer} 0%, ${roleColors.healer}99 100%)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    Healers
+                  </Typography>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      px: 0.75,
+                      py: 0.125,
+                      borderRadius: '6px',
+                      backgroundColor: `${roleColors.healer}12`,
+                      color: roleColors.healer,
+                      border: `1px solid ${roleColors.healer}25`,
+                    }}
+                  >
+                    2
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
             <Stack spacing={2} mb={3}>
               {[1, 2].map((num) => (
                 <HealerCard
@@ -2314,12 +2556,80 @@ export const RosterBuilderPage: React.FC = () => {
               ))}
             </Stack>
 
-            <Divider sx={{ my: 3 }} />
+            <Box
+              sx={{
+                my: 3,
+                height: '1px',
+                background: isDarkMode
+                  ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%)'
+                  : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+              }}
+            />
 
             {/* DPS Slots Section */}
-            <Typography variant="h5" gutterBottom>
-              DPS Roster (8 Slots)
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${roleColors.dps}20 0%, ${roleColors.dps}08 100%)`,
+                  border: `1px solid ${roleColors.dps}25`,
+                }}
+              >
+                <AutoAwesomeIcon sx={{ fontSize: '1rem', color: roleColors.dps }} />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
+                  }}
+                >
+                  Roster
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontWeight: 700,
+                      fontSize: '1.05rem',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: `linear-gradient(135deg, ${roleColors.dps} 0%, ${roleColors.dps}99 100%)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    DPS Roster
+                  </Typography>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      px: 0.75,
+                      py: 0.125,
+                      borderRadius: '6px',
+                      backgroundColor: `${roleColors.dps}12`,
+                      color: roleColors.dps,
+                      border: `1px solid ${roleColors.dps}25`,
+                    }}
+                  >
+                    {roster.dpsSlots.length} Slots
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -2352,9 +2662,74 @@ export const RosterBuilderPage: React.FC = () => {
               </SortableContext>
             </DndContext>
 
-            <Divider sx={{ my: 3 }} />
+            <Box
+              sx={{
+                my: 3,
+                height: '1px',
+                background: isDarkMode
+                  ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%)'
+                  : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+              }}
+            />
 
             {/* General Notes */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
+                    : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.08)',
+                }}
+              >
+                <NotesIcon
+                  sx={{
+                    fontSize: '1rem',
+                    color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                  }}
+                />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
+                  }}
+                >
+                  Notes
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: '"Space Grotesk", sans-serif',
+                    fontWeight: 700,
+                    fontSize: '1.05rem',
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1.1,
+                    background: isDarkMode
+                      ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                      : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  General Notes
+                </Typography>
+              </Box>
+            </Box>
             <TextField
               fullWidth
               multiline
