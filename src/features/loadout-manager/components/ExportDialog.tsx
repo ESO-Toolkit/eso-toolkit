@@ -209,11 +209,30 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
         },
       }}
     >
-      <DialogTitle>Export Loadout</DialogTitle>
+      <DialogTitle
+        sx={{
+          background: isDarkMode
+            ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+            : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          fontWeight: 700,
+        }}
+      >
+        Export Loadout
+      </DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
           {/* Trial Info */}
-          <Alert severity="info">
+          <Alert
+            severity="info"
+            sx={{
+              borderRadius: '12px',
+              backgroundColor: isDarkMode ? 'rgba(13, 110, 253, 0.1)' : 'rgba(13, 110, 253, 0.05)',
+              border: `1px solid ${isDarkMode ? 'rgba(13, 110, 253, 0.3)' : 'rgba(13, 110, 253, 0.2)'}`,
+            }}
+          >
             Exporting <strong>{setups.length} setups</strong> from{' '}
             <strong>{currentTrial?.name || 'Unknown Trial'}</strong>
           </Alert>
