@@ -93,12 +93,7 @@ const SortableChipRow: React.FC<SortableChipRowProps> = ({ chipId, checked, onTo
       </IconButton>
 
       {/* Checkbox */}
-      <Checkbox
-        size="small"
-        checked={checked}
-        onChange={() => onToggle(chipId)}
-        sx={{ p: 0.25 }}
-      />
+      <Checkbox size="small" checked={checked} onChange={() => onToggle(chipId)} sx={{ p: 0.25 }} />
 
       {/* Label */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flex: 1 }}>
@@ -138,7 +133,9 @@ export const StatChipCustomizationModal: React.FC<StatChipCustomizationModalProp
   ({ open, onClose, visibleChips, onSave }) => {
     // orderedIds holds the full list of all chips in user-defined order.
     // visibleSet tracks which chips are checked (will appear on cards).
-    const [orderedIds, setOrderedIds] = useState<StatChipId[]>(() => buildInitialOrder(visibleChips));
+    const [orderedIds, setOrderedIds] = useState<StatChipId[]>(() =>
+      buildInitialOrder(visibleChips),
+    );
     const [visibleSet, setVisibleSet] = useState<Set<StatChipId>>(() => new Set(visibleChips));
 
     // Reset draft whenever the modal opens with (potentially) new props.
