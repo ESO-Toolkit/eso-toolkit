@@ -4036,6 +4036,15 @@ interface DPSSlotCardProps {
   onConvertToDPS: (slotNumber: number) => void;
 }
 
+const jailLabels: Record<string, string> = {
+  banner: 'Banner',
+  zenkosh: 'Zenkosh',
+  wm: 'WM',
+  'wm-mk': 'WM/MK',
+  mk: 'MK',
+  custom: 'Custom',
+};
+
 const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
   slot,
   availableGroups,
@@ -4043,6 +4052,21 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
   onConvertToJail,
   onConvertToDPS,
 }) => {
+  const dpsTheme = useTheme();
+  const dpsIsDark = dpsTheme.palette.mode === 'dark';
+  const dpsRoleColors = dpsIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
+  const glassSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '10px',
+      backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+      '& fieldset': {
+        borderColor: dpsIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
+      },
+      '&:hover fieldset': {
+        borderColor: dpsIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
+      },
+    },
+  };
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: slot.slotNumber,
   });
@@ -4077,7 +4101,20 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
       ref={setNodeRef}
       style={style}
       variant="outlined"
-      sx={{ bgcolor: 'action.hover', cursor: isDragging ? 'grabbing' : 'default' }}
+      sx={{
+        borderRadius: '10px',
+        backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+        border: dpsIsDark
+          ? '1px solid rgba(255,255,255,0.06)'
+          : '1px solid rgba(0,0,0,0.06)',
+        borderLeft: `3px solid ${dpsRoleColors.dps}`,
+        cursor: isDragging ? 'grabbing' : 'default',
+        transition: 'border-color 0.15s ease',
+        '&:hover': {
+          borderColor: dpsIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          borderLeftColor: dpsRoleColors.dps,
+        },
+      }}
     >
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -4085,22 +4122,40 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
             size="small"
             {...attributes}
             {...listeners}
-            sx={{ cursor: 'grab' }}
+            sx={{
+              cursor: 'grab',
+              borderRadius: '6px',
+              backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+              color: dpsIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
+            }}
             aria-label={`Drag to reorder DPS ${slot.slotNumber}`}
           >
             <DragIndicatorIcon />
           </IconButton>
-          <Typography variant="subtitle1" fontWeight="bold">
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontFamily: '"Space Grotesk", sans-serif',
+              fontWeight: 700,
+              color: dpsRoleColors.dps,
+            }}
+          >
             DPS {slot.slotNumber}
-            {slot.jailDDType && (
-              <Chip
-                label={getJailDDTitle(slot.jailDDType)}
-                size="small"
-                color="primary"
-                sx={{ ml: 1 }}
-              />
-            )}
           </Typography>
+          {slot.jailDDType && (
+            <Chip
+              label={getJailDDTitle(slot.jailDDType)}
+              size="small"
+              sx={{
+                borderRadius: '6px',
+                backgroundColor: `${dpsRoleColors.dps}18`,
+                border: `1px solid ${dpsRoleColors.dps}35`,
+                color: dpsRoleColors.dps,
+                fontWeight: 600,
+                fontSize: '0.7rem',
+              }}
+            />
+          )}
         </Box>
         <Stack spacing={2}>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -4111,6 +4166,7 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
                 label="Player Name"
                 value={slot.playerName || ''}
                 onChange={(e) => onChange({ playerName: e.target.value })}
+                sx={glassSx}
               />
             </Box>
             <Box sx={{ flex: '1 1 25%', minWidth: 150 }}>
@@ -4121,6 +4177,7 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
                 placeholder="e.g., Portal L, Z'en"
                 value={slot.roleNotes || ''}
                 onChange={(e) => onChange({ roleNotes: e.target.value })}
+                sx={glassSx}
               />
             </Box>
             <Box sx={{ flex: '1 1 25%', minWidth: 120 }}>
@@ -4134,7 +4191,9 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
                     group: value ? { groupName: value } : undefined,
                   })
                 }
-                renderInput={(params) => <TextField {...params} label="Group" />}
+                renderInput={(params) => (
+                  <TextField {...params} label="Group" sx={glassSx} />
+                )}
               />
             </Box>
           </Box>
@@ -4149,7 +4208,23 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
             onChange={(_, value) => onChange({ labels: value })}
             renderTags={(value, getTagProps) =>
               value.map((option, index) => (
-                <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
+                <Chip
+                  {...getTagProps({ index })}
+                  key={option}
+                  label={option}
+                  size="small"
+                  sx={{
+                    borderRadius: '6px',
+                    backgroundColor: dpsIsDark
+                      ? 'rgba(255,255,255,0.06)'
+                      : 'rgba(0,0,0,0.05)',
+                    border: dpsIsDark
+                      ? '1px solid rgba(255,255,255,0.1)'
+                      : '1px solid rgba(0,0,0,0.1)',
+                    fontWeight: 500,
+                    fontSize: '0.75rem',
+                  }}
+                />
               ))
             }
             renderInput={(params) => (
@@ -4158,6 +4233,7 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
                 size="small"
                 label="Labels / Tags"
                 placeholder="Add custom labels (Press Enter)"
+                sx={glassSx}
               />
             )}
           />
@@ -4180,7 +4256,19 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
             }
             renderTags={(value, getTagProps) =>
               value.map((option, index) => (
-                <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
+                <Chip
+                  {...getTagProps({ index })}
+                  key={option}
+                  label={option}
+                  size="small"
+                  sx={{
+                    borderRadius: '6px',
+                    backgroundColor: `${dpsRoleColors.dps}10`,
+                    border: `1px solid ${dpsRoleColors.dps}25`,
+                    fontWeight: 500,
+                    fontSize: '0.75rem',
+                  }}
+                />
               ))
             }
             renderInput={(params) => (
@@ -4190,6 +4278,7 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
                 label="Gear Sets"
                 placeholder={slot.gearSets?.length ? undefined : 'Add set...'}
                 helperText="Sets worn by this player — click × to remove"
+                sx={glassSx}
               />
             )}
             renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -4200,66 +4289,84 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
             <Box>
               <Typography
                 variant="caption"
-                color="text.secondary"
-                sx={{ mb: 0.5, display: 'block' }}
+                sx={{
+                  mb: 0.75,
+                  display: 'block',
+                  color: dpsIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                }}
               >
                 Convert to Jail DD:
               </Typography>
-              <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => onConvertToJail(slot.slotNumber, 'banner')}
-                >
-                  Banner
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => onConvertToJail(slot.slotNumber, 'zenkosh')}
-                >
-                  Zenkosh
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => onConvertToJail(slot.slotNumber, 'wm')}
-                >
-                  WM
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => onConvertToJail(slot.slotNumber, 'wm-mk')}
-                >
-                  WM/MK
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => onConvertToJail(slot.slotNumber, 'mk')}
-                >
-                  MK
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => onConvertToJail(slot.slotNumber, 'custom')}
-                >
-                  Custom
-                </Button>
-              </Stack>
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  flexWrap: 'wrap',
+                  gap: '1px',
+                  borderRadius: '10px',
+                  padding: '3px',
+                  backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                  border: dpsIsDark
+                    ? '1px solid rgba(255,255,255,0.06)'
+                    : '1px solid rgba(0,0,0,0.06)',
+                }}
+              >
+                {(['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'] as const).map((type) => (
+                  <Box
+                    key={type}
+                    component="button"
+                    onClick={() => onConvertToJail(slot.slotNumber, type)}
+                    sx={{
+                      px: 1.25,
+                      py: 0.5,
+                      borderRadius: '7px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      fontSize: '0.72rem',
+                      fontWeight: 500,
+                      color: dpsIsDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                      background: 'transparent',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        color: dpsRoleColors.dps,
+                        background: dpsIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                      },
+                    }}
+                  >
+                    {jailLabels[type]}
+                  </Box>
+                ))}
+              </Box>
             </Box>
           ) : (
             <Box>
-              <Button
-                size="small"
-                variant="outlined"
-                color="secondary"
+              <Box
+                component="button"
                 onClick={() => onConvertToDPS(slot.slotNumber)}
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  px: 1.5,
+                  py: 0.625,
+                  borderRadius: '8px',
+                  border: dpsIsDark
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.1)',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  color: dpsIsDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                  background: 'transparent',
+                  transition: 'all 0.15s ease',
+                  '&:hover': {
+                    color: dpsIsDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
+                    background: dpsIsDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                  },
+                }}
               >
                 Convert Back to Regular DPS
-              </Button>
+              </Box>
             </Box>
           )}
         </Stack>
