@@ -62,7 +62,7 @@ import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnal
 import { ScribedSkillData } from '../../scribing/types';
 
 import type { StatChipId } from './statChipConfig';
-import { formatStatValue, STAT_CHIP_META } from './statChipConfig';
+import { formatStatValue, STAT_CHIP_IDS, STAT_CHIP_META } from './statChipConfig';
 // TODO: Implement proper scribing detection services
 // Temporary stubs to prevent compilation errors
 interface CombatEventData {
@@ -511,15 +511,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     // --- Data-driven stat chip entries ---
     // Build ordered array of chips, filtered by visibility prefs and role.
     const statChipEntries = React.useMemo(() => {
-      const entries: Array<{ id: StatChipId; node: React.ReactNode }> = [];
-      const vis = visibleChips ? new Set(visibleChips) : null;
+      // Collect candidate nodes into a map; order is determined afterwards.
+      const candidateMap = new Map<StatChipId, React.ReactNode>();
       const r = player.role as 'dps' | 'healer' | 'tank';
 
       const add = (id: StatChipId, node: React.ReactNode): void => {
-        if (vis && !vis.has(id)) return;
         const meta = STAT_CHIP_META[id];
         if (meta.roleFilter && !meta.roleFilter.includes(r)) return;
-        entries.push({ id, node });
+        candidateMap.set(id, node);
       };
 
       // --- New priority chips ---
@@ -837,6 +836,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         );
       }
 
+      // Emit entries in the user-configured order (visibleChips), falling back
+      // to the canonical STAT_CHIP_IDS order when no preference is stored.
+      const orderedIds: readonly StatChipId[] = visibleChips ?? STAT_CHIP_IDS;
+      const entries: Array<{ id: StatChipId; node: React.ReactNode }> = [];
+      for (const id of orderedIds) {
+        const node = candidateMap.get(id);
+        if (node !== undefined) entries.push({ id, node });
+      }
       return entries;
     }, [
       visibleChips,
