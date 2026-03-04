@@ -287,6 +287,12 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   lineHeight: 1.3,
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                    : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
                 }}
               >
                 {setup.name}
@@ -466,7 +472,15 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
               pageIndex={pageIndex}
               setupIndex={setupIndex}
             />
-            <Box sx={{ borderTop: 1, borderColor: 'divider' }} />
+            {/* Gradient section divider */}
+            <Box
+              sx={{
+                height: 1,
+                background: isDarkMode
+                  ? 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%)'
+                  : 'linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0) 100%)',
+              }}
+            />
             <FoodSelector
               food={setup.food}
               trialId={trialId}
