@@ -3466,12 +3466,12 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
             elevation={0}
             disableGutters
             sx={{
-              mt: 1,
+              mt: 2,
               borderRadius: '10px !important',
-              backgroundColor: tankIsDark ? `${tankRoleColors.tank}06` : `${tankRoleColors.tank}03`,
+              backgroundColor: 'transparent',
               border: tankIsDark
-                ? `1px solid ${tankRoleColors.tank}15`
-                : `1px solid ${tankRoleColors.tank}10`,
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.08)',
               '&:before': { display: 'none' },
             }}
           >
@@ -3482,7 +3482,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
               <Typography
                 variant="body2"
                 sx={{
-                  color: tankRoleColors.tank,
+                  color: tankIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
                   fontWeight: 500,
                 }}
               >
@@ -4107,14 +4107,12 @@ const HealerCard: React.FC<HealerCardProps> = ({
             elevation={0}
             disableGutters
             sx={{
-              mt: 1,
+              mt: 2,
               borderRadius: '10px !important',
-              backgroundColor: healerIsDark
-                ? `${healerRoleColors.healer}06`
-                : `${healerRoleColors.healer}03`,
+              backgroundColor: 'transparent',
               border: healerIsDark
-                ? `1px solid ${healerRoleColors.healer}15`
-                : `1px solid ${healerRoleColors.healer}10`,
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.08)',
               '&:before': { display: 'none' },
             }}
           >
@@ -4125,7 +4123,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
               <Typography
                 variant="body2"
                 sx={{
-                  color: healerRoleColors.healer,
+                  color: healerIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
                   fontWeight: 500,
                 }}
               >
