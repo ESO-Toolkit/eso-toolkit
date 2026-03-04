@@ -81,7 +81,12 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
     const updatedBar = { ...skills[barIndex] };
     delete updatedBar[slotIndex];
     dispatch(
-      updateSkills({ trialId, pageIndex, setupIndex, skills: { ...skills, [barIndex]: updatedBar } }),
+      updateSkills({
+        trialId,
+        pageIndex,
+        setupIndex,
+        skills: { ...skills, [barIndex]: updatedBar },
+      }),
     );
   };
 
