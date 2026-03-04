@@ -3538,7 +3538,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   Assignment
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  <Box sx={{ flex: '1 1 25%', minWidth: 100 }}>
+                  <Box sx={{ flex: '1 1 75%', minWidth: 150 }}>
                     <TextField
                       fullWidth
                       size="small"
@@ -3549,18 +3549,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       sx={glassSx}
                     />
                   </Box>
-                  <Box sx={{ flex: '1 1 50%', minWidth: 200 }}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Role Notes"
-                      placeholder="e.g., TOMB 1A, Portal Group"
-                      value={tank.roleNotes || ''}
-                      onChange={(e) => onChange({ roleNotes: e.target.value })}
-                      sx={glassSx}
-                    />
-                  </Box>
-                  <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
+                  <Box sx={{ flex: '1 1 20%', minWidth: 80 }}>
                     <TextField
                       fullWidth
                       size="small"
@@ -3576,6 +3565,15 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     />
                   </Box>
                 </Box>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Role Notes"
+                  placeholder="e.g., TOMB Main Tank, handles double stacks, portal duty"
+                  value={tank.roleNotes || ''}
+                  onChange={(e) => onChange({ roleNotes: e.target.value })}
+                  sx={glassSx}
+                />
                 <Autocomplete
                   multiple
                   freeSolo
@@ -4269,7 +4267,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                   Assignment
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  <Box sx={{ flex: '1 1 25%', minWidth: 100 }}>
+                  <Box sx={{ flex: '1 1 75%', minWidth: 150 }}>
                     <TextField
                       fullWidth
                       size="small"
@@ -4280,18 +4278,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       sx={glassSx}
                     />
                   </Box>
-                  <Box sx={{ flex: '1 1 50%', minWidth: 200 }}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Role Notes"
-                      placeholder="e.g., TOMB HEALER, TOMB 1B"
-                      value={healer.roleNotes || ''}
-                      onChange={(e) => onChange({ roleNotes: e.target.value })}
-                      sx={glassSx}
-                    />
-                  </Box>
-                  <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
+                  <Box sx={{ flex: '1 1 20%', minWidth: 80 }}>
                     <TextField
                       fullWidth
                       size="small"
@@ -4307,6 +4294,15 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     />
                   </Box>
                 </Box>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Role Notes"
+                  placeholder="e.g., Main healer, ramp healing, shield uptime focus"
+                  value={healer.roleNotes || ''}
+                  onChange={(e) => onChange({ roleNotes: e.target.value })}
+                  sx={glassSx}
+                />
                 <Autocomplete
                   multiple
                   freeSolo
