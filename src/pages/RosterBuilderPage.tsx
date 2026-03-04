@@ -3473,6 +3473,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                 ? '1px solid rgba(255,255,255,0.08)'
                 : '1px solid rgba(0,0,0,0.08)',
               '&:before': { display: 'none' },
+              '&.Mui-expanded': { margin: 0, marginTop: 2 },
             }}
           >
             <AccordionSummary
@@ -4114,6 +4115,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                 ? '1px solid rgba(255,255,255,0.08)'
                 : '1px solid rgba(0,0,0,0.08)',
               '&:before': { display: 'none' },
+              '&.Mui-expanded': { margin: 0, marginTop: 2 },
             }}
           >
             <AccordionSummary
