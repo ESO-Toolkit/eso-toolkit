@@ -530,35 +530,42 @@ const ProgressBadge: React.FC<{ section: SetupProgressSection }> = ({ section })
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
+  const colorMap: Record<SetupProgressSection['type'], string> = {
+    skills: theme.palette.primary.main,
+    cp: theme.palette.secondary.main,
+    food: theme.palette.success.main,
+    gear: theme.palette.info.main,
+  };
+  const iconColor = colorMap[section.type] ?? theme.palette.text.secondary;
+
+  const foodLabel =
+    section.type === 'food' && section.label
+      ? section.label.length > 14
+        ? `${section.label.slice(0, 13)}…`
+        : section.label
+      : null;
+
   return (
     <Tooltip title={label} arrow>
       <Box
-        sx={(theme) => {
-          const colorMap: Record<SetupProgressSection['type'], string> = {
-            skills: theme.palette.primary.main,
-            cp: theme.palette.secondary.main,
-            food: theme.palette.success.main,
-            gear: theme.palette.info.main,
-          };
-          const color = colorMap[section.type] ?? theme.palette.text.secondary;
-          return {
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 0.25,
-            px: 0.5,
-            py: 0.25,
-            borderRadius: 999,
-            fontSize: '0.6rem',
-            fontWeight: 600,
-            letterSpacing: 0.3,
-            color,
-            backgroundColor: alpha(color, isDarkMode ? 0.22 : 0.1),
-            border: `1px solid ${alpha(color, isDarkMode ? 0.3 : 0.2)}`,
-          };
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 0.25,
+          px: 0.5,
+          py: 0.25,
+          borderRadius: 999,
+          fontSize: '0.6rem',
+          fontWeight: 600,
+          letterSpacing: 0.3,
+          color: 'text.secondary',
+          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+          '& .MuiSvgIcon-root': { color: iconColor },
         }}
       >
         {getProgressIcon(section.type)}
-        {section.type !== 'food' ? section.count : null}
+        {section.type === 'food' ? foodLabel : section.count}
       </Box>
     </Tooltip>
   );
