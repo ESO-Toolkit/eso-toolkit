@@ -3539,6 +3539,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
+                    <Box sx={{ height: '1.4rem', mb: 0.5 }} />
                     <TextField
                       fullWidth
                       size="small"
@@ -3550,6 +3551,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
+                    <Box sx={{ height: '1.4rem', mb: 0.5 }} />
                     <TextField
                       fullWidth
                       size="small"
@@ -4278,6 +4280,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
+                    <Box sx={{ height: '1.4rem', mb: 0.5 }} />
                     <TextField
                       fullWidth
                       size="small"
@@ -4289,6 +4292,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
+                    <Box sx={{ height: '1.4rem', mb: 0.5 }} />
                     <TextField
                       fullWidth
                       size="small"
