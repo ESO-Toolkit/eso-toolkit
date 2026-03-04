@@ -124,8 +124,17 @@ export const SetupList: React.FC<SetupListProps> = ({
       >
         <Typography
           variant="caption"
-          sx={{ fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase' }}
-          color="text.secondary"
+          sx={{
+            fontWeight: 700,
+            letterSpacing: 0.8,
+            textTransform: 'uppercase',
+            background: isDarkMode
+              ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+              : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
         >
           Setups
         </Typography>
@@ -186,6 +195,8 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
   onDelete,
   onCopy,
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const conditionSummary = getSetupConditionSummary(setup);
   const progressSections = getSetupProgressSections(setup);
   const displayId = displayIndex.toString().padStart(2, '0');
@@ -214,18 +225,27 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
           px: 1.5,
           py: 1,
           cursor: 'pointer',
-          transition: 'background-color 0.15s',
+          transition: 'all 0.2s ease',
           opacity: setup.disabled ? 0.55 : 1,
           backgroundColor: selected
-            ? alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.18 : 0.1)
+            ? isDarkMode
+              ? 'rgba(255,255,255,0.05)'
+              : 'rgba(0,0,0,0.03)'
             : 'transparent',
           borderLeft: selected
             ? `3px solid ${theme.palette.primary.main}`
             : '3px solid transparent',
+          boxShadow: selected
+            ? `inset 3px 0 0 0 ${theme.palette.primary.main}, inset 0 1px 0 0 ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`
+            : 'none',
           '&:hover': {
             backgroundColor: selected
-              ? alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.24 : 0.14)
-              : alpha(theme.palette.action.hover, 0.06),
+              ? isDarkMode
+                ? 'rgba(255,255,255,0.08)'
+                : 'rgba(0,0,0,0.05)'
+              : isDarkMode
+                ? 'rgba(255,255,255,0.03)'
+                : 'rgba(0,0,0,0.02)',
           },
         })}
       >
