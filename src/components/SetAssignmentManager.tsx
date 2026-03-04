@@ -187,7 +187,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               minWidth: 32,
               bgcolor: isPrimary
                 ? `${color}18`
-                : isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(15,23,42,0.02)',
+                : isDarkMode
+                  ? 'rgba(255,255,255,0.03)'
+                  : 'rgba(15,23,42,0.02)',
               border: `1px solid ${isPrimary ? `${color}35` : `${color}20`}`,
               flexShrink: 0,
             }}
@@ -224,11 +226,19 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     userSelect: 'none',
                     border: '1px solid',
                     bgcolor: isDarkMode
-                      ? isSelected ? `${color}18` : 'rgba(255,255,255,0.03)'
-                      : isSelected ? `${color}15` : 'rgba(15,23,42,0.03)',
+                      ? isSelected
+                        ? `${color}18`
+                        : 'rgba(255,255,255,0.03)'
+                      : isSelected
+                        ? `${color}15`
+                        : 'rgba(15,23,42,0.03)',
                     borderColor: isDarkMode
-                      ? isSelected ? `${color}55` : 'rgba(255,255,255,0.07)'
-                      : isSelected ? `${color}45` : 'rgba(15,23,42,0.07)',
+                      ? isSelected
+                        ? `${color}55`
+                        : 'rgba(255,255,255,0.07)'
+                      : isSelected
+                        ? `${color}45`
+                        : 'rgba(15,23,42,0.07)',
                     boxShadow: isSelected
                       ? isDarkMode
                         ? `0 0 14px ${color}45, 0 2px 8px rgba(0,0,0,0.2)`
@@ -238,11 +248,19 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     '&:hover': {
                       transform: 'translateY(-1px)',
                       bgcolor: isDarkMode
-                        ? isSelected ? `${color}25` : 'rgba(255,255,255,0.06)'
-                        : isSelected ? `${color}20` : 'rgba(15,23,42,0.05)',
+                        ? isSelected
+                          ? `${color}25`
+                          : 'rgba(255,255,255,0.06)'
+                        : isSelected
+                          ? `${color}20`
+                          : 'rgba(15,23,42,0.05)',
                       borderColor: isDarkMode
-                        ? isSelected ? `${color}70` : 'rgba(255,255,255,0.13)'
-                        : isSelected ? `${color}60` : 'rgba(15,23,42,0.11)',
+                        ? isSelected
+                          ? `${color}70`
+                          : 'rgba(255,255,255,0.13)'
+                        : isSelected
+                          ? `${color}60`
+                          : 'rgba(15,23,42,0.11)',
                       boxShadow: isSelected
                         ? isDarkMode
                           ? `0 0 20px ${color}55, 0 4px 12px rgba(0,0,0,0.25)`
@@ -259,8 +277,12 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       fontSize: '0.75rem',
                       fontWeight: isSelected ? 600 : 400,
                       color: isSelected
-                        ? isDarkMode ? 'rgba(255,255,255,0.9)' : 'rgba(15,23,42,0.9)'
-                        : isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(15,23,42,0.4)',
+                        ? isDarkMode
+                          ? 'rgba(255,255,255,0.9)'
+                          : 'rgba(15,23,42,0.9)'
+                        : isDarkMode
+                          ? 'rgba(255,255,255,0.45)'
+                          : 'rgba(15,23,42,0.4)',
                       transition: 'color 0.2s',
                       lineHeight: 1.2,
                     }}
@@ -296,7 +318,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               minWidth: 32,
               bgcolor: isPrimary
                 ? `${color}18`
-                : isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(15,23,42,0.02)',
+                : isDarkMode
+                  ? 'rgba(255,255,255,0.03)'
+                  : 'rgba(15,23,42,0.02)',
               border: `1px solid ${isPrimary ? `${color}35` : `${color}20`}`,
               flexShrink: 0,
             }}
@@ -333,11 +357,19 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     userSelect: 'none',
                     border: '1px solid',
                     bgcolor: isDarkMode
-                      ? isSelected ? `${color}18` : 'rgba(255,255,255,0.03)'
-                      : isSelected ? `${color}15` : 'rgba(15,23,42,0.03)',
+                      ? isSelected
+                        ? `${color}18`
+                        : 'rgba(255,255,255,0.03)'
+                      : isSelected
+                        ? `${color}15`
+                        : 'rgba(15,23,42,0.03)',
                     borderColor: isDarkMode
-                      ? isSelected ? `${color}55` : 'rgba(255,255,255,0.07)'
-                      : isSelected ? `${color}45` : 'rgba(15,23,42,0.07)',
+                      ? isSelected
+                        ? `${color}55`
+                        : 'rgba(255,255,255,0.07)'
+                      : isSelected
+                        ? `${color}45`
+                        : 'rgba(15,23,42,0.07)',
                     boxShadow: isSelected
                       ? isDarkMode
                         ? `0 0 14px ${color}45, 0 2px 8px rgba(0,0,0,0.2)`
@@ -347,11 +379,19 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     '&:hover': {
                       transform: 'translateY(-1px)',
                       bgcolor: isDarkMode
-                        ? isSelected ? `${color}25` : 'rgba(255,255,255,0.06)'
-                        : isSelected ? `${color}20` : 'rgba(15,23,42,0.05)',
+                        ? isSelected
+                          ? `${color}25`
+                          : 'rgba(255,255,255,0.06)'
+                        : isSelected
+                          ? `${color}20`
+                          : 'rgba(15,23,42,0.05)',
                       borderColor: isDarkMode
-                        ? isSelected ? `${color}70` : 'rgba(255,255,255,0.13)'
-                        : isSelected ? `${color}60` : 'rgba(15,23,42,0.11)',
+                        ? isSelected
+                          ? `${color}70`
+                          : 'rgba(255,255,255,0.13)'
+                        : isSelected
+                          ? `${color}60`
+                          : 'rgba(15,23,42,0.11)',
                       boxShadow: isSelected
                         ? isDarkMode
                           ? `0 0 20px ${color}55, 0 4px 12px rgba(0,0,0,0.25)`
@@ -368,8 +408,12 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       fontSize: '0.75rem',
                       fontWeight: isSelected ? 600 : 400,
                       color: isSelected
-                        ? isDarkMode ? 'rgba(255,255,255,0.9)' : 'rgba(15,23,42,0.9)'
-                        : isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(15,23,42,0.4)',
+                        ? isDarkMode
+                          ? 'rgba(255,255,255,0.9)'
+                          : 'rgba(15,23,42,0.9)'
+                        : isDarkMode
+                          ? 'rgba(255,255,255,0.45)'
+                          : 'rgba(15,23,42,0.4)',
                       transition: 'color 0.2s',
                       lineHeight: 1.2,
                     }}
@@ -903,12 +947,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             borderRadius: '10px',
             padding: '3px',
             minWidth: { xs: 'auto', sm: 200 },
-            background: isDarkMode
-              ? 'rgba(255,255,255,0.05)'
-              : 'rgba(0,0,0,0.04)',
-            border: isDarkMode
-              ? '1px solid rgba(255,255,255,0.06)'
-              : '1px solid rgba(0,0,0,0.06)',
+            background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+            border: isDarkMode ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
           }}
         >
           {(['Quick Assign', 'All Sets'] as const).map((label, index) => (
@@ -977,9 +1017,22 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
           <Box sx={{ mb: 2 }}>
             {/* 5-Piece Sets Section - Three Columns by Role */}
             <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: { xs: 1.5, sm: 2 } }}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+                  gap: { xs: 1.5, sm: 2 },
+                }}
+              >
                 {/* Tank Column */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', borderRadius: '10px', bgcolor: isDarkMode ? `${roleColors.tank}0a` : `${roleColors.tank}06` }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRadius: '10px',
+                    bgcolor: isDarkMode ? `${roleColors.tank}0a` : `${roleColors.tank}06`,
+                  }}
+                >
                   <Box
                     sx={{
                       display: 'flex',
@@ -1025,7 +1078,14 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 </Box>
 
                 {/* Both/Flexible Column */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', borderRadius: '10px', bgcolor: isDarkMode ? `${roleColors.dps}0a` : `${roleColors.dps}06` }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRadius: '10px',
+                    bgcolor: isDarkMode ? `${roleColors.dps}0a` : `${roleColors.dps}06`,
+                  }}
+                >
                   <Box
                     sx={{
                       display: 'flex',
@@ -1071,7 +1131,14 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 </Box>
 
                 {/* Healer Column */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', borderRadius: '10px', bgcolor: isDarkMode ? `${roleColors.healer}0a` : `${roleColors.healer}06` }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRadius: '10px',
+                    bgcolor: isDarkMode ? `${roleColors.healer}0a` : `${roleColors.healer}06`,
+                  }}
+                >
                   <Box
                     sx={{
                       display: 'flex',
@@ -1180,9 +1247,22 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                   }}
                 />
               </Box>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: { xs: 1.5, sm: 2 } }}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+                  gap: { xs: 1.5, sm: 2 },
+                }}
+              >
                 {/* Tank Column */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', borderRadius: '10px', bgcolor: isDarkMode ? `${roleColors.tank}0a` : `${roleColors.tank}06` }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRadius: '10px',
+                    bgcolor: isDarkMode ? `${roleColors.tank}0a` : `${roleColors.tank}06`,
+                  }}
+                >
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1 }}>
                     {recommendedAssignments
                       .filter((a) => is2Or1PieceSetWithRole(a, 'tank'))
@@ -1191,7 +1271,14 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 </Box>
 
                 {/* Both/Flexible Column */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', borderRadius: '10px', bgcolor: isDarkMode ? `${roleColors.dps}0a` : `${roleColors.dps}06` }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRadius: '10px',
+                    bgcolor: isDarkMode ? `${roleColors.dps}0a` : `${roleColors.dps}06`,
+                  }}
+                >
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1 }}>
                     {recommendedAssignments
                       .filter((a) => is2Or1PieceSetWithRole(a, 'both'))
@@ -1200,7 +1287,14 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 </Box>
 
                 {/* Healer Column */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', borderRadius: '10px', bgcolor: isDarkMode ? `${roleColors.healer}0a` : `${roleColors.healer}06` }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRadius: '10px',
+                    bgcolor: isDarkMode ? `${roleColors.healer}0a` : `${roleColors.healer}06`,
+                  }}
+                >
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1 }}>
                     {recommendedAssignments
                       .filter((a) => is2Or1PieceSetWithRole(a, 'healer'))
@@ -1430,24 +1524,36 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: setAssignments.size > 0
-                    ? isDarkMode ? 'rgba(56,189,248,0.18)' : 'rgba(8,145,178,0.12)'
-                    : isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
-                  border: setAssignments.size > 0
-                    ? `1px solid ${isDarkMode ? 'rgba(56,189,248,0.4)' : 'rgba(8,145,178,0.3)'}`
-                    : 'none',
-                  boxShadow: setAssignments.size > 0
-                    ? isDarkMode ? '0 0 8px rgba(56,189,248,0.3)' : '0 0 6px rgba(8,145,178,0.2)'
-                    : 'none',
+                  bgcolor:
+                    setAssignments.size > 0
+                      ? isDarkMode
+                        ? 'rgba(56,189,248,0.18)'
+                        : 'rgba(8,145,178,0.12)'
+                      : isDarkMode
+                        ? 'rgba(255,255,255,0.08)'
+                        : 'rgba(15,23,42,0.06)',
+                  border:
+                    setAssignments.size > 0
+                      ? `1px solid ${isDarkMode ? 'rgba(56,189,248,0.4)' : 'rgba(8,145,178,0.3)'}`
+                      : 'none',
+                  boxShadow:
+                    setAssignments.size > 0
+                      ? isDarkMode
+                        ? '0 0 8px rgba(56,189,248,0.3)'
+                        : '0 0 6px rgba(8,145,178,0.2)'
+                      : 'none',
                 }}
               >
                 <Typography
                   sx={{
                     fontSize: '0.72rem',
                     fontWeight: 700,
-                    color: setAssignments.size > 0
-                      ? isDarkMode ? '#38bdf8' : '#0891b2'
-                      : 'text.secondary',
+                    color:
+                      setAssignments.size > 0
+                        ? isDarkMode
+                          ? '#38bdf8'
+                          : '#0891b2'
+                        : 'text.secondary',
                     lineHeight: 1,
                   }}
                 >
@@ -1518,7 +1624,11 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>
                 Tank Sets
               </Typography>
-              <Box>{allSets.filter((s) => s.category === SetCategory.TANK).map((a) => renderSetChip(a))}</Box>
+              <Box>
+                {allSets
+                  .filter((s) => s.category === SetCategory.TANK)
+                  .map((a) => renderSetChip(a))}
+              </Box>
             </Box>
           )}
 
@@ -1528,7 +1638,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 Healer Sets
               </Typography>
               <Box>
-                {allSets.filter((s) => s.category === SetCategory.HEALER).map((a) => renderSetChip(a))}
+                {allSets
+                  .filter((s) => s.category === SetCategory.HEALER)
+                  .map((a) => renderSetChip(a))}
               </Box>
             </Box>
           )}
@@ -1541,7 +1653,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                   Flexible (Tank/Healer)
                 </Typography>
                 <Box>
-                  {allSets.filter((s) => s.category === SetCategory.FLEXIBLE).map((a) => renderSetChip(a))}
+                  {allSets
+                    .filter((s) => s.category === SetCategory.FLEXIBLE)
+                    .map((a) => renderSetChip(a))}
                 </Box>
               </Box>
 
@@ -1551,7 +1665,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                   Monster Sets
                 </Typography>
                 <Box>
-                  {allSets.filter((s) => s.category === SetCategory.MONSTER).map((a) => renderSetChip(a))}
+                  {allSets
+                    .filter((s) => s.category === SetCategory.MONSTER)
+                    .map((a) => renderSetChip(a))}
                 </Box>
               </Box>
             </>
@@ -1626,7 +1742,16 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
         </Box>
 
         {/* Two-column body */}
-        <Box sx={{ px: { xs: 1, sm: 1.5 }, pt: 1.25, pb: 1.25, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5 }}>
+        <Box
+          sx={{
+            px: { xs: 1, sm: 1.5 },
+            pt: 1.25,
+            pb: 1.25,
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 1.5,
+          }}
+        >
           {/* Left Column - Tanks */}
           <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
             {/* MT / Tank 1 card */}
@@ -1634,7 +1759,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               sx={{
                 borderRadius: '10px',
                 overflow: 'hidden',
-                border: isDarkMode ? `1px solid ${roleColors.tank}28` : `1px solid ${roleColors.tank}35`,
+                border: isDarkMode
+                  ? `1px solid ${roleColors.tank}28`
+                  : `1px solid ${roleColors.tank}35`,
               }}
             >
               <Box
@@ -1689,7 +1816,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                         background: tank1.gearSets.set1
                           ? `linear-gradient(90deg, ${roleColors.tank}28 0%, ${roleColors.tank}10 100%)`
                           : `${roleColors.tank}0f`,
-                        borderLeftColor: tank1.gearSets.set1 ? roleColors.tank : `${roleColors.tank}50`,
+                        borderLeftColor: tank1.gearSets.set1
+                          ? roleColors.tank
+                          : `${roleColors.tank}50`,
                       },
                     }}
                   >
@@ -1732,7 +1861,11 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                             e.stopPropagation();
                             onAssignSet('', 'tank1', 'set1');
                           }}
-                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                          sx={{
+                            p: 0.25,
+                            color: 'text.disabled',
+                            '&:hover': { color: 'error.main' },
+                          }}
                         >
                           <ClearIcon sx={{ fontSize: '0.875rem' }} />
                         </IconButton>
@@ -1757,7 +1890,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                         background: tank1.gearSets.set2
                           ? `linear-gradient(90deg, ${roleColors.tank}28 0%, ${roleColors.tank}10 100%)`
                           : `${roleColors.tank}0f`,
-                        borderLeftColor: tank1.gearSets.set2 ? roleColors.tank : `${roleColors.tank}50`,
+                        borderLeftColor: tank1.gearSets.set2
+                          ? roleColors.tank
+                          : `${roleColors.tank}50`,
                       },
                     }}
                   >
@@ -1800,7 +1935,11 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                             e.stopPropagation();
                             onAssignSet('', 'tank1', 'set2');
                           }}
-                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                          sx={{
+                            p: 0.25,
+                            color: 'text.disabled',
+                            '&:hover': { color: 'error.main' },
+                          }}
                         >
                           <ClearIcon sx={{ fontSize: '0.875rem' }} />
                         </IconButton>
@@ -1890,7 +2029,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               sx={{
                 borderRadius: '10px',
                 overflow: 'hidden',
-                border: isDarkMode ? `1px solid ${roleColors.tank}18` : `1px solid ${roleColors.tank}22`,
+                border: isDarkMode
+                  ? `1px solid ${roleColors.tank}18`
+                  : `1px solid ${roleColors.tank}22`,
               }}
             >
               <Box
@@ -1938,7 +2079,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                         background: tank2.gearSets.set1
                           ? `linear-gradient(90deg, ${roleColors.tank}28 0%, ${roleColors.tank}10 100%)`
                           : `${roleColors.tank}0f`,
-                        borderLeftColor: tank2.gearSets.set1 ? roleColors.tank : `${roleColors.tank}50`,
+                        borderLeftColor: tank2.gearSets.set1
+                          ? roleColors.tank
+                          : `${roleColors.tank}50`,
                       },
                     }}
                   >
@@ -1981,7 +2124,11 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                             e.stopPropagation();
                             onAssignSet('', 'tank2', 'set1');
                           }}
-                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                          sx={{
+                            p: 0.25,
+                            color: 'text.disabled',
+                            '&:hover': { color: 'error.main' },
+                          }}
                         >
                           <ClearIcon sx={{ fontSize: '0.875rem' }} />
                         </IconButton>
@@ -2006,7 +2153,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                         background: tank2.gearSets.set2
                           ? `linear-gradient(90deg, ${roleColors.tank}28 0%, ${roleColors.tank}10 100%)`
                           : `${roleColors.tank}0f`,
-                        borderLeftColor: tank2.gearSets.set2 ? roleColors.tank : `${roleColors.tank}50`,
+                        borderLeftColor: tank2.gearSets.set2
+                          ? roleColors.tank
+                          : `${roleColors.tank}50`,
                       },
                     }}
                   >
@@ -2049,7 +2198,11 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                             e.stopPropagation();
                             onAssignSet('', 'tank2', 'set2');
                           }}
-                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                          sx={{
+                            p: 0.25,
+                            color: 'text.disabled',
+                            '&:hover': { color: 'error.main' },
+                          }}
                         >
                           <ClearIcon sx={{ fontSize: '0.875rem' }} />
                         </IconButton>
@@ -2142,7 +2295,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               sx={{
                 borderRadius: '10px',
                 overflow: 'hidden',
-                border: isDarkMode ? `1px solid ${roleColors.healer}28` : `1px solid ${roleColors.healer}35`,
+                border: isDarkMode
+                  ? `1px solid ${roleColors.healer}28`
+                  : `1px solid ${roleColors.healer}35`,
               }}
             >
               <Box
@@ -2197,7 +2352,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                         background: healer1.set1
                           ? `linear-gradient(90deg, ${roleColors.healer}28 0%, ${roleColors.healer}10 100%)`
                           : `${roleColors.healer}0f`,
-                        borderLeftColor: healer1.set1 ? roleColors.healer : `${roleColors.healer}50`,
+                        borderLeftColor: healer1.set1
+                          ? roleColors.healer
+                          : `${roleColors.healer}50`,
                       },
                     }}
                   >
@@ -2240,7 +2397,11 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                             e.stopPropagation();
                             onAssignSet('', 'healer1', 'set1');
                           }}
-                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                          sx={{
+                            p: 0.25,
+                            color: 'text.disabled',
+                            '&:hover': { color: 'error.main' },
+                          }}
                         >
                           <ClearIcon sx={{ fontSize: '0.875rem' }} />
                         </IconButton>
@@ -2265,7 +2426,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                         background: healer1.set2
                           ? `linear-gradient(90deg, ${roleColors.healer}28 0%, ${roleColors.healer}10 100%)`
                           : `${roleColors.healer}0f`,
-                        borderLeftColor: healer1.set2 ? roleColors.healer : `${roleColors.healer}50`,
+                        borderLeftColor: healer1.set2
+                          ? roleColors.healer
+                          : `${roleColors.healer}50`,
                       },
                     }}
                   >
@@ -2308,7 +2471,11 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                             e.stopPropagation();
                             onAssignSet('', 'healer1', 'set2');
                           }}
-                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                          sx={{
+                            p: 0.25,
+                            color: 'text.disabled',
+                            '&:hover': { color: 'error.main' },
+                          }}
                         >
                           <ClearIcon sx={{ fontSize: '0.875rem' }} />
                         </IconButton>
@@ -2396,7 +2563,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               sx={{
                 borderRadius: '10px',
                 overflow: 'hidden',
-                border: isDarkMode ? `1px solid ${roleColors.healer}18` : `1px solid ${roleColors.healer}22`,
+                border: isDarkMode
+                  ? `1px solid ${roleColors.healer}18`
+                  : `1px solid ${roleColors.healer}22`,
               }}
             >
               <Box
@@ -2410,7 +2579,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                   gap: 0.75,
                 }}
               >
-                <FavoriteIcon sx={{ fontSize: '0.75rem', color: roleColors.healer, opacity: 0.5 }} />
+                <FavoriteIcon
+                  sx={{ fontSize: '0.75rem', color: roleColors.healer, opacity: 0.5 }}
+                />
                 <Typography
                   variant="caption"
                   fontWeight={600}
@@ -2444,7 +2615,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                         background: healer2.set1
                           ? `linear-gradient(90deg, ${roleColors.healer}28 0%, ${roleColors.healer}10 100%)`
                           : `${roleColors.healer}0f`,
-                        borderLeftColor: healer2.set1 ? roleColors.healer : `${roleColors.healer}50`,
+                        borderLeftColor: healer2.set1
+                          ? roleColors.healer
+                          : `${roleColors.healer}50`,
                       },
                     }}
                   >
@@ -2487,7 +2660,11 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                             e.stopPropagation();
                             onAssignSet('', 'healer2', 'set1');
                           }}
-                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                          sx={{
+                            p: 0.25,
+                            color: 'text.disabled',
+                            '&:hover': { color: 'error.main' },
+                          }}
                         >
                           <ClearIcon sx={{ fontSize: '0.875rem' }} />
                         </IconButton>
@@ -2512,7 +2689,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                         background: healer2.set2
                           ? `linear-gradient(90deg, ${roleColors.healer}28 0%, ${roleColors.healer}10 100%)`
                           : `${roleColors.healer}0f`,
-                        borderLeftColor: healer2.set2 ? roleColors.healer : `${roleColors.healer}50`,
+                        borderLeftColor: healer2.set2
+                          ? roleColors.healer
+                          : `${roleColors.healer}50`,
                       },
                     }}
                   >
@@ -2555,7 +2734,11 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                             e.stopPropagation();
                             onAssignSet('', 'healer2', 'set2');
                           }}
-                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                          sx={{
+                            p: 0.25,
+                            color: 'text.disabled',
+                            '&:hover': { color: 'error.main' },
+                          }}
                         >
                           <ClearIcon sx={{ fontSize: '0.875rem' }} />
                         </IconButton>
