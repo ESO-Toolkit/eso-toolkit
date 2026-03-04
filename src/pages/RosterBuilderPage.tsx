@@ -2089,70 +2089,93 @@ export const RosterBuilderPage: React.FC = () => {
           {/* Spacer pushes CTAs right on desktop */}
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
 
-          {/* Primary CTAs (right) */}
-          <Tooltip title="Preview Discord format" arrow>
-            <Button
-              size="small"
-              startIcon={<VisibilityIcon />}
-              onClick={() => setPreviewDialog(true)}
-              sx={{
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontSize: '0.75rem',
-                fontWeight: 500,
-                color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                border: isDarkMode
-                  ? '1px solid rgba(255,255,255,0.08)'
-                  : '1px solid rgba(0,0,0,0.1)',
-                backgroundColor: 'transparent',
-                '&:hover': {
-                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                  border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.15)'
-                    : '1px solid rgba(0,0,0,0.18)',
-                },
-              }}
-            >
-              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                Preview
-              </Box>
-            </Button>
-          </Tooltip>
-          <Tooltip title="Copy for Discord" arrow>
-            <Button
-              size="small"
-              onClick={handleCopyDiscordFormat}
-              sx={{
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: isDarkMode ? '#f1f5f9' : '#0f172a',
-                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)',
-                border: isDarkMode
-                  ? '1px solid rgba(255,255,255,0.12)'
-                  : '1px solid rgba(0,0,0,0.12)',
-                boxShadow: isDarkMode
-                  ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
-                  : '0 1px 2px rgba(0,0,0,0.06)',
-                '&:hover': {
-                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.09)',
-                  border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.18)'
-                    : '1px solid rgba(0,0,0,0.18)',
-                },
-                minWidth: 'auto',
-                px: 1,
-              }}
-            >
+          {/* Discord compound button — preview + copy in a shared track */}
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              borderRadius: '10px',
+              padding: '3px',
+              background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.08)',
+            }}
+          >
+            <Tooltip title="Preview Discord format" arrow>
               <Box
-                component="img"
-                src={discordIcon}
-                alt="Discord"
-                sx={{ width: 16, height: 16 }}
-              />
-            </Button>
-          </Tooltip>
+                component="button"
+                onClick={() => setPreviewDialog(true)}
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 1.25,
+                  py: 0.5,
+                  borderRadius: '7px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  fontFamily: 'inherit',
+                  color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
+                  background: 'transparent',
+                  transition: 'all 0.15s ease',
+                  '&:hover': {
+                    color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
+                    background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                  },
+                }}
+              >
+                <VisibilityIcon sx={{ fontSize: '0.9rem' }} />
+                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                  Preview
+                </Box>
+              </Box>
+            </Tooltip>
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{
+                mx: 0.25,
+                opacity: isDarkMode ? 0.12 : 0.15,
+                borderColor: isDarkMode ? '#fff' : '#000',
+              }}
+            />
+            <Tooltip title="Copy for Discord" arrow>
+              <Box
+                component="button"
+                onClick={handleCopyDiscordFormat}
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: '7px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  color: isDarkMode ? '#f1f5f9' : '#0f172a',
+                  background: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.85)',
+                  boxShadow: isDarkMode
+                    ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)'
+                    : '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
+                  transition: 'all 0.15s ease',
+                  '&:hover': {
+                    background: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.95)',
+                  },
+                }}
+              >
+                <Box
+                  component="img"
+                  src={discordIcon}
+                  alt="Copy for Discord"
+                  sx={{ width: 16, height: 16 }}
+                />
+              </Box>
+            </Tooltip>
+          </Box>
           <Tooltip title="Copy shareable link" arrow>
             <Button
               size="small"
