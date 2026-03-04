@@ -3299,20 +3299,6 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
           </Box>
 
           {/* Gear Sets */}
-          <Divider textAlign="left">
-            <Chip
-              label="Gear Sets"
-              size="small"
-              sx={{
-                borderRadius: '6px',
-                backgroundColor: tankIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                border: tankIsDark
-                  ? '1px solid rgba(255,255,255,0.1)'
-                  : '1px solid rgba(0,0,0,0.1)',
-                fontWeight: 500,
-              }}
-            />
-          </Divider>
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
@@ -3417,21 +3403,6 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
               />
             </Box>
           </Box>
-
-          <Divider textAlign="left">
-            <Chip
-              label="Ultimate"
-              size="small"
-              sx={{
-                borderRadius: '6px',
-                backgroundColor: tankIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                border: tankIsDark
-                  ? '1px solid rgba(255,255,255,0.1)'
-                  : '1px solid rgba(0,0,0,0.1)',
-                fontWeight: 500,
-              }}
-            />
-          </Divider>
 
           <Autocomplete
             freeSolo
@@ -3942,20 +3913,6 @@ const HealerCard: React.FC<HealerCardProps> = ({
           </Box>
 
           {/* Gear Sets */}
-          <Divider textAlign="left">
-            <Chip
-              label="Gear Sets"
-              size="small"
-              sx={{
-                borderRadius: '6px',
-                backgroundColor: healerIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                border: healerIsDark
-                  ? '1px solid rgba(255,255,255,0.1)'
-                  : '1px solid rgba(0,0,0,0.1)',
-                fontWeight: 500,
-              }}
-            />
-          </Divider>
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
@@ -4087,21 +4044,6 @@ const HealerCard: React.FC<HealerCardProps> = ({
               ))}
             </Select>
           </FormControl>
-
-          <Divider textAlign="left">
-            <Chip
-              label="Ultimate"
-              size="small"
-              sx={{
-                borderRadius: '6px',
-                backgroundColor: healerIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                border: healerIsDark
-                  ? '1px solid rgba(255,255,255,0.1)'
-                  : '1px solid rgba(0,0,0,0.1)',
-                fontWeight: 500,
-              }}
-            />
-          </Divider>
 
           <Autocomplete
             freeSolo
