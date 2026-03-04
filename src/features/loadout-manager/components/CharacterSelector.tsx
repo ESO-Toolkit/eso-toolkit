@@ -13,6 +13,7 @@ import {
   Select,
   Stack,
   Typography,
+  useTheme,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import React, { useMemo } from 'react';
@@ -34,6 +35,24 @@ const formatSkillLines = (skillLines?: ClassSkillLine[]): string => {
 
 export const CharacterSelector: React.FC = (): React.ReactElement => {
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+  const glassTextField = {
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+      backdropFilter: 'blur(12px)',
+      borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+      transition: 'all 0.2s ease',
+      '&:hover': {
+        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
+        borderColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+      },
+      '&.Mui-focused': {
+        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+        borderColor: theme.palette.primary.main,
+      },
+    },
+  };
   const currentCharacter = useSelector((state: RootState) => state.loadout.currentCharacter);
   const characters = useSelector((state: RootState) => state.loadout.characters);
   const sortedCharacters = useMemo(
@@ -53,7 +72,7 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
 
   if (!hasCharacters) {
     return (
-      <FormControl size="small" sx={{ minWidth: 200 }} disabled>
+      <FormControl size="small" sx={{ minWidth: 200, ...glassTextField }} disabled>
         <InputLabel id="character-select-label">Character</InputLabel>
         <Select labelId="character-select-label" value="" label="Character">
           <MenuItem value="" disabled>
@@ -68,7 +87,7 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
 
   return (
     <>
-      <FormControl size="small" sx={{ minWidth: 200 }}>
+      <FormControl size="small" sx={{ minWidth: 200, ...glassTextField }}>
         <InputLabel id="character-select-label">Character</InputLabel>
         <Select
           labelId="character-select-label"
@@ -79,6 +98,18 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
             const char = sortedCharacters.find((c) => c.id === value);
             if (!char) return 'Select character';
             return `${char.name} · ${formatRole(char.role)}`;
+          }}
+          MenuProps={{
+            slotProps: {
+              paper: {
+                sx: {
+                  borderRadius: '10px',
+                  backdropFilter: 'blur(12px)',
+                  backgroundColor: isDarkMode ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
+                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                },
+              },
+            },
           }}
         >
           {sortedCharacters.map((char) => {
@@ -114,13 +145,27 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
 
       {/* Role selector for the currently selected character */}
       {currentCharacter && hasCharacters && (
-        <FormControl size="small" sx={{ minWidth: 100 }}>
+        <FormControl size="small" sx={{ minWidth: 100, ...glassTextField }}>
           <InputLabel id="role-select-label">Role</InputLabel>
           <Select
             labelId="role-select-label"
             value={sortedCharacters.find((c) => c.id === currentCharacter)?.role ?? 'DPS'}
             label="Role"
             onChange={(e) => handleRoleChange(currentCharacter, e.target.value)}
+            MenuProps={{
+              slotProps: {
+                paper: {
+                  sx: {
+                    borderRadius: '10px',
+                    backdropFilter: 'blur(12px)',
+                    backgroundColor: isDarkMode ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
+                    border: `1px solid ${
+                      isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
+                    }`,
+                  },
+                },
+              },
+            }}
           >
             {ROLE_OPTIONS.map((role) => (
               <MenuItem key={role} value={role}>
