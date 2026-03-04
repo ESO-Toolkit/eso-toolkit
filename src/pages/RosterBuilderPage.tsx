@@ -3612,20 +3612,6 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                 />
 
                 {/* Skill Lines Section */}
-                <Divider textAlign="left">
-                  <Chip
-                    label="Skill Lines"
-                    size="small"
-                    sx={{
-                      borderRadius: '6px',
-                      backgroundColor: tankIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                      border: tankIsDark
-                        ? '1px solid rgba(255,255,255,0.1)'
-                        : '1px solid rgba(0,0,0,0.1)',
-                      fontWeight: 500,
-                    }}
-                  />
-                </Divider>
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -4251,20 +4237,6 @@ const HealerCard: React.FC<HealerCardProps> = ({
                 />
 
                 {/* Skill Lines Section */}
-                <Divider textAlign="left">
-                  <Chip
-                    label="Skill Lines"
-                    size="small"
-                    sx={{
-                      borderRadius: '6px',
-                      backgroundColor: healerIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                      border: healerIsDark
-                        ? '1px solid rgba(255,255,255,0.1)'
-                        : '1px solid rgba(0,0,0,0.1)',
-                      fontWeight: 500,
-                    }}
-                  />
-                </Divider>
                 <FormControlLabel
                   control={
                     <Checkbox
