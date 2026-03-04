@@ -30,6 +30,7 @@ import {
   Stack,
   Tooltip,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -76,6 +77,8 @@ export const SetupList: React.FC<SetupListProps> = ({
   onDeleteSetup,
   onCopySetup,
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const normalizedFilter = filterText.trim().toLowerCase();
   const filtered = useMemo(() => {
     return setups
@@ -96,41 +99,62 @@ export const SetupList: React.FC<SetupListProps> = ({
 
   return (
     <Paper
-      variant="outlined"
+      elevation={0}
       sx={{
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 2,
         overflow: 'hidden',
         width: '100%',
+        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+        border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
       }}
     >
       {/* Compact header */}
       <Box
-        sx={(theme) => ({
+        sx={{
           px: 1.5,
           py: 0.75,
-          borderBottom: 1,
-          borderColor: 'divider',
-          backgroundColor: alpha(
-            theme.palette.background.paper,
-            theme.palette.mode === 'dark' ? 0.6 : 0.9,
-          ),
+          borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-        })}
+        }}
       >
         <Typography
           variant="caption"
-          sx={{ fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase' }}
-          color="text.secondary"
+          sx={{
+            fontWeight: 700,
+            letterSpacing: 0.8,
+            textTransform: 'uppercase',
+            background: isDarkMode
+              ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+              : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
         >
           Setups
         </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {filtered.length}/{setups.length}
-        </Typography>
+        <Box
+          sx={{
+            px: 0.75,
+            py: 0.15,
+            borderRadius: '999px',
+            backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+          }}
+        >
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ fontSize: '0.65rem', fontWeight: 600 }}
+          >
+            {filtered.length}/{setups.length}
+          </Typography>
+        </Box>
       </Box>
 
       {/* List */}
@@ -155,7 +179,15 @@ export const SetupList: React.FC<SetupListProps> = ({
                 onDelete={onDeleteSetup}
                 onCopy={onCopySetup}
               />
-              {i < filtered.length - 1 && <Divider />}
+              {i < filtered.length - 1 && (
+                <Box
+                  sx={{
+                    height: '1px',
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+                    mx: 1.5,
+                  }}
+                />
+              )}
             </React.Fragment>
           ))
         )}
@@ -185,6 +217,8 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
   onDelete,
   onCopy,
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const conditionSummary = getSetupConditionSummary(setup);
   const progressSections = getSetupProgressSections(setup);
   const displayId = displayIndex.toString().padStart(2, '0');
@@ -213,18 +247,24 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
           px: 1.5,
           py: 1,
           cursor: 'pointer',
-          transition: 'background-color 0.15s',
+          transition: 'all 0.2s ease',
           opacity: setup.disabled ? 0.55 : 1,
           backgroundColor: selected
-            ? alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.18 : 0.1)
+            ? isDarkMode
+              ? 'rgba(255,255,255,0.05)'
+              : 'rgba(0,0,0,0.03)'
             : 'transparent',
           borderLeft: selected
             ? `3px solid ${theme.palette.primary.main}`
             : '3px solid transparent',
           '&:hover': {
             backgroundColor: selected
-              ? alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.24 : 0.14)
-              : alpha(theme.palette.action.hover, 0.06),
+              ? isDarkMode
+                ? 'rgba(255,255,255,0.08)'
+                : 'rgba(0,0,0,0.05)'
+              : isDarkMode
+                ? 'rgba(255,255,255,0.03)'
+                : 'rgba(0,0,0,0.02)',
           },
         })}
       >
@@ -286,7 +326,16 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
         <IconButton
           size="small"
           onClick={handleMenuOpen}
-          sx={{ flexShrink: 0, opacity: 0.6, '&:hover': { opacity: 1 } }}
+          sx={{
+            flexShrink: 0,
+            opacity: 0.5,
+            borderRadius: '8px',
+            transition: 'all 0.15s ease',
+            '&:hover': {
+              opacity: 1,
+              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+            },
+          }}
         >
           <MoreVertIcon fontSize="small" />
         </IconButton>
@@ -299,7 +348,20 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
         onClose={handleMenuClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { sx: { minWidth: 160 } } }}
+        slotProps={{
+          paper: {
+            sx: (theme) => ({
+              minWidth: 160,
+              borderRadius: '10px',
+              backdropFilter: 'blur(12px)',
+              backgroundColor:
+                theme.palette.mode === 'dark' ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
+              border: `1px solid ${
+                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
+              }`,
+            }),
+          },
+        }}
       >
         <MenuItem
           onClick={() => {
@@ -349,8 +411,11 @@ const BadgeBox: React.FC<{ selected: boolean; children: React.ReactNode }> = ({
     sx={(theme) => ({
       width: 30,
       height: 30,
-      borderRadius: 1,
+      borderRadius: '8px',
       display: 'flex',
+      border: selected
+        ? 'none'
+        : `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.2)}`,
       alignItems: 'center',
       justifyContent: 'center',
       fontWeight: 700,
@@ -425,7 +490,7 @@ const AbilityIcon: React.FC<{ abilityId?: number; size: number; highlight?: bool
         sx={(theme) => ({
           width: size,
           height: size,
-          borderRadius: 1,
+          borderRadius: '6px',
           border: `1px solid ${highlight ? theme.palette.warning.main : theme.palette.divider}`,
           overflow: 'hidden',
           display: 'flex',
@@ -445,9 +510,15 @@ const AbilityIcon: React.FC<{ abilityId?: number; size: number; highlight?: bool
             onError={() => setLoadFailed(true)}
           />
         ) : (
-          <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.55rem' }}>
-            --
-          </Typography>
+          <Box
+            sx={{
+              width: '55%',
+              height: 1.5,
+              borderRadius: 1,
+              backgroundColor: 'divider',
+              opacity: 0.35,
+            }}
+          />
         )}
       </Box>
     </Tooltip>
@@ -456,36 +527,45 @@ const AbilityIcon: React.FC<{ abilityId?: number; size: number; highlight?: bool
 
 const ProgressBadge: React.FC<{ section: SetupProgressSection }> = ({ section }) => {
   const label = formatProgressSection(section);
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+
+  const colorMap: Record<SetupProgressSection['type'], string> = {
+    skills: theme.palette.primary.main,
+    cp: theme.palette.secondary.main,
+    food: theme.palette.success.main,
+    gear: theme.palette.info.main,
+  };
+  const iconColor = colorMap[section.type] ?? theme.palette.text.secondary;
+
+  const foodLabel =
+    section.type === 'food' && section.label
+      ? section.label.length > 14
+        ? `${section.label.slice(0, 13)}…`
+        : section.label
+      : null;
 
   return (
     <Tooltip title={label} arrow>
       <Box
-        sx={(theme) => {
-          const colorMap: Record<SetupProgressSection['type'], string> = {
-            skills: theme.palette.primary.main,
-            cp: theme.palette.secondary.main,
-            food: theme.palette.success.main,
-            gear: theme.palette.info.main,
-          };
-          const color = colorMap[section.type] ?? theme.palette.text.secondary;
-          return {
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 0.25,
-            px: 0.5,
-            py: 0.15,
-            borderRadius: 999,
-            fontSize: '0.6rem',
-            fontWeight: 600,
-            letterSpacing: 0.3,
-            textTransform: 'uppercase',
-            color,
-            backgroundColor: alpha(color, theme.palette.mode === 'dark' ? 0.22 : 0.1),
-          };
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 0.25,
+          px: 0.5,
+          py: 0.25,
+          borderRadius: 999,
+          fontSize: '0.6rem',
+          fontWeight: 600,
+          letterSpacing: 0.3,
+          color: 'text.secondary',
+          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+          '& .MuiSvgIcon-root': { color: iconColor },
         }}
       >
         {getProgressIcon(section.type)}
-        {section.type !== 'food' ? section.count : null}
+        {section.type === 'food' ? foodLabel : section.count}
       </Box>
     </Tooltip>
   );

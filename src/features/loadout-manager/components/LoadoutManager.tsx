@@ -6,6 +6,7 @@ import {
   FileDownload,
   FileUpload,
   MoreVert,
+  Backpack as BackpackIcon,
   Search as SearchIcon,
 } from '@mui/icons-material';
 import {
@@ -32,8 +33,6 @@ import {
   Select,
   Snackbar,
   Stack,
-  Tab,
-  Tabs,
   TextField,
   Tooltip,
   Typography,
@@ -104,6 +103,25 @@ export const LoadoutManager: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMdDown = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Glass design tokens
+  const isDarkMode = theme.palette.mode === 'dark';
+  const glassTextField = {
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+      backdropFilter: 'blur(12px)',
+      borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+      transition: 'all 0.2s ease',
+      '&:hover': {
+        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
+        borderColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+      },
+      '&.Mui-focused': {
+        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+        borderColor: theme.palette.primary.main,
+      },
+    },
+  };
 
   const currentTrial = useSelector(selectCurrentTrial);
   const currentPage = useSelector(selectCurrentPage);
@@ -205,25 +223,6 @@ export const LoadoutManager: React.FC = () => {
     [selectedSetupIndex, setups],
   );
 
-  const headerSubtitle = useMemo(() => {
-    if (!currentTrial) {
-      return 'Select a trial to start organizing your loadouts.';
-    }
-    const trial = TRIALS.find((entry) => entry.id === currentTrial);
-    if (!trial) {
-      return 'Custom loadouts';
-    }
-    const kind =
-      trial.type === 'trial'
-        ? 'Trial'
-        : trial.type === 'arena'
-          ? 'Arena'
-          : trial.type === 'substitute'
-            ? 'Substitute'
-            : 'General';
-    return `${trial.name} · ${kind}`;
-  }, [currentTrial]);
-
   const showSnackbar = (message: string, severity: 'success' | 'error'): void => {
     setSnackbar({ open: true, message, severity });
   };
@@ -241,14 +240,6 @@ export const LoadoutManager: React.FC = () => {
     dispatch(setCurrentTrial(value));
     setSelectedSetupIndex(null);
     setDrawerOpen(false);
-  };
-
-  const handlePageChange = (_event: React.SyntheticEvent, value: number): void => {
-    dispatch(setCurrentPage(value));
-    setSelectedSetupIndex(null);
-    if (isMdDown) {
-      setDrawerOpen(false);
-    }
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -492,7 +483,7 @@ export const LoadoutManager: React.FC = () => {
       <Stack spacing={2}>
         {/* ── Unified toolbar ─────────────────────────────────── */}
         <Paper
-          variant="outlined"
+          elevation={0}
           sx={{
             px: { xs: 1.5, md: 2 },
             py: { xs: 1.25, md: 1.5 },
@@ -500,155 +491,403 @@ export const LoadoutManager: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             gap: 1.5,
+            backgroundColor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+            backdropFilter: 'blur(12px)',
           }}
         >
-          {/* Row 1: title + global actions */}
-          <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-              <Tooltip title="Back" arrow>
-                <IconButton onClick={handleBack} size="small">
-                  <ArrowBack fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Typography variant="h6" sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
-                Loadout Manager
-              </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  display: { xs: 'none', md: 'block' },
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {headerSubtitle}
-              </Typography>
-            </Stack>
-
-            <Stack direction="row" spacing={0.5} sx={{ flexShrink: 0 }}>
-              <Tooltip title="Import data" arrow>
-                <IconButton size="small" onClick={handleImportClick}>
-                  <FileUpload fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Export" arrow>
-                <span>
-                  <IconButton
-                    size="small"
-                    onClick={handleExportClick}
-                    disabled={setups.length === 0}
-                  >
-                    <FileDownload fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Tooltip title="More actions" arrow>
-                <IconButton size="small" onClick={(e) => setOverflowAnchor(e.currentTarget)}>
-                  <MoreVert fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          </Stack>
-
-          {/* Row 2: character + role + trial dropdowns */}
+          {/* ── Row 1: identity · selectors · actions ── */}
           <Stack
             direction={{ xs: 'column', md: 'row' }}
             spacing={1.5}
             alignItems={{ md: 'center' }}
+            justifyContent={{ md: 'space-between' }}
           >
-            <CharacterSelector />
-
-            <FormControl sx={{ minWidth: 180 }} size="small">
-              <InputLabel id="trial-select-label">Trial / Activity</InputLabel>
-              <Select
-                labelId="trial-select-label"
-                value={currentTrial ?? ''}
-                label="Trial / Activity"
-                onChange={handleTrialChange}
-              >
-                {TRIALS.map((trial) => (
-                  <MenuItem key={trial.id} value={trial.id}>
-                    <Stack spacing={0.15}>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {trial.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {trial.type === 'trial'
-                          ? 'Trial'
-                          : trial.type === 'arena'
-                            ? 'Arena'
-                            : trial.type === 'substitute'
-                              ? 'Substitute'
-                              : 'General'}
-                      </Typography>
-                    </Stack>
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
-
-          {/* Row 3: page tabs — full width */}
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <Tabs
-              value={Math.min(currentPage, Math.max(allPages.length - 1, 0))}
-              onChange={handlePageChange}
-              variant="scrollable"
-              scrollButtons="auto"
-              allowScrollButtonsMobile
-              sx={{ flex: 1, minHeight: 36, '& .MuiTab-root': { minHeight: 36, py: 0.5 } }}
-            >
-              {allPages.map((page, index) => (
-                <Tab key={`${page.name}-${index}`} label={page.name} value={index} />
-              ))}
-            </Tabs>
-            <Tooltip title="Rename page" arrow>
-              <span>
+            {/* Left: back + icon lockup */}
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+              <Tooltip title="Back" arrow>
                 <IconButton
+                  onClick={handleBack}
                   size="small"
-                  onClick={() => handleOpenRename(currentPage)}
-                  disabled={renameDisabled}
+                  sx={{
+                    borderRadius: '8px',
+                    '&:hover': {
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                    },
+                  }}
                 >
-                  <Edit fontSize="small" />
+                  <ArrowBack fontSize="small" />
                 </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title="Add page" arrow>
-              <IconButton size="small" color="primary" onClick={handleAddPage}>
-                <AddIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+              </Tooltip>
+
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'}`,
+                  flexShrink: 0,
+                }}
+              >
+                <BackpackIcon
+                  sx={{
+                    fontSize: 20,
+                    background: isDarkMode
+                      ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                      : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                />
+              </Box>
+
+              <Stack spacing={0.15} sx={{ minWidth: 0 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontWeight: 700,
+                    letterSpacing: 1,
+                    textTransform: 'uppercase',
+                    color: 'text.secondary',
+                    fontSize: '0.65rem',
+                    lineHeight: 1,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Gear Manager
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    lineHeight: 1.2,
+                    background: isDarkMode
+                      ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                      : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  Loadout Manager
+                </Typography>
+              </Stack>
+            </Stack>
+
+            {/* Right: trial + actions */}
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              alignItems={{ sm: 'center' }}
+              sx={{ flexShrink: 0 }}
+            >
+              <FormControl sx={{ minWidth: 180, ...glassTextField }} size="small">
+                <InputLabel id="trial-select-label">Trial / Activity</InputLabel>
+                <Select
+                  labelId="trial-select-label"
+                  value={currentTrial ?? ''}
+                  label="Trial / Activity"
+                  onChange={handleTrialChange}
+                  renderValue={(value) => {
+                    const trial = TRIALS.find((t) => t.id === value);
+                    if (!trial) return 'Select trial';
+                    const kind =
+                      trial.type === 'trial'
+                        ? 'Trial'
+                        : trial.type === 'arena'
+                          ? 'Arena'
+                          : trial.type === 'substitute'
+                            ? 'Substitute'
+                            : 'General';
+                    return `${trial.name} · ${kind}`;
+                  }}
+                  MenuProps={{
+                    slotProps: {
+                      paper: {
+                        sx: {
+                          borderRadius: '10px',
+                          backdropFilter: 'blur(12px)',
+                          backgroundColor: isDarkMode
+                            ? 'rgba(20,20,30,0.92)'
+                            : 'rgba(255,255,255,0.94)',
+                          border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                        },
+                      },
+                    },
+                  }}
+                >
+                  {TRIALS.map((trial) => (
+                    <MenuItem key={trial.id} value={trial.id}>
+                      <Stack spacing={0.15}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {trial.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {trial.type === 'trial'
+                            ? 'Trial'
+                            : trial.type === 'arena'
+                              ? 'Arena'
+                              : trial.type === 'substitute'
+                                ? 'Substitute'
+                                : 'General'}
+                        </Typography>
+                      </Stack>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* Import / Export grouped control + overflow */}
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    borderRadius: '10px',
+                    border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Tooltip title="Import data" arrow>
+                    <IconButton
+                      size="small"
+                      onClick={handleImportClick}
+                      sx={{
+                        borderRadius: 0,
+                        px: 1,
+                        '&:hover': {
+                          backgroundColor: isDarkMode
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.05)',
+                        },
+                      }}
+                    >
+                      <FileUpload fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Box
+                    sx={{
+                      width: '1px',
+                      height: 20,
+                      flexShrink: 0,
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                    }}
+                  />
+                  <Tooltip title="Export" arrow>
+                    <span>
+                      <IconButton
+                        size="small"
+                        onClick={handleExportClick}
+                        disabled={setups.length === 0}
+                        sx={{
+                          borderRadius: 0,
+                          px: 1,
+                          '&:hover': {
+                            backgroundColor: isDarkMode
+                              ? 'rgba(255,255,255,0.08)'
+                              : 'rgba(0,0,0,0.05)',
+                          },
+                        }}
+                      >
+                        <FileDownload fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </Box>
+
+                <Tooltip title="More actions" arrow>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => setOverflowAnchor(e.currentTarget)}
+                    sx={{
+                      borderRadius: '8px',
+                      '&:hover': {
+                        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                      },
+                    }}
+                  >
+                    <MoreVert fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+            </Stack>
           </Stack>
 
-          {/* Row 4: search + new setup */}
-          <Stack direction="row" spacing={1} alignItems="center">
-            <TextField
-              value={searchTerm}
-              onChange={handleSearchChange}
-              placeholder="Search setups..."
-              size="small"
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ '& .MuiInputBase-root': { height: 36 } }}
-            />
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={handleAddSetup}
-              disabled={!currentTrial}
-              sx={{ flexShrink: 0, whiteSpace: 'nowrap', height: 36 }}
+          {/* ── Gradient divider ── */}
+          <Box
+            sx={{
+              height: 1,
+              background: isDarkMode
+                ? 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%)'
+                : 'linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0) 100%)',
+            }}
+          />
+
+          {/* ── Row 2: character · page · search · new ── */}
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={1}
+            alignItems={{ md: 'center' }}
+            justifyContent={{ md: 'space-between' }}
+          >
+            {/* Left cluster: character selectors + page controls */}
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              alignItems={{ sm: 'center' }}
+              sx={{ minWidth: 0, flexShrink: 1 }}
             >
-              New
-            </Button>
+              <CharacterSelector />
+
+              {/* Hairline separator */}
+              <Box
+                sx={{
+                  display: { xs: 'none', sm: 'block' },
+                  width: '1px',
+                  height: 28,
+                  flexShrink: 0,
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                }}
+              />
+
+              {/* Page select + rename + add */}
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <FormControl sx={{ minWidth: 120, ...glassTextField }} size="small">
+                  <InputLabel id="page-select-label">Page</InputLabel>
+                  <Select
+                    labelId="page-select-label"
+                    value={Math.min(currentPage, Math.max(allPages.length - 1, 0))}
+                    label="Page"
+                    onChange={(e) => {
+                      const value = e.target.value as number;
+                      dispatch(setCurrentPage(value));
+                      setSelectedSetupIndex(null);
+                      if (isMdDown) setDrawerOpen(false);
+                    }}
+                    disabled={allPages.length === 0}
+                    MenuProps={{
+                      slotProps: {
+                        paper: {
+                          sx: {
+                            borderRadius: '10px',
+                            backdropFilter: 'blur(12px)',
+                            backgroundColor: isDarkMode
+                              ? 'rgba(20,20,30,0.92)'
+                              : 'rgba(255,255,255,0.94)',
+                            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                          },
+                        },
+                      },
+                    }}
+                  >
+                    {allPages.map((page, index) => (
+                      <MenuItem key={`${page.name}-${index}`} value={index}>
+                        {page.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.25,
+                    p: '2px',
+                    borderRadius: '8px',
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                    border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+                  }}
+                >
+                  <Tooltip title="Rename page" arrow>
+                    <span>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenRename(currentPage)}
+                        disabled={renameDisabled}
+                        sx={{
+                          borderRadius: '6px',
+                          '&:hover': {
+                            backgroundColor: isDarkMode
+                              ? 'rgba(255,255,255,0.08)'
+                              : 'rgba(0,0,0,0.05)',
+                          },
+                        }}
+                      >
+                        <Edit sx={{ fontSize: 15 }} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Tooltip title="Add page" arrow>
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={handleAddPage}
+                      sx={{
+                        borderRadius: '6px',
+                        '&:hover': {
+                          backgroundColor: isDarkMode
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.05)',
+                        },
+                      }}
+                    >
+                      <AddIcon sx={{ fontSize: 15 }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Stack>
+            </Stack>
+
+            {/* Right cluster: search + new */}
+            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ flexShrink: 0 }}>
+              <TextField
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Search setups..."
+                size="small"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  width: { xs: '100%', sm: 180 },
+                  '& .MuiOutlinedInput-root': {
+                    ...glassTextField['& .MuiOutlinedInput-root'],
+                    height: 34,
+                    borderRadius: '999px',
+                  },
+                }}
+              />
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={handleAddSetup}
+                disabled={!currentTrial}
+                sx={{
+                  flexShrink: 0,
+                  whiteSpace: 'nowrap',
+                  height: 34,
+                  borderRadius: '20px',
+                  px: 2,
+                }}
+              >
+                New
+              </Button>
+            </Stack>
           </Stack>
         </Paper>
 
@@ -688,7 +927,7 @@ export const LoadoutManager: React.FC = () => {
                 />
               ) : (
                 <Paper
-                  variant="outlined"
+                  elevation={0}
                   sx={{
                     height: '100%',
                     minHeight: 200,
@@ -700,6 +939,8 @@ export const LoadoutManager: React.FC = () => {
                     px: 3,
                     py: 4,
                     color: 'text.secondary',
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+                    border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
                   }}
                 >
                   <Stack spacing={1} alignItems="center">
@@ -732,7 +973,14 @@ export const LoadoutManager: React.FC = () => {
         open={drawerOpen && Boolean(selectedSetup)}
         onClose={() => setDrawerOpen(false)}
         ModalProps={{ keepMounted: true }}
-        PaperProps={{ sx: { width: { xs: '100%', sm: 440 } } }}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 440 },
+            backdropFilter: 'blur(12px)',
+            backgroundColor: isDarkMode ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
+            borderLeft: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+          },
+        }}
       >
         {selectedSetup && (
           <SetupEditor
@@ -755,6 +1003,16 @@ export const LoadoutManager: React.FC = () => {
         onClose={() => setOverflowAnchor(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '10px',
+              backdropFilter: 'blur(12px)',
+              backgroundColor: isDarkMode ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
+              border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+            },
+          },
+        }}
       >
         <MenuItem
           onClick={() => {
@@ -795,7 +1053,18 @@ export const LoadoutManager: React.FC = () => {
       </Menu>
 
       {/* Rename page dialog */}
-      <Dialog open={renameDialogOpen} onClose={() => setRenameDialogOpen(false)}>
+      <Dialog
+        open={renameDialogOpen}
+        onClose={() => setRenameDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            backdropFilter: 'blur(20px)',
+            backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
+            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+          },
+        }}
+      >
         <DialogTitle>Rename Page</DialogTitle>
         <DialogContent>
           <TextField
@@ -816,7 +1085,18 @@ export const LoadoutManager: React.FC = () => {
       </Dialog>
 
       {/* Clear all dialog */}
-      <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)}>
+      <Dialog
+        open={clearDialogOpen}
+        onClose={() => setClearDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            backdropFilter: 'blur(20px)',
+            backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
+            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+          },
+        }}
+      >
         <DialogTitle>Clear all loadouts?</DialogTitle>
         <DialogContent>
           <DialogContentText>

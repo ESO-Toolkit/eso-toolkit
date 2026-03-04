@@ -20,6 +20,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  useTheme,
 } from '@mui/material';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -28,7 +29,7 @@ import { useLogger } from '@/hooks/useLogger';
 
 import { TRIALS } from '../data/trialConfigs';
 import { selectCurrentTrial, selectCurrentSetups, selectLoadoutState } from '../store/selectors';
-import { WizardWardrobeExport } from '../types/loadout.types';
+import type { WizardWardrobeExport } from '../types/loadout.types';
 import {
   convertLoadoutStateToAlphaGear,
   serializeAlphaGearToLua,
@@ -42,6 +43,24 @@ interface ExportDialogProps {
 
 export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => {
   const logger = useLogger('ExportDialog');
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+  const glassTextField = {
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+      backdropFilter: 'blur(12px)',
+      borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+      transition: 'all 0.2s ease',
+      '&:hover': {
+        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
+        borderColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+      },
+      '&.Mui-focused': {
+        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+        borderColor: theme.palette.primary.main,
+      },
+    },
+  };
   const currentTrialId = useSelector(selectCurrentTrial);
   const setups = useSelector(selectCurrentSetups);
   const loadoutState = useSelector(selectLoadoutState);
@@ -176,12 +195,44 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Export Loadout</DialogTitle>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: '16px',
+          backdropFilter: 'blur(20px)',
+          backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
+          border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          background: isDarkMode
+            ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+            : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          fontWeight: 700,
+        }}
+      >
+        Export Loadout
+      </DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
           {/* Trial Info */}
-          <Alert severity="info">
+          <Alert
+            severity="info"
+            sx={{
+              borderRadius: '12px',
+              backgroundColor: isDarkMode ? 'rgba(13, 110, 253, 0.1)' : 'rgba(13, 110, 253, 0.05)',
+              border: `1px solid ${isDarkMode ? 'rgba(13, 110, 253, 0.3)' : 'rgba(13, 110, 253, 0.2)'}`,
+            }}
+          >
             Exporting <strong>{setups.length} setups</strong> from{' '}
             <strong>{currentTrial?.name || 'Unknown Trial'}</strong>
           </Alert>
@@ -217,12 +268,13 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
           )}
 
           {/* Format Selector */}
-          <FormControl fullWidth>
+          <FormControl fullWidth sx={glassTextField}>
             <InputLabel>Export Format</InputLabel>
             <Select
               value={exportFormat}
               label="Export Format"
               onChange={(e) => setExportFormat(e.target.value as 'json' | 'wizard' | 'alphagear')}
+              size="small"
             >
               <MenuItem value="json">
                 <Stack>
@@ -252,7 +304,14 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
           </FormControl>
 
           {/* Preview */}
-          <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.900' }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              backgroundColor: isDarkMode ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.04)',
+              border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
+            }}
+          >
             <Typography variant="caption" color="text.secondary" gutterBottom>
               Preview:
             </Typography>
@@ -309,6 +368,15 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
           onClick={handleCopy}
           variant="outlined"
           disabled={exportBlocked}
+          sx={{
+            borderRadius: '20px',
+            backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+            borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+            '&:hover': {
+              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+            },
+          }}
         >
           Copy to Clipboard
         </Button>
@@ -317,6 +385,9 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
           onClick={handleExport}
           variant="contained"
           disabled={exportBlocked}
+          sx={{
+            borderRadius: '20px',
+          }}
         >
           Download File
         </Button>

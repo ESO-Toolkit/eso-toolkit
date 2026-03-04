@@ -3,7 +3,7 @@ import { LoadoutSetup } from '../types/loadout.types';
 export type SetupProgressSection =
   | { type: 'skills'; count: number }
   | { type: 'cp'; count: number }
-  | { type: 'food' }
+  | { type: 'food'; label?: string }
   | { type: 'gear'; count: number };
 
 export type SetupTagColor =
@@ -140,7 +140,8 @@ export const getSetupProgressSections = (setup: LoadoutSetup): SetupProgressSect
   }
 
   if (setup.food && (setup.food.id || setup.food.link)) {
-    sections.push({ type: 'food' });
+    const foodName = setup.food.link?.match(/\|h\[(.+?)\]\|h/)?.[1];
+    sections.push({ type: 'food', label: foodName });
   }
 
   const gearEntries = Object.entries(setup.gear ?? {}).filter(([slot, piece]) => {
@@ -170,7 +171,7 @@ export const formatProgressSection = (section: SetupProgressSection): string => 
     case 'cp':
       return `CP ${section.count}`;
     case 'food':
-      return 'Food';
+      return section.label ? `Food: ${section.label}` : 'Food';
     case 'gear':
       return `Gear ${section.count}`;
     default:

@@ -22,8 +22,8 @@ import {
   Alert,
   ChipProps,
   Tooltip,
+  useTheme,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 
@@ -95,6 +95,8 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
 }) => {
   const dispatch = useDispatch();
   const logger = useLogger('SetupEditor');
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const isDrawer = variant === 'drawer';
   const [currentTab, setCurrentTab] = React.useState(0);
   const [snackbar, setSnackbar] = useState<{
@@ -246,7 +248,6 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
 
   return (
     <Paper
-      variant={isDrawer ? 'elevation' : 'outlined'}
       elevation={isDrawer ? 0 : undefined}
       sx={{
         display: 'flex',
@@ -254,21 +255,25 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
         flex: 1,
         borderRadius: isDrawer ? 0 : 2,
         height: isDrawer ? '100%' : 'auto',
+        backgroundColor: isDrawer
+          ? 'transparent'
+          : isDarkMode
+            ? 'rgba(255,255,255,0.02)'
+            : 'rgba(0,0,0,0.01)',
+        border: isDrawer
+          ? 'none'
+          : `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
         boxShadow: isDrawer ? 'none' : undefined,
       }}
     >
       {/* ── Compact header ─────────────────────────────── */}
       <Box
-        sx={(theme) => ({
+        sx={{
           px: isDrawer ? 1.5 : { xs: 1.5, md: 2 },
           py: isDrawer ? 1.25 : { xs: 1.25, md: 1.5 },
-          borderBottom: 1,
-          borderColor: 'divider',
-          backgroundColor:
-            theme.palette.mode === 'dark'
-              ? alpha(theme.palette.primary.main, 0.06)
-              : alpha(theme.palette.primary.light, 0.1),
-        })}
+          borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+        }}
       >
         <Stack spacing={1} sx={{ minWidth: 0 }}>
           {/* Row 1: name + action icons */}
@@ -282,6 +287,12 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   lineHeight: 1.3,
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                    : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
                 }}
               >
                 {setup.name}
@@ -293,34 +304,112 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
               )}
             </Stack>
 
-            <Stack direction="row" spacing={0.25} sx={{ flexShrink: 0 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                flexShrink: 0,
+                borderRadius: '10px',
+                border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                overflow: 'hidden',
+              }}
+            >
               <Tooltip title="Copy to clipboard" arrow>
-                <IconButton size="small" onClick={handleCopy} color="primary">
+                <IconButton
+                  size="small"
+                  onClick={handleCopy}
+                  color="primary"
+                  sx={{
+                    borderRadius: 0,
+                    px: 0.75,
+                    '&:hover': {
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                    },
+                  }}
+                >
                   <ContentCopy fontSize="small" />
                 </IconButton>
               </Tooltip>
               <Tooltip title="Paste from clipboard" arrow>
-                <IconButton size="small" onClick={handlePaste} color="secondary">
+                <IconButton
+                  size="small"
+                  onClick={handlePaste}
+                  color="secondary"
+                  sx={{
+                    borderRadius: 0,
+                    px: 0.75,
+                    '&:hover': {
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                    },
+                  }}
+                >
                   <ContentPaste fontSize="small" />
                 </IconButton>
               </Tooltip>
+              <Box
+                sx={{
+                  width: '1px',
+                  height: 20,
+                  flexShrink: 0,
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                }}
+              />
               <Tooltip title="Duplicate setup" arrow>
-                <IconButton size="small" onClick={handleDuplicate}>
+                <IconButton
+                  size="small"
+                  onClick={handleDuplicate}
+                  sx={{
+                    borderRadius: 0,
+                    px: 0.75,
+                    '&:hover': {
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                    },
+                  }}
+                >
                   <FileCopy fontSize="small" />
                 </IconButton>
               </Tooltip>
+              <Box
+                sx={{
+                  width: '1px',
+                  height: 20,
+                  flexShrink: 0,
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                }}
+              />
               <Tooltip title="Delete setup" arrow>
-                <IconButton size="small" onClick={handleDelete} color="error">
+                <IconButton
+                  size="small"
+                  onClick={handleDelete}
+                  color="error"
+                  sx={{
+                    borderRadius: 0,
+                    px: 0.75,
+                    '&:hover': {
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                    },
+                  }}
+                >
                   <Delete fontSize="small" />
                 </IconButton>
               </Tooltip>
-            </Stack>
+            </Box>
           </Stack>
 
           {/* Row 2: progress chips (tags removed from header — they add clutter) */}
           <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', rowGap: 0.5 }} useFlexGap>
             {progressSections.length === 0 ? (
-              <Chip label="Empty setup" size="small" variant="outlined" />
+              <Chip
+                label="Empty setup"
+                size="small"
+                variant="outlined"
+                sx={{
+                  borderRadius: '999px',
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+                  borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                }}
+              />
             ) : (
               progressSections.map((section, index) => (
                 <Chip
@@ -329,7 +418,11 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
                   size="small"
                   color={getProgressChipColor(section)}
                   variant="outlined"
-                  sx={{ height: 22, fontSize: '0.7rem' }}
+                  sx={{
+                    height: 22,
+                    fontSize: '0.7rem',
+                    borderRadius: '999px',
+                  }}
                 />
               ))
             )}
@@ -341,7 +434,11 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
                   size="small"
                   color={tag.color}
                   variant={tag.variant ?? 'filled'}
-                  sx={{ height: 22, fontSize: '0.7rem' }}
+                  sx={{
+                    height: 22,
+                    fontSize: '0.7rem',
+                    borderRadius: '999px',
+                  }}
                 />
               ))}
           </Stack>
@@ -349,7 +446,11 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
       </Box>
 
       {/* ── Tabs ───────────────────────────────────────── */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      <Box
+        sx={{
+          borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+        }}
+      >
         <Tabs
           value={currentTab}
           onChange={handleTabChange}
@@ -357,7 +458,23 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
           sx={{
             minHeight: 40,
             px: { xs: isDrawer ? 0.5 : 0.75, md: isDrawer ? 1 : 1.5 },
-            '& .MuiTab-root': { minHeight: 40, py: 0.75, fontSize: '0.8rem' },
+            '& .MuiTab-root': {
+              minHeight: 40,
+              py: 0.75,
+              fontSize: '0.8rem',
+              borderRadius: '8px',
+              marginRight: '4px',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+              },
+            },
+            '& .MuiTabs-indicator': {
+              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
+              borderRadius: '8px',
+              height: '100%',
+              zIndex: 0,
+            },
           }}
         >
           <Tab label="Skills" />
@@ -385,7 +502,15 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
               pageIndex={pageIndex}
               setupIndex={setupIndex}
             />
-            <Box sx={{ borderTop: 1, borderColor: 'divider' }} />
+            {/* Gradient section divider */}
+            <Box
+              sx={{
+                height: 1,
+                background: isDarkMode
+                  ? 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%)'
+                  : 'linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0) 100%)',
+              }}
+            />
             <FoodSelector
               food={setup.food}
               trialId={trialId}
