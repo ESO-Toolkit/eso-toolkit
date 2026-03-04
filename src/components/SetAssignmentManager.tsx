@@ -21,10 +21,7 @@ import {
   Tooltip,
   Menu,
   MenuItem,
-  ListItemText,
   useTheme,
-  Tabs,
-  Tab,
   Button,
   ButtonGroup,
   IconButton,
@@ -176,36 +173,108 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
     ) => {
       if (!onUpdateUltimate) return null;
 
+      const isPrimary = roleLabel === 'MT' || roleLabel === 'H1';
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="caption" sx={{ minWidth: 30 }}>
-            {roleLabel}:
-          </Typography>
-          <ButtonGroup size="small" variant="outlined">
-            {Object.values(SupportUltimate).map((ult) => (
-              <Button
-                key={ult}
-                variant={roleData.ultimate === ult ? 'contained' : 'outlined'}
-                onClick={() => onUpdateUltimate(role, roleData.ultimate === ult ? null : ult)}
-                sx={{
-                  minWidth: 80,
-                  fontSize: '0.7rem',
-                  py: 0.5,
-                  bgcolor: roleData.ultimate === ult ? color : undefined,
-                  color: roleData.ultimate === ult ? 'white' : undefined,
-                  '&:hover': {
-                    bgcolor: roleData.ultimate === ult ? color : undefined,
-                  },
-                }}
-              >
-                {formatUltimateLabel(ult)}
-              </Button>
-            ))}
-          </ButtonGroup>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              px: 0.875,
+              py: 0.4,
+              borderRadius: '6px',
+              minWidth: 32,
+              bgcolor: isPrimary
+                ? `${color}18`
+                : isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(15,23,42,0.02)',
+              border: `1px solid ${isPrimary ? `${color}35` : `${color}20`}`,
+              flexShrink: 0,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: '0.65rem',
+                fontWeight: isPrimary ? 700 : 500,
+                fontFamily: '"Space Grotesk", sans-serif',
+                color: isPrimary ? color : `${color}99`,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                lineHeight: 1,
+              }}
+            >
+              {roleLabel}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.625 }}>
+            {Object.values(SupportUltimate).map((ult) => {
+              const isSelected = roleData.ultimate === ult;
+              return (
+                <Box
+                  key={ult}
+                  onClick={() => onUpdateUltimate(role, roleData.ultimate === ult ? null : ult)}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    px: 1.25,
+                    py: 0.625,
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    border: '1px solid',
+                    bgcolor: isDarkMode
+                      ? isSelected ? `${color}18` : 'rgba(255,255,255,0.03)'
+                      : isSelected ? `${color}15` : 'rgba(15,23,42,0.03)',
+                    borderColor: isDarkMode
+                      ? isSelected ? `${color}55` : 'rgba(255,255,255,0.07)'
+                      : isSelected ? `${color}45` : 'rgba(15,23,42,0.07)',
+                    boxShadow: isSelected
+                      ? isDarkMode
+                        ? `0 0 14px ${color}45, 0 2px 8px rgba(0,0,0,0.2)`
+                        : `0 0 10px ${color}35, 0 1px 4px rgba(0,0,0,0.06)`
+                      : 'none',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      bgcolor: isDarkMode
+                        ? isSelected ? `${color}25` : 'rgba(255,255,255,0.06)'
+                        : isSelected ? `${color}20` : 'rgba(15,23,42,0.05)',
+                      borderColor: isDarkMode
+                        ? isSelected ? `${color}70` : 'rgba(255,255,255,0.13)'
+                        : isSelected ? `${color}60` : 'rgba(15,23,42,0.11)',
+                      boxShadow: isSelected
+                        ? isDarkMode
+                          ? `0 0 20px ${color}55, 0 4px 12px rgba(0,0,0,0.25)`
+                          : `0 0 14px ${color}45, 0 3px 8px rgba(0,0,0,0.08)`
+                        : isDarkMode
+                          ? '0 4px 12px rgba(0,0,0,0.25)'
+                          : '0 3px 8px rgba(15,23,42,0.08)',
+                    },
+                  }}
+                >
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontSize: '0.75rem',
+                      fontWeight: isSelected ? 600 : 400,
+                      color: isSelected
+                        ? isDarkMode ? 'rgba(255,255,255,0.9)' : 'rgba(15,23,42,0.9)'
+                        : isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(15,23,42,0.4)',
+                      transition: 'color 0.2s',
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {formatUltimateLabel(ult)}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Box>
         </Box>
       );
     },
-    [onUpdateUltimate, formatUltimateLabel],
+    [onUpdateUltimate, formatUltimateLabel, isDarkMode],
   );
 
   // Helper to render CP selector
@@ -213,36 +282,108 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
     (role: 'healer1' | 'healer2', healer: HealerSetup, roleLabel: string, color: string) => {
       if (!onUpdateHealerCP) return null;
 
+      const isPrimary = roleLabel === 'H1';
       return (
-        <Box>
-          <Typography variant="body2" fontWeight="bold" gutterBottom sx={{ color }}>
-            ❤️ {roleLabel} Champion Point
-          </Typography>
-          <ButtonGroup size="small" variant="outlined">
-            {Object.values(HealerChampionPoint).map((cp) => (
-              <Button
-                key={cp}
-                variant={healer.championPoint === cp ? 'contained' : 'outlined'}
-                onClick={() => onUpdateHealerCP(role, healer.championPoint === cp ? null : cp)}
-                sx={{
-                  minWidth: 140,
-                  fontSize: '0.75rem',
-                  py: 0.5,
-                  bgcolor: healer.championPoint === cp ? color : undefined,
-                  color: healer.championPoint === cp ? 'white' : undefined,
-                  '&:hover': {
-                    bgcolor: healer.championPoint === cp ? color : undefined,
-                  },
-                }}
-              >
-                {cp}
-              </Button>
-            ))}
-          </ButtonGroup>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              px: 0.875,
+              py: 0.4,
+              borderRadius: '6px',
+              minWidth: 32,
+              bgcolor: isPrimary
+                ? `${color}18`
+                : isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(15,23,42,0.02)',
+              border: `1px solid ${isPrimary ? `${color}35` : `${color}20`}`,
+              flexShrink: 0,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: '0.65rem',
+                fontWeight: isPrimary ? 700 : 500,
+                fontFamily: '"Space Grotesk", sans-serif',
+                color: isPrimary ? color : `${color}99`,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                lineHeight: 1,
+              }}
+            >
+              {roleLabel}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.625 }}>
+            {Object.values(HealerChampionPoint).map((cp) => {
+              const isSelected = healer.championPoint === cp;
+              return (
+                <Box
+                  key={cp}
+                  onClick={() => onUpdateHealerCP(role, healer.championPoint === cp ? null : cp)}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    px: 1.5,
+                    py: 0.625,
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    border: '1px solid',
+                    bgcolor: isDarkMode
+                      ? isSelected ? `${color}18` : 'rgba(255,255,255,0.03)'
+                      : isSelected ? `${color}15` : 'rgba(15,23,42,0.03)',
+                    borderColor: isDarkMode
+                      ? isSelected ? `${color}55` : 'rgba(255,255,255,0.07)'
+                      : isSelected ? `${color}45` : 'rgba(15,23,42,0.07)',
+                    boxShadow: isSelected
+                      ? isDarkMode
+                        ? `0 0 14px ${color}45, 0 2px 8px rgba(0,0,0,0.2)`
+                        : `0 0 10px ${color}35, 0 1px 4px rgba(0,0,0,0.06)`
+                      : 'none',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      bgcolor: isDarkMode
+                        ? isSelected ? `${color}25` : 'rgba(255,255,255,0.06)'
+                        : isSelected ? `${color}20` : 'rgba(15,23,42,0.05)',
+                      borderColor: isDarkMode
+                        ? isSelected ? `${color}70` : 'rgba(255,255,255,0.13)'
+                        : isSelected ? `${color}60` : 'rgba(15,23,42,0.11)',
+                      boxShadow: isSelected
+                        ? isDarkMode
+                          ? `0 0 20px ${color}55, 0 4px 12px rgba(0,0,0,0.25)`
+                          : `0 0 14px ${color}45, 0 3px 8px rgba(0,0,0,0.08)`
+                        : isDarkMode
+                          ? '0 4px 12px rgba(0,0,0,0.25)'
+                          : '0 3px 8px rgba(15,23,42,0.08)',
+                    },
+                  }}
+                >
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontSize: '0.75rem',
+                      fontWeight: isSelected ? 600 : 400,
+                      color: isSelected
+                        ? isDarkMode ? 'rgba(255,255,255,0.9)' : 'rgba(15,23,42,0.9)'
+                        : isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(15,23,42,0.4)',
+                      transition: 'color 0.2s',
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {cp}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Box>
         </Box>
       );
     },
-    [onUpdateHealerCP],
+    [onUpdateHealerCP, isDarkMode],
   );
 
   // Helper functions to categorize sets by slot type
@@ -537,7 +678,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
   );
 
   const renderSetChip = useCallback(
-    (assignment: SetAssignment) => {
+    (assignment: SetAssignment, grow = false) => {
       const isAssigned = assignment.assignedTo.length > 0;
       const setId = findSetIdByName(assignment.setName);
       const role = setId ? getSetRole(setId) : 'both'; // Default to 'both' if set not found
@@ -573,9 +714,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 0.5,
-                  justifyContent: 'flex-start',
-                  width: '100%',
+                  gap: 0.75,
+                  width: 'auto',
                 }}
               >
                 <Box
@@ -584,55 +724,251 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    bgcolor: roleBadge.color,
-                    color: 'white',
-                    mr: 0.5,
+                    width: 16,
+                    height: 16,
+                    color: isAssigned
+                      ? roleBadge.color
+                      : isDarkMode
+                        ? 'rgba(255,255,255,0.25)'
+                        : 'rgba(15,23,42,0.2)',
+                    flexShrink: 0,
+                    transition: 'color 0.2s',
                   }}
                 >
                   {roleBadge.icon}
                 </Box>
-                <span>{assignment.setName}</span>
+                <Typography
+                  component="span"
+                  sx={{
+                    fontSize: '0.78rem',
+                    fontWeight: isAssigned ? 600 : 400,
+                    color: isAssigned
+                      ? isDarkMode
+                        ? 'rgba(255,255,255,0.9)'
+                        : 'rgba(15,23,42,0.9)'
+                      : isDarkMode
+                        ? 'rgba(255,255,255,0.45)'
+                        : 'rgba(15,23,42,0.4)',
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1.3,
+                    transition: 'color 0.2s',
+                  }}
+                >
+                  {assignment.setName}
+                </Typography>
               </Box>
             }
-            color={isAssigned ? 'success' : 'default'}
-            variant={isAssigned ? 'filled' : 'outlined'}
+            color="default"
+            variant="outlined"
             onClick={(e) => handleSetClick(assignment.setName, e)}
             onContextMenu={(e) => handleClearSet(assignment.setName, e)}
             sx={{
               m: 0.5,
               cursor: 'pointer',
-              justifyContent: 'flex-start',
+              justifyContent: 'center',
+              borderRadius: '8px',
+              ...(grow && { flex: 1, height: 'auto', minHeight: 34 }),
+              bgcolor: isDarkMode
+                ? isAssigned
+                  ? `${roleBadge.color}18`
+                  : 'rgba(255,255,255,0.03)'
+                : isAssigned
+                  ? `${roleBadge.color}15`
+                  : 'rgba(15,23,42,0.03)',
+              borderColor: isDarkMode
+                ? isAssigned
+                  ? `${roleBadge.color}55`
+                  : 'rgba(255,255,255,0.07)'
+                : isAssigned
+                  ? `${roleBadge.color}45`
+                  : 'rgba(15,23,42,0.07)',
+              boxShadow: isAssigned
+                ? isDarkMode
+                  ? `0 0 14px ${roleBadge.color}45, 0 2px 8px rgba(0,0,0,0.2)`
+                  : `0 0 10px ${roleBadge.color}35, 0 1px 4px rgba(0,0,0,0.06)`
+                : 'none',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '& .MuiChip-label': {
+                px: 0.75,
+                width: 'auto',
+              },
               '&:hover': {
-                backgroundColor: isAssigned ? 'success.dark' : 'primary.light',
-                transform: 'scale(1.05)',
-                transition: 'all 0.2s',
+                transform: 'translateY(-1px)',
+                bgcolor: isDarkMode
+                  ? isAssigned
+                    ? `${roleBadge.color}25`
+                    : 'rgba(255,255,255,0.06)'
+                  : isAssigned
+                    ? `${roleBadge.color}20`
+                    : 'rgba(15,23,42,0.05)',
+                borderColor: isDarkMode
+                  ? isAssigned
+                    ? `${roleBadge.color}70`
+                    : 'rgba(255,255,255,0.13)'
+                  : isAssigned
+                    ? `${roleBadge.color}60`
+                    : 'rgba(15,23,42,0.11)',
+                boxShadow: isAssigned
+                  ? isDarkMode
+                    ? `0 0 20px ${roleBadge.color}55, 0 4px 12px rgba(0,0,0,0.25)`
+                    : `0 0 14px ${roleBadge.color}45, 0 3px 8px rgba(0,0,0,0.08)`
+                  : isDarkMode
+                    ? '0 4px 12px rgba(0,0,0,0.25)'
+                    : '0 3px 8px rgba(15,23,42,0.08)',
               },
             }}
           />
         </Tooltip>
       );
     },
-    [getRoleBadgeConfig, handleSetClick, handleClearSet],
+    [getRoleBadgeConfig, handleSetClick, handleClearSet, isDarkMode],
   );
 
   return (
-    <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        🎯 Set Assignment Manager
-      </Typography>
-
-      {/* Tabs */}
-      <Tabs
-        value={activeTab}
-        onChange={handleTabChange}
-        sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
+    <Paper elevation={2} sx={{ p: { xs: 1.5, sm: 2 }, mb: 3 }}>
+      {/* Header + Segmented Tabs */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'stretch', sm: 'center' },
+          justifyContent: 'space-between',
+          gap: { xs: 1.5, sm: 0 },
+          mb: 2.5,
+        }}
       >
-        <Tab label="Quick Assignment" />
-        <Tab label="All Sets" />
-      </Tabs>
+        {/* Title */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Box
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: '9px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: isDarkMode
+                ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
+                : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.08)',
+            }}
+          >
+            <SwapHorizIcon
+              sx={{
+                fontSize: '1rem',
+                color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+              }}
+            />
+          </Box>
+          <Box>
+            <Typography
+              sx={{
+                fontSize: '0.6rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'text.disabled',
+                lineHeight: 1,
+                mb: 0.375,
+              }}
+            >
+              Roster
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: '"Space Grotesk", sans-serif',
+                fontWeight: 700,
+                fontSize: '1.05rem',
+                letterSpacing: '-0.02em',
+                lineHeight: 1.1,
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                  : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              Set Assignments
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Segmented Pill Tabs */}
+        <Box
+          sx={{
+            display: 'flex',
+            borderRadius: '10px',
+            padding: '3px',
+            minWidth: { xs: 'auto', sm: 200 },
+            background: isDarkMode
+              ? 'rgba(255,255,255,0.05)'
+              : 'rgba(0,0,0,0.04)',
+            border: isDarkMode
+              ? '1px solid rgba(255,255,255,0.06)'
+              : '1px solid rgba(0,0,0,0.06)',
+          }}
+        >
+          {(['Quick Assign', 'All Sets'] as const).map((label, index) => (
+            <Box
+              key={label}
+              onClick={() => handleTabChange(null as unknown as React.SyntheticEvent, index)}
+              sx={{
+                flex: '1 1 auto',
+                minWidth: 0,
+                textAlign: 'center',
+                px: 1.75,
+                py: 0.625,
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+                fontWeight: activeTab === index ? 600 : 500,
+                letterSpacing: '0.01em',
+                color:
+                  activeTab === index
+                    ? isDarkMode
+                      ? '#f1f5f9'
+                      : '#0f172a'
+                    : isDarkMode
+                      ? 'rgba(255,255,255,0.45)'
+                      : 'rgba(0,0,0,0.45)',
+                background:
+                  activeTab === index
+                    ? isDarkMode
+                      ? 'rgba(255,255,255,0.09)'
+                      : 'rgba(255,255,255,0.85)'
+                    : 'transparent',
+                boxShadow:
+                  activeTab === index
+                    ? isDarkMode
+                      ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)'
+                      : '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)'
+                    : 'none',
+                transition: 'all 0.15s ease',
+                userSelect: 'none',
+                '&:hover': {
+                  color:
+                    activeTab === index
+                      ? undefined
+                      : isDarkMode
+                        ? 'rgba(255,255,255,0.7)'
+                        : 'rgba(0,0,0,0.7)',
+                  background:
+                    activeTab === index
+                      ? undefined
+                      : isDarkMode
+                        ? 'rgba(255,255,255,0.04)'
+                        : 'rgba(0,0,0,0.03)',
+                },
+              }}
+            >
+              {label}
+            </Box>
+          ))}
+        </Box>
+      </Box>
 
       {/* Tab Panel 0: Quick Assignment (Recommended Sets) */}
       {activeTab === 0 && (
@@ -641,115 +977,142 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
           <Box sx={{ mb: 2 }}>
             {/* 5-Piece Sets Section - Three Columns by Role */}
             <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: { xs: 1.5, sm: 2 } }}>
                 {/* Tank Column */}
-                <Box>
-                  <Typography
-                    variant="caption"
+                <Box sx={{ display: 'flex', flexDirection: 'column', borderRadius: '10px', bgcolor: isDarkMode ? `${roleColors.tank}0a` : `${roleColors.tank}06` }}>
+                  <Box
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 0.5,
-                      mb: 0.5,
-                      fontWeight: 'bold',
-                      color: roleColors.tank,
+                      mb: 1.5,
+                      pb: 1,
+                      borderBottom: `1px solid ${roleColors.tank}30`,
                     }}
                   >
                     <Box
-                      component="span"
                       sx={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        bgcolor: roleColors.tank,
-                        color: 'white',
+                        gap: 0.5,
+                        px: 0.875,
+                        py: 0.4,
+                        borderRadius: '6px',
+                        bgcolor: `${roleColors.tank}18`,
+                        border: `1px solid ${roleColors.tank}35`,
                       }}
                     >
-                      <ShieldIcon sx={{ fontSize: 10 }} />
+                      <ShieldIcon sx={{ fontSize: 11, color: roleColors.tank }} />
+                      <Typography
+                        sx={{
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          fontFamily: '"Space Grotesk", sans-serif',
+                          color: roleColors.tank,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.1em',
+                          lineHeight: 1,
+                        }}
+                      >
+                        Tank
+                      </Typography>
                     </Box>
-                    Tank Sets
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                  </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1 }}>
                     {recommendedAssignments
                       .filter((a) => is5PieceSetWithRole(a, 'tank'))
-                      .map(renderSetChip)}
+                      .map((a) => renderSetChip(a, true))}
                   </Box>
                 </Box>
 
                 {/* Both/Flexible Column */}
-                <Box>
-                  <Typography
-                    variant="caption"
+                <Box sx={{ display: 'flex', flexDirection: 'column', borderRadius: '10px', bgcolor: isDarkMode ? `${roleColors.dps}0a` : `${roleColors.dps}06` }}>
+                  <Box
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 0.5,
-                      mb: 0.5,
-                      fontWeight: 'bold',
-                      color: roleColors.dps,
+                      mb: 1.5,
+                      pb: 1,
+                      borderBottom: `1px solid ${roleColors.dps}30`,
                     }}
                   >
                     <Box
-                      component="span"
                       sx={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        bgcolor: roleColors.dps,
-                        color: 'white',
+                        gap: 0.5,
+                        px: 0.875,
+                        py: 0.4,
+                        borderRadius: '6px',
+                        bgcolor: `${roleColors.dps}18`,
+                        border: `1px solid ${roleColors.dps}35`,
                       }}
                     >
-                      <SwapHorizIcon sx={{ fontSize: 10 }} />
+                      <SwapHorizIcon sx={{ fontSize: 11, color: roleColors.dps }} />
+                      <Typography
+                        sx={{
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          fontFamily: '"Space Grotesk", sans-serif',
+                          color: roleColors.dps,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.1em',
+                          lineHeight: 1,
+                        }}
+                      >
+                        Flexible
+                      </Typography>
                     </Box>
-                    Flexible
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                  </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1 }}>
                     {recommendedAssignments
                       .filter((a) => is5PieceSetWithRole(a, 'both'))
-                      .map(renderSetChip)}
+                      .map((a) => renderSetChip(a, true))}
                   </Box>
                 </Box>
 
                 {/* Healer Column */}
-                <Box>
-                  <Typography
-                    variant="caption"
+                <Box sx={{ display: 'flex', flexDirection: 'column', borderRadius: '10px', bgcolor: isDarkMode ? `${roleColors.healer}0a` : `${roleColors.healer}06` }}>
+                  <Box
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 0.5,
-                      mb: 0.5,
-                      fontWeight: 'bold',
-                      color: roleColors.healer,
+                      mb: 1.5,
+                      pb: 1,
+                      borderBottom: `1px solid ${roleColors.healer}30`,
                     }}
                   >
                     <Box
-                      component="span"
                       sx={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        bgcolor: roleColors.healer,
-                        color: 'white',
+                        gap: 0.5,
+                        px: 0.875,
+                        py: 0.4,
+                        borderRadius: '6px',
+                        bgcolor: `${roleColors.healer}18`,
+                        border: `1px solid ${roleColors.healer}35`,
                       }}
                     >
-                      <FavoriteIcon sx={{ fontSize: 10 }} />
+                      <FavoriteIcon sx={{ fontSize: 11, color: roleColors.healer }} />
+                      <Typography
+                        sx={{
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          fontFamily: '"Space Grotesk", sans-serif',
+                          color: roleColors.healer,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.1em',
+                          lineHeight: 1,
+                        }}
+                      >
+                        Healer
+                      </Typography>
                     </Box>
-                    Healer Sets
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                  </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1 }}>
                     {recommendedAssignments
                       .filter((a) => is5PieceSetWithRole(a, 'healer'))
-                      .map(renderSetChip)}
+                      .map((a) => renderSetChip(a, true))}
                   </Box>
                 </Box>
               </Box>
@@ -757,38 +1120,91 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
 
             {/* 2-Piece Monster Sets & 1-Piece Mythic Sets Section - Three Columns by Role */}
             <Box sx={{ mb: 1 }}>
-              <Typography
-                variant="caption"
-                sx={{ display: 'block', mb: 1, fontWeight: 'bold', color: 'text.secondary' }}
-              >
-                2-Piece Monster Sets & 1-Piece Mythics (
-                {RECOMMENDED_2PIECE_SETS.length + RECOMMENDED_1PIECE_SETS.length})
-              </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+                <Box
+                  sx={{
+                    flex: 1,
+                    height: '1px',
+                    bgcolor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)',
+                  }}
+                />
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    px: 1.25,
+                    py: 0.5,
+                    borderRadius: '20px',
+                    bgcolor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.03)',
+                    border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.07)'}`,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: '0.62rem',
+                      fontWeight: 600,
+                      fontFamily: '"Space Grotesk", sans-serif',
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.1em',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Monster &amp; Mythic
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: 18,
+                      height: 16,
+                      px: 0.5,
+                      borderRadius: '4px',
+                      bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
+                      fontSize: '0.6rem',
+                      fontWeight: 700,
+                      color: 'text.secondary',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {RECOMMENDED_2PIECE_SETS.length + RECOMMENDED_1PIECE_SETS.length}
+                  </Box>
+                </Box>
+                <Box
+                  sx={{
+                    flex: 1,
+                    height: '1px',
+                    bgcolor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)',
+                  }}
+                />
+              </Box>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: { xs: 1.5, sm: 2 } }}>
                 {/* Tank Column */}
-                <Box>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', borderRadius: '10px', bgcolor: isDarkMode ? `${roleColors.tank}0a` : `${roleColors.tank}06` }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1 }}>
                     {recommendedAssignments
                       .filter((a) => is2Or1PieceSetWithRole(a, 'tank'))
-                      .map(renderSetChip)}
+                      .map((a) => renderSetChip(a, true))}
                   </Box>
                 </Box>
 
                 {/* Both/Flexible Column */}
-                <Box>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', borderRadius: '10px', bgcolor: isDarkMode ? `${roleColors.dps}0a` : `${roleColors.dps}06` }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1 }}>
                     {recommendedAssignments
                       .filter((a) => is2Or1PieceSetWithRole(a, 'both'))
-                      .map(renderSetChip)}
+                      .map((a) => renderSetChip(a, true))}
                   </Box>
                 </Box>
 
                 {/* Healer Column */}
-                <Box>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', borderRadius: '10px', bgcolor: isDarkMode ? `${roleColors.healer}0a` : `${roleColors.healer}06` }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1 }}>
                     {recommendedAssignments
                       .filter((a) => is2Or1PieceSetWithRole(a, 'healer'))
-                      .map(renderSetChip)}
+                      .map((a) => renderSetChip(a, true))}
                   </Box>
                 </Box>
               </Box>
@@ -829,21 +1245,48 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
           {/* Ultimate Quick Selector */}
           {onUpdateUltimate && (
             <Box sx={{ mt: 2 }}>
-              <Divider sx={{ mb: 2 }}>
-                <Chip label="Ultimate Quick Assign" size="small" />
-              </Divider>
+              <Divider sx={{ mb: 2 }} />
               <Stack spacing={2}>
                 {/* Tank Ultimates */}
                 <Box>
-                  <Typography
-                    variant="body2"
-                    fontWeight="bold"
-                    gutterBottom
-                    sx={{ color: roleColors.tank }}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      mb: 1,
+                      pb: 0.75,
+                      borderBottom: `1px solid ${roleColors.tank}30`,
+                    }}
                   >
-                    🛡️ Tank Ultimates
-                  </Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                    <Box
+                      sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        px: 0.875,
+                        py: 0.4,
+                        borderRadius: '6px',
+                        bgcolor: `${roleColors.tank}18`,
+                        border: `1px solid ${roleColors.tank}35`,
+                      }}
+                    >
+                      <ShieldIcon sx={{ fontSize: 11, color: roleColors.tank }} />
+                      <Typography
+                        sx={{
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          fontFamily: '"Space Grotesk", sans-serif',
+                          color: roleColors.tank,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.1em',
+                          lineHeight: 1,
+                        }}
+                      >
+                        Tank Ultimates
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Stack spacing={0.75} sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}>
                     {renderRoleUltimateSelector('tank1', tank1, 'MT', roleColors.tank)}
                     {renderRoleUltimateSelector('tank2', tank2, 'OT', roleColors.tank)}
                   </Stack>
@@ -851,15 +1294,44 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
 
                 {/* Healer Ultimates */}
                 <Box>
-                  <Typography
-                    variant="body2"
-                    fontWeight="bold"
-                    gutterBottom
-                    sx={{ color: roleColors.healer }}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      mb: 1,
+                      pb: 0.75,
+                      borderBottom: `1px solid ${roleColors.healer}30`,
+                    }}
                   >
-                    ❤️ Healer Ultimates
-                  </Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                    <Box
+                      sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        px: 0.875,
+                        py: 0.4,
+                        borderRadius: '6px',
+                        bgcolor: `${roleColors.healer}18`,
+                        border: `1px solid ${roleColors.healer}35`,
+                      }}
+                    >
+                      <FavoriteIcon sx={{ fontSize: 11, color: roleColors.healer }} />
+                      <Typography
+                        sx={{
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          fontFamily: '"Space Grotesk", sans-serif',
+                          color: roleColors.healer,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.1em',
+                          lineHeight: 1,
+                        }}
+                      >
+                        Healer Ultimates
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Stack spacing={0.75} sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}>
                     {renderRoleUltimateSelector('healer1', healer1, 'H1', roleColors.healer)}
                     {renderRoleUltimateSelector('healer2', healer2, 'H2', roleColors.healer)}
                   </Stack>
@@ -871,10 +1343,44 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
           {/* Healer Champion Points Quick Selector */}
           {onUpdateHealerCP && (
             <Box sx={{ mt: 2 }}>
-              <Divider sx={{ mb: 2 }}>
-                <Chip label="Healer Champion Points" size="small" />
-              </Divider>
-              <Stack spacing={2}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  mb: 1.5,
+                  pb: 0.75,
+                  borderBottom: `1px solid ${roleColors.healer}30`,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    px: 0.875,
+                    py: 0.4,
+                    borderRadius: '6px',
+                    bgcolor: `${roleColors.healer}18`,
+                    border: `1px solid ${roleColors.healer}35`,
+                  }}
+                >
+                  <FavoriteIcon sx={{ fontSize: 11, color: roleColors.healer }} />
+                  <Typography
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      fontFamily: '"Space Grotesk", sans-serif',
+                      color: roleColors.healer,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.1em',
+                      lineHeight: 1,
+                    }}
+                  >
+                    Champion Points
+                  </Typography>
+                </Box>
+              </Box>
+              <Stack spacing={0.75} sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}>
                 {renderCPSelector('healer1', healer1, 'H1', roleColors.healer)}
                 {renderCPSelector('healer2', healer2, 'H2', roleColors.healer)}
               </Stack>
@@ -882,12 +1388,73 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
           )}
 
           {/* Quick Stats */}
-          <Box sx={{ mt: 2, p: 1, bgcolor: 'action.hover', borderRadius: 1 }}>
-            <Stack direction="row" spacing={3} justifyContent="center">
-              <Typography variant="caption">
-                <strong>Total Sets Assigned:</strong> {setAssignments.size}
+          <Box
+            sx={{
+              mt: 3,
+              pt: 2,
+              borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)'}`,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.875,
+                px: 1.5,
+                py: 0.75,
+                borderRadius: '10px',
+                bgcolor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.03)',
+                border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.07)'}`,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '0.68rem',
+                  color: 'text.secondary',
+                  fontFamily: '"Space Grotesk", sans-serif',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  fontWeight: 500,
+                }}
+              >
+                Sets Assigned
               </Typography>
-            </Stack>
+              <Box
+                sx={{
+                  minWidth: 22,
+                  height: 20,
+                  px: 0.75,
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: setAssignments.size > 0
+                    ? isDarkMode ? 'rgba(56,189,248,0.18)' : 'rgba(8,145,178,0.12)'
+                    : isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
+                  border: setAssignments.size > 0
+                    ? `1px solid ${isDarkMode ? 'rgba(56,189,248,0.4)' : 'rgba(8,145,178,0.3)'}`
+                    : 'none',
+                  boxShadow: setAssignments.size > 0
+                    ? isDarkMode ? '0 0 8px rgba(56,189,248,0.3)' : '0 0 6px rgba(8,145,178,0.2)'
+                    : 'none',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    color: setAssignments.size > 0
+                      ? isDarkMode ? '#38bdf8' : '#0891b2'
+                      : 'text.secondary',
+                    lineHeight: 1,
+                  }}
+                >
+                  {setAssignments.size}
+                </Typography>
+              </Box>
+            </Box>
           </Box>
         </Box>
       )}
@@ -951,7 +1518,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>
                 Tank Sets
               </Typography>
-              <Box>{allSets.filter((s) => s.category === SetCategory.TANK).map(renderSetChip)}</Box>
+              <Box>{allSets.filter((s) => s.category === SetCategory.TANK).map((a) => renderSetChip(a))}</Box>
             </Box>
           )}
 
@@ -961,7 +1528,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 Healer Sets
               </Typography>
               <Box>
-                {allSets.filter((s) => s.category === SetCategory.HEALER).map(renderSetChip)}
+                {allSets.filter((s) => s.category === SetCategory.HEALER).map((a) => renderSetChip(a))}
               </Box>
             </Box>
           )}
@@ -974,7 +1541,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                   Flexible (Tank/Healer)
                 </Typography>
                 <Box>
-                  {allSets.filter((s) => s.category === SetCategory.FLEXIBLE).map(renderSetChip)}
+                  {allSets.filter((s) => s.category === SetCategory.FLEXIBLE).map((a) => renderSetChip(a))}
                 </Box>
               </Box>
 
@@ -984,7 +1551,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                   Monster Sets
                 </Typography>
                 <Box>
-                  {allSets.filter((s) => s.category === SetCategory.MONSTER).map(renderSetChip)}
+                  {allSets.filter((s) => s.category === SetCategory.MONSTER).map((a) => renderSetChip(a))}
                 </Box>
               </Box>
             </>
@@ -1008,418 +1575,1068 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
         onClose={handleCloseMenu}
         slotProps={{
           paper: {
-            sx: { maxHeight: 500, minWidth: 480 },
+            sx: {
+              maxHeight: 560,
+              minWidth: { xs: 'calc(100vw - 32px)', sm: 500 },
+              borderRadius: '14px',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.10)'
+                : '1px solid rgba(0,0,0,0.10)',
+              backdropFilter: isDarkMode ? 'blur(24px) saturate(180%)' : undefined,
+              background: isDarkMode ? 'rgba(14,18,27,0.96)' : 'rgba(255,255,255,0.98)',
+              boxShadow: isDarkMode
+                ? '0 24px 64px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06)'
+                : '0 16px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06)',
+              overflow: 'hidden',
+            },
           },
         }}
       >
-        <MenuItem disabled sx={{ py: 0.5 }}>
-          <ListItemText
-            primary={`Assign "${selectedSetForAssign}" to:`}
-            primaryTypographyProps={{ fontWeight: 'bold', fontSize: '0.85rem' }}
-          />
-        </MenuItem>
-        <Divider sx={{ my: 0.5 }} />
+        {/* Header */}
+        <Box
+          sx={{
+            px: 2,
+            py: 1.5,
+            background: isDarkMode
+              ? 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)'
+              : 'linear-gradient(135deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.01) 100%)',
+            borderBottom: isDarkMode
+              ? '1px solid rgba(255,255,255,0.07)'
+              : '1px solid rgba(0,0,0,0.07)',
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'text.disabled',
+              display: 'block',
+              lineHeight: 1,
+              mb: 0.625,
+              fontSize: '0.625rem',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              fontWeight: 700,
+            }}
+          >
+            Quick assign
+          </Typography>
+          <Typography variant="body2" fontWeight={700} noWrap sx={{ letterSpacing: '-0.01em' }}>
+            {selectedSetForAssign}
+          </Typography>
+        </Box>
 
-        {/* Two-column layout */}
-        <Box sx={{ px: 0.5, pb: 0.5, display: 'flex', gap: 1 }}>
+        {/* Two-column body */}
+        <Box sx={{ px: { xs: 1, sm: 1.5 }, pt: 1.25, pb: 1.25, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5 }}>
           {/* Left Column - Tanks */}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="caption"
-              fontWeight="bold"
-              sx={{ display: 'block', px: 1, py: 0.25, color: 'text.secondary' }}
+          <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {/* MT / Tank 1 card */}
+            <Box
+              sx={{
+                borderRadius: '10px',
+                overflow: 'hidden',
+                border: isDarkMode ? `1px solid ${roleColors.tank}28` : `1px solid ${roleColors.tank}35`,
+              }}
             >
-              🛡️ Tanks
-            </Typography>
-            <Divider sx={{ mb: 0.25 }} />
-
-            {/* Tank 1 slots */}
-            {selectedSetId && canAssignToFivePieceSlot(selectedSetId) && (
-              <>
-                <MenuItem
-                  dense
-                  onClick={() => handleAssignToRole('tank1', 'set1')}
-                  sx={{ pr: 0.5 }}
-                >
-                  <ListItemText
-                    primary="Tank 1 - Set 1"
-                    secondary={
-                      tank1.gearSets.set1 ? getSetDisplayName(tank1.gearSets.set1) : 'Empty'
-                    }
-                    primaryTypographyProps={{ fontSize: '0.875rem' }}
-                    secondaryTypographyProps={{ fontSize: '0.75rem' }}
-                  />
-                  {tank1.gearSets.set1 && (
-                    <Tooltip title="Remove set from this slot">
-                      <IconButton
-                        size="small"
-                        edge="end"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAssignSet('', 'tank1', 'set1');
-                        }}
-                        sx={{ ml: 1 }}
-                      >
-                        <ClearIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </MenuItem>
-                <MenuItem
-                  dense
-                  onClick={() => handleAssignToRole('tank1', 'set2')}
-                  sx={{ pr: 0.5 }}
-                >
-                  <ListItemText
-                    primary="Tank 1 - Set 2"
-                    secondary={
-                      tank1.gearSets.set2 ? getSetDisplayName(tank1.gearSets.set2) : 'Empty'
-                    }
-                    primaryTypographyProps={{ fontSize: '0.875rem' }}
-                    secondaryTypographyProps={{ fontSize: '0.75rem' }}
-                  />
-                  {tank1.gearSets.set2 && (
-                    <Tooltip title="Remove set from this slot">
-                      <IconButton
-                        size="small"
-                        edge="end"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAssignSet('', 'tank1', 'set2');
-                        }}
-                        sx={{ ml: 1 }}
-                      >
-                        <ClearIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </MenuItem>
-              </>
-            )}
-            {selectedSetId && canAssignToMonsterSlot(selectedSetId) && (
-              <MenuItem
-                dense
-                onClick={() => handleAssignToRole('tank1', 'monster')}
-                sx={{ pr: 0.5 }}
+              <Box
+                sx={{
+                  px: 1.5,
+                  py: 0.625,
+                  background: `linear-gradient(90deg, ${roleColors.tank}2a 0%, ${roleColors.tank}0a 70%, transparent 100%)`,
+                  borderBottom: `1px solid ${roleColors.tank}1e`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.75,
+                }}
               >
-                <ListItemText
-                  primary="Tank 1 - Monster"
-                  secondary={
-                    tank1.gearSets.monsterSet
-                      ? getSetDisplayName(tank1.gearSets.monsterSet)
-                      : 'Empty'
-                  }
-                  primaryTypographyProps={{ fontSize: '0.875rem' }}
-                  secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                <ShieldIcon
+                  sx={{
+                    fontSize: '0.75rem',
+                    color: roleColors.tank,
+                    filter: isDarkMode ? `drop-shadow(0 0 4px ${roleColors.tank}80)` : 'none',
+                  }}
                 />
-                {tank1.gearSets.monsterSet && (
-                  <Tooltip title="Remove set from this slot">
-                    <IconButton
-                      size="small"
-                      edge="end"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onAssignSet('', 'tank1', 'monster');
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  sx={{
+                    color: roleColors.tank,
+                    fontSize: '0.675rem',
+                    letterSpacing: '0.07em',
+                    textTransform: 'uppercase',
+                    textShadow: isDarkMode ? `0 0 10px ${roleColors.tank}50` : 'none',
+                  }}
+                >
+                  MT · Tank 1
+                </Typography>
+              </Box>
+              {selectedSetId && canAssignToFivePieceSlot(selectedSetId) && (
+                <>
+                  <MenuItem
+                    dense
+                    onClick={() => handleAssignToRole('tank1', 'set1')}
+                    sx={{
+                      px: 1.5,
+                      py: 0.875,
+                      gap: 0.75,
+                      borderLeft: tank1.gearSets.set1
+                        ? `3px solid ${roleColors.tank}`
+                        : `3px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
+                      background: tank1.gearSets.set1
+                        ? `linear-gradient(90deg, ${roleColors.tank}1a 0%, ${roleColors.tank}06 100%)`
+                        : 'transparent',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        background: tank1.gearSets.set1
+                          ? `linear-gradient(90deg, ${roleColors.tank}28 0%, ${roleColors.tank}10 100%)`
+                          : `${roleColors.tank}0f`,
+                        borderLeftColor: tank1.gearSets.set1 ? roleColors.tank : `${roleColors.tank}50`,
+                      },
+                    }}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          color: tank1.gearSets.set1 ? `${roleColors.tank}cc` : 'text.disabled',
+                          lineHeight: 1.2,
+                          mb: 0.25,
+                          fontSize: '0.6rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                        }}
+                      >
+                        Set 1
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        fontWeight={tank1.gearSets.set1 ? 600 : 400}
+                        sx={{
+                          display: 'block',
+                          color: tank1.gearSets.set1 ? 'text.primary' : 'text.disabled',
+                          fontStyle: tank1.gearSets.set1 ? 'normal' : 'italic',
+                          lineHeight: 1.3,
+                          fontSize: '0.8rem',
+                        }}
+                        noWrap
+                      >
+                        {tank1.gearSets.set1 ? getSetDisplayName(tank1.gearSets.set1) : '— empty —'}
+                      </Typography>
+                    </Box>
+                    {tank1.gearSets.set1 && (
+                      <Tooltip title="Clear slot">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAssignSet('', 'tank1', 'set1');
+                          }}
+                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                        >
+                          <ClearIcon sx={{ fontSize: '0.875rem' }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </MenuItem>
+                  <MenuItem
+                    dense
+                    onClick={() => handleAssignToRole('tank1', 'set2')}
+                    sx={{
+                      px: 1.5,
+                      py: 0.875,
+                      gap: 0.75,
+                      borderLeft: tank1.gearSets.set2
+                        ? `3px solid ${roleColors.tank}`
+                        : `3px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
+                      background: tank1.gearSets.set2
+                        ? `linear-gradient(90deg, ${roleColors.tank}1a 0%, ${roleColors.tank}06 100%)`
+                        : 'transparent',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        background: tank1.gearSets.set2
+                          ? `linear-gradient(90deg, ${roleColors.tank}28 0%, ${roleColors.tank}10 100%)`
+                          : `${roleColors.tank}0f`,
+                        borderLeftColor: tank1.gearSets.set2 ? roleColors.tank : `${roleColors.tank}50`,
+                      },
+                    }}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          color: tank1.gearSets.set2 ? `${roleColors.tank}cc` : 'text.disabled',
+                          lineHeight: 1.2,
+                          mb: 0.25,
+                          fontSize: '0.6rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                        }}
+                      >
+                        Set 2
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        fontWeight={tank1.gearSets.set2 ? 600 : 400}
+                        sx={{
+                          display: 'block',
+                          color: tank1.gearSets.set2 ? 'text.primary' : 'text.disabled',
+                          fontStyle: tank1.gearSets.set2 ? 'normal' : 'italic',
+                          lineHeight: 1.3,
+                          fontSize: '0.8rem',
+                        }}
+                        noWrap
+                      >
+                        {tank1.gearSets.set2 ? getSetDisplayName(tank1.gearSets.set2) : '— empty —'}
+                      </Typography>
+                    </Box>
+                    {tank1.gearSets.set2 && (
+                      <Tooltip title="Clear slot">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAssignSet('', 'tank1', 'set2');
+                          }}
+                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                        >
+                          <ClearIcon sx={{ fontSize: '0.875rem' }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </MenuItem>
+                </>
+              )}
+              {selectedSetId && canAssignToMonsterSlot(selectedSetId) && (
+                <MenuItem
+                  dense
+                  onClick={() => handleAssignToRole('tank1', 'monster')}
+                  sx={{
+                    px: 1.5,
+                    py: 0.875,
+                    gap: 0.75,
+                    borderLeft: tank1.gearSets.monsterSet
+                      ? `3px solid ${roleColors.tank}`
+                      : `3px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
+                    background: tank1.gearSets.monsterSet
+                      ? `linear-gradient(90deg, ${roleColors.tank}1a 0%, ${roleColors.tank}06 100%)`
+                      : 'transparent',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      background: tank1.gearSets.monsterSet
+                        ? `linear-gradient(90deg, ${roleColors.tank}28 0%, ${roleColors.tank}10 100%)`
+                        : `${roleColors.tank}0f`,
+                      borderLeftColor: tank1.gearSets.monsterSet
+                        ? roleColors.tank
+                        : `${roleColors.tank}50`,
+                    },
+                  }}
+                >
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: 'block',
+                        color: tank1.gearSets.monsterSet ? `${roleColors.tank}cc` : 'text.disabled',
+                        lineHeight: 1.2,
+                        mb: 0.25,
+                        fontSize: '0.6rem',
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        fontWeight: 700,
                       }}
-                      sx={{ ml: 1 }}
                     >
-                      <ClearIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </MenuItem>
-            )}
-
-            <Divider sx={{ my: 0.25 }} />
-
-            {/* Tank 2 slots */}
-            {selectedSetId && canAssignToFivePieceSlot(selectedSetId) && (
-              <>
-                <MenuItem
-                  dense
-                  onClick={() => handleAssignToRole('tank2', 'set1')}
-                  sx={{ pr: 0.5 }}
-                >
-                  <ListItemText
-                    primary="Tank 2 - Set 1"
-                    secondary={
-                      tank2.gearSets.set1 ? getSetDisplayName(tank2.gearSets.set1) : 'Empty'
-                    }
-                    primaryTypographyProps={{ fontSize: '0.875rem' }}
-                    secondaryTypographyProps={{ fontSize: '0.75rem' }}
-                  />
-                  {tank2.gearSets.set1 && (
-                    <Tooltip title="Remove set from this slot">
+                      Monster
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      fontWeight={tank1.gearSets.monsterSet ? 600 : 400}
+                      sx={{
+                        display: 'block',
+                        color: tank1.gearSets.monsterSet ? 'text.primary' : 'text.disabled',
+                        fontStyle: tank1.gearSets.monsterSet ? 'normal' : 'italic',
+                        lineHeight: 1.3,
+                        fontSize: '0.8rem',
+                      }}
+                      noWrap
+                    >
+                      {tank1.gearSets.monsterSet
+                        ? getSetDisplayName(tank1.gearSets.monsterSet)
+                        : '— empty —'}
+                    </Typography>
+                  </Box>
+                  {tank1.gearSets.monsterSet && (
+                    <Tooltip title="Clear slot">
                       <IconButton
                         size="small"
-                        edge="end"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onAssignSet('', 'tank2', 'set1');
+                          onAssignSet('', 'tank1', 'monster');
                         }}
-                        sx={{ ml: 1 }}
+                        sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
                       >
-                        <ClearIcon fontSize="small" />
+                        <ClearIcon sx={{ fontSize: '0.875rem' }} />
                       </IconButton>
                     </Tooltip>
                   )}
                 </MenuItem>
-                <MenuItem
-                  dense
-                  onClick={() => handleAssignToRole('tank2', 'set2')}
-                  sx={{ pr: 0.5 }}
-                >
-                  <ListItemText
-                    primary="Tank 2 - Set 2"
-                    secondary={
-                      tank2.gearSets.set2 ? getSetDisplayName(tank2.gearSets.set2) : 'Empty'
-                    }
-                    primaryTypographyProps={{ fontSize: '0.875rem' }}
-                    secondaryTypographyProps={{ fontSize: '0.75rem' }}
-                  />
-                  {tank2.gearSets.set2 && (
-                    <Tooltip title="Remove set from this slot">
-                      <IconButton
-                        size="small"
-                        edge="end"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAssignSet('', 'tank2', 'set2');
-                        }}
-                        sx={{ ml: 1 }}
-                      >
-                        <ClearIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </MenuItem>
-              </>
-            )}
-            {selectedSetId && canAssignToMonsterSlot(selectedSetId) && (
-              <MenuItem
-                dense
-                onClick={() => handleAssignToRole('tank2', 'monster')}
-                sx={{ pr: 0.5 }}
+              )}
+            </Box>
+
+            {/* OT / Tank 2 card — muted */}
+            <Box
+              sx={{
+                borderRadius: '10px',
+                overflow: 'hidden',
+                border: isDarkMode ? `1px solid ${roleColors.tank}18` : `1px solid ${roleColors.tank}22`,
+              }}
+            >
+              <Box
+                sx={{
+                  px: 1.5,
+                  py: 0.625,
+                  background: `linear-gradient(90deg, ${roleColors.tank}14 0%, transparent 70%)`,
+                  borderBottom: `1px solid ${roleColors.tank}12`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.75,
+                }}
               >
-                <ListItemText
-                  primary="Tank 2 - Monster"
-                  secondary={
-                    tank2.gearSets.monsterSet
-                      ? getSetDisplayName(tank2.gearSets.monsterSet)
-                      : 'Empty'
-                  }
-                  primaryTypographyProps={{ fontSize: '0.875rem' }}
-                  secondaryTypographyProps={{ fontSize: '0.75rem' }}
-                />
-                {tank2.gearSets.monsterSet && (
-                  <Tooltip title="Remove set from this slot">
-                    <IconButton
-                      size="small"
-                      edge="end"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onAssignSet('', 'tank2', 'monster');
+                <ShieldIcon sx={{ fontSize: '0.75rem', color: roleColors.tank, opacity: 0.5 }} />
+                <Typography
+                  variant="caption"
+                  fontWeight={600}
+                  sx={{
+                    color: `${roleColors.tank}80`,
+                    fontSize: '0.675rem',
+                    letterSpacing: '0.07em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  OT · Tank 2
+                </Typography>
+              </Box>
+              {selectedSetId && canAssignToFivePieceSlot(selectedSetId) && (
+                <>
+                  <MenuItem
+                    dense
+                    onClick={() => handleAssignToRole('tank2', 'set1')}
+                    sx={{
+                      px: 1.5,
+                      py: 0.875,
+                      gap: 0.75,
+                      borderLeft: tank2.gearSets.set1
+                        ? `3px solid ${roleColors.tank}`
+                        : `3px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
+                      background: tank2.gearSets.set1
+                        ? `linear-gradient(90deg, ${roleColors.tank}1a 0%, ${roleColors.tank}06 100%)`
+                        : 'transparent',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        background: tank2.gearSets.set1
+                          ? `linear-gradient(90deg, ${roleColors.tank}28 0%, ${roleColors.tank}10 100%)`
+                          : `${roleColors.tank}0f`,
+                        borderLeftColor: tank2.gearSets.set1 ? roleColors.tank : `${roleColors.tank}50`,
+                      },
+                    }}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          color: tank2.gearSets.set1 ? `${roleColors.tank}cc` : 'text.disabled',
+                          lineHeight: 1.2,
+                          mb: 0.25,
+                          fontSize: '0.6rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                        }}
+                      >
+                        Set 1
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        fontWeight={tank2.gearSets.set1 ? 600 : 400}
+                        sx={{
+                          display: 'block',
+                          color: tank2.gearSets.set1 ? 'text.primary' : 'text.disabled',
+                          fontStyle: tank2.gearSets.set1 ? 'normal' : 'italic',
+                          lineHeight: 1.3,
+                          fontSize: '0.8rem',
+                        }}
+                        noWrap
+                      >
+                        {tank2.gearSets.set1 ? getSetDisplayName(tank2.gearSets.set1) : '— empty —'}
+                      </Typography>
+                    </Box>
+                    {tank2.gearSets.set1 && (
+                      <Tooltip title="Clear slot">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAssignSet('', 'tank2', 'set1');
+                          }}
+                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                        >
+                          <ClearIcon sx={{ fontSize: '0.875rem' }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </MenuItem>
+                  <MenuItem
+                    dense
+                    onClick={() => handleAssignToRole('tank2', 'set2')}
+                    sx={{
+                      px: 1.5,
+                      py: 0.875,
+                      gap: 0.75,
+                      borderLeft: tank2.gearSets.set2
+                        ? `3px solid ${roleColors.tank}`
+                        : `3px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
+                      background: tank2.gearSets.set2
+                        ? `linear-gradient(90deg, ${roleColors.tank}1a 0%, ${roleColors.tank}06 100%)`
+                        : 'transparent',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        background: tank2.gearSets.set2
+                          ? `linear-gradient(90deg, ${roleColors.tank}28 0%, ${roleColors.tank}10 100%)`
+                          : `${roleColors.tank}0f`,
+                        borderLeftColor: tank2.gearSets.set2 ? roleColors.tank : `${roleColors.tank}50`,
+                      },
+                    }}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          color: tank2.gearSets.set2 ? `${roleColors.tank}cc` : 'text.disabled',
+                          lineHeight: 1.2,
+                          mb: 0.25,
+                          fontSize: '0.6rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                        }}
+                      >
+                        Set 2
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        fontWeight={tank2.gearSets.set2 ? 600 : 400}
+                        sx={{
+                          display: 'block',
+                          color: tank2.gearSets.set2 ? 'text.primary' : 'text.disabled',
+                          fontStyle: tank2.gearSets.set2 ? 'normal' : 'italic',
+                          lineHeight: 1.3,
+                          fontSize: '0.8rem',
+                        }}
+                        noWrap
+                      >
+                        {tank2.gearSets.set2 ? getSetDisplayName(tank2.gearSets.set2) : '— empty —'}
+                      </Typography>
+                    </Box>
+                    {tank2.gearSets.set2 && (
+                      <Tooltip title="Clear slot">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAssignSet('', 'tank2', 'set2');
+                          }}
+                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                        >
+                          <ClearIcon sx={{ fontSize: '0.875rem' }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </MenuItem>
+                </>
+              )}
+              {selectedSetId && canAssignToMonsterSlot(selectedSetId) && (
+                <MenuItem
+                  dense
+                  onClick={() => handleAssignToRole('tank2', 'monster')}
+                  sx={{
+                    px: 1.5,
+                    py: 0.875,
+                    gap: 0.75,
+                    borderLeft: tank2.gearSets.monsterSet
+                      ? `3px solid ${roleColors.tank}`
+                      : `3px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
+                    background: tank2.gearSets.monsterSet
+                      ? `linear-gradient(90deg, ${roleColors.tank}1a 0%, ${roleColors.tank}06 100%)`
+                      : 'transparent',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      background: tank2.gearSets.monsterSet
+                        ? `linear-gradient(90deg, ${roleColors.tank}28 0%, ${roleColors.tank}10 100%)`
+                        : `${roleColors.tank}0f`,
+                      borderLeftColor: tank2.gearSets.monsterSet
+                        ? roleColors.tank
+                        : `${roleColors.tank}50`,
+                    },
+                  }}
+                >
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: 'block',
+                        color: tank2.gearSets.monsterSet ? `${roleColors.tank}cc` : 'text.disabled',
+                        lineHeight: 1.2,
+                        mb: 0.25,
+                        fontSize: '0.6rem',
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        fontWeight: 700,
                       }}
-                      sx={{ ml: 1 }}
                     >
-                      <ClearIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </MenuItem>
-            )}
+                      Monster
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      fontWeight={tank2.gearSets.monsterSet ? 600 : 400}
+                      sx={{
+                        display: 'block',
+                        color: tank2.gearSets.monsterSet ? 'text.primary' : 'text.disabled',
+                        fontStyle: tank2.gearSets.monsterSet ? 'normal' : 'italic',
+                        lineHeight: 1.3,
+                        fontSize: '0.8rem',
+                      }}
+                      noWrap
+                    >
+                      {tank2.gearSets.monsterSet
+                        ? getSetDisplayName(tank2.gearSets.monsterSet)
+                        : '— empty —'}
+                    </Typography>
+                  </Box>
+                  {tank2.gearSets.monsterSet && (
+                    <Tooltip title="Clear slot">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAssignSet('', 'tank2', 'monster');
+                        }}
+                        sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                      >
+                        <ClearIcon sx={{ fontSize: '0.875rem' }} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </MenuItem>
+              )}
+            </Box>
           </Box>
 
           {/* Right Column - Healers */}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="caption"
-              fontWeight="bold"
-              sx={{ display: 'block', px: 1, py: 0.25, color: 'text.secondary' }}
+          <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {/* H1 / Healer 1 card */}
+            <Box
+              sx={{
+                borderRadius: '10px',
+                overflow: 'hidden',
+                border: isDarkMode ? `1px solid ${roleColors.healer}28` : `1px solid ${roleColors.healer}35`,
+              }}
             >
-              ❤️ Healers
-            </Typography>
-            <Divider sx={{ mb: 0.25 }} />
-
-            {/* Healer 1 slots */}
-            {selectedSetId && canAssignToFivePieceSlot(selectedSetId) && (
-              <>
-                <MenuItem
-                  dense
-                  onClick={() => handleAssignToRole('healer1', 'set1')}
-                  sx={{ pr: 0.5 }}
-                >
-                  <ListItemText
-                    primary="Healer 1 - Set 1"
-                    secondary={healer1.set1 ? getSetDisplayName(healer1.set1) : 'Empty'}
-                    primaryTypographyProps={{ fontSize: '0.875rem' }}
-                    secondaryTypographyProps={{ fontSize: '0.75rem' }}
-                  />
-                  {healer1.set1 && (
-                    <Tooltip title="Remove set from this slot">
-                      <IconButton
-                        size="small"
-                        edge="end"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAssignSet('', 'healer1', 'set1');
-                        }}
-                        sx={{ ml: 1 }}
-                      >
-                        <ClearIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </MenuItem>
-                <MenuItem
-                  dense
-                  onClick={() => handleAssignToRole('healer1', 'set2')}
-                  sx={{ pr: 0.5 }}
-                >
-                  <ListItemText
-                    primary="Healer 1 - Set 2"
-                    secondary={healer1.set2 ? getSetDisplayName(healer1.set2) : 'Empty'}
-                    primaryTypographyProps={{ fontSize: '0.875rem' }}
-                    secondaryTypographyProps={{ fontSize: '0.75rem' }}
-                  />
-                  {healer1.set2 && (
-                    <Tooltip title="Remove set from this slot">
-                      <IconButton
-                        size="small"
-                        edge="end"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAssignSet('', 'healer1', 'set2');
-                        }}
-                        sx={{ ml: 1 }}
-                      >
-                        <ClearIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </MenuItem>
-              </>
-            )}
-            {selectedSetId && canAssignToMonsterSlot(selectedSetId) && (
-              <MenuItem
-                dense
-                onClick={() => handleAssignToRole('healer1', 'monster')}
-                sx={{ pr: 0.5 }}
+              <Box
+                sx={{
+                  px: 1.5,
+                  py: 0.625,
+                  background: `linear-gradient(90deg, ${roleColors.healer}2a 0%, ${roleColors.healer}0a 70%, transparent 100%)`,
+                  borderBottom: `1px solid ${roleColors.healer}1e`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.75,
+                }}
               >
-                <ListItemText
-                  primary="Healer 1 - Monster"
-                  secondary={healer1.monsterSet ? getSetDisplayName(healer1.monsterSet) : 'Empty'}
-                  primaryTypographyProps={{ fontSize: '0.875rem' }}
-                  secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                <FavoriteIcon
+                  sx={{
+                    fontSize: '0.75rem',
+                    color: roleColors.healer,
+                    filter: isDarkMode ? `drop-shadow(0 0 4px ${roleColors.healer}80)` : 'none',
+                  }}
                 />
-                {healer1.monsterSet && (
-                  <Tooltip title="Remove set from this slot">
-                    <IconButton
-                      size="small"
-                      edge="end"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onAssignSet('', 'healer1', 'monster');
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  sx={{
+                    color: roleColors.healer,
+                    fontSize: '0.675rem',
+                    letterSpacing: '0.07em',
+                    textTransform: 'uppercase',
+                    textShadow: isDarkMode ? `0 0 10px ${roleColors.healer}50` : 'none',
+                  }}
+                >
+                  H1 · Healer 1
+                </Typography>
+              </Box>
+              {selectedSetId && canAssignToFivePieceSlot(selectedSetId) && (
+                <>
+                  <MenuItem
+                    dense
+                    onClick={() => handleAssignToRole('healer1', 'set1')}
+                    sx={{
+                      px: 1.5,
+                      py: 0.875,
+                      gap: 0.75,
+                      borderLeft: healer1.set1
+                        ? `3px solid ${roleColors.healer}`
+                        : `3px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
+                      background: healer1.set1
+                        ? `linear-gradient(90deg, ${roleColors.healer}1a 0%, ${roleColors.healer}06 100%)`
+                        : 'transparent',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        background: healer1.set1
+                          ? `linear-gradient(90deg, ${roleColors.healer}28 0%, ${roleColors.healer}10 100%)`
+                          : `${roleColors.healer}0f`,
+                        borderLeftColor: healer1.set1 ? roleColors.healer : `${roleColors.healer}50`,
+                      },
+                    }}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          color: healer1.set1 ? `${roleColors.healer}cc` : 'text.disabled',
+                          lineHeight: 1.2,
+                          mb: 0.25,
+                          fontSize: '0.6rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                        }}
+                      >
+                        Set 1
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        fontWeight={healer1.set1 ? 600 : 400}
+                        sx={{
+                          display: 'block',
+                          color: healer1.set1 ? 'text.primary' : 'text.disabled',
+                          fontStyle: healer1.set1 ? 'normal' : 'italic',
+                          lineHeight: 1.3,
+                          fontSize: '0.8rem',
+                        }}
+                        noWrap
+                      >
+                        {healer1.set1 ? getSetDisplayName(healer1.set1) : '— empty —'}
+                      </Typography>
+                    </Box>
+                    {healer1.set1 && (
+                      <Tooltip title="Clear slot">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAssignSet('', 'healer1', 'set1');
+                          }}
+                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                        >
+                          <ClearIcon sx={{ fontSize: '0.875rem' }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </MenuItem>
+                  <MenuItem
+                    dense
+                    onClick={() => handleAssignToRole('healer1', 'set2')}
+                    sx={{
+                      px: 1.5,
+                      py: 0.875,
+                      gap: 0.75,
+                      borderLeft: healer1.set2
+                        ? `3px solid ${roleColors.healer}`
+                        : `3px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
+                      background: healer1.set2
+                        ? `linear-gradient(90deg, ${roleColors.healer}1a 0%, ${roleColors.healer}06 100%)`
+                        : 'transparent',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        background: healer1.set2
+                          ? `linear-gradient(90deg, ${roleColors.healer}28 0%, ${roleColors.healer}10 100%)`
+                          : `${roleColors.healer}0f`,
+                        borderLeftColor: healer1.set2 ? roleColors.healer : `${roleColors.healer}50`,
+                      },
+                    }}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          color: healer1.set2 ? `${roleColors.healer}cc` : 'text.disabled',
+                          lineHeight: 1.2,
+                          mb: 0.25,
+                          fontSize: '0.6rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                        }}
+                      >
+                        Set 2
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        fontWeight={healer1.set2 ? 600 : 400}
+                        sx={{
+                          display: 'block',
+                          color: healer1.set2 ? 'text.primary' : 'text.disabled',
+                          fontStyle: healer1.set2 ? 'normal' : 'italic',
+                          lineHeight: 1.3,
+                          fontSize: '0.8rem',
+                        }}
+                        noWrap
+                      >
+                        {healer1.set2 ? getSetDisplayName(healer1.set2) : '— empty —'}
+                      </Typography>
+                    </Box>
+                    {healer1.set2 && (
+                      <Tooltip title="Clear slot">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAssignSet('', 'healer1', 'set2');
+                          }}
+                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                        >
+                          <ClearIcon sx={{ fontSize: '0.875rem' }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </MenuItem>
+                </>
+              )}
+              {selectedSetId && canAssignToMonsterSlot(selectedSetId) && (
+                <MenuItem
+                  dense
+                  onClick={() => handleAssignToRole('healer1', 'monster')}
+                  sx={{
+                    px: 1.5,
+                    py: 0.875,
+                    gap: 0.75,
+                    borderLeft: healer1.monsterSet
+                      ? `3px solid ${roleColors.healer}`
+                      : `3px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
+                    background: healer1.monsterSet
+                      ? `linear-gradient(90deg, ${roleColors.healer}1a 0%, ${roleColors.healer}06 100%)`
+                      : 'transparent',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      background: healer1.monsterSet
+                        ? `linear-gradient(90deg, ${roleColors.healer}28 0%, ${roleColors.healer}10 100%)`
+                        : `${roleColors.healer}0f`,
+                      borderLeftColor: healer1.monsterSet
+                        ? roleColors.healer
+                        : `${roleColors.healer}50`,
+                    },
+                  }}
+                >
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: 'block',
+                        color: healer1.monsterSet ? `${roleColors.healer}cc` : 'text.disabled',
+                        lineHeight: 1.2,
+                        mb: 0.25,
+                        fontSize: '0.6rem',
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        fontWeight: 700,
                       }}
-                      sx={{ ml: 1 }}
                     >
-                      <ClearIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </MenuItem>
-            )}
-
-            <Divider sx={{ my: 0.25 }} />
-
-            {/* Healer 2 slots */}
-            {selectedSetId && canAssignToFivePieceSlot(selectedSetId) && (
-              <>
-                <MenuItem
-                  dense
-                  onClick={() => handleAssignToRole('healer2', 'set1')}
-                  sx={{ pr: 0.5 }}
-                >
-                  <ListItemText
-                    primary="Healer 2 - Set 1"
-                    secondary={healer2.set1 ? getSetDisplayName(healer2.set1) : 'Empty'}
-                    primaryTypographyProps={{ fontSize: '0.875rem' }}
-                    secondaryTypographyProps={{ fontSize: '0.75rem' }}
-                  />
-                  {healer2.set1 && (
-                    <Tooltip title="Remove set from this slot">
+                      Monster
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      fontWeight={healer1.monsterSet ? 600 : 400}
+                      sx={{
+                        display: 'block',
+                        color: healer1.monsterSet ? 'text.primary' : 'text.disabled',
+                        fontStyle: healer1.monsterSet ? 'normal' : 'italic',
+                        lineHeight: 1.3,
+                        fontSize: '0.8rem',
+                      }}
+                      noWrap
+                    >
+                      {healer1.monsterSet ? getSetDisplayName(healer1.monsterSet) : '— empty —'}
+                    </Typography>
+                  </Box>
+                  {healer1.monsterSet && (
+                    <Tooltip title="Clear slot">
                       <IconButton
                         size="small"
-                        edge="end"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onAssignSet('', 'healer2', 'set1');
+                          onAssignSet('', 'healer1', 'monster');
                         }}
-                        sx={{ ml: 1 }}
+                        sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
                       >
-                        <ClearIcon fontSize="small" />
+                        <ClearIcon sx={{ fontSize: '0.875rem' }} />
                       </IconButton>
                     </Tooltip>
                   )}
                 </MenuItem>
-                <MenuItem
-                  dense
-                  onClick={() => handleAssignToRole('healer2', 'set2')}
-                  sx={{ pr: 0.5 }}
-                >
-                  <ListItemText
-                    primary="Healer 2 - Set 2"
-                    secondary={healer2.set2 ? getSetDisplayName(healer2.set2) : 'Empty'}
-                    primaryTypographyProps={{ fontSize: '0.875rem' }}
-                    secondaryTypographyProps={{ fontSize: '0.75rem' }}
-                  />
-                  {healer2.set2 && (
-                    <Tooltip title="Remove set from this slot">
-                      <IconButton
-                        size="small"
-                        edge="end"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAssignSet('', 'healer2', 'set2');
-                        }}
-                        sx={{ ml: 1 }}
-                      >
-                        <ClearIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </MenuItem>
-              </>
-            )}
-            {selectedSetId && canAssignToMonsterSlot(selectedSetId) && (
-              <MenuItem
-                dense
-                onClick={() => handleAssignToRole('healer2', 'monster')}
-                sx={{ pr: 0.5 }}
+              )}
+            </Box>
+
+            {/* H2 / Healer 2 card — muted */}
+            <Box
+              sx={{
+                borderRadius: '10px',
+                overflow: 'hidden',
+                border: isDarkMode ? `1px solid ${roleColors.healer}18` : `1px solid ${roleColors.healer}22`,
+              }}
+            >
+              <Box
+                sx={{
+                  px: 1.5,
+                  py: 0.625,
+                  background: `linear-gradient(90deg, ${roleColors.healer}14 0%, transparent 70%)`,
+                  borderBottom: `1px solid ${roleColors.healer}12`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.75,
+                }}
               >
-                <ListItemText
-                  primary="Healer 2 - Monster"
-                  secondary={healer2.monsterSet ? getSetDisplayName(healer2.monsterSet) : 'Empty'}
-                  primaryTypographyProps={{ fontSize: '0.875rem' }}
-                  secondaryTypographyProps={{ fontSize: '0.75rem' }}
-                />
-                {healer2.monsterSet && (
-                  <Tooltip title="Remove set from this slot">
-                    <IconButton
-                      size="small"
-                      edge="end"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onAssignSet('', 'healer2', 'monster');
+                <FavoriteIcon sx={{ fontSize: '0.75rem', color: roleColors.healer, opacity: 0.5 }} />
+                <Typography
+                  variant="caption"
+                  fontWeight={600}
+                  sx={{
+                    color: `${roleColors.healer}80`,
+                    fontSize: '0.675rem',
+                    letterSpacing: '0.07em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  H2 · Healer 2
+                </Typography>
+              </Box>
+              {selectedSetId && canAssignToFivePieceSlot(selectedSetId) && (
+                <>
+                  <MenuItem
+                    dense
+                    onClick={() => handleAssignToRole('healer2', 'set1')}
+                    sx={{
+                      px: 1.5,
+                      py: 0.875,
+                      gap: 0.75,
+                      borderLeft: healer2.set1
+                        ? `3px solid ${roleColors.healer}`
+                        : `3px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
+                      background: healer2.set1
+                        ? `linear-gradient(90deg, ${roleColors.healer}1a 0%, ${roleColors.healer}06 100%)`
+                        : 'transparent',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        background: healer2.set1
+                          ? `linear-gradient(90deg, ${roleColors.healer}28 0%, ${roleColors.healer}10 100%)`
+                          : `${roleColors.healer}0f`,
+                        borderLeftColor: healer2.set1 ? roleColors.healer : `${roleColors.healer}50`,
+                      },
+                    }}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          color: healer2.set1 ? `${roleColors.healer}cc` : 'text.disabled',
+                          lineHeight: 1.2,
+                          mb: 0.25,
+                          fontSize: '0.6rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                        }}
+                      >
+                        Set 1
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        fontWeight={healer2.set1 ? 600 : 400}
+                        sx={{
+                          display: 'block',
+                          color: healer2.set1 ? 'text.primary' : 'text.disabled',
+                          fontStyle: healer2.set1 ? 'normal' : 'italic',
+                          lineHeight: 1.3,
+                          fontSize: '0.8rem',
+                        }}
+                        noWrap
+                      >
+                        {healer2.set1 ? getSetDisplayName(healer2.set1) : '— empty —'}
+                      </Typography>
+                    </Box>
+                    {healer2.set1 && (
+                      <Tooltip title="Clear slot">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAssignSet('', 'healer2', 'set1');
+                          }}
+                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                        >
+                          <ClearIcon sx={{ fontSize: '0.875rem' }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </MenuItem>
+                  <MenuItem
+                    dense
+                    onClick={() => handleAssignToRole('healer2', 'set2')}
+                    sx={{
+                      px: 1.5,
+                      py: 0.875,
+                      gap: 0.75,
+                      borderLeft: healer2.set2
+                        ? `3px solid ${roleColors.healer}`
+                        : `3px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
+                      background: healer2.set2
+                        ? `linear-gradient(90deg, ${roleColors.healer}1a 0%, ${roleColors.healer}06 100%)`
+                        : 'transparent',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        background: healer2.set2
+                          ? `linear-gradient(90deg, ${roleColors.healer}28 0%, ${roleColors.healer}10 100%)`
+                          : `${roleColors.healer}0f`,
+                        borderLeftColor: healer2.set2 ? roleColors.healer : `${roleColors.healer}50`,
+                      },
+                    }}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          color: healer2.set2 ? `${roleColors.healer}cc` : 'text.disabled',
+                          lineHeight: 1.2,
+                          mb: 0.25,
+                          fontSize: '0.6rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                        }}
+                      >
+                        Set 2
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        fontWeight={healer2.set2 ? 600 : 400}
+                        sx={{
+                          display: 'block',
+                          color: healer2.set2 ? 'text.primary' : 'text.disabled',
+                          fontStyle: healer2.set2 ? 'normal' : 'italic',
+                          lineHeight: 1.3,
+                          fontSize: '0.8rem',
+                        }}
+                        noWrap
+                      >
+                        {healer2.set2 ? getSetDisplayName(healer2.set2) : '— empty —'}
+                      </Typography>
+                    </Box>
+                    {healer2.set2 && (
+                      <Tooltip title="Clear slot">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAssignSet('', 'healer2', 'set2');
+                          }}
+                          sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                        >
+                          <ClearIcon sx={{ fontSize: '0.875rem' }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </MenuItem>
+                </>
+              )}
+              {selectedSetId && canAssignToMonsterSlot(selectedSetId) && (
+                <MenuItem
+                  dense
+                  onClick={() => handleAssignToRole('healer2', 'monster')}
+                  sx={{
+                    px: 1.5,
+                    py: 0.875,
+                    gap: 0.75,
+                    borderLeft: healer2.monsterSet
+                      ? `3px solid ${roleColors.healer}`
+                      : `3px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
+                    background: healer2.monsterSet
+                      ? `linear-gradient(90deg, ${roleColors.healer}1a 0%, ${roleColors.healer}06 100%)`
+                      : 'transparent',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      background: healer2.monsterSet
+                        ? `linear-gradient(90deg, ${roleColors.healer}28 0%, ${roleColors.healer}10 100%)`
+                        : `${roleColors.healer}0f`,
+                      borderLeftColor: healer2.monsterSet
+                        ? roleColors.healer
+                        : `${roleColors.healer}50`,
+                    },
+                  }}
+                >
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: 'block',
+                        color: healer2.monsterSet ? `${roleColors.healer}cc` : 'text.disabled',
+                        lineHeight: 1.2,
+                        mb: 0.25,
+                        fontSize: '0.6rem',
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        fontWeight: 700,
                       }}
-                      sx={{ ml: 1 }}
                     >
-                      <ClearIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </MenuItem>
-            )}
+                      Monster
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      fontWeight={healer2.monsterSet ? 600 : 400}
+                      sx={{
+                        display: 'block',
+                        color: healer2.monsterSet ? 'text.primary' : 'text.disabled',
+                        fontStyle: healer2.monsterSet ? 'normal' : 'italic',
+                        lineHeight: 1.3,
+                        fontSize: '0.8rem',
+                      }}
+                      noWrap
+                    >
+                      {healer2.monsterSet ? getSetDisplayName(healer2.monsterSet) : '— empty —'}
+                    </Typography>
+                  </Box>
+                  {healer2.monsterSet && (
+                    <Tooltip title="Clear slot">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAssignSet('', 'healer2', 'monster');
+                        }}
+                        sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                      >
+                        <ClearIcon sx={{ fontSize: '0.875rem' }} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </MenuItem>
+              )}
+            </Box>
           </Box>
         </Box>
       </Menu>
