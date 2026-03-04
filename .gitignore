@@ -112,6 +112,10 @@ public/mockServiceWorker.js
 /.claude/mcp-config.json
 /.claude/screenshots/
 /.claude-rules.md
+/.claude/settings.local.json
+/.claude/worktrees/
+.claudeignore
+nul
 
 # Build cache and temporary directories
 /cache/

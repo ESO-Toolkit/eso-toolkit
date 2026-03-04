@@ -27,7 +27,6 @@ import {
   Link as LinkIcon,
   PersonAdd as PersonAddIcon,
   Shield as ShieldIcon,
-  Star as GearIcon,
   StickyNote2 as NotesIcon,
   DragIndicator as DragIndicatorIcon,
   Visibility as VisibilityIcon,
@@ -873,6 +872,27 @@ export const RosterBuilderPage: React.FC = () => {
     },
   };
 
+  const sectionAccordionSx = {
+    backgroundColor: 'transparent',
+    boxShadow: 'none',
+    border: 'none',
+    '&:before': { display: 'none' },
+    '& .MuiAccordionSummary-root': {
+      px: 0,
+      minHeight: 40,
+      '&.Mui-expanded': { minHeight: 40 },
+    },
+    '& .MuiAccordionSummary-content': {
+      my: 0.5,
+      '&.Mui-expanded': { my: 0.5 },
+    },
+    '& .MuiAccordionDetails-root': {
+      px: 0,
+      pt: 1,
+      pb: 0,
+    },
+  };
+
   const [roster, setRoster] = useState<RaidRoster>(createDefaultRoster());
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [snackbar, setSnackbar] = useState<{
@@ -891,6 +911,12 @@ export const RosterBuilderPage: React.FC = () => {
   const [importUrl, setImportUrl] = useState('');
   const [importLoading, setImportLoading] = useState(false);
   const [importMenuAnchor, setImportMenuAnchor] = useState<null | HTMLElement>(null);
+  const [expandedSections, setExpandedSections] = useState({
+    groups: false,
+    tanks: true,
+    healers: true,
+    dps: true,
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get auth state
@@ -2259,429 +2285,479 @@ export const RosterBuilderPage: React.FC = () => {
         {mode === 'advanced' && (
           <>
             {/* Player Groups Management */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
-              <Box
-                sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '9px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: isDarkMode
-                    ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
-                    : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
-                  border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.08)'
-                    : '1px solid rgba(0,0,0,0.08)',
-                }}
-              >
-                <GroupIcon
-                  sx={{
-                    fontSize: '1rem',
-                    color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
-                  }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'text.disabled',
-                    lineHeight: 1,
-                    mb: 0.375,
-                  }}
-                >
-                  Groups
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography
-                    sx={{
-                      fontFamily: '"Space Grotesk", sans-serif',
-                      fontWeight: 700,
-                      fontSize: '1.05rem',
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1.1,
-                      background: isDarkMode
-                        ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-                        : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}
-                  >
-                    Player Groups
-                  </Typography>
+            <Accordion
+              expanded={expandedSections.groups}
+              onChange={() =>
+                setExpandedSections((prev) => ({
+                  ...prev,
+                  groups: !prev.groups,
+                }))
+              }
+              sx={sectionAccordionSx}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
                   <Box
-                    component="span"
                     sx={{
-                      fontSize: '0.65rem',
-                      fontWeight: 600,
-                      px: 0.75,
-                      py: 0.125,
-                      borderRadius: '6px',
-                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                      color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                      width: 32,
+                      height: 32,
+                      borderRadius: '9px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: isDarkMode
+                        ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
+                        : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
                       border: isDarkMode
                         ? '1px solid rgba(255,255,255,0.08)'
                         : '1px solid rgba(0,0,0,0.08)',
                     }}
                   >
-                    {roster.availableGroups.length}
+                    <GroupIcon
+                      sx={{
+                        fontSize: '1rem',
+                        color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                      }}
+                    />
                   </Box>
-                </Box>
-              </Box>
-            </Box>
-            <Stack spacing={2} mb={3}>
-              <Autocomplete
-                multiple
-                freeSolo
-                options={[]}
-                value={roster.availableGroups}
-                onChange={(_, value) =>
-                  setRoster((prev) => ({
-                    ...prev,
-                    availableGroups: value,
-                    updatedAt: new Date().toISOString(),
-                  }))
-                }
-                slotProps={{
-                  popper: {
-                    disablePortal: true,
-                  },
-                }}
-                ChipProps={{
-                  onMouseDown: (event) => {
-                    event.stopPropagation();
-                  },
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Available Groups (e.g., Slayer Stack 1, Group A)"
-                    placeholder="Add group..."
-                    helperText="Create groups to organize players. Common examples: Slayer Stack 1, Slayer Stack 2, Group A, Group B"
-                    sx={glassTextField}
-                  />
-                )}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => {
-                    const { key, ...chipProps } = getTagProps({ index });
-                    return (
-                      <Chip
-                        label={option}
-                        {...chipProps}
-                        key={key}
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontSize: '0.6rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: 'text.disabled',
+                        lineHeight: 1,
+                        mb: 0.375,
+                      }}
+                    >
+                      Groups
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography
                         sx={{
+                          fontFamily: '"Space Grotesk", sans-serif',
+                          fontWeight: 700,
+                          fontSize: '1.05rem',
+                          letterSpacing: '-0.02em',
+                          lineHeight: 1.1,
+                          background: isDarkMode
+                            ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                            : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                        }}
+                      >
+                        Player Groups
+                      </Typography>
+                      <Box
+                        component="span"
+                        sx={{
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
+                          px: 0.75,
+                          py: 0.125,
                           borderRadius: '6px',
                           backgroundColor: isDarkMode
                             ? 'rgba(255,255,255,0.06)'
                             : 'rgba(0,0,0,0.05)',
+                          color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
                           border: isDarkMode
-                            ? '1px solid rgba(255,255,255,0.1)'
-                            : '1px solid rgba(0,0,0,0.1)',
-                          fontWeight: 500,
+                            ? '1px solid rgba(255,255,255,0.08)'
+                            : '1px solid rgba(0,0,0,0.08)',
                         }}
+                      >
+                        {roster.availableGroups.length}
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Stack spacing={2} mb={3}>
+                  <Autocomplete
+                    multiple
+                    freeSolo
+                    options={[]}
+                    value={roster.availableGroups}
+                    onChange={(_, value) =>
+                      setRoster((prev) => ({
+                        ...prev,
+                        availableGroups: value,
+                        updatedAt: new Date().toISOString(),
+                      }))
+                    }
+                    slotProps={{
+                      popper: {
+                        disablePortal: true,
+                      },
+                    }}
+                    ChipProps={{
+                      onMouseDown: (event) => {
+                        event.stopPropagation();
+                      },
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Available Groups (e.g., Slayer Stack 1, Group A)"
+                        placeholder="Add group..."
+                        helperText="Create groups to organize players. Common examples: Slayer Stack 1, Slayer Stack 2, Group A, Group B"
+                        sx={glassTextField}
                       />
-                    );
-                  })
-                }
-              />
-            </Stack>
+                    )}
+                    renderTags={(value, getTagProps) =>
+                      value.map((option, index) => {
+                        const { key, ...chipProps } = getTagProps({ index });
+                        return (
+                          <Chip
+                            label={option}
+                            {...chipProps}
+                            key={key}
+                            sx={{
+                              borderRadius: '6px',
+                              backgroundColor: isDarkMode
+                                ? 'rgba(255,255,255,0.06)'
+                                : 'rgba(0,0,0,0.05)',
+                              border: isDarkMode
+                                ? '1px solid rgba(255,255,255,0.1)'
+                                : '1px solid rgba(0,0,0,0.1)',
+                              fontWeight: 500,
+                            }}
+                          />
+                        );
+                      })
+                    }
+                  />
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
 
-            <Box
+            <Divider
               sx={{
-                my: 3,
-                height: '1px',
-                background: isDarkMode
-                  ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%)'
-                  : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+                my: 1.5,
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
               }}
             />
 
             {/* Tanks Section */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
-              <Box
-                sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '9px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: `linear-gradient(135deg, ${roleColors.tank}20 0%, ${roleColors.tank}08 100%)`,
-                  border: `1px solid ${roleColors.tank}25`,
-                }}
-              >
-                <ShieldIcon sx={{ fontSize: '1rem', color: roleColors.tank }} />
-              </Box>
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'text.disabled',
-                    lineHeight: 1,
-                    mb: 0.375,
-                  }}
-                >
-                  Role
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography
-                    sx={{
-                      fontFamily: '"Space Grotesk", sans-serif',
-                      fontWeight: 700,
-                      fontSize: '1.05rem',
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1.1,
-                      background: `linear-gradient(135deg, ${roleColors.tank} 0%, ${roleColors.tank}99 100%)`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}
-                  >
-                    Tanks
-                  </Typography>
+            <Accordion
+              expanded={expandedSections.tanks}
+              onChange={() =>
+                setExpandedSections((prev) => ({
+                  ...prev,
+                  tanks: !prev.tanks,
+                }))
+              }
+              sx={sectionAccordionSx}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
                   <Box
-                    component="span"
                     sx={{
-                      fontSize: '0.65rem',
-                      fontWeight: 600,
-                      px: 0.75,
-                      py: 0.125,
-                      borderRadius: '6px',
-                      backgroundColor: `${roleColors.tank}12`,
-                      color: roleColors.tank,
+                      width: 32,
+                      height: 32,
+                      borderRadius: '9px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: `linear-gradient(135deg, ${roleColors.tank}20 0%, ${roleColors.tank}08 100%)`,
                       border: `1px solid ${roleColors.tank}25`,
                     }}
                   >
-                    2
+                    <ShieldIcon sx={{ fontSize: '1rem', color: roleColors.tank }} />
+                  </Box>
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontSize: '0.6rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: 'text.disabled',
+                        lineHeight: 1,
+                        mb: 0.375,
+                      }}
+                    >
+                      Role
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography
+                        sx={{
+                          fontFamily: '"Space Grotesk", sans-serif',
+                          fontWeight: 700,
+                          fontSize: '1.05rem',
+                          letterSpacing: '-0.02em',
+                          lineHeight: 1.1,
+                          background: `linear-gradient(135deg, ${roleColors.tank} 0%, ${roleColors.tank}99 100%)`,
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                        }}
+                      >
+                        Tanks
+                      </Typography>
+                      <Box
+                        component="span"
+                        sx={{
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
+                          px: 0.75,
+                          py: 0.125,
+                          borderRadius: '6px',
+                          backgroundColor: `${roleColors.tank}12`,
+                          color: roleColors.tank,
+                          border: `1px solid ${roleColors.tank}25`,
+                        }}
+                      >
+                        2
+                      </Box>
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
-            </Box>
-            <Stack spacing={2} mb={3}>
-              {[1, 2].map((num) => (
-                <TankCard
-                  key={num}
-                  tankNum={num as 1 | 2}
-                  tank={roster[`tank${num}` as 'tank1' | 'tank2']}
-                  onChange={(updates) => handleTankChange(num as 1 | 2, updates)}
-                  availableGroups={roster.availableGroups}
-                />
-              ))}
-            </Stack>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Stack spacing={2} mb={3}>
+                  {[1, 2].map((num) => (
+                    <TankCard
+                      key={num}
+                      tankNum={num as 1 | 2}
+                      tank={roster[`tank${num}` as 'tank1' | 'tank2']}
+                      onChange={(updates) => handleTankChange(num as 1 | 2, updates)}
+                      availableGroups={roster.availableGroups}
+                    />
+                  ))}
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
 
-            <Box
+            <Divider
               sx={{
-                my: 3,
-                height: '1px',
-                background: isDarkMode
-                  ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%)'
-                  : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+                my: 1.5,
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
               }}
             />
 
             {/* Healers Section */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
-              <Box
-                sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '9px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: `linear-gradient(135deg, ${roleColors.healer}20 0%, ${roleColors.healer}08 100%)`,
-                  border: `1px solid ${roleColors.healer}25`,
-                }}
-              >
-                <FavoriteIcon sx={{ fontSize: '1rem', color: roleColors.healer }} />
-              </Box>
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'text.disabled',
-                    lineHeight: 1,
-                    mb: 0.375,
-                  }}
-                >
-                  Role
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography
-                    sx={{
-                      fontFamily: '"Space Grotesk", sans-serif',
-                      fontWeight: 700,
-                      fontSize: '1.05rem',
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1.1,
-                      background: `linear-gradient(135deg, ${roleColors.healer} 0%, ${roleColors.healer}99 100%)`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}
-                  >
-                    Healers
-                  </Typography>
+            <Accordion
+              expanded={expandedSections.healers}
+              onChange={() =>
+                setExpandedSections((prev) => ({
+                  ...prev,
+                  healers: !prev.healers,
+                }))
+              }
+              sx={sectionAccordionSx}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
                   <Box
-                    component="span"
                     sx={{
-                      fontSize: '0.65rem',
-                      fontWeight: 600,
-                      px: 0.75,
-                      py: 0.125,
-                      borderRadius: '6px',
-                      backgroundColor: `${roleColors.healer}12`,
-                      color: roleColors.healer,
+                      width: 32,
+                      height: 32,
+                      borderRadius: '9px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: `linear-gradient(135deg, ${roleColors.healer}20 0%, ${roleColors.healer}08 100%)`,
                       border: `1px solid ${roleColors.healer}25`,
                     }}
                   >
-                    2
+                    <FavoriteIcon sx={{ fontSize: '1rem', color: roleColors.healer }} />
+                  </Box>
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontSize: '0.6rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: 'text.disabled',
+                        lineHeight: 1,
+                        mb: 0.375,
+                      }}
+                    >
+                      Role
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography
+                        sx={{
+                          fontFamily: '"Space Grotesk", sans-serif',
+                          fontWeight: 700,
+                          fontSize: '1.05rem',
+                          letterSpacing: '-0.02em',
+                          lineHeight: 1.1,
+                          background: `linear-gradient(135deg, ${roleColors.healer} 0%, ${roleColors.healer}99 100%)`,
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                        }}
+                      >
+                        Healers
+                      </Typography>
+                      <Box
+                        component="span"
+                        sx={{
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
+                          px: 0.75,
+                          py: 0.125,
+                          borderRadius: '6px',
+                          backgroundColor: `${roleColors.healer}12`,
+                          color: roleColors.healer,
+                          border: `1px solid ${roleColors.healer}25`,
+                        }}
+                      >
+                        2
+                      </Box>
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
-            </Box>
-            <Stack spacing={2} mb={3}>
-              {[1, 2].map((num) => (
-                <HealerCard
-                  key={num}
-                  healerNum={num as 1 | 2}
-                  healer={roster[`healer${num}` as 'healer1' | 'healer2']}
-                  onChange={(updates) => handleHealerChange(num as 1 | 2, updates)}
-                  availableGroups={roster.availableGroups}
-                  usedBuffs={
-                    [roster.healer1?.healerBuff, roster.healer2?.healerBuff].filter(
-                      Boolean,
-                    ) as HealerBuff[]
-                  }
-                />
-              ))}
-            </Stack>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Stack spacing={2} mb={3}>
+                  {[1, 2].map((num) => (
+                    <HealerCard
+                      key={num}
+                      healerNum={num as 1 | 2}
+                      healer={roster[`healer${num}` as 'healer1' | 'healer2']}
+                      onChange={(updates) => handleHealerChange(num as 1 | 2, updates)}
+                      availableGroups={roster.availableGroups}
+                      usedBuffs={
+                        [roster.healer1?.healerBuff, roster.healer2?.healerBuff].filter(
+                          Boolean,
+                        ) as HealerBuff[]
+                      }
+                    />
+                  ))}
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
 
-            <Box
+            <Divider
               sx={{
-                my: 3,
-                height: '1px',
-                background: isDarkMode
-                  ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%)'
-                  : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+                my: 1.5,
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
               }}
             />
 
             {/* DPS Slots Section */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
-              <Box
-                sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '9px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: `linear-gradient(135deg, ${roleColors.dps}20 0%, ${roleColors.dps}08 100%)`,
-                  border: `1px solid ${roleColors.dps}25`,
-                }}
-              >
-                <AutoAwesomeIcon sx={{ fontSize: '1rem', color: roleColors.dps }} />
-              </Box>
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'text.disabled',
-                    lineHeight: 1,
-                    mb: 0.375,
-                  }}
-                >
-                  Roster
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography
-                    sx={{
-                      fontFamily: '"Space Grotesk", sans-serif',
-                      fontWeight: 700,
-                      fontSize: '1.05rem',
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1.1,
-                      background: `linear-gradient(135deg, ${roleColors.dps} 0%, ${roleColors.dps}99 100%)`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}
-                  >
-                    DPS Roster
-                  </Typography>
+            <Accordion
+              expanded={expandedSections.dps}
+              onChange={() =>
+                setExpandedSections((prev) => ({
+                  ...prev,
+                  dps: !prev.dps,
+                }))
+              }
+              sx={sectionAccordionSx}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
                   <Box
-                    component="span"
                     sx={{
-                      fontSize: '0.65rem',
-                      fontWeight: 600,
-                      px: 0.75,
-                      py: 0.125,
-                      borderRadius: '6px',
-                      backgroundColor: `${roleColors.dps}12`,
-                      color: roleColors.dps,
+                      width: 32,
+                      height: 32,
+                      borderRadius: '9px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: `linear-gradient(135deg, ${roleColors.dps}20 0%, ${roleColors.dps}08 100%)`,
                       border: `1px solid ${roleColors.dps}25`,
                     }}
                   >
-                    {roster.dpsSlots.length} Slots
+                    <AutoAwesomeIcon sx={{ fontSize: '1rem', color: roleColors.dps }} />
+                  </Box>
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontSize: '0.6rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: 'text.disabled',
+                        lineHeight: 1,
+                        mb: 0.375,
+                      }}
+                    >
+                      Roster
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography
+                        sx={{
+                          fontFamily: '"Space Grotesk", sans-serif',
+                          fontWeight: 700,
+                          fontSize: '1.05rem',
+                          letterSpacing: '-0.02em',
+                          lineHeight: 1.1,
+                          background: `linear-gradient(135deg, ${roleColors.dps} 0%, ${roleColors.dps}99 100%)`,
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                        }}
+                      >
+                        DPS Roster
+                      </Typography>
+                      <Box
+                        component="span"
+                        sx={{
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
+                          px: 0.75,
+                          py: 0.125,
+                          borderRadius: '6px',
+                          backgroundColor: `${roleColors.dps}12`,
+                          color: roleColors.dps,
+                          border: `1px solid ${roleColors.dps}25`,
+                        }}
+                      >
+                        {roster.dpsSlots.length} Slots
+                      </Box>
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
-            </Box>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDPSDragEnd}
-            >
-              <SortableContext
-                items={roster.dpsSlots.map((slot) => slot.slotNumber)}
-                strategy={verticalListSortingStrategy}
-              >
-                <Stack spacing={1.5} mb={3}>
-                  {roster.dpsSlots.map((slot, index) => (
-                    <DPSSlotCard
-                      key={slot.slotNumber}
-                      slot={slot}
-                      availableGroups={roster.availableGroups}
-                      onChange={(updates) => {
-                        const updatedSlots = [...roster.dpsSlots];
-                        updatedSlots[index] = { ...updatedSlots[index], ...updates };
-                        setRoster((prev) => ({
-                          ...prev,
-                          dpsSlots: updatedSlots,
-                          updatedAt: new Date().toISOString(),
-                        }));
-                      }}
-                      onConvertToJail={handleConvertDPSToJail}
-                      onConvertToDPS={handleConvertJailToDPS}
-                    />
-                  ))}
-                </Stack>
-              </SortableContext>
-            </DndContext>
+              </AccordionSummary>
+              <AccordionDetails>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDPSDragEnd}
+                >
+                  <SortableContext
+                    items={roster.dpsSlots.map((slot) => slot.slotNumber)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <Stack spacing={1.5} mb={3}>
+                      {roster.dpsSlots.map((slot, index) => (
+                        <DPSSlotCard
+                          key={slot.slotNumber}
+                          slot={slot}
+                          availableGroups={roster.availableGroups}
+                          onChange={(updates) => {
+                            const updatedSlots = [...roster.dpsSlots];
+                            updatedSlots[index] = { ...updatedSlots[index], ...updates };
+                            setRoster((prev) => ({
+                              ...prev,
+                              dpsSlots: updatedSlots,
+                              updatedAt: new Date().toISOString(),
+                            }));
+                          }}
+                          onConvertToJail={handleConvertDPSToJail}
+                          onConvertToDPS={handleConvertJailToDPS}
+                        />
+                      ))}
+                    </Stack>
+                  </SortableContext>
+                </DndContext>
+              </AccordionDetails>
+            </Accordion>
 
-            <Box
+            <Divider
               sx={{
-                my: 3,
-                height: '1px',
-                background: isDarkMode
-                  ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%)'
-                  : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+                my: 1.5,
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
               }}
             />
 
@@ -3134,11 +3210,11 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
         },
       }}
     >
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <ShieldIcon sx={{ fontSize: '1.1rem', color: tankRoleColors.tank }} />
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
+          <ShieldIcon sx={{ fontSize: '1rem', color: tankRoleColors.tank }} />
           <Typography
-            variant="h6"
+            variant="subtitle1"
             sx={{
               fontFamily: '"Space Grotesk", sans-serif',
               fontWeight: 700,
@@ -3148,12 +3224,13 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
             Tank {tankNum}
           </Typography>
         </Box>
-        <Stack spacing={2}>
+        <Stack spacing={1.5}>
           {/* Essential Fields - Always Visible */}
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <TextField
                 fullWidth
+                size="small"
                 label="Player Name"
                 value={tank.playerName || ''}
                 onChange={(e) => onChange({ playerName: e.target.value })}
@@ -3164,6 +3241,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
             <Box sx={{ flex: '1 1 45%', minWidth: 150 }}>
               <Autocomplete
                 freeSolo
+                size="small"
                 options={[...availableGroups].sort()}
                 value={tank.group?.groupName || ''}
                 onChange={(_, value) =>
@@ -3174,6 +3252,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                 renderInput={(params) => (
                   <TextField
                     {...params}
+                    size="small"
                     label="Group"
                     placeholder="e.g., Left Stack"
                     sx={glassSx}
@@ -3187,10 +3266,11 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
             Configure gear sets (5-piece sets + 2-piece monster/mythic)
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
                 freeSolo
+                size="small"
                 options={getTank5PieceSetOptions()}
                 value={tank.gearSets.set1 ? getSetDisplayName(tank.gearSets.set1) : ''}
                 onChange={(_, value) =>
@@ -3210,15 +3290,12 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Primary 5-Piece Set (Body)"
+                    size="small"
+                    label="Primary Set (Body)"
                     placeholder="e.g., Alkosh, Yolnahkriin"
-                    helperText="Worn on body armor pieces (type custom set name if not listed)"
                     sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
-                      startAdornment: (
-                        <GearIcon fontSize="small" sx={{ mr: 1, color: 'action.active' }} />
-                      ),
                     }}
                   />
                 )}
@@ -3228,6 +3305,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
                 freeSolo
+                size="small"
                 options={getTank5PieceSetOptions()}
                 value={tank.gearSets.set2 ? getSetDisplayName(tank.gearSets.set2) : ''}
                 onChange={(_, value) =>
@@ -3247,15 +3325,12 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Secondary 5-Piece Set (Jewelry)"
+                    size="small"
+                    label="Secondary Set (Jewelry)"
                     placeholder="e.g., Crimson Oath's Rive"
-                    helperText="Worn on jewelry + weapons (type custom set name if not listed)"
                     sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
-                      startAdornment: (
-                        <GearIcon fontSize="small" sx={{ mr: 1, color: 'action.active' }} />
-                      ),
                     }}
                   />
                 )}
@@ -3265,6 +3340,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
                 freeSolo
+                size="small"
                 options={getTankMonsterSetOptions()}
                 value={tank.gearSets.monsterSet ? getSetDisplayName(tank.gearSets.monsterSet) : ''}
                 onChange={(_, value) =>
@@ -3281,15 +3357,12 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="2-Piece Monster/Mythic Set"
+                    size="small"
+                    label="Monster/Mythic Set"
                     placeholder="e.g., Symphony of Blades"
-                    helperText="Head + shoulders, or 1-piece mythic (type custom set name if not listed)"
                     sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
-                      startAdornment: (
-                        <GearIcon fontSize="small" sx={{ mr: 1, color: 'action.active' }} />
-                      ),
                     }}
                   />
                 )}
@@ -3300,12 +3373,14 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
 
           <Autocomplete
             freeSolo
+            size="small"
             options={availableUltimates}
             value={tank.ultimate || null}
             onChange={(_event, newValue) => onChange({ ultimate: newValue as string | null })}
             renderInput={(params) => (
               <TextField
                 {...params}
+                size="small"
                 label="Ultimate"
                 placeholder="Select or type custom ultimate"
                 sx={glassSx}
@@ -3377,9 +3452,9 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Stack spacing={2}>
+              <Stack spacing={1.5}>
                 {/* Role Label and Notes */}
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   <Box sx={{ flex: '1 1 30%', minWidth: 120 }}>
                     <TextField
                       fullWidth
@@ -3526,7 +3601,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   label="Flexible (any skill lines)"
                 />
                 {!tank.skillLines.isFlex && (
-                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                     <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
                       <Autocomplete
                         freeSolo
@@ -3723,11 +3798,11 @@ const HealerCard: React.FC<HealerCardProps> = ({
         },
       }}
     >
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <FavoriteIcon sx={{ fontSize: '1.1rem', color: healerRoleColors.healer }} />
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
+          <FavoriteIcon sx={{ fontSize: '1rem', color: healerRoleColors.healer }} />
           <Typography
-            variant="h6"
+            variant="subtitle1"
             sx={{
               fontFamily: '"Space Grotesk", sans-serif',
               fontWeight: 700,
@@ -3737,12 +3812,13 @@ const HealerCard: React.FC<HealerCardProps> = ({
             Healer {healerNum}
           </Typography>
         </Box>
-        <Stack spacing={2}>
+        <Stack spacing={1.5}>
           {/* Essential Fields - Always Visible */}
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <TextField
                 fullWidth
+                size="small"
                 label="Player Name (Optional)"
                 value={healer.playerName || ''}
                 onChange={(e) => onChange({ playerName: e.target.value })}
@@ -3752,6 +3828,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
                 freeSolo
+                size="small"
                 options={[...availableGroups].sort()}
                 value={healer.group?.groupName || ''}
                 onChange={(_, value) =>
@@ -3759,7 +3836,9 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     group: value ? { groupName: value } : undefined,
                   })
                 }
-                renderInput={(params) => <TextField {...params} label="Group" sx={glassSx} />}
+                renderInput={(params) => (
+                  <TextField {...params} size="small" label="Group" sx={glassSx} />
+                )}
               />
             </Box>
           </Box>
@@ -3768,10 +3847,11 @@ const HealerCard: React.FC<HealerCardProps> = ({
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
             Configure gear sets (5-piece sets + 2-piece monster/mythic)
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
                 freeSolo
+                size="small"
                 options={getHealer5PieceSetOptions()}
                 value={healer.set1 ? getSetDisplayName(healer.set1) : ''}
                 onChange={(_, value) =>
@@ -3786,15 +3866,12 @@ const HealerCard: React.FC<HealerCardProps> = ({
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Primary 5-Piece Set (Body)"
+                    size="small"
+                    label="Primary Set (Body)"
                     placeholder="e.g., Stone-Talker's Oath"
-                    helperText="Worn on body armor pieces (type custom set name if not listed)"
                     sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
-                      startAdornment: (
-                        <GearIcon fontSize="small" sx={{ mr: 1, color: 'action.active' }} />
-                      ),
                     }}
                   />
                 )}
@@ -3804,6 +3881,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
                 freeSolo
+                size="small"
                 options={getHealer5PieceSetOptions()}
                 value={healer.set2 ? getSetDisplayName(healer.set2) : ''}
                 onChange={(_, value) =>
@@ -3818,15 +3896,12 @@ const HealerCard: React.FC<HealerCardProps> = ({
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Secondary 5-Piece Set (Jewelry)"
+                    size="small"
+                    label="Secondary Set (Jewelry)"
                     placeholder="e.g., Worm's Raiment"
-                    helperText="Worn on jewelry + weapons (type custom set name if not listed)"
                     sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
-                      startAdornment: (
-                        <GearIcon fontSize="small" sx={{ mr: 1, color: 'action.active' }} />
-                      ),
                     }}
                   />
                 )}
@@ -3836,6 +3911,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
                 freeSolo
+                size="small"
                 options={getHealerMonsterSetOptions()}
                 value={healer.monsterSet ? getSetDisplayName(healer.monsterSet) : ''}
                 onChange={(_, value) =>
@@ -3847,15 +3923,12 @@ const HealerCard: React.FC<HealerCardProps> = ({
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="2-Piece Monster/Mythic Set"
+                    size="small"
+                    label="Monster/Mythic Set"
                     placeholder="e.g., Symphony of Blades"
-                    helperText="Head + shoulders, or 1-piece mythic (type custom set name if not listed)"
                     sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
-                      startAdornment: (
-                        <GearIcon fontSize="small" sx={{ mr: 1, color: 'action.active' }} />
-                      ),
                     }}
                   />
                 )}
@@ -3866,6 +3939,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
 
           <FormControl
             fullWidth
+            size="small"
             sx={{
               '& .MuiOutlinedInput-root': {
                 borderRadius: '10px',
@@ -3907,12 +3981,14 @@ const HealerCard: React.FC<HealerCardProps> = ({
 
           <Autocomplete
             freeSolo
+            size="small"
             options={availableUltimates}
             value={healer.ultimate || null}
             onChange={(_event, newValue) => onChange({ ultimate: newValue as string | null })}
             renderInput={(params) => (
               <TextField
                 {...params}
+                size="small"
                 label="Ultimate"
                 placeholder="Select or type custom ultimate"
                 sx={glassSx}
@@ -3984,9 +4060,9 @@ const HealerCard: React.FC<HealerCardProps> = ({
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Stack spacing={2}>
+              <Stack spacing={1.5}>
                 {/* Role Label and Notes */}
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   <Box sx={{ flex: '1 1 30%', minWidth: 120 }}>
                     <TextField
                       fullWidth
@@ -4130,7 +4206,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                   label="Flexible (any skill lines)"
                 />
                 {!healer.skillLines.isFlex && (
-                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                     <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
                       <Autocomplete
                         freeSolo
@@ -4312,8 +4388,8 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
         },
       }}
     >
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
           <IconButton
             size="small"
             {...attributes}
@@ -4353,8 +4429,8 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
             />
           )}
         </Box>
-        <Stack spacing={2}>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Stack spacing={1.5}>
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 40%', minWidth: 180 }}>
               <TextField
                 fullWidth
@@ -4387,7 +4463,9 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
                     group: value ? { groupName: value } : undefined,
                   })
                 }
-                renderInput={(params) => <TextField {...params} label="Group" sx={glassSx} />}
+                renderInput={(params) => (
+                  <TextField {...params} size="small" label="Group" sx={glassSx} />
+                )}
               />
             </Box>
           </Box>
@@ -4469,7 +4547,6 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
                 size="small"
                 label="Gear Sets"
                 placeholder={slot.gearSets?.length ? undefined : 'Add set...'}
-                helperText="Sets worn by this player — click × to remove"
                 sx={glassSx}
               />
             )}
