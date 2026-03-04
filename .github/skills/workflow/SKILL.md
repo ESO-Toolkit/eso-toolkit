@@ -41,41 +41,61 @@ Examples of valid names:
 
 > **Why this matters**: The `npm run sync-jira` script reads all remote branches and moves Jira tickets to *In Progress* or *Done* automatically. It only detects branches whose name **starts with the Jira ticket key** (`ESO-\d+`). A branch named `feature/remove-duplicate-roles` will be invisible to the sync and its ticket will never be updated.
 
-Run these commands in sequence:
+### 3a — Determine the parent branch
+
+**Ask the user before creating the branch:**
+> "Should this branch be based on `main`, or is it stacking on top of another feature branch (e.g. `ESO-449/structure-redux-state`)?"
+
+- Default is `main` unless the user says otherwise.
+- Set `$parentBranch` to the correct value now — it's needed for both the checkout and the twig dependency.
+
+### 3b — Check for worktree conflicts
+
+If the parent branch is open in another worktree, `git checkout` will fail. Always check first:
 
 ```powershell
-# Switch to main and pull latest
-git checkout main
-git pull origin main
-
-# Create and switch to the feature branch
-git checkout -b ESO-XXX/your-description
+git worktree list
 ```
 
-## Step 4 — Set Parent Branch Dependency
+If the parent branch is already checked out in a worktree, navigate there directly (`Set-Location <path>`) instead of using `git checkout`.
 
-Set the parent branch dependency (try twig, fall back to git config):
+### 3c — Create the branch from the correct parent
 
 ```powershell
-$branch = git branch --show-current
-$parentBranch = "main"  # or another feature branch if stacking
+$parentBranch = "main"  # or the feature branch name if stacking
+$newBranch = "ESO-XXX/your-description"
 
-twig branch depend $branch $parentBranch 2>$null
+# Check out from the correct parent and pull if it's main
+git checkout $parentBranch
+if ($parentBranch -eq "main") { git pull origin main }
+
+# Create and switch to the feature branch
+git checkout -b $newBranch
+```
+
+### 3d — Set the twig parent dependency immediately
+
+Set the parent right after creation so twig's branch tree is correct from the start:
+
+```powershell
+twig branch depend $newBranch $parentBranch 2>$null
 if ($LASTEXITCODE -ne 0) {
-    git config "branch.$branch.parent" $parentBranch
+    git config "branch.$newBranch.parent" $parentBranch
+    Write-Host "Parent '$parentBranch' recorded via git config (twig unavailable)"
+} else {
+    Write-Host "Parent '$parentBranch' set via twig"
 }
 ```
 
-If the new branch depends on another feature branch (not main), use that branch as the parent instead.
-
-## Step 5 — Confirm and Report
+## Step 4 — Confirm and Report
 
 Tell the user:
 - The new branch name
+- The parent branch that was used
 - That they are now safe to begin implementation
 - Whether twig or git config was used for the parent dependency
 
-## Step 6 — Pre-PR Quality Gate (MANDATORY)
+## Step 5 — Pre-PR Quality Gate (MANDATORY)
 
 **Before creating a PR or marking a ticket as In Review**, run all quality checks and ensure they pass:
 
@@ -93,7 +113,7 @@ npm test -- --watchAll=false
 - Run `npm run lint:fix` and `npm run format` to auto-fix lint/format issues, then re-run `npm run validate`.
 - Fix any failing unit tests before continuing.
 
-## Step 7 — Update Ticket Status When Work Is Complete
+## Step 6 — Update Ticket Status When Work Is Complete
 
 When implementation is finished, all quality checks pass, and changes are committed/pushed, update the Jira ticket status:
 
