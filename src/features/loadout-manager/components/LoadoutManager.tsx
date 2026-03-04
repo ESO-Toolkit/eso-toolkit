@@ -105,6 +105,25 @@ export const LoadoutManager: React.FC = () => {
   const theme = useTheme();
   const isMdDown = useMediaQuery(theme.breakpoints.down('md'));
 
+  // Glass design tokens
+  const isDarkMode = theme.palette.mode === 'dark';
+  const glassTextField = {
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+      backdropFilter: 'blur(12px)',
+      borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+      transition: 'all 0.2s ease',
+      '&:hover': {
+        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
+        borderColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+      },
+      '&.Mui-focused': {
+        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+        borderColor: theme.palette.primary.main,
+      },
+    },
+  };
+
   const currentTrial = useSelector(selectCurrentTrial);
   const currentPage = useSelector(selectCurrentPage);
   const setups = useSelector(selectCurrentSetups);
@@ -492,7 +511,7 @@ export const LoadoutManager: React.FC = () => {
       <Stack spacing={2}>
         {/* ── Unified toolbar ─────────────────────────────────── */}
         <Paper
-          variant="outlined"
+          elevation={0}
           sx={{
             px: { xs: 1.5, md: 2 },
             py: { xs: 1.25, md: 1.5 },
@@ -500,6 +519,9 @@ export const LoadoutManager: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             gap: 1.5,
+            backgroundColor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+            backdropFilter: 'blur(12px)',
           }}
         >
           {/* Row 1: title + global actions */}
@@ -560,7 +582,7 @@ export const LoadoutManager: React.FC = () => {
           >
             <CharacterSelector />
 
-            <FormControl sx={{ minWidth: 180 }} size="small">
+            <FormControl sx={{ minWidth: 180, ...glassTextField }} size="small">
               <InputLabel id="trial-select-label">Trial / Activity</InputLabel>
               <Select
                 labelId="trial-select-label"
@@ -598,7 +620,26 @@ export const LoadoutManager: React.FC = () => {
               variant="scrollable"
               scrollButtons="auto"
               allowScrollButtonsMobile
-              sx={{ flex: 1, minHeight: 36, '& .MuiTab-root': { minHeight: 36, py: 0.5 } }}
+              sx={{
+                flex: 1,
+                minHeight: 36,
+                '& .MuiTab-root': {
+                  minHeight: 36,
+                  py: 0.5,
+                  borderRadius: '8px',
+                  marginRight: '4px',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+                  },
+                },
+                '& .MuiTabs-indicator': {
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
+                  borderRadius: '8px',
+                  height: '100%',
+                  zIndex: 0,
+                },
+              }}
             >
               {allPages.map((page, index) => (
                 <Tab key={`${page.name}-${index}`} label={page.name} value={index} />
@@ -637,15 +678,29 @@ export const LoadoutManager: React.FC = () => {
                   </InputAdornment>
                 ),
               }}
-              sx={{ '& .MuiInputBase-root': { height: 36 } }}
+              sx={{
+                ...glassTextField,
+                '& .MuiInputBase-root': { height: 36 },
+              }}
             />
             <Button
-              variant="contained"
+              variant="outlined"
               size="small"
               startIcon={<AddIcon />}
               onClick={handleAddSetup}
               disabled={!currentTrial}
-              sx={{ flexShrink: 0, whiteSpace: 'nowrap', height: 36 }}
+              sx={{
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
+                height: 36,
+                borderRadius: '20px',
+                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                '&:hover': {
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+                  borderColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+                },
+              }}
             >
               New
             </Button>
@@ -688,7 +743,7 @@ export const LoadoutManager: React.FC = () => {
                 />
               ) : (
                 <Paper
-                  variant="outlined"
+                  elevation={0}
                   sx={{
                     height: '100%',
                     minHeight: 200,
@@ -700,6 +755,8 @@ export const LoadoutManager: React.FC = () => {
                     px: 3,
                     py: 4,
                     color: 'text.secondary',
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+                    border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
                   }}
                 >
                   <Stack spacing={1} alignItems="center">
@@ -732,7 +789,14 @@ export const LoadoutManager: React.FC = () => {
         open={drawerOpen && Boolean(selectedSetup)}
         onClose={() => setDrawerOpen(false)}
         ModalProps={{ keepMounted: true }}
-        PaperProps={{ sx: { width: { xs: '100%', sm: 440 } } }}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 440 },
+            backdropFilter: 'blur(12px)',
+            backgroundColor: isDarkMode ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
+            borderLeft: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+          },
+        }}
       >
         {selectedSetup && (
           <SetupEditor
@@ -755,6 +819,16 @@ export const LoadoutManager: React.FC = () => {
         onClose={() => setOverflowAnchor(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '10px',
+              backdropFilter: 'blur(12px)',
+              backgroundColor: isDarkMode ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
+              border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+            },
+          },
+        }}
       >
         <MenuItem
           onClick={() => {
@@ -795,7 +869,18 @@ export const LoadoutManager: React.FC = () => {
       </Menu>
 
       {/* Rename page dialog */}
-      <Dialog open={renameDialogOpen} onClose={() => setRenameDialogOpen(false)}>
+      <Dialog
+        open={renameDialogOpen}
+        onClose={() => setRenameDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            backdropFilter: 'blur(20px)',
+            backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
+            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+          },
+        }}
+      >
         <DialogTitle>Rename Page</DialogTitle>
         <DialogContent>
           <TextField
@@ -816,7 +901,18 @@ export const LoadoutManager: React.FC = () => {
       </Dialog>
 
       {/* Clear all dialog */}
-      <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)}>
+      <Dialog
+        open={clearDialogOpen}
+        onClose={() => setClearDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            backdropFilter: 'blur(20px)',
+            backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
+            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+          },
+        }}
+      >
         <DialogTitle>Clear all loadouts?</DialogTitle>
         <DialogContent>
           <DialogContentText>
