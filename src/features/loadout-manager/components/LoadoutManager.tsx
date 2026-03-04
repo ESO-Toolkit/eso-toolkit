@@ -744,6 +744,7 @@ export const LoadoutManager: React.FC = () => {
               direction={{ xs: 'column', sm: 'row' }}
               spacing={1}
               alignItems={{ sm: 'center' }}
+              sx={{ minWidth: 0, flexShrink: 1 }}
             >
               <CharacterSelector />
 
@@ -760,7 +761,7 @@ export const LoadoutManager: React.FC = () => {
 
               {/* Page select + rename + add */}
               <Stack direction="row" spacing={0.5} alignItems="center">
-                <FormControl sx={{ minWidth: 140, ...glassTextField }} size="small">
+                <FormControl sx={{ minWidth: 120, ...glassTextField }} size="small">
                   <InputLabel id="page-select-label">Page</InputLabel>
                   <Select
                     labelId="page-select-label"

@@ -72,7 +72,7 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
 
   if (!hasCharacters) {
     return (
-      <FormControl size="small" sx={{ minWidth: 200, ...glassTextField }} disabled>
+      <FormControl size="small" sx={{ minWidth: 160, ...glassTextField }} disabled>
         <InputLabel id="character-select-label">Character</InputLabel>
         <Select labelId="character-select-label" value="" label="Character">
           <MenuItem value="" disabled>
@@ -87,7 +87,7 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
 
   return (
     <>
-      <FormControl size="small" sx={{ minWidth: 200, ...glassTextField }}>
+      <FormControl size="small" sx={{ minWidth: 160, ...glassTextField }}>
         <InputLabel id="character-select-label">Character</InputLabel>
         <Select
           labelId="character-select-label"
@@ -145,7 +145,7 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
 
       {/* Role selector for the currently selected character */}
       {currentCharacter && hasCharacters && (
-        <FormControl size="small" sx={{ minWidth: 100, ...glassTextField }}>
+        <FormControl size="small" sx={{ minWidth: 80, ...glassTextField }}>
           <InputLabel id="role-select-label">Role</InputLabel>
           <Select
             labelId="role-select-label"
