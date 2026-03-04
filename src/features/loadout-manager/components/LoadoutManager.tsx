@@ -566,6 +566,7 @@ export const LoadoutManager: React.FC = () => {
                     color: 'text.secondary',
                     fontSize: '0.65rem',
                     lineHeight: 1,
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   Gear Manager
@@ -591,15 +592,13 @@ export const LoadoutManager: React.FC = () => {
               </Stack>
             </Stack>
 
-            {/* Right: selectors + actions */}
+            {/* Right: trial + actions */}
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
               spacing={1}
               alignItems={{ sm: 'center' }}
               sx={{ flexShrink: 0 }}
             >
-              <CharacterSelector />
-
               <FormControl sx={{ minWidth: 180, ...glassTextField }} size="small">
                 <InputLabel id="trial-select-label">Trial / Activity</InputLabel>
                 <Select
@@ -743,8 +742,21 @@ export const LoadoutManager: React.FC = () => {
             }}
           />
 
-          {/* ── Row 2: page tabs · search · new ── */}
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>
+          {/* ── Row 2: character · tabs · search · new ── */}
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}>
+            <CharacterSelector />
+
+            {/* Hairline separator (desktop only) */}
+            <Box
+              sx={{
+                display: { xs: 'none', md: 'block' },
+                width: '1px',
+                height: 28,
+                flexShrink: 0,
+                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+              }}
+            />
+
             {/* Page tabs + page action micro-group */}
             <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flex: 1, minWidth: 0 }}>
               <Tabs
