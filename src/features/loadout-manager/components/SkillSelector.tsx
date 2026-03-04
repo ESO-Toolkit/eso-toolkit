@@ -6,16 +6,16 @@
 import { Close as CloseIcon } from '@mui/icons-material';
 import {
   Box,
-  Paper,
-  Typography,
-  Stack,
-  Tooltip,
-  IconButton,
-  TextField,
   Dialog,
-  DialogTitle,
   DialogContent,
+  DialogTitle,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+  useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import Autocomplete, { AutocompleteInputChangeReason } from '@mui/material/Autocomplete';
 import React, { useState, useMemo, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
@@ -37,11 +37,15 @@ interface SkillSelectorProps {
 // Skill slot indices (ESO uses 3-8 for abilities, with 8 being the ultimate)
 const SKILL_SLOTS = [3, 4, 5, 6, 7]; // Regular abilities
 const ULTIMATE_SLOT = 8;
+const ALL_SLOTS = [...SKILL_SLOTS, ULTIMATE_SLOT];
 
 // Minimum characters required to trigger search
 const MIN_SEARCH_LENGTH = 2;
 // Maximum number of search results to display
 const MAX_SEARCH_RESULTS = 100;
+
+const countFilledSlots = (bar: { [slotIndex: number]: number }): number =>
+  ALL_SLOTS.filter((slot) => bar[slot] !== undefined && bar[slot] > 0).length;
 
 export const SkillSelector: React.FC<SkillSelectorProps> = ({
   skills,
@@ -51,6 +55,8 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
 }): React.ReactElement => {
   const dispatch = useDispatch();
   const logger = useLogger('SkillSelector');
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
   // Log skill statistics on mount (dev mode only)
   React.useEffect(() => {
@@ -74,40 +80,84 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
   const handleSkillRemove = (barIndex: 0 | 1, slotIndex: number): void => {
     const updatedBar = { ...skills[barIndex] };
     delete updatedBar[slotIndex];
-    const updatedSkills = {
-      ...skills,
-      [barIndex]: updatedBar,
-    };
-    dispatch(updateSkills({ trialId, pageIndex, setupIndex, skills: updatedSkills }));
+    dispatch(
+      updateSkills({ trialId, pageIndex, setupIndex, skills: { ...skills, [barIndex]: updatedBar } }),
+    );
   };
 
-  return (
-    <Stack spacing={1.75} sx={{ width: '100%' }}>
-      {/* Front Bar */}
-      <Box>
-        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
-          Front Bar
-        </Typography>
-        <SkillBarRow
-          barIndex={0}
-          skills={skills[0] || {}}
-          onSkillChange={handleSkillChange}
-          onSkillRemove={handleSkillRemove}
-        />
-      </Box>
+  const barDefs: Array<{ label: string; barIndex: 0 | 1 }> = [
+    { label: 'Front Bar', barIndex: 0 },
+    { label: 'Back Bar', barIndex: 1 },
+  ];
 
-      {/* Back Bar */}
-      <Box>
-        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
-          Back Bar
-        </Typography>
-        <SkillBarRow
-          barIndex={1}
-          skills={skills[1] || {}}
-          onSkillChange={handleSkillChange}
-          onSkillRemove={handleSkillRemove}
-        />
-      </Box>
+  return (
+    <Stack spacing={2.5} sx={{ width: '100%' }}>
+      {barDefs.map(({ label, barIndex }, i) => (
+        <React.Fragment key={barIndex}>
+          {/* Gradient divider between bars */}
+          {i > 0 && (
+            <Box
+              sx={{
+                height: 1,
+                background: isDarkMode
+                  ? 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%)'
+                  : 'linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0) 100%)',
+              }}
+            />
+          )}
+
+          <Box>
+            {/* Bar label + filled slot count */}
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ mb: 1.25 }}
+            >
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 700,
+                  letterSpacing: 0.8,
+                  textTransform: 'uppercase',
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                    : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                {label}
+              </Typography>
+              <Box
+                sx={{
+                  px: 0.75,
+                  py: 0.15,
+                  borderRadius: '999px',
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontSize: '0.65rem', fontWeight: 600 }}
+                >
+                  {countFilledSlots(skills[barIndex] || {})} / 6
+                </Typography>
+              </Box>
+            </Stack>
+
+            <SkillBarRow
+              barIndex={barIndex}
+              skills={skills[barIndex] || {}}
+              onSkillChange={handleSkillChange}
+              onSkillRemove={handleSkillRemove}
+            />
+          </Box>
+        </React.Fragment>
+      ))}
     </Stack>
   );
 };
@@ -125,42 +175,53 @@ const SkillBarRow: React.FC<SkillBarRowProps> = ({
   onSkillChange,
   onSkillRemove,
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+
   return (
     <Stack
       direction="row"
-      spacing={0.9}
+      spacing={0.75}
       alignItems="center"
       sx={{
         flexWrap: { xs: 'wrap', md: 'nowrap' },
         rowGap: 0.75,
         justifyContent: { xs: 'center', md: 'flex-start' },
-        maxWidth: '100%',
-        flexShrink: 1,
-        minWidth: 0,
       }}
       useFlexGap
     >
-      {/* Regular Skill Slots (Slots 1-5) */}
+      {/* Regular Skill Slots */}
       {SKILL_SLOTS.map((slotIndex, idx) => (
         <SkillSlotIcon
           key={slotIndex}
           barIndex={barIndex}
           slotIndex={slotIndex}
-          slotLabel={`Slot ${idx + 1}`}
+          slotLabel={String(idx + 1)}
           currentSkillId={skills[slotIndex]}
           onSkillChange={onSkillChange}
           onSkillRemove={onSkillRemove}
         />
       ))}
 
-      {/* Divider before Ultimate */}
-      <Box sx={{ width: 2, height: 48, bgcolor: 'primary.main', borderRadius: 1, mx: 0.25 }} />
+      {/* Gradient vertical divider before Ultimate */}
+      <Box
+        sx={{
+          width: 1.5,
+          height: 40,
+          borderRadius: 1,
+          flexShrink: 0,
+          mx: 0.5,
+          background: isDarkMode
+            ? `linear-gradient(180deg, transparent 0%, ${alpha(theme.palette.primary.main, 0.55)} 50%, transparent 100%)`
+            : `linear-gradient(180deg, transparent 0%, ${alpha(theme.palette.primary.main, 0.35)} 50%, transparent 100%)`,
+        }}
+      />
 
       {/* Ultimate Slot */}
       <SkillSlotIcon
         barIndex={barIndex}
         slotIndex={ULTIMATE_SLOT}
-        slotLabel="Ultimate"
+        slotLabel="U"
         currentSkillId={skills[ULTIMATE_SLOT]}
         onSkillChange={onSkillChange}
         onSkillRemove={onSkillRemove}
@@ -192,13 +253,12 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
   const [isSelecting, setIsSelecting] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [searchResults, setSearchResults] = useState<SkillData[]>([]);
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
-  // Find current skill info
   const currentSkill = currentSkillId !== undefined ? getSkillById(currentSkillId) : undefined;
+  const iconSize = isUltimate ? 54 : 46;
 
-  const iconSize = isUltimate ? 52 : 44;
-
-  // Handle skill selection
   const handleSelect = useCallback(
     (skill: SkillData | null) => {
       if (!skill) {
@@ -213,20 +273,15 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
     [barIndex, slotIndex, onSkillChange, onSkillRemove],
   );
 
-  // Handle input change with search
   const handleInputChange = useCallback(
     (_event: React.SyntheticEvent, value: string, reason: AutocompleteInputChangeReason) => {
       setInputValue(value);
-
       if (reason === 'reset' || reason === 'clear') {
         setSearchResults([]);
         return;
       }
-
-      // Only search if we have enough characters
       if (value.trim().length >= MIN_SEARCH_LENGTH) {
-        const results = searchSkills(value, MAX_SEARCH_RESULTS);
-        setSearchResults(results);
+        setSearchResults(searchSkills(value, MAX_SEARCH_RESULTS));
       } else {
         setSearchResults([]);
       }
@@ -241,84 +296,142 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
     return 'No skills match your search';
   }, [inputValue]);
 
+  // Border colors
+  const filledBorder = isUltimate
+    ? alpha(theme.palette.warning.main, isDarkMode ? 0.5 : 0.45)
+    : alpha(theme.palette.divider, isDarkMode ? 0.9 : 0.7);
+  const emptyBorder = isUltimate
+    ? alpha(theme.palette.warning.main, isDarkMode ? 0.2 : 0.15)
+    : alpha(theme.palette.divider, isDarkMode ? 0.4 : 0.35);
+
   return (
     <Box sx={{ position: 'relative', display: 'inline-block' }}>
       <Tooltip
         title={
           currentSkill
-            ? `${currentSkill.name} (${currentSkill.category})`
-            : `${slotLabel} - Click to select skill`
+            ? `${currentSkill.name}${currentSkill.category ? ` · ${currentSkill.category}` : ''}`
+            : `Slot ${slotLabel}${isUltimate ? ' (Ultimate)' : ''} — click to assign`
         }
         arrow
       >
-        <Paper
-          elevation={3}
+        <Box
+          onClick={() => setIsSelecting(true)}
           sx={{
             width: iconSize,
             height: iconSize,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            borderRadius: isUltimate ? '12px' : '10px',
             cursor: 'pointer',
             position: 'relative',
             overflow: 'hidden',
-            border: isUltimate ? 2 : 1,
-            borderColor: isUltimate ? 'secondary.main' : 'divider',
-            bgcolor: currentSkill ? 'background.paper' : 'action.hover',
-            transition: 'all 0.2s',
+            border: `${isUltimate ? 2 : 1}px solid ${currentSkill ? filledBorder : emptyBorder}`,
+            backgroundColor: currentSkill
+              ? isDarkMode
+                ? 'rgba(255,255,255,0.05)'
+                : 'rgba(0,0,0,0.03)'
+              : isDarkMode
+                ? 'rgba(255,255,255,0.02)'
+                : 'rgba(0,0,0,0.01)',
+            transition: 'all 0.2s ease',
             '&:hover': {
-              transform: 'scale(1.05)',
-              borderColor: isUltimate ? 'secondary.light' : 'primary.main',
+              transform: 'scale(1.07)',
+              borderColor: isUltimate
+                ? alpha(theme.palette.warning.main, 0.75)
+                : alpha(theme.palette.primary.main, 0.6),
+              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+              boxShadow: isUltimate
+                ? `0 0 14px ${alpha(theme.palette.warning.main, 0.3)}`
+                : `0 0 10px ${alpha(theme.palette.primary.main, 0.2)}`,
             },
+            // Reveal clear overlay on hover
+            '&:hover .skill-clear-overlay': { opacity: 1 },
           }}
-          onClick={() => setIsSelecting(true)}
         >
+          {/* Skill icon or empty slot placeholder */}
           {currentSkill?.icon ? (
             <Box
               component="img"
               src={`https://eso-hub.com/storage/icons/${currentSkill.icon}.png`}
               alt={currentSkill.name}
-              sx={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-              }}
+              sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
               onError={(e) => {
-                // Show placeholder if image fails
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
           ) : (
-            <Typography variant="caption" color="text.secondary" align="center" sx={{ px: 0.5 }}>
-              {slotLabel}
-            </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                gap: 0.3,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: isUltimate ? '0.7rem' : '0.65rem',
+                  fontWeight: 700,
+                  color: isDarkMode ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)',
+                  lineHeight: 1,
+                  letterSpacing: 0.2,
+                }}
+              >
+                {slotLabel}
+              </Typography>
+              <Box
+                sx={{
+                  width: '38%',
+                  height: 1,
+                  borderRadius: 1,
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                }}
+              />
+            </Box>
           )}
-        </Paper>
+
+          {/* Clear overlay — hover-reveal, only shown for filled slots */}
+          {currentSkill && (
+            <Box
+              className="skill-clear-overlay"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSkillRemove(barIndex, slotIndex);
+              }}
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(0,0,0,0.62)',
+                backdropFilter: 'blur(2px)',
+                opacity: 0,
+                transition: 'opacity 0.15s ease',
+                cursor: 'pointer',
+              }}
+            >
+              <CloseIcon sx={{ fontSize: isUltimate ? 22 : 18, color: 'rgba(255,255,255,0.9)' }} />
+            </Box>
+          )}
+        </Box>
       </Tooltip>
 
-      {/* Remove button */}
-      {currentSkill && (
-        <IconButton
-          size="small"
+      {/* Ultimate accent dot */}
+      {isUltimate && (
+        <Box
           sx={{
             position: 'absolute',
-            top: -4,
-            right: -4,
-            bgcolor: 'error.main',
-            color: 'white',
-            width: 18,
-            height: 18,
-            '&:hover': {
-              bgcolor: 'error.dark',
-            },
+            bottom: -4,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 4,
+            height: 4,
+            borderRadius: '50%',
+            backgroundColor: alpha(theme.palette.warning.main, isDarkMode ? 0.7 : 0.6),
+            boxShadow: `0 0 6px ${alpha(theme.palette.warning.main, isDarkMode ? 0.5 : 0.4)}`,
           }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSkillRemove(barIndex, slotIndex);
-          }}
-        >
-          <CloseIcon sx={{ fontSize: 12 }} />
-        </IconButton>
+        />
       )}
 
       {/* Selection Dialog */}
@@ -331,9 +444,27 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
         }}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            backdropFilter: 'blur(20px)',
+            backgroundColor: isDarkMode ? 'rgba(15,15,25,0.92)' : 'rgba(255,255,255,0.96)',
+            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+          },
+        }}
       >
-        <DialogTitle>
-          {slotLabel} - {isUltimate ? 'Ultimate' : 'Ability'}
+        <DialogTitle
+          sx={{
+            background: isDarkMode
+              ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+              : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            fontWeight: 700,
+          }}
+        >
+          {isUltimate ? 'Assign Ultimate' : `Assign Skill · Slot ${slotLabel}`}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1 }}>
@@ -355,25 +486,69 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
                   placeholder={`Type at least ${MIN_SEARCH_LENGTH} characters...`}
                   autoFocus
                   fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+                      backdropFilter: 'blur(12px)',
+                    },
+                  }}
                 />
               )}
               renderOption={(props, option) => {
                 const { key, ...optionProps } = props;
                 return (
-                  <Box component="li" key={key} {...optionProps}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      {option.icon && (
+                  <Box
+                    component="li"
+                    key={key}
+                    {...optionProps}
+                    sx={{ py: '7px !important', px: '10px !important' }}
+                  >
+                    <Stack direction="row" spacing={1.25} alignItems="center">
+                      {option.icon ? (
                         <Box
                           component="img"
                           src={`https://eso-hub.com/storage/icons/${option.icon}.png`}
                           alt={option.name}
-                          sx={{ width: 24, height: 24, borderRadius: 0.5 }}
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: '6px',
+                            flexShrink: 0,
+                            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                          }}
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
+                      ) : (
+                        <Box
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: '6px',
+                            flexShrink: 0,
+                            backgroundColor: isDarkMode
+                              ? 'rgba(255,255,255,0.06)'
+                              : 'rgba(0,0,0,0.04)',
+                            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+                          }}
+                        />
                       )}
-                      <Typography>{option.name}</Typography>
+                      <Stack spacing={0.1}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
+                          {option.name}
+                        </Typography>
+                        {option.category && (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ lineHeight: 1.2 }}
+                          >
+                            {option.category}
+                            {option.type ? ` · ${option.type}` : ''}
+                          </Typography>
+                        )}
+                      </Stack>
                     </Stack>
                   </Box>
                 );
