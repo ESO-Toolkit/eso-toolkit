@@ -66,8 +66,9 @@ import {
   DialogActions,
   Avatar,
   Tooltip,
+  SxProps,
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, Theme } from '@mui/material/styles';
 import React, { useState, useCallback, useRef } from 'react';
 
 import discordIcon from '../assets/discord-icon.svg';
@@ -872,26 +873,32 @@ export const RosterBuilderPage: React.FC = () => {
     },
   };
 
-  const sectionAccordionSx = {
+  const getSectionAccordionSx = (color: string): SxProps<Theme> => ({
     backgroundColor: 'transparent',
     boxShadow: 'none',
-    border: 'none',
+    border: '1px solid transparent',
+    borderRadius: '12px !important',
+    transition: 'background-color 0.2s ease, border-color 0.2s ease',
+    '&.Mui-expanded': {
+      backgroundColor: isDarkMode ? `${color}08` : `${color}04`,
+      borderColor: `${color}15`,
+    },
     '&:before': { display: 'none' },
     '& .MuiAccordionSummary-root': {
-      px: 0,
-      minHeight: 40,
-      '&.Mui-expanded': { minHeight: 40 },
+      px: 1,
+      minHeight: 44,
+      '&.Mui-expanded': { minHeight: 44 },
     },
     '& .MuiAccordionSummary-content': {
       my: 0.5,
       '&.Mui-expanded': { my: 0.5 },
     },
     '& .MuiAccordionDetails-root': {
-      px: 0,
-      pt: 1,
-      pb: 0,
+      px: 1,
+      pt: 1.5,
+      pb: 1,
     },
-  };
+  });
 
   const [roster, setRoster] = useState<RaidRoster>(createDefaultRoster());
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
@@ -2293,7 +2300,7 @@ export const RosterBuilderPage: React.FC = () => {
                   groups: !prev.groups,
                 }))
               }
-              sx={sectionAccordionSx}
+              sx={getSectionAccordionSx('#9e9e9e')}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
@@ -2451,7 +2458,7 @@ export const RosterBuilderPage: React.FC = () => {
                   tanks: !prev.tanks,
                 }))
               }
-              sx={sectionAccordionSx}
+              sx={getSectionAccordionSx(roleColors.tank)}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
@@ -2549,7 +2556,7 @@ export const RosterBuilderPage: React.FC = () => {
                   healers: !prev.healers,
                 }))
               }
-              sx={sectionAccordionSx}
+              sx={getSectionAccordionSx(roleColors.healer)}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
@@ -2652,7 +2659,7 @@ export const RosterBuilderPage: React.FC = () => {
                   dps: !prev.dps,
                 }))
               }
-              sx={sectionAccordionSx}
+              sx={getSectionAccordionSx(roleColors.dps)}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
@@ -3199,32 +3206,61 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
     <Card
       variant="outlined"
       sx={{
-        borderRadius: '10px',
-        backgroundColor: tankIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
-        border: tankIsDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+        borderRadius: '12px',
+        backgroundColor: tankIsDark ? `${tankRoleColors.tank}0a` : `${tankRoleColors.tank}06`,
+        border: tankIsDark
+          ? `1px solid ${tankRoleColors.tank}20`
+          : `1px solid ${tankRoleColors.tank}18`,
         borderLeft: `3px solid ${tankRoleColors.tank}`,
-        transition: 'border-color 0.15s ease',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          borderColor: tankIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          transform: 'translateY(-1px)',
+          borderColor: `${tankRoleColors.tank}35`,
           borderLeftColor: tankRoleColors.tank,
+          boxShadow: `0 4px 16px ${tankRoleColors.tank}18, 0 2px 8px rgba(0,0,0,0.1)`,
         },
       }}
     >
-      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
-          <ShieldIcon sx={{ fontSize: '1rem', color: tankRoleColors.tank }} />
-          <Typography
-            variant="subtitle1"
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            mb: 1.5,
+            pb: 1,
+            borderBottom: `1px solid ${tankRoleColors.tank}25`,
+          }}
+        >
+          <Box
             sx={{
-              fontFamily: '"Space Grotesk", sans-serif',
-              fontWeight: 700,
-              color: tankRoleColors.tank,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
+              px: 0.875,
+              py: 0.4,
+              borderRadius: '6px',
+              backgroundColor: `${tankRoleColors.tank}18`,
+              border: `1px solid ${tankRoleColors.tank}35`,
             }}
           >
-            Tank {tankNum}
-          </Typography>
+            <ShieldIcon sx={{ fontSize: '0.85rem', color: tankRoleColors.tank }} />
+            <Typography
+              sx={{
+                fontFamily: '"Space Grotesk", sans-serif',
+                fontWeight: 700,
+                fontSize: '0.65rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                color: tankRoleColors.tank,
+                lineHeight: 1,
+              }}
+            >
+              Tank {tankNum}
+            </Typography>
+          </Box>
         </Box>
-        <Stack spacing={1.5}>
+        <Stack spacing={2}>
           {/* Essential Fields - Always Visible */}
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
@@ -3263,9 +3299,20 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
           </Box>
 
           {/* Gear Sets */}
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-            Configure gear sets (5-piece sets + 2-piece monster/mythic)
-          </Typography>
+          <Divider textAlign="left">
+            <Chip
+              label="Gear Sets"
+              size="small"
+              sx={{
+                borderRadius: '6px',
+                backgroundColor: tankIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                border: tankIsDark
+                  ? '1px solid rgba(255,255,255,0.1)'
+                  : '1px solid rgba(0,0,0,0.1)',
+                fontWeight: 500,
+              }}
+            />
+          </Divider>
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
@@ -3371,6 +3418,21 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
             </Box>
           </Box>
 
+          <Divider textAlign="left">
+            <Chip
+              label="Ultimate"
+              size="small"
+              sx={{
+                borderRadius: '6px',
+                backgroundColor: tankIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                border: tankIsDark
+                  ? '1px solid rgba(255,255,255,0.1)'
+                  : '1px solid rgba(0,0,0,0.1)',
+                fontWeight: 500,
+              }}
+            />
+          </Divider>
+
           <Autocomplete
             freeSolo
             size="small"
@@ -3431,27 +3493,32 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
           {/* Advanced Options - Collapsible */}
           <Accordion
             elevation={0}
+            disableGutters
             sx={{
+              mt: 1,
               borderRadius: '10px !important',
-              backgroundColor: tankIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+              backgroundColor: tankIsDark ? `${tankRoleColors.tank}06` : `${tankRoleColors.tank}03`,
               border: tankIsDark
-                ? '1px solid rgba(255,255,255,0.06)'
-                : '1px solid rgba(0,0,0,0.06)',
+                ? `1px solid ${tankRoleColors.tank}15`
+                : `1px solid ${tankRoleColors.tank}10`,
               '&:before': { display: 'none' },
             }}
           >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              sx={{ px: 1.5, minHeight: 40, '&.Mui-expanded': { minHeight: 40 } }}
+            >
               <Typography
                 variant="body2"
                 sx={{
-                  color: tankIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                  color: tankRoleColors.tank,
                   fontWeight: 500,
                 }}
               >
                 Advanced Options
               </Typography>
             </AccordionSummary>
-            <AccordionDetails>
+            <AccordionDetails sx={{ px: 1.5, pt: 0.5, pb: 1.5 }}>
               <Stack spacing={1.5}>
                 {/* Role Label and Notes */}
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
@@ -3787,32 +3854,63 @@ const HealerCard: React.FC<HealerCardProps> = ({
     <Card
       variant="outlined"
       sx={{
-        borderRadius: '10px',
-        backgroundColor: healerIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
-        border: healerIsDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+        borderRadius: '12px',
+        backgroundColor: healerIsDark
+          ? `${healerRoleColors.healer}0a`
+          : `${healerRoleColors.healer}06`,
+        border: healerIsDark
+          ? `1px solid ${healerRoleColors.healer}20`
+          : `1px solid ${healerRoleColors.healer}18`,
         borderLeft: `3px solid ${healerRoleColors.healer}`,
-        transition: 'border-color 0.15s ease',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          borderColor: healerIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          transform: 'translateY(-1px)',
+          borderColor: `${healerRoleColors.healer}35`,
           borderLeftColor: healerRoleColors.healer,
+          boxShadow: `0 4px 16px ${healerRoleColors.healer}18, 0 2px 8px rgba(0,0,0,0.1)`,
         },
       }}
     >
-      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
-          <FavoriteIcon sx={{ fontSize: '1rem', color: healerRoleColors.healer }} />
-          <Typography
-            variant="subtitle1"
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            mb: 1.5,
+            pb: 1,
+            borderBottom: `1px solid ${healerRoleColors.healer}25`,
+          }}
+        >
+          <Box
             sx={{
-              fontFamily: '"Space Grotesk", sans-serif',
-              fontWeight: 700,
-              color: healerRoleColors.healer,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
+              px: 0.875,
+              py: 0.4,
+              borderRadius: '6px',
+              backgroundColor: `${healerRoleColors.healer}18`,
+              border: `1px solid ${healerRoleColors.healer}35`,
             }}
           >
-            Healer {healerNum}
-          </Typography>
+            <FavoriteIcon sx={{ fontSize: '0.85rem', color: healerRoleColors.healer }} />
+            <Typography
+              sx={{
+                fontFamily: '"Space Grotesk", sans-serif',
+                fontWeight: 700,
+                fontSize: '0.65rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                color: healerRoleColors.healer,
+                lineHeight: 1,
+              }}
+            >
+              Healer {healerNum}
+            </Typography>
+          </Box>
         </Box>
-        <Stack spacing={1.5}>
+        <Stack spacing={2}>
           {/* Essential Fields - Always Visible */}
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
@@ -3844,9 +3942,20 @@ const HealerCard: React.FC<HealerCardProps> = ({
           </Box>
 
           {/* Gear Sets */}
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-            Configure gear sets (5-piece sets + 2-piece monster/mythic)
-          </Typography>
+          <Divider textAlign="left">
+            <Chip
+              label="Gear Sets"
+              size="small"
+              sx={{
+                borderRadius: '6px',
+                backgroundColor: healerIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                border: healerIsDark
+                  ? '1px solid rgba(255,255,255,0.1)'
+                  : '1px solid rgba(0,0,0,0.1)',
+                fontWeight: 500,
+              }}
+            />
+          </Divider>
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
               <Autocomplete
@@ -3979,6 +4088,21 @@ const HealerCard: React.FC<HealerCardProps> = ({
             </Select>
           </FormControl>
 
+          <Divider textAlign="left">
+            <Chip
+              label="Ultimate"
+              size="small"
+              sx={{
+                borderRadius: '6px',
+                backgroundColor: healerIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                border: healerIsDark
+                  ? '1px solid rgba(255,255,255,0.1)'
+                  : '1px solid rgba(0,0,0,0.1)',
+                fontWeight: 500,
+              }}
+            />
+          </Divider>
+
           <Autocomplete
             freeSolo
             size="small"
@@ -4039,27 +4163,34 @@ const HealerCard: React.FC<HealerCardProps> = ({
           {/* Advanced Options - Collapsible */}
           <Accordion
             elevation={0}
+            disableGutters
             sx={{
+              mt: 1,
               borderRadius: '10px !important',
-              backgroundColor: healerIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+              backgroundColor: healerIsDark
+                ? `${healerRoleColors.healer}06`
+                : `${healerRoleColors.healer}03`,
               border: healerIsDark
-                ? '1px solid rgba(255,255,255,0.06)'
-                : '1px solid rgba(0,0,0,0.06)',
+                ? `1px solid ${healerRoleColors.healer}15`
+                : `1px solid ${healerRoleColors.healer}10`,
               '&:before': { display: 'none' },
             }}
           >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              sx={{ px: 1.5, minHeight: 40, '&.Mui-expanded': { minHeight: 40 } }}
+            >
               <Typography
                 variant="body2"
                 sx={{
-                  color: healerIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                  color: healerRoleColors.healer,
                   fontWeight: 500,
                 }}
               >
                 Advanced Options
               </Typography>
             </AccordionSummary>
-            <AccordionDetails>
+            <AccordionDetails sx={{ px: 1.5, pt: 0.5, pb: 1.5 }}>
               <Stack spacing={1.5}>
                 {/* Role Label and Notes */}
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
@@ -4376,20 +4507,33 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
       style={style}
       variant="outlined"
       sx={{
-        borderRadius: '10px',
-        backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
-        border: dpsIsDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+        borderRadius: '12px',
+        backgroundColor: dpsIsDark ? `${dpsRoleColors.dps}0a` : `${dpsRoleColors.dps}06`,
+        border: dpsIsDark ? `1px solid ${dpsRoleColors.dps}20` : `1px solid ${dpsRoleColors.dps}18`,
         borderLeft: `3px solid ${dpsRoleColors.dps}`,
         cursor: isDragging ? 'grabbing' : 'default',
-        transition: 'border-color 0.15s ease',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          borderColor: dpsIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          transform: isDragging ? 'none' : 'translateY(-1px)',
+          borderColor: `${dpsRoleColors.dps}35`,
           borderLeftColor: dpsRoleColors.dps,
+          boxShadow: isDragging
+            ? 'none'
+            : `0 4px 16px ${dpsRoleColors.dps}18, 0 2px 8px rgba(0,0,0,0.1)`,
         },
       }}
     >
-      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            mb: 1.5,
+            pb: 1,
+            borderBottom: `1px solid ${dpsRoleColors.dps}25`,
+          }}
+        >
           <IconButton
             size="small"
             {...attributes}
@@ -4404,16 +4548,33 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
           >
             <DragIndicatorIcon />
           </IconButton>
-          <Typography
-            variant="subtitle1"
+          <Box
             sx={{
-              fontFamily: '"Space Grotesk", sans-serif',
-              fontWeight: 700,
-              color: dpsRoleColors.dps,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
+              px: 0.875,
+              py: 0.4,
+              borderRadius: '6px',
+              backgroundColor: `${dpsRoleColors.dps}18`,
+              border: `1px solid ${dpsRoleColors.dps}35`,
             }}
           >
-            DPS {slot.slotNumber}
-          </Typography>
+            <AutoAwesomeIcon sx={{ fontSize: '0.85rem', color: dpsRoleColors.dps }} />
+            <Typography
+              sx={{
+                fontFamily: '"Space Grotesk", sans-serif',
+                fontWeight: 700,
+                fontSize: '0.65rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                color: dpsRoleColors.dps,
+                lineHeight: 1,
+              }}
+            >
+              DPS {slot.slotNumber}
+            </Typography>
+          </Box>
           {slot.jailDDType && (
             <Chip
               label={getJailDDTitle(slot.jailDDType)}
@@ -4429,7 +4590,7 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
             />
           )}
         </Box>
-        <Stack spacing={1.5}>
+        <Stack spacing={2}>
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             <Box sx={{ flex: '1 1 40%', minWidth: 180 }}>
               <TextField
