@@ -30,6 +30,7 @@ import {
   Stack,
   Tooltip,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -76,6 +77,8 @@ export const SetupList: React.FC<SetupListProps> = ({
   onDeleteSetup,
   onCopySetup,
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const normalizedFilter = filterText.trim().toLowerCase();
   const filtered = useMemo(() => {
     return setups
@@ -96,30 +99,28 @@ export const SetupList: React.FC<SetupListProps> = ({
 
   return (
     <Paper
-      variant="outlined"
+      elevation={0}
       sx={{
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 2,
         overflow: 'hidden',
         width: '100%',
+        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+        border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
       }}
     >
       {/* Compact header */}
       <Box
-        sx={(theme) => ({
+        sx={{
           px: 1.5,
           py: 0.75,
-          borderBottom: 1,
-          borderColor: 'divider',
-          backgroundColor: alpha(
-            theme.palette.background.paper,
-            theme.palette.mode === 'dark' ? 0.6 : 0.9,
-          ),
+          borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-        })}
+        }}
       >
         <Typography
           variant="caption"
@@ -299,7 +300,20 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
         onClose={handleMenuClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { sx: { minWidth: 160 } } }}
+        slotProps={{
+          paper: {
+            sx: (theme) => ({
+              minWidth: 160,
+              borderRadius: '10px',
+              backdropFilter: 'blur(12px)',
+              backgroundColor:
+                theme.palette.mode === 'dark' ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
+              border: `1px solid ${
+                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
+              }`,
+            }),
+          },
+        }}
       >
         <MenuItem
           onClick={() => {
@@ -456,6 +470,8 @@ const AbilityIcon: React.FC<{ abilityId?: number; size: number; highlight?: bool
 
 const ProgressBadge: React.FC<{ section: SetupProgressSection }> = ({ section }) => {
   const label = formatProgressSection(section);
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
   return (
     <Tooltip title={label} arrow>
@@ -480,7 +496,8 @@ const ProgressBadge: React.FC<{ section: SetupProgressSection }> = ({ section })
             letterSpacing: 0.3,
             textTransform: 'uppercase',
             color,
-            backgroundColor: alpha(color, theme.palette.mode === 'dark' ? 0.22 : 0.1),
+            backgroundColor: alpha(color, isDarkMode ? 0.22 : 0.1),
+            border: `1px solid ${alpha(color, isDarkMode ? 0.3 : 0.2)}`,
           };
         }}
       >
