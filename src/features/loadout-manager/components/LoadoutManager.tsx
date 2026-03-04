@@ -733,75 +733,104 @@ export const LoadoutManager: React.FC = () => {
           />
 
           {/* ── Row 2: character · page · search · new ── */}
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}>
-            <CharacterSelector />
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={1}
+            alignItems={{ md: 'center' }}
+            justifyContent={{ md: 'space-between' }}
+          >
+            {/* Left cluster: character selectors + page controls */}
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              alignItems={{ sm: 'center' }}
+            >
+              <CharacterSelector />
 
-            {/* Hairline separator (desktop only) */}
-            <Box
-              sx={{
-                display: { xs: 'none', md: 'block' },
-                width: '1px',
-                height: 28,
-                flexShrink: 0,
-                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
-              }}
-            />
-
-            {/* Page select + rename + add */}
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <FormControl sx={{ minWidth: 140, ...glassTextField }} size="small">
-                <InputLabel id="page-select-label">Page</InputLabel>
-                <Select
-                  labelId="page-select-label"
-                  value={Math.min(currentPage, Math.max(allPages.length - 1, 0))}
-                  label="Page"
-                  onChange={(e) => {
-                    const value = e.target.value as number;
-                    dispatch(setCurrentPage(value));
-                    setSelectedSetupIndex(null);
-                    if (isMdDown) setDrawerOpen(false);
-                  }}
-                  disabled={allPages.length === 0}
-                  MenuProps={{
-                    slotProps: {
-                      paper: {
-                        sx: {
-                          borderRadius: '10px',
-                          backdropFilter: 'blur(12px)',
-                          backgroundColor: isDarkMode
-                            ? 'rgba(20,20,30,0.92)'
-                            : 'rgba(255,255,255,0.94)',
-                          border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
-                        },
-                      },
-                    },
-                  }}
-                >
-                  {allPages.map((page, index) => (
-                    <MenuItem key={`${page.name}-${index}`} value={index}>
-                      {page.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
+              {/* Hairline separator */}
               <Box
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.25,
-                  p: '2px',
-                  borderRadius: '8px',
-                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+                  display: { xs: 'none', sm: 'block' },
+                  width: '1px',
+                  height: 28,
+                  flexShrink: 0,
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
                 }}
-              >
-                <Tooltip title="Rename page" arrow>
-                  <span>
+              />
+
+              {/* Page select + rename + add */}
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <FormControl sx={{ minWidth: 140, ...glassTextField }} size="small">
+                  <InputLabel id="page-select-label">Page</InputLabel>
+                  <Select
+                    labelId="page-select-label"
+                    value={Math.min(currentPage, Math.max(allPages.length - 1, 0))}
+                    label="Page"
+                    onChange={(e) => {
+                      const value = e.target.value as number;
+                      dispatch(setCurrentPage(value));
+                      setSelectedSetupIndex(null);
+                      if (isMdDown) setDrawerOpen(false);
+                    }}
+                    disabled={allPages.length === 0}
+                    MenuProps={{
+                      slotProps: {
+                        paper: {
+                          sx: {
+                            borderRadius: '10px',
+                            backdropFilter: 'blur(12px)',
+                            backgroundColor: isDarkMode
+                              ? 'rgba(20,20,30,0.92)'
+                              : 'rgba(255,255,255,0.94)',
+                            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                          },
+                        },
+                      },
+                    }}
+                  >
+                    {allPages.map((page, index) => (
+                      <MenuItem key={`${page.name}-${index}`} value={index}>
+                        {page.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.25,
+                    p: '2px',
+                    borderRadius: '8px',
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                    border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+                  }}
+                >
+                  <Tooltip title="Rename page" arrow>
+                    <span>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenRename(currentPage)}
+                        disabled={renameDisabled}
+                        sx={{
+                          borderRadius: '6px',
+                          '&:hover': {
+                            backgroundColor: isDarkMode
+                              ? 'rgba(255,255,255,0.08)'
+                              : 'rgba(0,0,0,0.05)',
+                          },
+                        }}
+                      >
+                        <Edit sx={{ fontSize: 15 }} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Tooltip title="Add page" arrow>
                     <IconButton
                       size="small"
-                      onClick={() => handleOpenRename(currentPage)}
-                      disabled={renameDisabled}
+                      color="primary"
+                      onClick={handleAddPage}
                       sx={{
                         borderRadius: '6px',
                         '&:hover': {
@@ -811,32 +840,14 @@ export const LoadoutManager: React.FC = () => {
                         },
                       }}
                     >
-                      <Edit sx={{ fontSize: 15 }} />
+                      <AddIcon sx={{ fontSize: 15 }} />
                     </IconButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title="Add page" arrow>
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={handleAddPage}
-                    sx={{
-                      borderRadius: '6px',
-                      '&:hover': {
-                        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                      },
-                    }}
-                  >
-                    <AddIcon sx={{ fontSize: 15 }} />
-                  </IconButton>
-                </Tooltip>
-              </Box>
+                  </Tooltip>
+                </Box>
+              </Stack>
             </Stack>
 
-            {/* Flex spacer — pushes search+new to the right on desktop */}
-            <Box sx={{ flex: 1, display: { xs: 'none', md: 'block' } }} />
-
-            {/* Search pill + New button */}
+            {/* Right cluster: search + new */}
             <Stack direction="row" spacing={0.75} alignItems="center" sx={{ flexShrink: 0 }}>
               <TextField
                 value={searchTerm}
@@ -851,7 +862,7 @@ export const LoadoutManager: React.FC = () => {
                   ),
                 }}
                 sx={{
-                  width: { xs: '100%', sm: 200 },
+                  width: { xs: '100%', sm: 180 },
                   '& .MuiOutlinedInput-root': {
                     ...glassTextField['& .MuiOutlinedInput-root'],
                     height: 34,
