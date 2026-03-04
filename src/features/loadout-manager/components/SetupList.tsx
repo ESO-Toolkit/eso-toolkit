@@ -138,9 +138,23 @@ export const SetupList: React.FC<SetupListProps> = ({
         >
           Setups
         </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {filtered.length}/{setups.length}
-        </Typography>
+        <Box
+          sx={{
+            px: 0.75,
+            py: 0.15,
+            borderRadius: '999px',
+            backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+          }}
+        >
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ fontSize: '0.65rem', fontWeight: 600 }}
+          >
+            {filtered.length}/{setups.length}
+          </Typography>
+        </Box>
       </Box>
 
       {/* List */}
@@ -165,7 +179,15 @@ export const SetupList: React.FC<SetupListProps> = ({
                 onDelete={onDeleteSetup}
                 onCopy={onCopySetup}
               />
-              {i < filtered.length - 1 && <Divider />}
+              {i < filtered.length - 1 && (
+                <Box
+                  sx={{
+                    height: '1px',
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+                    mx: 1.5,
+                  }}
+                />
+              )}
             </React.Fragment>
           ))
         )}
@@ -235,9 +257,6 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
           borderLeft: selected
             ? `3px solid ${theme.palette.primary.main}`
             : '3px solid transparent',
-          boxShadow: selected
-            ? `inset 3px 0 0 0 ${theme.palette.primary.main}, inset 0 1px 0 0 ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`
-            : 'none',
           '&:hover': {
             backgroundColor: selected
               ? isDarkMode
@@ -307,7 +326,16 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
         <IconButton
           size="small"
           onClick={handleMenuOpen}
-          sx={{ flexShrink: 0, opacity: 0.6, '&:hover': { opacity: 1 } }}
+          sx={{
+            flexShrink: 0,
+            opacity: 0.5,
+            borderRadius: '8px',
+            transition: 'all 0.15s ease',
+            '&:hover': {
+              opacity: 1,
+              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+            },
+          }}
         >
           <MoreVertIcon fontSize="small" />
         </IconButton>
@@ -383,8 +411,11 @@ const BadgeBox: React.FC<{ selected: boolean; children: React.ReactNode }> = ({
     sx={(theme) => ({
       width: 30,
       height: 30,
-      borderRadius: 1,
+      borderRadius: '8px',
       display: 'flex',
+      border: selected
+        ? 'none'
+        : `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.2)}`,
       alignItems: 'center',
       justifyContent: 'center',
       fontWeight: 700,
@@ -459,7 +490,7 @@ const AbilityIcon: React.FC<{ abilityId?: number; size: number; highlight?: bool
         sx={(theme) => ({
           width: size,
           height: size,
-          borderRadius: 1,
+          borderRadius: '6px',
           border: `1px solid ${highlight ? theme.palette.warning.main : theme.palette.divider}`,
           overflow: 'hidden',
           display: 'flex',
@@ -479,9 +510,15 @@ const AbilityIcon: React.FC<{ abilityId?: number; size: number; highlight?: bool
             onError={() => setLoadFailed(true)}
           />
         ) : (
-          <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.55rem' }}>
-            --
-          </Typography>
+          <Box
+            sx={{
+              width: '55%',
+              height: 1.5,
+              borderRadius: 1,
+              backgroundColor: 'divider',
+              opacity: 0.35,
+            }}
+          />
         )}
       </Box>
     </Tooltip>
@@ -509,12 +546,11 @@ const ProgressBadge: React.FC<{ section: SetupProgressSection }> = ({ section })
             alignItems: 'center',
             gap: 0.25,
             px: 0.5,
-            py: 0.15,
+            py: 0.25,
             borderRadius: 999,
             fontSize: '0.6rem',
             fontWeight: 600,
             letterSpacing: 0.3,
-            textTransform: 'uppercase',
             color,
             backgroundColor: alpha(color, isDarkMode ? 0.22 : 0.1),
             border: `1px solid ${alpha(color, isDarkMode ? 0.3 : 0.2)}`,

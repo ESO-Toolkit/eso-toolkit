@@ -304,16 +304,27 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
               )}
             </Stack>
 
-            <Stack direction="row" spacing={0.25} sx={{ flexShrink: 0 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                flexShrink: 0,
+                borderRadius: '10px',
+                border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                overflow: 'hidden',
+              }}
+            >
               <Tooltip title="Copy to clipboard" arrow>
                 <IconButton
                   size="small"
                   onClick={handleCopy}
                   color="primary"
                   sx={{
+                    borderRadius: 0,
+                    px: 0.75,
                     '&:hover': {
                       backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                      borderRadius: '8px',
                     },
                   }}
                 >
@@ -326,45 +337,64 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
                   onClick={handlePaste}
                   color="secondary"
                   sx={{
+                    borderRadius: 0,
+                    px: 0.75,
                     '&:hover': {
                       backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                      borderRadius: '8px',
                     },
                   }}
                 >
                   <ContentPaste fontSize="small" />
                 </IconButton>
               </Tooltip>
+              <Box
+                sx={{
+                  width: '1px',
+                  height: 20,
+                  flexShrink: 0,
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                }}
+              />
               <Tooltip title="Duplicate setup" arrow>
                 <IconButton
                   size="small"
                   onClick={handleDuplicate}
                   sx={{
+                    borderRadius: 0,
+                    px: 0.75,
                     '&:hover': {
                       backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                      borderRadius: '8px',
                     },
                   }}
                 >
                   <FileCopy fontSize="small" />
                 </IconButton>
               </Tooltip>
+              <Box
+                sx={{
+                  width: '1px',
+                  height: 20,
+                  flexShrink: 0,
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                }}
+              />
               <Tooltip title="Delete setup" arrow>
                 <IconButton
                   size="small"
                   onClick={handleDelete}
                   color="error"
                   sx={{
+                    borderRadius: 0,
+                    px: 0.75,
                     '&:hover': {
                       backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                      borderRadius: '8px',
                     },
                   }}
                 >
                   <Delete fontSize="small" />
                 </IconButton>
               </Tooltip>
-            </Stack>
+            </Box>
           </Stack>
 
           {/* Row 2: progress chips (tags removed from header — they add clutter) */}
