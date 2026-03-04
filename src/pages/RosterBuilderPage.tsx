@@ -17,15 +17,21 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
+  AutoAwesome as AutoAwesomeIcon,
   Download as DownloadIcon,
   Upload as UploadIcon,
   ContentCopy as CopyIcon,
   ExpandMore as ExpandMoreIcon,
+  Favorite as FavoriteIcon,
+  Group as GroupIcon,
   Link as LinkIcon,
   PersonAdd as PersonAddIcon,
+  Shield as ShieldIcon,
   Star as GearIcon,
+  StickyNote2 as NotesIcon,
   DragIndicator as DragIndicatorIcon,
   Visibility as VisibilityIcon,
+  Groups as GroupsIcon,
 } from '@mui/icons-material';
 import {
   Button,
@@ -35,7 +41,10 @@ import {
   FormControl,
   IconButton,
   InputLabel,
+  Menu,
   MenuItem,
+  ListItemIcon,
+  ListItemText,
   Paper,
   Select,
   Stack,
@@ -57,11 +66,12 @@ import {
   DialogContent,
   DialogActions,
   Avatar,
-  ToggleButton,
-  ToggleButtonGroup,
+  Tooltip,
 } from '@mui/material';
-import React, { useState, useCallback } from 'react';
+import { useTheme } from '@mui/material/styles';
+import React, { useState, useCallback, useRef } from 'react';
 
+import discordIcon from '../assets/discord-icon.svg';
 import { SetAssignmentManager } from '../components/SetAssignmentManager';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
@@ -95,6 +105,7 @@ import {
   ALL_5PIECE_SETS,
   validateCompatibility,
 } from '../types/roster';
+import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
 
 /**
@@ -845,6 +856,23 @@ const validateImportedRoster = (data: unknown): RaidRoster => {
  * Includes tank/healer gear assignments, DD requirements, and ultimate assignments
  */
 export const RosterBuilderPage: React.FC = () => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+  const roleColors = isDarkMode ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
+
+  const glassTextField = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '10px',
+      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+      '& fieldset': {
+        borderColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
+      },
+      '&:hover fieldset': {
+        borderColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
+      },
+    },
+  };
+
   const [roster, setRoster] = useState<RaidRoster>(createDefaultRoster());
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [snackbar, setSnackbar] = useState<{
@@ -862,6 +890,8 @@ export const RosterBuilderPage: React.FC = () => {
   const [importUrlDialog, setImportUrlDialog] = useState(false);
   const [importUrl, setImportUrl] = useState('');
   const [importLoading, setImportLoading] = useState(false);
+  const [importMenuAnchor, setImportMenuAnchor] = useState<null | HTMLElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get auth state
   const { isLoggedIn } = useAuth();
@@ -1753,104 +1783,462 @@ export const RosterBuilderPage: React.FC = () => {
       {/* Development Banner */}
       <WorkInProgressDisclaimer featureName="Roster Builder" sx={{ mb: 3 }} />
 
-      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-        <Stack spacing={3} mb={3}>
+      <Paper elevation={2} sx={{ p: { xs: 1.5, sm: 2 }, mb: 3 }}>
+        {/* Row 1 — Title lockup + Mode pill toggle */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
+            justifyContent: 'space-between',
+            gap: { xs: 1.5, sm: 0 },
+            mb: 2.5,
+          }}
+        >
+          {/* Icon lockup */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '9px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
+                  : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
+                border: isDarkMode
+                  ? '1px solid rgba(255,255,255,0.08)'
+                  : '1px solid rgba(0,0,0,0.08)',
+              }}
+            >
+              <GroupsIcon
+                sx={{
+                  fontSize: '1rem',
+                  color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                }}
+              />
+            </Box>
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: 'text.disabled',
+                  lineHeight: 1,
+                  mb: 0.375,
+                }}
+              >
+                Roster
+              </Typography>
+              <Typography
+                component="h1"
+                sx={{
+                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontWeight: 700,
+                  fontSize: '1.05rem',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                    : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                Roster Builder
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Segmented pill toggle */}
           <Box
             sx={{
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 2,
+              borderRadius: '10px',
+              padding: '3px',
+              minWidth: { xs: 'auto', sm: 220 },
+              background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.06)'
+                : '1px solid rgba(0,0,0,0.06)',
             }}
           >
-            <Typography variant="h4" component="h1">
-              Roster Builder
-            </Typography>
-
-            {/* Simple/Advanced Mode Toggle */}
-            <ToggleButtonGroup
-              value={mode}
-              exclusive
-              onChange={(_event, newMode) => {
-                if (newMode !== null) {
-                  setMode(newMode);
-                }
-              }}
-              size="small"
-              color="primary"
-            >
-              <ToggleButton value="simple">Simple Mode</ToggleButton>
-              <ToggleButton value="advanced">Advanced Mode</ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-
-          {/* Action Buttons - organized into logical groups */}
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {/* Import/Export Group */}
-            <Button
-              variant="outlined"
-              startIcon={<PersonAddIcon />}
-              onClick={() => setQuickFillDialog(true)}
-            >
-              Quick Fill
-            </Button>
-            <Button variant="outlined" startIcon={<UploadIcon />} component="label">
-              Import Roster
-              <input
-                type="file"
-                hidden
-                accept=".json"
-                onChange={handleImportJSON}
-                aria-label="Upload roster JSON file"
-              />
-            </Button>
-            {isLoggedIn && (
-              <Button
-                variant="outlined"
-                startIcon={<LinkIcon />}
-                onClick={() => setImportUrlDialog(true)}
+            {(['simple', 'advanced'] as const).map((value) => (
+              <Box
+                key={value}
+                onClick={() => setMode(value)}
+                sx={{
+                  flex: '1 1 auto',
+                  minWidth: 0,
+                  textAlign: 'center',
+                  px: 1.75,
+                  py: 0.625,
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                  fontWeight: mode === value ? 600 : 500,
+                  letterSpacing: '0.01em',
+                  color:
+                    mode === value
+                      ? isDarkMode
+                        ? '#f1f5f9'
+                        : '#0f172a'
+                      : isDarkMode
+                        ? 'rgba(255,255,255,0.45)'
+                        : 'rgba(0,0,0,0.45)',
+                  background:
+                    mode === value
+                      ? isDarkMode
+                        ? 'rgba(255,255,255,0.09)'
+                        : 'rgba(255,255,255,0.85)'
+                      : 'transparent',
+                  boxShadow:
+                    mode === value
+                      ? isDarkMode
+                        ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)'
+                        : '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)'
+                      : 'none',
+                  transition: 'all 0.15s ease',
+                  userSelect: 'none',
+                  '&:hover': {
+                    color:
+                      mode === value
+                        ? undefined
+                        : isDarkMode
+                          ? 'rgba(255,255,255,0.7)'
+                          : 'rgba(0,0,0,0.7)',
+                    background:
+                      mode === value
+                        ? undefined
+                        : isDarkMode
+                          ? 'rgba(255,255,255,0.04)'
+                          : 'rgba(0,0,0,0.03)',
+                  },
+                }}
               >
-                Import from Log
-              </Button>
-            )}
-            <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleExportJSON}>
-              Export JSON
-            </Button>
-
-            {/* Discord Group */}
-            <Button
-              variant="outlined"
-              startIcon={<VisibilityIcon />}
-              onClick={() => setPreviewDialog(true)}
-            >
-              Preview Discord
-            </Button>
-            <Button variant="contained" startIcon={<CopyIcon />} onClick={handleCopyDiscordFormat}>
-              Copy for Discord
-            </Button>
-
-            {/* Share Group */}
-            <Button
-              variant="contained"
-              color="secondary"
-              startIcon={<LinkIcon />}
-              onClick={handleCopyLink}
-            >
-              Copy Share Link
-            </Button>
+                {value === 'simple' ? 'Simple Mode' : 'Advanced Mode'}
+              </Box>
+            ))}
           </Box>
-        </Stack>
+        </Box>
 
+        {/* Row 2 — Roster Name */}
         <TextField
           fullWidth
+          size="small"
           label="Roster Name"
           value={roster.rosterName}
           onChange={(e) => handleRosterNameChange(e.target.value)}
-          sx={{ mb: 3 }}
+          sx={{
+            mb: 2,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '10px',
+              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+              '& fieldset': {
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
+              },
+              '&:hover fieldset': {
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
+              },
+            },
+          }}
         />
 
-        <Divider sx={{ my: 3 }} />
+        {/* Row 3 — Action button bar */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: 0.75,
+            mb: 2,
+          }}
+        >
+          {/* Secondary actions (left) */}
+          <Tooltip title="Quick Fill" arrow>
+            <Button
+              size="small"
+              startIcon={<PersonAddIcon />}
+              onClick={() => setQuickFillDialog(true)}
+              sx={{
+                borderRadius: '8px',
+                textTransform: 'none',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                border: isDarkMode
+                  ? '1px solid rgba(255,255,255,0.08)'
+                  : '1px solid rgba(0,0,0,0.1)',
+                backgroundColor: 'transparent',
+                '&:hover': {
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.15)'
+                    : '1px solid rgba(0,0,0,0.18)',
+                },
+              }}
+            >
+              Quick Fill
+            </Button>
+          </Tooltip>
+          <Tooltip title="Import roster from file or log" arrow>
+            <Button
+              size="small"
+              startIcon={<UploadIcon />}
+              endIcon={<ExpandMoreIcon sx={{ fontSize: '0.875rem !important', ml: -0.5 }} />}
+              onClick={(e) => setImportMenuAnchor(e.currentTarget)}
+              sx={{
+                borderRadius: '8px',
+                textTransform: 'none',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                border: isDarkMode
+                  ? '1px solid rgba(255,255,255,0.08)'
+                  : '1px solid rgba(0,0,0,0.1)',
+                backgroundColor: importMenuAnchor
+                  ? isDarkMode
+                    ? 'rgba(255,255,255,0.05)'
+                    : 'rgba(0,0,0,0.04)'
+                  : 'transparent',
+                '&:hover': {
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.15)'
+                    : '1px solid rgba(0,0,0,0.18)',
+                },
+              }}
+            >
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                Import
+              </Box>
+            </Button>
+          </Tooltip>
+          <Menu
+            anchorEl={importMenuAnchor}
+            open={Boolean(importMenuAnchor)}
+            onClose={() => setImportMenuAnchor(null)}
+            slotProps={{
+              paper: {
+                sx: {
+                  borderRadius: '10px',
+                  mt: 0.5,
+                  backgroundColor: isDarkMode ? 'rgba(30,30,40,0.95)' : 'rgba(255,255,255,0.97)',
+                  backdropFilter: 'blur(12px)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.08)',
+                  boxShadow: isDarkMode
+                    ? '0 8px 24px rgba(0,0,0,0.5)'
+                    : '0 8px 24px rgba(0,0,0,0.12)',
+                },
+              },
+            }}
+          >
+            <MenuItem
+              onClick={() => {
+                setImportMenuAnchor(null);
+                fileInputRef.current?.click();
+              }}
+              sx={{ fontSize: '0.8125rem', gap: 1 }}
+            >
+              <ListItemIcon sx={{ minWidth: '28px !important' }}>
+                <UploadIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>From JSON File</ListItemText>
+            </MenuItem>
+            {isLoggedIn && (
+              <MenuItem
+                onClick={() => {
+                  setImportMenuAnchor(null);
+                  setImportUrlDialog(true);
+                }}
+                sx={{ fontSize: '0.8125rem', gap: 1 }}
+              >
+                <ListItemIcon sx={{ minWidth: '28px !important' }}>
+                  <LinkIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>From Log URL</ListItemText>
+              </MenuItem>
+            )}
+          </Menu>
+          <input
+            ref={fileInputRef}
+            type="file"
+            hidden
+            accept=".json"
+            onChange={(e) => {
+              handleImportJSON(e);
+              if (fileInputRef.current) fileInputRef.current.value = '';
+            }}
+            aria-label="Upload roster JSON file"
+          />
+          <Tooltip title="Export JSON" arrow>
+            <Button
+              size="small"
+              startIcon={<DownloadIcon />}
+              onClick={handleExportJSON}
+              sx={{
+                borderRadius: '8px',
+                textTransform: 'none',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                border: isDarkMode
+                  ? '1px solid rgba(255,255,255,0.08)'
+                  : '1px solid rgba(0,0,0,0.1)',
+                backgroundColor: 'transparent',
+                '&:hover': {
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.15)'
+                    : '1px solid rgba(0,0,0,0.18)',
+                },
+              }}
+            >
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                Export
+              </Box>
+            </Button>
+          </Tooltip>
+
+          {/* Spacer pushes CTAs right on desktop */}
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
+
+          {/* Discord compound button — preview + copy in a shared track */}
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              borderRadius: '10px',
+              padding: '3px',
+              background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.08)',
+            }}
+          >
+            <Tooltip title="Preview Discord format" arrow>
+              <Box
+                component="button"
+                onClick={() => setPreviewDialog(true)}
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 1.25,
+                  py: 0.5,
+                  borderRadius: '7px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  fontFamily: 'inherit',
+                  color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
+                  background: 'transparent',
+                  transition: 'all 0.15s ease',
+                  '&:hover': {
+                    color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
+                    background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                  },
+                }}
+              >
+                <VisibilityIcon sx={{ fontSize: '0.9rem' }} />
+                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                  Preview
+                </Box>
+              </Box>
+            </Tooltip>
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{
+                mx: 0.25,
+                opacity: isDarkMode ? 0.12 : 0.15,
+                borderColor: isDarkMode ? '#fff' : '#000',
+              }}
+            />
+            <Tooltip title="Copy for Discord" arrow>
+              <Box
+                component="button"
+                onClick={handleCopyDiscordFormat}
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: '7px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  color: isDarkMode ? '#f1f5f9' : '#0f172a',
+                  background: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.85)',
+                  boxShadow: isDarkMode
+                    ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)'
+                    : '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
+                  transition: 'all 0.15s ease',
+                  '&:hover': {
+                    background: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.95)',
+                  },
+                }}
+              >
+                <Box
+                  component="img"
+                  src={discordIcon}
+                  alt="Copy for Discord"
+                  sx={{ width: 16, height: 16 }}
+                />
+              </Box>
+            </Tooltip>
+          </Box>
+          <Tooltip title="Copy shareable link" arrow>
+            <Button
+              size="small"
+              startIcon={<LinkIcon />}
+              onClick={handleCopyLink}
+              sx={{
+                borderRadius: '8px',
+                textTransform: 'none',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: isDarkMode ? '#f1f5f9' : '#0f172a',
+                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)',
+                border: isDarkMode
+                  ? '1px solid rgba(255,255,255,0.12)'
+                  : '1px solid rgba(0,0,0,0.12)',
+                boxShadow: isDarkMode
+                  ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
+                  : '0 1px 2px rgba(0,0,0,0.06)',
+                '&:hover': {
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.09)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.18)'
+                    : '1px solid rgba(0,0,0,0.18)',
+                },
+              }}
+            >
+              <Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}>
+                Share
+              </Box>
+            </Button>
+          </Tooltip>
+        </Box>
+
+        <Box
+          sx={{
+            my: 3,
+            height: '1px',
+            background: isDarkMode
+              ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%)'
+              : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+          }}
+        />
 
         {/* Simple Mode: Set Assignment Manager */}
         {mode === 'simple' && (
@@ -1871,9 +2259,82 @@ export const RosterBuilderPage: React.FC = () => {
         {mode === 'advanced' && (
           <>
             {/* Player Groups Management */}
-            <Typography variant="h5" gutterBottom>
-              Player Groups
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
+                    : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.08)',
+                }}
+              >
+                <GroupIcon
+                  sx={{
+                    fontSize: '1rem',
+                    color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                  }}
+                />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
+                  }}
+                >
+                  Groups
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontWeight: 700,
+                      fontSize: '1.05rem',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: isDarkMode
+                        ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                        : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    Player Groups
+                  </Typography>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      px: 0.75,
+                      py: 0.125,
+                      borderRadius: '6px',
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                      color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                      border: isDarkMode
+                        ? '1px solid rgba(255,255,255,0.08)'
+                        : '1px solid rgba(0,0,0,0.08)',
+                    }}
+                  >
+                    {roster.availableGroups.length}
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
             <Stack spacing={2} mb={3}>
               <Autocomplete
                 multiple
@@ -1903,23 +2364,108 @@ export const RosterBuilderPage: React.FC = () => {
                     label="Available Groups (e.g., Slayer Stack 1, Group A)"
                     placeholder="Add group..."
                     helperText="Create groups to organize players. Common examples: Slayer Stack 1, Slayer Stack 2, Group A, Group B"
+                    sx={glassTextField}
                   />
                 )}
                 renderTags={(value, getTagProps) =>
                   value.map((option, index) => {
                     const { key, ...chipProps } = getTagProps({ index });
-                    return <Chip label={option} {...chipProps} key={key} />;
+                    return (
+                      <Chip
+                        label={option}
+                        {...chipProps}
+                        key={key}
+                        sx={{
+                          borderRadius: '6px',
+                          backgroundColor: isDarkMode
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.05)',
+                          border: isDarkMode
+                            ? '1px solid rgba(255,255,255,0.1)'
+                            : '1px solid rgba(0,0,0,0.1)',
+                          fontWeight: 500,
+                        }}
+                      />
+                    );
                   })
                 }
               />
             </Stack>
 
-            <Divider sx={{ my: 3 }} />
+            <Box
+              sx={{
+                my: 3,
+                height: '1px',
+                background: isDarkMode
+                  ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%)'
+                  : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+              }}
+            />
 
             {/* Tanks Section */}
-            <Typography variant="h5" gutterBottom>
-              Tanks
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${roleColors.tank}20 0%, ${roleColors.tank}08 100%)`,
+                  border: `1px solid ${roleColors.tank}25`,
+                }}
+              >
+                <ShieldIcon sx={{ fontSize: '1rem', color: roleColors.tank }} />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
+                  }}
+                >
+                  Role
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontWeight: 700,
+                      fontSize: '1.05rem',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: `linear-gradient(135deg, ${roleColors.tank} 0%, ${roleColors.tank}99 100%)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    Tanks
+                  </Typography>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      px: 0.75,
+                      py: 0.125,
+                      borderRadius: '6px',
+                      backgroundColor: `${roleColors.tank}12`,
+                      color: roleColors.tank,
+                      border: `1px solid ${roleColors.tank}25`,
+                    }}
+                  >
+                    2
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
             <Stack spacing={2} mb={3}>
               {[1, 2].map((num) => (
                 <TankCard
@@ -1932,12 +2478,80 @@ export const RosterBuilderPage: React.FC = () => {
               ))}
             </Stack>
 
-            <Divider sx={{ my: 3 }} />
+            <Box
+              sx={{
+                my: 3,
+                height: '1px',
+                background: isDarkMode
+                  ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%)'
+                  : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+              }}
+            />
 
             {/* Healers Section */}
-            <Typography variant="h5" gutterBottom>
-              Healers
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${roleColors.healer}20 0%, ${roleColors.healer}08 100%)`,
+                  border: `1px solid ${roleColors.healer}25`,
+                }}
+              >
+                <FavoriteIcon sx={{ fontSize: '1rem', color: roleColors.healer }} />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
+                  }}
+                >
+                  Role
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontWeight: 700,
+                      fontSize: '1.05rem',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: `linear-gradient(135deg, ${roleColors.healer} 0%, ${roleColors.healer}99 100%)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    Healers
+                  </Typography>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      px: 0.75,
+                      py: 0.125,
+                      borderRadius: '6px',
+                      backgroundColor: `${roleColors.healer}12`,
+                      color: roleColors.healer,
+                      border: `1px solid ${roleColors.healer}25`,
+                    }}
+                  >
+                    2
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
             <Stack spacing={2} mb={3}>
               {[1, 2].map((num) => (
                 <HealerCard
@@ -1955,12 +2569,80 @@ export const RosterBuilderPage: React.FC = () => {
               ))}
             </Stack>
 
-            <Divider sx={{ my: 3 }} />
+            <Box
+              sx={{
+                my: 3,
+                height: '1px',
+                background: isDarkMode
+                  ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%)'
+                  : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+              }}
+            />
 
             {/* DPS Slots Section */}
-            <Typography variant="h5" gutterBottom>
-              DPS Roster (8 Slots)
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${roleColors.dps}20 0%, ${roleColors.dps}08 100%)`,
+                  border: `1px solid ${roleColors.dps}25`,
+                }}
+              >
+                <AutoAwesomeIcon sx={{ fontSize: '1rem', color: roleColors.dps }} />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
+                  }}
+                >
+                  Roster
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontWeight: 700,
+                      fontSize: '1.05rem',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: `linear-gradient(135deg, ${roleColors.dps} 0%, ${roleColors.dps}99 100%)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    DPS Roster
+                  </Typography>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      px: 0.75,
+                      py: 0.125,
+                      borderRadius: '6px',
+                      backgroundColor: `${roleColors.dps}12`,
+                      color: roleColors.dps,
+                      border: `1px solid ${roleColors.dps}25`,
+                    }}
+                  >
+                    {roster.dpsSlots.length} Slots
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -1993,9 +2675,74 @@ export const RosterBuilderPage: React.FC = () => {
               </SortableContext>
             </DndContext>
 
-            <Divider sx={{ my: 3 }} />
+            <Box
+              sx={{
+                my: 3,
+                height: '1px',
+                background: isDarkMode
+                  ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%)'
+                  : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+              }}
+            />
 
             {/* General Notes */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
+                    : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.08)',
+                }}
+              >
+                <NotesIcon
+                  sx={{
+                    fontSize: '1rem',
+                    color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                  }}
+                />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
+                  }}
+                >
+                  Notes
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: '"Space Grotesk", sans-serif',
+                    fontWeight: 700,
+                    fontSize: '1.05rem',
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1.1,
+                    background: isDarkMode
+                      ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                      : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  General Notes
+                </Typography>
+              </Box>
+            </Box>
             <TextField
               fullWidth
               multiline
@@ -2009,6 +2756,7 @@ export const RosterBuilderPage: React.FC = () => {
                   updatedAt: new Date().toISOString(),
                 }))
               }
+              sx={glassTextField}
             />
           </>
         )}
@@ -2020,8 +2768,36 @@ export const RosterBuilderPage: React.FC = () => {
         onClose={() => setQuickFillDialog(false)}
         maxWidth="sm"
         fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '14px',
+              backgroundColor: isDarkMode ? 'rgba(20,20,30,0.97)' : 'rgba(255,255,255,0.98)',
+              backdropFilter: 'blur(16px)',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.08)',
+              boxShadow: isDarkMode
+                ? '0 16px 48px rgba(0,0,0,0.5)'
+                : '0 16px 48px rgba(0,0,0,0.12)',
+            },
+          },
+        }}
       >
-        <DialogTitle>Quick Fill Player Names</DialogTitle>
+        <DialogTitle
+          sx={{
+            fontFamily: '"Space Grotesk", sans-serif',
+            fontWeight: 700,
+            background: isDarkMode
+              ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+              : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
+          Quick Fill Player Names
+        </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Enter player names, one per line. The first 2 will fill tanks, next 2 will fill healers,
@@ -2037,19 +2813,87 @@ export const RosterBuilderPage: React.FC = () => {
             value={quickFillText}
             onChange={(e) => setQuickFillText(e.target.value)}
             helperText={`${quickFillText.split('\n').filter((line) => line.trim()).length} players entered`}
+            sx={glassTextField}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setQuickFillDialog(false)}>Cancel</Button>
-          <Button onClick={handleQuickFill} variant="contained">
+          <Box
+            component="button"
+            onClick={() => setQuickFillDialog(false)}
+            sx={{
+              px: 1.5,
+              py: 0.625,
+              borderRadius: '8px',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.1)',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: '0.8rem',
+              fontWeight: 500,
+              color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+              background: 'transparent',
+              transition: 'all 0.15s ease',
+              '&:hover': {
+                color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
+                background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+              },
+            }}
+          >
+            Cancel
+          </Box>
+          <Button
+            onClick={handleQuickFill}
+            variant="contained"
+            sx={{
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              boxShadow: isDarkMode
+                ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
+                : '0 1px 2px rgba(0,0,0,0.06)',
+            }}
+          >
             Fill Roster
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Discord Preview Dialog */}
-      <Dialog open={previewDialog} onClose={() => setPreviewDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Discord Message Preview</DialogTitle>
+      <Dialog
+        open={previewDialog}
+        onClose={() => setPreviewDialog(false)}
+        maxWidth="md"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '14px',
+              backgroundColor: isDarkMode ? 'rgba(20,20,30,0.97)' : 'rgba(255,255,255,0.98)',
+              backdropFilter: 'blur(16px)',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.08)',
+              boxShadow: isDarkMode
+                ? '0 16px 48px rgba(0,0,0,0.5)'
+                : '0 16px 48px rgba(0,0,0,0.12)',
+            },
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontFamily: '"Space Grotesk", sans-serif',
+            fontWeight: 700,
+            background: isDarkMode
+              ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+              : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
+          Discord Message Preview
+        </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             This is how your roster will appear when posted to Discord:
@@ -2058,22 +2902,46 @@ export const RosterBuilderPage: React.FC = () => {
             elevation={0}
             sx={{
               p: 2,
-              bgcolor: 'grey.900',
+              borderRadius: '10px',
+              bgcolor: isDarkMode ? 'rgba(0,0,0,0.3)' : 'grey.900',
               color: 'grey.100',
               fontFamily: 'monospace',
               fontSize: '0.875rem',
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
               overflowX: 'auto',
-              border: '1px solid',
-              borderColor: 'divider',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.06)'
+                : '1px solid rgba(0,0,0,0.06)',
             }}
           >
             {generateDiscordFormat(roster)}
           </Paper>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setPreviewDialog(false)}>Close</Button>
+          <Box
+            component="button"
+            onClick={() => setPreviewDialog(false)}
+            sx={{
+              px: 1.5,
+              py: 0.625,
+              borderRadius: '8px',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.1)',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: '0.8rem',
+              fontWeight: 500,
+              color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+              background: 'transparent',
+              transition: 'all 0.15s ease',
+              '&:hover': {
+                color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
+                background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+              },
+            }}
+          >
+            Close
+          </Box>
           <Button
             onClick={() => {
               handleCopyDiscordFormat();
@@ -2081,6 +2949,15 @@ export const RosterBuilderPage: React.FC = () => {
             }}
             variant="contained"
             startIcon={<CopyIcon />}
+            sx={{
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              boxShadow: isDarkMode
+                ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
+                : '0 1px 2px rgba(0,0,0,0.06)',
+            }}
           >
             Copy to Clipboard
           </Button>
@@ -2096,8 +2973,36 @@ export const RosterBuilderPage: React.FC = () => {
         }}
         maxWidth="sm"
         fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '14px',
+              backgroundColor: isDarkMode ? 'rgba(20,20,30,0.97)' : 'rgba(255,255,255,0.98)',
+              backdropFilter: 'blur(16px)',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.08)',
+              boxShadow: isDarkMode
+                ? '0 16px 48px rgba(0,0,0,0.5)'
+                : '0 16px 48px rgba(0,0,0,0.12)',
+            },
+          },
+        }}
       >
-        <DialogTitle>Import Roster from ESO Logs</DialogTitle>
+        <DialogTitle
+          sx={{
+            fontFamily: '"Space Grotesk", sans-serif',
+            fontWeight: 700,
+            background: isDarkMode
+              ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+              : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
+          Import Roster from ESO Logs
+        </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Enter the ESO Logs report URL for a specific fight. The roster will be automatically
@@ -2119,22 +3024,54 @@ export const RosterBuilderPage: React.FC = () => {
             placeholder="https://www.esologs.com/reports/ABC123#fight=5"
             value={importUrl}
             onChange={(e) => setImportUrl(e.target.value)}
-            sx={{ mt: 2 }}
+            sx={{ mt: 2, ...glassTextField }}
             disabled={importLoading}
             helperText="The report must be public or you must be logged in to access it"
           />
         </DialogContent>
         <DialogActions>
-          <Button
+          <Box
+            component="button"
             onClick={() => {
               setImportUrlDialog(false);
               setImportUrl('');
             }}
-            disabled={importLoading}
+            sx={{
+              px: 1.5,
+              py: 0.625,
+              borderRadius: '8px',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.1)',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: '0.8rem',
+              fontWeight: 500,
+              color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+              background: 'transparent',
+              transition: 'all 0.15s ease',
+              opacity: importLoading ? 0.5 : 1,
+              pointerEvents: importLoading ? 'none' : 'auto',
+              '&:hover': {
+                color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
+                background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+              },
+            }}
           >
             Cancel
-          </Button>
-          <Button onClick={handleImportFromUrl} variant="contained" disabled={importLoading}>
+          </Box>
+          <Button
+            onClick={handleImportFromUrl}
+            variant="contained"
+            disabled={importLoading}
+            sx={{
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              boxShadow: isDarkMode
+                ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
+                : '0 1px 2px rgba(0,0,0,0.06)',
+            }}
+          >
             {importLoading ? 'Importing...' : 'Import Roster'}
           </Button>
         </DialogActions>
@@ -2165,14 +3102,52 @@ interface TankCardProps {
 }
 
 const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableGroups }) => {
+  const tankTheme = useTheme();
+  const tankIsDark = tankTheme.palette.mode === 'dark';
+  const tankRoleColors = tankIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
+  const glassSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '10px',
+      backgroundColor: tankIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+      '& fieldset': {
+        borderColor: tankIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
+      },
+      '&:hover fieldset': {
+        borderColor: tankIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
+      },
+    },
+  };
   const availableUltimates = Object.values(SupportUltimate);
 
   return (
-    <Card variant="outlined">
+    <Card
+      variant="outlined"
+      sx={{
+        borderRadius: '10px',
+        backgroundColor: tankIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+        border: tankIsDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+        borderLeft: `3px solid ${tankRoleColors.tank}`,
+        transition: 'border-color 0.15s ease',
+        '&:hover': {
+          borderColor: tankIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          borderLeftColor: tankRoleColors.tank,
+        },
+      }}
+    >
       <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Tank {tankNum}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <ShieldIcon sx={{ fontSize: '1.1rem', color: tankRoleColors.tank }} />
+          <Typography
+            variant="h6"
+            sx={{
+              fontFamily: '"Space Grotesk", sans-serif',
+              fontWeight: 700,
+              color: tankRoleColors.tank,
+            }}
+          >
+            Tank {tankNum}
+          </Typography>
+        </Box>
         <Stack spacing={2}>
           {/* Essential Fields - Always Visible */}
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -2183,6 +3158,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                 value={tank.playerName || ''}
                 onChange={(e) => onChange({ playerName: e.target.value })}
                 placeholder="Enter player name"
+                sx={glassSx}
               />
             </Box>
             <Box sx={{ flex: '1 1 45%', minWidth: 150 }}>
@@ -2196,7 +3172,12 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   })
                 }
                 renderInput={(params) => (
-                  <TextField {...params} label="Group" placeholder="e.g., Left Stack" />
+                  <TextField
+                    {...params}
+                    label="Group"
+                    placeholder="e.g., Left Stack"
+                    sx={glassSx}
+                  />
                 )}
               />
             </Box>
@@ -2232,6 +3213,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     label="Primary 5-Piece Set (Body)"
                     placeholder="e.g., Alkosh, Yolnahkriin"
                     helperText="Worn on body armor pieces (type custom set name if not listed)"
+                    sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -2268,6 +3250,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     label="Secondary 5-Piece Set (Jewelry)"
                     placeholder="e.g., Crimson Oath's Rive"
                     helperText="Worn on jewelry + weapons (type custom set name if not listed)"
+                    sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -2301,6 +3284,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     label="2-Piece Monster/Mythic Set"
                     placeholder="e.g., Symphony of Blades"
                     helperText="Head + shoulders, or 1-piece mythic (type custom set name if not listed)"
+                    sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -2324,6 +3308,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                 {...params}
                 label="Ultimate"
                 placeholder="Select or type custom ultimate"
+                sx={glassSx}
               />
             )}
             renderOption={(props, option) => (
@@ -2351,7 +3336,16 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
             return (
               <Stack spacing={1}>
                 {warnings.map((warning, index) => (
-                  <Alert key={index} severity="warning" sx={{ py: 0.5 }}>
+                  <Alert
+                    key={index}
+                    severity="warning"
+                    sx={{
+                      py: 0.5,
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(255,167,38,0.08)',
+                      border: '1px solid rgba(255,167,38,0.2)',
+                    }}
+                  >
                     {warning}
                   </Alert>
                 ))}
@@ -2360,9 +3354,25 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
           })()}
 
           {/* Advanced Options - Collapsible */}
-          <Accordion elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+          <Accordion
+            elevation={0}
+            sx={{
+              borderRadius: '10px !important',
+              backgroundColor: tankIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+              border: tankIsDark
+                ? '1px solid rgba(255,255,255,0.06)'
+                : '1px solid rgba(0,0,0,0.06)',
+              '&:before': { display: 'none' },
+            }}
+          >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                sx={{
+                  color: tankIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                  fontWeight: 500,
+                }}
+              >
                 Advanced Options
               </Typography>
             </AccordionSummary>
@@ -2379,6 +3389,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       value={tank.roleLabel || ''}
                       onChange={(e) => onChange({ roleLabel: e.target.value })}
                       helperText="e.g., MT, OT"
+                      sx={glassSx}
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 65%', minWidth: 200 }}>
@@ -2389,6 +3400,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       placeholder="e.g., TOMB 1A, Portal Group"
                       value={tank.roleNotes || ''}
                       onChange={(e) => onChange({ roleNotes: e.target.value })}
+                      sx={glassSx}
                     />
                   </Box>
                 </Box>
@@ -2403,7 +3415,23 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   onChange={(_, value) => onChange({ labels: value })}
                   renderTags={(value, getTagProps) =>
                     value.map((option, index) => (
-                      <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
+                      <Chip
+                        {...getTagProps({ index })}
+                        key={option}
+                        label={option}
+                        size="small"
+                        sx={{
+                          borderRadius: '6px',
+                          backgroundColor: tankIsDark
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.05)',
+                          border: tankIsDark
+                            ? '1px solid rgba(255,255,255,0.1)'
+                            : '1px solid rgba(0,0,0,0.1)',
+                          fontWeight: 500,
+                          fontSize: '0.75rem',
+                        }}
+                      />
                     ))
                   }
                   renderInput={(params) => (
@@ -2413,6 +3441,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       label="Labels / Tags"
                       placeholder="Add custom labels"
                       helperText="Press Enter to add new label"
+                      sx={glassSx}
                     />
                   )}
                 />
@@ -2429,6 +3458,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     })
                   }
                   helperText="Optional identifier"
+                  sx={glassSx}
                 />
 
                 <Autocomplete
@@ -2461,6 +3491,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       {...params}
                       label="Additional Sets"
                       helperText="e.g., monster sets, arena weapons (type custom set name if not listed)"
+                      sx={glassSx}
                     />
                   )}
                   renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -2468,7 +3499,18 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
 
                 {/* Skill Lines Section */}
                 <Divider textAlign="left">
-                  <Chip label="Skill Lines" size="small" />
+                  <Chip
+                    label="Skill Lines"
+                    size="small"
+                    sx={{
+                      borderRadius: '6px',
+                      backgroundColor: tankIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                      border: tankIsDark
+                        ? '1px solid rgba(255,255,255,0.1)'
+                        : '1px solid rgba(0,0,0,0.1)',
+                      fontWeight: 500,
+                    }}
+                  />
                 </Divider>
                 <FormControlLabel
                   control={
@@ -2496,7 +3538,9 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                             skillLines: { ...tank.skillLines, line1: value || '' },
                           })
                         }
-                        renderInput={(params) => <TextField {...params} label="Skill Line 1" />}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Skill Line 1" sx={glassSx} />
+                        )}
                         renderOption={(props, option) => (
                           <li {...props}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -2518,7 +3562,9 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                             skillLines: { ...tank.skillLines, line2: value || '' },
                           })
                         }
-                        renderInput={(params) => <TextField {...params} label="Skill Line 2" />}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Skill Line 2" sx={glassSx} />
+                        )}
                         renderOption={(props, option) => (
                           <li {...props}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -2540,7 +3586,9 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                             skillLines: { ...tank.skillLines, line3: value || '' },
                           })
                         }
-                        renderInput={(params) => <TextField {...params} label="Skill Line 3" />}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Skill Line 3" sx={glassSx} />
+                        )}
                         renderOption={(props, option) => (
                           <li {...props}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -2576,12 +3624,31 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       {...params}
                       label="Specific Skills Required"
                       placeholder="Add skill..."
+                      sx={glassSx}
                     />
                   )}
                   renderTags={(value, getTagProps) =>
                     value.map((option, index) => {
                       const { key, ...chipProps } = getTagProps({ index });
-                      return <Chip label={option} {...chipProps} key={key} size="small" />;
+                      return (
+                        <Chip
+                          label={option}
+                          {...chipProps}
+                          key={key}
+                          size="small"
+                          sx={{
+                            borderRadius: '6px',
+                            backgroundColor: tankIsDark
+                              ? 'rgba(255,255,255,0.06)'
+                              : 'rgba(0,0,0,0.05)',
+                            border: tankIsDark
+                              ? '1px solid rgba(255,255,255,0.1)'
+                              : '1px solid rgba(0,0,0,0.1)',
+                            fontWeight: 500,
+                            fontSize: '0.75rem',
+                          }}
+                        />
+                      );
                     })
                   }
                 />
@@ -2594,6 +3661,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   label="Notes"
                   value={tank.notes || ''}
                   onChange={(e) => onChange({ notes: e.target.value })}
+                  sx={glassSx}
                 />
               </Stack>
             </AccordionDetails>
@@ -2620,17 +3688,55 @@ const HealerCard: React.FC<HealerCardProps> = ({
   availableGroups,
   usedBuffs,
 }) => {
+  const healerTheme = useTheme();
+  const healerIsDark = healerTheme.palette.mode === 'dark';
+  const healerRoleColors = healerIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
+  const glassSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '10px',
+      backgroundColor: healerIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+      '& fieldset': {
+        borderColor: healerIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
+      },
+      '&:hover fieldset': {
+        borderColor: healerIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
+      },
+    },
+  };
   const availableBuffs = Object.values(HealerBuff).filter(
     (buff) => !usedBuffs.includes(buff) || healer.healerBuff === buff,
   );
   const availableUltimates = Object.values(SupportUltimate);
 
   return (
-    <Card variant="outlined">
+    <Card
+      variant="outlined"
+      sx={{
+        borderRadius: '10px',
+        backgroundColor: healerIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+        border: healerIsDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+        borderLeft: `3px solid ${healerRoleColors.healer}`,
+        transition: 'border-color 0.15s ease',
+        '&:hover': {
+          borderColor: healerIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          borderLeftColor: healerRoleColors.healer,
+        },
+      }}
+    >
       <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Healer {healerNum}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <FavoriteIcon sx={{ fontSize: '1.1rem', color: healerRoleColors.healer }} />
+          <Typography
+            variant="h6"
+            sx={{
+              fontFamily: '"Space Grotesk", sans-serif',
+              fontWeight: 700,
+              color: healerRoleColors.healer,
+            }}
+          >
+            Healer {healerNum}
+          </Typography>
+        </Box>
         <Stack spacing={2}>
           {/* Essential Fields - Always Visible */}
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -2640,6 +3746,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                 label="Player Name (Optional)"
                 value={healer.playerName || ''}
                 onChange={(e) => onChange({ playerName: e.target.value })}
+                sx={glassSx}
               />
             </Box>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
@@ -2652,7 +3759,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     group: value ? { groupName: value } : undefined,
                   })
                 }
-                renderInput={(params) => <TextField {...params} label="Group" />}
+                renderInput={(params) => <TextField {...params} label="Group" sx={glassSx} />}
               />
             </Box>
           </Box>
@@ -2682,6 +3789,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     label="Primary 5-Piece Set (Body)"
                     placeholder="e.g., Stone-Talker's Oath"
                     helperText="Worn on body armor pieces (type custom set name if not listed)"
+                    sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -2713,6 +3821,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     label="Secondary 5-Piece Set (Jewelry)"
                     placeholder="e.g., Worm's Raiment"
                     helperText="Worn on jewelry + weapons (type custom set name if not listed)"
+                    sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -2741,6 +3850,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     label="2-Piece Monster/Mythic Set"
                     placeholder="e.g., Symphony of Blades"
                     helperText="Head + shoulders, or 1-piece mythic (type custom set name if not listed)"
+                    sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -2754,7 +3864,21 @@ const HealerCard: React.FC<HealerCardProps> = ({
             </Box>
           </Box>
 
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '10px',
+                backgroundColor: healerIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                '& fieldset': {
+                  borderColor: healerIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
+                },
+                '&:hover fieldset': {
+                  borderColor: healerIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
+                },
+              },
+            }}
+          >
             <InputLabel>Champion Points</InputLabel>
             <Select
               value={healer.healerBuff || ''}
@@ -2791,6 +3915,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                 {...params}
                 label="Ultimate"
                 placeholder="Select or type custom ultimate"
+                sx={glassSx}
               />
             )}
             renderOption={(props, option) => (
@@ -2818,7 +3943,16 @@ const HealerCard: React.FC<HealerCardProps> = ({
             return (
               <Stack spacing={1}>
                 {warnings.map((warning, index) => (
-                  <Alert key={index} severity="warning" sx={{ py: 0.5 }}>
+                  <Alert
+                    key={index}
+                    severity="warning"
+                    sx={{
+                      py: 0.5,
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(255,167,38,0.08)',
+                      border: '1px solid rgba(255,167,38,0.2)',
+                    }}
+                  >
                     {warning}
                   </Alert>
                 ))}
@@ -2827,9 +3961,25 @@ const HealerCard: React.FC<HealerCardProps> = ({
           })()}
 
           {/* Advanced Options - Collapsible */}
-          <Accordion elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+          <Accordion
+            elevation={0}
+            sx={{
+              borderRadius: '10px !important',
+              backgroundColor: healerIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+              border: healerIsDark
+                ? '1px solid rgba(255,255,255,0.06)'
+                : '1px solid rgba(0,0,0,0.06)',
+              '&:before': { display: 'none' },
+            }}
+          >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                sx={{
+                  color: healerIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                  fontWeight: 500,
+                }}
+              >
                 Advanced Options
               </Typography>
             </AccordionSummary>
@@ -2846,6 +3996,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       value={healer.roleLabel || ''}
                       onChange={(e) => onChange({ roleLabel: e.target.value })}
                       helperText="e.g., H1, H2"
+                      sx={glassSx}
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 65%', minWidth: 200 }}>
@@ -2856,6 +4007,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       placeholder="e.g., TOMB HEALER, TOMB 1B"
                       value={healer.roleNotes || ''}
                       onChange={(e) => onChange({ roleNotes: e.target.value })}
+                      sx={glassSx}
                     />
                   </Box>
                 </Box>
@@ -2870,7 +4022,23 @@ const HealerCard: React.FC<HealerCardProps> = ({
                   onChange={(_, value) => onChange({ labels: value })}
                   renderTags={(value, getTagProps) =>
                     value.map((option, index) => (
-                      <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
+                      <Chip
+                        {...getTagProps({ index })}
+                        key={option}
+                        label={option}
+                        size="small"
+                        sx={{
+                          borderRadius: '6px',
+                          backgroundColor: healerIsDark
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.05)',
+                          border: healerIsDark
+                            ? '1px solid rgba(255,255,255,0.1)'
+                            : '1px solid rgba(0,0,0,0.1)',
+                          fontWeight: 500,
+                          fontSize: '0.75rem',
+                        }}
+                      />
                     ))
                   }
                   renderInput={(params) => (
@@ -2880,6 +4048,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       label="Labels / Tags"
                       placeholder="Add custom labels"
                       helperText="Press Enter to add new label"
+                      sx={glassSx}
                     />
                   )}
                 />
@@ -2896,6 +4065,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     })
                   }
                   helperText="Optional identifier"
+                  sx={glassSx}
                 />
 
                 <Autocomplete
@@ -2925,6 +4095,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       {...params}
                       label="Additional Sets"
                       helperText="e.g., monster sets, mythics (type custom set name if not listed)"
+                      sx={glassSx}
                     />
                   )}
                   renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -2932,7 +4103,18 @@ const HealerCard: React.FC<HealerCardProps> = ({
 
                 {/* Skill Lines Section */}
                 <Divider textAlign="left">
-                  <Chip label="Skill Lines" size="small" />
+                  <Chip
+                    label="Skill Lines"
+                    size="small"
+                    sx={{
+                      borderRadius: '6px',
+                      backgroundColor: healerIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                      border: healerIsDark
+                        ? '1px solid rgba(255,255,255,0.1)'
+                        : '1px solid rgba(0,0,0,0.1)',
+                      fontWeight: 500,
+                    }}
+                  />
                 </Divider>
                 <FormControlLabel
                   control={
@@ -2960,7 +4142,9 @@ const HealerCard: React.FC<HealerCardProps> = ({
                             skillLines: { ...healer.skillLines, line1: value || '' },
                           })
                         }
-                        renderInput={(params) => <TextField {...params} label="Skill Line 1" />}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Skill Line 1" sx={glassSx} />
+                        )}
                         renderOption={(props, option) => (
                           <li {...props}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -2982,7 +4166,9 @@ const HealerCard: React.FC<HealerCardProps> = ({
                             skillLines: { ...healer.skillLines, line2: value || '' },
                           })
                         }
-                        renderInput={(params) => <TextField {...params} label="Skill Line 2" />}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Skill Line 2" sx={glassSx} />
+                        )}
                         renderOption={(props, option) => (
                           <li {...props}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -3004,7 +4190,9 @@ const HealerCard: React.FC<HealerCardProps> = ({
                             skillLines: { ...healer.skillLines, line3: value || '' },
                           })
                         }
-                        renderInput={(params) => <TextField {...params} label="Skill Line 3" />}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Skill Line 3" sx={glassSx} />
+                        )}
                         renderOption={(props, option) => (
                           <li {...props}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -3026,6 +4214,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                   label="Notes"
                   value={healer.notes || ''}
                   onChange={(e) => onChange({ notes: e.target.value })}
+                  sx={glassSx}
                 />
               </Stack>
             </AccordionDetails>
@@ -3045,6 +4234,15 @@ interface DPSSlotCardProps {
   onConvertToDPS: (slotNumber: number) => void;
 }
 
+const jailLabels: Record<string, string> = {
+  banner: 'Banner',
+  zenkosh: 'Zenkosh',
+  wm: 'WM',
+  'wm-mk': 'WM/MK',
+  mk: 'MK',
+  custom: 'Custom',
+};
+
 const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
   slot,
   availableGroups,
@@ -3052,6 +4250,21 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
   onConvertToJail,
   onConvertToDPS,
 }) => {
+  const dpsTheme = useTheme();
+  const dpsIsDark = dpsTheme.palette.mode === 'dark';
+  const dpsRoleColors = dpsIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
+  const glassSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '10px',
+      backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+      '& fieldset': {
+        borderColor: dpsIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
+      },
+      '&:hover fieldset': {
+        borderColor: dpsIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
+      },
+    },
+  };
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: slot.slotNumber,
   });
@@ -3086,7 +4299,18 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
       ref={setNodeRef}
       style={style}
       variant="outlined"
-      sx={{ bgcolor: 'action.hover', cursor: isDragging ? 'grabbing' : 'default' }}
+      sx={{
+        borderRadius: '10px',
+        backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+        border: dpsIsDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+        borderLeft: `3px solid ${dpsRoleColors.dps}`,
+        cursor: isDragging ? 'grabbing' : 'default',
+        transition: 'border-color 0.15s ease',
+        '&:hover': {
+          borderColor: dpsIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          borderLeftColor: dpsRoleColors.dps,
+        },
+      }}
     >
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -3094,22 +4318,40 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
             size="small"
             {...attributes}
             {...listeners}
-            sx={{ cursor: 'grab' }}
+            sx={{
+              cursor: 'grab',
+              borderRadius: '6px',
+              backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+              color: dpsIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
+            }}
             aria-label={`Drag to reorder DPS ${slot.slotNumber}`}
           >
             <DragIndicatorIcon />
           </IconButton>
-          <Typography variant="subtitle1" fontWeight="bold">
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontFamily: '"Space Grotesk", sans-serif',
+              fontWeight: 700,
+              color: dpsRoleColors.dps,
+            }}
+          >
             DPS {slot.slotNumber}
-            {slot.jailDDType && (
-              <Chip
-                label={getJailDDTitle(slot.jailDDType)}
-                size="small"
-                color="primary"
-                sx={{ ml: 1 }}
-              />
-            )}
           </Typography>
+          {slot.jailDDType && (
+            <Chip
+              label={getJailDDTitle(slot.jailDDType)}
+              size="small"
+              sx={{
+                borderRadius: '6px',
+                backgroundColor: `${dpsRoleColors.dps}18`,
+                border: `1px solid ${dpsRoleColors.dps}35`,
+                color: dpsRoleColors.dps,
+                fontWeight: 600,
+                fontSize: '0.7rem',
+              }}
+            />
+          )}
         </Box>
         <Stack spacing={2}>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -3120,6 +4362,7 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
                 label="Player Name"
                 value={slot.playerName || ''}
                 onChange={(e) => onChange({ playerName: e.target.value })}
+                sx={glassSx}
               />
             </Box>
             <Box sx={{ flex: '1 1 25%', minWidth: 150 }}>
@@ -3130,6 +4373,7 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
                 placeholder="e.g., Portal L, Z'en"
                 value={slot.roleNotes || ''}
                 onChange={(e) => onChange({ roleNotes: e.target.value })}
+                sx={glassSx}
               />
             </Box>
             <Box sx={{ flex: '1 1 25%', minWidth: 120 }}>
@@ -3143,7 +4387,7 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
                     group: value ? { groupName: value } : undefined,
                   })
                 }
-                renderInput={(params) => <TextField {...params} label="Group" />}
+                renderInput={(params) => <TextField {...params} label="Group" sx={glassSx} />}
               />
             </Box>
           </Box>
@@ -3158,7 +4402,21 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
             onChange={(_, value) => onChange({ labels: value })}
             renderTags={(value, getTagProps) =>
               value.map((option, index) => (
-                <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
+                <Chip
+                  {...getTagProps({ index })}
+                  key={option}
+                  label={option}
+                  size="small"
+                  sx={{
+                    borderRadius: '6px',
+                    backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                    border: dpsIsDark
+                      ? '1px solid rgba(255,255,255,0.1)'
+                      : '1px solid rgba(0,0,0,0.1)',
+                    fontWeight: 500,
+                    fontSize: '0.75rem',
+                  }}
+                />
               ))
             }
             renderInput={(params) => (
@@ -3167,6 +4425,7 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
                 size="small"
                 label="Labels / Tags"
                 placeholder="Add custom labels (Press Enter)"
+                sx={glassSx}
               />
             )}
           />
@@ -3189,7 +4448,19 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
             }
             renderTags={(value, getTagProps) =>
               value.map((option, index) => (
-                <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
+                <Chip
+                  {...getTagProps({ index })}
+                  key={option}
+                  label={option}
+                  size="small"
+                  sx={{
+                    borderRadius: '6px',
+                    backgroundColor: `${dpsRoleColors.dps}10`,
+                    border: `1px solid ${dpsRoleColors.dps}25`,
+                    fontWeight: 500,
+                    fontSize: '0.75rem',
+                  }}
+                />
               ))
             }
             renderInput={(params) => (
@@ -3199,6 +4470,7 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
                 label="Gear Sets"
                 placeholder={slot.gearSets?.length ? undefined : 'Add set...'}
                 helperText="Sets worn by this player — click × to remove"
+                sx={glassSx}
               />
             )}
             renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -3209,66 +4481,84 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
             <Box>
               <Typography
                 variant="caption"
-                color="text.secondary"
-                sx={{ mb: 0.5, display: 'block' }}
+                sx={{
+                  mb: 0.75,
+                  display: 'block',
+                  color: dpsIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                }}
               >
                 Convert to Jail DD:
               </Typography>
-              <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => onConvertToJail(slot.slotNumber, 'banner')}
-                >
-                  Banner
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => onConvertToJail(slot.slotNumber, 'zenkosh')}
-                >
-                  Zenkosh
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => onConvertToJail(slot.slotNumber, 'wm')}
-                >
-                  WM
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => onConvertToJail(slot.slotNumber, 'wm-mk')}
-                >
-                  WM/MK
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => onConvertToJail(slot.slotNumber, 'mk')}
-                >
-                  MK
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => onConvertToJail(slot.slotNumber, 'custom')}
-                >
-                  Custom
-                </Button>
-              </Stack>
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  flexWrap: 'wrap',
+                  gap: '1px',
+                  borderRadius: '10px',
+                  padding: '3px',
+                  backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                  border: dpsIsDark
+                    ? '1px solid rgba(255,255,255,0.06)'
+                    : '1px solid rgba(0,0,0,0.06)',
+                }}
+              >
+                {(['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'] as const).map((type) => (
+                  <Box
+                    key={type}
+                    component="button"
+                    onClick={() => onConvertToJail(slot.slotNumber, type)}
+                    sx={{
+                      px: 1.25,
+                      py: 0.5,
+                      borderRadius: '7px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      fontSize: '0.72rem',
+                      fontWeight: 500,
+                      color: dpsIsDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                      background: 'transparent',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        color: dpsRoleColors.dps,
+                        background: dpsIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                      },
+                    }}
+                  >
+                    {jailLabels[type]}
+                  </Box>
+                ))}
+              </Box>
             </Box>
           ) : (
             <Box>
-              <Button
-                size="small"
-                variant="outlined"
-                color="secondary"
+              <Box
+                component="button"
                 onClick={() => onConvertToDPS(slot.slotNumber)}
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  px: 1.5,
+                  py: 0.625,
+                  borderRadius: '8px',
+                  border: dpsIsDark
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.1)',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  color: dpsIsDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                  background: 'transparent',
+                  transition: 'all 0.15s ease',
+                  '&:hover': {
+                    color: dpsIsDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
+                    background: dpsIsDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                  },
+                }}
               >
                 Convert Back to Regular DPS
-              </Button>
+              </Box>
             </Box>
           )}
         </Stack>
