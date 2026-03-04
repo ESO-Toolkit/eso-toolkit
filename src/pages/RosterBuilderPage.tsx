@@ -3535,7 +3535,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     mt: 0.5,
                   }}
                 >
-                  Identity
+                  Assignment
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   <Box sx={{ flex: '1 1 25%', minWidth: 100 }}>
@@ -3666,34 +3666,51 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                 />
 
                 {/* Build */}
-                <Typography
+                <Box
                   sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: tankIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
                     mt: 0.5,
                   }}
                 >
-                  Build
-                </Typography>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={tank.skillLines.isFlex}
-                      onChange={(e) =>
-                        onChange({
-                          skillLines: {
-                            ...tank.skillLines,
-                            isFlex: e.target.checked,
-                          },
-                        })
-                      }
-                    />
-                  }
-                  label="Flexible (any skill lines)"
-                />
+                  <Typography
+                    sx={{
+                      fontSize: '0.6rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      color: tankIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    Build
+                  </Typography>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        size="small"
+                        checked={tank.skillLines.isFlex}
+                        onChange={(e) =>
+                          onChange({
+                            skillLines: {
+                              ...tank.skillLines,
+                              isFlex: e.target.checked,
+                            },
+                          })
+                        }
+                        sx={{ p: 0.5 }}
+                      />
+                    }
+                    label="Any class"
+                    sx={{
+                      ml: 'auto',
+                      mr: 0,
+                      '& .MuiFormControlLabel-label': {
+                        fontSize: '0.75rem',
+                        color: tankIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                      },
+                    }}
+                  />
+                </Box>
                 {!tank.skillLines.isFlex && (
                   <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                     <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
@@ -4238,7 +4255,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
             </AccordionSummary>
             <AccordionDetails sx={{ px: 1.5, pt: 0.5, pb: 1.5 }}>
               <Stack spacing={1.25}>
-                {/* Identity */}
+                {/* Assignment */}
                 <Typography
                   sx={{
                     fontSize: '0.6rem',
@@ -4249,7 +4266,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     mt: 0.5,
                   }}
                 >
-                  Identity
+                  Assignment
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   <Box sx={{ flex: '1 1 25%', minWidth: 100 }}>
@@ -4377,34 +4394,51 @@ const HealerCard: React.FC<HealerCardProps> = ({
                 />
 
                 {/* Build */}
-                <Typography
+                <Box
                   sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: healerIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
                     mt: 0.5,
                   }}
                 >
-                  Build
-                </Typography>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={healer.skillLines.isFlex}
-                      onChange={(e) =>
-                        onChange({
-                          skillLines: {
-                            ...healer.skillLines,
-                            isFlex: e.target.checked,
-                          },
-                        })
-                      }
-                    />
-                  }
-                  label="Flexible (any skill lines)"
-                />
+                  <Typography
+                    sx={{
+                      fontSize: '0.6rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      color: healerIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    Build
+                  </Typography>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        size="small"
+                        checked={healer.skillLines.isFlex}
+                        onChange={(e) =>
+                          onChange({
+                            skillLines: {
+                              ...healer.skillLines,
+                              isFlex: e.target.checked,
+                            },
+                          })
+                        }
+                        sx={{ p: 0.5 }}
+                      />
+                    }
+                    label="Any class"
+                    sx={{
+                      ml: 'auto',
+                      mr: 0,
+                      '& .MuiFormControlLabel-label': {
+                        fontSize: '0.75rem',
+                        color: healerIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                      },
+                    }}
+                  />
+                </Box>
                 {!healer.skillLines.isFlex && (
                   <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                     <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
