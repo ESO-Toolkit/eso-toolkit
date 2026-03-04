@@ -2899,14 +2899,54 @@ interface TankCardProps {
 }
 
 const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableGroups }) => {
+  const tankTheme = useTheme();
+  const tankIsDark = tankTheme.palette.mode === 'dark';
+  const tankRoleColors = tankIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
+  const glassSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '10px',
+      backgroundColor: tankIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+      '& fieldset': {
+        borderColor: tankIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
+      },
+      '&:hover fieldset': {
+        borderColor: tankIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
+      },
+    },
+  };
   const availableUltimates = Object.values(SupportUltimate);
 
   return (
-    <Card variant="outlined">
+    <Card
+      variant="outlined"
+      sx={{
+        borderRadius: '10px',
+        backgroundColor: tankIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+        border: tankIsDark
+          ? '1px solid rgba(255,255,255,0.06)'
+          : '1px solid rgba(0,0,0,0.06)',
+        borderLeft: `3px solid ${tankRoleColors.tank}`,
+        transition: 'border-color 0.15s ease',
+        '&:hover': {
+          borderColor: tankIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          borderLeftColor: tankRoleColors.tank,
+        },
+      }}
+    >
       <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Tank {tankNum}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <ShieldIcon sx={{ fontSize: '1.1rem', color: tankRoleColors.tank }} />
+          <Typography
+            variant="h6"
+            sx={{
+              fontFamily: '"Space Grotesk", sans-serif',
+              fontWeight: 700,
+              color: tankRoleColors.tank,
+            }}
+          >
+            Tank {tankNum}
+          </Typography>
+        </Box>
         <Stack spacing={2}>
           {/* Essential Fields - Always Visible */}
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -2917,6 +2957,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                 value={tank.playerName || ''}
                 onChange={(e) => onChange({ playerName: e.target.value })}
                 placeholder="Enter player name"
+                sx={glassSx}
               />
             </Box>
             <Box sx={{ flex: '1 1 45%', minWidth: 150 }}>
@@ -2930,7 +2971,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   })
                 }
                 renderInput={(params) => (
-                  <TextField {...params} label="Group" placeholder="e.g., Left Stack" />
+                  <TextField {...params} label="Group" placeholder="e.g., Left Stack" sx={glassSx} />
                 )}
               />
             </Box>
@@ -2966,6 +3007,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     label="Primary 5-Piece Set (Body)"
                     placeholder="e.g., Alkosh, Yolnahkriin"
                     helperText="Worn on body armor pieces (type custom set name if not listed)"
+                    sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -3002,6 +3044,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     label="Secondary 5-Piece Set (Jewelry)"
                     placeholder="e.g., Crimson Oath's Rive"
                     helperText="Worn on jewelry + weapons (type custom set name if not listed)"
+                    sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -3035,6 +3078,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     label="2-Piece Monster/Mythic Set"
                     placeholder="e.g., Symphony of Blades"
                     helperText="Head + shoulders, or 1-piece mythic (type custom set name if not listed)"
+                    sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -3058,6 +3102,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                 {...params}
                 label="Ultimate"
                 placeholder="Select or type custom ultimate"
+                sx={glassSx}
               />
             )}
             renderOption={(props, option) => (
@@ -3085,7 +3130,16 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
             return (
               <Stack spacing={1}>
                 {warnings.map((warning, index) => (
-                  <Alert key={index} severity="warning" sx={{ py: 0.5 }}>
+                  <Alert
+                    key={index}
+                    severity="warning"
+                    sx={{
+                      py: 0.5,
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(255,167,38,0.08)',
+                      border: '1px solid rgba(255,167,38,0.2)',
+                    }}
+                  >
                     {warning}
                   </Alert>
                 ))}
@@ -3094,9 +3148,25 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
           })()}
 
           {/* Advanced Options - Collapsible */}
-          <Accordion elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+          <Accordion
+            elevation={0}
+            sx={{
+              borderRadius: '10px !important',
+              backgroundColor: tankIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+              border: tankIsDark
+                ? '1px solid rgba(255,255,255,0.06)'
+                : '1px solid rgba(0,0,0,0.06)',
+              '&:before': { display: 'none' },
+            }}
+          >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                sx={{
+                  color: tankIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                  fontWeight: 500,
+                }}
+              >
                 Advanced Options
               </Typography>
             </AccordionSummary>
@@ -3113,6 +3183,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       value={tank.roleLabel || ''}
                       onChange={(e) => onChange({ roleLabel: e.target.value })}
                       helperText="e.g., MT, OT"
+                      sx={glassSx}
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 65%', minWidth: 200 }}>
@@ -3123,6 +3194,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       placeholder="e.g., TOMB 1A, Portal Group"
                       value={tank.roleNotes || ''}
                       onChange={(e) => onChange({ roleNotes: e.target.value })}
+                      sx={glassSx}
                     />
                   </Box>
                 </Box>
@@ -3137,7 +3209,23 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   onChange={(_, value) => onChange({ labels: value })}
                   renderTags={(value, getTagProps) =>
                     value.map((option, index) => (
-                      <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
+                      <Chip
+                        {...getTagProps({ index })}
+                        key={option}
+                        label={option}
+                        size="small"
+                        sx={{
+                          borderRadius: '6px',
+                          backgroundColor: tankIsDark
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.05)',
+                          border: tankIsDark
+                            ? '1px solid rgba(255,255,255,0.1)'
+                            : '1px solid rgba(0,0,0,0.1)',
+                          fontWeight: 500,
+                          fontSize: '0.75rem',
+                        }}
+                      />
                     ))
                   }
                   renderInput={(params) => (
@@ -3147,6 +3235,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       label="Labels / Tags"
                       placeholder="Add custom labels"
                       helperText="Press Enter to add new label"
+                      sx={glassSx}
                     />
                   )}
                 />
@@ -3163,6 +3252,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     })
                   }
                   helperText="Optional identifier"
+                  sx={glassSx}
                 />
 
                 <Autocomplete
@@ -3195,6 +3285,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       {...params}
                       label="Additional Sets"
                       helperText="e.g., monster sets, arena weapons (type custom set name if not listed)"
+                      sx={glassSx}
                     />
                   )}
                   renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -3202,7 +3293,20 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
 
                 {/* Skill Lines Section */}
                 <Divider textAlign="left">
-                  <Chip label="Skill Lines" size="small" />
+                  <Chip
+                    label="Skill Lines"
+                    size="small"
+                    sx={{
+                      borderRadius: '6px',
+                      backgroundColor: tankIsDark
+                        ? 'rgba(255,255,255,0.06)'
+                        : 'rgba(0,0,0,0.05)',
+                      border: tankIsDark
+                        ? '1px solid rgba(255,255,255,0.1)'
+                        : '1px solid rgba(0,0,0,0.1)',
+                      fontWeight: 500,
+                    }}
+                  />
                 </Divider>
                 <FormControlLabel
                   control={
@@ -3230,7 +3334,9 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                             skillLines: { ...tank.skillLines, line1: value || '' },
                           })
                         }
-                        renderInput={(params) => <TextField {...params} label="Skill Line 1" />}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Skill Line 1" sx={glassSx} />
+                        )}
                         renderOption={(props, option) => (
                           <li {...props}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -3252,7 +3358,9 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                             skillLines: { ...tank.skillLines, line2: value || '' },
                           })
                         }
-                        renderInput={(params) => <TextField {...params} label="Skill Line 2" />}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Skill Line 2" sx={glassSx} />
+                        )}
                         renderOption={(props, option) => (
                           <li {...props}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -3274,7 +3382,9 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                             skillLines: { ...tank.skillLines, line3: value || '' },
                           })
                         }
-                        renderInput={(params) => <TextField {...params} label="Skill Line 3" />}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Skill Line 3" sx={glassSx} />
+                        )}
                         renderOption={(props, option) => (
                           <li {...props}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -3310,12 +3420,31 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       {...params}
                       label="Specific Skills Required"
                       placeholder="Add skill..."
+                      sx={glassSx}
                     />
                   )}
                   renderTags={(value, getTagProps) =>
                     value.map((option, index) => {
                       const { key, ...chipProps } = getTagProps({ index });
-                      return <Chip label={option} {...chipProps} key={key} size="small" />;
+                      return (
+                        <Chip
+                          label={option}
+                          {...chipProps}
+                          key={key}
+                          size="small"
+                          sx={{
+                            borderRadius: '6px',
+                            backgroundColor: tankIsDark
+                              ? 'rgba(255,255,255,0.06)'
+                              : 'rgba(0,0,0,0.05)',
+                            border: tankIsDark
+                              ? '1px solid rgba(255,255,255,0.1)'
+                              : '1px solid rgba(0,0,0,0.1)',
+                            fontWeight: 500,
+                            fontSize: '0.75rem',
+                          }}
+                        />
+                      );
                     })
                   }
                 />
@@ -3328,6 +3457,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   label="Notes"
                   value={tank.notes || ''}
                   onChange={(e) => onChange({ notes: e.target.value })}
+                  sx={glassSx}
                 />
               </Stack>
             </AccordionDetails>
@@ -3354,17 +3484,57 @@ const HealerCard: React.FC<HealerCardProps> = ({
   availableGroups,
   usedBuffs,
 }) => {
+  const healerTheme = useTheme();
+  const healerIsDark = healerTheme.palette.mode === 'dark';
+  const healerRoleColors = healerIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
+  const glassSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '10px',
+      backgroundColor: healerIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+      '& fieldset': {
+        borderColor: healerIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
+      },
+      '&:hover fieldset': {
+        borderColor: healerIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
+      },
+    },
+  };
   const availableBuffs = Object.values(HealerBuff).filter(
     (buff) => !usedBuffs.includes(buff) || healer.healerBuff === buff,
   );
   const availableUltimates = Object.values(SupportUltimate);
 
   return (
-    <Card variant="outlined">
+    <Card
+      variant="outlined"
+      sx={{
+        borderRadius: '10px',
+        backgroundColor: healerIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+        border: healerIsDark
+          ? '1px solid rgba(255,255,255,0.06)'
+          : '1px solid rgba(0,0,0,0.06)',
+        borderLeft: `3px solid ${healerRoleColors.healer}`,
+        transition: 'border-color 0.15s ease',
+        '&:hover': {
+          borderColor: healerIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          borderLeftColor: healerRoleColors.healer,
+        },
+      }}
+    >
       <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Healer {healerNum}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <FavoriteIcon sx={{ fontSize: '1.1rem', color: healerRoleColors.healer }} />
+          <Typography
+            variant="h6"
+            sx={{
+              fontFamily: '"Space Grotesk", sans-serif',
+              fontWeight: 700,
+              color: healerRoleColors.healer,
+            }}
+          >
+            Healer {healerNum}
+          </Typography>
+        </Box>
         <Stack spacing={2}>
           {/* Essential Fields - Always Visible */}
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -3374,6 +3544,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                 label="Player Name (Optional)"
                 value={healer.playerName || ''}
                 onChange={(e) => onChange({ playerName: e.target.value })}
+                sx={glassSx}
               />
             </Box>
             <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
@@ -3386,7 +3557,9 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     group: value ? { groupName: value } : undefined,
                   })
                 }
-                renderInput={(params) => <TextField {...params} label="Group" />}
+                renderInput={(params) => (
+                  <TextField {...params} label="Group" sx={glassSx} />
+                )}
               />
             </Box>
           </Box>
@@ -3416,6 +3589,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     label="Primary 5-Piece Set (Body)"
                     placeholder="e.g., Stone-Talker's Oath"
                     helperText="Worn on body armor pieces (type custom set name if not listed)"
+                    sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -3447,6 +3621,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     label="Secondary 5-Piece Set (Jewelry)"
                     placeholder="e.g., Worm's Raiment"
                     helperText="Worn on jewelry + weapons (type custom set name if not listed)"
+                    sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -3475,6 +3650,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     label="2-Piece Monster/Mythic Set"
                     placeholder="e.g., Symphony of Blades"
                     helperText="Head + shoulders, or 1-piece mythic (type custom set name if not listed)"
+                    sx={glassSx}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -3488,7 +3664,21 @@ const HealerCard: React.FC<HealerCardProps> = ({
             </Box>
           </Box>
 
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '10px',
+                backgroundColor: healerIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                '& fieldset': {
+                  borderColor: healerIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
+                },
+                '&:hover fieldset': {
+                  borderColor: healerIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
+                },
+              },
+            }}
+          >
             <InputLabel>Champion Points</InputLabel>
             <Select
               value={healer.healerBuff || ''}
@@ -3525,6 +3715,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                 {...params}
                 label="Ultimate"
                 placeholder="Select or type custom ultimate"
+                sx={glassSx}
               />
             )}
             renderOption={(props, option) => (
@@ -3552,7 +3743,16 @@ const HealerCard: React.FC<HealerCardProps> = ({
             return (
               <Stack spacing={1}>
                 {warnings.map((warning, index) => (
-                  <Alert key={index} severity="warning" sx={{ py: 0.5 }}>
+                  <Alert
+                    key={index}
+                    severity="warning"
+                    sx={{
+                      py: 0.5,
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(255,167,38,0.08)',
+                      border: '1px solid rgba(255,167,38,0.2)',
+                    }}
+                  >
                     {warning}
                   </Alert>
                 ))}
@@ -3561,9 +3761,25 @@ const HealerCard: React.FC<HealerCardProps> = ({
           })()}
 
           {/* Advanced Options - Collapsible */}
-          <Accordion elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+          <Accordion
+            elevation={0}
+            sx={{
+              borderRadius: '10px !important',
+              backgroundColor: healerIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+              border: healerIsDark
+                ? '1px solid rgba(255,255,255,0.06)'
+                : '1px solid rgba(0,0,0,0.06)',
+              '&:before': { display: 'none' },
+            }}
+          >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                sx={{
+                  color: healerIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                  fontWeight: 500,
+                }}
+              >
                 Advanced Options
               </Typography>
             </AccordionSummary>
@@ -3580,6 +3796,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       value={healer.roleLabel || ''}
                       onChange={(e) => onChange({ roleLabel: e.target.value })}
                       helperText="e.g., H1, H2"
+                      sx={glassSx}
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 65%', minWidth: 200 }}>
@@ -3590,6 +3807,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       placeholder="e.g., TOMB HEALER, TOMB 1B"
                       value={healer.roleNotes || ''}
                       onChange={(e) => onChange({ roleNotes: e.target.value })}
+                      sx={glassSx}
                     />
                   </Box>
                 </Box>
@@ -3604,7 +3822,23 @@ const HealerCard: React.FC<HealerCardProps> = ({
                   onChange={(_, value) => onChange({ labels: value })}
                   renderTags={(value, getTagProps) =>
                     value.map((option, index) => (
-                      <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
+                      <Chip
+                        {...getTagProps({ index })}
+                        key={option}
+                        label={option}
+                        size="small"
+                        sx={{
+                          borderRadius: '6px',
+                          backgroundColor: healerIsDark
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.05)',
+                          border: healerIsDark
+                            ? '1px solid rgba(255,255,255,0.1)'
+                            : '1px solid rgba(0,0,0,0.1)',
+                          fontWeight: 500,
+                          fontSize: '0.75rem',
+                        }}
+                      />
                     ))
                   }
                   renderInput={(params) => (
@@ -3614,6 +3848,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       label="Labels / Tags"
                       placeholder="Add custom labels"
                       helperText="Press Enter to add new label"
+                      sx={glassSx}
                     />
                   )}
                 />
@@ -3630,6 +3865,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     })
                   }
                   helperText="Optional identifier"
+                  sx={glassSx}
                 />
 
                 <Autocomplete
@@ -3659,6 +3895,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       {...params}
                       label="Additional Sets"
                       helperText="e.g., monster sets, mythics (type custom set name if not listed)"
+                      sx={glassSx}
                     />
                   )}
                   renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -3666,7 +3903,20 @@ const HealerCard: React.FC<HealerCardProps> = ({
 
                 {/* Skill Lines Section */}
                 <Divider textAlign="left">
-                  <Chip label="Skill Lines" size="small" />
+                  <Chip
+                    label="Skill Lines"
+                    size="small"
+                    sx={{
+                      borderRadius: '6px',
+                      backgroundColor: healerIsDark
+                        ? 'rgba(255,255,255,0.06)'
+                        : 'rgba(0,0,0,0.05)',
+                      border: healerIsDark
+                        ? '1px solid rgba(255,255,255,0.1)'
+                        : '1px solid rgba(0,0,0,0.1)',
+                      fontWeight: 500,
+                    }}
+                  />
                 </Divider>
                 <FormControlLabel
                   control={
@@ -3694,7 +3944,9 @@ const HealerCard: React.FC<HealerCardProps> = ({
                             skillLines: { ...healer.skillLines, line1: value || '' },
                           })
                         }
-                        renderInput={(params) => <TextField {...params} label="Skill Line 1" />}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Skill Line 1" sx={glassSx} />
+                        )}
                         renderOption={(props, option) => (
                           <li {...props}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -3716,7 +3968,9 @@ const HealerCard: React.FC<HealerCardProps> = ({
                             skillLines: { ...healer.skillLines, line2: value || '' },
                           })
                         }
-                        renderInput={(params) => <TextField {...params} label="Skill Line 2" />}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Skill Line 2" sx={glassSx} />
+                        )}
                         renderOption={(props, option) => (
                           <li {...props}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -3738,7 +3992,9 @@ const HealerCard: React.FC<HealerCardProps> = ({
                             skillLines: { ...healer.skillLines, line3: value || '' },
                           })
                         }
-                        renderInput={(params) => <TextField {...params} label="Skill Line 3" />}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Skill Line 3" sx={glassSx} />
+                        )}
                         renderOption={(props, option) => (
                           <li {...props}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -3760,6 +4016,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                   label="Notes"
                   value={healer.notes || ''}
                   onChange={(e) => onChange({ notes: e.target.value })}
+                  sx={glassSx}
                 />
               </Stack>
             </AccordionDetails>
