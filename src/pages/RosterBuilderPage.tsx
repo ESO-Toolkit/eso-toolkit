@@ -2368,12 +2368,29 @@ export const RosterBuilderPage: React.FC = () => {
                     label="Available Groups (e.g., Slayer Stack 1, Group A)"
                     placeholder="Add group..."
                     helperText="Create groups to organize players. Common examples: Slayer Stack 1, Slayer Stack 2, Group A, Group B"
+                    sx={glassTextField}
                   />
                 )}
                 renderTags={(value, getTagProps) =>
                   value.map((option, index) => {
                     const { key, ...chipProps } = getTagProps({ index });
-                    return <Chip label={option} {...chipProps} key={key} />;
+                    return (
+                      <Chip
+                        label={option}
+                        {...chipProps}
+                        key={key}
+                        sx={{
+                          borderRadius: '6px',
+                          backgroundColor: isDarkMode
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.05)',
+                          border: isDarkMode
+                            ? '1px solid rgba(255,255,255,0.1)'
+                            : '1px solid rgba(0,0,0,0.1)',
+                          fontWeight: 500,
+                        }}
+                      />
+                    );
                   })
                 }
               />
@@ -2743,6 +2760,7 @@ export const RosterBuilderPage: React.FC = () => {
                   updatedAt: new Date().toISOString(),
                 }))
               }
+              sx={glassTextField}
             />
           </>
         )}
@@ -2754,8 +2772,36 @@ export const RosterBuilderPage: React.FC = () => {
         onClose={() => setQuickFillDialog(false)}
         maxWidth="sm"
         fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '14px',
+              backgroundColor: isDarkMode ? 'rgba(20,20,30,0.97)' : 'rgba(255,255,255,0.98)',
+              backdropFilter: 'blur(16px)',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.08)',
+              boxShadow: isDarkMode
+                ? '0 16px 48px rgba(0,0,0,0.5)'
+                : '0 16px 48px rgba(0,0,0,0.12)',
+            },
+          },
+        }}
       >
-        <DialogTitle>Quick Fill Player Names</DialogTitle>
+        <DialogTitle
+          sx={{
+            fontFamily: '"Space Grotesk", sans-serif',
+            fontWeight: 700,
+            background: isDarkMode
+              ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+              : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
+          Quick Fill Player Names
+        </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Enter player names, one per line. The first 2 will fill tanks, next 2 will fill healers,
@@ -2771,19 +2817,89 @@ export const RosterBuilderPage: React.FC = () => {
             value={quickFillText}
             onChange={(e) => setQuickFillText(e.target.value)}
             helperText={`${quickFillText.split('\n').filter((line) => line.trim()).length} players entered`}
+            sx={glassTextField}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setQuickFillDialog(false)}>Cancel</Button>
-          <Button onClick={handleQuickFill} variant="contained">
+          <Box
+            component="button"
+            onClick={() => setQuickFillDialog(false)}
+            sx={{
+              px: 1.5,
+              py: 0.625,
+              borderRadius: '8px',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.1)',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: '0.8rem',
+              fontWeight: 500,
+              color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+              background: 'transparent',
+              transition: 'all 0.15s ease',
+              '&:hover': {
+                color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
+                background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+              },
+            }}
+          >
+            Cancel
+          </Box>
+          <Button
+            onClick={handleQuickFill}
+            variant="contained"
+            sx={{
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              boxShadow: isDarkMode
+                ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
+                : '0 1px 2px rgba(0,0,0,0.06)',
+            }}
+          >
             Fill Roster
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Discord Preview Dialog */}
-      <Dialog open={previewDialog} onClose={() => setPreviewDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Discord Message Preview</DialogTitle>
+      <Dialog
+        open={previewDialog}
+        onClose={() => setPreviewDialog(false)}
+        maxWidth="md"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '14px',
+              backgroundColor: isDarkMode ? 'rgba(20,20,30,0.97)' : 'rgba(255,255,255,0.98)',
+              backdropFilter: 'blur(16px)',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.08)',
+              boxShadow: isDarkMode
+                ? '0 16px 48px rgba(0,0,0,0.5)'
+                : '0 16px 48px rgba(0,0,0,0.12)',
+            },
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontFamily: '"Space Grotesk", sans-serif',
+            fontWeight: 700,
+            background: isDarkMode
+              ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+              : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
+          Discord Message Preview
+        </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             This is how your roster will appear when posted to Discord:
@@ -2792,22 +2908,48 @@ export const RosterBuilderPage: React.FC = () => {
             elevation={0}
             sx={{
               p: 2,
-              bgcolor: 'grey.900',
+              borderRadius: '10px',
+              bgcolor: isDarkMode ? 'rgba(0,0,0,0.3)' : 'grey.900',
               color: 'grey.100',
               fontFamily: 'monospace',
               fontSize: '0.875rem',
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
               overflowX: 'auto',
-              border: '1px solid',
-              borderColor: 'divider',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.06)'
+                : '1px solid rgba(0,0,0,0.06)',
             }}
           >
             {generateDiscordFormat(roster)}
           </Paper>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setPreviewDialog(false)}>Close</Button>
+          <Box
+            component="button"
+            onClick={() => setPreviewDialog(false)}
+            sx={{
+              px: 1.5,
+              py: 0.625,
+              borderRadius: '8px',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.1)',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: '0.8rem',
+              fontWeight: 500,
+              color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+              background: 'transparent',
+              transition: 'all 0.15s ease',
+              '&:hover': {
+                color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
+                background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+              },
+            }}
+          >
+            Close
+          </Box>
           <Button
             onClick={() => {
               handleCopyDiscordFormat();
@@ -2815,6 +2957,15 @@ export const RosterBuilderPage: React.FC = () => {
             }}
             variant="contained"
             startIcon={<CopyIcon />}
+            sx={{
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              boxShadow: isDarkMode
+                ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
+                : '0 1px 2px rgba(0,0,0,0.06)',
+            }}
           >
             Copy to Clipboard
           </Button>
@@ -2830,8 +2981,36 @@ export const RosterBuilderPage: React.FC = () => {
         }}
         maxWidth="sm"
         fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '14px',
+              backgroundColor: isDarkMode ? 'rgba(20,20,30,0.97)' : 'rgba(255,255,255,0.98)',
+              backdropFilter: 'blur(16px)',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.08)',
+              boxShadow: isDarkMode
+                ? '0 16px 48px rgba(0,0,0,0.5)'
+                : '0 16px 48px rgba(0,0,0,0.12)',
+            },
+          },
+        }}
       >
-        <DialogTitle>Import Roster from ESO Logs</DialogTitle>
+        <DialogTitle
+          sx={{
+            fontFamily: '"Space Grotesk", sans-serif',
+            fontWeight: 700,
+            background: isDarkMode
+              ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+              : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
+          Import Roster from ESO Logs
+        </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Enter the ESO Logs report URL for a specific fight. The roster will be automatically
@@ -2853,22 +3032,56 @@ export const RosterBuilderPage: React.FC = () => {
             placeholder="https://www.esologs.com/reports/ABC123#fight=5"
             value={importUrl}
             onChange={(e) => setImportUrl(e.target.value)}
-            sx={{ mt: 2 }}
+            sx={{ mt: 2, ...glassTextField }}
             disabled={importLoading}
             helperText="The report must be public or you must be logged in to access it"
           />
         </DialogContent>
         <DialogActions>
-          <Button
+          <Box
+            component="button"
             onClick={() => {
               setImportUrlDialog(false);
               setImportUrl('');
             }}
-            disabled={importLoading}
+            sx={{
+              px: 1.5,
+              py: 0.625,
+              borderRadius: '8px',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.1)',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: '0.8rem',
+              fontWeight: 500,
+              color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+              background: 'transparent',
+              transition: 'all 0.15s ease',
+              opacity: importLoading ? 0.5 : 1,
+              pointerEvents: importLoading ? 'none' : 'auto',
+              '&:hover': {
+                color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
+                background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+              },
+            }}
           >
             Cancel
-          </Button>
-          <Button onClick={handleImportFromUrl} variant="contained" disabled={importLoading}>
+          </Box>
+          <Button
+            onClick={handleImportFromUrl}
+            variant="contained"
+            disabled={importLoading}
+            sx={{
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              boxShadow: isDarkMode
+                ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
+                : '0 1px 2px rgba(0,0,0,0.06)',
+            }}
+          >
             {importLoading ? 'Importing...' : 'Import Roster'}
           </Button>
         </DialogActions>
