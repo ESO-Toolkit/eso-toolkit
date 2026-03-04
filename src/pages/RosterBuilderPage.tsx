@@ -3597,8 +3597,8 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                         <TextField
                           {...params}
                           size="small"
-                          label="Labels / Tags"
-                          placeholder="Add labels"
+                          label="Tags"
+                          placeholder="Add tags"
                           helperText="Press Enter to add"
                           sx={glassSx}
                         />
@@ -4328,8 +4328,8 @@ const HealerCard: React.FC<HealerCardProps> = ({
                         <TextField
                           {...params}
                           size="small"
-                          label="Labels / Tags"
-                          placeholder="Add labels"
+                          label="Tags"
+                          placeholder="Add tags"
                           helperText="Press Enter to add"
                           sx={glassSx}
                         />
