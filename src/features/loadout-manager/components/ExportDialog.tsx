@@ -29,7 +29,7 @@ import { useLogger } from '@/hooks/useLogger';
 
 import { TRIALS } from '../data/trialConfigs';
 import { selectCurrentTrial, selectCurrentSetups, selectLoadoutState } from '../store/selectors';
-import { WizardWardrobeExport } from '../types/loadout.types';
+import type { WizardWardrobeExport } from '../types/loadout.types';
 import {
   convertLoadoutStateToAlphaGear,
   serializeAlphaGearToLua,
