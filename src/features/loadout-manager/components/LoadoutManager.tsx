@@ -33,8 +33,6 @@ import {
   Select,
   Snackbar,
   Stack,
-  Tab,
-  Tabs,
   TextField,
   Tooltip,
   Typography,
@@ -242,14 +240,6 @@ export const LoadoutManager: React.FC = () => {
     dispatch(setCurrentTrial(value));
     setSelectedSetupIndex(null);
     setDrawerOpen(false);
-  };
-
-  const handlePageChange = (_event: React.SyntheticEvent, value: number): void => {
-    dispatch(setCurrentPage(value));
-    setSelectedSetupIndex(null);
-    if (isMdDown) {
-      setDrawerOpen(false);
-    }
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -742,7 +732,7 @@ export const LoadoutManager: React.FC = () => {
             }}
           />
 
-          {/* ── Row 2: character · tabs · search · new ── */}
+          {/* ── Row 2: character · page · search · new ── */}
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}>
             <CharacterSelector />
 
@@ -757,46 +747,43 @@ export const LoadoutManager: React.FC = () => {
               }}
             />
 
-            {/* Page tabs + page action micro-group */}
-            <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flex: 1, minWidth: 0 }}>
-              <Tabs
-                value={Math.min(currentPage, Math.max(allPages.length - 1, 0))}
-                onChange={handlePageChange}
-                variant="scrollable"
-                scrollButtons="auto"
-                allowScrollButtonsMobile
-                sx={{
-                  flex: 1,
-                  minHeight: 34,
-                  '& .MuiTab-root': {
-                    minHeight: 34,
-                    py: 0.5,
-                    px: 1.5,
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    borderRadius: '8px',
-                    marginRight: '2px',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+            {/* Page select + rename + add */}
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <FormControl sx={{ minWidth: 140, ...glassTextField }} size="small">
+                <InputLabel id="page-select-label">Page</InputLabel>
+                <Select
+                  labelId="page-select-label"
+                  value={Math.min(currentPage, Math.max(allPages.length - 1, 0))}
+                  label="Page"
+                  onChange={(e) => {
+                    const value = e.target.value as number;
+                    dispatch(setCurrentPage(value));
+                    setSelectedSetupIndex(null);
+                    if (isMdDown) setDrawerOpen(false);
+                  }}
+                  disabled={allPages.length === 0}
+                  MenuProps={{
+                    slotProps: {
+                      paper: {
+                        sx: {
+                          borderRadius: '10px',
+                          backdropFilter: 'blur(12px)',
+                          backgroundColor: isDarkMode
+                            ? 'rgba(20,20,30,0.92)'
+                            : 'rgba(255,255,255,0.94)',
+                          border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                        },
+                      },
                     },
-                    '&.Mui-selected': {
-                      color: isDarkMode ? '#f1f5f9' : '#0f172a',
-                    },
-                  },
-                  '& .MuiTabs-indicator': {
-                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)',
-                    borderRadius: '8px',
-                    height: '100%',
-                    zIndex: 0,
-                  },
-                }}
-              >
-                {allPages.map((page, index) => (
-                  <Tab key={`${page.name}-${index}`} label={page.name} value={index} />
-                ))}
-              </Tabs>
+                  }}
+                >
+                  {allPages.map((page, index) => (
+                    <MenuItem key={`${page.name}-${index}`} value={index}>
+                      {page.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
               <Box
                 sx={{
@@ -845,6 +832,9 @@ export const LoadoutManager: React.FC = () => {
                 </Tooltip>
               </Box>
             </Stack>
+
+            {/* Flex spacer — pushes search+new to the right on desktop */}
+            <Box sx={{ flex: 1, display: { xs: 'none', md: 'block' } }} />
 
             {/* Search pill + New button */}
             <Stack direction="row" spacing={0.75} alignItems="center" sx={{ flexShrink: 0 }}>
