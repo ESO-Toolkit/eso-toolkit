@@ -1,3 +1,4 @@
+import TuneIcon from '@mui/icons-material/Tune';
 import {
   Box,
   Typography,
@@ -11,8 +12,10 @@ import {
   Card,
   CardContent,
   Skeleton,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
@@ -24,6 +27,8 @@ import { resolveActorName } from '../../../utils/resolveActorName';
 import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 
 import { LazyPlayerCard as PlayerCard } from './LazyPlayerCard';
+import { StatChipCustomizationModal } from './StatChipCustomizationModal';
+import { useStatChipPreferences } from './useStatChipPreferences';
 
 interface PlayersPanelViewProps {
   playerActors: Record<string, PlayerDetailsWithRole> | undefined;
@@ -51,6 +56,16 @@ interface PlayersPanelViewProps {
   fightEndTime?: number;
   /** DPS value (damage/second) per player ID, used to identify the top DPS player */
   dpsValueByPlayer?: Record<string, number>;
+  /** HPS value (healing/second) per player ID */
+  hpsValueByPlayer?: Record<string, number>;
+  /** Total damage dealt per player ID */
+  totalDamageByPlayer?: Record<string, number>;
+  /** Total critical hit damage per player ID */
+  totalCritDamageByPlayer?: Record<string, number>;
+  /** Critical DPS (crit damage / duration) per player ID */
+  critDpsByPlayer?: Record<string, number>;
+  /** Critical hit chance (%) per player ID */
+  critChanceByPlayer?: Record<string, number>;
   criticalDamageByPlayer?: Record<string, { avg: number; max: number }>;
   /** Bar swap analysis results per player ID, used to show bar setup pattern on DPS cards */
   barSwapByPlayer?: Record<string, BarSwapAnalysisResult>;
@@ -91,6 +106,11 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     fightStartTime: _fightStartTime,
     fightEndTime: _fightEndTime,
     dpsValueByPlayer,
+    hpsValueByPlayer,
+    totalDamageByPlayer,
+    totalCritDamageByPlayer,
+    critDpsByPlayer,
+    critChanceByPlayer,
     criticalDamageByPlayer,
     barSwapByPlayer,
     potionResultsByPlayer,
@@ -98,6 +118,11 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState<SortOption>('alphabetical');
     const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
+    const [chipModalOpen, setChipModalOpen] = useState(false);
+
+    const { visibleChips, setVisibleChips } = useStatChipPreferences();
+    const handleOpenChipModal = useCallback(() => setChipModalOpen(true), []);
+    const handleCloseChipModal = useCallback(() => setChipModalOpen(false), []);
 
     // Identify the top DPS player (highest DPS value among DPS-role players)
     const { topDpsPlayerId, topDpsValue } = useMemo(() => {
@@ -141,6 +166,12 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         const isTopDps = topDpsPlayerId !== null && String(player.id) === topDpsPlayerId;
         const barSwapResult = barSwapByPlayer?.[String(player.id)];
         const potionStreamResult = potionResultsByPlayer?.[String(player.id)];
+        const dpsValue = dpsValueByPlayer?.[String(player.id)];
+        const hpsValue = hpsValueByPlayer?.[String(player.id)];
+        const totalDamage = totalDamageByPlayer?.[String(player.id)];
+        const totalCritDamage = totalCritDamageByPlayer?.[String(player.id)];
+        const critDps = critDpsByPlayer?.[String(player.id)];
+        const critChance = critChanceByPlayer?.[String(player.id)];
 
         return {
           key: player.id,
@@ -164,6 +195,12 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           critDamageSummary,
           barSwapResult,
           potionStreamResult,
+          dpsValue,
+          hpsValue,
+          totalDamage,
+          totalCritDamage,
+          critDps,
+          critChance,
         };
       });
     }, [
@@ -187,6 +224,12 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       criticalDamageByPlayer,
       barSwapByPlayer,
       potionResultsByPlayer,
+      dpsValueByPlayer,
+      hpsValueByPlayer,
+      totalDamageByPlayer,
+      totalCritDamageByPlayer,
+      critDpsByPlayer,
+      critChanceByPlayer,
     ]);
 
     // Filter, search, and sort players
@@ -426,6 +469,23 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
               <MenuItem value="supports">Supports (Tanks & Healers)</MenuItem>
             </Select>
           </FormControl>
+
+          <Tooltip title="Customize stat chips" arrow>
+            <IconButton
+              size="small"
+              onClick={handleOpenChipModal}
+              sx={{
+                alignSelf: 'center',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1,
+                px: 1,
+              }}
+              aria-label="Customize stat chips"
+            >
+              <TuneIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Stack>
 
         {/* Results summary */}
@@ -506,10 +566,24 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 critDamageSummary={playerData.critDamageSummary}
                 barSwapResult={playerData.barSwapResult}
                 potionStreamResult={playerData.potionStreamResult}
+                dpsValue={playerData.dpsValue}
+                hpsValue={playerData.hpsValue}
+                totalDamage={playerData.totalDamage}
+                totalCritDamage={playerData.totalCritDamage}
+                critDps={playerData.critDps}
+                critChance={playerData.critChance}
+                visibleChips={visibleChips}
               />
             </Box>
           ))}
         </Box>
+
+        <StatChipCustomizationModal
+          open={chipModalOpen}
+          onClose={handleCloseChipModal}
+          visibleChips={visibleChips}
+          onSave={setVisibleChips}
+        />
       </Box>
     );
   },
