@@ -845,7 +845,6 @@ export const RosterBuilderPage: React.FC = () => {
     },
   };
 
-
   const [roster, setRoster] = useState<RaidRoster>(createDefaultRoster());
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [snackbar, setSnackbar] = useState<{
@@ -1979,279 +1978,296 @@ export const RosterBuilderPage: React.FC = () => {
         />
 
         {/* Row 3 — Action button bar */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mb: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: { xs: 'stretch', md: 'center' },
+            gap: 0.75,
+            mb: 2,
+          }}
+        >
           {/* Row 1: utility actions */}
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.75 }}>
-          <Tooltip title="Quick Fill" arrow>
-            <Button
-              size="small"
-              startIcon={<PersonAddIcon />}
-              onClick={() => setQuickFillDialog(true)}
-              sx={{
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontSize: '0.75rem',
-                fontWeight: 500,
-                color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                border: isDarkMode
-                  ? '1px solid rgba(255,255,255,0.08)'
-                  : '1px solid rgba(0,0,0,0.1)',
-                backgroundColor: 'transparent',
-                '&:hover': {
-                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                  border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.15)'
-                    : '1px solid rgba(0,0,0,0.18)',
-                },
-              }}
-            >
-              Quick Fill
-            </Button>
-          </Tooltip>
-          <Tooltip title="Import roster from file or log" arrow>
-            <Button
-              size="small"
-              startIcon={<UploadIcon />}
-              endIcon={<ExpandMoreIcon sx={{ fontSize: '0.875rem !important', ml: -0.5 }} />}
-              onClick={(e) => setImportMenuAnchor(e.currentTarget)}
-              sx={{
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontSize: '0.75rem',
-                fontWeight: 500,
-                color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                border: isDarkMode
-                  ? '1px solid rgba(255,255,255,0.08)'
-                  : '1px solid rgba(0,0,0,0.1)',
-                backgroundColor: importMenuAnchor
-                  ? isDarkMode
-                    ? 'rgba(255,255,255,0.05)'
-                    : 'rgba(0,0,0,0.04)'
-                  : 'transparent',
-                '&:hover': {
-                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                  border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.15)'
-                    : '1px solid rgba(0,0,0,0.18)',
-                },
-              }}
-            >
-              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                Import
-              </Box>
-            </Button>
-          </Tooltip>
-          <Menu
-            anchorEl={importMenuAnchor}
-            open={Boolean(importMenuAnchor)}
-            onClose={() => setImportMenuAnchor(null)}
-            slotProps={{
-              paper: {
-                sx: {
-                  borderRadius: '10px',
-                  mt: 0.5,
-                  backgroundColor: isDarkMode ? 'rgba(30,30,40,0.95)' : 'rgba(255,255,255,0.97)',
-                  backdropFilter: 'blur(12px)',
+            <Tooltip title="Quick Fill" arrow>
+              <Button
+                size="small"
+                startIcon={<PersonAddIcon />}
+                onClick={() => setQuickFillDialog(true)}
+                sx={{
+                  flex: { xs: 1, md: 'none' },
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
                   border: isDarkMode
                     ? '1px solid rgba(255,255,255,0.08)'
-                    : '1px solid rgba(0,0,0,0.08)',
-                  boxShadow: isDarkMode
-                    ? '0 8px 24px rgba(0,0,0,0.5)'
-                    : '0 8px 24px rgba(0,0,0,0.12)',
+                    : '1px solid rgba(0,0,0,0.1)',
+                  backgroundColor: 'transparent',
+                  '&:hover': {
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                    border: isDarkMode
+                      ? '1px solid rgba(255,255,255,0.15)'
+                      : '1px solid rgba(0,0,0,0.18)',
+                  },
+                }}
+              >
+                Quick Fill
+              </Button>
+            </Tooltip>
+            <Tooltip title="Import roster from file or log" arrow>
+              <Button
+                size="small"
+                startIcon={<UploadIcon />}
+                endIcon={<ExpandMoreIcon sx={{ fontSize: '0.875rem !important', ml: -0.5 }} />}
+                onClick={(e) => setImportMenuAnchor(e.currentTarget)}
+                sx={{
+                  flex: { xs: 1, md: 'none' },
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.1)',
+                  backgroundColor: importMenuAnchor
+                    ? isDarkMode
+                      ? 'rgba(255,255,255,0.05)'
+                      : 'rgba(0,0,0,0.04)'
+                    : 'transparent',
+                  '&:hover': {
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                    border: isDarkMode
+                      ? '1px solid rgba(255,255,255,0.15)'
+                      : '1px solid rgba(0,0,0,0.18)',
+                  },
+                }}
+              >
+                Import
+              </Button>
+            </Tooltip>
+            <Menu
+              anchorEl={importMenuAnchor}
+              open={Boolean(importMenuAnchor)}
+              onClose={() => setImportMenuAnchor(null)}
+              slotProps={{
+                paper: {
+                  sx: {
+                    borderRadius: '10px',
+                    mt: 0.5,
+                    backgroundColor: isDarkMode ? 'rgba(30,30,40,0.95)' : 'rgba(255,255,255,0.97)',
+                    backdropFilter: 'blur(12px)',
+                    border: isDarkMode
+                      ? '1px solid rgba(255,255,255,0.08)'
+                      : '1px solid rgba(0,0,0,0.08)',
+                    boxShadow: isDarkMode
+                      ? '0 8px 24px rgba(0,0,0,0.5)'
+                      : '0 8px 24px rgba(0,0,0,0.12)',
+                  },
                 },
-              },
-            }}
-          >
-            <MenuItem
-              onClick={() => {
-                setImportMenuAnchor(null);
-                fileInputRef.current?.click();
               }}
-              sx={{ fontSize: '0.8125rem', gap: 1 }}
             >
-              <ListItemIcon sx={{ minWidth: '28px !important' }}>
-                <UploadIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>From JSON File</ListItemText>
-            </MenuItem>
-            {isLoggedIn && (
               <MenuItem
                 onClick={() => {
                   setImportMenuAnchor(null);
-                  setImportUrlDialog(true);
+                  fileInputRef.current?.click();
                 }}
                 sx={{ fontSize: '0.8125rem', gap: 1 }}
               >
                 <ListItemIcon sx={{ minWidth: '28px !important' }}>
-                  <LinkIcon fontSize="small" />
+                  <UploadIcon fontSize="small" />
                 </ListItemIcon>
-                <ListItemText>From Log URL</ListItemText>
+                <ListItemText>From JSON File</ListItemText>
               </MenuItem>
-            )}
-          </Menu>
-          <input
-            ref={fileInputRef}
-            type="file"
-            hidden
-            accept=".json"
-            onChange={(e) => {
-              handleImportJSON(e);
-              if (fileInputRef.current) fileInputRef.current.value = '';
-            }}
-            aria-label="Upload roster JSON file"
-          />
-          <Tooltip title="Export JSON" arrow>
-            <Button
-              size="small"
-              startIcon={<DownloadIcon />}
-              onClick={handleExportJSON}
-              sx={{
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontSize: '0.75rem',
-                fontWeight: 500,
-                color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                border: isDarkMode
-                  ? '1px solid rgba(255,255,255,0.08)'
-                  : '1px solid rgba(0,0,0,0.1)',
-                backgroundColor: 'transparent',
-                '&:hover': {
-                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                  border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.15)'
-                    : '1px solid rgba(0,0,0,0.18)',
-                },
+              {isLoggedIn && (
+                <MenuItem
+                  onClick={() => {
+                    setImportMenuAnchor(null);
+                    setImportUrlDialog(true);
+                  }}
+                  sx={{ fontSize: '0.8125rem', gap: 1 }}
+                >
+                  <ListItemIcon sx={{ minWidth: '28px !important' }}>
+                    <LinkIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>From Log URL</ListItemText>
+                </MenuItem>
+              )}
+            </Menu>
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              accept=".json"
+              onChange={(e) => {
+                handleImportJSON(e);
+                if (fileInputRef.current) fileInputRef.current.value = '';
               }}
-            >
-              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              aria-label="Upload roster JSON file"
+            />
+            <Tooltip title="Export JSON" arrow>
+              <Button
+                size="small"
+                startIcon={<DownloadIcon />}
+                onClick={handleExportJSON}
+                sx={{
+                  flex: { xs: 1, md: 'none' },
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.1)',
+                  backgroundColor: 'transparent',
+                  '&:hover': {
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                    border: isDarkMode
+                      ? '1px solid rgba(255,255,255,0.15)'
+                      : '1px solid rgba(0,0,0,0.18)',
+                  },
+                }}
+              >
                 Export
-              </Box>
-            </Button>
-          </Tooltip>
+              </Button>
+            </Tooltip>
+          </Box>
+          {/* end row 1 */}
 
-          </Box>{/* end row 1 */}
+          {/* Spacer — desktop only */}
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
 
           {/* Row 2: share actions */}
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.75 }}>
-          {/* Discord compound button — preview + copy in a shared track */}
-          <Box
-            sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              borderRadius: '10px',
-              padding: '3px',
-              background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-              border: isDarkMode
-                ? '1px solid rgba(255,255,255,0.08)'
-                : '1px solid rgba(0,0,0,0.08)',
-            }}
-          >
-            <Tooltip title="Preview Discord format" arrow>
-              <Box
-                component="button"
-                onClick={() => setPreviewDialog(true)}
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                  px: 1.25,
-                  py: 0.5,
-                  borderRadius: '7px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                  fontFamily: 'inherit',
-                  color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
-                  background: 'transparent',
-                  transition: 'all 0.15s ease',
-                  '&:hover': {
-                    color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
-                    background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                  },
-                }}
-              >
-                <VisibilityIcon sx={{ fontSize: '0.9rem' }} />
-                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                  Preview
-                </Box>
-              </Box>
-            </Tooltip>
-            <Divider
-              orientation="vertical"
-              flexItem
+            {/* Discord compound button — preview + copy in a shared track */}
+            <Box
               sx={{
-                mx: 0.25,
-                opacity: isDarkMode ? 0.12 : 0.15,
-                borderColor: isDarkMode ? '#fff' : '#000',
-              }}
-            />
-            <Tooltip title="Copy for Discord" arrow>
-              <Box
-                component="button"
-                onClick={handleCopyDiscordFormat}
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                  px: 1,
-                  py: 0.5,
-                  borderRadius: '7px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  color: isDarkMode ? '#f1f5f9' : '#0f172a',
-                  background: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.85)',
-                  boxShadow: isDarkMode
-                    ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)'
-                    : '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-                  transition: 'all 0.15s ease',
-                  '&:hover': {
-                    background: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.95)',
-                  },
-                }}
-              >
-                <Box
-                  component="img"
-                  src={discordIcon}
-                  alt="Copy for Discord"
-                  sx={{ width: 16, height: 16 }}
-                />
-              </Box>
-            </Tooltip>
-          </Box>
-          <Tooltip title="Copy shareable link" arrow>
-            <Button
-              size="small"
-              startIcon={<LinkIcon />}
-              onClick={handleCopyLink}
-              sx={{
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: isDarkMode ? '#f1f5f9' : '#0f172a',
-                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)',
+                flex: { xs: 1, md: '0 0 auto' },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '10px',
+                padding: '3px',
+                background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                 border: isDarkMode
-                  ? '1px solid rgba(255,255,255,0.12)'
-                  : '1px solid rgba(0,0,0,0.12)',
-                boxShadow: isDarkMode
-                  ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
-                  : '0 1px 2px rgba(0,0,0,0.06)',
-                '&:hover': {
-                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.09)',
-                  border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.18)'
-                    : '1px solid rgba(0,0,0,0.18)',
-                },
+                  ? '1px solid rgba(255,255,255,0.08)'
+                  : '1px solid rgba(0,0,0,0.08)',
               }}
             >
-              <Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}>
+              <Tooltip title="Preview Discord format" arrow>
+                <Box
+                  component="button"
+                  onClick={() => setPreviewDialog(true)}
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    px: 1.25,
+                    py: 0.5,
+                    borderRadius: '7px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    fontFamily: 'inherit',
+                    color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
+                    background: 'transparent',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
+                      background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                    },
+                  }}
+                >
+                  <VisibilityIcon sx={{ fontSize: '0.9rem' }} />
+                  <Box component="span">Preview</Box>
+                </Box>
+              </Tooltip>
+              <Divider
+                orientation="vertical"
+                flexItem
+                sx={{
+                  mx: 0.25,
+                  opacity: isDarkMode ? 0.12 : 0.15,
+                  borderColor: isDarkMode ? '#fff' : '#000',
+                }}
+              />
+              <Tooltip title="Copy for Discord" arrow>
+                <Box
+                  component="button"
+                  onClick={handleCopyDiscordFormat}
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    px: 1.25,
+                    py: 0.5,
+                    borderRadius: '7px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    color: isDarkMode ? '#f1f5f9' : '#0f172a',
+                    background: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.85)',
+                    boxShadow: isDarkMode
+                      ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)'
+                      : '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      background: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.95)',
+                    },
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={discordIcon}
+                    alt="Copy for Discord"
+                    sx={{ width: 16, height: 16 }}
+                  />
+                  Copy
+                </Box>
+              </Tooltip>
+            </Box>
+            <Tooltip title="Copy shareable link" arrow>
+              <Button
+                size="small"
+                startIcon={<LinkIcon />}
+                onClick={handleCopyLink}
+                sx={{
+                  flex: { xs: 1, md: 'none' },
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: isDarkMode ? '#f1f5f9' : '#0f172a',
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.12)'
+                    : '1px solid rgba(0,0,0,0.12)',
+                  boxShadow: isDarkMode
+                    ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
+                    : '0 1px 2px rgba(0,0,0,0.06)',
+                  '&:hover': {
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.09)',
+                    border: isDarkMode
+                      ? '1px solid rgba(255,255,255,0.18)'
+                      : '1px solid rgba(0,0,0,0.18)',
+                  },
+                }}
+              >
                 Share
-              </Box>
-            </Button>
-          </Tooltip>
-          </Box>{/* end row 2 */}
+              </Button>
+            </Tooltip>
+          </Box>
+          {/* end row 2 */}
         </Box>
 
         <Box
