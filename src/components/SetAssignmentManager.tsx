@@ -208,7 +208,14 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               {roleLabel}
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.625 }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' },
+              gap: 0.625,
+              flex: 1,
+            }}
+          >
             {Object.values(SupportUltimate).map((ult) => {
               const isSelected = roleData.ultimate === ult;
               return (
@@ -339,7 +346,13 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               {roleLabel}
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.625 }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(2, 1fr)' },
+              gap: 0.625,
+            }}
+          >
             {Object.values(HealerChampionPoint).map((cp) => {
               const isSelected = healer.championPoint === cp;
               return (

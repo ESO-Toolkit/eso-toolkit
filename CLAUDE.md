@@ -138,7 +138,7 @@ npm run test:full             # Full E2E suite
 | Issue | Solution |
 |-------|----------|
 | GraphQL errors | Run `npm run codegen` |
-| Port occupied | Kill the process (`netstat -ano \| findstr :<port>` → `taskkill /PID <PID> /F`) or use the next worktree slot — see [.claude-rules.md](.claude-rules.md) |
+| Port occupied | Find PID: `netstat -ano \| findstr :<port>` → Kill: `taskkill //PID <PID> //F` (use `//` not `/` — Git Bash converts single-slash flags to Windows paths, silently failing) |
 | Type errors | Run `npm run typecheck` |
 | Build fails | Check `GENERATE_SOURCEMAP=true` for Sentry debugging |
 | Module errors | Delete `node_modules/`, run `npm ci` |
