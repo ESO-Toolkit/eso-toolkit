@@ -25,7 +25,6 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Alert,
   Box,
   Button,
   Card,
@@ -2204,6 +2203,42 @@ const ParseAnalysisPageContent: React.FC = () => {
                 onClick={handleAnalyze}
                 disabled={!logUrl || state.loading}
                 fullWidth
+                sx={{
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  px: 2,
+                  py: 1,
+                  borderRadius: 1.5,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  background: roleColors.isDarkMode
+                    ? 'linear-gradient(135deg, rgba(66, 133, 244, 0.9) 0%, rgba(33, 150, 243, 0.8) 100%)'
+                    : 'linear-gradient(135deg, rgba(63, 81, 181, 0.9) 0%, rgba(33, 150, 243, 0.8) 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  boxShadow: roleColors.isDarkMode
+                    ? 'inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 6px rgba(66, 133, 244, 0.2)'
+                    : 'inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 6px rgba(63, 81, 181, 0.15)',
+                  transition: 'all 0.15s ease-out',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    boxShadow: roleColors.isDarkMode
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 12px rgba(66, 133, 244, 0.3)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 12px rgba(63, 81, 181, 0.25)',
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
+                    boxShadow: roleColors.isDarkMode
+                      ? 'inset 0 1px 2px rgba(255,255,255,0.08), 0 1px 3px rgba(66, 133, 244, 0.15)'
+                      : 'inset 0 1px 2px rgba(255,255,255,0.1), 0 1px 3px rgba(63, 81, 181, 0.1)',
+                  },
+                  '&:disabled': {
+                    background: roleColors.isDarkMode
+                      ? 'rgba(66, 133, 244, 0.3)'
+                      : 'rgba(63, 81, 181, 0.15)',
+                    color: roleColors.isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.3)',
+                  },
+                }}
               >
                 Analyze Parse
               </Button>
@@ -2324,15 +2359,33 @@ const ParseAnalysisPageContent: React.FC = () => {
                         width: 28,
                         height: 28,
                         borderRadius: '50%',
-                        bgcolor: 'primary.main',
+                        background: roleColors.isDarkMode
+                          ? 'linear-gradient(135deg, rgba(25, 118, 210, 0.2) 0%, rgba(25, 118, 210, 0.08) 100%)'
+                          : 'linear-gradient(135deg, rgba(25, 118, 210, 0.12) 0%, rgba(25, 118, 210, 0.04) 100%)',
+                        border: '1px solid',
+                        borderColor: roleColors.isDarkMode
+                          ? 'rgba(25, 118, 210, 0.2)'
+                          : 'rgba(25, 118, 210, 0.15)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
                         mt: 0.25,
+                        transition: 'all 0.15s ease-out',
+                        '&:hover': {
+                          transform: 'scale(1.1)',
+                          backgroundColor: roleColors.isDarkMode
+                            ? 'rgba(25, 118, 210, 0.15)'
+                            : 'rgba(25, 118, 210, 0.1)',
+                        },
                       }}
                     >
-                      <Typography variant="caption" fontWeight={700} color="primary.contrastText">
+                      <Typography
+                        variant="caption"
+                        fontWeight={700}
+                        color="primary.main"
+                        sx={{ lineHeight: 1 }}
+                      >
                         {step}
                       </Typography>
                     </Box>
@@ -2353,23 +2406,81 @@ const ParseAnalysisPageContent: React.FC = () => {
       )}
 
       {state.error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {state.error}
-        </Alert>
+        <Box
+          sx={{
+            mb: 3,
+            p: 2,
+            borderRadius: 1.5,
+            borderTop: '2px solid',
+            borderTopColor: 'error.main',
+            backgroundColor: roleColors.isDarkMode
+              ? 'rgba(244, 67, 54, 0.08)'
+              : 'rgba(244, 67, 54, 0.06)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 1.5,
+          }}
+        >
+          <ErrorIcon
+            color="error"
+            sx={{ fontSize: 20, mt: 0.25, flexShrink: 0 }}
+          />
+          <Typography variant="body2" color="error" fontWeight={500}>
+            {state.error}
+          </Typography>
+        </Box>
       )}
 
       {/* Fight navigation — visible whenever multiple supported fights are available, even while loading */}
       {availableFights.length > 0 && !!state.reportCode && (
         <Card
           sx={{
-            mb: 2,
+            mb: 3,
             ...glassCardSx,
           }}
         >
-          <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-              <RotateRightIcon fontSize="small" color="action" />
-              <Typography variant="caption" fontWeight={600}>
+          <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+            {/* Section Label */}
+            <Typography
+              sx={{
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'text.disabled',
+                mb: 1.5,
+              }}
+            >
+              Fight Selection
+            </Typography>
+
+            {/* Header with Icon Lockup */}
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+              {/* Icon Lockup: 24×24 with gradient background */}
+              <Box
+                sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: roleColors.isDarkMode
+                    ? 'linear-gradient(135deg, rgba(33, 150, 243, 0.2) 0%, rgba(33, 150, 243, 0.08) 100%)'
+                    : 'linear-gradient(135deg, rgba(33, 150, 243, 0.12) 0%, rgba(33, 150, 243, 0.04) 100%)',
+                  border: '1px solid',
+                  borderColor: roleColors.isDarkMode
+                    ? 'rgba(33, 150, 243, 0.2)'
+                    : 'rgba(33, 150, 243, 0.15)',
+                  transition: 'transform 0.15s ease-out',
+                  '&:hover': {
+                    transform: 'scale(1.1)',
+                  },
+                }}
+              >
+                <RotateRightIcon color="info" sx={{ fontSize: '14px' }} />
+              </Box>
+              <Typography variant="subtitle2" fontWeight={600}>
                 {availableFights.length === 1 ? 'Latest Fight' : 'Available Fights'}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -2394,8 +2505,26 @@ const ParseAnalysisPageContent: React.FC = () => {
       )}
 
       {state.loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress />
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2.5,
+            my: 4,
+            py: 3,
+          }}
+        >
+          <CircularProgress size={40} />
+          <Stack alignItems="center" spacing={0.5}>
+            <Typography variant="body2" fontWeight={600}>
+              Loading parse data...
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Fetching fight information and analyzing events
+            </Typography>
+          </Stack>
         </Box>
       )}
 
@@ -2734,6 +2863,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                       label={state.buildIssues.length}
                       size="small"
                       color="warning"
+                      variant="outlined"
                       sx={{ height: 20, fontSize: '0.65rem' }}
                     />
                   </Stack>
@@ -2796,6 +2926,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                         label={`${state.buffChecklist.summary.totalRedundantBuffs} redundant`}
                         size="small"
                         color="warning"
+                        variant="outlined"
                         sx={{ height: 20, fontSize: '0.65rem' }}
                       />
                     )}
