@@ -69,7 +69,7 @@ import {
   SxProps,
 } from '@mui/material';
 import { useTheme, Theme } from '@mui/material/styles';
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 
 import discordIcon from '../assets/discord-icon.svg';
 import { SetAssignmentManager } from '../components/SetAssignmentManager';
@@ -725,12 +725,8 @@ const getSkillLineIcon = (skillLine: string): React.ReactElement | null => {
   );
 };
 
-/**
- * Get 5-piece set options for tank role (set1/set2 slots only)
- */
-const getTank5PieceSetOptions = (): readonly string[] => {
-  // Return sets in order: Tank-specific first, then Hybrid, maintaining alphabetical within each group
-  // Use Sets to avoid duplicates if a set appears in both arrays
+// Pre-computed set option arrays (pure data, computed once at module load)
+const TANK_5PIECE_OPTIONS: readonly string[] = (() => {
   const tankSets = Array.from(TANK_5PIECE_SETS)
     .map((id) => getSetDisplayName(id))
     .sort();
@@ -738,31 +734,17 @@ const getTank5PieceSetOptions = (): readonly string[] => {
     .filter((set) => !TANK_5PIECE_SETS.includes(set))
     .map((id) => getSetDisplayName(id))
     .sort();
-
   return [...tankSets, ...hybridSets];
-};
+})();
 
-/**
- * Get monster set options for tank role (monsterSet slot only)
- */
-const getTankMonsterSetOptions = (): readonly string[] => {
+const TANK_MONSTER_OPTIONS: readonly string[] = (() => {
   const sets = new Set<string>();
-
-  // Add tank-specific monster sets
   TANK_MONSTER_SETS.forEach((id) => sets.add(getSetDisplayName(id)));
-
-  // Add flexible monster sets
   FLEXIBLE_MONSTER_SETS.forEach((id) => sets.add(getSetDisplayName(id)));
-
   return Array.from(sets).sort();
-};
+})();
 
-/**
- * Get 5-piece set options for healer role (set1/set2 slots only)
- */
-const getHealer5PieceSetOptions = (): readonly string[] => {
-  // Return sets in order: Healer-specific first, then Hybrid, maintaining alphabetical within each group
-  // Use Sets to avoid duplicates if a set appears in both arrays
+const HEALER_5PIECE_OPTIONS: readonly string[] = (() => {
   const healerSets = Array.from(HEALER_5PIECE_SETS)
     .map((id) => getSetDisplayName(id))
     .sort();
@@ -770,24 +752,15 @@ const getHealer5PieceSetOptions = (): readonly string[] => {
     .filter((set) => !HEALER_5PIECE_SETS.includes(set))
     .map((id) => getSetDisplayName(id))
     .sort();
-
   return [...healerSets, ...hybridSets];
-};
+})();
 
-/**
- * Get monster set options for healer role (monsterSet slot only)
- */
-const getHealerMonsterSetOptions = (): readonly string[] => {
+const HEALER_MONSTER_OPTIONS: readonly string[] = (() => {
   const sets = new Set<string>();
-
-  // Add healer-specific monster sets
   HEALER_MONSTER_SETS.forEach((id) => sets.add(getSetDisplayName(id)));
-
-  // Add flexible monster sets
   FLEXIBLE_MONSTER_SETS.forEach((id) => sets.add(getSetDisplayName(id)));
-
   return Array.from(sets).sort();
-};
+})();
 
 /**
  * Helper functions for type-safe set membership checks
@@ -947,6 +920,53 @@ export const RosterBuilderPage: React.FC = () => {
     [],
   );
 
+  // Update tank setup
+  const handleTankChange = useCallback((tankNum: 1 | 2, updates: Partial<TankSetup>): void => {
+    setRoster((prev) => ({
+      ...prev,
+      [`tank${tankNum}`]: {
+        ...prev[`tank${tankNum}` as 'tank1' | 'tank2'],
+        ...updates,
+      },
+      updatedAt: new Date().toISOString(),
+    }));
+  }, []);
+
+  // Stable per-card tank callbacks
+  const handleTank1Change = useCallback(
+    (updates: Partial<TankSetup>) => handleTankChange(1, updates),
+    [handleTankChange],
+  );
+  const handleTank2Change = useCallback(
+    (updates: Partial<TankSetup>) => handleTankChange(2, updates),
+    [handleTankChange],
+  );
+
+  // Update healer setup
+  const handleHealerChange = useCallback(
+    (healerNum: 1 | 2, updates: Partial<HealerSetup>): void => {
+      setRoster((prev) => ({
+        ...prev,
+        [`healer${healerNum}`]: {
+          ...prev[`healer${healerNum}` as 'healer1' | 'healer2'],
+          ...updates,
+        },
+        updatedAt: new Date().toISOString(),
+      }));
+    },
+    [],
+  );
+
+  // Stable per-card healer callbacks
+  const handleHealer1Change = useCallback(
+    (updates: Partial<HealerSetup>) => handleHealerChange(1, updates),
+    [handleHealerChange],
+  );
+  const handleHealer2Change = useCallback(
+    (updates: Partial<HealerSetup>) => handleHealerChange(2, updates),
+    [handleHealerChange],
+  );
+
   // Memoized callbacks for SetAssignmentManager
   const handleSetAssignment = useCallback(
     (setName: string, role: 'tank1' | 'tank2' | 'healer1' | 'healer2', slot: string) => {
@@ -993,7 +1013,7 @@ export const RosterBuilderPage: React.FC = () => {
         });
       }
     },
-    [roster, getRoleNumber, isTankRole],
+    [roster, getRoleNumber, isTankRole, handleTankChange, handleHealerChange],
   );
 
   const handleUltimateUpdate = useCallback(
@@ -1005,7 +1025,7 @@ export const RosterBuilderPage: React.FC = () => {
         handleHealerChange(roleNum, { ultimate });
       }
     },
-    [getRoleNumber, isTankRole],
+    [getRoleNumber, isTankRole, handleTankChange, handleHealerChange],
   );
 
   const handleHealerCPUpdate = useCallback(
@@ -1015,7 +1035,7 @@ export const RosterBuilderPage: React.FC = () => {
         championPoint,
       });
     },
-    [getRoleNumber],
+    [getRoleNumber, handleHealerChange],
   );
 
   // Drag and drop sensors
@@ -1110,38 +1130,21 @@ export const RosterBuilderPage: React.FC = () => {
     }));
   };
 
-  // Update tank setup
-  const handleTankChange = (tankNum: 1 | 2, updates: Partial<TankSetup>): void => {
-    setRoster((prev) => ({
-      ...prev,
-      [`tank${tankNum}`]: {
-        ...prev[`tank${tankNum}` as 'tank1' | 'tank2'],
-        ...updates,
-      },
-      updatedAt: new Date().toISOString(),
-    }));
-  };
-
-  // Update healer setup
-  const handleHealerChange = (healerNum: 1 | 2, updates: Partial<HealerSetup>): void => {
-    setRoster((prev) => ({
-      ...prev,
-      [`healer${healerNum}`]: {
-        ...prev[`healer${healerNum}` as 'healer1' | 'healer2'],
-        ...updates,
-      },
-      updatedAt: new Date().toISOString(),
-    }));
-  };
+  // Stable DPS slot change handler (used with slotIndex prop on DPSSlotCard)
+  const handleDPSSlotChange = useCallback((slotIndex: number, updates: Partial<DPSSlot>): void => {
+    setRoster((prev) => {
+      const updatedSlots = [...prev.dpsSlots];
+      updatedSlots[slotIndex] = { ...updatedSlots[slotIndex], ...updates };
+      return { ...prev, dpsSlots: updatedSlots, updatedAt: new Date().toISOString() };
+    });
+  }, []);
 
   // Convert existing DPS slot to jail DD requirement
-  const handleConvertDPSToJail = (slotNumber: number, jailType: JailDDType): void => {
+  const handleConvertDPSToJail = useCallback((slotNumber: number, jailType: JailDDType): void => {
     setRoster((prev) => {
-      // Find the DPS slot to convert
       const slotIndex = prev.dpsSlots.findIndex((s) => s.slotNumber === slotNumber);
       if (slotIndex === -1) return prev;
 
-      // Update the slot to be a jail DD (keep it in place)
       const updatedDpsSlots = [...prev.dpsSlots];
       updatedDpsSlots[slotIndex] = {
         ...updatedDpsSlots[slotIndex],
@@ -1155,15 +1158,14 @@ export const RosterBuilderPage: React.FC = () => {
         updatedAt: new Date().toISOString(),
       };
     });
-  };
+  }, []);
 
   // Convert jail DD back to regular DPS
-  const handleConvertJailToDPS = (slotNumber: number): void => {
+  const handleConvertJailToDPS = useCallback((slotNumber: number): void => {
     setRoster((prev) => {
       const slotIndex = prev.dpsSlots.findIndex((s) => s.slotNumber === slotNumber);
       if (slotIndex === -1) return prev;
 
-      // Clear jail DD fields
       const updatedDpsSlots = [...prev.dpsSlots];
       const {
         jailDDType: _removed1,
@@ -1178,7 +1180,15 @@ export const RosterBuilderPage: React.FC = () => {
         updatedAt: new Date().toISOString(),
       };
     });
-  };
+  }, []);
+
+  // Memoized derived values for stable prop references
+  const usedBuffs = useMemo(
+    () => [roster.healer1?.healerBuff, roster.healer2?.healerBuff].filter(Boolean) as HealerBuff[],
+    [roster.healer1?.healerBuff, roster.healer2?.healerBuff],
+  );
+
+  const memoizedGroups = useMemo(() => roster.availableGroups, [roster.availableGroups]);
 
   // Export roster as JSON
   const handleExportJSON = useCallback(() => {
@@ -2527,15 +2537,20 @@ export const RosterBuilderPage: React.FC = () => {
               </AccordionSummary>
               <AccordionDetails>
                 <Stack spacing={2} mb={3}>
-                  {[1, 2].map((num) => (
-                    <TankCard
-                      key={num}
-                      tankNum={num as 1 | 2}
-                      tank={roster[`tank${num}` as 'tank1' | 'tank2']}
-                      onChange={(updates) => handleTankChange(num as 1 | 2, updates)}
-                      availableGroups={roster.availableGroups}
-                    />
-                  ))}
+                  <TankCard
+                    key={1}
+                    tankNum={1}
+                    tank={roster.tank1}
+                    onChange={handleTank1Change}
+                    availableGroups={memoizedGroups}
+                  />
+                  <TankCard
+                    key={2}
+                    tankNum={2}
+                    tank={roster.tank2}
+                    onChange={handleTank2Change}
+                    availableGroups={memoizedGroups}
+                  />
                 </Stack>
               </AccordionDetails>
             </Accordion>
@@ -2625,20 +2640,22 @@ export const RosterBuilderPage: React.FC = () => {
               </AccordionSummary>
               <AccordionDetails>
                 <Stack spacing={2} mb={3}>
-                  {[1, 2].map((num) => (
-                    <HealerCard
-                      key={num}
-                      healerNum={num as 1 | 2}
-                      healer={roster[`healer${num}` as 'healer1' | 'healer2']}
-                      onChange={(updates) => handleHealerChange(num as 1 | 2, updates)}
-                      availableGroups={roster.availableGroups}
-                      usedBuffs={
-                        [roster.healer1?.healerBuff, roster.healer2?.healerBuff].filter(
-                          Boolean,
-                        ) as HealerBuff[]
-                      }
-                    />
-                  ))}
+                  <HealerCard
+                    key={1}
+                    healerNum={1}
+                    healer={roster.healer1}
+                    onChange={handleHealer1Change}
+                    availableGroups={memoizedGroups}
+                    usedBuffs={usedBuffs}
+                  />
+                  <HealerCard
+                    key={2}
+                    healerNum={2}
+                    healer={roster.healer2}
+                    onChange={handleHealer2Change}
+                    availableGroups={memoizedGroups}
+                    usedBuffs={usedBuffs}
+                  />
                 </Stack>
               </AccordionDetails>
             </Accordion>
@@ -2741,16 +2758,9 @@ export const RosterBuilderPage: React.FC = () => {
                         <DPSSlotCard
                           key={slot.slotNumber}
                           slot={slot}
-                          availableGroups={roster.availableGroups}
-                          onChange={(updates) => {
-                            const updatedSlots = [...roster.dpsSlots];
-                            updatedSlots[index] = { ...updatedSlots[index], ...updates };
-                            setRoster((prev) => ({
-                              ...prev,
-                              dpsSlots: updatedSlots,
-                              updatedAt: new Date().toISOString(),
-                            }));
-                          }}
+                          slotIndex={index}
+                          availableGroups={memoizedGroups}
+                          onSlotChange={handleDPSSlotChange}
                           onConvertToJail={handleConvertDPSToJail}
                           onConvertToDPS={handleConvertJailToDPS}
                         />
@@ -3184,7 +3194,7 @@ interface TankCardProps {
   availableGroups: string[];
 }
 
-const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableGroups }) => {
+const TankCard = React.memo<TankCardProps>(({ tankNum, tank, onChange, availableGroups }) => {
   const tankTheme = useTheme();
   const tankIsDark = tankTheme.palette.mode === 'dark';
   const tankRoleColors = tankIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
@@ -3327,7 +3337,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   <Autocomplete
                     freeSolo
                     size="small"
-                    options={getTank5PieceSetOptions()}
+                    options={TANK_5PIECE_OPTIONS}
                     value={tank.gearSets.set1 ? getSetDisplayName(tank.gearSets.set1) : ''}
                     onChange={(_, value) =>
                       onChange({
@@ -3362,7 +3372,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   <Autocomplete
                     freeSolo
                     size="small"
-                    options={getTank5PieceSetOptions()}
+                    options={TANK_5PIECE_OPTIONS}
                     value={tank.gearSets.set2 ? getSetDisplayName(tank.gearSets.set2) : ''}
                     onChange={(_, value) =>
                       onChange({
@@ -3399,7 +3409,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                   <Autocomplete
                     freeSolo
                     size="small"
-                    options={getTankMonsterSetOptions()}
+                    options={TANK_MONSTER_OPTIONS}
                     value={
                       tank.gearSets.monsterSet ? getSetDisplayName(tank.gearSets.monsterSet) : ''
                     }
@@ -3866,7 +3876,8 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
       </CardContent>
     </Card>
   );
-};
+});
+TankCard.displayName = 'TankCard';
 
 // Healer Card Component
 interface HealerCardProps {
@@ -3877,535 +3888,386 @@ interface HealerCardProps {
   usedBuffs: HealerBuff[];
 }
 
-const HealerCard: React.FC<HealerCardProps> = ({
-  healerNum,
-  healer,
-  onChange,
-  availableGroups,
-  usedBuffs,
-}) => {
-  const healerTheme = useTheme();
-  const healerIsDark = healerTheme.palette.mode === 'dark';
-  const healerRoleColors = healerIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
-  const glassSx = {
-    '& .MuiOutlinedInput-root': {
-      borderRadius: '10px',
-      backgroundColor: healerIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-      '& fieldset': {
-        borderColor: healerIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
-      },
-      '&:hover fieldset': {
-        borderColor: healerIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
-      },
-    },
-  };
-  const availableBuffs = Object.values(HealerBuff).filter(
-    (buff) => !usedBuffs.includes(buff) || healer.healerBuff === buff,
-  );
-  const availableUltimates = Object.values(SupportUltimate);
-
-  return (
-    <Card
-      variant="outlined"
-      sx={{
-        borderRadius: '12px',
-        backgroundColor: healerIsDark
-          ? `${healerRoleColors.healer}0a`
-          : `${healerRoleColors.healer}06`,
-        border: healerIsDark
-          ? `1px solid ${healerRoleColors.healer}20`
-          : `1px solid ${healerRoleColors.healer}18`,
-        borderLeft: `3px solid ${healerRoleColors.healer}`,
-        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          transform: 'translateY(-1px)',
-          borderColor: `${healerRoleColors.healer}35`,
-          borderLeftColor: healerRoleColors.healer,
-          boxShadow: `0 4px 16px ${healerRoleColors.healer}18, 0 2px 8px rgba(0,0,0,0.1)`,
+const HealerCard = React.memo<HealerCardProps>(
+  ({ healerNum, healer, onChange, availableGroups, usedBuffs }) => {
+    const healerTheme = useTheme();
+    const healerIsDark = healerTheme.palette.mode === 'dark';
+    const healerRoleColors = healerIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
+    const glassSx = {
+      '& .MuiOutlinedInput-root': {
+        borderRadius: '10px',
+        backgroundColor: healerIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+        '& fieldset': {
+          borderColor: healerIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
         },
-      }}
-    >
-      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            mb: 1,
-            pb: 1,
-            borderBottom: `1px solid ${healerRoleColors.healer}25`,
-          }}
-        >
+        '&:hover fieldset': {
+          borderColor: healerIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
+        },
+      },
+    };
+    const availableBuffs = Object.values(HealerBuff).filter(
+      (buff) => !usedBuffs.includes(buff) || healer.healerBuff === buff,
+    );
+    const availableUltimates = Object.values(SupportUltimate);
+
+    return (
+      <Card
+        variant="outlined"
+        sx={{
+          borderRadius: '12px',
+          backgroundColor: healerIsDark
+            ? `${healerRoleColors.healer}0a`
+            : `${healerRoleColors.healer}06`,
+          border: healerIsDark
+            ? `1px solid ${healerRoleColors.healer}20`
+            : `1px solid ${healerRoleColors.healer}18`,
+          borderLeft: `3px solid ${healerRoleColors.healer}`,
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            transform: 'translateY(-1px)',
+            borderColor: `${healerRoleColors.healer}35`,
+            borderLeftColor: healerRoleColors.healer,
+            boxShadow: `0 4px 16px ${healerRoleColors.healer}18, 0 2px 8px rgba(0,0,0,0.1)`,
+          },
+        }}
+      >
+        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
           <Box
             sx={{
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
-              gap: 0.5,
-              px: 0.875,
-              py: 0.4,
-              borderRadius: '6px',
-              backgroundColor: `${healerRoleColors.healer}18`,
-              border: `1px solid ${healerRoleColors.healer}35`,
+              gap: 1,
+              mb: 1,
+              pb: 1,
+              borderBottom: `1px solid ${healerRoleColors.healer}25`,
             }}
           >
-            <FavoriteIcon sx={{ fontSize: '0.85rem', color: healerRoleColors.healer }} />
-            <Typography
+            <Box
               sx={{
-                fontFamily: '"Space Grotesk", sans-serif',
-                fontWeight: 700,
-                fontSize: '0.65rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                color: healerRoleColors.healer,
-                lineHeight: 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                px: 0.875,
+                py: 0.4,
+                borderRadius: '6px',
+                backgroundColor: `${healerRoleColors.healer}18`,
+                border: `1px solid ${healerRoleColors.healer}35`,
               }}
             >
-              Healer {healerNum}
-            </Typography>
-          </Box>
-        </Box>
-        <Stack spacing={1.5}>
-          {/* Essential Fields - Always Visible */}
-          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-            <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-              <TextField
-                fullWidth
-                size="small"
-                label="Player Name (Optional)"
-                value={healer.playerName || ''}
-                onChange={(e) => onChange({ playerName: e.target.value })}
-                sx={glassSx}
-              />
-            </Box>
-            <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-              <Autocomplete
-                freeSolo
-                size="small"
-                options={[...availableGroups].sort()}
-                value={healer.group?.groupName || ''}
-                onChange={(_, value) =>
-                  onChange({
-                    group: value ? { groupName: value } : undefined,
-                  })
-                }
-                renderInput={(params) => (
-                  <TextField {...params} size="small" label="Group" sx={glassSx} />
-                )}
-              />
-            </Box>
-          </Box>
-
-          {/* Equipment */}
-          <Box
-            sx={{
-              p: 1.25,
-              borderRadius: '10px',
-              backgroundColor: healerIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
-              border: healerIsDark
-                ? '1px solid rgba(255,255,255,0.04)'
-                : '1px solid rgba(0,0,0,0.04)',
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: '0.65rem',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: healerIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                mb: 1,
-              }}
-            >
-              Equipment
-            </Typography>
-            <Stack spacing={1.5}>
-              <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                  <Autocomplete
-                    freeSolo
-                    size="small"
-                    options={getHealer5PieceSetOptions()}
-                    value={healer.set1 ? getSetDisplayName(healer.set1) : ''}
-                    onChange={(_, value) =>
-                      onChange({ set1: value ? findSetIdByName(value) : undefined })
-                    }
-                    groupBy={(option) => {
-                      const setId = findSetIdByName(option);
-                      if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
-                      if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
-                      return 'Other';
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        size="small"
-                        label="Primary Set (Body)"
-                        placeholder="e.g., Stone-Talker's Oath"
-                        sx={glassSx}
-                        InputProps={{
-                          ...params.InputProps,
-                        }}
-                      />
-                    )}
-                    renderOption={(props, option) => <li {...props}>{option}</li>}
-                  />
-                </Box>
-                <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                  <Autocomplete
-                    freeSolo
-                    size="small"
-                    options={getHealer5PieceSetOptions()}
-                    value={healer.set2 ? getSetDisplayName(healer.set2) : ''}
-                    onChange={(_, value) =>
-                      onChange({ set2: value ? findSetIdByName(value) : undefined })
-                    }
-                    groupBy={(option) => {
-                      const setId = findSetIdByName(option);
-                      if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
-                      if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
-                      return 'Other';
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        size="small"
-                        label="Secondary Set (Jewelry)"
-                        placeholder="e.g., Worm's Raiment"
-                        sx={glassSx}
-                        InputProps={{
-                          ...params.InputProps,
-                        }}
-                      />
-                    )}
-                    renderOption={(props, option) => <li {...props}>{option}</li>}
-                  />
-                </Box>
-              </Box>
-              <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                  <Autocomplete
-                    freeSolo
-                    size="small"
-                    options={getHealerMonsterSetOptions()}
-                    value={healer.monsterSet ? getSetDisplayName(healer.monsterSet) : ''}
-                    onChange={(_, value) =>
-                      onChange({
-                        monsterSet: value ? findSetIdByName(value) : undefined,
-                      })
-                    }
-                    groupBy={(_option) => {
-                      return 'Monster Sets';
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        size="small"
-                        label="Monster/Mythic Set"
-                        placeholder="e.g., Symphony of Blades"
-                        sx={glassSx}
-                        InputProps={{
-                          ...params.InputProps,
-                        }}
-                      />
-                    )}
-                    renderOption={(props, option) => <li {...props}>{option}</li>}
-                  />
-                </Box>
-              </Box>
-              <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                  <FormControl
-                    fullWidth
-                    size="small"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '10px',
-                        backgroundColor: healerIsDark
-                          ? 'rgba(255,255,255,0.03)'
-                          : 'rgba(0,0,0,0.02)',
-                        '& fieldset': {
-                          borderColor: healerIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
-                        },
-                        '&:hover fieldset': {
-                          borderColor: healerIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
-                        },
-                      },
-                    }}
-                  >
-                    <InputLabel>Champion Points</InputLabel>
-                    <Select
-                      value={healer.healerBuff || ''}
-                      onChange={(e) =>
-                        onChange({
-                          healerBuff: (e.target.value as HealerBuff) || null,
-                        })
-                      }
-                      label="Champion Points"
-                      renderValue={(value) => (
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          {getHealerBuffIcon(value)}
-                          {value || <em>None</em>}
-                        </Box>
-                      )}
-                    >
-                      <MenuItem value="">
-                        <em>None</em>
-                      </MenuItem>
-                      {availableBuffs.map((buff) => (
-                        <MenuItem key={buff} value={buff}>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            {getHealerBuffIcon(buff)}
-                            {buff}
-                          </Box>
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-                <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                  <Autocomplete
-                    freeSolo
-                    size="small"
-                    options={availableUltimates}
-                    value={healer.ultimate || null}
-                    onChange={(_event, newValue) =>
-                      onChange({ ultimate: newValue as string | null })
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        size="small"
-                        label="Ultimate"
-                        placeholder="Select or type custom ultimate"
-                        sx={glassSx}
-                      />
-                    )}
-                    renderOption={(props, option) => (
-                      <li {...props} key={option}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          {getUltimateIcon(option)}
-                          {option}
-                        </Box>
-                      </li>
-                    )}
-                  />
-                </Box>
-              </Box>
-            </Stack>
-          </Box>
-
-          {/* Compatibility Warnings */}
-          {(() => {
-            const warnings = validateCompatibility(
-              [
-                healer.set1 ? getSetDisplayName(healer.set1) : undefined,
-                healer.set2 ? getSetDisplayName(healer.set2) : undefined,
-                healer.monsterSet ? getSetDisplayName(healer.monsterSet) : undefined,
-                ...(healer.additionalSets || []).map((id) => getSetDisplayName(id)),
-              ].filter((s): s is string => s !== undefined),
-              healer.ultimate,
-            );
-            if (warnings.length === 0) return null;
-            return (
-              <Stack spacing={1}>
-                {warnings.map((warning, index) => (
-                  <Alert
-                    key={index}
-                    severity="warning"
-                    sx={{
-                      py: 0.5,
-                      borderRadius: '8px',
-                      backgroundColor: 'rgba(255,167,38,0.08)',
-                      border: '1px solid rgba(255,167,38,0.2)',
-                    }}
-                  >
-                    {warning}
-                  </Alert>
-                ))}
-              </Stack>
-            );
-          })()}
-
-          {/* Advanced Options - Collapsible */}
-          <Accordion
-            elevation={0}
-            disableGutters
-            sx={{
-              mt: 2,
-              borderRadius: '10px !important',
-              backgroundColor: 'transparent',
-              border: healerIsDark
-                ? '1px solid rgba(255,255,255,0.08)'
-                : '1px solid rgba(0,0,0,0.08)',
-              '&:before': { display: 'none' },
-              '&.Mui-expanded': { margin: 0, marginTop: 2 },
-            }}
-          >
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              sx={{ px: 1.5, minHeight: 40, '&.Mui-expanded': { minHeight: 40 } }}
-            >
+              <FavoriteIcon sx={{ fontSize: '0.85rem', color: healerRoleColors.healer }} />
               <Typography
-                variant="body2"
                 sx={{
-                  color: healerIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-                  fontWeight: 500,
+                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontWeight: 700,
+                  fontSize: '0.65rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  color: healerRoleColors.healer,
+                  lineHeight: 1,
                 }}
               >
-                Advanced Options
+                Healer {healerNum}
               </Typography>
-            </AccordionSummary>
-            <AccordionDetails sx={{ px: 1.5, pt: 0.5, pb: 1.5 }}>
-              <Stack spacing={1.25}>
-                {/* Assignment */}
-                <Typography
-                  sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: healerIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-                    mt: 0.5,
-                  }}
-                >
-                  Assignment
-                </Typography>
+            </Box>
+          </Box>
+          <Stack spacing={1.5}>
+            {/* Essential Fields - Always Visible */}
+            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+              <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Player Name (Optional)"
+                  value={healer.playerName || ''}
+                  onChange={(e) => onChange({ playerName: e.target.value })}
+                  sx={glassSx}
+                />
+              </Box>
+              <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                <Autocomplete
+                  freeSolo
+                  size="small"
+                  options={[...availableGroups].sort()}
+                  value={healer.group?.groupName || ''}
+                  onChange={(_, value) =>
+                    onChange({
+                      group: value ? { groupName: value } : undefined,
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField {...params} size="small" label="Group" sx={glassSx} />
+                  )}
+                />
+              </Box>
+            </Box>
+
+            {/* Equipment */}
+            <Box
+              sx={{
+                p: 1.25,
+                borderRadius: '10px',
+                backgroundColor: healerIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+                border: healerIsDark
+                  ? '1px solid rgba(255,255,255,0.04)'
+                  : '1px solid rgba(0,0,0,0.04)',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: healerIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                  mb: 1,
+                }}
+              >
+                Equipment
+              </Typography>
+              <Stack spacing={1.5}>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Role Label"
-                      placeholder={`H${healerNum}`}
-                      value={healer.roleLabel || ''}
-                      onChange={(e) => onChange({ roleLabel: e.target.value })}
-                      sx={glassSx}
-                    />
-                  </Box>
-                  <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      type="number"
-                      label="Player #"
-                      value={healer.playerNumber || ''}
-                      onChange={(e) =>
-                        onChange({
-                          playerNumber: e.target.value ? parseInt(e.target.value, 10) : undefined,
-                        })
-                      }
-                      sx={glassSx}
-                    />
-                  </Box>
-                  <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
+                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
                     <Autocomplete
-                      multiple
                       freeSolo
                       size="small"
-                      options={[]}
-                      value={healer.labels || []}
-                      onChange={(_, value) => onChange({ labels: value })}
-                      sx={{ mt: -0.5 }}
-                      renderTags={(value, getTagProps) =>
-                        value.map((option, index) => (
-                          <Chip
-                            {...getTagProps({ index })}
-                            key={option}
-                            label={option}
-                            size="small"
-                            sx={{
-                              borderRadius: '6px',
-                              backgroundColor: healerIsDark
-                                ? 'rgba(255,255,255,0.06)'
-                                : 'rgba(0,0,0,0.05)',
-                              border: healerIsDark
-                                ? '1px solid rgba(255,255,255,0.1)'
-                                : '1px solid rgba(0,0,0,0.1)',
-                              fontWeight: 500,
-                              fontSize: '0.75rem',
-                            }}
-                          />
-                        ))
+                      options={HEALER_5PIECE_OPTIONS}
+                      value={healer.set1 ? getSetDisplayName(healer.set1) : ''}
+                      onChange={(_, value) =>
+                        onChange({ set1: value ? findSetIdByName(value) : undefined })
+                      }
+                      groupBy={(option) => {
+                        const setId = findSetIdByName(option);
+                        if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
+                        if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
+                        return 'Other';
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          label="Primary Set (Body)"
+                          placeholder="e.g., Stone-Talker's Oath"
+                          sx={glassSx}
+                          InputProps={{
+                            ...params.InputProps,
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => <li {...props}>{option}</li>}
+                    />
+                  </Box>
+                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                    <Autocomplete
+                      freeSolo
+                      size="small"
+                      options={HEALER_5PIECE_OPTIONS}
+                      value={healer.set2 ? getSetDisplayName(healer.set2) : ''}
+                      onChange={(_, value) =>
+                        onChange({ set2: value ? findSetIdByName(value) : undefined })
+                      }
+                      groupBy={(option) => {
+                        const setId = findSetIdByName(option);
+                        if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
+                        if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
+                        return 'Other';
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          label="Secondary Set (Jewelry)"
+                          placeholder="e.g., Worm's Raiment"
+                          sx={glassSx}
+                          InputProps={{
+                            ...params.InputProps,
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => <li {...props}>{option}</li>}
+                    />
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                    <Autocomplete
+                      freeSolo
+                      size="small"
+                      options={HEALER_MONSTER_OPTIONS}
+                      value={healer.monsterSet ? getSetDisplayName(healer.monsterSet) : ''}
+                      onChange={(_, value) =>
+                        onChange({
+                          monsterSet: value ? findSetIdByName(value) : undefined,
+                        })
+                      }
+                      groupBy={(_option) => {
+                        return 'Monster Sets';
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          label="Monster/Mythic Set"
+                          placeholder="e.g., Symphony of Blades"
+                          sx={glassSx}
+                          InputProps={{
+                            ...params.InputProps,
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => <li {...props}>{option}</li>}
+                    />
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '10px',
+                          backgroundColor: healerIsDark
+                            ? 'rgba(255,255,255,0.03)'
+                            : 'rgba(0,0,0,0.02)',
+                          '& fieldset': {
+                            borderColor: healerIsDark
+                              ? 'rgba(255,255,255,0.08)'
+                              : 'rgba(0,0,0,0.12)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: healerIsDark
+                              ? 'rgba(255,255,255,0.15)'
+                              : 'rgba(0,0,0,0.2)',
+                          },
+                        },
+                      }}
+                    >
+                      <InputLabel>Champion Points</InputLabel>
+                      <Select
+                        value={healer.healerBuff || ''}
+                        onChange={(e) =>
+                          onChange({
+                            healerBuff: (e.target.value as HealerBuff) || null,
+                          })
+                        }
+                        label="Champion Points"
+                        renderValue={(value) => (
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            {getHealerBuffIcon(value)}
+                            {value || <em>None</em>}
+                          </Box>
+                        )}
+                      >
+                        <MenuItem value="">
+                          <em>None</em>
+                        </MenuItem>
+                        {availableBuffs.map((buff) => (
+                          <MenuItem key={buff} value={buff}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              {getHealerBuffIcon(buff)}
+                              {buff}
+                            </Box>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                    <Autocomplete
+                      freeSolo
+                      size="small"
+                      options={availableUltimates}
+                      value={healer.ultimate || null}
+                      onChange={(_event, newValue) =>
+                        onChange({ ultimate: newValue as string | null })
                       }
                       renderInput={(params) => (
                         <TextField
                           {...params}
                           size="small"
-                          label="Tags"
-                          placeholder="Add tags"
+                          label="Ultimate"
+                          placeholder="Select or type custom ultimate"
                           sx={glassSx}
                         />
+                      )}
+                      renderOption={(props, option) => (
+                        <li {...props} key={option}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            {getUltimateIcon(option)}
+                            {option}
+                          </Box>
+                        </li>
                       )}
                     />
                   </Box>
                 </Box>
-                <TextField
-                  fullWidth
-                  size="small"
-                  multiline
-                  minRows={1}
-                  maxRows={4}
-                  label="Role Notes"
-                  placeholder="e.g., Main healer, ramp healing, shield uptime focus"
-                  value={healer.roleNotes || ''}
-                  onChange={(e) => onChange({ roleNotes: e.target.value })}
-                  sx={glassSx}
-                />
+              </Stack>
+            </Box>
 
-                {/* Extra Gear */}
+            {/* Compatibility Warnings */}
+            {(() => {
+              const warnings = validateCompatibility(
+                [
+                  healer.set1 ? getSetDisplayName(healer.set1) : undefined,
+                  healer.set2 ? getSetDisplayName(healer.set2) : undefined,
+                  healer.monsterSet ? getSetDisplayName(healer.monsterSet) : undefined,
+                  ...(healer.additionalSets || []).map((id) => getSetDisplayName(id)),
+                ].filter((s): s is string => s !== undefined),
+                healer.ultimate,
+              );
+              if (warnings.length === 0) return null;
+              return (
+                <Stack spacing={1}>
+                  {warnings.map((warning, index) => (
+                    <Alert
+                      key={index}
+                      severity="warning"
+                      sx={{
+                        py: 0.5,
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(255,167,38,0.08)',
+                        border: '1px solid rgba(255,167,38,0.2)',
+                      }}
+                    >
+                      {warning}
+                    </Alert>
+                  ))}
+                </Stack>
+              );
+            })()}
+
+            {/* Advanced Options - Collapsible */}
+            <Accordion
+              elevation={0}
+              disableGutters
+              sx={{
+                mt: 2,
+                borderRadius: '10px !important',
+                backgroundColor: 'transparent',
+                border: healerIsDark
+                  ? '1px solid rgba(255,255,255,0.08)'
+                  : '1px solid rgba(0,0,0,0.08)',
+                '&:before': { display: 'none' },
+                '&.Mui-expanded': { margin: 0, marginTop: 2 },
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{ px: 1.5, minHeight: 40, '&.Mui-expanded': { minHeight: 40 } }}
+              >
                 <Typography
+                  variant="body2"
                   sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: healerIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-                    mt: 0.5,
+                    color: healerIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                    fontWeight: 500,
                   }}
                 >
-                  Extra Gear
+                  Advanced Options
                 </Typography>
-                <Autocomplete
-                  multiple
-                  freeSolo
-                  size="small"
-                  options={[...ALL_5PIECE_SETS, ...MONSTER_SETS]
-                    .map((id) => getSetDisplayName(id))
-                    .sort()}
-                  value={(healer.additionalSets || []).map((id) => getSetDisplayName(id))}
-                  onChange={(_, value) =>
-                    onChange({
-                      additionalSets: value
-                        .map((name) => findSetIdByName(name))
-                        .filter((id): id is KnownSetIDs => id !== undefined),
-                    })
-                  }
-                  groupBy={(option) => {
-                    const setId = findSetIdByName(option);
-                    if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
-                    if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
-                    if (setId && isMonsterSet(setId)) return 'Monster Sets';
-                    return 'Other';
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Additional Sets"
-                      helperText="e.g., monster sets, mythics (type custom set name if not listed)"
-                      sx={glassSx}
-                    />
-                  )}
-                  renderOption={(props, option) => <li {...props}>{option}</li>}
-                />
-
-                {/* Build */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    mt: 0.5,
-                  }}
-                >
+              </AccordionSummary>
+              <AccordionDetails sx={{ px: 1.5, pt: 0.5, pb: 1.5 }}>
+                <Stack spacing={1.25}>
+                  {/* Assignment */}
                   <Typography
                     sx={{
                       fontSize: '0.6rem',
@@ -4413,147 +4275,298 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       textTransform: 'uppercase',
                       letterSpacing: '0.08em',
                       color: healerIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                      mt: 0.5,
                     }}
                   >
-                    Build
+                    Assignment
                   </Typography>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
+                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                    <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
+                      <TextField
+                        fullWidth
                         size="small"
-                        checked={healer.skillLines.isFlex}
+                        label="Role Label"
+                        placeholder={`H${healerNum}`}
+                        value={healer.roleLabel || ''}
+                        onChange={(e) => onChange({ roleLabel: e.target.value })}
+                        sx={glassSx}
+                      />
+                    </Box>
+                    <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        type="number"
+                        label="Player #"
+                        value={healer.playerNumber || ''}
                         onChange={(e) =>
                           onChange({
-                            skillLines: {
-                              ...healer.skillLines,
-                              isFlex: e.target.checked,
-                            },
+                            playerNumber: e.target.value ? parseInt(e.target.value, 10) : undefined,
                           })
                         }
-                        sx={{ p: 0.5 }}
-                      />
-                    }
-                    label="Any class"
-                    sx={{
-                      ml: 'auto',
-                      mr: 0,
-                      '& .MuiFormControlLabel-label': {
-                        fontSize: '0.75rem',
-                        color: healerIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-                      },
-                    }}
-                  />
-                </Box>
-                {!healer.skillLines.isFlex && (
-                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                    <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
-                      <Autocomplete
-                        freeSolo
-                        size="small"
-                        options={[...CLASS_SKILL_LINES].sort()}
-                        value={healer.skillLines.line1}
-                        onChange={(_, value) =>
-                          onChange({
-                            skillLines: {
-                              ...healer.skillLines,
-                              line1: value || '',
-                            },
-                          })
-                        }
-                        renderInput={(params) => (
-                          <TextField {...params} label="Skill Line 1" sx={glassSx} />
-                        )}
-                        renderOption={(props, option) => (
-                          <li {...props}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              {getSkillLineIcon(option)}
-                              {option}
-                            </Box>
-                          </li>
-                        )}
+                        sx={glassSx}
                       />
                     </Box>
-                    <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
+                    <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
                       <Autocomplete
+                        multiple
                         freeSolo
                         size="small"
-                        options={[...CLASS_SKILL_LINES].sort()}
-                        value={healer.skillLines.line2}
-                        onChange={(_, value) =>
-                          onChange({
-                            skillLines: {
-                              ...healer.skillLines,
-                              line2: value || '',
-                            },
-                          })
+                        options={[]}
+                        value={healer.labels || []}
+                        onChange={(_, value) => onChange({ labels: value })}
+                        sx={{ mt: -0.5 }}
+                        renderTags={(value, getTagProps) =>
+                          value.map((option, index) => (
+                            <Chip
+                              {...getTagProps({ index })}
+                              key={option}
+                              label={option}
+                              size="small"
+                              sx={{
+                                borderRadius: '6px',
+                                backgroundColor: healerIsDark
+                                  ? 'rgba(255,255,255,0.06)'
+                                  : 'rgba(0,0,0,0.05)',
+                                border: healerIsDark
+                                  ? '1px solid rgba(255,255,255,0.1)'
+                                  : '1px solid rgba(0,0,0,0.1)',
+                                fontWeight: 500,
+                                fontSize: '0.75rem',
+                              }}
+                            />
+                          ))
                         }
                         renderInput={(params) => (
-                          <TextField {...params} label="Skill Line 2" sx={glassSx} />
-                        )}
-                        renderOption={(props, option) => (
-                          <li {...props}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              {getSkillLineIcon(option)}
-                              {option}
-                            </Box>
-                          </li>
-                        )}
-                      />
-                    </Box>
-                    <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
-                      <Autocomplete
-                        freeSolo
-                        size="small"
-                        options={[...CLASS_SKILL_LINES].sort()}
-                        value={healer.skillLines.line3}
-                        onChange={(_, value) =>
-                          onChange({
-                            skillLines: {
-                              ...healer.skillLines,
-                              line3: value || '',
-                            },
-                          })
-                        }
-                        renderInput={(params) => (
-                          <TextField {...params} label="Skill Line 3" sx={glassSx} />
-                        )}
-                        renderOption={(props, option) => (
-                          <li {...props}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              {getSkillLineIcon(option)}
-                              {option}
-                            </Box>
-                          </li>
+                          <TextField
+                            {...params}
+                            size="small"
+                            label="Tags"
+                            placeholder="Add tags"
+                            sx={glassSx}
+                          />
                         )}
                       />
                     </Box>
                   </Box>
-                )}
+                  <TextField
+                    fullWidth
+                    size="small"
+                    multiline
+                    minRows={1}
+                    maxRows={4}
+                    label="Role Notes"
+                    placeholder="e.g., Main healer, ramp healing, shield uptime focus"
+                    value={healer.roleNotes || ''}
+                    onChange={(e) => onChange({ roleNotes: e.target.value })}
+                    sx={glassSx}
+                  />
 
-                <TextField
-                  fullWidth
-                  multiline
-                  size="small"
-                  rows={2}
-                  label="Notes"
-                  value={healer.notes || ''}
-                  onChange={(e) => onChange({ notes: e.target.value })}
-                  sx={glassSx}
-                />
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
-        </Stack>
-      </CardContent>
-    </Card>
-  );
-};
+                  {/* Extra Gear */}
+                  <Typography
+                    sx={{
+                      fontSize: '0.6rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      color: healerIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                      mt: 0.5,
+                    }}
+                  >
+                    Extra Gear
+                  </Typography>
+                  <Autocomplete
+                    multiple
+                    freeSolo
+                    size="small"
+                    options={[...ALL_5PIECE_SETS, ...MONSTER_SETS]
+                      .map((id) => getSetDisplayName(id))
+                      .sort()}
+                    value={(healer.additionalSets || []).map((id) => getSetDisplayName(id))}
+                    onChange={(_, value) =>
+                      onChange({
+                        additionalSets: value
+                          .map((name) => findSetIdByName(name))
+                          .filter((id): id is KnownSetIDs => id !== undefined),
+                      })
+                    }
+                    groupBy={(option) => {
+                      const setId = findSetIdByName(option);
+                      if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
+                      if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
+                      if (setId && isMonsterSet(setId)) return 'Monster Sets';
+                      return 'Other';
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Additional Sets"
+                        helperText="e.g., monster sets, mythics (type custom set name if not listed)"
+                        sx={glassSx}
+                      />
+                    )}
+                    renderOption={(props, option) => <li {...props}>{option}</li>}
+                  />
+
+                  {/* Build */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      mt: 0.5,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: '0.6rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: healerIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                      }}
+                    >
+                      Build
+                    </Typography>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          size="small"
+                          checked={healer.skillLines.isFlex}
+                          onChange={(e) =>
+                            onChange({
+                              skillLines: {
+                                ...healer.skillLines,
+                                isFlex: e.target.checked,
+                              },
+                            })
+                          }
+                          sx={{ p: 0.5 }}
+                        />
+                      }
+                      label="Any class"
+                      sx={{
+                        ml: 'auto',
+                        mr: 0,
+                        '& .MuiFormControlLabel-label': {
+                          fontSize: '0.75rem',
+                          color: healerIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                        },
+                      }}
+                    />
+                  </Box>
+                  {!healer.skillLines.isFlex && (
+                    <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                      <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
+                        <Autocomplete
+                          freeSolo
+                          size="small"
+                          options={[...CLASS_SKILL_LINES].sort()}
+                          value={healer.skillLines.line1}
+                          onChange={(_, value) =>
+                            onChange({
+                              skillLines: {
+                                ...healer.skillLines,
+                                line1: value || '',
+                              },
+                            })
+                          }
+                          renderInput={(params) => (
+                            <TextField {...params} label="Skill Line 1" sx={glassSx} />
+                          )}
+                          renderOption={(props, option) => (
+                            <li {...props}>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {getSkillLineIcon(option)}
+                                {option}
+                              </Box>
+                            </li>
+                          )}
+                        />
+                      </Box>
+                      <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
+                        <Autocomplete
+                          freeSolo
+                          size="small"
+                          options={[...CLASS_SKILL_LINES].sort()}
+                          value={healer.skillLines.line2}
+                          onChange={(_, value) =>
+                            onChange({
+                              skillLines: {
+                                ...healer.skillLines,
+                                line2: value || '',
+                              },
+                            })
+                          }
+                          renderInput={(params) => (
+                            <TextField {...params} label="Skill Line 2" sx={glassSx} />
+                          )}
+                          renderOption={(props, option) => (
+                            <li {...props}>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {getSkillLineIcon(option)}
+                                {option}
+                              </Box>
+                            </li>
+                          )}
+                        />
+                      </Box>
+                      <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
+                        <Autocomplete
+                          freeSolo
+                          size="small"
+                          options={[...CLASS_SKILL_LINES].sort()}
+                          value={healer.skillLines.line3}
+                          onChange={(_, value) =>
+                            onChange({
+                              skillLines: {
+                                ...healer.skillLines,
+                                line3: value || '',
+                              },
+                            })
+                          }
+                          renderInput={(params) => (
+                            <TextField {...params} label="Skill Line 3" sx={glassSx} />
+                          )}
+                          renderOption={(props, option) => (
+                            <li {...props}>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {getSkillLineIcon(option)}
+                                {option}
+                              </Box>
+                            </li>
+                          )}
+                        />
+                      </Box>
+                    </Box>
+                  )}
+
+                  <TextField
+                    fullWidth
+                    multiline
+                    size="small"
+                    rows={2}
+                    label="Notes"
+                    value={healer.notes || ''}
+                    onChange={(e) => onChange({ notes: e.target.value })}
+                    sx={glassSx}
+                  />
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+          </Stack>
+        </CardContent>
+      </Card>
+    );
+  },
+);
+HealerCard.displayName = 'HealerCard';
 
 // DPS Slot Card Component
 interface DPSSlotCardProps {
   slot: DPSSlot;
+  slotIndex: number;
   availableGroups: string[];
-  onChange: (updates: Partial<DPSSlot>) => void;
+  onSlotChange: (slotIndex: number, updates: Partial<DPSSlot>) => void;
   onConvertToJail: (slotNumber: number, jailType: JailDDType) => void;
   onConvertToDPS: (slotNumber: number) => void;
 }
@@ -4567,363 +4580,366 @@ const jailLabels: Record<string, string> = {
   custom: 'Custom',
 };
 
-const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
-  slot,
-  availableGroups,
-  onChange,
-  onConvertToJail,
-  onConvertToDPS,
-}) => {
-  const dpsTheme = useTheme();
-  const dpsIsDark = dpsTheme.palette.mode === 'dark';
-  const dpsRoleColors = dpsIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
-  const glassSx = {
-    '& .MuiOutlinedInput-root': {
-      borderRadius: '10px',
-      backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-      '& fieldset': {
-        borderColor: dpsIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
-      },
-      '&:hover fieldset': {
-        borderColor: dpsIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
-      },
-    },
-  };
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: slot.slotNumber,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const getJailDDTitle = (type: JailDDType): string => {
-    switch (type) {
-      case 'banner':
-        return 'Banner Jail DD';
-      case 'zenkosh':
-        return 'Zenkosh Jail DD';
-      case 'wm':
-        return 'War Machine Jail DD';
-      case 'wm-mk':
-        return 'WM/MK Jail DD';
-      case 'mk':
-        return 'Martial Knowledge Jail DD';
-      case 'custom':
-        return slot.customDescription || 'Custom Jail DD';
-      default:
-        return 'Jail DD';
-    }
-  };
-
-  return (
-    <Card
-      ref={setNodeRef}
-      style={style}
-      variant="outlined"
-      sx={{
-        borderRadius: '12px',
-        backgroundColor: dpsIsDark ? `${dpsRoleColors.dps}0a` : `${dpsRoleColors.dps}06`,
-        border: dpsIsDark ? `1px solid ${dpsRoleColors.dps}20` : `1px solid ${dpsRoleColors.dps}18`,
-        borderLeft: `3px solid ${dpsRoleColors.dps}`,
-        cursor: isDragging ? 'grabbing' : 'default',
-        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          transform: isDragging ? 'none' : 'translateY(-1px)',
-          borderColor: `${dpsRoleColors.dps}35`,
-          borderLeftColor: dpsRoleColors.dps,
-          boxShadow: isDragging
-            ? 'none'
-            : `0 4px 16px ${dpsRoleColors.dps}18, 0 2px 8px rgba(0,0,0,0.1)`,
+const DPSSlotCard = React.memo<DPSSlotCardProps>(
+  ({ slot, slotIndex, availableGroups, onSlotChange, onConvertToJail, onConvertToDPS }) => {
+    const onChange = useCallback(
+      (updates: Partial<DPSSlot>) => onSlotChange(slotIndex, updates),
+      [onSlotChange, slotIndex],
+    );
+    const dpsTheme = useTheme();
+    const dpsIsDark = dpsTheme.palette.mode === 'dark';
+    const dpsRoleColors = dpsIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
+    const glassSx = {
+      '& .MuiOutlinedInput-root': {
+        borderRadius: '10px',
+        backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+        '& fieldset': {
+          borderColor: dpsIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
         },
-      }}
-    >
-      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            mb: 1,
-            pb: 1,
-            borderBottom: `1px solid ${dpsRoleColors.dps}25`,
-          }}
-        >
-          <IconButton
-            size="small"
-            {...attributes}
-            {...listeners}
-            sx={{
-              cursor: 'grab',
-              borderRadius: '6px',
-              backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-              color: dpsIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
-            }}
-            aria-label={`Drag to reorder DPS ${slot.slotNumber}`}
-          >
-            <DragIndicatorIcon />
-          </IconButton>
+        '&:hover fieldset': {
+          borderColor: dpsIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
+        },
+      },
+    };
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+      id: slot.slotNumber,
+    });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+    };
+
+    const getJailDDTitle = (type: JailDDType): string => {
+      switch (type) {
+        case 'banner':
+          return 'Banner Jail DD';
+        case 'zenkosh':
+          return 'Zenkosh Jail DD';
+        case 'wm':
+          return 'War Machine Jail DD';
+        case 'wm-mk':
+          return 'WM/MK Jail DD';
+        case 'mk':
+          return 'Martial Knowledge Jail DD';
+        case 'custom':
+          return slot.customDescription || 'Custom Jail DD';
+        default:
+          return 'Jail DD';
+      }
+    };
+
+    return (
+      <Card
+        ref={setNodeRef}
+        style={style}
+        variant="outlined"
+        sx={{
+          borderRadius: '12px',
+          backgroundColor: dpsIsDark ? `${dpsRoleColors.dps}0a` : `${dpsRoleColors.dps}06`,
+          border: dpsIsDark
+            ? `1px solid ${dpsRoleColors.dps}20`
+            : `1px solid ${dpsRoleColors.dps}18`,
+          borderLeft: `3px solid ${dpsRoleColors.dps}`,
+          cursor: isDragging ? 'grabbing' : 'default',
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            transform: isDragging ? 'none' : 'translateY(-1px)',
+            borderColor: `${dpsRoleColors.dps}35`,
+            borderLeftColor: dpsRoleColors.dps,
+            boxShadow: isDragging
+              ? 'none'
+              : `0 4px 16px ${dpsRoleColors.dps}18, 0 2px 8px rgba(0,0,0,0.1)`,
+          },
+        }}
+      >
+        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
           <Box
             sx={{
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
-              gap: 0.5,
-              px: 0.875,
-              py: 0.4,
-              borderRadius: '6px',
-              backgroundColor: `${dpsRoleColors.dps}18`,
-              border: `1px solid ${dpsRoleColors.dps}35`,
+              gap: 1,
+              mb: 1,
+              pb: 1,
+              borderBottom: `1px solid ${dpsRoleColors.dps}25`,
             }}
           >
-            <AutoAwesomeIcon sx={{ fontSize: '0.85rem', color: dpsRoleColors.dps }} />
-            <Typography
-              sx={{
-                fontFamily: '"Space Grotesk", sans-serif',
-                fontWeight: 700,
-                fontSize: '0.65rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                color: dpsRoleColors.dps,
-                lineHeight: 1,
-              }}
-            >
-              DPS {slot.slotNumber}
-            </Typography>
-          </Box>
-          {slot.jailDDType && (
-            <Chip
-              label={getJailDDTitle(slot.jailDDType)}
+            <IconButton
               size="small"
+              {...attributes}
+              {...listeners}
               sx={{
+                cursor: 'grab',
+                borderRadius: '6px',
+                backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                color: dpsIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
+              }}
+              aria-label={`Drag to reorder DPS ${slot.slotNumber}`}
+            >
+              <DragIndicatorIcon />
+            </IconButton>
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                px: 0.875,
+                py: 0.4,
                 borderRadius: '6px',
                 backgroundColor: `${dpsRoleColors.dps}18`,
                 border: `1px solid ${dpsRoleColors.dps}35`,
-                color: dpsRoleColors.dps,
-                fontWeight: 600,
-                fontSize: '0.7rem',
               }}
-            />
-          )}
-        </Box>
-        <Stack spacing={1.5}>
-          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-            <Box sx={{ flex: '1 1 40%', minWidth: 180 }}>
-              <TextField
-                fullWidth
-                size="small"
-                label="Player Name"
-                value={slot.playerName || ''}
-                onChange={(e) => onChange({ playerName: e.target.value })}
-                sx={glassSx}
-              />
-            </Box>
-            <Box sx={{ flex: '1 1 25%', minWidth: 150 }}>
-              <TextField
-                fullWidth
-                size="small"
-                multiline
-                minRows={1}
-                maxRows={4}
-                label="Role Notes"
-                placeholder="e.g., Portal L, Z'en"
-                value={slot.roleNotes || ''}
-                onChange={(e) => onChange({ roleNotes: e.target.value })}
-                sx={glassSx}
-              />
-            </Box>
-            <Box sx={{ flex: '1 1 25%', minWidth: 120 }}>
-              <Autocomplete
-                freeSolo
-                size="small"
-                options={[...availableGroups].sort()}
-                value={slot.group?.groupName || ''}
-                onChange={(_, value) =>
-                  onChange({
-                    group: value ? { groupName: value } : undefined,
-                  })
-                }
-                renderInput={(params) => (
-                  <TextField {...params} size="small" label="Group" sx={glassSx} />
-                )}
-              />
-            </Box>
-          </Box>
-
-          {/* Player Labels/Tags */}
-          <Autocomplete
-            multiple
-            freeSolo
-            size="small"
-            options={[]}
-            value={slot.labels || []}
-            onChange={(_, value) => onChange({ labels: value })}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip
-                  {...getTagProps({ index })}
-                  key={option}
-                  label={option}
-                  size="small"
-                  sx={{
-                    borderRadius: '6px',
-                    backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                    border: dpsIsDark
-                      ? '1px solid rgba(255,255,255,0.1)'
-                      : '1px solid rgba(0,0,0,0.1)',
-                    fontWeight: 500,
-                    fontSize: '0.75rem',
-                  }}
-                />
-              ))
-            }
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                size="small"
-                label="Labels / Tags"
-                placeholder="Add custom labels (Press Enter)"
-                sx={glassSx}
-              />
-            )}
-          />
-
-          {/* Gear Sets */}
-          <Autocomplete
-            multiple
-            freeSolo
-            size="small"
-            options={[...ALL_5PIECE_SETS, ...MONSTER_SETS]
-              .map((id) => getSetDisplayName(id))
-              .sort()}
-            value={(slot.gearSets || []).map((id) => getSetDisplayName(id))}
-            onChange={(_, value) =>
-              onChange({
-                gearSets: value
-                  .map((name) => findSetIdByName(name))
-                  .filter((id): id is KnownSetIDs => id !== undefined),
-              })
-            }
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip
-                  {...getTagProps({ index })}
-                  key={option}
-                  label={option}
-                  size="small"
-                  sx={{
-                    borderRadius: '6px',
-                    backgroundColor: `${dpsRoleColors.dps}10`,
-                    border: `1px solid ${dpsRoleColors.dps}25`,
-                    fontWeight: 500,
-                    fontSize: '0.75rem',
-                  }}
-                />
-              ))
-            }
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                size="small"
-                label="Gear Sets"
-                placeholder={slot.gearSets?.length ? undefined : 'Add set...'}
-                sx={glassSx}
-              />
-            )}
-            renderOption={(props, option) => <li {...props}>{option}</li>}
-          />
-
-          {/* Convert to Jail DD or back to regular DPS */}
-          {!slot.jailDDType ? (
-            <Box>
+            >
+              <AutoAwesomeIcon sx={{ fontSize: '0.85rem', color: dpsRoleColors.dps }} />
               <Typography
-                variant="caption"
                 sx={{
-                  mb: 0.75,
-                  display: 'block',
-                  color: dpsIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontWeight: 700,
+                  fontSize: '0.65rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  color: dpsRoleColors.dps,
+                  lineHeight: 1,
                 }}
               >
-                Convert to Jail DD:
+                DPS {slot.slotNumber}
               </Typography>
-              <Box
+            </Box>
+            {slot.jailDDType && (
+              <Chip
+                label={getJailDDTitle(slot.jailDDType)}
+                size="small"
                 sx={{
-                  display: 'inline-flex',
-                  flexWrap: 'wrap',
-                  gap: '1px',
-                  borderRadius: '10px',
-                  padding: '3px',
-                  backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                  border: dpsIsDark
-                    ? '1px solid rgba(255,255,255,0.06)'
-                    : '1px solid rgba(0,0,0,0.06)',
+                  borderRadius: '6px',
+                  backgroundColor: `${dpsRoleColors.dps}18`,
+                  border: `1px solid ${dpsRoleColors.dps}35`,
+                  color: dpsRoleColors.dps,
+                  fontWeight: 600,
+                  fontSize: '0.7rem',
                 }}
-              >
-                {(['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'] as const).map((type) => (
-                  <Box
-                    key={type}
-                    component="button"
-                    onClick={() => onConvertToJail(slot.slotNumber, type)}
+              />
+            )}
+          </Box>
+          <Stack spacing={1.5}>
+            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+              <Box sx={{ flex: '1 1 40%', minWidth: 180 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Player Name"
+                  value={slot.playerName || ''}
+                  onChange={(e) => onChange({ playerName: e.target.value })}
+                  sx={glassSx}
+                />
+              </Box>
+              <Box sx={{ flex: '1 1 25%', minWidth: 150 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  multiline
+                  minRows={1}
+                  maxRows={4}
+                  label="Role Notes"
+                  placeholder="e.g., Portal L, Z'en"
+                  value={slot.roleNotes || ''}
+                  onChange={(e) => onChange({ roleNotes: e.target.value })}
+                  sx={glassSx}
+                />
+              </Box>
+              <Box sx={{ flex: '1 1 25%', minWidth: 120 }}>
+                <Autocomplete
+                  freeSolo
+                  size="small"
+                  options={[...availableGroups].sort()}
+                  value={slot.group?.groupName || ''}
+                  onChange={(_, value) =>
+                    onChange({
+                      group: value ? { groupName: value } : undefined,
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField {...params} size="small" label="Group" sx={glassSx} />
+                  )}
+                />
+              </Box>
+            </Box>
+
+            {/* Player Labels/Tags */}
+            <Autocomplete
+              multiple
+              freeSolo
+              size="small"
+              options={[]}
+              value={slot.labels || []}
+              onChange={(_, value) => onChange({ labels: value })}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option}
+                    label={option}
+                    size="small"
                     sx={{
-                      px: 1.25,
-                      py: 0.5,
-                      borderRadius: '7px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      fontSize: '0.72rem',
+                      borderRadius: '6px',
+                      backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                      border: dpsIsDark
+                        ? '1px solid rgba(255,255,255,0.1)'
+                        : '1px solid rgba(0,0,0,0.1)',
                       fontWeight: 500,
-                      color: dpsIsDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                      background: 'transparent',
-                      transition: 'all 0.15s ease',
-                      '&:hover': {
-                        color: dpsRoleColors.dps,
-                        background: dpsIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                      },
+                      fontSize: '0.75rem',
                     }}
-                  >
-                    {jailLabels[type]}
-                  </Box>
-                ))}
+                  />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  size="small"
+                  label="Labels / Tags"
+                  placeholder="Add custom labels (Press Enter)"
+                  sx={glassSx}
+                />
+              )}
+            />
+
+            {/* Gear Sets */}
+            <Autocomplete
+              multiple
+              freeSolo
+              size="small"
+              options={[...ALL_5PIECE_SETS, ...MONSTER_SETS]
+                .map((id) => getSetDisplayName(id))
+                .sort()}
+              value={(slot.gearSets || []).map((id) => getSetDisplayName(id))}
+              onChange={(_, value) =>
+                onChange({
+                  gearSets: value
+                    .map((name) => findSetIdByName(name))
+                    .filter((id): id is KnownSetIDs => id !== undefined),
+                })
+              }
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option}
+                    label={option}
+                    size="small"
+                    sx={{
+                      borderRadius: '6px',
+                      backgroundColor: `${dpsRoleColors.dps}10`,
+                      border: `1px solid ${dpsRoleColors.dps}25`,
+                      fontWeight: 500,
+                      fontSize: '0.75rem',
+                    }}
+                  />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  size="small"
+                  label="Gear Sets"
+                  placeholder={slot.gearSets?.length ? undefined : 'Add set...'}
+                  sx={glassSx}
+                />
+              )}
+              renderOption={(props, option) => <li {...props}>{option}</li>}
+            />
+
+            {/* Convert to Jail DD or back to regular DPS */}
+            {!slot.jailDDType ? (
+              <Box>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    mb: 0.75,
+                    display: 'block',
+                    color: dpsIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                  }}
+                >
+                  Convert to Jail DD:
+                </Typography>
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    flexWrap: 'wrap',
+                    gap: '1px',
+                    borderRadius: '10px',
+                    padding: '3px',
+                    backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                    border: dpsIsDark
+                      ? '1px solid rgba(255,255,255,0.06)'
+                      : '1px solid rgba(0,0,0,0.06)',
+                  }}
+                >
+                  {(['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'] as const).map((type) => (
+                    <Box
+                      key={type}
+                      component="button"
+                      onClick={() => onConvertToJail(slot.slotNumber, type)}
+                      sx={{
+                        px: 1.25,
+                        py: 0.5,
+                        borderRadius: '7px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        fontSize: '0.72rem',
+                        fontWeight: 500,
+                        color: dpsIsDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                        background: 'transparent',
+                        transition: 'all 0.15s ease',
+                        '&:hover': {
+                          color: dpsRoleColors.dps,
+                          background: dpsIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                        },
+                      }}
+                    >
+                      {jailLabels[type]}
+                    </Box>
+                  ))}
+                </Box>
               </Box>
-            </Box>
-          ) : (
-            <Box>
-              <Box
-                component="button"
-                onClick={() => onConvertToDPS(slot.slotNumber)}
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  px: 1.5,
-                  py: 0.625,
-                  borderRadius: '8px',
-                  border: dpsIsDark
-                    ? '1px solid rgba(255,255,255,0.08)'
-                    : '1px solid rgba(0,0,0,0.1)',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                  color: dpsIsDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                  background: 'transparent',
-                  transition: 'all 0.15s ease',
-                  '&:hover': {
-                    color: dpsIsDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
-                    background: dpsIsDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                  },
-                }}
-              >
-                Convert Back to Regular DPS
+            ) : (
+              <Box>
+                <Box
+                  component="button"
+                  onClick={() => onConvertToDPS(slot.slotNumber)}
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    px: 1.5,
+                    py: 0.625,
+                    borderRadius: '8px',
+                    border: dpsIsDark
+                      ? '1px solid rgba(255,255,255,0.08)'
+                      : '1px solid rgba(0,0,0,0.1)',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    color: dpsIsDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                    background: 'transparent',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      color: dpsIsDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
+                      background: dpsIsDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                    },
+                  }}
+                >
+                  Convert Back to Regular DPS
+                </Box>
               </Box>
-            </Box>
-          )}
-        </Stack>
-      </CardContent>
-    </Card>
-  );
-};
+            )}
+          </Stack>
+        </CardContent>
+      </Card>
+    );
+  },
+);
+DPSSlotCard.displayName = 'DPSSlotCard';
 
 // DD Requirement Card Component
 // Generate Discord formatted text
