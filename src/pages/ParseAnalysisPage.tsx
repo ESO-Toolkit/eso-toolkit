@@ -248,11 +248,9 @@ const FOOD_TYPE_LABELS: Record<string, string> = {
 const ParseAnalysisPageContent: React.FC = () => {
   const roleColors = useRoleColors();
 
-  /** Shared glass-card styles — eliminates repeated backdropFilter + accordion boilerplate */
+  /** Shared glass-card styles — NO blur on cards (blur is modal-only per Principle 6) */
   const glassCardSx = {
     ...roleColors.getAccordionStyles(),
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
   } as const;
 
   /** Accordion variant — adds the MUI default-divider suppression */
