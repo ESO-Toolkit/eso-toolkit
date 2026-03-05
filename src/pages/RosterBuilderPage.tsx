@@ -66,9 +66,8 @@ import {
   DialogActions,
   Avatar,
   Tooltip,
-  SxProps,
 } from '@mui/material';
-import { useTheme, Theme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import React, { useState, useCallback, useMemo, useRef } from 'react';
 
 import discordIcon from '../assets/discord-icon.svg';
@@ -846,32 +845,6 @@ export const RosterBuilderPage: React.FC = () => {
     },
   };
 
-  const getSectionAccordionSx = (color: string): SxProps<Theme> => ({
-    backgroundColor: 'transparent',
-    boxShadow: 'none',
-    border: '1px solid transparent',
-    borderRadius: '12px !important',
-    transition: 'background-color 0.2s ease, border-color 0.2s ease',
-    '&.Mui-expanded': {
-      backgroundColor: isDarkMode ? `${color}08` : `${color}04`,
-      borderColor: `${color}15`,
-    },
-    '&:before': { display: 'none' },
-    '& .MuiAccordionSummary-root': {
-      px: 1,
-      minHeight: 44,
-      '&.Mui-expanded': { minHeight: 44 },
-    },
-    '& .MuiAccordionSummary-content': {
-      my: 0.5,
-      '&.Mui-expanded': { my: 0.5 },
-    },
-    '& .MuiAccordionDetails-root': {
-      px: 1,
-      pt: 1.5,
-      pb: 1,
-    },
-  });
 
   const [roster, setRoster] = useState<RaidRoster>(createDefaultRoster());
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
@@ -891,12 +864,7 @@ export const RosterBuilderPage: React.FC = () => {
   const [importUrl, setImportUrl] = useState('');
   const [importLoading, setImportLoading] = useState(false);
   const [importMenuAnchor, setImportMenuAnchor] = useState<null | HTMLElement>(null);
-  const [expandedSections, setExpandedSections] = useState({
-    groups: false,
-    tanks: true,
-    healers: true,
-    dps: true,
-  });
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get auth state
@@ -2317,153 +2285,140 @@ export const RosterBuilderPage: React.FC = () => {
         {/* Advanced Mode: Full Roster Details */}
         <Box sx={{ display: mode === 'advanced' ? 'block' : 'none' }}>
           {/* Player Groups Management */}
-          <Accordion
-            expanded={expandedSections.groups}
-            onChange={() =>
-              setExpandedSections((prev) => ({
-                ...prev,
-                groups: !prev.groups,
-              }))
-            }
-            sx={getSectionAccordionSx('#9e9e9e')}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
-                <Box
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
+                    : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.08)',
+                }}
+              >
+                <GroupIcon
                   sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '9px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: isDarkMode
-                      ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
-                      : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
-                    border: isDarkMode
-                      ? '1px solid rgba(255,255,255,0.08)'
-                      : '1px solid rgba(0,0,0,0.08)',
+                    fontSize: '1rem',
+                    color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                  }}
+                />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
                   }}
                 >
-                  <GroupIcon
-                    sx={{
-                      fontSize: '1rem',
-                      color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
-                    }}
-                  />
-                </Box>
-                <Box>
+                  Groups
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography
                     sx={{
-                      fontSize: '0.6rem',
+                      fontFamily: '"Space Grotesk", sans-serif',
                       fontWeight: 700,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color: 'text.disabled',
-                      lineHeight: 1,
-                      mb: 0.375,
+                      fontSize: '1.05rem',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: isDarkMode
+                        ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                        : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
                     }}
                   >
-                    Groups
+                    Player Groups
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography
-                      sx={{
-                        fontFamily: '"Space Grotesk", sans-serif',
-                        fontWeight: 700,
-                        fontSize: '1.05rem',
-                        letterSpacing: '-0.02em',
-                        lineHeight: 1.1,
-                        background: isDarkMode
-                          ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-                          : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                      }}
-                    >
-                      Player Groups
-                    </Typography>
-                    <Box
-                      component="span"
-                      sx={{
-                        fontSize: '0.65rem',
-                        fontWeight: 600,
-                        px: 0.75,
-                        py: 0.125,
-                        borderRadius: '6px',
-                        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                        color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-                        border: isDarkMode
-                          ? '1px solid rgba(255,255,255,0.08)'
-                          : '1px solid rgba(0,0,0,0.08)',
-                      }}
-                    >
-                      {roster.availableGroups.length}
-                    </Box>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      px: 0.75,
+                      py: 0.125,
+                      borderRadius: '6px',
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                      color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                      border: isDarkMode
+                        ? '1px solid rgba(255,255,255,0.08)'
+                        : '1px solid rgba(0,0,0,0.08)',
+                    }}
+                  >
+                    {roster.availableGroups.length}
                   </Box>
                 </Box>
               </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Stack spacing={2} mb={3}>
-                <Autocomplete
-                  multiple
-                  freeSolo
-                  options={[]}
-                  value={roster.availableGroups}
-                  onChange={(_, value) =>
-                    setRoster((prev) => ({
-                      ...prev,
-                      availableGroups: value,
-                      updatedAt: new Date().toISOString(),
-                    }))
-                  }
-                  slotProps={{
-                    popper: {
-                      disablePortal: true,
-                    },
-                  }}
-                  ChipProps={{
-                    onMouseDown: (event) => {
-                      event.stopPropagation();
-                    },
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Available Groups (e.g., Slayer Stack 1, Group A)"
-                      placeholder="Add group..."
-                      helperText="Create groups to organize players. Common examples: Slayer Stack 1, Slayer Stack 2, Group A, Group B"
-                      sx={glassTextField}
-                    />
-                  )}
-                  renderTags={(value, getTagProps) =>
-                    value.map((option, index) => {
-                      const { key, ...chipProps } = getTagProps({ index });
-                      return (
-                        <Chip
-                          label={option}
-                          {...chipProps}
-                          key={key}
-                          sx={{
-                            borderRadius: '6px',
-                            backgroundColor: isDarkMode
-                              ? 'rgba(255,255,255,0.06)'
-                              : 'rgba(0,0,0,0.05)',
-                            border: isDarkMode
-                              ? '1px solid rgba(255,255,255,0.1)'
-                              : '1px solid rgba(0,0,0,0.1)',
-                            fontWeight: 500,
-                          }}
-                        />
-                      );
-                    })
-                  }
-                />
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
+            </Box>
+            <Stack spacing={2} mb={3}>
+              <Autocomplete
+                multiple
+                freeSolo
+                options={[]}
+                value={roster.availableGroups}
+                onChange={(_, value) =>
+                  setRoster((prev) => ({
+                    ...prev,
+                    availableGroups: value,
+                    updatedAt: new Date().toISOString(),
+                  }))
+                }
+                slotProps={{
+                  popper: {
+                    disablePortal: true,
+                  },
+                }}
+                ChipProps={{
+                  onMouseDown: (event) => {
+                    event.stopPropagation();
+                  },
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Available Groups (e.g., Slayer Stack 1, Group A)"
+                    placeholder="Add group..."
+                    helperText="Create groups to organize players. Common examples: Slayer Stack 1, Slayer Stack 2, Group A, Group B"
+                    sx={glassTextField}
+                  />
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => {
+                    const { key, ...chipProps } = getTagProps({ index });
+                    return (
+                      <Chip
+                        label={option}
+                        {...chipProps}
+                        key={key}
+                        sx={{
+                          borderRadius: '6px',
+                          backgroundColor: isDarkMode
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.05)',
+                          border: isDarkMode
+                            ? '1px solid rgba(255,255,255,0.1)'
+                            : '1px solid rgba(0,0,0,0.1)',
+                          fontWeight: 500,
+                        }}
+                      />
+                    );
+                  })
+                }
+              />
+            </Stack>
+          </Box>
 
           <Divider
             sx={{
@@ -2473,100 +2428,87 @@ export const RosterBuilderPage: React.FC = () => {
           />
 
           {/* Tanks Section */}
-          <Accordion
-            expanded={expandedSections.tanks}
-            onChange={() =>
-              setExpandedSections((prev) => ({
-                ...prev,
-                tanks: !prev.tanks,
-              }))
-            }
-            sx={getSectionAccordionSx(roleColors.tank)}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
-                <Box
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${roleColors.tank}20 0%, ${roleColors.tank}08 100%)`,
+                  border: `1px solid ${roleColors.tank}25`,
+                }}
+              >
+                <ShieldIcon sx={{ fontSize: '1rem', color: roleColors.tank }} />
+              </Box>
+              <Box>
+                <Typography
                   sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '9px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: `linear-gradient(135deg, ${roleColors.tank}20 0%, ${roleColors.tank}08 100%)`,
-                    border: `1px solid ${roleColors.tank}25`,
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
                   }}
                 >
-                  <ShieldIcon sx={{ fontSize: '1rem', color: roleColors.tank }} />
-                </Box>
-                <Box>
+                  Role
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography
                     sx={{
-                      fontSize: '0.6rem',
+                      fontFamily: '"Space Grotesk", sans-serif',
                       fontWeight: 700,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color: 'text.disabled',
-                      lineHeight: 1,
-                      mb: 0.375,
+                      fontSize: '1.05rem',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: `linear-gradient(135deg, ${roleColors.tank} 0%, ${roleColors.tank}99 100%)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
                     }}
                   >
-                    Role
+                    Tanks
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography
-                      sx={{
-                        fontFamily: '"Space Grotesk", sans-serif',
-                        fontWeight: 700,
-                        fontSize: '1.05rem',
-                        letterSpacing: '-0.02em',
-                        lineHeight: 1.1,
-                        background: `linear-gradient(135deg, ${roleColors.tank} 0%, ${roleColors.tank}99 100%)`,
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                      }}
-                    >
-                      Tanks
-                    </Typography>
-                    <Box
-                      component="span"
-                      sx={{
-                        fontSize: '0.65rem',
-                        fontWeight: 600,
-                        px: 0.75,
-                        py: 0.125,
-                        borderRadius: '6px',
-                        backgroundColor: `${roleColors.tank}12`,
-                        color: roleColors.tank,
-                        border: `1px solid ${roleColors.tank}25`,
-                      }}
-                    >
-                      2
-                    </Box>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      px: 0.75,
+                      py: 0.125,
+                      borderRadius: '6px',
+                      backgroundColor: `${roleColors.tank}12`,
+                      color: roleColors.tank,
+                      border: `1px solid ${roleColors.tank}25`,
+                    }}
+                  >
+                    2
                   </Box>
                 </Box>
               </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Stack spacing={2} mb={3}>
-                <TankCard
-                  key={1}
-                  tankNum={1}
-                  tank={roster.tank1}
-                  onChange={handleTank1Change}
-                  availableGroups={memoizedGroups}
-                />
-                <TankCard
-                  key={2}
-                  tankNum={2}
-                  tank={roster.tank2}
-                  onChange={handleTank2Change}
-                  availableGroups={memoizedGroups}
-                />
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
+            </Box>
+            <Stack spacing={2} mb={3}>
+              <TankCard
+                key={1}
+                tankNum={1}
+                tank={roster.tank1}
+                onChange={handleTank1Change}
+                availableGroups={memoizedGroups}
+              />
+              <TankCard
+                key={2}
+                tankNum={2}
+                tank={roster.tank2}
+                onChange={handleTank2Change}
+                availableGroups={memoizedGroups}
+              />
+            </Stack>
+          </Box>
 
           <Divider
             sx={{
@@ -2576,102 +2518,89 @@ export const RosterBuilderPage: React.FC = () => {
           />
 
           {/* Healers Section */}
-          <Accordion
-            expanded={expandedSections.healers}
-            onChange={() =>
-              setExpandedSections((prev) => ({
-                ...prev,
-                healers: !prev.healers,
-              }))
-            }
-            sx={getSectionAccordionSx(roleColors.healer)}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
-                <Box
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${roleColors.healer}20 0%, ${roleColors.healer}08 100%)`,
+                  border: `1px solid ${roleColors.healer}25`,
+                }}
+              >
+                <FavoriteIcon sx={{ fontSize: '1rem', color: roleColors.healer }} />
+              </Box>
+              <Box>
+                <Typography
                   sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '9px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: `linear-gradient(135deg, ${roleColors.healer}20 0%, ${roleColors.healer}08 100%)`,
-                    border: `1px solid ${roleColors.healer}25`,
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
                   }}
                 >
-                  <FavoriteIcon sx={{ fontSize: '1rem', color: roleColors.healer }} />
-                </Box>
-                <Box>
+                  Role
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography
                     sx={{
-                      fontSize: '0.6rem',
+                      fontFamily: '"Space Grotesk", sans-serif',
                       fontWeight: 700,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color: 'text.disabled',
-                      lineHeight: 1,
-                      mb: 0.375,
+                      fontSize: '1.05rem',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: `linear-gradient(135deg, ${roleColors.healer} 0%, ${roleColors.healer}99 100%)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
                     }}
                   >
-                    Role
+                    Healers
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography
-                      sx={{
-                        fontFamily: '"Space Grotesk", sans-serif',
-                        fontWeight: 700,
-                        fontSize: '1.05rem',
-                        letterSpacing: '-0.02em',
-                        lineHeight: 1.1,
-                        background: `linear-gradient(135deg, ${roleColors.healer} 0%, ${roleColors.healer}99 100%)`,
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                      }}
-                    >
-                      Healers
-                    </Typography>
-                    <Box
-                      component="span"
-                      sx={{
-                        fontSize: '0.65rem',
-                        fontWeight: 600,
-                        px: 0.75,
-                        py: 0.125,
-                        borderRadius: '6px',
-                        backgroundColor: `${roleColors.healer}12`,
-                        color: roleColors.healer,
-                        border: `1px solid ${roleColors.healer}25`,
-                      }}
-                    >
-                      2
-                    </Box>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      px: 0.75,
+                      py: 0.125,
+                      borderRadius: '6px',
+                      backgroundColor: `${roleColors.healer}12`,
+                      color: roleColors.healer,
+                      border: `1px solid ${roleColors.healer}25`,
+                    }}
+                  >
+                    2
                   </Box>
                 </Box>
               </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Stack spacing={2} mb={3}>
-                <HealerCard
-                  key={1}
-                  healerNum={1}
-                  healer={roster.healer1}
-                  onChange={handleHealer1Change}
-                  availableGroups={memoizedGroups}
-                  usedBuffs={usedBuffs}
-                />
-                <HealerCard
-                  key={2}
-                  healerNum={2}
-                  healer={roster.healer2}
-                  onChange={handleHealer2Change}
-                  availableGroups={memoizedGroups}
-                  usedBuffs={usedBuffs}
-                />
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
+            </Box>
+            <Stack spacing={2} mb={3}>
+              <HealerCard
+                key={1}
+                healerNum={1}
+                healer={roster.healer1}
+                onChange={handleHealer1Change}
+                availableGroups={memoizedGroups}
+                usedBuffs={usedBuffs}
+              />
+              <HealerCard
+                key={2}
+                healerNum={2}
+                healer={roster.healer2}
+                onChange={handleHealer2Change}
+                availableGroups={memoizedGroups}
+                usedBuffs={usedBuffs}
+              />
+            </Stack>
+          </Box>
 
           <Divider
             sx={{
@@ -2681,105 +2610,92 @@ export const RosterBuilderPage: React.FC = () => {
           />
 
           {/* DPS Slots Section */}
-          <Accordion
-            expanded={expandedSections.dps}
-            onChange={() =>
-              setExpandedSections((prev) => ({
-                ...prev,
-                dps: !prev.dps,
-              }))
-            }
-            sx={getSectionAccordionSx(roleColors.dps)}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
-                <Box
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${roleColors.dps}20 0%, ${roleColors.dps}08 100%)`,
+                  border: `1px solid ${roleColors.dps}25`,
+                }}
+              >
+                <AutoAwesomeIcon sx={{ fontSize: '1rem', color: roleColors.dps }} />
+              </Box>
+              <Box>
+                <Typography
                   sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '9px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: `linear-gradient(135deg, ${roleColors.dps}20 0%, ${roleColors.dps}08 100%)`,
-                    border: `1px solid ${roleColors.dps}25`,
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
                   }}
                 >
-                  <AutoAwesomeIcon sx={{ fontSize: '1rem', color: roleColors.dps }} />
-                </Box>
-                <Box>
+                  Roster
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography
                     sx={{
-                      fontSize: '0.6rem',
+                      fontFamily: '"Space Grotesk", sans-serif',
                       fontWeight: 700,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color: 'text.disabled',
-                      lineHeight: 1,
-                      mb: 0.375,
+                      fontSize: '1.05rem',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: `linear-gradient(135deg, ${roleColors.dps} 0%, ${roleColors.dps}99 100%)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
                     }}
                   >
-                    Roster
+                    DPS Roster
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography
-                      sx={{
-                        fontFamily: '"Space Grotesk", sans-serif',
-                        fontWeight: 700,
-                        fontSize: '1.05rem',
-                        letterSpacing: '-0.02em',
-                        lineHeight: 1.1,
-                        background: `linear-gradient(135deg, ${roleColors.dps} 0%, ${roleColors.dps}99 100%)`,
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                      }}
-                    >
-                      DPS Roster
-                    </Typography>
-                    <Box
-                      component="span"
-                      sx={{
-                        fontSize: '0.65rem',
-                        fontWeight: 600,
-                        px: 0.75,
-                        py: 0.125,
-                        borderRadius: '6px',
-                        backgroundColor: `${roleColors.dps}12`,
-                        color: roleColors.dps,
-                        border: `1px solid ${roleColors.dps}25`,
-                      }}
-                    >
-                      {roster.dpsSlots.length} Slots
-                    </Box>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      px: 0.75,
+                      py: 0.125,
+                      borderRadius: '6px',
+                      backgroundColor: `${roleColors.dps}12`,
+                      color: roleColors.dps,
+                      border: `1px solid ${roleColors.dps}25`,
+                    }}
+                  >
+                    {roster.dpsSlots.length} Slots
                   </Box>
                 </Box>
               </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDPSDragEnd}
-              >
-                <SortableContext items={dpsSlotIds} strategy={verticalListSortingStrategy}>
-                  <Stack spacing={1.5} mb={3}>
-                    {roster.dpsSlots.map((slot, index) => (
-                      <DPSSlotCard
-                        key={slot.slotNumber}
-                        slot={slot}
-                        slotIndex={index}
-                        availableGroups={memoizedGroups}
-                        onSlotChange={handleDPSSlotChange}
-                        onConvertToJail={handleConvertDPSToJail}
-                        onConvertToDPS={handleConvertJailToDPS}
-                      />
-                    ))}
-                  </Stack>
-                </SortableContext>
-              </DndContext>
-            </AccordionDetails>
-          </Accordion>
+            </Box>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDPSDragEnd}
+            >
+              <SortableContext items={dpsSlotIds} strategy={verticalListSortingStrategy}>
+                <Stack spacing={1.5} mb={3}>
+                  {roster.dpsSlots.map((slot, index) => (
+                    <DPSSlotCard
+                      key={slot.slotNumber}
+                      slot={slot}
+                      slotIndex={index}
+                      availableGroups={memoizedGroups}
+                      onSlotChange={handleDPSSlotChange}
+                      onConvertToJail={handleConvertDPSToJail}
+                      onConvertToDPS={handleConvertJailToDPS}
+                    />
+                  ))}
+                </Stack>
+              </SortableContext>
+            </DndContext>
+          </Box>
 
           <Divider
             sx={{
