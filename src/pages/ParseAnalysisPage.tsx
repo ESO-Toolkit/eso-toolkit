@@ -2222,9 +2222,31 @@ const ParseAnalysisPageContent: React.FC = () => {
           }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              How to set up a live parse
-            </Typography>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              {/* Icon lockup: 24×24 with gradient background (Principle 7: Visual Language) */}
+              <Box
+                sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: roleColors.isDarkMode
+                    ? 'linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.08) 100%)'
+                    : 'linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(76, 175, 80, 0.04) 100%)',
+                  border: '1px solid',
+                  borderColor: roleColors.isDarkMode
+                    ? 'rgba(76, 175, 80, 0.2)'
+                    : 'rgba(76, 175, 80, 0.15)',
+                }}
+              >
+                <CheckCircleIcon color="success" sx={{ fontSize: '14px' }} />
+              </Box>
+              <Typography variant="subtitle1" fontWeight={600}>
+                How to set up a live parse
+              </Typography>
+            </Stack>
           </AccordionSummary>
           <AccordionDetails>
             <Box sx={{ pt: 1 }}>
