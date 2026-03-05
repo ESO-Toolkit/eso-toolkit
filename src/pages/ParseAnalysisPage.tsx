@@ -9,13 +9,16 @@
 
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FastfoodIcon from '@mui/icons-material/Fastfood';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import InfoIcon from '@mui/icons-material/Info';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import PersonIcon from '@mui/icons-material/Person';
 import RotateRightIcon from '@mui/icons-material/RotateRight';
 import SpeedIcon from '@mui/icons-material/Speed';
 import {
@@ -1081,46 +1084,160 @@ const ParseAnalysisPageContent: React.FC = () => {
     const { hasFood, foodType } = state.foodResult;
     const foodLabel = FOOD_TYPE_LABELS[foodType] ?? 'Other Food/Drink';
 
+    // Elite Design Principle: Color Strategy + Shadow & Depth + Micro-Interactions
+    // Icon lockup uses color-keyed semantic backgrounds, radial gradient overlay adds depth
+    const semanticColor = hasFood ? 'success' : 'error';
+    const semanticColorLight = hasFood
+      ? roleColors.isDarkMode
+        ? 'rgba(46, 125, 50, 0.12)' // Semantic opacity 12%
+        : 'rgba(46, 125, 50, 0.06)' // Semantic opacity 6%
+      : roleColors.isDarkMode
+        ? 'rgba(211, 47, 47, 0.12)' // Semantic opacity 12%
+        : 'rgba(211, 47, 47, 0.06)'; // Semantic opacity 6%
+
     return (
       <Box
         sx={{
-          p: 2,
-          borderRadius: 2,
+          p: 2.5,
+          borderRadius: 2.5,
+          position: 'relative',
+          overflow: 'hidden',
+          backgroundColor: semanticColorLight,
           border: '1px solid',
-          borderColor: hasFood ? 'success.main' : 'error.main',
-          borderLeftWidth: 4,
-          backgroundColor: hasFood
-            ? roleColors.isDarkMode
-              ? 'rgba(46, 125, 50, 0.08)'
-              : 'rgba(46, 125, 50, 0.04)'
-            : roleColors.isDarkMode
-              ? 'rgba(211, 47, 47, 0.08)'
-              : 'rgba(211, 47, 47, 0.04)',
+          borderColor: hasFood ? 'success.light' : 'error.light',
           mb: 2,
+          transition: 'all 0.2s ease-out',
+          '&:hover': {
+            transform: 'translateY(-1px)',
+            boxShadow: roleColors.isDarkMode
+              ? `0 8px 16px ${hasFood ? 'rgba(76, 175, 80, 0.15)' : 'rgba(244, 67, 54, 0.15)'}`
+              : `0 8px 16px ${hasFood ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)'}`,
+          },
+          // Pseudo-element: Radial gradient overlay for depth (Principle 5)
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            pointerEvents: 'none',
+            background: hasFood
+              ? 'radial-gradient(circle at 100% 0%, rgba(76, 175, 80, 0.04) 0%, transparent 70%)'
+              : 'radial-gradient(circle at 100% 0%, rgba(244, 67, 54, 0.04) 0%, transparent 70%)',
+          },
         }}
       >
-        <Stack direction="row" spacing={1.5} alignItems="center">
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="flex-start"
+          sx={{ position: 'relative', zIndex: 1 }}
+        >
+          {/* Icon Lockup: 44×44 with gradient background (Principle 7: Visual Language) */}
           <Box
             sx={{
               width: 44,
               height: 44,
-              borderRadius: '50%',
+              minWidth: 44,
+              borderRadius: 1.5,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: hasFood ? 'rgba(46, 125, 50, 0.15)' : 'rgba(211, 47, 47, 0.15)',
+              background: hasFood
+                ? `linear-gradient(135deg, ${roleColors.isDarkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.15)'} 0%, ${roleColors.isDarkMode ? 'rgba(56, 142, 60, 0.15)' : 'rgba(56, 142, 60, 0.1)'} 100%)`
+                : `linear-gradient(135deg, ${roleColors.isDarkMode ? 'rgba(244, 67, 54, 0.2)' : 'rgba(244, 67, 54, 0.15)'} 0%, ${roleColors.isDarkMode ? 'rgba(211, 47, 47, 0.15)' : 'rgba(211, 47, 47, 0.1)'} 100%)`,
+              transition: 'transform 0.15s ease-out',
+              '&:hover': {
+                transform: 'scale(1.05)',
+              },
             }}
           >
-            <FastfoodIcon color={hasFood ? 'success' : 'error'} sx={{ fontSize: 24 }} />
+            <FastfoodIcon
+              color={semanticColor}
+              sx={{
+                fontSize: 28,
+              }}
+            />
           </Box>
-          <Box>
-            <Typography variant="body2" fontWeight={600}>
-              {hasFood ? 'Food Active' : 'No Food Detected'}
+
+          {/* Content: Labels and status */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+              <Typography
+                sx={{
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: 'text.disabled',
+                }}
+              >
+                Food Analysis
+              </Typography>
+              {/* Status badge pill (Principle 9: Information Architecture) */}
+              <Box
+                sx={{
+                  px: 0.75,
+                  py: 0.25,
+                  borderRadius: 1,
+                  backgroundColor: hasFood
+                    ? roleColors.isDarkMode
+                      ? 'rgba(76, 175, 80, 0.15)'
+                      : 'rgba(76, 175, 80, 0.08)'
+                    : roleColors.isDarkMode
+                      ? 'rgba(244, 67, 54, 0.15)'
+                      : 'rgba(244, 67, 54, 0.08)',
+                  border: '1px solid',
+                  borderColor: hasFood ? 'success.light' : 'error.light',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    backgroundColor: hasFood ? 'success.main' : 'error.main',
+                  }}
+                />
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                    color: hasFood ? 'success.main' : 'error.main',
+                  }}
+                >
+                  {hasFood ? 'Active' : 'Missing'}
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                mb: 0.25,
+                lineHeight: 1.3,
+              }}
+            >
+              {hasFood ? 'Food Buff Detected' : 'No Food/Drink Detected'}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.secondary',
+                lineHeight: 1.4,
+              }}
+            >
               {hasFood
-                ? `${foodLabel}${state.foodResult?.foodNames.length > 0 ? ` — ${state.foodResult.foodNames.join(', ')}` : ''}`
-                : 'Using food/drink is recommended for parses'}
+                ? `${foodLabel}${state.foodResult?.foodNames.length > 0 ? `: ${state.foodResult.foodNames.join(', ')}` : ''}`
+                : 'Food or drink buff is recommended for optimal parse performance'}
             </Typography>
           </Box>
         </Stack>
@@ -2284,47 +2401,231 @@ const ParseAnalysisPageContent: React.FC = () => {
                 justifyContent="space-between"
                 alignItems={{ xs: 'flex-start', sm: 'center' }}
               >
-                <Box>
+                {/* Left: Icon lockup + Title + Metadata */}
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  {/* Elite Design: Section label (Principle 10: Visual Hierarchy) */}
                   <Typography
                     sx={{
-                      fontSize: '1.5rem',
-                      fontWeight: 800,
-                      letterSpacing: '-0.02em',
-                      background: roleColors.isDarkMode
-                        ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-                        : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
+                      fontSize: '0.6rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: 'text.disabled',
                       mb: 1,
                     }}
                   >
-                    {state.fightName}
+                    Live Parse Analysis
                   </Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                    <Chip
-                      label={state.playerName}
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                    />
-                    <Chip label={`Report: ${state.reportCode}`} size="small" variant="outlined" />
-                    <Chip label={`Fight #${state.fightId}`} size="small" variant="outlined" />
-                    {fightDurationMs != null && (
-                      <Chip
-                        label={formatDuration(fightDurationMs)}
-                        size="small"
-                        icon={<AccessTimeIcon />}
-                        variant="outlined"
+
+                  {/* Icon Lockup + Title Stack (Principle 7: Visual Language) */}
+                  <Stack direction="row" spacing={1.5} alignItems="flex-start" sx={{ mb: 1.5 }}>
+                    {/* Icon Lockup: 32×32 with linear gradient background */}
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        minWidth: 32,
+                        borderRadius: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: roleColors.isDarkMode
+                          ? 'linear-gradient(135deg, rgba(96, 125, 139, 0.3) 0%, rgba(66, 133, 244, 0.15) 100%)'
+                          : 'linear-gradient(135deg, rgba(63, 81, 181, 0.2) 0%, rgba(33, 150, 243, 0.12) 100%)',
+                        transition: 'transform 0.15s ease-out',
+                        '&:hover': {
+                          transform: 'scale(1.08)',
+                        },
+                      }}
+                    >
+                      <AssignmentIcon
+                        sx={{
+                          fontSize: 18,
+                          color: 'primary.main',
+                        }}
                       />
+                    </Box>
+
+                    {/* Title with gradient clip-text (Space Grotesk, Principle 1: Visual Hierarchy) */}
+                    <Box>
+                      <Typography
+                        sx={{
+                          fontFamily: '"Space Grotesk", sans-serif',
+                          fontSize: '1.05rem',
+                          fontWeight: 700,
+                          letterSpacing: '-0.01em',
+                          background: roleColors.isDarkMode
+                            ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                            : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {state.fightName}
+                      </Typography>
+                    </Box>
+                  </Stack>
+
+                  {/* Metadata Badges Grid (Principle 9: Information Architecture) */}
+                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 0 }}>
+                    {/* Player Name Badge */}
+                    <Box
+                      sx={{
+                        px: 1,
+                        py: 0.5,
+                        borderRadius: 1.5,
+                        backgroundColor: roleColors.isDarkMode
+                          ? 'rgba(56, 142, 60, 0.12)' // Success semantic opacity 12%
+                          : 'rgba(56, 142, 60, 0.06)',
+                        border: '1px solid',
+                        borderColor: 'success.light',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.6,
+                      }}
+                    >
+                      <PersonIcon
+                        sx={{
+                          fontSize: 16,
+                          color: 'success.main',
+                        }}
+                      />
+                      <Typography
+                        sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'text.primary' }}
+                      >
+                        {state.playerName}
+                      </Typography>
+                    </Box>
+
+                    {/* Report Badge */}
+                    <Box
+                      sx={{
+                        px: 1,
+                        py: 0.5,
+                        borderRadius: 1.5,
+                        backgroundColor: roleColors.isDarkMode
+                          ? 'rgba(103, 58, 183, 0.12)' // Primary semantic opacity 12%
+                          : 'rgba(103, 58, 183, 0.06)',
+                        border: '1px solid',
+                        borderColor: 'primary.light',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.6,
+                      }}
+                    >
+                      <FolderOpenIcon
+                        sx={{
+                          fontSize: 16,
+                          color: 'primary.main',
+                        }}
+                      />
+                      <Typography
+                        sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'text.primary' }}
+                      >
+                        {state.reportCode}
+                      </Typography>
+                    </Box>
+
+                    {/* Fight # Badge */}
+                    <Box
+                      sx={{
+                        px: 1,
+                        py: 0.5,
+                        borderRadius: 1.5,
+                        backgroundColor: roleColors.isDarkMode
+                          ? 'rgba(245, 127, 23, 0.12)' // Warning semantic opacity 12%
+                          : 'rgba(245, 127, 23, 0.06)',
+                        border: '1px solid',
+                        borderColor: 'warning.light',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.6,
+                      }}
+                    >
+                      <FlashOnIcon
+                        sx={{
+                          fontSize: 16,
+                          color: 'warning.main',
+                        }}
+                      />
+                      <Typography
+                        sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'text.primary' }}
+                      >
+                        Fight {state.fightId}
+                      </Typography>
+                    </Box>
+
+                    {/* Duration Badge */}
+                    {fightDurationMs != null && (
+                      <Box
+                        sx={{
+                          px: 1,
+                          py: 0.5,
+                          borderRadius: 1.5,
+                          backgroundColor: roleColors.isDarkMode
+                            ? 'rgba(0, 150, 136, 0.12)' // Teal/Info semantic opacity 12%
+                            : 'rgba(0, 150, 136, 0.06)',
+                          border: '1px solid',
+                          borderColor: 'info.light',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.6,
+                        }}
+                      >
+                        <AccessTimeIcon
+                          sx={{
+                            fontSize: 16,
+                            color: 'info.main',
+                          }}
+                        />
+                        <Typography
+                          sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'text.primary' }}
+                        >
+                          {formatDuration(fightDurationMs)}
+                        </Typography>
+                      </Box>
                     )}
                   </Stack>
                 </Box>
+
+                {/* Right: New Analysis Button (Principle 7: Micro-Interactions) */}
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   size="small"
                   onClick={handleReset}
-                  sx={{ alignSelf: { xs: 'stretch', sm: 'center' } }}
+                  sx={{
+                    alignSelf: { xs: 'stretch', sm: 'center' },
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    px: 2,
+                    py: 0.75,
+                    borderRadius: 1.5,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    background: roleColors.isDarkMode
+                      ? 'linear-gradient(135deg, rgba(66, 133, 244, 0.9) 0%, rgba(33, 150, 243, 0.8) 100%)'
+                      : 'linear-gradient(135deg, rgba(63, 81, 181, 0.9) 0%, rgba(33, 150, 243, 0.8) 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    boxShadow: roleColors.isDarkMode
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 6px rgba(66, 133, 244, 0.2)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 6px rgba(63, 81, 181, 0.15)',
+                    transition: 'all 0.15s ease-out',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: roleColors.isDarkMode
+                        ? 'inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 12px rgba(66, 133, 244, 0.3)'
+                        : 'inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 12px rgba(63, 81, 181, 0.25)',
+                    },
+                    '&:active': {
+                      transform: 'translateY(0)',
+                      boxShadow: roleColors.isDarkMode
+                        ? 'inset 0 1px 2px rgba(255,255,255,0.08), 0 1px 3px rgba(66, 133, 244, 0.15)'
+                        : 'inset 0 1px 2px rgba(255,255,255,0.1), 0 1px 3px rgba(63, 81, 181, 0.1)',
+                    },
+                  }}
                 >
                   New Analysis
                 </Button>
