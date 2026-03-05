@@ -62,18 +62,20 @@ export const BuffChecklist: React.FC<BuffChecklistProps> = ({ checklistData }) =
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          py: 0.75,
+          py: 0.85,
           px: 1.5,
           borderRadius: 1,
-          borderLeft: isRedundant ? '3px solid' : '3px solid transparent',
-          borderLeftColor: isRedundant ? 'warning.main' : 'transparent',
+          borderTop: isRedundant ? '2px solid' : 'none',
+          borderTopColor: isRedundant ? 'warning.main' : 'transparent',
           backgroundColor: isRedundant
             ? isDark
-              ? 'rgba(255, 152, 0, 0.06)'
-              : 'rgba(255, 152, 0, 0.04)'
+              ? 'rgba(255, 152, 0, 0.08)'
+              : 'rgba(255, 152, 0, 0.06)'
             : 'transparent',
+          transition: 'all 0.15s ease-out',
           '&:hover': {
-            backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+            backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+            transform: 'translateY(-1px)',
           },
         }}
       >
@@ -174,9 +176,9 @@ export const BuffChecklist: React.FC<BuffChecklistProps> = ({ checklistData }) =
             mb: 2,
             p: 1.5,
             borderRadius: 1.5,
-            borderLeft: '3px solid',
-            borderLeftColor: 'warning.main',
-            backgroundColor: isDark ? 'rgba(255, 152, 0, 0.06)' : 'rgba(255, 152, 0, 0.04)',
+            borderTop: '2px solid',
+            borderTopColor: 'warning.main',
+            backgroundColor: isDark ? 'rgba(255, 152, 0, 0.08)' : 'rgba(255, 152, 0, 0.06)',
           }}
         >
           <Typography variant="caption" fontWeight={600} color="warning.main">
