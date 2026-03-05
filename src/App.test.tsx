@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import App from './App';
+import { getBaseUrl } from './utils/envUtils';
 
 jest.mock('./store/storeWithHistory', () => {
   const configureStoreMock = require('redux-mock-store').default;
@@ -110,6 +111,10 @@ jest.mock('./pages/AboutPage', () => ({
 }));
 
 describe('App', () => {
+  beforeEach(() => {
+    jest.mocked(getBaseUrl).mockReturnValue('/');
+  });
+
   it('renders the about route when navigated', async () => {
     window.history.pushState({}, 'About', '/about');
 
