@@ -1979,16 +1979,9 @@ export const RosterBuilderPage: React.FC = () => {
         />
 
         {/* Row 3 — Action button bar */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: 0.75,
-            mb: 2,
-          }}
-        >
-          {/* Secondary actions (left) */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mb: 2 }}>
+          {/* Row 1: utility actions */}
+          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.75 }}>
           <Tooltip title="Quick Fill" arrow>
             <Button
               size="small"
@@ -2136,9 +2129,10 @@ export const RosterBuilderPage: React.FC = () => {
             </Button>
           </Tooltip>
 
-          {/* Spacer pushes CTAs right on desktop */}
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
+          </Box>{/* end row 1 */}
 
+          {/* Row 2: share actions */}
+          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.75 }}>
           {/* Discord compound button — preview + copy in a shared track */}
           <Box
             sx={{
@@ -2257,6 +2251,7 @@ export const RosterBuilderPage: React.FC = () => {
               </Box>
             </Button>
           </Tooltip>
+          </Box>{/* end row 2 */}
         </Box>
 
         <Box
