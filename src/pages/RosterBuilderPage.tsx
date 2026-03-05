@@ -1198,6 +1198,16 @@ export const RosterBuilderPage: React.FC = () => {
 
   const memoizedGroups = useMemo(() => roster.availableGroups, [roster.availableGroups]);
 
+  // Stable slot number list for SortableContext — only changes when slots are reordered,
+  // not when slot data changes. Prevents all 8 DPS cards from re-rendering via useSortable
+  // context subscription on every keystroke.
+  const dpsSlotOrder = roster.dpsSlots.map((s) => s.slotNumber).join(',');
+  const dpsSlotIds = useMemo(
+    () => roster.dpsSlots.map((slot) => slot.slotNumber),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dpsSlotOrder],
+  );
+
   // Export roster as JSON
   const handleExportJSON = useCallback(() => {
     const dataStr = JSON.stringify(roster, null, 2);
@@ -2752,10 +2762,7 @@ export const RosterBuilderPage: React.FC = () => {
                 collisionDetection={closestCenter}
                 onDragEnd={handleDPSDragEnd}
               >
-                <SortableContext
-                  items={roster.dpsSlots.map((slot) => slot.slotNumber)}
-                  strategy={verticalListSortingStrategy}
-                >
+                <SortableContext items={dpsSlotIds} strategy={verticalListSortingStrategy}>
                   <Stack spacing={1.5} mb={3}>
                     {roster.dpsSlots.map((slot, index) => (
                       <DPSSlotCard
