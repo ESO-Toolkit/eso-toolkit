@@ -3,6 +3,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
 import { FightFragment, GetReportByCodeDocument, ReportFragment } from '../../graphql/gql/graphql';
+import { isSampleReport, getSampleReportUrl } from '../../utils/sampleReports';
 import type { ReportFightContextInput } from '../contextTypes';
 import { RootState } from '../storeWithHistory';
 import { normalizeReportFightContext } from '../utils/cacheKeys';
@@ -185,6 +186,21 @@ export const fetchReportData = createAsyncThunk<
   'report/fetchReportData',
   async ({ reportId, client }, { rejectWithValue }) => {
     try {
+      // Bundled sample reports are served from static JSON in public/
+      // so they never hit the ESO Logs API and work without authentication.
+      if (isSampleReport(reportId)) {
+        const url = getSampleReportUrl(reportId);
+        const res = await fetch(url);
+        if (!res.ok) {
+          return rejectWithValue('Failed to load sample report data.');
+        }
+        const json = (await res.json()) as { reportData?: { report?: ReportFragment } };
+        if (!json.reportData?.report) {
+          return rejectWithValue('Sample report data not found.');
+        }
+        return { data: json.reportData.report, reportId };
+      }
+
       const response = await client.query({
         query: GetReportByCodeDocument,
         variables: { code: reportId },

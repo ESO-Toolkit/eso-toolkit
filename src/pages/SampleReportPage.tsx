@@ -2,27 +2,7 @@ import { Box, Paper, Skeleton, Typography, useTheme } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-/**
- * Curated sample reports sourced from data-downloads/.
- * These are publicly accessible ESO Logs reports that do not require
- * authentication to navigate to, avoiding the need for an OAuth token
- * on the /sample-report landing page.
- */
-const SAMPLE_REPORTS: ReadonlyArray<{ code: string; fightId: number }> = [
-  { code: 'F4f2bMwWtgVKxjB9', fightId: 39 }, // Tideborn Taleria
-  { code: 'nZdTqa6M9bWmtXBw', fightId: 6 }, // Yandir the Butcher / Sea Adder
-  { code: 'YArFDbq7BdhwL691', fightId: 72 }, // Ansuul the Tormentor
-  { code: 'YArFDbq7BdhwL691', fightId: 54 }, // Exarchanic Yaseyla
-  { code: 'F4f2bMwWtgVKxjB9', fightId: 2 }, // Lylanar and Turlassil
-];
-
-const pickRandom = <T,>(items: ReadonlyArray<T>): T | undefined => {
-  if (!items.length) {
-    return undefined;
-  }
-  const index = Math.floor(Math.random() * items.length);
-  return items[index];
-};
+import { SAMPLE_REPORT_LIST } from '../utils/sampleReports';
 
 export const SampleReportPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,13 +10,15 @@ export const SampleReportPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const sample = pickRandom(SAMPLE_REPORTS);
-    if (!sample) {
+    if (SAMPLE_REPORT_LIST.length === 0) {
       setErrorMessage('No sample reports are configured.');
       return;
     }
 
-    navigate(`/report/${sample.code}/fight/${sample.fightId}`, { replace: true });
+    const code = SAMPLE_REPORT_LIST[Math.floor(Math.random() * SAMPLE_REPORT_LIST.length)];
+    // Navigate to the fight-list overview — it works without auth because the
+    // report metadata is bundled as static JSON in public/sample-reports/.
+    navigate(`/report/${code}`, { replace: true });
   }, [navigate]);
 
   if (errorMessage) {

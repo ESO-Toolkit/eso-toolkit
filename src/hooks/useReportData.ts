@@ -10,6 +10,7 @@ import {
 } from '../store/report/reportSelectors';
 import { fetchReportData } from '../store/report/reportSlice';
 import { useAppDispatch } from '../store/useAppDispatch';
+import { isSampleReport } from '../utils/sampleReports';
 
 export function useReportData(): {
   reportData: ReportFragment | null;
@@ -20,8 +21,11 @@ export function useReportData(): {
   const { reportId } = useSelectedReportAndFight();
 
   React.useEffect(() => {
-    // Only fetch if client is ready, user is logged in, and we have a reportId
-    if (reportId && isReady && isLoggedIn && client) {
+    // Fetch if client is ready and user is logged in.
+    // For bundled sample reports, also fetch even without login — the thunk
+    // will serve data from the static JSON instead of hitting the API.
+    const canFetch = isLoggedIn || isSampleReport(reportId);
+    if (reportId && isReady && canFetch && client) {
       dispatch(fetchReportData({ reportId, client }));
     }
   }, [dispatch, reportId, client, isReady, isLoggedIn]);
