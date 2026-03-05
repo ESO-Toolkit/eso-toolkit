@@ -1088,16 +1088,24 @@ export const RosterBuilderPage: React.FC = () => {
     }
   }, []);
 
-  // Keep ?r= query param in sync with the current roster so the URL is always shareable
+  // Keep ?r= query param in sync with the current roster so the URL is always shareable.
+  // Debounced to avoid expensive compression on every keystroke and browser rate limits.
   React.useEffect(() => {
     if (!urlSyncReady.current) return;
-    void encodeRosterToURL(roster).then((encoded) => {
-      if (!encoded) return;
-      const url = new URL(window.location.href);
-      url.search = `?r=${encoded}`;
-      url.hash = '';
-      window.history.replaceState(null, '', url.toString());
-    });
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void encodeRosterToURL(roster).then((encoded) => {
+        if (cancelled || !encoded) return;
+        const url = new URL(window.location.href);
+        url.search = `?r=${encoded}`;
+        url.hash = '';
+        window.history.replaceState(null, '', url.toString());
+      });
+    }, 400);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [roster]);
 
   // Generate shareable link
