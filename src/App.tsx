@@ -249,8 +249,13 @@ const AppRoutes: React.FC = () => {
     });
   }, []);
 
+  // Derive basename from Vite's base config so the app works when deployed to a
+  // subdirectory (e.g. /dev-previews/pr-790/). Strip trailing slash because
+  // BrowserRouter expects no trailing slash in basename.
+  const basename = import.meta.env.BASE_URL.replace(/\/+$/, '') || '/';
+
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <HashRouteRedirect />
       <AnalyticsListener />
       <ScrollRestoration />
