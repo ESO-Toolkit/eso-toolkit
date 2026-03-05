@@ -4,7 +4,12 @@ import {
   CLIENT_ID,
   PKCE_CODE_VERIFIER_KEY,
   LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  getRedirectUri,
+  DEV_PREVIEW_OAUTH_RETURN_KEY,
 } from './auth';
+import { getBaseUrl } from '../../utils/envUtils';
+
+jest.mocked(getBaseUrl).mockReturnValue('https://esotk.com/');
 
 const mockLocalStorage = {
   getItem: jest.fn(),
@@ -51,6 +56,36 @@ describe('OAuth Basic Functions', () => {
     it('should have proper storage keys', () => {
       expect(PKCE_CODE_VERIFIER_KEY).toBe('eso_code_verifier');
       expect(LOCAL_STORAGE_ACCESS_TOKEN_KEY).toBe('access_token');
+    });
+  });
+
+  describe('getRedirectUri', () => {
+    it('should return production redirect URI for standard deployment', () => {
+      jest.mocked(getBaseUrl).mockReturnValue('https://esotk.com/');
+      expect(getRedirectUri()).toBe('https://esotk.com/oauth-redirect');
+    });
+
+    it('should return shared redirect URI for dev-preview deployments', () => {
+      jest.mocked(getBaseUrl).mockReturnValue('https://eso-toolkit.github.io/dev-previews/pr-790/');
+      expect(getRedirectUri()).toBe('https://eso-toolkit.github.io/dev-previews/oauth-redirect');
+    });
+
+    it('should return shared redirect URI for any PR number', () => {
+      jest
+        .mocked(getBaseUrl)
+        .mockReturnValue('https://eso-toolkit.github.io/dev-previews/pr-12345/');
+      expect(getRedirectUri()).toBe('https://eso-toolkit.github.io/dev-previews/oauth-redirect');
+    });
+
+    it('should not affect non-dev-preview subpaths', () => {
+      jest.mocked(getBaseUrl).mockReturnValue('https://example.com/some-other-path/');
+      expect(getRedirectUri()).toBe('https://example.com/some-other-path/oauth-redirect');
+    });
+  });
+
+  describe('DEV_PREVIEW_OAUTH_RETURN_KEY', () => {
+    it('should have the expected key value', () => {
+      expect(DEV_PREVIEW_OAUTH_RETURN_KEY).toBe('dev_preview_oauth_return_path');
     });
   });
 });
