@@ -70,6 +70,7 @@ git checkout -b ESO-XXX/description-here
 
 **CI/CD & Debugging:**
 - **Debug CI Failure**: [.github/skills/debug-ci-failure/SKILL.md](.github/skills/debug-ci-failure/SKILL.md) - End-to-end CI failure debugging workflow
+- **Deploy Preview**: [.github/skills/deploy-preview/SKILL.md](.github/skills/deploy-preview/SKILL.md) - Deploy local builds to dev-previews with a custom alias
 - **GitHub Actions Logs**: [.github/skills/github-actions-logs/SKILL.md](.github/skills/github-actions-logs/SKILL.md) - Parse and analyze GH Actions logs
 - **Troubleshoot**: [.github/skills/troubleshoot/SKILL.md](.github/skills/troubleshoot/SKILL.md) - Quick-reference fixes for common dev issues
 
@@ -203,6 +204,14 @@ See: [.github/skills/class-skill-regen/SKILL.md](.github/skills/class-skill-rege
 @workspace Fix my mangled PR description
 ```
 See: [.github/skills/create-pr/SKILL.md](.github/skills/create-pr/SKILL.md)
+
+**Deploy Preview** (Local Preview Deployments):
+```
+@workspace Deploy a preview of my current branch
+@workspace Deploy a preview with alias "my-feature"
+@workspace Remove the "my-feature" preview
+```
+See: [.github/skills/deploy-preview/SKILL.md](.github/skills/deploy-preview/SKILL.md)
 
 **Debug CI Failure**:
 ```
