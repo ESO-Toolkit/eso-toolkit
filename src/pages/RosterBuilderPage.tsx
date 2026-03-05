@@ -3583,6 +3583,7 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       options={[]}
                       value={tank.labels || []}
                       onChange={(_, value) => onChange({ labels: value })}
+                      sx={{ mt: -0.5 }}
                       renderTags={(value, getTagProps) =>
                         value.map((option, index) => (
                           <Chip
@@ -4324,6 +4325,7 @@ const HealerCard: React.FC<HealerCardProps> = ({
                       options={[]}
                       value={healer.labels || []}
                       onChange={(_, value) => onChange({ labels: value })}
+                      sx={{ mt: -0.5 }}
                       renderTags={(value, getTagProps) =>
                         value.map((option, index) => (
                           <Chip
