@@ -3608,6 +3608,9 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                 <TextField
                   fullWidth
                   size="small"
+                  multiline
+                  minRows={1}
+                  maxRows={4}
                   label="Role Notes"
                   placeholder="e.g., TOMB Main Tank, handles double stacks, portal duty"
                   value={tank.roleNotes || ''}
@@ -4339,6 +4342,9 @@ const HealerCard: React.FC<HealerCardProps> = ({
                 <TextField
                   fullWidth
                   size="small"
+                  multiline
+                  minRows={1}
+                  maxRows={4}
                   label="Role Notes"
                   placeholder="e.g., Main healer, ramp healing, shield uptime focus"
                   value={healer.roleNotes || ''}
@@ -4717,6 +4723,9 @@ const DPSSlotCard: React.FC<DPSSlotCardProps> = ({
               <TextField
                 fullWidth
                 size="small"
+                multiline
+                minRows={1}
+                maxRows={4}
                 label="Role Notes"
                 placeholder="e.g., Portal L, Z'en"
                 value={slot.roleNotes || ''}
