@@ -3539,7 +3539,6 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
-                    <Box sx={{ height: '1.4rem', mb: 0.5 }} />
                     <TextField
                       fullWidth
                       size="small"
@@ -3551,7 +3550,6 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
-                    <Box sx={{ height: '1.4rem', mb: 0.5 }} />
                     <TextField
                       fullWidth
                       size="small"
@@ -3567,15 +3565,6 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
-                    <Typography
-                      sx={{
-                        fontSize: '0.7rem',
-                        color: tankIsDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)',
-                        mb: 0.5,
-                      }}
-                    >
-                      Press Enter to add
-                    </Typography>
                     <Autocomplete
                       multiple
                       freeSolo
@@ -3583,7 +3572,6 @@ const TankCard: React.FC<TankCardProps> = ({ tankNum, tank, onChange, availableG
                       options={[]}
                       value={tank.labels || []}
                       onChange={(_, value) => onChange({ labels: value })}
-                      sx={{ mt: -0.5 }}
                       renderTags={(value, getTagProps) =>
                         value.map((option, index) => (
                           <Chip
@@ -4281,7 +4269,6 @@ const HealerCard: React.FC<HealerCardProps> = ({
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
-                    <Box sx={{ height: '1.4rem', mb: 0.5 }} />
                     <TextField
                       fullWidth
                       size="small"
@@ -4293,7 +4280,6 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
-                    <Box sx={{ height: '1.4rem', mb: 0.5 }} />
                     <TextField
                       fullWidth
                       size="small"
@@ -4309,15 +4295,6 @@ const HealerCard: React.FC<HealerCardProps> = ({
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
-                    <Typography
-                      sx={{
-                        fontSize: '0.7rem',
-                        color: healerIsDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)',
-                        mb: 0.5,
-                      }}
-                    >
-                      Press Enter to add
-                    </Typography>
                     <Autocomplete
                       multiple
                       freeSolo
