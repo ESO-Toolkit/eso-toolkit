@@ -2292,575 +2292,569 @@ export const RosterBuilderPage: React.FC = () => {
         />
 
         {/* Simple Mode: Set Assignment Manager */}
-        {mode === 'simple' && (
-          <>
-            <SetAssignmentManager
-              tank1={roster.tank1}
-              tank2={roster.tank2}
-              healer1={roster.healer1}
-              healer2={roster.healer2}
-              onAssignSet={handleSetAssignment}
-              onUpdateUltimate={handleUltimateUpdate}
-              onUpdateHealerCP={handleHealerCPUpdate}
-            />
-          </>
-        )}
+        <Box sx={{ display: mode === 'simple' ? 'block' : 'none' }}>
+          <SetAssignmentManager
+            tank1={roster.tank1}
+            tank2={roster.tank2}
+            healer1={roster.healer1}
+            healer2={roster.healer2}
+            onAssignSet={handleSetAssignment}
+            onUpdateUltimate={handleUltimateUpdate}
+            onUpdateHealerCP={handleHealerCPUpdate}
+          />
+        </Box>
 
         {/* Advanced Mode: Full Roster Details */}
-        {mode === 'advanced' && (
-          <>
-            {/* Player Groups Management */}
-            <Accordion
-              expanded={expandedSections.groups}
-              onChange={() =>
-                setExpandedSections((prev) => ({
-                  ...prev,
-                  groups: !prev.groups,
-                }))
-              }
-              sx={getSectionAccordionSx('#9e9e9e')}
-            >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '9px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: isDarkMode
-                        ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
-                        : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
-                      border: isDarkMode
-                        ? '1px solid rgba(255,255,255,0.08)'
-                        : '1px solid rgba(0,0,0,0.08)',
-                    }}
-                  >
-                    <GroupIcon
-                      sx={{
-                        fontSize: '1rem',
-                        color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
-                      }}
-                    />
-                  </Box>
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontSize: '0.6rem',
-                        fontWeight: 700,
-                        letterSpacing: '0.1em',
-                        textTransform: 'uppercase',
-                        color: 'text.disabled',
-                        lineHeight: 1,
-                        mb: 0.375,
-                      }}
-                    >
-                      Groups
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography
-                        sx={{
-                          fontFamily: '"Space Grotesk", sans-serif',
-                          fontWeight: 700,
-                          fontSize: '1.05rem',
-                          letterSpacing: '-0.02em',
-                          lineHeight: 1.1,
-                          background: isDarkMode
-                            ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-                            : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          backgroundClip: 'text',
-                        }}
-                      >
-                        Player Groups
-                      </Typography>
-                      <Box
-                        component="span"
-                        sx={{
-                          fontSize: '0.65rem',
-                          fontWeight: 600,
-                          px: 0.75,
-                          py: 0.125,
-                          borderRadius: '6px',
-                          backgroundColor: isDarkMode
-                            ? 'rgba(255,255,255,0.06)'
-                            : 'rgba(0,0,0,0.05)',
-                          color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-                          border: isDarkMode
-                            ? '1px solid rgba(255,255,255,0.08)'
-                            : '1px solid rgba(0,0,0,0.08)',
-                        }}
-                      >
-                        {roster.availableGroups.length}
-                      </Box>
-                    </Box>
-                  </Box>
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack spacing={2} mb={3}>
-                  <Autocomplete
-                    multiple
-                    freeSolo
-                    options={[]}
-                    value={roster.availableGroups}
-                    onChange={(_, value) =>
-                      setRoster((prev) => ({
-                        ...prev,
-                        availableGroups: value,
-                        updatedAt: new Date().toISOString(),
-                      }))
-                    }
-                    slotProps={{
-                      popper: {
-                        disablePortal: true,
-                      },
-                    }}
-                    ChipProps={{
-                      onMouseDown: (event) => {
-                        event.stopPropagation();
-                      },
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Available Groups (e.g., Slayer Stack 1, Group A)"
-                        placeholder="Add group..."
-                        helperText="Create groups to organize players. Common examples: Slayer Stack 1, Slayer Stack 2, Group A, Group B"
-                        sx={glassTextField}
-                      />
-                    )}
-                    renderTags={(value, getTagProps) =>
-                      value.map((option, index) => {
-                        const { key, ...chipProps } = getTagProps({ index });
-                        return (
-                          <Chip
-                            label={option}
-                            {...chipProps}
-                            key={key}
-                            sx={{
-                              borderRadius: '6px',
-                              backgroundColor: isDarkMode
-                                ? 'rgba(255,255,255,0.06)'
-                                : 'rgba(0,0,0,0.05)',
-                              border: isDarkMode
-                                ? '1px solid rgba(255,255,255,0.1)'
-                                : '1px solid rgba(0,0,0,0.1)',
-                              fontWeight: 500,
-                            }}
-                          />
-                        );
-                      })
-                    }
-                  />
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
-
-            <Divider
-              sx={{
-                my: 1.5,
-                borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-              }}
-            />
-
-            {/* Tanks Section */}
-            <Accordion
-              expanded={expandedSections.tanks}
-              onChange={() =>
-                setExpandedSections((prev) => ({
-                  ...prev,
-                  tanks: !prev.tanks,
-                }))
-              }
-              sx={getSectionAccordionSx(roleColors.tank)}
-            >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '9px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: `linear-gradient(135deg, ${roleColors.tank}20 0%, ${roleColors.tank}08 100%)`,
-                      border: `1px solid ${roleColors.tank}25`,
-                    }}
-                  >
-                    <ShieldIcon sx={{ fontSize: '1rem', color: roleColors.tank }} />
-                  </Box>
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontSize: '0.6rem',
-                        fontWeight: 700,
-                        letterSpacing: '0.1em',
-                        textTransform: 'uppercase',
-                        color: 'text.disabled',
-                        lineHeight: 1,
-                        mb: 0.375,
-                      }}
-                    >
-                      Role
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography
-                        sx={{
-                          fontFamily: '"Space Grotesk", sans-serif',
-                          fontWeight: 700,
-                          fontSize: '1.05rem',
-                          letterSpacing: '-0.02em',
-                          lineHeight: 1.1,
-                          background: `linear-gradient(135deg, ${roleColors.tank} 0%, ${roleColors.tank}99 100%)`,
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          backgroundClip: 'text',
-                        }}
-                      >
-                        Tanks
-                      </Typography>
-                      <Box
-                        component="span"
-                        sx={{
-                          fontSize: '0.65rem',
-                          fontWeight: 600,
-                          px: 0.75,
-                          py: 0.125,
-                          borderRadius: '6px',
-                          backgroundColor: `${roleColors.tank}12`,
-                          color: roleColors.tank,
-                          border: `1px solid ${roleColors.tank}25`,
-                        }}
-                      >
-                        2
-                      </Box>
-                    </Box>
-                  </Box>
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack spacing={2} mb={3}>
-                  <TankCard
-                    key={1}
-                    tankNum={1}
-                    tank={roster.tank1}
-                    onChange={handleTank1Change}
-                    availableGroups={memoizedGroups}
-                  />
-                  <TankCard
-                    key={2}
-                    tankNum={2}
-                    tank={roster.tank2}
-                    onChange={handleTank2Change}
-                    availableGroups={memoizedGroups}
-                  />
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
-
-            <Divider
-              sx={{
-                my: 1.5,
-                borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-              }}
-            />
-
-            {/* Healers Section */}
-            <Accordion
-              expanded={expandedSections.healers}
-              onChange={() =>
-                setExpandedSections((prev) => ({
-                  ...prev,
-                  healers: !prev.healers,
-                }))
-              }
-              sx={getSectionAccordionSx(roleColors.healer)}
-            >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '9px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: `linear-gradient(135deg, ${roleColors.healer}20 0%, ${roleColors.healer}08 100%)`,
-                      border: `1px solid ${roleColors.healer}25`,
-                    }}
-                  >
-                    <FavoriteIcon sx={{ fontSize: '1rem', color: roleColors.healer }} />
-                  </Box>
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontSize: '0.6rem',
-                        fontWeight: 700,
-                        letterSpacing: '0.1em',
-                        textTransform: 'uppercase',
-                        color: 'text.disabled',
-                        lineHeight: 1,
-                        mb: 0.375,
-                      }}
-                    >
-                      Role
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography
-                        sx={{
-                          fontFamily: '"Space Grotesk", sans-serif',
-                          fontWeight: 700,
-                          fontSize: '1.05rem',
-                          letterSpacing: '-0.02em',
-                          lineHeight: 1.1,
-                          background: `linear-gradient(135deg, ${roleColors.healer} 0%, ${roleColors.healer}99 100%)`,
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          backgroundClip: 'text',
-                        }}
-                      >
-                        Healers
-                      </Typography>
-                      <Box
-                        component="span"
-                        sx={{
-                          fontSize: '0.65rem',
-                          fontWeight: 600,
-                          px: 0.75,
-                          py: 0.125,
-                          borderRadius: '6px',
-                          backgroundColor: `${roleColors.healer}12`,
-                          color: roleColors.healer,
-                          border: `1px solid ${roleColors.healer}25`,
-                        }}
-                      >
-                        2
-                      </Box>
-                    </Box>
-                  </Box>
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack spacing={2} mb={3}>
-                  <HealerCard
-                    key={1}
-                    healerNum={1}
-                    healer={roster.healer1}
-                    onChange={handleHealer1Change}
-                    availableGroups={memoizedGroups}
-                    usedBuffs={usedBuffs}
-                  />
-                  <HealerCard
-                    key={2}
-                    healerNum={2}
-                    healer={roster.healer2}
-                    onChange={handleHealer2Change}
-                    availableGroups={memoizedGroups}
-                    usedBuffs={usedBuffs}
-                  />
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
-
-            <Divider
-              sx={{
-                my: 1.5,
-                borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-              }}
-            />
-
-            {/* DPS Slots Section */}
-            <Accordion
-              expanded={expandedSections.dps}
-              onChange={() =>
-                setExpandedSections((prev) => ({
-                  ...prev,
-                  dps: !prev.dps,
-                }))
-              }
-              sx={getSectionAccordionSx(roleColors.dps)}
-            >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '9px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: `linear-gradient(135deg, ${roleColors.dps}20 0%, ${roleColors.dps}08 100%)`,
-                      border: `1px solid ${roleColors.dps}25`,
-                    }}
-                  >
-                    <AutoAwesomeIcon sx={{ fontSize: '1rem', color: roleColors.dps }} />
-                  </Box>
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontSize: '0.6rem',
-                        fontWeight: 700,
-                        letterSpacing: '0.1em',
-                        textTransform: 'uppercase',
-                        color: 'text.disabled',
-                        lineHeight: 1,
-                        mb: 0.375,
-                      }}
-                    >
-                      Roster
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography
-                        sx={{
-                          fontFamily: '"Space Grotesk", sans-serif',
-                          fontWeight: 700,
-                          fontSize: '1.05rem',
-                          letterSpacing: '-0.02em',
-                          lineHeight: 1.1,
-                          background: `linear-gradient(135deg, ${roleColors.dps} 0%, ${roleColors.dps}99 100%)`,
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          backgroundClip: 'text',
-                        }}
-                      >
-                        DPS Roster
-                      </Typography>
-                      <Box
-                        component="span"
-                        sx={{
-                          fontSize: '0.65rem',
-                          fontWeight: 600,
-                          px: 0.75,
-                          py: 0.125,
-                          borderRadius: '6px',
-                          backgroundColor: `${roleColors.dps}12`,
-                          color: roleColors.dps,
-                          border: `1px solid ${roleColors.dps}25`,
-                        }}
-                      >
-                        {roster.dpsSlots.length} Slots
-                      </Box>
-                    </Box>
-                  </Box>
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDPSDragEnd}
+        <Box sx={{ display: mode === 'advanced' ? 'block' : 'none' }}>
+          {/* Player Groups Management */}
+          <Accordion
+            expanded={expandedSections.groups}
+            onChange={() =>
+              setExpandedSections((prev) => ({
+                ...prev,
+                groups: !prev.groups,
+              }))
+            }
+            sx={getSectionAccordionSx('#9e9e9e')}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '9px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: isDarkMode
+                      ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
+                      : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
+                    border: isDarkMode
+                      ? '1px solid rgba(255,255,255,0.08)'
+                      : '1px solid rgba(0,0,0,0.08)',
+                  }}
                 >
-                  <SortableContext
-                    items={roster.dpsSlots.map((slot) => slot.slotNumber)}
-                    strategy={verticalListSortingStrategy}
+                  <GroupIcon
+                    sx={{
+                      fontSize: '1rem',
+                      color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                    }}
+                  />
+                </Box>
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: '0.6rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: 'text.disabled',
+                      lineHeight: 1,
+                      mb: 0.375,
+                    }}
                   >
-                    <Stack spacing={1.5} mb={3}>
-                      {roster.dpsSlots.map((slot, index) => (
-                        <DPSSlotCard
-                          key={slot.slotNumber}
-                          slot={slot}
-                          slotIndex={index}
-                          availableGroups={memoizedGroups}
-                          onSlotChange={handleDPSSlotChange}
-                          onConvertToJail={handleConvertDPSToJail}
-                          onConvertToDPS={handleConvertJailToDPS}
+                    Groups
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
+                      sx={{
+                        fontFamily: '"Space Grotesk", sans-serif',
+                        fontWeight: 700,
+                        fontSize: '1.05rem',
+                        letterSpacing: '-0.02em',
+                        lineHeight: 1.1,
+                        background: isDarkMode
+                          ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                          : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                      }}
+                    >
+                      Player Groups
+                    </Typography>
+                    <Box
+                      component="span"
+                      sx={{
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        px: 0.75,
+                        py: 0.125,
+                        borderRadius: '6px',
+                        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                        color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                        border: isDarkMode
+                          ? '1px solid rgba(255,255,255,0.08)'
+                          : '1px solid rgba(0,0,0,0.08)',
+                      }}
+                    >
+                      {roster.availableGroups.length}
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Stack spacing={2} mb={3}>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={[]}
+                  value={roster.availableGroups}
+                  onChange={(_, value) =>
+                    setRoster((prev) => ({
+                      ...prev,
+                      availableGroups: value,
+                      updatedAt: new Date().toISOString(),
+                    }))
+                  }
+                  slotProps={{
+                    popper: {
+                      disablePortal: true,
+                    },
+                  }}
+                  ChipProps={{
+                    onMouseDown: (event) => {
+                      event.stopPropagation();
+                    },
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Available Groups (e.g., Slayer Stack 1, Group A)"
+                      placeholder="Add group..."
+                      helperText="Create groups to organize players. Common examples: Slayer Stack 1, Slayer Stack 2, Group A, Group B"
+                      sx={glassTextField}
+                    />
+                  )}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => {
+                      const { key, ...chipProps } = getTagProps({ index });
+                      return (
+                        <Chip
+                          label={option}
+                          {...chipProps}
+                          key={key}
+                          sx={{
+                            borderRadius: '6px',
+                            backgroundColor: isDarkMode
+                              ? 'rgba(255,255,255,0.06)'
+                              : 'rgba(0,0,0,0.05)',
+                            border: isDarkMode
+                              ? '1px solid rgba(255,255,255,0.1)'
+                              : '1px solid rgba(0,0,0,0.1)',
+                            fontWeight: 500,
+                          }}
                         />
-                      ))}
-                    </Stack>
-                  </SortableContext>
-                </DndContext>
-              </AccordionDetails>
-            </Accordion>
+                      );
+                    })
+                  }
+                />
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
 
-            <Divider
+          <Divider
+            sx={{
+              my: 1.5,
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+            }}
+          />
+
+          {/* Tanks Section */}
+          <Accordion
+            expanded={expandedSections.tanks}
+            onChange={() =>
+              setExpandedSections((prev) => ({
+                ...prev,
+                tanks: !prev.tanks,
+              }))
+            }
+            sx={getSectionAccordionSx(roleColors.tank)}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '9px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: `linear-gradient(135deg, ${roleColors.tank}20 0%, ${roleColors.tank}08 100%)`,
+                    border: `1px solid ${roleColors.tank}25`,
+                  }}
+                >
+                  <ShieldIcon sx={{ fontSize: '1rem', color: roleColors.tank }} />
+                </Box>
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: '0.6rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: 'text.disabled',
+                      lineHeight: 1,
+                      mb: 0.375,
+                    }}
+                  >
+                    Role
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
+                      sx={{
+                        fontFamily: '"Space Grotesk", sans-serif',
+                        fontWeight: 700,
+                        fontSize: '1.05rem',
+                        letterSpacing: '-0.02em',
+                        lineHeight: 1.1,
+                        background: `linear-gradient(135deg, ${roleColors.tank} 0%, ${roleColors.tank}99 100%)`,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                      }}
+                    >
+                      Tanks
+                    </Typography>
+                    <Box
+                      component="span"
+                      sx={{
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        px: 0.75,
+                        py: 0.125,
+                        borderRadius: '6px',
+                        backgroundColor: `${roleColors.tank}12`,
+                        color: roleColors.tank,
+                        border: `1px solid ${roleColors.tank}25`,
+                      }}
+                    >
+                      2
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Stack spacing={2} mb={3}>
+                <TankCard
+                  key={1}
+                  tankNum={1}
+                  tank={roster.tank1}
+                  onChange={handleTank1Change}
+                  availableGroups={memoizedGroups}
+                />
+                <TankCard
+                  key={2}
+                  tankNum={2}
+                  tank={roster.tank2}
+                  onChange={handleTank2Change}
+                  availableGroups={memoizedGroups}
+                />
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
+
+          <Divider
+            sx={{
+              my: 1.5,
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+            }}
+          />
+
+          {/* Healers Section */}
+          <Accordion
+            expanded={expandedSections.healers}
+            onChange={() =>
+              setExpandedSections((prev) => ({
+                ...prev,
+                healers: !prev.healers,
+              }))
+            }
+            sx={getSectionAccordionSx(roleColors.healer)}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '9px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: `linear-gradient(135deg, ${roleColors.healer}20 0%, ${roleColors.healer}08 100%)`,
+                    border: `1px solid ${roleColors.healer}25`,
+                  }}
+                >
+                  <FavoriteIcon sx={{ fontSize: '1rem', color: roleColors.healer }} />
+                </Box>
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: '0.6rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: 'text.disabled',
+                      lineHeight: 1,
+                      mb: 0.375,
+                    }}
+                  >
+                    Role
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
+                      sx={{
+                        fontFamily: '"Space Grotesk", sans-serif',
+                        fontWeight: 700,
+                        fontSize: '1.05rem',
+                        letterSpacing: '-0.02em',
+                        lineHeight: 1.1,
+                        background: `linear-gradient(135deg, ${roleColors.healer} 0%, ${roleColors.healer}99 100%)`,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                      }}
+                    >
+                      Healers
+                    </Typography>
+                    <Box
+                      component="span"
+                      sx={{
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        px: 0.75,
+                        py: 0.125,
+                        borderRadius: '6px',
+                        backgroundColor: `${roleColors.healer}12`,
+                        color: roleColors.healer,
+                        border: `1px solid ${roleColors.healer}25`,
+                      }}
+                    >
+                      2
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Stack spacing={2} mb={3}>
+                <HealerCard
+                  key={1}
+                  healerNum={1}
+                  healer={roster.healer1}
+                  onChange={handleHealer1Change}
+                  availableGroups={memoizedGroups}
+                  usedBuffs={usedBuffs}
+                />
+                <HealerCard
+                  key={2}
+                  healerNum={2}
+                  healer={roster.healer2}
+                  onChange={handleHealer2Change}
+                  availableGroups={memoizedGroups}
+                  usedBuffs={usedBuffs}
+                />
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
+
+          <Divider
+            sx={{
+              my: 1.5,
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+            }}
+          />
+
+          {/* DPS Slots Section */}
+          <Accordion
+            expanded={expandedSections.dps}
+            onChange={() =>
+              setExpandedSections((prev) => ({
+                ...prev,
+                dps: !prev.dps,
+              }))
+            }
+            sx={getSectionAccordionSx(roleColors.dps)}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, width: '100%' }}>
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '9px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: `linear-gradient(135deg, ${roleColors.dps}20 0%, ${roleColors.dps}08 100%)`,
+                    border: `1px solid ${roleColors.dps}25`,
+                  }}
+                >
+                  <AutoAwesomeIcon sx={{ fontSize: '1rem', color: roleColors.dps }} />
+                </Box>
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: '0.6rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: 'text.disabled',
+                      lineHeight: 1,
+                      mb: 0.375,
+                    }}
+                  >
+                    Roster
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
+                      sx={{
+                        fontFamily: '"Space Grotesk", sans-serif',
+                        fontWeight: 700,
+                        fontSize: '1.05rem',
+                        letterSpacing: '-0.02em',
+                        lineHeight: 1.1,
+                        background: `linear-gradient(135deg, ${roleColors.dps} 0%, ${roleColors.dps}99 100%)`,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                      }}
+                    >
+                      DPS Roster
+                    </Typography>
+                    <Box
+                      component="span"
+                      sx={{
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        px: 0.75,
+                        py: 0.125,
+                        borderRadius: '6px',
+                        backgroundColor: `${roleColors.dps}12`,
+                        color: roleColors.dps,
+                        border: `1px solid ${roleColors.dps}25`,
+                      }}
+                    >
+                      {roster.dpsSlots.length} Slots
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDPSDragEnd}
+              >
+                <SortableContext
+                  items={roster.dpsSlots.map((slot) => slot.slotNumber)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <Stack spacing={1.5} mb={3}>
+                    {roster.dpsSlots.map((slot, index) => (
+                      <DPSSlotCard
+                        key={slot.slotNumber}
+                        slot={slot}
+                        slotIndex={index}
+                        availableGroups={memoizedGroups}
+                        onSlotChange={handleDPSSlotChange}
+                        onConvertToJail={handleConvertDPSToJail}
+                        onConvertToDPS={handleConvertJailToDPS}
+                      />
+                    ))}
+                  </Stack>
+                </SortableContext>
+              </DndContext>
+            </AccordionDetails>
+          </Accordion>
+
+          <Divider
+            sx={{
+              my: 1.5,
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+            }}
+          />
+
+          {/* General Notes */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+            <Box
               sx={{
-                my: 1.5,
-                borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                width: 32,
+                height: 32,
+                borderRadius: '9px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
+                  : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
+                border: isDarkMode
+                  ? '1px solid rgba(255,255,255,0.08)'
+                  : '1px solid rgba(0,0,0,0.08)',
               }}
-            />
-
-            {/* General Notes */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
-              <Box
+            >
+              <NotesIcon
                 sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '9px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: isDarkMode
-                    ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
-                    : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
-                  border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.08)'
-                    : '1px solid rgba(0,0,0,0.08)',
+                  fontSize: '1rem',
+                  color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                }}
+              />
+            </Box>
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: 'text.disabled',
+                  lineHeight: 1,
+                  mb: 0.375,
                 }}
               >
-                <NotesIcon
-                  sx={{
-                    fontSize: '1rem',
-                    color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
-                  }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'text.disabled',
-                    lineHeight: 1,
-                    mb: 0.375,
-                  }}
-                >
-                  Notes
-                </Typography>
-                <Typography
-                  sx={{
-                    fontFamily: '"Space Grotesk", sans-serif',
-                    fontWeight: 700,
-                    fontSize: '1.05rem',
-                    letterSpacing: '-0.02em',
-                    lineHeight: 1.1,
-                    background: isDarkMode
-                      ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-                      : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
-                >
-                  General Notes
-                </Typography>
-              </Box>
+                Notes
+              </Typography>
+              <Typography
+                sx={{
+                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontWeight: 700,
+                  fontSize: '1.05rem',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                    : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                General Notes
+              </Typography>
             </Box>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              label="General Notes"
-              value={roster.notes || ''}
-              onChange={(e) =>
-                setRoster((prev) => ({
-                  ...prev,
-                  notes: e.target.value,
-                  updatedAt: new Date().toISOString(),
-                }))
-              }
-              sx={glassTextField}
-            />
-          </>
-        )}
+          </Box>
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            label="General Notes"
+            value={roster.notes || ''}
+            onChange={(e) =>
+              setRoster((prev) => ({
+                ...prev,
+                notes: e.target.value,
+                updatedAt: new Date().toISOString(),
+              }))
+            }
+            sx={glassTextField}
+          />
+        </Box>
       </Paper>
 
       {/* Quick Fill Dialog */}
