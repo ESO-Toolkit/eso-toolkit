@@ -3230,7 +3230,7 @@ const TankCard = React.memo<TankCardProps>(({ tankNum, tank, onChange, available
           ? `1px solid ${tankRoleColors.tank}20`
           : `1px solid ${tankRoleColors.tank}18`,
         borderLeft: `3px solid ${tankRoleColors.tank}`,
-        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease',
         '&:hover': {
           transform: 'translateY(-1px)',
           borderColor: `${tankRoleColors.tank}35`,
@@ -3930,7 +3930,7 @@ const HealerCard = React.memo<HealerCardProps>(
             ? `1px solid ${healerRoleColors.healer}20`
             : `1px solid ${healerRoleColors.healer}18`,
           borderLeft: `3px solid ${healerRoleColors.healer}`,
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease',
           '&:hover': {
             transform: 'translateY(-1px)',
             borderColor: `${healerRoleColors.healer}35`,
@@ -4651,7 +4651,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
             : `1px solid ${dpsRoleColors.dps}18`,
           borderLeft: `3px solid ${dpsRoleColors.dps}`,
           cursor: isDragging ? 'grabbing' : 'default',
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease',
           '&:hover': {
             transform: isDragging ? 'none' : 'translateY(-1px)',
             borderColor: `${dpsRoleColors.dps}35`,
