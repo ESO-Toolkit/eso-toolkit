@@ -5,6 +5,20 @@ description: Enforce git workflow by checking the current branch before starting
 
 You are enforcing the ESO Log Aggregator git workflow. Follow these steps precisely.
 
+## Automatic Invocation (Self-Trigger)
+
+This skill MUST be automatically invoked — without waiting for the user to explicitly request it — whenever:
+
+- The user's message consists **solely** of a Jira ticket reference (e.g. `eso669`, `ESO-669`, `ESO-669`)
+- The user says "work on ESO-XXX", "implement ESO-XXX", "start ESO-XXX", or any similar phrasing that implies beginning implementation
+
+**Execute Steps 1–4 of this skill BEFORE:**
+- Reading any source files
+- Viewing the Jira ticket
+- Writing or proposing any code changes
+
+The branch must be confirmed correct before any implementation begins. Skipping this step is the primary cause of commits landing on `main`.
+
 ## Step 1 — Check Current Branch
 
 Run this command and capture the output:
