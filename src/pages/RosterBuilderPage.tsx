@@ -5243,7 +5243,9 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                         value={slot.playerNumber || ''}
                         onChange={(e) =>
                           onChange({
-                            playerNumber: e.target.value ? parseInt(e.target.value, 10) : undefined,
+                            playerNumber: e.target.value
+                              ? parseInt(e.target.value, 10)
+                              : undefined,
                           })
                         }
                         sx={glassSx}
