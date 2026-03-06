@@ -70,11 +70,20 @@ $isOccupied = ($currentBranch -ne 'main') -and ($currentBranch -ne $newBranch)
 $worktreePath = "..\eso-log-aggregator-$($newBranch -replace '/', '-')"
 git worktree add $worktreePath -b $newBranch $parentBranch
 Set-Location $worktreePath
+
+# IMMEDIATELY register parent dependency (twig with fallback)
+twig branch depend $newBranch $parentBranch 2>$null
+if ($LASTEXITCODE -ne 0) {
+    git config "branch.$newBranch.parent" $parentBranch
+    Write-Host "Parent '$parentBranch' recorded via git config (twig unavailable)"
+} else {
+    Write-Host "Parent '$parentBranch' set via twig"
+}
 ```
 
 - After creating the worktree, run `npm ci` in the new directory if `node_modules/` is missing
 - Use the next available port pair for the dev server (see CLAUDE.md — Worktree Port Allocation)
-- Proceed to Step 3d (set twig parent)
+- Proceed to Step 4
 
 **If the current worktree is `main` or the target branch** (not occupied):
 - Use the standard in-place checkout (Step 3c below)
@@ -91,13 +100,8 @@ if ($parentBranch -eq "main") { git pull origin main }
 
 # Create and switch to the feature branch
 git checkout -b $newBranch
-```
 
-### 3d — Set the twig parent dependency immediately
-
-Set the parent right after creation so twig's branch tree is correct from the start:
-
-```powershell
+# IMMEDIATELY register parent dependency (twig with fallback)
 twig branch depend $newBranch $parentBranch 2>$null
 if ($LASTEXITCODE -ne 0) {
     git config "branch.$newBranch.parent" $parentBranch
@@ -107,11 +111,19 @@ if ($LASTEXITCODE -ne 0) {
 }
 ```
 
-## Step 4 — Confirm and Report
+## Step 4 — Verify and Report
+
+**Verify** the twig tree shows the new branch correctly parented:
+
+```powershell
+twig tree 2>$null
+if ($LASTEXITCODE -ne 0) { git config --get-regexp 'branch\..*\.parent' }
+```
 
 Tell the user:
 - The new branch name
 - The parent branch that was used
+- That `twig tree` confirms the branch is correctly parented
 - That they are now safe to begin implementation
 - Whether twig or git config was used for the parent dependency
 
