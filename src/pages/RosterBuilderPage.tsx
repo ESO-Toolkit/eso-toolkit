@@ -2780,10 +2780,7 @@ export const RosterBuilderPage: React.FC = () => {
 
           {/* Per-Fight Builds */}
           <Box sx={{ my: 2 }}>
-            <PerFightBuilds
-              roster={roster}
-              onUpdateTrialOverrides={handleTrialOverridesChange}
-            />
+            <PerFightBuilds roster={roster} onUpdateTrialOverrides={handleTrialOverridesChange} />
           </Box>
 
           <Divider
@@ -5085,9 +5082,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                         value={slot.playerNumber || ''}
                         onChange={(e) =>
                           onChange({
-                            playerNumber: e.target.value
-                              ? parseInt(e.target.value, 10)
-                              : undefined,
+                            playerNumber: e.target.value ? parseInt(e.target.value, 10) : undefined,
                           })
                         }
                         sx={glassSx}
