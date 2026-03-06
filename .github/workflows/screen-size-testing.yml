@@ -468,7 +468,7 @@ jobs:
           fi
 
       - name: Upload Test Results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: screen-size-test-results-${{ github.run_id }}
@@ -478,7 +478,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Test Report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: screen-size-test-report-complete
