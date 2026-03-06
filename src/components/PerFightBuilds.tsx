@@ -13,14 +13,12 @@ import {
   Box,
   Chip,
   FormControl,
-  FormControlLabel,
   IconButton,
   InputLabel,
   MenuItem,
   Paper,
   Select,
   Stack,
-  Switch,
   TextField,
   Tooltip,
   Typography,
@@ -535,21 +533,6 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
       [onUpdateTrialOverrides],
     );
 
-    // Handle toggle
-    const handleToggleSameBuild = useCallback(
-      (checked: boolean) => {
-        if (!trialOverrides) return;
-        onUpdateTrialOverrides({
-          ...trialOverrides,
-          useSameBuildForAll: checked,
-          // Clear overrides when switching to same build
-          encounterBuilds: checked ? {} : trialOverrides.encounterBuilds,
-        });
-        if (checked) setSelectedEncounterId(null);
-      },
-      [trialOverrides, onUpdateTrialOverrides],
-    );
-
     // Handle player override update for selected encounter
     const handlePlayerOverrideUpdate = useCallback(
       (playerKey: PlayerKey, override: PlayerOverride | undefined) => {
@@ -704,242 +687,204 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
               </Select>
             </FormControl>
 
-            {/* Toggle + timeline (only when trial is selected) */}
+            {/* Encounter timeline (shown immediately when trial is selected) */}
             {selectedTrial && (
               <>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={trialOverrides?.useSameBuildForAll ?? true}
-                      onChange={(_, checked) => handleToggleSameBuild(checked)}
-                      size="small"
-                    />
-                  }
-                  label={
-                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
-                      Use same build for all fights
-                    </Typography>
-                  }
+                <Box
                   sx={{
-                    ml: 0,
-                    '& .MuiFormControlLabel-label': { ml: 0.5 },
+                    p: 1.5,
+                    borderRadius: '10px',
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+                    border: isDark
+                      ? '1px solid rgba(255,255,255,0.04)'
+                      : '1px solid rgba(0,0,0,0.04)',
                   }}
-                />
+                >
+                  <Typography
+                    sx={{
+                      fontSize: '0.6rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: 'text.disabled',
+                      mb: 1,
+                    }}
+                  >
+                    {selectedTrial.name} — Select an encounter to customize
+                  </Typography>
+                  <EncounterTimeline
+                    encounters={selectedTrial.encounters}
+                    selectedEncounterId={selectedEncounterId}
+                    onSelectEncounter={setSelectedEncounterId}
+                    overriddenEncounters={overriddenEncounterIds}
+                  />
+                </Box>
 
-                {trialOverrides?.useSameBuildForAll === false && (
-                  <>
-                    {/* Encounter timeline */}
-                    <Box
-                      sx={{
-                        p: 1.5,
-                        borderRadius: '10px',
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
-                        border: isDark
-                          ? '1px solid rgba(255,255,255,0.04)'
-                          : '1px solid rgba(0,0,0,0.04)',
-                      }}
-                    >
+                {/* Per-fight override editor */}
+                {selectedEncounterId && selectedEncounterInfo && (
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 1.5,
+                      borderRadius: '10px',
+                      border: isDark
+                        ? '1px solid rgba(255,255,255,0.06)'
+                        : '1px solid rgba(0,0,0,0.06)',
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.01)',
+                    }}
+                  >
+                    {/* Encounter header */}
+                    <Box sx={{ mb: 1.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                        <Chip
+                          label={
+                            selectedEncounterInfo.type === 'boss'
+                              ? 'Boss'
+                              : selectedEncounterInfo.type === 'mini_boss'
+                                ? 'Mini-Boss'
+                                : 'Trash'
+                          }
+                          size="small"
+                          sx={{
+                            height: 20,
+                            fontSize: '0.55rem',
+                            fontWeight: 700,
+                            backgroundColor:
+                              selectedEncounterInfo.type === 'boss'
+                                ? 'rgba(239, 68, 68, 0.12)'
+                                : selectedEncounterInfo.type === 'mini_boss'
+                                  ? 'rgba(245, 158, 11, 0.12)'
+                                  : 'rgba(59, 130, 246, 0.08)',
+                            color:
+                              selectedEncounterInfo.type === 'boss'
+                                ? '#ef4444'
+                                : selectedEncounterInfo.type === 'mini_boss'
+                                  ? '#f59e0b'
+                                  : '#3b82f6',
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            fontFamily: '"Space Grotesk", sans-serif',
+                            fontWeight: 700,
+                            fontSize: '0.9rem',
+                            letterSpacing: '-0.01em',
+                          }}
+                        >
+                          {selectedEncounterInfo.name}
+                        </Typography>
+                      </Box>
+                      {selectedEncounterInfo.description && (
+                        <Typography
+                          sx={{
+                            fontSize: '0.7rem',
+                            color: 'text.secondary',
+                            ml: 0.5,
+                          }}
+                        >
+                          {selectedEncounterInfo.description}
+                        </Typography>
+                      )}
+                    </Box>
+
+                    {/* Player override list */}
+                    <Stack spacing={0.75}>
+                      {/* Section: Tanks */}
                       <Typography
                         sx={{
                           fontSize: '0.6rem',
                           fontWeight: 700,
                           letterSpacing: '0.08em',
                           textTransform: 'uppercase',
-                          color: 'text.disabled',
-                          mb: 1,
+                          color: isDark ? 'rgba(59, 130, 246, 0.7)' : 'rgba(59, 130, 246, 0.8)',
+                          mt: 0.5,
                         }}
                       >
-                        {selectedTrial.name} — Select an encounter to customize
+                        Tanks
                       </Typography>
-                      <EncounterTimeline
-                        encounters={selectedTrial.encounters}
-                        selectedEncounterId={selectedEncounterId}
-                        onSelectEncounter={setSelectedEncounterId}
-                        overriddenEncounters={overriddenEncounterIds}
-                      />
-                    </Box>
+                      {players
+                        .filter((p) => p.role === 'tank')
+                        .map((player) => (
+                          <PlayerOverrideEditor
+                            key={player.key}
+                            player={player}
+                            override={getPlayerOverride(currentEncounterOverrides, player.key)}
+                            onUpdate={(override) =>
+                              handlePlayerOverrideUpdate(player.key, override)
+                            }
+                            isDark={isDark}
+                          />
+                        ))}
 
-                    {/* Per-fight override editor */}
-                    {selectedEncounterId && selectedEncounterInfo && (
-                      <Paper
-                        elevation={0}
-                        sx={{
-                          p: 1.5,
-                          borderRadius: '10px',
-                          border: isDark
-                            ? '1px solid rgba(255,255,255,0.06)'
-                            : '1px solid rgba(0,0,0,0.06)',
-                          backgroundColor: isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.01)',
-                        }}
-                      >
-                        {/* Encounter header */}
-                        <Box sx={{ mb: 1.5 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                            <Chip
-                              label={
-                                selectedEncounterInfo.type === 'boss'
-                                  ? 'Boss'
-                                  : selectedEncounterInfo.type === 'mini_boss'
-                                    ? 'Mini-Boss'
-                                    : 'Trash'
-                              }
-                              size="small"
-                              sx={{
-                                height: 20,
-                                fontSize: '0.55rem',
-                                fontWeight: 700,
-                                backgroundColor:
-                                  selectedEncounterInfo.type === 'boss'
-                                    ? 'rgba(239, 68, 68, 0.12)'
-                                    : selectedEncounterInfo.type === 'mini_boss'
-                                      ? 'rgba(245, 158, 11, 0.12)'
-                                      : 'rgba(59, 130, 246, 0.08)',
-                                color:
-                                  selectedEncounterInfo.type === 'boss'
-                                    ? '#ef4444'
-                                    : selectedEncounterInfo.type === 'mini_boss'
-                                      ? '#f59e0b'
-                                      : '#3b82f6',
-                              }}
-                            />
-                            <Typography
-                              sx={{
-                                fontFamily: '"Space Grotesk", sans-serif',
-                                fontWeight: 700,
-                                fontSize: '0.9rem',
-                                letterSpacing: '-0.01em',
-                              }}
-                            >
-                              {selectedEncounterInfo.name}
-                            </Typography>
-                          </Box>
-                          {selectedEncounterInfo.description && (
-                            <Typography
-                              sx={{
-                                fontSize: '0.7rem',
-                                color: 'text.secondary',
-                                ml: 0.5,
-                              }}
-                            >
-                              {selectedEncounterInfo.description}
-                            </Typography>
-                          )}
-                        </Box>
-
-                        {/* Player override list */}
-                        <Stack spacing={0.75}>
-                          {/* Section: Tanks */}
-                          <Typography
-                            sx={{
-                              fontSize: '0.6rem',
-                              fontWeight: 700,
-                              letterSpacing: '0.08em',
-                              textTransform: 'uppercase',
-                              color: isDark ? 'rgba(59, 130, 246, 0.7)' : 'rgba(59, 130, 246, 0.8)',
-                              mt: 0.5,
-                            }}
-                          >
-                            Tanks
-                          </Typography>
-                          {players
-                            .filter((p) => p.role === 'tank')
-                            .map((player) => (
-                              <PlayerOverrideEditor
-                                key={player.key}
-                                player={player}
-                                override={getPlayerOverride(currentEncounterOverrides, player.key)}
-                                onUpdate={(override) =>
-                                  handlePlayerOverrideUpdate(player.key, override)
-                                }
-                                isDark={isDark}
-                              />
-                            ))}
-
-                          {/* Section: Healers */}
-                          <Typography
-                            sx={{
-                              fontSize: '0.6rem',
-                              fontWeight: 700,
-                              letterSpacing: '0.08em',
-                              textTransform: 'uppercase',
-                              color: isDark ? 'rgba(168, 85, 247, 0.7)' : 'rgba(168, 85, 247, 0.8)',
-                              mt: 1,
-                            }}
-                          >
-                            Healers
-                          </Typography>
-                          {players
-                            .filter((p) => p.role === 'healer')
-                            .map((player) => (
-                              <PlayerOverrideEditor
-                                key={player.key}
-                                player={player}
-                                override={getPlayerOverride(currentEncounterOverrides, player.key)}
-                                onUpdate={(override) =>
-                                  handlePlayerOverrideUpdate(player.key, override)
-                                }
-                                isDark={isDark}
-                              />
-                            ))}
-
-                          {/* Section: DPS */}
-                          <Typography
-                            sx={{
-                              fontSize: '0.6rem',
-                              fontWeight: 700,
-                              letterSpacing: '0.08em',
-                              textTransform: 'uppercase',
-                              color: isDark ? 'rgba(239, 68, 68, 0.7)' : 'rgba(239, 68, 68, 0.8)',
-                              mt: 1,
-                            }}
-                          >
-                            Damage Dealers
-                          </Typography>
-                          {players
-                            .filter((p) => p.role === 'dps')
-                            .map((player) => (
-                              <PlayerOverrideEditor
-                                key={player.key}
-                                player={player}
-                                override={getPlayerOverride(currentEncounterOverrides, player.key)}
-                                onUpdate={(override) =>
-                                  handlePlayerOverrideUpdate(player.key, override)
-                                }
-                                isDark={isDark}
-                              />
-                            ))}
-                        </Stack>
-                      </Paper>
-                    )}
-
-                    {/* Hint when no encounter is selected */}
-                    {!selectedEncounterId && (
+                      {/* Section: Healers */}
                       <Typography
                         sx={{
-                          fontSize: '0.75rem',
-                          color: 'text.disabled',
-                          textAlign: 'center',
-                          py: 2,
-                          fontStyle: 'italic',
+                          fontSize: '0.6rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          color: isDark ? 'rgba(168, 85, 247, 0.7)' : 'rgba(168, 85, 247, 0.8)',
+                          mt: 1,
                         }}
                       >
-                        Click an encounter in the timeline above to customize builds for that fight
+                        Healers
                       </Typography>
-                    )}
-                  </>
+                      {players
+                        .filter((p) => p.role === 'healer')
+                        .map((player) => (
+                          <PlayerOverrideEditor
+                            key={player.key}
+                            player={player}
+                            override={getPlayerOverride(currentEncounterOverrides, player.key)}
+                            onUpdate={(override) =>
+                              handlePlayerOverrideUpdate(player.key, override)
+                            }
+                            isDark={isDark}
+                          />
+                        ))}
+
+                      {/* Section: DPS */}
+                      <Typography
+                        sx={{
+                          fontSize: '0.6rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          color: isDark ? 'rgba(239, 68, 68, 0.7)' : 'rgba(239, 68, 68, 0.8)',
+                          mt: 1,
+                        }}
+                      >
+                        Damage Dealers
+                      </Typography>
+                      {players
+                        .filter((p) => p.role === 'dps')
+                        .map((player) => (
+                          <PlayerOverrideEditor
+                            key={player.key}
+                            player={player}
+                            override={getPlayerOverride(currentEncounterOverrides, player.key)}
+                            onUpdate={(override) =>
+                              handlePlayerOverrideUpdate(player.key, override)
+                            }
+                            isDark={isDark}
+                          />
+                        ))}
+                    </Stack>
+                  </Paper>
                 )}
 
-                {trialOverrides?.useSameBuildForAll !== false && (
+                {/* Hint when no encounter is selected */}
+                {!selectedEncounterId && (
                   <Typography
                     sx={{
                       fontSize: '0.75rem',
                       color: 'text.disabled',
                       textAlign: 'center',
-                      py: 1,
+                      py: 2,
+                      fontStyle: 'italic',
                     }}
                   >
-                    All players use their base roster builds for every fight. Turn off the toggle
-                    above to customize per encounter.
+                    Click an encounter in the timeline above to customize builds for that fight
                   </Typography>
                 )}
               </>
