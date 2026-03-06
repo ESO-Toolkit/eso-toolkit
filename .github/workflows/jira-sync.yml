@@ -5,10 +5,9 @@ name: Jira Ticket Sync
 # Branch name format expected: ESO-NNN/optional-description
 #
 # Transitions applied:
-#   PR opened / converted to ready-for-review / synchronize → In Progress
-#   PR review_requested                                       → In Review
-#   PR merged                                                 → Done
-#   PR closed (not merged)                                    → To Do
+#   PR opened / reopened / synchronize / ready_for_review / review_requested → In Review
+#   PR merged                                                                → Done
+#   PR closed (not merged)                                                   → To Do
 #
 # Required repository secrets:
 #   JIRA_BASE_URL    – e.g. https://bkrupa.atlassian.net
@@ -67,11 +66,9 @@ jobs:
             STATUS="Done"
           elif [[ "$ACTION" == "closed" && "$MERGED" == "false" ]]; then
             STATUS="To Do"
-          elif [[ "$ACTION" == "review_requested" ]]; then
-            STATUS="In Review"
           else
-            # opened, reopened, synchronize, ready_for_review
-            STATUS="In Progress"
+            # opened, reopened, synchronize, ready_for_review, review_requested
+            STATUS="In Review"
           fi
 
           echo "status=$STATUS" >> "$GITHUB_OUTPUT"
