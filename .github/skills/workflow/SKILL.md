@@ -21,10 +21,14 @@ git rev-parse --abbrev-ref HEAD
 - Ask for the Jira ticket number (e.g. `ESO-569`) and a short description
 - Proceed to Step 3
 
-**If branch is already an `ESO-XXX/...` feature branch:**
+**If branch is already the _correct_ `ESO-XXX/...` feature branch for the requested ticket:**
 - Confirm the branch name to the user
 - Confirm it is safe to proceed with work
 - Stop — no branch creation needed
+
+**If branch is a _different_ `ESO-XXX/...` feature branch (occupied worktree):**
+- Do **NOT** switch branches in-place — this displaces the existing work
+- Proceed to Step 3 and use the **worktree path** (Step 3b) to create the new branch in a separate worktree
 
 **If branch is some other non-main branch:**
 - Show the user the current branch name
@@ -49,17 +53,33 @@ Examples of valid names:
 - Default is `main` unless the user says otherwise.
 - Set `$parentBranch` to the correct value now — it's needed for both the checkout and the twig dependency.
 
-### 3b — Check for worktree conflicts
+### 3b — Use a worktree if the current worktree is occupied
 
-If the parent branch is open in another worktree, `git checkout` will fail. Always check first:
+**Always** check whether the current worktree already has a different feature branch checked out:
 
 ```powershell
-git worktree list
+$currentBranch = git rev-parse --abbrev-ref HEAD
+$isOccupied = ($currentBranch -ne 'main') -and ($currentBranch -ne $newBranch)
 ```
 
-If the parent branch is already checked out in a worktree, navigate there directly (`Set-Location <path>`) instead of using `git checkout`.
+**If the current worktree is occupied** (`$isOccupied -eq $true`):
+- Create a **new worktree** for the new branch instead of switching in-place
+- This avoids displacing the existing work on `$currentBranch`
 
-### 3c — Create the branch from the correct parent
+```powershell
+$worktreePath = "..\eso-log-aggregator-$($newBranch -replace '/', '-')"
+git worktree add $worktreePath -b $newBranch $parentBranch
+Set-Location $worktreePath
+```
+
+- After creating the worktree, run `npm ci` in the new directory if `node_modules/` is missing
+- Use the next available port pair for the dev server (see CLAUDE.md — Worktree Port Allocation)
+- Proceed to Step 3d (set twig parent)
+
+**If the current worktree is `main` or the target branch** (not occupied):
+- Use the standard in-place checkout (Step 3c below)
+
+### 3c — Create the branch in-place (only when worktree is not occupied)
 
 ```powershell
 $parentBranch = "main"  # or the feature branch name if stacking
