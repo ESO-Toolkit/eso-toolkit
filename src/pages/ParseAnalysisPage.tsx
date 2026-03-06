@@ -9,7 +9,6 @@
 
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import AssignmentIcon from '@mui/icons-material/Assignment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -253,29 +252,25 @@ const ParseAnalysisPageContent: React.FC = () => {
   const theme = useTheme();
 
   /**
-   * Get theme-aware semantic color for text display
-   * Uses .light variant on dark mode for better contrast
+   * Get theme-aware semantic color for text display.
+   * Dark mode uses brighter tints than MUI's auto-generated .light variants
+   * for sufficient contrast on dark backgrounds (~#111827).
    */
   const getMetricColor = (
     excellent: boolean,
     good: boolean,
   ): string => {
+    const isDark = theme.palette.mode === 'dark';
     if (excellent) {
-      return theme.palette.mode === 'dark'
-        ? theme.palette.success.light
-        : theme.palette.success.main;
+      return isDark ? '#4ade80' : theme.palette.success.main; // green-400
     }
     if (good) {
-      return theme.palette.mode === 'dark'
-        ? theme.palette.warning.light
-        : theme.palette.warning.main;
+      return isDark ? '#fbbf24' : theme.palette.warning.main; // amber-400
     }
-    return theme.palette.mode === 'dark'
-      ? theme.palette.error.light
-      : theme.palette.error.main;
+    return isDark ? '#f87171' : theme.palette.error.main; // red-400
   };
 
-  /** Shared glass-card styles — NO blur on cards (blur is modal-only per Principle 6) */
+  /** Shared glass-card styles */
   const glassCardSx = {
     ...roleColors.getAccordionStyles(),
   } as const;
@@ -284,7 +279,7 @@ const ParseAnalysisPageContent: React.FC = () => {
   const glassAccordionSx = {
     ...glassCardSx,
     '&:before': { display: 'none' },
-  } as const;
+  };
   const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -1108,162 +1103,42 @@ const ParseAnalysisPageContent: React.FC = () => {
     const { hasFood, foodType } = state.foodResult;
     const foodLabel = FOOD_TYPE_LABELS[foodType] ?? 'Other Food/Drink';
 
-    // Elite Design Principle: Color Strategy + Shadow & Depth + Micro-Interactions
-    // Icon lockup uses color-keyed semantic backgrounds, radial gradient overlay adds depth
     const semanticColor = hasFood ? 'success' : 'error';
-    const semanticColorLight = hasFood
-      ? roleColors.isDarkMode
-        ? 'rgba(46, 125, 50, 0.12)' // Semantic opacity 12%
-        : 'rgba(46, 125, 50, 0.06)' // Semantic opacity 6%
-      : roleColors.isDarkMode
-        ? 'rgba(211, 47, 47, 0.12)' // Semantic opacity 12%
-        : 'rgba(211, 47, 47, 0.06)'; // Semantic opacity 6%
 
     return (
       <Box
         sx={{
-          p: 2.5,
-          borderRadius: 2.5,
-          position: 'relative',
-          overflow: 'hidden',
-          backgroundColor: semanticColorLight,
+          p: 2,
+          borderRadius: 2,
+          backgroundColor: roleColors.isDarkMode
+            ? hasFood ? 'rgba(46, 125, 50, 0.10)' : 'rgba(211, 47, 47, 0.10)'
+            : hasFood ? 'rgba(46, 125, 50, 0.05)' : 'rgba(211, 47, 47, 0.05)',
           border: '1px solid',
           borderColor: hasFood ? 'success.light' : 'error.light',
+          borderTop: '3px solid',
+          borderTopColor: hasFood ? 'success.main' : 'error.main',
           mb: 2,
-          transition: 'all 0.2s ease-out',
-          '&:hover': {
-            transform: 'translateY(-1px)',
-            boxShadow: roleColors.isDarkMode
-              ? `0 8px 16px ${hasFood ? 'rgba(76, 175, 80, 0.15)' : 'rgba(244, 67, 54, 0.15)'}`
-              : `0 8px 16px ${hasFood ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)'}`,
-          },
-          // Pseudo-element: Radial gradient overlay for depth (Principle 5)
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            pointerEvents: 'none',
-            background: hasFood
-              ? 'radial-gradient(circle at 100% 0%, rgba(76, 175, 80, 0.04) 0%, transparent 70%)'
-              : 'radial-gradient(circle at 100% 0%, rgba(244, 67, 54, 0.04) 0%, transparent 70%)',
-          },
         }}
       >
-        <Stack
-          direction="row"
-          spacing={2}
-          alignItems="flex-start"
-          sx={{ position: 'relative', zIndex: 1 }}
-        >
-          {/* Icon Lockup: 44×44 with gradient background (Principle 7: Visual Language) */}
-          <Box
-            sx={{
-              width: 44,
-              height: 44,
-              minWidth: 44,
-              borderRadius: 1.5,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: hasFood
-                ? `linear-gradient(135deg, ${roleColors.isDarkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.15)'} 0%, ${roleColors.isDarkMode ? 'rgba(56, 142, 60, 0.15)' : 'rgba(56, 142, 60, 0.1)'} 100%)`
-                : `linear-gradient(135deg, ${roleColors.isDarkMode ? 'rgba(244, 67, 54, 0.2)' : 'rgba(244, 67, 54, 0.15)'} 0%, ${roleColors.isDarkMode ? 'rgba(211, 47, 47, 0.15)' : 'rgba(211, 47, 47, 0.1)'} 100%)`,
-              transition: 'transform 0.15s ease-out',
-              '&:hover': {
-                transform: 'scale(1.05)',
-              },
-            }}
-          >
-            <FastfoodIcon
-              color={semanticColor}
-              sx={{
-                fontSize: 28,
-              }}
-            />
-          </Box>
-
-          {/* Content: Labels and status */}
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <FastfoodIcon color={semanticColor} sx={{ fontSize: 20 }} />
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
-              <Typography
-                sx={{
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: 'text.disabled',
-                }}
-              >
-                Food Analysis
-              </Typography>
-              {/* Status badge pill (Principle 9: Information Architecture) */}
-              <Box
-                sx={{
-                  px: 0.75,
-                  py: 0.25,
-                  borderRadius: 1,
-                  backgroundColor: hasFood
-                    ? roleColors.isDarkMode
-                      ? 'rgba(76, 175, 80, 0.15)'
-                      : 'rgba(76, 175, 80, 0.08)'
-                    : roleColors.isDarkMode
-                      ? 'rgba(244, 67, 54, 0.15)'
-                      : 'rgba(244, 67, 54, 0.08)',
-                  border: '1px solid',
-                  borderColor: hasFood ? 'success.light' : 'error.light',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    backgroundColor: hasFood ? 'success.main' : 'error.main',
-                  }}
-                />
-                <Typography
-                  sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                    color: hasFood ? 'success.main' : 'error.main',
-                  }}
-                >
-                  {hasFood ? 'Active' : 'Missing'}
-                </Typography>
-              </Box>
-            </Stack>
-
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 600,
-                mb: 0.25,
-                lineHeight: 1.3,
-              }}
-            >
+            <Typography variant="body2" fontWeight={600}>
               {hasFood ? 'Food Buff Detected' : 'No Food/Drink Detected'}
             </Typography>
-
-            <Typography
-              variant="caption"
-              sx={{
-                color: 'text.secondary',
-                lineHeight: 1.4,
-              }}
-            >
+            <Typography variant="caption" color="text.secondary">
               {hasFood
                 ? `${foodLabel}${state.foodResult?.foodNames.length > 0 ? `: ${state.foodResult.foodNames.join(', ')}` : ''}`
                 : 'Food or drink buff is recommended for optimal parse performance'}
             </Typography>
           </Box>
+          <Chip
+            label={hasFood ? 'Active' : 'Missing'}
+            size="small"
+            color={hasFood ? 'success' : 'error'}
+            variant="outlined"
+            sx={{ height: 22, fontSize: '0.7rem' }}
+          />
         </Stack>
       </Box>
     );
@@ -1295,43 +1170,16 @@ const ParseAnalysisPageContent: React.FC = () => {
     const progressValue = Math.min(100, activePercentage);
     const progressColor = isExcellent ? 'success' : isGood ? 'warning' : 'error';
     const activityColor = getMetricColor(isExcellent, isGood);
-    const activityColorLight = isExcellent
-      ? 'rgba(76, 175, 80, 0.1)'
-      : isGood
-        ? 'rgba(255, 152, 0, 0.1)'
-        : 'rgba(244, 67, 54, 0.1)';
 
     return (
       <Card
         sx={{
           ...glassCardSx,
-          position: 'relative',
-          overflow: 'hidden',
           borderTop: '3px solid',
           borderTopColor: activityColor,
-          transition: 'all 0.2s ease-out',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: -40,
-            right: -40,
-            width: 180,
-            height: 180,
-            background: roleColors.isDarkMode
-              ? `radial-gradient(circle, ${activityColor}22 0%, transparent 70%)`
-              : `radial-gradient(circle, ${activityColor}11 0%, transparent 70%)`,
-            pointerEvents: 'none',
-            zIndex: 0,
-          },
-          '&:hover': {
-            transform: 'translateY(-3px)',
-            boxShadow: roleColors.isDarkMode
-              ? `0 16px 40px ${activityColor}33`
-              : `0 16px 40px ${activityColor}1f`,
-          },
         }}
       >
-        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 }, position: 'relative', zIndex: 1 }}>
+        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2.5 }}>
             <Box
               sx={{
@@ -1355,41 +1203,14 @@ const ParseAnalysisPageContent: React.FC = () => {
             </Typography>
           </Stack>
 
-          <Stack direction="row" alignItems="flex-end" spacing={1} sx={{ mb: 2 }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                variant="h2"
-                fontWeight={900}
-                color={activityColor}
-                sx={{ lineHeight: 0.9, letterSpacing: '-0.02em', fontSize: '2.5rem' }}
-              >
-                {percentDisplay}%
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                mb: 1.25,
-                px: 1,
-                py: 0.5,
-                borderRadius: '6px',
-                border: '1px solid',
-                borderColor: `${activityColor}4d`,
-                bgcolor: activityColorLight,
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.07em',
-                  color: activityColor,
-                  textTransform: 'uppercase',
-                }}
-              >
-                ACTIVE
-              </Typography>
-            </Box>
-          </Stack>
+          <Typography
+            variant="h3"
+            fontWeight={800}
+            color={activityColor}
+            sx={{ lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+          >
+            {percentDisplay}%
+          </Typography>
 
           <LinearProgress
             variant="determinate"
@@ -1436,12 +1257,8 @@ const ParseAnalysisPageContent: React.FC = () => {
                 fontWeight={600}
                 sx={{
                   color: downtimeSeconds <= 5
-                    ? theme.palette.mode === 'dark'
-                      ? theme.palette.success.light
-                      : theme.palette.success.main
-                    : theme.palette.mode === 'dark'
-                      ? theme.palette.error.light
-                      : theme.palette.error.main,
+                    ? (theme.palette.mode === 'dark' ? '#4ade80' : theme.palette.success.main)
+                    : (theme.palette.mode === 'dark' ? '#f87171' : theme.palette.error.main),
                 }}
               >
                 {downtimeSeconds.toFixed(1)}s
@@ -1479,43 +1296,16 @@ const ParseAnalysisPageContent: React.FC = () => {
     const isExcellentCPM = cpm >= 60;
 
     const cpmColor = getMetricColor(isExcellentCPM, isGoodCPM);
-    const cpmColorLight = isExcellentCPM
-      ? 'rgba(76, 175, 80, 0.1)'
-      : isGoodCPM
-        ? 'rgba(255, 152, 0, 0.1)'
-        : 'rgba(244, 67, 54, 0.1)';
 
     return (
       <Card
         sx={{
           ...glassCardSx,
-          position: 'relative',
-          overflow: 'hidden',
           borderTop: '3px solid',
           borderTopColor: cpmColor,
-          transition: 'all 0.2s ease-out',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: -40,
-            right: -40,
-            width: 180,
-            height: 180,
-            background: roleColors.isDarkMode
-              ? `radial-gradient(circle, ${cpmColor}22 0%, transparent 70%)`
-              : `radial-gradient(circle, ${cpmColor}11 0%, transparent 70%)`,
-            pointerEvents: 'none',
-            zIndex: 0,
-          },
-          '&:hover': {
-            transform: 'translateY(-3px)',
-            boxShadow: roleColors.isDarkMode
-              ? `0 16px 40px ${cpmColor}33`
-              : `0 16px 40px ${cpmColor}1f`,
-          },
         }}
       >
-        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 }, position: 'relative', zIndex: 1 }}>
+        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2.5 }}>
             <Box
               sx={{
@@ -1539,41 +1329,14 @@ const ParseAnalysisPageContent: React.FC = () => {
             </Typography>
           </Stack>
 
-          <Stack direction="row" alignItems="flex-end" spacing={1} sx={{ mb: 2 }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                variant="h2"
-                fontWeight={900}
-                color={cpmColor}
-                sx={{ lineHeight: 0.9, letterSpacing: '-0.02em', fontSize: '2.5rem' }}
-              >
-                {cpm.toFixed(1)}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                mb: 1.25,
-                px: 1,
-                py: 0.5,
-                borderRadius: '6px',
-                border: '1px solid',
-                borderColor: `${cpmColor}4d`,
-                bgcolor: cpmColorLight,
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.07em',
-                  color: cpmColor,
-                  textTransform: 'uppercase',
-                }}
-              >
-                CPM
-              </Typography>
-            </Box>
-          </Stack>
+          <Typography
+            variant="h3"
+            fontWeight={800}
+            color={cpmColor}
+            sx={{ lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+          >
+            {cpm.toFixed(1)}
+          </Typography>
 
           <LinearProgress
             variant="determinate"
@@ -1604,33 +1367,11 @@ const ParseAnalysisPageContent: React.FC = () => {
       <Card
         sx={{
           ...glassCardSx,
-          position: 'relative',
-          overflow: 'hidden',
           borderTop: '3px solid',
           borderTopColor: 'primary.main',
-          transition: 'all 0.2s ease-out',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: -40,
-            right: -40,
-            width: 180,
-            height: 180,
-            background: roleColors.isDarkMode
-              ? 'radial-gradient(circle, rgba(25, 118, 210, 0.15) 0%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(25, 118, 210, 0.08) 0%, transparent 70%)',
-            pointerEvents: 'none',
-            zIndex: 0,
-          },
-          '&:hover': {
-            transform: 'translateY(-3px)',
-            boxShadow: roleColors.isDarkMode
-              ? '0 16px 40px rgba(25, 118, 210, 0.2)'
-              : '0 16px 40px rgba(25, 118, 210, 0.12)',
-          },
         }}
       >
-        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 }, position: 'relative', zIndex: 1 }}>
+        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2.5 }}>
             <Box
               sx={{
@@ -1656,43 +1397,14 @@ const ParseAnalysisPageContent: React.FC = () => {
             </Typography>
           </Stack>
 
-          <Stack direction="row" alignItems="flex-end" spacing={1} sx={{ mb: 2 }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                variant="h2"
-                fontWeight={900}
-                color="primary.main"
-                sx={{ lineHeight: 0.9, letterSpacing: '-0.02em', fontSize: '2.5rem' }}
-              >
-                {Math.round(dps).toLocaleString()}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                mb: 1.25,
-                px: 1,
-                py: 0.5,
-                borderRadius: '6px',
-                border: '1px solid',
-                borderColor: 'rgba(25, 118, 210, 0.3)',
-                bgcolor: roleColors.isDarkMode
-                  ? 'rgba(25, 118, 210, 0.08)'
-                  : 'rgba(25, 118, 210, 0.05)',
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.07em',
-                  color: 'primary.main',
-                  textTransform: 'uppercase',
-                }}
-              >
-                DPS
-              </Typography>
-            </Box>
-          </Stack>
+          <Typography
+            variant="h3"
+            fontWeight={800}
+            color="primary.main"
+            sx={{ lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+          >
+            {Math.round(dps).toLocaleString()}
+          </Typography>
 
           <Stack spacing={0.5}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1733,9 +1445,8 @@ const ParseAnalysisPageContent: React.FC = () => {
     return (
       <Accordion
         defaultExpanded={true}
-        sx={{
-          ...glassAccordionSx,
-        }}
+        disableGutters
+        sx={glassAccordionSx}
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Stack direction="row" spacing={1} alignItems="center">
@@ -1957,43 +1668,16 @@ const ParseAnalysisPageContent: React.FC = () => {
     const isGoodWeaving = weaveAccuracy >= 80;
     const isExcellentWeaving = weaveAccuracy >= 90;
     const weaveColor = getMetricColor(isExcellentWeaving, isGoodWeaving);
-    const weaveColorLight = isExcellentWeaving
-      ? 'rgba(76, 175, 80, 0.1)'
-      : isGoodWeaving
-        ? 'rgba(255, 152, 0, 0.1)'
-        : 'rgba(244, 67, 54, 0.1)';
 
     return (
       <Card
         sx={{
           ...glassCardSx,
-          position: 'relative',
-          overflow: 'hidden',
           borderTop: '3px solid',
           borderTopColor: weaveColor,
-          transition: 'all 0.2s ease-out',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: -40,
-            right: -40,
-            width: 180,
-            height: 180,
-            background: roleColors.isDarkMode
-              ? `radial-gradient(circle, ${weaveColor}22 0%, transparent 70%)`
-              : `radial-gradient(circle, ${weaveColor}11 0%, transparent 70%)`,
-            pointerEvents: 'none',
-            zIndex: 0,
-          },
-          '&:hover': {
-            transform: 'translateY(-3px)',
-            boxShadow: roleColors.isDarkMode
-              ? `0 16px 40px ${weaveColor}33`
-              : `0 16px 40px ${weaveColor}1f`,
-          },
         }}
       >
-        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 }, position: 'relative', zIndex: 1 }}>
+        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
           <Stack
             direction="row"
             spacing={1}
@@ -2037,41 +1721,14 @@ const ParseAnalysisPageContent: React.FC = () => {
             </IconButton>
           </Stack>
 
-          <Stack direction="row" alignItems="flex-end" spacing={1} sx={{ mb: 2 }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                variant="h2"
-                fontWeight={900}
-                color={weaveColor}
-                sx={{ lineHeight: 0.9, letterSpacing: '-0.02em', fontSize: '2.5rem' }}
-              >
-                {weaveAccuracy.toFixed(1)}%
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                mb: 1.25,
-                px: 1,
-                py: 0.5,
-                borderRadius: '6px',
-                border: '1px solid',
-                borderColor: `${weaveColor}4d`,
-                bgcolor: weaveColorLight,
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.07em',
-                  color: weaveColor,
-                  textTransform: 'uppercase',
-                }}
-              >
-                WEAVE
-              </Typography>
-            </Box>
-          </Stack>
+          <Typography
+            variant="h3"
+            fontWeight={800}
+            color={weaveColor}
+            sx={{ lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+          >
+            {weaveAccuracy.toFixed(1)}%
+          </Typography>
 
           <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
             {properWeaves} / {totalSkills} skills had a light attack before them
@@ -2248,7 +1905,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                   boxShadow: roleColors.isDarkMode
                     ? 'inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 6px rgba(66, 133, 244, 0.2)'
                     : 'inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 6px rgba(63, 81, 181, 0.15)',
-                  transition: 'all 0.15s ease-out',
+                  transition: 'transform 0.15s ease-out, box-shadow 0.15s ease-out',
                   '&:hover': {
                     transform: 'translateY(-1px)',
                     boxShadow: roleColors.isDarkMode
@@ -2280,14 +1937,12 @@ const ParseAnalysisPageContent: React.FC = () => {
       {!state.reportCode && !state.loading && (
         <Accordion
           defaultExpanded={false}
-          sx={{
-            mb: 4,
-            ...glassAccordionSx,
-          }}
+          disableGutters
+          sx={{ mb: 4, ...glassAccordionSx }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Stack direction="row" spacing={1.5} alignItems="center">
-              {/* Icon lockup: 24×24 with gradient background (Principle 7: Visual Language) */}
+              {/* Icon lockup */}
               <Box
                 sx={{
                   width: 24,
@@ -2400,13 +2055,6 @@ const ParseAnalysisPageContent: React.FC = () => {
                         justifyContent: 'center',
                         flexShrink: 0,
                         mt: 0.25,
-                        transition: 'all 0.15s ease-out',
-                        '&:hover': {
-                          transform: 'scale(1.1)',
-                          backgroundColor: roleColors.isDarkMode
-                            ? 'rgba(25, 118, 210, 0.15)'
-                            : 'rgba(25, 118, 210, 0.1)',
-                        },
                       }}
                     >
                       <Typography
@@ -2501,10 +2149,6 @@ const ParseAnalysisPageContent: React.FC = () => {
                   borderColor: roleColors.isDarkMode
                     ? 'rgba(33, 150, 243, 0.2)'
                     : 'rgba(33, 150, 243, 0.15)',
-                  transition: 'transform 0.15s ease-out',
-                  '&:hover': {
-                    transform: 'scale(1.1)',
-                  },
                 }}
               >
                 <RotateRightIcon color="info" sx={{ fontSize: '14px' }} />
@@ -2559,19 +2203,11 @@ const ParseAnalysisPageContent: React.FC = () => {
 
       {state.reportCode && state.playerName && !state.loading && (
         <>
-          {/* Fight Info Hero Header */}
+          {/* Fight Info Header */}
           <Card
             sx={{
               mb: 3,
-              background: roleColors.isDarkMode
-                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(147, 51, 234, 0.08) 50%, rgba(15, 23, 42, 0.95) 100%)'
-                : 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(147, 51, 234, 0.05) 50%, rgba(255, 255, 255, 0.98) 100%)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: '1px solid',
-              borderColor: roleColors.isDarkMode
-                ? 'rgba(56, 189, 248, 0.15)'
-                : 'rgba(56, 189, 248, 0.2)',
+              ...glassCardSx,
             }}
           >
             <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
@@ -2581,196 +2217,45 @@ const ParseAnalysisPageContent: React.FC = () => {
                 justifyContent="space-between"
                 alignItems={{ xs: 'flex-start', sm: 'center' }}
               >
-                {/* Left: Icon lockup + Title + Metadata */}
                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                  {/* Elite Design: Section label (Principle 10: Visual Hierarchy) */}
-                  <Typography
-                    sx={{
-                      fontSize: '0.6rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color: 'text.disabled',
-                      mb: 1,
-                    }}
-                  >
-                    Live Parse Analysis
+                  <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
+                    {state.fightName}
                   </Typography>
 
-                  {/* Icon Lockup + Title Stack (Principle 7: Visual Language) */}
-                  <Stack direction="row" spacing={1.5} alignItems="flex-start" sx={{ mb: 1.5 }}>
-                    {/* Icon Lockup: 32×32 with linear gradient background */}
-                    <Box
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        minWidth: 32,
-                        borderRadius: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: roleColors.isDarkMode
-                          ? 'linear-gradient(135deg, rgba(96, 125, 139, 0.3) 0%, rgba(66, 133, 244, 0.15) 100%)'
-                          : 'linear-gradient(135deg, rgba(63, 81, 181, 0.2) 0%, rgba(33, 150, 243, 0.12) 100%)',
-                        transition: 'transform 0.15s ease-out',
-                        '&:hover': {
-                          transform: 'scale(1.08)',
-                        },
-                      }}
-                    >
-                      <AssignmentIcon
-                        sx={{
-                          fontSize: 18,
-                          color: 'primary.main',
-                        }}
-                      />
-                    </Box>
-
-                    {/* Title with gradient clip-text (Space Grotesk, Principle 1: Visual Hierarchy) */}
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontFamily: '"Space Grotesk", sans-serif',
-                          fontSize: '1.05rem',
-                          fontWeight: 700,
-                          letterSpacing: '-0.01em',
-                          background: roleColors.isDarkMode
-                            ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-                            : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          backgroundClip: 'text',
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        {state.fightName}
-                      </Typography>
-                    </Box>
-                  </Stack>
-
-                  {/* Metadata Badges Grid (Principle 9: Information Architecture) */}
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 0 }}>
-                    {/* Player Name Badge */}
-                    <Box
-                      sx={{
-                        px: 1,
-                        py: 0.5,
-                        borderRadius: 1.5,
-                        backgroundColor: roleColors.isDarkMode
-                          ? 'rgba(56, 142, 60, 0.12)' // Success semantic opacity 12%
-                          : 'rgba(56, 142, 60, 0.06)',
-                        border: '1px solid',
-                        borderColor: 'success.light',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.6,
-                      }}
-                    >
-                      <PersonIcon
-                        sx={{
-                          fontSize: 16,
-                          color: 'success.main',
-                        }}
-                      />
-                      <Typography
-                        sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'text.primary' }}
-                      >
-                        {state.playerName}
-                      </Typography>
-                    </Box>
-
-                    {/* Report Badge */}
-                    <Box
-                      sx={{
-                        px: 1,
-                        py: 0.5,
-                        borderRadius: 1.5,
-                        backgroundColor: roleColors.isDarkMode
-                          ? 'rgba(103, 58, 183, 0.12)' // Primary semantic opacity 12%
-                          : 'rgba(103, 58, 183, 0.06)',
-                        border: '1px solid',
-                        borderColor: 'primary.light',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.6,
-                      }}
-                    >
-                      <FolderOpenIcon
-                        sx={{
-                          fontSize: 16,
-                          color: 'primary.main',
-                        }}
-                      />
-                      <Typography
-                        sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'text.primary' }}
-                      >
-                        {state.reportCode}
-                      </Typography>
-                    </Box>
-
-                    {/* Fight # Badge */}
-                    <Box
-                      sx={{
-                        px: 1,
-                        py: 0.5,
-                        borderRadius: 1.5,
-                        backgroundColor: roleColors.isDarkMode
-                          ? 'rgba(245, 127, 23, 0.12)' // Warning semantic opacity 12%
-                          : 'rgba(245, 127, 23, 0.06)',
-                        border: '1px solid',
-                        borderColor: 'warning.light',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.6,
-                      }}
-                    >
-                      <FlashOnIcon
-                        sx={{
-                          fontSize: 16,
-                          color: 'warning.main',
-                        }}
-                      />
-                      <Typography
-                        sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'text.primary' }}
-                      >
-                        Fight {state.fightId}
-                      </Typography>
-                    </Box>
-
-                    {/* Duration Badge */}
+                  <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+                    <Chip
+                      icon={<PersonIcon sx={{ fontSize: 14 }} />}
+                      label={state.playerName}
+                      size="small"
+                      variant="outlined"
+                      sx={{ height: 24, fontSize: '0.75rem' }}
+                    />
+                    <Chip
+                      icon={<FolderOpenIcon sx={{ fontSize: 14 }} />}
+                      label={state.reportCode}
+                      size="small"
+                      variant="outlined"
+                      sx={{ height: 24, fontSize: '0.75rem' }}
+                    />
+                    <Chip
+                      icon={<FlashOnIcon sx={{ fontSize: 14 }} />}
+                      label={`Fight ${state.fightId}`}
+                      size="small"
+                      variant="outlined"
+                      sx={{ height: 24, fontSize: '0.75rem' }}
+                    />
                     {fightDurationMs != null && (
-                      <Box
-                        sx={{
-                          px: 1,
-                          py: 0.5,
-                          borderRadius: 1.5,
-                          backgroundColor: roleColors.isDarkMode
-                            ? 'rgba(0, 150, 136, 0.12)' // Teal/Info semantic opacity 12%
-                            : 'rgba(0, 150, 136, 0.06)',
-                          border: '1px solid',
-                          borderColor: 'info.light',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 0.6,
-                        }}
-                      >
-                        <AccessTimeIcon
-                          sx={{
-                            fontSize: 16,
-                            color: 'info.main',
-                          }}
-                        />
-                        <Typography
-                          sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'text.primary' }}
-                        >
-                          {formatDuration(fightDurationMs)}
-                        </Typography>
-                      </Box>
+                      <Chip
+                        icon={<AccessTimeIcon sx={{ fontSize: 14 }} />}
+                        label={formatDuration(fightDurationMs)}
+                        size="small"
+                        variant="outlined"
+                        sx={{ height: 24, fontSize: '0.75rem' }}
+                      />
                     )}
                   </Stack>
                 </Box>
 
-                {/* Right: New Analysis Button (Principle 7: Micro-Interactions) */}
                 <Button
                   variant="contained"
                   size="small"
@@ -2792,7 +2277,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                     boxShadow: roleColors.isDarkMode
                       ? 'inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 6px rgba(66, 133, 244, 0.2)'
                       : 'inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 6px rgba(63, 81, 181, 0.15)',
-                    transition: 'all 0.15s ease-out',
+                    transition: 'transform 0.15s ease-out, box-shadow 0.15s ease-out',
                     '&:hover': {
                       transform: 'translateY(-1px)',
                       boxShadow: roleColors.isDarkMode
@@ -2859,11 +2344,11 @@ const ParseAnalysisPageContent: React.FC = () => {
           >
             Detailed Insights
           </Typography>
-          <Stack spacing={2} sx={{ mb: 3 }}>
+          <Stack spacing={2} useFlexGap sx={{ mb: 3 }}>
             {renderRotationAnalysis()}
 
             {state.buildIssues && state.buildIssues.length > 0 && (
-              <Accordion defaultExpanded={state.buildIssues.length > 0} sx={glassAccordionSx}>
+              <Accordion defaultExpanded={state.buildIssues.length > 0} disableGutters sx={glassAccordionSx}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Box
@@ -2909,7 +2394,8 @@ const ParseAnalysisPageContent: React.FC = () => {
                   borderRadius: 2,
                   border: '1px solid',
                   borderColor: 'success.main',
-                  borderLeftWidth: 4,
+                  borderTop: '3px solid',
+                  borderTopColor: 'success.main',
                   backgroundColor: roleColors.isDarkMode
                     ? 'rgba(46, 125, 50, 0.08)'
                     : 'rgba(46, 125, 50, 0.04)',
@@ -2925,7 +2411,7 @@ const ParseAnalysisPageContent: React.FC = () => {
             )}
 
             {state.buffChecklist && (
-              <Accordion sx={glassAccordionSx}>
+              <Accordion disableGutters sx={glassAccordionSx}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Box
@@ -2968,7 +2454,7 @@ const ParseAnalysisPageContent: React.FC = () => {
             )}
 
             {state.debuffChecklist && (
-              <Accordion sx={glassAccordionSx}>
+              <Accordion disableGutters sx={glassAccordionSx}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Box
