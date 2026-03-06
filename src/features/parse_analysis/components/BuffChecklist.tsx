@@ -181,7 +181,11 @@ export const BuffChecklist: React.FC<BuffChecklistProps> = ({ checklistData }) =
             backgroundColor: isDark ? 'rgba(255, 152, 0, 0.08)' : 'rgba(255, 152, 0, 0.06)',
           }}
         >
-          <Typography variant="caption" fontWeight={600} color="warning.main">
+          <Typography
+            variant="caption"
+            fontWeight={600}
+            sx={{ color: isDark ? theme.palette.warning.light : theme.palette.warning.main }}
+          >
             Redundant Buffs
           </Typography>
           <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.25 }}>

@@ -37,16 +37,32 @@ function getStatusIcon(status: ParseChecklistStatus): React.ReactElement {
 const getStatusColor = (
   status: ParseChecklistStatus,
   theme: Theme,
-): { main: string; light: string } => {
+): { main: string; light: string; text: string } => {
   switch (status) {
     case 'pass':
-      return { main: theme.palette.success.main, light: theme.palette.success.light };
+      return {
+        main: theme.palette.success.main,
+        light: theme.palette.success.light,
+        text: theme.palette.mode === 'dark' ? theme.palette.success.light : theme.palette.success.main,
+      };
     case 'warn':
-      return { main: theme.palette.warning.main, light: theme.palette.warning.light };
+      return {
+        main: theme.palette.warning.main,
+        light: theme.palette.warning.light,
+        text: theme.palette.mode === 'dark' ? theme.palette.warning.light : theme.palette.warning.main,
+      };
     case 'fail':
-      return { main: theme.palette.error.main, light: theme.palette.error.light };
+      return {
+        main: theme.palette.error.main,
+        light: theme.palette.error.light,
+        text: theme.palette.mode === 'dark' ? theme.palette.error.light : theme.palette.error.main,
+      };
     case 'info':
-      return { main: theme.palette.info.main, light: theme.palette.info.light };
+      return {
+        main: theme.palette.info.main,
+        light: theme.palette.info.light,
+        text: theme.palette.mode === 'dark' ? theme.palette.info.light : theme.palette.info.main,
+      };
   }
 };
 
@@ -69,17 +85,35 @@ export const ParseChecklist: React.FC<ParseChecklistProps> = ({ items }) => {
         </Typography>
         <Stack direction="row" spacing={1}>
           {passCount > 0 && (
-            <Typography variant="caption" color="success.main" fontWeight={600}>
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 600,
+                color: isDark ? theme.palette.success.light : theme.palette.success.main,
+              }}
+            >
               {passCount} pass
             </Typography>
           )}
           {warnCount > 0 && (
-            <Typography variant="caption" color="warning.main" fontWeight={600}>
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 600,
+                color: isDark ? theme.palette.warning.light : theme.palette.warning.main,
+              }}
+            >
               {warnCount} review
             </Typography>
           )}
           {failCount > 0 && (
-            <Typography variant="caption" color="error.main" fontWeight={600}>
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 600,
+                color: isDark ? theme.palette.error.light : theme.palette.error.main,
+              }}
+            >
               {failCount} missing
             </Typography>
           )}
@@ -146,7 +180,7 @@ export const ParseChecklist: React.FC<ParseChecklistProps> = ({ items }) => {
                     fontWeight: 700,
                     textTransform: 'uppercase',
                     letterSpacing: 0.5,
-                    color: statusColor.main,
+                    color: statusColor.text,
                     opacity: 0.9,
                   }}
                 >
