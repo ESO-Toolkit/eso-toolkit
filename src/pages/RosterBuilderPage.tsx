@@ -31,6 +31,7 @@ import {
   DragIndicator as DragIndicatorIcon,
   Visibility as VisibilityIcon,
   Groups as GroupsIcon,
+  SportsEsports as AddonIcon,
 } from '@mui/icons-material';
 import {
   Button,
@@ -533,6 +534,114 @@ function expandCompactRoster(c: CompactRoster): RaidRoster {
     availableGroups: c.ag ?? [],
     notes: c.no,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Addon export helpers (ESO-658)
+// ---------------------------------------------------------------------------
+
+/** Addon-compatible roster slot for tanks/healers. */
+interface AddonSlot {
+  playerName?: string;
+  role: string;
+  gearSets?: {
+    set1?: string;
+    set2?: string;
+    monsterSet?: string;
+  };
+}
+
+/** Addon-compatible DPS slot. */
+interface AddonDPSSlot {
+  playerName?: string;
+  slotNumber: number;
+  gearSets?: string[];
+}
+
+/** The addon-import format: plain JSON, no compression, set names resolved. */
+interface AddonExportRoster {
+  rosterName: string;
+  tank1?: AddonSlot;
+  tank2?: AddonSlot;
+  healer1?: AddonSlot;
+  healer2?: AddonSlot;
+  dpsSlots?: AddonDPSSlot[];
+}
+
+function tankToAddonSlot(tank: TankSetup): AddonSlot | undefined {
+  if (!tank.playerName) return undefined;
+  const slot: AddonSlot = { playerName: tank.playerName, role: 'Tank' };
+  const gs = tank.gearSets;
+  if (gs.set1 || gs.set2 || gs.monsterSet) {
+    slot.gearSets = {
+      set1: gs.set1 ? getSetDisplayName(gs.set1) : undefined,
+      set2: gs.set2 ? getSetDisplayName(gs.set2) : undefined,
+      monsterSet: gs.monsterSet ? getSetDisplayName(gs.monsterSet) : undefined,
+    };
+  }
+  return slot;
+}
+
+function healerToAddonSlot(healer: HealerSetup): AddonSlot | undefined {
+  if (!healer.playerName) return undefined;
+  const slot: AddonSlot = { playerName: healer.playerName, role: 'Healer' };
+  if (healer.set1 || healer.set2 || healer.monsterSet) {
+    slot.gearSets = {
+      set1: healer.set1 ? getSetDisplayName(healer.set1) : undefined,
+      set2: healer.set2 ? getSetDisplayName(healer.set2) : undefined,
+      monsterSet: healer.monsterSet ? getSetDisplayName(healer.monsterSet) : undefined,
+    };
+  }
+  return slot;
+}
+
+function dpsToAddonSlot(dps: DPSSlot): AddonDPSSlot | undefined {
+  if (!dps.playerName) return undefined;
+  const slot: AddonDPSSlot = { playerName: dps.playerName, slotNumber: dps.slotNumber };
+  if (dps.gearSets?.length) {
+    slot.gearSets = dps.gearSets.map((id) => getSetDisplayName(id)).filter(Boolean);
+  }
+  return slot;
+}
+
+/**
+ * Convert a RaidRoster to the simplified addon-import format.
+ * Set IDs are resolved to human-readable display names so the addon can
+ * match them against in-game GetItemLinkSetInfo() results.
+ */
+function rosterToAddonExport(roster: RaidRoster): AddonExportRoster {
+  const addonRoster: AddonExportRoster = {
+    rosterName: roster.rosterName,
+  };
+
+  const t1 = tankToAddonSlot(roster.tank1);
+  const t2 = tankToAddonSlot(roster.tank2);
+  const h1 = healerToAddonSlot(roster.healer1);
+  const h2 = healerToAddonSlot(roster.healer2);
+
+  if (t1) addonRoster.tank1 = t1;
+  if (t2) addonRoster.tank2 = t2;
+  if (h1) addonRoster.healer1 = h1;
+  if (h2) addonRoster.healer2 = h2;
+
+  const dpsSlots = roster.dpsSlots
+    .map(dpsToAddonSlot)
+    .filter((s): s is AddonDPSSlot => s !== undefined);
+  if (dpsSlots.length) addonRoster.dpsSlots = dpsSlots;
+
+  return addonRoster;
+}
+
+/**
+ * Encode an addon-export roster as a Base64URL string (no compression).
+ * The ESOtk addon decodes this with Util.Base64UrlDecode + Util.JsonDecode.
+ */
+function encodeAddonExport(roster: RaidRoster): string {
+  const addonRoster = rosterToAddonExport(roster);
+  const json = JSON.stringify(addonRoster);
+  // Encode as Base64URL (URL-safe, no padding)
+  const base64 = btoa(unescape(encodeURIComponent(json)));
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /** Base64url encode a byte array (URL-safe, no padding) */
@@ -1177,6 +1286,27 @@ export const RosterBuilderPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [dpsSlotOrder],
   );
+
+  // Export roster for ESOtk addon (Base64URL-encoded JSON)
+  const handleExportAddon = useCallback(() => {
+    try {
+      const encoded = encodeAddonExport(roster);
+      navigator.clipboard
+        .writeText(encoded)
+        .then(() => {
+          setSnackbar({
+            open: true,
+            message: 'Addon import string copied! Paste in-game: /esotk roster import <string>',
+            severity: 'success',
+          });
+        })
+        .catch(() => {
+          setSnackbar({ open: true, message: 'Failed to copy to clipboard', severity: 'error' });
+        });
+    } catch {
+      setSnackbar({ open: true, message: 'Failed to generate addon export', severity: 'error' });
+    }
+  }, [roster]);
 
   // Export roster as JSON
   const handleExportJSON = useCallback(() => {
@@ -2138,6 +2268,34 @@ export const RosterBuilderPage: React.FC = () => {
                 }}
               >
                 Export
+              </Button>
+            </Tooltip>
+            <Tooltip title="Copy for ESOtk addon — paste in-game with /esotk roster import" arrow>
+              <Button
+                size="small"
+                startIcon={<AddonIcon />}
+                onClick={handleExportAddon}
+                sx={{
+                  flex: { xs: 1, md: 'none' },
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.1)',
+                  backgroundColor: 'transparent',
+                  '&:hover': {
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                    border: isDarkMode
+                      ? '1px solid rgba(255,255,255,0.15)'
+                      : '1px solid rgba(0,0,0,0.18)',
+                  },
+                }}
+              >
+                Addon
               </Button>
             </Tooltip>
           </Box>
