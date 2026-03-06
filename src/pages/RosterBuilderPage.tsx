@@ -71,6 +71,7 @@ import { useTheme } from '@mui/material/styles';
 import React, { useState, useCallback, useMemo, useRef } from 'react';
 
 import discordIcon from '../assets/discord-icon.svg';
+import { PerFightBuilds } from '../components/PerFightBuilds';
 import { SetAssignmentManager } from '../components/SetAssignmentManager';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
@@ -105,6 +106,7 @@ import {
   DD_SPECIAL_SETS,
   validateCompatibility,
 } from '../types/roster';
+import type { TrialBuildOverrides } from '../types/trial-encounters';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
 
@@ -1212,6 +1214,18 @@ export const RosterBuilderPage: React.FC = () => {
       };
     });
   }, []);
+
+  // Update trial per-fight build overrides
+  const handleTrialOverridesChange = useCallback(
+    (overrides: TrialBuildOverrides | undefined): void => {
+      setRoster((prev) => ({
+        ...prev,
+        trialOverrides: overrides,
+        updatedAt: new Date().toISOString(),
+      }));
+    },
+    [],
+  );
 
   // Memoized derived values for stable prop references
   const usedBuffs = useMemo(
@@ -2762,6 +2776,14 @@ export const RosterBuilderPage: React.FC = () => {
                 </Stack>
               </SortableContext>
             </DndContext>
+          </Box>
+
+          {/* Per-Fight Builds */}
+          <Box sx={{ my: 2 }}>
+            <PerFightBuilds
+              roster={roster}
+              onUpdateTrialOverrides={handleTrialOverridesChange}
+            />
           </Box>
 
           <Divider

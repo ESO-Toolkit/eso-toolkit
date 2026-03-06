@@ -4,6 +4,7 @@
  */
 
 import { KnownSetIDs } from './abilities';
+import type { TrialBuildOverrides } from './trial-encounters';
 
 /**
  * Role types in a raid
@@ -204,6 +205,9 @@ export interface RaidRoster {
 
   // General notes
   notes?: string;
+
+  // Per-fight build overrides (optional, advanced feature)
+  trialOverrides?: TrialBuildOverrides;
 }
 
 /**
