@@ -102,7 +102,7 @@ git checkout -b ESO-XXX/description-here
 **Workflow & Git:**
 - **Create PR**: [.github/skills/create-pr/SKILL.md](.github/skills/create-pr/SKILL.md) - PR creation with PowerShell-safe `--body-file` pattern and automatic UI screenshots
 - **Git Operations**: [.github/skills/git/SKILL.md](.github/skills/git/SKILL.md) - Branch management (twig with plain git fallbacks)
-- **Git Workflow Enforcement**: [.github/skills/workflow/SKILL.md](.github/skills/workflow/SKILL.md) - **Use this FIRST**
+- **Git Workflow Enforcement**: [.github/skills/workflow/SKILL.md](.github/skills/workflow/SKILL.md) — **Use this FIRST, before reading any files or writing any code. Prefers new worktrees over in-place checkout.**
 - **Post-Squash Rebase**: [.github/skills/rebase/SKILL.md](.github/skills/rebase/SKILL.md) - Recovery after squash-merge of stacked branches
 - **Rebase & Conflicts**: [.github/skills/rebase-conflicts/SKILL.md](.github/skills/rebase-conflicts/SKILL.md) - Rebase branches and resolve merge conflicts step-by-step
 
