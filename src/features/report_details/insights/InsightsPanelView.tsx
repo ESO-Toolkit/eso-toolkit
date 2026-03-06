@@ -17,7 +17,7 @@ interface InsightsPanelViewProps {
   durationMs: number;
   abilityEquipped: Partial<Record<KnownAbilities, string[]>>;
   buffActors: Partial<Record<KnownAbilities, Set<string>>>;
-  firstDamageDealer: string | null;
+  fightInitiator: string | null;
   selectedPlayerId: number | null;
   isLoading: boolean;
 }
@@ -71,7 +71,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
   durationMs,
   abilityEquipped,
   buffActors,
-  firstDamageDealer,
+  fightInitiator,
   selectedPlayerId,
   isLoading,
 }) => {
@@ -144,7 +144,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               </Typography>
             </Box>
 
-            {firstDamageDealer && (
+            {fightInitiator && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 1 }}>
                 <Box
                   sx={{
@@ -171,8 +171,8 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                     fontSize: { xs: '0.875rem', sm: '0.9rem', md: '0.95rem' },
                   }}
                 >
-                  <strong>First Damage Dealer: </strong>
-                  <span>{firstDamageDealer}</span>
+                  <strong>Fight initiator: </strong>
+                  <span>{fightInitiator}</span>
                 </Typography>
               </Box>
             )}
