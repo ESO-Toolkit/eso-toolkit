@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   deploy-preview:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR branch
