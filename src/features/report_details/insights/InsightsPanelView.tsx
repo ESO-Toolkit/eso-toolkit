@@ -392,7 +392,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
-            <DamageBreakdownPanel fight={fight} />
+            <DamageBreakdownPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
 
@@ -406,7 +406,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
-            <DamageTypeBreakdownPanel fight={fight} />
+            <DamageTypeBreakdownPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
       </Box>

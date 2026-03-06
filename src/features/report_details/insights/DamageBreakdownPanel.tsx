@@ -9,6 +9,7 @@ import { DamageBreakdownView } from './DamageBreakdownView';
 
 interface DamageBreakdownPanelProps {
   fight: FightFragment;
+  selectedPlayerId?: number | null;
 }
 
 interface DamageBreakdown {
@@ -23,7 +24,10 @@ interface DamageBreakdown {
   damageTypes?: string[];
 }
 
-export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({ fight }) => {
+export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({
+  fight,
+  selectedPlayerId,
+}) => {
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
@@ -33,9 +37,15 @@ export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({ figh
       return [];
     }
 
-    // Filter damage events for friendly players only
+    // Filter damage events for friendly players only, and optionally by selected player
     const friendlyDamageEvents = damageEvents.filter((event: DamageEvent) => {
-      return event.sourceIsFriendly === true && fight.friendlyPlayers?.includes(event.sourceID);
+      if (!event.sourceIsFriendly || !fight.friendlyPlayers?.includes(event.sourceID)) {
+        return false;
+      }
+      if (selectedPlayerId != null && event.sourceID !== selectedPlayerId) {
+        return false;
+      }
+      return true;
     });
 
     if (friendlyDamageEvents.length === 0) {
@@ -106,7 +116,7 @@ export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({ figh
 
     // Sort by total damage descending
     return breakdown.sort((a, b) => b.totalDamage - a.totalDamage);
-  }, [damageEvents, fight.friendlyPlayers, reportMasterData?.abilitiesById]);
+  }, [damageEvents, fight.friendlyPlayers, reportMasterData?.abilitiesById, selectedPlayerId]);
 
   const totalDamage = React.useMemo(() => {
     return damageBreakdown.reduce((sum, item) => sum + item.totalDamage, 0);

@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: Enforce git workflow by checking the current branch before starting Jira ticket work. Creates properly-formatted ESO-XXX/description feature branches, prevents commits directly to main, and updates the Jira ticket status as work progresses.
+description: Enforce git workflow by checking the current branch before starting Jira ticket work. Creates properly-formatted ESO-XXX/description feature branches in a new worktree (preferred) or in-place, prevents commits directly to main, and updates the Jira ticket status as work progresses. AUTO-INVOKED whenever the user's message is or contains a bare Jira ticket reference (e.g. ESO-670).
 ---
 
 You are enforcing the ESO Log Aggregator git workflow. Follow these steps precisely.
@@ -34,6 +34,7 @@ git rev-parse --abbrev-ref HEAD
 - Tell the user they are on a protected branch
 - Ask for the Jira ticket number (e.g. `ESO-569`) and a short description
 - Proceed to Step 3
+- **Note:** Even on `main`, still evaluate Step 3b — if this is the _main_ worktree, prefer creating a new worktree for the feature branch so the main worktree stays on `main` and is available for parallel work. Only use in-place checkout (Step 3c) when the user explicitly confirms they want to use this worktree.
 
 **If branch is already the _correct_ `ESO-XXX/...` feature branch for the requested ticket:**
 - Confirm the branch name to the user
