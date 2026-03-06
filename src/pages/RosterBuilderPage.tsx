@@ -102,6 +102,7 @@ import {
   FLEXIBLE_MONSTER_SETS,
   MONSTER_SETS,
   ALL_5PIECE_SETS,
+  DD_SPECIAL_SETS,
   validateCompatibility,
 } from '../types/roster';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
@@ -245,10 +246,17 @@ interface CompactDPS {
   sn: number; // slotNumber (required)
   pn?: string; // playerName
   pi?: number; // playerNumber
+  rl?: string; // roleLabel
   rn?: string; // roleNotes
   lb?: string[]; // labels
-  gs?: number[]; // gearSets
+  s1?: number; // set1
+  s2?: number; // set2
+  ms?: number; // monsterSet
+  as?: number[]; // additionalSets
+  gs?: number[]; // legacy gearSets (backward compat)
   sl?: CompactSkills; // skillLines
+  cp?: string; // championPoint
+  ul?: number | string; // ultimate (index or custom string)
   gr?: CompactGroup; // group
   no?: string; // notes
   jt?: number; // jailDDType index
@@ -453,11 +461,17 @@ function compactDPS(d: DPSSlot): CompactDPS {
   const c: CompactDPS = { sn: d.slotNumber };
   if (d.playerName) c.pn = d.playerName;
   if (d.playerNumber != null) c.pi = d.playerNumber;
+  if (d.roleLabel) c.rl = d.roleLabel;
   if (d.roleNotes) c.rn = d.roleNotes;
   if (d.labels?.length) c.lb = d.labels;
-  if (d.gearSets?.length) c.gs = d.gearSets as number[];
+  if (d.set1 != null) c.s1 = d.set1 as number;
+  if (d.set2 != null) c.s2 = d.set2 as number;
+  if (d.monsterSet != null) c.ms = d.monsterSet as number;
+  if (d.additionalSets?.length) c.as = d.additionalSets as number[];
   const sl = d.skillLines ? compactSkills(d.skillLines) : undefined;
   if (sl) c.sl = sl;
+  if (d.championPoint) c.cp = d.championPoint;
+  if (d.ultimate) c.ul = encodeUltimate(d.ultimate);
   const gr = compactGroup(d.group);
   if (gr) c.gr = gr;
   if (d.notes) c.no = d.notes;
@@ -474,10 +488,24 @@ function expandDPS(c: CompactDPS): DPSSlot {
     slotNumber: c.sn,
     playerName: c.pn,
     playerNumber: c.pi,
+    roleLabel: c.rl,
     roleNotes: c.rn,
     labels: c.lb,
-    gearSets: c.gs as KnownSetIDs[] | undefined,
+    set1: c.s1 as KnownSetIDs | undefined,
+    set2: c.s2 as KnownSetIDs | undefined,
+    monsterSet: c.ms as KnownSetIDs | undefined,
+    additionalSets: c.as as KnownSetIDs[] | undefined,
+    // Legacy: if old compact data has gs but no s1/s2, migrate first two to set1/set2
+    ...(c.gs && !c.s1 && !c.s2
+      ? {
+          set1: (c.gs[0] as KnownSetIDs) ?? undefined,
+          set2: (c.gs[1] as KnownSetIDs) ?? undefined,
+          additionalSets: (c.gs.slice(2) as KnownSetIDs[]) || undefined,
+        }
+      : {}),
     skillLines: c.sl ? expandSkills(c.sl) : undefined,
+    championPoint: c.cp || undefined,
+    ultimate: c.ul != null ? decodeUltimate(c.ul) : null,
     group: expandGroup(c.gr),
     notes: c.no,
     jailDDType: c.jt != null ? JAIL_DD_TYPE_LIST[c.jt] : undefined,
@@ -496,9 +524,15 @@ function compactifyRoster(roster: RaidRoster): CompactRoster {
     (slot) =>
       slot.playerName ||
       slot.playerNumber != null ||
+      slot.roleLabel ||
       slot.roleNotes ||
       slot.labels?.length ||
-      slot.gearSets?.length ||
+      slot.set1 != null ||
+      slot.set2 != null ||
+      slot.monsterSet != null ||
+      slot.additionalSets?.length ||
+      slot.championPoint ||
+      slot.ultimate ||
       slot.jailDDType ||
       slot.notes ||
       slot.group ||
@@ -760,6 +794,28 @@ const HEALER_MONSTER_OPTIONS: readonly string[] = (() => {
   FLEXIBLE_MONSTER_SETS.forEach((id) => sets.add(getSetDisplayName(id)));
   return Array.from(sets).sort();
 })();
+
+// DPS set options: DD special sets first, then all 5-piece sets
+const DPS_5PIECE_OPTIONS: readonly string[] = (() => {
+  const ddSets = Array.from(DD_SPECIAL_SETS)
+    .map((id) => getSetDisplayName(id))
+    .sort();
+  const otherSets = Array.from(ALL_5PIECE_SETS)
+    .filter((set) => !DD_SPECIAL_SETS.includes(set))
+    .map((id) => getSetDisplayName(id))
+    .sort();
+  return [...ddSets, ...otherSets];
+})();
+
+const DPS_MONSTER_OPTIONS: readonly string[] = (() => {
+  const sets = new Set<string>();
+  MONSTER_SETS.forEach((id) => sets.add(getSetDisplayName(id)));
+  return Array.from(sets).sort();
+})();
+
+const isDDSpecialSet = (setId: KnownSetIDs): boolean => {
+  return (DD_SPECIAL_SETS as readonly KnownSetIDs[]).includes(setId);
+};
 
 /**
  * Helper functions for type-safe set membership checks
@@ -4537,6 +4593,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
         },
       },
     };
+    const availableUltimates = Object.values(SupportUltimate);
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: slot.slotNumber,
     });
@@ -4591,6 +4648,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
         }}
       >
         <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+          {/* Header */}
           <Box
             sx={{
               display: 'flex',
@@ -4658,32 +4716,19 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
             )}
           </Box>
           <Stack spacing={1.5}>
+            {/* Essential Fields - Always Visible */}
             <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-              <Box sx={{ flex: '1 1 40%', minWidth: 180 }}>
+              <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
                 <TextField
                   fullWidth
                   size="small"
-                  label="Player Name"
+                  label="Player Name (Optional)"
                   value={slot.playerName || ''}
                   onChange={(e) => onChange({ playerName: e.target.value })}
                   sx={glassSx}
                 />
               </Box>
-              <Box sx={{ flex: '1 1 25%', minWidth: 150 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  multiline
-                  minRows={1}
-                  maxRows={4}
-                  label="Role Notes"
-                  placeholder="e.g., Portal L, Z'en"
-                  value={slot.roleNotes || ''}
-                  onChange={(e) => onChange({ roleNotes: e.target.value })}
-                  sx={glassSx}
-                />
-              </Box>
-              <Box sx={{ flex: '1 1 25%', minWidth: 120 }}>
+              <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
                 <Autocomplete
                   freeSolo
                   size="small"
@@ -4701,90 +4746,173 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
               </Box>
             </Box>
 
-            {/* Player Labels/Tags */}
-            <Autocomplete
-              multiple
-              freeSolo
-              size="small"
-              options={[]}
-              value={slot.labels || []}
-              onChange={(_, value) => onChange({ labels: value })}
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip
-                    {...getTagProps({ index })}
-                    key={option}
-                    label={option}
-                    size="small"
-                    sx={{
-                      borderRadius: '6px',
-                      backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                      border: dpsIsDark
-                        ? '1px solid rgba(255,255,255,0.1)'
-                        : '1px solid rgba(0,0,0,0.1)',
-                      fontWeight: 500,
-                      fontSize: '0.75rem',
-                    }}
-                  />
-                ))
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  size="small"
-                  label="Labels / Tags"
-                  placeholder="Add custom labels (Press Enter)"
-                  sx={glassSx}
-                />
-              )}
-            />
+            {/* Equipment */}
+            <Box
+              sx={{
+                p: 1.25,
+                borderRadius: '10px',
+                backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+                border: dpsIsDark
+                  ? '1px solid rgba(255,255,255,0.04)'
+                  : '1px solid rgba(0,0,0,0.04)',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: dpsIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                  mb: 1,
+                }}
+              >
+                Equipment
+              </Typography>
+              <Stack spacing={1.5}>
+                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                    <Autocomplete
+                      freeSolo
+                      size="small"
+                      options={DPS_5PIECE_OPTIONS}
+                      value={slot.set1 ? getSetDisplayName(slot.set1) : ''}
+                      onChange={(_, value) =>
+                        onChange({ set1: value ? findSetIdByName(value) : undefined })
+                      }
+                      groupBy={(option) => {
+                        const setId = findSetIdByName(option);
+                        if (setId && isDDSpecialSet(setId)) return 'DD Special Sets';
+                        return 'Other Sets';
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          label="Primary Set (Body)"
+                          placeholder="e.g., Roar of Alkosh"
+                          sx={glassSx}
+                          InputProps={{
+                            ...params.InputProps,
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => <li {...props}>{option}</li>}
+                    />
+                  </Box>
+                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                    <Autocomplete
+                      freeSolo
+                      size="small"
+                      options={DPS_5PIECE_OPTIONS}
+                      value={slot.set2 ? getSetDisplayName(slot.set2) : ''}
+                      onChange={(_, value) =>
+                        onChange({ set2: value ? findSetIdByName(value) : undefined })
+                      }
+                      groupBy={(option) => {
+                        const setId = findSetIdByName(option);
+                        if (setId && isDDSpecialSet(setId)) return 'DD Special Sets';
+                        return 'Other Sets';
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          label="Secondary Set (Jewelry)"
+                          placeholder="e.g., Way of Martial Knowledge"
+                          sx={glassSx}
+                          InputProps={{
+                            ...params.InputProps,
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => <li {...props}>{option}</li>}
+                    />
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                    <Autocomplete
+                      freeSolo
+                      size="small"
+                      options={DPS_MONSTER_OPTIONS}
+                      value={slot.monsterSet ? getSetDisplayName(slot.monsterSet) : ''}
+                      onChange={(_, value) =>
+                        onChange({
+                          monsterSet: value ? findSetIdByName(value) : undefined,
+                        })
+                      }
+                      groupBy={() => 'Monster Sets'}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          label="Monster/Mythic Set"
+                          placeholder="e.g., Zaan"
+                          sx={glassSx}
+                          InputProps={{
+                            ...params.InputProps,
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => <li {...props}>{option}</li>}
+                    />
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                    <Autocomplete
+                      freeSolo
+                      size="small"
+                      options={[]}
+                      value={slot.championPoint || null}
+                      onChange={(_event, newValue) =>
+                        onChange({ championPoint: newValue as string | null })
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          label="Champion Points"
+                          placeholder="e.g., Fighting Finesse"
+                          sx={glassSx}
+                        />
+                      )}
+                    />
+                  </Box>
+                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                    <Autocomplete
+                      freeSolo
+                      size="small"
+                      options={availableUltimates}
+                      value={slot.ultimate || null}
+                      onChange={(_event, newValue) =>
+                        onChange({ ultimate: newValue as string | null })
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          label="Ultimate"
+                          placeholder="Select or type custom ultimate"
+                          sx={glassSx}
+                        />
+                      )}
+                      renderOption={(props, option) => (
+                        <li {...props} key={option}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            {getUltimateIcon(option)}
+                            {option}
+                          </Box>
+                        </li>
+                      )}
+                    />
+                  </Box>
+                </Box>
+              </Stack>
+            </Box>
 
-            {/* Gear Sets */}
-            <Autocomplete
-              multiple
-              freeSolo
-              size="small"
-              options={[...ALL_5PIECE_SETS, ...MONSTER_SETS]
-                .map((id) => getSetDisplayName(id))
-                .sort()}
-              value={(slot.gearSets || []).map((id) => getSetDisplayName(id))}
-              onChange={(_, value) =>
-                onChange({
-                  gearSets: value
-                    .map((name) => findSetIdByName(name))
-                    .filter((id): id is KnownSetIDs => id !== undefined),
-                })
-              }
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip
-                    {...getTagProps({ index })}
-                    key={option}
-                    label={option}
-                    size="small"
-                    sx={{
-                      borderRadius: '6px',
-                      backgroundColor: `${dpsRoleColors.dps}10`,
-                      border: `1px solid ${dpsRoleColors.dps}25`,
-                      fontWeight: 500,
-                      fontSize: '0.75rem',
-                    }}
-                  />
-                ))
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  size="small"
-                  label="Gear Sets"
-                  placeholder={slot.gearSets?.length ? undefined : 'Add set...'}
-                  sx={glassSx}
-                />
-              )}
-              renderOption={(props, option) => <li {...props}>{option}</li>}
-            />
-
-            {/* Convert to Jail DD or back to regular DPS */}
+            {/* Jail DD Type Selector */}
             {!slot.jailDDType ? (
               <Box>
                 <Typography
@@ -4869,6 +4997,329 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                 </Box>
               </Box>
             )}
+
+            {/* Advanced Options - Collapsible */}
+            <Accordion
+              elevation={0}
+              disableGutters
+              sx={{
+                mt: 2,
+                borderRadius: '10px !important',
+                backgroundColor: 'transparent',
+                border: dpsIsDark
+                  ? '1px solid rgba(255,255,255,0.08)'
+                  : '1px solid rgba(0,0,0,0.08)',
+                '&:before': { display: 'none' },
+                '&.Mui-expanded': { margin: 0, marginTop: 2 },
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{ px: 1.5, minHeight: 40, '&.Mui-expanded': { minHeight: 40 } }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: dpsIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                    fontWeight: 500,
+                  }}
+                >
+                  Advanced Options
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ px: 1.5, pt: 0.5, pb: 1.5 }}>
+                <Stack spacing={1.25}>
+                  {/* Assignment */}
+                  <Typography
+                    sx={{
+                      fontSize: '0.6rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      color: dpsIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                      mt: 0.5,
+                    }}
+                  >
+                    Assignment
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                    <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Role Label"
+                        placeholder={`DD${slot.slotNumber}`}
+                        value={slot.roleLabel || ''}
+                        onChange={(e) => onChange({ roleLabel: e.target.value })}
+                        sx={glassSx}
+                      />
+                    </Box>
+                    <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        type="number"
+                        label="Player #"
+                        value={slot.playerNumber || ''}
+                        onChange={(e) =>
+                          onChange({
+                            playerNumber: e.target.value
+                              ? parseInt(e.target.value, 10)
+                              : undefined,
+                          })
+                        }
+                        sx={glassSx}
+                      />
+                    </Box>
+                    <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
+                      <Autocomplete
+                        multiple
+                        freeSolo
+                        size="small"
+                        options={[]}
+                        value={slot.labels || []}
+                        onChange={(_, value) => onChange({ labels: value })}
+                        renderTags={(value, getTagProps) =>
+                          value.map((option, index) => (
+                            <Chip
+                              {...getTagProps({ index })}
+                              key={option}
+                              label={option}
+                              size="small"
+                              sx={{
+                                borderRadius: '6px',
+                                backgroundColor: dpsIsDark
+                                  ? 'rgba(255,255,255,0.06)'
+                                  : 'rgba(0,0,0,0.05)',
+                                border: dpsIsDark
+                                  ? '1px solid rgba(255,255,255,0.1)'
+                                  : '1px solid rgba(0,0,0,0.1)',
+                                fontWeight: 500,
+                                fontSize: '0.75rem',
+                              }}
+                            />
+                          ))
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            size="small"
+                            label="Tags"
+                            placeholder="Add tags"
+                            sx={glassSx}
+                          />
+                        )}
+                      />
+                    </Box>
+                  </Box>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    multiline
+                    minRows={1}
+                    maxRows={4}
+                    label="Role Notes"
+                    placeholder="e.g., Portal L, Z'en, Ele sus"
+                    value={slot.roleNotes || ''}
+                    onChange={(e) => onChange({ roleNotes: e.target.value })}
+                    sx={glassSx}
+                  />
+
+                  {/* Extra Gear */}
+                  <Typography
+                    sx={{
+                      fontSize: '0.6rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      color: dpsIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                      mt: 0.5,
+                    }}
+                  >
+                    Extra Gear
+                  </Typography>
+                  <Autocomplete
+                    multiple
+                    freeSolo
+                    size="small"
+                    options={[...ALL_5PIECE_SETS, ...MONSTER_SETS]
+                      .map((id) => getSetDisplayName(id))
+                      .sort()}
+                    value={(slot.additionalSets || []).map((id) => getSetDisplayName(id))}
+                    onChange={(_, value) =>
+                      onChange({
+                        additionalSets: value
+                          .map((name) => findSetIdByName(name))
+                          .filter((id): id is KnownSetIDs => id !== undefined),
+                      })
+                    }
+                    groupBy={(option) => {
+                      const setId = findSetIdByName(option);
+                      if (setId && isDDSpecialSet(setId)) return 'DD Special Sets';
+                      if (setId && isMonsterSet(setId)) return 'Monster Sets';
+                      return 'Other';
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Additional Sets"
+                        helperText="e.g., arena weapons, mythics (type custom set name if not listed)"
+                        sx={glassSx}
+                      />
+                    )}
+                    renderOption={(props, option) => <li {...props}>{option}</li>}
+                  />
+
+                  {/* Build */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      mt: 0.5,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: '0.6rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: dpsIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                      }}
+                    >
+                      Build
+                    </Typography>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          size="small"
+                          checked={slot.skillLines?.isFlex ?? true}
+                          onChange={(e) =>
+                            onChange({
+                              skillLines: {
+                                ...(slot.skillLines || {
+                                  line1: '',
+                                  line2: '',
+                                  line3: '',
+                                  isFlex: true,
+                                }),
+                                isFlex: e.target.checked,
+                              },
+                            })
+                          }
+                          sx={{ p: 0.5 }}
+                        />
+                      }
+                      label="Any class"
+                      sx={{
+                        ml: 'auto',
+                        mr: 0,
+                        '& .MuiFormControlLabel-label': {
+                          fontSize: '0.75rem',
+                          color: dpsIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                        },
+                      }}
+                    />
+                  </Box>
+                  {slot.skillLines && !slot.skillLines.isFlex && (
+                    <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                      <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
+                        <Autocomplete
+                          freeSolo
+                          size="small"
+                          options={[...CLASS_SKILL_LINES].sort()}
+                          value={slot.skillLines.line1}
+                          onChange={(_, value) =>
+                            onChange({
+                              skillLines: {
+                                ...slot.skillLines!,
+                                line1: value || '',
+                              },
+                            })
+                          }
+                          renderInput={(params) => (
+                            <TextField {...params} label="Skill Line 1" sx={glassSx} />
+                          )}
+                          renderOption={(props, option) => (
+                            <li {...props}>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {getSkillLineIcon(option)}
+                                {option}
+                              </Box>
+                            </li>
+                          )}
+                        />
+                      </Box>
+                      <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
+                        <Autocomplete
+                          freeSolo
+                          size="small"
+                          options={[...CLASS_SKILL_LINES].sort()}
+                          value={slot.skillLines.line2}
+                          onChange={(_, value) =>
+                            onChange({
+                              skillLines: {
+                                ...slot.skillLines!,
+                                line2: value || '',
+                              },
+                            })
+                          }
+                          renderInput={(params) => (
+                            <TextField {...params} label="Skill Line 2" sx={glassSx} />
+                          )}
+                          renderOption={(props, option) => (
+                            <li {...props}>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {getSkillLineIcon(option)}
+                                {option}
+                              </Box>
+                            </li>
+                          )}
+                        />
+                      </Box>
+                      <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
+                        <Autocomplete
+                          freeSolo
+                          size="small"
+                          options={[...CLASS_SKILL_LINES].sort()}
+                          value={slot.skillLines.line3}
+                          onChange={(_, value) =>
+                            onChange({
+                              skillLines: {
+                                ...slot.skillLines!,
+                                line3: value || '',
+                              },
+                            })
+                          }
+                          renderInput={(params) => (
+                            <TextField {...params} label="Skill Line 3" sx={glassSx} />
+                          )}
+                          renderOption={(props, option) => (
+                            <li {...props}>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {getSkillLineIcon(option)}
+                                {option}
+                              </Box>
+                            </li>
+                          )}
+                        />
+                      </Box>
+                    </Box>
+                  )}
+
+                  <TextField
+                    fullWidth
+                    multiline
+                    size="small"
+                    rows={2}
+                    label="Notes"
+                    value={slot.notes || ''}
+                    onChange={(e) => onChange({ notes: e.target.value })}
+                    sx={glassSx}
+                  />
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
           </Stack>
         </CardContent>
       </Card>
@@ -5045,6 +5496,25 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
       groupedDDs.get(group)!.push(dd);
     });
 
+    // Helper to format DPS gear/build line
+    const formatDPSDetails = (dd: DPSSlot): void => {
+      const gearParts: string[] = [];
+      if (dd.set1) gearParts.push(getSetDisplayName(dd.set1));
+      if (dd.set2) gearParts.push(getSetDisplayName(dd.set2));
+      if (dd.monsterSet) gearParts.push(getSetDisplayName(dd.monsterSet));
+      if (dd.additionalSets) {
+        dd.additionalSets.forEach((id) => gearParts.push(getSetDisplayName(id)));
+      }
+      if (gearParts.length) lines.push(gearParts.join('/'));
+      if (dd.skillLines) {
+        const sl = formatSkillLines(dd.skillLines);
+        const ult = dd.ultimate ? formatUlt(dd.ultimate) : '';
+        if (sl || ult) lines.push(`${sl}${ult}`);
+      } else if (dd.ultimate) {
+        lines.push(formatUlt(dd.ultimate).trim());
+      }
+    };
+
     // Print each group
     groupedDDs.forEach((dds, groupName) => {
       lines.push(groupName);
@@ -5056,14 +5526,30 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
           : '';
         const labels = dd.labels && dd.labels.length > 0 ? ` (${dd.labels.join(', ')})` : '';
         lines.push(`${dd.slotNumber}${typeLabel}${roleNote}:${playerName}${labels}`);
-        if (dd.skillLines) {
-          const skillLines = formatSkillLines(dd.skillLines);
-          if (skillLines) lines.push(skillLines);
-        }
+        formatDPSDetails(dd);
       });
       lines.push('');
     });
   } else {
+    // Helper to format DPS gear/build line
+    const formatDPSDetails = (dd: DPSSlot): void => {
+      const gearParts: string[] = [];
+      if (dd.set1) gearParts.push(getSetDisplayName(dd.set1));
+      if (dd.set2) gearParts.push(getSetDisplayName(dd.set2));
+      if (dd.monsterSet) gearParts.push(getSetDisplayName(dd.monsterSet));
+      if (dd.additionalSets) {
+        dd.additionalSets.forEach((id) => gearParts.push(getSetDisplayName(id)));
+      }
+      if (gearParts.length) lines.push(gearParts.join('/'));
+      if (dd.skillLines) {
+        const sl = formatSkillLines(dd.skillLines);
+        const ult = dd.ultimate ? formatUlt(dd.ultimate) : '';
+        if (sl || ult) lines.push(`${sl}${ult}`);
+      } else if (dd.ultimate) {
+        lines.push(formatUlt(dd.ultimate).trim());
+      }
+    };
+
     // No groups - print DDs sequentially
     sortedDPS.forEach((dd) => {
       const roleNote = dd.roleNotes ? ` [${dd.roleNotes}]` : '';
@@ -5073,10 +5559,7 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
         : '';
       const labels = dd.labels && dd.labels.length > 0 ? ` (${dd.labels.join(', ')})` : '';
       lines.push(`${dd.slotNumber}${typeLabel}${roleNote}:${playerName}${labels}`);
-      if (dd.skillLines) {
-        const skillLines = formatSkillLines(dd.skillLines);
-        if (skillLines) lines.push(skillLines);
-      }
+      formatDPSDetails(dd);
     });
     lines.push('');
   }

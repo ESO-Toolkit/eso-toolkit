@@ -123,10 +123,19 @@ export interface DPSSlot {
   slotNumber: number; // 1-8
   playerName?: string;
   playerNumber?: number;
+  roleLabel?: string; // e.g., "DD1", "Portal DD"
   roleNotes?: string; // e.g., "Portal L - Ele sus", "Z'en", etc.
   labels?: string[]; // Multiple labels/tags for the player
-  gearSets?: KnownSetIDs[]; // Optional gear set tracking
+  // Structured gear (matches tank/healer pattern)
+  set1?: KnownSetIDs; // Primary 5-piece set (Body)
+  set2?: KnownSetIDs; // Secondary 5-piece set (Jewelry)
+  monsterSet?: KnownSetIDs; // Monster/Mythic set
+  additionalSets?: KnownSetIDs[]; // Extra gear sets
+  /** @deprecated Use set1/set2/monsterSet instead. Kept for backward compat decoding. */
+  gearSets?: KnownSetIDs[]; // Legacy flat gear set tracking
   skillLines?: SkillLineConfig;
+  championPoint?: string | null; // Champion point selection (free text or preset)
+  ultimate?: string | null; // Ultimate ability
   group?: PlayerGroup;
   notes?: string;
   jailDDType?: JailDDType; // If set, this slot is configured as a jail DD
