@@ -118,8 +118,8 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) 
     return result;
   }, [combatantInfoEvents, playerData?.playersById]);
 
-  // Find the first damage dealer
-  const firstDamageDealer = React.useMemo(() => {
+  // Find the fight initiator (the first friendly player to deal damage)
+  const fightInitiator = React.useMemo(() => {
     if (!damageEvents || damageEvents.length === 0 || !playerData?.playersById) {
       return null;
     }
@@ -150,7 +150,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) 
       durationMs={durationMs}
       abilityEquipped={abilityEquipped}
       buffActors={buffActors}
-      firstDamageDealer={firstDamageDealer}
+      fightInitiator={fightInitiator}
       selectedPlayerId={selectedFriendlyPlayerId ?? null}
       isLoading={isCombatantInfoEventsLoading || isDamageEventsLoading || isPlayerDataLoading}
     />
