@@ -66,13 +66,15 @@ const formatGearSets = (
   return [...Array.from(new Set(five)).sort(), ...Array.from(new Set(monster))];
 };
 
-const formatSkillLines = (sl?: {
-  line1?: string;
-  line2?: string;
-  line3?: string;
-  isFlex?: boolean;
-  notes?: string;
-} | null): string => {
+const formatSkillLines = (
+  sl?: {
+    line1?: string;
+    line2?: string;
+    line3?: string;
+    isFlex?: boolean;
+    notes?: string;
+  } | null,
+): string => {
   if (!sl) return '';
   if (sl.isFlex) return 'Flexible';
   return [sl.line1, sl.line2, sl.line3].filter(Boolean).join(' / ');
@@ -687,7 +689,9 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
 
         {/* Secondary info: skill lines, gear */}
         {(skillLines || gearSets.length > 0) && (
-          <Box sx={{ mt: 0.375, display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
+          <Box
+            sx={{ mt: 0.375, display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}
+          >
             {skillLines && (
               <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
                 {skillLines}
@@ -854,7 +858,9 @@ export const RosterViewPage: React.FC = () => {
     return (
       <Container maxWidth="lg" sx={{ pt: 4, pb: 6, px: { xs: 2, sm: 3 } }}>
         <Skeleton variant="text" width="40%" height={48} sx={{ mb: 3, borderRadius: 2 }} />
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 3 }}>
+        <Box
+          sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 3 }}
+        >
           {[...Array<number>(4)].map((_, i) => (
             <Skeleton key={i} variant="rectangular" height={160} sx={{ borderRadius: 2 }} />
           ))}
@@ -951,9 +957,7 @@ export const RosterViewPage: React.FC = () => {
               fontSize: '0.75rem',
               fontWeight: 500,
               color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-              border: isDarkMode
-                ? '1px solid rgba(255,255,255,0.1)'
-                : '1px solid rgba(0,0,0,0.12)',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.12)',
               backgroundColor: 'transparent',
               '&:hover': {
                 backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
@@ -1064,7 +1068,12 @@ export const RosterViewPage: React.FC = () => {
         />
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
           {sortedDPS.map((slot) => (
-            <DPSRow key={slot.slotNumber} slot={slot} color={roleColors.dps} isDarkMode={isDarkMode} />
+            <DPSRow
+              key={slot.slotNumber}
+              slot={slot}
+              color={roleColors.dps}
+              isDarkMode={isDarkMode}
+            />
           ))}
         </Box>
       </Box>
@@ -1122,9 +1131,7 @@ export const RosterViewPage: React.FC = () => {
             fontSize: '0.75rem',
             fontWeight: 500,
             color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-            border: isDarkMode
-              ? '1px solid rgba(255,255,255,0.08)'
-              : '1px solid rgba(0,0,0,0.1)',
+            border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.1)',
             backgroundColor: 'transparent',
             '&:hover': {
               backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
@@ -1163,17 +1170,21 @@ function buildDiscordText(roster: RaidRoster): string {
   lines.push(`**${roster.rosterName}**`, '');
 
   const fmtUlt = (u: string | null): string => (u ? ` [${u}]` : '');
-  const fmtSkillLines = (sl: { line1?: string; line2?: string; line3?: string; isFlex?: boolean } | undefined): string => {
+  const fmtSkillLines = (
+    sl: { line1?: string; line2?: string; line3?: string; isFlex?: boolean } | undefined,
+  ): string => {
     if (!sl) return '';
     if (sl.isFlex) return 'Flexible';
     return [sl.line1, sl.line2, sl.line3].filter(Boolean).join('/');
   };
-  const fmtGear = (sets: {
-    set1?: import('../types/abilities').KnownSetIDs;
-    set2?: import('../types/abilities').KnownSetIDs;
-    monsterSet?: import('../types/abilities').KnownSetIDs;
-    additionalSets?: import('../types/abilities').KnownSetIDs[];
-  } | null): string => formatGearSets(sets).join('/');
+  const fmtGear = (
+    sets: {
+      set1?: import('../types/abilities').KnownSetIDs;
+      set2?: import('../types/abilities').KnownSetIDs;
+      monsterSet?: import('../types/abilities').KnownSetIDs;
+      additionalSets?: import('../types/abilities').KnownSetIDs[];
+    } | null,
+  ): string => formatGearSets(sets).join('/');
 
   // Tanks
   ([roster.tank1, roster.tank2] as const).forEach((tank, i) => {
@@ -1200,7 +1211,12 @@ function buildDiscordText(roster: RaidRoster): string {
     const pn = h.playerName ? ` ${h.playerName}` : '';
     const lbs = h.labels?.length ? ` [${h.labels.join(', ')}]` : '';
     lines.push(`${lbl}${rn}:${pn}${lbs}`);
-    const g = fmtGear({ set1: h.set1, set2: h.set2, monsterSet: h.monsterSet, additionalSets: h.additionalSets });
+    const g = fmtGear({
+      set1: h.set1,
+      set2: h.set2,
+      monsterSet: h.monsterSet,
+      additionalSets: h.additionalSets,
+    });
     if (g) lines.push(g);
     if (h.healerBuff) lines.push(h.healerBuff);
     const sl = fmtSkillLines(h.skillLines);
@@ -1217,7 +1233,9 @@ function buildDiscordText(roster: RaidRoster): string {
   sorted.forEach((dd) => {
     const rn = dd.roleNotes ? ` [${dd.roleNotes}]` : '';
     const pn = dd.playerName ? ` ${dd.playerName}` : '';
-    const jl = dd.jailDDType ? ` [${DPS_JAIL_LABELS[dd.jailDDType] ?? dd.customDescription ?? ''}]` : '';
+    const jl = dd.jailDDType
+      ? ` [${DPS_JAIL_LABELS[dd.jailDDType] ?? dd.customDescription ?? ''}]`
+      : '';
     const lbs = dd.labels?.length ? ` (${dd.labels.join(', ')})` : '';
     lines.push(`${dd.slotNumber}${jl}${rn}:${pn}${lbs}`);
     const sl = dd.skillLines ? fmtSkillLines(dd.skillLines) : '';
@@ -1231,4 +1249,3 @@ function buildDiscordText(roster: RaidRoster): string {
 
   return lines.join('\n');
 }
-
