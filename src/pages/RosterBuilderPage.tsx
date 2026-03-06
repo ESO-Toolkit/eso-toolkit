@@ -105,6 +105,7 @@ import {
   validateCompatibility,
 } from '../types/roster';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
+import { encodeRosterToURL as encodeRosterToURLShared } from '../utils/rosterEncoding';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
 
 /**
@@ -1075,17 +1076,19 @@ export const RosterBuilderPage: React.FC = () => {
     };
   }, [roster]);
 
-  // Generate shareable link
+  // Generate shareable read-only link (points to /rv, the dedicated share view)
   const handleCopyLink = useCallback(() => {
-    void encodeRosterToURL(roster).then((encoded) => {
+    void encodeRosterToURLShared(roster).then((encoded) => {
       if (encoded) {
-        const url = `${window.location.origin}${window.location.pathname}?r=${encoded}`;
+        // Derive base path to support subdirectory deployments (e.g. /dev-previews/pr-xxx/)
+        const basePath = window.location.pathname.replace(/\/roster-builder(\/.*)?$/, '');
+        const url = `${window.location.origin}${basePath}/rv?r=${encoded}`;
         navigator.clipboard
           .writeText(url)
           .then(() => {
             setSnackbar({
               open: true,
-              message: 'Shareable link copied to clipboard!',
+              message: 'Read-only link copied to clipboard!',
               severity: 'success',
             });
           })
@@ -2235,7 +2238,7 @@ export const RosterBuilderPage: React.FC = () => {
                 </Box>
               </Tooltip>
             </Box>
-            <Tooltip title="Copy shareable link" arrow>
+            <Tooltip title="Copy read-only share link — opens /rv view" arrow>
               <Button
                 size="small"
                 startIcon={<LinkIcon />}

@@ -123,6 +123,9 @@ const SampleReportPage = React.lazy(() =>
 const RosterBuilderPage = React.lazy(() =>
   import('./pages/RosterBuilderPage').then((module) => ({ default: module.RosterBuilderPage })),
 );
+const RosterViewPage = React.lazy(() =>
+  import('./pages/RosterViewPage').then((module) => ({ default: module.RosterViewPage })),
+);
 const AboutPage = React.lazy(() =>
   import('./pages/AboutPage').then((module) => ({ default: module.AboutPage })),
 );
@@ -537,6 +540,17 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <RosterBuilderPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            {/* Read-only roster share view — accessible via direct link only */}
+            <Route
+              path="/rv"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <RosterViewPage />
                   </Suspense>
                 </ErrorBoundary>
               }
