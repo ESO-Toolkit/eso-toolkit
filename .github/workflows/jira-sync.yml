@@ -86,18 +86,24 @@ jobs:
           TICKET: ${{ steps.jira-key.outputs.ticket }}
           TARGET_STATUS: ${{ steps.target-status.outputs.status }}
         run: |
-          AUTH=$(echo -n "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" | base64)
+          CURL_AUTH="--user ${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}"
 
           # -- 1. Fetch available transitions for this issue --
-          TRANSITIONS_JSON=$(curl --silent --fail \
-            --header "Authorization: Basic $AUTH" \
+          HTTP_BODY=$(mktemp)
+          HTTP_CODE=$(curl --silent --output "$HTTP_BODY" --write-out "%{http_code}" \
+            $CURL_AUTH \
             --header "Content-Type: application/json" \
             "$JIRA_BASE_URL/rest/api/3/issue/$TICKET/transitions")
 
-          if [[ $? -ne 0 ]]; then
-            echo "❌ Failed to fetch transitions for $TICKET"
+          if [[ "$HTTP_CODE" -lt 200 || "$HTTP_CODE" -ge 300 ]]; then
+            echo "❌ Failed to fetch transitions for $TICKET (HTTP $HTTP_CODE)"
+            cat "$HTTP_BODY"
+            rm -f "$HTTP_BODY"
             exit 1
           fi
+
+          TRANSITIONS_JSON=$(cat "$HTTP_BODY")
+          rm -f "$HTTP_BODY"
 
           # -- 2. Find the transition ID that matches the target status name --
           TRANSITION_ID=$(echo "$TRANSITIONS_JSON" | \
@@ -129,8 +135,8 @@ jobs:
 
           # -- 3. Apply the transition --
           HTTP_STATUS=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+            $CURL_AUTH \
             --request POST \
-            --header "Authorization: Basic $AUTH" \
             --header "Content-Type: application/json" \
             --data "{\"transition\":{\"id\":\"$TRANSITION_ID\"}}" \
             "$JIRA_BASE_URL/rest/api/3/issue/$TICKET/transitions")
