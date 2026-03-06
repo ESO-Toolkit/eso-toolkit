@@ -49,6 +49,7 @@ import {
   TableRow,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -249,6 +250,30 @@ const FOOD_TYPE_LABELS: Record<string, string> = {
  */
 const ParseAnalysisPageContent: React.FC = () => {
   const roleColors = useRoleColors();
+  const theme = useTheme();
+
+  /**
+   * Get theme-aware semantic color for text display
+   * Uses .light variant on dark mode for better contrast
+   */
+  const getMetricColor = (
+    excellent: boolean,
+    good: boolean,
+  ): string => {
+    if (excellent) {
+      return theme.palette.mode === 'dark'
+        ? theme.palette.success.light
+        : theme.palette.success.main;
+    }
+    if (good) {
+      return theme.palette.mode === 'dark'
+        ? theme.palette.warning.light
+        : theme.palette.warning.main;
+    }
+    return theme.palette.mode === 'dark'
+      ? theme.palette.error.light
+      : theme.palette.error.main;
+  };
 
   /** Shared glass-card styles — NO blur on cards (blur is modal-only per Principle 6) */
   const glassCardSx = {
@@ -1269,7 +1294,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     const isGood = activePercentage >= 85;
     const progressValue = Math.min(100, activePercentage);
     const progressColor = isExcellent ? 'success' : isGood ? 'warning' : 'error';
-    const activityColor = isExcellent ? 'success.main' : isGood ? 'warning.main' : 'error.main';
+    const activityColor = getMetricColor(isExcellent, isGood);
     const activityColorLight = isExcellent
       ? 'rgba(76, 175, 80, 0.1)'
       : isGood
@@ -1409,7 +1434,15 @@ const ParseAnalysisPageContent: React.FC = () => {
               <Typography
                 variant="caption"
                 fontWeight={600}
-                color={downtimeSeconds <= 5 ? 'success.main' : 'error.main'}
+                sx={{
+                  color: downtimeSeconds <= 5
+                    ? theme.palette.mode === 'dark'
+                      ? theme.palette.success.light
+                      : theme.palette.success.main
+                    : theme.palette.mode === 'dark'
+                      ? theme.palette.error.light
+                      : theme.palette.error.main,
+                }}
               >
                 {downtimeSeconds.toFixed(1)}s
               </Typography>
@@ -1445,7 +1478,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     const isGoodCPM = cpm >= 50;
     const isExcellentCPM = cpm >= 60;
 
-    const cpmColor = isExcellentCPM ? 'success.main' : isGoodCPM ? 'warning.main' : 'error.main';
+    const cpmColor = getMetricColor(isExcellentCPM, isGoodCPM);
     const cpmColorLight = isExcellentCPM
       ? 'rgba(76, 175, 80, 0.1)'
       : isGoodCPM
@@ -1923,11 +1956,7 @@ const ParseAnalysisPageContent: React.FC = () => {
 
     const isGoodWeaving = weaveAccuracy >= 80;
     const isExcellentWeaving = weaveAccuracy >= 90;
-    const weaveColor = isExcellentWeaving
-      ? 'success.main'
-      : isGoodWeaving
-        ? 'warning.main'
-        : 'error.main';
+    const weaveColor = getMetricColor(isExcellentWeaving, isGoodWeaving);
     const weaveColorLight = isExcellentWeaving
       ? 'rgba(76, 175, 80, 0.1)'
       : isGoodWeaving
