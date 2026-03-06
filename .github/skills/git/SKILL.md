@@ -40,7 +40,19 @@ Install twig (optional): `npm install -g @gittwig/twig`
 
 ## Creating a Branch
 
-### Simple branch from main
+### ⚠️ Pre-flight: Check if the current worktree is occupied
+
+Before creating any new branch, check whether the current worktree already has a different feature branch checked out:
+
+```powershell
+$currentBranch = git rev-parse --abbrev-ref HEAD
+```
+
+- If `$currentBranch` is `main` → safe to create a branch in-place (checkout below)
+- If `$currentBranch` is a **different** `ESO-XXX/...` branch → **use a worktree** (see [Creating a Worktree](#creating-a-worktree) below) to avoid displacing the existing work
+- If `$currentBranch` is the **same** ticket branch → you're already on it, no action needed
+
+### Simple branch from main (in-place)
 ```powershell
 git checkout main
 git pull origin main
@@ -59,6 +71,39 @@ git checkout -b ESO-569/implement-replay-system
 # Register parent dependency (twig with fallback)
 twig branch depend ESO-569/implement-replay-system ESO-449/structure-redux-state 2>$null
 if ($LASTEXITCODE -ne 0) { git config "branch.ESO-569/implement-replay-system.parent" "ESO-449/structure-redux-state" }
+```
+
+## Creating a Worktree
+
+Use a worktree when the current working directory already has a different feature branch checked out. This keeps both branches available simultaneously without displacing either.
+
+```powershell
+$newBranch = "ESO-671/jira-branch-status-action"
+$parentBranch = "main"  # or the stacked parent branch
+$worktreePath = "..\eso-log-aggregator-$($newBranch -replace '/', '-')"
+
+# Create worktree with a new branch based on the parent
+git worktree add $worktreePath -b $newBranch $parentBranch
+Set-Location $worktreePath
+
+# Install dependencies (worktrees share .git but not node_modules)
+npm ci
+
+# Register parent dependency (twig with fallback)
+twig branch depend $newBranch $parentBranch 2>$null
+if ($LASTEXITCODE -ne 0) { git config "branch.$newBranch.parent" $parentBranch }
+```
+
+**Dev server**: Use the next available port pair (see CLAUDE.md — Worktree Port Allocation):
+```powershell
+$env:PORT = "3002" ; npm run dev   # worktree 1
+```
+
+**Cleanup** after work is merged:
+```powershell
+# Navigate back to main worktree first
+Set-Location D:\code\eso-log-aggregator
+git worktree remove $worktreePath
 ```
 
 ## Viewing Branch Tree
