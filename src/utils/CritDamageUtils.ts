@@ -12,6 +12,11 @@ import {
 import { getSetCount, countAxesInWeaponSlots, hasTwoHandedAxeEquipped } from './gearUtilities';
 
 const CRITICAL_DAMAGE_BUFF_VARIANTS: Partial<Record<KnownAbilities, KnownAbilities[]>> = {
+  // Advanced Species has two passive ranks; either may appear in combatantInfo.auras
+  [KnownAbilities.ADVANCED_SPECIES]: [
+    KnownAbilities.ADVANCED_SPECIES,
+    KnownAbilities.ADVANCED_SPECIES_RANK_1,
+  ],
   [KnownAbilities.LUCENT_ECHOES_RECIPIENT]: [
     KnownAbilities.LUCENT_ECHOES_RECIPIENT,
     KnownAbilities.LUCENT_ECHOES_WEARER,

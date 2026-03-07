@@ -326,18 +326,19 @@ describe('CritDamageUtils with BuffLookup', () => {
       expect(isAuraActive(combatantWithRank2, KnownAbilities.ADVANCED_SPECIES)).toBe(true);
     });
 
-    it('should not detect Advanced Species rank 1 aura (86068) as the rank 2 aura', () => {
-      // Rank 1 has ID 86068; rank 2 (what we detect) has ID 86069
+    it('should detect Advanced Species rank 1 aura (86068) via variant mapping', () => {
+      // Players with only rank 1 unlocked have 86068 in their auras; the variant
+      // map ensures checking for ADVANCED_SPECIES (rank 2) also matches rank 1.
       const combatantWithRank1 = createMockCombatantInfoEvent({
         auras: [
           createMockCombatantAura({
-            ability: 86068 as KnownAbilities,
+            ability: KnownAbilities.ADVANCED_SPECIES_RANK_1,
             name: 'Advanced Species',
           }),
         ],
       });
 
-      expect(isAuraActive(combatantWithRank1, KnownAbilities.ADVANCED_SPECIES)).toBe(false);
+      expect(isAuraActive(combatantWithRank1, KnownAbilities.ADVANCED_SPECIES)).toBe(true);
     });
 
     it('should detect Lucent Echoes as computed source for critical damage calculation', () => {
