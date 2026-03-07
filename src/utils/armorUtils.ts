@@ -5,27 +5,44 @@
 import { ArmorType, GearType, PlayerGear } from '../types/playerDetails';
 
 /**
- * Corrections for items where ESOLogs source data reports the wrong armor weight.
- * Maps item ID → correct ArmorType.
+ * Item IDs for mythic armor pieces that ESOLogs misreports as Light.
  *
  * Root cause: ESOLogs reports all mythic armor as type=1 (Light) regardless of actual
  * weight, because mythic items have no armor-weight variants in the game data.
- * Only non-light mythics need entries here; light mythics are already correct.
  * https://bkrupa.atlassian.net/browse/ESO-667
  */
-const ARMOR_TYPE_CORRECTIONS: Record<number, ArmorType> = {
-  165879: ArmorType.MEDIUM, // Snow Treaders (set 519) — medium feet
-  165899: ArmorType.HEAVY, // Bloodlord's Embrace (set 521) — heavy chest
-  175524: ArmorType.MEDIUM, // Harpooner's Wading Kilt (set 594) — medium waist
-  175525: ArmorType.HEAVY, // Gaze of Sithis (set 593) — heavy head
-  187655: ArmorType.HEAVY, // Dov-Rha Sabatons (set 655) — heavy feet
-  187656: ArmorType.MEDIUM, // Lefthander's Aegis Belt (set 656) — medium waist
-  190886: ArmorType.MEDIUM, // Faun's Lark Cladding (set 674) — medium chest
-  190888: ArmorType.HEAVY, // Syrabane's Ward (set 676) — heavy waist
-  194510: ArmorType.HEAVY, // Esoteric Environment Greaves (set 692) — heavy legs
-  205385: ArmorType.HEAVY, // Rourken Steamguards (set 760) — heavy hands
-  216236: ArmorType.MEDIUM, // Rakkhat's Voidmantle (set 812) — medium shoulders
-  223189: ArmorType.MEDIUM, // Huntsman's Warmask (set 845) — medium head
+export enum MythicArmorId {
+  SnowTreaders = 165879, // set 519 — medium feet
+  BloodlordsEmbrace = 165899, // set 521 — heavy chest
+  Harpooners_WadingKilt = 175524, // set 594 — medium waist
+  GazeOfSithis = 175525, // set 593 — heavy head
+  DovRhaSabatons = 187655, // set 655 — heavy feet
+  LefthandersAegisBelt = 187656, // set 656 — medium waist
+  FaunsLarkCladding = 190886, // set 674 — medium chest
+  SyrabanesWard = 190888, // set 676 — heavy waist
+  EsotericEnvironmentGreaves = 194510, // set 692 — heavy legs
+  RourkenSteamguards = 205385, // set 760 — heavy hands
+  RakkhatsVoidmantle = 216236, // set 812 — medium shoulders
+  HuntsmansWarmask = 223189, // set 845 — medium head
+}
+
+/**
+ * Corrections for mythic armor pieces where ESOLogs reports the wrong armor weight.
+ * Only non-light mythics need entries here; light mythics are already correct.
+ */
+const ARMOR_TYPE_CORRECTIONS: Record<MythicArmorId, ArmorType> = {
+  [MythicArmorId.SnowTreaders]: ArmorType.MEDIUM,
+  [MythicArmorId.BloodlordsEmbrace]: ArmorType.HEAVY,
+  [MythicArmorId.Harpooners_WadingKilt]: ArmorType.MEDIUM,
+  [MythicArmorId.GazeOfSithis]: ArmorType.HEAVY,
+  [MythicArmorId.DovRhaSabatons]: ArmorType.HEAVY,
+  [MythicArmorId.LefthandersAegisBelt]: ArmorType.MEDIUM,
+  [MythicArmorId.FaunsLarkCladding]: ArmorType.MEDIUM,
+  [MythicArmorId.SyrabanesWard]: ArmorType.HEAVY,
+  [MythicArmorId.EsotericEnvironmentGreaves]: ArmorType.HEAVY,
+  [MythicArmorId.RourkenSteamguards]: ArmorType.HEAVY,
+  [MythicArmorId.RakkhatsVoidmantle]: ArmorType.MEDIUM,
+  [MythicArmorId.HuntsmansWarmask]: ArmorType.MEDIUM,
 };
 
 /**
@@ -33,7 +50,7 @@ const ARMOR_TYPE_CORRECTIONS: Record<number, ArmorType> = {
  * for items where ESOLogs source data has an incorrect armor weight.
  */
 export function resolveArmorType(item: PlayerGear): GearType {
-  return ARMOR_TYPE_CORRECTIONS[item.id] ?? item.type;
+  return ARMOR_TYPE_CORRECTIONS[item.id as MythicArmorId] ?? item.type;
 }
 
 /**
