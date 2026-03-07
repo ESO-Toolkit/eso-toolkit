@@ -112,12 +112,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
             gap: 2,
           }}
         >
-          <Typography
-            component="div"
-            variant="body2"
-            color="text.secondary"
-            sx={{ mb: 2 }}
-          >
+          <Typography component="div" variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Penetration analysis for all players against{' '}
             {selectedTargetIds.size === 1
               ? 'the selected target'
@@ -160,8 +155,8 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
         </DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" paragraph>
-            ESO TK and Combat Metrics (CMX) use different methodologies to calculate penetration,
-            so small differences are expected. Here are the key differences:
+            ESO TK and Combat Metrics (CMX) use different methodologies to calculate penetration, so
+            small differences are expected. Here are the key differences:
           </Typography>
 
           <Typography variant="subtitle2" gutterBottom>
