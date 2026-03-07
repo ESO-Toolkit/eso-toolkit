@@ -190,9 +190,35 @@ npm test -- --watchAll=false
 - Run `npm run lint:fix` and `npm run format` to auto-fix lint/format issues, then re-run `npm run validate`.
 - Fix any failing unit tests before continuing.
 
-## Step 6 — Update Ticket Status When Work Is Complete
+## Step 6 — Commit and Push
 
-When implementation is finished, all quality checks pass, and changes are committed/pushed, update the Jira ticket status:
+Once all quality checks pass, ensure all changes are committed and the branch is pushed:
+
+```powershell
+# Stage and commit any remaining changes (skip if already committed)
+git add -A
+git status --short  # verify what will be committed before proceeding
+
+# Commit (use PowerShell here-string + --file to preserve backticks in message)
+$msg = @'
+type(scope): description
+'@
+$msg | Set-Content "$env:TEMP\commit-msg.txt"
+git commit --file "$env:TEMP\commit-msg.txt"
+
+# Push (first push sets upstream; subsequent pushes just use 'git push')
+git push -u origin HEAD
+```
+
+**After pushing**, verify the branch is visible on the remote before creating a PR:
+
+```powershell
+git log --oneline origin/$(git branch --show-current)..HEAD  # should be empty if in sync
+```
+
+## Step 7 — Update Ticket Status When Work Is Complete
+
+When implementation is finished, all quality checks pass, and changes are committed and pushed, update the Jira ticket status:
 
 ```
 @workspace Move ESO-XXX to "In Review"
