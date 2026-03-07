@@ -7,6 +7,12 @@ import { ArmorType, GearSlot, GearTrait, PlayerGear, WeaponType } from '../types
 import { BuffLookupData, isBuffActiveOnTarget } from './BuffLookupUtils';
 import { ItemQuality } from './gearUtilities';
 
+// Variant map: abilities where rank 1 and rank 2 produce different aura IDs in combatantInfo
+const AURA_VARIANTS: Partial<Record<KnownAbilities, KnownAbilities[]>> = {
+  // Frozen Armor has two passive ranks; either may appear in combatantInfo.auras
+  [KnownAbilities.FROZEN_ARMOR]: [KnownAbilities.FROZEN_ARMOR, KnownAbilities.FROZEN_ARMOR_RANK_1],
+};
+
 /**
  * Calculate dynamic damage reduction from buffs and debuffs at a specific timestamp for a specific player
  * These are sources that change during combat
@@ -69,7 +75,8 @@ export const ResistanceValues = Object.freeze<Record<string, number>>({
   AEGIS_OF_THE_UNSEEN: 3271,
   BULWARK: 1900, // Bulwark (Champion Point)
   FORTIFIED: 1731, // Fortified (Champion Point)
-  FROZEN_ARMOR_PER_ABILITY: 1240, // Frozen Armor: +1240 resistance per Winter's Embrace ability slotted
+  FROZEN_ARMOR_PER_ABILITY: 1240, // Frozen Armor II: +1240 resistance per Winter's Embrace ability slotted
+  FROZEN_ARMOR_PER_ABILITY_RANK_1: 620, // Frozen Armor I: +620 resistance per Winter's Embrace ability slotted
   MAJOR_RESOLVE: 5948, // Major Resolve/Ward buff
   MINOR_RESOLVE: 2974, // Minor Resolve/Ward buff
   RESOLVE: 343.2, // Resolve (Heavy Armor passive per piece)
@@ -432,7 +439,8 @@ export function isAuraActive(
   abilityId: KnownAbilities,
 ): boolean {
   if (!combatantInfo || !combatantInfo.auras) return false;
-  return combatantInfo.auras.some((aura) => aura.ability === abilityId);
+  const variants = AURA_VARIANTS[abilityId] ?? [abilityId];
+  return combatantInfo.auras.some((aura) => variants.includes(aura.ability));
 }
 
 /**
@@ -507,9 +515,16 @@ export function getResistanceFromComputedSource(
       return countHeavyArmorPieces(combatantInfo) * ResistanceValues.RESOLVE;
     case ComputedDamageReductionSources.FORTIFIED:
       return ResistanceValues.FORTIFIED;
-    case ComputedDamageReductionSources.FROZEN_ARMOR:
-      // Calculate resistance based on Winter's Embrace abilities slotted
-      return countWintersEmbraceAbilities(playerData) * ResistanceValues.FROZEN_ARMOR_PER_ABILITY;
+    case ComputedDamageReductionSources.FROZEN_ARMOR: {
+      // Rank II (86190) grants 1240 resistance per ability; Rank I (86189) grants 620
+      const hasRank2 = combatantInfo?.auras?.some(
+        (aura) => aura.ability === KnownAbilities.FROZEN_ARMOR,
+      );
+      const perAbilityValue = hasRank2
+        ? ResistanceValues.FROZEN_ARMOR_PER_ABILITY
+        : ResistanceValues.FROZEN_ARMOR_PER_ABILITY_RANK_1;
+      return countWintersEmbraceAbilities(playerData) * perAbilityValue;
+    }
     case ComputedDamageReductionSources.AEGIS_OF_THE_UNSEEN:
       // Returns 3271 armor if any arcanist ability is active, otherwise 0
       return ResistanceValues.AEGIS_OF_THE_UNSEEN; // Using literal value due to enum corruption issue

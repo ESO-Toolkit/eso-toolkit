@@ -133,7 +133,8 @@ export enum KnownAbilities {
   FATED_FORTUNE_BUFF = 194875,
   FATED_FORTUNE_STAGE_ONE = 184847,
   FOLLOW_UP = 45446,
-  FROZEN_ARMOR = 86190,
+  FROZEN_ARMOR = 86190, // Warden: Winter's Embrace passive, rank 2 aura
+  FROZEN_ARMOR_RANK_1 = 86189, // Warden: Winter's Embrace passive, rank 1 aura
   HARNESSED_QUINTESSENCE = 184858,
   HEMORRHAGE = 45060,
   ICY_AURA = 86194,
@@ -158,7 +159,8 @@ export enum KnownAbilities {
   TOUGH = 50907,
 
   // Class Passives and Abilities
-  DISMEMBER = 116192, // Necromancer: Grave Lord passive providing 3271 penetration
+  DISMEMBER = 116194, // Necromancer: Grave Lord passive, rank 2 aura providing 3271 penetration
+  DISMEMBER_RANK_1 = 116192, // Necromancer: Grave Lord passive, rank 1 aura providing 1635 penetration
 
   // Computed penetration passives
   PIERCING_PASSIVE = 45233, // Provides 700 penetration
@@ -519,8 +521,9 @@ export enum PenetrationValues {
   // SPECIAL/NON-ARMOR PENETRATION VALUES
   // ========================================
 
-  // Dismember passive provides 3271 penetration
-  DISMEMBER = 3271,
+  // Dismember passive
+  DISMEMBER = 3271, // Rank II: 3271 penetration while a Grave Lord ability is active
+  DISMEMBER_RANK_1 = 1635, // Rank I: 1635 penetration while a Grave Lord ability is active
 
   // Heavy Weapons passive provides 2974 penetration with two-handed maul
   HEAVY_WEAPONS_PENETRATION = 2974,
