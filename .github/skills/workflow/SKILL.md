@@ -19,15 +19,37 @@ This skill MUST be automatically invoked — without waiting for the user to exp
 
 The branch must be confirmed correct before any implementation begins. Skipping this step is the primary cause of commits landing on `main`.
 
-## Step 1 — Check Current Branch
+## Step 1 — Check Current Branch and Working Tree State
 
-Run this command and capture the output:
+Run both commands and capture the output:
 
 ```powershell
 git rev-parse --abbrev-ref HEAD
+git status --short
 ```
 
 ## Step 2 — Evaluate Branch State
+
+### 2a — Handle Uncommitted Changes First
+
+If `git status --short` produced any output, the working tree is dirty. Resolve this **before** any branch creation or `git pull`:
+
+```powershell
+$dirty = git status --short
+if ($dirty) {
+    Write-Warning "Uncommitted changes detected in the current worktree!"
+    $dirty  # show the list so the user can see what's affected
+}
+```
+
+Ask the user what to do with the changes:
+- **Commit them** (preferred if the changes belong on the current branch)
+- **Stash them** (`git stash push -m "WIP: pre-worktree-creation stash"`) if they should be set aside
+- **Discard them** (`git checkout -- .`) only if the user explicitly confirms they are throwaway
+
+Do **not** proceed to branch creation or `git pull` until the working tree is clean.
+
+### 2b — Evaluate Branch
 
 **If branch is `main` or `master`:**
 - Do NOT start or continue any implementation work
@@ -83,6 +105,14 @@ $isOccupied = ($currentBranch -ne 'main') -and ($currentBranch -ne $newBranch)
 
 ```powershell
 $worktreePath = "..\eso-log-aggregator-$($newBranch -replace '/', '-')"
+
+# Verify current worktree is clean before pulling (pull may fail on dirty trees)
+$dirty = git status --short
+if ($dirty) {
+    Write-Error "Working tree has uncommitted changes — resolve them before creating a worktree. Run: git status"
+    return
+}
+git pull origin $parentBranch  # ensure parent is up to date
 git worktree add $worktreePath -b $newBranch $parentBranch
 Set-Location $worktreePath
 
@@ -160,9 +190,35 @@ npm test -- --watchAll=false
 - Run `npm run lint:fix` and `npm run format` to auto-fix lint/format issues, then re-run `npm run validate`.
 - Fix any failing unit tests before continuing.
 
-## Step 6 — Update Ticket Status When Work Is Complete
+## Step 6 — Commit and Push
 
-When implementation is finished, all quality checks pass, and changes are committed/pushed, update the Jira ticket status:
+Once all quality checks pass, ensure all changes are committed and the branch is pushed:
+
+```powershell
+# Stage and commit any remaining changes (skip if already committed)
+git add -A
+git status --short  # verify what will be committed before proceeding
+
+# Commit (use PowerShell here-string + --file to preserve backticks in message)
+$msg = @'
+type(scope): description
+'@
+$msg | Set-Content "$env:TEMP\commit-msg.txt"
+git commit --file "$env:TEMP\commit-msg.txt"
+
+# Push (first push sets upstream; subsequent pushes just use 'git push')
+git push -u origin HEAD
+```
+
+**After pushing**, verify the branch is visible on the remote before creating a PR:
+
+```powershell
+git log --oneline origin/$(git branch --show-current)..HEAD  # should be empty if in sync
+```
+
+## Step 7 — Update Ticket Status When Work Is Complete
+
+When implementation is finished, all quality checks pass, and changes are committed and pushed, update the Jira ticket status:
 
 ```
 @workspace Move ESO-XXX to "In Review"

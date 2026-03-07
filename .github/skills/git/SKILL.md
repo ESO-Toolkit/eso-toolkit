@@ -40,17 +40,24 @@ Install twig (optional): `npm install -g @gittwig/twig`
 
 ## Creating a Branch
 
-### ⚠️ Pre-flight: Check if the current worktree is occupied
+### ⚠️ Pre-flight: Check for uncommitted changes and occupied worktree
 
-Before creating any new branch, check whether the current worktree already has a different feature branch checked out:
+Before creating any new branch, check the current state of the worktree:
 
 ```powershell
 $currentBranch = git rev-parse --abbrev-ref HEAD
+$dirty = git status --short
+if ($dirty) {
+    Write-Warning "Uncommitted changes detected — commit or stash before creating a new branch:"
+    $dirty
+    # Stop here and ask the user how to handle the uncommitted changes
+}
 ```
 
 - If `$currentBranch` is `main` → safe to create a branch in-place (checkout below)
 - If `$currentBranch` is a **different** `ESO-XXX/...` branch → **use a worktree** (see [Creating a Worktree](#creating-a-worktree) below) to avoid displacing the existing work
 - If `$currentBranch` is the **same** ticket branch → you're already on it, no action needed
+- If `$dirty` has output → **STOP** — resolve uncommitted changes first (commit them, stash them, or confirm they are discardable)
 
 ### Simple branch from main (in-place)
 ```powershell
@@ -81,7 +88,15 @@ Use a worktree when the current working directory already has a different featur
 $newBranch = "ESO-671/jira-branch-status-action"
 $parentBranch = "main"  # or the stacked parent branch
 $worktreePath = "..\eso-log-aggregator-$($newBranch -replace '/', '-')"
+# Pre-flight: ensure the source worktree is clean before pulling
+$dirty = git status --short
+if ($dirty) {
+    Write-Warning "Uncommitted changes detected in the current worktree — commit or stash them first:"
+    $dirty
+    return  # do not proceed until working tree is clean
+}
 
+git pull origin $parentBranch  # bring parent up to date before branching
 # Create worktree with a new branch based on the parent
 git worktree add $worktreePath -b $newBranch $parentBranch
 Set-Location $worktreePath
