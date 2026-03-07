@@ -121,7 +121,7 @@ export enum KnownAbilities {
   WIND_WALKER = 45565,
 
   // Class Passives
-  ADVANCED_SPECIES = 86068, // Warden: Animal Companions passive (was incorrectly 184809 which is "Ritual")
+  ADVANCED_SPECIES = 86069, // Warden: Animal Companions passive, rank 2 aura (rank 1 = 86068; same pattern as FROZEN_ARMOR = 86190 vs classSkillId 86189)
   AEGIS_OF_THE_UNSEEN = 184923,
   BATTLE_ROAR = 44984,
   CATALYST = 45135,
