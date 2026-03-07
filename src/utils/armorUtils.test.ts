@@ -239,18 +239,50 @@ describe('armorUtils', () => {
     // ESOLogs reports all mythic armor as type=1 (Light) regardless of actual weight.
     // These tests verify each correction in ARMOR_TYPE_CORRECTIONS is applied.
     const mythicCases: Array<{ itemId: MythicArmorId; name: string; expected: ArmorType }> = [
-      { itemId: MythicArmorId.SnowTreaders, name: "Snow Treaders", expected: ArmorType.MEDIUM },
-      { itemId: MythicArmorId.BloodlordsEmbrace, name: "Bloodlord's Embrace", expected: ArmorType.HEAVY },
-      { itemId: MythicArmorId.Harpooners_WadingKilt, name: "Harpooner's Wading Kilt", expected: ArmorType.MEDIUM },
+      { itemId: MythicArmorId.SnowTreaders, name: 'Snow Treaders', expected: ArmorType.MEDIUM },
+      {
+        itemId: MythicArmorId.BloodlordsEmbrace,
+        name: "Bloodlord's Embrace",
+        expected: ArmorType.HEAVY,
+      },
+      {
+        itemId: MythicArmorId.Harpooners_WadingKilt,
+        name: "Harpooner's Wading Kilt",
+        expected: ArmorType.MEDIUM,
+      },
       { itemId: MythicArmorId.GazeOfSithis, name: 'Gaze of Sithis', expected: ArmorType.HEAVY },
       { itemId: MythicArmorId.DovRhaSabatons, name: 'Dov-Rha Sabatons', expected: ArmorType.HEAVY },
-      { itemId: MythicArmorId.LefthandersAegisBelt, name: "Lefthander's Aegis Belt", expected: ArmorType.MEDIUM },
-      { itemId: MythicArmorId.FaunsLarkCladding, name: "Faun's Lark Cladding", expected: ArmorType.MEDIUM },
+      {
+        itemId: MythicArmorId.LefthandersAegisBelt,
+        name: "Lefthander's Aegis Belt",
+        expected: ArmorType.MEDIUM,
+      },
+      {
+        itemId: MythicArmorId.FaunsLarkCladding,
+        name: "Faun's Lark Cladding",
+        expected: ArmorType.MEDIUM,
+      },
       { itemId: MythicArmorId.SyrabanesWard, name: "Syrabane's Ward", expected: ArmorType.HEAVY },
-      { itemId: MythicArmorId.EsotericEnvironmentGreaves, name: 'Esoteric Environment Greaves', expected: ArmorType.HEAVY },
-      { itemId: MythicArmorId.RourkenSteamguards, name: 'Rourken Steamguards', expected: ArmorType.HEAVY },
-      { itemId: MythicArmorId.RakkhatsVoidmantle, name: "Rakkhat's Voidmantle", expected: ArmorType.MEDIUM },
-      { itemId: MythicArmorId.HuntsmansWarmask, name: "Huntsman's Warmask", expected: ArmorType.MEDIUM },
+      {
+        itemId: MythicArmorId.EsotericEnvironmentGreaves,
+        name: 'Esoteric Environment Greaves',
+        expected: ArmorType.HEAVY,
+      },
+      {
+        itemId: MythicArmorId.RourkenSteamguards,
+        name: 'Rourken Steamguards',
+        expected: ArmorType.HEAVY,
+      },
+      {
+        itemId: MythicArmorId.RakkhatsVoidmantle,
+        name: "Rakkhat's Voidmantle",
+        expected: ArmorType.MEDIUM,
+      },
+      {
+        itemId: MythicArmorId.HuntsmansWarmask,
+        name: "Huntsman's Warmask",
+        expected: ArmorType.MEDIUM,
+      },
     ];
 
     it.each(mythicCases)(
