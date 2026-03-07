@@ -390,7 +390,8 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
       slot.jailDDType ||
       slot.notes ||
       slot.group ||
-      slot.skillLines,
+      slot.skillLines ||
+      slot.championPoint,
   );
   if (filledSlots.length) c.dp = filledSlots.map(compactDPS);
   if (roster.availableGroups?.length) c.ag = roster.availableGroups;

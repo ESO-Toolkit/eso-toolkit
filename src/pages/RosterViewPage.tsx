@@ -700,6 +700,11 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
                 {skillLines}
               </Typography>
             )}
+            {slot.championPoint && (
+              <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                CP: {slot.championPoint}
+              </Typography>
+            )}
             {gearSets.map((set) => (
               <Chip
                 key={set}
