@@ -92,16 +92,37 @@ export enum KnownAbilities {
   RESTORE_MAGICKA = 7916,
 
   // Champion Points
+  BITING_AURA = 141997,
+  BLOODY_RENEWAL = 141993,
+  BOUNDLESS_VITALITY = 142034,
   BULWARK = 64079,
+  DEADLY_AIM = 141999,
+  DUELISTS_REBUFF = 151749,
+  ELUSIVE_MIST = 38963,
   ENLIVENING_OVERFLOW = 156008,
   EXPERT_EVASION = 142092,
   EXPLOITER = 63880,
+  FIGHTING_FINESSE = 141899,
+  FORTUNES_FAVOR = 142207,
   FROM_THE_BRINK = 156017,
   GILDED_FINGERS = 142210,
+  HASTY_RETREAT = 30923,
+  HEROS_VIGOR = 147889,
+  IRONCLAD = 5857,
   JUGGERNAUT = 45546,
+  LIQUID_EFFICIENCY = 142231,
+  MASTER_AT_ARMS = 92134,
+  METICULOUS_DISASSEMBLY = 142224,
+  PLENTIFUL_HARVEST = 63663,
+  PROFESSIONAL_UPKEEP = 142121,
+  RATIONER = 142230,
   REAVING_BLOWS = 142007,
+  REJUVENATOR = 141942,
+  SIPHONING_SPELLS = 141991,
   SLIPPERY = 142094,
   SPRINTER = 142079,
+  SUSTAINED_BY_SUFFERING = 160057,
+  UNASSAILABLE = 151748,
 
   // Shared Passives
   CLAIRVOYANCE = 103811,
@@ -986,23 +1007,49 @@ export enum MundusStones {
 
 export const RED_CHAMPION_POINTS = Object.freeze(
   new Set<KnownAbilities>([
+    // Fitness tree slottable nodes
+    KnownAbilities.BLOODY_RENEWAL,
+    KnownAbilities.BOUNDLESS_VITALITY,
     KnownAbilities.EXPERT_EVASION,
+    KnownAbilities.HASTY_RETREAT,
+    KnownAbilities.HEROS_VIGOR,
     KnownAbilities.JUGGERNAUT,
+    KnownAbilities.REJUVENATOR,
     KnownAbilities.SLIPPERY,
     KnownAbilities.SPRINTER,
   ]),
 );
 export const BLUE_CHAMPION_POINTS = Object.freeze(
   new Set<KnownAbilities>([
-    KnownAbilities.EXPLOITER,
+    // Warfare tree slottable nodes
+    KnownAbilities.BITING_AURA,
     KnownAbilities.BULWARK,
-    KnownAbilities.REAVING_BLOWS,
+    KnownAbilities.DEADLY_AIM,
+    KnownAbilities.DUELISTS_REBUFF,
+    KnownAbilities.ELUSIVE_MIST,
     KnownAbilities.ENLIVENING_OVERFLOW,
+    KnownAbilities.EXPLOITER,
+    KnownAbilities.FIGHTING_FINESSE,
     KnownAbilities.FROM_THE_BRINK,
+    KnownAbilities.IRONCLAD,
+    KnownAbilities.MASTER_AT_ARMS,
+    KnownAbilities.REAVING_BLOWS,
+    KnownAbilities.SIPHONING_SPELLS,
+    KnownAbilities.SUSTAINED_BY_SUFFERING,
+    KnownAbilities.UNASSAILABLE,
   ]),
 );
 export const GREEN_CHAMPION_POINTS = Object.freeze(
-  new Set<KnownAbilities>([KnownAbilities.GILDED_FINGERS]),
+  new Set<KnownAbilities>([
+    // Craft tree slottable nodes
+    KnownAbilities.FORTUNES_FAVOR,
+    KnownAbilities.GILDED_FINGERS,
+    KnownAbilities.LIQUID_EFFICIENCY,
+    KnownAbilities.METICULOUS_DISASSEMBLY,
+    KnownAbilities.PLENTIFUL_HARVEST,
+    KnownAbilities.PROFESSIONAL_UPKEEP,
+    KnownAbilities.RATIONER,
+  ]),
 );
 
 // Food Buffs
