@@ -234,9 +234,10 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
     source: 'not_implemented',
   },
   {
+    key: PenetrationComputedSourceKey.PIERCING,
     name: 'Piercing',
     description: '700 penetration',
-    source: 'not_implemented',
+    source: 'computed',
   },
   {
     key: PenetrationComputedSourceKey.HEAVY_WEAPONS,
@@ -394,8 +395,9 @@ function isComputedSourceActive(
       // TODO: Implement proper status effect tracking - assume inactive until implemented
       return false;
     case PenetrationComputedSourceKey.PIERCING:
-      // TODO: Implement proper conditions - assume inactive until implemented
-      return false;
+      // CP Piercing is a flat stat node with no aura/buff — cannot be detected from log data;
+      // assume all players have it active
+      return true;
     case PenetrationComputedSourceKey.HEAVY_WEAPONS:
       if (!combatantInfo || !combatantInfo.gear) return false;
       return hasTwoHandedMaulEquipped(combatantInfo);

@@ -35,13 +35,19 @@ describe('PenetrationUtils', () => {
       expect(sources).toBeDefined();
       expect(sources.length).toBeGreaterThan(0);
 
-      // All sources should be inactive when no data is provided
+      // All sources should be inactive when no data is provided, except Piercing which
+      // is always assumed active since it cannot be detected from log data
       sources.forEach((source) => {
         expect(source).toHaveProperty('name');
         expect(source).toHaveProperty('description');
         expect(source).toHaveProperty('value');
         expect(source).toHaveProperty('wasActive');
-        expect(source.wasActive).toBe(false);
+        if (source.name === 'Piercing') {
+          expect(source.wasActive).toBe(true);
+          expect(source.value).toBe(PenetrationValues.PIERCING_PENETRATION);
+        } else {
+          expect(source.wasActive).toBe(false);
+        }
         // For non-computed sources, value shows the potential penetration even when not active
         // For computed sources, value should be 0 when not active
         if (source.name.includes('Concentration')) {
@@ -157,9 +163,10 @@ describe('PenetrationUtils', () => {
   });
 
   describe('calculateStaticPenetration', () => {
-    it('should return 0 for null combatant info', () => {
+    it('should return Piercing penetration for null combatant info', () => {
       const result = calculateStaticPenetration(null, undefined);
-      expect(result).toBe(0);
+      // Piercing (CP node) is always assumed active since it cannot be detected from log data
+      expect(result).toBe(PenetrationValues.PIERCING_PENETRATION);
     });
 
     it('should calculate penetration from auras', () => {
@@ -182,8 +189,8 @@ describe('PenetrationUtils', () => {
 
       const result = calculateStaticPenetration(mockCombatantInfo, undefined);
 
-      // Should include Velothi Ur-Mage amulet penetration
-      expect(result).toBe(PenetrationValues.VELOTHI_UR_MAGE_AMULET);
+      // Should include Velothi Ur-Mage amulet penetration plus always-active Piercing
+      expect(result).toBe(PenetrationValues.VELOTHI_UR_MAGE_AMULET + PenetrationValues.PIERCING_PENETRATION);
     });
   });
 
@@ -373,7 +380,8 @@ describe('PenetrationUtils', () => {
 
     it('should handle null inputs gracefully', () => {
       const result = calculatePenetrationAtTimestamp(null, null, null, undefined, 1000, null, null);
-      expect(result).toBe(0);
+      // Piercing (CP node) is always assumed active since it cannot be detected from log data
+      expect(result).toBe(PenetrationValues.PIERCING_PENETRATION);
     });
 
     it('should filter buffs by player and debuffs by target correctly', () => {
