@@ -1,5 +1,15 @@
-import { Box, Typography, Alert } from '@mui/material';
-import React from 'react';
+import {
+  Box,
+  Typography,
+  Alert,
+  Link,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+} from '@mui/material';
+import React, { useState } from 'react';
 
 import { FightFragment as Fight } from '../../../graphql/gql/graphql';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
@@ -34,6 +44,8 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
   isLoading,
   phaseTransitionInfo,
 }) => {
+  const [cmxDialogOpen, setCmxDialogOpen] = useState(false);
+
   // Show info when no targets are available
   if (selectedTargetIds.size === 0) {
     return (
@@ -105,7 +117,15 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
             {selectedTargetIds.size === 1
               ? 'the selected target'
               : `${selectedTargetIds.size} available targets`}
-            . Click to expand details.
+            . Click to expand details.{' '}
+            <Link
+              component="button"
+              variant="body2"
+              onClick={() => setCmxDialogOpen(true)}
+              sx={{ verticalAlign: 'baseline' }}
+            >
+              Why is my value different from CMX?
+            </Link>
           </Typography>
 
           {players.map((player) => {
@@ -128,6 +148,58 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
           })}
         </Box>
       )}
+
+      <Dialog open={cmxDialogOpen} onClose={() => setCmxDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+          Why is my value different from CMX?
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" paragraph>
+            ESO Logs and Combat Metrics (CMX) use different methodologies to calculate penetration,
+            so small differences are expected. Here are the key differences:
+          </Typography>
+
+          <Typography variant="subtitle2" gutterBottom>
+            Time-weighted vs. damage-weighted averaging
+          </Typography>
+          <Typography variant="body2" paragraph>
+            ESO Logs calculates penetration in 1-second time windows (voxels) and averages them
+            equally across the fight duration. CMX weights each penetration sample by the damage
+            dealt in that window, so high-damage moments contribute more to the final average. This
+            is the primary source of small differences.
+          </Typography>
+
+          <Typography variant="subtitle2" gutterBottom>
+            Base penetration snapshots
+          </Typography>
+          <Typography variant="body2" paragraph>
+            CMX reads your penetration stat in real time and sees changes on weapon bar swaps. ESO
+            Logs uses a single snapshot from the combat log&apos;s combatant info, which may not
+            reflect bar-swap variations.
+          </Typography>
+
+          <Typography variant="subtitle2" gutterBottom>
+            What is tracked the same
+          </Typography>
+          <Typography variant="body2" paragraph>
+            Both tools track the same debuff and buff sources — Major &amp; Minor Breach, Crusher
+            enchantment, Crimson Oath&apos;s Rive, Night Mother&apos;s Gaze, Alkosh, and CP passive
+            penetration (Piercing, Force of Nature via status effects). Differences from these
+            sources are typically negligible.
+          </Typography>
+
+          <Typography variant="subtitle2" gutterBottom>
+            Typical variance
+          </Typography>
+          <Typography variant="body2">
+            In practice, the difference between ESO Logs and CMX is usually less than 0.1% — well
+            within the margin caused by the averaging method difference.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCmxDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
