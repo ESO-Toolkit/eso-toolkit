@@ -43,13 +43,15 @@ const getStatusColor = (
       return {
         main: theme.palette.success.main,
         light: theme.palette.success.light,
-        text: theme.palette.mode === 'dark' ? theme.palette.success.light : theme.palette.success.main,
+        text:
+          theme.palette.mode === 'dark' ? theme.palette.success.light : theme.palette.success.main,
       };
     case 'warn':
       return {
         main: theme.palette.warning.main,
         light: theme.palette.warning.light,
-        text: theme.palette.mode === 'dark' ? theme.palette.warning.light : theme.palette.warning.main,
+        text:
+          theme.palette.mode === 'dark' ? theme.palette.warning.light : theme.palette.warning.main,
       };
     case 'fail':
       return {
@@ -133,12 +135,20 @@ export const ParseChecklist: React.FC<ParseChecklistProps> = ({ items }) => {
           const bgAlpha = isDark ? 0.08 : 0.06;
           const bgColor = `rgba(${
             item.status === 'pass'
-              ? isDark ? '76, 175, 80' : '76, 175, 80'
+              ? isDark
+                ? '76, 175, 80'
+                : '76, 175, 80'
               : item.status === 'warn'
-                ? isDark ? '255, 152, 0' : '255, 152, 0'
+                ? isDark
+                  ? '255, 152, 0'
+                  : '255, 152, 0'
                 : item.status === 'fail'
-                  ? isDark ? '244, 67, 54' : '244, 67, 54'
-                  : isDark ? '33, 150, 243' : '33, 150, 243'
+                  ? isDark
+                    ? '244, 67, 54'
+                    : '244, 67, 54'
+                  : isDark
+                    ? '33, 150, 243'
+                    : '33, 150, 243'
           }, ${bgAlpha})`;
 
           return (
@@ -158,12 +168,20 @@ export const ParseChecklist: React.FC<ParseChecklistProps> = ({ items }) => {
                   '&:hover': {
                     backgroundColor: `rgba(${
                       item.status === 'pass'
-                        ? isDark ? '76, 175, 80' : '76, 175, 80'
+                        ? isDark
+                          ? '76, 175, 80'
+                          : '76, 175, 80'
                         : item.status === 'warn'
-                          ? isDark ? '255, 152, 0' : '255, 152, 0'
+                          ? isDark
+                            ? '255, 152, 0'
+                            : '255, 152, 0'
                           : item.status === 'fail'
-                            ? isDark ? '244, 67, 54' : '244, 67, 54'
-                            : isDark ? '33, 150, 243' : '33, 150, 243'
+                            ? isDark
+                              ? '244, 67, 54'
+                              : '244, 67, 54'
+                            : isDark
+                              ? '33, 150, 243'
+                              : '33, 150, 243'
                     }, ${bgAlpha + 0.04})`,
                     transform: 'translateY(-1px)',
                   },

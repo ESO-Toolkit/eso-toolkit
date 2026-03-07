@@ -256,10 +256,7 @@ const ParseAnalysisPageContent: React.FC = () => {
    * Dark mode uses brighter tints than MUI's auto-generated .light variants
    * for sufficient contrast on dark backgrounds (~#111827).
    */
-  const getMetricColor = (
-    excellent: boolean,
-    good: boolean,
-  ): string => {
+  const getMetricColor = (excellent: boolean, good: boolean): string => {
     const isDark = theme.palette.mode === 'dark';
     if (excellent) {
       return isDark ? '#4ade80' : theme.palette.success.main; // green-400
@@ -1111,8 +1108,12 @@ const ParseAnalysisPageContent: React.FC = () => {
           p: 2,
           borderRadius: 2,
           backgroundColor: roleColors.isDarkMode
-            ? hasFood ? 'rgba(46, 125, 50, 0.10)' : 'rgba(211, 47, 47, 0.10)'
-            : hasFood ? 'rgba(46, 125, 50, 0.05)' : 'rgba(211, 47, 47, 0.05)',
+            ? hasFood
+              ? 'rgba(46, 125, 50, 0.10)'
+              : 'rgba(211, 47, 47, 0.10)'
+            : hasFood
+              ? 'rgba(46, 125, 50, 0.05)'
+              : 'rgba(211, 47, 47, 0.05)',
           border: '1px solid',
           borderColor: hasFood ? 'success.light' : 'error.light',
           borderTop: '3px solid',
@@ -1256,9 +1257,14 @@ const ParseAnalysisPageContent: React.FC = () => {
                 variant="caption"
                 fontWeight={600}
                 sx={{
-                  color: downtimeSeconds <= 5
-                    ? (theme.palette.mode === 'dark' ? '#4ade80' : theme.palette.success.main)
-                    : (theme.palette.mode === 'dark' ? '#f87171' : theme.palette.error.main),
+                  color:
+                    downtimeSeconds <= 5
+                      ? theme.palette.mode === 'dark'
+                        ? '#4ade80'
+                        : theme.palette.success.main
+                      : theme.palette.mode === 'dark'
+                        ? '#f87171'
+                        : theme.palette.error.main,
                 }}
               >
                 {downtimeSeconds.toFixed(1)}s
@@ -1443,11 +1449,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     } = state.rotationResult;
 
     return (
-      <Accordion
-        defaultExpanded={true}
-        disableGutters
-        sx={glassAccordionSx}
-      >
+      <Accordion defaultExpanded={true} disableGutters sx={glassAccordionSx}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Stack direction="row" spacing={1} alignItems="center">
             <RotateRightIcon color="info" fontSize="small" />
@@ -1935,11 +1937,7 @@ const ParseAnalysisPageContent: React.FC = () => {
 
       {/* Setup instructions — shown only when no report is loaded */}
       {!state.reportCode && !state.loading && (
-        <Accordion
-          defaultExpanded={false}
-          disableGutters
-          sx={{ mb: 4, ...glassAccordionSx }}
-        >
+        <Accordion defaultExpanded={false} disableGutters sx={{ mb: 4, ...glassAccordionSx }}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Stack direction="row" spacing={1.5} alignItems="center">
               {/* Icon lockup */}
@@ -2098,10 +2096,7 @@ const ParseAnalysisPageContent: React.FC = () => {
             gap: 1.5,
           }}
         >
-          <ErrorIcon
-            color="error"
-            sx={{ fontSize: 20, mt: 0.25, flexShrink: 0 }}
-          />
+          <ErrorIcon color="error" sx={{ fontSize: 20, mt: 0.25, flexShrink: 0 }} />
           <Typography variant="body2" color="error" fontWeight={500}>
             {state.error}
           </Typography>
@@ -2348,7 +2343,11 @@ const ParseAnalysisPageContent: React.FC = () => {
             {renderRotationAnalysis()}
 
             {state.buildIssues && state.buildIssues.length > 0 && (
-              <Accordion defaultExpanded={state.buildIssues.length > 0} disableGutters sx={glassAccordionSx}>
+              <Accordion
+                defaultExpanded={state.buildIssues.length > 0}
+                disableGutters
+                sx={glassAccordionSx}
+              >
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Box
