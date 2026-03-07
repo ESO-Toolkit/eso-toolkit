@@ -19,15 +19,37 @@ This skill MUST be automatically invoked — without waiting for the user to exp
 
 The branch must be confirmed correct before any implementation begins. Skipping this step is the primary cause of commits landing on `main`.
 
-## Step 1 — Check Current Branch
+## Step 1 — Check Current Branch and Working Tree State
 
-Run this command and capture the output:
+Run both commands and capture the output:
 
 ```powershell
 git rev-parse --abbrev-ref HEAD
+git status --short
 ```
 
 ## Step 2 — Evaluate Branch State
+
+### 2a — Handle Uncommitted Changes First
+
+If `git status --short` produced any output, the working tree is dirty. Resolve this **before** any branch creation or `git pull`:
+
+```powershell
+$dirty = git status --short
+if ($dirty) {
+    Write-Warning "Uncommitted changes detected in the current worktree!"
+    $dirty  # show the list so the user can see what's affected
+}
+```
+
+Ask the user what to do with the changes:
+- **Commit them** (preferred if the changes belong on the current branch)
+- **Stash them** (`git stash push -m "WIP: pre-worktree-creation stash"`) if they should be set aside
+- **Discard them** (`git checkout -- .`) only if the user explicitly confirms they are throwaway
+
+Do **not** proceed to branch creation or `git pull` until the working tree is clean.
+
+### 2b — Evaluate Branch
 
 **If branch is `main` or `master`:**
 - Do NOT start or continue any implementation work
@@ -83,6 +105,14 @@ $isOccupied = ($currentBranch -ne 'main') -and ($currentBranch -ne $newBranch)
 
 ```powershell
 $worktreePath = "..\eso-log-aggregator-$($newBranch -replace '/', '-')"
+
+# Verify current worktree is clean before pulling (pull may fail on dirty trees)
+$dirty = git status --short
+if ($dirty) {
+    Write-Error "Working tree has uncommitted changes — resolve them before creating a worktree. Run: git status"
+    return
+}
+git pull origin $parentBranch  # ensure parent is up to date
 git worktree add $worktreePath -b $newBranch $parentBranch
 Set-Location $worktreePath
 
