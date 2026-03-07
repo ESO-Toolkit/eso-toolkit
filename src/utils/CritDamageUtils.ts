@@ -4,6 +4,7 @@ import { CriticalDamageValues, KnownAbilities, KnownSetIDs } from '../types/abil
 import { CombatantInfoEvent } from '../types/combatlogEvents';
 import { ArmorType } from '../types/playerDetails';
 
+import { resolveArmorType } from './armorUtils';
 import {
   BuffLookupData,
   isBuffActive as checkBuffActiveAtTimestamp,
@@ -692,7 +693,9 @@ export function getCritDamageFromAlwaysOnSource(
 ): number {
   switch (source.key) {
     case AlwaysOnCriticalDamageSources.DEXTERITY: {
-      const medPieces = combatantInfo?.gear?.filter((item) => item.type === ArmorType.MEDIUM);
+      const medPieces = combatantInfo?.gear?.filter(
+        (item) => resolveArmorType(item) === ArmorType.MEDIUM,
+      );
       return (medPieces?.length || 0) * CriticalDamageValues.DEXTERITY_PER_PIECE;
     }
     case AlwaysOnCriticalDamageSources.FIGHTING_FINESSE: {

@@ -2,7 +2,25 @@
  * Utilities for analyzing player gear and armor
  */
 
-import { ArmorType, PlayerGear } from '../types/playerDetails';
+import { ArmorType, GearType, PlayerGear } from '../types/playerDetails';
+
+/**
+ * Corrections for items where ESOLogs source data reports the wrong armor weight.
+ * Maps item ID → correct ArmorType.
+ */
+const ARMOR_TYPE_CORRECTIONS: Record<number, ArmorType> = {
+  // Huntsman's Warmask is medium armor but ESOLogs reports it as light.
+  // https://bkrupa.atlassian.net/browse/ESO-667
+  223189: ArmorType.MEDIUM,
+};
+
+/**
+ * Returns the correct armor type for a gear item, applying any known corrections
+ * for items where ESOLogs source data has an incorrect armor weight.
+ */
+export function resolveArmorType(item: PlayerGear): GearType {
+  return ARMOR_TYPE_CORRECTIONS[item.id] ?? item.type;
+}
 
 /**
  * Counts armor pieces by weight type
@@ -21,7 +39,7 @@ export function getArmorWeightCounts(gear: PlayerGear[]): {
   for (const g of gear) {
     if (!g || g.id === 0) continue;
 
-    switch (g.type) {
+    switch (resolveArmorType(g)) {
       case ArmorType.HEAVY:
         heavy += 1;
         break;

@@ -4,6 +4,7 @@ import { KnownAbilities, KnownSetIDs } from '../types/abilities';
 import { CombatantInfoEvent } from '../types/combatlogEvents';
 import { ArmorType, GearSlot, GearTrait, PlayerGear, WeaponType } from '../types/playerDetails';
 
+import { resolveArmorType } from './armorUtils';
 import { BuffLookupData, isBuffActiveOnTarget } from './BuffLookupUtils';
 import { ItemQuality } from './gearUtilities';
 
@@ -316,7 +317,7 @@ export function calculateArmorResistance(combatantInfo: CombatantInfoEvent | nul
  */
 function getBaseArmorResistance(armorPiece: PlayerGear, slot: GearSlot): number {
   // Use the actual resistance values provided
-  if (armorPiece.type === ArmorType.HEAVY) {
+  if (resolveArmorType(armorPiece) === ArmorType.HEAVY) {
     switch (slot) {
       case GearSlot.CHEST:
         return ResistanceValues.HEAVY_CHEST; // 2772
@@ -336,7 +337,7 @@ function getBaseArmorResistance(armorPiece: PlayerGear, slot: GearSlot): number 
       default:
         return 0;
     }
-  } else if (armorPiece.type === ArmorType.MEDIUM) {
+  } else if (resolveArmorType(armorPiece) === ArmorType.MEDIUM) {
     switch (slot) {
       case GearSlot.HEAD:
         return ResistanceValues.MEDIUM_HEAD; // 1823
@@ -356,7 +357,7 @@ function getBaseArmorResistance(armorPiece: PlayerGear, slot: GearSlot): number 
       default:
         return 0;
     }
-  } else if (armorPiece.type === ArmorType.LIGHT) {
+  } else if (resolveArmorType(armorPiece) === ArmorType.LIGHT) {
     switch (slot) {
       case GearSlot.SHOULDERS:
         return ResistanceValues.LIGHT_SHOULDERS; // 1221
@@ -540,7 +541,7 @@ function countHeavyArmorPieces(combatantInfo: CombatantInfoEvent | null): number
   armorSlots.forEach((slotIndex) => {
     if (slotIndex < combatantInfo.gear.length) {
       const armorPiece = combatantInfo.gear[slotIndex];
-      if (armorPiece && armorPiece.type === ArmorType.HEAVY) {
+      if (armorPiece && resolveArmorType(armorPiece) === ArmorType.HEAVY) {
         count++;
       }
     }
