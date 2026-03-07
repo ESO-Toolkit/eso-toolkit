@@ -647,7 +647,14 @@ export function getCritDamageFromComputedSource(
           })
           .some((a) => a?.name === t.name),
       );
-      return animalCompanionAbilities.length * CriticalDamageValues.ANIMAL_COMPANIONS_PER_ABILITY;
+      // Rank II (86069) grants 5% per ability; Rank I (86068) grants 2% per ability
+      const hasRank2 = combatantInfo.auras.some(
+        (aura) => aura.ability === KnownAbilities.ADVANCED_SPECIES,
+      );
+      const perAbilityValue = hasRank2
+        ? CriticalDamageValues.ANIMAL_COMPANIONS_PER_ABILITY
+        : CriticalDamageValues.ANIMAL_COMPANIONS_PER_ABILITY_RANK_1;
+      return animalCompanionAbilities.length * perAbilityValue;
     }
     case ComputedCriticalDamageSources.DUAL_WIELD_AXES: {
       const axeCount = countAxesInWeaponSlots(combatantInfo);

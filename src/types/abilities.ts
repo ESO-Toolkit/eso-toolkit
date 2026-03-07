@@ -588,8 +588,11 @@ export enum CriticalDamageValues {
   // Harpooner's Wading Kilt provides 10% critical damage when equipped
   HARPOONER_WADING_KILT = 10,
 
-  // Animal Companions provides 5% critical damage per ability slotted
+  // Animal Companions rank II provides 5% critical damage per ability slotted
   ANIMAL_COMPANIONS_PER_ABILITY = 5,
+
+  // Animal Companions rank I provides 2% critical damage per ability slotted
+  ANIMAL_COMPANIONS_PER_ABILITY_RANK_1 = 2,
 
   // Dual Wield (Twin Blade and Blunt) provides 6% critical damage per axe equipped
   DUAL_WIELD_AXES = 6,
