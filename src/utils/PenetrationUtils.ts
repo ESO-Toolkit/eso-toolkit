@@ -123,12 +123,23 @@ export interface PenetrationNotImplementedSource extends BasePenetrationSource {
   source: 'not_implemented';
 }
 
+export enum AlwaysOnPenetrationSources {
+  PIERCING,
+  FORCE_OF_NATURE,
+}
+
+export interface PenetrationAlwaysOnSource extends BasePenetrationSource {
+  key: AlwaysOnPenetrationSources;
+  source: 'always_on';
+}
+
 export type PenetrationSource =
   | PenetrationAuraSource
   | PenetrationGearSource
   | PenetrationBuffSource
   | PenetrationDebuffSource
   | PenetrationComputedSource
+  | PenetrationAlwaysOnSource
   | PenetrationNotImplementedSource;
 
 export interface PenetrationSourceWithActiveState {
@@ -229,16 +240,16 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
     source: 'computed',
   },
   {
-    key: PenetrationComputedSourceKey.FORCE_OF_NATURE,
+    key: AlwaysOnPenetrationSources.FORCE_OF_NATURE,
     name: 'Force of Nature',
     description: '660 penetration per status effect',
-    source: 'computed',
+    source: 'always_on',
   },
   {
-    key: PenetrationComputedSourceKey.PIERCING,
+    key: AlwaysOnPenetrationSources.PIERCING,
     name: 'Piercing',
     description: '700 penetration',
-    source: 'computed',
+    source: 'always_on',
   },
   {
     key: PenetrationComputedSourceKey.HEAVY_WEAPONS,
@@ -392,14 +403,6 @@ function isComputedSourceActive(
       );
       return splinteredSecretsAuras.length > 0;
     }
-    case PenetrationComputedSourceKey.FORCE_OF_NATURE:
-      // Force of Nature pen scales per status effect — undetectable from log data;
-      // assume active with a conservative baseline of 1 status effect (660 pen)
-      return true;
-    case PenetrationComputedSourceKey.PIERCING:
-      // CP Piercing is a flat stat node with no aura/buff — cannot be detected from log data;
-      // assume all players have it active
-      return true;
     case PenetrationComputedSourceKey.HEAVY_WEAPONS:
       if (!combatantInfo || !combatantInfo.gear) return false;
       return hasTwoHandedMaulEquipped(combatantInfo);
@@ -500,15 +503,6 @@ function getPenetrationFromComputedSource(
       );
     }
 
-    case PenetrationComputedSourceKey.FORCE_OF_NATURE:
-      // Cannot detect status effect count from log data; assume 1 status effect
-      return PenetrationValues.FORCE_OF_NATURE_PER_STATUS * 1;
-
-    case PenetrationComputedSourceKey.PIERCING:
-      // TODO: Implement proper conditions
-      // For now, assume always provides 700 penetration
-      return PenetrationValues.PIERCING_PENETRATION;
-
     case PenetrationComputedSourceKey.HEAVY_WEAPONS: {
       if (!combatantInfo || !combatantInfo.gear) return 0;
       const hasMaul = hasTwoHandedMaulEquipped(combatantInfo);
@@ -561,6 +555,16 @@ function getPenetrationFromComputedSource(
   }
 }
 
+function getPenetrationFromAlwaysOnSource(source: PenetrationAlwaysOnSource): number {
+  switch (source.key) {
+    case AlwaysOnPenetrationSources.PIERCING:
+      return PenetrationValues.PIERCING_PENETRATION;
+    case AlwaysOnPenetrationSources.FORCE_OF_NATURE:
+      // Cannot detect status effect count from log data; assume 1 status effect
+      return PenetrationValues.FORCE_OF_NATURE_PER_STATUS;
+  }
+}
+
 export function getAllPenetrationSourcesWithActiveState(
   buffLookup: BuffLookupData | null,
   debuffLookup: BuffLookupData | null,
@@ -610,6 +614,10 @@ export function getAllPenetrationSourcesWithActiveState(
         wasActive = isComputedSourceActive(combatantInfo, source, playerData);
         value = wasActive ? getPenetrationFromComputedSource(source, combatantInfo, playerData) : 0;
         break;
+      case 'always_on':
+        wasActive = true;
+        value = getPenetrationFromAlwaysOnSource(source);
+        break;
     }
 
     result.push({
@@ -658,6 +666,9 @@ export function calculateStaticPenetration(
             playerData,
           );
         }
+        break;
+      case 'always_on':
+        computedPenetration += getPenetrationFromAlwaysOnSource(source);
         break;
       // Skip dynamic sources (buff/debuff) - these are calculated per timestamp
     }
