@@ -112,7 +112,12 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
             gap: 2,
           }}
         >
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography
+            component="div"
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 2 }}
+          >
             Penetration analysis for all players against{' '}
             {selectedTargetIds.size === 1
               ? 'the selected target'
@@ -155,7 +160,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
         </DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" paragraph>
-            ESO Logs and Combat Metrics (CMX) use different methodologies to calculate penetration,
+            ESO TK and Combat Metrics (CMX) use different methodologies to calculate penetration,
             so small differences are expected. Here are the key differences:
           </Typography>
 
@@ -163,7 +168,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
             Time-weighted vs. damage-weighted averaging
           </Typography>
           <Typography variant="body2" paragraph>
-            ESO Logs calculates penetration in 1-second time windows (voxels) and averages them
+            ESO TK calculates penetration in 1-second time windows (voxels) and averages them
             equally across the fight duration. CMX weights each penetration sample by the damage
             dealt in that window, so high-damage moments contribute more to the final average. This
             is the primary source of small differences.
@@ -174,7 +179,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
           </Typography>
           <Typography variant="body2" paragraph>
             CMX reads your penetration stat in real time and sees changes on weapon bar swaps. ESO
-            Logs uses a single snapshot from the combat log&apos;s combatant info, which may not
+            TK uses a single snapshot from the combat log&apos;s combatant info, which may not
             reflect bar-swap variations.
           </Typography>
 
@@ -192,7 +197,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
             Typical variance
           </Typography>
           <Typography variant="body2">
-            In practice, the difference between ESO Logs and CMX is usually less than 0.1% — well
+            In practice, the difference between ESO TK and CMX is usually less than 0.1% — well
             within the margin caused by the averaging method difference.
           </Typography>
         </DialogContent>
