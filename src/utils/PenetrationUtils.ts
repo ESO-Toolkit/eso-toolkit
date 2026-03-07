@@ -125,7 +125,6 @@ export interface PenetrationNotImplementedSource extends BasePenetrationSource {
 
 export enum AlwaysOnPenetrationSources {
   PIERCING,
-  FORCE_OF_NATURE,
 }
 
 export interface PenetrationAlwaysOnSource extends BasePenetrationSource {
@@ -247,11 +246,66 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
     description: '620 penetration per stack per Herald of the Tome ability slotted',
     source: 'computed',
   },
+  // Status effect debuff sources (Wrath of Nature CP passive)
+  // Each active status effect on the target provides 660 penetration when the player has
+  // Wrath of Nature (CP 276) slotted. We cannot detect CP data from combat logs, so we
+  // assume it is always slotted (standard in endgame trial builds).
+  // Reference: CMX (Combat Metrics) uses fight.CP[1]["slotted"][276] for this check.
   {
-    key: AlwaysOnPenetrationSources.FORCE_OF_NATURE,
-    name: 'Force of Nature',
-    description: '660 penetration per status effect',
-    source: 'always_on',
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.BURNING,
+    name: 'Wrath of Nature (Burning)',
+    description: '660 penetration when Burning is active on target (Wrath of Nature CP)',
+    source: 'debuff',
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.CHILL,
+    name: 'Wrath of Nature (Chill)',
+    description: '660 penetration when Chill is active on target (Wrath of Nature CP)',
+    source: 'debuff',
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.CONCUSSION,
+    name: 'Wrath of Nature (Concussion)',
+    description: '660 penetration when Concussion is active on target (Wrath of Nature CP)',
+    source: 'debuff',
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.DISEASED,
+    name: 'Wrath of Nature (Diseased)',
+    description: '660 penetration when Diseased is active on target (Wrath of Nature CP)',
+    source: 'debuff',
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.HEMMORRHAGING,
+    name: 'Wrath of Nature (Hemorrhaging)',
+    description: '660 penetration when Hemorrhaging is active on target (Wrath of Nature CP)',
+    source: 'debuff',
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.OVERCHARGED,
+    name: 'Wrath of Nature (Overcharged)',
+    description: '660 penetration when Overcharged is active on target (Wrath of Nature CP)',
+    source: 'debuff',
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.POISONED,
+    name: 'Wrath of Nature (Poisoned)',
+    description: '660 penetration when Poisoned is active on target (Wrath of Nature CP)',
+    source: 'debuff',
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.SUNDERED,
+    name: 'Wrath of Nature (Sundered)',
+    description: '660 penetration when Sundered is active on target (Wrath of Nature CP)',
+    source: 'debuff',
   },
   {
     key: AlwaysOnPenetrationSources.PIERCING,
@@ -567,9 +621,6 @@ function getPenetrationFromAlwaysOnSource(source: PenetrationAlwaysOnSource): nu
   switch (source.key) {
     case AlwaysOnPenetrationSources.PIERCING:
       return PenetrationValues.PIERCING_PENETRATION;
-    case AlwaysOnPenetrationSources.FORCE_OF_NATURE:
-      // Cannot detect status effect count from log data; assume 1 status effect
-      return PenetrationValues.FORCE_OF_NATURE_PER_STATUS;
   }
 }
 

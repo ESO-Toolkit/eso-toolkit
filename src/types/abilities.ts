@@ -445,7 +445,6 @@ export enum PenetrationComputedSourceKey {
   // ========================================
   CONCENTRATION = 'concentration',
   SPLINTERED_SECRETS = 'splintered_secrets',
-  FORCE_OF_NATURE = 'force_of_nature',
   PIERCING = 'piercing',
   HEAVY_WEAPONS = 'heavy_weapons',
   TWIN_BLADE_AND_BLUNT = 'twin_blade_and_blunt',
