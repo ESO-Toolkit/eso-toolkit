@@ -76,10 +76,12 @@ describe('CritDamageUtils with BuffLookup', () => {
 
       const sources = getEnabledCriticalDamageSources(emptyBuffLookup, emptyDebuffLookup, null);
 
-      // Should find always-on sources (Dexterity, Fighting Finesse) even with empty lookups
-      expect(sources).toHaveLength(2);
+      // Should find always-on sources (Dexterity, Fighting Finesse) plus Backstabber
+      // which is always assumed active since flanking position is undetectable from log data
+      expect(sources).toHaveLength(3);
       expect(sources.some((s) => s.name === 'Dexterity')).toBe(true);
       expect(sources.some((s) => s.name === 'Fighting Finesse')).toBe(true);
+      expect(sources.some((s) => s.name === 'Backstabber')).toBe(true);
     });
 
     it('should return sources based on aura and debuff lookups', () => {
@@ -112,8 +114,8 @@ describe('CritDamageUtils with BuffLookup', () => {
 
       const sources = getEnabledCriticalDamageSources(buffLookup, debuffLookup, combatant);
 
-      // Should find Lucent Echoes (computed), Minor Brittle (debuff), and always-on sources
-      expect(sources).toHaveLength(4);
+      // Should find Lucent Echoes (computed), Minor Brittle (debuff), Backstabber (computed, always active), and always-on sources
+      expect(sources).toHaveLength(5);
       expect(
         sources.some(
           (s) =>
@@ -333,8 +335,9 @@ describe('CritDamageUtils with BuffLookup', () => {
         combatant,
       );
 
-      // Should find Lucent Echoes as computed source + always-on sources
-      expect(sources).toHaveLength(3);
+      // Should find Lucent Echoes + Backstabber as computed sources + always-on sources
+      // Backstabber is always assumed active since flanking position is undetectable from log data
+      expect(sources).toHaveLength(4);
       expect(
         sources.some(
           (s) =>

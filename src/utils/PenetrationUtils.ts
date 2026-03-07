@@ -229,9 +229,10 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
     source: 'computed',
   },
   {
+    key: PenetrationComputedSourceKey.FORCE_OF_NATURE,
     name: 'Force of Nature',
     description: '660 penetration per status effect',
-    source: 'not_implemented',
+    source: 'computed',
   },
   {
     key: PenetrationComputedSourceKey.PIERCING,
@@ -392,8 +393,9 @@ function isComputedSourceActive(
       return splinteredSecretsAuras.length > 0;
     }
     case PenetrationComputedSourceKey.FORCE_OF_NATURE:
-      // TODO: Implement proper status effect tracking - assume inactive until implemented
-      return false;
+      // Force of Nature pen scales per status effect — undetectable from log data;
+      // assume active with a conservative baseline of 1 status effect (660 pen)
+      return true;
     case PenetrationComputedSourceKey.PIERCING:
       // CP Piercing is a flat stat node with no aura/buff — cannot be detected from log data;
       // assume all players have it active
@@ -499,8 +501,7 @@ function getPenetrationFromComputedSource(
     }
 
     case PenetrationComputedSourceKey.FORCE_OF_NATURE:
-      // TODO: Implement proper status effect counting
-      // For now, assume 1 status effect (660 penetration)
+      // Cannot detect status effect count from log data; assume 1 status effect
       return PenetrationValues.FORCE_OF_NATURE_PER_STATUS * 1;
 
     case PenetrationComputedSourceKey.PIERCING:

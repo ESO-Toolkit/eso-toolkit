@@ -185,9 +185,10 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
     source: 'computed',
   },
   {
+    key: ComputedCriticalDamageSources.BACKSTABBER,
     name: 'Backstabber',
     description: 'Critical damage from Backstabber champion point (10%)',
-    source: 'not_implemented',
+    source: 'computed',
   },
   {
     key: ComputedCriticalDamageSources.ELEMENTAL_CATALYST,
@@ -326,8 +327,9 @@ export function isComputedSourceActive(
     case ComputedCriticalDamageSources.TWO_HANDED_BATTLE_AXE:
       return hasTwoHandedAxeEquipped(combatantInfo);
     case ComputedCriticalDamageSources.BACKSTABBER:
-      // TODO Detect if the backstabber CP is equipped
-      return false;
+      // Backstabber requires flanking — positional data is undetectable from log data;
+      // assume active (most DPS maintain flanking position in end-game content)
+      return true;
     case ComputedCriticalDamageSources.ELEMENTAL_CATALYST:
       return timestamp
         ? isDebuffActiveAtTimestamp(debuffLookup, KnownAbilities.FLAME_WEAKNESS, timestamp) ||
