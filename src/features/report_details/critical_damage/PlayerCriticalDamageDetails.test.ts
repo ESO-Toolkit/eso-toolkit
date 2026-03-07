@@ -124,10 +124,12 @@ describe('PlayerCriticalDamageDetails Integration', () => {
       expect(runningMaximum).toBe(traditionalMax);
       expect(runningAverage).toBeCloseTo(traditionalAverage, 2);
 
-      // Expected: t=0s: 50, t=1s: 60, t=2s: 60, t=3s: 50 (Minor Force gives +10)
-      // Average = (50+60+60+50)/4 = 55.0
-      expect(runningMaximum).toBe(60);
-      expect(runningAverage).toBeCloseTo(55.0, 2);
+      // Expected: t=0s: 60, t=1s: 70, t=2s: 70, t=3s: 60
+      // Backstabber always adds +10 (positional data undetectable, assumed always flanking)
+      // Minor Force adds another +10 at t=1s and t=2s
+      // Average = (60+70+70+60)/4 = 65.0
+      expect(runningMaximum).toBe(70);
+      expect(runningAverage).toBeCloseTo(65.0, 2);
     });
 
     it('should calculate time at cap percentage correctly', () => {
@@ -188,11 +190,11 @@ describe('PlayerCriticalDamageDetails Integration', () => {
       const timeAtCapPercentage = dataPointCount > 0 ? (timeAtCapCount / dataPointCount) * 100 : 0;
 
       // Expected pattern based on buff timing:
-      // t=0: 120, t=1: 130 (Minor Force +10), t=2: 130, t=3: 130, t=4: 120
-      // 3 out of 5 data points are at or above cap (>=125) = 60%
-      expect(timeAtCapCount).toBe(3);
+      // Backstabber always adds +10, so base is 120+10=130 >= 125 cap at all points
+      // All 5 out of 5 data points are at or above cap = 100%
+      expect(timeAtCapCount).toBe(5);
       expect(dataPointCount).toBe(5);
-      expect(timeAtCapPercentage).toBeCloseTo(60, 1);
+      expect(timeAtCapPercentage).toBeCloseTo(100, 1);
     });
 
     it('should handle fight with no dynamic buffs', () => {
@@ -227,10 +229,10 @@ describe('PlayerCriticalDamageDetails Integration', () => {
       const runningMaximum = maxCriticalDamage;
       const runningAverage = dataPointCount > 0 ? totalCriticalDamage / dataPointCount : 50;
 
-      // Backstabber is always_on (static) — not included in calculateDynamicCriticalDamageAtTimestamp
-      // No dynamic buffs; dynamic = 0 at every timestamp
-      expect(runningMaximum).toBe(50);
-      expect(runningAverage).toBe(50);
+      // Backstabber always adds +10 (positional data undetectable, assumed always flanking)
+      // So even with no buffs, dynamic = 10 at every timestamp → total = 50 + 10 = 60
+      expect(runningMaximum).toBe(60);
+      expect(runningAverage).toBe(60);
     });
   });
 });

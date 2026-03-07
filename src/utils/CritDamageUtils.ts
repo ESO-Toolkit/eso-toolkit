@@ -96,7 +96,6 @@ export interface CriticalDamageNotImplementedSource extends BaseCriticalDamageSo
 export enum AlwaysOnCriticalDamageSources {
   DEXTERITY,
   FIGHTING_FINESSE,
-  BACKSTABBER,
 }
 
 export interface CriticalDamageAlwaysOnSource extends BaseCriticalDamageSource {
@@ -112,6 +111,7 @@ export enum ComputedCriticalDamageSources {
   ADVANCED_SPECIES,
   DUAL_WIELD_AXES,
   TWO_HANDED_BATTLE_AXE,
+  BACKSTABBER,
   ELEMENTAL_CATALYST,
   LUCENT_ECHOES,
 }
@@ -190,10 +190,10 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
     source: 'computed',
   },
   {
-    key: AlwaysOnCriticalDamageSources.BACKSTABBER,
+    key: ComputedCriticalDamageSources.BACKSTABBER,
     name: 'Backstabber',
     description: 'Critical damage from Backstabber champion point (10%)',
-    source: 'always_on',
+    source: 'computed',
   },
   {
     key: ComputedCriticalDamageSources.ELEMENTAL_CATALYST,
@@ -331,6 +331,10 @@ export function isComputedSourceActive(
       return countAxesInWeaponSlots(combatantInfo) > 0;
     case ComputedCriticalDamageSources.TWO_HANDED_BATTLE_AXE:
       return hasTwoHandedAxeEquipped(combatantInfo);
+    case ComputedCriticalDamageSources.BACKSTABBER:
+      // Backstabber requires flanking — positional data is undetectable from log data;
+      // assume active (most DPS maintain flanking position in end-game content)
+      return true;
     case ComputedCriticalDamageSources.ELEMENTAL_CATALYST:
       return timestamp
         ? isDebuffActiveAtTimestamp(debuffLookup, KnownAbilities.FLAME_WEAKNESS, timestamp) ||
@@ -663,6 +667,10 @@ export function getCritDamageFromComputedSource(
         ? CriticalDamageValues.TWO_HANDED_BATTLE_AXE
         : 0;
     }
+    case ComputedCriticalDamageSources.BACKSTABBER: {
+      // Always active as requested
+      return CriticalDamageValues.BACKSTABBER;
+    }
     case ComputedCriticalDamageSources.ELEMENTAL_CATALYST: {
       // Calculate damage based on active elemental weakness debuffs
       if (!debuffLookup || timestamp === undefined) return 0;
@@ -703,10 +711,6 @@ export function getCritDamageFromAlwaysOnSource(
     }
     case AlwaysOnCriticalDamageSources.FIGHTING_FINESSE: {
       return CriticalDamageValues.FIGHTING_FINESSE;
-    }
-    case AlwaysOnCriticalDamageSources.BACKSTABBER: {
-      // Positional data is undetectable from log data; assume flanking
-      return CriticalDamageValues.BACKSTABBER;
     }
   }
 }
