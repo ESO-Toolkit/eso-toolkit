@@ -165,7 +165,9 @@ describe('PenetrationUtils', () => {
     it('should return always-active penetration for null combatant info', () => {
       const result = calculateStaticPenetration(null, undefined);
       // Piercing and Force of Nature are always assumed active since they cannot be detected from log data
-      expect(result).toBe(PenetrationValues.PIERCING_PENETRATION + PenetrationValues.FORCE_OF_NATURE_PER_STATUS);
+      expect(result).toBe(
+        PenetrationValues.PIERCING_PENETRATION + PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+      );
     });
 
     it('should calculate penetration from auras', () => {
@@ -384,7 +386,9 @@ describe('PenetrationUtils', () => {
     it('should handle null inputs gracefully', () => {
       const result = calculatePenetrationAtTimestamp(null, null, null, undefined, 1000, null, null);
       // Piercing and Force of Nature are always assumed active since they cannot be detected from log data
-      expect(result).toBe(PenetrationValues.PIERCING_PENETRATION + PenetrationValues.FORCE_OF_NATURE_PER_STATUS);
+      expect(result).toBe(
+        PenetrationValues.PIERCING_PENETRATION + PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+      );
     });
 
     it('should filter buffs by player and debuffs by target correctly', () => {
