@@ -208,11 +208,19 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
     source: 'aura',
   },
   {
+    value: PenetrationValues.DISMEMBER_RANK_1,
+    ability: KnownAbilities.DISMEMBER_RANK_1,
+    name: 'Dismember I (Grave Lord Passive)',
+    description:
+      'Grave Lord passive rank I providing 1635 penetration when a Grave Lord ability is active',
+    source: 'aura',
+  },
+  {
     value: PenetrationValues.DISMEMBER,
     ability: KnownAbilities.DISMEMBER,
-    name: 'Dismember (Grave Lord Passive)',
+    name: 'Dismember II (Grave Lord Passive)',
     description:
-      'Grave Lord passive providing 3271 penetration when a grave lord ability is active',
+      'Grave Lord passive rank II providing 3271 penetration when a Grave Lord ability is active',
     source: 'aura',
   },
   // Computed sources (dynamic values based on gear or abilities)
