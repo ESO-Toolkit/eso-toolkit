@@ -32,9 +32,8 @@ git rev-parse --abbrev-ref HEAD
 **If branch is `main` or `master`:**
 - Do NOT start or continue any implementation work
 - Tell the user they are on a protected branch
-- Ask for the Jira ticket number (e.g. `ESO-569`) and a short description
-- Proceed to Step 3
-- **Note:** Even on `main`, still evaluate Step 3b — if this is the _main_ worktree, prefer creating a new worktree for the feature branch so the main worktree stays on `main` and is available for parallel work. Only use in-place checkout (Step 3c) when the user explicitly confirms they want to use this worktree.
+- Ask for the Jira ticket number (e.g. `ESO-569`) and a short description if not already known
+- Proceed to Step 3 using a **new worktree** (Step 3b) — do NOT do an in-place checkout on `main`
 
 **If branch is already the _correct_ `ESO-XXX/...` feature branch for the requested ticket:**
 - Confirm the branch name to the user
@@ -62,27 +61,17 @@ Examples of valid names:
 
 ### 3a — Determine the parent branch
 
-**Ask the user before creating the branch:**
-> "Should this branch be based on `main`, or is it stacking on top of another feature branch (e.g. `ESO-449/structure-redux-state`)?"
-
-- Default is `main` unless the user says otherwise.
+- Default to `main` unless the user has **explicitly** stated this branch stacks on another (e.g. "stack on ESO-449").
+- Do **not** ask the user — proceed automatically with `main`.
 - Set `$parentBranch` to the correct value now — it's needed for both the checkout and the twig dependency.
 
-### 3b — Use a worktree if the current worktree is occupied
+### 3b — Always use a new worktree (default)
 
-**Always** check whether the current worktree already has a different feature branch checked out:
-
-```powershell
-$currentBranch = git rev-parse --abbrev-ref HEAD
-$isOccupied = ($currentBranch -ne 'main') -and ($currentBranch -ne $newBranch)
-```
-
-**If the current worktree is occupied** (`$isOccupied -eq $true`):
-- Create a **new worktree** for the new branch instead of switching in-place
-- This avoids displacing the existing work on `$currentBranch`
+**Always create a new worktree** regardless of whether the current worktree is on `main` or another feature branch. This keeps the main worktree on `main` and available for parallel work at all times.
 
 ```powershell
 $worktreePath = "..\eso-log-aggregator-$($newBranch -replace '/', '-')"
+git pull origin $parentBranch  # ensure parent is up to date
 git worktree add $worktreePath -b $newBranch $parentBranch
 Set-Location $worktreePath
 
@@ -96,35 +85,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 ```
 
-- After creating the worktree, run `npm ci` in the new directory if `node_modules/` is missing
+- After creating the worktree, check if `node_modules/` is missing and run `npm ci` if so
 - Use the next available port pair for the dev server (see CLAUDE.md — Worktree Port Allocation)
 - Proceed to Step 4
 
-**If the current worktree is `main` or the target branch** (not occupied):
-- Use the standard in-place checkout (Step 3c below)
-
-### 3c — Create the branch in-place (only when worktree is not occupied)
-
-```powershell
-$parentBranch = "main"  # or the feature branch name if stacking
-$newBranch = "ESO-XXX/your-description"
-
-# Check out from the correct parent and pull if it's main
-git checkout $parentBranch
-if ($parentBranch -eq "main") { git pull origin main }
-
-# Create and switch to the feature branch
-git checkout -b $newBranch
-
-# IMMEDIATELY register parent dependency (twig with fallback)
-twig branch depend $newBranch $parentBranch 2>$null
-if ($LASTEXITCODE -ne 0) {
-    git config "branch.$newBranch.parent" $parentBranch
-    Write-Host "Parent '$parentBranch' recorded via git config (twig unavailable)"
-} else {
-    Write-Host "Parent '$parentBranch' set via twig"
-}
-```
+> **Exception — in-place checkout**: Only use `git checkout -b $newBranch` in the current worktree if the user **explicitly requests** it (e.g. "use this worktree" or "in-place is fine"). Never do it automatically.
 
 ## Step 4 — Verify and Report
 

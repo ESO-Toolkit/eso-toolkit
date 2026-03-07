@@ -112,7 +112,7 @@ For HTTPS: `$env:PORT = "3002" ; $env:VITE_HTTPS = "true" ; npm run dev`
 | `testing` | Unit tests and dev tools |
 | `troubleshoot` | Quick-reference fixes for common dev issues |
 | `ui-updates` | Theme-consistent UI changes |
-| `workflow` | **FIRST** — before reading any files or writing code. Prefers new worktrees over in-place checkout. |
+| `workflow` | **FIRST** — before reading any files or writing code. Always creates a new worktree; in-place checkout only when user explicitly requests it. |
 | `write-playwright-tests` | Authoring visual/E2E tests |
 
 **Full skills index**: [AGENTS.md](AGENTS.md) — Documentation Index section
