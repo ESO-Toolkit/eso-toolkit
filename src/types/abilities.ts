@@ -234,7 +234,8 @@ export enum KnownAbilities {
   TREMORSCALE = 80866,
 
   // Crimson Oath - Monster set that reduces target resistance
-  CRIMSON_OATH = 155150,
+  // Verified from combat log data: report DzbVRcg98F1rnYLy, fight 9
+  CRIMSON_OATH = 159288,
 
   // Roar of Alkosh - Monster set that reduces target resistance
   ROAR_OF_ALKOSH = 102094,

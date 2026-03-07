@@ -322,6 +322,66 @@ describe('PenetrationUtils', () => {
 
       expect(resultAfterRemoval).toBe(0);
     });
+
+    it('should detect penetration from Crimson Oath debuff (ability ID 159288)', () => {
+      const targetId = 55;
+      const debuffEvents = [
+        {
+          timestamp: 1000,
+          type: 'applydebuff',
+          sourceID: 11,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.CRIMSON_OATH,
+          fight: 9,
+          extraAbilityGameID: 0,
+        },
+        {
+          timestamp: 6000,
+          type: 'removedebuff',
+          sourceID: 11,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.CRIMSON_OATH,
+          fight: 9,
+          extraAbilityGameID: 0,
+        },
+      ] as unknown as DebuffEvent[];
+
+      const debuffLookup = createDebuffLookup(debuffEvents);
+
+      const resultDuringDebuff = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        3000,
+        null,
+        targetId,
+      );
+
+      expect(resultDuringDebuff).toBe(PenetrationValues.CRIMSON_OATH);
+
+      const resultBeforeDebuff = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        500,
+        null,
+        targetId,
+      );
+
+      expect(resultBeforeDebuff).toBe(0);
+
+      const resultAfterRemoval = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        7000,
+        null,
+        targetId,
+      );
+
+      expect(resultAfterRemoval).toBe(0);
+    });
   });
 
   describe('calculatePenetrationAtTimestamp', () => {
