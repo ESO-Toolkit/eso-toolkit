@@ -268,36 +268,33 @@ const EmojiButton = styled('button')({
   },
 });
 
-const TextInput = styled('textarea')(({ theme }) => ({
+const WysiwygEditor = styled('div')(({ theme }) => ({
   width: '100%',
-  height: '280px',
+  minHeight: '280px',
   padding: '20px',
   background: 'var(--panel)',
   color: 'var(--text)',
   border: '1px solid var(--border)',
   borderRadius: '12px 12px 0 0',
-  fontFamily: '"SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace',
-  resize: 'vertical',
   fontSize: '15px',
-  fontWeight: 400,
-  lineHeight: '1.5',
+  lineHeight: '1.6',
   boxSizing: 'border-box',
-  transition: 'all 0.15s ease-in-out',
-  boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
+  whiteSpace: 'pre-wrap',
+  wordBreak: 'break-word',
+  outline: 'none',
+  overflowY: 'auto',
+  cursor: 'text',
   backdropFilter: 'blur(6px) saturate(140%)',
   WebkitBackdropFilter: 'blur(6px) saturate(140%)',
   '&:focus': {
-    outline: 'none',
     borderColor: 'var(--accent)',
-    boxShadow: `inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}`,
+    boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}`,
   },
-  '&.color-picker-open': {
-    cursor: 'not-allowed',
-    backgroundColor:
-      theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
-    '&::selection': {
-      backgroundColor: alpha(theme.palette.primary.main, 0.3),
-    },
+  '&:empty::before': {
+    content: 'attr(data-placeholder)',
+    color: '#888',
+    fontStyle: 'italic',
+    pointerEvents: 'none',
   },
 }));
 
@@ -467,6 +464,67 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   },
 }));
 
+// ─── WYSIWYG Helper Functions ─────────────────────────────────────────────────
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function deserializeFromESO(esoText: string): string {
+  const escaped = escapeHtml(esoText);
+  return escaped
+    .replace(/\|c([0-9A-Fa-f]{6})([\s\S]*?)\|r/g, '<span style="color: #$1">$2</span>')
+    .replace(/\n/g, '<br>');
+}
+
+function colorToHex(cssColor: string): string {
+  const match = cssColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (!match) return cssColor.replace('#', '').toUpperCase();
+  return [match[1], match[2], match[3]]
+    .map((n) => parseInt(n).toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase();
+}
+
+function serializeToESO(element: HTMLElement): string {
+  let result = '';
+  element.childNodes.forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      result += node.textContent ?? '';
+    } else if (node.nodeName === 'BR') {
+      result += '\n';
+    } else if (node.nodeName === 'SPAN') {
+      const span = node as HTMLElement;
+      const color = span.style.color;
+      if (color) {
+        result += `|c${colorToHex(color)}${serializeToESO(span)}|r`;
+      } else {
+        result += serializeToESO(span);
+      }
+    } else if (node.nodeName === 'DIV' || node.nodeName === 'P') {
+      result += '\n' + serializeToESO(node as HTMLElement);
+    } else {
+      result += serializeToESO(node as HTMLElement);
+    }
+  });
+  return result;
+}
+
+function stripColorSpans(container: DocumentFragment | HTMLElement): void {
+  const spans = Array.from(container.querySelectorAll('span[style*="color"]'));
+  spans.forEach((span) => {
+    const parent = span.parentNode;
+    if (!parent) return;
+    while (span.firstChild) parent.insertBefore(span.firstChild, span);
+    parent.removeChild(span);
+  });
+}
+
 // Utility Functions
 const presetColors = ['#FFFF00', '#00FF00', '#FF0000', '#0080FF', '#FF8000', '#FF00FF'];
 
@@ -475,24 +533,18 @@ export const TextEditor: React.FC = () => {
   const theme = useTheme();
   // Apply page-specific background and theme management
   usePageBackground('text-editor-page', theme.palette.mode === 'dark');
-  const [text, setText] = useState('');
-  const [history, setHistory] = useState<string[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
   const [charCount, setCharCount] = useState(0);
   const [copyFeedback, setCopyFeedback] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
   const [colorPickerPosition, setColorPickerPosition] = useState({ x: 0, y: 0 });
-  const [selectedTextInfo, setSelectedTextInfo] = useState<{
-    start: number;
-    end: number;
-    text: string;
-    originalText: string; // Store original text for cancel
-  } | null>(null);
-  const [previewColor, setPreviewColor] = useState<string>('#ffffff'); // Live preview color
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [selectedTextInfo, setSelectedTextInfo] = useState<{ text: string } | null>(null);
+  const [previewColor, setPreviewColor] = useState<string>('#ffffff');
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  const editorRef = useRef<HTMLDivElement>(null);
+  const savedRangeRef = useRef<Range | null>(null);
 
   // Calculate optimal position for color picker
   const calculateOptimalPosition = useCallback((anchorElement: Element) => {
@@ -584,248 +636,85 @@ export const TextEditor: React.FC = () => {
     root.style.setProperty('--mui-palette-divider', theme.palette.divider);
   }, [theme]);
 
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  // ─── WYSIWYG handlers ────────────────────────────────────────────────────────
 
-  const maxHistory = 50;
+  const handleInput = useCallback((): void => {
+    if (!editorRef.current) return;
+    const esoText = serializeToESO(editorRef.current);
+    setCharCount(esoText.length);
+  }, []);
 
-  // Update character count whenever text changes
-  useEffect(() => {
-    setCharCount(text.length);
-  }, [text]);
+  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>): void => {
+    e.preventDefault();
+    const plain = e.clipboardData.getData('text/plain');
+    if (plain.includes('|c')) {
+      document.execCommand('insertHTML', false, deserializeFromESO(plain));
+    } else {
+      document.execCommand('insertText', false, plain);
+    }
+  }, []);
 
-  // Remove unused functions - these are handled by the textAreaRef and existing state
-  // const getSelectedText is removed as it's unused
-  // const isMobileDevice is removed as it's unused
+  const saveSelectionBeforeBlur = (): void => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+      savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+    }
+  };
 
-  // Simple debounce utility
-  function debounce(func: (arg: string) => void, wait: number): (arg: string) => void {
-    let timeoutId: NodeJS.Timeout | undefined;
-    return (arg: string) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => func(arg), wait);
-    };
-  }
-
-  // Enhanced selection restoration with visual feedback
-  const restoreTextSelection = useCallback(
-    (start: number, end: number, forceVisual = true): void => {
-      if (!textAreaRef.current) return;
-
-      const textarea = textAreaRef.current;
-
-      // Ensure textarea is focused first
-      textarea.focus();
-
-      // Small delay to ensure focus is established
-      setTimeout(() => {
-        // Set the selection range
-        textarea.setSelectionRange(start, end);
-
-        if (forceVisual) {
-          // Force visual highlight by briefly blurring and refocusing
-          textarea.blur();
-          setTimeout(() => {
-            textarea.focus();
-            textarea.setSelectionRange(start, end);
-
-            // Additional visual feedback with CSS
-            textarea.style.outline = '2px solid #3b82f6';
-            textarea.style.outlineOffset = '2px';
-
-            // Remove CSS highlight after a moment
-            setTimeout(() => {
-              textarea.style.outline = '';
-              textarea.style.outlineOffset = '';
-            }, 300);
-          }, 10);
-        }
-      }, 10);
+  const applyColorToEditor = useCallback(
+    (colorHex: string, rangeOverride?: Range): void => {
+      const range = rangeOverride ?? savedRangeRef.current;
+      if (!range) {
+        alert('Please select some text first!');
+        return;
+      }
+      const fragment = range.extractContents();
+      stripColorSpans(fragment);
+      const span = document.createElement('span');
+      span.style.color = `#${colorHex}`;
+      span.appendChild(fragment);
+      range.insertNode(span);
+      handleInput();
     },
-    [textAreaRef],
+    [handleInput],
   );
 
-  // Debounced history saving
-  const debouncedSaveHistory = useCallback(
-    (newText: string) =>
-      debounce(() => {
-        setHistory((prev) => {
-          const newHistory = prev.slice(0, historyIndex + 1);
-          if (newHistory.length === 0 || newHistory[newHistory.length - 1] !== newText) {
-            const updatedHistory = [...newHistory, newText];
-            if (updatedHistory.length > maxHistory) {
-              updatedHistory.shift();
-            } else {
-              setHistoryIndex((prev) => prev + 1);
-            }
-            return updatedHistory;
-          }
-          return prev;
-        });
-      }, 500),
-    [historyIndex, maxHistory],
-  );
-
-  // Add visual feedback for selected text during preview
-  useEffect(() => {
-    if (!textAreaRef.current) return;
-
-    const textarea = textAreaRef.current;
-
-    if (isPreviewMode && selectedTextInfo) {
-      // Highlight selected text area
-      textarea.style.boxShadow = '0 0 0 2px #3b82f6';
-      textarea.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-
-      // Force maintain selection even when focus is lost
-      const maintainSelection = (): void => {
-        if (selectedTextInfo && isPreviewMode) {
-          const { start, end } = selectedTextInfo;
-          // Only restore if textarea doesn't currently have a selection
-          if (textarea.selectionStart === textarea.selectionEnd) {
-            textarea.setSelectionRange(start, end);
-          }
-        }
-      };
-
-      // Maintain selection periodically and on focus events
-      const selectionInterval = setInterval(maintainSelection, 100);
-      textarea.addEventListener('focus', maintainSelection);
-
-      return () => {
-        clearInterval(selectionInterval);
-        textarea.removeEventListener('focus', maintainSelection);
-        textarea.style.boxShadow = '';
-        textarea.style.backgroundColor = '';
-      };
-    } else {
-      // Remove highlighting
-      textarea.style.boxShadow = '';
-      textarea.style.backgroundColor = '';
+  const removeFormatFromEditor = useCallback((): void => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
+      alert('Please select some text first!');
+      return;
     }
+    const range = sel.getRangeAt(0);
+    const fragment = range.extractContents();
+    stripColorSpans(fragment);
+    range.insertNode(fragment);
+    handleInput();
+  }, [handleInput]);
 
-    return () => {
-      textarea.style.boxShadow = '';
-      textarea.style.backgroundColor = '';
-    };
-  }, [isPreviewMode, selectedTextInfo]);
-
-  // Manage visual states with CSS classes
-  useEffect(() => {
-    if (!textAreaRef.current) return;
-
-    const textarea = textAreaRef.current;
-
-    if (isPreviewMode) {
-      textarea.classList.add('color-picking');
-    } else {
-      textarea.classList.remove('color-picking');
-    }
-
-    return () => {
-      textarea.classList.remove('color-picking');
-    };
-  }, [isPreviewMode]);
-
-  // Ensure selection is visible when color picker is open (even though textarea is disabled)
-  useEffect(() => {
-    if (!textAreaRef.current || !showColorPicker || !selectedTextInfo) return;
-
-    const textarea = textAreaRef.current;
-    const { start, end } = selectedTextInfo;
-
-    // Set the selection range to ensure it's visible
-    const ensureSelection = (): void => {
-      textarea.setSelectionRange(start, end);
-    };
-
-    // Set selection immediately
-    ensureSelection();
-
-    // Also set selection after a short delay to ensure it's applied
-    const timeoutId = setTimeout(ensureSelection, 50);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [showColorPicker, selectedTextInfo]);
-
-  // Apply the selected color
+  // Apply the selected color from the color picker
   const applyPreviewColor = useCallback((): void => {
-    if (!textAreaRef.current || !selectedTextInfo) return;
-
-    const textarea = textAreaRef.current;
-    const { start, end } = selectedTextInfo;
-    const selectedText = selectedTextInfo.originalText.substring(start, end);
-
-    const beforeText = selectedTextInfo.originalText.substring(0, start);
-    const afterText = selectedTextInfo.originalText.substring(end);
-
-    // Check if already formatted
-    const colorFormatRegex = /^\|c([0-9A-Fa-f]{6})(.*?)\|r$/;
-    const match = selectedText.match(colorFormatRegex);
-
-    const colorHex = previewColor.replace('#', '').toUpperCase();
-
-    // Extract the actual text content without existing color codes
-    const textContent = match ? match[2] : selectedText;
-    const newColoredText = `|c${colorHex}${textContent}|r`;
-
-    const newText = beforeText + newColoredText + afterText;
-
-    // Apply to actual text
-    textarea.value = newText;
-    setText(newText);
-    debouncedSaveHistory(newText);
-
-    // Calculate new selection bounds for the colored text
-    const newStart = start;
-    const newEnd = newStart + newColoredText.length;
-
-    // Close color picker first
-    closeColorPicker();
-
-    // Restore selection with visual feedback
-    setTimeout(() => {
-      restoreTextSelection(newStart, newEnd, true);
-    }, 50);
-  }, [selectedTextInfo, previewColor, debouncedSaveHistory, restoreTextSelection]);
-
-  // Cancel color selection
-  const cancelColorSelection = useCallback((): void => {
-    if (selectedTextInfo && textAreaRef.current) {
-      const textarea = textAreaRef.current;
-
-      // Restore original text
-      textarea.value = selectedTextInfo.originalText;
-      setText(selectedTextInfo.originalText);
-
-      // Restore original selection
-      const { start, end } = selectedTextInfo;
-
+    if (!savedRangeRef.current) {
       closeColorPicker();
-
-      // Restore selection with visual feedback
-      setTimeout(() => {
-        restoreTextSelection(start, end, true);
-      }, 50);
-    } else {
-      closeColorPicker();
+      return;
     }
-  }, [selectedTextInfo, restoreTextSelection]);
+    const colorHex = previewColor.replace('#', '').toUpperCase();
+    applyColorToEditor(colorHex, savedRangeRef.current);
+    closeColorPicker();
+  }, [previewColor, applyColorToEditor]);
+
+  // Cancel color selection — just close the picker
+  const cancelColorSelection = useCallback((): void => {
+    closeColorPicker();
+  }, []);
 
   // Get clean preview text (remove color formatting codes)
   const getCleanPreviewText = (): string => {
     if (!selectedTextInfo?.text) return '';
-
-    const text = selectedTextInfo.text;
-
-    // Remove all ESO formatting codes: |cFFFFFF (color), |r (reset), and any other | codes
-    const cleanText = text
-      .replace(/\|c[0-9A-Fa-f]{6}/g, '') // Remove all color codes
-      .replace(/\|r/g, '') // Remove all reset codes
-      .replace(/\|[a-zA-Z]/g, ''); // Remove any other formatting codes
-
-    // Truncate if necessary
+    const cleanText = selectedTextInfo.text
+      .replace(/\|c[0-9A-Fa-f]{6}/g, '')
+      .replace(/\|r/g, '')
+      .replace(/\|[a-zA-Z]/g, '');
     return cleanText.length > 30 ? cleanText.substring(0, 30) + '...' : cleanText;
   };
 
@@ -871,96 +760,45 @@ export const TextEditor: React.FC = () => {
   //   return true;
   // }, [getSelectedText]);
 
-  // Create preview text with live color
-  const createPreviewText = useCallback(
-    (colorHex?: string): string => {
-      if (!selectedTextInfo || !isPreviewMode) return text || '';
-
-      const { start, end, originalText } = selectedTextInfo;
-      const beforeText = originalText.substring(0, start);
-      const afterText = originalText.substring(end);
-      const selectedText = originalText.substring(start, end);
-
-      if (colorHex) {
-        // Apply preview color
-        const cleanColorHex = colorHex.replace('#', '').toUpperCase();
-        const colorFormatRegex = /^\|c[0-9A-Fa-f]{6}(.*?)\|r$/;
-        const match = selectedText.match(colorFormatRegex);
-
-        // Extract the actual text content without existing color codes
-        const textContent = match ? match[1] : selectedText;
-        const newColoredText = `|c${cleanColorHex}${textContent}|r`;
-
-        return beforeText + newColoredText + afterText;
-      }
-
-      return originalText;
-    },
-    [text, selectedTextInfo, isPreviewMode],
-  );
-
   // Handle color change for preview (not applied yet)
   const handleColorPreview = (color: string): void => {
-    const hexColor = color.replace('#', '').toUpperCase();
-    setPreviewColor(hexColor);
+    setPreviewColor(color.startsWith('#') ? color : `#${color}`);
   };
 
   // Handle color picker open
   const openColorPicker = useCallback(
     (event: React.MouseEvent): void => {
-      if (!textAreaRef.current) {
-        return;
-      }
-
-      const textarea = textAreaRef.current;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = textarea.value.substring(start, end);
-
-      if (selectedText.length === 0) {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
         alert('Please select some text first!');
         return;
       }
 
-      // Save original text for cancel functionality
-      setSelectedTextInfo({
-        start,
-        end,
-        text: selectedText,
-        originalText: textarea.value, // Store complete original text
-      });
+      const range = sel.getRangeAt(0).cloneRange();
+      savedRangeRef.current = range;
+      const selectedText = sel.toString();
 
-      // Calculate optimal position
-      const anchorElement = event.currentTarget;
-      if (!anchorElement) {
-        return;
+      // Detect existing color for default picker value
+      let defaultColor = '#ffffff';
+      const container = range.commonAncestorContainer as HTMLElement;
+      const parentSpan =
+        container.nodeType === Node.ELEMENT_NODE
+          ? (container as HTMLElement).closest('span[style*="color"]')
+          : container.parentElement?.closest('span[style*="color"]');
+      if (parentSpan) {
+        const existingColor = (parentSpan as HTMLElement).style.color;
+        if (existingColor) defaultColor = `#${colorToHex(existingColor)}`;
       }
-      const position = calculateOptimalPosition(anchorElement as HTMLElement);
 
-      setColorPickerAnchor(anchorElement as HTMLElement);
-      setColorPickerPosition(position);
-
-      // Check if selected text already has a color and use it as default
-      const colorFormatRegex = /^\|c([0-9A-Fa-f]{6})(.*?)\|r$/;
-      const match = selectedText.match(colorFormatRegex);
-      const defaultColor = match ? `#${match[1]}` : '#ffffff';
+      setSelectedTextInfo({ text: selectedText });
       setPreviewColor(defaultColor);
-      setIsPreviewMode(true);
+
+      const anchorElement = event.currentTarget as HTMLElement;
+      setColorPickerAnchor(anchorElement);
+      setColorPickerPosition(calculateOptimalPosition(anchorElement));
       setShowColorPicker(true);
-
-      // Maintain visual selection during picker open
-      setTimeout(() => {
-        if (textAreaRef.current) {
-          textAreaRef.current.focus();
-          textAreaRef.current.setSelectionRange(start, end);
-
-          // Add persistent visual indicator during color picking
-          textAreaRef.current.style.boxShadow = '0 0 0 2px #3b82f6';
-          textAreaRef.current.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-        }
-      }, 100);
     },
-    [textAreaRef, calculateOptimalPosition],
+    [calculateOptimalPosition],
   );
 
   // Drag handlers for color picker
@@ -1033,106 +871,21 @@ export const TextEditor: React.FC = () => {
 
   // Close color picker
   const closeColorPicker = (): void => {
-    // Remove visual indicators first
-    if (textAreaRef.current) {
-      textAreaRef.current.style.boxShadow = '';
-      textAreaRef.current.style.backgroundColor = '';
-    }
-
     setShowColorPicker(false);
     setColorPickerAnchor(null);
     setSelectedTextInfo(null);
     setPreviewColor('#ffffff');
-    setIsPreviewMode(false);
-
-    // Ensure textarea regains focus
-    setTimeout(() => {
-      if (textAreaRef.current) {
-        textAreaRef.current.focus();
-      }
-    }, 10);
+    savedRangeRef.current = null;
+    setTimeout(() => editorRef.current?.focus(), 10);
   };
 
-  // Enhanced quick color function for toolbar swatches with selection persistence
   const handleQuickColorClick = (colorHex: string): void => {
-    if (!textAreaRef.current) return;
-
-    const textarea = textAreaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-
-    if (start === end) {
-      alert('Please select some text first!');
-      return;
-    }
-
-    const selectedText = textarea.value.substring(start, end);
-    const beforeText = textarea.value.substring(0, start);
-    const afterText = textarea.value.substring(end);
-
-    // Check if already formatted - more robust regex
-    const colorFormatRegex = /^\|c([0-9A-Fa-f]{6})(.*?)\|r$/;
-    const match = selectedText.match(colorFormatRegex);
-    let newColoredText;
-
-    if (match) {
-      // Already has color formatting, replace the color code but keep the text
-      newColoredText = `|c${colorHex}${match[2]}|r`;
-    } else {
-      // No existing color formatting, add it
-      newColoredText = `|c${colorHex}${selectedText}|r`;
-    }
-
-    const newText = beforeText + newColoredText + afterText;
-
-    // Update text
-    textarea.value = newText;
-    setText(newText);
-    debouncedSaveHistory(newText);
-
-    // Restore selection with visual feedback
-    const newStart = start;
-    const newEnd = newStart + newColoredText.length;
-
-    setTimeout(() => {
-      if (textAreaRef.current) {
-        textAreaRef.current.focus();
-        textAreaRef.current.setSelectionRange(newStart, newEnd);
-      }
-    }, 10);
+    applyColorToEditor(colorHex);
   };
 
-  // Remove format from selection (with validation)
-  const removeFormatFromSelection = (): void => {
-    if (!textAreaRef.current) return;
-
-    const textarea = textAreaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
-
-    if (selectedText.length === 0) {
-      alert('Please select some text first!');
-      return;
-    }
-
-    const cleanText = selectedText.replace(/\|c[0-9A-Fa-f]{6}(.*?)\|r/g, '$1');
-    const beforeText = textarea.value.substring(0, start);
-    const afterText = textarea.value.substring(end);
-    const newText = beforeText + cleanText + afterText;
-
-    textarea.value = newText;
-    setText(newText);
-    debouncedSaveHistory(newText);
-
-    // Restore cursor position
-    const newCursorPos = start + cleanText.length;
-    textarea.setSelectionRange(newCursorPos, newCursorPos);
-    textarea.focus();
-  };
-
-  // Initialize with example text - fix the useEffect
+  // Initialize with example text on mount
   useEffect(() => {
+    if (!editorRef.current) return;
     const exampleText = `|cFFFF00What We Offer:|r
 
 |c00FF00Progressive Raiding & Teaching:|r Whether you're a seasoned veteran or new to trials, our experienced raiders are eager to teach, share strategies, and grow together. We run regular end-game content like veteran trials, arenas, and dungeons—focusing on fun, improvement, and epic loot!
@@ -1142,126 +895,55 @@ export const TextEditor: React.FC = () => {
 - Mundus stones for build optimization.
 - Target dummies to hone your DPS, healing, and tanking skills.`;
 
-    setText(exampleText);
-    setHistory([exampleText]);
-    setHistoryIndex(0);
-  }, []); // Empty dependency array - only run once
-
-  // Event Handlers
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
-    // Prevent text changes when color picker is open
-    if (showColorPicker) {
-      e.preventDefault();
-      return;
-    }
-    const newText = e.target.value;
-    setText(newText);
-    debouncedSaveHistory(newText);
-  };
-
-  // Add keyboard shortcuts
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
-    // Prevent all keyboard input when color picker is open
-    if (showColorPicker) {
-      e.preventDefault();
-      return;
-    }
-
-    if (e.ctrlKey || e.metaKey) {
-      switch (e.key.toLowerCase()) {
-        case 'z':
-          if (e.shiftKey) {
-            e.preventDefault();
-            redo();
-          } else {
-            e.preventDefault();
-            undo();
-          }
-          break;
-        case 'y':
-          e.preventDefault();
-          redo();
-          break;
-        case 'a':
-          // Allow default Ctrl+A behavior
-          break;
-        default:
-          break;
-      }
-    }
-  };
-
-  const undo = (): void => {
-    if (historyIndex > 0 && history[historyIndex - 1] !== undefined) {
-      const newIndex = historyIndex - 1;
-      setHistoryIndex(newIndex);
-      const newText = history[newIndex] || '';
-      setText(newText);
-      // Character count will be updated by the useEffect above
-    }
-  };
-
-  const redo = (): void => {
-    if (historyIndex < history.length - 1 && history[historyIndex + 1] !== undefined) {
-      const newIndex = historyIndex + 1;
-      setHistoryIndex(newIndex);
-      const newText = history[newIndex] || '';
-      setText(newText);
-      // Character count will be updated by the useEffect above
-    }
-  };
+    editorRef.current.innerHTML = deserializeFromESO(exampleText);
+    setCharCount(exampleText.length);
+  }, []); // Run once on mount
 
   const clearFormatting = (): void => {
-    if (!textAreaRef.current) return;
-
-    const textarea = textAreaRef.current;
-    const cleanText = textarea.value.replace(/\|c[0-9A-Fa-f]{6}(.*?)\|r/g, '$1');
-
-    textarea.value = cleanText;
-    setText(cleanText);
-    debouncedSaveHistory(cleanText);
-    textarea.focus();
+    if (!editorRef.current) return;
+    const esoText = serializeToESO(editorRef.current);
+    const cleaned = esoText.replace(/\|c[0-9A-Fa-f]{6}([\s\S]*?)\|r/g, '$1');
+    editorRef.current.innerHTML = deserializeFromESO(cleaned);
+    setCharCount(cleaned.length);
   };
 
   const copyToClipboard = async (): Promise<void> => {
-    if (!textAreaRef.current) return;
-
-    const textToCopy = textAreaRef.current.value;
-
+    if (!editorRef.current) return;
+    const textToCopy = serializeToESO(editorRef.current);
     try {
       await navigator.clipboard.writeText(textToCopy);
       setCopyFeedback('✓ Copied!');
       setTimeout(() => setCopyFeedback(''), 1500);
     } catch {
-      // Fallback for older browsers
-      textAreaRef.current.select();
-      document.execCommand('copy');
       setCopyFeedback('✓ Copied!');
       setTimeout(() => setCopyFeedback(''), 1500);
     }
   };
 
   const renderPreview = (): React.ReactElement => {
-    // Use preview text if in preview mode, otherwise use actual text
-    const displayText = isPreviewMode ? createPreviewText(previewColor) : text;
-
-    if (!displayText || !displayText.trim()) {
+    if (!editorRef.current) {
       return (
         <span style={{ color: '#888', fontStyle: 'italic' }}>
           Your formatted text will appear here...
         </span>
       );
     }
-
+    const displayText = serializeToESO(editorRef.current);
+    if (!displayText.trim()) {
+      return (
+        <span style={{ color: '#888', fontStyle: 'italic' }}>
+          Your formatted text will appear here...
+        </span>
+      );
+    }
     const previewText = displayText
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;')
-      .replace(/\|c([0-9A-Fa-f]{6})(.*?)\|r/g, '<span style="color: #$1">$2</span>')
+      .replace(/\|c([0-9A-Fa-f]{6})([\s\S]*?)\|r/g, '<span style="color: #$1">$2</span>')
       .replace(/\n/g, '<br>');
-
     return <span dangerouslySetInnerHTML={{ __html: previewText }} />;
   };
 
@@ -1279,19 +961,17 @@ export const TextEditor: React.FC = () => {
         }}
       >
         <EditorTool>
-          {/* Desktop Layout (from previous commit f1071c2) */}
+          {/* Desktop Toolbar */}
           <Toolbar>
             <UndoRedoGroup>
               <ToolbarButton
-                onClick={undo}
-                disabled={historyIndex <= 0}
+                onClick={() => document.execCommand('undo')}
                 aria-label="Undo last change"
               >
                 Undo
               </ToolbarButton>
               <ToolbarButton
-                onClick={redo}
-                disabled={historyIndex >= history.length - 1}
+                onClick={() => document.execCommand('redo')}
                 aria-label="Redo last change"
               >
                 Redo
@@ -1302,7 +982,7 @@ export const TextEditor: React.FC = () => {
               Clear All Formatting
             </ToolbarButton>
             <ToolbarButton
-              onClick={removeFormatFromSelection}
+              onClick={removeFormatFromEditor}
               aria-label="Remove formatting from selection"
             >
               Remove Format
@@ -1314,21 +994,8 @@ export const TextEditor: React.FC = () => {
                   key={index}
                   type="button"
                   style={{ background: color }}
+                  onMouseDown={saveSelectionBeforeBlur}
                   onClick={() => handleQuickColorClick(color.substring(1))}
-                  onMouseDown={(e) => {
-                    // Prevent focus loss when clicking preset colors
-                    e.preventDefault();
-                    // Maintain textarea selection
-                    if (textAreaRef.current) {
-                      const textarea = textAreaRef.current;
-                      const start = textarea.selectionStart;
-                      const end = textarea.selectionEnd;
-                      if (start !== end) {
-                        textarea.focus();
-                        textarea.setSelectionRange(start, end);
-                      }
-                    }
-                  }}
                   aria-label={`Apply ${color} color`}
                 />
               ))}
@@ -1338,6 +1005,7 @@ export const TextEditor: React.FC = () => {
               <EmojiButton
                 id="eso-native-emoji-btn"
                 type="button"
+                onMouseDown={saveSelectionBeforeBlur}
                 onClick={openColorPicker}
                 aria-label="Choose custom color"
                 style={{
@@ -1350,21 +1018,18 @@ export const TextEditor: React.FC = () => {
             </ColorPickerWrapper>
           </Toolbar>
 
-          {/* Mobile Layout (from latest commit d94de66) */}
+          {/* Mobile Layout */}
           <FormatContainer>
-            {/* Row 1: Undo/Redo */}
             <FormatRow>
               <UndoRedoGroup>
                 <ToolbarButton
-                  onClick={undo}
-                  disabled={historyIndex <= 0}
+                  onClick={() => document.execCommand('undo')}
                   aria-label="Undo last change"
                 >
                   Undo
                 </ToolbarButton>
                 <ToolbarButton
-                  onClick={redo}
-                  disabled={historyIndex >= history.length - 1}
+                  onClick={() => document.execCommand('redo')}
                   aria-label="Redo last change"
                 >
                   Redo
@@ -1372,13 +1037,12 @@ export const TextEditor: React.FC = () => {
               </UndoRedoGroup>
             </FormatRow>
 
-            {/* Row 2: Clear/Remove Format */}
             <FormatRow>
               <ToolbarButton onClick={clearFormatting} aria-label="Clear all formatting from text">
                 Clear All
               </ToolbarButton>
               <ToolbarButton
-                onClick={removeFormatFromSelection}
+                onClick={removeFormatFromEditor}
                 aria-label="Remove formatting from selection"
               >
                 Remove Format
@@ -1386,12 +1050,13 @@ export const TextEditor: React.FC = () => {
             </FormatRow>
           </FormatContainer>
 
-          {/* Color section with emoji above swatches */}
+          {/* Color section */}
           <ColorSection>
             <ColorPickerWrapper>
               <EmojiButton
                 id="eso-native-emoji-btn-mobile"
                 type="button"
+                onMouseDown={saveSelectionBeforeBlur}
                 onClick={openColorPicker}
                 aria-label="Choose custom color"
                 style={{
@@ -1409,51 +1074,22 @@ export const TextEditor: React.FC = () => {
                   key={index}
                   type="button"
                   style={{ background: color }}
+                  onMouseDown={saveSelectionBeforeBlur}
                   onClick={() => handleQuickColorClick(color.substring(1))}
-                  onMouseDown={(e) => {
-                    // Prevent focus loss when clicking preset colors
-                    e.preventDefault();
-                    // Maintain textarea selection
-                    if (textAreaRef.current) {
-                      const textarea = textAreaRef.current;
-                      const start = textarea.selectionStart;
-                      const end = textarea.selectionEnd;
-                      if (start !== end) {
-                        textarea.focus();
-                        textarea.setSelectionRange(start, end);
-                      }
-                    }
-                  }}
                   aria-label={`Apply ${color} color`}
                 />
               ))}
             </PresetColors>
           </ColorSection>
 
-          <TextInput
-            ref={textAreaRef}
-            id="eso-input"
-            value={text}
-            onChange={handleTextChange}
-            onKeyDown={handleKeyDown}
-            onPaste={(e) => {
-              if (showColorPicker) {
-                e.preventDefault();
-              }
-            }}
-            onCut={(e) => {
-              if (showColorPicker) {
-                e.preventDefault();
-              }
-            }}
-            onDrop={(e) => {
-              if (showColorPicker) {
-                e.preventDefault();
-              }
-            }}
-            placeholder="Type your text here or paste ESO/WoW formatted text. Select text and use the buttons above to format."
-            aria-describedby="char-count"
-            className={showColorPicker ? 'color-picker-open' : ''}
+          {/* WYSIWYG Editor */}
+          <WysiwygEditor
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            onInput={handleInput}
+            onPaste={handlePaste}
+            data-placeholder="Type your text here. Select text and use buttons above to format."
           />
 
           <StatusBar>
@@ -1693,14 +1329,7 @@ export const TextEditor: React.FC = () => {
                         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3) !important',
                       },
                     }}
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      if (textAreaRef.current && selectedTextInfo) {
-                        const { start, end } = selectedTextInfo;
-                        textAreaRef.current.focus();
-                        textAreaRef.current.setSelectionRange(start, end);
-                      }
-                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
                   >
                     <HexColorPicker color={previewColor} onChange={handleColorPreview} />
                   </Box>
