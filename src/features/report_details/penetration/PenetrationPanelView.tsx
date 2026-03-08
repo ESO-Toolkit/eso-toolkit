@@ -170,12 +170,23 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
           </Typography>
 
           <Typography variant="subtitle2" gutterBottom>
+            Arena weapon set penetration
+          </Typography>
+          <Typography variant="body2" paragraph>
+            ESO TK tracks arena weapon set penetration (e.g. Perfected Merciless Charge, Perfected
+            Crushing Wall) per weapon bar, applying it only during the timestamps when that bar is
+            active. CMX does not track arena weapon pen by bar — it applies a single fixed value for
+            the whole fight. This means our MAX may be higher than CMX&apos;s when you spend time on
+            the arena weapon bar, but our ACTIVE average will be lower (and more accurate).
+          </Typography>
+
+          <Typography variant="subtitle2" gutterBottom>
             Base penetration snapshots
           </Typography>
           <Typography variant="body2" paragraph>
             CMX reads your penetration stat in real time and sees changes on weapon bar swaps. ESO
             TK uses a single snapshot from the combat log&apos;s combatant info, which may not
-            reflect bar-swap variations.
+            reflect bar-swap variations in other stats.
           </Typography>
 
           <Typography variant="subtitle2" gutterBottom>
