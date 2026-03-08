@@ -538,8 +538,9 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 height: '100%', // Accept full height from grid stretch
                 minWidth: 0, // Allow shrinking below content width
                 maxWidth: '100%', // Don't exceed parent container
-                overflow: 'hidden', // Clip individual card overflow if needed
+                overflow: 'visible', // Allow card to lift on hover without clipping
                 boxSizing: 'border-box', // Include padding in width calculation
+                paddingTop: '2px', // Give hover translateY(-2px) room at the top
               }}
             >
               <PlayerCard
