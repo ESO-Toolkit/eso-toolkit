@@ -375,8 +375,9 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   padding: '20px',
   borderRadius: '12px',
   minHeight: '120px',
-  background: theme.palette.mode === 'dark' ? 'transparent !important' : '#000000 !important',
-  backgroundColor: theme.palette.mode === 'dark' ? 'transparent !important' : '#000000 !important',
+  // Must be transparent so the ::before background image shows through
+  background: 'transparent !important',
+  backgroundColor: 'transparent !important',
   border:
     theme.palette.mode === 'dark'
       ? '1px solid rgba(255, 255, 255, 0.2)'
@@ -389,7 +390,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   transition: 'all 0.15s ease-in-out',
   color: '#ffffff',
 
-  // Background image with mobile optimizations
+  // Background image layer
   '&::before': {
     content: '""',
     position: 'absolute',
@@ -399,11 +400,10 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     bottom: 0,
     backgroundImage: `url(${theme.palette.mode === 'dark' ? '/text-editor/text-editor-bg-dark.jpg' : '/text-editor/text-editor-bg-light.jpg'})`,
     backgroundSize: 'cover',
-    backgroundPosition: 'center', // Back to original center positioning
+    backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
-    backgroundAttachment: 'fixed', // Back to original fixed
-    opacity: 0.3,
-    zIndex: -1,
+    backgroundAttachment: 'fixed',
+    zIndex: 0,
     pointerEvents: 'none',
     filter: 'blur(1px)',
     WebkitFilter: 'blur(1px)',
@@ -417,8 +417,9 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     left: 0,
     right: 0,
     bottom: 0,
-    background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'transparent',
-    zIndex: -1,
+    background:
+      theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.4)',
+    zIndex: 1,
     pointerEvents: 'none',
   },
 
@@ -451,15 +452,9 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     borderRadius: '8px',
     margin: '16px 0',
 
-    // Adjust background position for mobile
     '&::before': {
-      backgroundPosition: 'center', // Keep center positioning
+      backgroundPosition: 'center',
       backgroundAttachment: 'scroll',
-    },
-
-    // RESTORE ORIGINAL OVERLAY on mobile too
-    '&::after': {
-      background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'transparent',
     },
   },
 }));

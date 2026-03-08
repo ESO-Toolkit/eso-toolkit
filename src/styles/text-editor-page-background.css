@@ -101,104 +101,14 @@ body.text-editor-page.dark-mode .editor-container:not(.EditorTool) {
   color: #e0e0e0;
 }
 
-/* Calculator container uses --panel variable which now has transparency */
+/* Preview area transparency handled by the PreviewArea styled component */
 
-/* Make TextEditor component container use CSS variables */
-body.text-editor-page .MuiBox-root,
-body.text-editor-page .TextEditorContainer {
-  /* Let CSS variables handle the background */
-}
-
-/* Preview area - Let component handle its own transparency */
-
-/* Preview area transparency handled by component */
-
-/* Create a dedicated background layer */
-body.text-editor-page::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  z-index: -2;
-  pointer-events: none;
-}
-
-body.text-editor-page.dark-mode::before {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg');
-}
-
-body.text-editor-page:not(.dark-mode)::before {
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
-}
-
-/* Make the preview area show through to the background */
-body.text-editor-page .css-cplt40 {
+/* Preview area — use stable #eso-preview ID instead of fragile .css-* class names */
+body.text-editor-page #eso-preview {
   background: transparent !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background-color: transparent !important;
   position: relative !important;
   z-index: 1 !important;
-}
-
-/* Override any light mode backgrounds that might be applied */
-body.text-editor-page:not(.dark-mode) .css-cplt40 {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  position: relative !important;
-}
-
-/* Add background image directly to light mode preview area using ::before */
-body.text-editor-page:not(.dark-mode) .css-cplt40::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 1 !important;
-}
-
-body.text-editor-page.dark-mode .css-cplt40::before {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg');
-}
-
-/* Make sure preview area content is also transparent */
-body.text-editor-page .css-cplt40 *,
-body.text-editor-page:not(.dark-mode) .css-cplt40 * {
-  background: transparent !important;
-}
-
-/* Force the covering container to be completely transparent */
-body.text-editor-page .css-1u9mni1 {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  position: relative !important;
-}
-
-/* Also target the light mode container that might be getting a solid background */
-body.text-editor-page .css-1j69n08,
-body.text-editor-page:not(.dark-mode) .css-1j69n08,
-body.text-editor-page .MuiBox-root.css-1j69n08,
-body.text-editor-page .MuiPaper-root.css-1j69n08 {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  position: relative !important;
 }
 
 /* Improve mobile background positioning */
@@ -245,21 +155,8 @@ body.text-editor-page .MuiPaper-root.css-1j69n08 {
   }
 }
 
-/* Fix for specific Material-UI generated class */
-body.text-editor-page .css-cm1l3d {
-  background-color: #000000 !important;
-}
-
-/* Override mobile CSS rule for .css-cm1l3d::after */
+/* Hide .pickr element on text editor page */
 @media (max-width: 599.95px) {
-  body.text-editor-page .css-cm1l3d::after {
-    background: rgb(0 0 0 / 40%) !important;
-  }
-
-  /* Hide .pickr element next to emoji buttons on both mobile and desktop */
-  body.text-editor-page .css-fcvuav + .pickr,
-  body.text-editor-page .pickr:has(+ .css-fcvuav),
-  body.text-editor-page .pickr:has(~ .css-fcvuav),
   body.text-editor-page .pickr {
     display: none !important;
     visibility: hidden !important;
