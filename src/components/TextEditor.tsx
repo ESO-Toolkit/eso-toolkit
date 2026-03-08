@@ -273,9 +273,8 @@ const WysiwygEditor = styled('div')(({ theme }) => ({
   minHeight: '280px',
   padding: '20px',
   // Opaque background so it reads as an input, not a panel
-  background: theme.palette.mode === 'dark'
-    ? 'rgba(10, 16, 30, 0.95)'
-    : 'rgba(255, 255, 255, 0.97)',
+  background:
+    theme.palette.mode === 'dark' ? 'rgba(10, 16, 30, 0.95)' : 'rgba(255, 255, 255, 0.97)',
   color: 'var(--text)',
   border: `2px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.18)'}`,
   borderRadius: '12px 12px 0 0',
@@ -288,9 +287,10 @@ const WysiwygEditor = styled('div')(({ theme }) => ({
   overflowY: 'auto',
   cursor: 'text',
   // Inset shadow gives the "sunken input" feel
-  boxShadow: theme.palette.mode === 'dark'
-    ? 'inset 0 2px 4px rgba(0,0,0,0.4)'
-    : 'inset 0 2px 4px rgba(0,0,0,0.06)',
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? 'inset 0 2px 4px rgba(0,0,0,0.4)'
+      : 'inset 0 2px 4px rgba(0,0,0,0.06)',
   transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
   '&:hover': {
     borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
@@ -408,8 +408,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     left: 0,
     right: 0,
     bottom: 0,
-    background:
-      theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.3)',
+    background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.3)',
     zIndex: 0,
     pointerEvents: 'none',
   },
