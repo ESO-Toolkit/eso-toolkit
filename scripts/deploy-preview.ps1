@@ -196,6 +196,7 @@ else {
 }
 
 # Remove existing entry for this alias, add fresh one
+# Use PSObject.Properties to safely handle entries that don't have an 'alias' field (e.g. PR entries)
 $previews = @($previews | Where-Object { -not $_.PSObject.Properties['alias'] -or $_.alias -ne $Alias })
 
 $branchName = (git -C $ProjectRoot branch --show-current) 2>$null
@@ -219,7 +220,7 @@ $previews | ConvertTo-Json -Depth 10 | Set-Content $previewsJson -Encoding UTF8
 Push-Location $DevPreviewsPath
 try {
     git add -A
-    git commit -m "Deploy local preview: $Alias ($branchName@$commitHash)"
+    git commit -m ('Deploy local preview: ' + $Alias + ' (' + $branchName + '@' + $commitHash + ')')
     git push
     if ($LASTEXITCODE -ne 0) {
         Write-Error 'Failed to push to dev-previews. You may need to resolve conflicts manually.'
