@@ -272,9 +272,12 @@ const WysiwygEditor = styled('div')(({ theme }) => ({
   width: '100%',
   minHeight: '280px',
   padding: '20px',
-  background: 'var(--panel)',
+  // Opaque background so it reads as an input, not a panel
+  background: theme.palette.mode === 'dark'
+    ? 'rgba(10, 16, 30, 0.95)'
+    : 'rgba(255, 255, 255, 0.97)',
   color: 'var(--text)',
-  border: '1px solid var(--border)',
+  border: `2px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.18)'}`,
   borderRadius: '12px 12px 0 0',
   fontSize: '15px',
   lineHeight: '1.6',
@@ -284,15 +287,21 @@ const WysiwygEditor = styled('div')(({ theme }) => ({
   outline: 'none',
   overflowY: 'auto',
   cursor: 'text',
-  backdropFilter: 'blur(6px) saturate(140%)',
-  WebkitBackdropFilter: 'blur(6px) saturate(140%)',
+  // Inset shadow gives the "sunken input" feel
+  boxShadow: theme.palette.mode === 'dark'
+    ? 'inset 0 2px 4px rgba(0,0,0,0.4)'
+    : 'inset 0 2px 4px rgba(0,0,0,0.06)',
+  transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+  '&:hover': {
+    borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
+  },
   '&:focus': {
     borderColor: 'var(--accent)',
-    boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}`,
+    boxShadow: `inset 0 2px 4px rgba(0,0,0,0.06), 0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}`,
   },
   '&:empty::before': {
     content: 'attr(data-placeholder)',
-    color: '#888',
+    color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
     fontStyle: 'italic',
     pointerEvents: 'none',
   },
