@@ -1,5 +1,5 @@
 import { PlayerDetailsWithRole } from '@/store/player_data/playerDataSlice';
-import { CombatantInfoEvent, DamageEvent } from '@/types/combatlogEvents';
+import { CombatantInfoEvent, DamageEvent, UnifiedCastEvent } from '@/types/combatlogEvents';
 import {
   calculateActiveCombatTime,
   filterDataPointsByActiveCombat,
@@ -9,6 +9,8 @@ import {
   calculateDynamicPenetrationAtTimestamp,
   calculateStaticPenetration,
   getAllPenetrationSourcesWithActiveState,
+  getActiveWeaponBarAtTimestamp,
+  getArenaWeaponPenetrationForBar,
   PenetrationSourceWithActiveState,
 } from '@/utils/PenetrationUtils';
 
@@ -47,6 +49,8 @@ export interface PenetrationCalculationTask {
   debuffsLookup: BuffLookupData;
   selectedTargetIds: number[];
   damageEvents: DamageEvent[];
+  /** SWAP_WEAPONS cast events grouped by player ID, sorted by timestamp ascending */
+  swapEventsByPlayerId?: Record<number, UnifiedCastEvent[]>;
 }
 
 export function calculatePenetrationData(
@@ -61,6 +65,7 @@ export function calculatePenetrationData(
     debuffsLookup,
     selectedTargetIds,
     damageEvents,
+    swapEventsByPlayerId = {},
   } = data;
 
   // BuffLookupData is now a POJO, no deserialization needed
@@ -106,6 +111,7 @@ export function calculatePenetrationData(
       );
 
       const playerBasePenetration = calculateStaticPenetration(playerCombatantInfo, player);
+      const swapEvents = swapEventsByPlayerId[player.id] ?? [];
 
       // Report progress for static calculations
       if (index % 5 === 0 || index === Object.keys(players).length - 1) {
@@ -119,6 +125,7 @@ export function calculatePenetrationData(
         playerCombatantInfo,
         allSources,
         playerBasePenetration,
+        swapEvents,
         dataPoints: [] as PenetrationDataPoint[],
         timeAtCapCount: 0,
       };
@@ -158,8 +165,16 @@ export function calculatePenetrationData(
         null, // No target needed for player buffs
       );
 
+      // Arena weapon sets (ARMOR_SETS_1190) are only active on the bar they are equipped on.
+      const activeBar = getActiveWeaponBarAtTimestamp(playerData.swapEvents, voxelTimestamp);
+      const arenaWeaponPenetration = getArenaWeaponPenetrationForBar(
+        playerData.playerCombatantInfo,
+        activeBar,
+      );
+
       const totalDynamicPenetration = playerBuffPenetration + targetDebuffPenetration;
-      const totalPenetration = playerData.playerBasePenetration + totalDynamicPenetration;
+      const totalPenetration =
+        playerData.playerBasePenetration + totalDynamicPenetration + arenaWeaponPenetration;
 
       playerData.dataPoints.push({
         timestamp: voxelTimestamp,
