@@ -179,21 +179,34 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
           </Typography>
 
           <Typography variant="subtitle2" gutterBottom>
+            Force of Nature CP detection
+          </Typography>
+          <Typography variant="body2" paragraph>
+            Force of Nature (CP 276) grants 660 penetration per unique active status effect on the
+            target. ESO TK detects whether you have Force of Nature slotted by checking your
+            combatant-info aura data — the same mechanism used for other slottable CP passives. If
+            the aura is absent, status-effect penetration is not counted. CMX reads your CP loadout
+            directly from the combat log. Both tools should agree on this source; if they
+            don&apos;t, it may reflect a difference in which status effects are being tracked.
+          </Typography>
+
+          <Typography variant="subtitle2" gutterBottom>
             What is tracked the same
           </Typography>
           <Typography variant="body2" paragraph>
-            Both tools track the same debuff and buff sources — Major &amp; Minor Breach, Crusher
+            Both tools track the same debuff sources — Major &amp; Minor Breach, Crusher
             enchantment, Crimson Oath&apos;s Rive, Night Mother&apos;s Gaze, Alkosh, and CP passive
-            penetration (Piercing, Force of Nature via status effects). Differences from these
-            sources are typically negligible.
+            penetration (Piercing). Differences from these sources are typically negligible.
           </Typography>
 
           <Typography variant="subtitle2" gutterBottom>
             Typical variance
           </Typography>
           <Typography variant="body2">
-            In practice, the difference between ESO TK and CMX is usually less than 0.1% — well
-            within the margin caused by the averaging method difference.
+            In practice, the averaging-method difference causes less than 0.1% variance. When Force
+            of Nature is slotted, additional variance can appear if the tracked status effects
+            differ between tools (up to several thousand penetration when three or more are
+            simultaneously active).
           </Typography>
         </DialogContent>
         <DialogActions>

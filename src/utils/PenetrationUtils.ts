@@ -5,7 +5,7 @@ import {
   PenetrationValues,
   PenetrationComputedSourceKey,
 } from '../types/abilities';
-import { CombatantInfoEvent, CombatantAura } from '../types/combatlogEvents';
+import { CombatantInfoEvent, CombatantAura, UnifiedCastEvent } from '../types/combatlogEvents';
 
 import { getArmorWeightCounts } from './armorUtils';
 import {
@@ -15,6 +15,7 @@ import {
 } from './BuffLookupUtils';
 import {
   getSetCount,
+  getSetCountForBar,
   countOneHandedSharpenedWeapons,
   hasTwoHandedSharpenedWeapon,
   hasTwoHandedMaulEquipped,
@@ -112,6 +113,8 @@ export interface PenetrationDebuffSource extends BasePenetrationSource {
   value: PenetrationValues;
   ability: KnownAbilities;
   source: 'debuff';
+  /** If set, this debuff's penetration only applies when the player has this aura active (e.g. Force of Nature CP slotted). */
+  requiredPlayerAura?: KnownAbilities;
 }
 
 export interface PenetrationComputedSource extends BasePenetrationSource {
@@ -246,66 +249,73 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
     description: '620 penetration per stack per Herald of the Tome ability slotted',
     source: 'computed',
   },
-  // Status effect debuff sources (Wrath of Nature CP passive)
-  // Each active status effect on the target provides 660 penetration when the player has
-  // Wrath of Nature (CP 276) slotted. We cannot detect CP data from combat logs, so we
-  // assume it is always slotted (standard in endgame trial builds).
-  // Reference: CMX (Combat Metrics) uses fight.CP[1]["slotted"][276] for this check.
+  // Status effect debuff sources (Force of Nature CP passive)
+  // Each unique active status effect on the target provides 660 penetration when the player has
+  // Force of Nature (CP 276) slotted. Detection: Force of Nature (ability 174250) appears as an
+  // aura in combatantInfo when slotted. If the aura is absent, these sources are not counted.
   {
     value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
     ability: KnownAbilities.BURNING,
-    name: 'Wrath of Nature (Burning)',
-    description: '660 penetration when Burning is active on target (Wrath of Nature CP)',
+    name: 'Force of Nature (Burning)',
+    description: '660 penetration when Burning is active on target (Force of Nature CP)',
     source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
   },
   {
     value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
     ability: KnownAbilities.CHILL,
-    name: 'Wrath of Nature (Chill)',
-    description: '660 penetration when Chill is active on target (Wrath of Nature CP)',
+    name: 'Force of Nature (Chill)',
+    description: '660 penetration when Chill is active on target (Force of Nature CP)',
     source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
   },
   {
     value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
     ability: KnownAbilities.CONCUSSION,
-    name: 'Wrath of Nature (Concussion)',
-    description: '660 penetration when Concussion is active on target (Wrath of Nature CP)',
+    name: 'Force of Nature (Concussion)',
+    description: '660 penetration when Concussion is active on target (Force of Nature CP)',
     source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
   },
   {
     value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
     ability: KnownAbilities.DISEASED,
-    name: 'Wrath of Nature (Diseased)',
-    description: '660 penetration when Diseased is active on target (Wrath of Nature CP)',
+    name: 'Force of Nature (Diseased)',
+    description: '660 penetration when Diseased is active on target (Force of Nature CP)',
     source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
   },
   {
     value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
     ability: KnownAbilities.HEMMORRHAGING,
-    name: 'Wrath of Nature (Hemorrhaging)',
-    description: '660 penetration when Hemorrhaging is active on target (Wrath of Nature CP)',
+    name: 'Force of Nature (Hemorrhaging)',
+    description: '660 penetration when Hemorrhaging is active on target (Force of Nature CP)',
     source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
   },
   {
     value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
     ability: KnownAbilities.OVERCHARGED,
-    name: 'Wrath of Nature (Overcharged)',
-    description: '660 penetration when Overcharged is active on target (Wrath of Nature CP)',
+    name: 'Force of Nature (Overcharged)',
+    description: '660 penetration when Overcharged is active on target (Force of Nature CP)',
     source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
   },
   {
     value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
     ability: KnownAbilities.POISONED,
-    name: 'Wrath of Nature (Poisoned)',
-    description: '660 penetration when Poisoned is active on target (Wrath of Nature CP)',
+    name: 'Force of Nature (Poisoned)',
+    description: '660 penetration when Poisoned is active on target (Force of Nature CP)',
     source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
   },
   {
     value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
     ability: KnownAbilities.SUNDERED,
-    name: 'Wrath of Nature (Sundered)',
-    description: '660 penetration when Sundered is active on target (Wrath of Nature CP)',
+    name: 'Force of Nature (Sundered)',
+    description: '660 penetration when Sundered is active on target (Force of Nature CP)',
     source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
   },
   {
     key: AlwaysOnPenetrationSources.PIERCING,
@@ -655,13 +665,16 @@ export function getAllPenetrationSourcesWithActiveState(
         break;
       case 'debuff':
         if (debuffLookup) {
-          if (targetIds && targetIds.length > 0) {
-            wasActive = targetIds.some((targetId) =>
-              isBuffActiveOnTarget(debuffLookup, source.ability, undefined, targetId),
-            );
-          } else {
-            wasActive = isBuffActiveAtTimestamp(debuffLookup, source.ability);
-          }
+          const debuffActive =
+            targetIds && targetIds.length > 0
+              ? targetIds.some((targetId) =>
+                  isBuffActiveOnTarget(debuffLookup, source.ability, undefined, targetId),
+                )
+              : isBuffActiveAtTimestamp(debuffLookup, source.ability);
+          const playerAuraActive = source.requiredPlayerAura
+            ? isAuraActive(combatantInfo, source.requiredPlayerAura)
+            : true;
+          wasActive = debuffActive && playerAuraActive;
         }
         value = source.value;
         break;
@@ -717,6 +730,9 @@ export function calculateStaticPenetration(
         }
         break;
       case 'computed':
+        // ARMOR_SETS_1190 (arena weapon sets) are bar-dependent; skip here and compute per
+        // timestamp in the worker using getArenaWeaponPenetrationForBar instead.
+        if (source.key === PenetrationComputedSourceKey.ARMOR_SETS_1190) break;
         isActive = isComputedSourceActive(combatantInfo, source, playerData);
         if (isActive) {
           computedPenetration += getPenetrationFromComputedSource(
@@ -742,6 +758,7 @@ export function calculateDynamicPenetrationAtTimestamp(
   timestamp: number,
   playerId: number | null, // For checking buffs applied to the player
   targetId: number | null, // For checking debuffs applied to the target
+  combatantInfo?: CombatantInfoEvent | null, // For checking requiredPlayerAura on debuff sources
 ): number {
   let buffPenetration = 0;
   let debuffPenetration = 0;
@@ -767,12 +784,16 @@ export function calculateDynamicPenetrationAtTimestamp(
       case 'debuff':
         // Debuffs: Check if active on the selected target (enemy who has reduced resistances)
         if (debuffLookup) {
-          isActive = isBuffActiveOnTarget(
+          const debuffActive = isBuffActiveOnTarget(
             debuffLookup,
             source.ability,
             timestamp,
             targetId !== null ? targetId : undefined,
           );
+          const playerAuraActive = source.requiredPlayerAura
+            ? isAuraActive(combatantInfo ?? null, source.requiredPlayerAura)
+            : true;
+          isActive = debuffActive && playerAuraActive;
         }
         if (isActive) {
           debuffPenetration += source.value;
@@ -783,6 +804,46 @@ export function calculateDynamicPenetrationAtTimestamp(
   }
 
   return buffPenetration + debuffPenetration;
+}
+
+/**
+ * Returns the active weapon bar (1 or 2) at a given fight timestamp for a player.
+ * Assumes the player starts on bar 1. Each SWAP_WEAPONS cast event toggles the bar.
+ * `swapEvents` must be pre-filtered to SWAP_WEAPONS events for this specific player,
+ * sorted ascending by timestamp.
+ */
+export function getActiveWeaponBarAtTimestamp(
+  swapEvents: UnifiedCastEvent[],
+  timestamp: number,
+): 1 | 2 {
+  let swapCount = 0;
+  for (const event of swapEvents) {
+    if (event.timestamp <= timestamp) swapCount++;
+    else break; // events are sorted ascending
+  }
+  return swapCount % 2 === 0 ? 1 : 2;
+}
+
+/**
+ * Returns the penetration contribution from ARMOR_SETS_1190 (arena weapon sets)
+ * considering only the weapon slots that correspond to the player's active bar.
+ * Bar 1 = main hand / off hand slots; Bar 2 = backup main / backup off hand slots.
+ */
+export function getArenaWeaponPenetrationForBar(
+  combatantInfo: CombatantInfoEvent | null,
+  activeBar: 1 | 2,
+): number {
+  if (!combatantInfo?.gear) return 0;
+  const setsConfig = ARMOR_SET_PENETRATION_CONFIG[PenetrationComputedSourceKey.ARMOR_SETS_1190];
+  const penetrationValue =
+    ARMOR_SET_PENETRATION_VALUES[PenetrationComputedSourceKey.ARMOR_SETS_1190];
+  let activeSetCount = 0;
+  for (const { setId, requiredPieces } of setsConfig) {
+    if (getSetCountForBar(combatantInfo.gear, setId, activeBar) >= requiredPieces) {
+      activeSetCount++;
+    }
+  }
+  return activeSetCount * penetrationValue;
 }
 
 export function calculatePenetrationAtTimestamp(
@@ -801,6 +862,7 @@ export function calculatePenetrationAtTimestamp(
     timestamp,
     playerId,
     targetId,
+    combatantInfo,
   );
 
   return staticPenetration + dynamicPenetration;

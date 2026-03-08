@@ -165,7 +165,7 @@ describe('PenetrationUtils', () => {
     it('should return always-active penetration for null combatant info', () => {
       const result = calculateStaticPenetration(null, undefined);
       // Only Piercing is always assumed active since it cannot be detected from log data.
-      // Status effect penetration (Wrath of Nature) is now tracked dynamically via debuffs.
+      // Force of Nature penetration is tracked dynamically via debuffs + player aura detection.
       expect(result).toBe(PenetrationValues.PIERCING_PENETRATION);
     });
 
@@ -380,7 +380,7 @@ describe('PenetrationUtils', () => {
       expect(resultAfterRemoval).toBe(0);
     });
 
-    it('should track Wrath of Nature penetration from status effect debuffs on target', () => {
+    it('should track Force of Nature penetration from status effect debuffs on target', () => {
       const targetId = 60;
       const debuffEvents = [
         // Burning active 1000-4000
@@ -456,6 +456,24 @@ describe('PenetrationUtils', () => {
 
       const debuffLookup = createDebuffLookup(debuffEvents);
 
+      // Player has Force of Nature slotted
+      const mockCombatantInfo: CombatantInfoEvent = {
+        timestamp: 0,
+        type: 'combatantinfo',
+        sourceID: 1,
+        fight: 1,
+        gear: [],
+        auras: [
+          {
+            source: 1,
+            ability: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
+            name: 'Force of Nature',
+            icon: 'icon',
+            stacks: 1,
+          } as CombatantAura,
+        ],
+      };
+
       // Before any status effects: 0 pen
       const resultBefore = calculateDynamicPenetrationAtTimestamp(
         null,
@@ -463,6 +481,7 @@ describe('PenetrationUtils', () => {
         500,
         null,
         targetId,
+        mockCombatantInfo,
       );
       expect(resultBefore).toBe(0);
 
@@ -473,6 +492,7 @@ describe('PenetrationUtils', () => {
         1500,
         null,
         targetId,
+        mockCombatantInfo,
       );
       expect(resultOneBuff).toBe(PenetrationValues.FORCE_OF_NATURE_PER_STATUS);
 
@@ -483,6 +503,7 @@ describe('PenetrationUtils', () => {
         2500,
         null,
         targetId,
+        mockCombatantInfo,
       );
       expect(resultTwoBuffs).toBe(PenetrationValues.FORCE_OF_NATURE_PER_STATUS * 2);
 
@@ -493,6 +514,7 @@ describe('PenetrationUtils', () => {
         3500,
         null,
         targetId,
+        mockCombatantInfo,
       );
       expect(resultThreeBuffs).toBe(PenetrationValues.FORCE_OF_NATURE_PER_STATUS * 3);
 
@@ -503,6 +525,7 @@ describe('PenetrationUtils', () => {
         4500,
         null,
         targetId,
+        mockCombatantInfo,
       );
       expect(resultTwoRemaining).toBe(PenetrationValues.FORCE_OF_NATURE_PER_STATUS * 2);
 
@@ -513,8 +536,60 @@ describe('PenetrationUtils', () => {
         7000,
         null,
         targetId,
+        mockCombatantInfo,
       );
       expect(resultAfter).toBe(0);
+    });
+
+    it('should not count Force of Nature penetration when player does not have it slotted', () => {
+      const targetId = 61;
+      const debuffEvents = [
+        {
+          timestamp: 1000,
+          type: 'applydebuff',
+          sourceID: 5,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.BURNING,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+        {
+          timestamp: 4000,
+          type: 'removedebuff',
+          sourceID: 5,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.BURNING,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+      ] as unknown as DebuffEvent[];
+
+      const debuffLookup = createDebuffLookup(debuffEvents);
+
+      // Player does NOT have Force of Nature slotted (no aura for 174250)
+      const mockCombatantInfoNoFoN: CombatantInfoEvent = {
+        timestamp: 0,
+        type: 'combatantinfo',
+        sourceID: 1,
+        fight: 1,
+        gear: [],
+        auras: [],
+      };
+
+      const resultWithBurning = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        1500,
+        null,
+        targetId,
+        mockCombatantInfoNoFoN,
+      );
+      // Burning is active on target but player doesn't have Force of Nature — no pen
+      expect(resultWithBurning).toBe(0);
     });
   });
 
