@@ -498,13 +498,13 @@ function serializeToESO(element: HTMLElement): string {
       result += node.textContent ?? '';
     } else if (node.nodeName === 'BR') {
       result += '\n';
-    } else if (node.nodeName === 'SPAN') {
-      const span = node as HTMLElement;
-      const color = span.style.color;
+    } else if (node.nodeName === 'SPAN' || node.nodeName === 'FONT') {
+      const el = node as HTMLElement;
+      const color = el.style.color || el.getAttribute('color') || '';
       if (color) {
-        result += `|c${colorToHex(color)}${serializeToESO(span)}|r`;
+        result += `|c${colorToHex(color)}${serializeToESO(el)}|r`;
       } else {
-        result += serializeToESO(span);
+        result += serializeToESO(el);
       }
     } else if (node.nodeName === 'DIV' || node.nodeName === 'P') {
       result += '\n' + serializeToESO(node as HTMLElement);
@@ -513,16 +513,6 @@ function serializeToESO(element: HTMLElement): string {
     }
   });
   return result;
-}
-
-function stripColorSpans(container: DocumentFragment | HTMLElement): void {
-  const spans = Array.from(container.querySelectorAll('span[style*="color"]'));
-  spans.forEach((span) => {
-    const parent = span.parentNode;
-    if (!parent) return;
-    while (span.firstChild) parent.insertBefore(span.firstChild, span);
-    parent.removeChild(span);
-  });
 }
 
 // Utility Functions
@@ -657,38 +647,59 @@ export const TextEditor: React.FC = () => {
   const saveSelectionBeforeBlur = (): void => {
     const sel = window.getSelection();
     if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
-      savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+      const range = sel.getRangeAt(0);
+      // Only save if the selection is within the editor
+      if (editorRef.current && editorRef.current.contains(range.commonAncestorContainer)) {
+        savedRangeRef.current = range.cloneRange();
+      }
     }
   };
 
   const applyColorToEditor = useCallback(
     (colorHex: string, rangeOverride?: Range): void => {
-      const range = rangeOverride ?? savedRangeRef.current;
-      if (!range) {
+      if (!editorRef.current) return;
+
+      const sel = window.getSelection();
+      if (!sel) return;
+
+      const rangeToUse = rangeOverride ?? savedRangeRef.current;
+      if (!rangeToUse || rangeToUse.collapsed) {
         alert('Please select some text first!');
         return;
       }
-      const fragment = range.extractContents();
-      stripColorSpans(fragment);
-      const span = document.createElement('span');
-      span.style.color = `#${colorHex}`;
-      span.appendChild(fragment);
-      range.insertNode(span);
+
+      // Restore the range as the active selection
+      sel.removeAllRanges();
+      sel.addRange(rangeToUse);
+
+      // Ensure editor has focus for execCommand to work
+      editorRef.current.focus();
+
+      // Use native browser command — handles span splitting/merging automatically
+      // and integrates with browser's undo stack
+      document.execCommand('foreColor', false, `#${colorHex}`);
+
+      // Clear saved range after use
+      savedRangeRef.current = null;
+
       handleInput();
     },
     [handleInput],
   );
 
   const removeFormatFromEditor = useCallback((): void => {
+    if (!editorRef.current) return;
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
       alert('Please select some text first!');
       return;
     }
-    const range = sel.getRangeAt(0);
-    const fragment = range.extractContents();
-    stripColorSpans(fragment);
-    range.insertNode(fragment);
+
+    // Get the plain text of the selection, then replace with unformatted text
+    const plainText = sel.toString();
+    editorRef.current.focus();
+    document.execCommand('insertText', false, plainText);
+
     handleInput();
   }, [handleInput]);
 
@@ -902,7 +913,8 @@ export const TextEditor: React.FC = () => {
   const clearFormatting = (): void => {
     if (!editorRef.current) return;
     const esoText = serializeToESO(editorRef.current);
-    const cleaned = esoText.replace(/\|c[0-9A-Fa-f]{6}([\s\S]*?)\|r/g, '$1');
+    // Strip all color codes independently (handles nested codes safely)
+    const cleaned = esoText.replace(/\|c[0-9A-Fa-f]{6}/g, '').replace(/\|r/g, '');
     editorRef.current.innerHTML = deserializeFromESO(cleaned);
     setCharCount(cleaned.length);
   };
