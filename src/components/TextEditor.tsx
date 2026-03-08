@@ -497,6 +497,17 @@ function serializeToESO(element: HTMLElement): string {
   return result;
 }
 
+function stripColorSpans(container: DocumentFragment | HTMLElement): void {
+  const spans = Array.from(container.querySelectorAll('span[style*="color"]'));
+  spans.forEach((span) => {
+    const parent = span.parentNode;
+    if (!parent) return;
+    while (span.firstChild) parent.insertBefore(span.firstChild, span);
+    parent.removeChild(span);
+  });
+}
+
+
 // Utility Functions
 const presetColors = ['#FFFF00', '#00FF00', '#FF0000', '#0080FF', '#FF8000', '#FF00FF'];
 
@@ -639,49 +650,32 @@ export const TextEditor: React.FC = () => {
 
   const applyColorToEditor = useCallback(
     (colorHex: string, rangeOverride?: Range): void => {
-      if (!editorRef.current) return;
-
-      const sel = window.getSelection();
-      if (!sel) return;
-
-      const rangeToUse = rangeOverride ?? savedRangeRef.current;
-      if (!rangeToUse || rangeToUse.collapsed) {
+      const range = rangeOverride ?? savedRangeRef.current;
+      if (!range) {
         alert('Please select some text first!');
         return;
       }
-
-      // Restore the range as the active selection
-      sel.removeAllRanges();
-      sel.addRange(rangeToUse);
-
-      // Ensure editor has focus for execCommand to work
-      editorRef.current.focus();
-
-      // Use native browser command — handles span splitting/merging automatically
-      // and integrates with browser's undo stack
-      document.execCommand('foreColor', false, `#${colorHex}`);
-
-      // Clear saved range after use
-      savedRangeRef.current = null;
-
+      const fragment = range.extractContents();
+      stripColorSpans(fragment);
+      const span = document.createElement('span');
+      span.style.color = `#${colorHex}`;
+      span.appendChild(fragment);
+      range.insertNode(span);
       handleInput();
     },
     [handleInput],
   );
 
   const removeFormatFromEditor = useCallback((): void => {
-    if (!editorRef.current) return;
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
       alert('Please select some text first!');
       return;
     }
-
-    // Get the plain text of the selection, then replace with unformatted text
-    const plainText = sel.toString();
-    editorRef.current.focus();
-    document.execCommand('insertText', false, plainText);
-
+    const range = sel.getRangeAt(0);
+    const fragment = range.extractContents();
+    stripColorSpans(fragment);
+    range.insertNode(fragment);
     handleInput();
   }, [handleInput]);
 
@@ -894,8 +888,7 @@ export const TextEditor: React.FC = () => {
   const clearFormatting = (): void => {
     if (!editorRef.current) return;
     const esoText = serializeToESO(editorRef.current);
-    // Strip all color codes independently (handles nested codes safely)
-    const cleaned = esoText.replace(/\|c[0-9A-Fa-f]{6}/g, '').replace(/\|r/g, '');
+    const cleaned = esoText.replace(/\|c[0-9A-Fa-f]{6}([\s\S]*?)\|r/g, '$1');
     editorRef.current.innerHTML = deserializeFromESO(cleaned);
     setCharCount(cleaned.length);
   };
