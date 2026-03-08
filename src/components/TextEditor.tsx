@@ -375,7 +375,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   padding: '20px',
   borderRadius: '12px',
   minHeight: '120px',
-  backgroundImage: `url(${theme.palette.mode === 'dark' ? '/text-editor/text-editor-bg-dark.jpg' : '/text-editor/text-editor-bg-light.jpg'})`,
+  backgroundImage: `url(${theme.palette.mode === 'dark' ? `${import.meta.env.BASE_URL}text-editor/text-editor-bg-dark.jpg` : `${import.meta.env.BASE_URL}text-editor/text-editor-bg-light.jpg`})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat',
@@ -561,7 +561,7 @@ export const TextEditor: React.FC = () => {
       const body = document.body;
       // Force light mode background image
       setTimeout(() => {
-        body.style.backgroundImage = 'url("/text-editor/text-editor-bg-light.jpg")';
+        body.style.backgroundImage = `url("${import.meta.env.BASE_URL}text-editor/text-editor-bg-light.jpg")`;
         body.style.backgroundSize = 'cover';
         body.style.backgroundPosition = 'center';
         body.style.backgroundRepeat = 'no-repeat';

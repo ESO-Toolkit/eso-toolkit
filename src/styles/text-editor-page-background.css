@@ -10,57 +10,13 @@
 */
 
 /* Remove default body background when on text-editor page */
+/* Background images are applied via usePageBackground hook (JS) so they
+   respect import.meta.env.BASE_URL for subpath deployments. */
 body.text-editor-page {
   position: relative;
   min-height: 100vh;
   overflow-x: hidden;
-  background: transparent !important;
   background-color: transparent !important;
-}
-
-/* Force background image for both light and dark mode */
-body.text-editor-page:not(.dark-mode) {
-  background-image: url('/text-editor/text-editor-bg-light.jpg') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-  background-attachment: fixed !important;
-  background-color: transparent !important;
-}
-
-body.text-editor-page.dark-mode {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-  background-attachment: fixed !important;
-  background-color: transparent !important;
-}
-
-/* Background image layer - VISIBLE */
-body.text-editor-page::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  opacity: 1;
-  z-index: -1;
-  pointer-events: none;
-}
-
-body.text-editor-page.dark-mode::before {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg');
-}
-
-body.text-editor-page:not(.dark-mode)::before {
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
 }
 
 /* Remove solid backgrounds from common elements */
