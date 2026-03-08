@@ -375,9 +375,10 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   padding: '20px',
   borderRadius: '12px',
   minHeight: '120px',
-  // Must be transparent so the ::before background image shows through
-  background: 'transparent !important',
-  backgroundColor: 'transparent !important',
+  backgroundImage: `url(${theme.palette.mode === 'dark' ? '/text-editor/text-editor-bg-dark.jpg' : '/text-editor/text-editor-bg-light.jpg'})`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
   border:
     theme.palette.mode === 'dark'
       ? '1px solid rgba(255, 255, 255, 0.2)'
@@ -390,25 +391,6 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   transition: 'all 0.15s ease-in-out',
   color: '#ffffff',
 
-  // Background image layer
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundImage: `url(${theme.palette.mode === 'dark' ? '/text-editor/text-editor-bg-dark.jpg' : '/text-editor/text-editor-bg-light.jpg'})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-    backgroundAttachment: 'fixed',
-    zIndex: 0,
-    pointerEvents: 'none',
-    filter: 'blur(1px)',
-    WebkitFilter: 'blur(1px)',
-  },
-
   // Semi-transparent overlay for text readability
   '&::after': {
     content: '""',
@@ -418,15 +400,15 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     right: 0,
     bottom: 0,
     background:
-      theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.4)',
-    zIndex: 1,
+      theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.3)',
+    zIndex: 0,
     pointerEvents: 'none',
   },
 
   '& span': {
     textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)',
     position: 'relative',
-    zIndex: 2,
+    zIndex: 1,
   },
 
   '& span, & strong, & em, & i, & b': {
@@ -451,11 +433,6 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     fontSize: '0.9rem',
     borderRadius: '8px',
     margin: '16px 0',
-
-    '&::before': {
-      backgroundPosition: 'center',
-      backgroundAttachment: 'scroll',
-    },
   },
 }));
 

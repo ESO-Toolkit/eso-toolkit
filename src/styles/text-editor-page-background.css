@@ -103,13 +103,7 @@ body.text-editor-page.dark-mode .editor-container:not(.EditorTool) {
 
 /* Preview area transparency handled by the PreviewArea styled component */
 
-/* Preview area — use stable #eso-preview ID instead of fragile .css-* class names */
-body.text-editor-page #eso-preview {
-  background: transparent !important;
-  background-color: transparent !important;
-  position: relative !important;
-  z-index: 1 !important;
-}
+/* Preview area — let the PreviewArea styled component handle its own background */
 
 /* Improve mobile background positioning */
 @media (max-width: 768px) {
