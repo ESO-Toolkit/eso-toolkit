@@ -437,14 +437,24 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         display: 'flex',
         flexDirection: 'column' as const,
         height: '100%',
+        position: 'relative' as const,
         background:
           'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
-        border:
-          theme.palette.mode === 'dark'
+        border: isTopDps
+          ? theme.palette.mode === 'dark'
+            ? '1px solid rgba(245,158,11,0.55)'
+            : '1px solid rgba(180,83,9,0.5)'
+          : theme.palette.mode === 'dark'
             ? '1px solid rgba(255, 255, 255, 0.1)'
             : '1px solid rgba(59, 130, 246, 0.3)',
+        ...(isTopDps && {
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 0 16px rgba(245,158,11,0.18), 0 0 40px rgba(245,158,11,0.06), inset 0 1px 0 rgba(251,191,36,0.12)'
+              : '0 0 16px rgba(180,83,9,0.12), 0 0 40px rgba(245,158,11,0.08), inset 0 1px 0 rgba(251,191,36,0.18)',
+        }),
       }),
-      [theme.palette.mode],
+      [theme.palette.mode, isTopDps],
     );
 
     // Memoize expensive gear chip props - sorted by count descending
@@ -521,6 +531,23 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
           sx={cardStyles}
           data-testid={`player-card-${player.id}`}
         >
+          {isTopDps && (
+            <Box
+              aria-hidden="true"
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background:
+                  'linear-gradient(90deg, transparent 0%, rgba(245,158,11,0.5) 20%, rgba(251,191,36,1) 50%, rgba(245,158,11,0.5) 80%, transparent 100%)',
+                borderRadius: '4px 4px 0 0',
+                boxShadow: '0 0 8px rgba(251,191,36,0.7), 0 0 18px rgba(245,158,11,0.35)',
+                zIndex: 2,
+              }}
+            />
+          )}
           <CardContent
             sx={{ p: 2, pb: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
           >
@@ -661,36 +688,58 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                 {isTopDps && totalDps !== undefined && (
                   <Box sx={{ mb: 0.75 }}>
                     <Tooltip title={`Top DPS (Total): ${formatStatValue(totalDps)}`} arrow>
-                      <Chip
-                        icon={
-                          <EmojiEventsIcon
-                            sx={{
-                              fontSize: '0.85rem !important',
-                              color: '#b45309 !important',
-                            }}
-                          />
-                        }
-                        label=""
-                        size="small"
+                      <Box
                         data-testid="top-dps-badge"
                         sx={{
-                          height: 22,
-                          width: 22,
-                          borderRadius: '50%',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.75,
+                          px: 1.25,
+                          py: 0.4,
+                          borderRadius: '6px',
                           background: (theme) =>
                             theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgba(180,83,9,0.25) 0%, rgba(245,158,11,0.15) 100%)'
-                              : 'linear-gradient(135deg, rgba(251,191,36,0.25) 0%, rgba(245,158,11,0.15) 100%)',
-                          border: (theme) =>
-                            theme.palette.mode === 'dark'
-                              ? '1px solid rgba(245,158,11,0.4)'
-                              : '1px solid rgba(180,83,9,0.35)',
-                          '& .MuiChip-label': {
-                            display: 'none',
-                          },
-                          '& .MuiChip-icon': { ml: 0, mr: 0 },
+                              ? 'linear-gradient(90deg, rgba(245,158,11,0.15) 0%, rgba(251,191,36,0.08) 100%)'
+                              : 'linear-gradient(90deg, rgba(251,191,36,0.22) 0%, rgba(245,158,11,0.1) 100%)',
+                          border: '1px solid rgba(245,158,11,0.35)',
+                          boxShadow: '0 0 8px rgba(245,158,11,0.2)',
                         }}
-                      />
+                      >
+                        <EmojiEventsIcon sx={{ fontSize: '0.8rem', color: '#f59e0b' }} />
+                        <Typography
+                          sx={{
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            color: '#f59e0b',
+                            letterSpacing: '0.06em',
+                            lineHeight: 1,
+                          }}
+                        >
+                          TOP DPS
+                        </Typography>
+                        <Box
+                          sx={{
+                            width: '1px',
+                            height: '10px',
+                            background: 'rgba(245,158,11,0.4)',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            color: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(251,191,36,0.85)'
+                                : 'rgba(180,83,9,0.9)',
+                            lineHeight: 1,
+                            fontFamily: 'monospace',
+                          }}
+                        >
+                          {formatStatValue(totalDps)}
+                        </Typography>
+                      </Box>
                     </Tooltip>
                   </Box>
                 )}
