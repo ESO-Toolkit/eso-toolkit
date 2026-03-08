@@ -7,18 +7,30 @@ const logger = new Logger({
   contextPrefix: 'Auth',
 });
 
-// Compose redirect URI using Vite's BASE_URL
+// Compose redirect URI using Vite's BASE_URL.
+// For dev-preview deployments (e.g. /dev-previews/pr-790/), all PR previews
+// share a single registered redirect URI at /dev-previews/oauth-redirect so we
+// don't need to register a new URI with the OAuth provider for every PR.
 export const getRedirectUri = (): string => {
   const baseUrl = getBaseUrl();
-
-  // Remove trailing slash if it exists
   const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+
+  // Detect dev-preview deployment: URL contains /dev-previews/pr-<number>
+  const devPreviewMatch = cleanBaseUrl.match(/^(https?:\/\/[^/]+\/dev-previews)\/pr-\d+/);
+  if (devPreviewMatch) {
+    return `${devPreviewMatch[1]}/oauth-redirect`;
+  }
+
   return `${cleanBaseUrl}/oauth-redirect`;
 };
 // Replace with your actual ESO Logs client ID
 export const CLIENT_ID = '9fd28ffc-300a-44ce-8a0e-6167db47a7e1';
 export const PKCE_CODE_VERIFIER_KEY = 'eso_code_verifier';
 export const INTENDED_DESTINATION_KEY = 'eso_intended_destination';
+
+// Key used by the dev-preview OAuth bounce page to know which PR preview to
+// redirect back to after the OAuth provider callback.
+export const DEV_PREVIEW_OAUTH_RETURN_KEY = 'dev_preview_oauth_return_path';
 
 export const LOCAL_STORAGE_ACCESS_TOKEN_KEY = 'access_token';
 export const LOCAL_STORAGE_REFRESH_TOKEN_KEY = 'refresh_token';
@@ -91,6 +103,13 @@ export async function buildAuthUrl(verifier: string): Promise<string> {
 export async function startPKCEAuth(): Promise<void> {
   const verifier = generateCodeVerifier();
   setPkceCodeVerifier(verifier);
+
+  // For dev-preview deployments, store the current base path so the shared
+  // OAuth bounce page knows which PR preview to redirect back to.
+  const baseUrl = getBaseUrl();
+  if (baseUrl.includes('/dev-previews/pr-')) {
+    localStorage.setItem(DEV_PREVIEW_OAUTH_RETURN_KEY, baseUrl);
+  }
 
   let authUrl: string | undefined;
   try {

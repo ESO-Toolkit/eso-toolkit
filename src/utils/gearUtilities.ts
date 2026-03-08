@@ -68,6 +68,32 @@ export const getSetCount = (gear: PlayerGear[] | undefined, setID: number): numb
   return totalPieces;
 };
 
+/**
+ * Counts set pieces for a given set ID considering only the weapon slots of the
+ * specified active bar (bar 1 = main hand / off hand, bar 2 = backup main / backup off).
+ * Used to determine if a weapon set passive is active at a given bar state.
+ */
+export function getSetCountForBar(
+  gear: PlayerGear[] | undefined,
+  setID: number,
+  bar: 1 | 2,
+): number {
+  if (!gear) return 0;
+  const mainSlot = bar === 1 ? GearSlot.MAIN_HAND : GearSlot.BACKUP_MAIN_HAND;
+  const offSlot = bar === 1 ? GearSlot.OFF_HAND : GearSlot.BACKUP_OFF_HAND;
+  let totalPieces = 0;
+  for (const slot of [mainSlot, offSlot]) {
+    const g = gear[slot];
+    if (g?.setID === setID) {
+      totalPieces++;
+      if (isDoubleSetCount(g, slot, gear)) {
+        totalPieces++;
+      }
+    }
+  }
+  return totalPieces;
+}
+
 // Helpers for gear classification and chip coloring
 export const normalizeGearName = (name?: string): string =>
   (name || '')

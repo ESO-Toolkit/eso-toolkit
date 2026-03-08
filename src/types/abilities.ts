@@ -92,16 +92,37 @@ export enum KnownAbilities {
   RESTORE_MAGICKA = 7916,
 
   // Champion Points
+  BITING_AURA = 141997,
+  BLOODY_RENEWAL = 141993,
+  BOUNDLESS_VITALITY = 142034,
   BULWARK = 64079,
+  DEADLY_AIM = 141999,
+  DUELISTS_REBUFF = 151749,
+  ELUSIVE_MIST = 38963,
   ENLIVENING_OVERFLOW = 156008,
   EXPERT_EVASION = 142092,
   EXPLOITER = 63880,
+  FIGHTING_FINESSE = 141899,
+  FORTUNES_FAVOR = 142207,
   FROM_THE_BRINK = 156017,
   GILDED_FINGERS = 142210,
+  HASTY_RETREAT = 30923,
+  HEROS_VIGOR = 147889,
+  IRONCLAD = 5857,
   JUGGERNAUT = 45546,
+  LIQUID_EFFICIENCY = 142231,
+  MASTER_AT_ARMS = 92134,
+  METICULOUS_DISASSEMBLY = 142224,
+  PLENTIFUL_HARVEST = 63663,
+  PROFESSIONAL_UPKEEP = 142121,
+  RATIONER = 142230,
   REAVING_BLOWS = 142007,
+  REJUVENATOR = 141942,
+  SIPHONING_SPELLS = 141991,
   SLIPPERY = 142094,
   SPRINTER = 142079,
+  SUSTAINED_BY_SUFFERING = 160057,
+  UNASSAILABLE = 151748,
 
   // Shared Passives
   CLAIRVOYANCE = 103811,
@@ -121,7 +142,8 @@ export enum KnownAbilities {
   WIND_WALKER = 45565,
 
   // Class Passives
-  ADVANCED_SPECIES = 86068, // Warden: Animal Companions passive (was incorrectly 184809 which is "Ritual")
+  ADVANCED_SPECIES = 86069, // Warden: Animal Companions passive, rank 2 aura
+  ADVANCED_SPECIES_RANK_1 = 86068, // Warden: Animal Companions passive, rank 1 aura
   AEGIS_OF_THE_UNSEEN = 184923,
   BATTLE_ROAR = 44984,
   CATALYST = 45135,
@@ -132,7 +154,8 @@ export enum KnownAbilities {
   FATED_FORTUNE_BUFF = 194875,
   FATED_FORTUNE_STAGE_ONE = 184847,
   FOLLOW_UP = 45446,
-  FROZEN_ARMOR = 86190,
+  FROZEN_ARMOR = 86190, // Warden: Winter's Embrace passive, rank 2 aura
+  FROZEN_ARMOR_RANK_1 = 86189, // Warden: Winter's Embrace passive, rank 1 aura
   HARNESSED_QUINTESSENCE = 184858,
   HEMORRHAGE = 45060,
   ICY_AURA = 86194,
@@ -157,7 +180,8 @@ export enum KnownAbilities {
   TOUGH = 50907,
 
   // Class Passives and Abilities
-  DISMEMBER = 116192, // Necromancer: Grave Lord passive providing 3271 penetration
+  DISMEMBER = 116194, // Necromancer: Grave Lord passive, rank 2 aura providing 3271 penetration
+  DISMEMBER_RANK_1 = 116192, // Necromancer: Grave Lord passive, rank 1 aura providing 1635 penetration
 
   // Computed penetration passives
   PIERCING_PASSIVE = 45233, // Provides 700 penetration
@@ -210,7 +234,8 @@ export enum KnownAbilities {
   TREMORSCALE = 80866,
 
   // Crimson Oath - Monster set that reduces target resistance
-  CRIMSON_OATH = 155150,
+  // Verified from combat log data: report DzbVRcg98F1rnYLy, fight 9
+  CRIMSON_OATH = 159288,
 
   // Roar of Alkosh - Monster set that reduces target resistance
   ROAR_OF_ALKOSH = 102094,
@@ -420,7 +445,6 @@ export enum PenetrationComputedSourceKey {
   // ========================================
   CONCENTRATION = 'concentration',
   SPLINTERED_SECRETS = 'splintered_secrets',
-  FORCE_OF_NATURE = 'force_of_nature',
   PIERCING = 'piercing',
   HEAVY_WEAPONS = 'heavy_weapons',
   TWIN_BLADE_AND_BLUNT = 'twin_blade_and_blunt',
@@ -518,8 +542,9 @@ export enum PenetrationValues {
   // SPECIAL/NON-ARMOR PENETRATION VALUES
   // ========================================
 
-  // Dismember passive provides 3271 penetration
-  DISMEMBER = 3271,
+  // Dismember passive
+  DISMEMBER = 3271, // Rank II: 3271 penetration while a Grave Lord ability is active
+  DISMEMBER_RANK_1 = 1635, // Rank I: 1635 penetration while a Grave Lord ability is active
 
   // Heavy Weapons passive provides 2974 penetration with two-handed maul
   HEAVY_WEAPONS_PENETRATION = 2974,
@@ -587,8 +612,11 @@ export enum CriticalDamageValues {
   // Harpooner's Wading Kilt provides 10% critical damage when equipped
   HARPOONER_WADING_KILT = 10,
 
-  // Animal Companions provides 5% critical damage per ability slotted
+  // Animal Companions rank II provides 5% critical damage per ability slotted
   ANIMAL_COMPANIONS_PER_ABILITY = 5,
+
+  // Animal Companions rank I provides 2% critical damage per ability slotted
+  ANIMAL_COMPANIONS_PER_ABILITY_RANK_1 = 2,
 
   // Dual Wield (Twin Blade and Blunt) provides 6% critical damage per axe equipped
   DUAL_WIELD_AXES = 6,
@@ -979,23 +1007,49 @@ export enum MundusStones {
 
 export const RED_CHAMPION_POINTS = Object.freeze(
   new Set<KnownAbilities>([
+    // Fitness tree slottable nodes
+    KnownAbilities.BLOODY_RENEWAL,
+    KnownAbilities.BOUNDLESS_VITALITY,
     KnownAbilities.EXPERT_EVASION,
+    KnownAbilities.HASTY_RETREAT,
+    KnownAbilities.HEROS_VIGOR,
     KnownAbilities.JUGGERNAUT,
+    KnownAbilities.REJUVENATOR,
     KnownAbilities.SLIPPERY,
     KnownAbilities.SPRINTER,
   ]),
 );
 export const BLUE_CHAMPION_POINTS = Object.freeze(
   new Set<KnownAbilities>([
-    KnownAbilities.EXPLOITER,
+    // Warfare tree slottable nodes
+    KnownAbilities.BITING_AURA,
     KnownAbilities.BULWARK,
-    KnownAbilities.REAVING_BLOWS,
+    KnownAbilities.DEADLY_AIM,
+    KnownAbilities.DUELISTS_REBUFF,
+    KnownAbilities.ELUSIVE_MIST,
     KnownAbilities.ENLIVENING_OVERFLOW,
+    KnownAbilities.EXPLOITER,
+    KnownAbilities.FIGHTING_FINESSE,
     KnownAbilities.FROM_THE_BRINK,
+    KnownAbilities.IRONCLAD,
+    KnownAbilities.MASTER_AT_ARMS,
+    KnownAbilities.REAVING_BLOWS,
+    KnownAbilities.SIPHONING_SPELLS,
+    KnownAbilities.SUSTAINED_BY_SUFFERING,
+    KnownAbilities.UNASSAILABLE,
   ]),
 );
 export const GREEN_CHAMPION_POINTS = Object.freeze(
-  new Set<KnownAbilities>([KnownAbilities.GILDED_FINGERS]),
+  new Set<KnownAbilities>([
+    // Craft tree slottable nodes
+    KnownAbilities.FORTUNES_FAVOR,
+    KnownAbilities.GILDED_FINGERS,
+    KnownAbilities.LIQUID_EFFICIENCY,
+    KnownAbilities.METICULOUS_DISASSEMBLY,
+    KnownAbilities.PLENTIFUL_HARVEST,
+    KnownAbilities.PROFESSIONAL_UPKEEP,
+    KnownAbilities.RATIONER,
+  ]),
 );
 
 // Food Buffs

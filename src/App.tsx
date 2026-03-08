@@ -31,6 +31,7 @@ import { NotFound } from './pages/NotFound';
 import { ReduxThemeProvider } from './ReduxThemeProvider';
 import store, { persistor } from './store/storeWithHistory';
 import { initializeAnalytics } from './utils/analytics';
+import { getBaseUrl } from './utils/envUtils';
 import { initializeErrorTracking, addBreadcrumb } from './utils/errorTracking';
 
 // Initialize error tracking before the app starts
@@ -121,6 +122,9 @@ const SampleReportPage = React.lazy(() =>
 );
 const RosterBuilderPage = React.lazy(() =>
   import('./pages/RosterBuilderPage').then((module) => ({ default: module.RosterBuilderPage })),
+);
+const RosterViewPage = React.lazy(() =>
+  import('./pages/RosterViewPage').then((module) => ({ default: module.RosterViewPage })),
 );
 const AboutPage = React.lazy(() =>
   import('./pages/AboutPage').then((module) => ({ default: module.AboutPage })),
@@ -249,8 +253,23 @@ const AppRoutes: React.FC = () => {
     });
   }, []);
 
+  // Derive basename from Vite's base config so the app works when deployed to a
+  // subdirectory (e.g. /dev-previews/pr-790/). Strip trailing slash because
+  // BrowserRouter expects no trailing slash in basename.
+  // Uses getBaseUrl() from envUtils which is properly mocked in tests.
+  const baseUrl = getBaseUrl();
+  const basename = React.useMemo(() => {
+    try {
+      // getBaseUrl() may return a full URL or just a path
+      const url = new URL(baseUrl, window.location.origin);
+      return url.pathname.replace(/\/+$/, '') || '/';
+    } catch {
+      return '/';
+    }
+  }, [baseUrl]);
+
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <HashRouteRedirect />
       <AnalyticsListener />
       <ScrollRestoration />
@@ -521,6 +540,17 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <RosterBuilderPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            {/* Read-only roster share view — accessible via direct link only */}
+            <Route
+              path="/rv"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <RosterViewPage />
                   </Suspense>
                 </ErrorBoundary>
               }

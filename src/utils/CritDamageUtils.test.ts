@@ -3,7 +3,11 @@ import {
   createMockCombatantAura,
   createMockBuffEvent,
 } from '../test/utils/combatLogMockFactories';
-import { createMockPlayerData, createGearItem } from '../test/utils/playerMockFactories';
+import {
+  createMockPlayerData,
+  createGearItem,
+  createMockPlayerTalent,
+} from '../test/utils/playerMockFactories';
 import { KnownAbilities, CriticalDamageValues } from '../types/abilities';
 import { BuffEvent, DebuffEvent } from '../types/combatlogEvents';
 import { ArmorType } from '../types/playerDetails';
@@ -76,10 +80,12 @@ describe('CritDamageUtils with BuffLookup', () => {
 
       const sources = getEnabledCriticalDamageSources(emptyBuffLookup, emptyDebuffLookup, null);
 
-      // Should find always-on sources (Dexterity, Fighting Finesse) even with empty lookups
-      expect(sources).toHaveLength(2);
+      // Should find always-on sources (Dexterity, Fighting Finesse) plus Backstabber
+      // which is always assumed active since flanking position is undetectable from log data
+      expect(sources).toHaveLength(3);
       expect(sources.some((s) => s.name === 'Dexterity')).toBe(true);
       expect(sources.some((s) => s.name === 'Fighting Finesse')).toBe(true);
+      expect(sources.some((s) => s.name === 'Backstabber')).toBe(true);
     });
 
     it('should return sources based on aura and debuff lookups', () => {
@@ -112,8 +118,8 @@ describe('CritDamageUtils with BuffLookup', () => {
 
       const sources = getEnabledCriticalDamageSources(buffLookup, debuffLookup, combatant);
 
-      // Should find Lucent Echoes (computed), Minor Brittle (debuff), and always-on sources
-      expect(sources).toHaveLength(4);
+      // Should find Lucent Echoes (computed), Minor Brittle (debuff), Backstabber (computed, always active), and always-on sources
+      expect(sources).toHaveLength(5);
       expect(
         sources.some(
           (s) =>
@@ -296,6 +302,76 @@ describe('CritDamageUtils with BuffLookup', () => {
 
       expect(result).toBe(0);
     });
+
+    it('should return 5% per Animal Companion ability for rank 2 (86069)', () => {
+      const advancedSpeciesSource = CRITICAL_DAMAGE_SOURCES.find(
+        (s): s is CriticalDamageComputedSource =>
+          'key' in s && s.key === ComputedCriticalDamageSources.ADVANCED_SPECIES,
+      )!;
+      const combatant = createMockCombatantInfoEvent({
+        auras: [
+          createMockCombatantAura({
+            ability: KnownAbilities.ADVANCED_SPECIES,
+            name: 'Advanced Species',
+          }),
+        ],
+      });
+      // Slot 2 Animal Companions abilities (Betty Netch + Bird of Prey)
+      const playerData = createMockPlayerData({
+        combatantInfo: {
+          stats: [],
+          gear: [],
+          talents: [
+            createMockPlayerTalent({ name: 'Betty Netch' }),
+            createMockPlayerTalent({ name: 'Bird of Prey' }),
+          ],
+        },
+      });
+
+      const result = getCritDamageFromComputedSource(
+        advancedSpeciesSource,
+        playerData,
+        combatant,
+        createBuffLookup([]),
+      );
+
+      expect(result).toBe(10); // 2 abilities × 5%
+    });
+
+    it('should return 2% per Animal Companion ability for rank 1 (86068)', () => {
+      const advancedSpeciesSource = CRITICAL_DAMAGE_SOURCES.find(
+        (s): s is CriticalDamageComputedSource =>
+          'key' in s && s.key === ComputedCriticalDamageSources.ADVANCED_SPECIES,
+      )!;
+      const combatant = createMockCombatantInfoEvent({
+        auras: [
+          createMockCombatantAura({
+            ability: KnownAbilities.ADVANCED_SPECIES_RANK_1,
+            name: 'Advanced Species',
+          }),
+        ],
+      });
+      // Slot 2 Animal Companions abilities (Betty Netch + Bird of Prey)
+      const playerData = createMockPlayerData({
+        combatantInfo: {
+          stats: [],
+          gear: [],
+          talents: [
+            createMockPlayerTalent({ name: 'Betty Netch' }),
+            createMockPlayerTalent({ name: 'Bird of Prey' }),
+          ],
+        },
+      });
+
+      const result = getCritDamageFromComputedSource(
+        advancedSpeciesSource,
+        playerData,
+        combatant,
+        createBuffLookup([]),
+      );
+
+      expect(result).toBe(4); // 2 abilities × 2%
+    });
   });
 
   describe('isAuraActive', () => {
@@ -311,6 +387,34 @@ describe('CritDamageUtils with BuffLookup', () => {
       });
 
       expect(isAuraActive(combatantWithAura, KnownAbilities.FELINE_AMBUSH)).toBe(true);
+    });
+
+    it('should detect Advanced Species rank 2 aura (86069) as active', () => {
+      const combatantWithRank2 = createMockCombatantInfoEvent({
+        auras: [
+          createMockCombatantAura({
+            ability: KnownAbilities.ADVANCED_SPECIES,
+            name: 'Advanced Species',
+          }),
+        ],
+      });
+
+      expect(isAuraActive(combatantWithRank2, KnownAbilities.ADVANCED_SPECIES)).toBe(true);
+    });
+
+    it('should detect Advanced Species rank 1 aura (86068) via variant mapping', () => {
+      // Players with only rank 1 unlocked have 86068 in their auras; the variant
+      // map ensures checking for ADVANCED_SPECIES (rank 2) also matches rank 1.
+      const combatantWithRank1 = createMockCombatantInfoEvent({
+        auras: [
+          createMockCombatantAura({
+            ability: KnownAbilities.ADVANCED_SPECIES_RANK_1,
+            name: 'Advanced Species',
+          }),
+        ],
+      });
+
+      expect(isAuraActive(combatantWithRank1, KnownAbilities.ADVANCED_SPECIES)).toBe(true);
     });
 
     it('should detect Lucent Echoes as computed source for critical damage calculation', () => {
@@ -333,8 +437,9 @@ describe('CritDamageUtils with BuffLookup', () => {
         combatant,
       );
 
-      // Should find Lucent Echoes as computed source + always-on sources
-      expect(sources).toHaveLength(3);
+      // Should find Lucent Echoes + Backstabber as computed sources + always-on sources
+      // Backstabber is always assumed active since flanking position is undetectable from log data
+      expect(sources).toHaveLength(4);
       expect(
         sources.some(
           (s) =>

@@ -1,0 +1,120 @@
+name: Deploy PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: "pr-preview-${{ github.event.pull_request.number }}"
+  cancel-in-progress: true
+
+jobs:
+  deploy-preview:
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js and Install Dependencies
+        uses: ./.github/actions/setup-node-with-cache
+
+      - name: Build project
+        run: npm run build
+        env:
+          NODE_ENV: production
+          NODE_OPTIONS: '--max-old-space-size=8192'
+          VITE_BASE_URL: '/dev-previews/pr-${{ github.event.pull_request.number }}/'
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.DEV_PREVIEWS_APP_ID }}
+          private-key: ${{ secrets.DEV_PREVIEWS_APP_PRIVATE_KEY }}
+          owner: ESO-Toolkit
+          repositories: dev-previews
+
+      - name: Deploy to dev-previews repo
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+
+          PREVIEW_DIR="pr-${PR_NUMBER}"
+
+          # Clone the dev-previews repo
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/ESO-Toolkit/dev-previews.git" /tmp/dev-previews
+          cd /tmp/dev-previews
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Remove old preview for this PR (if exists) and copy new build
+          rm -rf "${PREVIEW_DIR}"
+          cp -r "${GITHUB_WORKSPACE}/build" "${PREVIEW_DIR}"
+
+          # Update previews.json
+          UPDATED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          # Read existing previews, remove entry for this PR, add updated entry
+          if [ -f previews.json ]; then
+            EXISTING=$(cat previews.json)
+          else
+            EXISTING="[]"
+          fi
+
+          UPDATED=$(echo "${EXISTING}" | jq --arg pr "${PR_NUMBER}" \
+            --arg title "${PR_TITLE}" \
+            --arg branch "${PR_BRANCH}" \
+            --arg updatedAt "${UPDATED_AT}" \
+            '[.[] | select(.pr != ($pr | tonumber))] + [{"pr": ($pr | tonumber), "title": $title, "branch": $branch, "updatedAt": $updatedAt}]')
+
+          echo "${UPDATED}" > previews.json
+
+          # Commit and push
+          git add -A
+          git commit -m "Deploy preview for PR #${PR_NUMBER}" --allow-empty
+          git push
+
+      - name: Comment on PR with preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const previewUrl = `https://eso-toolkit.github.io/dev-previews/pr-${prNumber}/`;
+            const body = `### 🔧 Dev Preview\n\nPreview deployed to: ${previewUrl}\n\n_Updated: ${new Date().toISOString()}_`;
+
+            // Find existing bot comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Dev Preview')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }

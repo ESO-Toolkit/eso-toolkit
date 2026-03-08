@@ -18,7 +18,7 @@ const mismatchedAbilities = [
   { enumName: 'TWIN_BLADE_AND_BLUNT_PASSIVE', id: 45477, actualName: 'Dual Wield Expert' },
   { enumName: 'CRYSTAL_WEAPON_BUFF', id: 126045, actualName: 'Heavy Attack' },
   { enumName: 'TREMORSCALE', id: 142023, actualName: 'Elemental Wave' },
-  { enumName: 'CRIMSON_OATH', id: 155150, actualName: 'Hunter\'s Focus' },
+  // CRIMSON_OATH was fixed: 155150 (Hunter's Focus) → 159288 (Crimson Oath's Rive)
   { enumName: 'ROAR_OF_ALKOSH', id: 102094, actualName: 'Thurvokun' },
   { enumName: 'VELOTHI_UR_MAGE_BUFF', id: 193447, actualName: 'Velothi Ur-Mage\'s Amulet' },
   { enumName: 'DEXTERITY', id: 45241, actualName: 'Major Savagery' },

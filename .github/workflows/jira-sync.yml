@@ -1,0 +1,146 @@
+name: Jira Ticket Sync
+
+# Automatically transitions Jira tickets based on PR lifecycle.
+#
+# Branch name format expected: ESO-NNN/optional-description
+#
+# Transitions applied:
+#   PR opened / reopened / synchronize / ready_for_review / review_requested → In Review
+#   PR merged                                                                → Done
+#   PR closed (not merged)                                                   → To Do
+#
+# Required repository secrets:
+#   JIRA_BASE_URL    – e.g. https://bkrupa.atlassian.net
+#   JIRA_USER_EMAIL  – Atlassian account email
+#   JIRA_API_TOKEN   – Atlassian API token (https://id.atlassian.com/manage-profile/security/api-tokens)
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+      - review_requested
+      - closed
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  sync-jira:
+    name: Sync Jira ticket status
+    runs-on: ubuntu-latest
+    # Skip draft PRs for most events; only act when they become ready
+    if: >-
+      github.event.action == 'ready_for_review' ||
+      github.event.action == 'review_requested' ||
+      github.event.action == 'closed' ||
+      (github.event.pull_request.draft == false)
+
+    steps:
+      - name: Extract Jira ticket key from branch name
+        id: jira-key
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          # Match ESO-NNN at the start of the branch name
+          if [[ "$BRANCH" =~ ^(ESO-[0-9]+) ]]; then
+            TICKET="${BASH_REMATCH[1]}"
+            echo "ticket=$TICKET" >> "$GITHUB_OUTPUT"
+            echo "found=true"     >> "$GITHUB_OUTPUT"
+            echo "✅ Found Jira ticket: $TICKET"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️  Branch '$BRANCH' does not contain a Jira ticket key — skipping."
+          fi
+
+      - name: Determine target Jira status
+        id: target-status
+        if: steps.jira-key.outputs.found == 'true'
+        run: |
+          ACTION="${{ github.event.action }}"
+          MERGED="${{ github.event.pull_request.merged }}"
+
+          if [[ "$ACTION" == "closed" && "$MERGED" == "true" ]]; then
+            STATUS="Done"
+          elif [[ "$ACTION" == "closed" && "$MERGED" == "false" ]]; then
+            STATUS="To Do"
+          else
+            # opened, reopened, synchronize, ready_for_review, review_requested
+            STATUS="In Review"
+          fi
+
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          echo "🎯 Target status: $STATUS"
+
+      - name: Transition Jira ticket
+        if: steps.jira-key.outputs.found == 'true'
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          TICKET: ${{ steps.jira-key.outputs.ticket }}
+          TARGET_STATUS: ${{ steps.target-status.outputs.status }}
+        run: |
+          CURL_AUTH="--user ${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}"
+
+          # -- 1. Fetch available transitions for this issue --
+          HTTP_BODY=$(mktemp)
+          HTTP_CODE=$(curl --silent --output "$HTTP_BODY" --write-out "%{http_code}" \
+            $CURL_AUTH \
+            --header "Content-Type: application/json" \
+            "$JIRA_BASE_URL/rest/api/3/issue/$TICKET/transitions")
+
+          if [[ "$HTTP_CODE" -lt 200 || "$HTTP_CODE" -ge 300 ]]; then
+            echo "❌ Failed to fetch transitions for $TICKET (HTTP $HTTP_CODE)"
+            cat "$HTTP_BODY"
+            rm -f "$HTTP_BODY"
+            exit 1
+          fi
+
+          TRANSITIONS_JSON=$(cat "$HTTP_BODY")
+          rm -f "$HTTP_BODY"
+
+          # -- 2. Find the transition ID that matches the target status name --
+          TRANSITION_ID=$(echo "$TRANSITIONS_JSON" | \
+            python3 -c "
+          import sys, json
+          target = '$TARGET_STATUS'.lower()
+          data = json.load(sys.stdin)
+          match = next(
+            (t['id'] for t in data.get('transitions', [])
+             if t['to']['name'].lower() == target),
+            None
+          )
+          print(match or '')
+          ")
+
+          if [[ -z "$TRANSITION_ID" ]]; then
+            echo "⚠️  No transition to '$TARGET_STATUS' is available for $TICKET (current status may already match or the transition is not permitted)."
+            # Available transitions for debugging
+            echo "$TRANSITIONS_JSON" | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          names = [t['to']['name'] for t in data.get('transitions', [])]
+          print('Available transitions:', names)
+          "
+            exit 0
+          fi
+
+          echo "🔄 Transitioning $TICKET to '$TARGET_STATUS' (id=$TRANSITION_ID)"
+
+          # -- 3. Apply the transition --
+          HTTP_STATUS=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+            $CURL_AUTH \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --data "{\"transition\":{\"id\":\"$TRANSITION_ID\"}}" \
+            "$JIRA_BASE_URL/rest/api/3/issue/$TICKET/transitions")
+
+          if [[ "$HTTP_STATUS" == "204" ]]; then
+            echo "✅ Successfully transitioned $TICKET to '$TARGET_STATUS'"
+          else
+            echo "❌ Transition failed with HTTP $HTTP_STATUS"
+            exit 1
+          fi

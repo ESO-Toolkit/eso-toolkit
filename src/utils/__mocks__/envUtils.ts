@@ -2,10 +2,11 @@
 
 /**
  * Get the base URL from Vite configuration
- * Mocked to return a full URL for tests (simulating production behavior)
+ * Mocked to return '/' for tests by default (root deployment).
+ * Tests that need a specific base URL can override via mockReturnValue.
  */
 export const getBaseUrl = jest.fn((): string => {
-  return 'https://example.com/eso-log-aggregator/';
+  return '/';
 });
 
 /**

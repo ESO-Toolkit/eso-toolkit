@@ -35,13 +35,18 @@ describe('PenetrationUtils', () => {
       expect(sources).toBeDefined();
       expect(sources.length).toBeGreaterThan(0);
 
-      // All sources should be inactive when no data is provided
+      // All sources should be inactive when no data is provided, except Piercing
+      // which is always assumed active since it cannot be detected from log data
       sources.forEach((source) => {
         expect(source).toHaveProperty('name');
         expect(source).toHaveProperty('description');
         expect(source).toHaveProperty('value');
         expect(source).toHaveProperty('wasActive');
-        expect(source.wasActive).toBe(false);
+        if (source.name === 'Piercing') {
+          expect(source.wasActive).toBe(true);
+        } else {
+          expect(source.wasActive).toBe(false);
+        }
         // For non-computed sources, value shows the potential penetration even when not active
         // For computed sources, value should be 0 when not active
         if (source.name.includes('Concentration')) {
@@ -157,9 +162,11 @@ describe('PenetrationUtils', () => {
   });
 
   describe('calculateStaticPenetration', () => {
-    it('should return 0 for null combatant info', () => {
+    it('should return always-active penetration for null combatant info', () => {
       const result = calculateStaticPenetration(null, undefined);
-      expect(result).toBe(0);
+      // Only Piercing is always assumed active since it cannot be detected from log data.
+      // Force of Nature penetration is tracked dynamically via debuffs + player aura detection.
+      expect(result).toBe(PenetrationValues.PIERCING_PENETRATION);
     });
 
     it('should calculate penetration from auras', () => {
@@ -182,8 +189,10 @@ describe('PenetrationUtils', () => {
 
       const result = calculateStaticPenetration(mockCombatantInfo, undefined);
 
-      // Should include Velothi Ur-Mage amulet penetration
-      expect(result).toBe(PenetrationValues.VELOTHI_UR_MAGE_AMULET);
+      // Should include Velothi Ur-Mage amulet penetration plus always-active Piercing
+      expect(result).toBe(
+        PenetrationValues.VELOTHI_UR_MAGE_AMULET + PenetrationValues.PIERCING_PENETRATION,
+      );
     });
   });
 
@@ -310,6 +319,278 @@ describe('PenetrationUtils', () => {
 
       expect(resultAfterRemoval).toBe(0);
     });
+
+    it('should detect penetration from Crimson Oath debuff (ability ID 159288)', () => {
+      const targetId = 55;
+      const debuffEvents = [
+        {
+          timestamp: 1000,
+          type: 'applydebuff',
+          sourceID: 11,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.CRIMSON_OATH,
+          fight: 9,
+          extraAbilityGameID: 0,
+        },
+        {
+          timestamp: 6000,
+          type: 'removedebuff',
+          sourceID: 11,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.CRIMSON_OATH,
+          fight: 9,
+          extraAbilityGameID: 0,
+        },
+      ] as unknown as DebuffEvent[];
+
+      const debuffLookup = createDebuffLookup(debuffEvents);
+
+      const resultDuringDebuff = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        3000,
+        null,
+        targetId,
+      );
+
+      expect(resultDuringDebuff).toBe(PenetrationValues.CRIMSON_OATH);
+
+      const resultBeforeDebuff = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        500,
+        null,
+        targetId,
+      );
+
+      expect(resultBeforeDebuff).toBe(0);
+
+      const resultAfterRemoval = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        7000,
+        null,
+        targetId,
+      );
+
+      expect(resultAfterRemoval).toBe(0);
+    });
+
+    it('should track Force of Nature penetration from status effect debuffs on target', () => {
+      const targetId = 60;
+      const debuffEvents = [
+        // Burning active 1000-4000
+        {
+          timestamp: 1000,
+          type: 'applydebuff',
+          sourceID: 5,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.BURNING,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+        {
+          timestamp: 4000,
+          type: 'removedebuff',
+          sourceID: 5,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.BURNING,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+        // Poisoned active 2000-5000
+        {
+          timestamp: 2000,
+          type: 'applydebuff',
+          sourceID: 5,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.POISONED,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+        {
+          timestamp: 5000,
+          type: 'removedebuff',
+          sourceID: 5,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.POISONED,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+        // Hemorrhaging active 3000-6000
+        {
+          timestamp: 3000,
+          type: 'applydebuff',
+          sourceID: 5,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.HEMMORRHAGING,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+        {
+          timestamp: 6000,
+          type: 'removedebuff',
+          sourceID: 5,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.HEMMORRHAGING,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+      ] as unknown as DebuffEvent[];
+
+      const debuffLookup = createDebuffLookup(debuffEvents);
+
+      // Player has Force of Nature slotted
+      const mockCombatantInfo: CombatantInfoEvent = {
+        timestamp: 0,
+        type: 'combatantinfo',
+        sourceID: 1,
+        fight: 1,
+        gear: [],
+        auras: [
+          {
+            source: 1,
+            ability: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
+            name: 'Force of Nature',
+            icon: 'icon',
+            stacks: 1,
+          } as CombatantAura,
+        ],
+      };
+
+      // Before any status effects: 0 pen
+      const resultBefore = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        500,
+        null,
+        targetId,
+        mockCombatantInfo,
+      );
+      expect(resultBefore).toBe(0);
+
+      // Only Burning active at 1500: 660 pen
+      const resultOneBuff = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        1500,
+        null,
+        targetId,
+        mockCombatantInfo,
+      );
+      expect(resultOneBuff).toBe(PenetrationValues.FORCE_OF_NATURE_PER_STATUS);
+
+      // Burning + Poisoned active at 2500: 1320 pen
+      const resultTwoBuffs = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        2500,
+        null,
+        targetId,
+        mockCombatantInfo,
+      );
+      expect(resultTwoBuffs).toBe(PenetrationValues.FORCE_OF_NATURE_PER_STATUS * 2);
+
+      // All three active at 3500: 1980 pen
+      const resultThreeBuffs = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        3500,
+        null,
+        targetId,
+        mockCombatantInfo,
+      );
+      expect(resultThreeBuffs).toBe(PenetrationValues.FORCE_OF_NATURE_PER_STATUS * 3);
+
+      // Burning expired, Poisoned + Hemorrhaging at 4500: 1320 pen
+      const resultTwoRemaining = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        4500,
+        null,
+        targetId,
+        mockCombatantInfo,
+      );
+      expect(resultTwoRemaining).toBe(PenetrationValues.FORCE_OF_NATURE_PER_STATUS * 2);
+
+      // All expired at 7000: 0 pen
+      const resultAfter = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        7000,
+        null,
+        targetId,
+        mockCombatantInfo,
+      );
+      expect(resultAfter).toBe(0);
+    });
+
+    it('should not count Force of Nature penetration when player does not have it slotted', () => {
+      const targetId = 61;
+      const debuffEvents = [
+        {
+          timestamp: 1000,
+          type: 'applydebuff',
+          sourceID: 5,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.BURNING,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+        {
+          timestamp: 4000,
+          type: 'removedebuff',
+          sourceID: 5,
+          sourceIsFriendly: true,
+          targetID: targetId,
+          targetIsFriendly: false,
+          abilityGameID: KnownAbilities.BURNING,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+      ] as unknown as DebuffEvent[];
+
+      const debuffLookup = createDebuffLookup(debuffEvents);
+
+      // Player does NOT have Force of Nature slotted (no aura for 174250)
+      const mockCombatantInfoNoFoN: CombatantInfoEvent = {
+        timestamp: 0,
+        type: 'combatantinfo',
+        sourceID: 1,
+        fight: 1,
+        gear: [],
+        auras: [],
+      };
+
+      const resultWithBurning = calculateDynamicPenetrationAtTimestamp(
+        null,
+        debuffLookup,
+        1500,
+        null,
+        targetId,
+        mockCombatantInfoNoFoN,
+      );
+      // Burning is active on target but player doesn't have Force of Nature — no pen
+      expect(resultWithBurning).toBe(0);
+    });
   });
 
   describe('calculatePenetrationAtTimestamp', () => {
@@ -373,7 +654,8 @@ describe('PenetrationUtils', () => {
 
     it('should handle null inputs gracefully', () => {
       const result = calculatePenetrationAtTimestamp(null, null, null, undefined, 1000, null, null);
-      expect(result).toBe(0);
+      // Only Piercing is always assumed active. Status effect pen is now dynamic.
+      expect(result).toBe(PenetrationValues.PIERCING_PENETRATION);
     });
 
     it('should filter buffs by player and debuffs by target correctly', () => {

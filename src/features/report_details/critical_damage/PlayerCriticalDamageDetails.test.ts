@@ -125,9 +125,9 @@ describe('PlayerCriticalDamageDetails Integration', () => {
       expect(runningAverage).toBeCloseTo(traditionalAverage, 2);
 
       // Expected: t=0s: 50, t=1s: 60, t=2s: 60, t=3s: 50 (Minor Force gives +10)
-      // The actual behavior shows average of 55.0 = (50+60+60+50)/4
+      // Average = (50+60+60+50)/4 = 55.0
       expect(runningMaximum).toBe(60);
-      expect(runningAverage).toBeCloseTo(55.0, 2); // Updated to match Minor Force behavior
+      expect(runningAverage).toBeCloseTo(55.0, 2);
     });
 
     it('should calculate time at cap percentage correctly', () => {
@@ -188,7 +188,8 @@ describe('PlayerCriticalDamageDetails Integration', () => {
       const timeAtCapPercentage = dataPointCount > 0 ? (timeAtCapCount / dataPointCount) * 100 : 0;
 
       // Expected pattern based on buff timing:
-      // 3 out of 5 data points are at cap = 60%
+      // t=0: 120, t=1: 130 (Minor Force +10), t=2: 130, t=3: 130, t=4: 120
+      // 3 out of 5 data points are at or above cap (>=125) = 60%
       expect(timeAtCapCount).toBe(3);
       expect(dataPointCount).toBe(5);
       expect(timeAtCapPercentage).toBeCloseTo(60, 1);
@@ -226,6 +227,8 @@ describe('PlayerCriticalDamageDetails Integration', () => {
       const runningMaximum = maxCriticalDamage;
       const runningAverage = dataPointCount > 0 ? totalCriticalDamage / dataPointCount : 50;
 
+      // Backstabber is always_on (static) — not included in calculateDynamicCriticalDamageAtTimestamp
+      // No dynamic buffs; dynamic = 0 at every timestamp
       expect(runningMaximum).toBe(50);
       expect(runningAverage).toBe(50);
     });

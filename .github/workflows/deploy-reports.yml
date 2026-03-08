@@ -70,7 +70,7 @@ jobs:
       # Consumed by the deploy job for the combined gh-pages push.
       # Short retention since this is an intermediate build artifact.
       - name: Upload Coverage Badge JSON
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && github.event_name != 'merge_group'
         with:
           name: coverage-badge-json
@@ -78,7 +78,7 @@ jobs:
           retention-days: 1
 
       - name: Upload Coverage Badges (SVG)
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always() && github.event_name != 'merge_group'
         with:
           name: coverage-badges-${{ github.run_number }}
@@ -86,7 +86,7 @@ jobs:
           retention-days: 90
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always() && github.event_name != 'merge_group'
         with:
           name: coverage-report-${{ github.run_number }}
@@ -188,7 +188,7 @@ jobs:
       # Short retention since this is an intermediate build artifact.
       - name: Upload Storybook
         if: github.event_name != 'merge_group'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: storybook-static
           path: storybook-static/
@@ -231,14 +231,14 @@ jobs:
 
       - name: Download Coverage Badge JSON
         if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: coverage-badge-json
           path: deploy-staging/badges/
 
       - name: Download Storybook
         if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: storybook-static
           path: deploy-staging/storybook/

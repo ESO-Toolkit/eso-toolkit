@@ -1,30 +1,71 @@
 ---
 name: workflow
-description: Enforce git workflow by checking the current branch before starting Jira ticket work. Creates properly-formatted ESO-XXX/description feature branches, prevents commits directly to main, and updates the Jira ticket status as work progresses.
+description: Enforce git workflow by checking the current branch before starting Jira ticket work. Creates properly-formatted ESO-XXX/description feature branches in a new worktree (preferred) or in-place, prevents commits directly to main, and updates the Jira ticket status as work progresses. AUTO-INVOKED whenever the user's message is or contains a bare Jira ticket reference (e.g. ESO-670).
 ---
 
 You are enforcing the ESO Log Aggregator git workflow. Follow these steps precisely.
 
-## Step 1 — Check Current Branch
+## Automatic Invocation (Self-Trigger)
 
-Run this command and capture the output:
+This skill MUST be automatically invoked — without waiting for the user to explicitly request it — whenever:
+
+- The user's message consists **solely** of a Jira ticket reference (e.g. `eso669`, `ESO-669`, `ESO-669`)
+- The user says "work on ESO-XXX", "implement ESO-XXX", "start ESO-XXX", or any similar phrasing that implies beginning implementation
+
+**Execute Steps 1–4 of this skill BEFORE:**
+- Reading any source files
+- Viewing the Jira ticket
+- Writing or proposing any code changes
+
+The branch must be confirmed correct before any implementation begins. Skipping this step is the primary cause of commits landing on `main`.
+
+## Step 1 — Check Current Branch and Working Tree State
+
+Run both commands and capture the output:
 
 ```powershell
 git rev-parse --abbrev-ref HEAD
+git status --short
 ```
 
 ## Step 2 — Evaluate Branch State
+
+### 2a — Handle Uncommitted Changes First
+
+If `git status --short` produced any output, the working tree is dirty. Resolve this **before** any branch creation or `git pull`:
+
+```powershell
+$dirty = git status --short
+if ($dirty) {
+    Write-Warning "Uncommitted changes detected in the current worktree!"
+    $dirty  # show the list so the user can see what's affected
+}
+```
+
+Ask the user what to do with the changes:
+- **Commit them** (preferred if the changes belong on the current branch)
+- **Stash them** (`git stash push -m "WIP: pre-worktree-creation stash"`) if they should be set aside
+- **Discard them** (`git checkout -- .`) only if the user explicitly confirms they are throwaway
+
+Do **not** proceed to branch creation or `git pull` until the working tree is clean.
+
+### 2b — Evaluate Branch
 
 **If branch is `main` or `master`:**
 - Do NOT start or continue any implementation work
 - Tell the user they are on a protected branch
 - Ask for the Jira ticket number (e.g. `ESO-569`) and a short description
 - Proceed to Step 3
+- **Note:** Even on `main`, still evaluate Step 3b — if this is the _main_ worktree, prefer creating a new worktree for the feature branch so the main worktree stays on `main` and is available for parallel work. Only use in-place checkout (Step 3c) when the user explicitly confirms they want to use this worktree.
 
-**If branch is already an `ESO-XXX/...` feature branch:**
+**If branch is already the _correct_ `ESO-XXX/...` feature branch for the requested ticket:**
 - Confirm the branch name to the user
 - Confirm it is safe to proceed with work
 - Stop — no branch creation needed
+
+**If branch is a _different_ `ESO-XXX/...` feature branch (occupied worktree):**
+- Do **NOT** switch branches in-place — this displaces the existing work
+- Proceed to Step 3 and use the **worktree path** (Step 3b) to create the new branch in a separate worktree
 
 **If branch is some other non-main branch:**
 - Show the user the current branch name
@@ -49,17 +90,50 @@ Examples of valid names:
 - Default is `main` unless the user says otherwise.
 - Set `$parentBranch` to the correct value now — it's needed for both the checkout and the twig dependency.
 
-### 3b — Check for worktree conflicts
+### 3b — Use a worktree if the current worktree is occupied
 
-If the parent branch is open in another worktree, `git checkout` will fail. Always check first:
+**Always** check whether the current worktree already has a different feature branch checked out:
 
 ```powershell
-git worktree list
+$currentBranch = git rev-parse --abbrev-ref HEAD
+$isOccupied = ($currentBranch -ne 'main') -and ($currentBranch -ne $newBranch)
 ```
 
-If the parent branch is already checked out in a worktree, navigate there directly (`Set-Location <path>`) instead of using `git checkout`.
+**If the current worktree is occupied** (`$isOccupied -eq $true`):
+- Create a **new worktree** for the new branch instead of switching in-place
+- This avoids displacing the existing work on `$currentBranch`
 
-### 3c — Create the branch from the correct parent
+```powershell
+$worktreePath = "..\eso-log-aggregator-$($newBranch -replace '/', '-')"
+
+# Verify current worktree is clean before pulling (pull may fail on dirty trees)
+$dirty = git status --short
+if ($dirty) {
+    Write-Error "Working tree has uncommitted changes — resolve them before creating a worktree. Run: git status"
+    return
+}
+git pull origin $parentBranch  # ensure parent is up to date
+git worktree add $worktreePath -b $newBranch $parentBranch
+Set-Location $worktreePath
+
+# IMMEDIATELY register parent dependency (twig with fallback)
+twig branch depend $newBranch $parentBranch 2>$null
+if ($LASTEXITCODE -ne 0) {
+    git config "branch.$newBranch.parent" $parentBranch
+    Write-Host "Parent '$parentBranch' recorded via git config (twig unavailable)"
+} else {
+    Write-Host "Parent '$parentBranch' set via twig"
+}
+```
+
+- After creating the worktree, run `npm ci` in the new directory if `node_modules/` is missing
+- Use the next available port pair for the dev server (see CLAUDE.md — Worktree Port Allocation)
+- Proceed to Step 4
+
+**If the current worktree is `main` or the target branch** (not occupied):
+- Use the standard in-place checkout (Step 3c below)
+
+### 3c — Create the branch in-place (only when worktree is not occupied)
 
 ```powershell
 $parentBranch = "main"  # or the feature branch name if stacking
@@ -71,13 +145,8 @@ if ($parentBranch -eq "main") { git pull origin main }
 
 # Create and switch to the feature branch
 git checkout -b $newBranch
-```
 
-### 3d — Set the twig parent dependency immediately
-
-Set the parent right after creation so twig's branch tree is correct from the start:
-
-```powershell
+# IMMEDIATELY register parent dependency (twig with fallback)
 twig branch depend $newBranch $parentBranch 2>$null
 if ($LASTEXITCODE -ne 0) {
     git config "branch.$newBranch.parent" $parentBranch
@@ -87,11 +156,19 @@ if ($LASTEXITCODE -ne 0) {
 }
 ```
 
-## Step 4 — Confirm and Report
+## Step 4 — Verify and Report
+
+**Verify** the twig tree shows the new branch correctly parented:
+
+```powershell
+twig tree 2>$null
+if ($LASTEXITCODE -ne 0) { git config --get-regexp 'branch\..*\.parent' }
+```
 
 Tell the user:
 - The new branch name
 - The parent branch that was used
+- That `twig tree` confirms the branch is correctly parented
 - That they are now safe to begin implementation
 - Whether twig or git config was used for the parent dependency
 
@@ -113,9 +190,35 @@ npm test -- --watchAll=false
 - Run `npm run lint:fix` and `npm run format` to auto-fix lint/format issues, then re-run `npm run validate`.
 - Fix any failing unit tests before continuing.
 
-## Step 6 — Update Ticket Status When Work Is Complete
+## Step 6 — Commit and Push
 
-When implementation is finished, all quality checks pass, and changes are committed/pushed, update the Jira ticket status:
+Once all quality checks pass, ensure all changes are committed and the branch is pushed:
+
+```powershell
+# Stage and commit any remaining changes (skip if already committed)
+git add -A
+git status --short  # verify what will be committed before proceeding
+
+# Commit (use PowerShell here-string + --file to preserve backticks in message)
+$msg = @'
+type(scope): description
+'@
+$msg | Set-Content "$env:TEMP\commit-msg.txt"
+git commit --file "$env:TEMP\commit-msg.txt"
+
+# Push (first push sets upstream; subsequent pushes just use 'git push')
+git push -u origin HEAD
+```
+
+**After pushing**, verify the branch is visible on the remote before creating a PR:
+
+```powershell
+git log --oneline origin/$(git branch --show-current)..HEAD  # should be empty if in sync
+```
+
+## Step 7 — Update Ticket Status When Work Is Complete
+
+When implementation is finished, all quality checks pass, and changes are committed and pushed, update the Jira ticket status:
 
 ```
 @workspace Move ESO-XXX to "In Review"

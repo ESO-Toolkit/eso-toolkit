@@ -100,6 +100,7 @@ For HTTPS: `$env:PORT = "3002" ; $env:VITE_HTTPS = "true" ; npm run dev`
 |-------|----------|
 | `create-pr` | Creating pull requests (PowerShell-safe `--body-file` pattern) |
 | `debug-ci-failure` | End-to-end CI failure debugging |
+| `deploy-preview` | Deploy local builds to dev-previews with a custom alias |
 | `fix-lint` | Diagnosing and fixing ESLint errors |
 | `fix-types` | Diagnosing and fixing TypeScript type errors |
 | `github-actions-logs` | Parsing and analyzing GH Actions logs |
@@ -111,7 +112,7 @@ For HTTPS: `$env:PORT = "3002" ; $env:VITE_HTTPS = "true" ; npm run dev`
 | `testing` | Unit tests and dev tools |
 | `troubleshoot` | Quick-reference fixes for common dev issues |
 | `ui-updates` | Theme-consistent UI changes |
-| `workflow` | **FIRST** — before starting any work (branch management) |
+| `workflow` | **FIRST** — before reading any files or writing code. Prefers new worktrees over in-place checkout. |
 | `write-playwright-tests` | Authoring visual/E2E tests |
 
 **Full skills index**: [AGENTS.md](AGENTS.md) — Documentation Index section

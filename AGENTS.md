@@ -70,12 +70,14 @@ git checkout -b ESO-XXX/description-here
 
 **CI/CD & Debugging:**
 - **Debug CI Failure**: [.github/skills/debug-ci-failure/SKILL.md](.github/skills/debug-ci-failure/SKILL.md) - End-to-end CI failure debugging workflow
+- **Deploy Preview**: [.github/skills/deploy-preview/SKILL.md](.github/skills/deploy-preview/SKILL.md) - Deploy local builds to dev-previews with a custom alias
 - **GitHub Actions Logs**: [.github/skills/github-actions-logs/SKILL.md](.github/skills/github-actions-logs/SKILL.md) - Parse and analyze GH Actions logs
 - **Troubleshoot**: [.github/skills/troubleshoot/SKILL.md](.github/skills/troubleshoot/SKILL.md) - Quick-reference fixes for common dev issues
 
 **Data & Content:**
 - **Class Skill Regen**: [.github/skills/class-skill-regen/SKILL.md](.github/skills/class-skill-regen/SKILL.md) - Refresh class skill descriptions/icons from ESO-Hub API
 - **Gear Data Regen**: [.github/skills/gear-data-regen/SKILL.md](.github/skills/gear-data-regen/SKILL.md) - Gear set bonus/tooltip data from ESO-Hub
+- **Mythic Armor Corrections**: [.github/skills/mythic-armor-corrections/SKILL.md](.github/skills/mythic-armor-corrections/SKILL.md) - Add/update ARMOR_TYPE_CORRECTIONS for new mythic armor
 - **No-Edit Generated**: [.github/skills/no-edit-generated/SKILL.md](.github/skills/no-edit-generated/SKILL.md) - Never manually edit generated files
 - **Skill Data Regen**: [.github/skills/skill-data-regen/SKILL.md](.github/skills/skill-data-regen/SKILL.md) - ESO skill line data regeneration
 - **UESP Data**: [.github/skills/uesp-data/SKILL.md](.github/skills/uesp-data/SKILL.md) - Item icon management
@@ -101,7 +103,7 @@ git checkout -b ESO-XXX/description-here
 **Workflow & Git:**
 - **Create PR**: [.github/skills/create-pr/SKILL.md](.github/skills/create-pr/SKILL.md) - PR creation with PowerShell-safe `--body-file` pattern and automatic UI screenshots
 - **Git Operations**: [.github/skills/git/SKILL.md](.github/skills/git/SKILL.md) - Branch management (twig with plain git fallbacks)
-- **Git Workflow Enforcement**: [.github/skills/workflow/SKILL.md](.github/skills/workflow/SKILL.md) - **Use this FIRST**
+- **Git Workflow Enforcement**: [.github/skills/workflow/SKILL.md](.github/skills/workflow/SKILL.md) — **Use this FIRST, before reading any files or writing any code. Always creates a new worktree; in-place checkout only when user explicitly requests it.**
 - **Post-Squash Rebase**: [.github/skills/rebase/SKILL.md](.github/skills/rebase/SKILL.md) - Recovery after squash-merge of stacked branches
 - **Rebase & Conflicts**: [.github/skills/rebase-conflicts/SKILL.md](.github/skills/rebase-conflicts/SKILL.md) - Rebase branches and resolve merge conflicts step-by-step
 
@@ -203,6 +205,14 @@ See: [.github/skills/class-skill-regen/SKILL.md](.github/skills/class-skill-rege
 @workspace Fix my mangled PR description
 ```
 See: [.github/skills/create-pr/SKILL.md](.github/skills/create-pr/SKILL.md)
+
+**Deploy Preview** (Local Preview Deployments):
+```
+@workspace Deploy a preview of my current branch
+@workspace Deploy a preview with alias "my-feature"
+@workspace Remove the "my-feature" preview
+```
+See: [.github/skills/deploy-preview/SKILL.md](.github/skills/deploy-preview/SKILL.md)
 
 **Debug CI Failure**:
 ```

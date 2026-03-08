@@ -12,6 +12,8 @@ import {
   selectWorkerTaskError,
   selectWorkerTaskProgress,
 } from '../../store/worker_results/selectors';
+import { KnownAbilities } from '../../types/abilities';
+import { useCastEvents } from '../events/useCastEvents';
 import { useCombatantInfoRecord } from '../events/useCombatantInfoRecord';
 import { useDamageEvents } from '../events/useDamageEvents';
 import { useCurrentFight } from '../useCurrentFight';
@@ -40,7 +42,22 @@ export function usePenetrationDataTask(_options?: UsePenetrationDataTaskOptions)
   const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask();
   const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const { castEvents, isCastEventsLoaded } = useCastEvents();
   const selectedTargetIds = useSelectedTargetIds();
+
+  // Pre-filter cast events to SWAP_WEAPONS events grouped by sourceID so the worker
+  // can determine the active weapon bar at any given timestamp per player.
+  const swapEventsByPlayerId = React.useMemo(() => {
+    const result: Record<number, (typeof castEvents)[number][]> = {};
+    for (const event of castEvents) {
+      if (event.abilityGameID === KnownAbilities.SWAP_WEAPONS) {
+        const id = event.sourceID;
+        if (!result[id]) result[id] = [];
+        result[id].push(event);
+      }
+    }
+    return result;
+  }, [castEvents]);
 
   // Execute task only when ALL dependencies are completely ready
   React.useEffect(() => {
@@ -56,7 +73,8 @@ export function usePenetrationDataTask(_options?: UsePenetrationDataTaskOptions)
       !isDebuffLookupLoading &&
       debuffLookupData !== null &&
       !isDamageEventsLoading &&
-      damageEvents.length > 0;
+      damageEvents.length > 0 &&
+      isCastEventsLoaded;
 
     if (allDependenciesReady) {
       const promise = dispatch(
@@ -68,6 +86,7 @@ export function usePenetrationDataTask(_options?: UsePenetrationDataTaskOptions)
           debuffsLookup: debuffLookupData,
           damageEvents: damageEvents,
           selectedTargetIds: Array.from(selectedTargetIds),
+          swapEventsByPlayerId,
         }),
       );
       return () => {
@@ -88,6 +107,8 @@ export function usePenetrationDataTask(_options?: UsePenetrationDataTaskOptions)
     isDebuffLookupLoading,
     isBuffLookupLoading,
     isPlayerDataLoading,
+    isCastEventsLoaded,
+    swapEventsByPlayerId,
   ]);
 
   const penetrationData = useSelector(selectPenetrationDataResult);
