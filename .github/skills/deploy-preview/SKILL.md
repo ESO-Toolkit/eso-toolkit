@@ -11,10 +11,11 @@ Deploy any local branch to the dev-previews GitHub Pages site at `https://eso-to
 
 ## Prerequisites
 
-- The `ESO-Toolkit/dev-previews` repo must be cloned as a sibling directory at `D:\code\dev-previews`. If it doesn't exist:
+- The `ESO-Toolkit/dev-previews` repo must be cloned as a sibling directory (e.g. `../dev-previews` relative to the project root). The script auto-detects this location. If it doesn't exist:
   ```powershell
-  git clone git@github.com:ESO-Toolkit/dev-previews.git D:\code\dev-previews
+  git clone git@github.com:ESO-Toolkit/dev-previews.git ../dev-previews
   ```
+  Or pass a custom path: `.\scripts\deploy-preview.ps1 -DevPreviewsPath "D:\path\to\dev-previews"`
 - Node.js and npm dependencies must be installed (`npm ci`)
 
 ## Deploy a Preview
@@ -71,10 +72,11 @@ After a successful deploy, report to the user:
 
 | Issue | Solution |
 |-------|----------|
-| Push rejected | The dev-previews repo has new commits. Run `git -C D:\code\dev-previews pull --rebase origin main` and retry. |
-| dev-previews not found | Clone it: `git clone git@github.com:ESO-Toolkit/dev-previews.git D:\code\dev-previews` |
+| Push rejected | The dev-previews repo has new commits. Run `git -C ../dev-previews pull --rebase origin main` from the project root and retry. If `previews.json` has conflicts, accept theirs (`git checkout --theirs previews.json`) since the script regenerates it. |
+| dev-previews not found | Clone it as a sibling: `git clone git@github.com:ESO-Toolkit/dev-previews.git ../dev-previews` |
 | Build fails | Check for TypeScript errors (`npm run typecheck`) or missing dependencies (`npm ci`) |
 | Custom DevPreviewsPath | Pass `-DevPreviewsPath "C:\path\to\dev-previews"` if the repo is not at the default sibling location |
+| `previews.json` conflict | This file is auto-generated. Accept theirs: `git -C ../dev-previews checkout --theirs previews.json && git -C ../dev-previews add previews.json && git -C ../dev-previews commit -m "resolve previews.json conflict"` then re-run the deploy script. |
 
 ## OAuth Note
 
