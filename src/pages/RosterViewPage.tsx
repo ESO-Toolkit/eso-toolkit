@@ -13,6 +13,7 @@ import {
   Favorite as FavoriteIcon,
   AutoAwesome as DPSIcon,
   OpenInNew as OpenInNewIcon,
+  SwapHoriz as PerFightIcon,
 } from '@mui/icons-material';
 import {
   Box,
@@ -30,6 +31,11 @@ import { useTheme } from '@mui/material/styles';
 import React, { useEffect, useState } from 'react';
 
 import { RaidRoster, TankSetup, HealerSetup, DPSSlot, MONSTER_SETS } from '../types/roster';
+import {
+  TrialBuildOverrides,
+  getTrialById,
+  encounterHasOverrides,
+} from '../types/trial-encounters';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { getSetDisplayName } from '../utils/setNameUtils';
@@ -783,6 +789,217 @@ const SectionLabel: React.FC<{
 );
 
 // ============================================================
+// Per-fight builds section
+// ============================================================
+
+interface PerFightSectionProps {
+  trialOverrides: TrialBuildOverrides;
+  isDarkMode: boolean;
+}
+
+const PerFightSection: React.FC<PerFightSectionProps> = ({ trialOverrides, isDarkMode }) => {
+  const trial = getTrialById(trialOverrides.trialId);
+  if (!trial) return null;
+
+  const encountersWithOverrides = trial.encounters.filter((enc) =>
+    encounterHasOverrides(trialOverrides.encounterBuilds[enc.id]),
+  );
+
+  const borderColor = isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const bgColor = isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
+  const accentColor = isDarkMode ? '#9c88ff' : '#6c5ce7';
+
+  return (
+    <Box sx={{ mb: 3 }}>
+      <SectionLabel
+        icon={<PerFightIcon sx={{ fontSize: '0.85rem', color: accentColor }} />}
+        label={`Per-Fight Builds — ${trial.name}`}
+        color={accentColor}
+        isDarkMode={isDarkMode}
+      />
+      {trialOverrides.useSameBuildForAll ? (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 1.5,
+            borderRadius: '10px',
+            backgroundColor: bgColor,
+            border: `1px solid ${borderColor}`,
+          }}
+        >
+          <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>
+            Same build used for all encounters.
+          </Typography>
+        </Paper>
+      ) : encountersWithOverrides.length === 0 ? (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 1.5,
+            borderRadius: '10px',
+            backgroundColor: bgColor,
+            border: `1px solid ${borderColor}`,
+          }}
+        >
+          <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>
+            No per-fight overrides configured.
+          </Typography>
+        </Paper>
+      ) : (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+          {encountersWithOverrides.map((enc) => {
+            const overrides = trialOverrides.encounterBuilds[enc.id];
+            const playerKeys = ['tank1', 'tank2', 'healer1', 'healer2'] as const;
+            const labelMap: Record<string, string> = {
+              tank1: 'MT',
+              tank2: 'OT',
+              healer1: 'H1',
+              healer2: 'H2',
+            };
+
+            return (
+              <Paper
+                key={enc.id}
+                elevation={0}
+                sx={{
+                  p: 1.25,
+                  borderRadius: '10px',
+                  backgroundColor: bgColor,
+                  border: `1px solid ${borderColor}`,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    color: accentColor,
+                    mb: 0.5,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  {enc.name}
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {playerKeys.map((key) => {
+                    const o = overrides[key];
+                    if (!o) return null;
+                    const sets = [
+                      o.set1
+                        ? getSetDisplayName(o.set1 as import('../types/abilities').KnownSetIDs)
+                        : null,
+                      o.set2
+                        ? getSetDisplayName(o.set2 as import('../types/abilities').KnownSetIDs)
+                        : null,
+                      o.monsterSet
+                        ? getSetDisplayName(
+                            o.monsterSet as import('../types/abilities').KnownSetIDs,
+                          )
+                        : null,
+                    ].filter(Boolean);
+                    if (!sets.length && !o.ultimate && !o.notes) return null;
+                    return (
+                      <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+                        <Typography
+                          sx={{
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            color: 'text.disabled',
+                            minWidth: 20,
+                          }}
+                        >
+                          {labelMap[key]}:
+                        </Typography>
+                        {sets.map((s) => (
+                          <Chip
+                            key={s}
+                            label={s}
+                            size="small"
+                            sx={{
+                              height: 16,
+                              fontSize: '0.6rem',
+                              fontWeight: 500,
+                              backgroundColor: `${accentColor}18`,
+                              color: accentColor,
+                              border: `1px solid ${accentColor}30`,
+                              '& .MuiChip-label': { px: 0.5 },
+                            }}
+                          />
+                        ))}
+                        {o.ultimate && (
+                          <Typography
+                            sx={{
+                              fontSize: '0.68rem',
+                              color: 'text.secondary',
+                              fontStyle: 'italic',
+                            }}
+                          >
+                            {o.ultimate}
+                          </Typography>
+                        )}
+                      </Box>
+                    );
+                  })}
+                  {overrides.dpsSlots?.map((slot) => {
+                    const sets = [
+                      slot.set1
+                        ? getSetDisplayName(slot.set1 as import('../types/abilities').KnownSetIDs)
+                        : null,
+                      slot.set2
+                        ? getSetDisplayName(slot.set2 as import('../types/abilities').KnownSetIDs)
+                        : null,
+                      slot.monsterSet
+                        ? getSetDisplayName(
+                            slot.monsterSet as import('../types/abilities').KnownSetIDs,
+                          )
+                        : null,
+                    ].filter(Boolean);
+                    if (!sets.length && !slot.ultimate && !slot.notes) return null;
+                    return (
+                      <Box
+                        key={slot.slotNumber}
+                        sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            color: 'text.disabled',
+                            minWidth: 20,
+                          }}
+                        >
+                          D{slot.slotNumber}:
+                        </Typography>
+                        {sets.map((s) => (
+                          <Chip
+                            key={s}
+                            label={s}
+                            size="small"
+                            sx={{
+                              height: 16,
+                              fontSize: '0.6rem',
+                              fontWeight: 500,
+                              backgroundColor: `${accentColor}18`,
+                              color: accentColor,
+                              border: `1px solid ${accentColor}30`,
+                              '& .MuiChip-label': { px: 0.5 },
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Paper>
+            );
+          })}
+        </Box>
+      )}
+    </Box>
+  );
+};
+
+// ============================================================
 // Main page component
 // ============================================================
 
@@ -1104,6 +1321,11 @@ export const RosterViewPage: React.FC = () => {
         </Box>
       </Box>
 
+      {/* ── Per-fight builds ── */}
+      {roster.trialOverrides && (
+        <PerFightSection trialOverrides={roster.trialOverrides} isDarkMode={isDarkMode} />
+      )}
+
       {/* ── Notes ── */}
       {roster.notes && (
         <Box sx={{ mb: 3 }}>
@@ -1278,8 +1500,16 @@ function buildDiscordText(roster: RaidRoster): string {
     // Prefer structured fields; fall back to legacy gearSets flat array
     const dpsGear =
       dd.set1 != null || dd.set2 != null || dd.monsterSet != null
-        ? fmtGear({ set1: dd.set1, set2: dd.set2, monsterSet: dd.monsterSet, additionalSets: dd.additionalSets })
-        : (dd.gearSets ?? []).map((id) => getSetDisplayName(id)).filter(Boolean).join('/');
+        ? fmtGear({
+            set1: dd.set1,
+            set2: dd.set2,
+            monsterSet: dd.monsterSet,
+            additionalSets: dd.additionalSets,
+          })
+        : (dd.gearSets ?? [])
+            .map((id) => getSetDisplayName(id))
+            .filter(Boolean)
+            .join('/');
     if (dpsGear) lines.push(dpsGear);
     const sl = dd.skillLines ? fmtSkillLines(dd.skillLines) : '';
     const ult = dd.ultimate ? fmtUlt(dd.ultimate) : '';

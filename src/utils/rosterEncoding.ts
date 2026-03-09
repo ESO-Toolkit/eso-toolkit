@@ -27,6 +27,15 @@ import {
   defaultHealerSetup,
   createDefaultDPSSlots,
 } from '../types/roster';
+import type {
+  TrialBuildOverrides,
+  EncounterOverrides,
+  PlayerOverride,
+} from '../types/trial-encounters';
+
+import { Logger, LogLevel } from './logger';
+
+const logger = new Logger({ level: LogLevel.WARN, contextPrefix: 'rosterEncoding' });
 
 // ============================================================
 // Compact interfaces — short key names for minimal JSON size
@@ -106,6 +115,31 @@ export interface CompactDPS {
   cd?: string; // customDescription
 }
 
+/** Compact representation of a PlayerOverride (per-fight set/ultimate/notes changes) */
+export interface CompactPlayerOverride {
+  s1?: number; // set1
+  s2?: number; // set2
+  ms?: number; // monsterSet
+  ul?: string | null; // ultimate
+  no?: string; // notes
+}
+
+/** Compact representation of EncounterOverrides (overrides per player for one encounter) */
+export interface CompactEncounterOverrides {
+  t1?: CompactPlayerOverride; // tank1
+  t2?: CompactPlayerOverride; // tank2
+  h1?: CompactPlayerOverride; // healer1
+  h2?: CompactPlayerOverride; // healer2
+  dp?: Array<{ sn: number } & CompactPlayerOverride>; // dpsSlots (sparse)
+}
+
+/** Compact representation of TrialBuildOverrides */
+export interface CompactTrialOverrides {
+  ti: string; // trialId
+  sa: boolean; // useSameBuildForAll
+  eb: Record<string, CompactEncounterOverrides>; // encounterBuilds
+}
+
 export interface CompactRoster {
   v: 2; // version marker
   n?: string; // rosterName
@@ -116,6 +150,7 @@ export interface CompactRoster {
   dp?: CompactDPS[]; // only filled DPS slots
   ag?: string[]; // availableGroups
   no?: string; // notes
+  to?: CompactTrialOverrides; // trialOverrides (per-fight builds)
 }
 
 // ============================================================
@@ -178,7 +213,7 @@ function encodeUltimate(u?: string | null): number | string | undefined {
 function decodeUltimate(v?: number | string): string | null {
   if (v == null) return null;
   if (typeof v === 'number') {
-    return isValidEnumIndex(v, ULTIMATE_LIST.length) ? ULTIMATE_LIST[v] ?? null : null;
+    return isValidEnumIndex(v, ULTIMATE_LIST.length) ? (ULTIMATE_LIST[v] ?? null) : null;
   }
   return v;
 }
@@ -221,7 +256,9 @@ function expandGear(c?: CompactGear): TankGearSet {
     set1: toValidSetId(c?.s1),
     set2: toValidSetId(c?.s2),
     monsterSet: toValidSetId(c?.ms),
-    additionalSets: c?.a?.map(toValidSetId).filter((id) => id !== undefined) as KnownSetIDs[] | undefined,
+    additionalSets: c?.a?.map(toValidSetId).filter((id) => id !== undefined) as
+      | KnownSetIDs[]
+      | undefined,
     notes: c?.no,
   };
 }
@@ -315,11 +352,22 @@ function expandHealer(c?: CompactHealer): HealerSetup {
     set1: toValidSetId(c?.s1),
     set2: toValidSetId(c?.s2),
     monsterSet: toValidSetId(c?.ms),
-    additionalSets: c?.a?.map(toValidSetId).filter((id) => id !== undefined) as KnownSetIDs[] | undefined,
+    additionalSets: c?.a?.map(toValidSetId).filter((id) => id !== undefined) as
+      | KnownSetIDs[]
+      | undefined,
     skillLines: expandSkills(c?.sl),
-    healerBuff: c?.hb != null ? (isValidEnumIndex(c.hb, HEALER_BUFF_LIST.length) ? (HEALER_BUFF_LIST[c.hb] as HealerBuff) : null) : null,
+    healerBuff:
+      c?.hb != null
+        ? isValidEnumIndex(c.hb, HEALER_BUFF_LIST.length)
+          ? (HEALER_BUFF_LIST[c.hb] as HealerBuff)
+          : null
+        : null,
     championPoint:
-      c?.cp != null ? (isValidEnumIndex(c.cp, CHAMPION_POINT_LIST.length) ? (CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint) : null) : null,
+      c?.cp != null
+        ? isValidEnumIndex(c.cp, CHAMPION_POINT_LIST.length)
+          ? (CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint)
+          : null
+        : null,
     ultimate: decodeUltimate(c?.ul),
     group: expandGroup(c?.gr),
     notes: c?.no,
@@ -359,7 +407,10 @@ function expandDPS(c: CompactDPS): DPSSlot {
   const legacySet2 = c.gs && c.s2 == null ? toValidSetId(c.gs[1]) : undefined;
   const legacyAdditional =
     c.gs && c.s1 == null && c.s2 == null
-      ? (c.gs.slice(2).map(toValidSetId).filter((id) => id !== undefined) as KnownSetIDs[])
+      ? (c.gs
+          .slice(2)
+          .map(toValidSetId)
+          .filter((id) => id !== undefined) as KnownSetIDs[])
       : undefined;
 
 
@@ -390,6 +441,70 @@ function expandDPS(c: CompactDPS): DPSSlot {
         : undefined,
     customDescription: c.cd,
   };
+}
+
+// ============================================================
+// Per-fight build (TrialBuildOverrides) compact/expand helpers
+// ============================================================
+
+function compactPlayerOverride(o: PlayerOverride): CompactPlayerOverride {
+  const c: CompactPlayerOverride = {};
+  if (o.set1 != null) c.s1 = o.set1;
+  if (o.set2 != null) c.s2 = o.set2;
+  if (o.monsterSet != null) c.ms = o.monsterSet;
+  if (o.ultimate !== undefined) c.ul = o.ultimate;
+  if (o.notes) c.no = o.notes;
+  return c;
+}
+
+function expandPlayerOverride(c: CompactPlayerOverride): PlayerOverride {
+  const o: PlayerOverride = {};
+  if (c.s1 != null) o.set1 = c.s1;
+  if (c.s2 != null) o.set2 = c.s2;
+  if (c.ms != null) o.monsterSet = c.ms;
+  if (c.ul !== undefined) o.ultimate = c.ul;
+  if (c.no) o.notes = c.no;
+  return o;
+}
+
+function compactEncounterOverrides(o: EncounterOverrides): CompactEncounterOverrides {
+  const c: CompactEncounterOverrides = {};
+  if (o.tank1) c.t1 = compactPlayerOverride(o.tank1);
+  if (o.tank2) c.t2 = compactPlayerOverride(o.tank2);
+  if (o.healer1) c.h1 = compactPlayerOverride(o.healer1);
+  if (o.healer2) c.h2 = compactPlayerOverride(o.healer2);
+  if (o.dpsSlots?.length) {
+    c.dp = o.dpsSlots.map((s) => ({ sn: s.slotNumber, ...compactPlayerOverride(s) }));
+  }
+  return c;
+}
+
+function expandEncounterOverrides(c: CompactEncounterOverrides): EncounterOverrides {
+  const o: EncounterOverrides = {};
+  if (c.t1) o.tank1 = expandPlayerOverride(c.t1);
+  if (c.t2) o.tank2 = expandPlayerOverride(c.t2);
+  if (c.h1) o.healer1 = expandPlayerOverride(c.h1);
+  if (c.h2) o.healer2 = expandPlayerOverride(c.h2);
+  if (c.dp?.length) {
+    o.dpsSlots = c.dp.map(({ sn, ...rest }) => ({ slotNumber: sn, ...expandPlayerOverride(rest) }));
+  }
+  return o;
+}
+
+function compactTrialOverrides(t: TrialBuildOverrides): CompactTrialOverrides {
+  const eb: Record<string, CompactEncounterOverrides> = {};
+  for (const [encId, overrides] of Object.entries(t.encounterBuilds)) {
+    eb[encId] = compactEncounterOverrides(overrides);
+  }
+  return { ti: t.trialId, sa: t.useSameBuildForAll, eb };
+}
+
+function expandTrialOverrides(c: CompactTrialOverrides): TrialBuildOverrides {
+  const encounterBuilds: Record<string, EncounterOverrides> = {};
+  for (const [encId, compact] of Object.entries(c.eb)) {
+    encounterBuilds[encId] = expandEncounterOverrides(compact);
+  }
+  return { trialId: c.ti, useSameBuildForAll: c.sa, encounterBuilds };
 }
 
 // ============================================================
@@ -426,6 +541,7 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
   if (filledSlots.length) c.dp = filledSlots.map(compactDPS);
   if (roster.availableGroups?.length) c.ag = roster.availableGroups;
   if (roster.notes) c.no = roster.notes;
+  if (roster.trialOverrides) c.to = compactTrialOverrides(roster.trialOverrides);
   return c;
 }
 
@@ -450,6 +566,7 @@ export function expandCompactRoster(c: CompactRoster): RaidRoster {
     dpsSlots,
     availableGroups: c.ag ?? [],
     notes: c.no,
+    trialOverrides: c.to ? expandTrialOverrides(c.to) : undefined,
   };
 }
 
@@ -543,7 +660,7 @@ export const encodeRosterToURL = async (roster: RaidRoster): Promise<string> => 
     const compressed = await deflateString(json);
     return toBase64Url(compressed);
   } catch (error) {
-    console.warn('[Roster Encoding Error] Failed to encode roster to URL:', error);
+    logger.warn('Failed to encode roster to URL:', error);
     return '';
   }
 };
@@ -564,9 +681,7 @@ export const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster |
     }
   } catch (error) {
     // fall through to v1, but log v2 errors for debugging
-    if (process.env.NODE_ENV === 'development') {
-      console.debug('[Roster Decoding] v2 decode failed, trying v1:', error);
-    }
+    logger.debug('v2 decode failed, trying v1:', error);
   }
   // Try v1: btoa(encodeURIComponent(json))
   try {
@@ -577,7 +692,7 @@ export const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster |
     }
     return null;
   } catch (error) {
-    console.warn('[Roster Decoding Error] Failed to decode roster from URL:', error);
+    logger.warn('Failed to decode roster from URL:', error);
     return null;
   }
 };
