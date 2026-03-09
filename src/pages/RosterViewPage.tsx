@@ -1275,8 +1275,15 @@ function buildDiscordText(roster: RaidRoster): string {
       : '';
     const lbs = dd.labels?.length ? ` (${dd.labels.join(', ')})` : '';
     lines.push(`${dd.slotNumber}${jl}${rn}:${pn}${lbs}`);
+    // Prefer structured fields; fall back to legacy gearSets flat array
+    const dpsGear =
+      dd.set1 != null || dd.set2 != null || dd.monsterSet != null
+        ? fmtGear({ set1: dd.set1, set2: dd.set2, monsterSet: dd.monsterSet, additionalSets: dd.additionalSets })
+        : (dd.gearSets ?? []).map((id) => getSetDisplayName(id)).filter(Boolean).join('/');
+    if (dpsGear) lines.push(dpsGear);
     const sl = dd.skillLines ? fmtSkillLines(dd.skillLines) : '';
-    if (sl) lines.push(sl);
+    const ult = dd.ultimate ? fmtUlt(dd.ultimate) : '';
+    if (sl || ult) lines.push(`${sl}${ult}`);
   });
   lines.push('');
 
