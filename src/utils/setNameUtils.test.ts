@@ -1,6 +1,18 @@
 import { KnownSetIDs } from '../types/abilities';
 import * as errorTracking from './errorTracking';
-import { getSetDisplayName, findSetIdByName, isUnsupportedSet } from './setNameUtils';
+import {
+  getSetDisplayName,
+  findSetIdByName,
+  isUnsupportedSet,
+  getAllSetIds,
+  getSetIdsSortedByName,
+  getAllSetDisplayNames,
+  getSetDisplayNameWithUnsupportedIndicator,
+  rosterSetNameToId,
+  setIdToRosterName,
+  SET_DISPLAY_NAMES,
+  UNSUPPORTED_SET_NAMES,
+} from './setNameUtils';
 
 // Mock errorTracking
 jest.mock('./errorTracking', () => ({
@@ -179,5 +191,123 @@ describe('setNameUtils', () => {
         );
       }
     });
+  });
+});
+
+// ============================================================
+// O(1) index consistency and list utilities
+// (These do not depend on error tracking, no mock needed)
+// ============================================================
+
+describe('SET_DISPLAY_NAMES ↔ findSetIdByName bidirectional consistency', () => {
+  it('every display name in SET_DISPLAY_NAMES can be looked up by findSetIdByName', () => {
+    // Build a set of names that appear more than once (e.g. base and Perfected share a name).
+    // For duplicate names the O(1) index returns the last-registered ID — that is intentional.
+    const nameCounts = new Map<string, number>();
+    for (const name of Object.values(SET_DISPLAY_NAMES)) {
+      nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
+    }
+
+    const failures: string[] = [];
+    for (const [idStr, name] of Object.entries(SET_DISPLAY_NAMES)) {
+      if (name === 'Unknown') continue; // Intentionally shared
+      if ((nameCounts.get(name) ?? 0) > 1) continue; // Duplicate names — index picks one; skip exact-ID check
+      const id = Number(idStr) as KnownSetIDs;
+      const found = findSetIdByName(name);
+      if (found !== id) {
+        failures.push(`ID ${id} ("${name}") → findSetIdByName returned ${String(found)}`);
+      }
+    }
+    expect(failures).toEqual([]);
+  });
+
+  it('findSetIdByName followed by getSetDisplayName returns the original name', () => {
+    // Build a map of all names that appear exactly once (unique names only).
+    // Duplicate names are intentional (base set + Perfected share the same name)
+    // and the index maps a duplicate name to exactly one of the IDs — that is fine.
+    const nameCounts = new Map<string, number>();
+    for (const name of Object.values(SET_DISPLAY_NAMES)) {
+      nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
+    }
+
+    const failures: string[] = [];
+    for (const name of Object.values(SET_DISPLAY_NAMES)) {
+      if (name === 'Unknown') continue;
+      if ((nameCounts.get(name) ?? 0) > 1) continue; // Duplicates — both map to the same display name, OK
+
+      const id = findSetIdByName(name);
+      if (id === undefined) {
+        failures.push(`"${name}" not found by findSetIdByName`);
+        continue;
+      }
+      const roundTripped = getSetDisplayName(id);
+      if (roundTripped !== name) {
+        failures.push(`"${name}" → ID ${id} → "${roundTripped}" (mismatch)`);
+      }
+    }
+    expect(failures).toEqual([]);
+  });
+});
+
+describe('getAllSetIds', () => {
+  it('returns a non-empty array of numbers', () => {
+    const ids = getAllSetIds();
+    expect(ids.length).toBeGreaterThan(0);
+    ids.forEach((id) => expect(typeof id).toBe('number'));
+  });
+
+  it('includes key known set IDs', () => {
+    const ids = getAllSetIds();
+    expect(ids).toContain(KnownSetIDs.LUCENT_ECHOES);
+    expect(ids).toContain(KnownSetIDs.SYMPHONY_OF_BLADES);
+    expect(ids).toContain(KnownSetIDs.PEARLS_OF_EHLNOFEY);
+  });
+});
+
+describe('getSetIdsSortedByName', () => {
+  it('returns IDs in alphabetical display-name order', () => {
+    const sorted = getSetIdsSortedByName();
+    const names = sorted.map((id) => SET_DISPLAY_NAMES[id]);
+    const expected = [...names].sort((a, b) => a.localeCompare(b));
+    expect(names).toEqual(expected);
+  });
+});
+
+describe('getAllSetDisplayNames', () => {
+  it('returns sorted display name strings', () => {
+    const names = getAllSetDisplayNames();
+    const expected = [...names].sort((a, b) => a.localeCompare(b));
+    expect(names).toEqual(expected);
+  });
+
+  it('contains well-known set names', () => {
+    const names = getAllSetDisplayNames();
+    expect(names).toContain('Lucent Echoes');
+    expect(names).toContain("Jorvuld's Guidance");
+  });
+});
+
+describe('getSetDisplayNameWithUnsupportedIndicator', () => {
+  it('appends (unsupported) for sets in the unsupported list', () => {
+    const key = Object.keys(UNSUPPORTED_SET_NAMES)[0];
+    expect(getSetDisplayNameWithUnsupportedIndicator(key)).toBe(`${key} (unsupported)`);
+  });
+
+  it('returns the name unchanged for supported sets', () => {
+    expect(getSetDisplayNameWithUnsupportedIndicator('Lucent Echoes')).toBe('Lucent Echoes');
+  });
+});
+
+describe('rosterSetNameToId wrapper', () => {
+  it('delegates correctly to findSetIdByName', () => {
+    expect(rosterSetNameToId('Lucent Echoes')).toBe(KnownSetIDs.LUCENT_ECHOES);
+    expect(rosterSetNameToId(undefined)).toBeUndefined();
+  });
+});
+
+describe('setIdToRosterName wrapper', () => {
+  it('delegates correctly to getSetDisplayName', () => {
+    expect(setIdToRosterName(KnownSetIDs.LUCENT_ECHOES)).toBe('Lucent Echoes');
+    expect(setIdToRosterName(undefined)).toBe('');
   });
 });
