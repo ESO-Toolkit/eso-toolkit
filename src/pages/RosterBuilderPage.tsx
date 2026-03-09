@@ -458,6 +458,9 @@ const isDDSpecialSet = (setId: KnownSetIDs): boolean => {
   return (DD_SPECIAL_SETS as readonly KnownSetIDs[]).includes(setId);
 };
 
+// Support ultimate options — computed once at module level, shared by all role cards
+const SUPPORT_ULTIMATE_OPTIONS: readonly string[] = Object.values(SupportUltimate);
+
 /**
  * Helper functions for type-safe set membership checks
  */
@@ -901,7 +904,10 @@ export const RosterBuilderPage: React.FC = () => {
     [roster.healer1?.healerBuff, roster.healer2?.healerBuff],
   );
 
-  const memoizedGroups = useMemo(() => roster.availableGroups, [roster.availableGroups]);
+  const memoizedGroups = useMemo(
+    () => [...(roster.availableGroups ?? [])].sort(),
+    [roster.availableGroups],
+  );
 
   // Stable slot number list for SortableContext — only changes when slots are reordered,
   // not when slot data changes. Prevents all 8 DPS cards from re-rendering via useSortable
@@ -3265,7 +3271,7 @@ const TankCard = React.memo<TankCardProps>(({ tankNum, tank, onChange, available
       },
     },
   };
-  const availableUltimates = Object.values(SupportUltimate);
+  const availableUltimates = SUPPORT_ULTIMATE_OPTIONS;
 
   return (
     <Card
@@ -3343,7 +3349,7 @@ const TankCard = React.memo<TankCardProps>(({ tankNum, tank, onChange, available
               <Autocomplete
                 freeSolo
                 size="small"
-                options={[...availableGroups].sort()}
+                options={availableGroups}
                 value={tank.group?.groupName || ''}
                 onChange={(_, value) =>
                   onChange({
@@ -3963,7 +3969,7 @@ const HealerCard = React.memo<HealerCardProps>(
     const availableBuffs = Object.values(HealerBuff).filter(
       (buff) => !usedBuffs.includes(buff) || healer.healerBuff === buff,
     );
-    const availableUltimates = Object.values(SupportUltimate);
+    const availableUltimates = SUPPORT_ULTIMATE_OPTIONS;
 
     return (
       <Card
@@ -4042,7 +4048,7 @@ const HealerCard = React.memo<HealerCardProps>(
                 <Autocomplete
                   freeSolo
                   size="small"
-                  options={[...availableGroups].sort()}
+                  options={availableGroups}
                   value={healer.group?.groupName || ''}
                   onChange={(_, value) =>
                     onChange({
@@ -4656,7 +4662,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
         },
       },
     };
-    const availableUltimates = Object.values(SupportUltimate);
+    const availableUltimates = SUPPORT_ULTIMATE_OPTIONS;
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: slot.slotNumber,
     });
@@ -4795,7 +4801,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                 <Autocomplete
                   freeSolo
                   size="small"
-                  options={[...availableGroups].sort()}
+                  options={availableGroups}
                   value={slot.group?.groupName || ''}
                   onChange={(_, value) =>
                     onChange({
