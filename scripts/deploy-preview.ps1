@@ -105,14 +105,14 @@ if ($Remove) {
         Write-Host "  Removed: $PreviewDir" -ForegroundColor Yellow
     }
     else {
-        Write-Host "  Nothing to remove — $Alias does not exist." -ForegroundColor Yellow
+        Write-Host "  Nothing to remove - $Alias does not exist." -ForegroundColor Yellow
     }
 
     # Update previews.json
     $previewsJson = Join-Path $DevPreviewsPath 'previews.json'
     if (Test-Path $previewsJson) {
         $previews = Get-Content $previewsJson -Raw | ConvertFrom-Json
-        $previews = @($previews | Where-Object { $_.alias -ne $Alias })
+        $previews = @($previews | Where-Object { -not $_.PSObject.Properties['alias'] -or $_.alias -ne $Alias })
         $previews | ConvertTo-Json -Depth 10 | Set-Content $previewsJson -Encoding UTF8
     }
 
@@ -169,7 +169,7 @@ if (-not (Test-Path $BuildDir)) {
 # ---------------------------------------------------------------------------
 Push-Location $DevPreviewsPath
 try {
-    git pull --rebase origin main 2>$null
+    try { git pull --rebase origin main 2>&1 | Out-Null } catch { <# ignore informational stderr; push will fail if real conflicts exist #> }
 }
 finally {
     Pop-Location
@@ -196,7 +196,7 @@ else {
 }
 
 # Remove existing entry for this alias, add fresh one
-$previews = @($previews | Where-Object { $_.alias -ne $Alias })
+$previews = @($previews | Where-Object { -not $_.PSObject.Properties['alias'] -or $_.alias -ne $Alias })
 
 $branchName = (git -C $ProjectRoot branch --show-current) 2>$null
 $commitHash = (git -C $ProjectRoot rev-parse --short HEAD) 2>$null
