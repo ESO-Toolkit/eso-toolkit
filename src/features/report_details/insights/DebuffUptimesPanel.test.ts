@@ -25,6 +25,7 @@ describe('DebuffUptimesPanel', () => {
         KnownAbilities.BURNING,
         KnownAbilities.CRUSHER,
         KnownAbilities.ENGULFING_FLAMES_BUFF,
+        KnownAbilities.HEAT_SHOCK,
         KnownAbilities.MAJOR_BREACH,
         KnownAbilities.MAJOR_COWARDICE,
         KnownAbilities.MAJOR_VULNERABILITY,
@@ -35,7 +36,7 @@ describe('DebuffUptimesPanel', () => {
         KnownAbilities.NAZARAY_DEBUFF,
         KnownAbilities.OFF_BALANCE,
         KnownAbilities.RUNIC_SUNDER_DEBUFF,
-        KnownAbilities.STAGGER,
+        KnownAbilities.STAGGER, // Pre-U49 legacy debuff ID
         KnownAbilities.TOUCH_OF_ZEN,
       ];
 

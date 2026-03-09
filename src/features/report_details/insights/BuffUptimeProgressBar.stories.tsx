@@ -30,7 +30,7 @@ const createMockBuff = (name: string, uptime: number, groupAverage?: number): Bu
   groupAverageUptimePercentage: groupAverage,
 });
 
-// Mock multi-stack buff (e.g., Stagger, Touch of Z'en)
+// Mock multi-stack buff (e.g., Heat Shock, Touch of Z'en)
 const createMockMultiStackBuff = (
   name: string,
   maxStacks: number,
@@ -224,10 +224,10 @@ export const DarkModeBelowAverage: Story = {
   ),
 };
 
-// Multi-stack: Stagger with 3 stacks
+// Multi-stack: Heat Shock with 3 stacks
 export const MultiStackStagger: Story = {
   args: {
-    buff: createMockMultiStackBuff('Stagger', 3, [85, 60, 35]),
+    buff: createMockMultiStackBuff('Heat Shock', 3, [85, 60, 35]),
     reportId: 'abc123',
     fightId: '1',
     selectedTargetId: 12345,
@@ -235,7 +235,7 @@ export const MultiStackStagger: Story = {
   render: (args) => (
     <Box sx={{ maxWidth: 600, p: 2 }}>
       <Box sx={{ mb: 2 }}>
-        <strong>Multi-Stack: Stagger (segmented display)</strong>
+        <strong>Multi-Stack: Heat Shock (segmented display)</strong>
         <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '4px' }}>
           Overlaid colored bars with segmented labels below: 85% | 60% | 35%
         </div>
@@ -300,7 +300,7 @@ export const MultiStackWithGroupAverage: Story = {
 export const MultiStackComparison: Story = {
   render: () => {
     const buffs: BuffUptime[] = [
-      createMockMultiStackBuff('Stagger', 3, [85, 60, 35], [70, 55, 30]),
+      createMockMultiStackBuff('Heat Shock', 3, [85, 60, 35], [70, 55, 30]),
       createMockMultiStackBuff("Touch of Z'en", 5, [95, 88, 72, 55, 38]),
       createMockMultiStackBuff('Elemental Weakness', 3, [78, 52, 28], [70, 50, 30]),
       createMockBuff('Major Courage', 84, 87), // Regular buff for comparison
@@ -329,7 +329,7 @@ export const MultiStackComparison: Story = {
 // Dark mode multi-stack
 export const DarkModeMultiStack: Story = {
   args: {
-    buff: createMockMultiStackBuff('Stagger', 3, [85, 60, 35], [70, 55, 30]),
+    buff: createMockMultiStackBuff('Heat Shock', 3, [85, 60, 35], [70, 55, 30]),
     reportId: 'abc123',
     fightId: '1',
     selectedTargetId: 12345,
@@ -340,7 +340,7 @@ export const DarkModeMultiStack: Story = {
   render: (args) => (
     <Box sx={{ maxWidth: 600, p: 2, bgcolor: '#1a1a1a', borderRadius: 2 }}>
       <Box sx={{ mb: 2, color: '#fff' }}>
-        <strong>Dark Mode Multi-Stack: Stagger</strong>
+        <strong>Dark Mode Multi-Stack: Heat Shock</strong>
       </Box>
       <BuffUptimeProgressBar {...args} />
     </Box>

@@ -445,10 +445,10 @@ export const dragonknightData: SkillsetData = {
           projectileDamage: '2323 Physical Damage each',
           finalStun: '2.5 seconds on final cast',
           morphs: {
-            stoneGiant: {
-              name: 'Stone Giant',
-              description: 'Applies stacks of Stagger, increasing enemy damage taken.',
-              stagger: '65 damage taken increase per stack for 5 seconds per hit',
+            magmaFist: {
+              name: 'Magma Fist',
+              description: 'Applies stacks of Heat Shock, increasing enemy damage taken.',
+              heatShock: '65 damage taken increase per stack for 5 seconds per hit',
             },
             obsidianShard: {
               name: 'Obsidian Shard',
@@ -602,9 +602,9 @@ export const dragonknightData: SkillsetData = {
         description: 'Applied when striking immobilized/stunned enemies with certain abilities',
       },
       stagger: {
-        name: 'Stagger',
+        name: 'Heat Shock',
         description:
-          'Stacking debuff from Stone Giant - 65 damage taken increase per stack for 5 seconds',
+          'Stacking debuff from Magma Fist - 65 damage taken increase per stack for 5 seconds',
       },
     },
     synergies: {

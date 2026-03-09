@@ -14,7 +14,7 @@ import { useDamageEvents } from '../events/useDamageEvents';
 
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
-// Hook for Stagger stacks calculation
+// Hook for Heat Shock (formerly Stagger) stacks calculation
 export function useStaggerStacksTask(): {
   staggerStacksData: StaggerStackResult[] | null;
   isStaggerStacksLoading: boolean;
