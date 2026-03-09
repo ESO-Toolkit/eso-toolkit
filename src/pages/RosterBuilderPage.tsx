@@ -741,6 +741,7 @@ export const RosterBuilderPage: React.FC = () => {
 
   // Load roster from URL on mount (supports ?r= query param and legacy #hash)
   React.useEffect(() => {
+    let cancelled = false;
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('r') || window.location.hash.substring(1);
     const savedId = params.get('id');
@@ -750,6 +751,7 @@ export const RosterBuilderPage: React.FC = () => {
     if (encoded) {
       void decodeRosterFromURL(encoded)
         .then((decoded) => {
+          if (cancelled) return;
           if (decoded) {
             setRoster(decoded);
             setSnackbar({
@@ -766,6 +768,9 @@ export const RosterBuilderPage: React.FC = () => {
     } else {
       urlSyncReady.current = true;
     }
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Keep ?r= query param in sync with the current roster so the URL is always shareable.

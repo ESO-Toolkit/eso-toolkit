@@ -46,6 +46,7 @@ import {
   HEALER_SETS,
   FLEXIBLE_SETS,
   MONSTER_SETS,
+  ALL_5PIECE_SETS,
   SetCategory,
   TankSetup,
   HealerSetup,
@@ -535,7 +536,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
       setList.forEach((setId) => {
         const setName = getSetDisplayName(setId);
         const isRecommended = recommendedSetIds.includes(setId);
-        const is5PieceCompatible = !requireFivePieceCheck || canAssignToFivePieceSlot(setId);
+        const is5PieceCompatible = !requireFivePieceCheck || ALL_5PIECE_SETS.includes(setId);
 
         if (!isRecommended && is5PieceCompatible) {
           addSet(setName, category);
