@@ -262,9 +262,7 @@ function dpsToAddonSlot(dps: DPSSlot): AddonDPSSlot | undefined {
  * match them against in-game GetItemLinkSetInfo() results.
  */
 function rosterToAddonExport(roster: RaidRoster): AddonExportRoster {
-  const addonRoster: AddonExportRoster = {
-    rosterName: roster.rosterName,
-  };
+  const addonRoster: AddonExportRoster = { rosterName: roster.rosterName };
 
   const t1 = tankToAddonSlot(roster.tank1);
   const t2 = tankToAddonSlot(roster.tank2);
@@ -291,7 +289,6 @@ function rosterToAddonExport(roster: RaidRoster): AddonExportRoster {
 function encodeAddonExport(roster: RaidRoster): string {
   const addonRoster = rosterToAddonExport(roster);
   const json = JSON.stringify(addonRoster);
-  // Encode as Base64URL (URL-safe, no padding)
   const base64 = btoa(unescape(encodeURIComponent(json)));
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -765,15 +762,13 @@ export const RosterBuilderPage: React.FC = () => {
     if (!urlSyncReady.current) return;
     let cancelled = false;
     const timer = window.setTimeout(() => {
-      void encodeRosterToURL(roster)
-        .then((encoded) => {
-          if (cancelled || !encoded) return;
-          const url = new URL(window.location.href);
-          url.search = `?r=${encoded}`;
-          url.hash = '';
-          window.history.replaceState(null, '', url.toString());
-        })
-        .catch(() => {});
+      void encodeRosterToURL(roster).then((encoded) => {
+        if (cancelled || !encoded) return;
+        const url = new URL(window.location.href);
+        url.search = `?r=${encoded}`;
+        url.hash = '';
+        window.history.replaceState(null, '', url.toString());
+      });
     }, 400);
     return () => {
       cancelled = true;
@@ -802,8 +797,7 @@ export const RosterBuilderPage: React.FC = () => {
               setSnackbar({ open: true, message: 'Failed to copy link', severity: 'error' });
             });
         }
-      })
-      .catch(() => {});
+      });
   }, [roster]);
 
   // Save roster to My Rosters (Redux/localStorage)
@@ -4627,22 +4621,6 @@ interface DPSSlotCardProps {
   onConvertToDPS: (slotNumber: number) => void;
 }
 
-// Common DPS champion point options (Warfare tree, ordered by usage frequency)
-const DPS_CHAMPION_POINT_OPTIONS = [
-  'Force of Nature',
-  'Deadly Aim',
-  'Fighting Finesse',
-  'Exploiter',
-  'Master-at-Arms',
-  'Weapons Expert',
-  'Thaumaturge',
-  'Biting Aura',
-  'Arcane Supremacy',
-  'Occult Overload',
-  'Wrathful Strikes',
-  'Resilience',
-];
-
 const jailLabels: Record<string, string> = {
   banner: 'Banner',
   zenkosh: 'Zenkosh',
@@ -4944,7 +4922,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                     <Autocomplete
                       freeSolo
                       size="small"
-                      options={DPS_CHAMPION_POINT_OPTIONS}
+                      options={[]}
                       value={slot.championPoint || null}
                       onChange={(_event, newValue) =>
                         onChange({ championPoint: newValue as string | null })
@@ -5605,7 +5583,6 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
         const labels = dd.labels && dd.labels.length > 0 ? ` (${dd.labels.join(', ')})` : '';
         lines.push(`${dd.slotNumber}${typeLabel}${roleNote}:${playerName}${labels}`);
         formatDPSDetails(dd);
-        if (dd.championPoint) lines.push(`CP: ${dd.championPoint}`);
       });
       lines.push('');
     });
@@ -5639,7 +5616,6 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
       const labels = dd.labels && dd.labels.length > 0 ? ` (${dd.labels.join(', ')})` : '';
       lines.push(`${dd.slotNumber}${typeLabel}${roleNote}:${playerName}${labels}`);
       formatDPSDetails(dd);
-      if (dd.championPoint) lines.push(`CP: ${dd.championPoint}`);
     });
     lines.push('');
   }

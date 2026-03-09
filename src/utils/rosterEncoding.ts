@@ -354,15 +354,15 @@ function compactDPS(d: DPSSlot): CompactDPS {
 }
 
 function expandDPS(c: CompactDPS): DPSSlot {
-  // Migrate legacy flat gearSets (gs) to structured fields when no new fields present.
-  const legacyGear =
-    c.gs && !c.s1 && !c.s2
-      ? {
-          set1: (c.gs[0] as KnownSetIDs) ?? undefined,
-          set2: (c.gs[1] as KnownSetIDs) ?? undefined,
-          additionalSets: (c.gs.slice(2) as KnownSetIDs[]) || undefined,
-        }
-      : {};
+  // Legacy migration: if old compact data has gs but no structured s1/s2, promote to set1/set2
+  const legacySet1 = c.gs && c.s1 == null ? toValidSetId(c.gs[0]) : undefined;
+  const legacySet2 = c.gs && c.s2 == null ? toValidSetId(c.gs[1]) : undefined;
+  const legacyAdditional =
+    c.gs && c.s1 == null && c.s2 == null
+      ? (c.gs.slice(2).map(toValidSetId).filter((id) => id !== undefined) as KnownSetIDs[])
+      : undefined;
+
+
   return {
     slotNumber: c.sn,
     playerName: c.pn,
@@ -370,17 +370,24 @@ function expandDPS(c: CompactDPS): DPSSlot {
     roleLabel: c.rl,
     roleNotes: c.rn,
     labels: c.lb,
-    set1: c.s1 as KnownSetIDs | undefined,
-    set2: c.s2 as KnownSetIDs | undefined,
-    monsterSet: c.ms as KnownSetIDs | undefined,
-    additionalSets: c.as as KnownSetIDs[] | undefined,
-    ...legacyGear,
+    set1: toValidSetId(c.s1) ?? legacySet1,
+    set2: toValidSetId(c.s2) ?? legacySet2,
+    monsterSet: toValidSetId(c.ms),
+    additionalSets:
+      c.as != null
+        ? (c.as.map(toValidSetId).filter((id) => id !== undefined) as KnownSetIDs[])
+        : legacyAdditional,
     skillLines: c.sl ? expandSkills(c.sl) : undefined,
     championPoint: c.cp || undefined,
     ultimate: c.ul != null ? decodeUltimate(c.ul) : null,
     group: expandGroup(c.gr),
     notes: c.no,
-    jailDDType: c.jt != null ? (isValidEnumIndex(c.jt, JAIL_DD_TYPE_LIST.length) ? JAIL_DD_TYPE_LIST[c.jt] : undefined) : undefined,
+    jailDDType:
+      c.jt != null
+        ? isValidEnumIndex(c.jt, JAIL_DD_TYPE_LIST.length)
+          ? JAIL_DD_TYPE_LIST[c.jt]
+          : undefined
+        : undefined,
     customDescription: c.cd,
   };
 }
