@@ -164,7 +164,7 @@ test.describe('RosterViewPage — /rv', () => {
       const roster = createDefaultRoster();
       roster.rosterName = 'View Page Test';
       roster.tank1 = {
-        ...(roster.tank1),
+        ...roster.tank1,
         playerName: 'TankHero',
         gearSets: { set1: 768 as never, set2: 648 as never }, // LUCENT_ECHOES, PEARLESCENT_WARD
       };
@@ -207,8 +207,8 @@ test.describe('RosterViewPage — /rv', () => {
       roster.dpsSlots[0] = {
         slotNumber: 1,
         playerName: 'GearPlayer',
-        set1: 691 as never,  // CRYPTCANON_VESTMENTS → "Cryptcanon Vestments"
-        set2: 127 as never,  // DEADLY_STRIKE → "Deadly Strike"
+        set1: 691 as never, // CRYPTCANON_VESTMENTS → "Cryptcanon Vestments"
+        set2: 127 as never, // DEADLY_STRIKE → "Deadly Strike"
       };
       const encoded = await encodeRosterToURL(roster);
       return `${window.location.origin}/rv?r=${encoded}`;

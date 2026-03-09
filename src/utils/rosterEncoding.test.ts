@@ -322,7 +322,11 @@ describe('compactifyRoster / expandCompactRoster', () => {
         {
           sn: 2,
           pn: 'LegacyPlayer',
-          gs: [KnownSetIDs.DEADLY_STRIKE, KnownSetIDs.MERCILESS_CHARGE, KnownSetIDs.CRYPTCANON_VESTMENTS],
+          gs: [
+            KnownSetIDs.DEADLY_STRIKE,
+            KnownSetIDs.MERCILESS_CHARGE,
+            KnownSetIDs.CRYPTCANON_VESTMENTS,
+          ],
         },
       ];
       const expanded = expandCompactRoster(compact);
