@@ -45,7 +45,7 @@ const EditorTool = styled(Box)(({ theme }) => ({
   color: 'var(--text)',
   boxShadow:
     theme.palette.mode === 'dark'
-      ? '0 8px 30px rgba(0, 0, 0, 0.6)'
+      ? '0 8px 32px rgba(80, 40, 200, 0.35), 0 0 60px rgba(0, 200, 255, 0.06), inset 0 1px 0 rgba(160, 100, 255, 0.12)'
       : '0 8px 30px rgba(0, 0, 0, 0.15)',
   transition: 'all 0.3s ease',
   backdropFilter: 'blur(12px) saturate(180%)',
@@ -918,7 +918,6 @@ export const TextEditor: React.FC = () => {
       const selectedText = textarea.value.substring(start, end);
 
       if (selectedText.length === 0) {
-        alert('Please select some text first!');
         return;
       }
 
@@ -1062,7 +1061,6 @@ export const TextEditor: React.FC = () => {
     const end = textarea.selectionEnd;
 
     if (start === end) {
-      alert('Please select some text first!');
       return;
     }
 
@@ -1112,7 +1110,6 @@ export const TextEditor: React.FC = () => {
     const selectedText = textarea.value.substring(start, end);
 
     if (selectedText.length === 0) {
-      alert('Please select some text first!');
       return;
     }
 
@@ -1309,9 +1306,9 @@ export const TextEditor: React.FC = () => {
             </ToolbarButton>
 
             <PresetColors role="group" aria-label="Quick color choices">
-              {presetColors.map((color, index) => (
+              {presetColors.map((color) => (
                 <PresetColor
-                  key={index}
+                  key={color}
                   type="button"
                   style={{ background: color }}
                   onClick={() => handleQuickColorClick(color.substring(1))}
@@ -1404,9 +1401,9 @@ export const TextEditor: React.FC = () => {
             </ColorPickerWrapper>
 
             <PresetColors role="group" aria-label="Quick color choices">
-              {presetColors.map((color, index) => (
+              {presetColors.map((color) => (
                 <PresetColor
-                  key={index}
+                  key={color}
                   type="button"
                   style={{ background: color }}
                   onClick={() => handleQuickColorClick(color.substring(1))}

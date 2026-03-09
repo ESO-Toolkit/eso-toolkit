@@ -1,8 +1,5 @@
 /*
-  text-editor-page-background.css - FIXED VERSION
-  DEBUG: This file should be loaded when TextEditor component mounts
-  Check browser console for "CSS LOADED" message
-
+  text-editor-page-background.css
   Purpose:
   - Apply background image to entire page body on text-editor page
   - Remove all solid backgrounds that hide the image
@@ -101,43 +98,6 @@ body.text-editor-page.dark-mode .editor-container:not(.EditorTool) {
   color: #e0e0e0;
 }
 
-/* Calculator container uses --panel variable which now has transparency */
-
-/* Make TextEditor component container use CSS variables */
-body.text-editor-page .MuiBox-root,
-body.text-editor-page .TextEditorContainer {
-  /* Let CSS variables handle the background */
-}
-
-/* Preview area - Let component handle its own transparency */
-
-/* Preview area transparency handled by component */
-
-/* Create a dedicated background layer */
-body.text-editor-page::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  z-index: -2;
-  pointer-events: none;
-}
-
-body.text-editor-page.dark-mode::before {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg');
-}
-
-body.text-editor-page:not(.dark-mode)::before {
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
-}
-
 /* Make the preview area show through to the background */
 body.text-editor-page .css-cplt40 {
   background: transparent !important;
@@ -176,7 +136,7 @@ body.text-editor-page.dark-mode .css-cplt40::before {
   background-image: url('/text-editor/text-editor-bg-dark.jpg');
 }
 
-/* Make sure preview area content is also transparent */
+/* Make sure preview area content is transparent */
 body.text-editor-page .css-cplt40 *,
 body.text-editor-page:not(.dark-mode) .css-cplt40 * {
   background: transparent !important;
