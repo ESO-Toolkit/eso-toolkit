@@ -56,8 +56,11 @@ import {
   canAssignToMonsterSlot,
   validateCompatibility,
 } from '../types/roster';
+import { Logger, LogLevel } from '../utils/logger';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
+
+const logger = new Logger({ level: LogLevel.WARN, contextPrefix: 'SetAssignmentManager' });
 
 /**
  * Determine the primary role(s) for a set in Quick Assignment UI
@@ -673,7 +676,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
       const setId = findSetIdByName(selectedSetForAssign);
       if (!setId) {
         // Invalid set - log and ignore
-        console.warn('[SetAssignmentManager] Unknown set name:', selectedSetForAssign);
+        logger.warn('Unknown set name:', selectedSetForAssign);
         setAssignMenuAnchor(null);
         setSelectedSetForAssign(null);
         return;
@@ -684,7 +687,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
         // Monster slot can only accept monster sets (2-piece)
         if (!canAssignToMonsterSlot(setId)) {
           // Invalid assignment - log and ignore
-          console.warn('[SetAssignmentManager] Cannot assign 5-piece set to monster slot:', selectedSetForAssign);
+          logger.warn('Cannot assign 5-piece set to monster slot:', selectedSetForAssign);
           setAssignMenuAnchor(null);
           setSelectedSetForAssign(null);
           return;
@@ -693,7 +696,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
         // Set1/Set2 slots can only accept 5-piece sets
         if (!canAssignToFivePieceSlot(setId)) {
           // Invalid assignment - log and ignore
-          console.warn(`[SetAssignmentManager] Cannot assign monster/mythic set to ${slot} slot:`, selectedSetForAssign);
+          logger.warn(`Cannot assign monster/mythic set to ${slot} slot:`, selectedSetForAssign);
           setAssignMenuAnchor(null);
           setSelectedSetForAssign(null);
           return;

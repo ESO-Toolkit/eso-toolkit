@@ -88,6 +88,7 @@ import { KnownAbilities, KnownSetIDs } from '../types/abilities';
 import {
   RaidRoster,
   TankSetup,
+  TankGearSet as _TankGearSet,
   HealerSetup,
   DPSSlot,
   SupportUltimate,
@@ -96,6 +97,7 @@ import {
   JailDDType,
   CLASS_SKILL_LINES,
   SkillLineConfig,
+  PlayerGroup as _PlayerGroup,
   createDefaultRoster,
   defaultTankSetup,
   defaultHealerSetup,
