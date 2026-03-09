@@ -671,7 +671,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
       // Convert set name to ID for validation
       const setId = findSetIdByName(selectedSetForAssign);
       if (!setId) {
-        // Invalid set - silently ignore
+        // Invalid set - log and ignore
+        console.warn('[SetAssignmentManager] Unknown set name:', selectedSetForAssign);
         setAssignMenuAnchor(null);
         setSelectedSetForAssign(null);
         return;
@@ -681,7 +682,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
       if (slot === 'monster') {
         // Monster slot can only accept monster sets (2-piece)
         if (!canAssignToMonsterSlot(setId)) {
-          // Invalid assignment - silently ignore
+          // Invalid assignment - log and ignore
+          console.warn('[SetAssignmentManager] Cannot assign 5-piece set to monster slot:', selectedSetForAssign);
           setAssignMenuAnchor(null);
           setSelectedSetForAssign(null);
           return;
@@ -689,7 +691,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
       } else if (slot === 'set1' || slot === 'set2') {
         // Set1/Set2 slots can only accept 5-piece sets
         if (!canAssignToFivePieceSlot(setId)) {
-          // Invalid assignment - silently ignore
+          // Invalid assignment - log and ignore
+          console.warn(`[SetAssignmentManager] Cannot assign monster/mythic set to ${slot} slot:`, selectedSetForAssign);
           setAssignMenuAnchor(null);
           setSelectedSetForAssign(null);
           return;

@@ -136,6 +136,25 @@ const JAIL_DD_TYPE_TO_IDX = new Map(JAIL_DD_TYPE_LIST.map((t, i) => [t, i] as co
 // Primitive encode/decode helpers
 // ============================================================
 
+/**
+ * Safely validate a number is a valid enum index in an array
+ */
+function isValidEnumIndex(value: number, arrayLength: number): boolean {
+  return Number.isInteger(value) && value >= 0 && value < arrayLength;
+}
+
+/**
+ * Safely convert a number to KnownSetIDs, returning undefined if invalid
+ * Since KnownSetIDs is a numeric enum, we can't validate the exact values,
+ * but we can at least ensure it's a safe integer
+ */
+function toValidSetId(value: unknown): KnownSetIDs | undefined {
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 0) {
+    return value as KnownSetIDs;
+  }
+  return undefined;
+}
+
 function encodeSkillLine(s?: string): number | string | undefined {
   if (!s) return undefined;
   const idx = SKILL_LINE_TO_IDX.get(s as (typeof CLASS_SKILL_LINES)[number]);
@@ -144,7 +163,9 @@ function encodeSkillLine(s?: string): number | string | undefined {
 
 function decodeSkillLine(v?: number | string): string {
   if (v == null) return '';
-  if (typeof v === 'number') return CLASS_SKILL_LINES[v] ?? '';
+  if (typeof v === 'number') {
+    return isValidEnumIndex(v, CLASS_SKILL_LINES.length) ? CLASS_SKILL_LINES[v] : '';
+  }
   return v;
 }
 
@@ -156,7 +177,9 @@ function encodeUltimate(u?: string | null): number | string | undefined {
 
 function decodeUltimate(v?: number | string): string | null {
   if (v == null) return null;
-  if (typeof v === 'number') return ULTIMATE_LIST[v] ?? null;
+  if (typeof v === 'number') {
+    return isValidEnumIndex(v, ULTIMATE_LIST.length) ? ULTIMATE_LIST[v] ?? null : null;
+  }
   return v;
 }
 
@@ -195,10 +218,10 @@ function compactGear(gs: TankGearSet): CompactGear | undefined {
 
 function expandGear(c?: CompactGear): TankGearSet {
   return {
-    set1: c?.s1 as KnownSetIDs | undefined,
-    set2: c?.s2 as KnownSetIDs | undefined,
-    monsterSet: c?.ms as KnownSetIDs | undefined,
-    additionalSets: c?.a as KnownSetIDs[] | undefined,
+    set1: toValidSetId(c?.s1),
+    set2: toValidSetId(c?.s2),
+    monsterSet: toValidSetId(c?.ms),
+    additionalSets: c?.a?.map(toValidSetId).filter((id) => id !== undefined) as KnownSetIDs[] | undefined,
     notes: c?.no,
   };
 }
@@ -289,14 +312,14 @@ function expandHealer(c?: CompactHealer): HealerSetup {
     roleLabel: c?.rl,
     roleNotes: c?.rn,
     labels: c?.lb,
-    set1: c?.s1 as KnownSetIDs | undefined,
-    set2: c?.s2 as KnownSetIDs | undefined,
-    monsterSet: c?.ms as KnownSetIDs | undefined,
-    additionalSets: c?.a as KnownSetIDs[] | undefined,
+    set1: toValidSetId(c?.s1),
+    set2: toValidSetId(c?.s2),
+    monsterSet: toValidSetId(c?.ms),
+    additionalSets: c?.a?.map(toValidSetId).filter((id) => id !== undefined) as KnownSetIDs[] | undefined,
     skillLines: expandSkills(c?.sl),
-    healerBuff: c?.hb != null ? ((HEALER_BUFF_LIST[c.hb] as HealerBuff) ?? null) : null,
+    healerBuff: c?.hb != null ? (isValidEnumIndex(c.hb, HEALER_BUFF_LIST.length) ? (HEALER_BUFF_LIST[c.hb] as HealerBuff) : null) : null,
     championPoint:
-      c?.cp != null ? ((CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint) ?? null) : null,
+      c?.cp != null ? (isValidEnumIndex(c.cp, CHAMPION_POINT_LIST.length) ? (CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint) : null) : null,
     ultimate: decodeUltimate(c?.ul),
     group: expandGroup(c?.gr),
     notes: c?.no,
@@ -357,7 +380,7 @@ function expandDPS(c: CompactDPS): DPSSlot {
     ultimate: c.ul != null ? decodeUltimate(c.ul) : null,
     group: expandGroup(c.gr),
     notes: c.no,
-    jailDDType: c.jt != null ? JAIL_DD_TYPE_LIST[c.jt] : undefined,
+    jailDDType: c.jt != null ? (isValidEnumIndex(c.jt, JAIL_DD_TYPE_LIST.length) ? JAIL_DD_TYPE_LIST[c.jt] : undefined) : undefined,
     customDescription: c.cd,
   };
 }
@@ -504,6 +527,7 @@ export async function inflateBytes(bytes: Uint8Array): Promise<string> {
 /**
  * Encode a roster to a compact, deflate-compressed, URL-safe base64 string.
  * Result goes into `?r=<returned>`.
+ * Returns empty string on error (with console warning logged).
  */
 export const encodeRosterToURL = async (roster: RaidRoster): Promise<string> => {
   try {
@@ -511,7 +535,8 @@ export const encodeRosterToURL = async (roster: RaidRoster): Promise<string> => 
     const json = JSON.stringify(compact);
     const compressed = await deflateString(json);
     return toBase64Url(compressed);
-  } catch {
+  } catch (error) {
+    console.warn('[Roster Encoding Error] Failed to encode roster to URL:', error);
     return '';
   }
 };
@@ -519,6 +544,7 @@ export const encodeRosterToURL = async (roster: RaidRoster): Promise<string> => 
 /**
  * Decode a roster from the `?r=` URL param value.
  * Supports v2 (deflate-raw + compact) and legacy v1 (plain base64 JSON).
+ * Logs warnings on decode failures for debugging.
  */
 export const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster | null> => {
   // Try v2: deflate-raw + compact format
@@ -529,8 +555,11 @@ export const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster |
     if (parsed.v === 2) {
       return expandCompactRoster(parsed as CompactRoster);
     }
-  } catch {
-    // fall through to v1
+  } catch (error) {
+    // fall through to v1, but log v2 errors for debugging
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[Roster Decoding] v2 decode failed, trying v1:', error);
+    }
   }
   // Try v1: btoa(encodeURIComponent(json))
   try {
@@ -540,7 +569,8 @@ export const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster |
       return parsed as RaidRoster;
     }
     return null;
-  } catch {
+  } catch (error) {
+    console.warn('[Roster Decoding Error] Failed to decode roster from URL:', error);
     return null;
   }
 };

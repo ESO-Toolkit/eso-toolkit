@@ -595,7 +595,7 @@ export const TANK_SETS: readonly KnownSetIDs[] = [
 ] as const;
 
 /**
- * Healer-specific 5-piece support setsasass
+ * Healer-specific 5-piece support sets
  * Alphabetically sorted
  * Can only be assigned to set1/set2 slots
  */
