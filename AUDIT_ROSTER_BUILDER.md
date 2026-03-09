@@ -137,11 +137,48 @@ If a corrupted URL contains index 99 but array only has 4 items, falls back grac
 
 ---
 
-## Recommendations
+## Implementation Status
+
+### ✅ Completed Fixes
+
+1. **Added enum range validation** ✓
+   - Added `isValidEnumIndex()` helper to safely validate array indices
+   - Added `toValidSetId()` helper to safely convert numbers to KnownSetIDs
+   - Updated `decodeSkillLine()`, `decodeUltimate()` to validate indices before access
+   - Updated `expandGear()`, `expandHealer()`, `expandDPS()` to use safe conversions
+
+2. **Improved error handling** ✓
+   - Replaced silent failures in `encodeRosterToURL()` with `console.warn()`
+   - Replaced silent failures in `decodeRosterFromURL()` with `console.warn()` and debug logging
+   - Added validation logging in SetAssignmentManager (set type mismatches)
+
+3. **Fixed documentation typo** ✓
+   - Fixed "setsasass" → "sets" in roster.ts line 598
+
+4. **Slot validation verified** ✓
+   - Confirmed SetAssignmentManager already validates set→slot restrictions
+   - Enhanced with console warnings for debugging
+
+### 📋 Remaining Work (Not Blocking)
 
 1. **Add unit tests** for encoding/decoding with edge cases (corrupted data, out-of-bounds indices)
-2. **Remove dead code** - consolidate DPS gear structure to use set1/set2/monsterSet OR keep gearSets but not both
-3. **Add slot validation** - prevent invalid set→slot assignments in SetAssignmentManager
-4. **Replace silent errors** with explicit logging or user-facing notifications
-5. **Add enum range validation** when encoding/decoding KnownSetIDs
-6. **Fix documentation** typo in roster.ts line 598
+   - Would benefit from: Jest tests for DPS slot creation, set validation, compatibility rules
+
+2. **Remove dead code** - consolidate DPS gear structure
+   - DPS slots define unused `set1`/`set2`/`monsterSet` fields that are never initialized
+   - Current implementation uses legacy `gearSets[]` only
+   - Consider standardizing to match Tank/Healer structure in future refactoring
+
+3. **Enhance error UX**
+   - Current implementation logs console warnings
+   - Could add Snackbar notifications for user-facing errors
+
+---
+
+## Commit Information
+
+- **Branch**: `audit/roster-builder`
+- **Commit**: `0d7012d0`
+- **Message**: `audit(roster-builder): Improve type safety and error handling in encoding/decoding`
+- **Files Changed**: 4 (AUDIT_ROSTER_BUILDER.md + 3 source files)
+- **Lines Added**: 202 | Deleted: 22
