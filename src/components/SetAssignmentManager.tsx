@@ -142,7 +142,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
     return selectedSetForAssign ? findSetIdByName(selectedSetForAssign) : undefined;
   }, [selectedSetForAssign]);
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number): void => {
+  const handleTabChange = (newValue: number): void => {
     setActiveTab(newValue);
   };
 
@@ -972,7 +972,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
           {(['Quick Assign', 'All Sets'] as const).map((label, index) => (
             <Box
               key={label}
-              onClick={() => handleTabChange(null as unknown as React.SyntheticEvent, index)}
+              onClick={() => handleTabChange(index)}
               sx={{
                 flex: '1 1 auto',
                 minWidth: 0,

@@ -250,9 +250,18 @@ function healerToAddonSlot(healer: HealerSetup): AddonSlot | undefined {
 function dpsToAddonSlot(dps: DPSSlot): AddonDPSSlot | undefined {
   if (!dps.playerName) return undefined;
   const slot: AddonDPSSlot = { playerName: dps.playerName, slotNumber: dps.slotNumber };
-  if (dps.gearSets?.length) {
-    slot.gearSets = dps.gearSets.map((id) => getSetDisplayName(id)).filter(Boolean);
+
+  // Prefer structured fields (new format); fall back to legacy flat gearSets array
+  const setNames: string[] = [];
+  if (dps.set1 != null) setNames.push(getSetDisplayName(dps.set1));
+  if (dps.set2 != null) setNames.push(getSetDisplayName(dps.set2));
+  if (dps.monsterSet != null) setNames.push(getSetDisplayName(dps.monsterSet));
+  dps.additionalSets?.forEach((id) => setNames.push(getSetDisplayName(id)));
+  if (setNames.length === 0 && dps.gearSets?.length) {
+    setNames.push(...dps.gearSets.map((id) => getSetDisplayName(id)).filter(Boolean));
   }
+  if (setNames.length) slot.gearSets = setNames;
+
   return slot;
 }
 
@@ -1435,8 +1444,12 @@ export const RosterBuilderPage: React.FC = () => {
         return {
           slotNumber: index + 1,
           playerName: dpsPlayer.name || '',
-          gearSets: deduplicateSetIds(
-            [...fivePieceSets, ...monsterSets, ...otherSets]
+          // Use structured fields so Discord format and addon export read them correctly
+          set1: fivePieceSets[0] ? findSetIdByName(fivePieceSets[0]) : undefined,
+          set2: fivePieceSets[1] ? findSetIdByName(fivePieceSets[1]) : undefined,
+          monsterSet: monsterSets[0] ? findSetIdByName(monsterSets[0]) : undefined,
+          additionalSets: deduplicateSetIds(
+            [...fivePieceSets.slice(2), ...monsterSets.slice(1), ...otherSets]
               .filter(Boolean)
               .map((name) => findSetIdByName(name))
               .filter((id): id is KnownSetIDs => id !== undefined),
@@ -1507,28 +1520,20 @@ export const RosterBuilderPage: React.FC = () => {
       return;
     }
 
-    setRoster((prev) => {
-      const updated = { ...prev };
-
-      // Fill tanks first (up to 2)
-      if (lines.length > 0 && lines[0]) updated.tank1.playerName = lines[0].trim();
-      if (lines.length > 1 && lines[1]) updated.tank2.playerName = lines[1].trim();
-
-      // Fill healers next (up to 2)
-      if (lines.length > 2 && lines[2]) updated.healer1.playerName = lines[2].trim();
-      if (lines.length > 3 && lines[3]) updated.healer2.playerName = lines[3].trim();
-
-      // Fill DPS slots (up to 8)
-      for (let i = 4; i < Math.min(lines.length, 12); i++) {
-        const dpsIndex = i - 4;
-        if (updated.dpsSlots[dpsIndex] && lines[i]) {
-          updated.dpsSlots[dpsIndex].playerName = lines[i].trim();
-        }
-      }
-
-      updated.updatedAt = new Date().toISOString();
-      return updated;
-    });
+    setRoster((prev) => ({
+      ...prev,
+      tank1: lines[0] ? { ...prev.tank1, playerName: lines[0].trim() } : prev.tank1,
+      tank2: lines[1] ? { ...prev.tank2, playerName: lines[1].trim() } : prev.tank2,
+      healer1: lines[2] ? { ...prev.healer1, playerName: lines[2].trim() } : prev.healer1,
+      healer2: lines[3] ? { ...prev.healer2, playerName: lines[3].trim() } : prev.healer2,
+      dpsSlots: prev.dpsSlots.map((slot, idx) => {
+        const lineIndex = idx + 4;
+        return lineIndex < lines.length && lines[lineIndex]
+          ? { ...slot, playerName: lines[lineIndex].trim() }
+          : slot;
+      }),
+      updatedAt: new Date().toISOString(),
+    }));
 
     setQuickFillDialog(false);
     setQuickFillText('');
@@ -5537,86 +5542,51 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
   // DPS - all slots are now in dpsSlots array, some may have jailDDType
   const sortedDPS = [...roster.dpsSlots].sort((a, b) => a.slotNumber - b.slotNumber);
 
+  // Format a single DPS slot's gear/build line
+  const formatDPSDetails = (dd: DPSSlot): void => {
+    const gearParts: string[] = [];
+    if (dd.set1) gearParts.push(getSetDisplayName(dd.set1));
+    if (dd.set2) gearParts.push(getSetDisplayName(dd.set2));
+    if (dd.monsterSet) gearParts.push(getSetDisplayName(dd.monsterSet));
+    dd.additionalSets?.forEach((id) => gearParts.push(getSetDisplayName(id)));
+    if (gearParts.length) lines.push(gearParts.join('/'));
+    if (dd.skillLines) {
+      const sl = formatSkillLines(dd.skillLines);
+      const ult = dd.ultimate ? formatUlt(dd.ultimate) : '';
+      if (sl || ult) lines.push(`${sl}${ult}`);
+    } else if (dd.ultimate) {
+      lines.push(formatUlt(dd.ultimate).trim());
+    }
+  };
+
+  const formatDPSRow = (dd: DPSSlot): void => {
+    const roleNote = dd.roleNotes ? ` [${dd.roleNotes}]` : '';
+    const playerName = dd.playerName ? ` ${dd.playerName}` : '';
+    const typeLabel = dd.jailDDType
+      ? ` [${formatJailDDType(dd.jailDDType, dd.customDescription)}]`
+      : '';
+    const labels = dd.labels && dd.labels.length > 0 ? ` (${dd.labels.join(', ')})` : '';
+    lines.push(`${dd.slotNumber}${typeLabel}${roleNote}:${playerName}${labels}`);
+    formatDPSDetails(dd);
+  };
+
   // Check if any DDs have groups assigned
   const hasGroups = sortedDPS.some((dd) => dd.group?.groupName);
 
   if (hasGroups) {
-    // Group DDs by their group
     const groupedDDs = new Map<string, DPSSlot[]>();
-
     sortedDPS.forEach((dd) => {
       const group = dd.group?.groupName || 'Unassigned';
-      if (!groupedDDs.has(group)) {
-        groupedDDs.set(group, []);
-      }
+      if (!groupedDDs.has(group)) groupedDDs.set(group, []);
       groupedDDs.get(group)!.push(dd);
     });
-
-    // Helper to format DPS gear/build line
-    const formatDPSDetails = (dd: DPSSlot): void => {
-      const gearParts: string[] = [];
-      if (dd.set1) gearParts.push(getSetDisplayName(dd.set1));
-      if (dd.set2) gearParts.push(getSetDisplayName(dd.set2));
-      if (dd.monsterSet) gearParts.push(getSetDisplayName(dd.monsterSet));
-      if (dd.additionalSets) {
-        dd.additionalSets.forEach((id) => gearParts.push(getSetDisplayName(id)));
-      }
-      if (gearParts.length) lines.push(gearParts.join('/'));
-      if (dd.skillLines) {
-        const sl = formatSkillLines(dd.skillLines);
-        const ult = dd.ultimate ? formatUlt(dd.ultimate) : '';
-        if (sl || ult) lines.push(`${sl}${ult}`);
-      } else if (dd.ultimate) {
-        lines.push(formatUlt(dd.ultimate).trim());
-      }
-    };
-
-    // Print each group
     groupedDDs.forEach((dds, groupName) => {
       lines.push(groupName);
-      dds.forEach((dd) => {
-        const roleNote = dd.roleNotes ? ` [${dd.roleNotes}]` : '';
-        const playerName = dd.playerName ? ` ${dd.playerName}` : '';
-        const typeLabel = dd.jailDDType
-          ? ` [${formatJailDDType(dd.jailDDType, dd.customDescription)}]`
-          : '';
-        const labels = dd.labels && dd.labels.length > 0 ? ` (${dd.labels.join(', ')})` : '';
-        lines.push(`${dd.slotNumber}${typeLabel}${roleNote}:${playerName}${labels}`);
-        formatDPSDetails(dd);
-      });
+      dds.forEach(formatDPSRow);
       lines.push('');
     });
   } else {
-    // Helper to format DPS gear/build line
-    const formatDPSDetails = (dd: DPSSlot): void => {
-      const gearParts: string[] = [];
-      if (dd.set1) gearParts.push(getSetDisplayName(dd.set1));
-      if (dd.set2) gearParts.push(getSetDisplayName(dd.set2));
-      if (dd.monsterSet) gearParts.push(getSetDisplayName(dd.monsterSet));
-      if (dd.additionalSets) {
-        dd.additionalSets.forEach((id) => gearParts.push(getSetDisplayName(id)));
-      }
-      if (gearParts.length) lines.push(gearParts.join('/'));
-      if (dd.skillLines) {
-        const sl = formatSkillLines(dd.skillLines);
-        const ult = dd.ultimate ? formatUlt(dd.ultimate) : '';
-        if (sl || ult) lines.push(`${sl}${ult}`);
-      } else if (dd.ultimate) {
-        lines.push(formatUlt(dd.ultimate).trim());
-      }
-    };
-
-    // No groups - print DDs sequentially
-    sortedDPS.forEach((dd) => {
-      const roleNote = dd.roleNotes ? ` [${dd.roleNotes}]` : '';
-      const playerName = dd.playerName ? ` ${dd.playerName}` : '';
-      const typeLabel = dd.jailDDType
-        ? ` [${formatJailDDType(dd.jailDDType, dd.customDescription)}]`
-        : '';
-      const labels = dd.labels && dd.labels.length > 0 ? ` (${dd.labels.join(', ')})` : '';
-      lines.push(`${dd.slotNumber}${typeLabel}${roleNote}:${playerName}${labels}`);
-      formatDPSDetails(dd);
-    });
+    sortedDPS.forEach(formatDPSRow);
     lines.push('');
   }
 
