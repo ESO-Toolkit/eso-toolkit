@@ -45,7 +45,7 @@ const EditorTool = styled(Box)(({ theme }) => ({
   color: 'var(--text)',
   boxShadow:
     theme.palette.mode === 'dark'
-      ? '0 8px 32px rgba(80, 40, 200, 0.35), 0 0 60px rgba(0, 200, 255, 0.06), inset 0 1px 0 rgba(160, 100, 255, 0.12)'
+      ? '0 4px 16px rgba(0, 0, 0, 0.4)'
       : '0 8px 30px rgba(0, 0, 0, 0.15)',
   transition: 'all 0.3s ease',
   backdropFilter: 'blur(12px) saturate(180%)',
