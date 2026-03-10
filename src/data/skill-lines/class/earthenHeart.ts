@@ -154,34 +154,6 @@ export const earthenHeart: SkillLineData = {
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PETRIFY,
     },
     {
-      id: ClassSkillId.DRAGONKNIGHT_ASH_CLOUD,
-      name: 'Ash Cloud',
-      type: 'active',
-      icon: 'ability_dragonknight_016',
-      description:
-        'Summon a scorching cloud of ash at the target location for 15 seconds, reducing enemy Movement Speed by 70% and healing you and your allies for 434 Health every 1 second.',
-      baseSkillId: ClassSkillId.DRAGONKNIGHT_ASH_CLOUD,
-    },
-    {
-      id: ClassSkillId.DRAGONKNIGHT_CINDER_STORM,
-      name: 'Cinder Storm',
-      type: 'active',
-      icon: 'ability_dragonknight_016a',
-      description:
-        'Summon a scorching cloud of ash at the target location for 15 seconds, reducing enemy Movement Speed by 70% and healing you and your allies for 674 every 1 second.',
-      baseSkillId: ClassSkillId.DRAGONKNIGHT_ASH_CLOUD,
-    },
-    {
-      id: ClassSkillId.DRAGONKNIGHT_ERUPTION,
-      name: 'Eruption',
-      type: 'active',
-      icon: 'ability_dragonknight_016b',
-      description:
-        'Summon a scorching cloud of ash at the target location for 15 seconds, dealing 1799 Flame Damage immediately, reducing enemy Movement Speed by 70%, and dealing 319 Flame Damage in the area every 1 second.\n\nThe eruptive damage can occur once every 10 seconds.',
-      baseSkillId: ClassSkillId.DRAGONKNIGHT_ASH_CLOUD,
-      alternateIds: [32710],
-    },
-    {
       id: ClassSkillId.DRAGONKNIGHT_BATTLE_ROAR,
       name: 'Battle Roar',
       type: 'passive',
