@@ -190,7 +190,7 @@ export const draconicPower: SkillLineData = {
       isPassive: true,
     },
     {
-      id: ClassSkillId.DRAGONKNIGHT_BATTLE_ROAR,
+      id: ClassSkillId.DRAGONKNIGHT_LANDSLIDE,
       name: 'The Storm Voice',
       type: 'passive',
       icon: 'ability_dragonknight_031',
