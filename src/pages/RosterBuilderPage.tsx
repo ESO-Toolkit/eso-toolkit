@@ -3361,12 +3361,7 @@ const TankCard = React.memo<TankCardProps>(({ tankNum, tank, onChange, available
                 onChange={(_, value) => onChange({ groups: value })}
                 renderTags={(value, getTagProps) =>
                   value.map((option, index) => (
-                    <Chip
-                      {...getTagProps({ index })}
-                      key={option}
-                      label={option}
-                      size="small"
-                    />
+                    <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
                   ))
                 }
                 renderInput={(params) => (
@@ -4066,12 +4061,7 @@ const HealerCard = React.memo<HealerCardProps>(
                   onChange={(_, value) => onChange({ groups: value })}
                   renderTags={(value, getTagProps) =>
                     value.map((option, index) => (
-                      <Chip
-                        {...getTagProps({ index })}
-                        key={option}
-                        label={option}
-                        size="small"
-                      />
+                      <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
                     ))
                   }
                   renderInput={(params) => (
@@ -4831,12 +4821,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                   onChange={(_, value) => onChange({ groups: value })}
                   renderTags={(value, getTagProps) =>
                     value.map((option, index) => (
-                      <Chip
-                        {...getTagProps({ index })}
-                        key={option}
-                        label={option}
-                        size="small"
-                      />
+                      <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
                     ))
                   }
                   renderInput={(params) => (
@@ -5544,8 +5529,7 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
     const label = h.roleLabel || (index === 0 ? 'H1' : 'H2');
     const roleNote = h.roleNotes ? ` [${h.roleNotes}]` : '';
     const playerName = h.playerName ? ` ${h.playerName}` : '';
-    const groupName =
-      h.groups && h.groups.length > 0 ? ` (${h.groups.join(', ')})` : '';
+    const groupName = h.groups && h.groups.length > 0 ? ` (${h.groups.join(', ')})` : '';
     const labels = h.labels && h.labels.length > 0 ? ` [${h.labels.join(', ')}]` : '';
 
     lines.push(`${label}${roleNote}:${playerName}${groupName}${labels}`);
@@ -5621,7 +5605,9 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
     // Preserve group order from availableGroups; append any unlisted groups at end
     const groupOrder = [
       ...roster.availableGroups,
-      ...sortedDPS.flatMap((dd) => dd.groups ?? []).filter((g) => !roster.availableGroups.includes(g)),
+      ...sortedDPS
+        .flatMap((dd) => dd.groups ?? [])
+        .filter((g) => !roster.availableGroups.includes(g)),
     ];
     const groupedDDs = new Map<string, DPSSlot[]>(groupOrder.map((g) => [g, []]));
     groupedDDs.set('Unassigned', []);

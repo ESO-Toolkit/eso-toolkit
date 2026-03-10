@@ -92,7 +92,7 @@ async function generateFullRoster(page: Page) {
       skillLines: {
         line1: 'Restoring Light',
         line2: 'Aedric Spear',
-        line3: 'Dawn\'s Wrath',
+        line3: "Dawn's Wrath",
         isFlex: false,
       },
       healerBuff: 'Enlivening Overflow',
@@ -114,7 +114,7 @@ async function generateFullRoster(page: Page) {
       skillLines: {
         line1: 'Restoring Light',
         line2: 'Aedric Spear',
-        line3: 'Dawn\'s Wrath',
+        line3: "Dawn's Wrath",
         isFlex: true,
       },
       healerBuff: 'From the Brink',
@@ -204,7 +204,7 @@ async function generateFullRoster(page: Page) {
       set2: 127, // DEADLY_STRIKE
       monsterSet: 2268,
       skillLines: {
-        line1: 'Winter\'s Embrace',
+        line1: "Winter's Embrace",
         line2: 'Animal Companions',
         line3: 'Green Balance',
         isFlex: true,
@@ -221,7 +221,7 @@ async function generateFullRoster(page: Page) {
       playerName: 'JailDD1',
       playerNumber: 5,
       roleLabel: 'Jail',
-      roleNotes: 'Z\'en Jail Opener',
+      roleNotes: "Z'en Jail Opener",
       labels: ['Jail', 'Opener'],
       set1: 620, // RELEQUEN
       set2: 627, // SPAULDER_OF_RUIN (Mythic)
@@ -298,7 +298,7 @@ async function generateFullRoster(page: Page) {
       skillLines: {
         line1: 'Aedric Spear',
         line2: 'Restoring Light',
-        line3: 'Dawn\'s Wrath',
+        line3: "Dawn's Wrath",
         isFlex: true,
       },
       championPoint: null,
@@ -349,7 +349,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
     await page.waitForLoadState('networkidle');
 
     const fullRosterData = await page.evaluate(async () => {
-      const { encodeRosterToURL, decodeRosterFromURL } = await import('/src/utils/rosterEncoding.ts');
+      const { encodeRosterToURL, decodeRosterFromURL } =
+        await import('/src/utils/rosterEncoding.ts');
       const { createDefaultRoster } = await import('/src/types/roster.ts');
 
       const roster = createDefaultRoster();
@@ -503,7 +504,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
     const skillData = await page.evaluate(async () => {
       const { createDefaultRoster } = await import('/src/types/roster.ts');
-      const { encodeRosterToURL, decodeRosterFromURL } = await import('/src/utils/rosterEncoding.ts');
+      const { encodeRosterToURL, decodeRosterFromURL } =
+        await import('/src/utils/rosterEncoding.ts');
 
       const roster = createDefaultRoster();
       // Configure skill lines
@@ -516,7 +518,7 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
       roster.healer1.skillLines = {
         line1: 'Restoring Light',
         line2: 'Aedric Spear',
-        line3: 'Dawn\'s Wrath',
+        line3: "Dawn's Wrath",
         isFlex: false,
       };
 
@@ -541,7 +543,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
     const jailData = await page.evaluate(async () => {
       const { createDefaultRoster } = await import('/src/types/roster.ts');
-      const { encodeRosterToURL, decodeRosterFromURL } = await import('/src/utils/rosterEncoding.ts');
+      const { encodeRosterToURL, decodeRosterFromURL } =
+        await import('/src/utils/rosterEncoding.ts');
 
       const roster = createDefaultRoster();
       roster.dpsSlots[4] = { slotNumber: 5, playerName: 'JailDD1', jailDDType: 'zenkosh' };
@@ -577,10 +580,10 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
     await page.waitForLoadState('networkidle');
 
     const ultimateData = await page.evaluate(async () => {
-      const { createDefaultRoster, defaultTankSetup, defaultHealerSetup } = await import(
-        '/src/types/roster.ts'
-      );
-      const { encodeRosterToURL, decodeRosterFromURL } = await import('/src/utils/rosterEncoding.ts');
+      const { createDefaultRoster, defaultTankSetup, defaultHealerSetup } =
+        await import('/src/types/roster.ts');
+      const { encodeRosterToURL, decodeRosterFromURL } =
+        await import('/src/utils/rosterEncoding.ts');
 
       const roster = createDefaultRoster();
       roster.tank1 = {
@@ -624,14 +627,21 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
     const groupData = await page.evaluate(async () => {
       const { createDefaultRoster, defaultTankSetup } = await import('/src/types/roster.ts');
-      const { encodeRosterToURL, decodeRosterFromURL } = await import('/src/utils/rosterEncoding.ts');
+      const { encodeRosterToURL, decodeRosterFromURL } =
+        await import('/src/utils/rosterEncoding.ts');
 
       const roster = createDefaultRoster();
-      roster.availableGroups = ['Tank Pair', 'Healer Pair', 'Slayer Stack 1', 'Slayer Stack 2', 'Jail Stack'];
+      roster.availableGroups = [
+        'Tank Pair',
+        'Healer Pair',
+        'Slayer Stack 1',
+        'Slayer Stack 2',
+        'Jail Stack',
+      ];
       roster.tank1 = {
         ...defaultTankSetup(),
         labels: ['Main', 'Trash Tank'],
-        group: { groupName: 'Tank Pair' },
+        groups: ['Tank Pair'],
       };
       roster.dpsSlots[0] = {
         slotNumber: 1,
@@ -641,7 +651,7 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
       roster.dpsSlots[4] = {
         slotNumber: 5,
         playerName: 'JailDD1',
-        group: { groupName: 'Jail Stack' },
+        groups: ['Jail Stack'],
       };
 
       const encoded = await encodeRosterToURL(roster);
@@ -649,19 +659,19 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
       return {
         rosterGroups: decoded.availableGroups,
-        tank1Group: decoded.tank1.group?.groupName,
+        tank1Groups: decoded.tank1.groups,
         tank1Labels: decoded.tank1.labels,
         dps1Labels: decoded.dpsSlots[0].labels,
-        dps5Group: decoded.dpsSlots[4].group?.groupName,
+        dps5Groups: decoded.dpsSlots[4].groups,
       };
     });
 
     expect(groupData).not.toBeNull();
     expect(groupData.rosterGroups).toContain('Tank Pair');
     expect(groupData.rosterGroups).toContain('Slayer Stack 1');
-    expect(groupData.tank1Group).toBe('Tank Pair');
+    expect(groupData.tank1Groups).toContain('Tank Pair');
     expect(groupData.tank1Labels).toContain('Main');
-    expect(groupData.dps5Group).toBe('Jail Stack');
+    expect(groupData.dps5Groups).toContain('Jail Stack');
   });
 
   test('all player fields (name, number, role label, notes) are preserved', async ({ page }) => {
@@ -669,10 +679,10 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
     await page.waitForLoadState('networkidle');
 
     const playerData = await page.evaluate(async () => {
-      const { createDefaultRoster, defaultTankSetup, defaultHealerSetup } = await import(
-        '/src/types/roster.ts'
-      );
-      const { encodeRosterToURL, decodeRosterFromURL } = await import('/src/utils/rosterEncoding.ts');
+      const { createDefaultRoster, defaultTankSetup, defaultHealerSetup } =
+        await import('/src/types/roster.ts');
+      const { encodeRosterToURL, decodeRosterFromURL } =
+        await import('/src/utils/rosterEncoding.ts');
 
       const roster = createDefaultRoster();
       roster.tank1 = {
@@ -737,7 +747,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
     const allDpsData = await page.evaluate(async () => {
       const { createDefaultRoster } = await import('/src/types/roster.ts');
-      const { encodeRosterToURL, decodeRosterFromURL } = await import('/src/utils/rosterEncoding.ts');
+      const { encodeRosterToURL, decodeRosterFromURL } =
+        await import('/src/utils/rosterEncoding.ts');
 
       const roster = createDefaultRoster();
       // Configure different DPS slots
@@ -797,7 +808,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
     const notes = await page.evaluate(async () => {
       const { createDefaultRoster } = await import('/src/types/roster.ts');
-      const { encodeRosterToURL, decodeRosterFromURL } = await import('/src/utils/rosterEncoding.ts');
+      const { encodeRosterToURL, decodeRosterFromURL } =
+        await import('/src/utils/rosterEncoding.ts');
 
       const roster = createDefaultRoster();
       roster.notes = 'Complete raid team roster for testing all features';

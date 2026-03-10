@@ -281,19 +281,6 @@ function expandGroups(grs?: string[], gr?: CompactGroup): string[] | undefined {
   return undefined;
 }
 
-// Keep for legacy decode path (other callers may still reference compactGroup/expandGroup)
-function compactGroup(gr?: PlayerGroup): CompactGroup | undefined {
-  if (!gr?.groupName) return undefined;
-  const c: CompactGroup = { g: gr.groupName };
-  if (gr.groupNumber != null) c.n = gr.groupNumber;
-  return c;
-}
-
-function expandGroup(c?: CompactGroup): PlayerGroup | undefined {
-  if (!c?.g) return undefined;
-  return { groupName: c.g, groupNumber: c.n };
-}
-
 function compactTank(t: TankSetup): CompactTank {
   const c: CompactTank = {};
   if (t.playerName) c.pn = t.playerName;
