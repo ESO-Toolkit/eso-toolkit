@@ -155,42 +155,6 @@ export const draconicPower: SkillLineData = {
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PROTECTIVE_SCALE,
     },
     {
-      id: ClassSkillId.DRAGONKNIGHT_INHALE,
-      name: 'Inhale',
-      type: 'active',
-      icon: 'ability_dragonknight_012',
-      description:
-        'Channel draconic energy to suck in the air around you, dealing 870 Flame Damage to nearby enemies and healing you for 100% of the damage caused.\n\nAfter 2.5 seconds, you exhale fire, dealing 1742 Flame Damage to nearby enemies.',
-      baseSkillId: ClassSkillId.DRAGONKNIGHT_INHALE,
-    },
-    {
-      id: ClassSkillId.DRAGONKNIGHT_DEEP_BREATH,
-      name: 'Deep Breath',
-      type: 'active',
-      icon: 'ability_dragonknight_012_a',
-      description:
-        'Channel draconic energy to suck in the air around you, dealing 870 Flame Damage to nearby enemies and healing you for 100% of the damage caused.\n\nAny enemy hit that is casting is interrupted, set Off Balance, and stunned for 2 seconds.\n\nAfter 2.5 seconds, you exhale fire, dealing 2249 Flame Damage to nearby enemies.',
-      baseSkillId: ClassSkillId.DRAGONKNIGHT_INHALE,
-    },
-    {
-      id: ClassSkillId.DRAGONKNIGHT_DRAW_ESSENCE,
-      name: 'Draw Essence',
-      type: 'active',
-      icon: 'ability_dragonknight_012_b',
-      description:
-        "Channel draconic energy to suck in the air around you, dealing 870 Flame Damage to nearby enemies and healing you for 150% of the damage caused.\n\nAfter 2.5 seconds, you exhale fire, dealing 1742 Flame Damage to nearby enemies and restoring 10% of the ability's cost for each enemy hit as Magicka.",
-      baseSkillId: ClassSkillId.DRAGONKNIGHT_INHALE,
-    },
-    {
-      id: ClassSkillId.DRAGONKNIGHT_BURNING_HEART,
-      name: 'Burning Heart',
-      type: 'passive',
-      icon: 'ability_dragonknight_032',
-      description:
-        'While a Draconic Power ability is active, your healing received is increased by 9%.',
-      isPassive: true,
-    },
-    {
       id: ClassSkillId.DRAGONKNIGHT_ELDER_DRAGON,
       name: 'Elder Dragon',
       type: 'passive',
