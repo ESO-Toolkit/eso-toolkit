@@ -130,6 +130,7 @@ export interface DPSSlot {
   set1?: KnownSetIDs; // Primary 5-piece set (Body)
   set2?: KnownSetIDs; // Secondary 5-piece set (Jewelry)
   monsterSet?: KnownSetIDs; // Monster/Mythic set
+  arenaWeapon?: string; // Arena weapon (e.g., "Maelstrom's Bow", "Asylum Restoration Staff")
   additionalSets?: KnownSetIDs[]; // Extra gear sets
   /** @deprecated Use set1/set2/monsterSet instead. Kept for backward compat decoding. */
   gearSets?: KnownSetIDs[]; // Legacy flat gear set tracking
@@ -155,6 +156,7 @@ export interface HealerSetup {
   set1: KnownSetIDs | undefined; // First 5-piece set
   set2: KnownSetIDs | undefined; // Second 5-piece set
   monsterSet?: KnownSetIDs; // 2-piece monster set (head + shoulders)
+  arenaWeapon?: string; // Arena weapon (e.g., "Asylum Restoration Staff")
   additionalSets?: KnownSetIDs[]; // For mythics or special items
   skillLines: SkillLineConfig;
   healerBuff: HealerBuff | null;

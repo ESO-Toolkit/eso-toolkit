@@ -83,6 +83,7 @@ export interface CompactHealer {
   s1?: number; // set1
   s2?: number; // set2
   ms?: number; // monsterSet
+  aw?: string; // arenaWeapon (free text)
   a?: number[]; // additionalSets
   sl?: CompactSkills; // skillLines
   hb?: number; // healerBuff: HealerBuff index
@@ -102,6 +103,7 @@ export interface CompactDPS {
   s1?: number; // set1 (primary 5-piece)
   s2?: number; // set2 (secondary 5-piece)
   ms?: number; // monsterSet
+  aw?: string; // arenaWeapon (free text)
   as?: number[]; // additionalSets
   gs?: number[]; // legacy gearSets (backward compat decode only)
   sl?: CompactSkills; // skillLines
@@ -321,6 +323,7 @@ function compactHealer(h: HealerSetup): CompactHealer {
   if (h.set1 != null) c.s1 = h.set1 as number;
   if (h.set2 != null) c.s2 = h.set2 as number;
   if (h.monsterSet != null) c.ms = h.monsterSet as number;
+  if (h.arenaWeapon) c.aw = h.arenaWeapon;
   if (h.additionalSets?.length) c.a = h.additionalSets as number[];
   const sl = compactSkills(h.skillLines);
   if (sl) c.sl = sl;
@@ -350,6 +353,7 @@ function expandHealer(c?: CompactHealer): HealerSetup {
     set1: toValidSetId(c?.s1),
     set2: toValidSetId(c?.s2),
     monsterSet: toValidSetId(c?.ms),
+    arenaWeapon: c?.aw,
     additionalSets: c?.a?.map(toValidSetId).filter((id) => id !== undefined) as
       | KnownSetIDs[]
       | undefined,
@@ -389,6 +393,7 @@ function compactDPS(d: DPSSlot): CompactDPS {
   if (ul != null) c.ul = ul;
   const grs = compactGroups(d.groups);
   if (grs) c.grs = grs;
+  if (d.arenaWeapon) c.aw = d.arenaWeapon;
   if (d.notes) c.no = d.notes;
   if (d.jailDDType) {
     const idx = JAIL_DD_TYPE_TO_IDX.get(d.jailDDType);
@@ -420,6 +425,7 @@ function expandDPS(c: CompactDPS): DPSSlot {
     set1: toValidSetId(c.s1) ?? legacySet1,
     set2: toValidSetId(c.s2) ?? legacySet2,
     monsterSet: toValidSetId(c.ms),
+    arenaWeapon: c.aw,
     additionalSets:
       c.as != null
         ? (c.as.map(toValidSetId).filter((id) => id !== undefined) as KnownSetIDs[])

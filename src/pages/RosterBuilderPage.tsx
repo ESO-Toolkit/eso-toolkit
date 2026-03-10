@@ -456,6 +456,25 @@ const DPS_MONSTER_OPTIONS: readonly string[] = (() => {
   return Array.from(sets).sort();
 })();
 
+const ARENA_WEAPON_OPTIONS: readonly string[] = [
+  'Asylum Destruction Staff',
+  'Asylum Restoration Staff',
+  "Maelstrom's Battle Axe",
+  "Maelstrom's Bow",
+  "Maelstrom's Dagger",
+  "Maelstrom's Destruction Staff",
+  "Maelstrom's Greatsword",
+  "Maelstrom's Lightning Staff",
+  "Maelstrom's Maul",
+  "Maelstrom's Restoration Staff",
+  "Maelstrom's Shield",
+  "Maelstrom's Sword",
+  "Vateshran's Bow",
+  "Vateshran's Destruction Staff",
+  "Vateshran's Restoration Staff",
+  "Vateshran's Sword",
+];
+
 const isDDSpecialSet = (setId: KnownSetIDs): boolean => {
   return (DD_SPECIAL_SETS as readonly KnownSetIDs[]).includes(setId);
 };
@@ -4180,6 +4199,29 @@ const HealerCard = React.memo<HealerCardProps>(
                       renderOption={(props, option) => <li {...props}>{option}</li>}
                     />
                   </Box>
+                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                    <Autocomplete
+                      freeSolo
+                      size="small"
+                      options={['Asylum Restoration Staff', 'Asylum Destruction Staff']}
+                      value={healer.arenaWeapon ?? ''}
+                      onChange={(_, value) => onChange({ arenaWeapon: value || undefined })}
+                      groupBy={() => 'Arena Weapons'}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          label="Arena Weapon"
+                          placeholder="e.g., Asylum Restoration Staff"
+                          sx={glassSx}
+                          InputProps={{
+                            ...params.InputProps,
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => <li {...props}>{option}</li>}
+                    />
+                  </Box>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
@@ -4923,6 +4965,29 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                       renderOption={(props, option) => <li {...props}>{option}</li>}
                     />
                   </Box>
+                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                    <Autocomplete
+                      freeSolo
+                      size="small"
+                      options={ARENA_WEAPON_OPTIONS}
+                      value={slot.arenaWeapon ?? ''}
+                      onChange={(_, value) => onChange({ arenaWeapon: value || undefined })}
+                      groupBy={() => 'Arena Weapons'}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          label="Arena Weapon"
+                          placeholder="e.g., Maelstrom's Bow"
+                          sx={glassSx}
+                          InputProps={{
+                            ...params.InputProps,
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => <li {...props}>{option}</li>}
+                    />
+                  </Box>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
@@ -5535,6 +5600,7 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
     if (dd.set1) gearParts.push(getSetDisplayName(dd.set1));
     if (dd.set2) gearParts.push(getSetDisplayName(dd.set2));
     if (dd.monsterSet) gearParts.push(getSetDisplayName(dd.monsterSet));
+    if (dd.arenaWeapon) gearParts.push(dd.arenaWeapon);
     dd.additionalSets?.forEach((id) => gearParts.push(getSetDisplayName(id)));
     if (gearParts.length) lines.push(gearParts.join('/'));
     if (dd.skillLines) {

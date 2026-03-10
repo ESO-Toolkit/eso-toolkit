@@ -717,6 +717,21 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
                 }}
               />
             ))}
+            {slot.arenaWeapon && (
+              <Chip
+                label={slot.arenaWeapon}
+                size="small"
+                sx={{
+                  height: 17,
+                  fontSize: '0.62rem',
+                  fontWeight: 500,
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                  color: 'text.secondary',
+                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                  '& .MuiChip-label': { px: 0.625 },
+                }}
+              />
+            )}
             {slot.notes && (
               <Typography sx={{ fontSize: '0.7rem', color: 'text.disabled', fontStyle: 'italic' }}>
                 {slot.notes}
@@ -1486,12 +1501,15 @@ function buildDiscordText(roster: RaidRoster): string {
     // Prefer structured fields; fall back to legacy gearSets flat array
     const dpsGear =
       dd.set1 != null || dd.set2 != null || dd.monsterSet != null
-        ? fmtGear({
-            set1: dd.set1,
-            set2: dd.set2,
-            monsterSet: dd.monsterSet,
-            additionalSets: dd.additionalSets,
-          })
+        ? [
+            ...formatGearSets({
+              set1: dd.set1,
+              set2: dd.set2,
+              monsterSet: dd.monsterSet,
+              additionalSets: dd.additionalSets,
+            }),
+            ...(dd.arenaWeapon ? [dd.arenaWeapon] : []),
+          ].join('/')
         : (dd.gearSets ?? [])
             .map((id) => getSetDisplayName(id))
             .filter(Boolean)
