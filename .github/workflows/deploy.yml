@@ -36,7 +36,7 @@ jobs:
         run: node scripts/generate-whats-new.cjs --count 20
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
 
       - name: Build and Deploy
         id: build-and-deploy
