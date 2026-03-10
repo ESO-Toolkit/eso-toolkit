@@ -12,6 +12,7 @@
  *
  * Environment:
  *   GITHUB_TOKEN - GitHub personal access token (required in CI, optional locally)
+ *   ANTHROPIC_API_KEY - Anthropic API key for AI summaries (optional)
  *
  * If GITHUB_TOKEN is not set, the script will skip generation and keep the
  * existing whats-new.json file (useful for local development).
@@ -22,6 +23,7 @@ const path = require('path');
 
 const OUTPUT_PATH = path.join(__dirname, '..', 'public', 'whats-new.json');
 const DEFAULT_PR_COUNT = 15;
+const SUMMARY_CONCURRENCY = 5;
 
 /**
  * Parse command-line arguments
@@ -34,7 +36,7 @@ function parseArgs() {
     if (args[i] === '--count' && args[i + 1]) {
       count = parseInt(args[i + 1], 10);
       if (isNaN(count) || count < 1) {
-        console.warn(`⚠️  Invalid --count value, using default (${DEFAULT_PR_COUNT})`);
+        console.warn(`\u26a0\ufe0f  Invalid --count value, using default (${DEFAULT_PR_COUNT})`);
         count = DEFAULT_PR_COUNT;
       }
     }
@@ -128,7 +130,7 @@ async function fetchMergedPRs(owner, repo, count) {
     auth: process.env.GITHUB_TOKEN,
   });
 
-  console.log(`📡 Fetching last ${count} merged PRs from ${owner}/${repo}...`);
+  console.log(`\ud83d\udce1 Fetching last ${count} merged PRs from ${owner}/${repo}...`);
 
   // Fetch merged PRs sorted by most recently updated
   const { data: pullRequests } = await octokit.rest.pulls.list({
@@ -157,6 +159,128 @@ async function fetchMergedPRs(owner, repo, count) {
 }
 
 /**
+ * Generate a friendly, non-technical summary via Claude Haiku.
+ * Returns null on failure so the caller can fall back to the raw description.
+ */
+async function generateSummary(title, description) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        system: `You write friendly update summaries for ESO Toolkit, an Elder Scrolls Online combat log analyzer. Your audience is gamers and guild members who are NOT developers. Write a 1-3 sentence summary of what changed from a user's perspective. Be conversational but concise. Never mention code, files, components, CSS, props, or technical implementation details. Focus on what users will SEE or EXPERIENCE differently. If the change is purely internal with no visible impact, write a single sentence saying it's an under-the-hood improvement. Do not use markdown formatting.`,
+        messages: [
+          {
+            role: 'user',
+            content: `Summarize this update:\n\nTitle: ${title}\n\nDescription:\n${description || 'No description provided.'}`,
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn(`   \u26a0\ufe0f  Claude API error (${response.status}) for "${title}"`);
+      return null;
+    }
+
+    const data = await response.json();
+    return data.content[0].text;
+  } catch (err) {
+    console.warn(`   \u26a0\ufe0f  Claude API failed for "${title}": ${err.message}`);
+    return null;
+  }
+}
+
+/**
+ * Load existing summaries from the current whats-new.json to avoid
+ * re-calling the API for entries that already have one.
+ */
+function loadExistingSummaries() {
+  try {
+    if (fs.existsSync(OUTPUT_PATH)) {
+      const existing = JSON.parse(fs.readFileSync(OUTPUT_PATH, 'utf8'));
+      const map = new Map();
+      for (const entry of existing.entries || []) {
+        if (entry.summary) {
+          map.set(entry.id, entry.summary);
+        }
+      }
+      return map;
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return new Map();
+}
+
+/**
+ * Generate summaries for entries in batches to avoid rate limits.
+ * Reuses existing summaries from the current file to save API calls.
+ */
+async function generateSummaries(entries) {
+  // Reuse existing summaries for entries that already have one
+  const cached = loadExistingSummaries();
+  let reusedCount = 0;
+
+  for (const entry of entries) {
+    if (cached.has(entry.id)) {
+      entry.summary = cached.get(entry.id);
+      reusedCount++;
+    }
+  }
+
+  if (reusedCount > 0) {
+    console.log(`\u267b\ufe0f  Reused ${reusedCount} cached summaries`);
+  }
+
+  // Only generate summaries for entries that don't have one yet
+  const needsSummary = entries.filter((e) => !e.summary);
+
+  if (needsSummary.length === 0) {
+    console.log('\u2705 All entries already have summaries \u2014 no API calls needed');
+    return entries;
+  }
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.log(`\u2139\ufe0f  ANTHROPIC_API_KEY not set \u2014 ${needsSummary.length} entries without summaries`);
+    return entries;
+  }
+
+  console.log(`\ud83e\udd16 Generating AI summaries for ${needsSummary.length} new entries...`);
+
+  // Process in batches
+  for (let i = 0; i < needsSummary.length; i += SUMMARY_CONCURRENCY) {
+    const batch = needsSummary.slice(i, i + SUMMARY_CONCURRENCY);
+    const summaries = await Promise.all(
+      batch.map((entry) => generateSummary(entry.title, entry.description)),
+    );
+
+    summaries.forEach((summary, j) => {
+      if (summary) {
+        needsSummary[i + j].summary = summary;
+      }
+    });
+
+    const completed = Math.min(i + SUMMARY_CONCURRENCY, needsSummary.length);
+    console.log(`   ${completed}/${needsSummary.length} summaries generated`);
+  }
+
+  const successCount = entries.filter((e) => e.summary).length;
+  console.log(`\u2705 AI summaries: ${successCount}/${entries.length} total (${successCount - reusedCount} new)`);
+
+  return entries;
+}
+
+/**
  * Main
  */
 async function main() {
@@ -164,7 +288,7 @@ async function main() {
   const token = process.env.GITHUB_TOKEN;
 
   if (!token) {
-    console.log('ℹ️  GITHUB_TOKEN not set — skipping whats-new.json generation.');
+    console.log('\u2139\ufe0f  GITHUB_TOKEN not set \u2014 skipping whats-new.json generation.');
     console.log('   Using existing file for local development.');
 
     // Ensure the file exists with seed data if it doesn't
@@ -181,12 +305,13 @@ async function main() {
 
   const repoInfo = getRepoInfo();
   if (!repoInfo) {
-    console.error('❌ Could not determine GitHub repository. Set GITHUB_REPOSITORY or configure git remote.');
+    console.error('\u274c Could not determine GitHub repository. Set GITHUB_REPOSITORY or configure git remote.');
     process.exit(1);
   }
 
   try {
-    const entries = await fetchMergedPRs(repoInfo.owner, repoInfo.repo, count);
+    let entries = await fetchMergedPRs(repoInfo.owner, repoInfo.repo, count);
+    entries = await generateSummaries(entries);
 
     const output = {
       generatedAt: new Date().toISOString(),
@@ -195,14 +320,14 @@ async function main() {
 
     fs.writeFileSync(OUTPUT_PATH, JSON.stringify(output, null, 2));
 
-    console.log(`✅ Generated whats-new.json with ${entries.length} entries`);
+    console.log(`\u2705 Generated whats-new.json with ${entries.length} entries`);
     entries.forEach((e) => {
       const date = new Date(e.mergedAt).toLocaleDateString();
-      console.log(`   #${e.id} (${date}) — ${e.title}`);
+      console.log(`   #${e.id} (${date}) \u2014 ${e.title}`);
     });
   } catch (error) {
-    console.error('❌ Failed to fetch PRs:', error.message);
-    // Don't fail the build — use existing file if available
+    console.error('\u274c Failed to fetch PRs:', error.message);
+    // Don't fail the build \u2014 use existing file if available
     if (fs.existsSync(OUTPUT_PATH)) {
       console.log('   Using existing whats-new.json file.');
     } else {

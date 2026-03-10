@@ -9,6 +9,8 @@ export interface WhatsNewEntry {
   title: string;
   /** Cleaned PR description (markdown) */
   description: string;
+  /** AI-generated friendly summary for non-technical readers */
+  summary?: string;
   /** ISO 8601 date when the PR was merged */
   mergedAt: string;
   /** GitHub username of the PR author */
