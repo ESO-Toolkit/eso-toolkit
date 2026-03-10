@@ -377,7 +377,7 @@ export enum KnownAbilities {
   POWERFUL_ASSAULT = 61771,
   HEAT_SHOCK = 134340, // U49: renamed from Stagger, new debuff ID
   STAGGER = 134336, // Pre-U49 legacy debuff ID (renamed to Heat Shock in U49)
-  STONE_GIANT = 133027, // Pre-U49 damage ability (replaced by Magma Fist in U49)
+  MAGMA_FIST = 133027, // U49: Magma Fist damage ability (renamed from Stone Giant, ability ID unchanged)
   TOUCH_OF_ZEN = 126597, // Touch of Z'en set buff
 
   // Major Buffs and Debuffs
