@@ -20,7 +20,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Magma Armor',
       type: 'ultimate',
       icon: 'ability_dragonknight_018',
-      description: 'Ignite the molten lava in your veins, limiting incoming damage to 3% of your Max Health for 15 seconds. While active, you cannot generate Ultimate.',
+      description:
+        'Ignite the molten lava in your veins, limiting incoming damage to 3% of your Max Health for 15 seconds. While active, you cannot generate Ultimate.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MAGMA_ARMOR,
     },
@@ -29,7 +30,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Magma Shell',
       type: 'ultimate',
       icon: 'ability_dragonknight_018_a',
-      description: 'Ignite the molten lava in your veins, limiting incoming damage to 3% of your Max Health for 15 seconds. When activated, nearby allies gain a damage shield for 133% of their Max Health for 10 seconds. While active, you cannot generate Ultimate.',
+      description:
+        'Ignite the molten lava in your veins, limiting incoming damage to 3% of your Max Health for 15 seconds. When activated, nearby allies gain a damage shield for 133% of their Max Health for 10 seconds. While active, you cannot generate Ultimate.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MAGMA_ARMOR,
     },
@@ -38,7 +40,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Corrosive Armor',
       type: 'ultimate',
       icon: 'ability_dragonknight_018_b',
-      description: 'Ignite the molten lava in your veins, limiting incoming damage to 6% of your Max Health and dealing 1619 Flame Damage to nearby enemies each second for 10 seconds. While active your direct damage attacks ignore enemy Physical and Spell Resistance but you cannot generate Ultimate.',
+      description:
+        'Ignite the molten lava in your veins, limiting incoming damage to 6% of your Max Health and dealing 1619 Flame Damage to nearby enemies each second for 10 seconds. While active your direct damage attacks ignore enemy Physical and Spell Resistance but you cannot generate Ultimate.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MAGMA_ARMOR,
     },
@@ -56,7 +59,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Magma Fist',
       type: 'active',
       icon: 'ability_dragonknight_013_stonefist_b',
-      description: "Draw forth magma from below to hurl at an enemy, dealing 2399 Flame Damage while applying a stack of Heat Shock, which increases the enemy's damage taken by 66 for 7 seconds per stack, up to 3 times. Hitting an enemy at max stacks of Heat Shock with this ability increases the damage done of the next cast of this ability within 6 seconds by 66%, up to once every 6 seconds.",
+      description:
+        "Draw forth magma from below to hurl at an enemy, dealing 2399 Flame Damage while applying a stack of Heat Shock, which increases the enemy's damage taken by 66 for 7 seconds per stack, up to 3 times. Hitting an enemy at max stacks of Heat Shock with this ability increases the damage done of the next cast of this ability within 6 seconds by 66%, up to once every 6 seconds.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_SUPERHEATED_WARD,
     },
     {
@@ -73,7 +77,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Molten Weapons',
       type: 'active',
       icon: 'ability_dragonknight_015',
-      description: "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds. While active, dealing damage with Light and Heavy Attacks causes an additional 448 Flame Damage, up to once every 2 seconds.",
+      description:
+        "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds. While active, dealing damage with Light and Heavy Attacks causes an additional 448 Flame Damage, up to once every 2 seconds.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MOLTEN_WEAPONS,
     },
     {
@@ -81,7 +86,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Igneous Weapons',
       type: 'active',
       icon: 'ability_dragonknight_015_a',
-      description: "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 1 minute. While active, dealing damage with Light and Heavy Attacks causes an additional 448 Flame Damage, up to once every 2 seconds.",
+      description:
+        "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 1 minute. While active, dealing damage with Light and Heavy Attacks causes an additional 448 Flame Damage, up to once every 2 seconds.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MOLTEN_WEAPONS,
     },
     {
@@ -89,7 +95,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Molten Armaments',
       type: 'active',
       icon: 'ability_dragonknight_015_b',
-      description: "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds. While active, dealing damage with Light and Heavy Attacks causes an additional 448 Flame Damage, up to once every 1.5 seconds. You also gain Empower for the duration, increasing the damage of your Heavy Attacks against monsters by 70%.",
+      description:
+        "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds. While active, dealing damage with Light and Heavy Attacks causes an additional 448 Flame Damage, up to once every 1.5 seconds. You also gain Empower for the duration, increasing the damage of your Heavy Attacks against monsters by 70%.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MOLTEN_WEAPONS,
     },
     {
@@ -97,7 +104,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Obsidian Shield',
       type: 'active',
       icon: 'ability_dragonknight_017',
-      description: 'Call the earth to your defense, granting a damage shield for you and nearby allies that absorbs 1321 damage. This portion of the ability scales off your Max Health. You also gain Major Mending, increasing your healing done by 16% for 4 seconds.',
+      description:
+        'Call the earth to your defense, granting a damage shield for you and nearby allies that absorbs 1321 damage. This portion of the ability scales off your Max Health. You also gain Major Mending, increasing your healing done by 16% for 4 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_OBSIDIAN_SHIELD,
     },
     {
@@ -105,7 +113,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Fragmented Shield',
       type: 'active',
       icon: 'ability_dragonknight_017a',
-      description: "Call the earth to your defense, creating a damage shield for you and nearby allies that absorbs 2400 damage. This portion of the ability scales off the higher of your Max Magicka or Stamina and is capped at 31% of the target's Max Health. You also gain Major Mending, increasing your healing done by 16% for 6 seconds.",
+      description:
+        "Call the earth to your defense, creating a damage shield for you and nearby allies that absorbs 2400 damage. This portion of the ability scales off the higher of your Max Magicka or Stamina and is capped at 31% of the target's Max Health. You also gain Major Mending, increasing your healing done by 16% for 6 seconds.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_OBSIDIAN_SHIELD,
     },
     {
@@ -113,7 +122,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Igneous Shield',
       type: 'active',
       icon: 'ability_dragonknight_017b',
-      description: 'Call the earth to your defense, granting a damage shield for nearby allies that absorbs 1322 damage. Your own damage shield absorbs 3824 damage. This portion of the ability scales off your Max Health. You also gain Major Mending, increasing your healing done by 16% for 4 seconds.',
+      description:
+        'Call the earth to your defense, granting a damage shield for nearby allies that absorbs 1322 damage. Your own damage shield absorbs 3824 damage. This portion of the ability scales off your Max Health. You also gain Major Mending, increasing your healing done by 16% for 4 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_OBSIDIAN_SHIELD,
     },
     {
@@ -121,7 +131,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Petrify',
       type: 'active',
       icon: 'ability_dragonknight_014',
-      description: "Encase an enemy in molten rock, reducing their movement speed by 50% for 1 second. Upon completion, the target is stunned for 4 seconds, or 8 seconds against monsters. This stun cannot be blocked. The molten rock melts through the enemy's armor and applies Minor Breach for 10 seconds, reducing Armor by 2974.",
+      description:
+        "Encase an enemy in molten rock, reducing their movement speed by 50% for 1 second. Upon completion, the target is stunned for 4 seconds, or 8 seconds against monsters. This stun cannot be blocked. The molten rock melts through the enemy's armor and applies Minor Breach for 10 seconds, reducing Armor by 2974.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PETRIFY,
     },
     {
@@ -129,7 +140,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Fossilize',
       type: 'active',
       icon: 'ability_dragonknight_014_a',
-      description: "Encase an enemy in molten rock, reducing their movement speed by 50% for 1 second. Upon completion, the target is stunned for 4 seconds, or 8 seconds against monsters. Immobilizes the target for 4 seconds after the stun ends. This stun cannot be blocked. The molten rock melts through the enemy's armor and applies Minor Breach and Minor Vulnerability for 20 seconds, reducing Armor by 2974 and increasing damage taken by 5%.",
+      description:
+        "Encase an enemy in molten rock, reducing their movement speed by 50% for 1 second. Upon completion, the target is stunned for 4 seconds, or 8 seconds against monsters. Immobilizes the target for 4 seconds after the stun ends. This stun cannot be blocked. The molten rock melts through the enemy's armor and applies Minor Breach and Minor Vulnerability for 20 seconds, reducing Armor by 2974 and increasing damage taken by 5%.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PETRIFY,
     },
     {
@@ -137,7 +149,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Shattering Rocks',
       type: 'active',
       icon: 'ability_dragonknight_014b',
-      description: "Encase an enemy in molten rock, reducing their movement speed by 50% for 1 second. Upon completion, the target is stunned for 4 seconds, or 8 seconds against monsters. After the stun ends, the target takes 1379 Flame Damage and you heal for 2760 Health. This stun cannot be blocked. The molten rock melts through the enemy's armor and applies Minor Breach for 10 seconds, reducing Armor by 2974.",
+      description:
+        "Encase an enemy in molten rock, reducing their movement speed by 50% for 1 second. Upon completion, the target is stunned for 4 seconds, or 8 seconds against monsters. After the stun ends, the target takes 1379 Flame Damage and you heal for 2760 Health. This stun cannot be blocked. The molten rock melts through the enemy's armor and applies Minor Breach for 10 seconds, reducing Armor by 2974.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PETRIFY,
     },
     {
@@ -192,7 +205,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_007_b',
       description:
-        "Envelop your body in molten spikes to increase your damage done by 100 and gain Major Resolve, increasing Physical and Spell Resistance by 5948 for 20 seconds. Power drawn from the heart of a volcano forms a damage shield around you that absorbs up to 5121 damage for 6 seconds, scaling off your Max Health.",
+        'Envelop your body in molten spikes to increase your damage done by 100 and gain Major Resolve, increasing Physical and Spell Resistance by 5948 for 20 seconds. Power drawn from the heart of a volcano forms a damage shield around you that absorbs up to 5121 damage for 6 seconds, scaling off your Max Health.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_EARTHSPIKE_MANTLE,
     },
     {
