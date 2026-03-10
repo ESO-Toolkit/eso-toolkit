@@ -12,7 +12,7 @@
  *
  * Environment:
  *   GITHUB_TOKEN - GitHub personal access token (required in CI, optional locally)
- *   ANTHROPIC_API_KEY - Anthropic API key for AI summaries (optional)
+ *   ZAI_API_KEY - Z.AI API key for AI summaries (optional)
  *
  * If GITHUB_TOKEN is not set, the script will skip generation and keep the
  * existing whats-new.json file (useful for local development).
@@ -159,26 +159,28 @@ async function fetchMergedPRs(owner, repo, count) {
 }
 
 /**
- * Generate a friendly, non-technical summary via Claude Haiku.
+ * Generate a friendly, non-technical summary via Z.AI GLM-5.
  * Returns null on failure so the caller can fall back to the raw description.
  */
 async function generateSummary(title, description) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.ZAI_API_KEY;
   if (!apiKey) return null;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.z.ai/api/paas/v4/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'glm-5',
         max_tokens: 300,
-        system: `You write friendly update summaries for ESO Toolkit, an Elder Scrolls Online combat log analyzer. Your audience is gamers and guild members who are NOT developers. Write a 1-3 sentence summary of what changed from a user's perspective. Be conversational but concise. Never mention code, files, components, CSS, props, or technical implementation details. Focus on what users will SEE or EXPERIENCE differently. If the change is purely internal with no visible impact, write a single sentence saying it's an under-the-hood improvement. Do not use markdown formatting.`,
         messages: [
+          {
+            role: 'system',
+            content: `You write friendly update summaries for ESO Toolkit, an Elder Scrolls Online combat log analyzer. Your audience is gamers and guild members who are NOT developers. Write a 1-3 sentence summary of what changed from a user's perspective. Be conversational but concise. Never mention code, files, components, CSS, props, or technical implementation details. Focus on what users will SEE or EXPERIENCE differently. If the change is purely internal with no visible impact, write a single sentence saying it's an under-the-hood improvement. Do not use markdown formatting.`,
+          },
           {
             role: 'user',
             content: `Summarize this update:\n\nTitle: ${title}\n\nDescription:\n${description || 'No description provided.'}`,
@@ -188,14 +190,14 @@ async function generateSummary(title, description) {
     });
 
     if (!response.ok) {
-      console.warn(`   \u26a0\ufe0f  Claude API error (${response.status}) for "${title}"`);
+      console.warn(`   \u26a0\ufe0f  Z.AI API error (${response.status}) for "${title}"`);
       return null;
     }
 
     const data = await response.json();
-    return data.content[0].text;
+    return data.choices[0].message.content;
   } catch (err) {
-    console.warn(`   \u26a0\ufe0f  Claude API failed for "${title}": ${err.message}`);
+    console.warn(`   \u26a0\ufe0f  Z.AI API failed for "${title}": ${err.message}`);
     return null;
   }
 }
@@ -250,8 +252,8 @@ async function generateSummaries(entries) {
     return entries;
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.log(`\u2139\ufe0f  ANTHROPIC_API_KEY not set \u2014 ${needsSummary.length} entries without summaries`);
+  if (!process.env.ZAI_API_KEY) {
+    console.log(`\u2139\ufe0f  ZAI_API_KEY not set \u2014 ${needsSummary.length} entries without summaries`);
     return entries;
   }
 
