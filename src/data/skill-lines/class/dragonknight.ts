@@ -86,7 +86,8 @@ export const dragonknightData: SkillsetData = {
           morphs: {
             heartOfFlame: {
               name: 'Heart of Flame',
-              resourceRestore: '15% missing Health, Magicka, and Stamina every 2 seconds for 4 seconds',
+              resourceRestore:
+                '15% missing Health, Magicka, and Stamina every 2 seconds for 4 seconds',
               exhaleDamage: '2004 Flame Damage on completion',
               description: 'Also restores missing Health in addition to Magicka and Stamina.',
             },
@@ -183,8 +184,7 @@ export const dragonknightData: SkillsetData = {
             incinerate: {
               name: 'Incinerate',
               damage: '1979 Flame Damage every 5 seconds',
-              description:
-                'Deals more damage and each hit has a 15% chance to apply Burning.',
+              description: 'Deals more damage and each hit has a 15% chance to apply Burning.',
               statusChance: '15% chance of applying Burning per hit',
             },
             cauterize: {
@@ -242,13 +242,15 @@ export const dragonknightData: SkillsetData = {
             ferociousLeap: {
               name: 'Ferocious Leap',
               damage: '3574 Flame Damage',
-              description: 'Grants a large damage shield upon activation that scales with Max Health.',
+              description:
+                'Grants a large damage shield upon activation that scales with Max Health.',
               shield: '17173 damage absorption for 10 seconds (scales with Max Health)',
             },
             takeFlight: {
               name: 'Take Flight',
               damage: '4106 Flame Damage',
-              description: 'Deals more damage and fills you with draconic fury, boosting damage done.',
+              description:
+                'Deals more damage and fills you with draconic fury, boosting damage done.',
               buff: '+10% damage done for 15 seconds (doubles vs monsters)',
             },
           },
@@ -397,8 +399,7 @@ export const dragonknightData: SkillsetData = {
               name: 'Protect the Brood',
               description:
                 'Extends protection to nearby group members and grants Minor Protection to you and allies.',
-              projectileReduction:
-                '50% for you, 25% for group members for 6 seconds',
+              projectileReduction: '50% for you, 25% for group members for 6 seconds',
               buff: 'Minor Protection (-5% damage taken for 20 seconds) to you and group',
             },
             fleetstepWings: {
@@ -422,8 +423,7 @@ export const dragonknightData: SkillsetData = {
         },
         worldInRuin: {
           name: 'World in Ruin',
-          description:
-            'Increases your damage done with area and over time attacks by 7%.',
+          description: 'Increases your damage done with area and over time attacks by 7%.',
         },
         burnishedScales: {
           name: 'Burnished Scales',
@@ -449,7 +449,7 @@ export const dragonknightData: SkillsetData = {
             magmaShell: {
               name: 'Magma Shell',
               description: 'Nearby allies gain a powerful damage shield when activated.',
-              allyShield: '133% of allies\' Max Health for 10 seconds',
+              allyShield: "133% of allies' Max Health for 10 seconds",
             },
             corrosiveArmor: {
               name: 'Corrosive Armor',
@@ -470,8 +470,9 @@ export const dragonknightData: SkillsetData = {
           target: 'Self or Ally',
           duration: '6 seconds',
           description:
-            'Roil the air around you or an ally, granting a damage shield that scales off the higher of Max Magicka or Stamina (capped at 50% of target\'s Max Health).',
-          shield: '4958 damage absorption (scales with Max Magicka or Stamina, capped at 50% target Max Health)',
+            "Roil the air around you or an ally, granting a damage shield that scales off the higher of Max Magicka or Stamina (capped at 50% of target's Max Health).",
+          shield:
+            '4958 damage absorption (scales with Max Magicka or Stamina, capped at 50% target Max Health)',
           morphs: {
             magmaFist: {
               name: 'Magma Fist',
@@ -507,7 +508,8 @@ export const dragonknightData: SkillsetData = {
               description:
                 'As the armor forms, blasts foes with shattered obsidian dealing Flame Damage over 20 seconds. Damage ticks generate Landslide stacks.',
               damageOverTime: '4785 Flame Damage over 20 seconds to nearby enemies',
-              effect: 'Generates a stack of Landslide up to once every 10 seconds when damage ticks',
+              effect:
+                'Generates a stack of Landslide up to once every 10 seconds when damage ticks',
             },
             earthshieldMantle: {
               name: 'Earthshield Mantle',
@@ -524,21 +526,24 @@ export const dragonknightData: SkillsetData = {
           duration: '30 seconds',
           radius: '28 meters',
           description:
-            'Charge you and grouped allies\' weapons with volcanic power. Grants Major Brutality and Sorcery. Light and Heavy Attacks deal bonus Flame Damage.',
+            "Charge you and grouped allies' weapons with volcanic power. Grants Major Brutality and Sorcery. Light and Heavy Attacks deal bonus Flame Damage.",
           buff: 'Major Brutality and Sorcery (+20% Weapon/Spell Damage)',
-          lightHeavyBonus: '448 bonus Flame Damage on Light/Heavy Attack hits (once every 2 seconds)',
+          lightHeavyBonus:
+            '448 bonus Flame Damage on Light/Heavy Attack hits (once every 2 seconds)',
           morphs: {
             igneousWeapons: {
               name: 'Igneous Weapons',
               duration: '60 seconds',
               description: 'Doubles the duration.',
-              lightHeavyBonus: '448 bonus Flame Damage on Light/Heavy Attack hits (once every 2 seconds)',
+              lightHeavyBonus:
+                '448 bonus Flame Damage on Light/Heavy Attack hits (once every 2 seconds)',
             },
             moltenArmaments: {
               name: 'Molten Armaments',
               cost: '4050 Magicka',
               description: 'Bonus Flame Damage procs faster and grants Empower for Heavy Attacks.',
-              lightHeavyBonus: '448 bonus Flame Damage on Light/Heavy Attack hits (once every 1.5 seconds)',
+              lightHeavyBonus:
+                '448 bonus Flame Damage on Light/Heavy Attack hits (once every 1.5 seconds)',
               buff: 'Empower (+70% Heavy Attack damage vs monsters for duration)',
             },
           },
@@ -549,13 +554,15 @@ export const dragonknightData: SkillsetData = {
           cost: '4050 Magicka',
           target: 'Area',
           radius: '12 meters',
-          description: 'Call the earth to your defense, granting a damage shield (scales with Max Health) to you and nearby allies. Grants Major Mending.',
+          description:
+            'Call the earth to your defense, granting a damage shield (scales with Max Health) to you and nearby allies. Grants Major Mending.',
           shield: '1321 damage absorption (scales with Max Health)',
           buff: 'Major Mending (+16% healing done for 4 seconds)',
           morphs: {
             fragmentedShield: {
               name: 'Fragmented Shield',
-              shield: '2400 damage absorption (scales with max Magicka or Stamina, capped at 31% target Max Health)',
+              shield:
+                '2400 damage absorption (scales with max Magicka or Stamina, capped at 31% target Max Health)',
               description: 'Larger shield scaling off Magicka/Stamina. Major Mending lasts longer.',
               buff: 'Major Mending (+16% healing done for 6 seconds)',
             },
@@ -626,7 +633,8 @@ export const dragonknightData: SkillsetData = {
     statusEffects: {
       burning: {
         name: 'Burning',
-        description: 'Fire status effect. Combustion restores 225 Magicka and Stamina when applied (once per second).',
+        description:
+          'Fire status effect. Combustion restores 225 Magicka and Stamina when applied (once per second).',
       },
       offBalance: {
         name: 'Off Balance',
@@ -661,17 +669,21 @@ export const dragonknightData: SkillsetData = {
         description:
           'Activating any Dragonknight ability while in combat grants stacks. Stacks boost next Molten Whip damage and sustained damage done.',
         maxStacks: 3,
-        stackBonus: '33% damage on next Molten Whip; +5% damage done (2% vs players) for 10 seconds',
+        stackBonus:
+          '33% damage on next Molten Whip; +5% damage done (2% vs players) for 10 seconds',
       },
       flameLashPowerLash: {
         name: 'Power Lash System (Flame Lash)',
-        description: 'Hitting an Off Balance enemy grants 5 Power Lash stacks for 20 seconds (once every 20 sec). Each stack deals AoE damage and heals. Consuming all stacks grants a damage bonus.',
+        description:
+          'Hitting an Off Balance enemy grants 5 Power Lash stacks for 20 seconds (once every 20 sec). Each stack deals AoE damage and heals. Consuming all stacks grants a damage bonus.',
         condition: 'Target must be Off Balance',
-        fullStackBonus: '+7% damage done (14% vs monsters) for 45 seconds after consuming all 5 stacks',
+        fullStackBonus:
+          '+7% damage done (14% vs monsters) for 45 seconds after consuming all 5 stacks',
       },
       volcanicWhip: {
         name: 'Volcanic Whip System (Lava Whip)',
-        description: 'Hitting an Off Balance enemy grants 5 Volcanic Whip stacks for 20 seconds (once every 20 sec). Each stack transforms next Lava Whip into a powerful AoE strike.',
+        description:
+          'Hitting an Off Balance enemy grants 5 Volcanic Whip stacks for 20 seconds (once every 20 sec). Each stack transforms next Lava Whip into a powerful AoE strike.',
         condition: 'Target must be Off Balance',
         benefit: '4338 Flame Damage to target and nearby enemies per stack consumed',
       },
@@ -687,14 +699,16 @@ export const dragonknightData: SkillsetData = {
       },
       coreOfFlame: {
         name: 'Resource Restore System (Core of Flame)',
-        description: 'Restores 15% of missing Magicka and Stamina every 2 seconds over 4 seconds, then deals AoE Flame Damage on completion.',
+        description:
+          'Restores 15% of missing Magicka and Stamina every 2 seconds over 4 seconds, then deals AoE Flame Damage on completion.',
         restoration: '15% missing Magicka and Stamina per 2 seconds for 4 seconds',
       },
     },
     resourceManagement: {
       theStormVoice: {
         name: 'The Storm Voice',
-        description: 'Restore resources based on Ultimate cost spent. Scales with number of DK abilities slotted.',
+        description:
+          'Restore resources based on Ultimate cost spent. Scales with number of DK abilities slotted.',
         rate: '16 Health/Magicka/Stamina per Ultimate point spent (+6 per DK ability slotted)',
       },
       combustion: {
