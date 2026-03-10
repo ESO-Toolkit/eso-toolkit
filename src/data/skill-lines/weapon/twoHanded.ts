@@ -2,7 +2,7 @@
  * Two Handed Weapon Skill Line Data
  *
  * Data source: https://eso-hub.com/en/skills/weapon/two-handed
- * Last updated: 2025
+ * Last updated: 2026 (U49)
  *
  * The Two-Handed skill-line is part of the "Weapons" category in the Elder Scrolls Online.
  * The Two-Handed skill-line is granted to you after killing an enemy with a Two-Handed weapon.
@@ -27,7 +27,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.BERSERKER_STRIKE,
       description:
-        "Strike at an enemy with a vicious blow, dealing Physical Damage to them and all nearby enemies. This attack ignores the target's Physical Resistance, and grants you Physical and Spell Resistance equal to the amount ignored from the initial target.",
+        "Strike at an enemy with a vicious blow, dealing Physical Damage to them and all nearby enemies. This attack ignores the target's Physical Resistance, and grants you Physical and Spell Resistance equal to the amount ignored from the initial target for 12 seconds.",
     },
     {
       id: 83238, // Berserker Rage (morph)
@@ -35,7 +35,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.BERSERKER_STRIKE,
       description:
-        "Strike at an enemy with a vicious blow, dealing Physical Damage to them and all nearby enemies. This attack ignores the target's Resistance and grants you Physical and Spell Resistance equal to the amount ignored from the initial target. You are immune to all disabling, snare, and immobilization effects for the duration.",
+        "Strike at an enemy with a vicious blow, dealing Physical Damage to them and all nearby enemies. This attack ignores the target's Resistance and grants you Physical and Spell Resistance equal to the amount ignored from the initial target for 12 seconds. You are immune to all disabling, snare, and immobilization effects for the duration.",
     },
     {
       id: 83229, // Onslaught (morph)
@@ -43,7 +43,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.BERSERKER_STRIKE,
       description:
-        "Strike at an enemy with a vicious blow, dealing Physical Damage to them and all nearby enemies. This attack ignores the target's Resistance and grants you Physical and Spell Penetration for your direct damage attacks equal to 100% of the amount ignored from the initial target.",
+        "Strike at an enemy with a vicious blow, dealing Physical Damage to them and all nearby enemies. This attack ignores the target's Resistance and grants you Physical and Spell Penetration for direct damage attacks equal to 100% of the amount ignored from the initial target and if Battle Spirit is inactive you gain 100% Critical Chance for 8 seconds.",
     },
 
     // Scribing Abilities
@@ -157,7 +157,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.MOMENTUM,
       description:
-        'Focus your strength and resolve to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage, as well as gaining Minor Endurance, increasing your Stamina Recovery.',
+        'Focus your strength and resolve to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage, as well as gaining Minor Endurance, increasing your Stamina Recovery for 30 seconds.',
     },
     {
       id: 38794, // Forward Momentum (morph)
@@ -165,7 +165,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.MOMENTUM,
       description:
-        'Focus your strength and resolve to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage, as well as gaining Minor Endurance, increasing your Stamina Recovery. Activating this ability removes all snares and immobilizations from you and grants immunity to them.',
+        'Focus your strength and resolve to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage, as well as gaining Minor Endurance, increasing your Stamina Recovery for 1 minute. Activating this ability removes all snares and immobilizations from you and grants immunity to them for 4 seconds.',
     },
     {
       id: 38802, // Rally (morph)
@@ -173,7 +173,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.MOMENTUM,
       description:
-        'Focus your strength and resolve to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage, as well as gaining Minor Endurance, increasing your Stamina Recovery. You heal when Rally ends. The final heal is increased over time.',
+        'Focus your strength and resolve to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage, as well as gaining Minor Endurance, increasing your Stamina Recovery for 30 seconds. You heal when Rally ends. The final heal is increased by 20% every 2 seconds, up to a maximum of 200%.',
     },
 
     // Passive Abilities
