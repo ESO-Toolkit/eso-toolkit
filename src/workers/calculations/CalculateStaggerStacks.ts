@@ -172,8 +172,8 @@ export function calculateStaggerStacks(
 
     if (totalUptime > 0) {
       results.push({
-        abilityGameID: KnownAbilities.STAGGER.toString(),
-        abilityName: `Stagger (${stackLevel} Stack${stackLevel > 1 ? 's' : ''})`,
+        abilityGameID: KnownAbilities.HEAT_SHOCK.toString(),
+        abilityName: `Heat Shock (${stackLevel} Stack${stackLevel > 1 ? 's' : ''})`,
         totalDuration: totalUptime,
         uptime: totalUptime / 1000, // Convert to seconds
         uptimePercentage: (totalUptime / fightDuration) * 100,
