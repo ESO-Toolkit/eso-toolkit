@@ -216,12 +216,73 @@ git push -u origin HEAD
 git log --oneline origin/$(git branch --show-current)..HEAD  # should be empty if in sync
 ```
 
-## Step 7 — Update Ticket Status When Work Is Complete
+## Step 7 — Create Pull Request (AUTOMATIC)
 
-When implementation is finished, all quality checks pass, and changes are committed and pushed, update the Jira ticket status:
+After pushing, **always create a PR automatically** — do not wait for the user to ask. This is mandatory as the final step of any implementation workflow.
 
+### 7a — Check for UI changes
+
+```powershell
+$baseBranch = (twig branch parent 2>$null) -replace '\s',''
+if (-not $baseBranch -or $baseBranch -eq '') {
+    $baseBranch = (git config "branch.$(git branch --show-current).parent") 2>$null
+}
+if (-not $baseBranch -or $baseBranch -eq '') { $baseBranch = 'main' }
+
+$changedFiles = git diff --name-only "$baseBranch...HEAD"
+$hasUIChanges = $changedFiles | Where-Object { $_ -match '\.tsx$' }
 ```
-@workspace Move ESO-XXX to "In Review"
+
+If `$hasUIChanges` is non-empty, follow the screenshot process in the **create-pr** skill before writing the PR body. Otherwise, skip screenshots entirely.
+
+### 7b — Write the PR body to a temp file (use create_file tool — never Set-Content with backticks)
+
+Use the PR body template from [.github/skills/create-pr/SKILL.md](.github/skills/create-pr/SKILL.md). Write it to `.github/tmp-pr-body.md`.
+
+For non-UI PRs omit the Screenshots section. A minimal body for data/logic PRs:
+
+```markdown
+## Summary
+Brief description of what changed.
+
+## Jira Ticket
+[ESO-XXX](https://bkrupa.atlassian.net/browse/ESO-XXX)
+
+## Changes Made
+- Change 1
+- Change 2
+
+## Testing Done
+- [x] TypeScript compiles (`npm run typecheck`)
+- [x] ESLint passes (`npm run lint`)
+- [x] Formatting passes (`npm run format:check`)
+- [x] Unit tests pass (`npm test -- --watchAll=false`)
+- [x] Pre-commit validation passes (`npm run validate`)
+```
+
+### 7c — Create the PR
+
+```powershell
+$baseBranch = (twig branch parent 2>$null) -replace '\s',''
+if (-not $baseBranch -or $baseBranch -eq '') {
+    $baseBranch = (git config "branch.$(git branch --show-current).parent") 2>$null
+}
+if (-not $baseBranch -or $baseBranch -eq '') { $baseBranch = 'main' }
+
+$ticket = if ((git branch --show-current) -match '(ESO-\d+)') { $Matches[1] } else { '' }
+
+gh pr create --title "feat($ticket): <short description>" --body-file ".github/tmp-pr-body.md" --base $baseBranch
+Remove-Item ".github/tmp-pr-body.md" -ErrorAction SilentlyContinue
+```
+
+**⚠️ CRITICAL**: Always use `--body-file`, never `--body`. PowerShell mangles markdown in inline strings (backticks stripped, special chars corrupted).
+
+## Step 8 — Update Ticket Status When Work Is Complete
+
+When implementation is finished, all quality checks pass, changes are committed, pushed, and a PR is open, update the Jira ticket status:
+
+```powershell
+acli jira workitem transition --key ESO-XXX --status "In Review"
 ```
 
 Use the appropriate status based on state:
