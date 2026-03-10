@@ -53,7 +53,8 @@ export const IMPORTANT_DEBUFF_ABILITIES = new Set([
   KnownAbilities.NAZARAY_DEBUFF,
   KnownAbilities.OFF_BALANCE,
   KnownAbilities.RUNIC_SUNDER_DEBUFF,
-  KnownAbilities.STAGGER,
+  KnownAbilities.HEAT_SHOCK,
+  KnownAbilities.STAGGER, // Pre-U49 legacy debuff ID
   KnownAbilities.TOUCH_OF_ZEN,
 ]);
 
@@ -308,7 +309,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
         return [
           {
             abilityGameID: defaultStack.abilityGameID,
-            abilityName: 'Stagger',
+            abilityName: 'Heat Shock',
             icon: staggerAbility?.icon ? String(staggerAbility.icon) : defaultStack.icon,
             totalDuration: defaultStack.totalDuration,
             uptime: defaultStack.uptime,
@@ -345,7 +346,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
     return [
       {
         abilityGameID: defaultStack.abilityGameID,
-        abilityName: 'Stagger',
+        abilityName: 'Heat Shock',
         icon: staggerAbility?.icon ? String(staggerAbility.icon) : defaultStack.icon,
         totalDuration: defaultStack.totalDuration,
         uptime: defaultStack.uptime,

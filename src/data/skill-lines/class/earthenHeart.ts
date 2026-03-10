@@ -55,12 +55,11 @@ export const earthenHeart: SkillLineData = {
       baseSkillId: ClassSkillId.DRAGONKNIGHT_STONEFIST,
     },
     {
-      id: ClassSkillId.DRAGONKNIGHT_STONE_GIANT,
-      name: 'Stone Giant',
+      id: ClassSkillId.DRAGONKNIGHT_MAGMA_FIST,
+      name: 'Magma Fist',
       type: 'active',
       icon: 'ability_dragonknight_013_a',
-      description:
-        'Crush the earth beneath you, dealing 2323 Physical Damage to all enemies within 6 meters of you. Debris ripped from the ground is held around you for 10 seconds.\n\nActivating the ability again allows you to launch part of the debris at an enemy, dealing 2323 Physical Damage, up to 3 times. The final cast stuns for 2.5 seconds.\n\nEach hit applies Stagger, increasing damage taken by 65 per stack for 5 seconds.',
+      description: 'Applies stacks of Heat Shock, increasing enemy damage taken.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_STONEFIST,
     },
     {

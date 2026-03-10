@@ -25,18 +25,19 @@ export interface StaggerStacksResult {
   stackResults: StaggerStackResult[];
 }
 
-// Stone Giant ability ID that applies stagger
+// Stone Giant / Magma Fist ability ID that applies Heat Shock (formerly Stagger)
 const STONE_GIANT_ABILITY_ID = KnownAbilities.STONE_GIANT;
 
 // Each stack lasts 6 seconds
 const STACK_DURATION = 6000;
 
 /**
- * Calculate Stagger stacks debuff uptimes
- * Each damage event from Stone Giant (134340) applies/refreshes stagger stacks:
+ * Calculate Heat Shock (formerly Stagger) stacks debuff uptimes
+ * Each damage event from Stone Giant / Magma Fist applies/refreshes stacks:
  * - Builds up to 3 stacks (1st hit = 1 stack, 2nd = 2 stacks, 3rd = 3 stacks)
  * - Once at 3 stacks, subsequent hits refresh the 6-second duration
  * - If 6 seconds pass with no hits, all stacks drop off at once
+ * Note: U49 renamed Stagger to Heat Shock (debuff ID 134340)
  */
 export function calculateStaggerStacks(
   data: StaggerStacksCalculationTask,
@@ -171,8 +172,8 @@ export function calculateStaggerStacks(
 
     if (totalUptime > 0) {
       results.push({
-        abilityGameID: KnownAbilities.STAGGER.toString(),
-        abilityName: `Stagger (${stackLevel} Stack${stackLevel > 1 ? 's' : ''})`,
+        abilityGameID: KnownAbilities.HEAT_SHOCK.toString(),
+        abilityName: `Heat Shock (${stackLevel} Stack${stackLevel > 1 ? 's' : ''})`,
         totalDuration: totalUptime,
         uptime: totalUptime / 1000, // Convert to seconds
         uptimePercentage: (totalUptime / fightDuration) * 100,

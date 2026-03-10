@@ -32,7 +32,7 @@ export interface BuffUptime {
     uptime: number;
     uptimePercentage: number;
     applications: number;
-    groupAverageUptimePercentage?: number; // Per-stack group average for stagger
+    groupAverageUptimePercentage?: number; // Per-stack group average for Heat Shock
   }>; // All stack data for Touch of Z'en to enable switching
   groupAverageUptimePercentage?: number; // Group average uptime percentage for delta calculation
 }
@@ -155,7 +155,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
   const pct = Math.max(0, Math.min(100, currentData.uptimePercentage));
 
   // Calculate delta from group average if available
-  // For stacked abilities (e.g., Stagger), use the per-stack group average from currentData
+  // For stacked abilities (e.g., Heat Shock), use the per-stack group average from currentData
   // Otherwise, use the buff-level group average
   const delta = React.useMemo(() => {
     const groupAverage =

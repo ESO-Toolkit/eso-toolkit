@@ -296,10 +296,10 @@ describe('BuffUptimeProgressBar - Delta Indicators', () => {
     });
   });
 
-  describe('Stacked Abilities (e.g., Stagger)', () => {
+  describe('Stacked Abilities (e.g., Heat Shock)', () => {
     it('should show delta indicator for highest stack when multi-stack', () => {
       const buff = createBuffData(29, undefined, {
-        abilityName: 'Stagger',
+        abilityName: 'Heat Shock',
         maxStacks: 3,
         stackLevel: 1,
         allStacksData: [
@@ -344,7 +344,7 @@ describe('BuffUptimeProgressBar - Delta Indicators', () => {
     it('should use per-stack group average for stacked abilities', () => {
       const buff = createBuffData(29, 99, {
         // Top-level group average is 99% (should be ignored)
-        abilityName: 'Stagger',
+        abilityName: 'Heat Shock',
         maxStacks: 3,
         stackLevel: 2,
         allStacksData: [

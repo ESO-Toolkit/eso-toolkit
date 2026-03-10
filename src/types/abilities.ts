@@ -375,8 +375,9 @@ export enum KnownAbilities {
   PEARLESCENT_WARD = 172621,
   PILLAGERS_PROFIT_BUFF = 172055, // Pillager's Profit healing set proc buff
   POWERFUL_ASSAULT = 61771,
-  STAGGER = 134336,
-  STONE_GIANT = 133027,
+  HEAT_SHOCK = 134340, // U49: renamed from Stagger, new debuff ID
+  STAGGER = 134336, // Pre-U49 legacy debuff ID (renamed to Heat Shock in U49)
+  STONE_GIANT = 133027, // Pre-U49 damage ability (replaced by Magma Fist in U49)
   TOUCH_OF_ZEN = 126597, // Touch of Z'en set buff
 
   // Major Buffs and Debuffs
