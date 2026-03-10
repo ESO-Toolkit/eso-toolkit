@@ -144,6 +144,10 @@ const WhatsNewPage = React.lazy(() =>
   import('./pages/WhatsNewPage').then((module) => ({ default: module.WhatsNewPage })),
 );
 
+const GearSetsPage = React.lazy(() =>
+  import('./pages/GearSetsPage').then((module) => ({ default: module.GearSetsPage })),
+);
+
 // Generic page loading skeleton - used for lazy-loaded routes and PersistGate hydration
 const LoadingFallback: React.FC = () => (
   <Container maxWidth="lg" sx={{ pt: 4, px: 2 }}>
@@ -591,6 +595,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <WhatsNewPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/gear-sets"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <GearSetsPage />
                   </Suspense>
                 </ErrorBoundary>
               }
