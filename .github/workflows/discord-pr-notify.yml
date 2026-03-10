@@ -236,6 +236,7 @@ jobs:
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 username: 'ESO Toolkit',
+                avatar_url: 'https://esotk.com/android-chrome-512x512.png',
                 embeds,
               }),
             });
