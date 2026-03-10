@@ -37,7 +37,6 @@ async function generateFullRoster(page: Page) {
       playerName: 'TankA',
       playerNumber: 1,
       roleLabel: 'MT',
-      roleNotes: 'TOMB Main Tank (1A)',
       labels: ['Main', 'Trash Tank'],
       gearSets: {
         set1: 768, // LUCENT_ECHOES
@@ -60,7 +59,6 @@ async function generateFullRoster(page: Page) {
       playerName: 'TankB',
       playerNumber: 2,
       roleLabel: 'OT',
-      roleNotes: 'TOMB Off-Tank (1B)',
       labels: ['Offtank', 'Trash Tank'],
       gearSets: {
         set1: 768, // LUCENT_ECHOES
@@ -84,7 +82,6 @@ async function generateFullRoster(page: Page) {
       playerName: 'HealerA',
       playerNumber: 1,
       roleLabel: 'H1',
-      roleNotes: 'TOMB Healer 1',
       labels: ['Backup Healer'],
       set1: 654, // JORVULD's_GUIDANCE
       set2: 2342, // ROARING_OPPORTUNIST
@@ -106,7 +103,6 @@ async function generateFullRoster(page: Page) {
       playerName: 'HealerB',
       playerNumber: 2,
       roleLabel: 'H2',
-      roleNotes: 'TOMB Healer 2',
       labels: ['Lead Healer'],
       set1: 654, // JORVULD's_GUIDANCE
       set2: 2342, // ROARING_OPPORTUNIST
@@ -132,7 +128,6 @@ async function generateFullRoster(page: Page) {
       playerName: 'DPS1',
       playerNumber: 1,
       roleLabel: 'DD1',
-      roleNotes: 'Front Bar DPS',
       labels: ['Stamina', 'Melee'],
       set1: 691, // CRYPTCANON_VESTMENTS
       set2: 127, // DEADLY_STRIKE
@@ -154,7 +149,6 @@ async function generateFullRoster(page: Page) {
       playerName: 'DPS2',
       playerNumber: 2,
       roleLabel: 'DD2',
-      roleNotes: 'Trash Clearer',
       labels: ['Stamina', 'Ranged'],
       set1: 620, // RELEQUEN
       set2: 127, // DEADLY_STRIKE
@@ -176,7 +170,6 @@ async function generateFullRoster(page: Page) {
       playerName: 'DPS3',
       playerNumber: 3,
       roleLabel: 'DD3',
-      roleNotes: 'Magicka DPS',
       labels: ['Magicka', 'Elemental'],
       set1: 620, // RELEQUEN
       set2: 641, // PERFECTED_SIRORIA (rotation if available)
@@ -198,7 +191,6 @@ async function generateFullRoster(page: Page) {
       playerName: 'DPS4',
       playerNumber: 4,
       roleLabel: 'DD4',
-      roleNotes: 'Alternate DPS',
       labels: ['Stamina', 'Sub DPS'],
       set1: 620, // RELEQUEN
       set2: 127, // DEADLY_STRIKE
@@ -221,7 +213,6 @@ async function generateFullRoster(page: Page) {
       playerName: 'JailDD1',
       playerNumber: 5,
       roleLabel: 'Jail',
-      roleNotes: "Z'en Jail Opener",
       labels: ['Jail', 'Opener'],
       set1: 620, // RELEQUEN
       set2: 627, // SPAULDER_OF_RUIN (Mythic)
@@ -243,7 +234,6 @@ async function generateFullRoster(page: Page) {
       playerName: 'JailDD2',
       playerNumber: 6,
       roleLabel: 'Banner',
-      roleNotes: 'Banner Jail Opener',
       labels: ['Jail', 'Banner'],
       set1: 620, // RELEQUEN
       set2: 701, // BANNER_OF_THE_ETERNAL (if exists)
@@ -265,7 +255,6 @@ async function generateFullRoster(page: Page) {
       playerName: 'JailDD3',
       playerNumber: 7,
       roleLabel: 'Portal',
-      roleNotes: 'Portal Jail Opener',
       labels: ['Jail', 'Portal', 'Cleanse'],
       set1: 620, // RELEQUEN
       set2: 701,
@@ -288,7 +277,6 @@ async function generateFullRoster(page: Page) {
       playerName: 'DPS8',
       playerNumber: 8,
       roleLabel: 'Flex',
-      roleNotes: 'Any-slot flexibility',
       labels: ['Flexible', 'Backup'],
       set1: 620, // RELEQUEN
       set2: 127, // DEADLY_STRIKE
@@ -460,7 +448,6 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
     // Verify tank section with all details
     await expect(page.getByText('TankA')).toBeVisible();
     await expect(page.getByText('MT')).toBeVisible();
-    await expect(page.getByText('TOMB Main Tank (1A)')).toBeVisible();
 
     // Verify healer section
     await expect(page.getByText('HealerA')).toBeVisible();
@@ -690,21 +677,21 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
         playerName: 'TankA',
         playerNumber: 1,
         roleLabel: 'MT',
-        roleNotes: 'TOMB Main Tank (1A)',
+        notes: 'TOMB Main Tank (1A)',
       };
       roster.healer1 = {
         ...defaultHealerSetup(),
         playerName: 'HealerA',
         playerNumber: 1,
         roleLabel: 'H1',
-        roleNotes: 'TOMB Healer 1',
+        notes: 'TOMB Healer 1',
       };
       roster.dpsSlots[0] = {
         slotNumber: 1,
         playerName: 'DPS1',
         playerNumber: 1,
         roleLabel: 'DD1',
-        roleNotes: 'Front Bar DPS',
+        notes: 'Front Bar DPS',
       };
 
       const encoded = await encodeRosterToURL(roster);
@@ -715,7 +702,7 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
           name: decoded.tank1.playerName,
           number: decoded.tank1.playerNumber,
           label: decoded.tank1.roleLabel,
-          notes: decoded.tank1.roleNotes,
+          notes: decoded.tank1.notes,
         },
         healer1: {
           name: decoded.healer1.playerName,

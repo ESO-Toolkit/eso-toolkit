@@ -22,7 +22,6 @@ import {
   HealerSetup,
   DPSSlot,
   SkillLineConfig,
-  PlayerGroup,
   defaultTankSetup,
   defaultHealerSetup,
   createDefaultDPSSlots,
@@ -66,7 +65,6 @@ export interface CompactTank {
   pn?: string; // playerName
   pi?: number; // playerNumber
   rl?: string; // roleLabel
-  rn?: string; // roleNotes
   lb?: string[]; // labels
   gs?: CompactGear; // gearSets
   sl?: CompactSkills; // skillLines
@@ -81,7 +79,6 @@ export interface CompactHealer {
   pn?: string; // playerName
   pi?: number; // playerNumber
   rl?: string; // roleLabel
-  rn?: string; // roleNotes
   lb?: string[]; // labels
   s1?: number; // set1
   s2?: number; // set2
@@ -101,7 +98,6 @@ export interface CompactDPS {
   pn?: string; // playerName
   pi?: number; // playerNumber
   rl?: string; // roleLabel
-  rn?: string; // roleNotes
   lb?: string[]; // labels
   s1?: number; // set1 (primary 5-piece)
   s2?: number; // set2 (secondary 5-piece)
@@ -286,7 +282,6 @@ function compactTank(t: TankSetup): CompactTank {
   if (t.playerName) c.pn = t.playerName;
   if (t.playerNumber != null) c.pi = t.playerNumber;
   if (t.roleLabel) c.rl = t.roleLabel;
-  if (t.roleNotes) c.rn = t.roleNotes;
   if (t.labels?.length) c.lb = t.labels;
   const gs = compactGear(t.gearSets);
   if (gs) c.gs = gs;
@@ -307,7 +302,6 @@ function expandTank(c?: CompactTank): TankSetup {
     playerName: c?.pn,
     playerNumber: c?.pi,
     roleLabel: c?.rl,
-    roleNotes: c?.rn,
     labels: c?.lb,
     gearSets: expandGear(c?.gs),
     skillLines: expandSkills(c?.sl),
@@ -323,7 +317,6 @@ function compactHealer(h: HealerSetup): CompactHealer {
   if (h.playerName) c.pn = h.playerName;
   if (h.playerNumber != null) c.pi = h.playerNumber;
   if (h.roleLabel) c.rl = h.roleLabel;
-  if (h.roleNotes) c.rn = h.roleNotes;
   if (h.labels?.length) c.lb = h.labels;
   if (h.set1 != null) c.s1 = h.set1 as number;
   if (h.set2 != null) c.s2 = h.set2 as number;
@@ -353,7 +346,6 @@ function expandHealer(c?: CompactHealer): HealerSetup {
     playerName: c?.pn,
     playerNumber: c?.pi,
     roleLabel: c?.rl,
-    roleNotes: c?.rn,
     labels: c?.lb,
     set1: toValidSetId(c?.s1),
     set2: toValidSetId(c?.s2),
@@ -385,7 +377,6 @@ function compactDPS(d: DPSSlot): CompactDPS {
   if (d.playerName) c.pn = d.playerName;
   if (d.playerNumber != null) c.pi = d.playerNumber;
   if (d.roleLabel) c.rl = d.roleLabel;
-  if (d.roleNotes) c.rn = d.roleNotes;
   if (d.labels?.length) c.lb = d.labels;
   if (d.set1 != null) c.s1 = d.set1 as number;
   if (d.set2 != null) c.s2 = d.set2 as number;
@@ -425,7 +416,6 @@ function expandDPS(c: CompactDPS): DPSSlot {
     playerName: c.pn,
     playerNumber: c.pi,
     roleLabel: c.rl,
-    roleNotes: c.rn,
     labels: c.lb,
     set1: toValidSetId(c.s1) ?? legacySet1,
     set2: toValidSetId(c.s2) ?? legacySet2,
@@ -529,7 +519,6 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
       slot.playerName ||
       slot.playerNumber != null ||
       slot.roleLabel ||
-      slot.roleNotes ||
       slot.labels?.length ||
       slot.set1 != null ||
       slot.set2 != null ||

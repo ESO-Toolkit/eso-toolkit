@@ -125,7 +125,6 @@ export interface DPSSlot {
   playerName?: string;
   playerNumber?: number;
   roleLabel?: string; // e.g., "DD1", "Portal DD"
-  roleNotes?: string; // e.g., "Portal L - Ele sus", "Z'en", etc.
   labels?: string[]; // Multiple labels/tags for the player
   // Structured gear (matches tank/healer pattern)
   set1?: KnownSetIDs; // Primary 5-piece set (Body)
@@ -152,7 +151,6 @@ export interface HealerSetup {
   playerName?: string;
   playerNumber?: number; // Optional player identifier (1, 2, etc.)
   roleLabel?: string; // e.g., "H1", "H2"
-  roleNotes?: string; // e.g., "TOMB HEALER", "TOMB 1B"
   labels?: string[]; // Multiple labels/tags for the player
   set1: KnownSetIDs | undefined; // First 5-piece set
   set2: KnownSetIDs | undefined; // Second 5-piece set
@@ -175,7 +173,6 @@ export interface TankSetup {
   playerName?: string;
   playerNumber?: number; // Optional player identifier (1, 2, etc.)
   roleLabel?: string; // e.g., "MT", "OT"
-  roleNotes?: string; // e.g., "TOMB 1A", "TOMB 1B"
   labels?: string[]; // Multiple labels/tags for the player
   gearSets: TankGearSet;
   skillLines: SkillLineConfig;

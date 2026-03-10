@@ -52,7 +52,6 @@ function buildFullRoster() {
     playerName: 'TankPlayer',
     playerNumber: 1,
     roleLabel: 'MT',
-    roleNotes: 'Off-tank tonight',
     labels: ['carry', 'veteran'],
     gearSets: {
       set1: KnownSetIDs.LUCENT_ECHOES,
@@ -204,7 +203,6 @@ describe('compactifyRoster / expandCompactRoster', () => {
       expect(t1.playerName).toBe('TankPlayer');
       expect(t1.playerNumber).toBe(1);
       expect(t1.roleLabel).toBe('MT');
-      expect(t1.roleNotes).toBe('Off-tank tonight');
       expect(t1.labels).toEqual(['carry', 'veteran']);
       expect(t1.gearSets.set1).toBe(KnownSetIDs.LUCENT_ECHOES);
       expect(t1.gearSets.set2).toBe(KnownSetIDs.PEARLESCENT_WARD);

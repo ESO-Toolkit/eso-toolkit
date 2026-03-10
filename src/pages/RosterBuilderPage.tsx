@@ -3684,19 +3684,6 @@ const TankCard = React.memo<TankCardProps>(({ tankNum, tank, onChange, available
                     />
                   </Box>
                 </Box>
-                <TextField
-                  fullWidth
-                  size="small"
-                  multiline
-                  minRows={1}
-                  maxRows={4}
-                  label="Role Notes"
-                  placeholder="e.g., TOMB Main Tank, handles double stacks, portal duty"
-                  value={tank.roleNotes || ''}
-                  onChange={(e) => onChange({ roleNotes: e.target.value })}
-                  sx={glassSx}
-                />
-
                 {/* Extra Gear */}
                 <Typography
                   sx={{
@@ -4425,19 +4412,6 @@ const HealerCard = React.memo<HealerCardProps>(
                       />
                     </Box>
                   </Box>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    multiline
-                    minRows={1}
-                    maxRows={4}
-                    label="Role Notes"
-                    placeholder="e.g., Main healer, ramp healing, shield uptime focus"
-                    value={healer.roleNotes || ''}
-                    onChange={(e) => onChange({ roleNotes: e.target.value })}
-                    sx={glassSx}
-                  />
-
                   {/* Extra Gear */}
                   <Typography
                     sx={{
@@ -5201,19 +5175,6 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                       />
                     </Box>
                   </Box>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    multiline
-                    minRows={1}
-                    maxRows={4}
-                    label="Role Notes"
-                    placeholder="e.g., Portal L, Z'en, Ele sus"
-                    value={slot.roleNotes || ''}
-                    onChange={(e) => onChange({ roleNotes: e.target.value })}
-                    sx={glassSx}
-                  />
-
                   {/* Extra Gear */}
                   <Typography
                     sx={{
@@ -5507,11 +5468,10 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
   [1, 2].forEach((num) => {
     const tank = roster[`tank${num}` as 'tank1' | 'tank2'];
     const label = num === 1 ? 'MT' : 'OT';
-    const roleNote = tank.roleNotes ? ` [${tank.roleNotes}]` : '';
     const playerName = tank.playerName ? ` ${tank.playerName}` : '';
     const labels = tank.labels && tank.labels.length > 0 ? ` (${tank.labels.join(', ')})` : '';
 
-    lines.push(`${label}${roleNote}:${playerName}${labels}`);
+    lines.push(`${label}:${playerName}${labels}`);
     const gearSets = formatGearSets(tank.gearSets);
     if (gearSets) lines.push(gearSets);
     const skillLines = formatSkillLines(tank.skillLines);
@@ -5527,12 +5487,11 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
   // Healers
   [roster.healer1, roster.healer2].forEach((h, index) => {
     const label = h.roleLabel || (index === 0 ? 'H1' : 'H2');
-    const roleNote = h.roleNotes ? ` [${h.roleNotes}]` : '';
     const playerName = h.playerName ? ` ${h.playerName}` : '';
     const groupName = h.groups && h.groups.length > 0 ? ` (${h.groups.join(', ')})` : '';
     const labels = h.labels && h.labels.length > 0 ? ` [${h.labels.join(', ')}]` : '';
 
-    lines.push(`${label}${roleNote}:${playerName}${groupName}${labels}`);
+    lines.push(`${label}:${playerName}${groupName}${labels}`);
     const gearSets = formatGearSets(undefined, h);
     if (gearSets) lines.push(gearSets);
     const buff = formatBuff(h.healerBuff);
@@ -5588,13 +5547,12 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
   };
 
   const formatDPSRow = (dd: DPSSlot): void => {
-    const roleNote = dd.roleNotes ? ` [${dd.roleNotes}]` : '';
     const playerName = dd.playerName ? ` ${dd.playerName}` : '';
     const typeLabel = dd.jailDDType
       ? ` [${formatJailDDType(dd.jailDDType, dd.customDescription)}]`
       : '';
     const labels = dd.labels && dd.labels.length > 0 ? ` (${dd.labels.join(', ')})` : '';
-    lines.push(`${dd.slotNumber}${typeLabel}${roleNote}:${playerName}${labels}`);
+    lines.push(`${dd.slotNumber}${typeLabel}:${playerName}${labels}`);
     formatDPSDetails(dd);
   };
 

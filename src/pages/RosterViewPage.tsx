@@ -102,7 +102,6 @@ const TankCard: React.FC<TankCardProps> = ({ tank, label, color, isDarkMode }) =
   const skillLines = formatSkillLines(tank.skillLines);
   const hasContent =
     tank.playerName ||
-    tank.roleNotes ||
     tank.labels?.length ||
     gearSets.length > 0 ||
     skillLines ||
@@ -161,7 +160,6 @@ const TankCard: React.FC<TankCardProps> = ({ tank, label, color, isDarkMode }) =
             }}
           >
             {label}
-            {tank.roleNotes ? ` · ${tank.roleNotes}` : ''}
           </Typography>
           <Typography
             sx={{
@@ -318,7 +316,6 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, label, color, isDarkMod
   const skillLines = formatSkillLines(healer.skillLines);
   const hasContent =
     healer.playerName ||
-    healer.roleNotes ||
     healer.labels?.length ||
     gearSets.length > 0 ||
     skillLines ||
@@ -378,7 +375,6 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, label, color, isDarkMod
             }}
           >
             {healer.roleLabel || label}
-            {healer.roleNotes ? ` · ${healer.roleNotes}` : ''}
           </Typography>
           <Typography
             sx={{
@@ -583,7 +579,7 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
       })
     : [];
 
-  const isEmpty = !slot.playerName && !slot.roleNotes && !slot.labels?.length;
+  const isEmpty = !slot.playerName && !slot.labels?.length;
 
   return (
     <Box
@@ -663,13 +659,6 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
           >
             {slot.playerName || (isEmpty ? 'Empty' : '')}
           </Typography>
-
-          {/* Role notes */}
-          {slot.roleNotes && (
-            <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-              [{slot.roleNotes}]
-            </Typography>
-          )}
 
           {/* Labels */}
           {slot.labels?.map((lbl) => (
@@ -1445,10 +1434,9 @@ function buildDiscordText(roster: RaidRoster): string {
       tank.notes;
     if (!hasData) return;
     const lbl = i === 0 ? 'MT' : 'OT';
-    const rn = tank.roleNotes ? ` [${tank.roleNotes}]` : '';
     const pn = tank.playerName ? ` ${tank.playerName}` : '';
     const lbs = tank.labels?.length ? ` (${tank.labels.join(', ')})` : '';
-    lines.push(`${lbl}${rn}:${pn}${lbs}`);
+    lines.push(`${lbl}:${pn}${lbs}`);
     const g = fmtGear(tank.gearSets);
     if (g) lines.push(g);
     const sl = fmtSkillLines(tank.skillLines);
@@ -1465,10 +1453,9 @@ function buildDiscordText(roster: RaidRoster): string {
     const hasData = h.playerName || h.roleNotes || h.labels?.length || h.set1 || h.set2 || h.notes;
     if (!hasData) return;
     const lbl = h.roleLabel || (i === 0 ? 'H1' : 'H2');
-    const rn = h.roleNotes ? ` [${h.roleNotes}]` : '';
     const pn = h.playerName ? ` ${h.playerName}` : '';
     const lbs = h.labels?.length ? ` [${h.labels.join(', ')}]` : '';
-    lines.push(`${lbl}${rn}:${pn}${lbs}`);
+    lines.push(`${lbl}:${pn}${lbs}`);
     const g = fmtGear({
       set1: h.set1,
       set2: h.set2,
@@ -1489,14 +1476,13 @@ function buildDiscordText(roster: RaidRoster): string {
   // DPS — skip fully empty slots
   const sorted = [...roster.dpsSlots].sort((a, b) => a.slotNumber - b.slotNumber);
   sorted.forEach((dd) => {
-    if (!dd.playerName && !dd.roleNotes && !dd.labels?.length && !dd.jailDDType) return;
-    const rn = dd.roleNotes ? ` [${dd.roleNotes}]` : '';
+    if (!dd.playerName && !dd.labels?.length && !dd.jailDDType) return;
     const pn = dd.playerName ? ` ${dd.playerName}` : '';
     const jl = dd.jailDDType
       ? ` [${DPS_JAIL_LABELS[dd.jailDDType] ?? dd.customDescription ?? ''}]`
       : '';
     const lbs = dd.labels?.length ? ` (${dd.labels.join(', ')})` : '';
-    lines.push(`${dd.slotNumber}${jl}${rn}:${pn}${lbs}`);
+    lines.push(`${dd.slotNumber}${jl}:${pn}${lbs}`);
     // Prefer structured fields; fall back to legacy gearSets flat array
     const dpsGear =
       dd.set1 != null || dd.set2 != null || dd.monsterSet != null
