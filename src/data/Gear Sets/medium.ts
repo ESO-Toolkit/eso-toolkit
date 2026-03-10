@@ -66,7 +66,7 @@ export const glitteringGoad: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    '(2 items) Dealing damage with a Bash or Heavy Attack deals 1024 Frost damage over 8 seconds to the enemy. This effect can occur once every 8 seconds. If the effect completes, the enemy applies Minor Brittle to up to of 6 enemies within 12 meters of itself for 10 seconds. If the enemy dies, the enemy releases glittering energy, restoring 847 Magicka and Stamina to you and group members within 12 meters of the enemy.',
+    '(2 items) Dealing damage with a Bash or Heavy Attack deals 812 Frost damage over 8 seconds to the enemy. This effect can occur once every 8 seconds. If the effect completes, the enemy applies Minor Brittle to up to 6 enemies within 12 meters of itself for 10 seconds. If the enemy dies, the enemy releases glittering energy, restoring 847 Magicka and Stamina to you and group members within 12 meters of the defeated enemy.',
   ],
 };
 
@@ -2001,7 +2001,7 @@ export const thousandEyes: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 657 Critical Chance',
-    '(2 items) Dealing direct critical damage applies Shived to the enemy, dealing 1357 Bleed damage and increasing their damage taken from you by 2% for 15 seconds. This damage scales off the higher of your Weapon or Spell Damage. When the enemy dies, Shived is reapplied to the lowest health enemy within 12 meters of the corpse and increases the damage taken by 2%, up to 8%. You may only have 1 enemy with Shived.',
+    '(2 items) Dealing direct critical damage applies Shived to the enemy, dealing 1079 Bleed damage and increasing their damage taken from you by 2% for 15 seconds. This damage scales off the higher of your Weapon or Spell Damage. When the enemy dies, Shived is reapplied to the lowest health enemy within 12 meters of the corpse and increases the damage taken by 2%, up to 8%. You may only have 1 enemy with Shived.',
   ],
 };
 
