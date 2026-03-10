@@ -3354,21 +3354,27 @@ const TankCard = React.memo<TankCardProps>(({ tankNum, tank, onChange, available
             </Box>
             <Box sx={{ flex: '1 1 45%', minWidth: 150 }}>
               <Autocomplete
-                freeSolo
+                multiple
                 size="small"
                 options={availableGroups}
-                value={tank.group?.groupName || ''}
-                onChange={(_, value) =>
-                  onChange({
-                    group: value ? { groupName: value } : undefined,
-                  })
+                value={tank.groups ?? []}
+                onChange={(_, value) => onChange({ groups: value })}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      {...getTagProps({ index })}
+                      key={option}
+                      label={option}
+                      size="small"
+                    />
+                  ))
                 }
                 renderInput={(params) => (
                   <TextField
                     {...params}
                     size="small"
-                    label="Group"
-                    placeholder="e.g., Left Stack"
+                    label="Groups"
+                    placeholder={tank.groups?.length ? '' : 'e.g., Left Stack'}
                     sx={glassSx}
                   />
                 )}
@@ -4053,17 +4059,29 @@ const HealerCard = React.memo<HealerCardProps>(
               </Box>
               <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
                 <Autocomplete
-                  freeSolo
+                  multiple
                   size="small"
                   options={availableGroups}
-                  value={healer.group?.groupName || ''}
-                  onChange={(_, value) =>
-                    onChange({
-                      group: value ? { groupName: value } : undefined,
-                    })
+                  value={healer.groups ?? []}
+                  onChange={(_, value) => onChange({ groups: value })}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        {...getTagProps({ index })}
+                        key={option}
+                        label={option}
+                        size="small"
+                      />
+                    ))
                   }
                   renderInput={(params) => (
-                    <TextField {...params} size="small" label="Group" sx={glassSx} />
+                    <TextField
+                      {...params}
+                      size="small"
+                      label="Groups"
+                      placeholder={healer.groups?.length ? '' : 'e.g., Left Stack'}
+                      sx={glassSx}
+                    />
                   )}
                 />
               </Box>
@@ -4806,17 +4824,29 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
               </Box>
               <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
                 <Autocomplete
-                  freeSolo
+                  multiple
                   size="small"
                   options={availableGroups}
-                  value={slot.group?.groupName || ''}
-                  onChange={(_, value) =>
-                    onChange({
-                      group: value ? { groupName: value } : undefined,
-                    })
+                  value={slot.groups ?? []}
+                  onChange={(_, value) => onChange({ groups: value })}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        {...getTagProps({ index })}
+                        key={option}
+                        label={option}
+                        size="small"
+                      />
+                    ))
                   }
                   renderInput={(params) => (
-                    <TextField {...params} size="small" label="Group" sx={glassSx} />
+                    <TextField
+                      {...params}
+                      size="small"
+                      label="Groups"
+                      placeholder={slot.groups?.length ? '' : 'e.g., Left Stack'}
+                      sx={glassSx}
+                    />
                   )}
                 />
               </Box>
@@ -5514,7 +5544,8 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
     const label = h.roleLabel || (index === 0 ? 'H1' : 'H2');
     const roleNote = h.roleNotes ? ` [${h.roleNotes}]` : '';
     const playerName = h.playerName ? ` ${h.playerName}` : '';
-    const groupName = h.group?.groupName ? ` (${h.group.groupName})` : '';
+    const groupName =
+      h.groups && h.groups.length > 0 ? ` (${h.groups.join(', ')})` : '';
     const labels = h.labels && h.labels.length > 0 ? ` [${h.labels.join(', ')}]` : '';
 
     lines.push(`${label}${roleNote}:${playerName}${groupName}${labels}`);
@@ -5584,16 +5615,29 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
   };
 
   // Check if any DDs have groups assigned
-  const hasGroups = sortedDPS.some((dd) => dd.group?.groupName);
+  const hasGroups = sortedDPS.some((dd) => dd.groups?.length);
 
   if (hasGroups) {
-    const groupedDDs = new Map<string, DPSSlot[]>();
+    // Preserve group order from availableGroups; append any unlisted groups at end
+    const groupOrder = [
+      ...roster.availableGroups,
+      ...sortedDPS.flatMap((dd) => dd.groups ?? []).filter((g) => !roster.availableGroups.includes(g)),
+    ];
+    const groupedDDs = new Map<string, DPSSlot[]>(groupOrder.map((g) => [g, []]));
+    groupedDDs.set('Unassigned', []);
     sortedDPS.forEach((dd) => {
-      const group = dd.group?.groupName || 'Unassigned';
-      if (!groupedDDs.has(group)) groupedDDs.set(group, []);
-      groupedDDs.get(group)!.push(dd);
+      if (dd.groups?.length) {
+        // A player in multiple groups appears under each group
+        dd.groups.forEach((g) => {
+          if (!groupedDDs.has(g)) groupedDDs.set(g, []);
+          groupedDDs.get(g)!.push(dd);
+        });
+      } else {
+        groupedDDs.get('Unassigned')!.push(dd);
+      }
     });
     groupedDDs.forEach((dds, groupName) => {
+      if (!dds.length) return;
       lines.push(groupName);
       dds.forEach(formatDPSRow);
       lines.push('');

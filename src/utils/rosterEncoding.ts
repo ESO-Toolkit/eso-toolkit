@@ -72,7 +72,8 @@ export interface CompactTank {
   sl?: CompactSkills; // skillLines
   ul?: number | string; // ultimate: SupportUltimate index or custom string
   ss?: string[]; // specificSkills
-  gr?: CompactGroup; // group
+  grs?: string[]; // groups (multi-group memberships)
+  gr?: CompactGroup; // @deprecated — legacy single group, decode only
   no?: string; // notes
 }
 
@@ -90,7 +91,8 @@ export interface CompactHealer {
   hb?: number; // healerBuff: HealerBuff index
   cp?: number; // championPoint: HealerChampionPoint index
   ul?: number | string; // ultimate: SupportUltimate index or custom string
-  gr?: CompactGroup; // group
+  grs?: string[]; // groups (multi-group memberships)
+  gr?: CompactGroup; // @deprecated — legacy single group, decode only
   no?: string; // notes
 }
 
@@ -109,7 +111,8 @@ export interface CompactDPS {
   sl?: CompactSkills; // skillLines
   cp?: string; // championPoint
   ul?: number | string; // ultimate: SupportUltimate index or custom string
-  gr?: CompactGroup; // group
+  grs?: string[]; // groups (multi-group memberships)
+  gr?: CompactGroup; // @deprecated — legacy single group, decode only
   no?: string; // notes
   jt?: number; // jailDDType index
   cd?: string; // customDescription
@@ -263,6 +266,22 @@ function expandGear(c?: CompactGear): TankGearSet {
   };
 }
 
+/** Encode groups array; returns undefined when empty. */
+function compactGroups(groups?: string[]): string[] | undefined {
+  return groups?.length ? groups : undefined;
+}
+
+/**
+ * Decode groups from the new `grs` field, falling back to the legacy single
+ * `gr` CompactGroup so that old share URLs continue to decode correctly.
+ */
+function expandGroups(grs?: string[], gr?: CompactGroup): string[] | undefined {
+  if (grs?.length) return grs;
+  if (gr?.g) return [gr.g];
+  return undefined;
+}
+
+// Keep for legacy decode path (other callers may still reference compactGroup/expandGroup)
 function compactGroup(gr?: PlayerGroup): CompactGroup | undefined {
   if (!gr?.groupName) return undefined;
   const c: CompactGroup = { g: gr.groupName };
@@ -289,8 +308,8 @@ function compactTank(t: TankSetup): CompactTank {
   const ul = encodeUltimate(t.ultimate);
   if (ul != null) c.ul = ul;
   if (t.specificSkills?.length) c.ss = t.specificSkills;
-  const gr = compactGroup(t.group);
-  if (gr) c.gr = gr;
+  const grs = compactGroups(t.groups);
+  if (grs) c.grs = grs;
   if (t.notes) c.no = t.notes;
   return c;
 }
@@ -307,7 +326,7 @@ function expandTank(c?: CompactTank): TankSetup {
     skillLines: expandSkills(c?.sl),
     ultimate: decodeUltimate(c?.ul),
     specificSkills: c?.ss ?? [],
-    group: expandGroup(c?.gr),
+    groups: expandGroups(c?.grs, c?.gr),
     notes: c?.no,
   };
 }
@@ -335,8 +354,8 @@ function compactHealer(h: HealerSetup): CompactHealer {
   }
   const ul = encodeUltimate(h.ultimate);
   if (ul != null) c.ul = ul;
-  const gr = compactGroup(h.group);
-  if (gr) c.gr = gr;
+  const grs = compactGroups(h.groups);
+  if (grs) c.grs = grs;
   if (h.notes) c.no = h.notes;
   return c;
 }
@@ -369,7 +388,7 @@ function expandHealer(c?: CompactHealer): HealerSetup {
           : null
         : null,
     ultimate: decodeUltimate(c?.ul),
-    group: expandGroup(c?.gr),
+    groups: expandGroups(c?.grs, c?.gr),
     notes: c?.no,
   };
 }
@@ -390,8 +409,8 @@ function compactDPS(d: DPSSlot): CompactDPS {
   if (d.championPoint) c.cp = d.championPoint;
   const ul = encodeUltimate(d.ultimate);
   if (ul != null) c.ul = ul;
-  const gr = compactGroup(d.group);
-  if (gr) c.gr = gr;
+  const grs = compactGroups(d.groups);
+  if (grs) c.grs = grs;
   if (d.notes) c.no = d.notes;
   if (d.jailDDType) {
     const idx = JAIL_DD_TYPE_TO_IDX.get(d.jailDDType);
@@ -431,7 +450,7 @@ function expandDPS(c: CompactDPS): DPSSlot {
     skillLines: c.sl ? expandSkills(c.sl) : undefined,
     championPoint: c.cp || undefined,
     ultimate: c.ul != null ? decodeUltimate(c.ul) : null,
-    group: expandGroup(c.gr),
+    groups: expandGroups(c.grs, c.gr),
     notes: c.no,
     jailDDType:
       c.jt != null
@@ -534,6 +553,7 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
       slot.ultimate ||
       slot.jailDDType ||
       slot.notes ||
+      slot.groups?.length ||
       slot.group ||
       slot.skillLines ||
       slot.championPoint,

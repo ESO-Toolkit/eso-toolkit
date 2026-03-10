@@ -1,0 +1,265 @@
+{
+  "rosterName": "Mythic Raiding Team - Comprehensive Test",
+  "createdAt": "2026-03-09T12:00:00.000Z",
+  "updatedAt": "2026-03-09T12:00:00.000Z",
+  "tank1": {
+    "playerName": "TankA",
+    "playerNumber": 1,
+    "roleLabel": "MT",
+    "roleNotes": "Main Tank",
+    "labels": ["Main", "Trash Tank", "Veteran"],
+    "gearSets": {
+      "set1": 768,
+      "set2": 648,
+      "monsterSet": 1261
+    },
+    "skillLines": {
+      "line1": "Draconic Power",
+      "line2": "Earthen Heart",
+      "line3": "Ardent Flame",
+      "isFlex": false
+    },
+    "ultimate": "Aggressive Warhorn",
+    "specificSkills": ["Pierce Armor", "Unrelenting Assault"],
+    "notes": "Single Bar Build - High survivability"
+  },
+  "tank2": {
+    "playerName": "TankB",
+    "playerNumber": 2,
+    "roleLabel": "OT",
+    "roleNotes": "Off-Tank",
+    "labels": ["Offtank", "Trash Tank"],
+    "gearSets": {
+      "set1": 768,
+      "set2": 648,
+      "monsterSet": 1261
+    },
+    "skillLines": {
+      "line1": "Draconic Power",
+      "line2": "Earthen Heart",
+      "line3": "Ardent Flame",
+      "isFlex": true
+    },
+    "ultimate": "Glacial Colossus",
+    "specificSkills": ["Pierce Armor"],
+    "notes": "Backup Build - Flexible setup"
+  },
+  "healer1": {
+    "playerName": "HealerA",
+    "playerNumber": 1,
+    "roleLabel": "H1",
+    "roleNotes": "Primary Healer",
+    "labels": ["Primary", "Spell Heal"],
+    "set1": 654,
+    "set2": 2342,
+    "monsterSet": 2268,
+    "skillLines": {
+      "line1": "Restoring Light",
+      "line2": "Aedric Spear",
+      "line3": "Dawn's Wrath",
+      "isFlex": false
+    },
+    "healerBuff": "Enlivening Overflow",
+    "championPoint": "Enlivening Overflow",
+    "ultimate": "Aggressive Warhorn",
+    "notes": "Primary Healer - Max throughput"
+  },
+  "healer2": {
+    "playerName": "HealerB",
+    "playerNumber": 2,
+    "roleLabel": "H2",
+    "roleNotes": "Secondary Healer",
+    "labels": ["Lead", "Support Heal"],
+    "set1": 654,
+    "set2": 2342,
+    "monsterSet": 2268,
+    "skillLines": {
+      "line1": "Restoring Light",
+      "line2": "Aedric Spear",
+      "line3": "Dawn's Wrath",
+      "isFlex": true
+    },
+    "healerBuff": "From the Brink",
+    "championPoint": "From the Brink",
+    "ultimate": "Glacial Colossus",
+    "notes": "Backup Healer - Flexible role"
+  },
+  "dpsSlots": [
+    {
+      "slotNumber": 1,
+      "playerName": "DPS1",
+      "playerNumber": 1,
+      "roleLabel": "DD1",
+      "roleNotes": "Front Bar DPS",
+      "labels": ["Stamina", "Melee", "High DPS"],
+      "set1": 691,
+      "set2": 127,
+      "monsterSet": 2268,
+      "skillLines": {
+        "line1": "Draconic Power",
+        "line2": "Ardent Flame",
+        "line3": "Dark Magic",
+        "isFlex": false
+      },
+      "championPoint": "Hardy",
+      "ultimate": "Aggressive Warhorn",
+      "groups": ["Left Stack"],
+      "notes": "High DPS priority - sustain focused"
+    },
+    {
+      "slotNumber": 2,
+      "playerName": "DPS2",
+      "playerNumber": 2,
+      "roleLabel": "DD2",
+      "roleNotes": "Trash Clearer",
+      "labels": ["Stamina", "Ranged"],
+      "set1": 620,
+      "set2": 127,
+      "monsterSet": 2268,
+      "skillLines": {
+        "line1": "Assassination",
+        "line2": "Shadow",
+        "line3": "Siphoning",
+        "isFlex": false
+      },
+      "championPoint": "Piercing",
+      "ultimate": "Aggressive Warhorn",
+      "groups": ["Left Stack", "Portal"],
+      "notes": "Portal opener - bleeds focus"
+    },
+    {
+      "slotNumber": 3,
+      "playerName": "DPS3",
+      "playerNumber": 3,
+      "roleLabel": "DD3",
+      "roleNotes": "Magicka DPS",
+      "labels": ["Magicka", "Elemental"],
+      "set1": 620,
+      "set2": 641,
+      "monsterSet": 2268,
+      "skillLines": {
+        "line1": "Dark Magic",
+        "line2": "Daedric Summoning",
+        "line3": "Storm Calling",
+        "isFlex": false
+      },
+      "championPoint": "Mighty",
+      "ultimate": "Aggressive Warhorn",
+      "groups": ["Left Stack", "Portal"],
+      "notes": "Backbar Support - rotation priority"
+    },
+    {
+      "slotNumber": 4,
+      "playerName": "DPS4",
+      "playerNumber": 4,
+      "roleLabel": "DD4",
+      "roleNotes": "Alternate DPS",
+      "labels": ["Stamina", "Sub DPS", "Flexible"],
+      "set1": 620,
+      "set2": 127,
+      "monsterSet": 2268,
+      "skillLines": {
+        "line1": "Winter's Embrace",
+        "line2": "Animal Companions",
+        "line3": "Green Balance",
+        "isFlex": true
+      },
+      "championPoint": "Hardy",
+      "ultimate": "Glacial Colossus",
+      "groups": ["Right Stack"],
+      "notes": "Flexible build - any spec works"
+    },
+    {
+      "slotNumber": 5,
+      "playerName": "JailDD1",
+      "playerNumber": 5,
+      "roleLabel": "Jail",
+      "roleNotes": "Z'en Jail Opener",
+      "labels": ["Jail", "Opener", "Critical"],
+      "set1": 620,
+      "set2": 627,
+      "jailDDType": "zenkosh",
+      "skillLines": {
+        "line1": "Assassination",
+        "line2": "Shadow",
+        "line3": "Siphoning",
+        "isFlex": false
+      },
+      "championPoint": "Piercing",
+      "ultimate": "Aggressive Warhorn",
+      "groups": ["Right Stack", "Portal"],
+      "notes": "Requires heavy attack weaving - Z'en focus"
+    },
+    {
+      "slotNumber": 6,
+      "playerName": "JailDD2",
+      "playerNumber": 6,
+      "roleLabel": "Banner",
+      "roleNotes": "Banner Jail Opener",
+      "labels": ["Jail", "Banner", "Support"],
+      "set1": 620,
+      "set2": 701,
+      "jailDDType": "banner",
+      "skillLines": {
+        "line1": "Storm Calling",
+        "line2": "Dark Magic",
+        "line3": "Daedric Summoning",
+        "isFlex": false
+      },
+      "championPoint": "Mighty",
+      "ultimate": "Aggressive Warhorn",
+      "groups": ["Right Stack"],
+      "notes": "Banner placement crucial - coordinate timing"
+    },
+    {
+      "slotNumber": 7,
+      "playerName": "JailDD3",
+      "playerNumber": 7,
+      "roleLabel": "Portal",
+      "roleNotes": "Portal Jail Opener",
+      "labels": ["Jail", "Portal", "Cleanse"],
+      "set1": 620,
+      "set2": 701,
+      "jailDDType": "wm",
+      "skillLines": {
+        "line1": "Grave Lord",
+        "line2": "Bone Tyrant",
+        "line3": "Living Death",
+        "isFlex": false
+      },
+      "championPoint": "Hardy",
+      "ultimate": "Aggressive Warhorn",
+      "groups": ["Right Stack"],
+      "notes": "WM portal responsibility - timing essential"
+    },
+    {
+      "slotNumber": 8,
+      "playerName": "DPS8",
+      "playerNumber": 8,
+      "roleLabel": "Flex",
+      "roleNotes": "Any-slot flexibility",
+      "labels": ["Flexible", "Backup", "Sub"],
+      "set1": 620,
+      "set2": 127,
+      "monsterSet": 2268,
+      "jailDDType": "custom",
+      "customDescription": "Flex slot - fill as needed. Can run jail or DPS based on group requirements.",
+      "skillLines": {
+        "line1": "Aedric Spear",
+        "line2": "Restoring Light",
+        "line3": "Dawn's Wrath",
+        "isFlex": true
+      },
+      "championPoint": null,
+      "ultimate": null,
+      "groups": ["Left Stack"],
+      "notes": "Substitute player - adapt to raid needs"
+    }
+  ],
+  "availableGroups": [
+    "Left Stack",
+    "Right Stack",
+    "Portal"
+  ],
+  "notes": "Complete raid team roster with 3 DPS groups (Left Stack, Right Stack, Portal). DPS2, DPS3, and JailDD1 are assigned to multiple groups to demonstrate the multi-group feature."
+}

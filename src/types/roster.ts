@@ -137,6 +137,8 @@ export interface DPSSlot {
   skillLines?: SkillLineConfig;
   championPoint?: string | null; // Champion point selection (free text or preset)
   ultimate?: string | null; // Ultimate ability
+  groups?: string[]; // Multiple group memberships (e.g., ["Left Stack", "Portal"])
+  /** @deprecated Use groups instead. Kept for backward-compat URL decoding. */
   group?: PlayerGroup;
   notes?: string;
   jailDDType?: JailDDType; // If set, this slot is configured as a jail DD
@@ -160,6 +162,8 @@ export interface HealerSetup {
   healerBuff: HealerBuff | null;
   championPoint?: HealerChampionPoint | null; // Champion point slotted
   ultimate: string | null; // Allows preset ultimates or custom text
+  groups?: string[]; // Multiple group memberships
+  /** @deprecated Use groups instead. Kept for backward-compat URL decoding. */
   group?: PlayerGroup;
   notes?: string;
 }
@@ -177,6 +181,8 @@ export interface TankSetup {
   skillLines: SkillLineConfig;
   ultimate: string | null; // Allows preset ultimates or custom text
   specificSkills: string[];
+  groups?: string[]; // Multiple group memberships (e.g., ["Left Stack", "Portal"])
+  /** @deprecated Use groups instead. Kept for backward-compat URL decoding. */
   group?: PlayerGroup;
   notes?: string;
 }
