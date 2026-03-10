@@ -19,7 +19,7 @@ jobs:
         uses: actions/github-script@v8
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_PR_UPDATES }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
         with:
           script: |
             const pr = context.payload.pull_request;
@@ -90,27 +90,29 @@ jobs:
               }
             }
 
-            // ── Generate friendly summary via Claude API ──
+            // ── Generate friendly summary via Z.AI GLM-5 ──
             async function generateFriendlySummary(prTitle, prBody) {
-              const apiKey = process.env.ANTHROPIC_API_KEY;
+              const apiKey = process.env.ZAI_API_KEY;
               if (!apiKey) {
-                core.warning('ANTHROPIC_API_KEY not set — falling back to raw description');
+                core.warning('ZAI_API_KEY not set — falling back to raw description');
                 return null;
               }
 
               try {
-                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                const response = await fetch('https://api.z.ai/api/paas/v4/chat/completions', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
-                    'x-api-key': apiKey,
-                    'anthropic-version': '2023-06-01',
+                    'Authorization': `Bearer ${apiKey}`,
                   },
                   body: JSON.stringify({
-                    model: 'claude-haiku-4-5-20251001',
+                    model: 'glm-5',
                     max_tokens: 300,
-                    system: `You write friendly Discord update messages for a gaming tool called ESO Toolkit (an Elder Scrolls Online combat log analyzer). Your audience is gamers and guild members who are NOT developers. Write a 2-3 sentence summary of what changed from a user's perspective. Use Discord markdown (**bold** for emphasis). Be conversational and enthusiastic but not over the top. Never mention code, files, components, CSS, or technical implementation details. Focus on what users will SEE or EXPERIENCE. If the change is purely technical/internal with no visible user impact, say so briefly.`,
                     messages: [
+                      {
+                        role: 'system',
+                        content: `You write friendly Discord update messages for a gaming tool called ESO Toolkit (an Elder Scrolls Online combat log analyzer). Your audience is gamers and guild members who are NOT developers. Write a 2-3 sentence summary of what changed from a user's perspective. Use Discord markdown (**bold** for emphasis). Be conversational and enthusiastic but not over the top. Never mention code, files, components, CSS, or technical implementation details. Focus on what users will SEE or EXPERIENCE. If the change is purely technical/internal with no visible user impact, say so briefly.`,
+                      },
                       {
                         role: 'user',
                         content: `Summarize this update for Discord:\n\nTitle: ${prTitle}\n\nDescription:\n${prBody || 'No description provided.'}`,
@@ -121,14 +123,14 @@ jobs:
 
                 if (!response.ok) {
                   const errText = await response.text();
-                  core.warning(`Claude API error (${response.status}): ${errText}`);
+                  core.warning(`Z.AI API error (${response.status}): ${errText}`);
                   return null;
                 }
 
                 const data = await response.json();
-                return data.content[0].text;
+                return data.choices[0].message.content;
               } catch (err) {
-                core.warning(`Claude API call failed: ${err.message}`);
+                core.warning(`Z.AI API call failed: ${err.message}`);
                 return null;
               }
             }
