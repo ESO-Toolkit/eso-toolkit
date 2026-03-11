@@ -5,12 +5,10 @@ import {
   KeyboardArrowDown,
   KeyboardArrowUp,
   OpenInNew,
-  Person,
 } from '@mui/icons-material';
 import {
   Box,
   Button,
-  Chip,
   CircularProgress,
   Collapse,
   Dialog,
@@ -30,7 +28,7 @@ import React from 'react';
 import type { HubRoster } from '../types/roster-hub.types';
 
 import { CommentSection } from './CommentSection';
-import { TRIAL_LABELS } from './RosterCard';
+import { TRIAL_ACCENT, TRIAL_LABELS } from './RosterCard';
 
 const IFRAME_TIMEOUT_MS = 12000;
 
@@ -119,6 +117,11 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
 
   const trialShort = TRIAL_SHORT[roster?.trial_id ?? ''] ?? roster?.trial_id ?? '';
   const trialFull = TRIAL_LABELS[roster?.trial_id ?? ''] ?? roster?.trial_id ?? '';
+  const accentColor = TRIAL_ACCENT[roster?.trial_id ?? ''] ?? '#3b82f6';
+
+  const authorName = roster?.author_name ?? '';
+  const authorHue = authorName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+  const avatarColor = `hsl(${authorHue}, 55%, 55%)`;
 
   return (
     <Dialog
@@ -136,59 +139,125 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
+            background: theme.palette.mode === 'dark'
+              ? `linear-gradient(160deg, ${accentColor}0a 0%, rgba(152,131,227,0.06) 40%, rgba(11,18,32,0.85) 100%)`
+              : `linear-gradient(160deg, ${accentColor}06 0%, rgba(152,131,227,0.03) 40%, rgba(248,250,252,0.95) 100%)`,
+            border: theme.palette.mode === 'dark'
+              ? `1px solid rgba(255,255,255,0.08)`
+              : `1px solid rgba(0,0,0,0.08)`,
+            boxShadow: theme.palette.mode === 'dark'
+              ? `0 0 0 1px ${accentColor}20, 0 24px 60px rgba(0,0,0,0.6)`
+              : `0 0 0 1px ${accentColor}15, 0 24px 60px rgba(0,0,0,0.15)`,
           },
         },
       }}
     >
+      {/* ─── Glowing accent bar at top of dialog ─── */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '3px',
+          background: `linear-gradient(90deg, transparent 0%, ${accentColor}70 20%, ${accentColor} 50%, ${accentColor}70 80%, transparent 100%)`,
+          boxShadow: `0 0 8px ${accentColor}70, 0 0 20px ${accentColor}30`,
+          zIndex: 10,
+        }}
+        aria-hidden="true"
+      />
+
       {/* ─── Title bar: trial badge + title + meta + actions ─── */}
       <DialogTitle
         sx={{
           pb: 0.75,
-          pt: 1.5,
+          pt: 1.75,
           display: 'flex',
           alignItems: 'center',
           gap: 1,
           flexWrap: 'nowrap',
-          minHeight: 48,
+          minHeight: 52,
         }}
       >
+        {/* Glowing trial badge */}
         <Tooltip title={trialFull}>
-          <Chip
-            label={trialShort}
-            size="small"
-            color="primary"
-            variant="filled"
+          <Box
+            component="span"
             sx={{
-              height: 22,
-              fontSize: '0.65rem',
-              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              px: 0.75,
+              py: 0.3,
+              borderRadius: '5px',
+              background: theme.palette.mode === 'dark'
+                ? `linear-gradient(90deg, ${accentColor}22 0%, ${accentColor}10 100%)`
+                : `linear-gradient(90deg, ${accentColor}18 0%, ${accentColor}08 100%)`,
+              border: `1px solid ${accentColor}45`,
+              boxShadow: `0 0 6px ${accentColor}25`,
               flexShrink: 0,
-              '& .MuiChip-label': { px: 0.75 },
+              cursor: 'default',
             }}
-          />
+          >
+            <Typography
+              sx={{
+                fontSize: '0.62rem',
+                fontWeight: 800,
+                letterSpacing: '0.06em',
+                color: accentColor,
+                lineHeight: 1,
+                textTransform: 'uppercase',
+              }}
+            >
+              {trialShort}
+            </Typography>
+          </Box>
         </Tooltip>
+
+        {/* Title */}
         <Typography
           variant="h6"
           component="span"
           sx={{
-            fontWeight: 600,
+            fontWeight: 700,
             lineHeight: 1.3,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
             flexGrow: 1,
+            fontSize: '1rem',
           }}
         >
           {roster?.title ?? ''}
         </Typography>
+
+        {/* Author avatar + name */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-          <Person sx={{ fontSize: 14, color: 'text.disabled' }} aria-hidden="true" />
+          <Box
+            sx={{
+              width: 18,
+              height: 18,
+              borderRadius: '50%',
+              bgcolor: `${avatarColor}25`,
+              border: `1px solid ${avatarColor}50`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+            aria-hidden="true"
+          >
+            <Typography sx={{ fontSize: '0.48rem', fontWeight: 800, color: avatarColor, lineHeight: 1 }}>
+              {(authorName || '?')[0].toUpperCase()}
+            </Typography>
+          </Box>
           <Typography variant="caption" color="text.disabled" noWrap>
-            {roster?.author_name}
+            {authorName}
           </Typography>
         </Box>
+
         <Tooltip title="Open full page">
-          <IconButton size="small" onClick={handleOpenFullPage} aria-label="Open full page">
+          <IconButton size="small" onClick={handleOpenFullPage} aria-label="Open full page"
+            sx={{ color: 'text.disabled', '&:hover': { color: accentColor } }}>
             <OpenInNew fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -327,17 +396,25 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
               Comments
             </Typography>
             {commentCount > 0 && (
-              <Chip
-                label={commentCount}
-                size="small"
+              <Box
+                component="span"
                 sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: 18,
                   height: 18,
-                  fontSize: '0.65rem',
+                  px: 0.5,
+                  borderRadius: '4px',
+                  fontSize: '0.62rem',
                   fontWeight: 700,
-                  '& .MuiChip-label': { px: 0.5 },
                   bgcolor: 'action.selected',
+                  color: 'text.secondary',
+                  lineHeight: 1,
                 }}
-              />
+              >
+                {commentCount}
+              </Box>
             )}
             <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', color: 'text.disabled' }}>
               {commentsOpen ? (
