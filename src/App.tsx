@@ -148,6 +148,12 @@ const GearSetsPage = React.lazy(() =>
   import('./pages/GearSetsPage').then((module) => ({ default: module.GearSetsPage })),
 );
 
+const RosterHubPage = React.lazy(() =>
+  import('./features/roster-hub/components/RosterHubPage').then((module) => ({
+    default: module.RosterHubPage,
+  })),
+);
+
 // Generic page loading skeleton - used for lazy-loaded routes and PersistGate hydration
 const LoadingFallback: React.FC = () => (
   <Container maxWidth="lg" sx={{ pt: 4, px: 2 }}>
@@ -544,6 +550,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <RosterBuilderPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/roster-hub"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <RosterHubPage />
                   </Suspense>
                 </ErrorBoundary>
               }
