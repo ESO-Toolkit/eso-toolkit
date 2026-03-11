@@ -4,32 +4,39 @@ import React from 'react';
 export const RosterCardSkeleton: React.FC = () => (
   <Card
     variant="outlined"
-    sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      borderColor: 'divider',
-    }}
+    sx={{ display: 'flex', flexDirection: 'column', width: '100%', borderColor: 'divider' }}
   >
-    <CardContent sx={{ pb: 0, flexGrow: 1 }}>
-      {/* Trial badge + title row */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-        <Skeleton variant="rounded" width={36} height={22} />
-        <Skeleton variant="text" width="60%" height={24} />
-      </Box>
+    <CardContent sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, pb: '12px !important' }}>
+      {/* Trial badge */}
+      <Skeleton variant="rounded" width={36} height={20} sx={{ mb: 1, borderRadius: '10px' }} />
+      {/* Title — 2 lines */}
+      <Skeleton variant="text" width="90%" height={22} />
+      <Skeleton variant="text" width="65%" height={22} sx={{ mb: 0.75 }} />
       {/* Description */}
       <Skeleton variant="text" width="100%" />
       <Skeleton variant="text" width="80%" sx={{ mb: 1 }} />
       {/* Tags */}
       <Box sx={{ display: 'flex', gap: 0.5, mb: 1 }}>
-        <Skeleton variant="rounded" width={60} height={20} />
-        <Skeleton variant="rounded" width={72} height={20} />
+        <Skeleton variant="rounded" width={62} height={22} sx={{ borderRadius: '11px' }} />
+        <Skeleton variant="rounded" width={76} height={22} sx={{ borderRadius: '11px' }} />
       </Box>
+      {/* Spacer */}
+      <Box sx={{ flexGrow: 1, minHeight: 8 }} />
       {/* Author */}
-      <Skeleton variant="text" width="50%" />
+      <Skeleton variant="text" width="55%" height={16} />
     </CardContent>
-    <Box sx={{ px: 2, pb: 1.5, pt: 1, display: 'flex', justifyContent: 'space-between' }}>
-      <Skeleton variant="rounded" width={60} height={28} />
+    <Box
+      sx={{
+        px: 1.5,
+        py: 1,
+        borderTop: 1,
+        borderColor: 'divider',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}
+    >
+      <Skeleton variant="rounded" width={58} height={32} sx={{ borderRadius: '16px' }} />
       <Skeleton variant="circular" width={28} height={28} />
     </Box>
   </Card>
