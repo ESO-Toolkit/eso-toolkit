@@ -52,7 +52,7 @@ export const AppLayout: React.FC = () => {
         >
           <HeaderBar />
           <Container
-            maxWidth={false}
+            maxWidth="md"
             sx={{
               px: { xs: isLandingPage ? 2 : 0, sm: 2 },
               flex: 1,
