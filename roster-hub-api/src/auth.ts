@@ -1,142 +1,147 @@
 /**
- * JWT validation for ESO Logs OAuth tokens.
+ * Token validation for ESO Logs OAuth tokens.
  *
- * ESO Logs uses standard OAuth2 with RS256 JWTs. We fetch their JWKS public
- * keys and verify the token signature using the Web Crypto API (available in
- * all Cloudflare Workers runtimes without any extra deps).
+ * ESO Logs does not expose a public JWKS endpoint, so we cannot verify
+ * JWT signatures locally. Instead we validate tokens by introspecting
+ * them against the ESO Logs GraphQL API — if the API accepts the token
+ * and returns user data, the token is genuine.
  *
- * Token claims we use:
- *   sub  — stable user identifier (used as author_id)
- *   name — display name (used as author_name)
+ * Results are cached per-token for 5 minutes to avoid excessive
+ * upstream calls (the Worker isolate cache lives for the isolate's
+ * lifetime, typically seconds to minutes at the edge).
  */
 
 import type { Env, AuthUser } from './types';
 
-interface JWK {
-  kty: string;
-  use: string;
-  n: string;
-  e: string;
-  kid: string;
-  alg: string;
+// ─── In-memory token → user cache ────────────────────────────────────────────
+
+interface CachedAuth {
+  user: AuthUser;
+  expiresAt: number;
 }
 
-interface JWKS {
-  keys: JWK[];
-}
+const tokenCache = new Map<string, CachedAuth>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-// Cache JWKS in-memory for the Worker's lifetime (per-isolate, not per-request)
-let cachedJWKS: JWKS | null = null;
-let cachedAt = 0;
-const JWKS_TTL_MS = 60 * 60 * 1000; // 1 hour
-
-async function fetchJWKS(url: string): Promise<JWKS> {
-  const now = Date.now();
-  if (cachedJWKS && now - cachedAt < JWKS_TTL_MS) {
-    return cachedJWKS;
+function getCached(token: string): AuthUser | null {
+  const entry = tokenCache.get(token);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    tokenCache.delete(token);
+    return null;
   }
-  const res = await fetch(url, { cf: { cacheTtl: 3600 } } as RequestInit);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch JWKS: ${res.status}`);
-  }
-  cachedJWKS = (await res.json()) as JWKS;
-  cachedAt = now;
-  return cachedJWKS;
+  return entry.user;
 }
 
-function base64urlToBuffer(str: string): ArrayBuffer {
-  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
-  const binary = atob(padded);
-  const buf = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    buf[i] = binary.charCodeAt(i);
+function setCache(token: string, user: AuthUser): void {
+  // Evict stale entries if cache grows (prevent memory leak in long-lived isolates)
+  if (tokenCache.size > 200) {
+    const now = Date.now();
+    for (const [key, val] of tokenCache) {
+      if (now > val.expiresAt) tokenCache.delete(key);
+    }
   }
-  return buf.buffer;
+  tokenCache.set(token, { user, expiresAt: Date.now() + CACHE_TTL_MS });
 }
 
-async function importRSAKey(jwk: JWK): Promise<CryptoKey> {
-  return crypto.subtle.importKey(
-    'jwk',
-    { kty: jwk.kty, n: jwk.n, e: jwk.e, alg: jwk.alg, use: jwk.use },
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-    false,
-    ['verify'],
-  );
-}
+// ─── JWT payload decode (no signature verification) ──────────────────────────
 
 interface JWTPayload {
-  sub: string;
-  exp: number;
-  iat: number;
-  scope?: string;
+  sub?: string;
+  exp?: number;
   name?: string;
 }
 
-/**
- * Validates an ESO Logs JWT and returns the authenticated user.
- * Returns null if the token is missing, malformed, or invalid.
- */
-export async function validateToken(
-  authHeader: string | undefined,
-  env: Env,
-): Promise<AuthUser | null> {
-  if (!authHeader?.startsWith('Bearer ')) return null;
-  const token = authHeader.slice(7);
-
+function decodeJWTPayload(token: string): JWTPayload | null {
   const parts = token.split('.');
   if (parts.length !== 3) return null;
 
-  const [headerB64, payloadB64, sigB64] = parts;
-
-  // Decode header to get kid
-  let header: { kid?: string; alg?: string };
   try {
-    header = JSON.parse(atob(headerB64.replace(/-/g, '+').replace(/_/g, '/'))) as {
-      kid?: string;
-      alg?: string;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return payload as JWTPayload;
+  } catch {
+    return null;
+  }
+}
+
+// ─── ESO Logs GraphQL introspection ──────────────────────────────────────────
+
+const ESOLOGS_GRAPHQL_URL = 'https://www.esologs.com/api/v2/user';
+
+const CURRENT_USER_QUERY = `{
+  userData {
+    currentUser {
+      id
+      name
+    }
+  }
+}`;
+
+interface EsoLogsResponse {
+  data?: {
+    userData?: {
+      currentUser?: {
+        id: number;
+        name: string;
+      };
+    };
+  };
+}
+
+async function introspectToken(token: string): Promise<AuthUser | null> {
+  try {
+    const res = await fetch(ESOLOGS_GRAPHQL_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ query: CURRENT_USER_QUERY }),
+    });
+
+    if (!res.ok) return null;
+
+    const json = (await res.json()) as EsoLogsResponse;
+    const user = json.data?.userData?.currentUser;
+    if (!user?.id || !user?.name) return null;
+
+    return {
+      id: String(user.id),
+      name: user.name,
     };
   } catch {
     return null;
   }
+}
 
-  // Decode payload
-  let payload: JWTPayload;
-  try {
-    payload = JSON.parse(
-      atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')),
-    ) as JWTPayload;
-  } catch {
+// ─── Public API ──────────────────────────────────────────────────────────────
+
+/**
+ * Validates an ESO Logs Bearer token and returns the authenticated user.
+ * Returns null if the token is missing, expired, or rejected by ESO Logs.
+ */
+export async function validateToken(
+  authHeader: string | undefined,
+  _env: Env,
+): Promise<AuthUser | null> {
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  const token = authHeader.slice(7);
+  if (!token) return null;
+
+  // Quick local expiry check (avoids unnecessary API call)
+  const payload = decodeJWTPayload(token);
+  if (payload?.exp && payload.exp < Math.floor(Date.now() / 1000)) {
     return null;
   }
 
-  // Check expiry
-  if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+  // Check in-memory cache
+  const cached = getCached(token);
+  if (cached) return cached;
 
-  // Fetch JWKS and find matching key
-  let jwks: JWKS;
-  try {
-    jwks = await fetchJWKS(env.ESOLOGS_JWKS_URL);
-  } catch {
-    return null;
-  }
+  // Introspect against ESO Logs API
+  const user = await introspectToken(token);
+  if (!user) return null;
 
-  const key = jwks.keys.find((k) => !header.kid || k.kid === header.kid);
-  if (!key) return null;
-
-  // Verify signature
-  try {
-    const cryptoKey = await importRSAKey(key);
-    const signingInput = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
-    const signature = base64urlToBuffer(sigB64);
-    const valid = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', cryptoKey, signature, signingInput);
-    if (!valid) return null;
-  } catch {
-    return null;
-  }
-
-  return {
-    id: payload.sub,
-    name: payload.name ?? 'Unknown',
-  };
+  setCache(token, user);
+  return user;
 }
