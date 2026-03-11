@@ -1,7 +1,8 @@
-import { ContentCopy, DeleteOutline, Download, Person } from '@mui/icons-material';
+import { ContentCopy, DeleteOutline, Person, Visibility } from '@mui/icons-material';
 import {
   Box,
   Card,
+  CardActionArea,
   CardActions,
   CardContent,
   Chip,
@@ -21,7 +22,7 @@ interface RosterCardProps {
   isOwner: boolean;
   isLoggedIn: boolean;
   onVote: (id: string) => void;
-  onLoad: (roster: HubRoster) => void;
+  onPreview: (roster: HubRoster) => void;
   onDelete: (id: string) => void;
 }
 
@@ -56,7 +57,7 @@ export const RosterCard: React.FC<RosterCardProps> = ({
   isOwner,
   isLoggedIn,
   onVote,
-  onLoad,
+  onPreview,
   onDelete,
 }) => {
   return (
@@ -73,61 +74,81 @@ export const RosterCard: React.FC<RosterCardProps> = ({
         },
       }}
     >
-      <CardContent sx={{ flexGrow: 1, pb: 0 }}>
-        {/* Header row: trial badge + title */}
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
-          <Chip
-            label={TRIAL_SHORT[roster.trial_id] ?? roster.trial_id}
-            size="small"
-            color="primary"
-            variant="filled"
-            sx={{ fontWeight: 700, fontSize: '0.7rem', flexShrink: 0 }}
-          />
-          <Typography
-            variant="subtitle1"
-            component="h3"
-            sx={{ fontWeight: 600, lineHeight: 1.3, wordBreak: 'break-word' }}
-          >
-            {roster.title}
-          </Typography>
-        </Box>
+      {/* Clickable area — opens preview dialog */}
+      <CardActionArea
+        onClick={() => onPreview(roster)}
+        sx={{ flexGrow: 1, alignItems: 'flex-start', '&:hover .preview-hint': { opacity: 1 } }}
+      >
+        <CardContent sx={{ pb: 0, width: '100%' }}>
+          {/* Header row: trial badge + title + preview hint */}
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
+            <Chip
+              label={TRIAL_SHORT[roster.trial_id] ?? roster.trial_id}
+              size="small"
+              color="primary"
+              variant="filled"
+              sx={{ fontWeight: 700, fontSize: '0.7rem', flexShrink: 0 }}
+            />
+            <Typography
+              variant="subtitle1"
+              component="h3"
+              sx={{ fontWeight: 600, lineHeight: 1.3, wordBreak: 'break-word', flexGrow: 1 }}
+            >
+              {roster.title}
+            </Typography>
+            <Visibility
+              className="preview-hint"
+              fontSize="small"
+              sx={{
+                opacity: 0,
+                flexShrink: 0,
+                color: 'primary.main',
+                transition: 'opacity 0.2s ease',
+              }}
+            />
+          </Box>
 
-        {/* Description */}
-        {roster.description && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              mb: 1,
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-            }}
-          >
-            {roster.description}
-          </Typography>
-        )}
+          {/* Description */}
+          {roster.description && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                mb: 1,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+            >
+              {roster.description}
+            </Typography>
+          )}
 
-        {/* Tags */}
-        {roster.tags.length > 0 && (
-          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mb: 1 }}>
-            {roster.tags.map((tag) => (
-              <Chip key={tag} label={tag} size="small" variant="outlined" sx={{ fontSize: '0.65rem' }} />
-            ))}
-          </Stack>
-        )}
+          {/* Tags */}
+          {roster.tags.length > 0 && (
+            <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mb: 1 }}>
+              {roster.tags.map((tag) => (
+                <Chip key={tag} label={tag} size="small" variant="outlined" sx={{ fontSize: '0.65rem' }} />
+              ))}
+            </Stack>
+          )}
 
-        {/* Author + date */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 'auto' }}>
-          <Person sx={{ fontSize: 14, color: 'text.disabled' }} />
-          <Typography variant="caption" color="text.disabled">
-            {roster.author_name} · {formatDate(roster.created_at)}
-          </Typography>
-        </Box>
-      </CardContent>
+          {/* Author + date */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 'auto' }}>
+            <Person sx={{ fontSize: 14, color: 'text.disabled' }} />
+            <Typography variant="caption" color="text.disabled">
+              {roster.author_name} · {formatDate(roster.created_at)}
+            </Typography>
+          </Box>
+        </CardContent>
+      </CardActionArea>
 
-      <CardActions sx={{ px: 2, pt: 1, pb: 1.5, justifyContent: 'space-between' }}>
+      {/* Action row — stopPropagation keeps clicks from opening the dialog */}
+      <CardActions
+        sx={{ px: 2, pt: 1, pb: 1.5, justifyContent: 'space-between' }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <VoteButton
           voteCount={roster.vote_count}
           voted={roster.user_voted ?? false}
@@ -136,11 +157,6 @@ export const RosterCard: React.FC<RosterCardProps> = ({
         />
 
         <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <Tooltip title="Load into Roster Builder">
-            <IconButton size="small" onClick={() => onLoad(roster)} aria-label="Load into builder">
-              <Download fontSize="small" />
-            </IconButton>
-          </Tooltip>
           <Tooltip title="Copy share link">
             <IconButton
               size="small"
