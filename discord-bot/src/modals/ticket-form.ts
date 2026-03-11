@@ -395,10 +395,3 @@ function findInputValue(
 function capitalise(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
-
-function deferred(): InteractionResponse {
-  return {
-    type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
-    data: { flags: 64 },
-  };
-}
