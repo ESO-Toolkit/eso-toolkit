@@ -119,6 +119,8 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
   const trialFull = TRIAL_LABELS[roster?.trial_id ?? ''] ?? roster?.trial_id ?? '';
   const accentColor = TRIAL_ACCENT[roster?.trial_id ?? ''] ?? '#3b82f6';
 
+  const isDark = theme.palette.mode === 'dark';
+
   const authorName = roster?.author_name ?? '';
   const authorHue = authorName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
   const avatarColor = `hsl(${authorHue}, 55%, 55%)`;
@@ -139,15 +141,15 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
-            background: theme.palette.mode === 'dark'
-              ? `linear-gradient(160deg, ${accentColor}0a 0%, rgba(152,131,227,0.06) 40%, rgba(11,18,32,0.85) 100%)`
-              : `linear-gradient(160deg, ${accentColor}06 0%, rgba(152,131,227,0.03) 40%, rgba(248,250,252,0.95) 100%)`,
-            border: theme.palette.mode === 'dark'
-              ? `1px solid rgba(255,255,255,0.08)`
-              : `1px solid rgba(0,0,0,0.08)`,
-            boxShadow: theme.palette.mode === 'dark'
-              ? `0 0 0 1px ${accentColor}20, 0 24px 60px rgba(0,0,0,0.6)`
-              : `0 0 0 1px ${accentColor}15, 0 24px 60px rgba(0,0,0,0.15)`,
+            background: isDark
+              ? `linear-gradient(160deg, ${accentColor}12 0%, rgba(152,131,227,0.07) 35%, rgba(10,15,28,0.97) 100%)`
+              : `linear-gradient(160deg, ${accentColor}08 0%, rgba(152,131,227,0.04) 35%, rgba(248,250,252,0.98) 100%)`,
+            border: isDark
+              ? `1px solid ${accentColor}25`
+              : `1px solid ${accentColor}18`,
+            boxShadow: isDark
+              ? `0 0 0 1px ${accentColor}18, 0 32px 80px rgba(0,0,0,0.7), 0 0 60px ${accentColor}08`
+              : `0 0 0 1px ${accentColor}12, 0 32px 80px rgba(0,0,0,0.18)`,
           },
         },
       }}
@@ -159,9 +161,9 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
           top: 0,
           left: 0,
           right: 0,
-          height: '3px',
-          background: `linear-gradient(90deg, transparent 0%, ${accentColor}70 20%, ${accentColor} 50%, ${accentColor}70 80%, transparent 100%)`,
-          boxShadow: `0 0 8px ${accentColor}70, 0 0 20px ${accentColor}30`,
+          height: '4px',
+          background: `linear-gradient(90deg, transparent 0%, ${accentColor}60 15%, ${accentColor} 50%, ${accentColor}60 85%, transparent 100%)`,
+          boxShadow: `0 0 12px ${accentColor}80, 0 0 30px ${accentColor}40, 0 0 60px ${accentColor}15`,
           zIndex: 10,
         }}
         aria-hidden="true"
@@ -170,13 +172,18 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
       {/* ─── Title bar: trial badge + title + meta + actions ─── */}
       <DialogTitle
         sx={{
-          pb: 0.75,
-          pt: 1.75,
+          pb: 1.5,
+          pt: 2.25,
+          px: 2.5,
           display: 'flex',
           alignItems: 'center',
-          gap: 1,
+          gap: 1.25,
           flexWrap: 'nowrap',
-          minHeight: 52,
+          minHeight: 64,
+          background: isDark
+            ? `linear-gradient(180deg, ${accentColor}10 0%, transparent 100%)`
+            : `linear-gradient(180deg, ${accentColor}07 0%, transparent 100%)`,
+          borderBottom: `1px solid ${isDark ? accentColor + '18' : accentColor + '12'}`,
         }}
       >
         {/* Glowing trial badge */}
@@ -186,26 +193,27 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
             sx={{
               display: 'inline-flex',
               alignItems: 'center',
-              px: 0.75,
-              py: 0.3,
-              borderRadius: '5px',
-              background: theme.palette.mode === 'dark'
-                ? `linear-gradient(90deg, ${accentColor}22 0%, ${accentColor}10 100%)`
-                : `linear-gradient(90deg, ${accentColor}18 0%, ${accentColor}08 100%)`,
-              border: `1px solid ${accentColor}45`,
-              boxShadow: `0 0 6px ${accentColor}25`,
+              px: 1,
+              py: 0.45,
+              borderRadius: '6px',
+              background: isDark
+                ? `linear-gradient(135deg, ${accentColor}30 0%, ${accentColor}18 100%)`
+                : `linear-gradient(135deg, ${accentColor}22 0%, ${accentColor}10 100%)`,
+              border: `1px solid ${accentColor}55`,
+              boxShadow: `0 0 10px ${accentColor}35, inset 0 1px 0 rgba(255,255,255,0.12)`,
               flexShrink: 0,
               cursor: 'default',
             }}
           >
             <Typography
               sx={{
-                fontSize: '0.62rem',
+                fontSize: '0.68rem',
                 fontWeight: 800,
-                letterSpacing: '0.06em',
+                letterSpacing: '0.08em',
                 color: accentColor,
                 lineHeight: 1,
                 textTransform: 'uppercase',
+                textShadow: `0 0 8px ${accentColor}80`,
               }}
             >
               {trialShort}
@@ -224,21 +232,23 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
             flexGrow: 1,
-            fontSize: '1rem',
+            fontSize: '1.05rem',
+            letterSpacing: '-0.01em',
           }}
         >
           {roster?.title ?? ''}
         </Typography>
 
         {/* Author avatar + name */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
           <Box
             sx={{
-              width: 18,
-              height: 18,
+              width: 26,
+              height: 26,
               borderRadius: '50%',
-              bgcolor: `${avatarColor}25`,
-              border: `1px solid ${avatarColor}50`,
+              background: `radial-gradient(circle at 30% 30%, ${avatarColor}40, ${avatarColor}18)`,
+              border: `1.5px solid ${avatarColor}60`,
+              boxShadow: `0 0 8px ${avatarColor}30`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -246,18 +256,36 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
             }}
             aria-hidden="true"
           >
-            <Typography sx={{ fontSize: '0.48rem', fontWeight: 800, color: avatarColor, lineHeight: 1 }}>
+            <Typography sx={{ fontSize: '0.58rem', fontWeight: 800, color: avatarColor, lineHeight: 1 }}>
               {(authorName || '?')[0].toUpperCase()}
             </Typography>
           </Box>
-          <Typography variant="caption" color="text.disabled" noWrap>
-            {authorName}
-          </Typography>
+          <Box>
+            <Typography sx={{ fontSize: '0.62rem', fontWeight: 600, lineHeight: 1.1, color: isDark ? 'rgba(255,255,255,0.75)' : 'text.primary' }} noWrap>
+              {authorName}
+            </Typography>
+            <Typography sx={{ fontSize: '0.55rem', color: 'text.disabled', lineHeight: 1.2 }}>
+              Author
+            </Typography>
+          </Box>
         </Box>
 
         <Tooltip title="Open full page">
-          <IconButton size="small" onClick={handleOpenFullPage} aria-label="Open full page"
-            sx={{ color: 'text.disabled', '&:hover': { color: accentColor } }}>
+          <IconButton
+            size="small"
+            onClick={handleOpenFullPage}
+            aria-label="Open full page"
+            sx={{
+              color: 'text.disabled',
+              border: `1px solid transparent`,
+              '&:hover': {
+                color: accentColor,
+                borderColor: `${accentColor}30`,
+                background: `${accentColor}10`,
+              },
+              transition: 'all 0.2s ease',
+            }}
+          >
             <OpenInNew fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -267,23 +295,25 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
       {roster?.description && (
         <Box
           sx={{
-            px: 2,
-            py: 0.75,
-            borderTop: 1,
-            borderColor: 'divider',
+            px: 2.5,
+            py: 1,
             flexShrink: 0,
+            borderLeft: `3px solid ${accentColor}60`,
+            background: isDark ? `${accentColor}08` : `${accentColor}05`,
+            borderBottom: `1px solid ${isDark ? accentColor + '14' : accentColor + '0e'}`,
           }}
         >
           <Typography
             variant="body2"
-            color="text.secondary"
             sx={{
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
-              lineHeight: 1.5,
-              fontSize: '0.8rem',
+              lineHeight: 1.6,
+              fontSize: '0.82rem',
+              color: isDark ? 'rgba(255,255,255,0.6)' : 'text.secondary',
+              fontStyle: 'italic',
             }}
           >
             {roster.description}
@@ -298,8 +328,22 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
           position: 'relative',
           overflow: 'hidden',
           minHeight: isMobile ? 200 : 250,
-          borderTop: 1,
-          borderColor: 'divider',
+          borderTop: `1px solid ${accentColor}20`,
+          boxShadow: `inset 0 4px 20px rgba(0,0,0,0.3)`,
+          // Bottom fade into comments/action bar
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 48,
+            background: isDark
+              ? 'linear-gradient(to bottom, transparent, rgba(10,15,28,0.7))'
+              : 'linear-gradient(to bottom, transparent, rgba(248,250,252,0.7))',
+            pointerEvents: 'none',
+            zIndex: 2,
+          },
         }}
       >
         {!iframeLoaded && !iframeError && (
@@ -342,6 +386,30 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
             </Button>
           </Box>
         )}
+        {/* PREVIEW label badge */}
+        {iframeLoaded && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 10,
+              right: 12,
+              zIndex: 3,
+              px: 0.75,
+              py: 0.3,
+              borderRadius: '4px',
+              background: 'rgba(0,0,0,0.55)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              border: `1px solid ${accentColor}30`,
+              boxShadow: `0 0 6px ${accentColor}20`,
+            }}
+            aria-hidden="true"
+          >
+            <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', color: `${accentColor}cc`, textTransform: 'uppercase', lineHeight: 1 }}>
+              Preview
+            </Typography>
+          </Box>
+        )}
         {roster && !iframeError && (
           <iframe
             src={embedUrl}
@@ -355,7 +423,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
               height: '100%',
               border: 'none',
               opacity: iframeLoaded ? 1 : 0,
-              transition: 'opacity 0.3s ease',
+              transition: 'opacity 0.4s ease',
               display: 'block',
             }}
           />
@@ -378,21 +446,31 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
               }
             }}
             sx={{
-              px: 2,
+              px: 2.5,
               py: 1,
               display: 'flex',
               alignItems: 'center',
               gap: 0.75,
-              borderTop: 1,
-              borderColor: 'divider',
+              borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
               cursor: 'pointer',
               userSelect: 'none',
-              transition: 'background-color 0.15s ease',
-              '&:hover': { bgcolor: 'action.hover' },
+              transition: 'all 0.15s ease',
+              background: commentsOpen ? `${accentColor}08` : 'transparent',
+              '&:hover': {
+                background: `${accentColor}0c`,
+              },
             }}
           >
-            <ChatBubbleOutline sx={{ fontSize: 16, color: 'text.secondary' }} />
-            <Typography variant="body2" color="text.secondary" fontWeight={500}>
+            <ChatBubbleOutline sx={{ fontSize: 15, color: commentsOpen ? accentColor : 'text.disabled', transition: 'color 0.15s ease' }} />
+            <Typography
+              variant="body2"
+              fontWeight={600}
+              sx={{
+                fontSize: '0.8rem',
+                color: commentsOpen ? (isDark ? 'rgba(255,255,255,0.8)' : 'text.primary') : 'text.secondary',
+                transition: 'color 0.15s ease',
+              }}
+            >
               Comments
             </Typography>
             {commentCount > 0 && (
@@ -408,15 +486,16 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
                   borderRadius: '4px',
                   fontSize: '0.62rem',
                   fontWeight: 700,
-                  bgcolor: 'action.selected',
-                  color: 'text.secondary',
+                  background: `${accentColor}20`,
+                  border: `1px solid ${accentColor}40`,
+                  color: accentColor,
                   lineHeight: 1,
                 }}
               >
                 {commentCount}
               </Box>
             )}
-            <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', color: 'text.disabled' }}>
+            <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', color: commentsOpen ? accentColor : 'text.disabled', transition: 'color 0.15s ease' }}>
               {commentsOpen ? (
                 <KeyboardArrowUp fontSize="small" />
               ) : (
