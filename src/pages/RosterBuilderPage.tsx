@@ -719,19 +719,34 @@ async function readAllChunks(readable: ReadableStream<Uint8Array>): Promise<Uint
 
 async function deflateString(str: string): Promise<Uint8Array> {
   const input = new TextEncoder().encode(str);
-  const stream = new CompressionStream('deflate-raw');
-  const writer = stream.writable.getWriter();
-  writer.write(input);
-  writer.close();
-  return readAllChunks(stream.readable);
+  // Use pipeThrough to avoid floating promise rejections from unawaited write/close calls.
+  const inputStream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(input);
+      controller.close();
+    },
+  });
+  return readAllChunks(
+    inputStream.pipeThrough(
+      new CompressionStream('deflate-raw') as unknown as TransformStream<Uint8Array, Uint8Array>,
+    ),
+  );
 }
 
 async function inflateBytes(bytes: Uint8Array): Promise<string> {
-  const stream = new DecompressionStream('deflate-raw');
-  const writer = stream.writable.getWriter();
-  writer.write(bytes as Uint8Array<ArrayBuffer>);
-  writer.close();
-  const output = await readAllChunks(stream.readable);
+  // Use pipeThrough to avoid floating promise rejections from unawaited write/close calls.
+  // Decompression errors propagate cleanly through the pipeline to the caller.
+  const inputStream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(bytes);
+      controller.close();
+    },
+  });
+  const output = await readAllChunks(
+    inputStream.pipeThrough(
+      new DecompressionStream('deflate-raw') as unknown as TransformStream<Uint8Array, Uint8Array>,
+    ),
+  );
   return new TextDecoder().decode(output);
 }
 
