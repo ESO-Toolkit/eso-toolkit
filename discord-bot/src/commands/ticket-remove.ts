@@ -2,7 +2,7 @@
  * /ticket remove @user — removes a user from the current ticket channel.
  */
 
-import { deleteChannelPermission } from '../discord.js';
+import { deleteChannelPermission, isStaff } from '../discord.js';
 import { getTicket } from '../kv.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
@@ -19,6 +19,10 @@ export async function handleTicketRemove(
   const ticket = await getTicket(env, channelId);
   if (!ticket) {
     return ephemeral('❌ This command can only be used inside a ticket channel.');
+  }
+
+  if (!isStaff(interaction)) {
+    return ephemeral('❌ Only staff can remove users from a ticket.');
   }
 
   const userOption = interaction.data?.options?.find((o) => o.name === 'user');

@@ -3,7 +3,7 @@
  * Releases the ticket claim so another staff member can claim it.
  */
 
-import { editMessage } from '../discord.js';
+import { editMessage, Permission } from '../discord.js';
 import { getTicket, updateTicket } from '../kv.js';
 import { buildTicketEmbed, buildTicketActionRows } from '../modals/ticket-form.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
@@ -37,7 +37,7 @@ export async function handleUnclaimButton(
   if (ticket.claimedBy !== unclaimingUser.id) {
     // Check if user has manage channels permission
     const hasPerms = interaction.member?.permissions
-      ? (BigInt(interaction.member.permissions) & 0x10n) !== 0n // MANAGE_CHANNELS = 0x10
+      ? (BigInt(interaction.member.permissions) & Permission.MANAGE_CHANNELS) === Permission.MANAGE_CHANNELS
       : false;
     if (!hasPerms) {
       return ephemeral('Only the person who claimed this ticket or a moderator can unclaim it.');

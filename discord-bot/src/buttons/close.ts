@@ -3,13 +3,21 @@
  * Responds with an ephemeral confirmation prompt.
  */
 
+import { isStaff } from '../discord.js';
 import { ButtonId, ButtonStyle, ComponentType, InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
 
 export function handleCloseButton(
   _env: Env,
-  _interaction: DiscordInteraction,
+  interaction: DiscordInteraction,
 ): InteractionResponse {
+  if (!isStaff(interaction)) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: { content: '❌ Only staff can close tickets.', flags: MessageFlags.EPHEMERAL },
+    };
+  }
+
   return {
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {

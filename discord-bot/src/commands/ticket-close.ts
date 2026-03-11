@@ -3,7 +3,7 @@
  * Can be used by staff in a ticket channel as an alternative to the Close button.
  */
 
-import { getMessages, sendMessage, deleteChannel } from '../discord.js';
+import { getMessages, isStaff, sendMessage, deleteChannel } from '../discord.js';
 import { deleteTicket, getTicket } from '../kv.js';
 import { Colors, InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, DiscordMessage, Env, InteractionResponse } from '../types.js';
@@ -25,6 +25,10 @@ export async function handleTicketClose(
 
   if (ticket.status === 'closed') {
     return ephemeral('❌ This ticket is already closed.');
+  }
+
+  if (!isStaff(interaction)) {
+    return ephemeral('❌ Only staff can close tickets.');
   }
 
   // Extract optional reason option

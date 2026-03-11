@@ -3,7 +3,7 @@
  * Shows a modal to add internal notes visible to staff.
  */
 
-import { editMessage } from '../discord.js';
+import { editMessage, isStaff } from '../discord.js';
 import { getTicket, updateTicket } from '../kv.js';
 import { buildTicketEmbed, buildTicketActionRows } from '../modals/ticket-form.js';
 import {
@@ -15,8 +15,14 @@ import {
 } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
 
-export function handleStaffNoteButton(_env: Env, _interaction: DiscordInteraction): InteractionResponse {
-  // Pre-fill with existing notes if any
+export function handleStaffNoteButton(_env: Env, interaction: DiscordInteraction): InteractionResponse {
+  if (!isStaff(interaction)) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: { content: '❌ Only staff can add notes to tickets.', flags: MessageFlags.EPHEMERAL },
+    };
+  }
+
   return {
     type: InteractionResponseType.MODAL,
     data: {
@@ -50,6 +56,10 @@ export async function handleStaffNoteModal(
   const channelId = interaction.channel_id;
   if (!channelId) {
     return ephemeral('Could not determine the channel for this ticket.');
+  }
+
+  if (!isStaff(interaction)) {
+    return ephemeral('❌ Only staff can add notes to tickets.');
   }
 
   const ticket = await getTicket(env, channelId);

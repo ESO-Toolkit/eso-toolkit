@@ -7,6 +7,7 @@ import type {
   DiscordChannel,
   DiscordEmbed,
   DiscordComponent,
+  DiscordInteraction,
   DiscordMessage,
   Env,
 } from './types.js';
@@ -240,4 +241,11 @@ export const Permission = {
 /** Compute combined permission bitfield string for a set of Permission flags. */
 export function allow(...perms: bigint[]): string {
   return perms.reduce((acc, p) => acc | p, 0n).toString();
+}
+
+/** Returns true if the interaction member has MANAGE_CHANNELS permission (staff check). */
+export function isStaff(interaction: DiscordInteraction): boolean {
+  const memberPermissions = interaction.member?.permissions;
+  if (!memberPermissions) return false;
+  return (BigInt(memberPermissions) & Permission.MANAGE_CHANNELS) === Permission.MANAGE_CHANNELS;
 }

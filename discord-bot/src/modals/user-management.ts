@@ -2,7 +2,7 @@
  * Handles modals for adding/removing users from tickets.
  */
 
-import { addChannelPermission, removeChannelPermission } from '../discord.js';
+import { addChannelPermission, isStaff, removeChannelPermission } from '../discord.js';
 import { getTicket } from '../kv.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
@@ -19,6 +19,10 @@ export async function handleAddUserModal(
   const ticket = await getTicket(env, channelId);
   if (!ticket) {
     return ephemeral('This channel does not have an associated ticket.');
+  }
+
+  if (!isStaff(interaction)) {
+    return ephemeral('❌ Only staff can add users to a ticket.');
   }
 
   // Extract user input from modal
@@ -72,6 +76,10 @@ export async function handleRemoveUserModal(
   const ticket = await getTicket(env, channelId);
   if (!ticket) {
     return ephemeral('This channel does not have an associated ticket.');
+  }
+
+  if (!isStaff(interaction)) {
+    return ephemeral('❌ Only staff can remove users from a ticket.');
   }
 
   // Extract user input from modal

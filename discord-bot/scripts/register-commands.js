@@ -16,7 +16,7 @@
 
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const APPLICATION_ID = process.env.DISCORD_APPLICATION_ID;
-const GUILD_ID = process.env.DISCORD_GUILD_ID || '1375703719995244686';
+const GUILD_ID = process.env.DISCORD_GUILD_ID || null;
 
 if (!BOT_TOKEN || !APPLICATION_ID) {
   console.error('ERROR: DISCORD_BOT_TOKEN and DISCORD_APPLICATION_ID must be set.');

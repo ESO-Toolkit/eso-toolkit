@@ -6,7 +6,7 @@
  * 4. Cleans up KV state.
  */
 
-import { deleteChannel, getMessages, sendMessage } from '../discord.js';
+import { deleteChannel, getMessages, isStaff, sendMessage } from '../discord.js';
 import { deleteTicket, getTicket } from '../kv.js';
 import { Colors, InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, DiscordMessage, Env, InteractionResponse, TicketState } from '../types.js';
@@ -19,6 +19,10 @@ export async function handleConfirmCloseButton(
   const channelId = interaction.channel_id;
   if (!channelId) {
     return ephemeral('Could not determine the ticket channel.');
+  }
+
+  if (!isStaff(interaction)) {
+    return ephemeral('❌ Only staff can close tickets.');
   }
 
   const ticket = await getTicket(env, channelId);

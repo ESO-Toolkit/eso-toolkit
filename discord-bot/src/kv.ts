@@ -10,13 +10,31 @@ import type { Env, TicketState } from './types.js';
 
 const COUNTER_KEY = 'ticket-counter';
 
-/** Read the current counter and increment it atomically (best-effort with KV). */
+/**
+ * Read the current counter (best-effort), increment it, and return a collision-resistant ID.
+ * KV is eventually consistent so concurrent Workers may read the same counter value;
+ * the timestamp+random suffix provides actual uniqueness while the counter gives a
+ * human-friendly prefix for display purposes.
+ */
 export async function nextTicketId(env: Env): Promise<string> {
   const raw = await env.TICKETS.get(COUNTER_KEY);
-  const current = raw !== null ? parseInt(raw, 10) : 0;
+  let current = 0;
+  if (raw !== null) {
+    const parsed = parseInt(raw, 10);
+    if (Number.isFinite(parsed)) {
+      current = parsed;
+    }
+  }
   const next = current + 1;
   await env.TICKETS.put(COUNTER_KEY, String(next));
-  return String(next).padStart(4, '0');
+
+  const counterPart = String(next).padStart(4, '0');
+  const timestampPart = Date.now().toString(36);
+  const randomArray = new Uint32Array(1);
+  crypto.getRandomValues(randomArray);
+  const randomPart = randomArray[0].toString(36);
+
+  return `${counterPart}-${timestampPart}-${randomPart}`;
 }
 
 /** Persist a ticket state object. */

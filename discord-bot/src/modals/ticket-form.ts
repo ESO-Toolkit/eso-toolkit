@@ -92,14 +92,9 @@ export function buildTicketEmbed(ticket: TicketState): DiscordEmbed {
     });
   }
 
-  // Show staff notes (only visible to staff via permissions, but shown in embed)
-  if (ticket.staffNotes) {
-    fields.push({
-      name: '📝 Staff Notes',
-      value: ticket.staffNotes,
-      inline: false,
-    });
-  }
+  // Staff notes are intentionally excluded from the embed — the ticket creator and added
+  // users can view this channel, so notes must not be rendered here. Staff can review
+  // notes by using the Staff Note button, which responds ephemerally.
 
   const openedAt = new Date(ticket.createdAt);
   const timeStr = openedAt.toLocaleString('en-GB', {
@@ -217,7 +212,13 @@ export async function handleTicketFormModal(
 
   const user = interaction.member?.user ?? interaction.user;
   if (!user) {
-    return deferred(); // will get a generic error in followup
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: 'Unable to identify the user for this interaction. Please try again.',
+        flags: 64, // ephemeral
+      },
+    };
   }
 
   // Immediately defer — channel creation + AI + GitHub all take >3s

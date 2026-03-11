@@ -2,7 +2,7 @@
  * /ticket add @user — adds a user to the current ticket channel.
  */
 
-import { allow, editChannelPermissions, Permission } from '../discord.js';
+import { allow, editChannelPermissions, isStaff, Permission } from '../discord.js';
 import { getTicket } from '../kv.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
@@ -19,6 +19,10 @@ export async function handleTicketAdd(
   const ticket = await getTicket(env, channelId);
   if (!ticket) {
     return ephemeral('❌ This command can only be used inside a ticket channel.');
+  }
+
+  if (!isStaff(interaction)) {
+    return ephemeral('❌ Only staff can add users to a ticket.');
   }
 
   // Get the target user from the resolved data

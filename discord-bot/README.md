@@ -146,11 +146,11 @@ Build the OAuth2 invite URL with the required permissions:
 ```
 https://discord.com/api/oauth2/authorize
   ?client_id=YOUR_APPLICATION_ID
-  &permissions=8208     (or use the permissions calculator below)
+  &permissions=125968
   &scope=bot%20applications.commands
 ```
 
-**Required permissions (decimal: `8208`):**
+**Required permissions (decimal: `125968`):**
 
 | Permission | Why |
 |---|---|
@@ -164,7 +164,7 @@ https://discord.com/api/oauth2/authorize
 **Permissions calculator URL (pre-filled):**
 
 ```
-https://discord.com/api/oauth2/authorize?client_id=YOUR_APPLICATION_ID&permissions=93184&scope=bot%20applications.commands
+https://discord.com/api/oauth2/authorize?client_id=YOUR_APPLICATION_ID&permissions=125968&scope=bot%20applications.commands
 ```
 
 Replace `YOUR_APPLICATION_ID` with your Discord Application ID.
@@ -194,7 +194,7 @@ export DISCORD_APPLICATION_ID="your_app_id"
 npm run register
 ```
 
-To register globally (takes up to 1 hour to propagate), omit `DISCORD_GUILD_ID`.
+To register globally (takes up to 1 hour to propagate), omit `DISCORD_GUILD_ID`. Note: if you set `DISCORD_GUILD_ID` (as shown in the example above), commands are registered as guild commands for instant propagation — omitting it truly registers globally.
 
 ### 9. Post the Ticket Panel
 

@@ -4,7 +4,7 @@
  * When "Acknowledged" is clicked, also syncs with GitHub Issues.
  */
 
-import { sendMessage } from '../discord.js';
+import { isStaff, sendMessage } from '../discord.js';
 import {
   addGitHubIssueComment,
   addGitHubIssueLabel,
@@ -22,6 +22,10 @@ export async function handleTemplateButton(
   const channelId = interaction.channel_id;
   if (!channelId) {
     return ephemeral('Could not determine the channel for this ticket.');
+  }
+
+  if (!isStaff(interaction)) {
+    return ephemeral('❌ Only staff can send template responses.');
   }
 
   const ticket = await getTicket(env, channelId);
@@ -69,7 +73,7 @@ export async function handleTemplateButton(
 /**
  * Syncs the "Acknowledged" action to GitHub:
  * - Bug with existing issue → add label + comment
- * - Feature/Feedback → create a new issue
+ * - Feature/Feedback → create a new GitHub discussion
  * Returns a short status string to append to the ephemeral reply.
  */
 async function syncAcknowledgedToGitHub(

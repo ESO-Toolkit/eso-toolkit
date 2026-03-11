@@ -3,7 +3,7 @@
  * Assigns the ticket to the staff member who clicked, updates the embed.
  */
 
-import { editMessage } from '../discord.js';
+import { editMessage, isStaff } from '../discord.js';
 import { getTicket, updateTicket } from '../kv.js';
 import { buildTicketEmbed, buildTicketActionRows } from '../modals/ticket-form.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
@@ -17,6 +17,10 @@ export async function handleClaimButton(
   const channelId = interaction.channel_id;
   if (!channelId) {
     return ephemeral('Could not determine the channel for this ticket.');
+  }
+
+  if (!isStaff(interaction)) {
+    return ephemeral('❌ Only staff can claim tickets.');
   }
 
   const ticket = await getTicket(env, channelId);
