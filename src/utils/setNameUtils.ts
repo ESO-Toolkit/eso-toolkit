@@ -2,6 +2,9 @@ import { KnownSetIDs } from '../types/abilities';
 
 import { reportError } from './errorTracking';
 
+// Tracks unknown set IDs already reported this session — prevents Rollbar flooding (ESO-689)
+const reportedUnknownSetIds = new Set<number>();
+
 /**
  * Sets that are not currently supported for calculations due to missing verified API IDs.
  * These sets will be marked with "(unsupported)" in the UI.
@@ -312,15 +315,18 @@ export function getSetDisplayName(setId: KnownSetIDs | undefined | null): string
 
   const displayName = SET_DISPLAY_NAMES[setId];
 
-  // If set is not found, report to error tracking
+  // If set is not found, report to error tracking (once per unknown ID to avoid flooding)
   if (!displayName) {
-    reportError(new Error(`Unknown set ID detected: ${setId}`), {
-      setId,
-      setIdType: typeof setId,
-      availableSetCount: Object.keys(SET_DISPLAY_NAMES).length,
-      component: 'setNameUtils',
-      function: 'getSetDisplayName',
-    });
+    if (!reportedUnknownSetIds.has(setId)) {
+      reportedUnknownSetIds.add(setId);
+      reportError(new Error(`Unknown set ID detected: ${setId}`), {
+        setId,
+        setIdType: typeof setId,
+        availableSetCount: Object.keys(SET_DISPLAY_NAMES).length,
+        component: 'setNameUtils',
+        function: 'getSetDisplayName',
+      });
+    }
     return `Unknown Set (${setId})`;
   }
 
