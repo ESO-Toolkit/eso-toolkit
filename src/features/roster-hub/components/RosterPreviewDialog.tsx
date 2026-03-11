@@ -10,7 +10,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Collapse,
   Dialog,
   DialogActions,
   DialogTitle,
@@ -503,19 +502,22 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
               )}
             </Box>
           </Box>
-          <Collapse in={commentsOpen} unmountOnExit>
-            <Box
-              sx={{
-                px: 2,
-                py: 1.5,
-                maxHeight: { xs: 220, md: 280 },
-                overflowY: 'auto',
-                borderTop: 1,
-                borderColor: 'divider',
-              }}
-              role="region"
-              aria-label="Comments"
-            >
+          {/* CSS max-height transition avoids MUI Collapse's overflow:hidden wrapper
+              which blocks inner scroll, and keeps the component mounted so data
+              is pre-loaded — eliminating the spinner-to-content height jitter. */}
+          <Box
+            role="region"
+            aria-label="Comments"
+            sx={{
+              maxHeight: commentsOpen ? { xs: '220px', md: '300px' } : 0,
+              overflowY: commentsOpen ? 'auto' : 'hidden',
+              opacity: commentsOpen ? 1 : 0,
+              transition: 'max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease',
+              borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+              px: 2.5,
+            }}
+          >
+            <Box sx={{ py: 1.5 }}>
               <CommentSection
                 rosterId={roster.id}
                 isLoggedIn={isLoggedIn}
@@ -524,7 +526,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
                 onCountChange={setCommentCount}
               />
             </Box>
-          </Collapse>
+          </Box>
         </>
       )}
 
