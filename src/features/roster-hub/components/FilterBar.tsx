@@ -69,13 +69,26 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
           position: 'sticky',
           top: 64,
           zIndex: 10,
-          bgcolor: isDark ? 'rgba(11,16,26,0.82)' : 'rgba(248,250,252,0.88)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
           pt: 1.25,
           pb: 1.75,
-          borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
           mb: 2.5,
+          // Full-bleed background: the ::before pseudo-element breaks out of the
+          // centered Container and spans 100vw using left:50% + translateX(-50%).
+          // Controls stay positioned normally inside the Container.
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '100vw',
+            background: isDark ? 'rgba(11,16,26,0.88)' : 'rgba(248,250,252,0.92)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+            zIndex: -1,
+          },
         }}
       >
         {/* ── Row 1: search · trial · sort ──────────────────────────── */}
@@ -233,7 +246,7 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
             {(['votes', 'recent'] as SortOrder[]).map((sort) => {
               const active = filters.sort === sort;
               return (
-                <Box
+                <Box<'button'>
                   key={sort}
                   component="button"
                   onClick={() => handleSortChange(sort)}
@@ -306,7 +319,7 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
               const active = filters.tag === tag;
               const accent = TAG_COLORS[tag] ?? '#888';
               return (
-                <Box
+                <Box<'button'>
                   key={tag}
                   component="button"
                   onClick={() => handleTagToggle(tag)}
@@ -324,7 +337,6 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
                     letterSpacing: '0.02em',
                     cursor: 'pointer',
                     flexShrink: 0,
-                    border: 'none',
                     outline: 'none',
                     fontFamily: 'inherit',
                     transition: 'all 0.18s ease',
