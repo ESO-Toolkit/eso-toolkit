@@ -189,21 +189,17 @@ export const RosterHubPage: React.FC = () => {
               size="small"
               href="/roster-builder"
               sx={{
-                background: isDark
-                  ? 'linear-gradient(135deg, rgba(96,165,250,0.9) 0%, rgba(139,92,246,0.9) 100%)'
-                  : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                background: 'linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)',
+                color: '#fff',
                 border: 'none',
-                boxShadow: isDark
-                  ? '0 0 12px rgba(96,165,250,0.3), 0 4px 12px rgba(0,0,0,0.3)'
-                  : '0 4px 12px rgba(59,130,246,0.3)',
+                fontWeight: 700,
+                letterSpacing: '0.01em',
+                boxShadow: '0 0 18px rgba(6,182,212,0.45), 0 4px 14px rgba(0,0,0,0.45)',
+                textShadow: '0 1px 3px rgba(0,0,0,0.35)',
                 '&:hover': {
-                  background: isDark
-                    ? 'linear-gradient(135deg, rgba(96,165,250,1) 0%, rgba(139,92,246,1) 100%)'
-                    : 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
-                  boxShadow: isDark
-                    ? '0 0 16px rgba(96,165,250,0.4), 0 6px 16px rgba(0,0,0,0.4)'
-                    : '0 6px 16px rgba(59,130,246,0.4)',
-                  transform: 'translateY(-1px)',
+                  background: 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
+                  boxShadow: '0 0 26px rgba(6,182,212,0.6), 0 6px 20px rgba(0,0,0,0.5)',
+                  transform: 'translateY(-2px)',
                 },
                 transition: 'all 0.2s ease',
               }}
