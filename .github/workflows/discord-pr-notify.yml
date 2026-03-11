@@ -65,7 +65,7 @@ jobs:
                 if (!images.includes(match[1])) images.push(match[1]);
               }
 
-              // GitHub user-attachments format
+              // GitHub user-attachments in markdown: ![alt](https://github.com/user-attachments/assets/...)
               const ghAttachRegex = /!\[.*?\]\((https:\/\/github\.com\/user-attachments\/assets\/[^\s)]+)\)/gi;
               while ((match = ghAttachRegex.exec(text)) !== null) {
                 if (!images.includes(match[1])) images.push(match[1]);
