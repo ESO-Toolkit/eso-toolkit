@@ -18,6 +18,7 @@ import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import InfoIcon from '@mui/icons-material/Info';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PersonIcon from '@mui/icons-material/Person';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import RotateRightIcon from '@mui/icons-material/RotateRight';
 import SpeedIcon from '@mui/icons-material/Speed';
 import {
@@ -223,6 +224,14 @@ const extractReportInfo = (url: string): { reportId: string; fightId: string | n
 
 /** How often to poll for new fights added to the report while the page is open */
 const POLL_INTERVAL_MS = 15_000;
+
+/**
+ * Public demo log users can explore the parse analysis tool without their own log.
+ * Report: https://www.esologs.com/reports/KxZcrWHAjLaYvm38?fight=1
+ */
+const DEMO_LOG_REPORT_ID = 'KxZcrWHAjLaYvm38';
+const DEMO_LOG_FIGHT_ID = '1';
+const DEMO_LOG_URL = `https://www.esologs.com/reports/${DEMO_LOG_REPORT_ID}?fight=${DEMO_LOG_FIGHT_ID}`;
 
 const logger = new Logger({
   level: LogLevel.DEBUG,
@@ -1084,6 +1093,11 @@ const ParseAnalysisPageContent: React.FC = () => {
     setLogUrl(e.target.value);
   };
 
+  const handleLoadDemo = useCallback(async (): Promise<void> => {
+    setLogUrl(DEMO_LOG_URL);
+    await analyzeReport(DEMO_LOG_REPORT_ID, DEMO_LOG_FIGHT_ID);
+  }, [analyzeReport]);
+
   const handleReset = useCallback((): void => {
     setState(createInitialParseState());
     setPendingAnalysis(null);
@@ -1929,6 +1943,17 @@ const ParseAnalysisPageContent: React.FC = () => {
                 }}
               >
                 Analyze Parse
+              </Button>
+              <Button
+                variant="outlined"
+                size="medium"
+                onClick={() => void handleLoadDemo()}
+                disabled={state.loading}
+                fullWidth
+                startIcon={<PlayCircleOutlineIcon />}
+                sx={{ mt: 0.5 }}
+              >
+                Try Demo Log
               </Button>
             </Stack>
           </CardContent>
