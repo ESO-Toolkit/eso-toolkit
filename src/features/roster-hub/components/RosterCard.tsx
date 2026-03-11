@@ -1,4 +1,4 @@
-import { ContentCopy, DeleteOutline, Person } from '@mui/icons-material';
+import { ContentCopy, DeleteOutline } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -14,6 +14,7 @@ import { useSnackbar } from 'notistack';
 import React from 'react';
 
 import type { HubRoster } from '../types/roster-hub.types';
+import { TAG_COLORS } from '../types/roster-hub.types';
 
 import { VoteButton } from './VoteButton';
 
@@ -51,7 +52,34 @@ const TRIAL_SHORT: Record<string, string> = {
   SO: 'SO', SS: 'SS',
 };
 
+// Trial accent colors — gives each trial a distinctive top border on cards
+const TRIAL_ACCENT: Record<string, string> = {
+  AA: '#f59e0b',  // amber
+  AS: '#6366f1',  // indigo
+  BRP: '#ef4444', // red
+  CR: '#22c55e',  // green
+  DSR: '#a855f7', // purple
+  HOF: '#f97316', // orange
+  HRC: '#eab308', // yellow
+  KA: '#06b6d4',  // cyan
+  LC: '#8b5cf6',  // violet
+  MOL: '#ec4899', // pink
+  RG: '#14b8a6',  // teal
+  SE: '#ef4444',  // red
+  SO: '#3b82f6',  // blue
+  SS: '#0ea5e9',  // sky
+};
+
 function formatDate(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
   return new Date(iso).toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -72,6 +100,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
     const trialShort = TRIAL_SHORT[roster.trial_id] ?? roster.trial_id;
     const trialFull = TRIAL_LABELS[roster.trial_id] ?? roster.trial_id;
+    const accentColor = TRIAL_ACCENT[roster.trial_id] ?? '#3b82f6';
 
     return (
       <Card
@@ -80,14 +109,17 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
           display: 'flex',
           flexDirection: 'column',
           width: '100%',
+          borderTop: `3px solid ${accentColor}`,
           transition: 'box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease',
           '&:hover': {
-            boxShadow: 8,
-            borderColor: 'primary.main',
+            boxShadow: `0 8px 25px -5px ${accentColor}33, 0 4px 10px -6px ${accentColor}22`,
+            borderColor: 'divider',
+            borderTopColor: accentColor,
             transform: 'translateY(-3px)',
           },
           '&:focus-within': {
-            borderColor: 'primary.main',
+            borderColor: 'divider',
+            borderTopColor: accentColor,
           },
         }}
       >
@@ -166,15 +198,29 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             {/* Tags */}
             {roster.tags.length > 0 && (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                {roster.tags.map((tag) => (
-                  <Chip
-                    key={tag}
-                    label={tag}
-                    size="small"
-                    variant="outlined"
-                    sx={{ fontSize: '0.7rem', height: 22, '& .MuiChip-label': { px: 0.75 } }}
-                  />
-                ))}
+                {roster.tags.map((tag) => {
+                  const tagColor = TAG_COLORS[tag];
+                  return (
+                    <Chip
+                      key={tag}
+                      label={tag}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        fontSize: '0.7rem',
+                        height: 22,
+                        '& .MuiChip-label': { px: 0.75 },
+                        ...(tagColor
+                          ? {
+                              borderColor: `${tagColor}50`,
+                              color: tagColor,
+                              fontWeight: 600,
+                            }
+                          : {}),
+                      }}
+                    />
+                  );
+                })}
               </Box>
             )}
 
@@ -183,7 +229,23 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
             {/* Author + date */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Person sx={{ fontSize: 13, color: 'text.disabled' }} aria-hidden="true" />
+              <Box
+                sx={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  bgcolor: 'action.selected',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+                aria-hidden="true"
+              >
+                <Typography sx={{ fontSize: '0.5rem', fontWeight: 700, color: 'text.disabled', lineHeight: 1 }}>
+                  {(roster.author_name || '?')[0].toUpperCase()}
+                </Typography>
+              </Box>
               <Typography variant="caption" color="text.disabled" noWrap>
                 {roster.author_name} · {formatDate(roster.created_at)}
               </Typography>

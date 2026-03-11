@@ -56,6 +56,18 @@ export const PRESET_TAGS = [
 
 export type PresetTag = (typeof PRESET_TAGS)[number];
 
+// Accent colors for preset tag chips — consistent across filter bar, cards, and publish dialog
+export const TAG_COLORS: Record<string, string> = {
+  beginner: '#22c55e',     // green
+  optimized: '#3b82f6',    // blue
+  'score-push': '#a855f7', // purple
+  godslayer: '#ef4444',    // red
+  'no-cp': '#f97316',      // orange
+  'group-finder': '#06b6d4', // cyan
+  'speed-run': '#eab308',  // yellow
+  prog: '#6366f1',         // indigo
+};
+
 // ─── Comments ──────────────────────────────────────────────────────────────
 
 export interface HubComment {

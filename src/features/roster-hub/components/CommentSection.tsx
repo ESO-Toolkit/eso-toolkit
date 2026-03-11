@@ -1,4 +1,4 @@
-import { DeleteOutline, Person, Reply, Send } from '@mui/icons-material';
+import { DeleteOutline, Reply, Send } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -20,6 +20,7 @@ interface CommentSectionProps {
   isLoggedIn: boolean;
   currentUserId: string;
   token?: string;
+  onCountChange?: (count: number) => void;
 }
 
 const MAX_BODY_LENGTH = 1000;
@@ -46,10 +47,43 @@ const SingleComment: React.FC<{
   onReply: (commentId: string, authorName: string) => void;
   onDelete: (commentId: string) => void;
   isReply?: boolean;
-}> = React.memo(({ comment, isOwner, isLoggedIn, replyingToId, onReply, onDelete, isReply = false }) => (
-  <Box sx={{ pl: isReply ? 3 : 0, py: 0.75, borderLeft: isReply ? 2 : 0, borderColor: 'divider', ml: isReply ? 1 : 0 }}>
+}> = React.memo(({ comment, isOwner, isLoggedIn, replyingToId, onReply, onDelete, isReply = false }) => {
+  // Generate a stable color from the author name
+  const initial = (comment.author_name || '?')[0].toUpperCase();
+  const hue = comment.author_name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+  const avatarColor = `hsl(${hue}, 55%, 55%)`;
+
+  return (
+  <Box
+    sx={{
+      pl: isReply ? 3 : 0,
+      py: 0.75,
+      borderLeft: isReply ? 2 : 0,
+      borderColor: isReply ? `hsl(${hue}, 30%, 70%)` : 'transparent',
+      ml: isReply ? 1 : 0,
+      transition: 'background-color 0.15s ease',
+      borderRadius: 1,
+      '&:hover': { bgcolor: 'action.hover' },
+    }}
+  >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25 }}>
-      <Person sx={{ fontSize: 13, color: 'text.disabled' }} aria-hidden="true" />
+      <Box
+        sx={{
+          width: 20,
+          height: 20,
+          borderRadius: '50%',
+          bgcolor: `${avatarColor}25`,
+          border: `1px solid ${avatarColor}40`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, color: avatarColor, lineHeight: 1 }}>
+          {initial}
+        </Typography>
+      </Box>
       <Typography variant="caption" fontWeight={600} color="text.secondary">
         {comment.author_name}
       </Typography>
@@ -84,11 +118,12 @@ const SingleComment: React.FC<{
         )}
       </Box>
     </Box>
-    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', pl: 2.5 }}>
+    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', pl: 3.25, fontSize: '0.82rem' }}>
       {comment.body}
     </Typography>
   </Box>
-));
+  );
+});
 
 SingleComment.displayName = 'SingleComment';
 
@@ -99,6 +134,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
   isLoggedIn,
   currentUserId,
   token,
+  onCountChange,
 }) => {
   const { enqueueSnackbar } = useSnackbar();
   const [comments, setComments] = React.useState<HubComment[]>([]);
@@ -207,6 +243,12 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
   };
 
   const totalCount = comments.reduce((sum, c) => sum + 1 + c.replies.length, 0);
+
+  // Notify parent of comment count changes
+  React.useEffect(() => {
+    onCountChange?.(totalCount);
+  }, [totalCount, onCountChange]);
+
   const charsLeft = MAX_BODY_LENGTH - body.length;
   const isNearLimit = charsLeft <= 100;
 

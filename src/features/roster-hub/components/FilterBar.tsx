@@ -18,7 +18,7 @@ import React from 'react';
 
 import { TRIALS } from '../../loadout-manager/data/trialConfigs';
 import type { RosterHubFilters, SortOrder } from '../types/roster-hub.types';
-import { PRESET_TAGS } from '../types/roster-hub.types';
+import { PRESET_TAGS, TAG_COLORS } from '../types/roster-hub.types';
 
 interface FilterBarProps {
   filters: RosterHubFilters;
@@ -57,7 +57,11 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
           position: 'sticky',
           top: 64, // below header bar
           zIndex: 10,
-          bgcolor: 'background.default',
+          bgcolor: (t: { palette: { mode: string } }) =>
+            t.palette.mode === 'dark'
+              ? 'rgba(13, 17, 28, 0.85)'
+              : 'rgba(255, 255, 255, 0.85)',
+          backdropFilter: 'blur(12px)',
           pt: 1,
           pb: 1.5,
           borderBottom: 1,
@@ -169,13 +173,13 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
           >
             {PRESET_TAGS.map((tag) => {
               const active = filters.tag === tag;
+              const accent = TAG_COLORS[tag] ?? '#888';
               return (
                 <Chip
                   key={tag}
                   label={tag}
                   size="small"
                   onClick={() => handleTagToggle(tag)}
-                  color={active ? 'primary' : 'default'}
                   variant={active ? 'filled' : 'outlined'}
                   aria-pressed={active}
                   role="checkbox"
@@ -186,6 +190,18 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
                     height: 24,
                     '& .MuiChip-label': { px: 1 },
                     transition: 'all 0.15s ease',
+                    ...(active
+                      ? {
+                          bgcolor: accent,
+                          color: '#fff',
+                          borderColor: accent,
+                          '&:hover': { bgcolor: accent, filter: 'brightness(0.9)' },
+                        }
+                      : {
+                          borderColor: `${accent}55`,
+                          color: accent,
+                          '&:hover': { bgcolor: `${accent}18`, borderColor: accent },
+                        }),
                   }}
                 />
               );

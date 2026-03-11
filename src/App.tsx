@@ -1,10 +1,9 @@
 import { Box, Container, Skeleton } from '@mui/material';
+import { SnackbarProvider } from 'notistack';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
-
-import { SnackbarProvider } from 'notistack';
 
 import { AnalyticsListener } from './components/AnalyticsListener';
 import { CookieConsent } from './components/CookieConsent';
@@ -242,13 +241,13 @@ const App: React.FC = () => {
                   autoHideDuration={4000}
                   preventDuplicate
                 >
-                {/* Global cosmic/nebula background */}
-                <SiteBackground />
+                {/* Global cosmic/nebula background — suppressed in embed/iframe mode */}
+                {!window.location.search.includes('embed=1') && <SiteBackground />}
                 <AppRoutes />
                 {/* Update notification for new versions */}
-                <UpdateNotification />
-                {/* Cookie consent banner */}
-                <CookieConsent />
+                {!window.location.search.includes('embed=1') && <UpdateNotification />}
+                {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
+                {!window.location.search.includes('embed=1') && <CookieConsent />}
                 </SnackbarProvider>
               </AuthProvider>
             </EsoLogsClientProvider>
