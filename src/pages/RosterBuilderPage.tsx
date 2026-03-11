@@ -540,7 +540,8 @@ function compactifyRoster(roster: RaidRoster): CompactRoster {
       slot.jailDDType ||
       slot.notes ||
       slot.group ||
-      slot.skillLines,
+      slot.skillLines ||
+      slot.championPoint,
   );
   if (filledSlots.length) c.dp = filledSlots.map(compactDPS);
   if (roster.availableGroups?.length) c.ag = roster.availableGroups;
@@ -4758,6 +4759,22 @@ interface DPSSlotCardProps {
   onConvertToDPS: (slotNumber: number) => void;
 }
 
+// Common DPS champion point options (Warfare tree, ordered by usage frequency)
+const DPS_CHAMPION_POINT_OPTIONS = [
+  'Force of Nature',
+  'Deadly Aim',
+  'Fighting Finesse',
+  'Exploiter',
+  'Master-at-Arms',
+  'Weapons Expert',
+  'Thaumaturge',
+  'Biting Aura',
+  'Arcane Supremacy',
+  'Occult Overload',
+  'Wrathful Strikes',
+  'Resilience',
+];
+
 const jailLabels: Record<string, string> = {
   banner: 'Banner',
   zenkosh: 'Zenkosh',
@@ -5059,7 +5076,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                     <Autocomplete
                       freeSolo
                       size="small"
-                      options={[]}
+                      options={DPS_CHAMPION_POINT_OPTIONS}
                       value={slot.championPoint || null}
                       onChange={(_event, newValue) =>
                         onChange({ championPoint: newValue as string | null })
@@ -5720,6 +5737,7 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
         const labels = dd.labels && dd.labels.length > 0 ? ` (${dd.labels.join(', ')})` : '';
         lines.push(`${dd.slotNumber}${typeLabel}${roleNote}:${playerName}${labels}`);
         formatDPSDetails(dd);
+        if (dd.championPoint) lines.push(`CP: ${dd.championPoint}`);
       });
       lines.push('');
     });
@@ -5753,6 +5771,7 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
       const labels = dd.labels && dd.labels.length > 0 ? ` (${dd.labels.join(', ')})` : '';
       lines.push(`${dd.slotNumber}${typeLabel}${roleNote}:${playerName}${labels}`);
       formatDPSDetails(dd);
+      if (dd.championPoint) lines.push(`CP: ${dd.championPoint}`);
     });
     lines.push('');
   }
