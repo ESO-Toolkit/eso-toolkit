@@ -1,8 +1,5 @@
 /*
-  text-editor-page-background.css - FIXED VERSION
-  DEBUG: This file should be loaded when TextEditor component mounts
-  Check browser console for "CSS LOADED" message
-
+  text-editor-page-background.css
   Purpose:
   - Apply background image to entire page body on text-editor page
   - Remove all solid backgrounds that hide the image

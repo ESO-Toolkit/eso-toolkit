@@ -45,7 +45,7 @@ const EditorTool = styled(Box)(({ theme }) => ({
   color: 'var(--text)',
   boxShadow:
     theme.palette.mode === 'dark'
-      ? '0 8px 30px rgba(0, 0, 0, 0.6)'
+      ? '0 4px 16px rgba(0, 0, 0, 0.4)'
       : '0 8px 30px rgba(0, 0, 0, 0.15)',
   transition: 'all 0.3s ease',
   backdropFilter: 'blur(12px) saturate(180%)',
@@ -761,7 +761,6 @@ export const TextEditor: React.FC = () => {
     (event: React.MouseEvent): void => {
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
-        alert('Please select some text first!');
         return;
       }
 
@@ -981,9 +980,9 @@ export const TextEditor: React.FC = () => {
             </ToolbarButton>
 
             <PresetColors role="group" aria-label="Quick color choices">
-              {presetColors.map((color, index) => (
+              {presetColors.map((color) => (
                 <PresetColor
-                  key={index}
+                  key={color}
                   type="button"
                   style={{ background: color }}
                   onMouseDown={saveSelectionBeforeBlur}
@@ -1061,9 +1060,9 @@ export const TextEditor: React.FC = () => {
             </ColorPickerWrapper>
 
             <PresetColors role="group" aria-label="Quick color choices">
-              {presetColors.map((color, index) => (
+              {presetColors.map((color) => (
                 <PresetColor
-                  key={index}
+                  key={color}
                   type="button"
                   style={{ background: color }}
                   onMouseDown={saveSelectionBeforeBlur}
