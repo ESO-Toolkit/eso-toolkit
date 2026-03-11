@@ -17,12 +17,15 @@ import type { HubRoster } from '../types/roster-hub.types';
 
 import { FilterBar } from './FilterBar';
 import { RosterCard } from './RosterCard';
+import { RosterPreviewDialog } from './RosterPreviewDialog';
 
 export const RosterHubPage: React.FC = () => {
   const { isLoggedIn, accessToken, currentUser } = useAuth();
   const token = isLoggedIn ? accessToken : undefined;
   const { rosters, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote } =
     useRosterHub(token);
+
+  const [previewRoster, setPreviewRoster] = React.useState<HubRoster | null>(null);
 
   const handleVote = React.useCallback(
     (rosterId: string) => {
@@ -31,10 +34,6 @@ export const RosterHubPage: React.FC = () => {
     },
     [token, vote],
   );
-
-  const handleLoad = React.useCallback((roster: HubRoster) => {
-    rosterHubApi.loadRosterIntoBuilder(roster);
-  }, []);
 
   const handleDelete = React.useCallback(
     async (rosterId: string) => {
@@ -70,7 +69,7 @@ export const RosterHubPage: React.FC = () => {
             Roster Hub
           </Typography>
           <Typography variant="body2" color="text.secondary" mt={0.5}>
-            Browse, vote, and share raid compositions for every ESO trial.
+            Browse, vote, and share raid compositions for every ESO trial. Click any card to preview.
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -128,7 +127,7 @@ export const RosterHubPage: React.FC = () => {
                 isOwner={isLoggedIn && roster.author_id === currentUserId}
                 isLoggedIn={isLoggedIn}
                 onVote={handleVote}
-                onLoad={handleLoad}
+                onPreview={setPreviewRoster}
                 onDelete={(id) => void handleDelete(id)}
               />
             </Grid>
@@ -157,6 +156,12 @@ export const RosterHubPage: React.FC = () => {
           Log in with your ESO Logs account to vote on rosters or publish your own.
         </Alert>
       )}
+
+      {/* Roster preview dialog */}
+      <RosterPreviewDialog
+        roster={previewRoster}
+        onClose={() => setPreviewRoster(null)}
+      />
     </Container>
   );
 };
