@@ -20,6 +20,7 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_PR_UPDATES }}
           ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         with:
           script: |
             const pr = context.payload.pull_request;
@@ -70,6 +71,12 @@ jobs:
                 if (!images.includes(match[1])) images.push(match[1]);
               }
 
+              // GitHub user-attachments in HTML <img> tags (most common when drag-dropping into comments)
+              const ghImgTagRegex = /<img[^>]+src=["'](https:\/\/github\.com\/user-attachments\/assets\/[^\s"']+)["'][^>]*>/gi;
+              while ((match = ghImgTagRegex.exec(text)) !== null) {
+                if (!images.includes(match[1])) images.push(match[1]);
+              }
+
               return images;
             }
 
@@ -90,13 +97,12 @@ jobs:
               }
             }
 
-            // ── Generate friendly summary via Z.AI GLM-5 ──
-            async function generateFriendlySummary(prTitle, prBody) {
+            const SUMMARY_SYSTEM_PROMPT = `You write friendly Discord update messages for a gaming tool called ESO Toolkit (an Elder Scrolls Online combat log analyzer). Your audience is gamers and guild members who are NOT developers. Write a 2-3 sentence summary of what changed from a user's perspective. Use Discord markdown (**bold** for emphasis). Be conversational and enthusiastic but not over the top. Never mention code, files, components, CSS, or technical implementation details. Focus on what users will SEE or EXPERIENCE. If the change is purely technical/internal with no visible user impact, say so briefly.`;
+
+            // ── Primary: Z.AI GLM-5 ──
+            async function summarizeWithZAI(prTitle, prBody) {
               const apiKey = process.env.ZAI_API_KEY;
-              if (!apiKey) {
-                core.warning('ZAI_API_KEY not set — falling back to raw description');
-                return null;
-              }
+              if (!apiKey) return null;
 
               try {
                 const response = await fetch('https://api.z.ai/api/paas/v4/chat/completions', {
@@ -109,14 +115,8 @@ jobs:
                     model: 'glm-5',
                     max_tokens: 300,
                     messages: [
-                      {
-                        role: 'system',
-                        content: `You write friendly Discord update messages for a gaming tool called ESO Toolkit (an Elder Scrolls Online combat log analyzer). Your audience is gamers and guild members who are NOT developers. Write a 2-3 sentence summary of what changed from a user's perspective. Use Discord markdown (**bold** for emphasis). Be conversational and enthusiastic but not over the top. Never mention code, files, components, CSS, or technical implementation details. Focus on what users will SEE or EXPERIENCE. If the change is purely technical/internal with no visible user impact, say so briefly.`,
-                      },
-                      {
-                        role: 'user',
-                        content: `Summarize this update for Discord:\n\nTitle: ${prTitle}\n\nDescription:\n${prBody || 'No description provided.'}`,
-                      },
+                      { role: 'system', content: SUMMARY_SYSTEM_PROMPT },
+                      { role: 'user', content: `Summarize this update for Discord:\n\nTitle: ${prTitle}\n\nDescription:\n${prBody || 'No description provided.'}` },
                     ],
                   }),
                 });
@@ -135,7 +135,62 @@ jobs:
               }
             }
 
-            // ── Fallback: convert GitHub markdown → Discord markdown ──
+            // ── Backup: DeepSeek ──
+            async function summarizeWithDeepSeek(prTitle, prBody) {
+              const apiKey = process.env.DEEPSEEK_API_KEY;
+              if (!apiKey) return null;
+
+              try {
+                const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                  },
+                  body: JSON.stringify({
+                    model: 'deepseek-chat',
+                    max_tokens: 300,
+                    messages: [
+                      { role: 'system', content: SUMMARY_SYSTEM_PROMPT },
+                      { role: 'user', content: `Summarize this update for Discord:\n\nTitle: ${prTitle}\n\nDescription:\n${prBody || 'No description provided.'}` },
+                    ],
+                  }),
+                });
+
+                if (!response.ok) {
+                  const errText = await response.text();
+                  core.warning(`DeepSeek API error (${response.status}): ${errText}`);
+                  return null;
+                }
+
+                const data = await response.json();
+                return data.choices[0].message.content;
+              } catch (err) {
+                core.warning(`DeepSeek API call failed: ${err.message}`);
+                return null;
+              }
+            }
+
+            // ── Try Z.AI first, DeepSeek as backup ──
+            async function generateFriendlySummary(prTitle, prBody) {
+              const summary = await summarizeWithZAI(prTitle, prBody);
+              if (summary) {
+                core.info('   AI summary: Z.AI ✅');
+                return summary;
+              }
+
+              core.warning('Z.AI unavailable — trying DeepSeek backup...');
+              const fallback = await summarizeWithDeepSeek(prTitle, prBody);
+              if (fallback) {
+                core.info('   AI summary: DeepSeek ✅');
+                return fallback;
+              }
+
+              core.warning('Both AI providers unavailable — using raw description');
+              return null;
+            }
+
+            // ── Last resort: convert GitHub markdown → Discord markdown ──
             function toDiscordMarkdown(text) {
               if (!text) return '*No description provided.*';
 
@@ -155,9 +210,10 @@ jobs:
               return result.trim();
             }
 
-            // Generate friendly summary, fall back to raw markdown if API fails
+            // Generate friendly summary, fall back to raw markdown if both APIs fail
             const friendlySummary = await generateFriendlySummary(pr.title, pr.body);
-            const description = friendlySummary || toDiscordMarkdown(pr.body);
+            const rawDescription = friendlySummary || toDiscordMarkdown(pr.body);
+            const description = `${rawDescription}\n\n🔗 [View Pull Request on GitHub](${pr.html_url})`;
 
             // ── Build labels string ──
             const labels = pr.labels
@@ -177,9 +233,13 @@ jobs:
                 url: pr.user.html_url,
                 icon_url: pr.user.avatar_url,
               },
+              thumbnail: {
+                url: pr.user.avatar_url,
+              },
               fields: [],
               footer: {
                 text: `main \u2190 ${pr.head.ref} \u00b7 ${pr.changed_files} file${pr.changed_files === 1 ? '' : 's'} changed`,
+                icon_url: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png',
               },
               timestamp: pr.merged_at,
             };
@@ -236,7 +296,7 @@ jobs:
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 username: 'ESO Toolkit',
-                avatar_url: 'https://esotk.com/android-chrome-512x512.png',
+                avatar_url: 'https://cdn.discordapp.com/avatars/1480832993613578322/e3c37b8e3c1cf5389ef3a6c3e014e11a.png',
                 embeds,
               }),
             });
@@ -247,5 +307,4 @@ jobs:
             } else {
               core.info(`\u2705 Discord notification sent for PR #${pr.number}`);
               core.info(`   Screenshots included: ${screenshots.length}`);
-              core.info(`   AI summary: ${friendlySummary ? 'yes' : 'no (fallback)'}`);
             }
