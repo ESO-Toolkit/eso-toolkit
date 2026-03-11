@@ -1,5 +1,5 @@
 import { ThumbUp, ThumbUpOutlined } from '@mui/icons-material';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, ButtonBase, Tooltip, Typography } from '@mui/material';
 import React from 'react';
 
 interface VoteButtonProps {
@@ -15,34 +15,48 @@ export const VoteButton: React.FC<VoteButtonProps> = React.memo(
 
     return (
       <Tooltip title={tooltip} placement="top">
-        {/* span needed so Tooltip works on a non-focusable Box */}
-        <Box
-          component="span"
-          sx={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}
-        >
-          <IconButton
-            size="small"
+        {/* span wrapper so Tooltip works when button is disabled */}
+        <Box component="span" sx={{ display: 'inline-flex' }}>
+          <ButtonBase
             onClick={onVote}
             disabled={disabled}
             aria-label={tooltip}
+            aria-pressed={voted}
             sx={{
-              color: voted ? 'primary.main' : 'text.secondary',
-              // 44×44px minimum touch target (WCAG 2.5.5)
-              minWidth: 44,
-              minHeight: 44,
-              transition: 'transform 0.15s ease, color 0.15s ease',
-              '&:hover': { transform: 'scale(1.2)' },
-              '&:active': { transform: 'scale(0.9)' },
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.75,
+              px: 1.25,
+              py: 0.5,
+              borderRadius: '20px',
+              border: '1px solid',
+              borderColor: voted ? 'primary.main' : 'divider',
+              bgcolor: voted ? 'primary.main' : 'transparent',
+              color: voted ? 'primary.contrastText' : 'text.secondary',
+              transition: 'all 0.15s ease',
+              minHeight: 32,
+              '&:hover:not(.Mui-disabled)': {
+                borderColor: 'primary.main',
+                color: voted ? 'primary.contrastText' : 'primary.main',
+                bgcolor: voted ? 'primary.dark' : 'action.hover',
+              },
+              '&:active:not(.Mui-disabled)': { transform: 'scale(0.95)' },
+              '&.Mui-disabled': { opacity: 0.38, cursor: 'default' },
             }}
           >
-            {voted ? <ThumbUp fontSize="small" /> : <ThumbUpOutlined fontSize="small" />}
-          </IconButton>
-          <Typography
-            variant="caption"
-            sx={{ color: voted ? 'primary.main' : 'text.secondary', fontWeight: 600, lineHeight: 1 }}
-          >
-            {voteCount}
-          </Typography>
+            {voted ? (
+              <ThumbUp sx={{ fontSize: 14 }} />
+            ) : (
+              <ThumbUpOutlined sx={{ fontSize: 14 }} />
+            )}
+            <Typography
+              component="span"
+              variant="caption"
+              sx={{ fontWeight: 700, lineHeight: 1 }}
+            >
+              {voteCount}
+            </Typography>
+          </ButtonBase>
         </Box>
       </Tooltip>
     );

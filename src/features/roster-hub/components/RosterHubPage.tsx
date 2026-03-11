@@ -149,7 +149,7 @@ export const RosterHubPage: React.FC = () => {
         {loading && filteredRosters.length === 0 && (
           <Grid container spacing={2}>
             {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-              <Grid key={i} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+              <Grid key={i} size={{ xs: 12, sm: 6, md: 4, lg: 3 }} sx={{ display: 'flex' }}>
                 <RosterCardSkeleton />
               </Grid>
             ))}
@@ -189,7 +189,7 @@ export const RosterHubPage: React.FC = () => {
           <ErrorBoundary>
             <Grid container spacing={2}>
               {filteredRosters.map((roster) => (
-                <Grid key={roster.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+                <Grid key={roster.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }} sx={{ display: 'flex' }}>
                   <RosterCard
                     roster={roster}
                     isOwner={isLoggedIn && roster.author_id === currentUserId}

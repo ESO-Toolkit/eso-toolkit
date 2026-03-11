@@ -1,4 +1,4 @@
-import { Clear, FilterList, Search, Sort } from '@mui/icons-material';
+import { Clear, Search } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -11,7 +11,6 @@ import {
   MenuItem,
   Select,
   type SelectChangeEvent,
-  Stack,
   TextField,
   Typography,
 } from '@mui/material';
@@ -107,22 +106,12 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
           />
 
           {/* Trial filter */}
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel id="trial-filter-label">
-              <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <FilterList fontSize="small" aria-hidden="true" />
-                Trial
-              </Box>
-            </InputLabel>
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel id="trial-filter-label">Trial</InputLabel>
             <Select
               labelId="trial-filter-label"
               value={filters.trial}
-              label={
-                <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <FilterList fontSize="small" aria-hidden="true" />
-                  Trial
-                </Box>
-              }
+              label="Trial"
               onChange={handleTrialChange}
             >
               <MenuItem value="">All Trials</MenuItem>
@@ -136,7 +125,6 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
 
           {/* Sort toggle */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Sort fontSize="small" sx={{ color: 'text.secondary' }} aria-hidden="true" />
             <ButtonGroup size="small" variant="outlined" aria-label="Sort order">
               <Button
                 onClick={() => handleSortChange('votes')}
@@ -166,25 +154,43 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
             flexWrap: 'wrap',
           }}
         >
-          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, flexGrow: 1 }}>
-            {PRESET_TAGS.map((tag) => (
-              <Chip
-                key={tag}
-                label={tag}
-                size="small"
-                onClick={() => handleTagToggle(tag)}
-                color={filters.tag === tag ? 'primary' : 'default'}
-                variant={filters.tag === tag ? 'filled' : 'outlined'}
-                aria-pressed={filters.tag === tag}
-                role="checkbox"
-                sx={{
-                  cursor: 'pointer',
-                  textTransform: 'lowercase',
-                  fontSize: '0.75rem',
-                }}
-              />
-            ))}
-          </Stack>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 0.75,
+              flexGrow: 1,
+              overflowX: 'auto',
+              flexWrap: { xs: 'nowrap', sm: 'wrap' },
+              // Hide scrollbar visually but keep scroll functionality
+              '&::-webkit-scrollbar': { display: 'none' },
+              scrollbarWidth: 'none',
+              pb: { xs: 0.5, sm: 0 },
+            }}
+          >
+            {PRESET_TAGS.map((tag) => {
+              const active = filters.tag === tag;
+              return (
+                <Chip
+                  key={tag}
+                  label={tag}
+                  size="small"
+                  onClick={() => handleTagToggle(tag)}
+                  color={active ? 'primary' : 'default'}
+                  variant={active ? 'filled' : 'outlined'}
+                  aria-pressed={active}
+                  role="checkbox"
+                  sx={{
+                    cursor: 'pointer',
+                    fontSize: '0.7rem',
+                    flexShrink: 0,
+                    height: 24,
+                    '& .MuiChip-label': { px: 1 },
+                    transition: 'all 0.15s ease',
+                  }}
+                />
+              );
+            })}
+          </Box>
 
           {totalCount !== null && (
             <Typography variant="caption" color="text.disabled" sx={{ whiteSpace: 'nowrap' }}>
