@@ -456,7 +456,24 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
         </Button>
         <Box sx={{ flexGrow: 1 }} />
         <Tooltip title="Copy share link">
-          <Button size="small" startIcon={<ContentCopy />} onClick={handleCopyLink} variant="outlined">
+          <Button
+            size="small"
+            startIcon={<ContentCopy />}
+            onClick={handleCopyLink}
+            variant="outlined"
+            sx={{
+              color: '#22d3ee',
+              borderColor: 'rgba(6,182,212,0.45)',
+              background: 'rgba(6,182,212,0.06)',
+              fontWeight: 600,
+              '&:hover': {
+                borderColor: 'rgba(6,182,212,0.75)',
+                background: 'rgba(6,182,212,0.12)',
+                boxShadow: '0 0 10px rgba(6,182,212,0.2)',
+              },
+              transition: 'all 0.2s ease',
+            }}
+          >
             Copy link
           </Button>
         </Tooltip>
@@ -465,6 +482,21 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
           startIcon={<Download />}
           onClick={handleLoadIntoBuilder}
           variant="contained"
+          sx={{
+            background: 'linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)',
+            color: '#fff',
+            border: 'none',
+            fontWeight: 700,
+            letterSpacing: '0.01em',
+            boxShadow: '0 0 18px rgba(6,182,212,0.45), 0 4px 14px rgba(0,0,0,0.45)',
+            textShadow: '0 1px 3px rgba(0,0,0,0.35)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
+              boxShadow: '0 0 26px rgba(6,182,212,0.6), 0 6px 20px rgba(0,0,0,0.5)',
+              transform: 'translateY(-2px)',
+            },
+            transition: 'all 0.2s ease',
+          }}
         >
           Load into Builder
         </Button>
