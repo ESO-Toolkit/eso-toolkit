@@ -2,7 +2,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import InfoIcon from '@mui/icons-material/Info';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { Box, Stack, Tooltip, Typography, useTheme } from '@mui/material';
+import { Box, Stack, Tooltip, Typography, useTheme, type Theme } from '@mui/material';
 import React from 'react';
 
 import type { ParseChecklistItem, ParseChecklistStatus } from '../types/parseChecklist';
@@ -18,12 +18,7 @@ const STATUS_LABELS: Record<ParseChecklistStatus, string> = {
   info: 'Manual',
 };
 
-const STATUS_BORDER_COLORS: Record<ParseChecklistStatus, string> = {
-  pass: '#4caf50',
-  warn: '#ff9800',
-  fail: '#f44336',
-  info: '#2196f3',
-};
+// Removed hardcoded colors - using theme palette instead
 
 function getStatusIcon(status: ParseChecklistStatus): React.ReactElement {
   const sx = { fontSize: 16 };
@@ -38,6 +33,40 @@ function getStatusIcon(status: ParseChecklistStatus): React.ReactElement {
       return <InfoIcon color="info" sx={sx} />;
   }
 }
+
+const getStatusColor = (
+  status: ParseChecklistStatus,
+  theme: Theme,
+): { main: string; light: string; text: string } => {
+  switch (status) {
+    case 'pass':
+      return {
+        main: theme.palette.success.main,
+        light: theme.palette.success.light,
+        text:
+          theme.palette.mode === 'dark' ? theme.palette.success.light : theme.palette.success.main,
+      };
+    case 'warn':
+      return {
+        main: theme.palette.warning.main,
+        light: theme.palette.warning.light,
+        text:
+          theme.palette.mode === 'dark' ? theme.palette.warning.light : theme.palette.warning.main,
+      };
+    case 'fail':
+      return {
+        main: theme.palette.error.main,
+        light: theme.palette.error.light,
+        text: theme.palette.mode === 'dark' ? theme.palette.error.light : theme.palette.error.main,
+      };
+    case 'info':
+      return {
+        main: theme.palette.info.main,
+        light: theme.palette.info.light,
+        text: theme.palette.mode === 'dark' ? theme.palette.info.light : theme.palette.info.main,
+      };
+  }
+};
 
 export const ParseChecklist: React.FC<ParseChecklistProps> = ({ items }) => {
   const theme = useTheme();
@@ -58,17 +87,35 @@ export const ParseChecklist: React.FC<ParseChecklistProps> = ({ items }) => {
         </Typography>
         <Stack direction="row" spacing={1}>
           {passCount > 0 && (
-            <Typography variant="caption" color="success.main" fontWeight={600}>
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 600,
+                color: isDark ? theme.palette.success.light : theme.palette.success.main,
+              }}
+            >
               {passCount} pass
             </Typography>
           )}
           {warnCount > 0 && (
-            <Typography variant="caption" color="warning.main" fontWeight={600}>
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 600,
+                color: isDark ? theme.palette.warning.light : theme.palette.warning.main,
+              }}
+            >
               {warnCount} review
             </Typography>
           )}
           {failCount > 0 && (
-            <Typography variant="caption" color="error.main" fontWeight={600}>
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 600,
+                color: isDark ? theme.palette.error.light : theme.palette.error.main,
+              }}
+            >
               {failCount} missing
             </Typography>
           )}
@@ -83,45 +130,84 @@ export const ParseChecklist: React.FC<ParseChecklistProps> = ({ items }) => {
           gap: 1,
         }}
       >
-        {items.map((item) => (
-          <Tooltip key={item.id} title={item.detail || ''} placement="top" arrow>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                py: 1,
-                px: 1.5,
-                borderRadius: 1.5,
-                borderLeft: '3px solid',
-                borderLeftColor: STATUS_BORDER_COLORS[item.status],
-                backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                transition: 'background-color 0.15s',
-                '&:hover': {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                },
-              }}
-            >
-              {getStatusIcon(item.status)}
-              <Typography variant="caption" fontWeight={500} sx={{ flex: 1 }}>
-                {item.title}
-              </Typography>
-              <Typography
-                variant="caption"
+        {items.map((item) => {
+          const statusColor = getStatusColor(item.status, theme);
+          const bgAlpha = isDark ? 0.08 : 0.06;
+          const bgColor = `rgba(${
+            item.status === 'pass'
+              ? isDark
+                ? '76, 175, 80'
+                : '76, 175, 80'
+              : item.status === 'warn'
+                ? isDark
+                  ? '255, 152, 0'
+                  : '255, 152, 0'
+                : item.status === 'fail'
+                  ? isDark
+                    ? '244, 67, 54'
+                    : '244, 67, 54'
+                  : isDark
+                    ? '33, 150, 243'
+                    : '33, 150, 243'
+          }, ${bgAlpha})`;
+
+          return (
+            <Tooltip key={item.id} title={item.detail || ''} placement="top" arrow>
+              <Box
                 sx={{
-                  fontSize: '0.6rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.5,
-                  color: STATUS_BORDER_COLORS[item.status],
-                  opacity: 0.85,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  py: 1.25,
+                  px: 1.5,
+                  borderRadius: 1.5,
+                  borderTop: '2px solid',
+                  borderTopColor: statusColor.main,
+                  backgroundColor: bgColor,
+                  transition: 'all 0.15s ease-out',
+                  '&:hover': {
+                    backgroundColor: `rgba(${
+                      item.status === 'pass'
+                        ? isDark
+                          ? '76, 175, 80'
+                          : '76, 175, 80'
+                        : item.status === 'warn'
+                          ? isDark
+                            ? '255, 152, 0'
+                            : '255, 152, 0'
+                          : item.status === 'fail'
+                            ? isDark
+                              ? '244, 67, 54'
+                              : '244, 67, 54'
+                            : isDark
+                              ? '33, 150, 243'
+                              : '33, 150, 243'
+                    }, ${bgAlpha + 0.04})`,
+                    transform: 'translateY(-1px)',
+                  },
                 }}
               >
-                {STATUS_LABELS[item.status]}
-              </Typography>
-            </Box>
-          </Tooltip>
-        ))}
+                {getStatusIcon(item.status)}
+                <Typography variant="caption" fontWeight={500} sx={{ flex: 1 }}>
+                  {item.title}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                    color: statusColor.text,
+                    opacity: 0.9,
+                  }}
+                >
+                  {STATUS_LABELS[item.status]}
+                </Typography>
+              </Box>
+            </Tooltip>
+          );
+        })}
       </Box>
     </Box>
   );

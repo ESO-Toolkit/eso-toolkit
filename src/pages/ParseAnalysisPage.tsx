@@ -14,15 +14,16 @@ import ErrorIcon from '@mui/icons-material/Error';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FastfoodIcon from '@mui/icons-material/Fastfood';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import InfoIcon from '@mui/icons-material/Info';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import PersonIcon from '@mui/icons-material/Person';
 import RotateRightIcon from '@mui/icons-material/RotateRight';
 import SpeedIcon from '@mui/icons-material/Speed';
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Alert,
   Box,
   Button,
   Card,
@@ -34,7 +35,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   IconButton,
   LinearProgress,
   Link,
@@ -48,6 +48,7 @@ import {
   TableRow,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -228,12 +229,54 @@ const logger = new Logger({
   contextPrefix: 'ParseAnalysisPage',
 });
 
+/** Readable food type labels — avoids a 10-level ternary chain */
+const FOOD_TYPE_LABELS: Record<string, string> = {
+  'tri-stat': 'Tri-Stat Food (Max Health, Magicka & Stamina)',
+  stamina: 'Stamina Recovery Food',
+  magicka: 'Magicka Recovery Food',
+  'health-stamina': 'Health + Stamina Food',
+  'health-magicka': 'Health + Magicka Food',
+  'magicka-stamina': 'Magicka + Stamina Food',
+  'stamina-magicka-recovery': 'Max Stamina + Magicka Recovery Food',
+  'health-regen': 'Health + Regeneration Food',
+  event: 'Event Food/Drink',
+  'xp-boost': 'Experience Boost Food',
+};
+
 /**
  * Inner component that uses hooks from ReportFightProvider context
  * This must be rendered as a child of ReportFightProvider
  */
 const ParseAnalysisPageContent: React.FC = () => {
   const roleColors = useRoleColors();
+  const theme = useTheme();
+
+  /**
+   * Get theme-aware semantic color for text display.
+   * Dark mode uses brighter tints than MUI's auto-generated .light variants
+   * for sufficient contrast on dark backgrounds (~#111827).
+   */
+  const getMetricColor = (excellent: boolean, good: boolean): string => {
+    const isDark = theme.palette.mode === 'dark';
+    if (excellent) {
+      return isDark ? '#4ade80' : theme.palette.success.main; // green-400
+    }
+    if (good) {
+      return isDark ? '#fbbf24' : theme.palette.warning.main; // amber-400
+    }
+    return isDark ? '#f87171' : theme.palette.error.main; // red-400
+  };
+
+  /** Shared glass-card styles */
+  const glassCardSx = {
+    ...roleColors.getAccordionStyles(),
+  } as const;
+
+  /** Accordion variant — adds the MUI default-divider suppression */
+  const glassAccordionSx = {
+    ...glassCardSx,
+    '&:before': { display: 'none' },
+  };
   const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -1055,59 +1098,48 @@ const ParseAnalysisPageContent: React.FC = () => {
     if (!state.foodResult) return null;
 
     const { hasFood, foodType } = state.foodResult;
+    const foodLabel = FOOD_TYPE_LABELS[foodType] ?? 'Other Food/Drink';
 
-    const foodLabel =
-      foodType === 'tri-stat'
-        ? 'Tri-Stat Food (Max Health, Magicka & Stamina)'
-        : foodType === 'stamina'
-          ? 'Stamina Recovery Food'
-          : foodType === 'magicka'
-            ? 'Magicka Recovery Food'
-            : foodType === 'health-stamina'
-              ? 'Health + Stamina Food'
-              : foodType === 'health-magicka'
-                ? 'Health + Magicka Food'
-                : foodType === 'magicka-stamina'
-                  ? 'Magicka + Stamina Food'
-                  : foodType === 'stamina-magicka-recovery'
-                    ? 'Max Stamina + Magicka Recovery Food'
-                    : foodType === 'health-regen'
-                      ? 'Health + Regeneration Food'
-                      : foodType === 'event'
-                        ? 'Event Food/Drink'
-                        : foodType === 'xp-boost'
-                          ? 'Experience Boost Food'
-                          : 'Other Food/Drink';
+    const semanticColor = hasFood ? 'success' : 'error';
 
     return (
       <Box
         sx={{
           p: 2,
           borderRadius: 2,
+          backgroundColor: roleColors.isDarkMode
+            ? hasFood
+              ? 'rgba(46, 125, 50, 0.10)'
+              : 'rgba(211, 47, 47, 0.10)'
+            : hasFood
+              ? 'rgba(46, 125, 50, 0.05)'
+              : 'rgba(211, 47, 47, 0.05)',
           border: '1px solid',
-          borderColor: hasFood ? 'success.main' : 'error.main',
-          borderLeftWidth: 4,
-          backgroundColor: hasFood
-            ? roleColors.isDarkMode
-              ? 'rgba(46, 125, 50, 0.08)'
-              : 'rgba(46, 125, 50, 0.04)'
-            : roleColors.isDarkMode
-              ? 'rgba(211, 47, 47, 0.08)'
-              : 'rgba(211, 47, 47, 0.04)',
+          borderColor: hasFood ? 'success.light' : 'error.light',
+          borderTop: '3px solid',
+          borderTopColor: hasFood ? 'success.main' : 'error.main',
+          mb: 2,
         }}
       >
         <Stack direction="row" spacing={1.5} alignItems="center">
-          <FastfoodIcon color={hasFood ? 'success' : 'error'} />
-          <Box>
+          <FastfoodIcon color={semanticColor} sx={{ fontSize: 20 }} />
+          <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="body2" fontWeight={600}>
-              {hasFood ? 'Food Active' : 'No Food Detected'}
+              {hasFood ? 'Food Buff Detected' : 'No Food/Drink Detected'}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {hasFood
-                ? `${foodLabel}${state.foodResult?.foodNames.length > 0 ? ` — ${state.foodResult.foodNames.join(', ')}` : ''}`
-                : 'Using food/drink is recommended for parses'}
+                ? `${foodLabel}${state.foodResult?.foodNames.length > 0 ? `: ${state.foodResult.foodNames.join(', ')}` : ''}`
+                : 'Food or drink buff is recommended for optimal parse performance'}
             </Typography>
           </Box>
+          <Chip
+            label={hasFood ? 'Active' : 'Missing'}
+            size="small"
+            color={hasFood ? 'success' : 'error'}
+            variant="outlined"
+            sx={{ height: 22, fontSize: '0.7rem' }}
+          />
         </Stack>
       </Box>
     );
@@ -1138,35 +1170,48 @@ const ParseAnalysisPageContent: React.FC = () => {
     const isGood = activePercentage >= 85;
     const progressValue = Math.min(100, activePercentage);
     const progressColor = isExcellent ? 'success' : isGood ? 'warning' : 'error';
+    const activityColor = getMetricColor(isExcellent, isGood);
 
     return (
       <Card
         sx={{
-          ...roleColors.getAccordionStyles(),
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
+          ...glassCardSx,
+          borderTop: '3px solid',
+          borderTopColor: activityColor,
         }}
       >
         <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
-            <AccessTimeIcon color={progressColor} fontSize="small" />
-            <Typography variant="subtitle2" fontWeight={600}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2.5 }}>
+            <Box
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: roleColors.isDarkMode
+                  ? `linear-gradient(135deg, ${activityColor}33 0%, ${activityColor}11 100%)`
+                  : `linear-gradient(135deg, ${activityColor}1a 0%, ${activityColor}0a 100%)`,
+                border: '1px solid',
+                borderColor: roleColors.isDarkMode ? `${activityColor}33` : `${activityColor}26`,
+              }}
+            >
+              <AccessTimeIcon color={progressColor} sx={{ fontSize: '1rem' }} />
+            </Box>
+            <Typography variant="subtitle2" fontWeight={600} sx={{ letterSpacing: '-0.01em' }}>
               Activity Uptime
             </Typography>
           </Stack>
 
-          <Stack direction="row" alignItems="baseline" spacing={0.5} sx={{ mb: 1 }}>
-            <Typography
-              variant="h4"
-              fontWeight={700}
-              color={isExcellent ? 'success.main' : isGood ? 'warning.main' : 'error.main'}
-            >
-              {percentDisplay}%
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Active
-            </Typography>
-          </Stack>
+          <Typography
+            variant="h3"
+            fontWeight={800}
+            color={activityColor}
+            sx={{ lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+          >
+            {percentDisplay}%
+          </Typography>
 
           <LinearProgress
             variant="determinate"
@@ -1211,7 +1256,16 @@ const ParseAnalysisPageContent: React.FC = () => {
               <Typography
                 variant="caption"
                 fontWeight={600}
-                color={downtimeSeconds <= 5 ? 'success.main' : 'error.main'}
+                sx={{
+                  color:
+                    downtimeSeconds <= 5
+                      ? theme.palette.mode === 'dark'
+                        ? '#4ade80'
+                        : theme.palette.success.main
+                      : theme.palette.mode === 'dark'
+                        ? '#f87171'
+                        : theme.palette.error.main,
+                }}
               >
                 {downtimeSeconds.toFixed(1)}s
               </Typography>
@@ -1247,34 +1301,48 @@ const ParseAnalysisPageContent: React.FC = () => {
     const isGoodCPM = cpm >= 50;
     const isExcellentCPM = cpm >= 60;
 
+    const cpmColor = getMetricColor(isExcellentCPM, isGoodCPM);
+
     return (
       <Card
         sx={{
-          ...roleColors.getAccordionStyles(),
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
+          ...glassCardSx,
+          borderTop: '3px solid',
+          borderTopColor: cpmColor,
         }}
       >
         <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
-            <SpeedIcon color={isGoodCPM ? 'success' : 'warning'} fontSize="small" />
-            <Typography variant="subtitle2" fontWeight={600}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2.5 }}>
+            <Box
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: roleColors.isDarkMode
+                  ? `linear-gradient(135deg, ${cpmColor}33 0%, ${cpmColor}11 100%)`
+                  : `linear-gradient(135deg, ${cpmColor}1a 0%, ${cpmColor}0a 100%)`,
+                border: '1px solid',
+                borderColor: roleColors.isDarkMode ? `${cpmColor}33` : `${cpmColor}26`,
+              }}
+            >
+              <SpeedIcon color={isGoodCPM ? 'success' : 'warning'} sx={{ fontSize: '1rem' }} />
+            </Box>
+            <Typography variant="subtitle2" fontWeight={600} sx={{ letterSpacing: '-0.01em' }}>
               Casts Per Minute
             </Typography>
           </Stack>
 
-          <Stack direction="row" alignItems="baseline" spacing={0.5} sx={{ mb: 1 }}>
-            <Typography
-              variant="h4"
-              fontWeight={700}
-              color={isExcellentCPM ? 'success.main' : isGoodCPM ? 'warning.main' : 'error.main'}
-            >
-              {cpm.toFixed(1)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              CPM
-            </Typography>
-          </Stack>
+          <Typography
+            variant="h3"
+            fontWeight={800}
+            color={cpmColor}
+            sx={{ lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+          >
+            {cpm.toFixed(1)}
+          </Typography>
 
           <LinearProgress
             variant="determinate"
@@ -1304,29 +1372,45 @@ const ParseAnalysisPageContent: React.FC = () => {
     return (
       <Card
         sx={{
-          ...roleColors.getAccordionStyles(),
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
+          ...glassCardSx,
+          borderTop: '3px solid',
+          borderTopColor: 'primary.main',
         }}
       >
         <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
-            <FlashOnIcon color="primary" fontSize="small" />
-            <Typography variant="subtitle2" fontWeight={600}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2.5 }}>
+            <Box
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: roleColors.isDarkMode
+                  ? 'linear-gradient(135deg, rgba(25, 118, 210, 0.2) 0%, rgba(25, 118, 210, 0.08) 100%)'
+                  : 'linear-gradient(135deg, rgba(25, 118, 210, 0.12) 0%, rgba(25, 118, 210, 0.04) 100%)',
+                border: '1px solid',
+                borderColor: roleColors.isDarkMode
+                  ? 'rgba(25, 118, 210, 0.2)'
+                  : 'rgba(25, 118, 210, 0.15)',
+              }}
+            >
+              <FlashOnIcon color="primary" sx={{ fontSize: '1rem' }} />
+            </Box>
+            <Typography variant="subtitle2" fontWeight={600} sx={{ letterSpacing: '-0.01em' }}>
               Damage Per Second
             </Typography>
           </Stack>
 
-          <Stack direction="row" alignItems="baseline" spacing={0.5}>
-            <Typography variant="h4" fontWeight={700} color="primary.main">
-              {Math.round(dps).toLocaleString()}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              DPS
-            </Typography>
-          </Stack>
-
-          <Divider sx={{ my: 1.5, opacity: 0.3 }} />
+          <Typography
+            variant="h3"
+            fontWeight={800}
+            color="primary.main"
+            sx={{ lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+          >
+            {Math.round(dps).toLocaleString()}
+          </Typography>
 
           <Stack spacing={0.5}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1365,15 +1449,7 @@ const ParseAnalysisPageContent: React.FC = () => {
     } = state.rotationResult;
 
     return (
-      <Accordion
-        defaultExpanded={false}
-        sx={{
-          ...roleColors.getAccordionStyles(),
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          '&:before': { display: 'none' },
-        }}
-      >
+      <Accordion defaultExpanded={true} disableGutters sx={glassAccordionSx}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Stack direction="row" spacing={1} alignItems="center">
             <RotateRightIcon color="info" fontSize="small" />
@@ -1593,13 +1669,14 @@ const ParseAnalysisPageContent: React.FC = () => {
 
     const isGoodWeaving = weaveAccuracy >= 80;
     const isExcellentWeaving = weaveAccuracy >= 90;
+    const weaveColor = getMetricColor(isExcellentWeaving, isGoodWeaving);
 
     return (
       <Card
         sx={{
-          ...roleColors.getAccordionStyles(),
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
+          ...glassCardSx,
+          borderTop: '3px solid',
+          borderTopColor: weaveColor,
         }}
       >
         <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
@@ -1608,11 +1685,30 @@ const ParseAnalysisPageContent: React.FC = () => {
             spacing={1}
             alignItems="center"
             justifyContent="space-between"
-            sx={{ mb: 1.5 }}
+            sx={{ mb: 2.5 }}
           >
             <Stack direction="row" spacing={1} alignItems="center">
-              <FlashOnIcon color={isGoodWeaving ? 'success' : 'warning'} fontSize="small" />
-              <Typography variant="subtitle2" fontWeight={600}>
+              <Box
+                sx={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: roleColors.isDarkMode
+                    ? `linear-gradient(135deg, ${weaveColor}33 0%, ${weaveColor}11 100%)`
+                    : `linear-gradient(135deg, ${weaveColor}1a 0%, ${weaveColor}0a 100%)`,
+                  border: '1px solid',
+                  borderColor: roleColors.isDarkMode ? `${weaveColor}33` : `${weaveColor}26`,
+                }}
+              >
+                <FlashOnIcon
+                  color={isGoodWeaving ? 'success' : 'warning'}
+                  sx={{ fontSize: '1rem' }}
+                />
+              </Box>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ letterSpacing: '-0.01em' }}>
                 Weave Accuracy
               </Typography>
             </Stack>
@@ -1627,17 +1723,14 @@ const ParseAnalysisPageContent: React.FC = () => {
             </IconButton>
           </Stack>
 
-          <Stack direction="row" alignItems="baseline" spacing={0.5} sx={{ mb: 1 }}>
-            <Typography
-              variant="h4"
-              fontWeight={700}
-              color={
-                isExcellentWeaving ? 'success.main' : isGoodWeaving ? 'warning.main' : 'error.main'
-              }
-            >
-              {weaveAccuracy.toFixed(1)}%
-            </Typography>
-          </Stack>
+          <Typography
+            variant="h3"
+            fontWeight={800}
+            color={weaveColor}
+            sx={{ lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+          >
+            {weaveAccuracy.toFixed(1)}%
+          </Typography>
 
           <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
             {properWeaves} / {totalSkills} skills had a light attack before them
@@ -1713,7 +1806,33 @@ const ParseAnalysisPageContent: React.FC = () => {
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
+        <Typography
+          sx={{
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: 'text.disabled',
+            mb: 0.75,
+          }}
+        >
+          ESO Toolkit
+        </Typography>
+        <Typography
+          variant="h1"
+          sx={{
+            fontSize: '2rem',
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
+            background: roleColors.isDarkMode
+              ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+              : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            mb: 1,
+          }}
+        >
           Parse Analysis
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -1730,12 +1849,10 @@ const ParseAnalysisPageContent: React.FC = () => {
         <Card
           sx={{
             mb: 4,
-            ...roleColors.getAccordionStyles(),
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
+            ...glassCardSx,
           }}
         >
-          <CardContent sx={{ p: 3 }}>
+          <CardContent sx={{ p: 2.5 }}>
             <Stack spacing={2}>
               <TextField
                 label="ESOLogs.com Report URL"
@@ -1746,6 +1863,27 @@ const ParseAnalysisPageContent: React.FC = () => {
                 placeholder="https://www.esologs.com/reports/ABC123XYZ"
                 disabled={state.loading}
                 size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '10px',
+                    backgroundColor: roleColors.isDarkMode
+                      ? 'rgba(255,255,255,0.03)'
+                      : 'rgba(0,0,0,0.02)',
+                    '& fieldset': {
+                      borderColor: roleColors.isDarkMode
+                        ? 'rgba(255,255,255,0.08)'
+                        : 'rgba(0,0,0,0.12)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: roleColors.isDarkMode
+                        ? 'rgba(255,255,255,0.15)'
+                        : 'rgba(0,0,0,0.2)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    },
+                  },
+                }}
               />
               <Button
                 variant="contained"
@@ -1753,6 +1891,42 @@ const ParseAnalysisPageContent: React.FC = () => {
                 onClick={handleAnalyze}
                 disabled={!logUrl || state.loading}
                 fullWidth
+                sx={{
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  px: 2,
+                  py: 1,
+                  borderRadius: 1.5,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  background: roleColors.isDarkMode
+                    ? 'linear-gradient(135deg, rgba(66, 133, 244, 0.9) 0%, rgba(33, 150, 243, 0.8) 100%)'
+                    : 'linear-gradient(135deg, rgba(63, 81, 181, 0.9) 0%, rgba(33, 150, 243, 0.8) 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  boxShadow: roleColors.isDarkMode
+                    ? 'inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 6px rgba(66, 133, 244, 0.2)'
+                    : 'inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 6px rgba(63, 81, 181, 0.15)',
+                  transition: 'transform 0.15s ease-out, box-shadow 0.15s ease-out',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    boxShadow: roleColors.isDarkMode
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 12px rgba(66, 133, 244, 0.3)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 12px rgba(63, 81, 181, 0.25)',
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
+                    boxShadow: roleColors.isDarkMode
+                      ? 'inset 0 1px 2px rgba(255,255,255,0.08), 0 1px 3px rgba(66, 133, 244, 0.15)'
+                      : 'inset 0 1px 2px rgba(255,255,255,0.1), 0 1px 3px rgba(63, 81, 181, 0.1)',
+                  },
+                  '&:disabled': {
+                    background: roleColors.isDarkMode
+                      ? 'rgba(66, 133, 244, 0.3)'
+                      : 'rgba(63, 81, 181, 0.15)',
+                    color: roleColors.isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.3)',
+                  },
+                }}
               >
                 Analyze Parse
               </Button>
@@ -1763,139 +1937,218 @@ const ParseAnalysisPageContent: React.FC = () => {
 
       {/* Setup instructions — shown only when no report is loaded */}
       {!state.reportCode && !state.loading && (
-        <Card
-          sx={{
-            mb: 4,
-            ...roleColors.getAccordionStyles(),
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-          }}
-        >
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="subtitle1" fontWeight={700} gutterBottom>
-              How to set up a live parse
-            </Typography>
-            <Stack spacing={2.5}>
-              {(
-                [
-                  {
-                    step: 1,
-                    title: 'Download the ESOLogs uploader',
-                    body: (
-                      <>
-                        Download and install the desktop client from{' '}
-                        <Link
-                          href="https://www.esologs.com/client/download"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25 }}
-                        >
-                          esologs.com/client/download
-                          <OpenInNewIcon sx={{ fontSize: 12 }} />
-                        </Link>
-                        .
-                      </>
-                    ),
-                  },
-                  {
-                    step: 2,
-                    title: 'Start a Live Log',
-                    body: 'Open the uploader, select your ESO Logs directory and guild, then click Go! to begin uploading.',
-                  },
-                  {
-                    step: 3,
-                    title: 'Copy your report URL',
-                    body: 'Once the upload starts you will see a View Report button. Click it to open your live report, then copy the URL from your browser and paste it into the field above.',
-                  },
-                  {
-                    step: 4,
-                    title: 'Enable encounter logging in-game',
-                    body: (
-                      <>
-                        In the ESO chat box run the command{' '}
-                        <Box
-                          component="code"
-                          sx={{
-                            px: 0.75,
-                            py: 0.25,
-                            borderRadius: 1,
-                            bgcolor: 'action.hover',
-                            fontFamily: 'monospace',
-                            fontSize: '0.8rem',
-                          }}
-                        >
-                          /encounterlog
-                        </Box>
-                        . You should see the message{' '}
-                        <Box component="em">Encounter log enabled.</Box>
-                      </>
-                    ),
-                  },
-                  {
-                    step: 5,
-                    title: 'Parse on a 21M trial dummy',
-                    body: 'Attack a 21,000,000 HP trial dummy. Make sure your gear and food are set up as you intend to parse.',
-                  },
-                  {
-                    step: 6,
-                    title: 'Wait for automatic upload',
-                    body: 'Logs upload automatically ~10 seconds after combat ends (the ESO combat status timer). This page will poll for new fights and refresh automatically once your parse is available.',
-                  },
-                ] as { step: number; title: string; body: React.ReactNode }[]
-              ).map(({ step, title, body }) => (
-                <Stack key={step} direction="row" spacing={2} alignItems="flex-start">
-                  <Box
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      bgcolor: 'primary.main',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      mt: 0.25,
-                    }}
-                  >
-                    <Typography variant="caption" fontWeight={700} color="primary.contrastText">
-                      {step}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" fontWeight={600}>
-                      {title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {body}
-                    </Typography>
-                  </Box>
-                </Stack>
-              ))}
+        <Accordion defaultExpanded={false} disableGutters sx={{ mb: 4, ...glassAccordionSx }}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              {/* Icon lockup */}
+              <Box
+                sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: roleColors.isDarkMode
+                    ? 'linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.08) 100%)'
+                    : 'linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(76, 175, 80, 0.04) 100%)',
+                  border: '1px solid',
+                  borderColor: roleColors.isDarkMode
+                    ? 'rgba(76, 175, 80, 0.2)'
+                    : 'rgba(76, 175, 80, 0.15)',
+                }}
+              >
+                <CheckCircleIcon color="success" sx={{ fontSize: '14px' }} />
+              </Box>
+              <Typography variant="subtitle1" fontWeight={600}>
+                How to set up a live parse
+              </Typography>
             </Stack>
-          </CardContent>
-        </Card>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Box sx={{ pt: 1 }}>
+              <Stack spacing={2.5}>
+                {(
+                  [
+                    {
+                      step: 1,
+                      title: 'Download the ESOLogs uploader',
+                      body: (
+                        <>
+                          Download and install the desktop client from{' '}
+                          <Link
+                            href="https://www.esologs.com/client/download"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25 }}
+                          >
+                            esologs.com/client/download
+                            <OpenInNewIcon sx={{ fontSize: 12 }} />
+                          </Link>
+                          .
+                        </>
+                      ),
+                    },
+                    {
+                      step: 2,
+                      title: 'Start a Live Log',
+                      body: 'Open the uploader, select your ESO Logs directory and guild, then click Go! to begin uploading.',
+                    },
+                    {
+                      step: 3,
+                      title: 'Copy your report URL',
+                      body: 'Once the upload starts you will see a View Report button. Click it to open your live report, then copy the URL from your browser and paste it into the field above.',
+                    },
+                    {
+                      step: 4,
+                      title: 'Enable encounter logging in-game',
+                      body: (
+                        <>
+                          In the ESO chat box run the command{' '}
+                          <Box
+                            component="code"
+                            sx={{
+                              px: 0.75,
+                              py: 0.25,
+                              borderRadius: 1,
+                              bgcolor: 'action.hover',
+                              fontFamily: 'monospace',
+                              fontSize: '0.8rem',
+                            }}
+                          >
+                            /encounterlog
+                          </Box>
+                          . You should see the message{' '}
+                          <Box component="em">Encounter log enabled.</Box>
+                        </>
+                      ),
+                    },
+                    {
+                      step: 5,
+                      title: 'Parse on a 21M trial dummy',
+                      body: 'Attack a 21,000,000 HP trial dummy. Make sure your gear and food are set up as you intend to parse.',
+                    },
+                    {
+                      step: 6,
+                      title: 'Wait for automatic upload',
+                      body: 'Logs upload automatically ~10 seconds after combat ends (the ESO combat status timer). This page will poll for new fights and refresh automatically once your parse is available.',
+                    },
+                  ] as { step: number; title: string; body: React.ReactNode }[]
+                ).map(({ step, title, body }) => (
+                  <Stack key={step} direction="row" spacing={2} alignItems="flex-start">
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        background: roleColors.isDarkMode
+                          ? 'linear-gradient(135deg, rgba(25, 118, 210, 0.2) 0%, rgba(25, 118, 210, 0.08) 100%)'
+                          : 'linear-gradient(135deg, rgba(25, 118, 210, 0.12) 0%, rgba(25, 118, 210, 0.04) 100%)',
+                        border: '1px solid',
+                        borderColor: roleColors.isDarkMode
+                          ? 'rgba(25, 118, 210, 0.2)'
+                          : 'rgba(25, 118, 210, 0.15)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        mt: 0.25,
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        fontWeight={700}
+                        color="primary.main"
+                        sx={{ lineHeight: 1 }}
+                      >
+                        {step}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>
+                        {title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {body}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                ))}
+              </Stack>
+            </Box>
+          </AccordionDetails>
+        </Accordion>
       )}
 
       {state.error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {state.error}
-        </Alert>
+        <Box
+          sx={{
+            mb: 3,
+            p: 2,
+            borderRadius: 1.5,
+            borderTop: '2px solid',
+            borderTopColor: 'error.main',
+            backgroundColor: roleColors.isDarkMode
+              ? 'rgba(244, 67, 54, 0.08)'
+              : 'rgba(244, 67, 54, 0.06)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 1.5,
+          }}
+        >
+          <ErrorIcon color="error" sx={{ fontSize: 20, mt: 0.25, flexShrink: 0 }} />
+          <Typography variant="body2" color="error" fontWeight={500}>
+            {state.error}
+          </Typography>
+        </Box>
       )}
 
       {/* Fight navigation — visible whenever multiple supported fights are available, even while loading */}
       {availableFights.length > 0 && !!state.reportCode && (
         <Card
           sx={{
-            mb: 2,
-            ...roleColors.getAccordionStyles(),
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
+            mb: 3,
+            ...glassCardSx,
           }}
         >
-          <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-              <RotateRightIcon fontSize="small" color="action" />
-              <Typography variant="caption" fontWeight={600}>
+          <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+            {/* Section Label */}
+            <Typography
+              sx={{
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'text.disabled',
+                mb: 1.5,
+              }}
+            >
+              Fight Selection
+            </Typography>
+
+            {/* Header with Icon Lockup */}
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+              {/* Icon Lockup: 24×24 with gradient background */}
+              <Box
+                sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: roleColors.isDarkMode
+                    ? 'linear-gradient(135deg, rgba(33, 150, 243, 0.2) 0%, rgba(33, 150, 243, 0.08) 100%)'
+                    : 'linear-gradient(135deg, rgba(33, 150, 243, 0.12) 0%, rgba(33, 150, 243, 0.04) 100%)',
+                  border: '1px solid',
+                  borderColor: roleColors.isDarkMode
+                    ? 'rgba(33, 150, 243, 0.2)'
+                    : 'rgba(33, 150, 243, 0.15)',
+                }}
+              >
+                <RotateRightIcon color="info" sx={{ fontSize: '14px' }} />
+              </Box>
+              <Typography variant="subtitle2" fontWeight={600}>
                 {availableFights.length === 1 ? 'Latest Fight' : 'Available Fights'}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -1920,63 +2173,119 @@ const ParseAnalysisPageContent: React.FC = () => {
       )}
 
       {state.loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress />
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2.5,
+            my: 4,
+            py: 3,
+          }}
+        >
+          <CircularProgress size={40} />
+          <Stack alignItems="center" spacing={0.5}>
+            <Typography variant="body2" fontWeight={600}>
+              Loading parse data...
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Fetching fight information and analyzing events
+            </Typography>
+          </Stack>
         </Box>
       )}
 
       {state.reportCode && state.playerName && !state.loading && (
         <>
-          {/* Fight Info Hero Header */}
+          {/* Fight Info Header */}
           <Card
             sx={{
               mb: 3,
-              background: roleColors.isDarkMode
-                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(147, 51, 234, 0.08) 50%, rgba(15, 23, 42, 0.95) 100%)'
-                : 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(147, 51, 234, 0.05) 50%, rgba(255, 255, 255, 0.98) 100%)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: '1px solid',
-              borderColor: roleColors.isDarkMode
-                ? 'rgba(56, 189, 248, 0.15)'
-                : 'rgba(56, 189, 248, 0.2)',
+              ...glassCardSx,
             }}
           >
-            <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+            <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
               <Stack
                 direction={{ xs: 'column', sm: 'row' }}
                 spacing={2}
                 justifyContent="space-between"
                 alignItems={{ xs: 'flex-start', sm: 'center' }}
               >
-                <Box>
-                  <Typography variant="h5" fontWeight={700} gutterBottom>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
                     {state.fightName}
                   </Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+
+                  <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
                     <Chip
+                      icon={<PersonIcon sx={{ fontSize: 14 }} />}
                       label={state.playerName}
                       size="small"
-                      color="primary"
                       variant="outlined"
+                      sx={{ height: 24, fontSize: '0.75rem' }}
                     />
-                    <Chip label={`Report: ${state.reportCode}`} size="small" variant="outlined" />
-                    <Chip label={`Fight #${state.fightId}`} size="small" variant="outlined" />
+                    <Chip
+                      icon={<FolderOpenIcon sx={{ fontSize: 14 }} />}
+                      label={state.reportCode}
+                      size="small"
+                      variant="outlined"
+                      sx={{ height: 24, fontSize: '0.75rem' }}
+                    />
+                    <Chip
+                      icon={<FlashOnIcon sx={{ fontSize: 14 }} />}
+                      label={`Fight ${state.fightId}`}
+                      size="small"
+                      variant="outlined"
+                      sx={{ height: 24, fontSize: '0.75rem' }}
+                    />
                     {fightDurationMs != null && (
                       <Chip
+                        icon={<AccessTimeIcon sx={{ fontSize: 14 }} />}
                         label={formatDuration(fightDurationMs)}
                         size="small"
-                        icon={<AccessTimeIcon />}
                         variant="outlined"
+                        sx={{ height: 24, fontSize: '0.75rem' }}
                       />
                     )}
                   </Stack>
                 </Box>
+
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   size="small"
                   onClick={handleReset}
-                  sx={{ alignSelf: { xs: 'stretch', sm: 'center' } }}
+                  sx={{
+                    alignSelf: { xs: 'stretch', sm: 'center' },
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    px: 2,
+                    py: 0.75,
+                    borderRadius: 1.5,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    background: roleColors.isDarkMode
+                      ? 'linear-gradient(135deg, rgba(66, 133, 244, 0.9) 0%, rgba(33, 150, 243, 0.8) 100%)'
+                      : 'linear-gradient(135deg, rgba(63, 81, 181, 0.9) 0%, rgba(33, 150, 243, 0.8) 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    boxShadow: roleColors.isDarkMode
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 6px rgba(66, 133, 244, 0.2)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 6px rgba(63, 81, 181, 0.15)',
+                    transition: 'transform 0.15s ease-out, box-shadow 0.15s ease-out',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: roleColors.isDarkMode
+                        ? 'inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 12px rgba(66, 133, 244, 0.3)'
+                        : 'inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 12px rgba(63, 81, 181, 0.25)',
+                    },
+                    '&:active': {
+                      transform: 'translateY(0)',
+                      boxShadow: roleColors.isDarkMode
+                        ? 'inset 0 1px 2px rgba(255,255,255,0.08), 0 1px 3px rgba(66, 133, 244, 0.15)'
+                        : 'inset 0 1px 2px rgba(255,255,255,0.1), 0 1px 3px rgba(63, 81, 181, 0.1)',
+                    },
+                  }}
                 >
                   New Analysis
                 </Button>
@@ -1991,6 +2300,18 @@ const ParseAnalysisPageContent: React.FC = () => {
           {renderParseChecklist()}
 
           {/* Key Stats Grid */}
+          <Typography
+            sx={{
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: 'text.disabled',
+              mb: 1,
+            }}
+          >
+            Performance Metrics
+          </Typography>
           <Box
             sx={{
               display: 'grid',
@@ -2006,22 +2327,48 @@ const ParseAnalysisPageContent: React.FC = () => {
           </Box>
 
           {/* Expandable Detail Sections */}
-          <Stack spacing={2} sx={{ mb: 3 }}>
+          <Typography
+            sx={{
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: 'text.disabled',
+              mb: 1,
+            }}
+          >
+            Detailed Insights
+          </Typography>
+          <Stack spacing={2} useFlexGap sx={{ mb: 3 }}>
             {renderRotationAnalysis()}
 
             {state.buildIssues && state.buildIssues.length > 0 && (
               <Accordion
                 defaultExpanded={state.buildIssues.length > 0}
-                sx={{
-                  ...roleColors.getAccordionStyles(),
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  '&:before': { display: 'none' },
-                }}
+                disableGutters
+                sx={glassAccordionSx}
               >
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <ErrorIcon color="warning" fontSize="small" />
+                    <Box
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: roleColors.isDarkMode
+                          ? 'linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 152, 0, 0.08) 100%)'
+                          : 'linear-gradient(135deg, rgba(255, 152, 0, 0.12) 0%, rgba(255, 152, 0, 0.04) 100%)',
+                        border: '1px solid',
+                        borderColor: roleColors.isDarkMode
+                          ? 'rgba(255, 152, 0, 0.2)'
+                          : 'rgba(255, 152, 0, 0.15)',
+                      }}
+                    >
+                      <ErrorIcon color="warning" sx={{ fontSize: '14px' }} />
+                    </Box>
                     <Typography variant="subtitle2" fontWeight={600}>
                       Build Issues
                     </Typography>
@@ -2029,6 +2376,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                       label={state.buildIssues.length}
                       size="small"
                       color="warning"
+                      variant="outlined"
                       sx={{ height: 20, fontSize: '0.65rem' }}
                     />
                   </Stack>
@@ -2038,42 +2386,52 @@ const ParseAnalysisPageContent: React.FC = () => {
                 </AccordionDetails>
               </Accordion>
             )}
-            {!state.buildIssues || state.buildIssues.length === 0
-              ? state.buildIssues && (
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      border: '1px solid',
-                      borderColor: 'success.main',
-                      borderLeftWidth: 4,
-                      backgroundColor: roleColors.isDarkMode
-                        ? 'rgba(46, 125, 50, 0.08)'
-                        : 'rgba(46, 125, 50, 0.04)',
-                    }}
-                  >
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-                      <CheckCircleIcon color="success" fontSize="small" />
-                      <Typography variant="body2" fontWeight={500}>
-                        No build issues detected
-                      </Typography>
-                    </Stack>
-                  </Box>
-                )
-              : null}
-
-            {state.buffChecklist && (
-              <Accordion
+            {state.buildIssues && state.buildIssues.length === 0 && (
+              <Box
                 sx={{
-                  ...roleColors.getAccordionStyles(),
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  '&:before': { display: 'none' },
+                  p: 2,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'success.main',
+                  borderTop: '3px solid',
+                  borderTopColor: 'success.main',
+                  backgroundColor: roleColors.isDarkMode
+                    ? 'rgba(46, 125, 50, 0.08)'
+                    : 'rgba(46, 125, 50, 0.04)',
                 }}
               >
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <CheckCircleIcon color="success" fontSize="small" />
+                  <Typography variant="body2" fontWeight={500}>
+                    No build issues detected
+                  </Typography>
+                </Stack>
+              </Box>
+            )}
+
+            {state.buffChecklist && (
+              <Accordion disableGutters sx={glassAccordionSx}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <CheckCircleIcon color="primary" fontSize="small" />
+                    <Box
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: roleColors.isDarkMode
+                          ? 'linear-gradient(135deg, rgba(25, 118, 210, 0.2) 0%, rgba(25, 118, 210, 0.08) 100%)'
+                          : 'linear-gradient(135deg, rgba(25, 118, 210, 0.12) 0%, rgba(25, 118, 210, 0.04) 100%)',
+                        border: '1px solid',
+                        borderColor: roleColors.isDarkMode
+                          ? 'rgba(25, 118, 210, 0.2)'
+                          : 'rgba(25, 118, 210, 0.15)',
+                      }}
+                    >
+                      <CheckCircleIcon color="primary" sx={{ fontSize: '14px' }} />
+                    </Box>
                     <Typography variant="subtitle2" fontWeight={600}>
                       Buff Source Analysis
                     </Typography>
@@ -2082,6 +2440,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                         label={`${state.buffChecklist.summary.totalRedundantBuffs} redundant`}
                         size="small"
                         color="warning"
+                        variant="outlined"
                         sx={{ height: 20, fontSize: '0.65rem' }}
                       />
                     )}
@@ -2094,17 +2453,28 @@ const ParseAnalysisPageContent: React.FC = () => {
             )}
 
             {state.debuffChecklist && (
-              <Accordion
-                sx={{
-                  ...roleColors.getAccordionStyles(),
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  '&:before': { display: 'none' },
-                }}
-              >
+              <Accordion disableGutters sx={glassAccordionSx}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <InfoIcon color="info" fontSize="small" />
+                    <Box
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: roleColors.isDarkMode
+                          ? 'linear-gradient(135deg, rgba(33, 150, 243, 0.2) 0%, rgba(33, 150, 243, 0.08) 100%)'
+                          : 'linear-gradient(135deg, rgba(33, 150, 243, 0.12) 0%, rgba(33, 150, 243, 0.04) 100%)',
+                        border: '1px solid',
+                        borderColor: roleColors.isDarkMode
+                          ? 'rgba(33, 150, 243, 0.2)'
+                          : 'rgba(33, 150, 243, 0.15)',
+                      }}
+                    >
+                      <InfoIcon color="info" sx={{ fontSize: '14px' }} />
+                    </Box>
                     <Typography variant="subtitle2" fontWeight={600}>
                       Debuffs Applied to Target
                     </Typography>

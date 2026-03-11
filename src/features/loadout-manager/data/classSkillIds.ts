@@ -69,71 +69,133 @@ export enum ClassSkillId {
   ARCANIST_WELLSPRING_OF_THE_ABYSS = 185033, // Wellspring of the Abyss
   ARCANIST_WRITHING_RUNEBLADES = 185803, // Writhing Runeblades
   ARCANIST_ZENAS_EMPOWERING_DISC = 186229, // Zenas\' Empowering Disc
-  DRAGONKNIGHT_ASH_CLOUD = 29059, // Ash Cloud
-  DRAGONKNIGHT_BATTLE_ROAR = 29463, // Battle Roar
+  DRAGONKNIGHT_ASH_CLOUD = 29059, // Ash Cloud (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Ash Cloud → Hearthfire)
+  DRAGONKNIGHT_HEARTHFIRE = 29059, // Hearthfire (U49, renamed from Ash Cloud)
+  DRAGONKNIGHT_BATTLE_ROAR = 29463, // Battle Roar (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Battle Roar → The Storm Voice)
+  DRAGONKNIGHT_THE_STORM_VOICE = 29463, // The Storm Voice (U49, renamed from Battle Roar)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Landslide new passive, ID pending)
+  DRAGONKNIGHT_LANDSLIDE = 29463, // Landslide (U49, new Earthen Heart passive — ID pending; references 29463 until corrected)
   DRAGONKNIGHT_BURNING_EMBERS = 20660, // Burning Embers
-  DRAGONKNIGHT_BURNING_HEART = 29457, // Burning Heart
+  DRAGONKNIGHT_BURNING_HEART = 29457, // Burning Heart (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Burning Heart → A Soul Ablaze)
+  DRAGONKNIGHT_A_SOUL_ABLAZE = 29457, // A Soul Ablaze (U49, renamed from Burning Heart)
   DRAGONKNIGHT_BURNING_TALONS = 20252, // Burning Talons
   DRAGONKNIGHT_CAUTERIZE = 32881, // Cauterize
   DRAGONKNIGHT_CHAINS_OF_DEVASTATION = 20499, // Chains of Devastation
   DRAGONKNIGHT_CHOKING_TALONS = 20251, // Choking Talons
-  DRAGONKNIGHT_CINDER_STORM = 20779, // Cinder Storm
-  DRAGONKNIGHT_COAGULATING_BLOOD = 32722, // Coagulating Blood
+  DRAGONKNIGHT_CINDER_STORM = 20779, // Cinder Storm (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Cinder Storm → Fire Keeper)
+  DRAGONKNIGHT_FIRE_KEEPER = 20779, // Fire Keeper (U49, renamed from Cinder Storm)
+  DRAGONKNIGHT_COAGULATING_BLOOD = 32722, // Coagulating Blood (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Coagulating Blood → Blood of the Elder Dragon)
+  DRAGONKNIGHT_BLOOD_OF_THE_ELDER_DRAGON = 32722, // Blood of the Elder Dragon (U49, renamed from Coagulating Blood)
   DRAGONKNIGHT_COMBUSTION = 3463, // Combustion
   DRAGONKNIGHT_CORROSIVE_ARMOR = 17878, // Corrosive Armor
   DRAGONKNIGHT_DARK_TALONS = 20245, // Dark Talons
-  DRAGONKNIGHT_DEEP_BREATH = 32792, // Deep Breath
+  DRAGONKNIGHT_DEEP_BREATH = 32792, // Deep Breath (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Deep Breath → Soul of Flame)
+  DRAGONKNIGHT_SOUL_OF_FLAME = 32792, // Soul of Flame (U49, renamed from Deep Breath)
   DRAGONKNIGHT_DRAGON_BLOOD = 29004, // Dragon Blood
-  DRAGONKNIGHT_DRAGON_FIRE_SCALE = 21017, // Dragon Fire Scale
+  DRAGONKNIGHT_DRAGON_FIRE_SCALE = 21017, // Dragon Fire Scale (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Dragon Fire Scale → Protect the Brood)
+  DRAGONKNIGHT_PROTECT_THE_BROOD = 21017, // Protect the Brood (U49, renamed from Dragon Fire Scale)
   DRAGONKNIGHT_DRAGON_LEAP = 29012, // Dragon Leap
   DRAGONKNIGHT_DRAGONKNIGHT_STANDARD = 28988, // Dragonknight Standard
-  DRAGONKNIGHT_DRAW_ESSENCE = 32785, // Draw Essence
+  DRAGONKNIGHT_DRAW_ESSENCE = 32785, // Draw Essence (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Draw Essence → Heart of Flame)
+  DRAGONKNIGHT_HEART_OF_FLAME = 32785, // Heart of Flame (U49, renamed from Draw Essence)
   DRAGONKNIGHT_ELDER_DRAGON = 29460, // Elder Dragon
-  DRAGONKNIGHT_ENGULFING_FLAMES = 20930, // Engulfing Flames
-  DRAGONKNIGHT_ERUPTION = 20789, // Eruption
+  DRAGONKNIGHT_ENGULFING_FLAMES = 20930, // Engulfing Flames (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Engulfing Flames → Engulfing Dragonfire)
+  DRAGONKNIGHT_ENGULFING_DRAGONFIRE = 20930, // Engulfing Dragonfire (U49, renamed from Engulfing Flames)
+  DRAGONKNIGHT_ERUPTION = 20789, // Eruption (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Eruption → Hearth and Home)
+  DRAGONKNIGHT_HEARTH_AND_HOME = 20789, // Hearth and Home (U49, renamed from Eruption)
   DRAGONKNIGHT_ETERNAL_MOUNTAIN = 29468, // Eternal Mountain
   DRAGONKNIGHT_FEROCIOUS_LEAP = 32715, // Ferocious Leap
-  DRAGONKNIGHT_FIERY_BREATH = 4771, // Fiery Breath
-  DRAGONKNIGHT_FIERY_GRIP = 20492, // Fiery Grip
+  DRAGONKNIGHT_FIERY_BREATH = 4771, // Fiery Breath (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Fiery Breath → Dragonfire Breath)
+  DRAGONKNIGHT_DRAGONFIRE_BREATH = 4771, // Dragonfire Breath (U49, renamed from Fiery Breath)
+  DRAGONKNIGHT_FIERY_GRIP = 20492, // Fiery Grip (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Fiery Grip → Chains of Flame)
+  DRAGONKNIGHT_CHAINS_OF_FLAME = 20492, // Chains of Flame (U49, renamed from Fiery Grip)
   DRAGONKNIGHT_FLAME_LASH = 20816, // Flame Lash
-  DRAGONKNIGHT_FLAMES_OF_OBLIVION = 32853, // Flames of Oblivion
+  DRAGONKNIGHT_FLAMES_OF_OBLIVION = 32853, // Flames of Oblivion (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Flames of Oblivion → Incinerate)
+  DRAGONKNIGHT_INCINERATE = 32853, // Incinerate (U49, renamed from Flames of Oblivion)
   DRAGONKNIGHT_FOSSILIZE = 32685, // Fossilize
   DRAGONKNIGHT_FRAGMENTED_SHIELD = 32673, // Fragmented Shield
-  DRAGONKNIGHT_GREEN_DRAGON_BLOOD = 15998, // Green Dragon Blood
-  DRAGONKNIGHT_HARDENED_ARMOR = 20328, // Hardened Armor
-  DRAGONKNIGHT_HELPING_HANDS = 29475, // Helping Hands
+  DRAGONKNIGHT_GREEN_DRAGON_BLOOD = 15998, // Green Dragon Blood (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Green Dragon Blood → Blood of the Green Dragon)
+  DRAGONKNIGHT_BLOOD_OF_THE_GREEN_DRAGON = 15998, // Blood of the Green Dragon (U49, renamed from Green Dragon Blood)
+  DRAGONKNIGHT_HARDENED_ARMOR = 20328, // Hardened Armor (pre-U49 name, moved to Earthen Heart)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Hardened Armor → Earthshield Mantle)
+  DRAGONKNIGHT_EARTHSHIELD_MANTLE = 20328, // Earthshield Mantle (U49, renamed from Hardened Armor)
+  DRAGONKNIGHT_HELPING_HANDS = 29475, // Helping Hands (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Helping Hands → Mountain Giant)
+  DRAGONKNIGHT_MOUNTAIN_GIANT = 29475, // Mountain Giant (U49, renamed from Helping Hands)
   DRAGONKNIGHT_IGNEOUS_SHIELD = 29224, // Igneous Shield
   DRAGONKNIGHT_IGNEOUS_WEAPONS = 31874, // Igneous Weapons
   DRAGONKNIGHT_INFERNO = 25954, // Inferno
-  DRAGONKNIGHT_INHALE = 31837, // Inhale
-  DRAGONKNIGHT_IRON_SKIN = 29455, // Iron Skin
+  DRAGONKNIGHT_INHALE = 31837, // Inhale (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Inhale → Core of Flame)
+  DRAGONKNIGHT_CORE_OF_FLAME = 31837, // Core of Flame (U49, renamed from Inhale)
+  DRAGONKNIGHT_IRON_SKIN = 29455, // Iron Skin (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Iron Skin → Burnished Scales)
+  DRAGONKNIGHT_BURNISHED_SCALES = 29455, // Burnished Scales (U49, renamed from Iron Skin)
   DRAGONKNIGHT_LAVA_WHIP = 23806, // Lava Whip
   DRAGONKNIGHT_MAGMA_ARMOR = 15957, // Magma Armor
   DRAGONKNIGHT_MAGMA_SHELL = 17874, // Magma Shell
   DRAGONKNIGHT_MOLTEN_ARMAMENTS = 31888, // Molten Armaments
   DRAGONKNIGHT_MOLTEN_WEAPONS = 29043, // Molten Weapons
   DRAGONKNIGHT_MOLTEN_WHIP = 20805, // Molten Whip
-  DRAGONKNIGHT_MOUNTAIN_S_BLESSING = 29473, // Mountain\'s Blessing
-  DRAGONKNIGHT_NOXIOUS_BREATH = 20944, // Noxious Breath
-  DRAGONKNIGHT_OBSIDIAN_SHARD = 31820, // Obsidian Shard
+  DRAGONKNIGHT_MOUNTAIN_S_BLESSING = 29473, // Mountain's Blessing (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Mountain's Blessing → Blessing at the Peak)
+  DRAGONKNIGHT_BLESSING_AT_THE_PEAK = 29473, // Blessing at the Peak (U49, renamed from Mountain's Blessing)
+  DRAGONKNIGHT_NOXIOUS_BREATH = 20944, // Noxious Breath (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Noxious Breath → Disintegrating Dragonfire)
+  DRAGONKNIGHT_DISINTEGRATING_DRAGONFIRE = 20944, // Disintegrating Dragonfire (U49, renamed from Noxious Breath)
+  DRAGONKNIGHT_OBSIDIAN_SHARD = 31820, // Obsidian Shard (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Obsidian Shard → Volcanic Ward)
+  DRAGONKNIGHT_VOLCANIC_WARD = 31820, // Volcanic Ward (U49, renamed from Obsidian Shard)
   DRAGONKNIGHT_OBSIDIAN_SHIELD = 29071, // Obsidian Shield
   DRAGONKNIGHT_PETRIFY = 29037, // Petrify
-  DRAGONKNIGHT_PROTECTIVE_PLATE = 21014, // Protective Plate
-  DRAGONKNIGHT_PROTECTIVE_SCALE = 21007, // Protective Scale
+  DRAGONKNIGHT_PROTECTIVE_PLATE = 21014, // Protective Plate (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Protective Plate → Fleetstep Wings)
+  DRAGONKNIGHT_FLEETSTEP_WINGS = 21014, // Fleetstep Wings (U49, renamed from Protective Plate)
+  DRAGONKNIGHT_PROTECTIVE_SCALE = 21007, // Protective Scale (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Protective Scale → Wing Buffet)
+  DRAGONKNIGHT_WING_BUFFET = 21007, // Wing Buffet (U49, renamed from Protective Scale)
   DRAGONKNIGHT_SCALED_ARMOR = 29462, // Scaled Armor
-  DRAGONKNIGHT_SEARING_HEAT = 29439, // Searing Heat
+  DRAGONKNIGHT_SEARING_HEAT = 29439, // Searing Heat (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Searing Heat → Fan the Flames)
+  DRAGONKNIGHT_FAN_THE_FLAMES = 29439, // Fan the Flames (U49, renamed from Searing Heat)
   DRAGONKNIGHT_SEARING_STRIKE = 20657, // Searing Strike
   DRAGONKNIGHT_SHATTERING_ROCKS = 32678, // Shattering Rocks
   DRAGONKNIGHT_SHIFTING_STANDARD = 32958, // Shifting Standard
-  DRAGONKNIGHT_SPIKED_ARMOR = 20319, // Spiked Armor
+  DRAGONKNIGHT_SPIKED_ARMOR = 20319, // Spiked Armor (pre-U49 name, was in Draconic Power)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Spiked Armor → Earthspike Mantle)
+  DRAGONKNIGHT_EARTHSPIKE_MANTLE = 20319, // Earthspike Mantle (U49, renamed from Spiked Armor, moved to Earthen Heart)
   DRAGONKNIGHT_STANDARD_OF_MIGHT = 32947, // Standard of Might
   DRAGONKNIGHT_MAGMA_FIST = 31816, // Magma Fist (U49, replaces Stone Giant)
-  DRAGONKNIGHT_STONEFIST = 29032, // Stonefist
+  DRAGONKNIGHT_STONEFIST = 29032, // Stonefist (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Stonefist → Superheated Ward)
+  DRAGONKNIGHT_SUPERHEATED_WARD = 29032, // Superheated Ward (U49, renamed/reworked from Stonefist)
   DRAGONKNIGHT_TAKE_FLIGHT = 32719, // Take Flight
-  DRAGONKNIGHT_UNRELENTING_GRIP = 20496, // Unrelenting Grip
-  DRAGONKNIGHT_VENOMOUS_CLAW = 20668, // Venomous Claw
-  DRAGONKNIGHT_VOLATILE_ARMOR = 20323, // Volatile Armor
-  DRAGONKNIGHT_WARMTH = 29430, // Warmth
+  DRAGONKNIGHT_UNRELENTING_GRIP = 20496, // Unrelenting Grip (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Unrelenting Grip → Chains of Dominance)
+  DRAGONKNIGHT_CHAINS_OF_DOMINANCE = 20496, // Chains of Dominance (U49, renamed from Unrelenting Grip)
+  DRAGONKNIGHT_VENOMOUS_CLAW = 20668, // Venomous Claw (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Venomous Claw → Searing Claw)
+  DRAGONKNIGHT_SEARING_CLAW = 20668, // Searing Claw (U49, renamed from Venomous Claw)
+  DRAGONKNIGHT_VOLATILE_ARMOR = 20323, // Volatile Armor (pre-U49 name, moved to Earthen Heart)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Volatile Armor → Shatterspike Mantle)
+  DRAGONKNIGHT_SHATTERSPIKE_MANTLE = 20323, // Shatterspike Mantle (U49, renamed from Volatile Armor)
+  DRAGONKNIGHT_WARMTH = 29430, // Warmth (pre-U49 name)
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- intentional U49 alias (Warmth → Traumatic Burns)
+  DRAGONKNIGHT_TRAUMATIC_BURNS = 29430, // Traumatic Burns (U49, renamed from Warmth)
   DRAGONKNIGHT_WORLD_IN_RUIN = 29451, // World in Ruin
   NECROMANCER_AGONY_TOTEM = 118404, // Agony Totem
   NECROMANCER_ANIMATE_BLASTBONES = 118379, // Animate Blastbones

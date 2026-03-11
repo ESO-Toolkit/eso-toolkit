@@ -7,57 +7,13 @@
 */
 
 /* Remove default body background when on text-editor page */
+/* Background images are applied via usePageBackground hook (JS) so they
+   respect import.meta.env.BASE_URL for subpath deployments. */
 body.text-editor-page {
   position: relative;
   min-height: 100vh;
   overflow-x: hidden;
-  background: transparent !important;
   background-color: transparent !important;
-}
-
-/* Force background image for both light and dark mode */
-body.text-editor-page:not(.dark-mode) {
-  background-image: url('/text-editor/text-editor-bg-light.jpg') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-  background-attachment: fixed !important;
-  background-color: transparent !important;
-}
-
-body.text-editor-page.dark-mode {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-  background-attachment: fixed !important;
-  background-color: transparent !important;
-}
-
-/* Background image layer - VISIBLE */
-body.text-editor-page::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  opacity: 1;
-  z-index: -1;
-  pointer-events: none;
-}
-
-body.text-editor-page.dark-mode::before {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg');
-}
-
-body.text-editor-page:not(.dark-mode)::before {
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
 }
 
 /* Remove solid backgrounds from common elements */
@@ -98,68 +54,9 @@ body.text-editor-page.dark-mode .editor-container:not(.EditorTool) {
   color: #e0e0e0;
 }
 
-/* Make the preview area show through to the background */
-body.text-editor-page .css-cplt40 {
-  background: transparent !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  position: relative !important;
-  z-index: 1 !important;
-}
+/* Preview area transparency handled by the PreviewArea styled component */
 
-/* Override any light mode backgrounds that might be applied */
-body.text-editor-page:not(.dark-mode) .css-cplt40 {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  position: relative !important;
-}
-
-/* Add background image directly to light mode preview area using ::before */
-body.text-editor-page:not(.dark-mode) .css-cplt40::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 1 !important;
-}
-
-body.text-editor-page.dark-mode .css-cplt40::before {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg');
-}
-
-/* Make sure preview area content is transparent */
-body.text-editor-page .css-cplt40 *,
-body.text-editor-page:not(.dark-mode) .css-cplt40 * {
-  background: transparent !important;
-}
-
-/* Force the covering container to be completely transparent */
-body.text-editor-page .css-1u9mni1 {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  position: relative !important;
-}
-
-/* Also target the light mode container that might be getting a solid background */
-body.text-editor-page .css-1j69n08,
-body.text-editor-page:not(.dark-mode) .css-1j69n08,
-body.text-editor-page .MuiBox-root.css-1j69n08,
-body.text-editor-page .MuiPaper-root.css-1j69n08 {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  position: relative !important;
-}
+/* Preview area — let the PreviewArea styled component handle its own background */
 
 /* Improve mobile background positioning */
 @media (max-width: 768px) {
@@ -205,21 +102,8 @@ body.text-editor-page .MuiPaper-root.css-1j69n08 {
   }
 }
 
-/* Fix for specific Material-UI generated class */
-body.text-editor-page .css-cm1l3d {
-  background-color: #000000 !important;
-}
-
-/* Override mobile CSS rule for .css-cm1l3d::after */
+/* Hide .pickr element on text editor page */
 @media (max-width: 599.95px) {
-  body.text-editor-page .css-cm1l3d::after {
-    background: rgb(0 0 0 / 40%) !important;
-  }
-
-  /* Hide .pickr element next to emoji buttons on both mobile and desktop */
-  body.text-editor-page .css-fcvuav + .pickr,
-  body.text-editor-page .pickr:has(+ .css-fcvuav),
-  body.text-editor-page .pickr:has(~ .css-fcvuav),
   body.text-editor-page .pickr {
     display: none !important;
     visibility: hidden !important;

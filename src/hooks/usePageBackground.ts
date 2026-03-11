@@ -13,9 +13,10 @@ export function usePageBackground(pageClass: string, isDarkMode = false): void {
     }
 
     // Apply background image to body based on theme
+    const base = import.meta.env.BASE_URL;
     const backgroundImage = isDarkMode
-      ? 'url("/text-editor/text-editor-bg-dark.jpg")'
-      : 'url("/text-editor/text-editor-bg-light.jpg")';
+      ? `url("${base}text-editor/text-editor-bg-dark.jpg")`
+      : `url("${base}text-editor/text-editor-bg-light.jpg")`;
 
     document.body.style.backgroundImage = backgroundImage;
     document.body.style.backgroundSize = 'cover';

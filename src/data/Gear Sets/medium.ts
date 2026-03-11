@@ -66,7 +66,7 @@ export const glitteringGoad: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    '(2 items) Dealing damage with a Bash or Heavy Attack deals 1024 Frost damage over 8 seconds to the enemy. This effect can occur once every 8 seconds. If the effect completes, the enemy applies Minor Brittle to up to of 6 enemies within 12 meters of itself for 10 seconds. If the enemy dies, the enemy releases glittering energy, restoring 847 Magicka and Stamina to you and group members within 12 meters of the enemy.',
+    '(2 items) Dealing damage with a Bash or Heavy Attack deals 812 Frost damage over 8 seconds to the enemy. This effect can occur once every 8 seconds. If the effect completes, the enemy applies Minor Brittle to up to 6 enemies within 12 meters of itself for 10 seconds. If the enemy dies, the enemy releases glittering energy, restoring 847 Magicka and Stamina to you and group members within 12 meters of the defeated enemy.',
   ],
 };
 
@@ -293,7 +293,7 @@ export const briarheart: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) When you deal Critical Damage, you increase your Weapon and Spell Damage by 450 for 10 seconds. While this effect is active your Critical Strikes heal you for 95 Health. This effect can occur once every 15 seconds and the heal scales off the higher of your Max Magicka or Stamina.',
+    '(5 items) When you deal Critical Damage, you increase your Weapon and Spell Damage by 450 for 10 seconds. While this effect is active, dealing Critical Damage heals you for 95 Health. This effect can occur once every 15 seconds and the heal scales off the higher of your Max Magicka or Stamina.',
   ],
 };
 
@@ -2001,7 +2001,7 @@ export const thousandEyes: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 657 Critical Chance',
-    '(2 items) Dealing direct critical damage applies Shived to the enemy, dealing 1357 Bleed damage and increasing their damage taken from you by 2% for 15 seconds. This damage scales off the higher of your Weapon or Spell Damage. When the enemy dies, Shived is reapplied to the lowest health enemy within 12 meters of the corpse and increases the damage taken by 2%, up to 8%. You may only have 1 enemy with Shived.',
+    '(2 items) Dealing direct critical damage applies Shived to the enemy, dealing 1079 Bleed damage and increasing their damage taken from you by 2% for 15 seconds. This damage scales off the higher of your Weapon or Spell Damage. When the enemy dies, Shived is reapplied to the lowest health enemy within 12 meters of the corpse and increases the damage taken by 2%, up to 8%. You may only have 1 enemy with Shived.',
   ],
 };
 
@@ -2556,7 +2556,7 @@ export const barSakka: GearSetData = {
   setType: 'Dungeon',
   bonuses: [
     '(1 item) Adds 1206 Maximum Health',
-    '(2 items) While in combat, performing a roll dodge creates a 6 meter pool of blood. After a 1 second delay, enemies in the pool take 788 Magic Damage. Gain a Damage Shield for 6 seconds based on total damage done by the pool to enemies, up to 15000 damage. This effect can occur once every 10 seconds and the amount of damage done scales off your Max Health and cannot critically hit.',
+    '(2 items) While in combat, performing a Roll Dodge creates a 6 meter pool of blood. After a 1 second delay, enemies in the pool take 788 Magic Damage. Gain a Damage Shield for 6 seconds based on total damage done by the pool to enemies, up to 15000 damage. This effect can occur once every 10 seconds and the amount of damage done scales off your Max Health and cannot critically hit.',
   ],
 };
 

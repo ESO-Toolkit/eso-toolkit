@@ -20,7 +20,6 @@ export const UNSUPPORTED_SET_NAMES: Record<string, string> = {
   "Draugrkin's Grip": "Draugrkin's Grip",
   "Dro'Zakar's Claws": "Dro'Zakar's Claws",
   'Grisly Gourmet': 'Grisly Gourmet',
-  "Gryphon's Reprisal": "Gryphon's Reprisal",
   'Hew and Sunder': 'Hew and Sunder',
   "Hrothgar's Chill": "Hrothgar's Chill",
   'Icy Conjurer': 'Icy Conjurer',
@@ -79,6 +78,7 @@ export const SET_DISPLAY_NAMES: Record<KnownSetIDs, string> = {
   // ============================================================
   [KnownSetIDs.ENGINE_GUARDIAN]: 'Engine Guardian',
   [KnownSetIDs.VALKYN_SKORIA]: 'Valkyn Skoria',
+  [KnownSetIDs.GRYPHONS_REPRISAL]: "Gryphon's Reprisal",
   [KnownSetIDs.SLIMECRAW]: 'Slimecraw',
   [KnownSetIDs.EARTHGORE]: 'Earthgore',
   [KnownSetIDs.SYMPHONY_OF_BLADES]: 'Symphony of Blades',
@@ -108,6 +108,7 @@ export const SET_DISPLAY_NAMES: Record<KnownSetIDs, string> = {
   [KnownSetIDs.PERFECTED_CRUSHING_WALL]: 'Perfected Crushing Wall',
   [KnownSetIDs.PERFECTED_GRAND_REJUVENATION]: 'Perfected Grand Rejuvenation',
   [KnownSetIDs.CRYPTCANON_VESTMENTS]: 'Cryptcanon Vestments',
+  [KnownSetIDs.PEACE_AND_SERENITY]: 'Peace and Serenity',
   [KnownSetIDs.PERFECTED_ANSUULS_TORMENT]: "Perfected Ansuul's Torment",
   [KnownSetIDs.SLIVERS_OF_THE_NULL_ARCA]: 'Slivers of the Null Arca',
   [KnownSetIDs.PERFECTED_SLIVERS_OF_THE_NULL_ARCA]: 'Perfected Slivers of the Null Arca',
@@ -211,6 +212,7 @@ export const SET_DISPLAY_NAMES: Record<KnownSetIDs, string> = {
   [KnownSetIDs.RALLYING_CRY]: 'Rallying Cry',
   [KnownSetIDs.BARON_THIRSK]: 'Baron Thirsk',
   [KnownSetIDs.ORDERS_WRATH]: "Order's Wrath",
+  [KnownSetIDs.SERPENTS_DISDAIN]: "Serpent's Disdain",
   [KnownSetIDs.CORAL_RIPTIDE]: 'Coral Riptide',
   [KnownSetIDs.CORAL_RIPTIDE_PERFECTED]: 'Perfected Coral Riptide',
   [KnownSetIDs.MORAS_WHISPERS]: "Mora's Whispers",
@@ -298,6 +300,8 @@ export const SET_DISPLAY_NAMES: Record<KnownSetIDs, string> = {
   [KnownSetIDs.BLACK_GEM_MONSTROSITY]: 'Black Gem Monstrosity',
   [KnownSetIDs.COUP_DE_GRACE]: 'Coup De Grâce',
   [KnownSetIDs.UNKNOWN_SET_846]: 'Unknown',
+  [KnownSetIDs.UNKNOWN_SET_2268]: 'Unknown',
+  [KnownSetIDs.UNKNOWN_SET_2342]: 'Unknown',
 };
 
 /**

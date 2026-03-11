@@ -49,7 +49,7 @@ export const gorethief: GearSetData = {
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Dealing direct damage generates a stack of Gorethief for 30 seconds, up to 10 stacks. While you have Gorethief equipped, roll dodge consumes 1 stack and heals you for 2147 Health. At max stacks, while you have Gorethief equipped, bash an enemy to consume all stacks and deal 2698 Bleed Damage to enemies within 8 meters of you.',
+    '(5 items) Dealing direct damage generates a stack of Gorethief for 30 seconds, up to 10 stacks. While you have Gorethief equipped, Roll Dodge consumes 1 stack and heals you for 2021 Health, scaling off your Max Health. At max stacks, while you have Gorethief equipped, bash an enemy to consume all stacks and deal 2144 Bleed Damage, scaling off the higher of your Weapon or Spell Damage, to enemies within 8 meters of you.',
   ],
 };
 

@@ -125,8 +125,8 @@ const EntryCard: React.FC<{ entry: WhatsNewEntry }> = ({ entry }) => (
         </Stack>
       )}
 
-      {/* Description */}
-      {entry.description && (
+      {/* Summary (AI-generated) or raw description fallback */}
+      {(entry.summary || entry.description) && (
         <Typography
           variant="body2"
           color="text.secondary"
@@ -137,7 +137,7 @@ const EntryCard: React.FC<{ entry: WhatsNewEntry }> = ({ entry }) => (
             overflow: 'auto',
           }}
         >
-          {entry.description}
+          {entry.summary || entry.description}
         </Typography>
       )}
     </Stack>

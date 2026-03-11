@@ -377,7 +377,7 @@ export enum KnownAbilities {
   POWERFUL_ASSAULT = 61771,
   HEAT_SHOCK = 134340, // U49: renamed from Stagger, new debuff ID
   STAGGER = 134336, // Pre-U49 legacy debuff ID (renamed to Heat Shock in U49)
-  STONE_GIANT = 133027, // Pre-U49 damage ability (replaced by Magma Fist in U49)
+  MAGMA_FIST = 133027, // U49: Magma Fist damage ability (renamed from Stone Giant, ability ID unchanged)
   TOUCH_OF_ZEN = 126597, // Touch of Z'en set buff
 
   // Major Buffs and Debuffs
@@ -695,6 +695,7 @@ export enum KnownSetIDs {
   STONE_HUSK = 534, // Stone Husk
   ENCRATIS_BEHEMOTH = 577, // Encratis's Behemoth (Encratis)
   BARON_ZAUDRUS = 578, // Baron Zaudrus
+  GRYPHONS_REPRISAL = 620, // Gryphon's Reprisal
   SPAULDER_OF_RUIN = 627, // Spaulder of Ruin
   NAZARAY = 633, // Nazaray
   NUNATAK = 634, // Nunatak
@@ -725,6 +726,7 @@ export enum KnownSetIDs {
   CRUSHING_WALL = 373, // Crushing Wall
   PERFECTED_CRUSHING_WALL = 526, // Perfected Crushing Wall
   PERFECTED_GRAND_REJUVENATION = 533, // Perfected Grand Rejuvenation
+  PEACE_AND_SERENITY = 701, // Peace and Serenity
   ANSUULS_TORMENT = 702, // Ansuul's Torment (non-perfected)
   PERFECTED_ANSUULS_TORMENT = 707, // Perfected Ansuul's Torment
   SLIVERS_OF_THE_NULL_ARCA = 767, // Slivers of the Null Arca
@@ -771,6 +773,7 @@ export enum KnownSetIDs {
   KINRAS_WRATH = 570, // Kinras's Wrath
   DEATH_DEALERS_FETE = 596, // Death Dealer's Fete
   ORDERS_WRATH = 640, // Order's Wrath
+  SERPENTS_DISDAIN = 641, // Serpent's Disdain
   RUNECARVERS_BLAZE = 684, // Runecarver's Blaze
   MACABRE_VINTAGE = 758, // Macabre Vintage
   PYREBRAND = 776, // Pyrebrand
@@ -952,6 +955,8 @@ export enum KnownSetIDs {
   // ============================================================
   UNKNOWN_SET_845 = 845, // Unknown Set (ID 845)
   UNKNOWN_SET_846 = 846, // Unknown Set (ID 846)
+  UNKNOWN_SET_2268 = 2268, // Unknown Set (ID 2268) — newer ESO content
+  UNKNOWN_SET_2342 = 2342, // Unknown Set (ID 2342) — newer ESO content
 }
 
 /**

@@ -33,12 +33,17 @@ export const BuildIssuesPanel: React.FC<BuildIssuesPanelProps> = ({ issues }) =>
             display: 'flex',
             alignItems: 'flex-start',
             gap: 1.5,
-            py: 1,
+            py: 1.25,
             px: 1.5,
             borderRadius: 1.5,
-            borderLeft: '3px solid',
-            borderLeftColor: 'warning.main',
-            backgroundColor: isDark ? 'rgba(255, 152, 0, 0.06)' : 'rgba(255, 152, 0, 0.04)',
+            borderTop: '2px solid',
+            borderTopColor: theme.palette.warning.main,
+            backgroundColor: isDark ? 'rgba(255, 152, 0, 0.08)' : 'rgba(255, 152, 0, 0.06)',
+            transition: 'all 0.15s ease-out',
+            '&:hover': {
+              backgroundColor: isDark ? 'rgba(255, 152, 0, 0.12)' : 'rgba(255, 152, 0, 0.09)',
+              transform: 'translateY(-1px)',
+            },
           }}
         >
           <WarningAmberIcon color="warning" sx={{ fontSize: 16, mt: 0.25, flexShrink: 0 }} />

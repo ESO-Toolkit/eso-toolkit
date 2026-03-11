@@ -39,6 +39,8 @@ export const Footer: React.FC = React.memo(() => {
       { label: 'Roster Builder', href: '/roster-builder' },
 
       { label: 'My Reports', href: '/my-reports' },
+
+      { label: 'Gear Sets', href: '/gear-sets' },
     ],
 
     [],
