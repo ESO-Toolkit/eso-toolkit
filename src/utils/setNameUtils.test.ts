@@ -131,4 +131,43 @@ describe('setNameUtils', () => {
       expect(isUnsupportedSet('Some Random Set')).toBe(false);
     });
   });
+
+  describe('KnownSetIDs coverage (ESO-684 regression)', () => {
+    /**
+     * Regression test for ESO-684 / ESO-686: ensures every value in the
+     * KnownSetIDs enum has a corresponding entry in SET_DISPLAY_NAMES.
+     *
+     * "Unknown set ID detected" Rollbar errors (counters 7, 12) were triggered
+     * when users opened roster share links whose gear sets had valid KnownSetIDs
+     * values (e.g. 641 Serpent's Disdain, 620 Gryphon's Reprisal, 701 Peace and
+     * Serenity) that were missing from SET_DISPLAY_NAMES at build time.
+     *
+     * Adding a new entry to KnownSetIDs without a matching SET_DISPLAY_NAMES
+     * entry will fail this test and prevent a repeat of the incident.
+     */
+    it('every KnownSetIDs value must have a SET_DISPLAY_NAMES entry', () => {
+      const missingIds: Array<{ name: string; id: number }> = [];
+
+      for (const [name, value] of Object.entries(KnownSetIDs)) {
+        // KnownSetIDs is a numeric enum — filter out the reverse-mapping strings
+        if (typeof value !== 'number') continue;
+
+        const displayName = getSetDisplayName(value as KnownSetIDs);
+        if (!displayName) {
+          missingIds.push({ name, id: value });
+        }
+      }
+
+      // Clear reportError calls generated above so they don't leak into other tests
+      jest.clearAllMocks();
+
+      if (missingIds.length > 0) {
+        const formatted = missingIds.map(({ name, id }) => `  ${name} = ${id}`).join('\n');
+        throw new Error(
+          `${missingIds.length} KnownSetIDs value(s) have no SET_DISPLAY_NAMES entry.\n` +
+            `Add them to SET_DISPLAY_NAMES in setNameUtils.ts:\n${formatted}`,
+        );
+      }
+    });
+  });
 });
