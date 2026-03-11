@@ -54,3 +54,24 @@ export const PRESET_TAGS = [
 ] as const;
 
 export type PresetTag = (typeof PRESET_TAGS)[number];
+
+// ─── Comments ──────────────────────────────────────────────────────────────
+
+export interface HubComment {
+  id: string;
+  roster_id: string;
+  parent_id: string | null;
+  author_id: string;
+  author_name: string;
+  body: string;
+  created_at: string;
+  replies: HubComment[];
+}
+
+export interface ListCommentsResponse {
+  comments: HubComment[];
+}
+
+export interface SingleCommentResponse {
+  comment: HubComment;
+}

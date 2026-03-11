@@ -13,12 +13,23 @@ import React from 'react';
 import { rosterHubApi } from '../api/roster-hub-api';
 import type { HubRoster } from '../types/roster-hub.types';
 
+import { CommentSection } from './CommentSection';
+
 interface RosterPreviewDialogProps {
   roster: HubRoster | null;
+  isLoggedIn: boolean;
+  currentUserId: string;
+  token?: string;
   onClose: () => void;
 }
 
-export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({ roster, onClose }) => {
+export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
+  roster,
+  isLoggedIn,
+  currentUserId,
+  token,
+  onClose,
+}) => {
   const [iframeLoaded, setIframeLoaded] = React.useState(false);
 
   // Reset loading state when roster changes
@@ -97,6 +108,18 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({ roster
           />
         )}
       </Box>
+
+      {/* Comments section */}
+      {roster && (
+        <Box sx={{ px: 2, py: 1.5, maxHeight: 300, overflowY: 'auto', borderTop: 1, borderColor: 'divider' }}>
+          <CommentSection
+            rosterId={roster.id}
+            isLoggedIn={isLoggedIn}
+            currentUserId={currentUserId}
+            token={token}
+          />
+        </Box>
+      )}
 
       <DialogActions sx={{ px: 2, py: 1.5, gap: 1 }}>
         <Button onClick={onClose} color="inherit" size="small">

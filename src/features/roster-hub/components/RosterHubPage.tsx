@@ -49,7 +49,7 @@ export const RosterHubPage: React.FC = () => {
     [token, refresh],
   );
 
-  const currentUserId = currentUser?.id ?? '';
+  const currentUserId = String(currentUser?.id ?? '');
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -160,6 +160,9 @@ export const RosterHubPage: React.FC = () => {
       {/* Roster preview dialog */}
       <RosterPreviewDialog
         roster={previewRoster}
+        isLoggedIn={isLoggedIn}
+        currentUserId={currentUserId}
+        token={token}
         onClose={() => setPreviewRoster(null)}
       />
     </Container>

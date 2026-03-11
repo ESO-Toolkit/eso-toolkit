@@ -16,6 +16,10 @@ import {
   updateRoster,
   deleteRoster,
   toggleVote,
+  listComments,
+  createComment,
+  deleteComment,
+  checkCommentRateLimit,
 } from './db/queries';
 import type { Env } from './types';
 
@@ -186,6 +190,90 @@ app.post('/rosters/:id/vote', async (c) => {
 
   const result = await toggleVote(c.env.DB, rosterId, user.id);
   return c.json(result);
+});
+
+// ─── GET /rosters/:id/comments — list comments for a roster ─────────────────
+
+app.get('/rosters/:id/comments', async (c) => {
+  const rosterId = c.req.param('id');
+
+  // Verify roster exists
+  const exists = await c.env.DB.prepare('SELECT id FROM rosters WHERE id = ?').bind(rosterId).first();
+  if (!exists) return c.json({ error: 'Not found' }, 404);
+
+  const comments = await listComments(c.env.DB, rosterId);
+  return c.json({ comments });
+});
+
+// ─── POST /rosters/:id/comments — add a comment ────────────────────────────
+
+app.post('/rosters/:id/comments', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const rosterId = c.req.param('id');
+
+  // Verify roster exists
+  const exists = await c.env.DB.prepare('SELECT id FROM rosters WHERE id = ?').bind(rosterId).first();
+  if (!exists) return c.json({ error: 'Roster not found' }, 404);
+
+  // Rate limit: 5 comments per minute per user
+  const allowed = await checkCommentRateLimit(c.env.DB, user.id);
+  if (!allowed) return c.json({ error: 'Rate limit exceeded. Try again in a minute.' }, 429);
+
+  interface CommentBody {
+    body: string;
+    parent_id?: string;
+  }
+
+  let body: CommentBody;
+  try {
+    body = await c.req.json<CommentBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.body?.trim()) return c.json({ error: 'body is required' }, 400);
+  if (body.body.length > 1000) return c.json({ error: 'Comment must be ≤ 1000 characters' }, 400);
+
+  // If replying, verify parent exists and belongs to same roster
+  if (body.parent_id) {
+    const parent = await c.env.DB.prepare(
+      'SELECT id, parent_id FROM roster_comments WHERE id = ? AND roster_id = ?',
+    )
+      .bind(body.parent_id, rosterId)
+      .first<{ id: string; parent_id: string | null }>();
+    if (!parent) return c.json({ error: 'Parent comment not found' }, 404);
+    // Only allow 1-level nesting
+    if (parent.parent_id) return c.json({ error: 'Cannot reply to a reply' }, 400);
+  }
+
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
+    .map((b) => b.toString(36).padStart(2, '0'))
+    .join('')
+    .slice(0, 12);
+
+  const comment = await createComment(c.env.DB, {
+    id,
+    rosterId,
+    parentId: body.parent_id ?? null,
+    authorId: user.id,
+    authorName: user.name,
+    body: body.body.trim(),
+  });
+
+  return c.json({ comment }, 201);
+});
+
+// ─── DELETE /rosters/:rosterId/comments/:commentId — delete own comment ─────
+
+app.delete('/rosters/:rosterId/comments/:commentId', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const deleted = await deleteComment(c.env.DB, c.req.param('commentId'), user.id);
+  if (!deleted) return c.json({ error: 'Not found or forbidden' }, 404);
+  return c.json({ ok: true });
 });
 
 export default app;

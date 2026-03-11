@@ -6,10 +6,12 @@
 
 import type {
   HubRoster,
+  ListCommentsResponse,
   ListRostersResponse,
+  SingleCommentResponse,
   SingleRosterResponse,
-  VoteResponse,
   SortOrder,
+  VoteResponse,
 } from '../types/roster-hub.types';
 
 const BASE_URL = (import.meta.env.VITE_ROSTER_HUB_API_URL as string | undefined) ?? 'http://localhost:8787';
@@ -103,5 +105,31 @@ export const rosterHubApi = {
   loadRosterIntoBuilder(roster: HubRoster): void {
     // Navigate to roster builder with the encoded roster data as the ?r= param
     window.location.href = `/roster-builder?r=${roster.roster_data}`;
+  },
+
+  // ─── Comments ──────────────────────────────────────────────────────────────
+
+  listComments(rosterId: string): Promise<ListCommentsResponse> {
+    return request<ListCommentsResponse>(`/rosters/${rosterId}/comments`);
+  },
+
+  createComment(
+    rosterId: string,
+    data: { body: string; parent_id?: string },
+    token: string,
+  ): Promise<SingleCommentResponse> {
+    return request<SingleCommentResponse>(
+      `/rosters/${rosterId}/comments`,
+      { method: 'POST', body: JSON.stringify(data) },
+      token,
+    );
+  },
+
+  deleteComment(rosterId: string, commentId: string, token: string): Promise<{ ok: boolean }> {
+    return request<{ ok: boolean }>(
+      `/rosters/${rosterId}/comments/${commentId}`,
+      { method: 'DELETE' },
+      token,
+    );
   },
 };
