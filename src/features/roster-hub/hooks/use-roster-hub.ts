@@ -5,6 +5,7 @@ import type { HubRoster, RosterHubFilters } from '../types/roster-hub.types';
 
 interface UseRosterHubReturn {
   rosters: HubRoster[];
+  filteredRosters: HubRoster[];
   loading: boolean;
   error: string | null;
   filters: RosterHubFilters;
@@ -25,6 +26,7 @@ export function useRosterHub(token: string | undefined): UseRosterHubReturn {
     tag: '',
     sort: 'votes',
     page: 1,
+    search: '',
   });
   // Track a fetch key to cancel stale requests
   const fetchKeyRef = React.useRef(0);
@@ -58,7 +60,7 @@ export function useRosterHub(token: string | undefined): UseRosterHubReturn {
     [token],
   );
 
-  // Refetch when filters change (except page → handled by loadMore)
+  // Refetch when server-side filters change (trial, tag, sort) — not search (client-side)
   React.useEffect(() => {
     const resetFilters = { ...filters, page: 1 };
     setFilters(resetFilters);
@@ -68,7 +70,7 @@ export function useRosterHub(token: string | undefined): UseRosterHubReturn {
 
   const setFilter = React.useCallback(
     <K extends keyof RosterHubFilters>(key: K, value: RosterHubFilters[K]) => {
-      setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
+      setFilters((prev) => ({ ...prev, [key]: value, ...(key !== 'search' ? { page: 1 } : {}) }));
     },
     [],
   );
@@ -127,5 +129,17 @@ export function useRosterHub(token: string | undefined): UseRosterHubReturn {
     [],
   );
 
-  return { rosters, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote };
+  // Client-side text search filter (no server round-trip)
+  const filteredRosters = React.useMemo(() => {
+    if (!filters.search.trim()) return rosters;
+    const q = filters.search.toLowerCase();
+    return rosters.filter(
+      (r) =>
+        r.title.toLowerCase().includes(q) ||
+        r.description.toLowerCase().includes(q) ||
+        r.author_name.toLowerCase().includes(q),
+    );
+  }, [rosters, filters.search]);
+
+  return { rosters, filteredRosters, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote };
 }

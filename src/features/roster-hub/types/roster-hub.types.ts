@@ -36,10 +36,11 @@ export interface VoteResponse {
 export type SortOrder = 'votes' | 'recent';
 
 export interface RosterHubFilters {
-  trial: string; // '' = all trials
-  tag: string;   // '' = any tag
+  trial: string;  // '' = all trials
+  tag: string;    // '' = any tag
   sort: SortOrder;
   page: number;
+  search: string; // '' = no text filter (client-side)
 }
 
 export const PRESET_TAGS = [
