@@ -63,7 +63,6 @@ export const AppLayout: React.FC = () => {
                 pt: { xs: isLandingPage ? 2 : 0, sm: 8 },
                 pb: { xs: isLandingPage ? 2 : 0, sm: 4 },
                 minHeight: 'calc(100vh - 200px)',
-                overflowY: 'auto',
               }}
             >
               <Outlet />
