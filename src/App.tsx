@@ -4,6 +4,8 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
+import { SnackbarProvider } from 'notistack';
+
 import { AnalyticsListener } from './components/AnalyticsListener';
 import { CookieConsent } from './components/CookieConsent';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -234,6 +236,12 @@ const App: React.FC = () => {
           <ReduxThemeProvider>
             <EsoLogsClientProvider>
               <AuthProvider>
+                <SnackbarProvider
+                  maxSnack={3}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                  autoHideDuration={4000}
+                  preventDuplicate
+                >
                 {/* Global cosmic/nebula background */}
                 <SiteBackground />
                 <AppRoutes />
@@ -241,6 +249,7 @@ const App: React.FC = () => {
                 <UpdateNotification />
                 {/* Cookie consent banner */}
                 <CookieConsent />
+                </SnackbarProvider>
               </AuthProvider>
             </EsoLogsClientProvider>
           </ReduxThemeProvider>
