@@ -1,7 +1,6 @@
 export interface Env {
   DB: D1Database;
   ALLOWED_ORIGINS: string;
-  ESOLOGS_JWKS_URL: string;
 }
 
 export interface RosterRow {
