@@ -4,7 +4,7 @@
  */
 
 import type { D1Database } from '@cloudflare/workers-types';
-import type { RosterRow, RosterTagRow, RosterWithMeta } from '../types';
+import type { CommentRow, CommentWithReplies, RosterRow, RosterTagRow, RosterWithMeta } from '../types';
 
 const PAGE_SIZE = 20;
 
@@ -202,6 +202,93 @@ export async function toggleVote(
       .first<{ vote_count: number }>();
     return { voted: true, voteCount: updated?.vote_count ?? 1 };
   }
+}
+
+// ─── Comments ──────────────────────────────────────────────────────────────
+
+const RATE_LIMIT_WINDOW_SEC = 60;
+const RATE_LIMIT_MAX = 5;
+
+export async function listComments(
+  db: D1Database,
+  rosterId: string,
+): Promise<CommentWithReplies[]> {
+  const rows = await db
+    .prepare('SELECT * FROM roster_comments WHERE roster_id = ? ORDER BY created_at ASC')
+    .bind(rosterId)
+    .all<CommentRow>();
+
+  // Build threaded structure: top-level comments with nested replies (1-level)
+  const topLevel: CommentWithReplies[] = [];
+  const replyMap = new Map<string, CommentRow[]>();
+
+  for (const row of rows.results) {
+    if (row.parent_id) {
+      const replies = replyMap.get(row.parent_id) ?? [];
+      replies.push(row);
+      replyMap.set(row.parent_id, replies);
+    } else {
+      topLevel.push({ ...row, replies: [] });
+    }
+  }
+
+  for (const comment of topLevel) {
+    comment.replies = replyMap.get(comment.id) ?? [];
+  }
+
+  return topLevel;
+}
+
+export async function createComment(
+  db: D1Database,
+  data: {
+    id: string;
+    rosterId: string;
+    parentId: string | null;
+    authorId: string;
+    authorName: string;
+    body: string;
+  },
+): Promise<CommentRow> {
+  await db
+    .prepare(
+      'INSERT INTO roster_comments (id, roster_id, parent_id, author_id, author_name, body) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+    .bind(data.id, data.rosterId, data.parentId, data.authorId, data.authorName, data.body)
+    .run();
+
+  const row = await db
+    .prepare('SELECT * FROM roster_comments WHERE id = ?')
+    .bind(data.id)
+    .first<CommentRow>();
+
+  return row!;
+}
+
+export async function deleteComment(
+  db: D1Database,
+  commentId: string,
+  authorId: string,
+): Promise<boolean> {
+  const result = await db
+    .prepare('DELETE FROM roster_comments WHERE id = ? AND author_id = ?')
+    .bind(commentId, authorId)
+    .run();
+  return (result.meta.changes ?? 0) > 0;
+}
+
+export async function checkCommentRateLimit(
+  db: D1Database,
+  userId: string,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM roster_comments
+       WHERE author_id = ? AND created_at > datetime('now', '-${RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < RATE_LIMIT_MAX;
 }
 
 async function insertTags(db: D1Database, rosterId: string, tags: string[]): Promise<void> {

@@ -27,6 +27,20 @@ export interface RosterWithMeta extends RosterRow {
   user_voted?: boolean;
 }
 
+export interface CommentRow {
+  id: string;
+  roster_id: string;
+  parent_id: string | null;
+  author_id: string;
+  author_name: string;
+  body: string;
+  created_at: string;
+}
+
+export interface CommentWithReplies extends CommentRow {
+  replies: CommentRow[];
+}
+
 export interface AuthUser {
   id: string;
   name: string;
