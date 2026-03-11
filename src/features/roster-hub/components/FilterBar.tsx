@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   ButtonGroup,
-  Chip,
   FormControl,
   IconButton,
   InputAdornment,
@@ -13,6 +12,7 @@ import {
   type SelectChangeEvent,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import React from 'react';
 
@@ -31,6 +31,9 @@ const HUB_TRIALS = TRIALS.filter((t) => t.id !== 'GEN');
 
 export const FilterBar: React.FC<FilterBarProps> = React.memo(
   ({ filters, totalCount, onFilterChange }) => {
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
+
     const handleTrialChange = (e: SelectChangeEvent): void => {
       onFilterChange('trial', e.target.value);
     };
@@ -175,35 +178,60 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
               const active = filters.tag === tag;
               const accent = TAG_COLORS[tag] ?? '#888';
               return (
-                <Chip
+                <Box
                   key={tag}
-                  label={tag}
-                  size="small"
+                  component="button"
                   onClick={() => handleTagToggle(tag)}
-                  variant={active ? 'filled' : 'outlined'}
-                  aria-pressed={active}
                   role="checkbox"
+                  aria-pressed={active}
+                  aria-label={tag}
                   sx={{
-                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    px: 1,
+                    py: 0.4,
+                    borderRadius: '6px',
                     fontSize: '0.7rem',
+                    fontWeight: active ? 700 : 600,
+                    letterSpacing: '0.02em',
+                    cursor: 'pointer',
                     flexShrink: 0,
-                    height: 24,
-                    '& .MuiChip-label': { px: 1 },
-                    transition: 'all 0.15s ease',
+                    border: 'none',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                    transition: 'all 0.18s ease',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
                     ...(active
                       ? {
-                          bgcolor: accent,
+                          background: isDark
+                            ? `linear-gradient(135deg, ${accent}dd 0%, ${accent}aa 100%)`
+                            : `linear-gradient(135deg, ${accent}cc 0%, ${accent}99 100%)`,
+                          border: `1px solid ${accent}90`,
+                          boxShadow: `0 0 10px ${accent}50, 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)`,
                           color: '#fff',
-                          borderColor: accent,
-                          '&:hover': { bgcolor: accent, filter: 'brightness(0.9)' },
+                          transform: 'translateY(-1px)',
                         }
                       : {
-                          borderColor: `${accent}55`,
-                          color: accent,
-                          '&:hover': { bgcolor: `${accent}18`, borderColor: accent },
+                          background: isDark ? `${accent}10` : `${accent}0d`,
+                          border: `1px solid ${accent}35`,
+                          color: isDark ? accent : accent,
+                          boxShadow: 'none',
+                          '&:hover': {
+                            background: isDark ? `${accent}22` : `${accent}1a`,
+                            border: `1px solid ${accent}60`,
+                            transform: 'translateY(-1px)',
+                            boxShadow: `0 2px 8px ${accent}25`,
+                          },
                         }),
+                    '&:focus-visible': {
+                      outline: `2px solid ${accent}`,
+                      outlineOffset: '2px',
+                    },
                   }}
-                />
+                >
+                  {tag}
+                </Box>
               );
             })}
           </Box>

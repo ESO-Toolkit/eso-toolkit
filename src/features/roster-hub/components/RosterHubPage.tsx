@@ -75,44 +75,72 @@ export const RosterHubPage: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Page header — styled to match Roster Builder's icon lockup pattern */}
+      {/* Page hero header */}
       <Box
         sx={{
+          position: 'relative',
           display: 'flex',
           alignItems: { xs: 'flex-start', sm: 'center' },
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'space-between',
           gap: 2,
           mb: 3,
+          px: 2.5,
+          py: 2,
+          borderRadius: 2,
+          background: isDark
+            ? 'linear-gradient(135deg, rgba(110,170,240,0.10) 0%, rgba(152,131,227,0.07) 50%, rgba(11,18,32,0.4) 100%)'
+            : 'linear-gradient(135deg, rgba(37,99,235,0.06) 0%, rgba(124,58,237,0.04) 50%, rgba(255,255,255,0.6) 100%)',
+          border: isDark
+            ? '1px solid rgba(255,255,255,0.07)'
+            : '1px solid rgba(0,0,0,0.06)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '2px',
+            background: isDark
+              ? 'linear-gradient(90deg, transparent 0%, rgba(96,165,250,0.6) 30%, rgba(167,139,250,0.8) 60%, transparent 100%)'
+              : 'linear-gradient(90deg, transparent 0%, rgba(37,99,235,0.4) 30%, rgba(124,58,237,0.5) 60%, transparent 100%)',
+            borderRadius: '4px 4px 0 0',
+          },
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box
             sx={{
-              width: 36,
-              height: 36,
-              borderRadius: '10px',
+              width: 40,
+              height: 40,
+              borderRadius: '11px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               background: isDark
-                ? 'linear-gradient(135deg, rgba(96,165,250,0.15) 0%, rgba(167,139,250,0.10) 100%)'
-                : 'linear-gradient(135deg, rgba(37,99,235,0.10) 0%, rgba(124,58,237,0.08) 100%)',
+                ? 'linear-gradient(135deg, rgba(96,165,250,0.2) 0%, rgba(167,139,250,0.12) 100%)'
+                : 'linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(124,58,237,0.08) 100%)',
               border: isDark
-                ? '1px solid rgba(96,165,250,0.2)'
-                : '1px solid rgba(37,99,235,0.15)',
+                ? '1px solid rgba(96,165,250,0.25)'
+                : '1px solid rgba(37,99,235,0.18)',
+              boxShadow: isDark
+                ? '0 0 12px rgba(96,165,250,0.15)'
+                : '0 0 8px rgba(37,99,235,0.10)',
             }}
           >
-            <Groups sx={{ fontSize: '1.1rem', color: isDark ? '#60a5fa' : '#2563eb' }} />
+            <Groups sx={{ fontSize: '1.25rem', color: isDark ? '#60a5fa' : '#2563eb' }} />
           </Box>
           <Box>
             <Typography
               sx={{
-                fontSize: '0.6rem',
+                fontSize: '0.58rem',
                 fontWeight: 700,
-                letterSpacing: '0.1em',
+                letterSpacing: '0.12em',
                 textTransform: 'uppercase',
-                color: 'text.disabled',
+                color: isDark ? 'rgba(148,163,184,0.7)' : 'rgba(100,116,139,0.8)',
                 lineHeight: 1.2,
               }}
             >
@@ -121,8 +149,8 @@ export const RosterHubPage: React.FC = () => {
             <Typography
               component="h1"
               sx={{
-                fontWeight: 700,
-                fontSize: '1.15rem',
+                fontWeight: 800,
+                fontSize: '1.25rem',
                 letterSpacing: '-0.02em',
                 background: isDark
                   ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
@@ -144,7 +172,12 @@ export const RosterHubPage: React.FC = () => {
               onClick={refresh}
               disabled={loading}
               aria-label="Refresh roster list"
-              sx={{ minWidth: 36, minHeight: 36 }}
+              sx={{
+                minWidth: 32,
+                minHeight: 32,
+                color: 'text.disabled',
+                '&:hover': { color: 'text.secondary' },
+              }}
             >
               <Refresh fontSize="small" />
             </IconButton>
@@ -155,6 +188,25 @@ export const RosterHubPage: React.FC = () => {
               variant="contained"
               size="small"
               href="/roster-builder"
+              sx={{
+                background: isDark
+                  ? 'linear-gradient(135deg, rgba(96,165,250,0.9) 0%, rgba(139,92,246,0.9) 100%)'
+                  : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                border: 'none',
+                boxShadow: isDark
+                  ? '0 0 12px rgba(96,165,250,0.3), 0 4px 12px rgba(0,0,0,0.3)'
+                  : '0 4px 12px rgba(59,130,246,0.3)',
+                '&:hover': {
+                  background: isDark
+                    ? 'linear-gradient(135deg, rgba(96,165,250,1) 0%, rgba(139,92,246,1) 100%)'
+                    : 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+                  boxShadow: isDark
+                    ? '0 0 16px rgba(96,165,250,0.4), 0 6px 16px rgba(0,0,0,0.4)'
+                    : '0 6px 16px rgba(59,130,246,0.4)',
+                  transform: 'translateY(-1px)',
+                },
+                transition: 'all 0.2s ease',
+              }}
             >
               Build &amp; Publish
             </Button>

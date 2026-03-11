@@ -5,10 +5,10 @@ import {
   CardActionArea,
   CardActions,
   CardContent,
-  Chip,
   IconButton,
   Tooltip,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React from 'react';
@@ -32,7 +32,7 @@ export const TRIAL_LABELS: Record<string, string> = {
   AA: 'Aetherian Archive',
   AS: 'Asylum Sanctorium',
   BRP: 'Blackrose Prison',
-  CR: "Cloudrest",
+  CR: 'Cloudrest',
   DSR: 'Dreadsail Reef',
   HOF: 'Hall of Fabrication',
   HRC: 'Hel Ra Citadel',
@@ -52,8 +52,8 @@ const TRIAL_SHORT: Record<string, string> = {
   SO: 'SO', SS: 'SS',
 };
 
-// Trial accent colors — gives each trial a distinctive top border on cards
-const TRIAL_ACCENT: Record<string, string> = {
+// Trial accent colors — gives each trial its visual identity
+export const TRIAL_ACCENT: Record<string, string> = {
   AA: '#f59e0b',  // amber
   AS: '#6366f1',  // indigo
   BRP: '#ef4444', // red
@@ -80,15 +80,19 @@ function formatDate(iso: string): string {
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d ago`;
   if (days < 30) return `${Math.floor(days / 7)}w ago`;
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-  });
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+// Deterministic avatar color from author name (matches CommentSection)
+function getAvatarHue(name: string): number {
+  return name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
 }
 
 export const RosterCard: React.FC<RosterCardProps> = React.memo(
   ({ roster, isOwner, isLoggedIn, onVote, onPreview, onDelete }) => {
     const { enqueueSnackbar } = useSnackbar();
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
 
     const handleCopyLink = (e: React.MouseEvent): void => {
       e.stopPropagation();
@@ -102,34 +106,54 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
     const trialFull = TRIAL_LABELS[roster.trial_id] ?? roster.trial_id;
     const accentColor = TRIAL_ACCENT[roster.trial_id] ?? '#3b82f6';
 
+    const authorHue = getAvatarHue(roster.author_name || '?');
+    const avatarColor = `hsl(${authorHue}, 55%, 55%)`;
+    const initial = (roster.author_name || '?')[0].toUpperCase();
+
     return (
       <Card
-        variant="outlined"
         sx={{
           display: 'flex',
           flexDirection: 'column',
           width: '100%',
-          borderTop: `3px solid ${accentColor}`,
-          transition: 'box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease',
+          position: 'relative',
+          background: isDark
+            ? `linear-gradient(135deg, ${accentColor}0a 0%, rgba(152,131,227,0.06) 50%, rgba(11,18,32,0.5) 100%)`
+            : `linear-gradient(135deg, ${accentColor}08 0%, rgba(152,131,227,0.04) 50%, rgba(255,255,255,0.7) 100%)`,
+          border: isDark
+            ? `1px solid rgba(255,255,255,0.07)`
+            : `1px solid rgba(0,0,0,0.08)`,
+          borderRadius: 2,
+          overflow: 'hidden',
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
           '&:hover': {
-            boxShadow: `0 8px 25px -5px ${accentColor}33, 0 4px 10px -6px ${accentColor}22`,
-            borderColor: 'divider',
-            borderTopColor: accentColor,
-            transform: 'translateY(-3px)',
-          },
-          '&:focus-within': {
-            borderColor: 'divider',
-            borderTopColor: accentColor,
+            transform: 'translateY(-4px)',
+            boxShadow: isDark
+              ? `0 0 0 1px ${accentColor}30, 0 12px 32px -6px ${accentColor}45, 0 4px 16px -4px rgba(0,0,0,0.5)`
+              : `0 0 0 1px ${accentColor}20, 0 12px 32px -6px ${accentColor}30, 0 4px 16px -4px rgba(0,0,0,0.12)`,
           },
         }}
       >
+        {/* Glowing accent bar — feathered gradient like PlayerCard top DPS */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '3px',
+            background: `linear-gradient(90deg, transparent 0%, ${accentColor}70 20%, ${accentColor} 50%, ${accentColor}70 80%, transparent 100%)`,
+            boxShadow: `0 0 8px ${accentColor}70, 0 0 20px ${accentColor}30`,
+            borderRadius: '4px 4px 0 0',
+            zIndex: 2,
+          }}
+          aria-hidden="true"
+        />
+
         {/* Clickable area — opens preview */}
         <CardActionArea
           onClick={() => onPreview(roster)}
-          sx={{
-            flexGrow: 1,
-            alignItems: 'flex-start',
-          }}
+          sx={{ flexGrow: 1, alignItems: 'flex-start' }}
           aria-label={`Preview ${roster.title}`}
         >
           <CardContent
@@ -137,25 +161,41 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
               display: 'flex',
               flexDirection: 'column',
               height: '100%',
+              pt: 2.5, // extra top padding clears the accent bar
               pb: '12px !important',
             }}
           >
-            {/* Trial badge row */}
+            {/* Trial badge */}
             <Tooltip title={trialFull} placement="top">
-              <Box component="span" sx={{ display: 'inline-flex', mb: 1 }}>
-                <Chip
-                  label={trialShort}
-                  size="small"
-                  color="primary"
-                  variant="filled"
+              <Box
+                component="span"
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  mb: 1,
+                  px: 0.75,
+                  py: 0.3,
+                  borderRadius: '5px',
+                  background: isDark
+                    ? `linear-gradient(90deg, ${accentColor}22 0%, ${accentColor}10 100%)`
+                    : `linear-gradient(90deg, ${accentColor}18 0%, ${accentColor}08 100%)`,
+                  border: `1px solid ${accentColor}45`,
+                  boxShadow: `0 0 6px ${accentColor}25`,
+                  alignSelf: 'flex-start',
+                }}
+              >
+                <Typography
                   sx={{
-                    height: 20,
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.03em',
-                    '& .MuiChip-label': { px: 0.75 },
+                    fontSize: '0.62rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    color: isDark ? accentColor : accentColor,
+                    lineHeight: 1,
+                    textTransform: 'uppercase',
                   }}
-                />
+                >
+                  {trialShort}
+                </Typography>
               </Box>
             </Tooltip>
 
@@ -172,6 +212,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
                 wordBreak: 'break-word',
+                fontSize: '0.95rem',
               }}
             >
               {roster.title}
@@ -189,36 +230,43 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
                   lineHeight: 1.5,
+                  fontSize: '0.8rem',
+                  opacity: 0.85,
                 }}
               >
                 {roster.description}
               </Typography>
             )}
 
-            {/* Tags */}
+            {/* Tags — glassmorphic mini chips */}
             {roster.tags.length > 0 && (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
                 {roster.tags.map((tag) => {
-                  const tagColor = TAG_COLORS[tag];
+                  const tagColor = TAG_COLORS[tag] ?? '#888';
                   return (
-                    <Chip
+                    <Box
                       key={tag}
-                      label={tag}
-                      size="small"
-                      variant="outlined"
+                      component="span"
                       sx={{
-                        fontSize: '0.7rem',
-                        height: 22,
-                        '& .MuiChip-label': { px: 0.75 },
-                        ...(tagColor
-                          ? {
-                              borderColor: `${tagColor}50`,
-                              color: tagColor,
-                              fontWeight: 600,
-                            }
-                          : {}),
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        px: 0.75,
+                        py: 0.2,
+                        borderRadius: '4px',
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.02em',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                        background: isDark ? `${tagColor}20` : `${tagColor}14`,
+                        border: `1px solid ${tagColor}40`,
+                        color: isDark ? tagColor : tagColor,
+                        lineHeight: 1.4,
+                        whiteSpace: 'nowrap',
                       }}
-                    />
+                    >
+                      {tag}
+                    </Box>
                   );
                 })}
               </Box>
@@ -228,13 +276,15 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             <Box sx={{ flexGrow: 1, minHeight: 8 }} />
 
             {/* Author + date */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              {/* Colored avatar based on author name hash */}
               <Box
                 sx={{
-                  width: 16,
-                  height: 16,
+                  width: 18,
+                  height: 18,
                   borderRadius: '50%',
-                  bgcolor: 'action.selected',
+                  bgcolor: `${avatarColor}25`,
+                  border: `1px solid ${avatarColor}50`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -242,24 +292,28 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                 }}
                 aria-hidden="true"
               >
-                <Typography sx={{ fontSize: '0.5rem', fontWeight: 700, color: 'text.disabled', lineHeight: 1 }}>
-                  {(roster.author_name || '?')[0].toUpperCase()}
+                <Typography sx={{ fontSize: '0.48rem', fontWeight: 800, color: avatarColor, lineHeight: 1 }}>
+                  {initial}
                 </Typography>
               </Box>
-              <Typography variant="caption" color="text.disabled" noWrap>
+              <Typography variant="caption" color="text.disabled" noWrap sx={{ fontSize: '0.72rem' }}>
                 {roster.author_name} · {formatDate(roster.created_at)}
               </Typography>
             </Box>
           </CardContent>
         </CardActionArea>
 
-        {/* Divider + action row */}
+        {/* Action row */}
         <CardActions
           sx={{
             px: 1.5,
-            py: 1,
-            borderTop: 1,
-            borderColor: 'divider',
+            py: 0.75,
+            borderTop: isDark
+              ? '1px solid rgba(255,255,255,0.06)'
+              : '1px solid rgba(0,0,0,0.07)',
+            background: isDark
+              ? 'rgba(0,0,0,0.2)'
+              : 'rgba(0,0,0,0.02)',
             justifyContent: 'space-between',
           }}
           onClick={(e) => e.stopPropagation()}
@@ -277,9 +331,14 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                 size="small"
                 onClick={handleCopyLink}
                 aria-label="Copy share link"
-                sx={{ minWidth: 36, minHeight: 36 }}
+                sx={{
+                  minWidth: 32,
+                  minHeight: 32,
+                  color: 'text.disabled',
+                  '&:hover': { color: 'text.secondary' },
+                }}
               >
-                <ContentCopy sx={{ fontSize: 16 }} />
+                <ContentCopy sx={{ fontSize: 15 }} />
               </IconButton>
             </Tooltip>
             {isOwner && (
@@ -289,9 +348,9 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                   color="error"
                   onClick={() => onDelete(roster.id)}
                   aria-label="Delete roster"
-                  sx={{ minWidth: 36, minHeight: 36 }}
+                  sx={{ minWidth: 32, minHeight: 32 }}
                 >
-                  <DeleteOutline sx={{ fontSize: 16 }} />
+                  <DeleteOutline sx={{ fontSize: 15 }} />
                 </IconButton>
               </Tooltip>
             )}
