@@ -68,6 +68,8 @@ export const initializeErrorTracking = (): void => {
     captureUncaught: isProduction && ERROR_TRACKING_CONFIG.captureUncaught,
     captureUnhandledRejections: isProduction && ERROR_TRACKING_CONFIG.captureUnhandledRejections,
     verbose: ERROR_TRACKING_CONFIG.verbose,
+    // Cap items per page load to prevent Rollbar flooding (ESO-689)
+    maxItems: ERROR_TRACKING_CONFIG.maxItems,
 
     // Filter out browser extension errors (ESO-559)
     checkIgnore: (_isUncaught, args, payload) => {

@@ -21,6 +21,9 @@ export const ERROR_TRACKING_CONFIG = Object.freeze({
 
   // Verbose SDK logging (disable in production)
   verbose: false,
+
+  // Rate limiting — cap items per page load to prevent Rollbar flooding (ESO-689)
+  maxItems: 10,
 } as const);
 
 // Bug report categories

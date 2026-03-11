@@ -38,22 +38,32 @@ describe('setNameUtils', () => {
     });
 
     it('should report error to error tracking when unknown set is detected', () => {
-      const unknownSetId = 99999 as KnownSetIDs;
+      // Use a unique ID (88888) — 99999 was already added to the dedup Set by the previous test
+      const unknownSetId = 88888 as KnownSetIDs;
       getSetDisplayName(unknownSetId);
 
       expect(errorTracking.reportError).toHaveBeenCalledTimes(1);
       expect(errorTracking.reportError).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Unknown set ID detected: 99999',
+          message: 'Unknown set ID detected: 88888',
         }),
         expect.objectContaining({
-          setId: 99999,
+          setId: 88888,
           setIdType: 'number',
           component: 'setNameUtils',
           function: 'getSetDisplayName',
           availableSetCount: expect.any(Number),
         }),
       );
+    });
+
+    it('should not report the same unknown set ID more than once (ESO-689)', () => {
+      const unknownSetId = 77777 as KnownSetIDs;
+      getSetDisplayName(unknownSetId);
+      getSetDisplayName(unknownSetId);
+      getSetDisplayName(unknownSetId);
+
+      expect(errorTracking.reportError).toHaveBeenCalledTimes(1);
     });
 
     it('should include context data in error tracking report', () => {
