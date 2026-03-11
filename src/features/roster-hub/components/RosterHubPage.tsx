@@ -1,10 +1,12 @@
-import { Add, Refresh } from '@mui/icons-material';
+import { Add, Groups, Refresh, SearchOff } from '@mui/icons-material';
 import {
   Alert,
   Box,
   Button,
   Container,
   Grid,
+  IconButton,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -70,13 +72,10 @@ export const RosterHubPage: React.FC = () => {
   }, [token, deleteTarget, enqueueSnackbar, refresh]);
 
   const isDark = theme.palette.mode === 'dark';
-  const gradientText = isDark
-    ? 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)'
-    : 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)';
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Page header */}
+      {/* Page header — styled to match Roster Builder's icon lockup pattern */}
       <Box
         sx={{
           display: 'flex',
@@ -87,36 +86,69 @@ export const RosterHubPage: React.FC = () => {
           mb: 3,
         }}
       >
-        <Box>
-          <Typography
-            variant="h4"
-            component="h1"
-            fontWeight={700}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Box
             sx={{
-              background: gradientText,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              letterSpacing: '-0.02em',
+              width: 36,
+              height: 36,
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: isDark
+                ? 'linear-gradient(135deg, rgba(96,165,250,0.15) 0%, rgba(167,139,250,0.10) 100%)'
+                : 'linear-gradient(135deg, rgba(37,99,235,0.10) 0%, rgba(124,58,237,0.08) 100%)',
+              border: isDark
+                ? '1px solid rgba(96,165,250,0.2)'
+                : '1px solid rgba(37,99,235,0.15)',
             }}
           >
-            Roster Hub
-          </Typography>
-          <Typography variant="body2" color="text.secondary" mt={0.5}>
-            Browse, vote, and share raid compositions for every ESO trial. Click any card to preview.
-          </Typography>
+            <Groups sx={{ fontSize: '1.1rem', color: isDark ? '#60a5fa' : '#2563eb' }} />
+          </Box>
+          <Box>
+            <Typography
+              sx={{
+                fontSize: '0.6rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'text.disabled',
+                lineHeight: 1.2,
+              }}
+            >
+              Community
+            </Typography>
+            <Typography
+              component="h1"
+              sx={{
+                fontWeight: 700,
+                fontSize: '1.15rem',
+                letterSpacing: '-0.02em',
+                background: isDark
+                  ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                  : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                lineHeight: 1.3,
+              }}
+            >
+              Roster Hub
+            </Typography>
+          </Box>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
-          <Button
-            startIcon={<Refresh />}
-            variant="outlined"
-            size="small"
-            onClick={refresh}
-            disabled={loading}
-            aria-label="Refresh roster list"
-          >
-            Refresh
-          </Button>
+        <Box sx={{ display: 'flex', gap: 1, flexShrink: 0, alignItems: 'center' }}>
+          <Tooltip title="Refresh roster list">
+            <IconButton
+              size="small"
+              onClick={refresh}
+              disabled={loading}
+              aria-label="Refresh roster list"
+              sx={{ minWidth: 36, minHeight: 36 }}
+            >
+              <Refresh fontSize="small" />
+            </IconButton>
+          </Tooltip>
           {isLoggedIn && (
             <Button
               startIcon={<Add />}
@@ -158,27 +190,30 @@ export const RosterHubPage: React.FC = () => {
 
         {/* Empty state */}
         {!loading && filteredRosters.length === 0 && !error && (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <Typography variant="h6" color="text.secondary">
-              No rosters found
-            </Typography>
-            <Typography variant="body2" color="text.secondary" mt={1}>
+          <Box sx={{ textAlign: 'center', py: 10, px: 2 }}>
+            <SearchOff sx={{ fontSize: 48, color: 'text.disabled', mb: 2, opacity: 0.5 }} />
+            <Typography variant="h6" color="text.secondary" fontWeight={600}>
               {filters.trial || filters.tag || filters.search
-                ? 'Try adjusting or clearing the filters.'
-                : 'Be the first to publish a roster!'}
+                ? 'No matching rosters'
+                : 'No rosters yet'}
+            </Typography>
+            <Typography variant="body2" color="text.disabled" mt={0.75} sx={{ maxWidth: 360, mx: 'auto' }}>
+              {filters.trial || filters.tag || filters.search
+                ? 'Try broadening your search or removing some filters.'
+                : 'Be the first to publish a roster to the Hub!'}
             </Typography>
             {(filters.trial || filters.tag || filters.search) && (
               <Button
                 variant="outlined"
                 size="small"
-                sx={{ mt: 2 }}
+                sx={{ mt: 2.5 }}
                 onClick={() => {
                   setFilter('trial', '');
                   setFilter('tag', '');
                   setFilter('search', '');
                 }}
               >
-                Clear filters
+                Clear all filters
               </Button>
             )}
           </Box>

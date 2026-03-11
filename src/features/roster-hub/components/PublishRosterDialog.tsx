@@ -21,7 +21,7 @@ import React from 'react';
 
 import { TRIALS } from '../../loadout-manager/data/trialConfigs';
 import { rosterHubApi } from '../api/roster-hub-api';
-import { PRESET_TAGS } from '../types/roster-hub.types';
+import { PRESET_TAGS, TAG_COLORS } from '../types/roster-hub.types';
 
 interface PublishRosterDialogProps {
   open: boolean;
@@ -165,6 +165,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
             {PRESET_TAGS.map((tag) => {
               const isSelected = selectedTags.includes(tag);
               const isDisabled = !isSelected && atTagLimit;
+              const accent = TAG_COLORS[tag] ?? '#888';
               return (
                 <Tooltip key={tag} title={isDisabled ? `Remove a tag first (max ${MAX_TAGS})` : ''}>
                   <span>
@@ -172,13 +173,27 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                       label={tag}
                       size="small"
                       onClick={isDisabled ? undefined : () => handleTagToggle(tag)}
-                      color={isSelected ? 'primary' : 'default'}
                       variant={isSelected ? 'filled' : 'outlined'}
                       aria-pressed={isSelected}
                       role="checkbox"
                       sx={{
                         cursor: isDisabled ? 'not-allowed' : 'pointer',
                         opacity: isDisabled ? 0.5 : 1,
+                        transition: 'all 0.15s ease',
+                        ...(isSelected
+                          ? {
+                              bgcolor: accent,
+                              color: '#fff',
+                              borderColor: accent,
+                              '&:hover': { bgcolor: accent, filter: 'brightness(0.9)' },
+                            }
+                          : {
+                              borderColor: `${accent}55`,
+                              color: accent,
+                              '&:hover': isDisabled
+                                ? {}
+                                : { bgcolor: `${accent}18`, borderColor: accent },
+                            }),
                       }}
                     />
                   </span>

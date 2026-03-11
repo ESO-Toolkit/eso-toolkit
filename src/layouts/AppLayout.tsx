@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
 import Container from '@mui/material/Container';
 import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useSearchParams } from 'react-router-dom';
 
 import { Footer } from '../components/Footer';
 import { HeaderBar } from '../components/HeaderBar';
@@ -10,9 +10,32 @@ import { ReportFightProvider } from '../ReportFightContext';
 
 export const AppLayout: React.FC = () => {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   // Check if we're on the landing page (root path)
   const isLandingPage = location.pathname === '/' || location.pathname === '';
+
+  // Embed mode: strip chrome (header/footer) for iframe previews
+  const isEmbed = searchParams.get('embed') === '1';
+
+  if (isEmbed) {
+    return (
+      <ReduxThemeProvider>
+        <ReportFightProvider>
+          <Box
+            sx={{
+              bgcolor: 'background.default',
+              color: 'text.primary',
+              minHeight: '100vh',
+              overflow: 'auto',
+            }}
+          >
+            <Outlet />
+          </Box>
+        </ReportFightProvider>
+      </ReduxThemeProvider>
+    );
+  }
 
   return (
     <ReduxThemeProvider>
@@ -29,7 +52,7 @@ export const AppLayout: React.FC = () => {
         >
           <HeaderBar />
           <Container
-            maxWidth="md"
+            maxWidth={false}
             sx={{
               px: { xs: isLandingPage ? 2 : 0, sm: 2 },
               flex: 1,

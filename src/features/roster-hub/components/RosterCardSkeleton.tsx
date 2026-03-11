@@ -4,7 +4,15 @@ import React from 'react';
 export const RosterCardSkeleton: React.FC = () => (
   <Card
     variant="outlined"
-    sx={{ display: 'flex', flexDirection: 'column', width: '100%', borderColor: 'divider' }}
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+      borderColor: 'divider',
+      borderTop: '3px solid transparent',
+      borderImage: 'linear-gradient(90deg, rgba(99,102,241,0.3), rgba(168,85,247,0.3), rgba(59,130,246,0.3)) 1',
+      overflow: 'hidden',
+    }}
   >
     <CardContent sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, pb: '12px !important' }}>
       {/* Trial badge */}
@@ -37,7 +45,10 @@ export const RosterCardSkeleton: React.FC = () => (
       }}
     >
       <Skeleton variant="rounded" width={58} height={32} sx={{ borderRadius: '16px' }} />
-      <Skeleton variant="circular" width={28} height={28} />
+      <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Skeleton variant="circular" width={28} height={28} />
+        <Skeleton variant="circular" width={28} height={28} />
+      </Box>
     </Box>
   </Card>
 );
