@@ -77,6 +77,7 @@ import { SetAssignmentManager } from '../components/SetAssignmentManager';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
+import { PublishRosterDialog } from '../features/roster-hub/components/PublishRosterDialog';
 import { GetPlayersForReportQuery } from '../graphql/gql/graphql';
 import { KnownAbilities, KnownSetIDs } from '../types/abilities';
 import {
@@ -1050,7 +1051,9 @@ export const RosterBuilderPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get auth state
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, accessToken } = useAuth();
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+  const [publishRosterData, setPublishRosterData] = useState<string>('');
 
   // Get ESO Logs client context (safe to call - doesn't throw if not logged in)
   const { client: esoLogsClient, isReady, isLoggedIn: clientLoggedIn } = useEsoLogsClientContext();
@@ -2512,6 +2515,37 @@ export const RosterBuilderPage: React.FC = () => {
                 Share
               </Button>
             </Tooltip>
+            {isLoggedIn && (
+              <Tooltip title="Publish to Roster Hub — share with the community" arrow>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    void encodeRosterToURLShared(roster).then((encoded) => {
+                      setPublishRosterData(encoded);
+                      setPublishDialogOpen(true);
+                    });
+                  }}
+                  sx={{
+                    flex: { xs: 1, md: 'none' },
+                    justifyContent: 'center',
+                    borderRadius: '8px',
+                    textTransform: 'none',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    color: isDarkMode ? '#bae6fd' : '#0369a1',
+                    backgroundColor: isDarkMode ? 'rgba(56,189,248,0.1)' : 'rgba(3,105,161,0.06)',
+                    border: isDarkMode
+                      ? '1px solid rgba(56,189,248,0.2)'
+                      : '1px solid rgba(3,105,161,0.2)',
+                    '&:hover': {
+                      backgroundColor: isDarkMode ? 'rgba(56,189,248,0.18)' : 'rgba(3,105,161,0.1)',
+                    },
+                  }}
+                >
+                  🏛️ Publish
+                </Button>
+              </Tooltip>
+            )}
           </Box>
           {/* end row 2 */}
         </Box>
@@ -3369,6 +3403,17 @@ export const RosterBuilderPage: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Publish to Roster Hub dialog */}
+      <PublishRosterDialog
+        open={publishDialogOpen}
+        rosterData={publishRosterData}
+        token={accessToken}
+        onClose={() => setPublishDialogOpen(false)}
+        onPublished={() => {
+          setSnackbar({ open: true, severity: 'success', message: 'Roster published to Roster Hub!' });
+        }}
+      />
     </Container>
   );
 };
