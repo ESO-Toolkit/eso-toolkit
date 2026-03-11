@@ -89,10 +89,17 @@ export interface CompactDPS {
   sn: number; // slotNumber (required)
   pn?: string; // playerName
   pi?: number; // playerNumber
+  rl?: string; // roleLabel
   rn?: string; // roleNotes
   lb?: string[]; // labels
-  gs?: number[]; // gearSets
+  s1?: number; // set1 (primary 5-piece)
+  s2?: number; // set2 (secondary 5-piece)
+  ms?: number; // monsterSet
+  as?: number[]; // additionalSets
+  gs?: number[]; // legacy gearSets (backward compat decode only)
   sl?: CompactSkills; // skillLines
+  cp?: string; // championPoint
+  ul?: number | string; // ultimate: SupportUltimate index or custom string
   gr?: CompactGroup; // group
   no?: string; // notes
   jt?: number; // jailDDType index
@@ -300,11 +307,18 @@ function compactDPS(d: DPSSlot): CompactDPS {
   const c: CompactDPS = { sn: d.slotNumber };
   if (d.playerName) c.pn = d.playerName;
   if (d.playerNumber != null) c.pi = d.playerNumber;
+  if (d.roleLabel) c.rl = d.roleLabel;
   if (d.roleNotes) c.rn = d.roleNotes;
   if (d.labels?.length) c.lb = d.labels;
-  if (d.gearSets?.length) c.gs = d.gearSets as number[];
+  if (d.set1 != null) c.s1 = d.set1 as number;
+  if (d.set2 != null) c.s2 = d.set2 as number;
+  if (d.monsterSet != null) c.ms = d.monsterSet as number;
+  if (d.additionalSets?.length) c.as = d.additionalSets as number[];
   const sl = d.skillLines ? compactSkills(d.skillLines) : undefined;
   if (sl) c.sl = sl;
+  if (d.championPoint) c.cp = d.championPoint;
+  const ul = encodeUltimate(d.ultimate);
+  if (ul != null) c.ul = ul;
   const gr = compactGroup(d.group);
   if (gr) c.gr = gr;
   if (d.notes) c.no = d.notes;
@@ -317,14 +331,30 @@ function compactDPS(d: DPSSlot): CompactDPS {
 }
 
 function expandDPS(c: CompactDPS): DPSSlot {
+  // Migrate legacy flat gearSets (gs) to structured fields when no new fields present.
+  const legacyGear =
+    c.gs && !c.s1 && !c.s2
+      ? {
+          set1: (c.gs[0] as KnownSetIDs) ?? undefined,
+          set2: (c.gs[1] as KnownSetIDs) ?? undefined,
+          additionalSets: (c.gs.slice(2) as KnownSetIDs[]) || undefined,
+        }
+      : {};
   return {
     slotNumber: c.sn,
     playerName: c.pn,
     playerNumber: c.pi,
+    roleLabel: c.rl,
     roleNotes: c.rn,
     labels: c.lb,
-    gearSets: c.gs as KnownSetIDs[] | undefined,
+    set1: c.s1 as KnownSetIDs | undefined,
+    set2: c.s2 as KnownSetIDs | undefined,
+    monsterSet: c.ms as KnownSetIDs | undefined,
+    additionalSets: c.as as KnownSetIDs[] | undefined,
+    ...legacyGear,
     skillLines: c.sl ? expandSkills(c.sl) : undefined,
+    championPoint: c.cp || undefined,
+    ultimate: c.ul != null ? decodeUltimate(c.ul) : null,
     group: expandGroup(c.gr),
     notes: c.no,
     jailDDType: c.jt != null ? JAIL_DD_TYPE_LIST[c.jt] : undefined,
@@ -347,9 +377,16 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
     (slot) =>
       slot.playerName ||
       slot.playerNumber != null ||
+      slot.roleLabel ||
       slot.roleNotes ||
       slot.labels?.length ||
+      slot.set1 != null ||
+      slot.set2 != null ||
+      slot.monsterSet != null ||
+      slot.additionalSets?.length ||
       slot.gearSets?.length ||
+      slot.championPoint ||
+      slot.ultimate ||
       slot.jailDDType ||
       slot.notes ||
       slot.group ||
