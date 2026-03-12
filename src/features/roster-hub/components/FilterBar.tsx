@@ -66,29 +66,16 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
     return (
       <Box
         sx={{
-          position: 'sticky',
-          top: { xs: 56, sm: 64 },
           zIndex: 10,
+          px: 2,
           pt: 1.25,
           pb: 1.75,
           mb: 2.5,
-          // Full-bleed background: the ::before pseudo-element breaks out of the
-          // centered Container and spans 100vw using left:50% + translateX(-50%).
-          // Controls stay positioned normally inside the Container.
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '100vw',
-            background: isDark ? 'rgba(11,16,26,0.88)' : 'rgba(248,250,252,0.92)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-            zIndex: -1,
-          },
+          borderRadius: 3,
+          background: isDark ? 'rgba(11,16,26,0.88)' : 'rgba(248,250,252,0.92)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
         }}
       >
         {/* ── Row 1: search · [trial · sort] ────────────────────────── */}
