@@ -20,15 +20,17 @@ jest.mock('./abilityIdMapper', () => ({
 
 jest.mock('./skillLinesRegistry', () => ({
   findSkillByName: jest.fn(),
+  findSkillById: jest.fn(),
   getClassKey: jest.fn(),
 }));
 
 // Import the mocked modules for type assertions
 import { abilityIdMapper } from './abilityIdMapper';
-import { findSkillByName, getClassKey } from './skillLinesRegistry';
+import { findSkillByName, findSkillById, getClassKey } from './skillLinesRegistry';
 
 const mockAbilityIdMapper = abilityIdMapper as jest.Mocked<typeof abilityIdMapper>;
 const mockFindSkillByName = findSkillByName as jest.MockedFunction<typeof findSkillByName>;
+const mockFindSkillById = findSkillById as jest.MockedFunction<typeof findSkillById>;
 const mockGetClassKey = getClassKey as jest.MockedFunction<typeof getClassKey>;
 
 // Helper function to create mock ability data with required properties
