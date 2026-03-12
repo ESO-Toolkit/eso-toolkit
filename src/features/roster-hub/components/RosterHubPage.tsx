@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
 import { ErrorBoundary } from '../../../components/ErrorBoundary';
 import { useAuth } from '../../auth/AuthContext';
@@ -181,7 +182,8 @@ export const RosterHubPage: React.FC = () => {
               startIcon={<Add />}
               variant="contained"
               size="small"
-              href="/roster-builder"
+              component={RouterLink}
+              to="/roster-builder"
               sx={{
                 background: 'linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)',
                 color: '#fff',

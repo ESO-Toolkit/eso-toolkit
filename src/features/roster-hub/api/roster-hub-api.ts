@@ -109,7 +109,7 @@ export const rosterHubApi = {
 
   loadRosterIntoBuilder(roster: HubRoster): void {
     // Navigate to roster builder with the encoded roster data as the ?r= param
-    window.location.href = `/roster-builder?r=${roster.roster_data}`;
+    window.location.href = `${import.meta.env.BASE_URL}roster-builder?r=${roster.roster_data}`;
   },
 
   // ─── Comments ──────────────────────────────────────────────────────────────
