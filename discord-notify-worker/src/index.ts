@@ -3,12 +3,14 @@ import { Hono } from 'hono';
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 interface Env {
-  DISCORD_BOT_TOKEN: string;
-  DISCORD_FORUM_CHANNEL_ID: string;
+  DISCORD_WEBHOOK_URL: string;
   GITHUB_WEBHOOK_SECRET: string;
   GITHUB_TOKEN: string;
   ZAI_API_KEY: string;
 }
+
+const BOT_USERNAME = 'ESO Toolkit';
+const BOT_AVATAR_URL = 'https://esotk.com/android-chrome-512x512.png';
 
 interface PullRequest {
   number: number;
@@ -342,24 +344,18 @@ app.post('/webhook/github', async (c) => {
   // Build embeds
   const embeds = buildEmbeds(pr, description, screenshots);
 
-  // Create forum thread via Discord Bot API
-  const discordResponse = await fetch(
-    `https://discord.com/api/v10/channels/${c.env.DISCORD_FORUM_CHANNEL_ID}/threads`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bot ${c.env.DISCORD_BOT_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name: `#${pr.number} — ${pr.title}`.substring(0, 100),
-        applied_tags: appliedTags,
-        message: {
-          embeds,
-        },
-      }),
-    },
-  );
+  // Create forum thread via Discord webhook
+  const discordResponse = await fetch(`${c.env.DISCORD_WEBHOOK_URL}?wait=true`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: BOT_USERNAME,
+      avatar_url: BOT_AVATAR_URL,
+      thread_name: `#${pr.number} — ${pr.title}`.substring(0, 100),
+      applied_tags: appliedTags,
+      embeds,
+    }),
+  });
 
   if (!discordResponse.ok) {
     const errText = await discordResponse.text();
@@ -370,12 +366,12 @@ app.post('/webhook/github', async (c) => {
     );
   }
 
-  const thread = (await discordResponse.json()) as { id: string };
-  console.log(`Forum thread created: ${thread.id} for PR #${pr.number}`);
+  const message = (await discordResponse.json()) as { id: string; channel_id: string };
+  console.log(`Forum thread created: ${message.channel_id} for PR #${pr.number}`);
 
   return c.json({
     success: true,
-    threadId: thread.id,
+    threadId: message.channel_id,
     prNumber: pr.number,
     commitType: commitType || 'unknown',
     tagApplied: !!tagId,
