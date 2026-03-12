@@ -15,296 +15,48 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - name: Build and send Discord embed
+      - name: Forward to Discord notify worker
         uses: actions/github-script@v8
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_PR_UPDATES }}
-          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          WORKER_URL: ${{ secrets.DISCORD_NOTIFY_WORKER_URL }}
+          WEBHOOK_SECRET: ${{ secrets.DISCORD_NOTIFY_WEBHOOK_SECRET }}
         with:
           script: |
-            const pr = context.payload.pull_request;
-
-            // ── Fetch PR comments (issue comments + review comments) ──
-            const [issueComments, reviewComments] = await Promise.all([
-              github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                per_page: 100,
-              }),
-              github.rest.pulls.listReviewComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: pr.number,
-                per_page: 100,
-              }),
-            ]);
-
-            // ── Extract screenshots from PR body + all comments ──
-            function extractImages(text) {
-              if (!text) return [];
-              const images = [];
-
-              // Markdown images: ![alt](url)
-              const mdRegex = /!\[.*?\]\((https?:\/\/[^\s)]+\.(?:png|jpg|jpeg|gif|webp|svg)(?:\?[^\s)]*)?)\)/gi;
-              let match;
-              while ((match = mdRegex.exec(text)) !== null) {
-                images.push(match[1]);
-              }
-
-              // HTML images: <img src="url" ...>
-              const htmlRegex = /<img[^>]+src=["'](https?:\/\/[^\s"']+\.(?:png|jpg|jpeg|gif|webp|svg)(?:\?[^\s"']*)?)["'][^>]*>/gi;
-              while ((match = htmlRegex.exec(text)) !== null) {
-                images.push(match[1]);
-              }
-
-              // GitHub user-uploaded assets (no extension in URL)
-              const ghAssetRegex = /!\[.*?\]\((https:\/\/github\.com\/[^/]+\/[^/]+\/assets\/[^\s)]+)\)/gi;
-              while ((match = ghAssetRegex.exec(text)) !== null) {
-                if (!images.includes(match[1])) images.push(match[1]);
-              }
-
-              // GitHub user-attachments in markdown: ![alt](https://github.com/user-attachments/assets/...)
-              const ghAttachRegex = /!\[.*?\]\((https:\/\/github\.com\/user-attachments\/assets\/[^\s)]+)\)/gi;
-              while ((match = ghAttachRegex.exec(text)) !== null) {
-                if (!images.includes(match[1])) images.push(match[1]);
-              }
-
-              // GitHub user-attachments in HTML <img> tags (most common when drag-dropping into comments)
-              const ghImgTagRegex = /<img[^>]+src=["'](https:\/\/github\.com\/user-attachments\/assets\/[^\s"']+)["'][^>]*>/gi;
-              while ((match = ghImgTagRegex.exec(text)) !== null) {
-                if (!images.includes(match[1])) images.push(match[1]);
-              }
-
-              return images;
-            }
-
-            const allBodies = [
-              pr.body,
-              ...issueComments.data.map((c) => c.body),
-              ...reviewComments.data.map((c) => c.body),
-            ];
-
-            const screenshots = [];
-            const seen = new Set();
-            for (const body of allBodies) {
-              for (const url of extractImages(body)) {
-                if (!seen.has(url)) {
-                  seen.add(url);
-                  screenshots.push(url);
-                }
-              }
-            }
-
-            const SUMMARY_SYSTEM_PROMPT = `You write friendly Discord update messages for a gaming tool called ESO Toolkit (an Elder Scrolls Online combat log analyzer). Your audience is gamers and guild members who are NOT developers. Write a 2-3 sentence summary of what changed from a user's perspective. Use Discord markdown (**bold** for emphasis). Be conversational and enthusiastic but not over the top. Never mention code, files, components, CSS, or technical implementation details. Focus on what users will SEE or EXPERIENCE. If the change is purely technical/internal with no visible user impact, say so briefly.`;
-
-            // ── Primary: Z.AI GLM-5 ──
-            async function summarizeWithZAI(prTitle, prBody) {
-              const apiKey = process.env.ZAI_API_KEY;
-              if (!apiKey) return null;
-
-              try {
-                const response = await fetch('https://api.z.ai/api/paas/v4/chat/completions', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`,
-                  },
-                  body: JSON.stringify({
-                    model: 'glm-5',
-                    max_tokens: 300,
-                    messages: [
-                      { role: 'system', content: SUMMARY_SYSTEM_PROMPT },
-                      { role: 'user', content: `Summarize this update for Discord:\n\nTitle: ${prTitle}\n\nDescription:\n${prBody || 'No description provided.'}` },
-                    ],
-                  }),
-                });
-
-                if (!response.ok) {
-                  const errText = await response.text();
-                  core.warning(`Z.AI API error (${response.status}): ${errText}`);
-                  return null;
-                }
-
-                const data = await response.json();
-                return data.choices[0].message.content;
-              } catch (err) {
-                core.warning(`Z.AI API call failed: ${err.message}`);
-                return null;
-              }
-            }
-
-            // ── Backup: DeepSeek ──
-            async function summarizeWithDeepSeek(prTitle, prBody) {
-              const apiKey = process.env.DEEPSEEK_API_KEY;
-              if (!apiKey) return null;
-
-              try {
-                const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`,
-                  },
-                  body: JSON.stringify({
-                    model: 'deepseek-chat',
-                    max_tokens: 300,
-                    messages: [
-                      { role: 'system', content: SUMMARY_SYSTEM_PROMPT },
-                      { role: 'user', content: `Summarize this update for Discord:\n\nTitle: ${prTitle}\n\nDescription:\n${prBody || 'No description provided.'}` },
-                    ],
-                  }),
-                });
-
-                if (!response.ok) {
-                  const errText = await response.text();
-                  core.warning(`DeepSeek API error (${response.status}): ${errText}`);
-                  return null;
-                }
-
-                const data = await response.json();
-                return data.choices[0].message.content;
-              } catch (err) {
-                core.warning(`DeepSeek API call failed: ${err.message}`);
-                return null;
-              }
-            }
-
-            // ── Try Z.AI first, DeepSeek as backup ──
-            async function generateFriendlySummary(prTitle, prBody) {
-              const summary = await summarizeWithZAI(prTitle, prBody);
-              if (summary) {
-                core.info('   AI summary: Z.AI ✅');
-                return summary;
-              }
-
-              core.warning('Z.AI unavailable — trying DeepSeek backup...');
-              const fallback = await summarizeWithDeepSeek(prTitle, prBody);
-              if (fallback) {
-                core.info('   AI summary: DeepSeek ✅');
-                return fallback;
-              }
-
-              core.warning('Both AI providers unavailable — using raw description');
-              return null;
-            }
-
-            // ── Last resort: convert GitHub markdown → Discord markdown ──
-            function toDiscordMarkdown(text) {
-              if (!text) return '*No description provided.*';
-
-              let result = text;
-              result = result.replace(/^#{1,3}\s+(.+)$/gm, '**$1**');
-              result = result.replace(/<br\s*\/?>/gi, '\n');
-              result = result.replace(/<\/?(?:details|summary|div|span|p|table|thead|tbody|tr|td|th|hr)[^>]*>/gi, '');
-              result = result.replace(/<img[^>]*>/gi, '');
-              result = result.replace(/- \[x\]/gi, '\u2705');
-              result = result.replace(/- \[ \]/g, '\u2b1c');
-              result = result.replace(/\n{3,}/g, '\n\n');
-
-              if (result.length > 3900) {
-                result = result.substring(0, 3900) + '\n\n*\u2026 truncated \u2014 [view full PR](' + pr.html_url + ')*';
-              }
-
-              return result.trim();
-            }
-
-            // Generate friendly summary, fall back to raw markdown if both APIs fail
-            const friendlySummary = await generateFriendlySummary(pr.title, pr.body);
-            const rawDescription = friendlySummary || toDiscordMarkdown(pr.body);
-            const description = `${rawDescription}\n\n🔗 [View Pull Request on GitHub](${pr.html_url})`;
-
-            // ── Build labels string ──
-            const labels = pr.labels
-              .map((l) => '`' + l.name + '`')
-              .join(' ');
-
-            // ── Build Discord embeds ──
-            const MERGED_GREEN = 5763719; // Discord color int for #57F287
-
-            const mainEmbed = {
-              title: `#${pr.number} \u2014 ${pr.title}`,
-              url: pr.html_url,
-              description,
-              color: MERGED_GREEN,
-              author: {
-                name: pr.user.login,
-                url: pr.user.html_url,
-                icon_url: pr.user.avatar_url,
-              },
-              thumbnail: {
-                url: pr.user.avatar_url,
-              },
-              fields: [],
-              footer: {
-                text: `main \u2190 ${pr.head.ref} \u00b7 ${pr.changed_files} file${pr.changed_files === 1 ? '' : 's'} changed`,
-                icon_url: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png',
-              },
-              timestamp: pr.merged_at,
-            };
-
-            if (labels) {
-              mainEmbed.fields.push({
-                name: 'Labels',
-                value: labels,
-                inline: true,
-              });
-            }
-
-            mainEmbed.fields.push({
-              name: 'Changes',
-              value: `\`+${pr.additions}\` / \`-${pr.deletions}\``,
-              inline: true,
-            });
-
-            if (pr.milestone) {
-              mainEmbed.fields.push({
-                name: 'Milestone',
-                value: pr.milestone.title,
-                inline: true,
-              });
-            }
-
-            // ── Assemble embeds array (main + screenshot embeds) ──
-            // Discord groups embeds with the same URL into a gallery
-            const embeds = [mainEmbed];
-
-            // First screenshot goes on the main embed
-            if (screenshots.length > 0) {
-              mainEmbed.image = { url: screenshots[0] };
-            }
-
-            // Additional screenshots as separate embeds (same URL for grouping)
-            // Discord allows up to 10 embeds per message
-            for (let i = 1; i < Math.min(screenshots.length, 9); i++) {
-              embeds.push({
-                url: pr.html_url,
-                image: { url: screenshots[i] },
-              });
-            }
-
-            // ── Send to Discord webhook ──
-            const webhookUrl = process.env.DISCORD_WEBHOOK;
-            if (!webhookUrl) {
-              core.setFailed('DISCORD_WEBHOOK_PR_UPDATES secret is not set');
+            const workerUrl = process.env.WORKER_URL;
+            if (!workerUrl) {
+              core.setFailed('DISCORD_NOTIFY_WORKER_URL secret is not set');
               return;
             }
 
-            const response = await fetch(webhookUrl, {
+            // Build the payload matching GitHub webhook format
+            const payload = JSON.stringify(context.payload);
+
+            // Generate HMAC-SHA256 signature
+            const crypto = require('crypto');
+            const hmac = crypto.createHmac('sha256', process.env.WEBHOOK_SECRET || '');
+            hmac.update(payload);
+            const signature = `sha256=${hmac.digest('hex')}`;
+
+            const response = await fetch(`${workerUrl}/webhook/github`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                username: 'ESO Toolkit',
-                avatar_url: 'https://cdn.discordapp.com/avatars/1480832993613578322/e3c37b8e3c1cf5389ef3a6c3e014e11a.png',
-                embeds,
-              }),
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Hub-Signature-256': signature,
+                'X-GitHub-Event': 'pull_request',
+              },
+              body: payload,
             });
 
+            const result = await response.json();
+
             if (!response.ok) {
-              const text = await response.text();
-              core.setFailed(`Discord webhook failed (${response.status}): ${text}`);
-            } else {
-              core.info(`\u2705 Discord notification sent for PR #${pr.number}`);
-              core.info(`   Screenshots included: ${screenshots.length}`);
+              core.setFailed(`Worker failed (${response.status}): ${JSON.stringify(result)}`);
+              return;
             }
+
+            const pr = context.payload.pull_request;
+            core.info(`✅ Discord forum post created for PR #${pr.number}`);
+            core.info(`   Thread ID: ${result.threadId}`);
+            core.info(`   Commit type: ${result.commitType}`);
+            core.info(`   AI summary: ${result.aiSummary}`);
+            core.info(`   Screenshots: ${result.screenshots}`);

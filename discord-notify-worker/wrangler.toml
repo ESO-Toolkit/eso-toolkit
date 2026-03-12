@@ -1,0 +1,14 @@
+name = "discord-notify-worker"
+main = "src/index.ts"
+compatibility_date = "2024-10-22"
+compatibility_flags = ["nodejs_compat"]
+account_id = "75620f084ea25ade5ee57a71a830bba2"
+
+# Secrets (set via `wrangler secret put`):
+# - DISCORD_BOT_TOKEN     — Discord bot token for creating forum posts
+# - GITHUB_WEBHOOK_SECRET — GitHub webhook secret for signature verification
+# - GITHUB_TOKEN          — GitHub PAT for fetching PR comments (screenshot extraction)
+# - ZAI_API_KEY           — Z.AI API key for AI-generated summaries
+
+[vars]
+DISCORD_FORUM_CHANNEL_ID = "1481632728557555803"
