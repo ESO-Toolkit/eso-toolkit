@@ -88,9 +88,30 @@ export function useRosterHub(token: string | undefined): UseRosterHubReturn {
     void fetchPage(reset, false);
   }, [filters, fetchPage]);
 
-  const vote = React.useCallback(
-    async (rosterId: string, voteToken: string) => {
-      // Optimistic update
+  const vote = React.useCallback(async (rosterId: string, voteToken: string) => {
+    // Optimistic update
+    setRosters((prev) =>
+      prev.map((r) => {
+        if (r.id !== rosterId) return r;
+        const wasVoted = r.user_voted ?? false;
+        return {
+          ...r,
+          user_voted: !wasVoted,
+          vote_count: wasVoted ? r.vote_count - 1 : r.vote_count + 1,
+        };
+      }),
+    );
+
+    try {
+      const res = await rosterHubApi.vote(rosterId, voteToken);
+      // Reconcile with server truth
+      setRosters((prev) =>
+        prev.map((r) =>
+          r.id === rosterId ? { ...r, user_voted: res.voted, vote_count: res.voteCount } : r,
+        ),
+      );
+    } catch {
+      // Revert optimistic update on failure
       setRosters((prev) =>
         prev.map((r) => {
           if (r.id !== rosterId) return r;
@@ -102,32 +123,8 @@ export function useRosterHub(token: string | undefined): UseRosterHubReturn {
           };
         }),
       );
-
-      try {
-        const res = await rosterHubApi.vote(rosterId, voteToken);
-        // Reconcile with server truth
-        setRosters((prev) =>
-          prev.map((r) =>
-            r.id === rosterId ? { ...r, user_voted: res.voted, vote_count: res.voteCount } : r,
-          ),
-        );
-      } catch {
-        // Revert optimistic update on failure
-        setRosters((prev) =>
-          prev.map((r) => {
-            if (r.id !== rosterId) return r;
-            const wasVoted = r.user_voted ?? false;
-            return {
-              ...r,
-              user_voted: !wasVoted,
-              vote_count: wasVoted ? r.vote_count - 1 : r.vote_count + 1,
-            };
-          }),
-        );
-      }
-    },
-    [],
-  );
+    }
+  }, []);
 
   // Client-side text search filter (no server round-trip)
   const filteredRosters = React.useMemo(() => {
@@ -141,5 +138,16 @@ export function useRosterHub(token: string | undefined): UseRosterHubReturn {
     );
   }, [rosters, filters.search]);
 
-  return { rosters, filteredRosters, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote };
+  return {
+    rosters,
+    filteredRosters,
+    loading,
+    error,
+    filters,
+    hasMore,
+    setFilter,
+    loadMore,
+    refresh,
+    vote,
+  };
 }

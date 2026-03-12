@@ -47,27 +47,38 @@ export const TRIAL_LABELS: Record<string, string> = {
 
 // Short abbreviations for badge display
 const TRIAL_SHORT: Record<string, string> = {
-  AA: 'AA', AS: 'AS', BRP: 'BRP', CR: 'CR', DSR: 'DSR', HOF: 'HoF',
-  HRC: 'HRC', KA: 'KA', LC: 'LC', MOL: 'MoL', RG: 'RG', SE: 'SE',
-  SO: 'SO', SS: 'SS',
+  AA: 'AA',
+  AS: 'AS',
+  BRP: 'BRP',
+  CR: 'CR',
+  DSR: 'DSR',
+  HOF: 'HoF',
+  HRC: 'HRC',
+  KA: 'KA',
+  LC: 'LC',
+  MOL: 'MoL',
+  RG: 'RG',
+  SE: 'SE',
+  SO: 'SO',
+  SS: 'SS',
 };
 
 // Trial accent colors — gives each trial its visual identity
 export const TRIAL_ACCENT: Record<string, string> = {
-  AA: '#f59e0b',  // amber
-  AS: '#6366f1',  // indigo
+  AA: '#f59e0b', // amber
+  AS: '#6366f1', // indigo
   BRP: '#ef4444', // red
-  CR: '#22c55e',  // green
+  CR: '#22c55e', // green
   DSR: '#a855f7', // purple
   HOF: '#f97316', // orange
   HRC: '#eab308', // yellow
-  KA: '#06b6d4',  // cyan
-  LC: '#8b5cf6',  // violet
+  KA: '#06b6d4', // cyan
+  LC: '#8b5cf6', // violet
   MOL: '#ec4899', // pink
-  RG: '#14b8a6',  // teal
-  SE: '#ef4444',  // red
-  SO: '#3b82f6',  // blue
-  SS: '#0ea5e9',  // sky
+  RG: '#14b8a6', // teal
+  SE: '#ef4444', // red
+  SO: '#3b82f6', // blue
+  SS: '#0ea5e9', // sky
 };
 
 function formatDate(iso: string): string {
@@ -120,9 +131,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
           background: isDark
             ? `linear-gradient(135deg, ${accentColor}0a 0%, rgba(152,131,227,0.06) 50%, rgba(11,18,32,0.5) 100%)`
             : `linear-gradient(135deg, ${accentColor}08 0%, rgba(152,131,227,0.04) 50%, rgba(255,255,255,0.7) 100%)`,
-          border: isDark
-            ? `1px solid rgba(255,255,255,0.07)`
-            : `1px solid rgba(0,0,0,0.08)`,
+          border: isDark ? `1px solid rgba(255,255,255,0.07)` : `1px solid rgba(0,0,0,0.08)`,
           borderRadius: 2,
           overflow: 'hidden',
           transition: 'transform 0.2s ease, box-shadow 0.2s ease',
@@ -292,11 +301,18 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                 }}
                 aria-hidden="true"
               >
-                <Typography sx={{ fontSize: '0.48rem', fontWeight: 800, color: avatarColor, lineHeight: 1 }}>
+                <Typography
+                  sx={{ fontSize: '0.48rem', fontWeight: 800, color: avatarColor, lineHeight: 1 }}
+                >
                   {initial}
                 </Typography>
               </Box>
-              <Typography variant="caption" color="text.disabled" noWrap sx={{ fontSize: '0.72rem' }}>
+              <Typography
+                variant="caption"
+                color="text.disabled"
+                noWrap
+                sx={{ fontSize: '0.72rem' }}
+              >
                 {roster.author_name} · {formatDate(roster.created_at)}
               </Typography>
             </Box>
@@ -308,12 +324,8 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
           sx={{
             px: 1.5,
             py: 0.75,
-            borderTop: isDark
-              ? '1px solid rgba(255,255,255,0.06)'
-              : '1px solid rgba(0,0,0,0.07)',
-            background: isDark
-              ? 'rgba(0,0,0,0.2)'
-              : 'rgba(0,0,0,0.02)',
+            borderTop: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.07)',
+            background: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.02)',
             justifyContent: 'space-between',
           }}
           onClick={(e) => e.stopPropagation()}

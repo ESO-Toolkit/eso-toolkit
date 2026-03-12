@@ -9,7 +9,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: "pr-preview-${{ github.event.pull_request.number }}"
+  group: 'pr-preview-${{ github.event.pull_request.number }}'
   cancel-in-progress: true
 
 jobs:
@@ -29,6 +29,7 @@ jobs:
           NODE_ENV: production
           NODE_OPTIONS: '--max-old-space-size=8192'
           VITE_BASE_URL: '/dev-previews/pr-${{ github.event.pull_request.number }}/'
+          VITE_ROSTER_HUB_API_URL: 'https://roster-hub-api.eso-toolkit.workers.dev'
 
       - name: Generate GitHub App token
         id: app-token

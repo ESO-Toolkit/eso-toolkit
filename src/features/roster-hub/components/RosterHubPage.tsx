@@ -91,9 +91,7 @@ export const RosterHubPage: React.FC = () => {
           background: isDark
             ? 'linear-gradient(135deg, rgba(110,170,240,0.10) 0%, rgba(152,131,227,0.07) 50%, rgba(11,18,32,0.4) 100%)'
             : 'linear-gradient(135deg, rgba(37,99,235,0.06) 0%, rgba(124,58,237,0.04) 50%, rgba(255,255,255,0.6) 100%)',
-          border: isDark
-            ? '1px solid rgba(255,255,255,0.07)'
-            : '1px solid rgba(0,0,0,0.06)',
+          border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(0,0,0,0.06)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           overflow: 'hidden',
@@ -123,12 +121,8 @@ export const RosterHubPage: React.FC = () => {
               background: isDark
                 ? 'linear-gradient(135deg, rgba(96,165,250,0.2) 0%, rgba(167,139,250,0.12) 100%)'
                 : 'linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(124,58,237,0.08) 100%)',
-              border: isDark
-                ? '1px solid rgba(96,165,250,0.25)'
-                : '1px solid rgba(37,99,235,0.18)',
-              boxShadow: isDark
-                ? '0 0 12px rgba(96,165,250,0.15)'
-                : '0 0 8px rgba(37,99,235,0.10)',
+              border: isDark ? '1px solid rgba(96,165,250,0.25)' : '1px solid rgba(37,99,235,0.18)',
+              boxShadow: isDark ? '0 0 12px rgba(96,165,250,0.15)' : '0 0 8px rgba(37,99,235,0.10)',
             }}
           >
             <Groups sx={{ fontSize: '1.25rem', color: isDark ? '#60a5fa' : '#2563eb' }} />
@@ -245,7 +239,12 @@ export const RosterHubPage: React.FC = () => {
                 ? 'No matching rosters'
                 : 'No rosters yet'}
             </Typography>
-            <Typography variant="body2" color="text.disabled" mt={0.75} sx={{ maxWidth: 360, mx: 'auto' }}>
+            <Typography
+              variant="body2"
+              color="text.disabled"
+              mt={0.75}
+              sx={{ maxWidth: 360, mx: 'auto' }}
+            >
               {filters.trial || filters.tag || filters.search
                 ? 'Try broadening your search or removing some filters.'
                 : 'Be the first to publish a roster to the Hub!'}
@@ -272,7 +271,11 @@ export const RosterHubPage: React.FC = () => {
           <ErrorBoundary>
             <Grid container spacing={2}>
               {filteredRosters.map((roster) => (
-                <Grid key={roster.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }} sx={{ display: 'flex' }}>
+                <Grid
+                  key={roster.id}
+                  size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+                  sx={{ display: 'flex' }}
+                >
                   <RosterCard
                     roster={roster}
                     isOwner={isLoggedIn && roster.author_id === currentUserId}

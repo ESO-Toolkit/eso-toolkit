@@ -72,11 +72,7 @@ export const VoteButton: React.FC<VoteButtonProps> = React.memo(
                 <ThumbUpOutlined sx={{ fontSize: 14 }} />
               )}
             </Box>
-            <Typography
-              component="span"
-              variant="caption"
-              sx={{ fontWeight: 700, lineHeight: 1 }}
-            >
+            <Typography component="span" variant="caption" sx={{ fontWeight: 700, lineHeight: 1 }}>
               {voteCount}
             </Typography>
           </ButtonBase>

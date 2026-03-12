@@ -36,28 +36,23 @@ export interface VoteResponse {
 export type SortOrder = 'votes' | 'recent';
 
 export interface RosterHubFilters {
-  trial: string;  // '' = all trials
-  tag: string;    // '' = any tag
+  trial: string; // '' = all trials
+  tag: string; // '' = any tag
   sort: SortOrder;
   page: number;
   search: string; // '' = no text filter (client-side)
 }
 
-export const PRESET_TAGS = [
-  'beginner',
-  'pug',
-  'score-push',
-  'core',
-] as const;
+export const PRESET_TAGS = ['beginner', 'pug', 'score-push', 'core'] as const;
 
 export type PresetTag = (typeof PRESET_TAGS)[number];
 
 // Accent colors for preset tag chips — consistent across filter bar, cards, and publish dialog
 export const TAG_COLORS: Record<string, string> = {
-  beginner: '#22c55e',     // green
-  pug: '#f97316',          // orange
+  beginner: '#22c55e', // green
+  pug: '#f97316', // orange
   'score-push': '#a855f7', // purple
-  core: '#3b82f6',         // blue
+  core: '#3b82f6', // blue
 };
 
 // ─── Comments ──────────────────────────────────────────────────────────────
