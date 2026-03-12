@@ -37,20 +37,24 @@ interface GitHubComment {
   body: string | null;
 }
 
-// ── Tag mapping ────────────────────────────────────────────────────────────────
-// Maps conventional commit types to Discord forum tag IDs
-const TAG_MAP: Record<string, string> = {
-  feat: '1481632728557555804',
-  fix: '1481632728557555805',
-  chore: '1481632728557555806',
-  refactor: '1481632728557555807',
-  docs: '1481632728557555808',
-  style: '1481632728557555809',
-  test: '1481632728557555810',
-  ci: '1481632728557555811',
-  perf: '1481632728557555812',
-  build: '1481632728586911806',
+// ── Thread mapping ─────────────────────────────────────────────────────────────
+// Maps conventional commit types to their permanent Discord forum thread IDs.
+// Each category has one pinned thread; PR updates are posted as replies inside it.
+const THREAD_MAP: Record<string, string> = {
+  feat: '1481677826766667869', // ✨ Features
+  fix: '1481677836040409129', // 🐛 Bug Fixes
+  chore: '1481677844634533960', // 🔧 Maintenance
+  refactor: '1481677853043982336', // ♻️ Refactors
+  docs: '1481677860862300161', // 📝 Documentation
+  style: '1481677869296910500', // 💄 Styling
+  test: '1481677877849362562', // 🧪 Tests
+  ci: '1481677886091034767', // ⚙️ CI/CD
+  perf: '1481677894748209232', // ⚡ Performance
+  build: '1481677902872318150', // 📦 Build
 };
+
+// Fallback thread for PRs without a recognized conventional commit type
+const DEFAULT_THREAD = THREAD_MAP.chore;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -313,10 +317,9 @@ app.post('/webhook/github', async (c) => {
 
   const pr = payload.pull_request;
 
-  // Parse conventional commit type for tag
+  // Parse conventional commit type → look up the category thread
   const commitType = parseCommitType(pr.title);
-  const tagId = commitType ? TAG_MAP[commitType] : null;
-  const appliedTags = tagId ? [tagId] : [];
+  const threadId = (commitType && THREAD_MAP[commitType]) || DEFAULT_THREAD;
 
   // Extract screenshots from PR body + all comments
   const { owner, name: repo } = payload.repository;
@@ -344,18 +347,19 @@ app.post('/webhook/github', async (c) => {
   // Build embeds
   const embeds = buildEmbeds(pr, description, screenshots);
 
-  // Create forum thread via Discord webhook
-  const discordResponse = await fetch(`${c.env.DISCORD_WEBHOOK_URL}?wait=true`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      username: BOT_USERNAME,
-      avatar_url: BOT_AVATAR_URL,
-      thread_name: `#${pr.number} — ${pr.title}`.substring(0, 100),
-      applied_tags: appliedTags,
-      embeds,
-    }),
-  });
+  // Post reply into the matching category thread via Discord webhook
+  const discordResponse = await fetch(
+    `${c.env.DISCORD_WEBHOOK_URL}?wait=true&thread_id=${threadId}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: BOT_USERNAME,
+        avatar_url: BOT_AVATAR_URL,
+        embeds,
+      }),
+    },
+  );
 
   if (!discordResponse.ok) {
     const errText = await discordResponse.text();
@@ -367,14 +371,16 @@ app.post('/webhook/github', async (c) => {
   }
 
   const message = (await discordResponse.json()) as { id: string; channel_id: string };
-  console.log(`Forum thread created: ${message.channel_id} for PR #${pr.number}`);
+  console.log(
+    `Update posted to ${commitType || 'default'} thread (${threadId}) for PR #${pr.number}`,
+  );
 
   return c.json({
     success: true,
-    threadId: message.channel_id,
+    messageId: message.id,
+    threadId,
     prNumber: pr.number,
     commitType: commitType || 'unknown',
-    tagApplied: !!tagId,
     aiSummary: !!aiSummary,
     screenshots: screenshots.length,
   });
