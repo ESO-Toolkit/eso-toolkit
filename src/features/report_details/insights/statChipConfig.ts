@@ -148,6 +148,7 @@ export const DEFAULT_VISIBLE_CHIPS: StatChipId[] = [
   'dps',
   'critChance',
   'mundus',
+  'food',
   'potion',
   'deaths',
   'resurrects',
