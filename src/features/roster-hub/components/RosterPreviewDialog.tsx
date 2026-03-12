@@ -1,7 +1,8 @@
 import {
   ChatBubbleOutline,
   ContentCopy,
-  Download,
+  Fullscreen,
+  FullscreenExit,
   KeyboardArrowDown,
   KeyboardArrowUp,
   OpenInNew,
@@ -9,11 +10,11 @@ import {
 import {
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogTitle,
   IconButton,
+  Skeleton,
   Slide,
   Tooltip,
   Typography,
@@ -27,27 +28,9 @@ import React from 'react';
 import type { HubRoster } from '../types/roster-hub.types';
 
 import { CommentSection } from './CommentSection';
-import { TRIAL_ACCENT, TRIAL_LABELS } from './RosterCard';
+import { TRIAL_ACCENT, TRIAL_LABELS, TRIAL_SHORT } from './RosterCard';
 
 const IFRAME_TIMEOUT_MS = 12000;
-
-// Short labels for the badge in dialog title
-const TRIAL_SHORT: Record<string, string> = {
-  AA: 'AA',
-  AS: 'AS',
-  BRP: 'BRP',
-  CR: 'CR',
-  DSR: 'DSR',
-  HOF: 'HoF',
-  HRC: 'HRC',
-  KA: 'KA',
-  LC: 'LC',
-  MOL: 'MoL',
-  RG: 'RG',
-  SE: 'SE',
-  SO: 'SO',
-  SS: 'SS',
-};
 
 const SlideUpTransition = React.forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -79,6 +62,9 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
   const [iframeError, setIframeError] = React.useState(false);
   const [commentsOpen, setCommentsOpen] = React.useState(false);
   const [commentCount, setCommentCount] = React.useState(0);
+  const [commentsFullscreen, setCommentsFullscreen] = React.useState(false);
+  const commentsRegionRef = React.useRef<HTMLDivElement>(null);
+  const COMMENT_HEIGHT = isMobile ? 220 : 300;
 
   // Reset state when roster changes
   React.useEffect(() => {
@@ -87,16 +73,34 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
       setIframeError(false);
       setCommentsOpen(false);
       setCommentCount(0);
+      setCommentsFullscreen(false);
     }
   }, [roster]);
 
-  // Iframe load timeout
+  // Listen for postMessage from the iframe when roster content is fully rendered
   React.useEffect(() => {
     if (!roster || iframeLoaded || iframeError) return;
+
+    const handleMessage = (event: MessageEvent): void => {
+      if (
+        event.origin === window.location.origin &&
+        event.data?.type === 'roster-preview-ready'
+      ) {
+        setIframeLoaded(true);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+
+    // Timeout fallback in case the message is never received
     const timer = setTimeout(() => {
       if (!iframeLoaded) setIframeError(true);
     }, IFRAME_TIMEOUT_MS);
-    return () => clearTimeout(timer);
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      clearTimeout(timer);
+    };
   }, [roster, iframeLoaded, iframeError]);
 
   // Embed mode URL — strips header/footer from the iframe
@@ -136,9 +140,10 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
 
   const isDark = theme.palette.mode === 'dark';
 
-  const authorName = roster?.author_name ?? '';
+  const isAnonymous = roster?.is_anonymous ?? false;
+  const authorName = isAnonymous ? 'Anonymous' : (roster?.author_name ?? '');
   const authorHue = authorName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
-  const avatarColor = `hsl(${authorHue}, 55%, 55%)`;
+  const avatarColor = isAnonymous ? 'hsl(0, 0%, 55%)' : `hsl(${authorHue}, 55%, 55%)`;
 
   return (
     <Dialog
@@ -272,7 +277,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
             <Typography
               sx={{ fontSize: '0.58rem', fontWeight: 800, color: avatarColor, lineHeight: 1 }}
             >
-              {(authorName || '?')[0].toUpperCase()}
+              {isAnonymous ? '?' : (authorName || '?')[0].toUpperCase()}
             </Typography>
           </Box>
           <Box>
@@ -315,7 +320,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
       </DialogTitle>
 
       {/* ─── Description (if present) ─── */}
-      {roster?.description && (
+      {roster?.description && !commentsFullscreen && (
         <Box
           sx={{
             px: 2.5,
@@ -347,12 +352,18 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
       {/* ─── Iframe preview ─── */}
       <Box
         sx={{
-          flex: '1 1 0',
+          flex: commentsFullscreen ? '0 0 0' : '1 1 0',
           position: 'relative',
           overflow: 'hidden',
-          minHeight: isMobile ? 200 : 250,
-          borderTop: `1px solid ${accentColor}20`,
-          boxShadow: `inset 0 4px 20px rgba(0,0,0,0.3)`,
+          minHeight: commentsFullscreen ? 0 : isMobile ? 200 : 250,
+          maxHeight: commentsFullscreen ? 0 : 'none',
+          opacity: commentsFullscreen ? 0 : 1,
+          transition: 'flex 0.3s ease, min-height 0.3s ease, max-height 0.3s ease, opacity 0.2s ease',
+          background: isDark
+            ? 'linear-gradient(180deg, rgb(30,36,52) 0%, rgb(24,30,46) 100%)'
+            : 'linear-gradient(180deg, rgb(218,222,234) 0%, rgb(210,216,228) 100%)',
+          p: commentsFullscreen ? 0 : isMobile ? '6px' : '10px',
+          pt: commentsFullscreen ? 0 : isMobile ? '6px' : '8px',
           // Bottom fade into comments/action bar
           '&::after': {
             content: '""',
@@ -362,30 +373,54 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
             right: 0,
             height: 48,
             background: isDark
-              ? 'linear-gradient(to bottom, transparent, rgba(10,15,28,0.7))'
-              : 'linear-gradient(to bottom, transparent, rgba(248,250,252,0.7))',
+              ? 'linear-gradient(to bottom, transparent, rgb(24,30,46))'
+              : 'linear-gradient(to bottom, transparent, rgb(210,216,228))',
             pointerEvents: 'none',
             zIndex: 2,
           },
         }}
       >
-        {!iframeLoaded && !iframeError && (
+        {!iframeError && (
           <Box
             sx={{
               position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column',
-              gap: 1,
+              inset: isMobile ? 6 : 8,
+              right: isMobile ? 6 : 10,
+              left: isMobile ? 6 : 10,
               zIndex: 1,
+              borderRadius: '8px',
+              overflow: 'hidden',
+              background: isDark ? 'rgba(20,24,38,0.92)' : 'rgba(240,242,248,0.92)',
+              px: { xs: 2, sm: 3 },
+              pt: 4,
+              pb: 6,
+              opacity: iframeLoaded ? 0 : 1,
+              pointerEvents: iframeLoaded ? 'none' : 'auto',
+              transition: 'opacity 0.4s ease',
             }}
           >
-            <CircularProgress size={28} />
-            <Typography variant="caption" color="text.disabled">
-              Loading preview…
-            </Typography>
+            {/* Title skeleton */}
+            <Skeleton variant="text" width="40%" height={48} sx={{ mb: 3, borderRadius: 2 }} />
+            {/* 2×2 content grid skeleton */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                gap: 2,
+                mb: 3,
+              }}
+            >
+              {[0, 1, 2, 3].map((i) => (
+                <Skeleton
+                  key={i}
+                  variant="rectangular"
+                  height={160}
+                  sx={{ borderRadius: 2 }}
+                />
+              ))}
+            </Box>
+            {/* Bottom section skeleton */}
+            <Skeleton variant="rectangular" height={240} sx={{ borderRadius: 2 }} />
           </Box>
         )}
         {iframeError && (
@@ -446,14 +481,15 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
           <iframe
             src={embedUrl}
             title={`Preview: ${roster.title}`}
-            onLoad={() => setIframeLoaded(true)}
+            /* onLoad not used — loaded signal comes via postMessage from RosterViewPage */
             style={{
               position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
+              top: isMobile ? 6 : 8,
+              left: isMobile ? 6 : 10,
+              width: isMobile ? 'calc(100% - 12px)' : 'calc(100% - 20px)',
+              height: isMobile ? 'calc(100% - 12px)' : 'calc(100% - 18px)',
               border: 'none',
+              borderRadius: '8px',
               opacity: iframeLoaded ? 1 : 0,
               transition: 'opacity 0.4s ease',
               display: 'block',
@@ -465,106 +501,175 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
       {/* ─── Collapsible comments drawer ─── */}
       {roster && (
         <>
+          {/* Comments header bar */}
           <Box
-            onClick={() => setCommentsOpen((prev) => !prev)}
-            role="button"
-            tabIndex={0}
-            aria-expanded={commentsOpen}
-            aria-label="Toggle comments"
-            onKeyDown={(e: React.KeyboardEvent) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setCommentsOpen((prev) => !prev);
-              }
-            }}
             sx={{
-              px: 2.5,
-              py: 1,
               display: 'flex',
               alignItems: 'center',
-              gap: 0.75,
               borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-              cursor: 'pointer',
-              userSelect: 'none',
-              transition: 'all 0.15s ease',
-              background: commentsOpen ? `${accentColor}08` : 'transparent',
-              '&:hover': {
-                background: `${accentColor}0c`,
-              },
+              background: isDark
+                ? 'linear-gradient(180deg, rgba(38,44,72,0.97) 0%, rgba(34,40,66,0.95) 100%)'
+                : 'linear-gradient(180deg, rgba(220,224,238,0.97) 0%, rgba(224,228,240,0.95) 100%)',
+              borderBottom: isDark
+                ? '1px solid rgba(100,110,180,0.12)'
+                : '1px solid rgba(0,0,0,0.05)',
+              flexShrink: 0,
             }}
           >
-            <ChatBubbleOutline
-              sx={{
-                fontSize: 15,
-                color: commentsOpen ? accentColor : 'text.disabled',
-                transition: 'color 0.15s ease',
-              }}
-            />
-            <Typography
-              variant="body2"
-              fontWeight={600}
-              sx={{
-                fontSize: '0.8rem',
-                color: commentsOpen
-                  ? isDark
-                    ? 'rgba(255,255,255,0.8)'
-                    : 'text.primary'
-                  : 'text.secondary',
-                transition: 'color 0.15s ease',
-              }}
-            >
-              Comments
-            </Typography>
-            {commentCount > 0 && (
-              <Box
-                component="span"
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  minWidth: 18,
-                  height: 18,
-                  px: 0.5,
-                  borderRadius: '4px',
-                  fontSize: '0.62rem',
-                  fontWeight: 700,
-                  background: `${accentColor}20`,
-                  border: `1px solid ${accentColor}40`,
-                  color: accentColor,
-                  lineHeight: 1,
-                }}
-              >
-                {commentCount}
-              </Box>
-            )}
+            {/* Toggle button — click to open/close */}
             <Box
+              onClick={() => {
+                setCommentsOpen((prev) => !prev);
+                if (commentsFullscreen) setCommentsFullscreen(false);
+              }}
+              role="button"
+              tabIndex={0}
+              aria-expanded={commentsOpen}
+              aria-label="Toggle comments"
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setCommentsOpen((prev) => !prev);
+                  if (commentsFullscreen) setCommentsFullscreen(false);
+                }
+              }}
               sx={{
-                ml: 'auto',
+                flex: 1,
+                px: 2.5,
+                py: 1,
                 display: 'flex',
                 alignItems: 'center',
-                color: commentsOpen ? accentColor : 'text.disabled',
-                transition: 'color 0.15s ease',
+                gap: 0.75,
+                cursor: 'pointer',
+                userSelect: 'none',
+                transition: 'all 0.15s ease',
+                background: commentsOpen ? `${accentColor}08` : 'transparent',
+                '&:hover': {
+                  background: `${accentColor}0c`,
+                },
               }}
             >
-              {commentsOpen ? (
-                <KeyboardArrowUp fontSize="small" />
-              ) : (
-                <KeyboardArrowDown fontSize="small" />
+              <ChatBubbleOutline
+                sx={{
+                  fontSize: 15,
+                  color: commentsOpen ? accentColor : 'text.disabled',
+                  transition: 'color 0.15s ease',
+                }}
+              />
+              <Typography
+                variant="body2"
+                fontWeight={600}
+                sx={{
+                  fontSize: '0.8rem',
+                  color: commentsOpen
+                    ? isDark
+                      ? 'rgba(255,255,255,0.8)'
+                      : 'text.primary'
+                    : 'text.secondary',
+                  transition: 'color 0.15s ease',
+                }}
+              >
+                Comments
+              </Typography>
+              {commentCount > 0 && (
+                <Box
+                  component="span"
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: 18,
+                    height: 18,
+                    px: 0.5,
+                    borderRadius: '4px',
+                    fontSize: '0.62rem',
+                    fontWeight: 700,
+                    background: `${accentColor}20`,
+                    border: `1px solid ${accentColor}40`,
+                    color: accentColor,
+                    lineHeight: 1,
+                  }}
+                >
+                  {commentCount}
+                </Box>
               )}
+              <Box
+                sx={{
+                  ml: 'auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: commentsOpen ? accentColor : 'text.disabled',
+                  transition: 'color 0.15s ease',
+                }}
+              >
+                {commentsOpen ? (
+                  <KeyboardArrowUp fontSize="small" />
+                ) : (
+                  <KeyboardArrowDown fontSize="small" />
+                )}
+              </Box>
             </Box>
+
+            {/* Fullscreen toggle button */}
+            {commentsOpen && (
+              <Tooltip title={commentsFullscreen ? 'Exit fullscreen' : 'Fullscreen comments'}>
+                <IconButton
+                  size="small"
+                  onClick={() => setCommentsFullscreen((prev) => !prev)}
+                  aria-label={commentsFullscreen ? 'Exit fullscreen comments' : 'Fullscreen comments'}
+                  sx={{
+                    mr: 1.5,
+                    p: 0.5,
+                    borderRadius: '8px',
+                    color: commentsFullscreen ? accentColor : 'text.disabled',
+                    border: commentsFullscreen
+                      ? `1px solid ${accentColor}40`
+                      : '1px solid transparent',
+                    background: commentsFullscreen ? `${accentColor}12` : 'transparent',
+                    '&:hover': {
+                      color: accentColor,
+                      background: `${accentColor}15`,
+                    },
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {commentsFullscreen ? (
+                    <FullscreenExit sx={{ fontSize: 18 }} />
+                  ) : (
+                    <Fullscreen sx={{ fontSize: 18 }} />
+                  )}
+                </IconButton>
+              </Tooltip>
+            )}
           </Box>
-          {/* CSS max-height transition avoids MUI Collapse's overflow:hidden wrapper
-              which blocks inner scroll, and keeps the component mounted so data
-              is pre-loaded — eliminating the spinner-to-content height jitter. */}
+
+          {/* Comments content region */}
           <Box
+            ref={commentsRegionRef}
             role="region"
             aria-label="Comments"
             sx={{
-              maxHeight: commentsOpen ? { xs: '220px', md: '300px' } : 0,
+              ...(commentsFullscreen
+                ? { flex: '1 1 0', minHeight: 0 }
+                : {
+                    maxHeight: commentsOpen ? COMMENT_HEIGHT : 0,
+                    flex: '0 0 auto',
+                  }),
               overflowY: commentsOpen ? 'auto' : 'hidden',
               opacity: commentsOpen ? 1 : 0,
-              transition: 'max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease',
-              borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+              transition: 'max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, flex 0.28s ease',
+              borderTop: commentsFullscreen
+                ? 'none'
+                : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+              background: isDark
+                ? 'linear-gradient(180deg, rgba(36,42,68,0.95) 0%, rgba(30,36,60,0.97) 100%)'
+                : 'linear-gradient(180deg, rgba(226,230,242,0.98) 0%, rgba(220,224,238,0.98) 100%)',
+              borderLeft: isDark
+                ? '1px solid rgba(100,110,180,0.15)'
+                : '1px solid rgba(0,0,0,0.06)',
+              borderRight: isDark
+                ? '1px solid rgba(100,110,180,0.15)'
+                : '1px solid rgba(0,0,0,0.06)',
               px: 2.5,
             }}
           >
@@ -594,14 +699,14 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
             onClick={handleCopyLink}
             variant="outlined"
             sx={{
-              color: '#22d3ee',
-              borderColor: 'rgba(6,182,212,0.45)',
-              background: 'rgba(6,182,212,0.06)',
+              color: accentColor,
+              borderColor: `${accentColor}70`,
+              background: `${accentColor}0a`,
               fontWeight: 600,
               '&:hover': {
-                borderColor: 'rgba(6,182,212,0.75)',
-                background: 'rgba(6,182,212,0.12)',
-                boxShadow: '0 0 10px rgba(6,182,212,0.2)',
+                borderColor: accentColor,
+                background: `${accentColor}18`,
+                boxShadow: `0 0 10px ${accentColor}30`,
               },
               transition: 'all 0.2s ease',
             }}
@@ -611,20 +716,20 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
         </Tooltip>
         <Button
           size="small"
-          startIcon={<Download />}
+          startIcon={<OpenInNew />}
           onClick={handleLoadIntoBuilder}
           variant="contained"
           sx={{
-            background: 'linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)',
+            background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}cc 100%)`,
             color: '#fff',
             border: 'none',
             fontWeight: 700,
             letterSpacing: '0.01em',
-            boxShadow: '0 0 18px rgba(6,182,212,0.45), 0 4px 14px rgba(0,0,0,0.45)',
+            boxShadow: `0 0 18px ${accentColor}70, 0 4px 14px rgba(0,0,0,0.45)`,
             textShadow: '0 1px 3px rgba(0,0,0,0.35)',
             '&:hover': {
-              background: 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
-              boxShadow: '0 0 26px rgba(6,182,212,0.6), 0 6px 20px rgba(0,0,0,0.5)',
+              background: `linear-gradient(135deg, ${accentColor}ee 0%, ${accentColor} 100%)`,
+              boxShadow: `0 0 26px ${accentColor}99, 0 6px 20px rgba(0,0,0,0.5)`,
               transform: 'translateY(-2px)',
             },
             transition: 'all 0.2s ease',

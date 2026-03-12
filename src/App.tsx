@@ -12,6 +12,7 @@ import { HashRouteRedirect } from './components/HashRouteRedirect';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
+import { RosterBuilderSkeleton } from './components/RosterBuilderSkeleton';
 import { ScrollRestoration } from './components/ScrollRestoration';
 import { SiteBackground } from './components/shared';
 import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
@@ -175,6 +176,9 @@ const ReportFightsLoadingFallback: React.FC = () => <ReportFightsSkeleton />;
 
 // Calculator specific loading fallback
 const CalculatorLoadingFallback: React.FC = () => <SmartCalculatorSkeleton />;
+
+// Roster Builder specific loading fallback
+const RosterBuilderLoadingFallback: React.FC = () => <RosterBuilderSkeleton />;
 
 const MainApp: React.FC = () => {
   return (
@@ -556,7 +560,7 @@ const AppRoutes: React.FC = () => {
               path="/roster-builder"
               element={
                 <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
+                  <Suspense fallback={<RosterBuilderLoadingFallback />}>
                     <RosterBuilderPage />
                   </Suspense>
                 </ErrorBoundary>

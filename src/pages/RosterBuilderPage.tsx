@@ -67,9 +67,11 @@ import {
   DialogActions,
   Avatar,
   Tooltip,
+  ButtonGroup,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useState, useCallback, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
 import { PerFightBuilds } from '../components/PerFightBuilds';
@@ -1014,6 +1016,7 @@ export const RosterBuilderPage: React.FC = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const roleColors = isDarkMode ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
+  const navigate = useNavigate();
 
   const glassTextField = {
     '& .MuiOutlinedInput-root': {
@@ -2039,20 +2042,83 @@ export const RosterBuilderPage: React.FC = () => {
       {/* Development Banner */}
       <WorkInProgressDisclaimer featureName="Roster Builder" sx={{ mb: 3 }} />
 
+      {/* Roster Hub Banner */}
+      <Box
+        onClick={() => navigate('/roster-hub')}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 2,
+          px: { xs: 1.5, sm: 2 },
+          py: 1,
+          mb: 3,
+          borderRadius: '10px',
+          background: isDarkMode
+            ? 'linear-gradient(135deg, rgba(96,165,250,0.12) 0%, rgba(167,139,250,0.08) 100%)'
+            : 'linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(124,58,237,0.05) 100%)',
+          border: isDarkMode
+            ? '1px solid rgba(96,165,250,0.2)'
+            : '1px solid rgba(37,99,235,0.15)',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            background: isDarkMode
+              ? 'linear-gradient(135deg, rgba(96,165,250,0.18) 0%, rgba(167,139,250,0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(124,58,237,0.08) 100%)',
+            border: isDarkMode
+              ? '1px solid rgba(96,165,250,0.3)'
+              : '1px solid rgba(37,99,235,0.25)',
+          },
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography
+            sx={{
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              color: isDarkMode ? '#60a5fa' : '#2563eb',
+              letterSpacing: '0.02em',
+            }}
+          >
+            🏛️ Explore Community Rosters
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '0.75rem',
+              color: isDarkMode ? 'rgba(148,163,184,0.8)' : 'rgba(100,116,139,0.7)',
+            }}
+          >
+            Browse published rosters from the community
+          </Typography>
+        </Box>
+        <Typography
+          sx={{
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            color: isDarkMode ? '#60a5fa' : '#2563eb',
+            whiteSpace: 'nowrap',
+            ml: 'auto',
+          }}
+        >
+          Visit Hub →
+        </Typography>
+      </Box>
+
       <Paper elevation={2} sx={{ p: { xs: 1.5, sm: 2 }, mb: 3 }}>
-        {/* Row 1 — Title lockup + Mode pill toggle */}
+        {/* Row 1 — Title lockup + Mode pill toggle + Hub link */}
         <Box
           sx={{
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
             alignItems: { xs: 'stretch', sm: 'center' },
             justifyContent: 'space-between',
-            gap: { xs: 1.5, sm: 0 },
+            gap: { xs: 1.5, sm: 1 },
             mb: 2.5,
           }}
         >
           {/* Icon lockup */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flex: 1 }}>
             <Box
               sx={{
                 width: 32,
@@ -2215,69 +2281,60 @@ export const RosterBuilderPage: React.FC = () => {
             mb: 2,
           }}
         >
-          {/* Row 1: utility actions */}
-          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.75 }}>
-            <Tooltip title="Quick Fill" arrow>
-              <Button
-                size="small"
-                startIcon={<PersonAddIcon />}
-                onClick={() => setQuickFillDialog(true)}
-                sx={{
-                  flex: { xs: 1, md: 'none' },
-                  justifyContent: 'center',
-                  borderRadius: '8px',
+          {/* Row 1: Import/Export grouped left · Quick Fill & Addon standalone right */}
+          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
+            {/* Import/Export — ButtonGroup */}
+            <ButtonGroup
+              size="small"
+              variant="outlined"
+              sx={{
+                '& .MuiButton-root': {
                   textTransform: 'none',
                   fontSize: '0.75rem',
                   fontWeight: 500,
-                  color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                  border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.08)'
-                    : '1px solid rgba(0,0,0,0.1)',
-                  backgroundColor: 'transparent',
+                  borderRadius: '8px',
+                  color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
+                  borderColor: isDarkMode
+                    ? 'rgba(255,255,255,0.1)'
+                    : 'rgba(0,0,0,0.12)',
                   '&:hover': {
-                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                    border: isDarkMode
-                      ? '1px solid rgba(255,255,255,0.15)'
-                      : '1px solid rgba(0,0,0,0.18)',
-                  },
-                }}
-              >
-                Quick Fill
-              </Button>
-            </Tooltip>
-            <Tooltip title="Import roster from file or log" arrow>
-              <Button
-                size="small"
-                startIcon={<UploadIcon />}
-                endIcon={<ExpandMoreIcon sx={{ fontSize: '0.875rem !important', ml: -0.5 }} />}
-                onClick={(e) => setImportMenuAnchor(e.currentTarget)}
-                sx={{
-                  flex: { xs: 1, md: 'none' },
-                  justifyContent: 'center',
-                  borderRadius: '8px',
-                  textTransform: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                  color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                  border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.08)'
-                    : '1px solid rgba(0,0,0,0.1)',
-                  backgroundColor: importMenuAnchor
-                    ? isDarkMode
+                    backgroundColor: isDarkMode
                       ? 'rgba(255,255,255,0.05)'
-                      : 'rgba(0,0,0,0.04)'
-                    : 'transparent',
-                  '&:hover': {
-                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                    border: isDarkMode
-                      ? '1px solid rgba(255,255,255,0.15)'
-                      : '1px solid rgba(0,0,0,0.18)',
+                      : 'rgba(0,0,0,0.04)',
+                    borderColor: isDarkMode
+                      ? 'rgba(255,255,255,0.18)'
+                      : 'rgba(0,0,0,0.2)',
                   },
-                }}
-              >
-                Import
-              </Button>
-            </Tooltip>
+                },
+                /* Override ButtonGroup's flat inner edges for a pill-pair look */
+                '& .MuiButton-root:first-of-type': {
+                  borderTopLeftRadius: '8px',
+                  borderBottomLeftRadius: '8px',
+                },
+                '& .MuiButton-root:last-of-type': {
+                  borderTopRightRadius: '8px',
+                  borderBottomRightRadius: '8px',
+                },
+              }}
+            >
+              <Tooltip title="Import roster from file or log" arrow>
+                <Button
+                  startIcon={<UploadIcon />}
+                  endIcon={
+                    <ExpandMoreIcon sx={{ fontSize: '0.875rem !important', ml: -0.5 }} />
+                  }
+                  onClick={(e) => setImportMenuAnchor(e.currentTarget)}
+                >
+                  Import
+                </Button>
+              </Tooltip>
+              <Tooltip title="Export roster as JSON file" arrow>
+                <Button startIcon={<DownloadIcon />} onClick={handleExportJSON}>
+                  Export
+                </Button>
+              </Tooltip>
+            </ButtonGroup>
+
             <Menu
               anchorEl={importMenuAnchor}
               open={Boolean(importMenuAnchor)}
@@ -2287,7 +2344,9 @@ export const RosterBuilderPage: React.FC = () => {
                   sx: {
                     borderRadius: '10px',
                     mt: 0.5,
-                    backgroundColor: isDarkMode ? 'rgba(30,30,40,0.95)' : 'rgba(255,255,255,0.97)',
+                    backgroundColor: isDarkMode
+                      ? 'rgba(30,30,40,0.95)'
+                      : 'rgba(255,255,255,0.97)',
                     backdropFilter: 'blur(12px)',
                     border: isDarkMode
                       ? '1px solid rgba(255,255,255,0.08)'
@@ -2337,56 +2396,72 @@ export const RosterBuilderPage: React.FC = () => {
               }}
               aria-label="Upload roster JSON file"
             />
-            <Tooltip title="Export JSON" arrow>
+
+            {/* Quick Fill — distinct CTA (sky-blue tint) */}
+            <Tooltip title="Paste a list of names to fill all roster slots at once" arrow>
               <Button
                 size="small"
-                startIcon={<DownloadIcon />}
-                onClick={handleExportJSON}
+                startIcon={<PersonAddIcon />}
+                onClick={() => setQuickFillDialog(true)}
                 sx={{
-                  flex: { xs: 1, md: 'none' },
-                  justifyContent: 'center',
+                  ml: 0.5,
                   borderRadius: '8px',
                   textTransform: 'none',
                   fontSize: '0.75rem',
-                  fontWeight: 500,
-                  color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                  fontWeight: 600,
+                  color: isDarkMode
+                    ? 'rgba(56, 189, 248, 0.85)'
+                    : 'rgba(14, 116, 144, 0.9)',
                   border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.08)'
-                    : '1px solid rgba(0,0,0,0.1)',
-                  backgroundColor: 'transparent',
+                    ? '1px solid rgba(56, 189, 248, 0.2)'
+                    : '1px solid rgba(14, 116, 144, 0.25)',
+                  backgroundColor: isDarkMode
+                    ? 'rgba(56, 189, 248, 0.06)'
+                    : 'rgba(14, 116, 144, 0.05)',
                   '&:hover': {
-                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                    border: isDarkMode
-                      ? '1px solid rgba(255,255,255,0.15)'
-                      : '1px solid rgba(0,0,0,0.18)',
+                    backgroundColor: isDarkMode
+                      ? 'rgba(56, 189, 248, 0.12)'
+                      : 'rgba(14, 116, 144, 0.1)',
+                    borderColor: isDarkMode
+                      ? 'rgba(56, 189, 248, 0.35)'
+                      : 'rgba(14, 116, 144, 0.4)',
                   },
                 }}
               >
-                Export
+                Quick Fill
               </Button>
             </Tooltip>
-            <Tooltip title="Copy for ESOtk addon — paste in-game with /esotk roster import" arrow>
+
+            {/* Addon — distinct CTA (amber tint) */}
+            <Tooltip
+              title="Copy for ESOtk addon — paste in-game with /esotk roster import"
+              arrow
+            >
               <Button
                 size="small"
                 startIcon={<AddonIcon />}
                 onClick={handleExportAddon}
                 sx={{
-                  flex: { xs: 1, md: 'none' },
-                  justifyContent: 'center',
                   borderRadius: '8px',
                   textTransform: 'none',
                   fontSize: '0.75rem',
-                  fontWeight: 500,
-                  color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                  fontWeight: 600,
+                  color: isDarkMode
+                    ? 'rgba(251, 191, 36, 0.85)'
+                    : 'rgba(161, 98, 7, 0.9)',
                   border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.08)'
-                    : '1px solid rgba(0,0,0,0.1)',
-                  backgroundColor: 'transparent',
+                    ? '1px solid rgba(251, 191, 36, 0.2)'
+                    : '1px solid rgba(161, 98, 7, 0.25)',
+                  backgroundColor: isDarkMode
+                    ? 'rgba(251, 191, 36, 0.06)'
+                    : 'rgba(161, 98, 7, 0.05)',
                   '&:hover': {
-                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                    border: isDarkMode
-                      ? '1px solid rgba(255,255,255,0.15)'
-                      : '1px solid rgba(0,0,0,0.18)',
+                    backgroundColor: isDarkMode
+                      ? 'rgba(251, 191, 36, 0.12)'
+                      : 'rgba(161, 98, 7, 0.1)',
+                    borderColor: isDarkMode
+                      ? 'rgba(251, 191, 36, 0.35)'
+                      : 'rgba(161, 98, 7, 0.4)',
                   },
                 }}
               >

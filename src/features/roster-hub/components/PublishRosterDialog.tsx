@@ -8,11 +8,13 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
   type SelectChangeEvent,
   Stack,
+  Switch,
   TextField,
   Tooltip,
   Typography,
@@ -45,6 +47,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   const [description, setDescription] = React.useState('');
   const [trialId, setTrialId] = React.useState('');
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
+  const [isAnonymous, setIsAnonymous] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -80,6 +83,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           trial_id: trialId,
           roster_data: rosterData,
           tags: selectedTags,
+          is_anonymous: isAnonymous,
         },
         token,
       );
@@ -99,6 +103,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       setDescription('');
       setTrialId('');
       setSelectedTags([]);
+      setIsAnonymous(false);
       setError(null);
     }
   }, [open]);
@@ -207,6 +212,22 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
             })}
           </Stack>
         </div>
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={isAnonymous}
+              onChange={(e) => setIsAnonymous(e.target.checked)}
+              size="small"
+            />
+          }
+          label={
+            <Typography variant="body2" color="text.secondary">
+              Publish anonymously
+            </Typography>
+          }
+          sx={{ mt: 0.5 }}
+        />
 
         {error && (
           <Alert severity="error" onClose={() => setError(null)}>

@@ -820,6 +820,11 @@ export const RosterViewPage: React.FC = () => {
           setNotFound(true);
         }
         setLoading(false);
+
+        // Signal to the parent frame (RosterPreviewDialog) that content is ready
+        if (window.parent !== window) {
+          window.parent.postMessage({ type: 'roster-preview-ready' }, window.location.origin);
+        }
       })
       .catch(() => {
         setNotFound(true);

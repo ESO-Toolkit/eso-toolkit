@@ -61,6 +61,7 @@ export async function listRosters(db: D1Database, opts: ListOptions): Promise<Ro
 
   return rows.results.map((row) => ({
     ...row,
+    is_anonymous: row.is_anonymous ? true : false,
     tags: row.tags_concat ? row.tags_concat.split(',') : [],
     user_voted: opts.userId ? votedSet.has(row.id) : undefined,
   }));
@@ -90,6 +91,7 @@ export async function getRosterById(
 
   return {
     ...row,
+    is_anonymous: row.is_anonymous ? true : false,
     tags: tagRows.results.map((t) => t.tag),
     user_voted: userId ? userVoted : undefined,
   };
@@ -106,13 +108,14 @@ export async function createRoster(
     trialId: string;
     rosterData: string;
     tags: string[];
+    isAnonymous: boolean;
   },
 ): Promise<void> {
   await db
     .prepare(
-      'INSERT INTO rosters (id, author_id, author_name, title, description, trial_id, roster_data) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO rosters (id, author_id, author_name, title, description, trial_id, roster_data, is_anonymous) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     )
-    .bind(data.id, data.authorId, data.authorName, data.title, data.description, data.trialId, data.rosterData)
+    .bind(data.id, data.authorId, data.authorName, data.title, data.description, data.trialId, data.rosterData, data.isAnonymous ? 1 : 0)
     .run();
 
   if (data.tags.length > 0) {
@@ -130,13 +133,14 @@ export async function updateRoster(
     trialId: string;
     rosterData: string;
     tags: string[];
+    isAnonymous: boolean;
   },
 ): Promise<boolean> {
   const result = await db
     .prepare(
-      'UPDATE rosters SET title = ?, description = ?, trial_id = ?, roster_data = ?, updated_at = datetime(\'now\') WHERE id = ? AND author_id = ?',
+      'UPDATE rosters SET title = ?, description = ?, trial_id = ?, roster_data = ?, is_anonymous = ?, updated_at = datetime(\'now\') WHERE id = ? AND author_id = ?',
     )
-    .bind(data.title, data.description, data.trialId, data.rosterData, id, authorId)
+    .bind(data.title, data.description, data.trialId, data.rosterData, data.isAnonymous ? 1 : 0, id, authorId)
     .run();
 
   if (!result.meta.changes || result.meta.changes === 0) return false;

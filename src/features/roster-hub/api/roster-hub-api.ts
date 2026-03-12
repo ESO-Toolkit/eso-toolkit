@@ -71,6 +71,7 @@ export const rosterHubApi = {
       trial_id: string;
       roster_data: string;
       tags: string[];
+      is_anonymous?: boolean;
     },
     token: string,
   ): Promise<SingleRosterResponse> {
@@ -89,6 +90,7 @@ export const rosterHubApi = {
       trial_id: string;
       roster_data: string;
       tags: string[];
+      is_anonymous?: boolean;
     },
     token: string,
   ): Promise<SingleRosterResponse> {

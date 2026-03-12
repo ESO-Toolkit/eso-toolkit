@@ -7,6 +7,7 @@ export interface RosterRow {
   id: string;
   author_id: string;
   author_name: string;
+  is_anonymous: number; // SQLite boolean: 0 = false, 1 = true
   title: string;
   description: string;
   trial_id: string;
@@ -21,7 +22,8 @@ export interface RosterTagRow {
   tag: string;
 }
 
-export interface RosterWithMeta extends RosterRow {
+export interface RosterWithMeta extends Omit<RosterRow, 'is_anonymous'> {
+  is_anonymous: boolean;
   tags: string[];
   user_voted?: boolean;
 }

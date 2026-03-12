@@ -46,7 +46,7 @@ export const TRIAL_LABELS: Record<string, string> = {
 };
 
 // Short abbreviations for badge display
-const TRIAL_SHORT: Record<string, string> = {
+export const TRIAL_SHORT: Record<string, string> = {
   AA: 'AA',
   AS: 'AS',
   BRP: 'BRP',
@@ -94,11 +94,6 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-// Deterministic avatar color from author name (matches CommentSection)
-function getAvatarHue(name: string): number {
-  return name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
-}
-
 export const RosterCard: React.FC<RosterCardProps> = React.memo(
   ({ roster, isOwner, isLoggedIn, onVote, onPreview, onDelete }) => {
     const { enqueueSnackbar } = useSnackbar();
@@ -117,9 +112,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
     const trialFull = TRIAL_LABELS[roster.trial_id] ?? roster.trial_id;
     const accentColor = TRIAL_ACCENT[roster.trial_id] ?? '#3b82f6';
 
-    const authorHue = getAvatarHue(roster.author_name || '?');
-    const avatarColor = `hsl(${authorHue}, 55%, 55%)`;
-    const initial = (roster.author_name || '?')[0].toUpperCase();
+    const displayName = roster.is_anonymous ? 'Anonymous' : roster.author_name || '?';
 
     return (
       <Card
@@ -293,45 +286,62 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             {/* Spacer pushes author to bottom */}
             <Box sx={{ flexGrow: 1, minHeight: 12 }} />
 
-            {/* Author + date */}
+            {/* Author + date — glassmorphic footer with accent bar */}
             <Box
               sx={{
                 display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                pt: 1.5,
-                borderTop: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+                alignItems: 'stretch',
+                mt: 0.5,
+                borderRadius: '8px',
+                background: isDark
+                  ? 'rgba(255,255,255,0.04)'
+                  : 'rgba(0,0,0,0.025)',
+                backdropFilter: 'blur(6px)',
+                WebkitBackdropFilter: 'blur(6px)',
+                border: isDark
+                  ? '1px solid rgba(255,255,255,0.06)'
+                  : '1px solid rgba(0,0,0,0.05)',
+                overflow: 'hidden',
               }}
             >
-              {/* Colored avatar based on author name hash */}
+              {/* Vertical accent bar */}
               <Box
                 sx={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: '50%',
-                  bgcolor: `${avatarColor}25`,
-                  border: `1px solid ${avatarColor}50`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  width: '3px',
                   flexShrink: 0,
+                  background: `linear-gradient(180deg, ${accentColor} 0%, ${accentColor}40 100%)`,
+                  boxShadow: `0 0 6px ${accentColor}30`,
                 }}
                 aria-hidden="true"
-              >
+              />
+
+              {/* Name + timestamp stacked */}
+              <Box sx={{ minWidth: 0, flex: 1, px: 1.25, py: 0.9 }}>
                 <Typography
-                  sx={{ fontSize: '0.58rem', fontWeight: 800, color: avatarColor, lineHeight: 1 }}
+                  noWrap
+                  sx={{
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    lineHeight: 1.3,
+                    color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.8)',
+                    letterSpacing: '-0.005em',
+                  }}
                 >
-                  {initial}
+                  {displayName}
+                </Typography>
+                <Typography
+                  noWrap
+                  sx={{
+                    fontSize: '0.68rem',
+                    fontWeight: 500,
+                    lineHeight: 1.3,
+                    color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.4)',
+                    letterSpacing: '0.01em',
+                  }}
+                >
+                  {formatDate(roster.created_at)}
                 </Typography>
               </Box>
-              <Typography
-                variant="caption"
-                color="text.disabled"
-                noWrap
-                sx={{ fontSize: '0.78rem' }}
-              >
-                {roster.author_name} · {formatDate(roster.created_at)}
-              </Typography>
             </Box>
           </CardContent>
         </CardActionArea>

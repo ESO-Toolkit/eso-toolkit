@@ -88,6 +88,7 @@ app.post('/rosters', async (c) => {
     trial_id: string;
     roster_data: string;
     tags?: string[];
+    is_anonymous?: boolean;
   }
 
   let body: CreateBody;
@@ -97,7 +98,7 @@ app.post('/rosters', async (c) => {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
 
-  const { title, description = '', trial_id, roster_data, tags = [] } = body;
+  const { title, description = '', trial_id, roster_data, tags = [], is_anonymous = false } = body;
 
   if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
   if (!trial_id?.trim()) return c.json({ error: 'trial_id is required' }, 400);
@@ -120,6 +121,7 @@ app.post('/rosters', async (c) => {
     trialId: trial_id.trim(),
     rosterData: roster_data,
     tags: Array.isArray(tags) ? tags.filter((t) => typeof t === 'string').slice(0, 10) : [],
+    isAnonymous: !!is_anonymous,
   });
 
   const roster = await getRosterById(c.env.DB, id, user.id);
@@ -138,6 +140,7 @@ app.put('/rosters/:id', async (c) => {
     trial_id: string;
     roster_data: string;
     tags?: string[];
+    is_anonymous?: boolean;
   }
 
   let body: UpdateBody;
@@ -147,7 +150,7 @@ app.put('/rosters/:id', async (c) => {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
 
-  const { title, description = '', trial_id, roster_data, tags = [] } = body;
+  const { title, description = '', trial_id, roster_data, tags = [], is_anonymous = false } = body;
 
   if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
   if (title.length > 100) return c.json({ error: 'title must be ≤ 100 characters' }, 400);
@@ -158,6 +161,7 @@ app.put('/rosters/:id', async (c) => {
     trialId: trial_id,
     rosterData: roster_data,
     tags: Array.isArray(tags) ? tags.filter((t) => typeof t === 'string').slice(0, 10) : [],
+    isAnonymous: !!is_anonymous,
   });
 
   if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
