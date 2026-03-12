@@ -7,6 +7,7 @@ export interface HubRoster {
   id: string;
   author_id: string;
   author_name: string;
+  is_anonymous: boolean;
   title: string;
   description: string;
   trial_id: string;

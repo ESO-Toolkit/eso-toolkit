@@ -3,11 +3,11 @@ import {
   Alert,
   Box,
   CircularProgress,
-  Divider,
   IconButton,
-  TextField,
+  InputBase,
   Tooltip,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React from 'react';
@@ -49,89 +49,191 @@ const SingleComment: React.FC<{
   isReply?: boolean;
 }> = React.memo(
   ({ comment, isOwner, isLoggedIn, replyingToId, onReply, onDelete, isReply = false }) => {
-    // Generate a stable color from the author name
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
+
     const initial = (comment.author_name || '?')[0].toUpperCase();
     const hue = comment.author_name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
     const avatarColor = `hsl(${hue}, 55%, 55%)`;
+    const isActive = replyingToId === comment.id;
 
     return (
       <Box
         sx={{
-          pl: isReply ? 3 : 0,
-          py: 0.75,
-          borderLeft: isReply ? 2 : 0,
-          borderColor: isReply ? `hsl(${hue}, 30%, 70%)` : 'transparent',
-          ml: isReply ? 1 : 0,
-          transition: 'background-color 0.15s ease',
-          borderRadius: 1,
-          '&:hover': { bgcolor: 'action.hover' },
+          display: 'flex',
+          gap: 1.25,
+          pl: isReply ? 5 : 0,
+          py: 0.5,
+          position: 'relative',
+          '&:hover .comment-actions': { opacity: 1 },
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25 }}>
+        {/* Thread connector for replies */}
+        {isReply && (
           <Box
             sx={{
+              position: 'absolute',
+              left: 19,
+              top: -8,
+              height: 'calc(50% + 8px)',
               width: 20,
-              height: 20,
-              borderRadius: '50%',
-              bgcolor: `${avatarColor}25`,
-              border: `1px solid ${avatarColor}40`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
+              borderLeft: isDark
+                ? `2px solid rgba(120,130,180,0.35)`
+                : `2px solid rgba(0,0,0,0.18)`,
+              borderBottom: isDark
+                ? `2px solid rgba(120,130,180,0.35)`
+                : `2px solid rgba(0,0,0,0.18)`,
+              borderBottomLeftRadius: '12px',
+            }}
+            aria-hidden="true"
+          />
+        )}
+
+        {/* Avatar */}
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: '10px',
+            background: `linear-gradient(135deg, ${avatarColor}35 0%, ${avatarColor}18 100%)`,
+            border: `1.5px solid ${avatarColor}50`,
+            boxShadow: `0 0 8px ${avatarColor}20`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            mt: 0.25,
+          }}
+        >
+          <Typography
+            sx={{ fontSize: '0.72rem', fontWeight: 800, color: avatarColor, lineHeight: 1 }}
+          >
+            {initial}
+          </Typography>
+        </Box>
+
+        {/* Message bubble */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box
+            sx={{
+              py: 0.75,
+              px: 1.25,
+              borderRadius: '14px',
+              borderTopLeftRadius: '4px',
+              background: isDark
+                ? 'rgba(255,255,255,0.07)'
+                : 'rgba(0,0,0,0.04)',
+              border: isDark
+                ? '1px solid rgba(255,255,255,0.1)'
+                : '1px solid rgba(0,0,0,0.07)',
+              backdropFilter: 'blur(6px)',
+              boxShadow: isDark
+                ? '0 1px 4px rgba(0,0,0,0.3)'
+                : '0 1px 3px rgba(0,0,0,0.06)',
+              transition: 'all 0.15s ease',
+              '&:hover': {
+                background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.055)',
+                border: isDark
+                  ? '1px solid rgba(255,255,255,0.15)'
+                  : '1px solid rgba(0,0,0,0.1)',
+                boxShadow: isDark
+                  ? '0 2px 8px rgba(0,0,0,0.4)'
+                  : '0 2px 6px rgba(0,0,0,0.08)',
+              },
             }}
           >
+            {/* Author + time inside the bubble */}
+            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75, mb: 0.35 }}>
+              <Typography
+                sx={{
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  color: avatarColor,
+                  lineHeight: 1.2,
+                }}
+              >
+                {comment.author_name}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: '0.62rem',
+                  color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
+                  lineHeight: 1.2,
+                }}
+              >
+                {formatRelativeTime(comment.created_at)}
+              </Typography>
+            </Box>
+
             <Typography
-              sx={{ fontSize: '0.6rem', fontWeight: 700, color: avatarColor, lineHeight: 1 }}
+              variant="body2"
+              sx={{
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                fontSize: '0.82rem',
+                lineHeight: 1.55,
+                color: isDark ? 'rgba(255,255,255,0.82)' : 'text.primary',
+              }}
             >
-              {initial}
+              {comment.body}
             </Typography>
           </Box>
-          <Typography variant="caption" fontWeight={600} color="text.secondary">
-            {comment.author_name}
-          </Typography>
-          <Typography variant="caption" color="text.disabled">
-            · {formatRelativeTime(comment.created_at)}
-          </Typography>
-          <Box sx={{ ml: 'auto', display: 'flex', gap: 0.25 }}>
+
+          {/* Action buttons — float below the bubble */}
+          <Box
+            className="comment-actions"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              mt: 0.35,
+              ml: 0.75,
+              opacity: isActive ? 1 : 0,
+              transition: 'opacity 0.15s ease',
+            }}
+          >
             {isLoggedIn && !isReply && (
-              <Tooltip title={`Reply to ${comment.author_name}`}>
+              <Tooltip title={`Reply`} arrow>
                 <IconButton
                   size="small"
                   onClick={() => onReply(comment.id, comment.author_name)}
                   aria-label={`Reply to ${comment.author_name}`}
                   sx={{
-                    p: 0.5,
-                    minWidth: 32,
-                    minHeight: 32,
-                    color: replyingToId === comment.id ? 'primary.main' : 'text.disabled',
+                    p: 0.35,
+                    borderRadius: '8px',
+                    color: isActive ? 'primary.main' : 'text.disabled',
+                    '&:hover': {
+                      color: 'primary.main',
+                      bgcolor: isDark ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.08)',
+                    },
                   }}
                 >
-                  <Reply sx={{ fontSize: 16 }} />
+                  <Reply sx={{ fontSize: 15 }} />
                 </IconButton>
               </Tooltip>
             )}
             {isOwner && (
-              <Tooltip title="Delete comment">
+              <Tooltip title="Delete" arrow>
                 <IconButton
                   size="small"
-                  color="error"
                   onClick={() => onDelete(comment.id)}
                   aria-label="Delete comment"
-                  sx={{ p: 0.5, minWidth: 32, minHeight: 32 }}
+                  sx={{
+                    p: 0.35,
+                    borderRadius: '8px',
+                    color: isDark ? 'rgba(239,68,68,0.6)' : 'rgba(239,68,68,0.5)',
+                    '&:hover': {
+                      color: '#ef4444',
+                      bgcolor: isDark ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.08)',
+                    },
+                  }}
                 >
-                  <DeleteOutline sx={{ fontSize: 16 }} />
+                  <DeleteOutline sx={{ fontSize: 15 }} />
                 </IconButton>
               </Tooltip>
             )}
           </Box>
         </Box>
-        <Typography
-          variant="body2"
-          sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', pl: 3.25, fontSize: '0.82rem' }}
-        >
-          {comment.body}
-        </Typography>
       </Box>
     );
   },
@@ -149,13 +251,15 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
   onCountChange,
 }) => {
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
   const [comments, setComments] = React.useState<HubComment[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
   const [body, setBody] = React.useState('');
   const [replyTo, setReplyTo] = React.useState<{ id: string; authorName: string } | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
-  // Optimistic: track pending comment ids (used for cleanup on error)
   const pendingIdsRef = React.useRef<Set<string>>(new Set());
 
   const fetchComments = React.useCallback((): void => {
@@ -182,7 +286,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     e.preventDefault();
     if (!token || !body.trim() || submitting) return;
 
-    // Optimistic: insert a temporary comment immediately
     const tempId = `pending-${Date.now()}`;
     const optimisticComment: HubComment = {
       id: tempId,
@@ -220,10 +323,9 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
       )
       .then(() => {
         enqueueSnackbar('Comment posted!', { variant: 'success' });
-        fetchComments(); // replace optimistic with real data
+        fetchComments();
       })
       .catch((err: unknown) => {
-        // Remove optimistic comment on failure
         setComments((prev) =>
           prev
             .filter((c) => c.id !== tempId)
@@ -254,7 +356,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
   const totalCount = comments.reduce((sum, c) => sum + 1 + c.replies.length, 0);
 
-  // Notify parent of comment count changes
   React.useEffect(() => {
     onCountChange?.(totalCount);
   }, [totalCount, onCountChange]);
@@ -264,120 +365,267 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
   return (
     <Box>
-      <Typography variant="subtitle2" sx={{ mb: 1 }}>
-        Comments {totalCount > 0 && `(${totalCount})`}
-      </Typography>
-
       {error && (
-        <Alert severity="error" sx={{ mb: 1 }} onClose={() => setError('')}>
+        <Alert severity="error" sx={{ mb: 1, borderRadius: 2 }} onClose={() => setError('')}>
           {error}
         </Alert>
       )}
 
-      {/* Comment form */}
+      {/* Comment form — modern pill input */}
       {isLoggedIn ? (
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: 1.5 }}>
+          {replyTo && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                mb: 0.75,
+                px: 1.5,
+                py: 0.5,
+                borderRadius: '10px',
+                background: isDark ? 'rgba(99,102,241,0.08)' : 'rgba(99,102,241,0.06)',
+                border: isDark
+                  ? '1px solid rgba(99,102,241,0.2)'
+                  : '1px solid rgba(99,102,241,0.15)',
+              }}
+            >
+              <Reply sx={{ fontSize: 14, color: 'primary.main' }} />
+              <Typography
+                sx={{
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  color: 'primary.main',
+                }}
+              >
+                Replying to {replyTo.authorName}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: '0.68rem',
+                  color: 'text.disabled',
+                  cursor: 'pointer',
+                  ml: 'auto',
+                  px: 0.75,
+                  py: 0.25,
+                  borderRadius: '6px',
+                  '&:hover': {
+                    color: 'text.secondary',
+                    bgcolor: 'action.hover',
+                  },
+                  transition: 'all 0.15s ease',
+                }}
+                onClick={() => setReplyTo(null)}
+              >
+                Cancel
+              </Typography>
+            </Box>
+          )}
           <form onSubmit={handleSubmit}>
-            {replyTo && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                <Reply sx={{ fontSize: 14, color: 'primary.main' }} />
-                <Typography variant="caption" color="primary">
-                  Replying to {replyTo.authorName}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ cursor: 'pointer', ml: 0.5, '&:hover': { color: 'text.primary' } }}
-                  onClick={() => setReplyTo(null)}
-                >
-                  · Cancel
-                </Typography>
-              </Box>
-            )}
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
-              <TextField
+            <div
+              className="MuiCommentInput-root"
+              style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: '6px',
+                padding: '4px',
+                paddingLeft: '12px',
+                borderRadius: '16px',
+                backgroundColor: isDark
+                  ? 'rgb(40, 48, 72)'
+                  : 'rgba(255,255,255,0.7)',
+                border: isDark
+                  ? '1px solid rgba(255,255,255,0.22)'
+                  : '1px solid rgba(0,0,0,0.09)',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <InputBase
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder={replyTo ? `Reply to ${replyTo.authorName}…` : 'Add a comment…'}
-                size="small"
+                placeholder={replyTo ? `Reply to ${replyTo.authorName}…` : 'Write a comment…'}
                 multiline
                 maxRows={4}
                 fullWidth
                 aria-label="Comment text"
-                slotProps={{ htmlInput: { maxLength: MAX_BODY_LENGTH } }}
-                helperText={
-                  isNearLimit ? (
-                    <Typography
-                      component="span"
-                      variant="caption"
-                      color={charsLeft <= 0 ? 'error' : 'warning.main'}
-                    >
-                      {charsLeft} characters remaining
-                    </Typography>
-                  ) : undefined
-                }
+                inputProps={{ maxLength: MAX_BODY_LENGTH }}
                 onKeyDown={(e) => {
                   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                     e.preventDefault();
                     handleSubmit(e as unknown as React.FormEvent);
                   }
                 }}
+                sx={{
+                  fontSize: '0.82rem',
+                  py: 0.75,
+                  '&.MuiInputBase-root': {
+                    backgroundColor: 'transparent !important',
+                    '&:hover': {
+                      backgroundColor: 'transparent !important',
+                    },
+                  },
+                  '& .MuiInputBase-input::placeholder': {
+                    opacity: 0.5,
+                  },
+                }}
               />
+              {isNearLimit && (
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    color: charsLeft <= 0 ? 'error.main' : 'warning.main',
+                    whiteSpace: 'nowrap',
+                    pb: 1,
+                    pr: 0.5,
+                    fontWeight: 500,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {charsLeft}
+                </Typography>
+              )}
               <IconButton
                 type="submit"
-                color="primary"
                 disabled={!body.trim() || submitting}
                 aria-label="Post comment"
-                sx={{ flexShrink: 0, minWidth: 44, minHeight: 44 }}
+                sx={{
+                  flexShrink: 0,
+                  width: 36,
+                  height: 36,
+                  borderRadius: '12px',
+                  background:
+                    body.trim() && !submitting
+                      ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+                      : isDark
+                        ? 'rgba(255,255,255,0.06)'
+                        : 'rgba(0,0,0,0.04)',
+                  color: body.trim() && !submitting ? '#fff' : 'text.disabled',
+                  boxShadow:
+                    body.trim() && !submitting
+                      ? '0 2px 8px rgba(99,102,241,0.35)'
+                      : 'none',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    background:
+                      body.trim() && !submitting
+                        ? 'linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)'
+                        : 'action.hover',
+                    transform: body.trim() ? 'scale(1.05)' : 'none',
+                  },
+                  '&:disabled': {
+                    color: 'text.disabled',
+                  },
+                }}
               >
-                {submitting ? <CircularProgress size={20} /> : <Send />}
+                {submitting ? <CircularProgress size={18} color="inherit" /> : <Send sx={{ fontSize: 18 }} />}
               </IconButton>
-            </Box>
+            </div>
           </form>
         </Box>
       ) : (
-        <Typography variant="caption" color="text.disabled" sx={{ mb: 2, display: 'block' }}>
-          Log in to leave a comment.
-        </Typography>
+        <Box
+          sx={{
+            mb: 1.5,
+            py: 1,
+            px: 1.5,
+            borderRadius: '12px',
+            background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+            border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.04)',
+            textAlign: 'center',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '0.78rem',
+              color: 'text.disabled',
+            }}
+          >
+            Log in to join the conversation
+          </Typography>
+        </Box>
       )}
 
       {/* Comment list */}
       <Box role="region" aria-label="Comments" aria-live="polite">
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-            <CircularProgress size={24} />
+            <CircularProgress size={22} />
           </Box>
         ) : comments.length === 0 ? (
-          <Typography variant="body2" color="text.disabled" sx={{ py: 1 }}>
-            No comments yet — start the discussion!
-          </Typography>
+          <Box
+            sx={{
+              py: 2.5,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 0.75,
+            }}
+          >
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '14px',
+                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                border: isDark
+                  ? '1px solid rgba(255,255,255,0.06)'
+                  : '1px solid rgba(0,0,0,0.05)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Typography sx={{ fontSize: '1.1rem', lineHeight: 1, opacity: 0.4 }}>
+                💬
+              </Typography>
+            </Box>
+            <Typography
+              sx={{
+                fontSize: '0.78rem',
+                color: 'text.disabled',
+                fontWeight: 500,
+              }}
+            >
+              No comments yet
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: '0.68rem',
+                color: 'text.disabled',
+                opacity: 0.6,
+              }}
+            >
+              Be the first to share your thoughts
+            </Typography>
+          </Box>
         ) : (
-          comments.map((comment, i) => (
-            <React.Fragment key={comment.id}>
-              {i > 0 && <Divider sx={{ my: 0.5 }} />}
-              <SingleComment
-                comment={comment}
-                isOwner={comment.author_id === currentUserId}
-                isLoggedIn={isLoggedIn}
-                replyingToId={replyTo?.id ?? null}
-                onReply={handleReply}
-                onDelete={handleDelete}
-                isReply={false}
-              />
-              {comment.replies.map((reply) => (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+            {comments.map((comment) => (
+              <React.Fragment key={comment.id}>
                 <SingleComment
-                  key={reply.id}
-                  comment={reply as HubComment}
-                  isOwner={reply.author_id === currentUserId}
+                  comment={comment}
+                  isOwner={comment.author_id === currentUserId}
                   isLoggedIn={isLoggedIn}
-                  replyingToId={null}
+                  replyingToId={replyTo?.id ?? null}
                   onReply={handleReply}
                   onDelete={handleDelete}
-                  isReply
+                  isReply={false}
                 />
-              ))}
-            </React.Fragment>
-          ))
+                {comment.replies.map((reply) => (
+                  <SingleComment
+                    key={reply.id}
+                    comment={reply as HubComment}
+                    isOwner={reply.author_id === currentUserId}
+                    isLoggedIn={isLoggedIn}
+                    replyingToId={null}
+                    onReply={handleReply}
+                    onDelete={handleDelete}
+                    isReply
+                  />
+                ))}
+              </React.Fragment>
+            ))}
+          </Box>
         )}
       </Box>
     </Box>
