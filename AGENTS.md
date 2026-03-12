@@ -53,7 +53,8 @@ git checkout -b ESO-XXX/description-here
 ```
 
 **❌ NEVER commit directly to main**  
-**✅ ALWAYS work on feature branches**
+**✅ ALWAYS work on feature branches**  
+**✅ ALWAYS continue through to PR creation after implementation** (see below)
 
 **If you've already made changes on main:**
 ```
@@ -62,7 +63,20 @@ git checkout -b ESO-XXX/description-here
 
 ---
 
-## 📚 Documentation Index
+## � CRITICAL: Post-Implementation Workflow (MANDATORY)
+
+**⚠️ After finishing implementation, agents MUST automatically continue through these steps without waiting for the user to ask:**
+
+1. **Validate** — `npm run validate` AND `npm test -- --watchAll=false` must both pass
+2. **Commit & Push** — stage all changes, commit with a descriptive message, push to origin
+3. **Create PR** — use the [create-pr skill](.github/skills/create-pr/SKILL.md) to open a PR automatically
+4. **Update Jira** — transition the ticket to "In Review"
+
+This is **not optional**. The workflow skill (Steps 5–8) defines the full procedure. Do not stop after writing code — the task is not complete until the PR is open and the ticket is moved to "In Review".
+
+---
+
+## �📚 Documentation Index
 
 **Full Index**: [documentation/INDEX.md](documentation/INDEX.md)
 

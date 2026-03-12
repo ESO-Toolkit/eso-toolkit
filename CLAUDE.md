@@ -56,7 +56,14 @@ For HTTPS: `$env:PORT = "3002" ; $env:VITE_HTTPS = "true" ; npm run dev`
 **Rules**:
 - Work on feature branches only (`ESO-XXX/description` format)
 - NEVER commit directly to main
+- **ALWAYS continue through to PR creation after implementation** — do not stop after writing code
 - Optional: [twig](https://github.com/gittwig/twig) for branch stacking (all commands have plain git fallbacks)
+
+**Post-implementation (MANDATORY — do not wait for user to ask):**
+1. `npm run validate` + `npm test -- --watchAll=false` — both must pass
+2. Commit and push all changes
+3. Create PR using the [create-pr skill](.github/skills/create-pr/SKILL.md)
+4. Transition Jira ticket to "In Review"
 
 **Complete workflow**: [AGENTS.md](AGENTS.md) — Git Workflow section
 

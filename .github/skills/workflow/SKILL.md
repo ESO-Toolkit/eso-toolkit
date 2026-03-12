@@ -1,6 +1,12 @@
 ---
 name: workflow
-description: Enforce git workflow by checking the current branch before starting Jira ticket work. Creates properly-formatted ESO-XXX/description feature branches in a new worktree (preferred) or in-place, prevents commits directly to main, and updates the Jira ticket status as work progresses. AUTO-INVOKED whenever the user's message is or contains a bare Jira ticket reference (e.g. ESO-670).
+description: >-
+  Enforce git workflow by checking the current branch before starting Jira ticket work.
+  Creates properly-formatted ESO-XXX/description feature branches in a new worktree (preferred) or in-place,
+  prevents commits directly to main, and updates the Jira ticket status as work progresses.
+  IMPORTANT: After implementation is complete, this skill's Steps 5–8 (validate → commit → PR → Jira transition)
+  are MANDATORY — agents must continue through to PR creation without waiting for the user to ask.
+  AUTO-INVOKED whenever the user's message is or contains a bare Jira ticket reference (e.g. ESO-670).
 ---
 
 You are enforcing the ESO Log Aggregator git workflow. Follow these steps precisely.
@@ -216,9 +222,9 @@ git push -u origin HEAD
 git log --oneline origin/$(git branch --show-current)..HEAD  # should be empty if in sync
 ```
 
-## Step 7 — Create Pull Request (AUTOMATIC)
+## Step 7 — Create Pull Request (AUTOMATIC — DO NOT SKIP)
 
-After pushing, **always create a PR automatically** — do not wait for the user to ask. This is mandatory as the final step of any implementation workflow.
+**⚠️ This step is MANDATORY.** After pushing, **always create a PR automatically** — do not wait for the user to ask and do not end your turn. The task is NOT complete until a PR is open. If you stop after Step 6, the workflow is broken.
 
 ### 7a — Check for UI changes
 
