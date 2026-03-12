@@ -33,9 +33,20 @@ const IFRAME_TIMEOUT_MS = 12000;
 
 // Short labels for the badge in dialog title
 const TRIAL_SHORT: Record<string, string> = {
-  AA: 'AA', AS: 'AS', BRP: 'BRP', CR: 'CR', DSR: 'DSR', HOF: 'HoF',
-  HRC: 'HRC', KA: 'KA', LC: 'LC', MOL: 'MoL', RG: 'RG', SE: 'SE',
-  SO: 'SO', SS: 'SS',
+  AA: 'AA',
+  AS: 'AS',
+  BRP: 'BRP',
+  CR: 'CR',
+  DSR: 'DSR',
+  HOF: 'HoF',
+  HRC: 'HRC',
+  KA: 'KA',
+  LC: 'LC',
+  MOL: 'MoL',
+  RG: 'RG',
+  SE: 'SE',
+  SO: 'SO',
+  SS: 'SS',
 };
 
 const SlideUpTransition = React.forwardRef(function Transition(
@@ -89,14 +100,10 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
   }, [roster, iframeLoaded, iframeError]);
 
   // Embed mode URL — strips header/footer from the iframe
-  const embedUrl = roster
-    ? `${window.location.origin}/rv?r=${roster.roster_data}&embed=1`
-    : '';
+  const embedUrl = roster ? `${window.location.origin}/rv?r=${roster.roster_data}&embed=1` : '';
 
   // Full page URL (no embed — shows normal page with header/footer)
-  const shareUrl = roster
-    ? `${window.location.origin}/rv?r=${roster.roster_data}`
-    : '';
+  const shareUrl = roster ? `${window.location.origin}/rv?r=${roster.roster_data}` : '';
 
   const handleOpenFullPage = (): void => {
     window.open(shareUrl, '_blank', 'noopener,noreferrer');
@@ -143,9 +150,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
             background: isDark
               ? `linear-gradient(160deg, ${accentColor}12 0%, rgba(152,131,227,0.07) 35%, rgba(10,15,28,0.97) 100%)`
               : `linear-gradient(160deg, ${accentColor}08 0%, rgba(152,131,227,0.04) 35%, rgba(248,250,252,0.98) 100%)`,
-            border: isDark
-              ? `1px solid ${accentColor}25`
-              : `1px solid ${accentColor}18`,
+            border: isDark ? `1px solid ${accentColor}25` : `1px solid ${accentColor}18`,
             boxShadow: isDark
               ? `0 0 0 1px ${accentColor}18, 0 32px 80px rgba(0,0,0,0.7), 0 0 60px ${accentColor}08`
               : `0 0 0 1px ${accentColor}12, 0 32px 80px rgba(0,0,0,0.18)`,
@@ -255,12 +260,22 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
             }}
             aria-hidden="true"
           >
-            <Typography sx={{ fontSize: '0.58rem', fontWeight: 800, color: avatarColor, lineHeight: 1 }}>
+            <Typography
+              sx={{ fontSize: '0.58rem', fontWeight: 800, color: avatarColor, lineHeight: 1 }}
+            >
               {(authorName || '?')[0].toUpperCase()}
             </Typography>
           </Box>
           <Box>
-            <Typography sx={{ fontSize: '0.62rem', fontWeight: 600, lineHeight: 1.1, color: isDark ? 'rgba(255,255,255,0.75)' : 'text.primary' }} noWrap>
+            <Typography
+              sx={{
+                fontSize: '0.62rem',
+                fontWeight: 600,
+                lineHeight: 1.1,
+                color: isDark ? 'rgba(255,255,255,0.75)' : 'text.primary',
+              }}
+              noWrap
+            >
               {authorName}
             </Typography>
             <Typography sx={{ fontSize: '0.55rem', color: 'text.disabled', lineHeight: 1.2 }}>
@@ -404,7 +419,16 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
             }}
             aria-hidden="true"
           >
-            <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', color: `${accentColor}cc`, textTransform: 'uppercase', lineHeight: 1 }}>
+            <Typography
+              sx={{
+                fontSize: '0.55rem',
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+                color: `${accentColor}cc`,
+                textTransform: 'uppercase',
+                lineHeight: 1,
+              }}
+            >
               Preview
             </Typography>
           </Box>
@@ -460,13 +484,23 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
               },
             }}
           >
-            <ChatBubbleOutline sx={{ fontSize: 15, color: commentsOpen ? accentColor : 'text.disabled', transition: 'color 0.15s ease' }} />
+            <ChatBubbleOutline
+              sx={{
+                fontSize: 15,
+                color: commentsOpen ? accentColor : 'text.disabled',
+                transition: 'color 0.15s ease',
+              }}
+            />
             <Typography
               variant="body2"
               fontWeight={600}
               sx={{
                 fontSize: '0.8rem',
-                color: commentsOpen ? (isDark ? 'rgba(255,255,255,0.8)' : 'text.primary') : 'text.secondary',
+                color: commentsOpen
+                  ? isDark
+                    ? 'rgba(255,255,255,0.8)'
+                    : 'text.primary'
+                  : 'text.secondary',
                 transition: 'color 0.15s ease',
               }}
             >
@@ -494,7 +528,15 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
                 {commentCount}
               </Box>
             )}
-            <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', color: commentsOpen ? accentColor : 'text.disabled', transition: 'color 0.15s ease' }}>
+            <Box
+              sx={{
+                ml: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                color: commentsOpen ? accentColor : 'text.disabled',
+                transition: 'color 0.15s ease',
+              }}
+            >
               {commentsOpen ? (
                 <KeyboardArrowUp fontSize="small" />
               ) : (

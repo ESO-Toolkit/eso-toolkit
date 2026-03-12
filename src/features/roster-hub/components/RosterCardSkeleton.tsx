@@ -10,11 +10,14 @@ export const RosterCardSkeleton: React.FC = () => (
       width: '100%',
       borderColor: 'divider',
       borderTop: '3px solid transparent',
-      borderImage: 'linear-gradient(90deg, rgba(99,102,241,0.3), rgba(168,85,247,0.3), rgba(59,130,246,0.3)) 1',
+      borderImage:
+        'linear-gradient(90deg, rgba(99,102,241,0.3), rgba(168,85,247,0.3), rgba(59,130,246,0.3)) 1',
       overflow: 'hidden',
     }}
   >
-    <CardContent sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, pb: '12px !important' }}>
+    <CardContent
+      sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, pb: '12px !important' }}
+    >
       {/* Trial badge */}
       <Skeleton variant="rounded" width={36} height={20} sx={{ mb: 1, borderRadius: '10px' }} />
       {/* Title — 2 lines */}

@@ -47,83 +47,95 @@ const SingleComment: React.FC<{
   onReply: (commentId: string, authorName: string) => void;
   onDelete: (commentId: string) => void;
   isReply?: boolean;
-}> = React.memo(({ comment, isOwner, isLoggedIn, replyingToId, onReply, onDelete, isReply = false }) => {
-  // Generate a stable color from the author name
-  const initial = (comment.author_name || '?')[0].toUpperCase();
-  const hue = comment.author_name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
-  const avatarColor = `hsl(${hue}, 55%, 55%)`;
+}> = React.memo(
+  ({ comment, isOwner, isLoggedIn, replyingToId, onReply, onDelete, isReply = false }) => {
+    // Generate a stable color from the author name
+    const initial = (comment.author_name || '?')[0].toUpperCase();
+    const hue = comment.author_name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+    const avatarColor = `hsl(${hue}, 55%, 55%)`;
 
-  return (
-  <Box
-    sx={{
-      pl: isReply ? 3 : 0,
-      py: 0.75,
-      borderLeft: isReply ? 2 : 0,
-      borderColor: isReply ? `hsl(${hue}, 30%, 70%)` : 'transparent',
-      ml: isReply ? 1 : 0,
-      transition: 'background-color 0.15s ease',
-      borderRadius: 1,
-      '&:hover': { bgcolor: 'action.hover' },
-    }}
-  >
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25 }}>
+    return (
       <Box
         sx={{
-          width: 20,
-          height: 20,
-          borderRadius: '50%',
-          bgcolor: `${avatarColor}25`,
-          border: `1px solid ${avatarColor}40`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
+          pl: isReply ? 3 : 0,
+          py: 0.75,
+          borderLeft: isReply ? 2 : 0,
+          borderColor: isReply ? `hsl(${hue}, 30%, 70%)` : 'transparent',
+          ml: isReply ? 1 : 0,
+          transition: 'background-color 0.15s ease',
+          borderRadius: 1,
+          '&:hover': { bgcolor: 'action.hover' },
         }}
       >
-        <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, color: avatarColor, lineHeight: 1 }}>
-          {initial}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25 }}>
+          <Box
+            sx={{
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              bgcolor: `${avatarColor}25`,
+              border: `1px solid ${avatarColor}40`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Typography
+              sx={{ fontSize: '0.6rem', fontWeight: 700, color: avatarColor, lineHeight: 1 }}
+            >
+              {initial}
+            </Typography>
+          </Box>
+          <Typography variant="caption" fontWeight={600} color="text.secondary">
+            {comment.author_name}
+          </Typography>
+          <Typography variant="caption" color="text.disabled">
+            · {formatRelativeTime(comment.created_at)}
+          </Typography>
+          <Box sx={{ ml: 'auto', display: 'flex', gap: 0.25 }}>
+            {isLoggedIn && !isReply && (
+              <Tooltip title={`Reply to ${comment.author_name}`}>
+                <IconButton
+                  size="small"
+                  onClick={() => onReply(comment.id, comment.author_name)}
+                  aria-label={`Reply to ${comment.author_name}`}
+                  sx={{
+                    p: 0.5,
+                    minWidth: 32,
+                    minHeight: 32,
+                    color: replyingToId === comment.id ? 'primary.main' : 'text.disabled',
+                  }}
+                >
+                  <Reply sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Tooltip>
+            )}
+            {isOwner && (
+              <Tooltip title="Delete comment">
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => onDelete(comment.id)}
+                  aria-label="Delete comment"
+                  sx={{ p: 0.5, minWidth: 32, minHeight: 32 }}
+                >
+                  <DeleteOutline sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        </Box>
+        <Typography
+          variant="body2"
+          sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', pl: 3.25, fontSize: '0.82rem' }}
+        >
+          {comment.body}
         </Typography>
       </Box>
-      <Typography variant="caption" fontWeight={600} color="text.secondary">
-        {comment.author_name}
-      </Typography>
-      <Typography variant="caption" color="text.disabled">
-        · {formatRelativeTime(comment.created_at)}
-      </Typography>
-      <Box sx={{ ml: 'auto', display: 'flex', gap: 0.25 }}>
-        {isLoggedIn && !isReply && (
-          <Tooltip title={`Reply to ${comment.author_name}`}>
-            <IconButton
-              size="small"
-              onClick={() => onReply(comment.id, comment.author_name)}
-              aria-label={`Reply to ${comment.author_name}`}
-              sx={{ p: 0.5, minWidth: 32, minHeight: 32, color: replyingToId === comment.id ? 'primary.main' : 'text.disabled' }}
-            >
-              <Reply sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Tooltip>
-        )}
-        {isOwner && (
-          <Tooltip title="Delete comment">
-            <IconButton
-              size="small"
-              color="error"
-              onClick={() => onDelete(comment.id)}
-              aria-label="Delete comment"
-              sx={{ p: 0.5, minWidth: 32, minHeight: 32 }}
-            >
-              <DeleteOutline sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Tooltip>
-        )}
-      </Box>
-    </Box>
-    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', pl: 3.25, fontSize: '0.82rem' }}>
-      {comment.body}
-    </Typography>
-  </Box>
-  );
-});
+    );
+  },
+);
 
 SingleComment.displayName = 'SingleComment';
 
@@ -186,9 +198,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     if (replyTo) {
       setComments((prev) =>
         prev.map((c) =>
-          c.id === replyTo.id
-            ? { ...c, replies: [...c.replies, optimisticComment] }
-            : c,
+          c.id === replyTo.id ? { ...c, replies: [...c.replies, optimisticComment] } : c,
         ),
       );
     } else {
@@ -267,59 +277,63 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
       {/* Comment form */}
       {isLoggedIn ? (
         <Box sx={{ mb: 2 }}>
-        <form onSubmit={handleSubmit}>
-          {replyTo && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-              <Reply sx={{ fontSize: 14, color: 'primary.main' }} />
-              <Typography variant="caption" color="primary">
-                Replying to {replyTo.authorName}
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ cursor: 'pointer', ml: 0.5, '&:hover': { color: 'text.primary' } }}
-                onClick={() => setReplyTo(null)}
-              >
-                · Cancel
-              </Typography>
-            </Box>
-          )}
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
-            <TextField
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder={replyTo ? `Reply to ${replyTo.authorName}…` : 'Add a comment…'}
-              size="small"
-              multiline
-              maxRows={4}
-              fullWidth
-              aria-label="Comment text"
-              slotProps={{ htmlInput: { maxLength: MAX_BODY_LENGTH } }}
-              helperText={
-                isNearLimit ? (
-                  <Typography component="span" variant="caption" color={charsLeft <= 0 ? 'error' : 'warning.main'}>
-                    {charsLeft} characters remaining
-                  </Typography>
-                ) : undefined
-              }
-              onKeyDown={(e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                  e.preventDefault();
-                  handleSubmit(e as unknown as React.FormEvent);
+          <form onSubmit={handleSubmit}>
+            {replyTo && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                <Reply sx={{ fontSize: 14, color: 'primary.main' }} />
+                <Typography variant="caption" color="primary">
+                  Replying to {replyTo.authorName}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ cursor: 'pointer', ml: 0.5, '&:hover': { color: 'text.primary' } }}
+                  onClick={() => setReplyTo(null)}
+                >
+                  · Cancel
+                </Typography>
+              </Box>
+            )}
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+              <TextField
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                placeholder={replyTo ? `Reply to ${replyTo.authorName}…` : 'Add a comment…'}
+                size="small"
+                multiline
+                maxRows={4}
+                fullWidth
+                aria-label="Comment text"
+                slotProps={{ htmlInput: { maxLength: MAX_BODY_LENGTH } }}
+                helperText={
+                  isNearLimit ? (
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      color={charsLeft <= 0 ? 'error' : 'warning.main'}
+                    >
+                      {charsLeft} characters remaining
+                    </Typography>
+                  ) : undefined
                 }
-              }}
-            />
-            <IconButton
-              type="submit"
-              color="primary"
-              disabled={!body.trim() || submitting}
-              aria-label="Post comment"
-              sx={{ flexShrink: 0, minWidth: 44, minHeight: 44 }}
-            >
-              {submitting ? <CircularProgress size={20} /> : <Send />}
-            </IconButton>
-          </Box>
-        </form>
+                onKeyDown={(e) => {
+                  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSubmit(e as unknown as React.FormEvent);
+                  }
+                }}
+              />
+              <IconButton
+                type="submit"
+                color="primary"
+                disabled={!body.trim() || submitting}
+                aria-label="Post comment"
+                sx={{ flexShrink: 0, minWidth: 44, minHeight: 44 }}
+              >
+                {submitting ? <CircularProgress size={20} /> : <Send />}
+              </IconButton>
+            </Box>
+          </form>
         </Box>
       ) : (
         <Typography variant="caption" color="text.disabled" sx={{ mb: 2, display: 'block' }}>

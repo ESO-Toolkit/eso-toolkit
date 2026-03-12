@@ -158,7 +158,12 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         </FormControl>
 
         <div>
-          <Typography variant="caption" color={atTagLimit ? 'warning.main' : 'text.secondary'} gutterBottom display="block">
+          <Typography
+            variant="caption"
+            color={atTagLimit ? 'warning.main' : 'text.secondary'}
+            gutterBottom
+            display="block"
+          >
             Tags ({selectedTags.length}/{MAX_TAGS}){atTagLimit ? ' — limit reached' : ''}
           </Typography>
           <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mt: 0.5 }}>

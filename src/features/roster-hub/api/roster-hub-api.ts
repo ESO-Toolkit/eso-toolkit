@@ -14,13 +14,10 @@ import type {
   VoteResponse,
 } from '../types/roster-hub.types';
 
-const BASE_URL = (import.meta.env.VITE_ROSTER_HUB_API_URL as string | undefined) ?? 'http://localhost:8787';
+const BASE_URL =
+  (import.meta.env.VITE_ROSTER_HUB_API_URL as string | undefined) ?? 'http://localhost:8787';
 
-async function request<T>(
-  path: string,
-  options: RequestInit = {},
-  token?: string,
-): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string> | undefined),
@@ -77,7 +74,11 @@ export const rosterHubApi = {
     },
     token: string,
   ): Promise<SingleRosterResponse> {
-    return request<SingleRosterResponse>('/rosters', { method: 'POST', body: JSON.stringify(data) }, token);
+    return request<SingleRosterResponse>(
+      '/rosters',
+      { method: 'POST', body: JSON.stringify(data) },
+      token,
+    );
   },
 
   update(
@@ -91,7 +92,11 @@ export const rosterHubApi = {
     },
     token: string,
   ): Promise<SingleRosterResponse> {
-    return request<SingleRosterResponse>(`/rosters/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token);
+    return request<SingleRosterResponse>(
+      `/rosters/${id}`,
+      { method: 'PUT', body: JSON.stringify(data) },
+      token,
+    );
   },
 
   delete(id: string, token: string): Promise<{ ok: boolean }> {
