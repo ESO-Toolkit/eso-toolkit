@@ -10,6 +10,7 @@ import type { PotionStreamResult } from '../../../utils/potionDetectionUtils';
 import type { BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 
 import type { StatChipId } from './statChipConfig';
+import type { MetricsLayout } from './useMetricsLayout';
 
 // Lazy load the PlayerCard component
 const PlayerCard = React.lazy(() =>
@@ -150,6 +151,8 @@ export interface PlayerCardProps {
   critChance?: number;
   /** Ordered list of visible stat chip IDs (from customization preferences) */
   visibleChips?: StatChipId[];
+  /** Whether the metrics row wraps chips vertically or scrolls horizontally */
+  metricsLayout?: MetricsLayout;
   /** Test ID for testing */
   'data-testid'?: string;
 }

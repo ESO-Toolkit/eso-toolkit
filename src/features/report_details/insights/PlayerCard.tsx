@@ -155,6 +155,8 @@ interface PlayerCardProps {
   critChance?: number;
   /** Ordered list of visible stat chip IDs (from customization preferences) */
   visibleChips?: StatChipId[];
+  /** Whether the metrics row wraps chips vertically or scrolls horizontally */
+  metricsLayout?: 'scroll' | 'wrap';
 }
 
 // Helper function to consolidate build issues
@@ -282,6 +284,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     critDps,
     critChance,
     visibleChips,
+    metricsLayout = 'scroll',
   }) => {
     const theme = useTheme();
 
@@ -1586,15 +1589,22 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       alignItems: 'center',
                       justifyContent: 'flex-start',
                       minWidth: 0,
-                      minHeight: { xs: 40, sm: 28, md: 28 },
+                      minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 40, sm: 28, md: 28 },
                     }}
                   >
                     <MetricsScrollContainer
                       sx={{
                         display: 'flex',
-                        flexWrap: 'nowrap',
+                        flexWrap:
+                          metricsLayout === 'wrap'
+                            ? 'wrap'
+                            : { xs: 'wrap', sm: 'nowrap', md: 'nowrap' },
+                        overflowX:
+                          metricsLayout === 'wrap'
+                            ? 'hidden'
+                            : { xs: 'hidden', sm: 'auto', md: 'auto' },
                         gap: { xs: 0.75, sm: 0.5, md: 0.5 },
-                        minHeight: { xs: 40, sm: 24, md: 24 },
+                        minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 40, sm: 24, md: 24 },
                         flex: '1 1 auto',
                         minWidth: 0,
                         mr: 0.5,
@@ -1606,14 +1616,21 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: { xs: 0.75, sm: 0.5, md: 0.25 },
-                          whiteSpace: { xs: 'normal', sm: 'nowrap', md: 'nowrap' },
+                          flexWrap: metricsLayout === 'wrap' ? 'wrap' : 'nowrap',
+                          gap:
+                            metricsLayout === 'wrap'
+                              ? { xs: 1, sm: 0.75, md: 0.5 }
+                              : { xs: 0.75, sm: 0.5, md: 0.25 },
+                          whiteSpace:
+                            metricsLayout === 'wrap'
+                              ? 'normal'
+                              : { xs: 'normal', sm: 'nowrap', md: 'nowrap' },
                           fontSize: { xs: '0.85rem', sm: '0.8rem', md: 'body2.fontSize' },
                         }}
                       >
                         {statChipEntries.map((entry, i) => (
                           <React.Fragment key={entry.id}>
-                            {i > 0 && ' · '}
+                            {i > 0 && metricsLayout !== 'wrap' && ' · '}
                             {entry.node}
                           </React.Fragment>
                         ))}
