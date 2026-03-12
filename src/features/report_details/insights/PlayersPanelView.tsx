@@ -1,4 +1,5 @@
 import TuneIcon from '@mui/icons-material/Tune';
+import WrapTextIcon from '@mui/icons-material/WrapText';
 import {
   Badge,
   Box,
@@ -30,6 +31,7 @@ import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnal
 import { LazyPlayerCard as PlayerCard } from './LazyPlayerCard';
 import { STAT_CHIP_IDS } from './statChipConfig';
 import { StatChipCustomizationModal } from './StatChipCustomizationModal';
+import { useMetricsLayout } from './useMetricsLayout';
 import { useStatChipPreferences } from './useStatChipPreferences';
 
 interface PlayersPanelViewProps {
@@ -126,6 +128,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     const [chipModalOpen, setChipModalOpen] = useState(false);
 
     const { visibleChips, setVisibleChips } = useStatChipPreferences();
+    const { metricsLayout, toggleMetricsLayout } = useMetricsLayout();
     const handleOpenChipModal = useCallback(() => setChipModalOpen(true), []);
     const handleCloseChipModal = useCallback(() => setChipModalOpen(false), []);
 
@@ -379,6 +382,43 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
               </Button>
             </Badge>
           </Tooltip>
+
+          <Tooltip
+            title={
+              metricsLayout === 'wrap'
+                ? 'Metrics: wrap view — click to switch to scroll view'
+                : 'Metrics: scroll view — click to switch to wrap view'
+            }
+            arrow
+          >
+            <IconButton
+              size="small"
+              onClick={toggleMetricsLayout}
+              sx={{
+                alignSelf: 'center',
+                border: '1px solid',
+                borderColor: metricsLayout === 'wrap' ? 'primary.main' : 'divider',
+                borderRadius: 1,
+                px: 1,
+                color: metricsLayout === 'wrap' ? 'primary.main' : 'inherit',
+                bgcolor: metricsLayout === 'wrap' ? 'primary.main' : 'transparent',
+                '&:hover': {
+                  bgcolor: metricsLayout === 'wrap' ? 'primary.dark' : undefined,
+                },
+              }}
+              aria-label={
+                metricsLayout === 'wrap'
+                  ? 'Switch to scroll view for metrics'
+                  : 'Switch to wrap view for metrics'
+              }
+              aria-pressed={metricsLayout === 'wrap'}
+            >
+              <WrapTextIcon
+                fontSize="small"
+                sx={{ color: metricsLayout === 'wrap' ? 'primary.contrastText' : 'inherit' }}
+              />
+            </IconButton>
+          </Tooltip>
         </Stack>
 
         {/* Results summary */}
@@ -468,6 +508,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 critChance={playerData.critChance}
                 visibleChips={visibleChips}
                 detectedRole={rolesByPlayerId?.[Number(playerData.player.id)]}
+                metricsLayout={metricsLayout}
               />
             </Box>
           ))}
