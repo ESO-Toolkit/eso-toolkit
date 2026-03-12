@@ -52,7 +52,7 @@ import {
 import { PlayerTalent } from '../types/playerDetails';
 
 import { abilityIdMapper } from './abilityIdMapper';
-import { findSkillByName, SkillNode, getClassKey } from './skillLinesRegistry';
+import { findSkillByName, findSkillById, SkillNode, getClassKey } from './skillLinesRegistry';
 
 // SkillNode type is now imported from skillLinesRegistry
 
@@ -287,7 +287,8 @@ export function buildTooltipPropsFromAbilityId(
       : undefined);
 
   // Try to find detailed skill data by name
-  const found = abilityData.name ? findSkillByName(abilityData.name) : null;
+  const found =
+    (abilityData.name ? findSkillByName(abilityData.name) : null) ?? findSkillById(abilityId);
   if (found) {
     const { node, skillLineName, skillLineData, parent } = found;
     const className = getClassKey(skillLineData);

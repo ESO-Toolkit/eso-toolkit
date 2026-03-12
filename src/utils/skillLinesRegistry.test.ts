@@ -2,6 +2,7 @@ import {
   SKILL_LINES_REGISTRY,
   ALL_SKILL_LINES,
   findSkillByName,
+  findSkillById,
   getClassKey,
 } from './skillLinesRegistry';
 import type { SkillLineData } from '../data/types/skill-line-types';
@@ -604,6 +605,60 @@ describe('skillLinesRegistry', () => {
 
       expect(warHorn).toBeDefined();
       expect(supportAura).toBeDefined();
+    });
+  });
+
+  describe('findSkillById', () => {
+    it('should find a skill by its numeric ID', () => {
+      const result = findSkillById(1000);
+
+      expect(result).toBeDefined();
+      expect(result?.node.name).toBe('War Horn');
+      expect(result?.skillLineName).toBe('Assault');
+      expect(result?.category).toBe('alliance');
+    });
+
+    it('should find a class skill by ID', () => {
+      const result = findSkillById(1);
+
+      expect(result).toBeDefined();
+      expect(result?.node.name).toBe('Dragonknight Standard');
+      expect(result?.skillLineName).toBe('Ardent Flame');
+      expect(result?.category).toBe('classes');
+    });
+
+    it('should find a morph skill by ID and include parent reference', () => {
+      const result = findSkillById(1001);
+
+      expect(result).toBeDefined();
+      expect(result?.node.name).toBe('Aggressive Horn');
+      expect(result?.parent?.name).toBe('War Horn');
+    });
+
+    it('should return null for an unknown ID', () => {
+      expect(findSkillById(99999)).toBeNull();
+    });
+
+    it('should find the same skill as findSkillByName when both match', () => {
+      const byName = findSkillByName('War Horn');
+      const byId = findSkillById(1000);
+
+      expect(byId?.node.name).toBe(byName?.node.name);
+      expect(byId?.skillLineName).toBe(byName?.skillLineName);
+    });
+
+    // Regression: Stone Giant (ID 31816) was renamed to Magma Fist in U49.
+    // The ESO Logs API still returns the pre-rename name "Stone Giant" in newer logs,
+    // so findSkillByName("Stone Giant") fails. findSkillById must resolve it via the
+    // ID that is present in earthenHeart.ts as DRAGONKNIGHT_MAGMA_FIST.
+    it('should find skill by ID even when the local skill name no longer matches the API name', () => {
+      // In the mock, skill id=2 is "Lava Whip" — simulate a renamed skill scenario
+      // by looking up an ID that is known to the registry regardless of name
+      const result = findSkillById(2);
+
+      expect(result).toBeDefined();
+      expect(result?.node.name).toBe('Lava Whip');
+      expect(result?.skillLineName).toBe('Ardent Flame');
     });
   });
 

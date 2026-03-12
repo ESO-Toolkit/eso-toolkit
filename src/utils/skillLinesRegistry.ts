@@ -211,6 +211,53 @@ export function findSkillByName(abilityName: string): SkillSearchResult | null {
   );
 }
 
+function searchSkillLineById(
+  skillLineData: SkillLineData,
+  targetId: number,
+  category: SkillCategoryKey,
+): SkillSearchResult | null {
+  if (!Array.isArray(skillLineData.skills)) return null;
+
+  for (const skill of skillLineData.skills) {
+    if (skill?.id !== targetId) continue;
+
+    const node = skillDataToSkillNode(skill);
+    return {
+      node,
+      skillLineName: skillLineData.name,
+      skillLineData,
+      category,
+      abilityType: resolveAbilityCollection(skill),
+      parent: findParentSkillNode(skillLineData, skill),
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Search for a skill/ability by ID across all skill lines.
+ * Use this as a fallback when name-based lookup fails (e.g. when the ESO Logs API
+ * returns a pre-rename ability name that no longer matches local skill line data).
+ */
+export function findSkillById(abilityId: number): SkillSearchResult | null {
+  for (const skillLines of Object.values(SKILL_LINES_REGISTRY.classes)) {
+    for (const skillLine of skillLines) {
+      const result = searchSkillLineById(skillLine, abilityId, 'classes');
+      if (result) return result;
+    }
+  }
+  for (const category of ['weapons', 'alliance', 'guild'] as const) {
+    const entries = SKILL_LINES_REGISTRY[category];
+    for (const skillLineData of Object.values(entries)) {
+      if (!skillLineData) continue;
+      const result = searchSkillLineById(skillLineData as SkillLineData, abilityId, category);
+      if (result) return result;
+    }
+  }
+  return null;
+}
+
 /**
  * Get class key from skillset data
  */
