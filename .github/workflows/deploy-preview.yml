@@ -63,6 +63,11 @@ jobs:
           rm -rf "${PREVIEW_DIR}"
           cp -r "${GITHUB_WORKSPACE}/build" "${PREVIEW_DIR}"
 
+          # Keep a root-level 404.html in the dev-previews repo so GitHub Pages
+          # can redirect SPA deep links (e.g. /dev-previews/pr-N/rv?r=…) back to
+          # the correct PR's index.html before React mounts and handles the route.
+          cp "${GITHUB_WORKSPACE}/scripts/dev-previews-404.html" 404.html
+
           # Update previews.json
           UPDATED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           # Read existing previews, remove entry for this PR, add updated entry
