@@ -129,17 +129,24 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
           width: '100%',
           position: 'relative',
           background: isDark
-            ? `linear-gradient(135deg, ${accentColor}0a 0%, rgba(152,131,227,0.06) 50%, rgba(11,18,32,0.5) 100%)`
-            : `linear-gradient(135deg, ${accentColor}08 0%, rgba(152,131,227,0.04) 50%, rgba(255,255,255,0.7) 100%)`,
-          border: isDark ? `1px solid rgba(255,255,255,0.07)` : `1px solid rgba(0,0,0,0.08)`,
-          borderRadius: 2,
+            ? `linear-gradient(160deg, ${accentColor}12 0%, rgba(152,131,227,0.07) 45%, rgba(11,18,32,0.6) 100%)`
+            : `linear-gradient(160deg, ${accentColor}0c 0%, rgba(152,131,227,0.05) 45%, rgba(255,255,255,0.8) 100%)`,
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: isDark
+            ? `1px solid rgba(255,255,255,0.09)`
+            : `1px solid rgba(0,0,0,0.09)`,
+          borderRadius: 3,
           overflow: 'hidden',
-          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+          boxShadow: isDark
+            ? `0 2px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)`
+            : `0 2px 12px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9)`,
+          transition: 'transform 0.22s ease, box-shadow 0.22s ease',
           '&:hover': {
-            transform: 'translateY(-4px)',
+            transform: 'translateY(-5px)',
             boxShadow: isDark
-              ? `0 0 0 1px ${accentColor}30, 0 12px 32px -6px ${accentColor}45, 0 4px 16px -4px rgba(0,0,0,0.5)`
-              : `0 0 0 1px ${accentColor}20, 0 12px 32px -6px ${accentColor}30, 0 4px 16px -4px rgba(0,0,0,0.12)`,
+              ? `0 0 0 1px ${accentColor}35, 0 16px 40px -8px ${accentColor}50, 0 6px 20px -4px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)`
+              : `0 0 0 1px ${accentColor}25, 0 16px 40px -8px ${accentColor}35, 0 6px 20px -4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9)`,
           },
         }}
       >
@@ -150,9 +157,9 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             top: 0,
             left: 0,
             right: 0,
-            height: '3px',
-            background: `linear-gradient(90deg, transparent 0%, ${accentColor}70 20%, ${accentColor} 50%, ${accentColor}70 80%, transparent 100%)`,
-            boxShadow: `0 0 8px ${accentColor}70, 0 0 20px ${accentColor}30`,
+            height: '4px',
+            background: `linear-gradient(90deg, transparent 0%, ${accentColor}80 20%, ${accentColor} 50%, ${accentColor}80 80%, transparent 100%)`,
+            boxShadow: `0 0 12px ${accentColor}80, 0 0 28px ${accentColor}40`,
             borderRadius: '4px 4px 0 0',
             zIndex: 2,
           }}
@@ -170,8 +177,9 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
               display: 'flex',
               flexDirection: 'column',
               height: '100%',
-              pt: 2.5, // extra top padding clears the accent bar
-              pb: '12px !important',
+              pt: 3,
+              px: 2.5,
+              pb: '20px !important',
             }}
           >
             {/* Trial badge */}
@@ -181,24 +189,24 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                 sx={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  mb: 1,
-                  px: 0.75,
-                  py: 0.3,
-                  borderRadius: '5px',
+                  mb: 1.75,
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: '6px',
                   background: isDark
                     ? `linear-gradient(90deg, ${accentColor}22 0%, ${accentColor}10 100%)`
                     : `linear-gradient(90deg, ${accentColor}18 0%, ${accentColor}08 100%)`,
                   border: `1px solid ${accentColor}45`,
-                  boxShadow: `0 0 6px ${accentColor}25`,
+                  boxShadow: `0 0 8px ${accentColor}25`,
                   alignSelf: 'flex-start',
                 }}
               >
                 <Typography
                   sx={{
-                    fontSize: '0.62rem',
+                    fontSize: '0.7rem',
                     fontWeight: 800,
-                    letterSpacing: '0.06em',
-                    color: isDark ? accentColor : accentColor,
+                    letterSpacing: '0.07em',
+                    color: accentColor,
                     lineHeight: 1,
                     textTransform: 'uppercase',
                   }}
@@ -213,15 +221,16 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
               variant="body1"
               component="h3"
               sx={{
-                fontWeight: 700,
-                lineHeight: 1.35,
-                mb: 0.75,
+                fontWeight: 800,
+                lineHeight: 1.4,
+                mb: 1,
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
                 wordBreak: 'break-word',
-                fontSize: '0.95rem',
+                fontSize: '1.05rem',
+                letterSpacing: '-0.01em',
               }}
             >
               {roster.title}
@@ -233,14 +242,14 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                 variant="body2"
                 color="text.secondary"
                 sx={{
-                  mb: 1,
+                  mb: 1.75,
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
-                  lineHeight: 1.5,
-                  fontSize: '0.8rem',
-                  opacity: 0.85,
+                  lineHeight: 1.6,
+                  fontSize: '0.85rem',
+                  opacity: 0.75,
                 }}
               >
                 {roster.description}
@@ -249,9 +258,9 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
             {/* Tags — glassmorphic mini chips */}
             {roster.tags.length > 0 && (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.75 }}>
                 {roster.tags.map((tag) => {
-                  const tagColor = TAG_COLORS[tag] ?? '#888';
+                  const tagColor = TAG_COLORS[tag] ?? '#94a3b8';
                   return (
                     <Box
                       key={tag}
@@ -259,17 +268,17 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                       sx={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        px: 0.75,
-                        py: 0.2,
-                        borderRadius: '4px',
-                        fontSize: '0.68rem',
+                        px: 1,
+                        py: 0.4,
+                        borderRadius: '6px',
+                        fontSize: '0.72rem',
                         fontWeight: 700,
                         letterSpacing: '0.02em',
                         backdropFilter: 'blur(8px)',
                         WebkitBackdropFilter: 'blur(8px)',
-                        background: isDark ? `${tagColor}20` : `${tagColor}14`,
-                        border: `1px solid ${tagColor}40`,
-                        color: isDark ? tagColor : tagColor,
+                        background: isDark ? `${tagColor}25` : `${tagColor}18`,
+                        border: `1px solid ${tagColor}50`,
+                        color: tagColor,
                         lineHeight: 1.4,
                         whiteSpace: 'nowrap',
                       }}
@@ -282,15 +291,23 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             )}
 
             {/* Spacer pushes author to bottom */}
-            <Box sx={{ flexGrow: 1, minHeight: 8 }} />
+            <Box sx={{ flexGrow: 1, minHeight: 12 }} />
 
             {/* Author + date */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                pt: 1.5,
+                borderTop: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+              }}
+            >
               {/* Colored avatar based on author name hash */}
               <Box
                 sx={{
-                  width: 18,
-                  height: 18,
+                  width: 24,
+                  height: 24,
                   borderRadius: '50%',
                   bgcolor: `${avatarColor}25`,
                   border: `1px solid ${avatarColor}50`,
@@ -302,7 +319,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                 aria-hidden="true"
               >
                 <Typography
-                  sx={{ fontSize: '0.48rem', fontWeight: 800, color: avatarColor, lineHeight: 1 }}
+                  sx={{ fontSize: '0.58rem', fontWeight: 800, color: avatarColor, lineHeight: 1 }}
                 >
                   {initial}
                 </Typography>
@@ -311,7 +328,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                 variant="caption"
                 color="text.disabled"
                 noWrap
-                sx={{ fontSize: '0.72rem' }}
+                sx={{ fontSize: '0.78rem' }}
               >
                 {roster.author_name} · {formatDate(roster.created_at)}
               </Typography>
@@ -322,11 +339,12 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
         {/* Action row */}
         <CardActions
           sx={{
-            px: 1.5,
-            py: 0.75,
-            borderTop: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.07)',
-            background: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.02)',
+            px: 2.5,
+            py: 1,
+            borderTop: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(0,0,0,0.07)',
+            background: isDark ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.025)',
             justifyContent: 'space-between',
+            alignItems: 'center',
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -337,20 +355,20 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             onVote={() => onVote(roster.id)}
           />
 
-          <Box sx={{ display: 'flex', gap: 0.25 }}>
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Tooltip title="Copy share link">
               <IconButton
                 size="small"
                 onClick={handleCopyLink}
                 aria-label="Copy share link"
                 sx={{
-                  minWidth: 32,
-                  minHeight: 32,
+                  width: 36,
+                  height: 36,
                   color: 'text.disabled',
                   '&:hover': { color: 'text.secondary' },
                 }}
               >
-                <ContentCopy sx={{ fontSize: 15 }} />
+                <ContentCopy sx={{ fontSize: 17 }} />
               </IconButton>
             </Tooltip>
             {isOwner && (
@@ -360,9 +378,9 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                   color="error"
                   onClick={() => onDelete(roster.id)}
                   aria-label="Delete roster"
-                  sx={{ minWidth: 32, minHeight: 32 }}
+                  sx={{ width: 36, height: 36 }}
                 >
-                  <DeleteOutline sx={{ fontSize: 15 }} />
+                  <DeleteOutline sx={{ fontSize: 17 }} />
                 </IconButton>
               </Tooltip>
             )}
