@@ -1,6 +1,8 @@
 import TuneIcon from '@mui/icons-material/Tune';
 import {
+  Badge,
   Box,
+  Button,
   Typography,
   TextField,
   Select,
@@ -12,7 +14,6 @@ import {
   Card,
   CardContent,
   Skeleton,
-  IconButton,
   Tooltip,
 } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
@@ -27,6 +28,7 @@ import { resolveActorName } from '../../../utils/resolveActorName';
 import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 
 import { LazyPlayerCard as PlayerCard } from './LazyPlayerCard';
+import { STAT_CHIP_IDS } from './statChipConfig';
 import { StatChipCustomizationModal } from './StatChipCustomizationModal';
 import { useStatChipPreferences } from './useStatChipPreferences';
 
@@ -470,21 +472,24 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
             </Select>
           </FormControl>
 
-          <Tooltip title="Customize stat chips" arrow>
-            <IconButton
-              size="small"
-              onClick={handleOpenChipModal}
-              sx={{
-                alignSelf: 'center',
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1,
-                px: 1,
-              }}
-              aria-label="Customize stat chips"
+          <Tooltip title="Choose which stat chips are shown on each player card" arrow>
+            <Badge
+              badgeContent={visibleChips.length}
+              color="primary"
+              invisible={visibleChips.length === STAT_CHIP_IDS.length}
+              max={99}
             >
-              <TuneIcon fontSize="small" />
-            </IconButton>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={handleOpenChipModal}
+                startIcon={<TuneIcon />}
+                aria-label="Customize stat chips"
+                sx={{ alignSelf: 'center', textTransform: 'none', whiteSpace: 'nowrap' }}
+              >
+                Stats
+              </Button>
+            </Badge>
           </Tooltip>
         </Stack>
 
