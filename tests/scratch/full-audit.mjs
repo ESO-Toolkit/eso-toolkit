@@ -340,7 +340,7 @@ async function runAudit() {
 
           // disableEnforceFocus check — dialog should allow iframe focus
           const hasTabIndex = await dialog.evaluate(el => el.getAttribute('tabindex') !== '-1' || !!el.closest('[tabindex]'));
-          log('Dialog', 'Dialog does not block iframe interaction', true); // We'll apply this fix
+          log('Dialog', 'Dialog does not block iframe interaction', hasTabIndex);
 
           // Comments toggle visible
           const commentToggle = await page.$('[aria-label="Toggle comments"], [aria-expanded]');
@@ -453,7 +453,6 @@ async function runAudit() {
       for (const el of Array.from(textEls).slice(0, 50)) {
         const style = getComputedStyle(el);
         const color = style.color;
-        const bg = style.backgroundColor;
         // Simple check: if text is transparent or invisible
         if (color === 'rgba(0, 0, 0, 0)' || color === 'transparent') {
           issues.push(`Transparent text on: ${el.tagName}.${el.className.slice(0, 40)}`);
@@ -529,7 +528,7 @@ async function runAudit() {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'dark' });
     const page = await ctx.newPage();
 
-    const metrics = await page.evaluate(async () => {
+    await page.evaluate(async () => {
       const nav = performance.getEntriesByType('navigation')[0];
       return { domComplete: nav ? nav.domComplete : 0 };
     });
