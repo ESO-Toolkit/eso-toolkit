@@ -44,7 +44,7 @@ export interface RosterHubFilters {
   search: string; // '' = no text filter (client-side)
 }
 
-export const PRESET_TAGS = ['beginner', 'score-push', '#1'] as const;
+export const PRESET_TAGS = ['beginner', 'score-push', '#1', 'fun'] as const;
 
 export type PresetTag = (typeof PRESET_TAGS)[number];
 
@@ -53,6 +53,7 @@ export const TAG_COLORS: Record<string, string> = {
   beginner: '#22c55e', // green
   'score-push': '#ef4444', // red
   '#1': '#eab308', // gold
+  fun: '#a855f7', // purple
 };
 
 // ─── Comments ──────────────────────────────────────────────────────────────
