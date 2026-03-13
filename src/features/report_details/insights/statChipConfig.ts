@@ -30,7 +30,6 @@ export type StatChipId = (typeof STAT_CHIP_IDS)[number];
 export interface StatChipMeta {
   id: StatChipId;
   label: string;
-  emoji: string;
   tooltip: string;
   /** If set, chip is only available for these roles */
   roleFilter?: Array<'dps' | 'healer' | 'tank'>;
@@ -40,26 +39,22 @@ export const STAT_CHIP_META: Record<StatChipId, StatChipMeta> = {
   dps: {
     id: 'dps',
     label: 'DPS',
-    emoji: '⚔️',
     tooltip: 'Damage per second',
   },
   hps: {
     id: 'hps',
     label: 'HPS',
-    emoji: '💚',
     tooltip: 'Healing per second',
     roleFilter: ['healer'],
   },
   critChance: {
     id: 'critChance',
     label: 'Crit %',
-    emoji: '🎯',
     tooltip: 'Critical hit chance percentage',
   },
   critDamage: {
     id: 'critDamage',
     label: 'Crit Dmg',
-    emoji: '💥',
     tooltip:
       'Critical damage multiplier: avg is the time-weighted average; max is the highest recorded value',
     roleFilter: ['dps'],
@@ -67,70 +62,59 @@ export const STAT_CHIP_META: Record<StatChipId, StatChipMeta> = {
   totalDamage: {
     id: 'totalDamage',
     label: 'Total Dmg',
-    emoji: '🗡️',
     tooltip: 'Total damage dealt during the fight',
     roleFilter: ['dps'],
   },
   totalCritDamage: {
     id: 'totalCritDamage',
     label: 'Crit Total',
-    emoji: '⚡',
     tooltip: 'Total critical hit damage dealt during the fight',
     roleFilter: ['dps'],
   },
   critDps: {
     id: 'critDps',
     label: 'Crit DPS',
-    emoji: '🔥',
     tooltip: 'Critical damage per second',
     roleFilter: ['dps'],
   },
   mundus: {
     id: 'mundus',
     label: 'Mundus',
-    emoji: '✨',
     tooltip: 'Mundus Stone buff',
   },
   food: {
     id: 'food',
     label: 'Food',
-    emoji: '🍲',
     tooltip: 'Food or drink buff',
   },
   potion: {
     id: 'potion',
     label: 'Potion',
-    emoji: '⚗️',
     tooltip: 'Potion usage during the fight',
   },
   deaths: {
     id: 'deaths',
     label: 'Deaths',
-    emoji: '💀',
     tooltip: 'Number of deaths',
   },
   resurrects: {
     id: 'resurrects',
     label: 'Resurrects',
-    emoji: '❤️',
     tooltip: 'Number of resurrects performed',
   },
   cpm: {
     id: 'cpm',
     label: 'CPM',
-    emoji: '🐭',
     tooltip: 'Casts per minute',
   },
   distance: {
     id: 'distance',
     label: 'Distance',
-    emoji: '🛤️',
     tooltip: 'Distance traveled during the fight',
   },
   barPattern: {
     id: 'barPattern',
     label: 'Bar Pattern',
-    emoji: '🔄',
     tooltip: 'Bar swap setup pattern',
     roleFilter: ['dps'],
   },
