@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   AutoAwesome as AutoAwesomeIcon,
+  Bookmark as BookmarkIcon,
   Download as DownloadIcon,
   Upload as UploadIcon,
   ContentCopy as CopyIcon,
@@ -80,6 +81,8 @@ import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
 import { PublishRosterDialog } from '../features/roster-hub/components/PublishRosterDialog';
+import { useAppDispatch } from '../store/useAppDispatch';
+import { saveRoster, updateRoster } from '../store/saved_rosters';
 import { GetPlayersForReportQuery } from '../graphql/gql/graphql';
 import { KnownAbilities, KnownSetIDs } from '../types/abilities';
 import {
@@ -1051,11 +1054,13 @@ export const RosterBuilderPage: React.FC = () => {
   const [importMenuAnchor, setImportMenuAnchor] = useState<null | HTMLElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const savedRosterIdRef = useRef<string | null>(null);
 
   // Get auth state
   const { isLoggedIn, accessToken } = useAuth();
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [publishRosterData, setPublishRosterData] = useState<string>('');
+  const dispatch = useAppDispatch();
 
   // Get ESO Logs client context (safe to call - doesn't throw if not logged in)
   const { client: esoLogsClient, isReady, isLoggedIn: clientLoggedIn } = useEsoLogsClientContext();
@@ -1226,6 +1231,10 @@ export const RosterBuilderPage: React.FC = () => {
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('r') || window.location.hash.substring(1);
+    const savedId = params.get('id');
+    if (savedId) {
+      savedRosterIdRef.current = savedId;
+    }
     if (encoded) {
       void decodeRosterFromURL(encoded)
         .then((decoded) => {
@@ -1233,7 +1242,7 @@ export const RosterBuilderPage: React.FC = () => {
             setRoster(decoded);
             setSnackbar({
               open: true,
-              message: 'Roster loaded from shared link!',
+              message: savedId ? 'Roster loaded for editing!' : 'Roster loaded from shared link!',
               severity: 'success',
             });
           }
@@ -1293,6 +1302,19 @@ export const RosterBuilderPage: React.FC = () => {
       })
       .catch(() => {});
   }, [roster]);
+
+  // Save roster to My Rosters (Redux/localStorage)
+  const handleSaveToMyRosters = useCallback((): void => {
+    const existingId = savedRosterIdRef.current;
+    if (existingId) {
+      dispatch(updateRoster({ id: existingId, roster }));
+      setSnackbar({ open: true, message: 'Roster updated in My Rosters!', severity: 'success' });
+    } else {
+      const action = dispatch(saveRoster(roster));
+      savedRosterIdRef.current = action.payload.id;
+      setSnackbar({ open: true, message: 'Roster saved to My Rosters!', severity: 'success' });
+    }
+  }, [dispatch, roster]);
 
   // Update roster name
   const handleRosterNameChange = (name: string): void => {
@@ -2628,6 +2650,45 @@ export const RosterBuilderPage: React.FC = () => {
                 </Button>
               </Tooltip>
             )}
+            <Tooltip
+              title={
+                savedRosterIdRef.current
+                  ? 'Update this roster in My Rosters'
+                  : 'Save roster to My Rosters (stored locally)'
+              }
+              arrow
+            >
+              <Button
+                size="small"
+                startIcon={<BookmarkIcon />}
+                onClick={handleSaveToMyRosters}
+                sx={{
+                  flex: { xs: 1, md: 'none' },
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: isDarkMode ? '#bfdbfe' : '#1d4ed8',
+                  backgroundColor: isDarkMode
+                    ? 'rgba(59,130,246,0.12)'
+                    : 'rgba(59,130,246,0.08)',
+                  border: isDarkMode
+                    ? '1px solid rgba(59,130,246,0.25)'
+                    : '1px solid rgba(59,130,246,0.2)',
+                  '&:hover': {
+                    backgroundColor: isDarkMode
+                      ? 'rgba(59,130,246,0.2)'
+                      : 'rgba(59,130,246,0.14)',
+                    border: isDarkMode
+                      ? '1px solid rgba(59,130,246,0.4)'
+                      : '1px solid rgba(59,130,246,0.35)',
+                  },
+                }}
+              >
+                Save
+              </Button>
+            </Tooltip>
           </Box>
           {/* end row 2 */}
         </Box>
