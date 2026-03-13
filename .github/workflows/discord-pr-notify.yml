@@ -291,7 +291,28 @@ jobs:
               return;
             }
 
-            const response = await fetch(webhookUrl, {
+            // ── Route to forum thread by conventional commit type ──
+            const THREAD_MAP = {
+              feat:     '1481787762842796154',
+              fix:      '1481787759122190553',
+              refactor: '1481787753984430383',
+              style:    '1481787749991452772',
+              perf:     '1481787745985888376',
+              test:     '1481787742542364743',
+              docs:     '1481787739136331856',
+              chore:    '1481787734736506894',
+              ci:       '1481787731502829682',
+              build:    '1481787727614705685',
+            };
+
+            const commitTypeMatch = pr.title.match(/^(\w+)(?:\(.+?\))?[!]?:/);
+            const commitType = commitTypeMatch ? commitTypeMatch[1].toLowerCase() : 'chore';
+            const threadId = THREAD_MAP[commitType] || THREAD_MAP['chore'];
+            const postUrl = `${webhookUrl}?thread_id=${threadId}&wait=true`;
+
+            core.info(`   Commit type: ${commitType} → thread ${threadId}`);
+
+            const response = await fetch(postUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -306,5 +327,6 @@ jobs:
               core.setFailed(`Discord webhook failed (${response.status}): ${text}`);
             } else {
               core.info(`\u2705 Discord notification sent for PR #${pr.number}`);
+              core.info(`   Category: ${commitType} (thread ${threadId})`);
               core.info(`   Screenshots included: ${screenshots.length}`);
             }
