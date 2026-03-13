@@ -44,17 +44,15 @@ export interface RosterHubFilters {
   search: string; // '' = no text filter (client-side)
 }
 
-export const PRESET_TAGS = ['beginner', 'pug', 'score-push', 'core', 'leaderboard'] as const;
+export const PRESET_TAGS = ['beginner', 'score-push', '#1'] as const;
 
 export type PresetTag = (typeof PRESET_TAGS)[number];
 
 // Accent colors for preset tag chips — consistent across filter bar, cards, and publish dialog
 export const TAG_COLORS: Record<string, string> = {
   beginner: '#22c55e', // green
-  pug: '#f97316', // orange
-  'score-push': '#a855f7', // purple
-  core: '#3b82f6', // blue
-  leaderboard: '#eab308', // gold/yellow
+  'score-push': '#ef4444', // red
+  '#1': '#eab308', // gold
 };
 
 // ─── Comments ──────────────────────────────────────────────────────────────

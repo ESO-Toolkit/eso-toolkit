@@ -15,13 +15,13 @@ INSERT OR IGNORE INTO rosters (id, author_id, author_name, title, description, t
   ('seed-oc-01', 'user-seed-10', 'MuLtiCoLOrEd PoNiEs', 'OC #1 — MuLtiCoLOrEd PoNiEs', 'Rank 1 Oathsworn Citadel (vHM). Pillager''s Profit on main tank. Master Architect + Archdruid Devyric healer.', 'OC', 'placeholder', 51, datetime('now', '-10 days'));
 
 INSERT OR IGNORE INTO roster_tags (roster_id, tag) VALUES
-  ('seed-aa-01', 'leaderboard'),
-  ('seed-hrc-01', 'leaderboard'),
-  ('seed-hof-01', 'leaderboard'),
-  ('seed-as-01', 'leaderboard'),
-  ('seed-cr-01', 'leaderboard'),
-  ('seed-ss-01', 'leaderboard'),
-  ('seed-ka-01', 'leaderboard'),
-  ('seed-rg-01', 'leaderboard'),
-  ('seed-dsr-01', 'leaderboard'),
-  ('seed-oc-01', 'leaderboard');
+  ('seed-aa-01', '#1'),
+  ('seed-hrc-01', '#1'),
+  ('seed-hof-01', '#1'),
+  ('seed-as-01', '#1'),
+  ('seed-cr-01', '#1'),
+  ('seed-ss-01', '#1'),
+  ('seed-ka-01', '#1'),
+  ('seed-rg-01', '#1'),
+  ('seed-dsr-01', '#1'),
+  ('seed-oc-01', '#1');
