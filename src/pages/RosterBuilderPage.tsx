@@ -1223,17 +1223,21 @@ export const RosterBuilderPage: React.FC = () => {
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('r') || window.location.hash.substring(1);
     if (encoded) {
-      void decodeRosterFromURL(encoded).then((decoded) => {
-        if (decoded) {
-          setRoster(decoded);
-          setSnackbar({
-            open: true,
-            message: 'Roster loaded from shared link!',
-            severity: 'success',
-          });
-        }
-        urlSyncReady.current = true;
-      });
+      void decodeRosterFromURL(encoded)
+        .then((decoded) => {
+          if (decoded) {
+            setRoster(decoded);
+            setSnackbar({
+              open: true,
+              message: 'Roster loaded from shared link!',
+              severity: 'success',
+            });
+          }
+          urlSyncReady.current = true;
+        })
+        .catch(() => {
+          urlSyncReady.current = true;
+        });
     } else {
       urlSyncReady.current = true;
     }
@@ -1245,13 +1249,15 @@ export const RosterBuilderPage: React.FC = () => {
     if (!urlSyncReady.current) return;
     let cancelled = false;
     const timer = window.setTimeout(() => {
-      void encodeRosterToURL(roster).then((encoded) => {
-        if (cancelled || !encoded) return;
-        const url = new URL(window.location.href);
-        url.search = `?r=${encoded}`;
-        url.hash = '';
-        window.history.replaceState(null, '', url.toString());
-      });
+      void encodeRosterToURL(roster)
+        .then((encoded) => {
+          if (cancelled || !encoded) return;
+          const url = new URL(window.location.href);
+          url.search = `?r=${encoded}`;
+          url.hash = '';
+          window.history.replaceState(null, '', url.toString());
+        })
+        .catch(() => {});
     }, 400);
     return () => {
       cancelled = true;
@@ -1261,25 +1267,27 @@ export const RosterBuilderPage: React.FC = () => {
 
   // Generate shareable read-only link (points to /rv, the dedicated share view)
   const handleCopyLink = useCallback(() => {
-    void encodeRosterToURLShared(roster).then((encoded) => {
-      if (encoded) {
-        // Derive base path to support subdirectory deployments (e.g. /dev-previews/pr-xxx/)
-        const basePath = window.location.pathname.replace(/\/roster-builder(\/.*)?$/, '');
-        const url = `${window.location.origin}${basePath}/rv?r=${encoded}`;
-        navigator.clipboard
-          .writeText(url)
-          .then(() => {
-            setSnackbar({
-              open: true,
-              message: 'Read-only link copied to clipboard!',
-              severity: 'success',
+    void encodeRosterToURLShared(roster)
+      .then((encoded) => {
+        if (encoded) {
+          // Derive base path to support subdirectory deployments (e.g. /dev-previews/pr-xxx/)
+          const basePath = window.location.pathname.replace(/\/roster-builder(\/.*)?$/, '');
+          const url = `${window.location.origin}${basePath}/rv?r=${encoded}`;
+          navigator.clipboard
+            .writeText(url)
+            .then(() => {
+              setSnackbar({
+                open: true,
+                message: 'Read-only link copied to clipboard!',
+                severity: 'success',
+              });
+            })
+            .catch(() => {
+              setSnackbar({ open: true, message: 'Failed to copy link', severity: 'error' });
             });
-          })
-          .catch(() => {
-            setSnackbar({ open: true, message: 'Failed to copy link', severity: 'error' });
-          });
-      }
-    });
+        }
+      })
+      .catch(() => {});
   }, [roster]);
 
   // Update roster name
