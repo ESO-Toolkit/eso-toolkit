@@ -128,10 +128,16 @@ export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, c
       case 'deaths':
         return (
           <g style={strokeSx}>
-            <path d="M12 3.5 C8.5 3.5 6 6 6 9.5 C6 13 8.5 15 12 15 C15.5 15 18 13 18 9.5 C18 6 15.5 3.5 12 3.5 Z" />
-            <circle cx="9.5" cy="9.5" r="1.3" style={fillSx} />
-            <circle cx="14.5" cy="9.5" r="1.3" style={fillSx} />
-            <path d="M10 12.5 L14 12.5" />
+            {/* Cranium */}
+            <path d="M12 3 C8 3 5.5 5.8 5.5 9.5 C5.5 12.5 7 14 8.5 14.5 L8.5 16 L15.5 16 L15.5 14.5 C17 14 18.5 12.5 18.5 9.5 C18.5 5.8 16 3 12 3 Z" />
+            {/* Eye sockets */}
+            <circle cx="9.3" cy="9.5" r="1.6" style={fillSx} />
+            <circle cx="14.7" cy="9.5" r="1.6" style={fillSx} />
+            {/* Nasal cavity */}
+            <path d="M11.2 12.5 L12 13.5 L12.8 12.5" />
+            {/* Teeth */}
+            <path d="M9 16 L9 17.5 M11 16 L11 17.5 M13 16 L13 17.5 M15 16 L15 17.5" />
+            <path d="M8.5 17.5 L15.5 17.5" />
           </g>
         );
       // ── Resurrects: person rising with upward arrow ────────
