@@ -550,11 +550,6 @@ export const HeaderBar: React.FC = () => {
     setAnchorEl(null);
   };
 
-  const handleViewRosters = (): void => {
-    navigate('/my-rosters');
-    setAnchorEl(null);
-  };
-
   const handleLogoutFromMenu = (): void => {
     handleLogout();
     setAnchorEl(null);
@@ -599,12 +594,6 @@ export const HeaderBar: React.FC = () => {
 
   const handleMobileViewReports = React.useCallback((): void => {
     navigate('/my-reports');
-    setMobileOpen(false);
-    setMobileAccountOpen(false);
-  }, [navigate]);
-
-  const handleMobileViewRosters = React.useCallback((): void => {
-    navigate('/my-rosters');
     setMobileOpen(false);
     setMobileAccountOpen(false);
   }, [navigate]);
@@ -696,15 +685,9 @@ export const HeaderBar: React.FC = () => {
 
     if (isLoggedIn) {
       items.push({
-        text: 'My reports',
+        text: 'View my reports',
         icon: <Person sx={{ fontSize: 18 }} />,
         action: handleMobileViewReports,
-        colorVariant: 'default',
-      });
-      items.push({
-        text: 'My rosters',
-        icon: <Build sx={{ fontSize: 18 }} />,
-        action: handleMobileViewRosters,
         colorVariant: 'default',
       });
       items.push({
@@ -1097,28 +1080,7 @@ export const HeaderBar: React.FC = () => {
           }}
         >
           <Person sx={{ mr: 1.5, fontSize: 20 }} />
-          My reports
-        </MenuItem>
-        <MenuItem
-          onClick={handleViewRosters}
-          sx={{
-            py: 1.5,
-            px: 2,
-            borderRadius: 1,
-            mx: 1,
-            mb: 0.5,
-            '&:hover': {
-              backgroundColor:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(56, 189, 248, 0.08)'
-                  : 'rgba(59, 130, 246, 0.08)',
-            },
-          }}
-        >
-          <ListItemIcon sx={{ minWidth: 32 }}>
-            <Build sx={{ fontSize: 20 }} />
-          </ListItemIcon>
-          My rosters
+          View my reports
         </MenuItem>
         <MenuItem
           onClick={handleLogoutFromMenu}

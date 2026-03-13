@@ -130,10 +130,6 @@ const AboutPage = React.lazy(() =>
   import('./pages/AboutPage').then((module) => ({ default: module.AboutPage })),
 );
 
-const MyRostersPage = React.lazy(() =>
-  import('./pages/MyRostersPage').then((module) => ({ default: module.MyRostersPage })),
-);
-
 const ReportSummaryPage = React.lazy(() =>
   import('./features/report_summary/ReportSummaryPage').then((module) => ({
     default: module.ReportSummaryPage,
@@ -548,16 +544,6 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <RosterBuilderPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/my-rosters"
-              element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <MyRostersPage />
                   </Suspense>
                 </ErrorBoundary>
               }
