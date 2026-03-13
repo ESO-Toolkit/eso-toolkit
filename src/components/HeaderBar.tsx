@@ -646,6 +646,11 @@ export const HeaderBar: React.FC = () => {
       path: '/roster-builder',
     },
     {
+      text: 'Roster Hub',
+      icon: '🏛️',
+      path: '/roster-hub',
+    },
+    {
       text: 'Gear Sets',
       icon: '🛡️',
       path: '/gear-sets',
@@ -722,7 +727,7 @@ export const HeaderBar: React.FC = () => {
       });
     }
     return items;
-  }, [isLoggedIn, handleMobileAuthAction, handleMobileViewReports]);
+  }, [isLoggedIn, handleMobileAuthAction, handleMobileViewReports, handleMobileViewRosters]);
 
   const navItems = [
     {
