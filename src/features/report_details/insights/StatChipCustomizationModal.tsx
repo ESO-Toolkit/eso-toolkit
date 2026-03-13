@@ -37,9 +37,9 @@ import {
 } from '@mui/material';
 import React, { useCallback, useState } from 'react';
 
-import { StatChipIcon } from './StatChipIcon';
 import type { StatChipId } from './statChipConfig';
 import { STAT_CHIP_IDS, STAT_CHIP_META } from './statChipConfig';
+import { StatChipIcon } from './StatChipIcon';
 
 // ---------------------------------------------------------------------------
 // SortableChipRow — a single draggable row inside the customization list
