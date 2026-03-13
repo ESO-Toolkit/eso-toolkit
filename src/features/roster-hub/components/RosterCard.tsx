@@ -110,7 +110,11 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
     const trialShort = TRIAL_SHORT[roster.trial_id] ?? roster.trial_id;
     const trialFull = TRIAL_LABELS[roster.trial_id] ?? roster.trial_id;
-    const accentColor = TRIAL_ACCENT[roster.trial_id] ?? '#3b82f6';
+    // Tag color takes priority over trial color — leaderboard cards glow gold, etc.
+    const tagAccent = roster.tags
+      .map((t) => TAG_COLORS[t])
+      .find((c): c is string => c != null);
+    const accentColor = tagAccent ?? TRIAL_ACCENT[roster.trial_id] ?? '#3b82f6';
 
     const displayName = roster.is_anonymous ? 'Anonymous' : roster.author_name || '?';
 
