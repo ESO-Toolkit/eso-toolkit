@@ -720,34 +720,32 @@ async function readAllChunks(readable: ReadableStream<Uint8Array>): Promise<Uint
 
 async function deflateString(str: string): Promise<Uint8Array> {
   const input = new TextEncoder().encode(str);
-  // Use pipeThrough to avoid floating promise rejections from unawaited write/close calls.
-  const inputStream = new ReadableStream<Uint8Array>({
-    start(controller) {
-      controller.enqueue(input);
-      controller.close();
-    },
-  });
-  return readAllChunks(
-    inputStream.pipeThrough(
-      new CompressionStream('deflate-raw') as unknown as TransformStream<Uint8Array, Uint8Array>,
-    ),
-  );
+  const cs = new CompressionStream('deflate-raw') as unknown as TransformStream<
+    Uint8Array,
+    Uint8Array
+  >;
+  const writer = cs.writable.getWriter();
+  // Write + close, suppressing rejections — errors also propagate through the readable side.
+  void writer
+    .write(input)
+    .then(() => writer.close())
+    .catch(() => {});
+  return readAllChunks(cs.readable);
 }
 
 async function inflateBytes(bytes: Uint8Array): Promise<string> {
-  // Use pipeThrough to avoid floating promise rejections from unawaited write/close calls.
-  // Decompression errors propagate cleanly through the pipeline to the caller.
-  const inputStream = new ReadableStream<Uint8Array>({
-    start(controller) {
-      controller.enqueue(bytes);
-      controller.close();
-    },
-  });
-  const output = await readAllChunks(
-    inputStream.pipeThrough(
-      new DecompressionStream('deflate-raw') as unknown as TransformStream<Uint8Array, Uint8Array>,
-    ),
-  );
+  const ds = new DecompressionStream('deflate-raw') as unknown as TransformStream<
+    Uint8Array,
+    Uint8Array
+  >;
+  const writer = ds.writable.getWriter();
+  // Write + close, suppressing rejections — the same decompression error will
+  // also propagate through the readable side for the caller to catch.
+  void writer
+    .write(bytes)
+    .then(() => writer.close())
+    .catch(() => {});
+  const output = await readAllChunks(ds.readable);
   return new TextDecoder().decode(output);
 }
 
@@ -1223,17 +1221,21 @@ export const RosterBuilderPage: React.FC = () => {
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('r') || window.location.hash.substring(1);
     if (encoded) {
-      void decodeRosterFromURL(encoded).then((decoded) => {
-        if (decoded) {
-          setRoster(decoded);
-          setSnackbar({
-            open: true,
-            message: 'Roster loaded from shared link!',
-            severity: 'success',
-          });
-        }
-        urlSyncReady.current = true;
-      });
+      void decodeRosterFromURL(encoded)
+        .then((decoded) => {
+          if (decoded) {
+            setRoster(decoded);
+            setSnackbar({
+              open: true,
+              message: 'Roster loaded from shared link!',
+              severity: 'success',
+            });
+          }
+          urlSyncReady.current = true;
+        })
+        .catch(() => {
+          urlSyncReady.current = true;
+        });
     } else {
       urlSyncReady.current = true;
     }
@@ -1245,13 +1247,15 @@ export const RosterBuilderPage: React.FC = () => {
     if (!urlSyncReady.current) return;
     let cancelled = false;
     const timer = window.setTimeout(() => {
-      void encodeRosterToURL(roster).then((encoded) => {
-        if (cancelled || !encoded) return;
-        const url = new URL(window.location.href);
-        url.search = `?r=${encoded}`;
-        url.hash = '';
-        window.history.replaceState(null, '', url.toString());
-      });
+      void encodeRosterToURL(roster)
+        .then((encoded) => {
+          if (cancelled || !encoded) return;
+          const url = new URL(window.location.href);
+          url.search = `?r=${encoded}`;
+          url.hash = '';
+          window.history.replaceState(null, '', url.toString());
+        })
+        .catch(() => {});
     }, 400);
     return () => {
       cancelled = true;
@@ -1261,25 +1265,27 @@ export const RosterBuilderPage: React.FC = () => {
 
   // Generate shareable read-only link (points to /rv, the dedicated share view)
   const handleCopyLink = useCallback(() => {
-    void encodeRosterToURLShared(roster).then((encoded) => {
-      if (encoded) {
-        // Derive base path to support subdirectory deployments (e.g. /dev-previews/pr-xxx/)
-        const basePath = window.location.pathname.replace(/\/roster-builder(\/.*)?$/, '');
-        const url = `${window.location.origin}${basePath}/rv?r=${encoded}`;
-        navigator.clipboard
-          .writeText(url)
-          .then(() => {
-            setSnackbar({
-              open: true,
-              message: 'Read-only link copied to clipboard!',
-              severity: 'success',
+    void encodeRosterToURLShared(roster)
+      .then((encoded) => {
+        if (encoded) {
+          // Derive base path to support subdirectory deployments (e.g. /dev-previews/pr-xxx/)
+          const basePath = window.location.pathname.replace(/\/roster-builder(\/.*)?$/, '');
+          const url = `${window.location.origin}${basePath}/rv?r=${encoded}`;
+          navigator.clipboard
+            .writeText(url)
+            .then(() => {
+              setSnackbar({
+                open: true,
+                message: 'Read-only link copied to clipboard!',
+                severity: 'success',
+              });
+            })
+            .catch(() => {
+              setSnackbar({ open: true, message: 'Failed to copy link', severity: 'error' });
             });
-          })
-          .catch(() => {
-            setSnackbar({ open: true, message: 'Failed to copy link', severity: 'error' });
-          });
-      }
-    });
+        }
+      })
+      .catch(() => {});
   }, [roster]);
 
   // Update roster name

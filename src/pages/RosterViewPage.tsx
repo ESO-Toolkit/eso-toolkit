@@ -812,14 +812,19 @@ export const RosterViewPage: React.FC = () => {
       return;
     }
 
-    void decodeRosterFromURL(encoded).then((decoded) => {
-      if (decoded) {
-        setRoster(decoded);
-      } else {
+    void decodeRosterFromURL(encoded)
+      .then((decoded) => {
+        if (decoded) {
+          setRoster(decoded);
+        } else {
+          setNotFound(true);
+        }
+        setLoading(false);
+      })
+      .catch(() => {
         setNotFound(true);
-      }
-      setLoading(false);
-    });
+        setLoading(false);
+      });
   }, []);
 
   // Copy this shareable link to clipboard
