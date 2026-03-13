@@ -44,7 +44,7 @@ export interface RosterHubFilters {
   search: string; // '' = no text filter (client-side)
 }
 
-export const PRESET_TAGS = ['beginner', 'score-push', '#1', 'fun'] as const;
+export const PRESET_TAGS = ['beginner', 'score-push', 'fun', '#1'] as const;
 
 export type PresetTag = (typeof PRESET_TAGS)[number];
 
