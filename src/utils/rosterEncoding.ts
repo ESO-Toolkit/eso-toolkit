@@ -466,34 +466,33 @@ async function readAllChunks(readable: ReadableStream<Uint8Array>): Promise<Uint
 
 export async function deflateString(str: string): Promise<Uint8Array> {
   const input = new TextEncoder().encode(str);
-  // Use pipeThrough to avoid floating promise rejections from unawaited write/close calls.
-  const inputStream = new ReadableStream<Uint8Array>({
-    start(controller) {
-      controller.enqueue(input);
-      controller.close();
-    },
-  });
-  return readAllChunks(
-    inputStream.pipeThrough(
-      new CompressionStream('deflate-raw') as unknown as TransformStream<Uint8Array, Uint8Array>,
-    ),
-  );
+  const cs = new CompressionStream('deflate-raw') as unknown as TransformStream<
+    Uint8Array,
+    Uint8Array
+  >;
+  const writer = cs.writable.getWriter();
+  // Write + close, suppressing rejections — errors also propagate through the readable side.
+  void writer
+    .write(input)
+    .then(() => writer.close())
+    .catch(() => {});
+  return readAllChunks(cs.readable);
 }
 
 export async function inflateBytes(bytes: Uint8Array): Promise<string> {
-  // Use pipeThrough to avoid floating promise rejections from unawaited write/close calls.
-  // Decompression errors propagate cleanly through the pipeline to the caller.
-  const inputStream = new ReadableStream<Uint8Array>({
-    start(controller) {
-      controller.enqueue(bytes);
-      controller.close();
-    },
-  });
-  const output = await readAllChunks(
-    inputStream.pipeThrough(
-      new DecompressionStream('deflate-raw') as unknown as TransformStream<Uint8Array, Uint8Array>,
-    ),
-  );
+  const ds = new DecompressionStream('deflate-raw') as unknown as TransformStream<
+    Uint8Array,
+    Uint8Array
+  >;
+  const writer = ds.writable.getWriter();
+  // Write + close, suppressing rejections — the same decompression error will
+  // also propagate through the readable side for the caller to catch.
+  // This avoids unhandled rejections from pipeThrough's internal pipeTo promise.
+  void writer
+    .write(bytes)
+    .then(() => writer.close())
+    .catch(() => {});
+  const output = await readAllChunks(ds.readable);
   return new TextDecoder().decode(output);
 }
 
