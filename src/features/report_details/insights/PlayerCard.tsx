@@ -16,7 +16,6 @@ import {
   Tooltip,
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
-import type { Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -34,7 +33,6 @@ import {
   type PotionStreamResult,
 } from '@/utils/potionDetectionUtils';
 
-import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
 import { GearDetailsPanel } from '../../../components/GearDetailsPanel';
 import { GearSetTooltip } from '../../../components/GearSetTooltip';
@@ -219,28 +217,15 @@ const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
 
   return (
     <Tooltip title={`Mundus: ${mundusName}`} enterTouchDelay={0} leaveTouchDelay={3000}>
-      <Box
-        component="span"
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          minWidth: { xs: 44, sm: 'auto', md: 'auto' },
-          minHeight: { xs: 28, sm: 'auto', md: 'auto' },
-        }}
-      >
-        <Box
-          component={'img' as React.ElementType}
-          src={mundusIcon}
-          alt=""
-          sx={{ width: { xs: 16, sm: 14, md: 12 }, height: { xs: 16, sm: 14, md: 12 } }}
-        />
-        <Box component="span" sx={{ margin: { xs: '0 4px', sm: '0 2px', md: '0 1px' } }}></Box>
+      <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+        <StatChipIcon chipId="mundus" />
+        <span style={{ margin: '0 1px' }} />
         <Box
           component="span"
           sx={{
             display: 'inline',
             fontWeight: 700,
-            fontSize: { xs: 11, sm: 10, md: 10 },
+            fontSize: { xs: 8, sm: 9, md: 10 },
             letterSpacing: '.01em',
             color: 'primary.main',
             textTransform: 'uppercase',
@@ -248,7 +233,7 @@ const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
         >
           {mundusName}
         </Box>
-      </Box>
+      </span>
     </Tooltip>
   );
 };
@@ -968,7 +953,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       <Typography
                         variant="caption"
                         sx={{
-                          color: (theme: Theme) =>
+                          color: (theme) =>
                             theme.palette.mode === 'light' ? '#c44e4e' : '#ff7a7a',
                           fontSize: 11,
                           lineHeight: 1,
@@ -986,7 +971,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       <Typography
                         variant="caption"
                         sx={{
-                          color: (theme: Theme) =>
+                          color: (theme) =>
                             theme.palette.mode === 'light' ? '#3db03d' : '#93f093',
                           fontSize: 11,
                           lineHeight: 1,
@@ -1045,7 +1030,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           px: 1.25,
                           py: 0.4,
                           borderRadius: '6px',
-                          background: (theme: Theme) =>
+                          background: (theme) =>
                             theme.palette.mode === 'dark'
                               ? 'linear-gradient(90deg, rgba(245,158,11,0.15) 0%, rgba(251,191,36,0.08) 100%)'
                               : 'linear-gradient(90deg, rgba(251,191,36,0.22) 0%, rgba(245,158,11,0.1) 100%)',
@@ -1077,7 +1062,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           sx={{
                             fontSize: '0.7rem',
                             fontWeight: 600,
-                            color: (theme: Theme) =>
+                            color: (theme) =>
                               theme.palette.mode === 'dark'
                                 ? 'rgba(251,191,36,0.85)'
                                 : 'rgba(180,83,9,0.9)',
