@@ -63,23 +63,33 @@ export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, c
             <circle cx="12.5" cy="11" r="0.8" style={fillSx} />
           </g>
         );
-      // ── Total Dmg: explosion / impact burst ───────────────────
+      // ── Total Dmg: sword with impact starburst ────────────────
       case 'totalDamage':
         return (
           <g style={strokeSx}>
-            <circle cx="12" cy="10.5" r="3.5" />
-            <circle cx="12" cy="10.5" r="1" style={fillSx} />
-            <path d="M12 3 L12 5.5 M12 15.5 L12 18 M5 10.5 L7 10.5 M17 10.5 L19 10.5" />
-            <path d="M7.5 6 L9 7.5 M15 13.5 L16.5 15 M16.5 6 L15 7.5 M9 13.5 L7.5 15" />
+            {/* Blade */}
+            <path d="M12 3 L12 13" />
+            {/* Crossguard */}
+            <path d="M8 11 L16 11" />
+            {/* Grip + pommel */}
+            <path d="M12 13 L12 17" />
+            <circle cx="12" cy="17.5" r="1" style={fillSx} />
+            {/* Impact rays */}
+            <path d="M6 5 L8.5 7 M18 5 L15.5 7 M5 9 L7.5 9.5 M19 9 L16.5 9.5" />
           </g>
         );
-      // ── Crit Total: sigma + lightning ─────────────────────────
+      // ── Crit Total: bar chart with lightning spark ────────────
       case 'totalCritDamage':
         return (
           <g style={strokeSx}>
-            <path d="M6 5 L11 5 L8.5 10 L11 15 L6 15" />
-            <path d="M16.5 4.5 L14 9 L16 9 L13.5 14.5" />
-            <circle cx="15.5" cy="9" r="0.7" style={fillSx} />
+            {/* Bar chart */}
+            <path d="M5 18 L5 11" />
+            <path d="M9 18 L9 8" />
+            <path d="M13 18 L13 5" />
+            <path d="M5 18 L13 18" />
+            {/* Lightning spark (crit indicator) */}
+            <path d="M17.5 5 L15.5 9.5 L17.5 9.5 L16 14" />
+            <circle cx="17" cy="9.5" r="0.7" style={fillSx} />
           </g>
         );
       // ── Crit DPS: flame (critical fire damage) ────────────────
@@ -140,16 +150,17 @@ export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, c
             <path d="M8.5 17.5 L15.5 17.5" />
           </g>
         );
-      // ── Resurrects: person rising with upward arrow ────────
+      // ── Resurrects: upward arrow through line (revive) ─────
       case 'resurrects':
         return (
           <g style={strokeSx}>
-            <circle cx="12" cy="5.5" r="2.2" />
-            <circle cx="12" cy="5.5" r="0.7" style={fillSx} />
-            <path d="M12 7.7 L12 14" />
-            <path d="M9.5 11 L14.5 11" />
-            <path d="M9 16.5 L12 14 L15 16.5" />
-            <path d="M8 18 L16 18" />
+            {/* Ground line */}
+            <path d="M6 14 L18 14" />
+            {/* Upward arrow shaft through the line */}
+            <path d="M12 18 L12 5" />
+            {/* Arrowhead */}
+            <path d="M8.5 8.5 L12 5 L15.5 8.5" />
+            <circle cx="12" cy="5" r="0.9" style={fillSx} />
           </g>
         );
       // ── CPM: clock face (casts per minute) ────────────────
@@ -163,16 +174,19 @@ export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, c
             <path d="M12 4 L12 5 M12 16 L12 17 M5.5 10.5 L6.5 10.5 M17.5 10.5 L18.5 10.5" />
           </g>
         );
-      // ── Distance: ruler / measuring ────────────────────────
+      // ── Distance: double-headed horizontal arrow ──────────
       case 'distance':
         return (
           <g style={strokeSx}>
-            <path d="M5 17 L19 7" />
-            <path d="M7.5 14 L9 12.5" />
-            <path d="M10 12 L12 10" />
-            <path d="M12.5 10 L14.5 8" />
-            <circle cx="5" cy="17" r="1" style={fillSx} />
-            <circle cx="19" cy="7" r="1" style={fillSx} />
+            {/* Horizontal shaft */}
+            <path d="M4 11 L20 11" />
+            {/* Left arrowhead */}
+            <path d="M7.5 8 L4 11 L7.5 14" />
+            {/* Right arrowhead */}
+            <path d="M16.5 8 L20 11 L16.5 14" />
+            {/* Tick marks */}
+            <path d="M10 9 L10 13 M14 9 L14 13" />
+            <circle cx="12" cy="11" r="0.8" style={fillSx} />
           </g>
         );
       // ── Bar Pattern: two bars with arrows ─────────────────────
