@@ -39,6 +39,13 @@ app.use('*', async (c, next) => {
   return corsMiddleware(c, next);
 });
 
+// ─── No-cache headers ─────────────────────────────────────────────────────────
+
+app.use('*', async (c, next) => {
+  await next();
+  c.res.headers.set('Cache-Control', 'no-store');
+});
+
 // ─── Health check ─────────────────────────────────────────────────────────────
 
 app.get('/health', (c) => c.json({ ok: true }));
