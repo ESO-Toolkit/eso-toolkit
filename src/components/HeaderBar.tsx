@@ -646,11 +646,6 @@ export const HeaderBar: React.FC = () => {
       path: '/roster-builder',
     },
     {
-      text: 'Roster Hub',
-      icon: '🏛️',
-      path: '/roster-hub',
-    },
-    {
       text: 'Gear Sets',
       icon: '🛡️',
       path: '/gear-sets',
