@@ -36,7 +36,6 @@ import {
 } from '@mui/icons-material';
 import {
   Button,
-  ButtonBase,
   Card,
   CardContent,
   Container,
@@ -72,7 +71,6 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useState, useCallback, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
 import { PerFightBuilds } from '../components/PerFightBuilds';
@@ -80,14 +78,14 @@ import { SetAssignmentManager } from '../components/SetAssignmentManager';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
-import { PublishRosterDialog } from '../features/roster-hub/components/PublishRosterDialog';
-import { GetPlayersForReportQuery } from '../graphql/gql/graphql';
-import { saveRoster, updateRoster } from '../store/saved_rosters';
 import { useAppDispatch } from '../store/useAppDispatch';
+import { saveRoster, updateRoster } from '../store/saved_rosters';
+import { GetPlayersForReportQuery } from '../graphql/gql/graphql';
 import { KnownAbilities, KnownSetIDs } from '../types/abilities';
 import {
   RaidRoster,
   TankSetup,
+  TankGearSet,
   HealerSetup,
   DPSSlot,
   SupportUltimate,
@@ -96,6 +94,7 @@ import {
   JailDDType,
   CLASS_SKILL_LINES,
   SkillLineConfig,
+  PlayerGroup,
   createDefaultRoster,
   defaultTankSetup,
   defaultHealerSetup,
@@ -113,7 +112,7 @@ import {
 } from '../types/roster';
 import type { TrialBuildOverrides } from '../types/trial-encounters';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
-import { encodeRosterToURL, decodeRosterFromURL } from '../utils/rosterEncoding';
+import { encodeRosterToURL as encodeRosterToURLShared } from '../utils/rosterEncoding';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
 
 /**
@@ -187,6 +186,395 @@ const GET_PLAYERS_FOR_REPORT = gql`
     }
   }
 `;
+
+/**
+ * Encode roster to base64 for URL sharing
+ */
+// ============================================================
+// COMPACT URL ENCODING (v2)
+// Short key names + deflate-raw compression = smallest possible URL
+// Backwards compatible: falls back to v1 (plain base64 JSON) on decode
+// ============================================================
+
+interface CompactSkills {
+  l1?: number | string; // line1: CLASS_SKILL_LINES index or custom string
+  l2?: number | string; // line2: CLASS_SKILL_LINES index or custom string
+  l3?: number | string; // line3: CLASS_SKILL_LINES index or custom string
+  fl?: 1; // isFlex (only stored when true)
+  no?: string; // notes
+}
+
+interface CompactGear {
+  s1?: number; // set1
+  s2?: number; // set2
+  ms?: number; // monsterSet
+  a?: number[]; // additionalSets
+  no?: string; // notes
+}
+
+interface CompactGroup {
+  g?: string; // groupName
+  n?: number; // groupNumber
+}
+
+interface CompactTank {
+  pn?: string; // playerName
+  pi?: number; // playerNumber
+  rl?: string; // roleLabel
+  rn?: string; // roleNotes
+  lb?: string[]; // labels
+  gs?: CompactGear; // gearSets
+  sl?: CompactSkills; // skillLines
+  ul?: number | string; // ultimate: SupportUltimate index or custom string
+  ss?: string[]; // specificSkills
+  gr?: CompactGroup; // group
+  no?: string; // notes
+}
+
+interface CompactHealer {
+  pn?: string; // playerName
+  pi?: number; // playerNumber
+  rl?: string; // roleLabel
+  rn?: string; // roleNotes
+  lb?: string[]; // labels
+  s1?: number; // set1
+  s2?: number; // set2
+  ms?: number; // monsterSet
+  a?: number[]; // additionalSets
+  sl?: CompactSkills; // skillLines
+  hb?: number; // healerBuff: HealerBuff index
+  cp?: number; // championPoint: HealerChampionPoint index
+  ul?: number | string; // ultimate: SupportUltimate index or custom string
+  gr?: CompactGroup; // group
+  no?: string; // notes
+}
+
+interface CompactDPS {
+  sn: number; // slotNumber (required)
+  pn?: string; // playerName
+  pi?: number; // playerNumber
+  rl?: string; // roleLabel
+  rn?: string; // roleNotes
+  lb?: string[]; // labels
+  s1?: number; // set1
+  s2?: number; // set2
+  ms?: number; // monsterSet
+  as?: number[]; // additionalSets
+  gs?: number[]; // legacy gearSets (backward compat)
+  sl?: CompactSkills; // skillLines
+  cp?: string; // championPoint
+  ul?: number | string; // ultimate (index or custom string)
+  gr?: CompactGroup; // group
+  no?: string; // notes
+  jt?: number; // jailDDType index
+  cd?: string; // customDescription
+}
+
+interface CompactRoster {
+  v: 2; // version marker
+  n?: string; // rosterName
+  t1?: CompactTank;
+  t2?: CompactTank;
+  h1?: CompactHealer;
+  h2?: CompactHealer;
+  dp?: CompactDPS[]; // only filled DPS slots
+  ag?: string[]; // availableGroups
+  no?: string; // notes
+}
+
+// Lookup tables for encoding/decoding fixed-vocabulary strings as integers
+const SKILL_LINE_TO_IDX = new Map(CLASS_SKILL_LINES.map((sl, i) => [sl, i] as const));
+const ULTIMATE_LIST = Object.values(SupportUltimate); // 4 preset ultimates
+const ULTIMATE_TO_IDX = new Map(ULTIMATE_LIST.map((u, i) => [u, i] as const));
+const HEALER_BUFF_LIST = Object.values(HealerBuff); // 2 values
+const HEALER_BUFF_TO_IDX = new Map(HEALER_BUFF_LIST.map((b, i) => [b, i] as const));
+const CHAMPION_POINT_LIST = Object.values(HealerChampionPoint); // 2 values
+const CHAMPION_POINT_TO_IDX = new Map(CHAMPION_POINT_LIST.map((cp, i) => [cp, i] as const));
+const JAIL_DD_TYPE_LIST: JailDDType[] = ['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'];
+const JAIL_DD_TYPE_TO_IDX = new Map(JAIL_DD_TYPE_LIST.map((t, i) => [t, i] as const));
+
+/** Encode a skill line string: known index or raw string for custom values */
+function encodeSkillLine(s?: string): number | string | undefined {
+  if (!s) return undefined;
+  const idx = SKILL_LINE_TO_IDX.get(s as (typeof CLASS_SKILL_LINES)[number]);
+  return idx !== undefined ? idx : s;
+}
+
+/** Decode a skill line: index → lookup, string → pass-through */
+function decodeSkillLine(v?: number | string): string {
+  if (v == null) return '';
+  if (typeof v === 'number') return CLASS_SKILL_LINES[v] ?? '';
+  return v;
+}
+
+/** Encode an ultimate: known SupportUltimate index or raw string for custom */
+function encodeUltimate(u?: string | null): number | string | undefined {
+  if (!u) return undefined;
+  const idx = ULTIMATE_TO_IDX.get(u as SupportUltimate);
+  return idx !== undefined ? idx : u;
+}
+
+/** Decode an ultimate */
+function decodeUltimate(v?: number | string): string | null {
+  if (v == null) return null;
+  if (typeof v === 'number') return ULTIMATE_LIST[v] ?? null;
+  return v;
+}
+
+function compactSkills(sl: SkillLineConfig): CompactSkills | undefined {
+  const c: CompactSkills = {};
+  const l1 = encodeSkillLine(sl.line1);
+  if (l1 != null) c.l1 = l1;
+  const l2 = encodeSkillLine(sl.line2);
+  if (l2 != null) c.l2 = l2;
+  const l3 = encodeSkillLine(sl.line3);
+  if (l3 != null) c.l3 = l3;
+  if (sl.isFlex) c.fl = 1;
+  if (sl.notes) c.no = sl.notes;
+  return Object.keys(c).length > 0 ? c : undefined;
+}
+
+function expandSkills(c?: CompactSkills): SkillLineConfig {
+  return {
+    line1: decodeSkillLine(c?.l1),
+    line2: decodeSkillLine(c?.l2),
+    line3: decodeSkillLine(c?.l3),
+    isFlex: c?.fl === 1,
+    notes: c?.no,
+  };
+}
+
+function compactGear(gs: TankGearSet): CompactGear | undefined {
+  const c: CompactGear = {};
+  if (gs.set1 != null) c.s1 = gs.set1 as number;
+  if (gs.set2 != null) c.s2 = gs.set2 as number;
+  if (gs.monsterSet != null) c.ms = gs.monsterSet as number;
+  if (gs.additionalSets?.length) c.a = gs.additionalSets as number[];
+  if (gs.notes) c.no = gs.notes;
+  return Object.keys(c).length > 0 ? c : undefined;
+}
+
+function expandGear(c?: CompactGear): TankGearSet {
+  return {
+    set1: c?.s1 as KnownSetIDs | undefined,
+    set2: c?.s2 as KnownSetIDs | undefined,
+    monsterSet: c?.ms as KnownSetIDs | undefined,
+    additionalSets: c?.a as KnownSetIDs[] | undefined,
+    notes: c?.no,
+  };
+}
+
+function compactGroup(gr?: PlayerGroup): CompactGroup | undefined {
+  if (!gr?.groupName) return undefined;
+  const c: CompactGroup = { g: gr.groupName };
+  if (gr.groupNumber != null) c.n = gr.groupNumber;
+  return c;
+}
+
+function expandGroup(c?: CompactGroup): PlayerGroup | undefined {
+  if (!c?.g) return undefined;
+  return { groupName: c.g, groupNumber: c.n };
+}
+
+function compactTank(t: TankSetup): CompactTank {
+  const c: CompactTank = {};
+  if (t.playerName) c.pn = t.playerName;
+  if (t.playerNumber != null) c.pi = t.playerNumber;
+  if (t.roleLabel) c.rl = t.roleLabel;
+  if (t.roleNotes) c.rn = t.roleNotes;
+  if (t.labels?.length) c.lb = t.labels;
+  const gs = compactGear(t.gearSets);
+  if (gs) c.gs = gs;
+  const sl = compactSkills(t.skillLines);
+  if (sl) c.sl = sl;
+  const ul = encodeUltimate(t.ultimate);
+  if (ul != null) c.ul = ul;
+  if (t.specificSkills?.length) c.ss = t.specificSkills;
+  const gr = compactGroup(t.group);
+  if (gr) c.gr = gr;
+  if (t.notes) c.no = t.notes;
+  return c;
+}
+
+function expandTank(c?: CompactTank): TankSetup {
+  return {
+    ...defaultTankSetup(),
+    playerName: c?.pn,
+    playerNumber: c?.pi,
+    roleLabel: c?.rl,
+    roleNotes: c?.rn,
+    labels: c?.lb,
+    gearSets: expandGear(c?.gs),
+    skillLines: expandSkills(c?.sl),
+    ultimate: decodeUltimate(c?.ul),
+    specificSkills: c?.ss ?? [],
+    group: expandGroup(c?.gr),
+    notes: c?.no,
+  };
+}
+
+function compactHealer(h: HealerSetup): CompactHealer {
+  const c: CompactHealer = {};
+  if (h.playerName) c.pn = h.playerName;
+  if (h.playerNumber != null) c.pi = h.playerNumber;
+  if (h.roleLabel) c.rl = h.roleLabel;
+  if (h.roleNotes) c.rn = h.roleNotes;
+  if (h.labels?.length) c.lb = h.labels;
+  if (h.set1 != null) c.s1 = h.set1 as number;
+  if (h.set2 != null) c.s2 = h.set2 as number;
+  if (h.monsterSet != null) c.ms = h.monsterSet as number;
+  if (h.additionalSets?.length) c.a = h.additionalSets as number[];
+  const sl = compactSkills(h.skillLines);
+  if (sl) c.sl = sl;
+  if (h.healerBuff != null) {
+    const idx = HEALER_BUFF_TO_IDX.get(h.healerBuff);
+    if (idx !== undefined) c.hb = idx;
+  }
+  if (h.championPoint != null) {
+    const idx = CHAMPION_POINT_TO_IDX.get(h.championPoint);
+    if (idx !== undefined) c.cp = idx;
+  }
+  const ul = encodeUltimate(h.ultimate);
+  if (ul != null) c.ul = ul;
+  const gr = compactGroup(h.group);
+  if (gr) c.gr = gr;
+  if (h.notes) c.no = h.notes;
+  return c;
+}
+
+function expandHealer(c?: CompactHealer): HealerSetup {
+  return {
+    ...defaultHealerSetup(),
+    playerName: c?.pn,
+    playerNumber: c?.pi,
+    roleLabel: c?.rl,
+    roleNotes: c?.rn,
+    labels: c?.lb,
+    set1: c?.s1 as KnownSetIDs | undefined,
+    set2: c?.s2 as KnownSetIDs | undefined,
+    monsterSet: c?.ms as KnownSetIDs | undefined,
+    additionalSets: c?.a as KnownSetIDs[] | undefined,
+    skillLines: expandSkills(c?.sl),
+    healerBuff: c?.hb != null ? ((HEALER_BUFF_LIST[c.hb] as HealerBuff) ?? null) : null,
+    championPoint:
+      c?.cp != null ? ((CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint) ?? null) : null,
+    ultimate: decodeUltimate(c?.ul),
+    group: expandGroup(c?.gr),
+    notes: c?.no,
+  };
+}
+
+function compactDPS(d: DPSSlot): CompactDPS {
+  const c: CompactDPS = { sn: d.slotNumber };
+  if (d.playerName) c.pn = d.playerName;
+  if (d.playerNumber != null) c.pi = d.playerNumber;
+  if (d.roleLabel) c.rl = d.roleLabel;
+  if (d.roleNotes) c.rn = d.roleNotes;
+  if (d.labels?.length) c.lb = d.labels;
+  if (d.set1 != null) c.s1 = d.set1 as number;
+  if (d.set2 != null) c.s2 = d.set2 as number;
+  if (d.monsterSet != null) c.ms = d.monsterSet as number;
+  if (d.additionalSets?.length) c.as = d.additionalSets as number[];
+  const sl = d.skillLines ? compactSkills(d.skillLines) : undefined;
+  if (sl) c.sl = sl;
+  if (d.championPoint) c.cp = d.championPoint;
+  if (d.ultimate) c.ul = encodeUltimate(d.ultimate);
+  const gr = compactGroup(d.group);
+  if (gr) c.gr = gr;
+  if (d.notes) c.no = d.notes;
+  if (d.jailDDType) {
+    const idx = JAIL_DD_TYPE_TO_IDX.get(d.jailDDType);
+    if (idx !== undefined) c.jt = idx;
+  }
+  if (d.customDescription) c.cd = d.customDescription;
+  return c;
+}
+
+function expandDPS(c: CompactDPS): DPSSlot {
+  return {
+    slotNumber: c.sn,
+    playerName: c.pn,
+    playerNumber: c.pi,
+    roleLabel: c.rl,
+    roleNotes: c.rn,
+    labels: c.lb,
+    set1: c.s1 as KnownSetIDs | undefined,
+    set2: c.s2 as KnownSetIDs | undefined,
+    monsterSet: c.ms as KnownSetIDs | undefined,
+    additionalSets: c.as as KnownSetIDs[] | undefined,
+    // Legacy: if old compact data has gs but no s1/s2, migrate first two to set1/set2
+    ...(c.gs && !c.s1 && !c.s2
+      ? {
+          set1: (c.gs[0] as KnownSetIDs) ?? undefined,
+          set2: (c.gs[1] as KnownSetIDs) ?? undefined,
+          additionalSets: (c.gs.slice(2) as KnownSetIDs[]) || undefined,
+        }
+      : {}),
+    skillLines: c.sl ? expandSkills(c.sl) : undefined,
+    championPoint: c.cp || undefined,
+    ultimate: c.ul != null ? decodeUltimate(c.ul) : null,
+    group: expandGroup(c.gr),
+    notes: c.no,
+    jailDDType: c.jt != null ? JAIL_DD_TYPE_LIST[c.jt] : undefined,
+    customDescription: c.cd,
+  };
+}
+
+function compactifyRoster(roster: RaidRoster): CompactRoster {
+  const c: CompactRoster = { v: 2 };
+  if (roster.rosterName && roster.rosterName !== 'New Roster') c.n = roster.rosterName;
+  c.t1 = compactTank(roster.tank1);
+  c.t2 = compactTank(roster.tank2);
+  c.h1 = compactHealer(roster.healer1);
+  c.h2 = compactHealer(roster.healer2);
+  const filledSlots = roster.dpsSlots.filter(
+    (slot) =>
+      slot.playerName ||
+      slot.playerNumber != null ||
+      slot.roleLabel ||
+      slot.roleNotes ||
+      slot.labels?.length ||
+      slot.set1 != null ||
+      slot.set2 != null ||
+      slot.monsterSet != null ||
+      slot.additionalSets?.length ||
+      slot.championPoint ||
+      slot.ultimate ||
+      slot.jailDDType ||
+      slot.notes ||
+      slot.group ||
+      slot.skillLines ||
+      slot.championPoint,
+  );
+  if (filledSlots.length) c.dp = filledSlots.map(compactDPS);
+  if (roster.availableGroups?.length) c.ag = roster.availableGroups;
+  if (roster.notes) c.no = roster.notes;
+  return c;
+}
+
+function expandCompactRoster(c: CompactRoster): RaidRoster {
+  const dpsSlots = createDefaultDPSSlots();
+  if (c.dp) {
+    for (const compactSlot of c.dp) {
+      const idx = compactSlot.sn - 1;
+      if (idx >= 0 && idx < 8) {
+        dpsSlots[idx] = expandDPS(compactSlot);
+      }
+    }
+  }
+  return {
+    rosterName: c.n ?? 'New Roster',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    tank1: expandTank(c.t1),
+    tank2: expandTank(c.t2),
+    healer1: expandHealer(c.h1),
+    healer2: expandHealer(c.h2),
+    dpsSlots,
+    availableGroups: c.ag ?? [],
+    notes: c.no,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Addon export helpers (ESO-658)
@@ -295,6 +683,112 @@ function encodeAddonExport(roster: RaidRoster): string {
   const base64 = btoa(unescape(encodeURIComponent(json)));
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
+
+/** Base64url encode a byte array (URL-safe, no padding) */
+function toBase64Url(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/** Base64url decode back to byte array */
+function fromBase64Url(str: string): Uint8Array {
+  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+async function readAllChunks(readable: ReadableStream<Uint8Array>): Promise<Uint8Array> {
+  const chunks: Uint8Array[] = [];
+  const reader = readable.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  const total = chunks.reduce((s, c) => s + c.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return out;
+}
+
+async function deflateString(str: string): Promise<Uint8Array> {
+  const input = new TextEncoder().encode(str);
+  const cs = new CompressionStream('deflate-raw') as unknown as TransformStream<
+    Uint8Array,
+    Uint8Array
+  >;
+  const writer = cs.writable.getWriter();
+  // Write + close, suppressing rejections — errors also propagate through the readable side.
+  void writer
+    .write(input)
+    .then(() => writer.close())
+    .catch(() => {});
+  return readAllChunks(cs.readable);
+}
+
+async function inflateBytes(bytes: Uint8Array): Promise<string> {
+  const ds = new DecompressionStream('deflate-raw') as unknown as TransformStream<
+    Uint8Array,
+    Uint8Array
+  >;
+  const writer = ds.writable.getWriter();
+  // Write + close, suppressing rejections — the same decompression error will
+  // also propagate through the readable side for the caller to catch.
+  void writer
+    .write(bytes)
+    .then(() => writer.close())
+    .catch(() => {});
+  const output = await readAllChunks(ds.readable);
+  return new TextDecoder().decode(output);
+}
+
+/**
+ * Encode roster to a compact, deflate-compressed, URL-safe base64 string (v2).
+ */
+const encodeRosterToURL = async (roster: RaidRoster): Promise<string> => {
+  try {
+    const compact = compactifyRoster(roster);
+    const json = JSON.stringify(compact);
+    const compressed = await deflateString(json);
+    return toBase64Url(compressed);
+  } catch {
+    return '';
+  }
+};
+
+/**
+ * Decode roster from URL hash. Supports v2 (deflate + compact) and v1 (plain base64 JSON).
+ */
+const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster | null> => {
+  // Try v2: deflate-raw + compact format
+  try {
+    const bytes = fromBase64Url(encoded);
+    const json = await inflateBytes(bytes);
+    const parsed = JSON.parse(json) as { v?: number };
+    if (parsed.v === 2) {
+      return expandCompactRoster(parsed as CompactRoster);
+    }
+  } catch {
+    // fall through to v1
+  }
+  // Try v1: btoa(encodeURIComponent(json))
+  try {
+    const json = decodeURIComponent(atob(encoded));
+    return JSON.parse(json) as RaidRoster;
+  } catch {
+    return null;
+  }
+};
 
 // Icon mappings for ESO abilities
 const ULTIMATE_ICONS: Record<string, string> = {
@@ -522,7 +1016,6 @@ export const RosterBuilderPage: React.FC = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const roleColors = isDarkMode ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
-  const navigate = useNavigate();
 
   const glassTextField = {
     '& .MuiOutlinedInput-root': {
@@ -560,9 +1053,7 @@ export const RosterBuilderPage: React.FC = () => {
   const savedRosterIdRef = useRef<string | null>(null);
 
   // Get auth state
-  const { isLoggedIn, accessToken } = useAuth();
-  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
-  const [publishRosterData, setPublishRosterData] = useState<string>('');
+  const { isLoggedIn } = useAuth();
   const dispatch = useAppDispatch();
 
   // Get ESO Logs client context (safe to call - doesn't throw if not logged in)
@@ -783,7 +1274,7 @@ export const RosterBuilderPage: React.FC = () => {
 
   // Generate shareable read-only link (points to /rv, the dedicated share view)
   const handleCopyLink = useCallback(() => {
-    void encodeRosterToURL(roster)
+    void encodeRosterToURLShared(roster)
       .then((encoded) => {
         if (encoded) {
           // Derive base path to support subdirectory deployments (e.g. /dev-previews/pr-xxx/)
@@ -1567,81 +2058,20 @@ export const RosterBuilderPage: React.FC = () => {
       {/* Development Banner */}
       <WorkInProgressDisclaimer featureName="Roster Builder" sx={{ mb: 3 }} />
 
-      {/* Roster Hub Banner */}
-      <Box
-        onClick={() => navigate('/roster-hub')}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 2,
-          px: { xs: 1.5, sm: 2 },
-          py: 1,
-          mb: 3,
-          borderRadius: '10px',
-          background: isDarkMode
-            ? 'linear-gradient(135deg, rgba(96,165,250,0.12) 0%, rgba(167,139,250,0.08) 100%)'
-            : 'linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(124,58,237,0.05) 100%)',
-          border: isDarkMode ? '1px solid rgba(96,165,250,0.2)' : '1px solid rgba(37,99,235,0.15)',
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          '&:hover': {
-            background: isDarkMode
-              ? 'linear-gradient(135deg, rgba(96,165,250,0.18) 0%, rgba(167,139,250,0.12) 100%)'
-              : 'linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(124,58,237,0.08) 100%)',
-            border: isDarkMode
-              ? '1px solid rgba(96,165,250,0.3)'
-              : '1px solid rgba(37,99,235,0.25)',
-          },
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography
-            sx={{
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              color: isDarkMode ? '#60a5fa' : '#2563eb',
-              letterSpacing: '0.02em',
-            }}
-          >
-            🏛️ Explore Community Rosters
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: '0.75rem',
-              color: isDarkMode ? 'rgba(148,163,184,0.8)' : 'rgba(100,116,139,0.7)',
-            }}
-          >
-            Browse published rosters from the community
-          </Typography>
-        </Box>
-        <Typography
-          sx={{
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            color: isDarkMode ? '#60a5fa' : '#2563eb',
-            whiteSpace: 'nowrap',
-            ml: 'auto',
-          }}
-        >
-          Visit Hub →
-        </Typography>
-      </Box>
-
       <Paper elevation={2} sx={{ p: { xs: 1.5, sm: 2 }, mb: 3 }}>
-        {/* Row 1 — Title lockup + Mode pill toggle + Hub link */}
+        {/* Row 1 — Title lockup + Mode pill toggle */}
         <Box
           sx={{
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
             alignItems: { xs: 'stretch', sm: 'center' },
             justifyContent: 'space-between',
-            gap: { xs: 1.5, sm: 1 },
+            gap: { xs: 1.5, sm: 0 },
             mb: 2.5,
           }}
         >
           {/* Icon lockup */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
             <Box
               sx={{
                 width: 32,
@@ -1795,154 +2225,78 @@ export const RosterBuilderPage: React.FC = () => {
         />
 
         {/* Row 3 — Action button bar */}
-        <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {/* ── Top row: pill groups left + right ── */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              alignItems: { xs: 'stretch', md: 'center' },
-              gap: 1,
-            }}
-          >
-            {/* ── Import / Export / Quick Fill pill group ── */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'stretch',
-                borderRadius: '10px',
-                width: { xs: '100%', md: 'auto' },
-                background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                border: isDarkMode
-                  ? '1px solid rgba(255,255,255,0.1)'
-                  : '1px solid rgba(0,0,0,0.1)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                overflow: 'hidden',
-                boxShadow: isDarkMode
-                  ? '0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)'
-                  : '0 1px 4px rgba(0,0,0,0.07)',
-              }}
-            >
-              {/* Import */}
-              <Tooltip title="Import roster from file or log" arrow>
-                <ButtonBase
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
-                    setImportMenuAnchor(e.currentTarget)
-                  }
-                  sx={{
-                    display: 'inline-flex',
-                    flex: { xs: 1, md: 'none' },
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 0.625,
-                    px: 1.5,
-                    py: { xs: 1.375, md: 0.875 },
-                    minHeight: { xs: '44px', md: 'auto' },
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                    background: 'transparent',
-                    transition: 'all 0.15s ease',
-                    '&:hover': {
-                      color: isDarkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)',
-                      background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    },
-                  }}
-                >
-                  <UploadIcon sx={{ fontSize: '0.95rem' }} />
-                  Import
-                  <ExpandMoreIcon sx={{ fontSize: '0.8rem', opacity: 0.55, ml: -0.25 }} />
-                </ButtonBase>
-              </Tooltip>
-
-              {/* Segment divider */}
-              <Box
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: { xs: 'stretch', md: 'center' },
+            gap: 0.75,
+            mb: 2,
+          }}
+        >
+          {/* Row 1: utility actions */}
+          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.75 }}>
+            <Tooltip title="Quick Fill" arrow>
+              <Button
+                size="small"
+                startIcon={<PersonAddIcon />}
+                onClick={() => setQuickFillDialog(true)}
                 sx={{
-                  width: '1px',
-                  my: 0.625,
-                  background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                  flex: { xs: 1, md: 'none' },
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.1)',
+                  backgroundColor: 'transparent',
+                  '&:hover': {
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                    border: isDarkMode
+                      ? '1px solid rgba(255,255,255,0.15)'
+                      : '1px solid rgba(0,0,0,0.18)',
+                  },
                 }}
-              />
-
-              {/* Export */}
-              <Tooltip title="Export roster as JSON file" arrow>
-                <ButtonBase
-                  onClick={handleExportJSON}
-                  sx={{
-                    display: 'inline-flex',
-                    flex: { xs: 1, md: 'none' },
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 0.625,
-                    px: 1.5,
-                    py: { xs: 1.375, md: 0.875 },
-                    minHeight: { xs: '44px', md: 'auto' },
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                    background: 'transparent',
-                    transition: 'all 0.15s ease',
-                    '&:hover': {
-                      color: isDarkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)',
-                      background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    },
-                  }}
-                >
-                  <DownloadIcon sx={{ fontSize: '0.95rem' }} />
-                  Export
-                </ButtonBase>
-              </Tooltip>
-
-              {/* Thicker divider before Quick Fill */}
-              <Box
+              >
+                Quick Fill
+              </Button>
+            </Tooltip>
+            <Tooltip title="Import roster from file or log" arrow>
+              <Button
+                size="small"
+                startIcon={<UploadIcon />}
+                endIcon={<ExpandMoreIcon sx={{ fontSize: '0.875rem !important', ml: -0.5 }} />}
+                onClick={(e) => setImportMenuAnchor(e.currentTarget)}
                 sx={{
-                  width: '1px',
-                  my: 0,
-                  background: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                  flex: { xs: 1, md: 'none' },
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.1)',
+                  backgroundColor: importMenuAnchor
+                    ? isDarkMode
+                      ? 'rgba(255,255,255,0.05)'
+                      : 'rgba(0,0,0,0.04)'
+                    : 'transparent',
+                  '&:hover': {
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                    border: isDarkMode
+                      ? '1px solid rgba(255,255,255,0.15)'
+                      : '1px solid rgba(0,0,0,0.18)',
+                  },
                 }}
-              />
-
-              {/* Quick Fill — sky-blue accent segment */}
-              <Tooltip title="Paste a list of names to fill all roster slots at once" arrow>
-                <ButtonBase
-                  onClick={() => setQuickFillDialog(true)}
-                  sx={{
-                    display: 'inline-flex',
-                    flex: { xs: 1, md: 'none' },
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 0.625,
-                    px: 1.5,
-                    py: { xs: 1.375, md: 0.875 },
-                    minHeight: { xs: '44px', md: 'auto' },
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    color: isDarkMode ? 'rgba(56,189,248,0.9)' : 'rgba(14,116,144,0.9)',
-                    background: isDarkMode ? 'rgba(56,189,248,0.07)' : 'rgba(14,116,144,0.05)',
-                    transition: 'all 0.15s ease',
-                    '&:hover': {
-                      color: isDarkMode ? 'rgba(56,189,248,1)' : 'rgba(14,116,144,1)',
-                      background: isDarkMode ? 'rgba(56,189,248,0.14)' : 'rgba(14,116,144,0.09)',
-                    },
-                  }}
-                >
-                  <PersonAddIcon sx={{ fontSize: '0.95rem' }} />
-                  Quick Fill
-                </ButtonBase>
-              </Tooltip>
-            </Box>
-
-            {/* Import dropdown menu (sibling of pill group, not inside) */}
+              >
+                Import
+              </Button>
+            </Tooltip>
             <Menu
               anchorEl={importMenuAnchor}
               open={Boolean(importMenuAnchor)}
@@ -2002,372 +2356,232 @@ export const RosterBuilderPage: React.FC = () => {
               }}
               aria-label="Upload roster JSON file"
             />
-
-            {/* Spacer pushes share actions to the right on wider screens */}
-            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
-
-            {/* ── Right side: Discord compound + Share/Publish/Save ── */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'stretch',
-                gap: 1,
-                width: { xs: '100%', md: 'auto' },
-              }}
-            >
-              {/* Discord compound — Preview | Copy */}
-              <Box
+            <Tooltip title="Export JSON" arrow>
+              <Button
+                size="small"
+                startIcon={<DownloadIcon />}
+                onClick={handleExportJSON}
                 sx={{
-                  flex: { xs: 1, md: '0 0 auto' },
-                  display: 'flex',
-                  alignItems: 'stretch',
-                  borderRadius: '10px',
-                  overflow: 'hidden',
-                  minHeight: { xs: '44px', md: 'auto' },
-                  background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                  flex: { xs: 1, md: 'none' },
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
                   border: isDarkMode
                     ? '1px solid rgba(255,255,255,0.08)'
-                    : '1px solid rgba(0,0,0,0.08)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
-                  boxShadow: isDarkMode
-                    ? '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
-                    : '0 1px 4px rgba(0,0,0,0.06)',
-                }}
-              >
-                <Tooltip title="Preview Discord format" arrow>
-                  <ButtonBase
-                    onClick={() => setPreviewDialog(true)}
-                    sx={{
-                      flex: 1,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 0.5,
-                      px: 1.25,
-                      py: { xs: 1.375, md: 0.875 },
-                      fontSize: '0.75rem',
-                      fontWeight: 500,
-                      color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
-                      background: 'transparent',
-                      transition: 'all 0.15s ease',
-                      '&:hover': {
-                        color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
-                        background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                      },
-                    }}
-                  >
-                    <VisibilityIcon sx={{ fontSize: '0.9rem' }} />
-                    Preview
-                  </ButtonBase>
-                </Tooltip>
-                <Box
-                  sx={{
-                    width: '1px',
-                    my: 0.625,
-                    background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                  }}
-                />
-                <Tooltip title="Copy roster for Discord" arrow>
-                  <ButtonBase
-                    onClick={handleCopyDiscordFormat}
-                    sx={{
-                      flex: 1,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 0.5,
-                      px: 1.25,
-                      py: { xs: 1.375, md: 0.875 },
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: isDarkMode ? '#f1f5f9' : '#0f172a',
-                      background: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.05)',
-                      transition: 'all 0.15s ease',
-                      '&:hover': {
-                        background: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)',
-                      },
-                    }}
-                  >
-                    <img
-                      src={discordIcon}
-                      alt=""
-                      style={{ width: 14, height: 14, opacity: isDarkMode ? 0.85 : 0.7 }}
-                    />
-                    Copy
-                  </ButtonBase>
-                </Tooltip>
-              </Box>
-
-              {/* Share / Publish / Save pill */}
-              <Box
-                sx={{
-                  flex: { xs: 1, md: '0 0 auto' },
-                  display: 'flex',
-                  alignItems: 'stretch',
-                  borderRadius: '10px',
-                  minHeight: { xs: '44px', md: 'auto' },
-                  background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                  border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.1)'
                     : '1px solid rgba(0,0,0,0.1)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
-                  overflow: 'hidden',
-                  boxShadow: isDarkMode
-                    ? '0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)'
-                    : '0 1px 4px rgba(0,0,0,0.07)',
+                  backgroundColor: 'transparent',
+                  '&:hover': {
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                    border: isDarkMode
+                      ? '1px solid rgba(255,255,255,0.15)'
+                      : '1px solid rgba(0,0,0,0.18)',
+                  },
                 }}
               >
-                {/* Share */}
-                <Tooltip title="Copy read-only share link — opens /rv view" arrow>
-                  <ButtonBase
-                    onClick={handleCopyLink}
-                    sx={{
-                      display: 'inline-flex',
-                      flex: 1,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 0.625,
-                      px: 1.375,
-                      py: { xs: 1.375, md: 0.875 },
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                      background: 'transparent',
-                      transition: 'all 0.15s ease',
-                      '&:hover': {
-                        color: isDarkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)',
-                        background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                      },
-                    }}
-                  >
-                    <LinkIcon sx={{ fontSize: '0.9rem' }} />
-                    Share
-                  </ButtonBase>
-                </Tooltip>
-
-                {/* Publish — logged-in only */}
-                {isLoggedIn && (
-                  <>
-                    <Box
-                      sx={{
-                        width: '1px',
-                        my: 0,
-                        background: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
-                      }}
-                    />
-                    <Tooltip title="Publish to Roster Hub — share with the community" arrow>
-                      <ButtonBase
-                        onClick={() => {
-                          void encodeRosterToURL(roster).then((encoded) => {
-                            setPublishRosterData(encoded);
-                            setPublishDialogOpen(true);
-                          });
-                        }}
-                        sx={{
-                          display: 'inline-flex',
-                          flex: 1,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 0.625,
-                          px: 1.375,
-                          py: { xs: 1.375, md: 0.875 },
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          color: isDarkMode ? 'rgba(147,197,253,0.95)' : 'rgba(29,78,216,0.9)',
-                          background: isDarkMode ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.07)',
-                          transition: 'all 0.15s ease',
-                          '&:hover': {
-                            color: isDarkMode ? '#bfdbfe' : '#1d4ed8',
-                            background: isDarkMode
-                              ? 'rgba(59,130,246,0.18)'
-                              : 'rgba(59,130,246,0.12)',
-                          },
-                        }}
-                      >
-                        <GroupsIcon sx={{ fontSize: '0.9rem' }} />
-                        Publish
-                      </ButtonBase>
-                    </Tooltip>
-                  </>
-                )}
-
-                <Box
-                  sx={{
-                    width: '1px',
-                    my: 0,
-                    background: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
-                  }}
-                />
-
-                {/* Save */}
-                <Tooltip
-                  title={
-                    savedRosterIdRef.current
-                      ? 'Update this roster in My Rosters'
-                      : 'Save roster to My Rosters (stored locally)'
-                  }
-                  arrow
-                >
-                  <ButtonBase
-                    onClick={handleSaveToMyRosters}
-                    sx={{
-                      display: 'inline-flex',
-                      flex: 1,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 0.625,
-                      px: 1.375,
-                      py: { xs: 1.375, md: 0.875 },
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      color: isDarkMode ? 'rgba(196,181,253,0.95)' : 'rgba(109,40,217,0.9)',
-                      background: isDarkMode ? 'rgba(139,92,246,0.1)' : 'rgba(139,92,246,0.07)',
-                      transition: 'all 0.15s ease',
-                      '&:hover': {
-                        color: isDarkMode ? '#ddd6fe' : '#7c3aed',
-                        background: isDarkMode ? 'rgba(139,92,246,0.18)' : 'rgba(139,92,246,0.12)',
-                      },
-                    }}
-                  >
-                    <BookmarkIcon sx={{ fontSize: '0.9rem' }} />
-                    Save
-                  </ButtonBase>
-                </Tooltip>
-              </Box>
-            </Box>
+                Export
+              </Button>
+            </Tooltip>
+            <Tooltip title="Copy for ESOtk addon — paste in-game with /esotk roster import" arrow>
+              <Button
+                size="small"
+                startIcon={<AddonIcon />}
+                onClick={handleExportAddon}
+                sx={{
+                  flex: { xs: 1, md: 'none' },
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.1)',
+                  backgroundColor: 'transparent',
+                  '&:hover': {
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                    border: isDarkMode
+                      ? '1px solid rgba(255,255,255,0.15)'
+                      : '1px solid rgba(0,0,0,0.18)',
+                  },
+                }}
+              >
+                Addon
+              </Button>
+            </Tooltip>
           </Box>
+          {/* end row 1 */}
 
-          {/* ── ESOtk Addon Banner ── */}
-          <Tooltip
-            title="Copy roster for ESOtk addon — paste in-game with /esotk roster import"
-            arrow
-          >
-            <ButtonBase
-              onClick={handleExportAddon}
+          {/* Spacer — desktop only */}
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
+
+          {/* Row 2: share actions */}
+          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.75 }}>
+            {/* Discord compound button — preview + copy in a shared track */}
+            <Box
               sx={{
-                width: '100%',
-                position: 'relative',
+                flex: { xs: 1, md: '0 0 auto' },
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1.5,
-                px: 2,
-                py: 1.25,
+                justifyContent: 'center',
                 borderRadius: '10px',
-                cursor: 'pointer',
+                padding: '3px',
+                background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                 border: isDarkMode
-                  ? '1px solid rgba(251,191,36,0.18)'
-                  : '1px solid rgba(161,98,7,0.18)',
-                fontFamily: 'inherit',
-                textAlign: 'left',
-                background: isDarkMode
-                  ? 'linear-gradient(135deg, rgba(251,191,36,0.09) 0%, rgba(245,158,11,0.05) 55%, rgba(11,18,32,0.35) 100%)'
-                  : 'linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(245,158,11,0.04) 55%, rgba(255,255,255,0.55) 100%)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                overflow: 'hidden',
-                transition: 'all 0.2s ease',
-                boxShadow: isDarkMode
-                  ? '0 2px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(251,191,36,0.06)'
-                  : '0 1px 4px rgba(0,0,0,0.06)',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '2px',
-                  background: isDarkMode
-                    ? 'linear-gradient(90deg, transparent 0%, rgba(251,191,36,0.65) 25%, rgba(245,158,11,0.9) 55%, transparent 100%)'
-                    : 'linear-gradient(90deg, transparent 0%, rgba(161,98,7,0.4) 25%, rgba(245,158,11,0.65) 55%, transparent 100%)',
-                  borderRadius: '4px 4px 0 0',
-                },
-                '&:hover': {
-                  background: isDarkMode
-                    ? 'linear-gradient(135deg, rgba(251,191,36,0.14) 0%, rgba(245,158,11,0.08) 55%, rgba(11,18,32,0.35) 100%)'
-                    : 'linear-gradient(135deg, rgba(251,191,36,0.13) 0%, rgba(245,158,11,0.07) 55%, rgba(255,255,255,0.55) 100%)',
-                  borderColor: isDarkMode ? 'rgba(251,191,36,0.32)' : 'rgba(161,98,7,0.3)',
-                  boxShadow: isDarkMode
-                    ? '0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(251,191,36,0.1)'
-                    : '0 2px 8px rgba(161,98,7,0.1)',
-                },
+                  ? '1px solid rgba(255,255,255,0.08)'
+                  : '1px solid rgba(0,0,0,0.08)',
               }}
             >
-              {/* Icon box */}
-              <Box
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '9px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  background: isDarkMode ? 'rgba(251,191,36,0.14)' : 'rgba(161,98,7,0.1)',
-                  border: isDarkMode
-                    ? '1px solid rgba(251,191,36,0.22)'
-                    : '1px solid rgba(161,98,7,0.18)',
-                }}
-              >
-                <AddonIcon
+              <Tooltip title="Preview Discord format" arrow>
+                <Box
+                  component="button"
+                  onClick={() => setPreviewDialog(true)}
                   sx={{
-                    fontSize: '1.1rem',
-                    color: isDarkMode ? 'rgba(251,191,36,0.92)' : 'rgba(120,70,0,0.88)',
-                  }}
-                />
-              </Box>
-
-              {/* Text content */}
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography
-                  component="div"
-                  sx={{
-                    fontSize: '0.8125rem',
-                    fontWeight: 700,
-                    lineHeight: 1.25,
-                    color: isDarkMode ? 'rgba(251,191,36,0.95)' : 'rgba(120,70,0,0.9)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    px: 1.25,
+                    py: 0.5,
+                    borderRadius: '7px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    fontFamily: 'inherit',
+                    color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
+                    background: 'transparent',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
+                      background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                    },
                   }}
                 >
-                  ESOtk Addon Export
-                </Typography>
-                <Typography
-                  component="div"
-                  sx={{
-                    fontSize: '0.7rem',
-                    lineHeight: 1.4,
-                    mt: 0.25,
-                    color: isDarkMode ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.42)',
-                  }}
-                >
-                  Copy roster data · paste in-game with{' '}
-                  <Box
-                    component="code"
-                    sx={{
-                      fontFamily: 'monospace',
-                      fontSize: '0.675rem',
-                      px: 0.5,
-                      py: 0.125,
-                      borderRadius: '4px',
-                      background: isDarkMode ? 'rgba(251,191,36,0.1)' : 'rgba(161,98,7,0.08)',
-                      color: isDarkMode ? 'rgba(251,191,36,0.8)' : 'rgba(120,70,0,0.75)',
-                    }}
-                  >
-                    /esotk roster import
-                  </Box>
-                </Typography>
-              </Box>
-
-              {/* Action hint icon */}
-              <CopyIcon
+                  <VisibilityIcon sx={{ fontSize: '0.9rem' }} />
+                  <Box component="span">Preview</Box>
+                </Box>
+              </Tooltip>
+              <Divider
+                orientation="vertical"
+                flexItem
                 sx={{
-                  fontSize: '1rem',
-                  flexShrink: 0,
-                  color: isDarkMode ? 'rgba(251,191,36,0.45)' : 'rgba(161,98,7,0.38)',
+                  mx: 0.25,
+                  opacity: isDarkMode ? 0.12 : 0.15,
+                  borderColor: isDarkMode ? '#fff' : '#000',
                 }}
               />
-            </ButtonBase>
-          </Tooltip>
+              <Tooltip title="Copy for Discord" arrow>
+                <Box
+                  component="button"
+                  onClick={handleCopyDiscordFormat}
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    px: 1.25,
+                    py: 0.5,
+                    borderRadius: '7px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    color: isDarkMode ? '#f1f5f9' : '#0f172a',
+                    background: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.85)',
+                    boxShadow: isDarkMode
+                      ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)'
+                      : '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      background: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.95)',
+                    },
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={discordIcon}
+                    alt="Copy for Discord"
+                    sx={{ width: 16, height: 16 }}
+                  />
+                  Copy
+                </Box>
+              </Tooltip>
+            </Box>
+            <Tooltip title="Copy read-only share link — opens /rv view" arrow>
+              <Button
+                size="small"
+                startIcon={<LinkIcon />}
+                onClick={handleCopyLink}
+                sx={{
+                  flex: { xs: 1, md: 'none' },
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: isDarkMode ? '#f1f5f9' : '#0f172a',
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255,255,255,0.12)'
+                    : '1px solid rgba(0,0,0,0.12)',
+                  boxShadow: isDarkMode
+                    ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
+                    : '0 1px 2px rgba(0,0,0,0.06)',
+                  '&:hover': {
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.09)',
+                    border: isDarkMode
+                      ? '1px solid rgba(255,255,255,0.18)'
+                      : '1px solid rgba(0,0,0,0.18)',
+                  },
+                }}
+              >
+                Share
+              </Button>
+            </Tooltip>
+            <Tooltip
+              title={
+                savedRosterIdRef.current
+                  ? 'Update this roster in My Rosters'
+                  : 'Save roster to My Rosters (stored locally)'
+              }
+              arrow
+            >
+              <Button
+                size="small"
+                startIcon={<BookmarkIcon />}
+                onClick={handleSaveToMyRosters}
+                sx={{
+                  flex: { xs: 1, md: 'none' },
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: isDarkMode ? '#bfdbfe' : '#1d4ed8',
+                  backgroundColor: isDarkMode
+                    ? 'rgba(59,130,246,0.12)'
+                    : 'rgba(59,130,246,0.08)',
+                  border: isDarkMode
+                    ? '1px solid rgba(59,130,246,0.25)'
+                    : '1px solid rgba(59,130,246,0.2)',
+                  '&:hover': {
+                    backgroundColor: isDarkMode
+                      ? 'rgba(59,130,246,0.2)'
+                      : 'rgba(59,130,246,0.14)',
+                    border: isDarkMode
+                      ? '1px solid rgba(59,130,246,0.4)'
+                      : '1px solid rgba(59,130,246,0.35)',
+                  },
+                }}
+              >
+                Save
+              </Button>
+            </Tooltip>
+          </Box>
+          {/* end row 2 */}
         </Box>
 
         <Box
@@ -2952,7 +3166,7 @@ export const RosterBuilderPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Box
-            component={'button' as React.ElementType}
+            component="button"
             onClick={() => setQuickFillDialog(false)}
             sx={{
               px: 1.5,
@@ -3054,7 +3268,7 @@ export const RosterBuilderPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Box
-            component={'button' as React.ElementType}
+            component="button"
             onClick={() => setPreviewDialog(false)}
             sx={{
               px: 1.5,
@@ -3165,7 +3379,7 @@ export const RosterBuilderPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Box
-            component={'button' as React.ElementType}
+            component="button"
             onClick={() => {
               setImportUrlDialog(false);
               setImportUrl('');
@@ -3223,21 +3437,6 @@ export const RosterBuilderPage: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-
-      {/* Publish to Roster Hub dialog */}
-      <PublishRosterDialog
-        open={publishDialogOpen}
-        rosterData={publishRosterData}
-        token={accessToken}
-        onClose={() => setPublishDialogOpen(false)}
-        onPublished={() => {
-          setSnackbar({
-            open: true,
-            severity: 'success',
-            message: 'Roster published to Roster Hub!',
-          });
-        }}
-      />
     </Container>
   );
 };
@@ -5021,7 +5220,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                   {(['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'] as const).map((type) => (
                     <Box
                       key={type}
-                      component={'button' as React.ElementType}
+                      component="button"
                       onClick={() => onConvertToJail(slot.slotNumber, type)}
                       sx={{
                         px: 1.25,
@@ -5049,7 +5248,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
             ) : (
               <Box>
                 <Box
-                  component={'button' as React.ElementType}
+                  component="button"
                   onClick={() => onConvertToDPS(slot.slotNumber)}
                   sx={{
                     display: 'inline-flex',
