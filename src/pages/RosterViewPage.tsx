@@ -851,7 +851,14 @@ export const RosterViewPage: React.FC = () => {
   const handleOpenInBuilder = (): void => {
     // Strip /rv suffix to get base path
     const basePath = window.location.pathname.replace(/\/rv(\/.*)?$/, '');
-    window.location.href = `${window.location.origin}${basePath}/roster-builder?r=${encodedParam}`;
+    const url = `${window.location.origin}${basePath}/roster-builder?r=${encodedParam}`;
+    // When rendered inside an iframe (embed preview), navigate the top-level window
+    // so the builder loads as a full page rather than inside the iframe.
+    if (window.top && window.parent !== window) {
+      window.top.location.href = url;
+    } else {
+      window.location.href = url;
+    }
   };
 
   // Copy discord format text
