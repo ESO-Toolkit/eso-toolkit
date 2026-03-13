@@ -7,6 +7,10 @@
     "deploy": "wrangler deploy",
     "db:migrate": "wrangler d1 execute roster-hub-db --file=src/db/schema.sql",
     "db:migrate:remote": "wrangler d1 execute roster-hub-db --remote --file=src/db/schema.sql",
+    "db:seed": "wrangler d1 execute roster-hub-db --file=src/db/seed.sql",
+    "db:seed:remote": "wrangler d1 execute roster-hub-db --remote --file=src/db/seed.sql",
+    "db:seed:update": "wrangler d1 execute roster-hub-db --file=src/db/seed-update.sql",
+    "db:seed:update:remote": "wrangler d1 execute roster-hub-db --remote --file=src/db/seed-update.sql",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
