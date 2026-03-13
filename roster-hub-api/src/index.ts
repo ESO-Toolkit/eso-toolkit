@@ -112,6 +112,7 @@ app.post('/rosters', async (c) => {
   if (!roster_data?.trim()) return c.json({ error: 'roster_data is required' }, 400);
   if (title.length > 100) return c.json({ error: 'title must be ≤ 100 characters' }, 400);
   if (description.length > 500) return c.json({ error: 'description must be ≤ 500 characters' }, 400);
+  if (roster_data.length > 50_000) return c.json({ error: 'roster_data must be ≤ 50 000 characters' }, 400);
 
   // Generate a short unique ID (nanoid-style without the dep)
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
@@ -160,7 +161,11 @@ app.put('/rosters/:id', async (c) => {
   const { title, description = '', trial_id, roster_data, tags = [], is_anonymous = false } = body;
 
   if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
+  if (!trial_id?.trim()) return c.json({ error: 'trial_id is required' }, 400);
+  if (!roster_data?.trim()) return c.json({ error: 'roster_data is required' }, 400);
   if (title.length > 100) return c.json({ error: 'title must be ≤ 100 characters' }, 400);
+  if (description.length > 500) return c.json({ error: 'description must be ≤ 500 characters' }, 400);
+  if (roster_data.length > 50_000) return c.json({ error: 'roster_data must be ≤ 50 000 characters' }, 400);
 
   const updated = await updateRoster(c.env.DB, c.req.param('id'), user.id, {
     title: title.trim(),

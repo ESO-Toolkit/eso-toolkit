@@ -36,7 +36,7 @@ export async function listRosters(db: D1Database, opts: ListOptions): Promise<Ro
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   const sql = `
-    SELECT r.*, GROUP_CONCAT(rt.tag) AS tags_concat
+    SELECT r.*, GROUP_CONCAT(DISTINCT rt.tag) AS tags_concat
     FROM rosters r
     LEFT JOIN roster_tags rt ON rt.roster_id = r.id
     ${where}

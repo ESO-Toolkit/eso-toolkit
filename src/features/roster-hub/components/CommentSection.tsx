@@ -286,7 +286,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     e.preventDefault();
     if (!token || !body.trim() || submitting) return;
 
-    const tempId = `pending-${Date.now()}`;
+    const tempId = `pending-${crypto.randomUUID()}`;
     const optimisticComment: HubComment = {
       id: tempId,
       roster_id: rosterId,
