@@ -36,6 +36,7 @@ import {
 } from '@mui/icons-material';
 import {
   Button,
+  ButtonBase,
   Card,
   CardContent,
   Container,
@@ -68,7 +69,6 @@ import {
   DialogActions,
   Avatar,
   Tooltip,
-  ButtonGroup,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useState, useCallback, useMemo, useRef } from 'react';
@@ -2294,69 +2294,163 @@ export const RosterBuilderPage: React.FC = () => {
         />
 
         {/* Row 3 — Action button bar */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: { xs: 'stretch', md: 'center' },
-            gap: 0.75,
-            mb: 2,
-          }}
-        >
-          {/* Row 1: Import/Export grouped left · Quick Fill & Addon standalone right */}
-          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
-            {/* Import/Export — ButtonGroup */}
-            <ButtonGroup
-              size="small"
-              variant="outlined"
+        <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+
+          {/* ── Top row: pill groups left + right ── */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              alignItems: { xs: 'stretch', md: 'center' },
+              gap: 1,
+            }}
+          >
+            {/* ── Import / Export / Quick Fill pill group ── */}
+            <Box
               sx={{
-                '& .MuiButton-root': {
-                  textTransform: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                  borderRadius: '8px',
-                  color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
-                  borderColor: isDarkMode
-                    ? 'rgba(255,255,255,0.1)'
-                    : 'rgba(0,0,0,0.12)',
-                  '&:hover': {
-                    backgroundColor: isDarkMode
-                      ? 'rgba(255,255,255,0.05)'
-                      : 'rgba(0,0,0,0.04)',
-                    borderColor: isDarkMode
-                      ? 'rgba(255,255,255,0.18)'
-                      : 'rgba(0,0,0,0.2)',
-                  },
-                },
-                /* Override ButtonGroup's flat inner edges for a pill-pair look */
-                '& .MuiButton-root:first-of-type': {
-                  borderTopLeftRadius: '8px',
-                  borderBottomLeftRadius: '8px',
-                },
-                '& .MuiButton-root:last-of-type': {
-                  borderTopRightRadius: '8px',
-                  borderBottomRightRadius: '8px',
-                },
+                display: 'flex',
+                alignItems: 'stretch',
+                borderRadius: '10px',
+                width: { xs: '100%', md: 'auto' },
+                background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                border: isDarkMode
+                  ? '1px solid rgba(255,255,255,0.1)'
+                  : '1px solid rgba(0,0,0,0.1)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                overflow: 'hidden',
+                boxShadow: isDarkMode
+                  ? '0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)'
+                  : '0 1px 4px rgba(0,0,0,0.07)',
               }}
             >
+              {/* Import */}
               <Tooltip title="Import roster from file or log" arrow>
-                <Button
-                  startIcon={<UploadIcon />}
-                  endIcon={
-                    <ExpandMoreIcon sx={{ fontSize: '0.875rem !important', ml: -0.5 }} />
+                <ButtonBase
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
+                    setImportMenuAnchor(e.currentTarget)
                   }
-                  onClick={(e) => setImportMenuAnchor(e.currentTarget)}
+                  sx={{
+                    display: 'inline-flex',
+                    flex: { xs: 1, md: 'none' },
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 0.625,
+                    px: 1.5,
+                    py: { xs: 1.375, md: 0.875 },
+                    minHeight: { xs: '44px', md: 'auto' },
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                    background: 'transparent',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      color: isDarkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)',
+                      background: isDarkMode
+                        ? 'rgba(255,255,255,0.06)'
+                        : 'rgba(0,0,0,0.04)',
+                    },
+                  }}
                 >
+                  <UploadIcon sx={{ fontSize: '0.95rem' }} />
                   Import
-                </Button>
+                  <ExpandMoreIcon sx={{ fontSize: '0.8rem', opacity: 0.55, ml: -0.25 }} />
+                </ButtonBase>
               </Tooltip>
-              <Tooltip title="Export roster as JSON file" arrow>
-                <Button startIcon={<DownloadIcon />} onClick={handleExportJSON}>
-                  Export
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
 
+              {/* Segment divider */}
+              <Box
+                sx={{
+                  width: '1px',
+                  my: 0.625,
+                  background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                }}
+              />
+
+              {/* Export */}
+              <Tooltip title="Export roster as JSON file" arrow>
+                <ButtonBase
+                  onClick={handleExportJSON}
+                  sx={{
+                    display: 'inline-flex',
+                    flex: { xs: 1, md: 'none' },
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 0.625,
+                    px: 1.5,
+                    py: { xs: 1.375, md: 0.875 },
+                    minHeight: { xs: '44px', md: 'auto' },
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                    background: 'transparent',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      color: isDarkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)',
+                      background: isDarkMode
+                        ? 'rgba(255,255,255,0.06)'
+                        : 'rgba(0,0,0,0.04)',
+                    },
+                  }}
+                >
+                  <DownloadIcon sx={{ fontSize: '0.95rem' }} />
+                  Export
+                </ButtonBase>
+              </Tooltip>
+
+              {/* Thicker divider before Quick Fill */}
+              <Box
+                sx={{
+                  width: '1px',
+                  my: 0,
+                  background: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                }}
+              />
+
+              {/* Quick Fill — sky-blue accent segment */}
+              <Tooltip title="Paste a list of names to fill all roster slots at once" arrow>
+                <ButtonBase
+                  onClick={() => setQuickFillDialog(true)}
+                  sx={{
+                    display: 'inline-flex',
+                    flex: { xs: 1, md: 'none' },
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 0.625,
+                    px: 1.5,
+                    py: { xs: 1.375, md: 0.875 },
+                    minHeight: { xs: '44px', md: 'auto' },
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: isDarkMode ? 'rgba(56,189,248,0.9)' : 'rgba(14,116,144,0.9)',
+                    background: isDarkMode
+                      ? 'rgba(56,189,248,0.07)'
+                      : 'rgba(14,116,144,0.05)',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      color: isDarkMode ? 'rgba(56,189,248,1)' : 'rgba(14,116,144,1)',
+                      background: isDarkMode
+                        ? 'rgba(56,189,248,0.14)'
+                        : 'rgba(14,116,144,0.09)',
+                    },
+                  }}
+                >
+                  <PersonAddIcon sx={{ fontSize: '0.95rem' }} />
+                  Quick Fill
+                </ButtonBase>
+              </Tooltip>
+            </Box>
+
+            {/* Import dropdown menu (sibling of pill group, not inside) */}
             <Menu
               anchorEl={importMenuAnchor}
               open={Boolean(importMenuAnchor)}
@@ -2419,278 +2513,393 @@ export const RosterBuilderPage: React.FC = () => {
               aria-label="Upload roster JSON file"
             />
 
-            {/* Quick Fill — distinct CTA (sky-blue tint) */}
-            <Tooltip title="Paste a list of names to fill all roster slots at once" arrow>
-              <Button
-                size="small"
-                startIcon={<PersonAddIcon />}
-                onClick={() => setQuickFillDialog(true)}
-                sx={{
-                  ml: 0.5,
-                  borderRadius: '8px',
-                  textTransform: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: isDarkMode
-                    ? 'rgba(56, 189, 248, 0.85)'
-                    : 'rgba(14, 116, 144, 0.9)',
-                  border: isDarkMode
-                    ? '1px solid rgba(56, 189, 248, 0.2)'
-                    : '1px solid rgba(14, 116, 144, 0.25)',
-                  backgroundColor: isDarkMode
-                    ? 'rgba(56, 189, 248, 0.06)'
-                    : 'rgba(14, 116, 144, 0.05)',
-                  '&:hover': {
-                    backgroundColor: isDarkMode
-                      ? 'rgba(56, 189, 248, 0.12)'
-                      : 'rgba(14, 116, 144, 0.1)',
-                    borderColor: isDarkMode
-                      ? 'rgba(56, 189, 248, 0.35)'
-                      : 'rgba(14, 116, 144, 0.4)',
-                  },
-                }}
-              >
-                Quick Fill
-              </Button>
-            </Tooltip>
+            {/* Spacer pushes share actions to the right on wider screens */}
+            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
 
-            {/* Addon — distinct CTA (amber tint) */}
-            <Tooltip
-              title="Copy for ESOtk addon — paste in-game with /esotk roster import"
-              arrow
-            >
-              <Button
-                size="small"
-                startIcon={<AddonIcon />}
-                onClick={handleExportAddon}
-                sx={{
-                  borderRadius: '8px',
-                  textTransform: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: isDarkMode
-                    ? 'rgba(251, 191, 36, 0.85)'
-                    : 'rgba(161, 98, 7, 0.9)',
-                  border: isDarkMode
-                    ? '1px solid rgba(251, 191, 36, 0.2)'
-                    : '1px solid rgba(161, 98, 7, 0.25)',
-                  backgroundColor: isDarkMode
-                    ? 'rgba(251, 191, 36, 0.06)'
-                    : 'rgba(161, 98, 7, 0.05)',
-                  '&:hover': {
-                    backgroundColor: isDarkMode
-                      ? 'rgba(251, 191, 36, 0.12)'
-                      : 'rgba(161, 98, 7, 0.1)',
-                    borderColor: isDarkMode
-                      ? 'rgba(251, 191, 36, 0.35)'
-                      : 'rgba(161, 98, 7, 0.4)',
-                  },
-                }}
-              >
-                Addon
-              </Button>
-            </Tooltip>
-          </Box>
-          {/* end row 1 */}
-
-          {/* Spacer — desktop only */}
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
-
-          {/* Row 2: share actions */}
-          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.75 }}>
-            {/* Discord compound button — preview + copy in a shared track */}
+            {/* ── Share / Publish / Save pill group ── */}
             <Box
               sx={{
-                flex: { xs: 1, md: '0 0 auto' },
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                alignItems: 'stretch',
                 borderRadius: '10px',
-                padding: '3px',
-                background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                width: { xs: '100%', md: 'auto' },
+                background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
                 border: isDarkMode
-                  ? '1px solid rgba(255,255,255,0.08)'
-                  : '1px solid rgba(0,0,0,0.08)',
+                  ? '1px solid rgba(255,255,255,0.1)'
+                  : '1px solid rgba(0,0,0,0.1)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                overflow: 'hidden',
+                boxShadow: isDarkMode
+                  ? '0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)'
+                  : '0 1px 4px rgba(0,0,0,0.07)',
               }}
             >
+              {/* Preview */}
               <Tooltip title="Preview Discord format" arrow>
-                <Box
-                  component="button"
+                <ButtonBase
                   onClick={() => setPreviewDialog(true)}
                   sx={{
                     display: 'inline-flex',
+                    flex: { xs: 1, md: 'none' },
                     alignItems: 'center',
-                    gap: 0.5,
-                    px: 1.25,
-                    py: 0.5,
-                    borderRadius: '7px',
+                    justifyContent: 'center',
+                    gap: 0.625,
+                    px: 1.375,
+                    py: { xs: 1.375, md: 0.875 },
+                    minHeight: { xs: '44px', md: 'auto' },
                     border: 'none',
                     cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
                     fontFamily: 'inherit',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
                     color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
                     background: 'transparent',
                     transition: 'all 0.15s ease',
                     '&:hover': {
-                      color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
-                      background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                      color: isDarkMode ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.75)',
+                      background: isDarkMode
+                        ? 'rgba(255,255,255,0.06)'
+                        : 'rgba(0,0,0,0.04)',
                     },
                   }}
                 >
                   <VisibilityIcon sx={{ fontSize: '0.9rem' }} />
-                  <Box component="span">Preview</Box>
-                </Box>
+                  Preview
+                </ButtonBase>
               </Tooltip>
-              <Divider
-                orientation="vertical"
-                flexItem
+
+              <Box
                 sx={{
-                  mx: 0.25,
-                  opacity: isDarkMode ? 0.12 : 0.15,
-                  borderColor: isDarkMode ? '#fff' : '#000',
+                  width: '1px',
+                  my: 0.625,
+                  background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
                 }}
               />
-              <Tooltip title="Copy for Discord" arrow>
-                <Box
-                  component="button"
+
+              {/* Copy for Discord — slightly elevated */}
+              <Tooltip title="Copy roster for Discord" arrow>
+                <ButtonBase
                   onClick={handleCopyDiscordFormat}
                   sx={{
                     display: 'inline-flex',
+                    flex: { xs: 1, md: 'none' },
                     alignItems: 'center',
-                    gap: 0.5,
-                    px: 1.25,
-                    py: 0.5,
-                    borderRadius: '7px',
+                    justifyContent: 'center',
+                    gap: 0.625,
+                    px: 1.375,
+                    py: { xs: 1.375, md: 0.875 },
+                    minHeight: { xs: '44px', md: 'auto' },
                     border: 'none',
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                     fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: isDarkMode ? '#f1f5f9' : '#0f172a',
-                    background: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.85)',
-                    boxShadow: isDarkMode
-                      ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)'
-                      : '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
+                    fontWeight: 600,
+                    color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)',
+                    background: isDarkMode
+                      ? 'rgba(255,255,255,0.07)'
+                      : 'rgba(0,0,0,0.035)',
                     transition: 'all 0.15s ease',
                     '&:hover': {
-                      background: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.95)',
+                      color: isDarkMode ? '#f1f5f9' : '#0f172a',
+                      background: isDarkMode
+                        ? 'rgba(255,255,255,0.12)'
+                        : 'rgba(0,0,0,0.06)',
                     },
                   }}
                 >
-                  <Box
-                    component="img"
+                  <img
                     src={discordIcon}
-                    alt="Copy for Discord"
-                    sx={{ width: 16, height: 16 }}
+                    alt=""
+                    style={{ width: 14, height: 14, opacity: isDarkMode ? 0.85 : 0.7 }}
                   />
                   Copy
-                </Box>
+                </ButtonBase>
               </Tooltip>
-            </Box>
-            <Tooltip title="Copy read-only share link — opens /rv view" arrow>
-              <Button
-                size="small"
-                startIcon={<LinkIcon />}
-                onClick={handleCopyLink}
+
+              <Box
                 sx={{
-                  flex: { xs: 1, md: 'none' },
-                  justifyContent: 'center',
-                  borderRadius: '8px',
-                  textTransform: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: isDarkMode ? '#f1f5f9' : '#0f172a',
-                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)',
-                  border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.12)'
-                    : '1px solid rgba(0,0,0,0.12)',
-                  boxShadow: isDarkMode
-                    ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
-                    : '0 1px 2px rgba(0,0,0,0.06)',
-                  '&:hover': {
-                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.09)',
-                    border: isDarkMode
-                      ? '1px solid rgba(255,255,255,0.18)'
-                      : '1px solid rgba(0,0,0,0.18)',
-                  },
+                  width: '1px',
+                  my: 0.625,
+                  background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
                 }}
-              >
-                Share
-              </Button>
-            </Tooltip>
-            {isLoggedIn && (
-              <Tooltip title="Publish to Roster Hub — share with the community" arrow>
-                <Button
-                  size="small"
-                  onClick={() => {
-                    void encodeRosterToURLShared(roster).then((encoded) => {
-                      setPublishRosterData(encoded);
-                      setPublishDialogOpen(true);
-                    });
-                  }}
+              />
+
+              {/* Share link */}
+              <Tooltip title="Copy read-only share link — opens /rv view" arrow>
+                <ButtonBase
+                  onClick={handleCopyLink}
                   sx={{
+                    display: 'inline-flex',
                     flex: { xs: 1, md: 'none' },
+                    alignItems: 'center',
                     justifyContent: 'center',
-                    borderRadius: '8px',
-                    textTransform: 'none',
+                    gap: 0.625,
+                    px: 1.375,
+                    py: { xs: 1.375, md: 0.875 },
+                    minHeight: { xs: '44px', md: 'auto' },
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
                     fontSize: '0.75rem',
                     fontWeight: 600,
-                    color: isDarkMode ? '#bae6fd' : '#0369a1',
-                    backgroundColor: isDarkMode ? 'rgba(56,189,248,0.1)' : 'rgba(3,105,161,0.06)',
-                    border: isDarkMode
-                      ? '1px solid rgba(56,189,248,0.2)'
-                      : '1px solid rgba(3,105,161,0.2)',
+                    color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                    background: 'transparent',
+                    transition: 'all 0.15s ease',
                     '&:hover': {
-                      backgroundColor: isDarkMode ? 'rgba(56,189,248,0.18)' : 'rgba(3,105,161,0.1)',
+                      color: isDarkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)',
+                      background: isDarkMode
+                        ? 'rgba(255,255,255,0.06)'
+                        : 'rgba(0,0,0,0.04)',
                     },
                   }}
                 >
-                  🏛️ Publish
-                </Button>
+                  <LinkIcon sx={{ fontSize: '0.9rem' }} />
+                  Share
+                </ButtonBase>
               </Tooltip>
-            )}
-            <Tooltip
-              title={
-                savedRosterIdRef.current
-                  ? 'Update this roster in My Rosters'
-                  : 'Save roster to My Rosters (stored locally)'
-              }
-              arrow
-            >
-              <Button
-                size="small"
-                startIcon={<BookmarkIcon />}
-                onClick={handleSaveToMyRosters}
+
+              {/* Publish — logged-in only */}
+              {isLoggedIn && (
+                <>
+                  <Box
+                    sx={{
+                      width: '1px',
+                      my: 0,
+                      background: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                    }}
+                  />
+                  <Tooltip title="Publish to Roster Hub — share with the community" arrow>
+                    <ButtonBase
+                      onClick={() => {
+                        void encodeRosterToURLShared(roster).then((encoded) => {
+                          setPublishRosterData(encoded);
+                          setPublishDialogOpen(true);
+                        });
+                      }}
+                      sx={{
+                        display: 'inline-flex',
+                        flex: { xs: 1, md: 'none' },
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 0.625,
+                        px: 1.5,
+                        py: { xs: 1.375, md: 0.875 },
+                    minHeight: { xs: '44px', md: 'auto' },
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        color: isDarkMode ? 'rgba(147,197,253,0.95)' : 'rgba(29,78,216,0.9)',
+                        background: isDarkMode
+                          ? 'rgba(59,130,246,0.1)'
+                          : 'rgba(59,130,246,0.07)',
+                        transition: 'all 0.15s ease',
+                        '&:hover': {
+                          color: isDarkMode ? '#bfdbfe' : '#1d4ed8',
+                          background: isDarkMode
+                            ? 'rgba(59,130,246,0.18)'
+                            : 'rgba(59,130,246,0.12)',
+                        },
+                      }}
+                    >
+                      🏛️ Publish
+                    </ButtonBase>
+                  </Tooltip>
+                </>
+              )}
+
+              <Box
                 sx={{
-                  flex: { xs: 1, md: 'none' },
+                  width: '1px',
+                  my: 0,
+                  background: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                }}
+              />
+
+              {/* Save */}
+              <Tooltip
+                title={
+                  savedRosterIdRef.current
+                    ? 'Update this roster in My Rosters'
+                    : 'Save roster to My Rosters (stored locally)'
+                }
+                arrow
+              >
+                <ButtonBase
+                  onClick={handleSaveToMyRosters}
+                  sx={{
+                    display: 'inline-flex',
+                    flex: { xs: 1, md: 'none' },
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 0.625,
+                    px: 1.5,
+                    py: { xs: 1.375, md: 0.875 },
+                    minHeight: { xs: '44px', md: 'auto' },
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: isDarkMode ? 'rgba(196,181,253,0.95)' : 'rgba(109,40,217,0.9)',
+                    background: isDarkMode
+                      ? 'rgba(139,92,246,0.1)'
+                      : 'rgba(139,92,246,0.07)',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      color: isDarkMode ? '#ddd6fe' : '#7c3aed',
+                      background: isDarkMode
+                        ? 'rgba(139,92,246,0.18)'
+                        : 'rgba(139,92,246,0.12)',
+                    },
+                  }}
+                >
+                  <BookmarkIcon sx={{ fontSize: '0.9rem' }} />
+                  Save
+                </ButtonBase>
+              </Tooltip>
+            </Box>
+          </Box>
+
+          {/* ── ESOtk Addon Banner ── */}
+          <Tooltip title="Copy roster for ESOtk addon — paste in-game with /esotk roster import" arrow>
+            <ButtonBase
+              onClick={handleExportAddon}
+              sx={{
+                width: '100%',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                px: 2,
+                py: 1.25,
+                borderRadius: '10px',
+                cursor: 'pointer',
+                border: isDarkMode
+                  ? '1px solid rgba(251,191,36,0.18)'
+                  : '1px solid rgba(161,98,7,0.18)',
+                fontFamily: 'inherit',
+                textAlign: 'left',
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, rgba(251,191,36,0.09) 0%, rgba(245,158,11,0.05) 55%, rgba(11,18,32,0.35) 100%)'
+                  : 'linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(245,158,11,0.04) 55%, rgba(255,255,255,0.55) 100%)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                overflow: 'hidden',
+                transition: 'all 0.2s ease',
+                boxShadow: isDarkMode
+                  ? '0 2px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(251,191,36,0.06)'
+                  : '0 1px 4px rgba(0,0,0,0.06)',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '2px',
+                  background: isDarkMode
+                    ? 'linear-gradient(90deg, transparent 0%, rgba(251,191,36,0.65) 25%, rgba(245,158,11,0.9) 55%, transparent 100%)'
+                    : 'linear-gradient(90deg, transparent 0%, rgba(161,98,7,0.4) 25%, rgba(245,158,11,0.65) 55%, transparent 100%)',
+                  borderRadius: '4px 4px 0 0',
+                },
+                '&:hover': {
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, rgba(251,191,36,0.14) 0%, rgba(245,158,11,0.08) 55%, rgba(11,18,32,0.35) 100%)'
+                    : 'linear-gradient(135deg, rgba(251,191,36,0.13) 0%, rgba(245,158,11,0.07) 55%, rgba(255,255,255,0.55) 100%)',
+                  borderColor: isDarkMode
+                    ? 'rgba(251,191,36,0.32)'
+                    : 'rgba(161,98,7,0.3)',
+                  boxShadow: isDarkMode
+                    ? '0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(251,191,36,0.1)'
+                    : '0 2px 8px rgba(161,98,7,0.1)',
+                },
+              }}
+            >
+              {/* Icon box */}
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'center',
-                  borderRadius: '8px',
-                  textTransform: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: isDarkMode ? '#bfdbfe' : '#1d4ed8',
-                  backgroundColor: isDarkMode
-                    ? 'rgba(59,130,246,0.12)'
-                    : 'rgba(59,130,246,0.08)',
+                  flexShrink: 0,
+                  background: isDarkMode
+                    ? 'rgba(251,191,36,0.14)'
+                    : 'rgba(161,98,7,0.1)',
                   border: isDarkMode
-                    ? '1px solid rgba(59,130,246,0.25)'
-                    : '1px solid rgba(59,130,246,0.2)',
-                  '&:hover': {
-                    backgroundColor: isDarkMode
-                      ? 'rgba(59,130,246,0.2)'
-                      : 'rgba(59,130,246,0.14)',
-                    border: isDarkMode
-                      ? '1px solid rgba(59,130,246,0.4)'
-                      : '1px solid rgba(59,130,246,0.35)',
-                  },
+                    ? '1px solid rgba(251,191,36,0.22)'
+                    : '1px solid rgba(161,98,7,0.18)',
                 }}
               >
-                Save
-              </Button>
-            </Tooltip>
-          </Box>
-          {/* end row 2 */}
+                <AddonIcon
+                  sx={{
+                    fontSize: '1.1rem',
+                    color: isDarkMode ? 'rgba(251,191,36,0.92)' : 'rgba(120,70,0,0.88)',
+                  }}
+                />
+              </Box>
+
+              {/* Text content */}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  component="div"
+                  sx={{
+                    fontSize: '0.8125rem',
+                    fontWeight: 700,
+                    lineHeight: 1.25,
+                    color: isDarkMode
+                      ? 'rgba(251,191,36,0.95)'
+                      : 'rgba(120,70,0,0.9)',
+                  }}
+                >
+                  ESOtk Addon Export
+                </Typography>
+                <Typography
+                  component="div"
+                  sx={{
+                    fontSize: '0.7rem',
+                    lineHeight: 1.4,
+                    mt: 0.25,
+                    color: isDarkMode ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.42)',
+                  }}
+                >
+                  Copy roster data · paste in-game with{' '}
+                  <Box
+                    component="code"
+                    sx={{
+                      fontFamily: 'monospace',
+                      fontSize: '0.675rem',
+                      px: 0.5,
+                      py: 0.125,
+                      borderRadius: '4px',
+                      background: isDarkMode
+                        ? 'rgba(251,191,36,0.1)'
+                        : 'rgba(161,98,7,0.08)',
+                      color: isDarkMode
+                        ? 'rgba(251,191,36,0.8)'
+                        : 'rgba(120,70,0,0.75)',
+                    }}
+                  >
+                    /esotk roster import
+                  </Box>
+                </Typography>
+              </Box>
+
+              {/* Action hint icon */}
+              <CopyIcon
+                sx={{
+                  fontSize: '1rem',
+                  flexShrink: 0,
+                  color: isDarkMode ? 'rgba(251,191,36,0.45)' : 'rgba(161,98,7,0.38)',
+                }}
+              />
+            </ButtonBase>
+          </Tooltip>
+
         </Box>
 
         <Box

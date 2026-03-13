@@ -242,6 +242,7 @@ ${downloadBtn}
       open: false,
       host: true,
       strictPort: strictPortConfig,
+      allowedHosts: ['host.docker.internal'],
       headers: {
         'Access-Control-Allow-Origin': '*',
       },
