@@ -18,7 +18,7 @@ interface UseRosterHubReturn {
 
 export function useRosterHub(token: string | undefined): UseRosterHubReturn {
   const [rosters, setRosters] = React.useState<HubRoster[]>([]);
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [hasMore, setHasMore] = React.useState(true);
   const [filters, setFilters] = React.useState<RosterHubFilters>({
