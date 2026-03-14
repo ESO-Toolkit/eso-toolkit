@@ -55,6 +55,7 @@ Feature-specific documentation — [features/](./features/)
 | [Calculations](./features/calculations/) | Worker formulas |
 | [Logger](./features/logger/) | Logging system |
 | [Performance](./features/performance/) | Performance monitoring |
+| [Trial Boss Models](./features/trial-boss-models/) | Trial boss 3D model & texture mapping |
 
 ### Testing
 Testing guides and references — [testing/](./testing/)

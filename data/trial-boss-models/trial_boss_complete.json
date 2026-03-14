@@ -1,0 +1,3422 @@
+{
+  "description": "ESO Trial Boss Complete Asset Mapping \u2014 Models, Textures & Animations",
+  "generated_by": "build_combined_mapping.py",
+  "notes": [
+    "Each creature boss includes: GR2 model geometry, DDS textures (diffuse/normal/specular where found), and related GR2 skeleton/animation files.",
+    "Texture roles: diffuse (base color), normal (surface detail/bump), specular (shininess/reflectivity).",
+    "DDS formats: DXT1 (compressed, no alpha), DXT3/DXT5 (compressed, alpha), DX10 (modern), uncompressed (raw RGBA).",
+    "file_index values can extract specific files: eso-model-extractor extract <mnf> --file-index <fi>",
+    "Humanoid bosses use player-type skeletons with generic player textures (not extractable as standalone creatures).",
+    "Some models have 0 textures found \u2014 ESO stores their textures in a non-adjacent archive region we cannot link without runtime data.",
+    "Dragon models: Living dragon meshes are stored as unnamed multi-part files. BoneDragon_A_Basic is the skeletal dragon reference."
+  ],
+  "trials": {
+    "Hel Ra Citadel": {
+      "location": "Craglorn",
+      "year": 2014,
+      "bosses": [
+        {
+          "name": "Ra Kotu",
+          "model_type": "humanoid",
+          "notes": "Yokedan warrior, uses player-type skeleton"
+        },
+        {
+          "name": "Yokeda Rok'dun",
+          "model_type": "humanoid",
+          "notes": "Yokedan warrior, uses player-type skeleton"
+        },
+        {
+          "name": "The Warrior",
+          "model_type": "humanoid",
+          "notes": "Celestial being, unique humanoid model with celestial armor"
+        }
+      ]
+    },
+    "Aetherian Archive": {
+      "location": "Craglorn",
+      "year": 2014,
+      "bosses": [
+        {
+          "name": "Lightning Storm Atronach",
+          "model_type": "creature",
+          "species": "StormAtronach",
+          "notes": "Storm Atronach creature model. StormAtronach_A_Basic is the standard creature mesh.",
+          "model": {
+            "name": "StormAtronach_A_Basic",
+            "file_index": 547909,
+            "size_kb": 292,
+            "verts": 3668,
+            "tris": 5296
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 547915,
+                "width": 2048,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 2048,
+                "role": "diffuse"
+              },
+              {
+                "file_index": 547917,
+                "width": 512,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 170,
+                "role": "normal"
+              },
+              {
+                "file_index": 547919,
+                "width": 2048,
+                "height": 1024,
+                "format": "uncompressed",
+                "size_kb": 8192,
+                "role": "specular"
+              }
+            ],
+            "additional": [
+              {
+                "file_index": 547921,
+                "width": 512,
+                "height": 256,
+                "format": "uncompressed",
+                "size_kb": 682,
+                "role": "extra_3"
+              },
+              {
+                "file_index": 547923,
+                "width": 2048,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 2048,
+                "role": "extra_4"
+              },
+              {
+                "file_index": 547925,
+                "width": 512,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 170,
+                "role": "extra_5"
+              },
+              {
+                "file_index": 547927,
+                "width": 2048,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 2048,
+                "role": "extra_6"
+              },
+              {
+                "file_index": 547929,
+                "width": 512,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 170,
+                "role": "extra_7"
+              },
+              {
+                "file_index": 547931,
+                "width": 2048,
+                "height": 1024,
+                "format": "uncompressed",
+                "size_kb": 8192,
+                "role": "extra_8"
+              },
+              {
+                "file_index": 547933,
+                "width": 512,
+                "height": 256,
+                "format": "uncompressed",
+                "size_kb": 682,
+                "role": "extra_9"
+              },
+              {
+                "file_index": 547935,
+                "width": 2048,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 2048,
+                "role": "extra_10"
+              },
+              {
+                "file_index": 547937,
+                "width": 512,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 170,
+                "role": "extra_11"
+              },
+              {
+                "file_index": 547939,
+                "width": 2048,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 2048,
+                "role": "extra_12"
+              }
+            ],
+            "total_count": 13
+          },
+          "related_gr2": {
+            "animations": [],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 547907,
+                "size_kb": 36,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 547913,
+                "size_kb": 32,
+                "type": "unknown_gr2"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "StormAtronach_A_Basic",
+              "file_index": 547909,
+              "size_kb": 292,
+              "textures": 13,
+              "has_textures": true
+            },
+            {
+              "name": "StormAtronach_B_Basic",
+              "file_index": 2752805,
+              "size_kb": 257,
+              "textures": 9,
+              "has_textures": true
+            }
+          ]
+        },
+        {
+          "name": "Foundation Stone Atronach",
+          "model_type": "creature",
+          "species": "StoneAtronach",
+          "notes": "Uses the boss-variant Stone Atronach model",
+          "model": {
+            "name": "StoneAtronach_B_Boss",
+            "file_index": 640555,
+            "size_kb": 323,
+            "verts": 3906,
+            "tris": 6884
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 640545,
+                "width": 1024,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 1365,
+                "role": "diffuse"
+              },
+              {
+                "file_index": 640547,
+                "width": 1024,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 1365,
+                "role": "normal"
+              },
+              {
+                "file_index": 640551,
+                "width": 4096,
+                "height": 4096,
+                "format": "DXT1",
+                "size_kb": 10922,
+                "role": "specular"
+              }
+            ],
+            "additional": [
+              {
+                "file_index": 640553,
+                "width": 4096,
+                "height": 4096,
+                "format": "DXT5",
+                "size_kb": 21845,
+                "role": "unknown"
+              },
+              {
+                "file_index": 640557,
+                "width": 1024,
+                "height": 512,
+                "format": "DXT5",
+                "size_kb": 512,
+                "role": "extra_4"
+              },
+              {
+                "file_index": 640559,
+                "width": 1024,
+                "height": 512,
+                "format": "DXT5",
+                "size_kb": 512,
+                "role": "extra_5"
+              },
+              {
+                "file_index": 640565,
+                "width": 256,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 85,
+                "role": "extra_6"
+              },
+              {
+                "file_index": 640575,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT1",
+                "size_kb": 2730,
+                "role": "extra_7"
+              },
+              {
+                "file_index": 640577,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "extra_8"
+              },
+              {
+                "file_index": 640579,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "extra_9"
+              }
+            ],
+            "total_count": 10
+          },
+          "related_gr2": {
+            "animations": [
+              {
+                "file_index": 640585,
+                "size_kb": 37
+              }
+            ],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 640561,
+                "size_kb": 54,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 640563,
+                "size_kb": 42,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 640581,
+                "size_kb": 412,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 640583,
+                "size_kb": 30,
+                "type": "unknown_gr2"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "StoneAtronach_C_Jungle",
+              "file_index": 1530099,
+              "size_kb": 325,
+              "textures": 4,
+              "has_textures": true
+            },
+            {
+              "name": "StoneAtronach_B_Boss",
+              "file_index": 640555,
+              "size_kb": 323,
+              "textures": 10,
+              "has_textures": true
+            },
+            {
+              "name": "StoneAtronach_A_Basic",
+              "file_index": 614195,
+              "size_kb": 319,
+              "textures": 20,
+              "has_textures": true
+            }
+          ]
+        },
+        {
+          "name": "Varlariel",
+          "model_type": "humanoid",
+          "notes": "High Elf NPC, uses player-type skeleton"
+        },
+        {
+          "name": "The Mage",
+          "model_type": "humanoid",
+          "notes": "Celestial being, unique humanoid model"
+        }
+      ]
+    },
+    "Sanctum Ophidia": {
+      "location": "Craglorn",
+      "year": 2014,
+      "bosses": [
+        {
+          "name": "Stonebreaker",
+          "model_type": "creature",
+          "species": "Troll",
+          "notes": "Craglorn-specific boss troll variant",
+          "model": {
+            "name": "Troll_Craglorn_Boss",
+            "file_index": 672165,
+            "size_kb": 875,
+            "verts": 11614,
+            "tris": 13474
+          },
+          "textures": {
+            "primary": [],
+            "additional": [
+              {
+                "file_index": 672159,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT1",
+                "size_kb": 2730,
+                "role": "unknown"
+              },
+              {
+                "file_index": 672161,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "unknown"
+              },
+              {
+                "file_index": 672163,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "unknown"
+              },
+              {
+                "file_index": 672187,
+                "width": 128,
+                "height": 128,
+                "format": "DXT5",
+                "size_kb": 16,
+                "role": "extra_3"
+              },
+              {
+                "file_index": 672193,
+                "width": 128,
+                "height": 128,
+                "format": "uncompressed",
+                "size_kb": 64,
+                "role": "extra_4"
+              }
+            ],
+            "total_count": 5
+          },
+          "related_gr2": {
+            "animations": [
+              {
+                "file_index": 672195,
+                "size_kb": 30
+              }
+            ],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 672169,
+                "size_kb": 40,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 672177,
+                "size_kb": 69,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 672185,
+                "size_kb": 38,
+                "type": "unknown_gr2"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "Troll_Craglorn_Boss",
+              "file_index": 672165,
+              "size_kb": 875,
+              "textures": 5,
+              "has_textures": true
+            },
+            {
+              "name": "Troll_Armored_Boss",
+              "file_index": 558737,
+              "size_kb": 724,
+              "textures": 3,
+              "has_textures": true
+            },
+            {
+              "name": "Troll_A_Basic",
+              "file_index": 558735,
+              "size_kb": 595,
+              "textures": 3,
+              "has_textures": true
+            }
+          ]
+        },
+        {
+          "name": "Ozara",
+          "model_type": "creature",
+          "species": "Lamia",
+          "notes": "Boss variant Lamia Queen",
+          "model": {
+            "name": "Lamia_A_Boss",
+            "file_index": 527791,
+            "size_kb": 248,
+            "verts": 2953,
+            "tris": 4554
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 527797,
+                "width": 256,
+                "height": 256,
+                "format": "DXT1",
+                "size_kb": 42,
+                "role": "diffuse"
+              },
+              {
+                "file_index": 527801,
+                "width": 256,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 85,
+                "role": "normal"
+              }
+            ],
+            "additional": null,
+            "total_count": 2
+          },
+          "related_gr2": {
+            "animations": [],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 527787,
+                "size_kb": 244,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 527789,
+                "size_kb": 33,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 527817,
+                "size_kb": 46,
+                "type": "unknown_gr2"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "Lamia_A_Boss",
+              "file_index": 527791,
+              "size_kb": 248,
+              "textures": 2,
+              "has_textures": true
+            },
+            {
+              "name": "Lamia_B_Basic",
+              "file_index": 527787,
+              "size_kb": 244,
+              "textures": 2,
+              "has_textures": true
+            }
+          ]
+        },
+        {
+          "name": "Possessed Mantikora",
+          "model_type": "creature",
+          "species": "Mantikora",
+          "notes": "Boss variant Mantikora",
+          "model": {
+            "name": "Mantikora_B_Boss",
+            "file_index": 651175,
+            "size_kb": 480,
+            "verts": 6030,
+            "tris": 9072
+          },
+          "textures": {
+            "primary": [],
+            "additional": [
+              {
+                "file_index": 651169,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT1",
+                "size_kb": 2730,
+                "role": "unknown"
+              },
+              {
+                "file_index": 651171,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "unknown"
+              },
+              {
+                "file_index": 651173,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "unknown"
+              },
+              {
+                "file_index": 651195,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "extra_3"
+              }
+            ],
+            "total_count": 4
+          },
+          "related_gr2": {
+            "animations": [
+              {
+                "file_index": 651165,
+                "size_kb": 60
+              },
+              {
+                "file_index": 651167,
+                "size_kb": 62
+              },
+              {
+                "file_index": 651177,
+                "size_kb": 38
+              },
+              {
+                "file_index": 651179,
+                "size_kb": 35
+              },
+              {
+                "file_index": 651181,
+                "size_kb": 34
+              },
+              {
+                "file_index": 651183,
+                "size_kb": 33
+              },
+              {
+                "file_index": 651189,
+                "size_kb": 112
+              },
+              {
+                "file_index": 651191,
+                "size_kb": 40
+              },
+              {
+                "file_index": 651201,
+                "size_kb": 54
+              }
+            ],
+            "skeletons": [],
+            "other": []
+          },
+          "all_variants": [
+            {
+              "name": "Mantikora_B_Boss",
+              "file_index": 651175,
+              "size_kb": 480,
+              "textures": 4,
+              "has_textures": true
+            },
+            {
+              "name": "Mantikora_Mehrunes_Boss",
+              "file_index": 2669831,
+              "size_kb": 472,
+              "textures": 18,
+              "has_textures": true
+            },
+            {
+              "name": "Mantikora_B_Basic",
+              "file_index": 2664655,
+              "size_kb": 340,
+              "textures": 3,
+              "has_textures": true
+            },
+            {
+              "name": "Mantikora_A_Basic",
+              "file_index": 639663,
+              "size_kb": 340,
+              "textures": 3,
+              "has_textures": true
+            }
+          ]
+        },
+        {
+          "name": "The Serpent",
+          "model_type": "humanoid",
+          "notes": "Celestial being, unique serpentine humanoid model. Transform phase uses GiantSnake-like model."
+        }
+      ]
+    },
+    "Maw of Lorkhaj": {
+      "location": "Reaper's March",
+      "year": 2016,
+      "bosses": [
+        {
+          "name": "Zhaj'hassa the Forgotten",
+          "model_type": "creature",
+          "species": "CatLargeSenche",
+          "notes": "Dro-m'Athra Senche boss. Uses CatLargeSenche_Wraithhaunt_Base (wraith/spectral variant matches Dro-m'Athra theme).",
+          "model": {
+            "name": "CatLargeSenche_Wraithhaunt_Base",
+            "file_index": 2739405,
+            "size_kb": 1458,
+            "verts": 19147,
+            "tris": 27962
+          },
+          "textures": {
+            "primary": [],
+            "additional": [
+              {
+                "file_index": 2739395,
+                "width": 1024,
+                "height": 1024,
+                "format": "DXT1",
+                "size_kb": 682,
+                "role": "unknown"
+              }
+            ],
+            "total_count": 1
+          },
+          "related_gr2": {
+            "animations": [],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 2739397,
+                "size_kb": 156,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2739401,
+                "size_kb": 301,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2739407,
+                "size_kb": 153,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2739411,
+                "size_kb": 161,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2739415,
+                "size_kb": 130,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2739419,
+                "size_kb": 152,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2739423,
+                "size_kb": 152,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2739425,
+                "size_kb": 180,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2739429,
+                "size_kb": 109,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2739433,
+                "size_kb": 34,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2739435,
+                "size_kb": 112,
+                "type": "unknown_gr2"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "CatLargeSenche_Wraithhaunt_Base",
+              "file_index": 2739405,
+              "size_kb": 1458,
+              "textures": 1,
+              "has_textures": true
+            },
+            {
+              "name": "CatLargeSenche_FrostAtronach",
+              "file_index": 2360475,
+              "size_kb": 1402,
+              "textures": 3,
+              "has_textures": true
+            },
+            {
+              "name": "CatLargeSenche_A_DragonCult",
+              "file_index": 1550701,
+              "size_kb": 476,
+              "textures": 8,
+              "has_textures": true
+            }
+          ]
+        },
+        {
+          "name": "S'kinrai",
+          "model_type": "humanoid",
+          "notes": "Dro-m'Athra Khajiit, humanoid player-type skeleton with Dro-m'Athra effects"
+        },
+        {
+          "name": "Vashai",
+          "model_type": "humanoid",
+          "notes": "Dro-m'Athra Khajiit, humanoid player-type skeleton with Dro-m'Athra effects"
+        },
+        {
+          "name": "Rakkhat",
+          "model_type": "humanoid",
+          "notes": "Dro-m'Athra Khajiit lord, humanoid with unique Dro-m'Athra appearance"
+        }
+      ]
+    },
+    "Halls of Fabrication": {
+      "location": "Vvardenfell (Morrowind)",
+      "year": 2017,
+      "bosses": [
+        {
+          "name": "Hunter-Killer Fabricants",
+          "model_type": "creature",
+          "species": "VerminousFabricant",
+          "notes": "Pack of Fabricant creatures. Same base model as VerminousFabricant.",
+          "model": {
+            "name": "VerminousFabricant_A_Basic",
+            "file_index": 1052301,
+            "size_kb": 875,
+            "verts": 11390,
+            "tris": 16347
+          },
+          "textures": {
+            "primary": [],
+            "additional": null,
+            "total_count": 0,
+            "note": "Textures not found via adjacent file scan \u2014 stored in non-adjacent archive region"
+          },
+          "related_gr2": {
+            "animations": [
+              {
+                "file_index": 1052305,
+                "size_kb": 34
+              },
+              {
+                "file_index": 1052307,
+                "size_kb": 33
+              },
+              {
+                "file_index": 1052309,
+                "size_kb": 36
+              },
+              {
+                "file_index": 1052311,
+                "size_kb": 37
+              },
+              {
+                "file_index": 1052313,
+                "size_kb": 100
+              },
+              {
+                "file_index": 1052315,
+                "size_kb": 35
+              },
+              {
+                "file_index": 1052317,
+                "size_kb": 33
+              },
+              {
+                "file_index": 1052319,
+                "size_kb": 33
+              },
+              {
+                "file_index": 1052321,
+                "size_kb": 33
+              },
+              {
+                "file_index": 1052323,
+                "size_kb": 40
+              },
+              {
+                "file_index": 1052325,
+                "size_kb": 40
+              },
+              {
+                "file_index": 1052327,
+                "size_kb": 33
+              },
+              {
+                "file_index": 1052329,
+                "size_kb": 35
+              },
+              {
+                "file_index": 1052331,
+                "size_kb": 32
+              }
+            ],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 1052303,
+                "size_kb": 30,
+                "type": "unknown_gr2"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Pinnacle Factotum",
+          "model_type": "creature",
+          "species": "DwemerCenturion",
+          "notes": "Clockwork City factotum automaton. Uses DwemerCenturion skeleton with Clockwork City textures.",
+          "model": {
+            "name": "DwemerCenturion_B_Basic",
+            "file_index": 862681,
+            "size_kb": 623,
+            "verts": 8210,
+            "tris": 9076
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 862673,
+                "width": 256,
+                "height": 512,
+                "format": "DXT5",
+                "size_kb": 170,
+                "role": "diffuse"
+              },
+              {
+                "file_index": 862675,
+                "width": 512,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 682,
+                "role": "normal"
+              },
+              {
+                "file_index": 862677,
+                "width": 128,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 42,
+                "role": "specular"
+              }
+            ],
+            "additional": [
+              {
+                "file_index": 862683,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT1",
+                "size_kb": 2730,
+                "role": "extra_3"
+              },
+              {
+                "file_index": 862685,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "extra_4"
+              },
+              {
+                "file_index": 862689,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT1",
+                "size_kb": 2730,
+                "role": "extra_5"
+              },
+              {
+                "file_index": 862691,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "extra_6"
+              }
+            ],
+            "total_count": 7
+          },
+          "related_gr2": {
+            "animations": [
+              {
+                "file_index": 862679,
+                "size_kb": 59
+              }
+            ],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 862695,
+                "size_kb": 566,
+                "type": "unknown_gr2"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "DwemerCenturion_B_Basic",
+              "file_index": 862681,
+              "size_kb": 623,
+              "textures": 7,
+              "has_textures": true
+            },
+            {
+              "name": "DwemerCenturion_C_Basic",
+              "file_index": 862695,
+              "size_kb": 566,
+              "textures": 3,
+              "has_textures": true
+            },
+            {
+              "name": "DwemerCenturion_A_Basic",
+              "file_index": 548237,
+              "size_kb": 550,
+              "textures": 5,
+              "has_textures": true
+            }
+          ]
+        },
+        {
+          "name": "Archcustodian",
+          "model_type": "creature",
+          "species": "DwemerCenturion",
+          "notes": "Large factotum automaton. Uses DwemerCenturion skeleton, same model family as Pinnacle Factotum.",
+          "model": {
+            "name": "DwemerCenturion_C_Basic",
+            "file_index": 862695,
+            "size_kb": 566,
+            "verts": 7456,
+            "tris": 7854
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 862685,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "diffuse"
+              },
+              {
+                "file_index": 862689,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT1",
+                "size_kb": 2730,
+                "role": "normal"
+              },
+              {
+                "file_index": 862691,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "specular"
+              }
+            ],
+            "additional": null,
+            "total_count": 3
+          },
+          "all_variants": [
+            {
+              "name": "DwemerCenturion_B_Basic",
+              "file_index": 862681,
+              "size_kb": 623,
+              "textures": 7,
+              "has_textures": true
+            },
+            {
+              "name": "DwemerCenturion_C_Basic",
+              "file_index": 862695,
+              "size_kb": 566,
+              "textures": 3,
+              "has_textures": true
+            },
+            {
+              "name": "DwemerCenturion_A_Basic",
+              "file_index": 548237,
+              "size_kb": 550,
+              "textures": 5,
+              "has_textures": true
+            }
+          ]
+        },
+        {
+          "name": "Assembly General",
+          "model_type": "creature",
+          "species": "ClockWorkImperfect",
+          "notes": "The Imperfect - massive Clockwork construct, unique boss model",
+          "model": {
+            "name": "ClockWorkImperfect_A_Basic",
+            "file_index": 1158669,
+            "size_kb": 2810,
+            "verts": 37628,
+            "tris": 48483
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 1158673,
+                "width": 2048,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 2730,
+                "role": "diffuse"
+              },
+              {
+                "file_index": 1158675,
+                "width": 512,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 170,
+                "role": "normal"
+              },
+              {
+                "file_index": 1158677,
+                "width": 2048,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 2730,
+                "role": "specular"
+              }
+            ],
+            "additional": [
+              {
+                "file_index": 1158679,
+                "width": 512,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 170,
+                "role": "extra_3"
+              },
+              {
+                "file_index": 1158681,
+                "width": 2048,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 2730,
+                "role": "extra_4"
+              },
+              {
+                "file_index": 1158683,
+                "width": 512,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 170,
+                "role": "extra_5"
+              },
+              {
+                "file_index": 1158685,
+                "width": 2048,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 2730,
+                "role": "extra_6"
+              },
+              {
+                "file_index": 1158687,
+                "width": 512,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 170,
+                "role": "extra_7"
+              },
+              {
+                "file_index": 1158689,
+                "width": 2048,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 2730,
+                "role": "extra_8"
+              },
+              {
+                "file_index": 1158691,
+                "width": 512,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 170,
+                "role": "extra_9"
+              },
+              {
+                "file_index": 1158693,
+                "width": 2048,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 2730,
+                "role": "extra_10"
+              },
+              {
+                "file_index": 1158695,
+                "width": 512,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 170,
+                "role": "extra_11"
+              },
+              {
+                "file_index": 1158697,
+                "width": 2048,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 2730,
+                "role": "extra_12"
+              },
+              {
+                "file_index": 1158699,
+                "width": 512,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 170,
+                "role": "extra_13"
+              }
+            ],
+            "total_count": 14
+          }
+        },
+        {
+          "name": "The Hunter",
+          "model_type": "creature",
+          "species": "ClockWorkTitan",
+          "notes": "Fabrication-created titan, similar to Clockwork Titan model",
+          "model": {
+            "name": "ClockWorkTitan_A_Basic",
+            "file_index": 1154543,
+            "size_kb": 2921,
+            "verts": 39807,
+            "tris": 42876
+          },
+          "textures": {
+            "primary": [],
+            "additional": null,
+            "total_count": 0,
+            "note": "Textures not found via adjacent file scan \u2014 stored in non-adjacent archive region"
+          },
+          "related_gr2": {
+            "animations": [],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 1154545,
+                "size_kb": 200,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154547,
+                "size_kb": 38,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154549,
+                "size_kb": 17,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154551,
+                "size_kb": 139,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154553,
+                "size_kb": 99,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154555,
+                "size_kb": 42,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154557,
+                "size_kb": 42,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154559,
+                "size_kb": 45,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154561,
+                "size_kb": 47,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154563,
+                "size_kb": 67,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154565,
+                "size_kb": 50,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154567,
+                "size_kb": 39,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154569,
+                "size_kb": 74,
+                "type": "unknown_gr2"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "Asylum Sanctorium": {
+      "location": "Clockwork City",
+      "year": 2017,
+      "bosses": [
+        {
+          "name": "Saint Olms the Just",
+          "model_type": "creature",
+          "species": "ClockWorkTitan",
+          "notes": "Gigantic clockwork titan, same model species as The Hunter in Halls of Fabrication. Main boss - always fought.",
+          "model": {
+            "name": "ClockWorkTitan_A_Basic",
+            "file_index": 1154543,
+            "size_kb": 2921,
+            "verts": 39807,
+            "tris": 42876
+          },
+          "textures": {
+            "primary": [],
+            "additional": null,
+            "total_count": 0,
+            "note": "Textures not found via adjacent file scan \u2014 stored in non-adjacent archive region"
+          },
+          "related_gr2": {
+            "animations": [],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 1154545,
+                "size_kb": 200,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154547,
+                "size_kb": 38,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154549,
+                "size_kb": 17,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154551,
+                "size_kb": 139,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154553,
+                "size_kb": 99,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154555,
+                "size_kb": 42,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154557,
+                "size_kb": 42,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154559,
+                "size_kb": 45,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154561,
+                "size_kb": 47,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154563,
+                "size_kb": 67,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154565,
+                "size_kb": 50,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154567,
+                "size_kb": 39,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1154569,
+                "size_kb": 74,
+                "type": "unknown_gr2"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Saint Felms the Bold",
+          "model_type": "creature",
+          "species": "DwemerCenturion",
+          "notes": "Dual-wielding factotum warrior. Optional boss \u00e2\u20ac\u201d can be fought separately or alongside Saint Olms. Same species as Pinnacle Factotum in Halls of Fabrication.",
+          "model": {
+            "name": "DwemerCenturion_B_Basic",
+            "file_index": 862681,
+            "size_kb": 623,
+            "verts": 8210,
+            "tris": 9076
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 862673,
+                "width": 256,
+                "height": 512,
+                "format": "DXT5",
+                "size_kb": 170,
+                "role": "diffuse"
+              },
+              {
+                "file_index": 862675,
+                "width": 512,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 682,
+                "role": "normal"
+              },
+              {
+                "file_index": 862677,
+                "width": 128,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 42,
+                "role": "specular"
+              }
+            ],
+            "additional": [
+              {
+                "file_index": 862683,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT1",
+                "size_kb": 2730,
+                "role": "extra_3"
+              },
+              {
+                "file_index": 862685,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "extra_4"
+              },
+              {
+                "file_index": 862689,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT1",
+                "size_kb": 2730,
+                "role": "extra_5"
+              },
+              {
+                "file_index": 862691,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "extra_6"
+              }
+            ],
+            "total_count": 7
+          },
+          "related_gr2": {
+            "animations": [
+              {
+                "file_index": 862679,
+                "size_kb": 59
+              }
+            ],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 862695,
+                "size_kb": 566,
+                "type": "unknown_gr2"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "DwemerCenturion_B_Basic",
+              "file_index": 862681,
+              "size_kb": 623,
+              "textures": 7,
+              "has_textures": true
+            },
+            {
+              "name": "DwemerCenturion_C_Basic",
+              "file_index": 862695,
+              "size_kb": 566,
+              "textures": 3,
+              "has_textures": true
+            }
+          ]
+        },
+        {
+          "name": "Saint Llothis the Pious",
+          "model_type": "creature",
+          "species": "DwemerCenturion",
+          "notes": "Factotum poison mage. Optional boss \u00e2\u20ac\u201d can be fought separately or alongside Saint Olms. Same species as Archcustodian in Halls of Fabrication.",
+          "model": {
+            "name": "DwemerCenturion_C_Basic",
+            "file_index": 862695,
+            "size_kb": 566,
+            "verts": 7456,
+            "tris": 7854
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 862685,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "diffuse"
+              },
+              {
+                "file_index": 862689,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT1",
+                "size_kb": 2730,
+                "role": "normal"
+              },
+              {
+                "file_index": 862691,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "specular"
+              }
+            ],
+            "additional": null,
+            "total_count": 3
+          },
+          "all_variants": [
+            {
+              "name": "DwemerCenturion_B_Basic",
+              "file_index": 862681,
+              "size_kb": 623,
+              "textures": 7,
+              "has_textures": true
+            },
+            {
+              "name": "DwemerCenturion_C_Basic",
+              "file_index": 862695,
+              "size_kb": 566,
+              "textures": 3,
+              "has_textures": true
+            }
+          ]
+        }
+      ]
+    },
+    "Cloudrest": {
+      "location": "Summerset",
+      "year": 2018,
+      "bosses": [
+        {
+          "name": "Shade of Galenwe",
+          "model_type": "humanoid",
+          "notes": "Welkynar knight shade, humanoid with gryphon rider armor"
+        },
+        {
+          "name": "Shade of Siroria",
+          "model_type": "humanoid",
+          "notes": "Welkynar knight shade, humanoid with gryphon rider armor"
+        },
+        {
+          "name": "Shade of Relequen",
+          "model_type": "humanoid",
+          "notes": "Welkynar knight shade, humanoid with gryphon rider armor"
+        },
+        {
+          "name": "Z'Maja",
+          "model_type": "creature",
+          "species": "Sload",
+          "notes": "Sea Sload boss. Uses Sload_A_Basic creature mesh (jellyfish-like aberration model).",
+          "model": {
+            "name": "Sload_A_Basic",
+            "file_index": 1182249,
+            "size_kb": 887,
+            "verts": 11222,
+            "tris": 18852
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 1182253,
+                "width": 1024,
+                "height": 512,
+                "format": "DXT1",
+                "size_kb": 341,
+                "role": "normal"
+              },
+              {
+                "file_index": 1182255,
+                "width": 1024,
+                "height": 512,
+                "format": "DXT5",
+                "size_kb": 682,
+                "role": "specular"
+              }
+            ],
+            "additional": [
+              {
+                "file_index": 1182243,
+                "width": 256,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 85,
+                "role": "unknown"
+              },
+              {
+                "file_index": 1182257,
+                "width": 128,
+                "height": 64,
+                "format": "DXT5",
+                "size_kb": 10,
+                "role": "extra_3"
+              },
+              {
+                "file_index": 1182259,
+                "width": 1024,
+                "height": 512,
+                "format": "DXT5",
+                "size_kb": 682,
+                "role": "extra_4"
+              },
+              {
+                "file_index": 1182263,
+                "width": 1024,
+                "height": 512,
+                "format": "DXT5",
+                "size_kb": 682,
+                "role": "extra_5"
+              },
+              {
+                "file_index": 1182267,
+                "width": 1024,
+                "height": 512,
+                "format": "DXT1",
+                "size_kb": 341,
+                "role": "extra_6"
+              },
+              {
+                "file_index": 1182269,
+                "width": 128,
+                "height": 64,
+                "format": "DXT1",
+                "size_kb": 5,
+                "role": "extra_7"
+              }
+            ],
+            "total_count": 8
+          },
+          "related_gr2": {
+            "animations": [],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 1182251,
+                "size_kb": 46,
+                "type": "unknown_gr2"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Gryphon (Welkynar Mounts)",
+          "model_type": "creature",
+          "species": "Gryphon",
+          "notes": "Welkynar gryphon mounts appear as mini-bosses. Uses Gryphon_A_Boss model.",
+          "model": {
+            "name": "Gryphon_A_Boss",
+            "file_index": 2702925,
+            "size_kb": 2091,
+            "verts": 27647,
+            "tris": 37104
+          },
+          "textures": {
+            "primary": [],
+            "additional": [
+              {
+                "file_index": 2702919,
+                "width": 4096,
+                "height": 4096,
+                "format": "DXT5",
+                "size_kb": 21845,
+                "role": "unknown"
+              },
+              {
+                "file_index": 2702921,
+                "width": 4096,
+                "height": 4096,
+                "format": "DXT5",
+                "size_kb": 21845,
+                "role": "unknown"
+              },
+              {
+                "file_index": 2702923,
+                "width": 4096,
+                "height": 4096,
+                "format": "DXT5",
+                "size_kb": 21845,
+                "role": "unknown"
+              },
+              {
+                "file_index": 2702929,
+                "width": 576,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 144,
+                "role": "extra_3"
+              },
+              {
+                "file_index": 2702931,
+                "width": 576,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 144,
+                "role": "extra_4"
+              },
+              {
+                "file_index": 2702933,
+                "width": 576,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 144,
+                "role": "extra_5"
+              },
+              {
+                "file_index": 2702935,
+                "width": 576,
+                "height": 256,
+                "format": "uncompressed",
+                "size_kb": 576,
+                "role": "extra_6"
+              },
+              {
+                "file_index": 2702951,
+                "width": 576,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 144,
+                "role": "extra_7"
+              },
+              {
+                "file_index": 2702953,
+                "width": 576,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 144,
+                "role": "extra_8"
+              },
+              {
+                "file_index": 2702955,
+                "width": 576,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 144,
+                "role": "extra_9"
+              }
+            ],
+            "total_count": 10
+          },
+          "related_gr2": {
+            "animations": [],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 2702937,
+                "size_kb": 188,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2702939,
+                "size_kb": 213,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2702941,
+                "size_kb": 213,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2702943,
+                "size_kb": 188,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2702945,
+                "size_kb": 188,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2702947,
+                "size_kb": 3451,
+                "type": "unknown_gr2"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "Gryphon_A_Tame",
+              "file_index": 1227373,
+              "size_kb": 2120,
+              "textures": 5,
+              "has_textures": true
+            },
+            {
+              "name": "Gryphon_A_Boss",
+              "file_index": 2702925,
+              "size_kb": 2091,
+              "textures": 10,
+              "has_textures": true
+            },
+            {
+              "name": "Gryphon_A_Basic",
+              "file_index": 1191791,
+              "size_kb": 2049,
+              "textures": 3,
+              "has_textures": true
+            }
+          ]
+        }
+      ]
+    },
+    "Sunspire": {
+      "location": "Northern Elsweyr",
+      "year": 2019,
+      "bosses": [
+        {
+          "name": "Yolnahkriin",
+          "model_type": "creature",
+          "species": "Dragon",
+          "notes": "Fire Dragon. ESO dragons do not use 'Dragon' in their GR2 mesh names. Living dragon models are stored as unnamed multi-part files that cannot be identified by name search. BoneDragon_A_Basic (fi=1167549, 3187KB, 41991v) is the skeletal dragon reference model with the same bone structure.",
+          "model": {
+            "name": "BoneDragon_A_Basic",
+            "file_index": 1167549,
+            "size_kb": 3187,
+            "verts": 41991,
+            "tris": 63786,
+            "note": "reference_skeleton"
+          },
+          "textures": {
+            "primary": [],
+            "additional": null,
+            "total_count": 0,
+            "note": "Textures not found via adjacent file scan \u2014 stored in non-adjacent archive region"
+          },
+          "related_gr2": {
+            "animations": [],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 1167541,
+                "size_kb": 1435,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167543,
+                "size_kb": 1502,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167551,
+                "size_kb": 38,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167571,
+                "size_kb": 113,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167573,
+                "size_kb": 113,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167575,
+                "size_kb": 124,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167577,
+                "size_kb": 114,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167579,
+                "size_kb": 118,
+                "type": "unknown_gr2"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Lokkestiiz",
+          "model_type": "creature",
+          "species": "Dragon",
+          "notes": "Ice Dragon. ESO dragons do not use 'Dragon' in their GR2 mesh names. Living dragon models are stored as unnamed multi-part files that cannot be identified by name search. BoneDragon_A_Basic (fi=1167549, 3187KB, 41991v) is the skeletal dragon reference model with the same bone structure.",
+          "model": {
+            "name": "BoneDragon_A_Basic",
+            "file_index": 1167549,
+            "size_kb": 3187,
+            "verts": 41991,
+            "tris": 63786,
+            "note": "reference_skeleton"
+          },
+          "textures": {
+            "primary": [],
+            "additional": null,
+            "total_count": 0,
+            "note": "Textures not found via adjacent file scan \u2014 stored in non-adjacent archive region"
+          },
+          "related_gr2": {
+            "animations": [],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 1167541,
+                "size_kb": 1435,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167543,
+                "size_kb": 1502,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167551,
+                "size_kb": 38,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167571,
+                "size_kb": 113,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167573,
+                "size_kb": 113,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167575,
+                "size_kb": 124,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167577,
+                "size_kb": 114,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167579,
+                "size_kb": 118,
+                "type": "unknown_gr2"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Nahviintaas",
+          "model_type": "creature",
+          "species": "Dragon",
+          "notes": "Storm Dragon (final boss). ESO dragons do not use 'Dragon' in their GR2 mesh names. Living dragon models are stored as unnamed multi-part files that cannot be identified by name search. BoneDragon_A_Basic (fi=1167549, 3187KB, 41991v) is the skeletal dragon reference model with the same bone structure.",
+          "model": {
+            "name": "BoneDragon_A_Basic",
+            "file_index": 1167549,
+            "size_kb": 3187,
+            "verts": 41991,
+            "tris": 63786,
+            "note": "reference_skeleton"
+          },
+          "textures": {
+            "primary": [],
+            "additional": null,
+            "total_count": 0,
+            "note": "Textures not found via adjacent file scan \u2014 stored in non-adjacent archive region"
+          },
+          "related_gr2": {
+            "animations": [],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 1167541,
+                "size_kb": 1435,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167543,
+                "size_kb": 1502,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167551,
+                "size_kb": 38,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167571,
+                "size_kb": 113,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167573,
+                "size_kb": 113,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167575,
+                "size_kb": 124,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167577,
+                "size_kb": 114,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 1167579,
+                "size_kb": 118,
+                "type": "unknown_gr2"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "Kyne's Aegis": {
+      "location": "Western Skyrim (Greymoor)",
+      "year": 2020,
+      "bosses": [
+        {
+          "name": "Yandir the Butcher",
+          "model_type": "creature",
+          "species": "Giant",
+          "notes": "Sea Giant. Uses the Giant model with Nordic/Sea Giant texture variant.",
+          "model": {
+            "name": "Giant_B_Basic",
+            "file_index": 535619,
+            "size_kb": 443,
+            "verts": 5581,
+            "tris": 8061
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 535613,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "diffuse"
+              },
+              {
+                "file_index": 535615,
+                "width": 4096,
+                "height": 4096,
+                "format": "DXT5",
+                "size_kb": 21845,
+                "role": "normal"
+              },
+              {
+                "file_index": 535617,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "specular"
+              }
+            ],
+            "additional": null,
+            "total_count": 3
+          },
+          "all_variants": [
+            {
+              "name": "Giant_Plague_Basic",
+              "file_index": 1192235,
+              "size_kb": 635,
+              "textures": 2,
+              "has_textures": true
+            },
+            {
+              "name": "Giant_Snow_Basic",
+              "file_index": 671189,
+              "size_kb": 451,
+              "textures": 3,
+              "has_textures": true
+            },
+            {
+              "name": "Giant_B_Basic",
+              "file_index": 535619,
+              "size_kb": 443,
+              "textures": 3,
+              "has_textures": true
+            },
+            {
+              "name": "Giant_A_Basic",
+              "file_index": 170497,
+              "size_kb": 441,
+              "textures": 12,
+              "has_textures": true
+            }
+          ]
+        },
+        {
+          "name": "Captain Vrol",
+          "model_type": "humanoid",
+          "notes": "Vampire sea captain, humanoid NPC model"
+        },
+        {
+          "name": "Lord Falgravn",
+          "model_type": "creature",
+          "species": "VampireLord",
+          "notes": "Transforms into Vampire Lord form. Uses VampireLord Lurker Boss variant.",
+          "model": {
+            "name": "VampireLord_Lurker_Boss",
+            "file_index": 2823085,
+            "size_kb": 1412,
+            "verts": 18133,
+            "tris": 30072
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 2823075,
+                "width": 512,
+                "height": 512,
+                "format": "DXT5",
+                "size_kb": 341,
+                "role": "diffuse"
+              },
+              {
+                "file_index": 2823109,
+                "width": 256,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 85,
+                "role": "normal"
+              },
+              {
+                "file_index": 2823111,
+                "width": 1024,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 1365,
+                "role": "specular"
+              }
+            ],
+            "additional": [
+              {
+                "file_index": 2823113,
+                "width": 576,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 144,
+                "role": "extra_3"
+              },
+              {
+                "file_index": 2823115,
+                "width": 576,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 144,
+                "role": "extra_4"
+              }
+            ],
+            "total_count": 5
+          },
+          "related_gr2": {
+            "animations": [],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 2823083,
+                "size_kb": 846,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2823087,
+                "size_kb": 49,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2823091,
+                "size_kb": 385,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2823095,
+                "size_kb": 69,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2823101,
+                "size_kb": 35,
+                "type": "unknown_gr2"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "VampireLord_A_Wings",
+              "file_index": 2400125,
+              "size_kb": 2960,
+              "textures": 4,
+              "has_textures": true
+            },
+            {
+              "name": "VampireLord_C_Basic",
+              "file_index": 2494349,
+              "size_kb": 2281,
+              "textures": 3,
+              "has_textures": true
+            },
+            {
+              "name": "VampireLord_B_Female",
+              "file_index": 2587447,
+              "size_kb": 2171,
+              "textures": 5,
+              "has_textures": true
+            },
+            {
+              "name": "VampireLord_A_Basic",
+              "file_index": 1573229,
+              "size_kb": 2152,
+              "textures": 2,
+              "has_textures": true
+            },
+            {
+              "name": "VampireLord_A_Female",
+              "file_index": 2531925,
+              "size_kb": 2139,
+              "textures": 0,
+              "has_textures": false
+            },
+            {
+              "name": "VampireLord_B_Basic",
+              "file_index": 2479641,
+              "size_kb": 1695,
+              "textures": 9,
+              "has_textures": true
+            },
+            {
+              "name": "VampireLord_Lurker_Boss",
+              "file_index": 2823085,
+              "size_kb": 1412,
+              "textures": 5,
+              "has_textures": true
+            },
+            {
+              "name": "VampireLord_Lurker_Basic",
+              "file_index": 2792917,
+              "size_kb": 947,
+              "textures": 8,
+              "has_textures": true
+            },
+            {
+              "name": "VampireLord_Faun_Basic",
+              "file_index": 2718715,
+              "size_kb": 435,
+              "textures": 0,
+              "has_textures": false
+            },
+            {
+              "name": "VampireLord_01_Costume",
+              "file_index": 873839,
+              "size_kb": 293,
+              "textures": 1,
+              "has_textures": true
+            }
+          ]
+        }
+      ]
+    },
+    "Rockgrove": {
+      "location": "Blackwood",
+      "year": 2021,
+      "bosses": [
+        {
+          "name": "Oaxiltso",
+          "model_type": "creature",
+          "species": "ArgonianBehemoth",
+          "notes": "Red Argonian Behemoth. Unique red color variant (fi=2643525).",
+          "model": {
+            "name": "ArgonianBehemoth_A_Red_Basic",
+            "file_index": 2643525,
+            "size_kb": 416,
+            "verts": 5207,
+            "tris": 8130
+          },
+          "textures": {
+            "primary": [],
+            "additional": null,
+            "total_count": 0,
+            "note": "Textures not found via adjacent file scan \u2014 stored in non-adjacent archive region"
+          },
+          "related_gr2": {
+            "animations": [
+              {
+                "file_index": 2643527,
+                "size_kb": 968
+              },
+              {
+                "file_index": 2643529,
+                "size_kb": 317
+              },
+              {
+                "file_index": 2643531,
+                "size_kb": 179
+              },
+              {
+                "file_index": 2643533,
+                "size_kb": 521
+              }
+            ],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 2643535,
+                "size_kb": 32,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2643537,
+                "size_kb": 39,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2643539,
+                "size_kb": 34,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2643541,
+                "size_kb": 49,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2643543,
+                "size_kb": 31,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2643545,
+                "size_kb": 37,
+                "type": "unknown_gr2"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "ArgonianBehemoth_A_Basic",
+              "file_index": 669101,
+              "size_kb": 416,
+              "textures": 0,
+              "has_textures": false
+            },
+            {
+              "name": "ArgonianBehemoth_A_Red_Basic",
+              "file_index": 2643525,
+              "size_kb": 416,
+              "textures": 0,
+              "has_textures": false
+            }
+          ]
+        },
+        {
+          "name": "Flame-Herald Bahsei",
+          "model_type": "humanoid",
+          "notes": "Sul-Xan Argonian priest, humanoid NPC model"
+        },
+        {
+          "name": "Xalvakka",
+          "model_type": "humanoid",
+          "notes": "Sul-Xan Argonian warlord, humanoid NPC model"
+        }
+      ]
+    },
+    "Dreadsail Reef": {
+      "location": "High Isle",
+      "year": 2022,
+      "bosses": [
+        {
+          "name": "Lylanar and Turlassil",
+          "model_type": "humanoid",
+          "notes": "Dreadsail sea elf twins, humanoid NPC models"
+        },
+        {
+          "name": "Reef Guardian",
+          "model_type": "creature",
+          "species": "StoneAtronach",
+          "notes": "Coral golem \u2014 reef-themed stone atronach creature (uses AirAtronach_Coral_Boss base).",
+          "model": {
+            "name": "AirAtronach_Coral_Boss",
+            "file_index": 2732009,
+            "size_kb": 1055,
+            "verts": 13752,
+            "tris": 19862
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 2732019,
+                "width": 1024,
+                "height": 512,
+                "format": "DXT1",
+                "size_kb": 341,
+                "role": "diffuse"
+              },
+              {
+                "file_index": 2732021,
+                "width": 1024,
+                "height": 512,
+                "format": "DXT5",
+                "size_kb": 682,
+                "role": "normal"
+              },
+              {
+                "file_index": 2732023,
+                "width": 256,
+                "height": 128,
+                "format": "DXT5",
+                "size_kb": 42,
+                "role": "specular"
+              }
+            ],
+            "additional": [
+              {
+                "file_index": 2732033,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "extra_3"
+              },
+              {
+                "file_index": 2732035,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "extra_4"
+              },
+              {
+                "file_index": 2732037,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "extra_5"
+              }
+            ],
+            "total_count": 6
+          },
+          "related_gr2": {
+            "animations": [
+              {
+                "file_index": 2732017,
+                "size_kb": 264
+              },
+              {
+                "file_index": 2732039,
+                "size_kb": 141
+              }
+            ],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 2732001,
+                "size_kb": 34,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2732003,
+                "size_kb": 49,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2732007,
+                "size_kb": 36,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2732015,
+                "size_kb": 74,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2732025,
+                "size_kb": 167,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2732027,
+                "size_kb": 176,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2732029,
+                "size_kb": 223,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2732031,
+                "size_kb": 403,
+                "type": "unknown_gr2"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Tideborn Taleria",
+          "model_type": "creature",
+          "species": "AirAtronach",
+          "notes": "Final boss of Dreadsail Reef. Coral air atronach form (uses AirAtronach_Coral_Boss base).",
+          "model": {
+            "name": "AirAtronach_Coral_Boss",
+            "file_index": 2732009,
+            "size_kb": 1055,
+            "verts": 13752,
+            "tris": 19862
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 2732019,
+                "width": 1024,
+                "height": 512,
+                "format": "DXT1",
+                "size_kb": 341,
+                "role": "diffuse"
+              },
+              {
+                "file_index": 2732021,
+                "width": 1024,
+                "height": 512,
+                "format": "DXT5",
+                "size_kb": 682,
+                "role": "normal"
+              },
+              {
+                "file_index": 2732023,
+                "width": 256,
+                "height": 128,
+                "format": "DXT5",
+                "size_kb": 42,
+                "role": "specular"
+              }
+            ],
+            "additional": [
+              {
+                "file_index": 2732033,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "extra_3"
+              },
+              {
+                "file_index": 2732035,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "extra_4"
+              },
+              {
+                "file_index": 2732037,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "extra_5"
+              }
+            ],
+            "total_count": 6
+          },
+          "related_gr2": {
+            "animations": [
+              {
+                "file_index": 2732017,
+                "size_kb": 264
+              },
+              {
+                "file_index": 2732039,
+                "size_kb": 141
+              }
+            ],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 2732001,
+                "size_kb": 34,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2732003,
+                "size_kb": 49,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2732007,
+                "size_kb": 36,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2732015,
+                "size_kb": 74,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2732025,
+                "size_kb": 167,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2732027,
+                "size_kb": 176,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2732029,
+                "size_kb": 223,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2732031,
+                "size_kb": 403,
+                "type": "unknown_gr2"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "AirAtronach_Coral_Boss",
+              "file_index": 2732009,
+              "size_kb": 1055,
+              "textures": 6,
+              "has_textures": true
+            }
+          ]
+        }
+      ]
+    },
+    "Sanity's Edge": {
+      "location": "Telvanni Peninsula (Necrom)",
+      "year": 2023,
+      "bosses": [
+        {
+          "name": "Exarchon of Emblazoned Sins",
+          "model_type": "creature",
+          "species": "MindTerror",
+          "notes": "Nightmare creature boss variant from Vaermina's realm",
+          "model": {
+            "name": "MindTerror_A_Boss",
+            "file_index": 2841085,
+            "size_kb": 1310,
+            "verts": 17477,
+            "tris": 20518
+          },
+          "textures": {
+            "primary": [],
+            "additional": [
+              {
+                "file_index": 2841075,
+                "width": 1024,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 1365,
+                "role": "unknown"
+              },
+              {
+                "file_index": 2841077,
+                "width": 1024,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 1365,
+                "role": "unknown"
+              }
+            ],
+            "total_count": 2
+          },
+          "related_gr2": {
+            "animations": [
+              {
+                "file_index": 2841081,
+                "size_kb": 42
+              },
+              {
+                "file_index": 2841083,
+                "size_kb": 51
+              }
+            ],
+            "skeletons": [],
+            "other": []
+          },
+          "all_variants": [
+            {
+              "name": "MindTerror_A_Boss",
+              "file_index": 2841085,
+              "size_kb": 1310,
+              "textures": 2,
+              "has_textures": true
+            },
+            {
+              "name": "MindTerror_A_Minion",
+              "file_index": 2840985,
+              "size_kb": 775,
+              "textures": 4,
+              "has_textures": true
+            }
+          ]
+        },
+        {
+          "name": "Ansuul the Tormented",
+          "model_type": "humanoid",
+          "notes": "Daedric being, humanoid with unique nightmare-themed appearance. Multiple phases."
+        },
+        {
+          "name": "Mindterror Mini-bosses",
+          "model_type": "creature",
+          "species": "MindTerror",
+          "notes": "Mindterror minions appear throughout the trial",
+          "model": {
+            "name": "MindTerror_A_Minion",
+            "file_index": 2840985,
+            "size_kb": 775,
+            "verts": 9714,
+            "tris": 17242
+          },
+          "textures": {
+            "primary": [],
+            "additional": [
+              {
+                "file_index": 2840979,
+                "width": 1024,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 1365,
+                "role": "unknown"
+              },
+              {
+                "file_index": 2840981,
+                "width": 1024,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 1365,
+                "role": "unknown"
+              },
+              {
+                "file_index": 2840983,
+                "width": 1024,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 1365,
+                "role": "unknown"
+              },
+              {
+                "file_index": 2841015,
+                "width": 256,
+                "height": 128,
+                "format": "DXT5",
+                "size_kb": 32,
+                "role": "extra_3"
+              }
+            ],
+            "total_count": 4
+          },
+          "related_gr2": {
+            "animations": [],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 2840987,
+                "size_kb": 160,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2840991,
+                "size_kb": 146,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2840995,
+                "size_kb": 133,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2840999,
+                "size_kb": 35,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2841001,
+                "size_kb": 126,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2841005,
+                "size_kb": 145,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2841009,
+                "size_kb": 105,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2841013,
+                "size_kb": 105,
+                "type": "unknown_gr2"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "MindTerror_A_Boss",
+              "file_index": 2841085,
+              "size_kb": 1310,
+              "textures": 2,
+              "has_textures": true
+            },
+            {
+              "name": "MindTerror_A_Minion",
+              "file_index": 2840985,
+              "size_kb": 775,
+              "textures": 4,
+              "has_textures": true
+            }
+          ]
+        }
+      ]
+    },
+    "Lucent Citadel": {
+      "location": "West Weald (Gold Road)",
+      "year": 2024,
+      "bosses": [
+        {
+          "name": "Riftmaster",
+          "model_type": "creature",
+          "species": "Harbinger",
+          "notes": "Daedric Harbinger creature \u00e2\u20ac\u201d large winged daedra boss",
+          "model": {
+            "name": "Harbinger_B_Boss",
+            "file_index": 2636767,
+            "size_kb": 2369,
+            "verts": 31012,
+            "tris": 46987
+          },
+          "textures": {
+            "primary": [],
+            "additional": null,
+            "total_count": 0,
+            "note": "Textures not found via adjacent file scan \u2014 stored in non-adjacent archive region"
+          },
+          "related_gr2": {
+            "animations": [
+              {
+                "file_index": 2636781,
+                "size_kb": 972
+              },
+              {
+                "file_index": 2636793,
+                "size_kb": 1075
+              }
+            ],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 2636757,
+                "size_kb": 222,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636759,
+                "size_kb": 120,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636761,
+                "size_kb": 120,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636763,
+                "size_kb": 35,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636765,
+                "size_kb": 35,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636769,
+                "size_kb": 144,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636771,
+                "size_kb": 144,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636773,
+                "size_kb": 155,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636775,
+                "size_kb": 155,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636777,
+                "size_kb": 144,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636779,
+                "size_kb": 144,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636785,
+                "size_kb": 44,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636787,
+                "size_kb": 44,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636789,
+                "size_kb": 59,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636791,
+                "size_kb": 59,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2636795,
+                "size_kb": 121,
+                "type": "unknown_gr2"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "Harbinger_C_Incarnate",
+              "file_index": 2658023,
+              "size_kb": 3204,
+              "textures": 6,
+              "has_textures": true
+            },
+            {
+              "name": "Harbinger_B_Boss",
+              "file_index": 2636767,
+              "size_kb": 2369,
+              "textures": 0,
+              "has_textures": false
+            },
+            {
+              "name": "Harbinger_A_Basic",
+              "file_index": 2645893,
+              "size_kb": 2172,
+              "textures": 15,
+              "has_textures": true
+            },
+            {
+              "name": "Harbinger_A_Basic",
+              "file_index": 2588661,
+              "size_kb": 2170,
+              "textures": 13,
+              "has_textures": true
+            },
+            {
+              "name": "Harbinger_A_MehrunesDagon",
+              "file_index": 2567931,
+              "size_kb": 1750,
+              "textures": 6,
+              "has_textures": true
+            }
+          ]
+        },
+        {
+          "name": "Xoryn the Ruthless",
+          "model_type": "humanoid",
+          "notes": "Daedric humanoid boss"
+        },
+        {
+          "name": "Baron Thierry / Praxin Douare",
+          "model_type": "humanoid",
+          "notes": "Humanoid NPC bosses"
+        },
+        {
+          "name": "Infernium Encounter",
+          "model_type": "creature",
+          "species": "Infernium",
+          "notes": "Infernium creature boss \u00e2\u20ac\u201d fire daedric beast from the Deadlands",
+          "model": {
+            "name": "Infernium_A_Boss",
+            "file_index": 2685613,
+            "size_kb": 2246,
+            "verts": 29520,
+            "tris": 44322
+          },
+          "textures": {
+            "primary": [],
+            "additional": [
+              {
+                "file_index": 2685607,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT1",
+                "size_kb": 2730,
+                "role": "unknown"
+              },
+              {
+                "file_index": 2685609,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "unknown"
+              },
+              {
+                "file_index": 2685611,
+                "width": 2048,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 5461,
+                "role": "unknown"
+              }
+            ],
+            "total_count": 3
+          },
+          "related_gr2": {
+            "animations": [
+              {
+                "file_index": 2685603,
+                "size_kb": 94
+              },
+              {
+                "file_index": 2685605,
+                "size_kb": 124
+              },
+              {
+                "file_index": 2685625,
+                "size_kb": 235
+              },
+              {
+                "file_index": 2685627,
+                "size_kb": 255
+              },
+              {
+                "file_index": 2685629,
+                "size_kb": 433
+              },
+              {
+                "file_index": 2685631,
+                "size_kb": 254
+              },
+              {
+                "file_index": 2685633,
+                "size_kb": 251
+              },
+              {
+                "file_index": 2685635,
+                "size_kb": 184
+              },
+              {
+                "file_index": 2685637,
+                "size_kb": 960
+              },
+              {
+                "file_index": 2685641,
+                "size_kb": 60
+              }
+            ],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 2685639,
+                "size_kb": 29,
+                "type": "unknown_gr2"
+              },
+              {
+                "file_index": 2685643,
+                "size_kb": 518,
+                "type": "unknown_gr2"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "Infernium_A_Boss",
+              "file_index": 2685613,
+              "size_kb": 2246,
+              "textures": 3,
+              "has_textures": true
+            },
+            {
+              "name": "Infernium_A_Basic",
+              "file_index": 2657971,
+              "size_kb": 1960,
+              "textures": 0,
+              "has_textures": false
+            }
+          ]
+        }
+      ]
+    },
+    "Ossein Cage": {
+      "location": "Solstice (Coldharbour)",
+      "year": 2025,
+      "bosses": [
+        {
+          "name": "Shapers of Flesh",
+          "model_type": "creature",
+          "species": "FleshAbomination",
+          "notes": "Multi-creature boss encounter in Hall of Fleshcraft. Likely uses FleshAbomination or similar Daedric flesh creature models. Summons include Fleshspawn, Harvesters, Ogrim, Daedroth, and Soul Shriven.",
+          "model": {
+            "name": "FleshAbomination_C_Boss",
+            "file_index": 777383,
+            "size_kb": 527,
+            "verts": 6677,
+            "tris": 9978
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 777389,
+                "width": 4096,
+                "height": 2048,
+                "format": "DXT1",
+                "size_kb": 5461,
+                "role": "diffuse"
+              },
+              {
+                "file_index": 777391,
+                "width": 4096,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 10922,
+                "role": "normal"
+              },
+              {
+                "file_index": 777393,
+                "width": 4096,
+                "height": 2048,
+                "format": "DXT5",
+                "size_kb": 10922,
+                "role": "specular"
+              }
+            ],
+            "additional": [
+              {
+                "file_index": 777409,
+                "width": 1024,
+                "height": 1024,
+                "format": "DXT3",
+                "size_kb": 1365,
+                "role": "unknown"
+              }
+            ],
+            "total_count": 4
+          },
+          "related_gr2": {
+            "animations": [],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 777385,
+                "size_kb": 270,
+                "type": "unknown"
+              },
+              {
+                "file_index": 777397,
+                "size_kb": 243,
+                "type": "unknown"
+              },
+              {
+                "file_index": 777399,
+                "size_kb": 189,
+                "type": "unknown"
+              },
+              {
+                "file_index": 777401,
+                "size_kb": 147,
+                "type": "unknown"
+              },
+              {
+                "file_index": 777403,
+                "size_kb": 276,
+                "type": "unknown"
+              },
+              {
+                "file_index": 777411,
+                "size_kb": 36,
+                "type": "unknown"
+              },
+              {
+                "file_index": 777413,
+                "size_kb": 36,
+                "type": "unknown"
+              }
+            ]
+          },
+          "all_variants": [
+            {
+              "name": "FleshAbomination_C_Boss",
+              "file_index": 777383,
+              "size_kb": 527,
+              "textures": 4,
+              "has_textures": true
+            },
+            {
+              "name": "FleshAbomination_B_Boss",
+              "file_index": 671753,
+              "size_kb": 447,
+              "textures": 0,
+              "has_textures": false
+            },
+            {
+              "name": "FleshAbomination_A_Basic",
+              "file_index": 640581,
+              "size_kb": 412,
+              "textures": 0,
+              "has_textures": false
+            }
+          ]
+        },
+        {
+          "name": "Jynorah & Skorkhif",
+          "model_type": "creature",
+          "species": "Titan",
+          "notes": "Dual Daedric boss fight in Quarreler's Quarry. 'Titanic Clash' mechanic suggests Daedric Titan forms. Summons include Blazeforged Valneer (fire), Sparkstorm Myrinax (lightning), Flame Atronach, Cold-Flame Atronach, Banekin, and Daedroth.",
+          "model": {
+            "name": "Titan_A_Boss",
+            "file_index": 234219,
+            "size_kb": 423,
+            "verts": 5231,
+            "tris": 8476
+          },
+          "textures": {
+            "primary": [
+              {
+                "file_index": 234211,
+                "width": 256,
+                "height": 128,
+                "format": "DXT5",
+                "size_kb": 32,
+                "role": "diffuse"
+              },
+              {
+                "file_index": 234213,
+                "width": 256,
+                "height": 128,
+                "format": "DXT5",
+                "size_kb": 32,
+                "role": "normal"
+              },
+              {
+                "file_index": 234215,
+                "width": 256,
+                "height": 128,
+                "format": "DXT5",
+                "size_kb": 32,
+                "role": "specular"
+              }
+            ],
+            "additional": [
+              {
+                "file_index": 234217,
+                "width": 256,
+                "height": 128,
+                "format": "DXT1",
+                "size_kb": 16,
+                "role": "unknown"
+              },
+              {
+                "file_index": 234229,
+                "width": 384,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 96,
+                "role": "unknown"
+              },
+              {
+                "file_index": 234231,
+                "width": 384,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 96,
+                "role": "unknown"
+              },
+              {
+                "file_index": 234233,
+                "width": 384,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 96,
+                "role": "unknown"
+              },
+              {
+                "file_index": 234235,
+                "width": 384,
+                "height": 256,
+                "format": "uncompressed",
+                "size_kb": 384,
+                "role": "unknown"
+              },
+              {
+                "file_index": 234245,
+                "width": 128,
+                "height": 128,
+                "format": "DXT5",
+                "size_kb": 16,
+                "role": "unknown"
+              },
+              {
+                "file_index": 234247,
+                "width": 128,
+                "height": 128,
+                "format": "DXT5",
+                "size_kb": 16,
+                "role": "unknown"
+              }
+            ],
+            "total_count": 10
+          },
+          "related_gr2": {
+            "animations": [],
+            "skeletons": [],
+            "other": [
+              {
+                "file_index": 234209,
+                "size_kb": 48,
+                "type": "unknown"
+              },
+              {
+                "file_index": 234221,
+                "size_kb": 38,
+                "type": "unknown"
+              },
+              {
+                "file_index": 234223,
+                "size_kb": 119,
+                "type": "unknown"
+              },
+              {
+                "file_index": 234237,
+                "size_kb": 85,
+                "type": "unknown"
+              },
+              {
+                "file_index": 234241,
+                "size_kb": 58,
+                "type": "unknown"
+              },
+              {
+                "file_index": 234243,
+                "size_kb": 27,
+                "type": "unknown"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Overfiend Kazpian",
+          "model_type": "humanoid",
+          "notes": "Final boss in Mangled Court. Daedric Overfiend \u00e2\u20ac\u201d likely unique humanoid model. Summons Ossein Colossus, Molag Kena, Low Warden Dusk, King Khrogo, and other Coldharbour creatures."
+        },
+        {
+          "name": "Red Witch Gedna Relvel",
+          "model_type": "humanoid",
+          "notes": "Optional boss. Necromancer witch, summons Flesh Atronach, Skeletal Archer, and Skeletal Wolf."
+        },
+        {
+          "name": "Tortured Amkaos, Kathutet & Ranyu",
+          "model_type": "humanoid",
+          "notes": "Optional boss trio. Tortured Dremora/Daedra, likely Dremora-humanoid models. Summons Watchlings."
+        },
+        {
+          "name": "Blood Drinker Thisa",
+          "model_type": "humanoid",
+          "notes": "Optional boss. Vampire, summons Blood Crawlers, Blood Slingers, Bloodknights, and Gargoyles."
+        }
+      ]
+    }
+  },
+  "summary": {
+    "total_bosses": 54,
+    "creature_bosses": 30,
+    "humanoid_bosses": 24,
+    "models_with_textures": 22,
+    "models_without_textures": 8,
+    "total_primary_textures": 42,
+    "total_extra_textures": 88,
+    "total_other_gr2": 202
+  }
+}

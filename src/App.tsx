@@ -148,6 +148,12 @@ const GearSetsPage = React.lazy(() =>
   import('./pages/GearSetsPage').then((module) => ({ default: module.GearSetsPage })),
 );
 
+const BossModelViewerPage = React.lazy(() =>
+  import('./pages/BossModelViewerPage').then((module) => ({
+    default: module.BossModelViewerPage,
+  })),
+);
+
 // Generic page loading skeleton - used for lazy-loaded routes and PersistGate hydration
 const LoadingFallback: React.FC = () => (
   <Container maxWidth="lg" sx={{ pt: 4, px: 2 }}>
@@ -605,6 +611,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <GearSetsPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/boss-models"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <BossModelViewerPage />
                   </Suspense>
                 </ErrorBoundary>
               }
