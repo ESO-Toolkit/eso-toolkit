@@ -150,6 +150,7 @@ Icon?
 *.tmp
 *.temp
 *.lock
+!tools/**/Cargo.lock
 *.pid
 .playwright-mcp/
 tmp/
