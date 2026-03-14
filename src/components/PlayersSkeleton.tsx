@@ -43,23 +43,29 @@ const PlayerCardSkeleton: React.FC<{ index: number }> = ({ index }) => (
         <Skeleton variant="text" width={`${55 + (index % 3) * 10}%`} height={14} />
       </Box>
 
-      {/* Talents: 2 rows of 6 ability icons */}
+      {/* Talents: 2 rows of 5 skills + divider + 1 ultimate (matching real card layout) */}
       <Box sx={{ mb: 1.5 }}>
-        <Box sx={{ display: 'flex', gap: 1.25, mb: 1.25 }}>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton
-              key={i}
-              variant="rounded"
-              width={i === 5 ? 34 : 32}
-              height={i === 5 ? 34 : 32}
+        {[0, 6].map((offset) => (
+          <Box
+            key={offset}
+            sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.25, alignItems: 'center', mb: offset === 0 ? 1.25 : 0 }}
+          >
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i + offset} variant="rounded" width={32} height={32} />
+            ))}
+            {/* Cyan divider before ultimate — mirrors real card exactly */}
+            <Box
+              sx={{
+                width: 2,
+                height: 34,
+                bgcolor: 'rgba(124,207,252,0.55)',
+                borderRadius: 0.5,
+                flexShrink: 0,
+              }}
             />
-          ))}
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1.25 }}>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i + 6} variant="rounded" width={32} height={32} />
-          ))}
-        </Box>
+            <Skeleton variant="rounded" width={34} height={34} />
+          </Box>
+        ))}
       </Box>
 
       {/* Gear section: "Gear" label + "INFO" button + gear chips */}
