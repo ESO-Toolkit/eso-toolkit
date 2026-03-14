@@ -95,12 +95,12 @@ export const STAT_CHIP_META: Record<StatChipId, StatChipMeta> = {
   deaths: {
     id: 'deaths',
     label: 'Deaths',
-    tooltip: 'Number of deaths',
+    tooltip: 'Deaths in this fight',
   },
   resurrects: {
     id: 'resurrects',
     label: 'Resurrects',
-    tooltip: 'Number of resurrects performed',
+    tooltip: 'Successful resurrects performed',
   },
   cpm: {
     id: 'cpm',
@@ -115,7 +115,8 @@ export const STAT_CHIP_META: Record<StatChipId, StatChipMeta> = {
   barPattern: {
     id: 'barPattern',
     label: 'Bar Pattern',
-    tooltip: 'Bar swap setup pattern',
+    tooltip:
+      'Bar rotation pattern — each letter is one bar-trip between swaps: F = front bar, B = back bar, S = setup trip',
     roleFilter: ['dps'],
   },
 };
