@@ -2530,10 +2530,9 @@ export const RosterBuilderPage: React.FC = () => {
                 sx={{
                   flex: { xs: 1, md: '0 0 auto' },
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  alignItems: 'stretch',
                   borderRadius: '10px',
-                  padding: '3px',
+                  overflow: 'hidden',
                   minHeight: { xs: '44px', md: 'auto' },
                   background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                   border: isDarkMode
@@ -2556,8 +2555,7 @@ export const RosterBuilderPage: React.FC = () => {
                       justifyContent: 'center',
                       gap: 0.5,
                       px: 1.25,
-                      py: 0.625,
-                      borderRadius: '7px',
+                      py: { xs: 1.375, md: 0.875 },
                       fontSize: '0.75rem',
                       fontWeight: 500,
                       color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
@@ -2566,8 +2564,8 @@ export const RosterBuilderPage: React.FC = () => {
                       '&:hover': {
                         color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
                         background: isDarkMode
-                          ? 'rgba(255,255,255,0.04)'
-                          : 'rgba(0,0,0,0.03)',
+                          ? 'rgba(255,255,255,0.05)'
+                          : 'rgba(0,0,0,0.04)',
                       },
                     }}
                   >
@@ -2575,13 +2573,11 @@ export const RosterBuilderPage: React.FC = () => {
                     Preview
                   </ButtonBase>
                 </Tooltip>
-                <Divider
-                  orientation="vertical"
-                  flexItem
+                <Box
                   sx={{
-                    mx: 0.25,
-                    opacity: isDarkMode ? 0.12 : 0.15,
-                    borderColor: isDarkMode ? '#fff' : '#000',
+                    width: '1px',
+                    my: 0.625,
+                    background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
                   }}
                 />
                 <Tooltip title="Copy roster for Discord" arrow>
@@ -2594,22 +2590,18 @@ export const RosterBuilderPage: React.FC = () => {
                       justifyContent: 'center',
                       gap: 0.5,
                       px: 1.25,
-                      py: 0.625,
-                      borderRadius: '7px',
+                      py: { xs: 1.375, md: 0.875 },
                       fontSize: '0.75rem',
-                      fontWeight: 500,
+                      fontWeight: 600,
                       color: isDarkMode ? '#f1f5f9' : '#0f172a',
                       background: isDarkMode
                         ? 'rgba(255,255,255,0.09)'
-                        : 'rgba(255,255,255,0.85)',
-                      boxShadow: isDarkMode
-                        ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)'
-                        : '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
+                        : 'rgba(0,0,0,0.05)',
                       transition: 'all 0.15s ease',
                       '&:hover': {
                         background: isDarkMode
                           ? 'rgba(255,255,255,0.14)'
-                          : 'rgba(255,255,255,0.95)',
+                          : 'rgba(0,0,0,0.08)',
                       },
                     }}
                   >
