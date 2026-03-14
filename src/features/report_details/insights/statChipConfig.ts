@@ -124,7 +124,7 @@ export const STAT_CHIP_META: Record<StatChipId, StatChipMeta> = {
  * Icon category colors — matches the role-based palette from roleColors.ts.
  * Dark-mode hex values; the component resolves light-mode automatically.
  */
-export type ChipCategory = 'damage' | 'healing' | 'utility' | 'neutral';
+export type ChipCategory = 'damage' | 'healing' | 'general' | 'utility' | 'neutral';
 
 const CHIP_CATEGORY: Record<StatChipId, ChipCategory> = {
   dps: 'damage',
@@ -137,9 +137,9 @@ const CHIP_CATEGORY: Record<StatChipId, ChipCategory> = {
   mundus: 'neutral',
   food: 'neutral',
   potion: 'neutral',
-  deaths: 'utility',
-  resurrects: 'healing',
-  cpm: 'damage',
+  deaths: 'general',
+  resurrects: 'general',
+  cpm: 'general',
   distance: 'neutral',
   barPattern: 'damage',
 };
@@ -148,6 +148,7 @@ const CHIP_CATEGORY: Record<StatChipId, ChipCategory> = {
 const CATEGORY_COLORS: Record<ChipCategory, { dark: string; light: string }> = {
   damage: { dark: '#ff8b61', light: '#ff5722' },
   healing: { dark: '#b970ff', light: '#7c3aed' },
+  general: { dark: '#4dd0a1', light: '#0d9668' },
   utility: { dark: '#62baff', light: '#0891b2' },
   neutral: { dark: '#90a4ae', light: '#607d8b' },
 };
