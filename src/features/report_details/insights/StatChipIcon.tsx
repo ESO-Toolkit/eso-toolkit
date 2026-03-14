@@ -69,29 +69,29 @@ export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, c
             <circle cx="12.5" cy="11" r="0.8" style={fillSx} />
           </g>
         );
-      // ── Total Dmg: crossed swords + sum bars (≡ DPS accumulated) ─────
+      // ── Total Dmg: crossed swords + sum bars below ─────────────
       case 'totalDamage':
         return (
           <g style={strokeSx}>
-            {/* Same crossed-swords motif as DPS, shifted left */}
-            <path d="M4 4 L15 17" />
-            <path d="M3 7.5 L7.5 5" />
-            <path d="M16 4 L5 17" />
-            <path d="M12.5 5 L17 7.5" />
-            <circle cx="10" cy="10.5" r="1" style={fillSx} />
-            {/* Sum indicator: double bar */}
-            <path d="M18 13 L22 13 M18 17 L22 17" />
+            {/* Crossed swords (same shape as DPS, compressed into top) */}
+            <path d="M6 2 L17 14" />
+            <path d="M5 5.5 L9.5 3" />
+            <path d="M18 2 L7 14" />
+            <path d="M14.5 3 L19 5.5" />
+            <circle cx="12" cy="8" r="1" style={fillSx} />
+            {/* Sum indicator: double bar underneath */}
+            <path d="M7 18 L17 18 M7 21 L17 21" />
           </g>
         );
-      // ── Crit Total: flame + sum bars (≡ Crit DPS accumulated) ────
+      // ── Crit Total: flame + sum bars below ────────────────
       case 'totalCritDamage':
         return (
           <g style={strokeSx}>
-            {/* Same flame motif as critDps, shifted left */}
-            <path d="M9 17 C13 16 14 12 12 9.5 C11.3 8.5 10.8 7 11.2 5.5 C9.2 6.8 8 8.8 8.5 10.5 C7 10 5.8 11.3 6 13 C6.3 15 7.5 16.5 9 17 Z" />
-            <circle cx="9" cy="13" r="1" style={fillSx} />
-            {/* Sum indicator: double bar */}
-            <path d="M17 13 L21 13 M17 17 L21 17" />
+            {/* Flame (same shape as critDps, compressed into top) */}
+            <path d="M12 15 C16 14 17 10 15 7.5 C14.3 6.5 13.8 5 14.2 3.5 C12.2 4.8 11 6.8 11.5 8.5 C10 8 8.8 9.3 9 11 C9.3 13 10.5 14.5 12 15 Z" />
+            <circle cx="12" cy="11" r="1" style={fillSx} />
+            {/* Sum indicator: double bar underneath */}
+            <path d="M7 18 L17 18 M7 21 L17 21" />
           </g>
         );
       // ── Crit DPS: flame (critical fire damage) ────────────────
