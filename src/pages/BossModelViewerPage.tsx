@@ -140,17 +140,27 @@ const GlbModel: React.FC<{ url: string; color: string }> = ({ url, color }) => {
   const { scene } = useGLTF(url);
   const cloned = React.useMemo(() => scene.clone(true), [scene]);
 
-  // Auto-fit: compute bounding box and normalize scale + centering
+  // Auto-fit: compute bounding box, normalize scale, and center
   const { camera } = useThree();
   React.useEffect(() => {
+    // Reset transforms before measuring
+    cloned.position.set(0, 0, 0);
+    cloned.scale.setScalar(1);
+    cloned.rotation.set(0, 0, 0);
+
     const box = new THREE.Box3().setFromObject(cloned);
     const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
     const targetScale = 3 / maxDim; // Fit within ~3 units
-    cloned.scale.setScalar(targetScale);
 
-    const center = box.getCenter(new THREE.Vector3());
-    cloned.position.sub(center.multiplyScalar(targetScale));
+    cloned.scale.setScalar(targetScale);
+    // Center the model at origin (translate by -center, then apply scale)
+    cloned.position.set(
+      -center.x * targetScale,
+      -center.y * targetScale,
+      -center.z * targetScale,
+    );
 
     // Apply species color tint to all meshes
     cloned.traverse((child) => {
