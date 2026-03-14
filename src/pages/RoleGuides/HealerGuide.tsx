@@ -286,7 +286,7 @@ export const HealerGuide: React.FC = () => {
               desc: 'Drop ground heals, refresh HoTs, weave heavies, and time your buffs.',
             },
           ].map((s) => (
-            <Grid item key={s.n} xs={12} md={4}>
+            <Grid key={s.n} size={{ xs: 12, md: 4 }}>
               <Paper sx={frostCardSx(theme)}>
                 <Stack direction="row" spacing={1.5} alignItems="flex-start">
                   <Box
@@ -363,7 +363,7 @@ export const HealerGuide: React.FC = () => {
               'Symphony of Blades',
               "Grand Rejuvenation (Master's Restoration Staff)",
             ].map((name) => (
-              <Grid item key={name} xs={12} md={4}>
+              <Grid key={name} size={{ xs: 12, md: 4 }}>
                 <Paper sx={frostCardSx(theme)}>
                   <Typography variant="subtitle1" fontWeight={800}>
                     {name}
@@ -468,7 +468,7 @@ export const HealerGuide: React.FC = () => {
           </Typography>
           <Grid container spacing={2}>
             {outlineSlides.slice(0, 6).map((sl) => (
-              <Grid item key={sl.index} xs={12} md={6}>
+              <Grid key={sl.index} size={{ xs: 12, md: 6 }}>
                 <Paper sx={frostCardSx(theme)}>
                   <Typography variant="subtitle1" fontWeight={800}>
                     {sl.title}
@@ -551,7 +551,7 @@ export const HealerGuide: React.FC = () => {
 
             <Grid container spacing={2} sx={{ mt: 1 }}>
               {filtered.map((set) => (
-                <Grid item key={`${set.full_name}-${set.category}`} xs={12} sm={6} md={4}>
+                <Grid key={`${set.full_name}-${set.category}`} size={{ xs: 12, sm: 6, md: 4 }}>
                   <Paper sx={frostCardSx(theme)}>
                     <Stack
                       direction="row"
@@ -622,7 +622,7 @@ export const HealerGuide: React.FC = () => {
             </Typography>
             <Grid container spacing={2}>
               {activationEntries.map(([key, desc]) => (
-                <Grid item key={key} xs={12} sm={6} md={4}>
+                <Grid key={key} size={{ xs: 12, sm: 6, md: 4 }}>
                   <Paper sx={frostCardSx(theme)}>
                     <Stack direction="row" spacing={1} alignItems="center">
                       <span role="img" aria-label={key} style={{ fontSize: 18 }}>
@@ -653,7 +653,7 @@ export const HealerGuide: React.FC = () => {
             <Paper sx={{ ...frostCardSx(theme), mt: 1 }}>
               <Grid container spacing={2}>
                 {healingGuideData.build_strategies.example_builds.map((b) => (
-                  <Grid item key={b.build_name} xs={12} md={6}>
+                  <Grid key={b.build_name} size={{ xs: 12, md: 6 }}>
                     <Paper sx={frostCardSx(theme)}>
                       <Typography variant="subtitle2" fontWeight={800}>
                         {b.build_name}

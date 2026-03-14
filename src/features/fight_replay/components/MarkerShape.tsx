@@ -141,21 +141,23 @@ export const MarkerShape: React.FC<MarkerShapeProps> = ({ texturePath, size, col
   const shapeType = getShapeFromTexture(texturePath);
 
   const geometry = useMemo(() => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     switch (shapeType) {
       case 'hexagon':
-        return new THREE.ShapeGeometry(createHexagonShape(radius));
+        return new THREE.ShapeGeometry(createHexagonShape(radius) as any);
 
       case 'octagon':
-        return new THREE.ShapeGeometry(createOctagonShape(radius));
+        return new THREE.ShapeGeometry(createOctagonShape(radius) as any);
 
       case 'diamond':
-        return new THREE.ShapeGeometry(createDiamondShape(radius));
+        return new THREE.ShapeGeometry(createDiamondShape(radius) as any);
 
       case 'square':
-        return new THREE.ShapeGeometry(createSquareShape(radius));
+        return new THREE.ShapeGeometry(createSquareShape(radius) as any);
 
       case 'chevron':
-        return new THREE.ShapeGeometry(createChevronShape(radius));
+        return new THREE.ShapeGeometry(createChevronShape(radius) as any);
+      /* eslint-enable @typescript-eslint/no-explicit-any */
 
       case 'circle':
       case 'blank': // Blank uses circle as base (text will show on top)
