@@ -571,7 +571,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       if (critChance != null) {
         add(
           'critChance',
-          <Tooltip title={STAT_CHIP_META.critChance.tooltip} enterTouchDelay={0} leaveTouchDelay={3000}>
+          <Tooltip
+            title={STAT_CHIP_META.critChance.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
             <span style={{ display: 'inline-flex', alignItems: 'center' }}>
               <StatChipIcon chipId="critChance" />
               <span style={{ margin: '0 1px' }} />
@@ -621,7 +625,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       if (totalDamage != null) {
         add(
           'totalDamage',
-          <Tooltip title={STAT_CHIP_META.totalDamage.tooltip} enterTouchDelay={0} leaveTouchDelay={3000}>
+          <Tooltip
+            title={STAT_CHIP_META.totalDamage.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
             <span style={{ display: 'inline-flex', alignItems: 'center' }}>
               <StatChipIcon chipId="totalDamage" />
               <span style={{ margin: '0 1px' }} />
@@ -639,7 +647,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       if (totalCritDamage != null) {
         add(
           'totalCritDamage',
-          <Tooltip title={STAT_CHIP_META.totalCritDamage.tooltip} enterTouchDelay={0} leaveTouchDelay={3000}>
+          <Tooltip
+            title={STAT_CHIP_META.totalCritDamage.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
             <span style={{ display: 'inline-flex', alignItems: 'center' }}>
               <StatChipIcon chipId="totalCritDamage" />
               <span style={{ margin: '0 1px' }} />
@@ -657,7 +669,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       if (critDps != null) {
         add(
           'critDps',
-          <Tooltip title={STAT_CHIP_META.critDps.tooltip} enterTouchDelay={0} leaveTouchDelay={3000}>
+          <Tooltip
+            title={STAT_CHIP_META.critDps.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
             <span style={{ display: 'inline-flex', alignItems: 'center' }}>
               <StatChipIcon chipId="critDps" />
               <span style={{ margin: '0 1px' }} />
@@ -748,7 +764,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
       add(
         'resurrects',
-        <Tooltip title={STAT_CHIP_META.resurrects.tooltip} enterTouchDelay={0} leaveTouchDelay={3000}>
+        <Tooltip
+          title={STAT_CHIP_META.resurrects.tooltip}
+          enterTouchDelay={0}
+          leaveTouchDelay={3000}
+        >
           <span style={{ display: 'inline-flex', alignItems: 'center' }}>
             <StatChipIcon chipId="resurrects" />
             <span style={{ margin: '0 1px' }} />
