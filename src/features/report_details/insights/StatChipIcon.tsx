@@ -61,7 +61,7 @@ export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, c
             <path d="M12 4 L12 6 M12 16 L12 18 M5 11 L7 11 M17 11 L19 11" />
           </g>
         );
-      // ── Crit Dmg: lightning bolt (burst damage) ───────────────
+      // ── Crit Multi: lightning bolt (crit multiplier) ────────────
       case 'critDamage':
         return (
           <g style={strokeSx}>
@@ -83,7 +83,7 @@ export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, c
             <path d="M7 18 L17 18 M7 21 L17 21" />
           </g>
         );
-      // ── Crit Total: flame + sum bars below ────────────────
+      // ── Crit Dmg: flame + sum bars below ────────────────
       case 'totalCritDamage':
         return (
           <g style={strokeSx}>
