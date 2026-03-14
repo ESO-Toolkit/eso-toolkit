@@ -287,7 +287,7 @@ export const PlayersSkeleton: React.FC<PlayersSkeletonProps> = ({
           maxWidth: '100vw',
         }}
       >
-        {Array.from({ length: 4 }).map((_, index) => (
+        {Array.from({ length: 2 }).map((_, index) => (
           <Box
             key={index}
             sx={{
