@@ -2710,7 +2710,8 @@ export const RosterBuilderPage: React.FC = () => {
                           },
                         }}
                       >
-                        🏛️ Publish
+                        <GroupsIcon sx={{ fontSize: '0.9rem' }} />
+                        Publish
                       </ButtonBase>
                     </Tooltip>
                   </>
