@@ -1,5 +1,6 @@
 import {
   Box,
+  CircularProgress,
   Container,
   Chip,
   FormControl,
@@ -12,8 +13,8 @@ import {
   Typography,
   type SelectChangeEvent,
 } from '@mui/material';
-import { OrbitControls } from '@react-three/drei';
-import { Canvas } from '@react-three/fiber';
+import { Center, OrbitControls, useGLTF } from '@react-three/drei';
+import { Canvas, useThree } from '@react-three/fiber';
 import React from 'react';
 import * as THREE from 'three';
 
@@ -91,88 +92,174 @@ const bossOptions: BossOption[] = Object.entries(typedData.trials).flatMap(([tri
 
 // ── 3D Scene ───────────────────────────────────────────────────────────────
 
-const BossModelMesh: React.FC<{ boss: Boss }> = ({ boss }) => {
-  const meshRef = React.useRef<THREE.Mesh>(null);
+/** Path convention: /models/bosses/{model_name}.glb */
+const getModelUrl = (boss: Boss): string | null => {
+  if (!boss.model) return null;
+  return `/models/bosses/${boss.model.name}.glb`;
+};
 
-  // Scale the geometry based on vertex count — more verts = larger/more detailed mesh
+// Color based on species/type
+const getSpeciesColor = (boss: Boss): string => {
+  if (boss.model_type === 'humanoid') return '#9ca3af';
+  const species = boss.species ?? '';
+  const speciesColors: Record<string, string> = {
+    DwemerCenturion: '#d4a843',
+    ClockWorkTitan: '#c0a030',
+    ClockWorkImperfect: '#b08820',
+    StormAtronach: '#60a0ff',
+    StoneAtronach: '#8b7355',
+    FleshAbomination: '#8b2252',
+    Titan: '#ff4444',
+    Dragon: '#22cc44',
+    Senche: '#ff9900',
+    Lurcher: '#558844',
+    Gargoyle: '#777788',
+    Harvester: '#aa44aa',
+    Mammoth: '#8b6e4e',
+    Wamasu: '#44bbaa',
+    Lamia: '#55aa88',
+    Ogrim: '#884422',
+    ArgonianBehemoth: '#448844',
+    Mantikora: '#aa6644',
+    Gryphon: '#ddcc88',
+    BoneDragon: '#88aa66',
+    CoralAtronach: '#38bdf8',
+    MindTerror: '#9f44dd',
+  };
+  return speciesColors[species] ?? '#38bdf8';
+};
+
+/** Renders an actual GLB model. */
+const GlbModel: React.FC<{ url: string; color: string }> = ({ url, color }) => {
+  const { scene } = useGLTF(url);
+  const cloned = React.useMemo(() => scene.clone(true), [scene]);
+
+  // Auto-fit: compute bounding box and normalize scale + centering
+  const { camera } = useThree();
+  React.useEffect(() => {
+    const box = new THREE.Box3().setFromObject(cloned);
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const targetScale = 3 / maxDim; // Fit within ~3 units
+    cloned.scale.setScalar(targetScale);
+
+    const center = box.getCenter(new THREE.Vector3());
+    cloned.position.sub(center.multiplyScalar(targetScale));
+
+    // Apply species color tint to all meshes
+    cloned.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        const mat = child.material as THREE.MeshStandardMaterial;
+        if (mat.isMeshStandardMaterial) {
+          mat.emissive = new THREE.Color(color);
+          mat.emissiveIntensity = 0.05;
+        }
+      }
+    });
+
+    // Adjust camera to fit
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.position.set(4, 3, 4);
+      camera.lookAt(0, 0, 0);
+    }
+  }, [cloned, color, camera]);
+
+  return <primitive object={cloned} />;
+};
+
+/** Fallback placeholder geometry when no GLB is available. */
+const PlaceholderMesh: React.FC<{ boss: Boss }> = ({ boss }) => {
   const verts = boss.model?.verts ?? 1000;
   const scale = Math.max(0.5, Math.min(3, Math.log10(verts) / 2));
+  const color = getSpeciesColor(boss);
+  const hasTextures = (boss.textures?.total_count ?? 0) > 0;
 
-  // Pick geometry complexity based on model data
   const geometry = React.useMemo(() => {
-    if (!boss.model) {
-      // Humanoid — simple capsule
-      return new THREE.CapsuleGeometry(0.5, 1.5, 8, 16);
-    }
-
+    if (!boss.model) return new THREE.CapsuleGeometry(0.5, 1.5, 8, 16);
     const tris = boss.model.tris;
-    if (tris > 20000) {
-      // High-poly boss — icosahedron with high detail
-      return new THREE.IcosahedronGeometry(1, 4);
-    } else if (tris > 8000) {
-      // Medium boss — dodecahedron
-      return new THREE.DodecahedronGeometry(1, 2);
-    } else {
-      // Smaller boss — octahedron
-      return new THREE.OctahedronGeometry(1, 2);
-    }
+    if (tris > 20000) return new THREE.IcosahedronGeometry(1, 4);
+    if (tris > 8000) return new THREE.DodecahedronGeometry(1, 2);
+    return new THREE.OctahedronGeometry(1, 2);
   }, [boss.model]);
 
-  // Color based on species/type
-  const color = React.useMemo(() => {
-    if (boss.model_type === 'humanoid') return '#9ca3af';
-    const species = boss.species ?? '';
-    const speciesColors: Record<string, string> = {
-      DwemerCenturion: '#d4a843',
-      ClockWorkTitan: '#c0a030',
-      ClockWorkImperfect: '#b08820',
-      StormAtronach: '#60a0ff',
-      StoneAtronach: '#8b7355',
-      FleshAbomination: '#8b2252',
-      Titan: '#ff4444',
-      Dragon: '#22cc44',
-      Senche: '#ff9900',
-      Lurcher: '#558844',
-      Gargoyle: '#777788',
-      Harvester: '#aa44aa',
-      Mammoth: '#8b6e4e',
-      Wamasu: '#44bbaa',
-      Lamia: '#55aa88',
-      Ogrim: '#884422',
-      ArgonianBehemoth: '#448844',
-      Mantikora: '#aa6644',
-      Gryphon: '#ddcc88',
-      BoneDragon: '#88aa66',
-    };
-    return speciesColors[species] ?? '#38bdf8';
-  }, [boss.model_type, boss.species]);
-
-  // Has textures?
-  const hasTextures = (boss.textures?.total_count ?? 0) > 0;
-  const emissiveIntensity = hasTextures ? 0.15 : 0;
-
   return (
-    <mesh ref={meshRef} scale={scale} position={[0, 0, 0]}>
+    <mesh scale={scale} position={[0, 0, 0]}>
       <primitive object={geometry} attach="geometry" />
       <meshStandardMaterial
         color={color}
         roughness={hasTextures ? 0.3 : 0.7}
         metalness={hasTextures ? 0.6 : 0.2}
         emissive={color}
-        emissiveIntensity={emissiveIntensity}
+        emissiveIntensity={hasTextures ? 0.15 : 0}
         wireframe={!hasTextures && boss.model_type === 'creature'}
       />
     </mesh>
   );
 };
 
-const BossScene: React.FC<{ boss: Boss }> = ({ boss }) => {
+/** Tries to load GLB, falls back to placeholder on error. */
+const BossModelMesh: React.FC<{ boss: Boss; onModelStatus: (status: ModelStatus) => void }> = ({
+  boss,
+  onModelStatus,
+}) => {
+  const modelUrl = getModelUrl(boss);
+  const [useGlb, setUseGlb] = React.useState(false);
+  const [checking, setChecking] = React.useState(false);
+  const color = getSpeciesColor(boss);
+
+  // Probe whether the GLB file exists via a HEAD request
+  React.useEffect(() => {
+    if (!modelUrl) {
+      onModelStatus('no-model');
+      return;
+    }
+    setChecking(true);
+    setUseGlb(false);
+
+    const controller = new AbortController();
+    fetch(modelUrl, { method: 'HEAD', signal: controller.signal })
+      .then((res) => {
+        if (res.ok) {
+          setUseGlb(true);
+          onModelStatus('glb');
+        } else {
+          onModelStatus('placeholder');
+        }
+      })
+      .catch(() => {
+        onModelStatus('placeholder');
+      })
+      .finally(() => {
+        setChecking(false);
+      });
+    return () => {
+      controller.abort();
+    };
+  }, [modelUrl, onModelStatus]);
+
+  if (checking) return null;
+  if (useGlb && modelUrl) {
+    return (
+      <Center>
+        <GlbModel url={modelUrl} color={color} />
+      </Center>
+    );
+  }
+  return <PlaceholderMesh boss={boss} />;
+};
+
+type ModelStatus = 'loading' | 'glb' | 'placeholder' | 'no-model';
+
+const BossScene: React.FC<{ boss: Boss; onModelStatus: (status: ModelStatus) => void }> = ({
+  boss,
+  onModelStatus,
+}) => {
   return (
     <>
       <ambientLight intensity={0.4} />
       <directionalLight position={[5, 8, 5]} intensity={0.8} castShadow />
       <directionalLight position={[-3, 4, -3]} intensity={0.3} />
-      <BossModelMesh boss={boss} />
+      <BossModelMesh boss={boss} onModelStatus={onModelStatus} />
       <gridHelper args={[10, 20, '#334155', '#1e293b']} position={[0, -2, 0]} />
       <OrbitControls
         enableDamping
@@ -304,12 +391,18 @@ const BossInfoPanel: React.FC<{ boss: Boss; trialName: string }> = ({ boss, tria
 
 export const BossModelViewerPage: React.FC = () => {
   const [selectedId, setSelectedId] = React.useState<string>('');
+  const [modelStatus, setModelStatus] = React.useState<ModelStatus>('loading');
 
   const selected = React.useMemo(() => bossOptions.find((o) => o.id === selectedId), [selectedId]);
 
   const handleChange = (event: SelectChangeEvent<string>): void => {
     setSelectedId(event.target.value);
+    setModelStatus('loading');
   };
+
+  const handleModelStatus = React.useCallback((status: ModelStatus) => {
+    setModelStatus(status);
+  }, []);
 
   // Build grouped menu items
   const menuItems = React.useMemo(() => {
@@ -386,6 +479,7 @@ export const BossModelViewerPage: React.FC = () => {
                 borderRadius: 3,
                 overflow: 'hidden',
                 height: { xs: 350, md: 500 },
+                position: 'relative',
                 background: (theme) => (theme.palette.mode === 'dark' ? '#0a0f1a' : '#e8ecf0'),
                 border: (theme) =>
                   `1px solid ${theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.15)' : 'rgba(0,0,0,0.08)'}`,
@@ -395,8 +489,47 @@ export const BossModelViewerPage: React.FC = () => {
                 camera={{ position: [4, 3, 4], fov: 45, near: 0.1, far: 100 }}
                 gl={{ antialias: true, powerPreference: 'high-performance' }}
               >
-                <BossScene boss={selected.boss} />
+                <BossScene boss={selected.boss} onModelStatus={handleModelStatus} />
               </Canvas>
+              {/* Loading overlay */}
+              {modelStatus === 'loading' && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: 'rgba(0,0,0,0.4)',
+                    zIndex: 1,
+                  }}
+                >
+                  <CircularProgress size={40} />
+                </Box>
+              )}
+              {/* Model source badge */}
+              {modelStatus !== 'loading' && (
+                <Chip
+                  label={
+                    modelStatus === 'glb'
+                      ? 'GLB Model'
+                      : modelStatus === 'no-model'
+                        ? 'No Model Data'
+                        : 'Placeholder'
+                  }
+                  size="small"
+                  color={modelStatus === 'glb' ? 'success' : 'default'}
+                  variant={modelStatus === 'glb' ? 'filled' : 'outlined'}
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    zIndex: 1,
+                    fontSize: '0.7rem',
+                    opacity: 0.85,
+                  }}
+                />
+              )}
             </Paper>
 
             {/* Info Panel */}
