@@ -28,13 +28,14 @@ export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, c
       case 'dps':
         return (
           <g style={strokeSx}>
-            <path d="M7 5 L17 15" />
-            <path d="M7 5 L5 7 L7.5 9.5" />
-            <path d="M17 15 L19 13 L16.5 10.5" />
-            <path d="M17 5 L7 15" />
-            <path d="M17 5 L19 7 L16.5 9.5" />
-            <path d="M7 15 L5 13 L7.5 10.5" />
-            <rect x="10.8" y="8.8" width="2.4" height="2.4" style={fillSx} rx="0.4" />
+            {/* Blade 1: top-left to bottom-right */}
+            <path d="M6 4 L17 17" />
+            <path d="M5 7.5 L9.5 5" />
+            {/* Blade 2: top-right to bottom-left */}
+            <path d="M18 4 L7 17" />
+            <path d="M14.5 5 L19 7.5" />
+            {/* Center clash */}
+            <circle cx="12" cy="10.5" r="1.2" style={fillSx} />
           </g>
         );
       // ── HPS: heart with plus (healing) ────────────────────────
@@ -63,19 +64,15 @@ export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, c
             <circle cx="12.5" cy="11" r="0.8" style={fillSx} />
           </g>
         );
-      // ── Total Dmg: sword with impact starburst ────────────────
+      // ── Total Dmg: war hammer ─────────────────────────────────
       case 'totalDamage':
         return (
           <g style={strokeSx}>
-            {/* Blade */}
-            <path d="M12 3 L12 13" />
-            {/* Crossguard */}
-            <path d="M8 11 L16 11" />
-            {/* Grip + pommel */}
-            <path d="M12 13 L12 17" />
-            <circle cx="12" cy="17.5" r="1" style={fillSx} />
-            {/* Impact rays */}
-            <path d="M6 5 L8.5 7 M18 5 L15.5 7 M5 9 L7.5 9.5 M19 9 L16.5 9.5" />
+            {/* Hammer head */}
+            <rect x="6" y="4" width="12" height="6" rx="1.5" />
+            <circle cx="12" cy="7" r="1" style={fillSx} />
+            {/* Handle */}
+            <path d="M12 10 L12 19" />
           </g>
         );
       // ── Crit Total: bar chart with lightning spark ────────────
@@ -101,16 +98,16 @@ export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, c
             <path d="M12 9 L12 11" />
           </g>
         );
-      // ── Mundus: constellation (star sign) ─────────────────────
+      // ── Mundus: standing stone with glow ──────────────────────
       case 'mundus':
         return (
           <g style={strokeSx}>
-            <circle cx="12" cy="5" r="1.5" style={fillSx} />
-            <circle cx="7" cy="9" r="1.2" style={fillSx} />
-            <circle cx="17" cy="9" r="1.2" style={fillSx} />
-            <circle cx="9" cy="15" r="1.2" style={fillSx} />
-            <circle cx="15" cy="15" r="1.2" style={fillSx} />
-            <path d="M12 5 L7 9 M12 5 L17 9 M7 9 L9 15 M17 9 L15 15 M9 15 L15 15" />
+            {/* Standing stone pillar with arched top */}
+            <path d="M9 19 L9 7 C9 3.5 10.5 2.5 12 2.5 C13.5 2.5 15 3.5 15 7 L15 19" />
+            {/* Base */}
+            <path d="M7 19 L17 19" />
+            {/* Glowing diamond symbol */}
+            <path d="M12 5.5 L14 9 L12 12.5 L10 9 Z" style={fillSx} />
           </g>
         );
       // ── Food: bowl with steam ─────────────────────────────────
