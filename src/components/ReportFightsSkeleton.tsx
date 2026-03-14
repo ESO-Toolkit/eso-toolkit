@@ -83,7 +83,7 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
           </Box>
 
           {/* Boss Encounters (always visible) */}
-          {Array.from({ length: Math.floor(Math.random() * 3) + 3 }).map((_, encounterIndex) => (
+          {Array.from({ length: 4 }).map((_, encounterIndex) => (
             <Box
               key={encounterIndex}
               sx={{
@@ -107,8 +107,8 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
                   <Skeleton variant="circular" width={32} height={32} animation={false} />
                   <Skeleton variant="text" width={120} height={20} animation={false} />
                 </Box>
-                {/* Trash toggle (shown randomly) */}
-                {Math.random() > 0.5 && (
+                {/* Trash toggle (shown for alternate encounters) */}
+                {encounterIndex % 2 === 1 && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Skeleton variant="text" width={30} height={16} animation={false} />
                     <Skeleton variant="rounded" width={40} height={24} animation={false} />
@@ -124,8 +124,8 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
                   gap: 1,
                 }}
               >
-                {/* Generate 2-5 fight cards per encounter */}
-                {Array.from({ length: Math.floor(Math.random() * 4) + 2 }).map((_, cardIndex) => (
+                {/* Deterministic fight card counts per encounter */}
+                {Array.from({ length: [3, 2, 4, 3][encounterIndex] }).map((_, cardIndex) => (
                   <Box
                     key={cardIndex}
                     sx={{

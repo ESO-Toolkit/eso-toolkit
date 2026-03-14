@@ -116,7 +116,15 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
       >
         {/* Fight Insights - First column */}
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              height: '100%',
+              background:
+                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
+            }}
+          >
             <Typography variant="h6" gutterBottom>
               Fight Insights
             </Typography>
@@ -181,7 +189,15 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
 
         {/* Status Effects - Second column */}
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              height: '100%',
+              background:
+                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
+            }}
+          >
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               Status Effect Uptimes
             </Typography>
@@ -249,7 +265,15 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
 
         {/* Buff Uptimes - Third column */}
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              height: '100%',
+              background:
+                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
+            }}
+          >
             <Box
               sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
             >
@@ -322,7 +346,15 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
 
         {/* Debuff Uptimes - Fourth column */}
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              height: '100%',
+              background:
+                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
+            }}
+          >
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               Debuff Uptimes
             </Typography>
@@ -390,7 +422,15 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
 
         {/* Damage Breakdown - Fifth column */}
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              height: '100%',
+              background:
+                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
+            }}
+          >
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               Damage Breakdown
             </Typography>
@@ -442,7 +482,15 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
 
         {/* Damage by Type - Sixth column */}
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              height: '100%',
+              background:
+                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
+            }}
+          >
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               Damage by Type
             </Typography>
