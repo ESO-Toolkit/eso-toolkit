@@ -4,6 +4,16 @@
 import React, { useMemo } from 'react';
 import * as THREE from 'three';
 
+// THREE.Shape is missing from @types/three 0.183.x (packaging bug — the class exists at runtime).
+// This local interface provides the minimum surface needed by the shape factory functions below.
+/* eslint-disable no-redeclare, @typescript-eslint/no-explicit-any */
+interface ThreeShape {
+  moveTo(x: number, y: number): void;
+  lineTo(x: number, y: number): void;
+}
+const ThreeShape = (THREE as any).Shape as new () => ThreeShape;
+/* eslint-enable no-redeclare, @typescript-eslint/no-explicit-any */
+
 interface MarkerShapeProps {
   /** Texture path from M0RMarkers (e.g., "M0RMarkers/textures/circle.dds") */
   texturePath: string;
@@ -33,8 +43,8 @@ function getShapeFromTexture(texturePath: string): string {
 /**
  * Creates a hexagon shape
  */
-function createHexagonShape(radius: number): THREE.Shape {
-  const shape = new THREE.Shape();
+function createHexagonShape(radius: number): ThreeShape {
+  const shape = new ThreeShape();
   const sides = 6;
   const angleStep = (Math.PI * 2) / sides;
 
@@ -53,8 +63,8 @@ function createHexagonShape(radius: number): THREE.Shape {
 /**
  * Creates an octagon shape
  */
-function createOctagonShape(radius: number): THREE.Shape {
-  const shape = new THREE.Shape();
+function createOctagonShape(radius: number): ThreeShape {
+  const shape = new ThreeShape();
   const sides = 8;
   const angleStep = (Math.PI * 2) / sides;
 
@@ -73,8 +83,8 @@ function createOctagonShape(radius: number): THREE.Shape {
 /**
  * Creates a diamond (45-degree rotated square) shape
  */
-function createDiamondShape(radius: number): THREE.Shape {
-  const shape = new THREE.Shape();
+function createDiamondShape(radius: number): ThreeShape {
+  const shape = new ThreeShape();
   // const _halfSize = radius * 0.707; // Adjust for diagonal (unused, kept for reference)
 
   // Diamond points (top, right, bottom, left)
@@ -90,8 +100,8 @@ function createDiamondShape(radius: number): THREE.Shape {
 /**
  * Creates a square shape
  */
-function createSquareShape(radius: number): THREE.Shape {
-  const shape = new THREE.Shape();
+function createSquareShape(radius: number): ThreeShape {
+  const shape = new ThreeShape();
   const halfSize = radius * 0.85; // Slightly smaller to match visual size
 
   // Square corners
@@ -107,8 +117,8 @@ function createSquareShape(radius: number): THREE.Shape {
 /**
  * Creates a chevron (arrow/V shape) pointing up
  */
-function createChevronShape(radius: number): THREE.Shape {
-  const shape = new THREE.Shape();
+function createChevronShape(radius: number): ThreeShape {
+  const shape = new ThreeShape();
   // const _thickness = radius * 0.25; // Thickness of the chevron arms (unused, kept for reference)
 
   // Outer V shape

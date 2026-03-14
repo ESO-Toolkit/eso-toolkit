@@ -19,6 +19,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -168,7 +169,7 @@ export const LatestReports: React.FC = () => {
         elevation={isDesktop ? 4 : 1}
         sx={{
           ...cardSx,
-          background: (theme) =>
+          background: (theme: Theme) =>
             theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
               : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
@@ -301,8 +302,10 @@ export const LatestReports: React.FC = () => {
                         <TableRow
                           key={report.code}
                           hover
-                          onClick={(e) => handleReportClick(report.code, e)}
-                          onMouseDown={(e) => {
+                          onClick={(e: React.MouseEvent<HTMLTableRowElement>) =>
+                            handleReportClick(report.code, e)
+                          }
+                          onMouseDown={(e: React.MouseEvent<HTMLTableRowElement>) => {
                             // Handle middle-click
                             if (e.button === 1) {
                               e.preventDefault();

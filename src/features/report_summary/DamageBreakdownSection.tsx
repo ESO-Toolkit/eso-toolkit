@@ -20,6 +20,7 @@ import {
   Divider,
   Avatar,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
 import { ReportDamageBreakdown } from '../../types/reportSummaryTypes';
@@ -222,7 +223,7 @@ const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
                             height: 48,
                             borderRadius: 2,
                             overflow: 'hidden',
-                            bgcolor: (theme) =>
+                            bgcolor: (theme: Theme) =>
                               theme.palette.mode === 'dark'
                                 ? 'rgba(255,255,255,0.08)'
                                 : 'rgba(0,0,0,0.06)',

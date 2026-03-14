@@ -111,7 +111,7 @@ const ColumnFilter = <T,>({ column }: { column: Column<T, unknown> }): React.JSX
   const hasValue = columnFilterValue !== undefined && columnFilterValue !== '';
 
   return (
-    <Box sx={{ mt: 1 }} onClick={(e) => e.stopPropagation()}>
+    <Box sx={{ mt: 1 }} onClick={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}>
       <TextField
         size="small"
         type={isNumeric ? 'number' : 'text'}
@@ -132,7 +132,7 @@ const ColumnFilter = <T,>({ column }: { column: Column<T, unknown> }): React.JSX
             <InputAdornment position="end">
               <IconButton
                 size="small"
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   column.setFilterValue(undefined);
                 }}

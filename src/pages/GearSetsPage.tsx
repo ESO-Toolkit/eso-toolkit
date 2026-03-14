@@ -23,6 +23,7 @@ import {
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
+import type { Theme } from '@mui/material/styles';
 import React, { useMemo, useState } from 'react';
 
 import * as arenaSets from '../data/Gear Sets/arena';
@@ -101,18 +102,15 @@ const GearSetRow: React.FC<GearSetRowProps> = ({ set }) => {
       >
         <TableCell sx={{ width: 56, py: 1 }}>
           {!imgError ? (
-            <Box
-              component="img"
+            <img
               src={getIconUrl(set.icon)}
               alt={set.name}
               onError={() => setImgError(true)}
-              sx={{
+              style={{
                 width: 40,
                 height: 40,
-                borderRadius: 1,
+                borderRadius: 4,
                 objectFit: 'contain',
-                background: (theme) =>
-                  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
               }}
             />
           ) : (
@@ -121,7 +119,7 @@ const GearSetRow: React.FC<GearSetRowProps> = ({ set }) => {
                 width: 40,
                 height: 40,
                 borderRadius: 1,
-                background: (theme) =>
+                background: (theme: Theme) =>
                   theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
                 display: 'flex',
                 alignItems: 'center',
@@ -166,7 +164,7 @@ const GearSetRow: React.FC<GearSetRowProps> = ({ set }) => {
                     key={i}
                     variant="caption"
                     component="p"
-                    sx={(theme) => ({
+                    sx={(theme: Theme) => ({
                       color: theme.palette.mode === 'dark' ? '#94a3b8' : '#475569',
                       '&:not(:last-child)': {
                         borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
@@ -308,7 +306,7 @@ export const GearSetsPage: React.FC = () => {
       {/* Table */}
       <Paper
         variant="outlined"
-        sx={(theme) => ({
+        sx={(theme: Theme) => ({
           overflow: 'hidden',
           background:
             theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(255, 255, 255, 0.8)',

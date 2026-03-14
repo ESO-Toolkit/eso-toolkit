@@ -1,4 +1,5 @@
 import { Box, Typography, Paper, Skeleton } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
 interface InsightsSkeletonLayoutProps {
@@ -205,15 +206,15 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
                         position: 'relative',
                         height: 48,
                         borderRadius: 2,
-                        bgcolor: (theme) =>
+                        bgcolor: (theme: Theme) =>
                           theme.palette.mode === 'dark'
                             ? 'rgba(255,255,255,0.08)'
                             : 'rgba(203, 213, 225, 0.3)',
-                        border: (theme) =>
+                        border: (theme: Theme) =>
                           theme.palette.mode === 'dark'
                             ? 'none'
                             : '1px solid rgba(15, 23, 42, 0.08)',
-                        boxShadow: (theme) =>
+                        boxShadow: (theme: Theme) =>
                           theme.palette.mode === 'dark'
                             ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)'
                             : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
@@ -278,15 +279,15 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
                         position: 'relative',
                         height: 48,
                         borderRadius: 2,
-                        bgcolor: (theme) =>
+                        bgcolor: (theme: Theme) =>
                           theme.palette.mode === 'dark'
                             ? 'rgba(255,255,255,0.08)'
                             : 'rgba(203, 213, 225, 0.3)',
-                        border: (theme) =>
+                        border: (theme: Theme) =>
                           theme.palette.mode === 'dark'
                             ? 'none'
                             : '1px solid rgba(15, 23, 42, 0.08)',
-                        boxShadow: (theme) =>
+                        boxShadow: (theme: Theme) =>
                           theme.palette.mode === 'dark'
                             ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)'
                             : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
@@ -346,15 +347,15 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
                         position: 'relative',
                         height: 48,
                         borderRadius: 2,
-                        bgcolor: (theme) =>
+                        bgcolor: (theme: Theme) =>
                           theme.palette.mode === 'dark'
                             ? 'rgba(255,255,255,0.08)'
                             : 'rgba(203, 213, 225, 0.3)',
-                        border: (theme) =>
+                        border: (theme: Theme) =>
                           theme.palette.mode === 'dark'
                             ? 'none'
                             : '1px solid rgba(15, 23, 42, 0.08)',
-                        boxShadow: (theme) =>
+                        boxShadow: (theme: Theme) =>
                           theme.palette.mode === 'dark'
                             ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)'
                             : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
@@ -467,15 +468,15 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
                         position: 'relative',
                         height: 48,
                         borderRadius: 2,
-                        bgcolor: (theme) =>
+                        bgcolor: (theme: Theme) =>
                           theme.palette.mode === 'dark'
                             ? 'rgba(255,255,255,0.08)'
                             : 'rgba(203, 213, 225, 0.3)',
-                        border: (theme) =>
+                        border: (theme: Theme) =>
                           theme.palette.mode === 'dark'
                             ? 'none'
                             : '1px solid rgba(15, 23, 42, 0.08)',
-                        boxShadow: (theme) =>
+                        boxShadow: (theme: Theme) =>
                           theme.palette.mode === 'dark'
                             ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)'
                             : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',

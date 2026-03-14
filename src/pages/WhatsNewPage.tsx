@@ -13,6 +13,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
 import { useWhatsNew } from '@/hooks/useWhatsNew';
@@ -70,14 +71,14 @@ const EntryCard: React.FC<{ entry: WhatsNewEntry }> = ({ entry }) => (
     sx={{
       p: { xs: 2.5, md: 3 },
       borderRadius: 2,
-      border: (theme) =>
+      border: (theme: Theme) =>
         `1px solid ${
           theme.palette.mode === 'dark' ? 'rgba(148,163,184,0.15)' : 'rgba(148,163,184,0.25)'
         }`,
       transition: 'border-color 0.2s, box-shadow 0.2s',
       '&:hover': {
         borderColor: 'primary.main',
-        boxShadow: (theme) =>
+        boxShadow: (theme: Theme) =>
           theme.palette.mode === 'dark'
             ? '0 0 0 1px rgba(59,130,246,0.3)'
             : '0 0 0 1px rgba(59,130,246,0.2)',

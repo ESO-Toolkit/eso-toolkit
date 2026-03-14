@@ -817,8 +817,10 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             }
             color="default"
             variant="outlined"
-            onClick={(e) => handleSetClick(assignment.setName, e)}
-            onContextMenu={(e) => handleClearSet(assignment.setName, e)}
+            onClick={(e: React.MouseEvent<HTMLDivElement>) => handleSetClick(assignment.setName, e)}
+            onContextMenu={(e: React.MouseEvent<HTMLDivElement>) =>
+              handleClearSet(assignment.setName, e)
+            }
             sx={{
               m: 0.5,
               cursor: 'pointer',
@@ -1870,7 +1872,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <Tooltip title="Clear slot">
                         <IconButton
                           size="small"
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                             e.stopPropagation();
                             onAssignSet('', 'tank1', 'set1');
                           }}
@@ -1944,7 +1946,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <Tooltip title="Clear slot">
                         <IconButton
                           size="small"
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                             e.stopPropagation();
                             onAssignSet('', 'tank1', 'set2');
                           }}
@@ -2023,7 +2025,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     <Tooltip title="Clear slot">
                       <IconButton
                         size="small"
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                           e.stopPropagation();
                           onAssignSet('', 'tank1', 'monster');
                         }}
@@ -2133,7 +2135,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <Tooltip title="Clear slot">
                         <IconButton
                           size="small"
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                             e.stopPropagation();
                             onAssignSet('', 'tank2', 'set1');
                           }}
@@ -2207,7 +2209,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <Tooltip title="Clear slot">
                         <IconButton
                           size="small"
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                             e.stopPropagation();
                             onAssignSet('', 'tank2', 'set2');
                           }}
@@ -2286,7 +2288,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     <Tooltip title="Clear slot">
                       <IconButton
                         size="small"
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                           e.stopPropagation();
                           onAssignSet('', 'tank2', 'monster');
                         }}
@@ -2406,7 +2408,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <Tooltip title="Clear slot">
                         <IconButton
                           size="small"
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                             e.stopPropagation();
                             onAssignSet('', 'healer1', 'set1');
                           }}
@@ -2480,7 +2482,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <Tooltip title="Clear slot">
                         <IconButton
                           size="small"
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                             e.stopPropagation();
                             onAssignSet('', 'healer1', 'set2');
                           }}
@@ -2557,7 +2559,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     <Tooltip title="Clear slot">
                       <IconButton
                         size="small"
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                           e.stopPropagation();
                           onAssignSet('', 'healer1', 'monster');
                         }}
@@ -2669,7 +2671,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <Tooltip title="Clear slot">
                         <IconButton
                           size="small"
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                             e.stopPropagation();
                             onAssignSet('', 'healer2', 'set1');
                           }}
@@ -2743,7 +2745,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                       <Tooltip title="Clear slot">
                         <IconButton
                           size="small"
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                             e.stopPropagation();
                             onAssignSet('', 'healer2', 'set2');
                           }}
@@ -2820,7 +2822,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                     <Tooltip title="Clear slot">
                       <IconButton
                         size="small"
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                           e.stopPropagation();
                           onAssignSet('', 'healer2', 'monster');
                         }}

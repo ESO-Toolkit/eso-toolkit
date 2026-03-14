@@ -120,16 +120,13 @@ export const SynergyPanelView: React.FC<SynergyPanelViewProps> = ({
           const allSynergiesUrl = buildAllSynergiesUrl(reportCode, fightId);
           return allSynergiesUrl ? (
             <Chip
-              component="a"
-              href={allSynergiesUrl}
-              target="_blank"
-              rel="noopener noreferrer"
               icon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
               label="View on ESO Logs"
               size="small"
               variant="outlined"
               color="info"
               clickable
+              onClick={() => window.open(allSynergiesUrl, '_blank', 'noopener,noreferrer')}
             />
           ) : null;
         })()}

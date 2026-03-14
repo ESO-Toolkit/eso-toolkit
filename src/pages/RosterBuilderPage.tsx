@@ -3448,8 +3448,7 @@ export const RosterBuilderPage: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Box
-            component="button"
+          <ButtonBase
             onClick={() => setQuickFillDialog(false)}
             sx={{
               px: 1.5,
@@ -3470,7 +3469,7 @@ export const RosterBuilderPage: React.FC = () => {
             }}
           >
             Cancel
-          </Box>
+          </ButtonBase>
           <Button
             onClick={handleQuickFill}
             variant="contained"
@@ -3550,8 +3549,7 @@ export const RosterBuilderPage: React.FC = () => {
           </Paper>
         </DialogContent>
         <DialogActions>
-          <Box
-            component="button"
+          <ButtonBase
             onClick={() => setPreviewDialog(false)}
             sx={{
               px: 1.5,
@@ -3572,7 +3570,7 @@ export const RosterBuilderPage: React.FC = () => {
             }}
           >
             Close
-          </Box>
+          </ButtonBase>
           <Button
             onClick={() => {
               handleCopyDiscordFormat();
@@ -3661,8 +3659,7 @@ export const RosterBuilderPage: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Box
-            component="button"
+          <ButtonBase
             onClick={() => {
               setImportUrlDialog(false);
               setImportUrl('');
@@ -3688,7 +3685,7 @@ export const RosterBuilderPage: React.FC = () => {
             }}
           >
             Cancel
-          </Box>
+          </ButtonBase>
           <Button
             onClick={handleImportFromUrl}
             variant="contained"
@@ -5516,9 +5513,8 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                   }}
                 >
                   {(['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'] as const).map((type) => (
-                    <Box
+                    <ButtonBase
                       key={type}
-                      component="button"
                       onClick={() => onConvertToJail(slot.slotNumber, type)}
                       sx={{
                         px: 1.25,
@@ -5539,14 +5535,13 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                       }}
                     >
                       {jailLabels[type]}
-                    </Box>
+                    </ButtonBase>
                   ))}
                 </Box>
               </Box>
             ) : (
               <Box>
-                <Box
-                  component="button"
+                <ButtonBase
                   onClick={() => onConvertToDPS(slot.slotNumber)}
                   sx={{
                     display: 'inline-flex',
@@ -5571,7 +5566,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                   }}
                 >
                   Convert Back to Regular DPS
-                </Box>
+                </ButtonBase>
               </Box>
             )}
 

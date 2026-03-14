@@ -6,6 +6,7 @@
 import { HelpOutline, Restaurant } from '@mui/icons-material';
 import { Alert, Box, Chip, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import Autocomplete, { AutocompleteInputChangeReason } from '@mui/material/Autocomplete';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 import { useDispatch } from 'react-redux';
 import { Link as RouterLink } from 'react-router-dom';
@@ -276,11 +277,10 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
             <li {...props}>
               <Stack direction="row" spacing={1.5} alignItems="center" width="100%">
                 {iconUrl && (
-                  <Box
-                    component="img"
+                  <img
                     src={iconUrl}
                     alt=""
-                    sx={{ width: 28, height: 28, flexShrink: 0, opacity: 0.85 }}
+                    style={{ width: 28, height: 28, flexShrink: 0, opacity: 0.85 }}
                   />
                 )}
                 <Stack spacing={0} flex={1} minWidth={0}>
@@ -352,20 +352,15 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
                 px: 1.5,
                 py: 1,
                 borderRadius: 1,
-                border: (theme) => `1px solid ${theme.palette.success.light}`,
-                bgcolor: (theme) =>
+                border: (theme: Theme) => `1px solid ${theme.palette.success.light}`,
+                bgcolor: (theme: Theme) =>
                   theme.palette.mode === 'dark'
                     ? 'rgba(46, 125, 50, 0.18)'
                     : 'rgba(76, 175, 80, 0.12)',
               }}
             >
               {iconUrl && (
-                <Box
-                  component="img"
-                  src={iconUrl}
-                  alt=""
-                  sx={{ width: 36, height: 36, flexShrink: 0 }}
-                />
+                <img src={iconUrl} alt="" style={{ width: 36, height: 36, flexShrink: 0 }} />
               )}
               <Box flex={1} minWidth={0}>
                 <Stack direction="row" spacing={1} alignItems="center">

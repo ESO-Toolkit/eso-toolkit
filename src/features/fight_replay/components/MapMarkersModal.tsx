@@ -122,11 +122,10 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
       <DialogTitle>Import M0R Markers</DialogTitle>
 
       <DialogContent>
-        <Box
-          component="form"
+        <form
           onSubmit={handleFormSubmit}
           noValidate
-          sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 8 }}
         >
           {/* Instructions */}
           <Typography variant="body2" color="text.secondary">
@@ -199,7 +198,7 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
             )}
 
           {loadError && <Alert severity="error">{loadError}</Alert>}
-        </Box>
+        </form>
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2 }}>

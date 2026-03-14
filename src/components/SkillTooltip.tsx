@@ -229,7 +229,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
         </Box>
 
         <Box
-          sx={(theme) => ({
+          sx={(theme: Theme) => ({
             p: 0.75,
             pt: 0.5,
             borderRadius: '10px',
@@ -241,7 +241,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
           <Stack direction="row" spacing={1.75} alignItems="flex-start">
             {resolvedIconUrl && (
               <Box
-                sx={(theme) => ({
+                sx={(theme: Theme) => ({
                   width: { xs: 40, sm: 44 },
                   height: { xs: 40, sm: 44 },
                   borderRadius: '7px',
@@ -252,16 +252,15 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                   flex: '0 0 auto',
                 })}
               >
-                <Box
-                  component="img"
+                <img
                   src={resolvedIconUrl}
                   alt={name}
-                  sx={{
+                  style={{
                     width: '100%',
                     height: '100%',
                     display: 'block',
                     objectFit: 'cover',
-                    borderRadius: 'inherit !important',
+                    borderRadius: 'inherit',
                   }}
                 />
               </Box>
@@ -320,7 +319,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
           <Box sx={{ mt: 0.5, mb: 1 }}>
             <Box
               ref={statsRowRef}
-              sx={(_theme) => ({
+              sx={(_theme: Theme) => ({
                 display: 'grid',
                 gridTemplateColumns: wrapStats
                   ? 'repeat(auto-fit, minmax(120px, 1fr))'
@@ -390,7 +389,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                     </Typography>
                     <Box
                       component="span"
-                      sx={(theme) => ({
+                      sx={(theme: Theme) => ({
                         display: 'inline-block',
                         px: 0.38,
                         py: 0.1,
@@ -413,7 +412,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
         )}
 
         <Divider
-          sx={(theme) => ({
+          sx={(theme: Theme) => ({
             my: 1,
             borderColor:
               theme.palette.mode === 'dark'
@@ -676,7 +675,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                             size="small"
                             label={`${effect.abilityName} (${effect.count})`}
                             variant="outlined"
-                            sx={(_theme) => ({
+                            sx={(_theme: Theme) => ({
                               fontSize: '0.62rem',
                               height: '20px',
                               color: indicator.color,
@@ -711,7 +710,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
               )}
             </Box>
             <Divider
-              sx={(theme) => ({
+              sx={(theme: Theme) => ({
                 my: 1,
                 borderColor:
                   theme.palette.mode === 'dark'

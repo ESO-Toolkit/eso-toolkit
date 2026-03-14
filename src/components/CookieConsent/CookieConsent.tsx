@@ -185,23 +185,24 @@ export const CookieConsent: React.FC = () => {
                 We use essential storage (localStorage) for app functionality. Optional analytics
                 and error tracking help us improve your experience. You choose which categories to
                 enable.{' '}
-                <Link
-                  component="button"
-                  variant="body2"
+                <button
+                  type="button"
                   onClick={handleCustomize}
-                  underline="hover"
-                  sx={{
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
                     color: 'var(--accent)',
                     cursor: 'pointer',
-                    transition: 'color 0.15s ease-in-out',
-                    '&:hover': { color: 'var(--accent-2)' },
+                    font: 'inherit',
+                    fontSize: '0.875rem',
+                    textDecoration: 'underline',
                   }}
                 >
                   Customize
-                </Link>{' '}
+                </button>{' '}
                 |{' '}
                 <Link
-                  component="a"
                   href="/privacy"
                   variant="body2"
                   underline="hover"

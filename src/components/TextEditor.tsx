@@ -1181,7 +1181,7 @@ export const TextEditor: React.FC = () => {
                   role="dialog"
                   aria-modal="true"
                   aria-labelledby="color-picker-title"
-                  onMouseDown={(e) => {
+                  onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {
                     // Don't start drag if clicking on the hex input
                     if ((e.target as HTMLElement).tagName === 'INPUT') {
                       return;
@@ -1322,7 +1322,7 @@ export const TextEditor: React.FC = () => {
                         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3) !important',
                       },
                     }}
-                    onMouseDown={(e) => e.stopPropagation()}
+                    onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}
                   >
                     <HexColorPicker color={previewColor} onChange={handleColorPreview} />
                   </Box>
