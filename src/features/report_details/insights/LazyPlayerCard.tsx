@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 
 import { PlayerCardSkeleton } from '../../../components/PlayersSkeleton';
 import type { GrimoireData } from '../../../components/ScribingSkillsDisplay';
+import type { PlayerRoleResult } from '../../../features/role_detection';
 import type { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import type { ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import type { BuildIssue } from '../../../utils/detectBuildIssues';
@@ -60,6 +61,8 @@ export interface PlayerCardProps {
   critChance?: number;
   /** Ordered list of visible stat chip IDs (from customization preferences) */
   visibleChips?: StatChipId[];
+  /** Detected role from the role detection algorithm */
+  detectedRole?: PlayerRoleResult;
   /** Test ID for testing */
   'data-testid'?: string;
 }

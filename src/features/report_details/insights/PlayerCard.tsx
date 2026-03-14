@@ -40,6 +40,7 @@ import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillT
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
+import type { PlayerRoleResult } from '../../../features/role_detection';
 import { useCastEvents } from '../../../hooks/events/useCastEvents';
 import { useDamageEvents } from '../../../hooks/events/useDamageEvents';
 import { useDebuffEvents } from '../../../hooks/events/useDebuffEvents';
@@ -47,6 +48,7 @@ import { useFriendlyBuffEvents } from '../../../hooks/events/useFriendlyBuffEven
 import { useHealingEvents } from '../../../hooks/events/useHealingEvents';
 import { useHostileBuffEvents } from '../../../hooks/events/useHostileBuffEvents';
 import { useResourceEvents } from '../../../hooks/events/useResourceEvents';
+import { getRoleEmoji, ROLE_LABELS, toBroadRole } from '../../../hooks/useRoleDetection';
 import { selectPlayersByIdForContext } from '../../../store/player_data/playerDataSelectors';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { selectActiveReportContext } from '../../../store/report/reportSelectors';
@@ -155,6 +157,8 @@ interface PlayerCardProps {
   critChance?: number;
   /** Ordered list of visible stat chip IDs (from customization preferences) */
   visibleChips?: StatChipId[];
+  /** Detected role from the role detection algorithm */
+  detectedRole?: PlayerRoleResult;
 }
 
 // Helper function to consolidate build issues
@@ -269,6 +273,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     critDps,
     critChance,
     visibleChips,
+    detectedRole,
   }) => {
     const theme = useTheme();
 
@@ -467,13 +472,19 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       [playerGear, theme],
     );
 
-    // Memoize role information
+    // Memoize role information — prefer detected role when available
     const roleInfo = React.useMemo(() => {
+      if (detectedRole) {
+        return {
+          roleType: ROLE_LABELS[detectedRole.role],
+          roleEmoji: getRoleEmoji(detectedRole.role),
+        };
+      }
       const roleType =
         player.role === 'tank' ? 'Tank' : player.role === 'healer' ? 'Healer' : 'DPS';
       const roleEmoji = player.role === 'tank' ? '🛡️' : player.role === 'healer' ? '❤️' : '⚔️';
       return { roleType, roleEmoji };
-    }, [player.role]);
+    }, [player.role, detectedRole]);
 
     // Memoize food information
     const foodInfo = React.useMemo(() => {
@@ -523,7 +534,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     const statChipEntries = React.useMemo(() => {
       // Collect candidate nodes into a map; order is determined afterwards.
       const candidateMap = new Map<StatChipId, React.ReactNode>();
-      const r = player.role as 'dps' | 'healer' | 'tank';
+      const r: 'dps' | 'healer' | 'tank' = detectedRole
+        ? toBroadRole(detectedRole.role)
+        : (player.role as 'dps' | 'healer' | 'tank');
 
       const add = (id: StatChipId, node: React.ReactNode): void => {
         const meta = STAT_CHIP_META[id];
@@ -854,6 +867,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     }, [
       visibleChips,
       player.role,
+      detectedRole,
       player.id,
       dpsValue,
       hpsValue,
