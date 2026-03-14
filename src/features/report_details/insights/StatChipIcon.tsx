@@ -1,27 +1,32 @@
-import { SvgIcon } from '@mui/material';
+import { SvgIcon, useTheme } from '@mui/material';
 import React from 'react';
 
 import type { StatChipId } from './statChipConfig';
+import { getChipIconColor } from './statChipConfig';
 
 interface StatChipIconProps {
   chipId: StatChipId;
   size?: number;
+  /** Explicit colour override — when omitted the icon uses its category colour. */
   color?: string;
 }
 
-/** Stroke style for outline paths — thicker for legibility at small sizes. */
+/** Stroke style — bolder than text for visual distinction. */
 const strokeSx = {
   fill: 'none',
   stroke: 'currentColor',
-  strokeWidth: 2.2,
+  strokeWidth: 2.8,
   strokeLinecap: 'round' as const,
   strokeLinejoin: 'round' as const,
 };
 
-/** Filled accent — small solid dots / highlights to anchor the eye. */
+/** Filled accent — solid dots / highlights to anchor the eye. */
 const fillSx = { fill: 'currentColor', stroke: 'none' };
 
 export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, color }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const resolvedColor = color ?? getChipIconColor(chipId, isDark);
   const renderIcon = (): React.ReactNode => {
     switch (chipId) {
       // ── DPS: crossed swords ───────────────────────────────────
@@ -209,7 +214,7 @@ export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, c
       sx={{
         width: size,
         height: size,
-        color: color ?? 'text.secondary',
+        color: resolvedColor,
         verticalAlign: 'middle',
       }}
       aria-hidden="true"

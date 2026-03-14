@@ -120,6 +120,43 @@ export const STAT_CHIP_META: Record<StatChipId, StatChipMeta> = {
   },
 };
 
+/**
+ * Icon category colors — matches the role-based palette from roleColors.ts.
+ * Dark-mode hex values; the component resolves light-mode automatically.
+ */
+export type ChipCategory = 'damage' | 'healing' | 'utility' | 'neutral';
+
+const CHIP_CATEGORY: Record<StatChipId, ChipCategory> = {
+  dps: 'damage',
+  hps: 'healing',
+  critChance: 'damage',
+  critDamage: 'damage',
+  totalDamage: 'damage',
+  totalCritDamage: 'damage',
+  critDps: 'damage',
+  mundus: 'neutral',
+  food: 'neutral',
+  potion: 'neutral',
+  deaths: 'utility',
+  resurrects: 'healing',
+  cpm: 'damage',
+  distance: 'neutral',
+  barPattern: 'damage',
+};
+
+/** Solid icon colours per category (dark / light mode pairs). */
+const CATEGORY_COLORS: Record<ChipCategory, { dark: string; light: string }> = {
+  damage: { dark: '#ff8b61', light: '#ff5722' },
+  healing: { dark: '#b970ff', light: '#7c3aed' },
+  utility: { dark: '#62baff', light: '#0891b2' },
+  neutral: { dark: '#90a4ae', light: '#607d8b' },
+};
+
+export function getChipIconColor(chipId: StatChipId, isDarkMode: boolean): string {
+  const cat = CHIP_CATEGORY[chipId];
+  return isDarkMode ? CATEGORY_COLORS[cat].dark : CATEGORY_COLORS[cat].light;
+}
+
 /** Formats a large number as an abbreviated string (e.g. 106234 → "106k") */
 export function formatStatValue(value: number): string {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}m`;
