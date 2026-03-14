@@ -17,9 +17,7 @@ export const RosterCardSkeleton: React.FC = () => {
           : 'linear-gradient(160deg, rgba(99,102,241,0.05) 0%, rgba(152,131,227,0.05) 45%, rgba(255,255,255,0.8) 100%)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        border: isDark
-          ? '1px solid rgba(255,255,255,0.09)'
-          : '1px solid rgba(0,0,0,0.09)',
+        border: isDark ? '1px solid rgba(255,255,255,0.09)' : '1px solid rgba(0,0,0,0.09)',
         borderRadius: 3,
         overflow: 'hidden',
         boxShadow: isDark
@@ -68,9 +66,7 @@ export const RosterCardSkeleton: React.FC = () => {
               mb: 1.75,
               borderRadius: '6px',
               alignSelf: 'flex-start',
-              border: isDark
-                ? '1px solid rgba(255,255,255,0.06)'
-                : '1px solid rgba(0,0,0,0.05)',
+              border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.05)',
               bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
             }}
           />
@@ -142,9 +138,7 @@ export const RosterCardSkeleton: React.FC = () => {
               background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
               backdropFilter: 'blur(6px)',
               WebkitBackdropFilter: 'blur(6px)',
-              border: isDark
-                ? '1px solid rgba(255,255,255,0.06)'
-                : '1px solid rgba(0,0,0,0.05)',
+              border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.05)',
               overflow: 'hidden',
             }}
           >
@@ -156,9 +150,7 @@ export const RosterCardSkeleton: React.FC = () => {
                 background: isDark
                   ? 'linear-gradient(180deg, rgba(99,102,241,0.5) 0%, rgba(99,102,241,0.2) 100%)'
                   : 'linear-gradient(180deg, rgba(99,102,241,0.35) 0%, rgba(99,102,241,0.12) 100%)',
-                boxShadow: isDark
-                  ? '0 0 6px rgba(99,102,241,0.2)'
-                  : '0 0 4px rgba(99,102,241,0.1)',
+                boxShadow: isDark ? '0 0 6px rgba(99,102,241,0.2)' : '0 0 4px rgba(99,102,241,0.1)',
               }}
               aria-hidden="true"
             />

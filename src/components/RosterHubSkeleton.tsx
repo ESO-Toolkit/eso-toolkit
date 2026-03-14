@@ -1,4 +1,13 @@
-import { Box, Card, CardActions, CardContent, Container, Grid, Skeleton, useTheme } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardActions,
+  CardContent,
+  Container,
+  Grid,
+  Skeleton,
+  useTheme,
+} from '@mui/material';
 import React from 'react';
 
 const SKELETON_COUNT = 8;
@@ -108,13 +117,19 @@ const RosterCardSkeletonInline: React.FC = () => {
               variant="rounded"
               width={68}
               height={24}
-              sx={{ borderRadius: '6px', bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}
+              sx={{
+                borderRadius: '6px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+              }}
             />
             <Skeleton
               variant="rounded"
               width={82}
               height={24}
-              sx={{ borderRadius: '6px', bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}
+              sx={{
+                borderRadius: '6px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+              }}
             />
           </Box>
 
@@ -178,7 +193,10 @@ const RosterCardSkeletonInline: React.FC = () => {
           variant="rounded"
           width={62}
           height={32}
-          sx={{ borderRadius: '999px', bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}
+          sx={{
+            borderRadius: '999px',
+            bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+          }}
         />
         <Box sx={{ display: 'flex', gap: 0.5 }}>
           <Skeleton
@@ -228,18 +246,36 @@ export const RosterHubSkeleton: React.FC = () => {
             variant="rounded"
             width={40}
             height={40}
-            sx={{ borderRadius: '11px', bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', flexShrink: 0 }}
+            sx={{
+              borderRadius: '11px',
+              bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+              flexShrink: 0,
+            }}
           />
           <Box>
-            <Skeleton variant="text" width={70} height={12} sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)', mb: 0.5 }} />
-            <Skeleton variant="text" width={110} height={26} sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)' }} />
+            <Skeleton
+              variant="text"
+              width={70}
+              height={12}
+              sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)', mb: 0.5 }}
+            />
+            <Skeleton
+              variant="text"
+              width={110}
+              height={26}
+              sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)' }}
+            />
           </Box>
         </Box>
         <Skeleton
           variant="rounded"
           width={140}
           height={34}
-          sx={{ borderRadius: '8px', bgcolor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', flexShrink: 0 }}
+          sx={{
+            borderRadius: '8px',
+            bgcolor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
+            flexShrink: 0,
+          }}
         />
       </Box>
 
@@ -262,19 +298,31 @@ export const RosterHubSkeleton: React.FC = () => {
           <Skeleton
             variant="rounded"
             height={36}
-            sx={{ flexGrow: 1, borderRadius: '10px', bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }}
+            sx={{
+              flexGrow: 1,
+              borderRadius: '10px',
+              bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+            }}
           />
           <Skeleton
             variant="rounded"
             width={160}
             height={36}
-            sx={{ borderRadius: '10px', bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', flexShrink: 0 }}
+            sx={{
+              borderRadius: '10px',
+              bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+              flexShrink: 0,
+            }}
           />
           <Skeleton
             variant="rounded"
             width={108}
             height={36}
-            sx={{ borderRadius: '999px', bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', flexShrink: 0 }}
+            sx={{
+              borderRadius: '999px',
+              bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+              flexShrink: 0,
+            }}
           />
         </Box>
         {/* Row 2: tag chips */}
@@ -285,7 +333,10 @@ export const RosterHubSkeleton: React.FC = () => {
               variant="rounded"
               width={w}
               height={26}
-              sx={{ borderRadius: '6px', bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }}
+              sx={{
+                borderRadius: '6px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+              }}
             />
           ))}
         </Box>

@@ -120,25 +120,15 @@ const SingleComment: React.FC<{
               px: 1.25,
               borderRadius: '14px',
               borderTopLeftRadius: '4px',
-              background: isDark
-                ? 'rgba(255,255,255,0.07)'
-                : 'rgba(0,0,0,0.04)',
-              border: isDark
-                ? '1px solid rgba(255,255,255,0.1)'
-                : '1px solid rgba(0,0,0,0.07)',
+              background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)',
+              border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.07)',
               backdropFilter: 'blur(6px)',
-              boxShadow: isDark
-                ? '0 1px 4px rgba(0,0,0,0.3)'
-                : '0 1px 3px rgba(0,0,0,0.06)',
+              boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.06)',
               transition: 'all 0.15s ease',
               '&:hover': {
                 background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.055)',
-                border: isDark
-                  ? '1px solid rgba(255,255,255,0.15)'
-                  : '1px solid rgba(0,0,0,0.1)',
-                boxShadow: isDark
-                  ? '0 2px 8px rgba(0,0,0,0.4)'
-                  : '0 2px 6px rgba(0,0,0,0.08)',
+                border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.1)',
+                boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 6px rgba(0,0,0,0.08)',
               },
             }}
           >
@@ -286,7 +276,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     e.preventDefault();
     if (!token || !body.trim() || submitting) return;
 
-    const tempId = `pending-${crypto.randomUUID()}`;
+    const tempId = `pending-${window.crypto.randomUUID()}`;
     const optimisticComment: HubComment = {
       id: tempId,
       roster_id: rosterId,
@@ -431,12 +421,8 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                 padding: '4px',
                 paddingLeft: '12px',
                 borderRadius: '16px',
-                backgroundColor: isDark
-                  ? 'rgb(40, 48, 72)'
-                  : 'rgba(255,255,255,0.7)',
-                border: isDark
-                  ? '1px solid rgba(255,255,255,0.22)'
-                  : '1px solid rgba(0,0,0,0.09)',
+                backgroundColor: isDark ? 'rgb(40, 48, 72)' : 'rgba(255,255,255,0.7)',
+                border: isDark ? '1px solid rgba(255,255,255,0.22)' : '1px solid rgba(0,0,0,0.09)',
                 transition: 'all 0.2s ease',
               }}
             >
@@ -501,9 +487,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                         : 'rgba(0,0,0,0.04)',
                   color: body.trim() && !submitting ? '#fff' : 'text.disabled',
                   boxShadow:
-                    body.trim() && !submitting
-                      ? '0 2px 8px rgba(99,102,241,0.35)'
-                      : 'none',
+                    body.trim() && !submitting ? '0 2px 8px rgba(99,102,241,0.35)' : 'none',
                   transition: 'all 0.2s ease',
                   '&:hover': {
                     background:
@@ -517,7 +501,11 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                   },
                 }}
               >
-                {submitting ? <CircularProgress size={18} color="inherit" /> : <Send sx={{ fontSize: 18 }} />}
+                {submitting ? (
+                  <CircularProgress size={18} color="inherit" />
+                ) : (
+                  <Send sx={{ fontSize: 18 }} />
+                )}
               </IconButton>
             </div>
           </form>
@@ -567,17 +555,13 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                 height: 40,
                 borderRadius: '14px',
                 background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                border: isDark
-                  ? '1px solid rgba(255,255,255,0.06)'
-                  : '1px solid rgba(0,0,0,0.05)',
+                border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.05)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Typography sx={{ fontSize: '1.1rem', lineHeight: 1, opacity: 0.4 }}>
-                💬
-              </Typography>
+              <Typography sx={{ fontSize: '1.1rem', lineHeight: 1, opacity: 0.4 }}>💬</Typography>
             </Box>
             <Typography
               sx={{

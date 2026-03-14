@@ -16,7 +16,7 @@ export const RosterBuilderSkeleton: React.FC = () => {
   const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
 
   /** Reusable gear set row skeleton */
-  const GearSetRow = ({ width = '70%' }: { width?: string }) => (
+  const GearSetRow = ({ width = '70%' }: { width?: string }): React.ReactElement => (
     <Box
       sx={{
         display: 'flex',
@@ -29,13 +29,18 @@ export const RosterBuilderSkeleton: React.FC = () => {
         border: `1px solid ${borderColor}`,
       }}
     >
-      <Skeleton variant="circular" width={20} height={20} sx={{ bgcolor: skeletonBgLight, flexShrink: 0 }} />
+      <Skeleton
+        variant="circular"
+        width={20}
+        height={20}
+        sx={{ bgcolor: skeletonBgLight, flexShrink: 0 }}
+      />
       <Skeleton variant="text" width={width} height={20} sx={{ bgcolor: skeletonBg }} />
     </Box>
   );
 
   /** Section header badge skeleton (e.g. TANK, HEALER, FLEXIBLE) */
-  const SectionBadge = ({ width = 60 }: { width?: number }) => (
+  const SectionBadge = ({ width = 60 }: { width?: number }): React.ReactElement => (
     <Skeleton
       variant="rounded"
       width={width}
@@ -45,11 +50,22 @@ export const RosterBuilderSkeleton: React.FC = () => {
   );
 
   /** Ultimate row skeleton (role badge + 4 ultimate buttons) */
-  const UltimateRow = () => (
+  const UltimateRow = (): React.ReactElement => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 4 }}>
-      <Skeleton variant="rounded" width={28} height={22} sx={{ borderRadius: '4px', bgcolor: skeletonBg }} />
+      <Skeleton
+        variant="rounded"
+        width={28}
+        height={22}
+        sx={{ borderRadius: '4px', bgcolor: skeletonBg }}
+      />
       {[70, 68, 56, 72].map((w, i) => (
-        <Skeleton key={i} variant="rounded" width={w} height={30} sx={{ borderRadius: '6px', bgcolor: skeletonBgLight }} />
+        <Skeleton
+          key={i}
+          variant="rounded"
+          width={w}
+          height={30}
+          sx={{ borderRadius: '6px', bgcolor: skeletonBgLight }}
+        />
       ))}
     </Box>
   );
@@ -83,10 +99,20 @@ export const RosterBuilderSkeleton: React.FC = () => {
         {/* Header: title + mode toggle */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Box>
-            <Skeleton variant="text" width={60} height={14} sx={{ bgcolor: skeletonBgLight, mb: 0.5 }} />
+            <Skeleton
+              variant="text"
+              width={60}
+              height={14}
+              sx={{ bgcolor: skeletonBgLight, mb: 0.5 }}
+            />
             <Skeleton variant="text" width={160} height={32} sx={{ bgcolor: skeletonBg }} />
           </Box>
-          <Skeleton variant="rounded" width={200} height={36} sx={{ borderRadius: '18px', bgcolor: skeletonBg }} />
+          <Skeleton
+            variant="rounded"
+            width={200}
+            height={36}
+            sx={{ borderRadius: '18px', bgcolor: skeletonBg }}
+          />
         </Box>
 
         {/* Roster name input */}
@@ -99,21 +125,43 @@ export const RosterBuilderSkeleton: React.FC = () => {
         {/* Toolbar row */}
         <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
           {[90, 80, 95, 80].map((w, i) => (
-            <Skeleton key={i} variant="rounded" width={w} height={34} sx={{ borderRadius: '8px', bgcolor: skeletonBg }} />
+            <Skeleton
+              key={i}
+              variant="rounded"
+              width={w}
+              height={34}
+              sx={{ borderRadius: '8px', bgcolor: skeletonBg }}
+            />
           ))}
           <Box sx={{ flexGrow: 1 }} />
           {[90, 75, 75, 85].map((w, i) => (
-            <Skeleton key={`r${i}`} variant="rounded" width={w} height={34} sx={{ borderRadius: '8px', bgcolor: skeletonBg }} />
+            <Skeleton
+              key={`r${i}`}
+              variant="rounded"
+              width={w}
+              height={34}
+              sx={{ borderRadius: '8px', bgcolor: skeletonBg }}
+            />
           ))}
         </Box>
 
         {/* Set Assignments header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Box>
-            <Skeleton variant="text" width={50} height={14} sx={{ bgcolor: skeletonBgLight, mb: 0.5 }} />
+            <Skeleton
+              variant="text"
+              width={50}
+              height={14}
+              sx={{ bgcolor: skeletonBgLight, mb: 0.5 }}
+            />
             <Skeleton variant="text" width={150} height={26} sx={{ bgcolor: skeletonBg }} />
           </Box>
-          <Skeleton variant="rounded" width={160} height={34} sx={{ borderRadius: '18px', bgcolor: skeletonBg }} />
+          <Skeleton
+            variant="rounded"
+            width={160}
+            height={34}
+            sx={{ borderRadius: '18px', bgcolor: skeletonBg }}
+          />
         </Box>
 
         {/* 3-column set assignments grid */}
@@ -152,7 +200,12 @@ export const RosterBuilderSkeleton: React.FC = () => {
 
         {/* Monster & Mythic section */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-          <Skeleton variant="rounded" width={140} height={22} sx={{ borderRadius: '6px', bgcolor: skeletonBg }} />
+          <Skeleton
+            variant="rounded"
+            width={140}
+            height={22}
+            sx={{ borderRadius: '6px', bgcolor: skeletonBg }}
+          />
         </Box>
         <Box
           sx={{

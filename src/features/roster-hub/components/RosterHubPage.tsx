@@ -273,11 +273,7 @@ export const RosterHubPage: React.FC = () => {
           <ErrorBoundary>
             <Grid container spacing={3}>
               {filteredRosters.map((roster) => (
-                <Grid
-                  key={roster.id}
-                  size={{ xs: 12, sm: 6, md: 4 }}
-                  sx={{ display: 'flex' }}
-                >
+                <Grid key={roster.id} size={{ xs: 12, sm: 6, md: 4 }} sx={{ display: 'flex' }}>
                   <RosterCard
                     roster={roster}
                     isOwner={isLoggedIn && roster.author_id === currentUserId}
