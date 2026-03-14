@@ -6205,15 +6205,24 @@ const CalculatorComponent: React.FC = () => {
                                 max={ARMOR_QUALITY_LABELS.length}
                                 precision={1}
                                 size="large"
-                                onChange={(event: React.SyntheticEvent, newValue: number | null) => {
+                                onChange={(
+                                  event: React.SyntheticEvent,
+                                  newValue: number | null,
+                                ) => {
                                   event.stopPropagation();
                                   if (typeof newValue === 'number') {
                                     setTempQualityLevel(newValue - 1);
                                   }
                                 }}
-                                onClick={(event: React.MouseEvent<HTMLSpanElement>) => event.stopPropagation()}
-                                onMouseDown={(event: React.MouseEvent<HTMLSpanElement>) => event.stopPropagation()}
-                                onTouchStart={(event: React.TouchEvent<HTMLSpanElement>) => event.stopPropagation()}
+                                onClick={(event: React.MouseEvent<HTMLSpanElement>) =>
+                                  event.stopPropagation()
+                                }
+                                onMouseDown={(event: React.MouseEvent<HTMLSpanElement>) =>
+                                  event.stopPropagation()
+                                }
+                                onTouchStart={(event: React.TouchEvent<HTMLSpanElement>) =>
+                                  event.stopPropagation()
+                                }
                                 getLabelText={(value: number) =>
                                   `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`
                                 }

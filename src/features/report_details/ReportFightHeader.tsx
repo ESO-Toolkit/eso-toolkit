@@ -276,7 +276,7 @@ export const ReportFightHeader: React.FC = () => {
         </Tooltip>
       </Box>
       <Box
-        component={"button" as React.ElementType}
+        component={'button' as React.ElementType}
         onClick={() => {
           navigate(`/report/${reportId}`);
         }}

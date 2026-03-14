@@ -18,7 +18,6 @@ const PlayerCard = React.lazy(() =>
   })),
 );
 
-
 export interface PlayerCardProps {
   key?: string;
   player: PlayerDetailsWithRole;

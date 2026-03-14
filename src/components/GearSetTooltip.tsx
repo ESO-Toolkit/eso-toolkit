@@ -155,7 +155,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
                 })}
               >
                 <Box
-                  component={"img" as React.ElementType}
+                  component={'img' as React.ElementType}
                   src={iconUrl}
                   alt={setName}
                   sx={{

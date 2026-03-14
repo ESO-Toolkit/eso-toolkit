@@ -228,7 +228,7 @@ const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
         }}
       >
         <Box
-          component={"img" as React.ElementType}
+          component={'img' as React.ElementType}
           src={mundusIcon}
           alt=""
           sx={{ width: { xs: 16, sm: 14, md: 12 }, height: { xs: 16, sm: 14, md: 12 } }}

@@ -253,7 +253,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                 })}
               >
                 <Box
-                  component={"img" as React.ElementType}
+                  component={'img' as React.ElementType}
                   src={resolvedIconUrl}
                   alt={name}
                   sx={{

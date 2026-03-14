@@ -253,13 +253,13 @@ const App: React.FC = () => {
                   autoHideDuration={4000}
                   preventDuplicate
                 >
-                {/* Global cosmic/nebula background — suppressed in embed/iframe mode */}
-                {!window.location.search.includes('embed=1') && <SiteBackground />}
-                <AppRoutes />
-                {/* Update notification for new versions */}
-                {!window.location.search.includes('embed=1') && <UpdateNotification />}
-                {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
-                {!window.location.search.includes('embed=1') && <CookieConsent />}
+                  {/* Global cosmic/nebula background — suppressed in embed/iframe mode */}
+                  {!window.location.search.includes('embed=1') && <SiteBackground />}
+                  <AppRoutes />
+                  {/* Update notification for new versions */}
+                  {!window.location.search.includes('embed=1') && <UpdateNotification />}
+                  {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
+                  {!window.location.search.includes('embed=1') && <CookieConsent />}
                 </SnackbarProvider>
               </AuthProvider>
             </EsoLogsClientProvider>

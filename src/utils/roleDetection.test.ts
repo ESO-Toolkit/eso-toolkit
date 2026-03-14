@@ -26,11 +26,7 @@ const emptyGear = (): PlayerGear[] => {
   return gear;
 };
 
-const withGearInSlot = (
-  gear: PlayerGear[],
-  slot: GearSlot,
-  type: WeaponType,
-): PlayerGear[] => {
+const withGearInSlot = (gear: PlayerGear[], slot: GearSlot, type: WeaponType): PlayerGear[] => {
   const copy = gear.map((g) => ({ ...g }));
   copy[slot] = { ...copy[slot], id: 12345, type };
   return copy;

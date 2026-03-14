@@ -1240,8 +1240,7 @@ function buildDiscordText(roster: RaidRoster): string {
 
   // Healers — skip completely empty slots (single-healer comps)
   ([roster.healer1, roster.healer2] as const).forEach((h, i) => {
-    const hasData =
-      h.playerName || h.roleNotes || h.labels?.length || h.set1 || h.set2 || h.notes;
+    const hasData = h.playerName || h.roleNotes || h.labels?.length || h.set1 || h.set2 || h.notes;
     if (!hasData) return;
     const lbl = h.roleLabel || (i === 0 ? 'H1' : 'H2');
     const rn = h.roleNotes ? ` [${h.roleNotes}]` : '';

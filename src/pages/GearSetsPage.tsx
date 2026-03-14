@@ -103,7 +103,7 @@ const GearSetRow: React.FC<GearSetRowProps> = ({ set }) => {
         <TableCell sx={{ width: 56, py: 1 }}>
           {!imgError ? (
             <Box
-              component={"img" as React.ElementType}
+              component={'img' as React.ElementType}
               src={getIconUrl(set.icon)}
               alt={set.name}
               onError={() => setImgError(true)}

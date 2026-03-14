@@ -504,7 +504,7 @@ const AbilityIcon: React.FC<{ abilityId?: number; size: number; highlight?: bool
       >
         {iconUrl && !loadFailed ? (
           <Box
-            component={"img" as React.ElementType}
+            component={'img' as React.ElementType}
             src={iconUrl}
             alt={skill?.name ?? 'Empty slot'}
             sx={{ width: '100%', height: '100%', objectFit: 'cover' }}

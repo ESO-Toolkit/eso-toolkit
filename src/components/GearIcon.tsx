@@ -82,7 +82,7 @@ export const GearIcon: React.FC<GearIconProps> = ({
 
   const iconElement = (
     <Box
-      component={"img" as React.ElementType}
+      component={'img' as React.ElementType}
       src={iconUrl}
       alt={alt}
       className={className}

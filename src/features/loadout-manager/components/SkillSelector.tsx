@@ -354,7 +354,7 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
           {/* Skill icon or empty slot placeholder */}
           {currentSkill?.icon ? (
             <Box
-              component={"img" as React.ElementType}
+              component={'img' as React.ElementType}
               src={`https://eso-hub.com/storage/icons/${currentSkill.icon}.png`}
               alt={currentSkill.name}
               sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -511,7 +511,7 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
                     <Stack direction="row" spacing={1.25} alignItems="center">
                       {option.icon ? (
                         <Box
-                          component={"img" as React.ElementType}
+                          component={'img' as React.ElementType}
                           src={`https://eso-hub.com/storage/icons/${option.icon}.png`}
                           alt={option.name}
                           sx={{

@@ -82,10 +82,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
     if (!roster || iframeLoaded || iframeError) return;
 
     const handleMessage = (event: MessageEvent): void => {
-      if (
-        event.origin === window.location.origin &&
-        event.data?.type === 'roster-preview-ready'
-      ) {
+      if (event.origin === window.location.origin && event.data?.type === 'roster-preview-ready') {
         setIframeLoaded(true);
       }
     };
@@ -358,7 +355,8 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
           minHeight: commentsFullscreen ? 0 : isMobile ? 200 : 250,
           maxHeight: commentsFullscreen ? 0 : 'none',
           opacity: commentsFullscreen ? 0 : 1,
-          transition: 'flex 0.3s ease, min-height 0.3s ease, max-height 0.3s ease, opacity 0.2s ease',
+          transition:
+            'flex 0.3s ease, min-height 0.3s ease, max-height 0.3s ease, opacity 0.2s ease',
           background: isDark
             ? 'linear-gradient(180deg, rgb(30,36,52) 0%, rgb(24,30,46) 100%)'
             : 'linear-gradient(180deg, rgb(218,222,234) 0%, rgb(210,216,228) 100%)',
@@ -411,12 +409,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
               }}
             >
               {[0, 1, 2, 3].map((i) => (
-                <Skeleton
-                  key={i}
-                  variant="rectangular"
-                  height={160}
-                  sx={{ borderRadius: 2 }}
-                />
+                <Skeleton key={i} variant="rectangular" height={160} sx={{ borderRadius: 2 }} />
               ))}
             </Box>
             {/* Bottom section skeleton */}
@@ -616,7 +609,9 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
                 <IconButton
                   size="small"
                   onClick={() => setCommentsFullscreen((prev) => !prev)}
-                  aria-label={commentsFullscreen ? 'Exit fullscreen comments' : 'Fullscreen comments'}
+                  aria-label={
+                    commentsFullscreen ? 'Exit fullscreen comments' : 'Fullscreen comments'
+                  }
                   sx={{
                     mr: 1.5,
                     p: 0.5,
@@ -657,7 +652,8 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
                   }),
               overflowY: commentsOpen ? 'auto' : 'hidden',
               opacity: commentsOpen ? 1 : 0,
-              transition: 'max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, flex 0.28s ease',
+              transition:
+                'max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, flex 0.28s ease',
               borderTop: commentsFullscreen
                 ? 'none'
                 : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,

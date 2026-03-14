@@ -115,7 +115,7 @@ export const UnauthenticatedLandingSection: React.FC = () => {
       >
         Want to learn more about privacy and data security?{' '}
         <Box
-          component={"span" as React.ElementType}
+          component={'span' as React.ElementType}
           onClick={() => navigate('/login')}
           sx={{
             color: theme.palette.primary.main,

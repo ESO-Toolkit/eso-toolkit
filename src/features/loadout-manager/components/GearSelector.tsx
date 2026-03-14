@@ -343,7 +343,7 @@ const GearTile: React.FC<GearTileProps> = ({
         {/* Item icon: actual image from UESP or SVG fallback */}
         {hasGear && iconUrl && !iconFailed ? (
           <Box
-            component={"img" as React.ElementType}
+            component={'img' as React.ElementType}
             src={iconUrl}
             alt={gearLabel}
             onError={() => setIconFailed(true)}

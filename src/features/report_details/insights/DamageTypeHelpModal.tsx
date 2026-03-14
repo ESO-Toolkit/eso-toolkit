@@ -292,7 +292,8 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
                         theme.palette.mode === 'dark'
                           ? 'rgba(59, 130, 246, 0.15)'
                           : 'rgba(59, 130, 246, 0.1)',
-                      color: (theme: Theme) => (theme.palette.mode === 'dark' ? '#60a5fa' : '#2563eb'),
+                      color: (theme: Theme) =>
+                        theme.palette.mode === 'dark' ? '#60a5fa' : '#2563eb',
                       fontWeight: 600,
                     }}
                   />

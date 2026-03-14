@@ -29,10 +29,7 @@ export const DataGridPanelSkeleton: React.FC<DataGridPanelSkeletonProps> = ({
   'data-testid': dataTestId = 'data-grid-panel-skeleton',
 }) => {
   return (
-    <Box
-      data-testid={dataTestId}
-      sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-    >
+    <Box data-testid={dataTestId} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Title row */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
         <Skeleton variant="text" width={220} height={32} />
@@ -43,22 +40,12 @@ export const DataGridPanelSkeleton: React.FC<DataGridPanelSkeletonProps> = ({
 
       {/* Description */}
       {showDescription && (
-        <Skeleton
-          variant="text"
-          width="55%"
-          height={20}
-          sx={{ mb: showFilter ? 2 : 3 }}
-        />
+        <Skeleton variant="text" width="55%" height={20} sx={{ mb: showFilter ? 2 : 3 }} />
       )}
 
       {/* Optional filter dropdown */}
       {showFilter && (
-        <Skeleton
-          variant="rounded"
-          width={200}
-          height={40}
-          sx={{ mb: 3, borderRadius: 1 }}
-        />
+        <Skeleton variant="rounded" width={200} height={40} sx={{ mb: 3, borderRadius: 1 }} />
       )}
 
       {/* DataGrid container */}
@@ -141,12 +128,7 @@ export const DataGridPanelSkeleton: React.FC<DataGridPanelSkeletonProps> = ({
                     <Skeleton variant="text" width="65%" height={16} />
                   ) : colIdx === 1 ? (
                     // Count/chip column
-                    <Skeleton
-                      variant="rounded"
-                      width={36}
-                      height={20}
-                      sx={{ borderRadius: 10 }}
-                    />
+                    <Skeleton variant="rounded" width={36} height={20} sx={{ borderRadius: 10 }} />
                   ) : colIdx === 2 ? (
                     // Player chips column
                     <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>

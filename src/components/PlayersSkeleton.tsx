@@ -52,17 +52,33 @@ export const PlayerCardSkeleton: React.FC<{ index?: number }> = ({ index = 0 }) 
           {/* Header: class icon + player name + gear weights (H•M•L) + role emoji */}
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5, gap: 1 }}>
             {/* Class icon — rounded square (PlayerIcon) */}
-            <Skeleton variant="rounded" width={40} height={40} sx={{ flexShrink: 0, borderRadius: 1 }} />
+            <Skeleton
+              variant="rounded"
+              width={40}
+              height={40}
+              sx={{ flexShrink: 0, borderRadius: 1 }}
+            />
 
             {/* Name + gear weights + role emoji */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: 1, minWidth: 0, gap: 1 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flex: 1,
+                minWidth: 0,
+                gap: 1,
+              }}
+            >
               {/* Player name */}
               <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>
                 <Skeleton variant="text" width="55%" height={22} />
               </Box>
 
               {/* Gear weights: shield icon + H•M•L */}
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.35, flex: '0 0 auto' }}>
+              <Box
+                sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.35, flex: '0 0 auto' }}
+              >
                 <Skeleton variant="rounded" width={16} height={16} sx={{ flexShrink: 0 }} />
                 <Skeleton variant="text" width={14} height={14} />
                 <Skeleton variant="text" width={6} height={10} />
@@ -84,7 +100,9 @@ export const PlayerCardSkeleton: React.FC<{ index?: number }> = ({ index = 0 }) 
           {/* Talents + Gear — the real card wraps both in one <Box mb={1.5}> */}
           <Box sx={{ mb: 1.5 }}>
             {/* Row 1: 5 skills + cyan divider + 1 ultimate (mb:1.25) */}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.25, alignItems: 'center', mb: 1.25 }}>
+            <Box
+              sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.25, alignItems: 'center', mb: 1.25 }}
+            >
               {Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} variant="rounded" width={32} height={32} />
               ))}
@@ -102,7 +120,9 @@ export const PlayerCardSkeleton: React.FC<{ index?: number }> = ({ index = 0 }) 
             </Box>
 
             {/* Row 2: 5 skills + cyan divider + 1 ultimate (mt:0.25) */}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.25, alignItems: 'center', mt: 0.25 }}>
+            <Box
+              sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.25, alignItems: 'center', mt: 0.25 }}
+            >
               {Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} variant="rounded" width={32} height={32} />
               ))}
@@ -122,7 +142,12 @@ export const PlayerCardSkeleton: React.FC<{ index?: number }> = ({ index = 0 }) 
             <Box sx={{ mt: 1.25, pt: 0.9 }}>
               {/* "Gear" label + INFO button (mb:2.5 matches real card) */}
               <Box
-                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  mb: 2.5,
+                }}
               >
                 <Skeleton variant="text" width={36} height={16} />
                 <Skeleton variant="rounded" width={44} height={20} sx={{ borderRadius: 0.5 }} />
@@ -176,7 +201,15 @@ export const PlayerCardSkeleton: React.FC<{ index?: number }> = ({ index = 0 }) 
                 overflow: 'hidden',
               }}
             >
-              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'nowrap', flex: '1 1 auto', minWidth: 0 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 0.5,
+                  flexWrap: 'nowrap',
+                  flex: '1 1 auto',
+                  minWidth: 0,
+                }}
+              >
                 {[48, 40, 46, 36, 44].map((w, i) => (
                   <React.Fragment key={i}>
                     {i > 0 && <Skeleton variant="text" width={6} height={18} />}
@@ -199,12 +232,23 @@ export const PlayerCardSkeleton: React.FC<{ index?: number }> = ({ index = 0 }) 
               }}
             >
               <Box
-                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 1,
+                }}
               >
                 {Array.from({ length: 3 }).map((_, i) => (
                   <Box
                     key={i}
-                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, flex: 1 }}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 0.5,
+                      flex: 1,
+                    }}
                   >
                     <Skeleton variant="circular" width={12} height={12} sx={{ flexShrink: 0 }} />
                     <Skeleton variant="text" width={44} height={14} />

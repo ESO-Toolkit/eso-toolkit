@@ -818,7 +818,9 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             color="default"
             variant="outlined"
             onClick={(e: React.MouseEvent<HTMLDivElement>) => handleSetClick(assignment.setName, e)}
-            onContextMenu={(e: React.MouseEvent<HTMLDivElement>) => handleClearSet(assignment.setName, e)}
+            onContextMenu={(e: React.MouseEvent<HTMLDivElement>) =>
+              handleClearSet(assignment.setName, e)
+            }
             sx={{
               m: 0.5,
               cursor: 'pointer',

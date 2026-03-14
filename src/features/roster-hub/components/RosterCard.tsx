@@ -114,9 +114,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
     const trialShort = TRIAL_SHORT[roster.trial_id] ?? roster.trial_id;
     const trialFull = TRIAL_LABELS[roster.trial_id] ?? roster.trial_id;
     // Tag color takes priority over trial color — leaderboard cards glow gold, etc.
-    const tagAccent = roster.tags
-      .map((t) => TAG_COLORS[t])
-      .find((c): c is string => c != null);
+    const tagAccent = roster.tags.map((t) => TAG_COLORS[t]).find((c): c is string => c != null);
     const accentColor = tagAccent ?? TRIAL_ACCENT[roster.trial_id] ?? '#3b82f6';
 
     const displayName = roster.is_anonymous ? 'Anonymous' : roster.author_name || '?';
@@ -133,9 +131,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             : `linear-gradient(160deg, ${accentColor}0c 0%, rgba(152,131,227,0.05) 45%, rgba(255,255,255,0.8) 100%)`,
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
-          border: isDark
-            ? `1px solid rgba(255,255,255,0.09)`
-            : `1px solid rgba(0,0,0,0.09)`,
+          border: isDark ? `1px solid rgba(255,255,255,0.09)` : `1px solid rgba(0,0,0,0.09)`,
           borderRadius: 3,
           overflow: 'hidden',
           boxShadow: isDark
@@ -300,14 +296,10 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                 alignItems: 'stretch',
                 mt: 0.5,
                 borderRadius: '8px',
-                background: isDark
-                  ? 'rgba(255,255,255,0.04)'
-                  : 'rgba(0,0,0,0.025)',
+                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
                 backdropFilter: 'blur(6px)',
                 WebkitBackdropFilter: 'blur(6px)',
-                border: isDark
-                  ? '1px solid rgba(255,255,255,0.06)'
-                  : '1px solid rgba(0,0,0,0.05)',
+                border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.05)',
                 overflow: 'hidden',
               }}
             >
