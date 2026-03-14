@@ -33,6 +33,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
+import type { Theme } from '@mui/material/styles';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { getSkillById } from '../data/skillLineSkills';
@@ -240,7 +241,7 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
     <>
       <Box
         onClick={() => onOpenDetails(index)}
-        sx={(theme) => ({
+        sx={(theme: Theme) => ({
           display: 'flex',
           alignItems: 'center',
           gap: 1.25,
@@ -350,7 +351,7 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         slotProps={{
           paper: {
-            sx: (theme) => ({
+            sx: (theme: Theme) => ({
               minWidth: 160,
               borderRadius: '10px',
               backdropFilter: 'blur(12px)',
@@ -408,7 +409,7 @@ const BadgeBox: React.FC<{ selected: boolean; children: React.ReactNode }> = ({
   children,
 }) => (
   <Box
-    sx={(theme) => ({
+    sx={(theme: Theme) => ({
       width: 30,
       height: 30,
       borderRadius: '8px',
@@ -487,7 +488,7 @@ const AbilityIcon: React.FC<{ abilityId?: number; size: number; highlight?: bool
   return (
     <Tooltip title={skill?.name ?? 'Empty slot'} arrow>
       <Box
-        sx={(theme) => ({
+        sx={(theme: Theme) => ({
           width: size,
           height: size,
           borderRadius: '6px',
@@ -503,7 +504,7 @@ const AbilityIcon: React.FC<{ abilityId?: number; size: number; highlight?: bool
       >
         {iconUrl && !loadFailed ? (
           <Box
-            component="img"
+            component={"img" as React.ElementType}
             src={iconUrl}
             alt={skill?.name ?? 'Empty slot'}
             sx={{ width: '100%', height: '100%', objectFit: 'cover' }}

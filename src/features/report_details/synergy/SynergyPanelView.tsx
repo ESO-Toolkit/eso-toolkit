@@ -120,7 +120,7 @@ export const SynergyPanelView: React.FC<SynergyPanelViewProps> = ({
           const allSynergiesUrl = buildAllSynergiesUrl(reportCode, fightId);
           return allSynergiesUrl ? (
             <Chip
-              component="a"
+              component={"a" as React.ElementType}
               href={allSynergiesUrl}
               target="_blank"
               rel="noopener noreferrer"

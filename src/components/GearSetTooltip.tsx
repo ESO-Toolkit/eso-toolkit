@@ -1,5 +1,6 @@
 import { Box, Card, CardContent, Chip, Divider, Stack, Typography, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
 export interface GearSetBonus {
@@ -67,7 +68,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
     <Card
       variant="outlined"
       className="u-fade-in gear-set-tooltip"
-      sx={(theme) => ({
+      sx={(theme: Theme) => ({
         maxWidth: { xs: 280, sm: 340, md: 380 },
         backgroundColor:
           theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(249, 250, 251, 0.85)',
@@ -121,7 +122,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
         </Box>
 
         <Box
-          sx={(theme) => ({
+          sx={(theme: Theme) => ({
             p: 0.75,
             pt: 0.5,
             borderRadius: '10px',
@@ -139,7 +140,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
           <Stack direction="row" spacing={1.75} alignItems="flex-start">
             {iconUrl && (
               <Box
-                sx={(theme) => ({
+                sx={(theme: Theme) => ({
                   width: { xs: 40, sm: 44 },
                   height: { xs: 40, sm: 44 },
                   borderRadius: '7px',
@@ -154,7 +155,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
                 })}
               >
                 <Box
-                  component="img"
+                  component={"img" as React.ElementType}
                   src={iconUrl}
                   alt={setName}
                   sx={{
@@ -230,7 +231,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Box
                       component="span"
-                      sx={(theme) => ({
+                      sx={(theme: Theme) => ({
                         display: 'inline-block',
                         px: 0.5,
                         py: 0.1,
@@ -281,7 +282,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
         {description && (
           <>
             <Divider
-              sx={(theme) => ({
+              sx={(theme: Theme) => ({
                 my: 1,
                 borderColor:
                   theme.palette.mode === 'dark'

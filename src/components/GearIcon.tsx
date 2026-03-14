@@ -82,7 +82,7 @@ export const GearIcon: React.FC<GearIconProps> = ({
 
   const iconElement = (
     <Box
-      component="img"
+      component={"img" as React.ElementType}
       src={iconUrl}
       alt={alt}
       className={className}
@@ -104,7 +104,7 @@ export const GearIcon: React.FC<GearIconProps> = ({
           : {},
         ...style,
       }}
-      onError={(e) => {
+      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
         // Fallback to a placeholder or hide on error
         const target = e.target as HTMLImageElement;
         target.style.display = 'none';

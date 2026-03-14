@@ -254,7 +254,6 @@ export const ReportFightHeader: React.FC = () => {
         </Tooltip>
         <Tooltip title="View full report on ESO Logs">
           <Button
-            component="a"
             href={`https://www.esologs.com/reports/${reportId}?fight=${fightId}`}
             target="_blank"
             rel="noopener noreferrer"
@@ -277,7 +276,7 @@ export const ReportFightHeader: React.FC = () => {
         </Tooltip>
       </Box>
       <Box
-        component="button"
+        component={"button" as React.ElementType}
         onClick={() => {
           navigate(`/report/${reportId}`);
         }}

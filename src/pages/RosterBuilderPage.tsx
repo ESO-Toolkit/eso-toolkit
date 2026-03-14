@@ -3492,7 +3492,7 @@ export const RosterBuilderPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Box
-            component="button"
+            component={"button" as React.ElementType}
             onClick={() => setQuickFillDialog(false)}
             sx={{
               px: 1.5,
@@ -3594,7 +3594,7 @@ export const RosterBuilderPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Box
-            component="button"
+            component={"button" as React.ElementType}
             onClick={() => setPreviewDialog(false)}
             sx={{
               px: 1.5,
@@ -3705,7 +3705,7 @@ export const RosterBuilderPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Box
-            component="button"
+            component={"button" as React.ElementType}
             onClick={() => {
               setImportUrlDialog(false);
               setImportUrl('');
@@ -5557,7 +5557,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                   {(['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'] as const).map((type) => (
                     <Box
                       key={type}
-                      component="button"
+                      component={"button" as React.ElementType}
                       onClick={() => onConvertToJail(slot.slotNumber, type)}
                       sx={{
                         px: 1.25,
@@ -5585,7 +5585,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
             ) : (
               <Box>
                 <Box
-                  component="button"
+                  component={"button" as React.ElementType}
                   onClick={() => onConvertToDPS(slot.slotNumber)}
                   sx={{
                     display: 'inline-flex',

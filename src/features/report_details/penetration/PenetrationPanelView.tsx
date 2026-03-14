@@ -119,10 +119,9 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
               : `${selectedTargetIds.size} available targets`}
             . Click to expand details.{' '}
             <Link
-              component="button"
               variant="body2"
               onClick={() => setCmxDialogOpen(true)}
-              sx={{ verticalAlign: 'baseline' }}
+              sx={{ verticalAlign: 'baseline', cursor: 'pointer' }}
             >
               Why is my value different from CMX?
             </Link>

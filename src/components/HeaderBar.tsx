@@ -789,7 +789,7 @@ export const HeaderBar: React.FC = () => {
                   startIcon={
                     typeof item.icon === 'string' ? (
                       <Box
-                        component="span"
+                        component={"span" as React.ElementType}
                         role="img"
                         aria-label={item.text.toLowerCase()}
                         sx={{ fontSize: 16, lineHeight: 1, display: 'inline-block' }}
