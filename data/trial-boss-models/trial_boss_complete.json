@@ -2127,107 +2127,88 @@
           "name": "Lord Falgravn",
           "model_type": "creature",
           "species": "VampireLord",
-          "notes": "Transforms into Vampire Lord form. Uses VampireLord creature model.",
+          "notes": "Transforms into Vampire Lord form. Uses VampireLord Lurker Boss variant.",
           "model": {
-            "name": "VampireLord_A_Basic",
-            "file_index": 1573229,
-            "size_kb": 2152,
-            "verts": 28101,
-            "tris": 44176
+            "name": "VampireLord_Lurker_Boss",
+            "file_index": 2823085,
+            "size_kb": 1412,
+            "verts": 18133,
+            "tris": 30072
           },
           "textures": {
             "primary": [
               {
-                "file_index": 1573231,
-                "width": 2048,
-                "height": 1024,
+                "file_index": 2823075,
+                "width": 512,
+                "height": 512,
                 "format": "DXT5",
-                "size_kb": 2048,
+                "size_kb": 341,
                 "role": "diffuse"
               },
               {
-                "file_index": 1573233,
-                "width": 512,
+                "file_index": 2823109,
+                "width": 256,
                 "height": 256,
                 "format": "DXT5",
-                "size_kb": 170,
+                "size_kb": 85,
                 "role": "normal"
-              }
-            ],
-            "additional": null,
-            "total_count": 2
-          },
-          "related_gr2": {
-            "animations": [
-              {
-                "file_index": 1573225,
-                "size_kb": 173
               },
               {
-                "file_index": 1573227,
-                "size_kb": 1225
+                "file_index": 2823111,
+                "width": 1024,
+                "height": 1024,
+                "format": "DXT5",
+                "size_kb": 1365,
+                "role": "specular"
               }
             ],
+            "additional": [
+              {
+                "file_index": 2823113,
+                "width": 576,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 144,
+                "role": "extra_3"
+              },
+              {
+                "file_index": 2823115,
+                "width": 576,
+                "height": 256,
+                "format": "DXT5",
+                "size_kb": 144,
+                "role": "extra_4"
+              }
+            ],
+            "total_count": 5
+          },
+          "related_gr2": {
+            "animations": [],
             "skeletons": [],
             "other": [
               {
-                "file_index": 1573219,
-                "size_kb": 363,
+                "file_index": 2823083,
+                "size_kb": 846,
                 "type": "unknown_gr2"
               },
               {
-                "file_index": 1573223,
-                "size_kb": 876,
+                "file_index": 2823087,
+                "size_kb": 49,
                 "type": "unknown_gr2"
               },
               {
-                "file_index": 1573235,
-                "size_kb": 120,
+                "file_index": 2823091,
+                "size_kb": 385,
                 "type": "unknown_gr2"
               },
               {
-                "file_index": 1573237,
-                "size_kb": 122,
+                "file_index": 2823095,
+                "size_kb": 69,
                 "type": "unknown_gr2"
               },
               {
-                "file_index": 1573239,
-                "size_kb": 122,
-                "type": "unknown_gr2"
-              },
-              {
-                "file_index": 1573241,
-                "size_kb": 137,
-                "type": "unknown_gr2"
-              },
-              {
-                "file_index": 1573243,
-                "size_kb": 38,
-                "type": "unknown_gr2"
-              },
-              {
-                "file_index": 1573245,
-                "size_kb": 198,
-                "type": "unknown_gr2"
-              },
-              {
-                "file_index": 1573247,
-                "size_kb": 346,
-                "type": "unknown_gr2"
-              },
-              {
-                "file_index": 1573249,
-                "size_kb": 367,
-                "type": "unknown_gr2"
-              },
-              {
-                "file_index": 1573251,
-                "size_kb": 48,
-                "type": "unknown_gr2"
-              },
-              {
-                "file_index": 1573253,
-                "size_kb": 225,
+                "file_index": 2823101,
+                "size_kb": 35,
                 "type": "unknown_gr2"
               }
             ]
@@ -2423,7 +2404,7 @@
         {
           "name": "Reef Guardian",
           "model_type": "creature",
-          "species": "CoralAtronach",
+          "species": "AirAtronach",
           "notes": "Coral Atronach \u00e2\u20ac\u201d reef-themed atronach creature (uses AirAtronach_Coral_Boss base).",
           "model": {
             "name": "AirAtronach_Coral_Boss",
@@ -2546,7 +2527,7 @@
         {
           "name": "Tideborn Taleria",
           "model_type": "creature",
-          "species": "CoralAtronach",
+          "species": "AirAtronach",
           "notes": "Final boss of Dreadsail Reef. Coral air atronach form (uses AirAtronach_Coral_Boss base).",
           "model": {
             "name": "AirAtronach_Coral_Boss",
