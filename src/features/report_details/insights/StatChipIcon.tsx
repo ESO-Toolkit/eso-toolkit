@@ -83,7 +83,7 @@ export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, c
             <path d="M7 18 L17 18 M7 21 L17 21" />
           </g>
         );
-      // ── Crit Dmg: flame + sum bars below ────────────────
+      // ── Total Crit Dmg: flame + sum bars below ────────────
       case 'totalCritDamage':
         return (
           <g style={strokeSx}>

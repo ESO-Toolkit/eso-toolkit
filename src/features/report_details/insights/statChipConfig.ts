@@ -67,7 +67,7 @@ export const STAT_CHIP_META: Record<StatChipId, StatChipMeta> = {
   },
   totalCritDamage: {
     id: 'totalCritDamage',
-    label: 'Crit Dmg',
+    label: 'Total Crit Dmg',
     tooltip: 'Total critical hit damage dealt during the fight',
     roleFilter: ['dps'],
   },
