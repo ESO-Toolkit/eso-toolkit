@@ -135,6 +135,35 @@ const PlayerCardSkeleton: React.FC<{ index: number }> = ({ index }) => (
             ))}
           </Box>
         </Box>
+
+        {/* Champion Points section */}
+        <Box sx={{ mt: 1 }}>
+          <Skeleton variant="text" width={120} height={16} sx={{ mb: 1 }} />
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, minHeight: 40 }}>
+            <Skeleton variant="rounded" height={22} width={88} sx={{ borderRadius: 12 }} />
+            <Skeleton variant="rounded" height={22} width={72} sx={{ borderRadius: 12 }} />
+            <Skeleton variant="rounded" height={22} width={96} sx={{ borderRadius: 12 }} />
+          </Box>
+        </Box>
+
+        {/* Build status bar — mirrors green "Build checks out" bar (48px) */}
+        <Box
+          sx={{
+            mt: 1,
+            height: 48,
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: 'success.main',
+            backgroundColor: 'rgba(76,175,80,0.07)',
+            display: 'flex',
+            alignItems: 'center',
+            px: 2,
+            gap: 1,
+          }}
+        >
+          <Skeleton variant="circular" width={20} height={20} />
+          <Skeleton variant="text" width={110} height={16} />
+        </Box>
       </Box>
     </CardContent>
   </Card>
