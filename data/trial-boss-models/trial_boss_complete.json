@@ -2404,8 +2404,8 @@
         {
           "name": "Reef Guardian",
           "model_type": "creature",
-          "species": "AirAtronach",
-          "notes": "Coral Atronach \u00e2\u20ac\u201d reef-themed atronach creature (uses AirAtronach_Coral_Boss base).",
+          "species": "StoneAtronach",
+          "notes": "Coral golem \u2014 reef-themed stone atronach creature (uses AirAtronach_Coral_Boss base).",
           "model": {
             "name": "AirAtronach_Coral_Boss",
             "file_index": 2732009,
@@ -2527,8 +2527,8 @@
         {
           "name": "Tideborn Taleria",
           "model_type": "creature",
-          "species": "AirAtronach",
-          "notes": "Final boss of Dreadsail Reef. Coral air atronach form (uses AirAtronach_Coral_Boss base).",
+          "species": "StoneAtronach",
+          "notes": "Final boss of Dreadsail Reef. Coral golem form (uses AirAtronach_Coral_Boss base).",
           "model": {
             "name": "AirAtronach_Coral_Boss",
             "file_index": 2732009,
