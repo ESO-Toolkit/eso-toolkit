@@ -92,15 +92,16 @@ const bossOptions: BossOption[] = Object.entries(typedData.trials).flatMap(([tri
 
 // ── 3D Scene ───────────────────────────────────────────────────────────────
 
-/** Path convention: /models/bosses/{model_name}.glb */
-const getModelUrl = (boss: Boss): string | null => {
-  if (boss.model) return `/models/bosses/${boss.model.name}.glb`;
+/** Path convention: {BASE_URL}models/bosses/{model_name}.glb */
+const getModelUrl = (boss: Boss): string => {
+  const base = import.meta.env.BASE_URL;
+  if (boss.model) return `${base}models/bosses/${boss.model.name}.glb`;
   // Humanoid bosses without a model field — derive name from boss name
   const safeName = boss.name
     .replace(/ /g, '_')
     .replace(/\//g, '_')
     .replace(/\\/g, '_');
-  return `/models/bosses/${safeName}.glb`;
+  return `${base}models/bosses/${safeName}.glb`;
 };
 
 // Color based on species/type
@@ -214,10 +215,6 @@ const BossModelMesh: React.FC<{ boss: Boss; onModelStatus: (status: ModelStatus)
 
   // Probe whether the GLB file exists via a HEAD request
   React.useEffect(() => {
-    if (!modelUrl) {
-      onModelStatus('no-model');
-      return;
-    }
     setChecking(true);
     setUseGlb(false);
 
@@ -243,7 +240,7 @@ const BossModelMesh: React.FC<{ boss: Boss; onModelStatus: (status: ModelStatus)
   }, [modelUrl, onModelStatus]);
 
   if (checking) return null;
-  if (useGlb && modelUrl) {
+  if (useGlb) {
     return (
       <Center>
         <GlbModel url={modelUrl} color={color} />
