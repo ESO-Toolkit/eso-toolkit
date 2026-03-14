@@ -31,7 +31,7 @@ interface PlayersSkeletonProps {
  *             Champion Points section (mt:1)
  *           Build status bar — sibling to metrics box (mt:1, height:48)
  */
-const PlayerCardSkeleton: React.FC<{ index: number }> = ({ index }) => (
+export const PlayerCardSkeleton: React.FC<{ index?: number }> = ({ index = 0 }) => (
   <Card
     variant="outlined"
     sx={{
