@@ -9,6 +9,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
 
 import { DamageTypeFlags } from '../../../types/abilities';
@@ -161,7 +162,7 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
                     position: 'relative',
                     height: 48,
                     borderRadius: 2,
-                    bgcolor: (theme) =>
+                    bgcolor: (theme: Theme) =>
                       theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
                     display: 'flex',
                     alignItems: 'center',
@@ -254,7 +255,7 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
                         height: 48,
                         borderRadius: 2,
                         overflow: 'hidden',
-                        bgcolor: (theme) =>
+                        bgcolor: (theme: Theme) =>
                           theme.palette.mode === 'dark'
                             ? 'rgba(255,255,255,0.08)'
                             : 'rgba(0,0,0,0.06)',

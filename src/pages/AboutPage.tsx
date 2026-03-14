@@ -1,4 +1,5 @@
 import { Box, Chip, Container, Divider, Paper, Stack, Typography } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
 import { getBuildInfoAsync, getDisplayVersion, isDevelopmentBuild } from '../utils/cacheBusting';
@@ -93,7 +94,7 @@ export const AboutPage: React.FC = () => {
           sx={{
             p: { xs: 3, md: 4 },
             borderRadius: 3,
-            border: (theme) =>
+            border: (theme: Theme) =>
               `1px solid ${
                 theme.palette.mode === 'dark'
                   ? 'rgba(148, 163, 184, 0.2)'

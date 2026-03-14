@@ -1,3 +1,4 @@
+// @ts-ignore -- @react-three/drei v10.7.7 is missing Texture.d.ts type declaration
 import { useTexture } from '@react-three/drei';
 import { useMemo } from 'react';
 import { RepeatWrapping } from 'three';
@@ -25,7 +26,7 @@ const TexturedMesh: React.FC<{ url: string; size: number; position: [number, num
   size,
   position,
 }) => {
-  const texture = useTexture(url, (loadedTexture) => {
+  const texture = useTexture(url, (loadedTexture: import('three').Texture) => {
     loadedTexture.wrapS = RepeatWrapping;
     loadedTexture.wrapT = RepeatWrapping;
     loadedTexture.flipY = false;

@@ -1,5 +1,6 @@
 import { Block } from '@mui/icons-material';
 import { Box, Button, Container, Paper, Typography } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,9 +27,9 @@ export const Banned: React.FC = () => {
         sx={{
           p: 4,
           textAlign: 'center',
-          backgroundColor: (theme) =>
+          backgroundColor: (theme: Theme) =>
             theme.palette.mode === 'dark' ? 'rgba(211, 47, 47, 0.1)' : 'rgba(211, 47, 47, 0.05)',
-          borderLeft: (theme) => `4px solid ${theme.palette.error.main}`,
+          borderLeft: (theme: Theme) => `4px solid ${theme.palette.error.main}`,
         }}
       >
         <Box

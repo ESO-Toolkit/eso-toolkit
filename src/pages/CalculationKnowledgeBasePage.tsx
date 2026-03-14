@@ -95,7 +95,7 @@ const markdownStyles = {
 } as const;
 
 const markdownComponents: Components = {
-  a: ({ href, children, ...props }) => (
+  a: ({ href, children, ...props }: { href?: string; children?: React.ReactNode; [key: string]: unknown }) => (
     <Link {...props} href={href} target="_blank" rel="noopener noreferrer">
       {children}
     </Link>

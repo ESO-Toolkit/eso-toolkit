@@ -206,7 +206,6 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
           <>
             {/* Death Summary Cards */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              {/* @ts-expect-error - MUI Grid item prop typing issue */}
               <Grid item xs={12} md={3}>
                 <Card
                   variant="outlined"
@@ -228,7 +227,6 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                 </Card>
               </Grid>
 
-              {/* @ts-expect-error - MUI Grid item prop typing issue */}
               <Grid item xs={12} md={3}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
@@ -242,7 +240,6 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                 </Card>
               </Grid>
 
-              {/* @ts-expect-error - MUI Grid item prop typing issue */}
               <Grid item xs={12} md={3}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
@@ -256,7 +253,6 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                 </Card>
               </Grid>
 
-              {/* @ts-expect-error - MUI Grid item prop typing issue */}
               <Grid item xs={12} md={3}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>

@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import Autocomplete, { AutocompleteInputChangeReason } from '@mui/material/Autocomplete';
 import type { FilterOptionsState } from '@mui/material/useAutocomplete';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
 import { useLogger } from '@/hooks/useLogger';
@@ -247,7 +248,7 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
                 px: 2,
                 py: 1.5,
                 borderRadius: 1,
-                border: (theme) => `1px solid ${theme.palette.divider}`,
+                border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
               }}
             >
               <Typography variant="subtitle2" gutterBottom>
