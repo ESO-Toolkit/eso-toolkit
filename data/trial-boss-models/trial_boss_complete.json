@@ -2421,11 +2421,6 @@
           "notes": "Dreadsail sea elf twins, humanoid NPC models"
         },
         {
-          "name": "Taleria",
-          "model_type": "humanoid",
-          "notes": "Dreadsail Reef captain, humanoid NPC model"
-        },
-        {
           "name": "Reef Guardian",
           "model_type": "creature",
           "species": "CoralAtronach",
@@ -2549,10 +2544,10 @@
           }
         },
         {
-          "name": "Tideborn",
+          "name": "Tideborn Taleria",
           "model_type": "creature",
-          "species": "Hadolid",
-          "notes": "Large Hadolid sea creature (crab-like). Oversized variant.",
+          "species": "CoralAtronach",
+          "notes": "Final boss of Dreadsail Reef. Coral air atronach form (uses AirAtronach_Coral_Boss base). Hadolid model variant also associated.",
           "model": {
             "name": "GreyFallen_HadolidMelee_Basic",
             "file_index": 2717671,

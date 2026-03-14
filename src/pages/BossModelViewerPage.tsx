@@ -354,7 +354,7 @@ export const BossModelViewerPage: React.FC = () => {
           Boss Model Viewer
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Browse 3D model data for all 54 trial bosses across 14 ESO trials. Creature bosses include
+          Browse 3D model data for all 53 trial bosses across 14 ESO trials. Creature bosses include
           extractable GR2 model geometry and DDS texture mappings.
         </Typography>
 
