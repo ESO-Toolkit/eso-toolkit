@@ -5,8 +5,8 @@
 
 import { HelpOutline, Restaurant } from '@mui/icons-material';
 import { Alert, Box, Chip, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
-import type { Theme } from '@mui/material/styles';
 import Autocomplete, { AutocompleteInputChangeReason } from '@mui/material/Autocomplete';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 import { useDispatch } from 'react-redux';
 import { Link as RouterLink } from 'react-router-dom';
@@ -278,7 +278,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
               <Stack direction="row" spacing={1.5} alignItems="center" width="100%">
                 {iconUrl && (
                   <Box
-                    component={"img" as React.ElementType}
+                    component={'img' as React.ElementType}
                     src={iconUrl}
                     alt=""
                     sx={{ width: 28, height: 28, flexShrink: 0, opacity: 0.85 }}
@@ -362,7 +362,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
             >
               {iconUrl && (
                 <Box
-                  component={"img" as React.ElementType}
+                  component={'img' as React.ElementType}
                   src={iconUrl}
                   alt=""
                   sx={{ width: 36, height: 36, flexShrink: 0 }}

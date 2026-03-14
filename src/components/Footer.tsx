@@ -761,7 +761,12 @@ export const Footer: React.FC = React.memo(() => {
               rel="noopener noreferrer"
               sx={primaryButtonSx}
               startIcon={
-                <Box component={"img" as React.ElementType} src={discordIcon} alt="" sx={{ width: 20, height: 20 }} />
+                <Box
+                  component={'img' as React.ElementType}
+                  src={discordIcon}
+                  alt=""
+                  sx={{ width: 20, height: 20 }}
+                />
               }
             >
               Join Discord
@@ -1002,7 +1007,7 @@ export const Footer: React.FC = React.memo(() => {
 
                           <ChevronRight className="footer-link-icon" sx={linkIconSx} />
                         </Link>
-                      )
+                      ),
                     )}
                   </Box>
                 </Box>

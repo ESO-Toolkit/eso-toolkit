@@ -81,9 +81,9 @@ import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
 import { PublishRosterDialog } from '../features/roster-hub/components/PublishRosterDialog';
-import { useAppDispatch } from '../store/useAppDispatch';
-import { saveRoster, updateRoster } from '../store/saved_rosters';
 import { GetPlayersForReportQuery } from '../graphql/gql/graphql';
+import { saveRoster, updateRoster } from '../store/saved_rosters';
+import { useAppDispatch } from '../store/useAppDispatch';
 import { KnownAbilities, KnownSetIDs } from '../types/abilities';
 import {
   RaidRoster,
@@ -2079,9 +2079,7 @@ export const RosterBuilderPage: React.FC = () => {
           background: isDarkMode
             ? 'linear-gradient(135deg, rgba(96,165,250,0.12) 0%, rgba(167,139,250,0.08) 100%)'
             : 'linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(124,58,237,0.05) 100%)',
-          border: isDarkMode
-            ? '1px solid rgba(96,165,250,0.2)'
-            : '1px solid rgba(37,99,235,0.15)',
+          border: isDarkMode ? '1px solid rgba(96,165,250,0.2)' : '1px solid rgba(37,99,235,0.15)',
           cursor: 'pointer',
           transition: 'all 0.2s ease',
           '&:hover': {
@@ -2295,7 +2293,6 @@ export const RosterBuilderPage: React.FC = () => {
 
         {/* Row 3 — Action button bar */}
         <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-
           {/* ── Top row: pill groups left + right ── */}
           <Box
             sx={{
@@ -2349,9 +2346,7 @@ export const RosterBuilderPage: React.FC = () => {
                     transition: 'all 0.15s ease',
                     '&:hover': {
                       color: isDarkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)',
-                      background: isDarkMode
-                        ? 'rgba(255,255,255,0.06)'
-                        : 'rgba(0,0,0,0.04)',
+                      background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                     },
                   }}
                 >
@@ -2393,9 +2388,7 @@ export const RosterBuilderPage: React.FC = () => {
                     transition: 'all 0.15s ease',
                     '&:hover': {
                       color: isDarkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)',
-                      background: isDarkMode
-                        ? 'rgba(255,255,255,0.06)'
-                        : 'rgba(0,0,0,0.04)',
+                      background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                     },
                   }}
                 >
@@ -2432,15 +2425,11 @@ export const RosterBuilderPage: React.FC = () => {
                     fontSize: '0.75rem',
                     fontWeight: 700,
                     color: isDarkMode ? 'rgba(56,189,248,0.9)' : 'rgba(14,116,144,0.9)',
-                    background: isDarkMode
-                      ? 'rgba(56,189,248,0.07)'
-                      : 'rgba(14,116,144,0.05)',
+                    background: isDarkMode ? 'rgba(56,189,248,0.07)' : 'rgba(14,116,144,0.05)',
                     transition: 'all 0.15s ease',
                     '&:hover': {
                       color: isDarkMode ? 'rgba(56,189,248,1)' : 'rgba(14,116,144,1)',
-                      background: isDarkMode
-                        ? 'rgba(56,189,248,0.14)'
-                        : 'rgba(14,116,144,0.09)',
+                      background: isDarkMode ? 'rgba(56,189,248,0.14)' : 'rgba(14,116,144,0.09)',
                     },
                   }}
                 >
@@ -2460,9 +2449,7 @@ export const RosterBuilderPage: React.FC = () => {
                   sx: {
                     borderRadius: '10px',
                     mt: 0.5,
-                    backgroundColor: isDarkMode
-                      ? 'rgba(30,30,40,0.95)'
-                      : 'rgba(255,255,255,0.97)',
+                    backgroundColor: isDarkMode ? 'rgba(30,30,40,0.95)' : 'rgba(255,255,255,0.97)',
                     backdropFilter: 'blur(12px)',
                     border: isDarkMode
                       ? '1px solid rgba(255,255,255,0.08)'
@@ -2563,9 +2550,7 @@ export const RosterBuilderPage: React.FC = () => {
                       transition: 'all 0.15s ease',
                       '&:hover': {
                         color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
-                        background: isDarkMode
-                          ? 'rgba(255,255,255,0.05)'
-                          : 'rgba(0,0,0,0.04)',
+                        background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                       },
                     }}
                   >
@@ -2594,14 +2579,10 @@ export const RosterBuilderPage: React.FC = () => {
                       fontSize: '0.75rem',
                       fontWeight: 600,
                       color: isDarkMode ? '#f1f5f9' : '#0f172a',
-                      background: isDarkMode
-                        ? 'rgba(255,255,255,0.09)'
-                        : 'rgba(0,0,0,0.05)',
+                      background: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.05)',
                       transition: 'all 0.15s ease',
                       '&:hover': {
-                        background: isDarkMode
-                          ? 'rgba(255,255,255,0.14)'
-                          : 'rgba(0,0,0,0.08)',
+                        background: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)',
                       },
                     }}
                   >
@@ -2654,9 +2635,7 @@ export const RosterBuilderPage: React.FC = () => {
                       transition: 'all 0.15s ease',
                       '&:hover': {
                         color: isDarkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)',
-                        background: isDarkMode
-                          ? 'rgba(255,255,255,0.06)'
-                          : 'rgba(0,0,0,0.04)',
+                        background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                       },
                     }}
                   >
@@ -2672,9 +2651,7 @@ export const RosterBuilderPage: React.FC = () => {
                       sx={{
                         width: '1px',
                         my: 0,
-                        background: isDarkMode
-                          ? 'rgba(255,255,255,0.08)'
-                          : 'rgba(0,0,0,0.08)',
+                        background: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
                       }}
                     />
                     <Tooltip title="Publish to Roster Hub — share with the community" arrow>
@@ -2695,12 +2672,8 @@ export const RosterBuilderPage: React.FC = () => {
                           py: { xs: 1.375, md: 0.875 },
                           fontSize: '0.75rem',
                           fontWeight: 700,
-                          color: isDarkMode
-                            ? 'rgba(147,197,253,0.95)'
-                            : 'rgba(29,78,216,0.9)',
-                          background: isDarkMode
-                            ? 'rgba(59,130,246,0.1)'
-                            : 'rgba(59,130,246,0.07)',
+                          color: isDarkMode ? 'rgba(147,197,253,0.95)' : 'rgba(29,78,216,0.9)',
+                          background: isDarkMode ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.07)',
                           transition: 'all 0.15s ease',
                           '&:hover': {
                             color: isDarkMode ? '#bfdbfe' : '#1d4ed8',
@@ -2721,9 +2694,7 @@ export const RosterBuilderPage: React.FC = () => {
                   sx={{
                     width: '1px',
                     my: 0,
-                    background: isDarkMode
-                      ? 'rgba(255,255,255,0.08)'
-                      : 'rgba(0,0,0,0.08)',
+                    background: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
                   }}
                 />
 
@@ -2748,18 +2719,12 @@ export const RosterBuilderPage: React.FC = () => {
                       py: { xs: 1.375, md: 0.875 },
                       fontSize: '0.75rem',
                       fontWeight: 700,
-                      color: isDarkMode
-                        ? 'rgba(196,181,253,0.95)'
-                        : 'rgba(109,40,217,0.9)',
-                      background: isDarkMode
-                        ? 'rgba(139,92,246,0.1)'
-                        : 'rgba(139,92,246,0.07)',
+                      color: isDarkMode ? 'rgba(196,181,253,0.95)' : 'rgba(109,40,217,0.9)',
+                      background: isDarkMode ? 'rgba(139,92,246,0.1)' : 'rgba(139,92,246,0.07)',
                       transition: 'all 0.15s ease',
                       '&:hover': {
                         color: isDarkMode ? '#ddd6fe' : '#7c3aed',
-                        background: isDarkMode
-                          ? 'rgba(139,92,246,0.18)'
-                          : 'rgba(139,92,246,0.12)',
+                        background: isDarkMode ? 'rgba(139,92,246,0.18)' : 'rgba(139,92,246,0.12)',
                       },
                     }}
                   >
@@ -2772,7 +2737,10 @@ export const RosterBuilderPage: React.FC = () => {
           </Box>
 
           {/* ── ESOtk Addon Banner ── */}
-          <Tooltip title="Copy roster for ESOtk addon — paste in-game with /esotk roster import" arrow>
+          <Tooltip
+            title="Copy roster for ESOtk addon — paste in-game with /esotk roster import"
+            arrow
+          >
             <ButtonBase
               onClick={handleExportAddon}
               sx={{
@@ -2816,9 +2784,7 @@ export const RosterBuilderPage: React.FC = () => {
                   background: isDarkMode
                     ? 'linear-gradient(135deg, rgba(251,191,36,0.14) 0%, rgba(245,158,11,0.08) 55%, rgba(11,18,32,0.35) 100%)'
                     : 'linear-gradient(135deg, rgba(251,191,36,0.13) 0%, rgba(245,158,11,0.07) 55%, rgba(255,255,255,0.55) 100%)',
-                  borderColor: isDarkMode
-                    ? 'rgba(251,191,36,0.32)'
-                    : 'rgba(161,98,7,0.3)',
+                  borderColor: isDarkMode ? 'rgba(251,191,36,0.32)' : 'rgba(161,98,7,0.3)',
                   boxShadow: isDarkMode
                     ? '0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(251,191,36,0.1)'
                     : '0 2px 8px rgba(161,98,7,0.1)',
@@ -2835,9 +2801,7 @@ export const RosterBuilderPage: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
-                  background: isDarkMode
-                    ? 'rgba(251,191,36,0.14)'
-                    : 'rgba(161,98,7,0.1)',
+                  background: isDarkMode ? 'rgba(251,191,36,0.14)' : 'rgba(161,98,7,0.1)',
                   border: isDarkMode
                     ? '1px solid rgba(251,191,36,0.22)'
                     : '1px solid rgba(161,98,7,0.18)',
@@ -2859,9 +2823,7 @@ export const RosterBuilderPage: React.FC = () => {
                     fontSize: '0.8125rem',
                     fontWeight: 700,
                     lineHeight: 1.25,
-                    color: isDarkMode
-                      ? 'rgba(251,191,36,0.95)'
-                      : 'rgba(120,70,0,0.9)',
+                    color: isDarkMode ? 'rgba(251,191,36,0.95)' : 'rgba(120,70,0,0.9)',
                   }}
                 >
                   ESOtk Addon Export
@@ -2884,12 +2846,8 @@ export const RosterBuilderPage: React.FC = () => {
                       px: 0.5,
                       py: 0.125,
                       borderRadius: '4px',
-                      background: isDarkMode
-                        ? 'rgba(251,191,36,0.1)'
-                        : 'rgba(161,98,7,0.08)',
-                      color: isDarkMode
-                        ? 'rgba(251,191,36,0.8)'
-                        : 'rgba(120,70,0,0.75)',
+                      background: isDarkMode ? 'rgba(251,191,36,0.1)' : 'rgba(161,98,7,0.08)',
+                      color: isDarkMode ? 'rgba(251,191,36,0.8)' : 'rgba(120,70,0,0.75)',
                     }}
                   >
                     /esotk roster import
@@ -2907,7 +2865,6 @@ export const RosterBuilderPage: React.FC = () => {
               />
             </ButtonBase>
           </Tooltip>
-
         </Box>
 
         <Box
@@ -3492,7 +3449,7 @@ export const RosterBuilderPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Box
-            component={"button" as React.ElementType}
+            component={'button' as React.ElementType}
             onClick={() => setQuickFillDialog(false)}
             sx={{
               px: 1.5,
@@ -3594,7 +3551,7 @@ export const RosterBuilderPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Box
-            component={"button" as React.ElementType}
+            component={'button' as React.ElementType}
             onClick={() => setPreviewDialog(false)}
             sx={{
               px: 1.5,
@@ -3705,7 +3662,7 @@ export const RosterBuilderPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Box
-            component={"button" as React.ElementType}
+            component={'button' as React.ElementType}
             onClick={() => {
               setImportUrlDialog(false);
               setImportUrl('');
@@ -3771,7 +3728,11 @@ export const RosterBuilderPage: React.FC = () => {
         token={accessToken}
         onClose={() => setPublishDialogOpen(false)}
         onPublished={() => {
-          setSnackbar({ open: true, severity: 'success', message: 'Roster published to Roster Hub!' });
+          setSnackbar({
+            open: true,
+            severity: 'success',
+            message: 'Roster published to Roster Hub!',
+          });
         }}
       />
     </Container>
@@ -5557,7 +5518,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                   {(['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'] as const).map((type) => (
                     <Box
                       key={type}
-                      component={"button" as React.ElementType}
+                      component={'button' as React.ElementType}
                       onClick={() => onConvertToJail(slot.slotNumber, type)}
                       sx={{
                         px: 1.25,
@@ -5585,7 +5546,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
             ) : (
               <Box>
                 <Box
-                  component={"button" as React.ElementType}
+                  component={'button' as React.ElementType}
                   onClick={() => onConvertToDPS(slot.slotNumber)}
                   sx={{
                     display: 'inline-flex',

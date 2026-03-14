@@ -95,7 +95,12 @@ const markdownStyles = {
 } as const;
 
 const markdownComponents: Components = {
-  a: ({ href, children, ...props }: { href?: string; children?: React.ReactNode; [key: string]: unknown }) => (
+  a: ({
+    href,
+    children,
+    node: _node,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { node?: unknown }) => (
     <Link {...props} href={href} target="_blank" rel="noopener noreferrer">
       {children}
     </Link>

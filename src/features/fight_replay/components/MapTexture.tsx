@@ -1,4 +1,3 @@
-// @ts-ignore -- @react-three/drei v10.7.7 is missing Texture.d.ts type declaration
 import { useTexture } from '@react-three/drei';
 import { useMemo } from 'react';
 import { RepeatWrapping } from 'three';

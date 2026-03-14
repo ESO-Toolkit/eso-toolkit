@@ -18,8 +18,8 @@ import {
   Typography,
 } from '@mui/material';
 import Autocomplete, { AutocompleteInputChangeReason } from '@mui/material/Autocomplete';
-import type { FilterOptionsState } from '@mui/material/useAutocomplete';
 import type { Theme } from '@mui/material/styles';
+import type { FilterOptionsState } from '@mui/material/useAutocomplete';
 import React from 'react';
 
 import { useLogger } from '@/hooks/useLogger';

@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
 
+import { PlayersSkeleton } from '../../../components/PlayersSkeleton';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
@@ -23,8 +24,6 @@ import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import { type PotionStreamResult } from '../../../utils/potionDetectionUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
-
-import { PlayersSkeleton } from '../../../components/PlayersSkeleton';
 
 import { LazyPlayerCard as PlayerCard } from './LazyPlayerCard';
 import { STAT_CHIP_IDS } from './statChipConfig';
