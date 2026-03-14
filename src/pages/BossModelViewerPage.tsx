@@ -94,8 +94,13 @@ const bossOptions: BossOption[] = Object.entries(typedData.trials).flatMap(([tri
 
 /** Path convention: /models/bosses/{model_name}.glb */
 const getModelUrl = (boss: Boss): string | null => {
-  if (!boss.model) return null;
-  return `/models/bosses/${boss.model.name}.glb`;
+  if (boss.model) return `/models/bosses/${boss.model.name}.glb`;
+  // Humanoid bosses without a model field — derive name from boss name
+  const safeName = boss.name
+    .replace(/ /g, '_')
+    .replace(/\//g, '_')
+    .replace(/\\/g, '_');
+  return `/models/bosses/${safeName}.glb`;
 };
 
 // Color based on species/type
