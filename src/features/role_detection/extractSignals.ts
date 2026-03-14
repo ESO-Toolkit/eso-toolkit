@@ -176,26 +176,14 @@ function extractGearSignals(
     const gear = event.gear;
     if (!gear?.length) continue;
 
-    // Analyze weapons
-    const weaponSlots = [
+    // Analyze weapons — gear array index IS the slot (ESO Logs API doesn't include a slot field)
+    const weaponSlotIndices = new Set([
       GearSlot.MAIN_HAND,
       GearSlot.OFF_HAND,
       GearSlot.BACKUP_MAIN_HAND,
       GearSlot.BACKUP_OFF_HAND,
-    ];
-    for (const item of gear) {
-      if (weaponSlots.includes(item.slot)) {
-        if (item.type === WeaponType.SHIELD) {
-          signals.hasShieldWeapon = true;
-        }
-        if (item.type === WeaponType.FROST_STAFF) {
-          signals.hasFrostStaff = true;
-        }
-      }
-    }
-
-    // Count heavy armor on body slots
-    const bodySlots = [
+    ]);
+    const bodySlotIndices = new Set([
       GearSlot.HEAD,
       GearSlot.CHEST,
       GearSlot.SHOULDERS,
@@ -203,9 +191,22 @@ function extractGearSignals(
       GearSlot.HANDS,
       GearSlot.LEGS,
       GearSlot.FEET,
-    ];
-    for (const item of gear) {
-      if (bodySlots.includes(item.slot) && item.type === ArmorType.HEAVY) {
+    ]);
+
+    for (let i = 0; i < gear.length; i++) {
+      const item = gear[i];
+      const slot = item.slot ?? i;
+
+      if (weaponSlotIndices.has(slot)) {
+        if (item.type === WeaponType.SHIELD) {
+          signals.hasShieldWeapon = true;
+        }
+        if (item.type === WeaponType.FROST_STAFF) {
+          signals.hasFrostStaff = true;
+        }
+      }
+
+      if (bodySlotIndices.has(slot) && item.type === ArmorType.HEAVY) {
         signals.heavyArmorCount++;
       }
     }
@@ -283,10 +284,12 @@ function extractHealingSignals(
 
     const signals = playerSignals.get(event.sourceID);
     if (signals) {
-      signals.totalHealing += event.amount;
-      groupTotal += event.amount;
+      const amount = event.amount ?? 0;
+      const overheal = event.overheal ?? 0;
+      signals.totalHealing += amount;
+      groupTotal += amount;
 
-      const rawHeal = event.amount + (event.overheal ?? 0);
+      const rawHeal = amount + overheal;
       playerRawHealing.set(event.sourceID, (playerRawHealing.get(event.sourceID) ?? 0) + rawHeal);
     }
   }
@@ -379,6 +382,24 @@ function extractTauntSignals(
       .map((e) => ({ ...e, eventType: 'remove' as const })),
   ].sort((a, b) => a.timestamp - b.timestamp);
 
+  // Auto-detect primary boss if not provided: the enemy with the most taunt debuff applications
+  let effectiveBossId = context.primaryBossId;
+  if (effectiveBossId === null) {
+    const tauntCountByTarget = new Map<number, number>();
+    for (const event of debuffEvents) {
+      if (event.eventType === 'apply') {
+        tauntCountByTarget.set(event.targetID, (tauntCountByTarget.get(event.targetID) ?? 0) + 1);
+      }
+    }
+    let maxTaunts = 0;
+    for (const [targetId, count] of tauntCountByTarget) {
+      if (count > maxTaunts) {
+        maxTaunts = count;
+        effectiveBossId = targetId;
+      }
+    }
+  }
+
   for (const event of debuffEvents) {
     if (event.eventType === 'apply') {
       // Close any existing taunt on this target
@@ -427,7 +448,7 @@ function extractTauntSignals(
     playerTauntedEnemies.get(interval.sourceId)!.add(interval.targetId);
 
     // Track boss taunt uptime
-    if (context.primaryBossId !== null && interval.targetId === context.primaryBossId) {
+    if (effectiveBossId !== null && interval.targetId === effectiveBossId) {
       const duration = (interval.endTime ?? context.endTime) - interval.startTime;
       signals.tauntUptimeOnBossMs += Math.max(0, Math.min(duration, fightDurationMs));
     }
