@@ -69,29 +69,29 @@ export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, c
             <circle cx="12.5" cy="11" r="0.8" style={fillSx} />
           </g>
         );
-      // ── Total Dmg: war hammer ─────────────────────────────────
+      // ── Total Dmg: crossed swords + sum bars (≡ DPS accumulated) ─────
       case 'totalDamage':
         return (
           <g style={strokeSx}>
-            {/* Hammer head */}
-            <rect x="6" y="4" width="12" height="6" rx="1.5" />
-            <circle cx="12" cy="7" r="1" style={fillSx} />
-            {/* Handle */}
-            <path d="M12 10 L12 19" />
+            {/* Same crossed-swords motif as DPS, shifted left */}
+            <path d="M4 4 L15 17" />
+            <path d="M3 7.5 L7.5 5" />
+            <path d="M16 4 L5 17" />
+            <path d="M12.5 5 L17 7.5" />
+            <circle cx="10" cy="10.5" r="1" style={fillSx} />
+            {/* Sum indicator: double bar */}
+            <path d="M18 13 L22 13 M18 17 L22 17" />
           </g>
         );
-      // ── Crit Total: bar chart with lightning spark ────────────
+      // ── Crit Total: flame + sum bars (≡ Crit DPS accumulated) ────
       case 'totalCritDamage':
         return (
           <g style={strokeSx}>
-            {/* Bar chart */}
-            <path d="M5 18 L5 11" />
-            <path d="M9 18 L9 8" />
-            <path d="M13 18 L13 5" />
-            <path d="M5 18 L13 18" />
-            {/* Lightning spark (crit indicator) */}
-            <path d="M17.5 5 L15.5 9.5 L17.5 9.5 L16 14" />
-            <circle cx="17" cy="9.5" r="0.7" style={fillSx} />
+            {/* Same flame motif as critDps, shifted left */}
+            <path d="M9 17 C13 16 14 12 12 9.5 C11.3 8.5 10.8 7 11.2 5.5 C9.2 6.8 8 8.8 8.5 10.5 C7 10 5.8 11.3 6 13 C6.3 15 7.5 16.5 9 17 Z" />
+            <circle cx="9" cy="13" r="1" style={fillSx} />
+            {/* Sum indicator: double bar */}
+            <path d="M17 13 L21 13 M17 17 L21 17" />
           </g>
         );
       // ── Crit DPS: flame (critical fire damage) ────────────────
