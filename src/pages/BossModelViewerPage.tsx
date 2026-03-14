@@ -97,10 +97,7 @@ const getModelUrl = (boss: Boss): string => {
   const base = import.meta.env.BASE_URL;
   if (boss.model) return `${base}models/bosses/${boss.model.name}.glb`;
   // Humanoid bosses without a model field — derive name from boss name
-  const safeName = boss.name
-    .replace(/ /g, '_')
-    .replace(/\//g, '_')
-    .replace(/\\/g, '_');
+  const safeName = boss.name.replace(/ /g, '_').replace(/\//g, '_').replace(/\\/g, '_');
   return `${base}models/bosses/${safeName}.glb`;
 };
 
@@ -156,11 +153,7 @@ const GlbModel: React.FC<{ url: string; color: string }> = ({ url, color }) => {
 
     cloned.scale.setScalar(targetScale);
     // Center the model at origin (translate by -center, then apply scale)
-    cloned.position.set(
-      -center.x * targetScale,
-      -center.y * targetScale,
-      -center.z * targetScale,
-    );
+    cloned.position.set(-center.x * targetScale, -center.y * targetScale, -center.z * targetScale);
 
     // Apply species color tint to all meshes
     cloned.traverse((child) => {
@@ -524,13 +517,17 @@ export const BossModelViewerPage: React.FC = () => {
                 <Chip
                   label={
                     modelStatus === 'glb'
-                      ? 'GLB Model'
+                      ? selected.boss.model
+                        ? 'Extracted Model'
+                        : 'Procedural'
                       : modelStatus === 'no-model'
                         ? 'No Model Data'
                         : 'Placeholder'
                   }
                   size="small"
-                  color={modelStatus === 'glb' ? 'success' : 'default'}
+                  color={
+                    modelStatus === 'glb' ? (selected.boss.model ? 'success' : 'info') : 'default'
+                  }
                   variant={modelStatus === 'glb' ? 'filled' : 'outlined'}
                   sx={{
                     position: 'absolute',
