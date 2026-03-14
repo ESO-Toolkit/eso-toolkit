@@ -23,7 +23,7 @@ interface FilterBarProps {
   onFilterChange: <K extends keyof RosterHubFilters>(key: K, value: RosterHubFilters[K]) => void;
 }
 
-const HUB_TRIALS = TRIALS.filter((t) => t.id !== 'GEN');
+const HUB_TRIALS = TRIALS.filter((t) => t.type === 'trial');
 
 // Shared glassmorphic field styles
 const glassField = (isDark: boolean): Record<string, unknown> => ({

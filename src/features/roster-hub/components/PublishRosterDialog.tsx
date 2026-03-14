@@ -33,7 +33,7 @@ interface PublishRosterDialogProps {
   token: string;
 }
 
-const HUB_TRIALS = TRIALS.filter((t) => t.id !== 'GEN');
+const HUB_TRIALS = TRIALS.filter((t) => t.type === 'trial');
 const MAX_TAGS = 5;
 
 export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
