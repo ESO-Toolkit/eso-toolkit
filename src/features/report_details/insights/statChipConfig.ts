@@ -56,7 +56,7 @@ export const STAT_CHIP_META: Record<StatChipId, StatChipMeta> = {
     id: 'critDamage',
     label: 'Crit Multi',
     tooltip:
-      'Critical damage multiplier (e.g. 1.65×): avg is the time-weighted average; max is the highest recorded value',
+      'Critical damage multiplier (e.g. 125%): avg is the time-weighted average; max is the highest recorded value',
     roleFilter: ['dps'],
   },
   totalDamage: {
