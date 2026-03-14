@@ -415,7 +415,6 @@ function expandDPS(c: CompactDPS): DPSSlot {
           .filter((id) => id !== undefined) as KnownSetIDs[])
       : undefined;
 
-
   return {
     slotNumber: c.sn,
     playerName: c.pn,

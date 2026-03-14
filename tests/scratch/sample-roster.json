@@ -244,10 +244,6 @@
       "notes": "Substitute player - adapt to raid needs"
     }
   ],
-  "availableGroups": [
-    "Left Stack",
-    "Right Stack",
-    "Portal"
-  ],
+  "availableGroups": ["Left Stack", "Right Stack", "Portal"],
   "notes": "Complete raid team roster with 3 DPS groups (Left Stack, Right Stack, Portal). DPS2, DPS3, and JailDD1 are assigned to multiple groups to demonstrate the multi-group feature."
 }
