@@ -1,44 +1,48 @@
 /**
- * Build Editor Layout — Bento Grid Orchestrator
- *
- * Replaces the old sidebar+content-panel router with a scrollable bento grid
- * that renders ALL sections simultaneously. The nav rail provides scroll-spy
- * icons; the setup tab bar sits at the bottom.
- *
- * Desktop (≥960px): CSS Grid bento layout with nav rail on left.
- * Mobile (<960px): Single column, sections collapsible, bottom nav bar.
+ * Build Editor Layout
+ * Replicates ESO Hub's build editor UX:
+ *  - Left sidebar: top-level tabs (General / Guide / Settings) + setup selector + per-setup tabs
+ *  - Right content: active section
+ *  - Action bar: Save / Share / View
  */
 
 import {
-  AccountTreeOutlined as SubclassingIcon,
-  AutoFixHigh as ChampionIcon,
-  BarChartOutlined as StatsIcon,
-  BookOutlined as GuideIcon,
-  Inventory2Outlined as EquipmentIcon,
-  LocalDrinkOutlined as ConsumableIcon,
-  PersonOutlined as GeneralIcon,
-  PsychologyOutlined as PassiveIcon,
-  SettingsOutlined as SettingsIcon,
-  SportsEsportsOutlined as SkillsIcon,
-  TuneOutlined as CharacterIcon,
+  Add as AddIcon,
+  BookOutlined,
+  PersonOutlined,
+  SaveOutlined,
+  SettingsOutlined,
+  ShareOutlined,
+  VisibilityOutlined,
 } from '@mui/icons-material';
-import { Box, useMediaQuery } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { motion, useReducedMotion } from 'framer-motion';
+import {
+  Box,
+  Button,
+  ButtonBase,
+  Chip,
+  Divider,
+  IconButton,
+  MenuItem,
+  Select,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import { useSnackbar } from 'notistack';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { saveBuild } from '@/store/saved_builds';
 import type { RootState } from '@/store/storeWithHistory';
 
-import { useSectionProgress } from '../hooks/useSectionProgress';
-import { BUILD_EDITOR_STORAGE_KEY, markSaved } from '../store/buildEditorSlice';
+import {
+  addSetup,
+  markSaved,
+  setActiveSetupIndex,
+  setSidebarTab,
+  setSetupTab,
+} from '../store/buildEditorSlice';
+import type { SetupTab, SidebarTopTab } from '../types/build.types';
 
-import { BuildCompletionHeader } from './BuildCompletionHeader';
-import { BuildNavRail } from './BuildNavRail';
-import { staggerContainer } from './motion/variants';
-import { SectionCard } from './primitives/SectionCard';
 import { ChampionSection } from './sections/ChampionSection';
 import { CharacterSection } from './sections/CharacterSection';
 import { ConsumablesSection } from './sections/ConsumablesSection';
@@ -46,239 +50,321 @@ import { EquipmentSection } from './sections/EquipmentSection';
 import { GeneralSection } from './sections/GeneralSection';
 import { GuideSection } from './sections/GuideSection';
 import { PassivesSection } from './sections/PassivesSection';
+import { ScreenshotsSection } from './sections/ScreenshotsSection';
 import { SettingsSection } from './sections/SettingsSection';
 import { SkillsSection } from './sections/SkillsSection';
-import { StatsSection } from './sections/StatsSection';
-import { SubclassingSection } from './sections/SubclassingSection';
-import { SetupTabBar } from './SetupTabBar';
+
+// ─── Sidebar tab definitions ──────────────────────────────────────────────────
+
+const TOP_TABS: { id: SidebarTopTab; label: string; icon: React.ReactNode }[] = [
+  { id: 'general', label: 'General', icon: <PersonOutlined sx={{ fontSize: 16 }} /> },
+  { id: 'guide', label: 'Guide', icon: <BookOutlined sx={{ fontSize: 16 }} /> },
+  { id: 'settings', label: 'Settings', icon: <SettingsOutlined sx={{ fontSize: 16 }} /> },
+];
+
+const SETUP_TABS: { id: SetupTab; label: string }[] = [
+  { id: 'character', label: 'Character' },
+  { id: 'equipment', label: 'Equipment' },
+  { id: 'skills', label: 'Skills' },
+  { id: 'passives', label: 'Passives' },
+  { id: 'champion', label: 'Champion' },
+  { id: 'consumables', label: 'Consumables' },
+  { id: 'screenshots', label: 'Screenshots' },
+  { id: 'subclassing', label: 'Subclassing' },
+];
+
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
+
+const BuildEditorSidebar: React.FC = () => {
+  const dispatch = useDispatch();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const { build, activeSetupIndex, activeSidebarTab, activeSetupTab } = useSelector(
+    (s: RootState) => s.buildEditor,
+  );
+
+  const sidebarBg = isDark ? alpha('#0f172a', 0.97) : alpha('#f8fafc', 0.98);
+  const borderRight = isDark ? alpha('#38bdf8', 0.1) : alpha('#0f172a', 0.1);
+
+  const activeTabStyle = (active: boolean): object => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
+    px: 1.75,
+    py: 1,
+    borderRadius: 1.5,
+    cursor: 'pointer',
+    width: '100%',
+    background: active
+      ? isDark ? alpha('#38bdf8', 0.13) : alpha('#0f172a', 0.07)
+      : 'transparent',
+    color: active ? 'primary.main' : 'text.secondary',
+    fontWeight: active ? 700 : 500,
+    border: 'none',
+    transition: 'background 0.13s, color 0.13s',
+    '&:hover': {
+      background: active
+        ? isDark ? alpha('#38bdf8', 0.18) : alpha('#0f172a', 0.1)
+        : isDark ? alpha('#fff', 0.05) : alpha('#000', 0.04),
+    },
+  });
+
+  return (
+    <Box
+      sx={{
+        width: 230,
+        flexShrink: 0,
+        background: sidebarBg,
+        borderRight: `1px solid ${borderRight}`,
+        display: 'flex',
+        flexDirection: 'column',
+        py: 2,
+        gap: 0,
+        overflowY: 'auto',
+        minHeight: 0,
+      }}
+    >
+      {/* Top-level tabs */}
+      <Box sx={{ px: 1.5, mb: 1.5 }}>
+        {TOP_TABS.map((t) => (
+          <ButtonBase
+            key={t.id}
+            onClick={() => dispatch(setSidebarTab(t.id))}
+            sx={activeTabStyle(activeSidebarTab === t.id)}
+          >
+            {t.icon}
+            <Typography variant="body2" fontWeight="inherit" color="inherit">
+              {t.label}
+            </Typography>
+          </ButtonBase>
+        ))}
+      </Box>
+
+      <Divider sx={{ mx: 1.5, opacity: 0.5 }} />
+
+      {/* Setup selector */}
+      <Box sx={{ px: 1.5, pt: 1.5, pb: 0.5 }}>
+        <Typography variant="overline" color="text.disabled" sx={{ fontWeight: 700, letterSpacing: 1.2, fontSize: 10 }}>
+          Current Setup ({activeSetupIndex + 1}/{build.setups.length})
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 0.75, mt: 0.75, alignItems: 'center' }}>
+          <Select
+            size="small"
+            value={activeSetupIndex}
+            onChange={(e) => dispatch(setActiveSetupIndex(Number(e.target.value)))}
+            sx={{ flex: 1, fontSize: 13 }}
+          >
+            {build.setups.map((s, i) => (
+              <MenuItem key={s.id} value={i}>
+                {s.name}
+              </MenuItem>
+            ))}
+          </Select>
+          <Tooltip title={build.setups.length >= 5 ? 'Max 5 setups' : 'Add setup'}>
+            <Box>
+              <IconButton
+                size="small"
+                onClick={() => dispatch(addSetup())}
+                disabled={build.setups.length >= 5}
+                sx={{
+                  background: isDark ? alpha('#38bdf8', 0.12) : alpha('#0f172a', 0.07),
+                  '&:hover': {
+                    background: isDark ? alpha('#38bdf8', 0.22) : alpha('#0f172a', 0.12),
+                  },
+                }}
+              >
+                <AddIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Box>
+          </Tooltip>
+        </Box>
+      </Box>
+
+      {/* Per-setup section tabs */}
+      <Box sx={{ px: 1.5, pt: 1, flex: 1 }}>
+        {SETUP_TABS.map((t) => (
+          <ButtonBase
+            key={t.id}
+            onClick={() => {
+              dispatch(setSidebarTab('general'));
+              dispatch(setSetupTab(t.id));
+            }}
+            sx={{
+              ...activeTabStyle(activeSidebarTab === 'general' && activeSetupTab === t.id),
+              fontSize: 13,
+            }}
+          >
+            <Typography variant="body2" fontWeight="inherit" color="inherit" sx={{ fontSize: 13 }}>
+              {t.label}
+            </Typography>
+            {t.id === 'subclassing' && (
+              <Chip label="New" size="small" color="primary" sx={{ ml: 'auto', height: 16, fontSize: 9 }} />
+            )}
+          </ButtonBase>
+        ))}
+      </Box>
+    </Box>
+  );
+};
+
+// ─── Action Bar ───────────────────────────────────────────────────────────────
+
+const ActionBar: React.FC = () => {
+  const dispatch = useDispatch();
+  const { isDirty, build } = useSelector((s: RootState) => s.buildEditor);
+  const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const handleSave = (): void => {
+    if (!build.name.trim()) {
+      enqueueSnackbar('Please enter a build name before saving.', { variant: 'warning' });
+      return;
+    }
+    // TODO: persist to backend
+    dispatch(markSaved());
+    enqueueSnackbar('Build saved!', { variant: 'success' });
+  };
+
+  const handleShare = (): void => {
+    navigator.clipboard
+      .writeText(window.location.href)
+      .then(() => enqueueSnackbar('Link copied to clipboard!', { variant: 'info' }))
+      .catch(() => enqueueSnackbar('Could not copy link.', { variant: 'error' }));
+  };
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: 1,
+        px: 2,
+        py: 1.25,
+        borderBottom: `1px solid ${isDark ? alpha('#fff', 0.08) : alpha('#000', 0.08)}`,
+        background: isDark ? alpha('#0b1220', 0.95) : alpha('#f8fafc', 0.98),
+        backdropFilter: 'blur(8px)',
+      }}
+    >
+      <Button
+        variant="contained"
+        size="small"
+        startIcon={<SaveOutlined sx={{ fontSize: 15 }} />}
+        onClick={handleSave}
+        sx={{
+          minWidth: 80,
+          background: isDirty
+            ? undefined
+            : isDark ? alpha('#22c55e', 0.2) : alpha('#059669', 0.15),
+          color: isDirty ? undefined : isDark ? '#22c55e' : '#059669',
+        }}
+      >
+        {isDirty ? 'Save' : 'Saved'}
+      </Button>
+      <Button
+        variant="outlined"
+        size="small"
+        startIcon={<ShareOutlined sx={{ fontSize: 15 }} />}
+        onClick={handleShare}
+      >
+        Share
+      </Button>
+      <Button
+        variant="outlined"
+        size="small"
+        startIcon={<VisibilityOutlined sx={{ fontSize: 15 }} />}
+        disabled
+      >
+        View
+      </Button>
+    </Box>
+  );
+};
+
+// ─── Content router ───────────────────────────────────────────────────────────
+
+const ContentPanel: React.FC = () => {
+  const { activeSidebarTab, activeSetupTab } = useSelector((s: RootState) => s.buildEditor);
+
+  if (activeSidebarTab === 'guide') return <GuideSection />;
+  if (activeSidebarTab === 'settings') return <SettingsSection />;
+
+  // activeSidebarTab === 'general' → delegate to setup tab
+  switch (activeSetupTab) {
+    case 'character':
+      return <CharacterSection />;
+    case 'equipment':
+      return <EquipmentSection />;
+    case 'skills':
+      return <SkillsSection />;
+    case 'passives':
+      return <PassivesSection />;
+    case 'champion':
+      return <ChampionSection />;
+    case 'consumables':
+      return <ConsumablesSection />;
+    case 'screenshots':
+      return <ScreenshotsSection />;
+    case 'subclassing':
+      return (
+        <Box sx={{ textAlign: 'center', py: 6 }}>
+          <Typography color="text.disabled">Subclassing support coming soon.</Typography>
+        </Box>
+      );
+    default:
+      return <GeneralSection />;
+  }
+};
+
+// ─── Root Layout ──────────────────────────────────────────────────────────────
 
 export const BuildEditorLayout: React.FC = () => {
   const theme = useTheme();
-  const dispatch = useDispatch();
-  const { enqueueSnackbar } = useSnackbar();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const prefersReduced = useReducedMotion();
-  const progress = useSectionProgress();
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
+  const isDark = theme.palette.mode === 'dark';
+  const { activeSidebarTab, activeSetupTab } = useSelector((s: RootState) => s.buildEditor);
 
-  // NOTE: beforeunload handler lives in BuildEditorPage (sets e.returnValue for cross-browser compat).
-
-  // Ctrl+S / Cmd+S keyboard shortcut to save — use refs to avoid re-registering
-  // the keydown listener on every build mutation.
-  const buildRef = React.useRef(build);
-  buildRef.current = build;
-  const activeSetupIndexRef = React.useRef(activeSetupIndex);
-  activeSetupIndexRef.current = activeSetupIndex;
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        const currentBuild = buildRef.current;
-        if (!currentBuild.name.trim()) return;
-        try {
-          localStorage.setItem(
-            BUILD_EDITOR_STORAGE_KEY,
-            JSON.stringify({ build: currentBuild, activeSetupIndex: activeSetupIndexRef.current }),
-          );
-        } catch (err) {
-          const isQuota =
-            err instanceof DOMException && (err.name === 'QuotaExceededError' || err.code === 22);
-          enqueueSnackbar(
-            isQuota
-              ? 'Browser storage full — build not saved locally. Try publishing to the Hub.'
-              : 'Could not save to browser storage.',
-            { variant: 'warning', preventDuplicate: true },
-          );
-        }
-        dispatch(saveBuild(currentBuild));
-        dispatch(markSaved());
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [dispatch, enqueueSnackbar]);
+  // Determine human-readable section title
+  const sectionTitle = (() => {
+    if (activeSidebarTab === 'guide') return 'Guide';
+    if (activeSidebarTab === 'settings') return 'Settings';
+    return activeSetupTab.charAt(0).toUpperCase() + activeSetupTab.slice(1);
+  })();
 
   return (
-    <Box component="main" sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
-      {/* Header: build name + progress + save/share */}
-      <BuildCompletionHeader />
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: 3,
+        border: `1px solid ${isDark ? alpha('#38bdf8', 0.12) : alpha('#0f172a', 0.1)}`,
+        background: isDark ? alpha('#0f172a', 0.7) : alpha('#ffffff', 0.9),
+        backdropFilter: 'blur(10px)',
+        overflow: 'hidden',
+        minHeight: 600,
+      }}
+    >
+      {/* Action bar */}
+      <ActionBar />
 
-      {/* Body: nav rail + bento grid */}
-      <Box
-        sx={{
-          display: 'flex',
-          flex: 1,
-          minHeight: 0,
-          flexDirection: 'row',
-        }}
-      >
-        {/* Desktop nav rail */}
-        {!isMobile && <BuildNavRail progress={progress} />}
+      {/* Body */}
+      <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        <BuildEditorSidebar />
 
-        {/* Bento grid content */}
+        {/* Main content */}
         <Box
           sx={{
             flex: 1,
             minWidth: 0,
             overflowY: 'auto',
-            p: { xs: 1.5, md: 2.5 },
-            // Extra bottom padding for mobile nav bar + iOS home indicator
-            pb: isMobile ? `calc(${10 * 8}px + env(safe-area-inset-bottom, 0px))` : 2.5,
+            p: 3,
           }}
         >
-          <motion.div
-            variants={prefersReduced ? undefined : staggerContainer}
-            initial={prefersReduced ? undefined : 'hidden'}
-            animate={prefersReduced ? undefined : 'visible'}
-          >
-            <Box
-              sx={{
-                display: 'grid',
-                gap: { xs: 2, md: 2.5, lg: 3 },
-                // Desktop: 2-column bento grid with dense packing
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-                gridAutoFlow: isMobile ? undefined : 'dense',
-              }}
-            >
-              {/* Row 1: Identity (primary) + Character */}
-              <SectionCard
-                id="general"
-                title="Identity"
-                icon={<GeneralIcon />}
-                complete={progress.general}
-                variant="primary"
-                defaultExpanded={!isMobile}
-              >
-                <GeneralSection />
-              </SectionCard>
-
-              <SectionCard
-                id="character"
-                title="Character"
-                icon={<CharacterIcon />}
-                complete={progress.character}
-                defaultExpanded={!isMobile}
-              >
-                <CharacterSection />
-              </SectionCard>
-
-              {/* Row 2: Subclassing */}
-              <SectionCard
-                id="subclassing"
-                title="Subclassing"
-                icon={<SubclassingIcon />}
-                complete={progress.subclassing}
-                defaultExpanded={!isMobile}
-              >
-                <SubclassingSection />
-              </SectionCard>
-
-              {/* Row 3–4: Equipment spans 2 rows; Skills + Consumables stack on right */}
-              <SectionCard
-                id="equipment"
-                title="Equipment"
-                icon={<EquipmentIcon />}
-                complete={progress.equipment}
-                variant="primary"
-                gridRow={isMobile ? undefined : 'span 2'}
-                defaultExpanded={!isMobile}
-              >
-                <EquipmentSection />
-              </SectionCard>
-
-              <SectionCard
-                id="skills"
-                title="Skills"
-                icon={<SkillsIcon />}
-                complete={progress.skills}
-                variant="primary"
-                defaultExpanded={!isMobile}
-              >
-                <SkillsSection />
-              </SectionCard>
-
-              <SectionCard
-                id="consumables"
-                title="Consumables"
-                icon={<ConsumableIcon />}
-                complete={progress.consumables}
-                defaultExpanded={!isMobile}
-              >
-                <ConsumablesSection />
-              </SectionCard>
-
-              {/* Champion Points — full width */}
-              <SectionCard
-                id="champion"
-                title="Champion Points"
-                icon={<ChampionIcon />}
-                complete={progress.champion}
-                variant="primary"
-                gridColumn={isMobile ? undefined : 'span 2'}
-                defaultExpanded={!isMobile}
-              >
-                <ChampionSection />
-              </SectionCard>
-
-              {/* Passives — half width */}
-              <SectionCard
-                id="passives"
-                title="Passives"
-                icon={<PassiveIcon />}
-                complete={progress.passives}
-                defaultExpanded={!isMobile}
-              >
-                <PassivesSection />
-              </SectionCard>
-
-              {/* Stats — full width */}
-              <SectionCard
-                id="stats"
-                title="Stats"
-                icon={<StatsIcon />}
-                complete={progress.stats}
-                variant="primary"
-                gridColumn={isMobile ? undefined : 'span 2'}
-                defaultExpanded={!isMobile}
-              >
-                <StatsSection />
-              </SectionCard>
-
-              {/* Guide & Media — full width */}
-              <SectionCard
-                id="guide"
-                title="Guide & Media"
-                icon={<GuideIcon />}
-                complete={progress.guide}
-                gridColumn={isMobile ? undefined : 'span 2'}
-                defaultExpanded={!isMobile}
-              >
-                <GuideSection />
-              </SectionCard>
-
-              {/* Settings — full width footer */}
-              <SectionCard
-                id="settings"
-                title="Settings"
-                icon={<SettingsIcon />}
-                complete={progress.settings}
-                variant="subtle"
-                gridColumn={isMobile ? undefined : 'span 2'}
-                defaultExpanded={!isMobile}
-              >
-                <SettingsSection />
-              </SectionCard>
-            </Box>
-          </motion.div>
+          <Typography variant="overline" color="text.disabled" sx={{ fontWeight: 700, letterSpacing: 1.2, mb: 2, display: 'block' }}>
+            {sectionTitle}
+          </Typography>
+          <ContentPanel />
         </Box>
       </Box>
-
-      {/* Setup tab bar at bottom */}
-      <SetupTabBar />
-
-      {/* Mobile bottom nav */}
-      {isMobile && <BuildNavRail progress={progress} />}
     </Box>
   );
 };

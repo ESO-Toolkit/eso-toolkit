@@ -6,12 +6,10 @@
  */
 
 import type { GearConfig, SkillsConfig } from '../../loadout-manager/types/loadout.types';
-import type { StatOverrides } from '../engine/stat-types';
 
 // ─── Enums / Unions ──────────────────────────────────────────────────────────
 
 export type ESOClass =
-  | 'any-class'
   | 'dragonknight'
   | 'sorcerer'
   | 'nightblade'
@@ -20,40 +18,15 @@ export type ESOClass =
   | 'necromancer'
   | 'arcanist';
 
-/** IDs match the `SkillLineData.id` field in src/data/skill-lines/class/ */
-export type ClassSkillLineId =
-  | 'class.ardent-flame'
-  | 'class.draconic-power'
-  | 'class.earthen-heart'
-  | 'class.dark-magic'
-  | 'class.daedric-summoning'
-  | 'class.storm-calling'
-  | 'class.assassination'
-  | 'class.shadow'
-  | 'class.siphoning'
-  | 'class.aedric-spear'
-  | 'class.dawns-wrath'
-  | 'class.restoring-light'
-  | 'class.animal-companions'
-  | 'class.green-balance'
-  | 'class.winters-embrace'
-  | 'class.grave-lord'
-  | 'class.bone-tyrant'
-  | 'class.living-death'
-  | 'class.herald-of-the-tome'
-  | 'class.soldier-of-apocrypha'
-  | 'class.curative-runeforms';
-
 export type CombatRole = 'tank' | 'healer' | 'magicka-dps' | 'stamina-dps' | 'hybrid-dps';
 
-export type GameMode = 'pve' | 'pvp';
+export type GameMode = 'pve' | 'pvp' | 'both';
 
 export type BuildVisibility = 'public' | 'private' | 'link-only';
 
 export type SidebarTopTab = 'general' | 'guide' | 'settings';
 
 export type SetupTab =
-  | 'info'
   | 'character'
   | 'equipment'
   | 'skills'
@@ -110,8 +83,6 @@ export interface BuildSetup {
   passives: number[];
   /** Screenshot URLs / data-urls */
   screenshots: string[];
-  /** Manual stat overrides for buff toggles and armor counts */
-  statOverrides?: StatOverrides;
 }
 
 // ─── Top-level build ─────────────────────────────────────────────────────────
@@ -134,8 +105,6 @@ export interface Build {
   name: string;
   shortDescription: string;
   esoClass: ESOClass;
-  /** Exactly 3 class skill line slots — can be from any class, nullable during editing */
-  classSkillLines: [ClassSkillLineId | null, ClassSkillLineId | null, ClassSkillLineId | null];
   role: CombatRole;
   gameMode: GameMode;
   races: string[];
@@ -144,8 +113,6 @@ export interface Build {
   settings: BuildSettings;
   /** Raw addon import string (Combat Metrics / Caro's Skill Point Saver) */
   addonImportString: string;
-  /** Trial IDs this build is designed for (e.g. 'lucent_citadel') */
-  trialTags?: string[];
   /** ISO timestamp */
   createdAt: string;
   updatedAt: string;

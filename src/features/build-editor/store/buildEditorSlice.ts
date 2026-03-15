@@ -6,14 +6,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 
-import type {
-  ArmorWeight,
-  GearConfig,
-  SkillsConfig,
-} from '../../loadout-manager/types/loadout.types';
-import { getDefaultLinesForClass } from '../data/esoStaticData';
-import { DEFAULT_STAT_OVERRIDES } from '../engine/stat-constants';
-import type { StatOverrides } from '../engine/stat-types';
+import type { GearConfig, SkillsConfig } from '../../loadout-manager/types/loadout.types';
 import type {
   Build,
   BuildAttributes,
@@ -21,15 +14,9 @@ import type {
   BuildConsumables,
   BuildEditorState,
   BuildSetup,
-  ClassSkillLineId,
   SidebarTopTab,
   SetupTab,
 } from '../types/build.types';
-
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-/** Maximum screenshots per setup — guards against localStorage bloat from base64 data-URLs */
-export const MAX_SCREENSHOTS = 8;
 
 // ─── Factories ───────────────────────────────────────────────────────────────
 
@@ -54,7 +41,6 @@ const makeSetup = (name = 'Default'): BuildSetup => ({
   consumables: { potions: [], food: {} },
   passives: [],
   screenshots: [],
-  statOverrides: { ...DEFAULT_STAT_OVERRIDES, buffs: { ...DEFAULT_STAT_OVERRIDES.buffs } },
 });
 
 const makeBuild = (): Build => ({
@@ -62,7 +48,6 @@ const makeBuild = (): Build => ({
   name: '',
   shortDescription: '',
   esoClass: 'dragonknight',
-  classSkillLines: getDefaultLinesForClass('dragonknight'),
   role: 'tank',
   gameMode: 'pve',
   races: [],
@@ -74,51 +59,13 @@ const makeBuild = (): Build => ({
   updatedAt: new Date().toISOString(),
 });
 
-// ─── Persistence helpers ──────────────────────────────────────────────────────
-
-export const BUILD_EDITOR_STORAGE_KEY = 'eso-build-editor-v1';
-
-/** Attempt to restore a previously saved build from localStorage. */
-function loadFromStorage(): Pick<BuildEditorState, 'build' | 'activeSetupIndex'> | null {
-  try {
-    const raw = localStorage.getItem(BUILD_EDITOR_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { build?: Build; activeSetupIndex?: number };
-    // Minimal schema guard — ensure we have at least one setup
-    if (!parsed.build?.setups?.length) return null;
-    // Migration: builds saved before subclassing was added won't have classSkillLines
-    if (!parsed.build.classSkillLines) {
-      parsed.build.classSkillLines = getDefaultLinesForClass(
-        parsed.build.esoClass ?? 'dragonknight',
-      );
-    }
-    // Migration: builds saved before stats feature won't have statOverrides
-    for (const setup of parsed.build.setups) {
-      if (!setup.statOverrides) {
-        setup.statOverrides = {
-          ...DEFAULT_STAT_OVERRIDES,
-          buffs: { ...DEFAULT_STAT_OVERRIDES.buffs },
-        };
-      }
-    }
-    return {
-      build: parsed.build,
-      activeSetupIndex: parsed.activeSetupIndex ?? 0,
-    };
-  } catch {
-    return null;
-  }
-}
-
 // ─── Initial state ────────────────────────────────────────────────────────────
 
-const savedState = loadFromStorage();
-
 const initialState: BuildEditorState = {
-  build: savedState?.build ?? makeBuild(),
-  activeSetupIndex: savedState?.activeSetupIndex ?? 0,
+  build: makeBuild(),
+  activeSetupIndex: 0,
   activeSidebarTab: 'general',
-  activeSetupTab: 'info',
+  activeSetupTab: 'character',
   isDirty: false,
 };
 
@@ -154,37 +101,22 @@ export const buildEditorSlice = createSlice({
     },
     setBuildClass(state, action: PayloadAction<Build['esoClass']>) {
       state.build.esoClass = action.payload;
-      // Pre-fill all 3 skill line slots with the selected class's lines (convenience shortcut)
-      state.build.classSkillLines = getDefaultLinesForClass(action.payload);
-      state.build.updatedAt = new Date().toISOString();
-      state.isDirty = true;
-    },
-    setClassSkillLine(
-      state,
-      action: PayloadAction<{ slot: 0 | 1 | 2; skillLineId: ClassSkillLineId | null }>,
-    ) {
-      state.build.classSkillLines[action.payload.slot] = action.payload.skillLineId;
-      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     setBuildRole(state, action: PayloadAction<Build['role']>) {
       state.build.role = action.payload;
-      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     setBuildGameMode(state, action: PayloadAction<Build['gameMode']>) {
       state.build.gameMode = action.payload;
-      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     setBuildRaces(state, action: PayloadAction<string[]>) {
       state.build.races = action.payload;
-      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     setAddonImportString(state, action: PayloadAction<string>) {
       state.build.addonImportString = action.payload;
-      state.isDirty = true;
     },
 
     // ── Guide ─────────────────────────────────────────────────────────────────
@@ -236,38 +168,12 @@ export const buildEditorSlice = createSlice({
       }
       state.isDirty = true;
     },
-    reorderSetups(state, action: PayloadAction<{ fromIndex: number; toIndex: number }>) {
-      const { fromIndex, toIndex } = action.payload;
-      if (fromIndex === toIndex) return;
-      if (fromIndex < 0 || toIndex < 0) return;
-      if (fromIndex >= state.build.setups.length || toIndex >= state.build.setups.length) return;
-
-      // Track the currently active setup's id so we can follow it after reorder
-      const activeSetupId = state.build.setups[state.activeSetupIndex]?.id;
-
-      // Move the setup from fromIndex to toIndex
-      const [moved] = state.build.setups.splice(fromIndex, 1);
-      state.build.setups.splice(toIndex, 0, moved);
-
-      // Update setupOrder to match new positions
-      state.build.settings.setupOrder = state.build.setups.map((_, i) => i);
-
-      // Keep the same setup active (follow it to its new index)
-      if (activeSetupId) {
-        const newIdx = state.build.setups.findIndex((s) => s.id === activeSetupId);
-        if (newIdx !== -1) state.activeSetupIndex = newIdx;
-      }
-
-      state.build.updatedAt = new Date().toISOString();
-      state.isDirty = true;
-    },
 
     // ── Character (per-setup) ─────────────────────────────────────────────────
     setAttributes(state, action: PayloadAction<BuildAttributes>) {
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.attributes = action.payload;
-        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -275,7 +181,6 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.curse = action.payload;
-        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -283,7 +188,6 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.mundusStone = action.payload;
-        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -293,11 +197,13 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.gear = action.payload;
-        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
-    setGearSlot(state, action: PayloadAction<{ slot: number; itemId: number | null }>) {
+    setGearSlot(
+      state,
+      action: PayloadAction<{ slot: number; itemId: number | null }>,
+    ) {
       const setup = state.build.setups[state.activeSetupIndex];
       if (!setup) return;
       if (action.payload.itemId === null) {
@@ -305,41 +211,7 @@ export const buildEditorSlice = createSlice({
       } else {
         setup.gear[action.payload.slot] = { id: action.payload.itemId };
       }
-      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
-    },
-
-    setGearWeight(state, action: PayloadAction<{ slot: number; weight: ArmorWeight | undefined }>) {
-      const setup = state.build.setups[state.activeSetupIndex];
-      if (!setup) return;
-      const piece = setup.gear[action.payload.slot];
-      if (piece) {
-        piece.weight = action.payload.weight;
-        state.build.updatedAt = new Date().toISOString();
-        state.isDirty = true;
-      }
-    },
-
-    setGearTrait(state, action: PayloadAction<{ slot: number; trait: string | undefined }>) {
-      const setup = state.build.setups[state.activeSetupIndex];
-      if (!setup) return;
-      const piece = setup.gear[action.payload.slot];
-      if (piece) {
-        piece.trait = action.payload.trait;
-        state.build.updatedAt = new Date().toISOString();
-        state.isDirty = true;
-      }
-    },
-
-    setGearEnchant(state, action: PayloadAction<{ slot: number; enchant: string | undefined }>) {
-      const setup = state.build.setups[state.activeSetupIndex];
-      if (!setup) return;
-      const piece = setup.gear[action.payload.slot];
-      if (piece) {
-        piece.enchant = action.payload.enchant;
-        state.build.updatedAt = new Date().toISOString();
-        state.isDirty = true;
-      }
     },
 
     // ── Skills (per-setup) ────────────────────────────────────────────────────
@@ -347,7 +219,6 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.skills = action.payload;
-        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -357,7 +228,6 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.cp = action.payload;
-        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -372,7 +242,6 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (!setup) return;
       setup.cp[action.payload.tree].slots[action.payload.slotIndex] = action.payload.cpId;
-      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     setChampionPassive(
@@ -392,7 +261,6 @@ export const buildEditorSlice = createSlice({
       } else {
         setup.cp[tree].passives[key] = points;
       }
-      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
 
@@ -401,7 +269,6 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.consumables = action.payload;
-        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -416,33 +283,14 @@ export const buildEditorSlice = createSlice({
       } else {
         setup.passives.splice(idx, 1);
       }
-      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
-    },
-    setPassives(state, action: PayloadAction<number[]>) {
-      const setup = state.build.setups[state.activeSetupIndex];
-      if (!setup) return;
-      setup.passives = action.payload;
-      state.build.updatedAt = new Date().toISOString();
-      state.isDirty = true;
-    },
-
-    // ── Stat Overrides (per-setup) ────────────────────────────────────────────
-    setStatOverrides(state, action: PayloadAction<StatOverrides>) {
-      const setup = state.build.setups[state.activeSetupIndex];
-      if (setup) {
-        setup.statOverrides = action.payload;
-        state.build.updatedAt = new Date().toISOString();
-        state.isDirty = true;
-      }
     },
 
     // ── Screenshots (per-setup) ───────────────────────────────────────────────
     addScreenshot(state, action: PayloadAction<string>) {
       const setup = state.build.setups[state.activeSetupIndex];
-      if (setup && setup.screenshots.length < MAX_SCREENSHOTS) {
+      if (setup) {
         setup.screenshots.push(action.payload);
-        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -450,25 +298,16 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.screenshots.splice(action.payload, 1);
-        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
-    /** Load an entire build object (e.g. from a decoded URL share). */
-    loadBuild(state, action: PayloadAction<Build>) {
-      state.build = action.payload;
-      state.activeSetupIndex = 0;
-      state.activeSidebarTab = 'general';
-      state.activeSetupTab = 'info';
-      state.isDirty = false;
-    },
     resetBuild(state) {
       state.build = makeBuild();
       state.activeSetupIndex = 0;
       state.activeSidebarTab = 'general';
-      state.activeSetupTab = 'info';
+      state.activeSetupTab = 'character';
       state.isDirty = false;
     },
     markSaved(state) {
@@ -484,7 +323,6 @@ export const {
   setBuildName,
   setBuildDescription,
   setBuildClass,
-  setClassSkillLine,
   setBuildRole,
   setBuildGameMode,
   setBuildRaces,
@@ -497,26 +335,19 @@ export const {
   addSetup,
   renameSetup,
   deleteSetup,
-  reorderSetups,
   setAttributes,
   setCurse,
   setMundusStone,
   setGear,
   setGearSlot,
-  setGearWeight,
-  setGearTrait,
-  setGearEnchant,
   setSkills,
   setChampionPoints,
   setChampionTreeSlot,
   setChampionPassive,
   setConsumables,
   togglePassive,
-  setPassives,
-  setStatOverrides,
   addScreenshot,
   removeScreenshot,
-  loadBuild,
   resetBuild,
   markSaved,
 } = buildEditorSlice.actions;

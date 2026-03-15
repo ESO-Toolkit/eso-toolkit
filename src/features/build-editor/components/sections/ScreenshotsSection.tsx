@@ -1,17 +1,11 @@
 /**
- * Screenshots Section — uploads screenshots to ImgBB via the Worker proxy,
- * stores hosted HTTPS URLs instead of base64 data-URLs.
+ * Screenshots Section — character stat screenshots.
  */
 
-import {
-  Add as AddIcon,
-  Close as CloseIcon,
-  CloudUpload as CloudUploadIcon,
-} from '@mui/icons-material';
+import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
 import {
   Box,
   Button,
-  CircularProgress,
   Grid,
   IconButton,
   Stack,
@@ -19,237 +13,117 @@ import {
   Typography,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { useSnackbar } from 'notistack';
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { useAuth } from '@/features/auth/AuthContext';
 import type { RootState } from '@/store/storeWithHistory';
 
-import { uploadScreenshot } from '../../api/image-upload-api';
 import { addScreenshot, removeScreenshot } from '../../store/buildEditorSlice';
-
-const MAX_SCREENSHOT_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export const ScreenshotsSection: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const prefersReduced = useReducedMotion();
-  const { enqueueSnackbar } = useSnackbar();
-  const { isLoggedIn, accessToken } = useAuth();
   const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
   const setup = build.setups[activeSetupIndex];
   const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const files = e.target.files;
-    if (!files?.length) return;
-
-    if (!isLoggedIn || !accessToken) {
-      enqueueSnackbar('Sign in to upload screenshots.', { variant: 'warning' });
-      e.target.value = '';
-      return;
-    }
-
-    const validFiles = Array.from(files).filter((file) => {
-      if (file.size > MAX_SCREENSHOT_SIZE) {
-        enqueueSnackbar(`"${file.name}" exceeds 5 MB — please resize before uploading.`, {
-          variant: 'warning',
-        });
-        return false;
-      }
-      return true;
+    if (!files) return;
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (ev.target?.result) {
+          dispatch(addScreenshot(ev.target.result as string));
+        }
+      };
+      reader.readAsDataURL(file);
     });
-
-    if (!validFiles.length) {
-      e.target.value = '';
-      return;
-    }
-
-    setUploading(true);
-
-    for (const file of validFiles) {
-      try {
-        // Read file as base64 data-URL, then upload via Worker proxy
-        const dataUrl = await readFileAsDataUrl(file);
-        const result = await uploadScreenshot(dataUrl, accessToken, file.name);
-        dispatch(addScreenshot(result.url));
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Upload failed';
-        enqueueSnackbar(`Failed to upload "${file.name}": ${message}`, { variant: 'error' });
-      }
-    }
-
-    setUploading(false);
+    // Reset so same file can be re-uploaded
     e.target.value = '';
   };
 
   return (
-    <Stack spacing={1.5}>
-      <Typography
-        variant="caption"
-        color="text.disabled"
-        sx={{ fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
-      >
-        Screenshots of character stats, gear, or skills.
+    <Stack spacing={2}>
+      <Typography variant="caption" color="text.secondary">
+        Add screenshots of your character stats, gear, or skills.
       </Typography>
 
-      {setup.screenshots.length === 0 && !uploading ? (
+      {setup.screenshots.length === 0 ? (
         <Box
           sx={{
             textAlign: 'center',
-            py: 4,
-            background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
-            border: `1px dashed ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            borderRadius: 3,
+            py: 5,
+            background: isDark ? alpha('#fff', 0.02) : alpha('#000', 0.02),
+            border: `1px dashed ${isDark ? alpha('#fff', 0.1) : alpha('#000', 0.08)}`,
+            borderRadius: 2,
           }}
         >
-          <Typography
-            variant="caption"
-            color="text.disabled"
-            mb={1.5}
-            display="block"
-            sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
-          >
-            No screenshots yet
+          <Typography variant="body2" color="text.disabled" mb={1.5}>
+            No screenshots uploaded yet
           </Typography>
           <Button
-            startIcon={<CloudUploadIcon sx={{ fontSize: 14 }} />}
+            startIcon={<AddIcon />}
             variant="outlined"
             size="small"
-            disabled={!isLoggedIn}
             onClick={() => inputRef.current?.click()}
-            sx={{
-              fontSize: 11,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              fontWeight: 600,
-              borderRadius: '99px',
-              textTransform: 'none',
-              borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)',
-              color: 'var(--be-accent, #38bdf8)',
-              '&:hover': {
-                borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.45)',
-                background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
-              },
-            }}
           >
-            {isLoggedIn ? 'Upload' : 'Sign in to upload'}
+            Upload Screenshot
           </Button>
         </Box>
       ) : (
         <>
-          <Grid container spacing={1}>
-            <AnimatePresence>
-              {setup.screenshots.map((src, i) => (
-                <Grid key={src.slice(0, 48) + i} size={{ xs: 12, sm: 6 }}>
-                  <motion.div
-                    layout={!prefersReduced}
-                    initial={prefersReduced ? false : { scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={prefersReduced ? undefined : { scale: 0.9, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Box
+          <Grid container spacing={1.5}>
+            {setup.screenshots.map((src, i) => (
+              <Grid item xs={6} sm={4} key={i}>
+                <Box
+                  sx={{
+                    position: 'relative',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    border: `1px solid ${isDark ? alpha('#fff', 0.1) : alpha('#000', 0.1)}`,
+                    '&:hover .remove-btn': { opacity: 1 },
+                  }}
+                >
+                  <img
+                    src={src}
+                    alt={`Screenshot ${i + 1}`}
+                    style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }}
+                  />
+                  <Tooltip title="Remove">
+                    <IconButton
+                      className="remove-btn"
+                      size="small"
+                      onClick={() => dispatch(removeScreenshot(i))}
                       sx={{
-                        position: 'relative',
-                        borderRadius: 2.5,
-                        overflow: 'hidden',
-                        border: `1px solid ${isDark ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)' : 'rgba(0,0,0,0.08)'}`,
-                        boxShadow: isDark
-                          ? '0 4px 14px rgba(0,0,0,0.3)'
-                          : '0 4px 12px rgba(0,0,0,0.08)',
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          borderColor: isDark
-                            ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)'
-                            : 'rgba(0,0,0,0.15)',
-                          boxShadow: isDark
-                            ? '0 8px 24px rgba(0,0,0,0.4), 0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)'
-                            : '0 8px 20px rgba(0,0,0,0.12)',
-                        },
-                        '&:hover .remove-btn': { opacity: 1 },
+                        position: 'absolute',
+                        top: 4,
+                        right: 4,
+                        opacity: 0,
+                        transition: 'opacity 0.15s',
+                        background: alpha('#000', 0.6),
+                        color: '#fff',
+                        '&:hover': { background: alpha('#ef4444', 0.8) },
                       }}
                     >
-                      <img
-                        src={src}
-                        alt={`Screenshot ${i + 1}`}
-                        style={{
-                          width: '100%',
-                          display: 'block',
-                        }}
-                      />
-                      <Tooltip title="Remove">
-                        <IconButton
-                          className="remove-btn"
-                          size="small"
-                          aria-label="Remove screenshot"
-                          onClick={() => dispatch(removeScreenshot(i))}
-                          sx={{
-                            position: 'absolute',
-                            top: 6,
-                            right: 6,
-                            width: 26,
-                            height: 26,
-                            opacity: 0,
-                            transition: 'opacity 0.15s',
-                            background: 'rgba(0,0,0,0.72)',
-                            border: '1px solid rgba(255,255,255,0.12)',
-                            color: '#fff',
-                            '&:hover': {
-                              background: alpha('#ef4444', 0.85),
-                              borderColor: alpha('#ef4444', 0.5),
-                            },
-                          }}
-                        >
-                          <CloseIcon sx={{ fontSize: 14 }} />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </motion.div>
-                </Grid>
-              ))}
-            </AnimatePresence>
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Grid>
+            ))}
           </Grid>
 
-          {uploading ? (
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ py: 0.5 }}>
-              <CircularProgress size={16} sx={{ color: 'var(--be-accent, #38bdf8)' }} />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontSize: 11, fontFamily: 'Space Grotesk, Inter, system-ui' }}
-              >
-                Uploading...
-              </Typography>
-            </Stack>
-          ) : (
-            <Button
-              startIcon={<AddIcon sx={{ fontSize: 14 }} />}
-              variant="outlined"
-              size="small"
-              disabled={!isLoggedIn}
-              sx={{
-                alignSelf: 'flex-start',
-                fontSize: 11,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
-                fontWeight: 600,
-                borderRadius: '99px',
-                textTransform: 'none',
-                borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
-                color: 'var(--be-accent, #38bdf8)',
-                '&:hover': {
-                  borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.40)',
-                  background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
-                },
-              }}
-              onClick={() => inputRef.current?.click()}
-            >
-              Add More
-            </Button>
-          )}
+          <Button
+            startIcon={<AddIcon />}
+            variant="outlined"
+            size="small"
+            sx={{ alignSelf: 'flex-start' }}
+            onClick={() => inputRef.current?.click()}
+          >
+            Add More
+          </Button>
         </>
       )}
 
@@ -259,21 +133,8 @@ export const ScreenshotsSection: React.FC = () => {
         accept="image/*"
         multiple
         style={{ display: 'none' }}
-        onChange={(e) => void handleFileChange(e)}
+        onChange={handleFileChange}
       />
     </Stack>
   );
 };
-
-/** Read a File as a base64 data-URL string. */
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      if (ev.target?.result) resolve(ev.target.result as string);
-      else reject(new Error('FileReader returned empty result'));
-    };
-    reader.onerror = () => reject(new Error(`Failed to read "${file.name}"`));
-    reader.readAsDataURL(file);
-  });
-}

@@ -168,6 +168,18 @@ const BuildEditorPage = React.lazy(() =>
   import('./pages/BuildEditorPage').then((module) => ({ default: module.BuildEditorPage })),
 );
 
+// Generic page loading skeleton - used for lazy-loaded routes and PersistGate hydration
+const LoadingFallback: React.FC = () => (
+  <Container maxWidth="lg" sx={{ pt: 4, px: 2 }}>
+    <Skeleton variant="text" width="35%" height={52} sx={{ mb: 2, borderRadius: 1 }} />
+    <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 2, mb: 2 }} />
+    <Box sx={{ display: 'flex', gap: 2 }}>
+      <Skeleton variant="rectangular" height={160} sx={{ flex: 1, borderRadius: 2 }} />
+      <Skeleton variant="rectangular" height={160} sx={{ flex: 1, borderRadius: 2 }} />
+    </Box>
+  </Container>
+);
+
 const BuildViewPage = React.lazy(() =>
   import('./pages/BuildViewPage').then((module) => ({ default: module.BuildViewPage })),
 );
@@ -591,7 +603,7 @@ const AppRoutes: React.FC = () => {
               path="/build-editor"
               element={
                 <ErrorBoundary>
-                  <Suspense fallback={<BuildEditorLoadingFallback />}>
+                  <Suspense fallback={<LoadingFallback />}>
                     <BuildEditorPage />
                   </Suspense>
                 </ErrorBoundary>

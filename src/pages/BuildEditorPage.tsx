@@ -1,73 +1,75 @@
 /**
  * Build Editor Page
- * Simplified wrapper — delegates to BuildEditorShell which provides
- * class theming, scoped background, and the bento grid layout.
- * AppLayout provides the xl Container and reduced padding for this route.
- *
- * Supports loading a shared build via `?b=<encoded>` URL parameter.
+ * Full-page wrapper for the ESO build editor with hero banner and layout.
  */
 
-import { useSnackbar } from 'notistack';
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom';
+import { Box, Container, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import React from 'react';
 
-import type { RootState } from '@/store/storeWithHistory';
-import { decodeBuildFromURL } from '@/utils/buildEncoding';
-import { BuildEditorShell } from '@features/build-editor/components/BuildEditorShell';
-import { loadBuild } from '@features/build-editor/store/buildEditorSlice';
-
-const BuildEditorPageInner: React.FC = () => {
-  const dispatch = useDispatch();
-  const { enqueueSnackbar } = useSnackbar();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const isDirty = useSelector((s: RootState) => s.buildEditor.isDirty);
-  const loadedRef = React.useRef(false);
-
-  // Load build from ?b= URL param on mount
-  useEffect(() => {
-    if (loadedRef.current) return;
-    const encoded = searchParams.get('b');
-    if (!encoded) return;
-    loadedRef.current = true;
-
-    void decodeBuildFromURL(encoded)
-      .then((decoded) => {
-        if (decoded) {
-          dispatch(loadBuild(decoded));
-          // Remove the ?b= param from URL to avoid re-loading on refresh
-          // Keep other params like ?id= for saved build editing
-          const newParams = new URLSearchParams(searchParams);
-          newParams.delete('b');
-          setSearchParams(newParams, { replace: true });
-        } else {
-          enqueueSnackbar('Could not load shared build — the link may be invalid.', {
-            variant: 'warning',
-          });
-        }
-      })
-      .catch(() => {
-        enqueueSnackbar('Could not load shared build — the link may be corrupted.', {
-          variant: 'error',
-        });
-      });
-  }, [searchParams, setSearchParams, dispatch, enqueueSnackbar]);
-
-  // Warn before unloading if there are unsaved changes
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent): void => {
-      if (isDirty) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isDirty]);
-
-  return <BuildEditorShell />;
-};
+import { BuildEditorLayout } from '@features/build-editor/components/BuildEditorLayout';
 
 export const BuildEditorPage: React.FC = () => {
-  return <BuildEditorPageInner />;
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  return (
+    <Box sx={{ minHeight: '100vh', pb: 8 }}>
+      {/* Hero Banner */}
+      <Box
+        sx={{
+          position: 'relative',
+          height: 160,
+          overflow: 'hidden',
+          background: isDark
+            ? 'linear-gradient(135deg, #0b1220 0%, #0f172a 40%, #1a0a2e 100%)'
+            : 'linear-gradient(135deg, #e8f4fd 0%, #f0f7ff 40%, #e8eaf6 100%)',
+          display: 'flex',
+          alignItems: 'flex-end',
+          pb: 2.5,
+          mb: 0,
+        }}
+      >
+        {/* Decorative glow */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: -40,
+            right: '10%',
+            width: 320,
+            height: 200,
+            borderRadius: '50%',
+            background: isDark
+              ? 'radial-gradient(ellipse, rgba(56,189,248,0.12) 0%, transparent 70%)'
+              : 'radial-gradient(ellipse, rgba(99,102,241,0.08) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
+        <Container maxWidth="xl">
+          <Box sx={{ px: { xs: 0, sm: 1 } }}>
+            <Typography
+              component="h1"
+              variant="h4"
+              sx={{
+                fontFamily: 'Space Grotesk, sans-serif',
+                fontWeight: 700,
+                color: isDark ? '#e5e7eb' : '#1e293b',
+                mb: 0.5,
+              }}
+            >
+              ESO Build Editor
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Create, configure, and share your Elder Scrolls Online build.
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Editor container */}
+      <Container maxWidth="xl" sx={{ pt: 3 }}>
+        <BuildEditorLayout />
+      </Container>
+    </Box>
+  );
 };
