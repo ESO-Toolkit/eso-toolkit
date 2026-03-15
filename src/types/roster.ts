@@ -123,7 +123,8 @@ export type JailDDType = 'banner' | 'zenkosh' | 'wm' | 'wm-mk' | 'mk' | 'custom'
 export interface DPSSlot {
   slotNumber: number; // 1-8
   playerName?: string;
-  playerNumber?: number;
+  positionTag?: string; // Assignment tag — e.g. "portal", "slayer", "banner"
+  playerNumber?: string; // Position within that tag — e.g. "left", "right", "1"
   roleLabel?: string; // e.g., "DD1", "Portal DD"
   roleNotes?: string; // e.g., "Portal L - Ele sus", "Z'en", etc.
   labels?: string[]; // Multiple labels/tags for the player
@@ -136,6 +137,7 @@ export interface DPSSlot {
   gearSets?: KnownSetIDs[]; // Legacy flat gear set tracking
   skillLines?: SkillLineConfig;
   championPoint?: string | null; // Champion point selection (free text or preset)
+  specificSkills?: string[]; // Specific skills required for this slot
   ultimate?: string | null; // Ultimate ability
   group?: PlayerGroup;
   notes?: string;
@@ -148,7 +150,8 @@ export interface DPSSlot {
  */
 export interface HealerSetup {
   playerName?: string;
-  playerNumber?: number; // Optional player identifier (1, 2, etc.)
+  positionTag?: string; // Assignment tag — e.g. "portal", "tomb" (shown before position)
+  playerNumber?: string; // Position within that tag — e.g. "left", "right", "1"
   roleLabel?: string; // e.g., "H1", "H2"
   roleNotes?: string; // e.g., "TOMB HEALER", "TOMB 1B"
   labels?: string[]; // Multiple labels/tags for the player
@@ -159,6 +162,7 @@ export interface HealerSetup {
   skillLines: SkillLineConfig;
   healerBuff: HealerBuff | null;
   championPoint?: HealerChampionPoint | null; // Champion point slotted
+  specificSkills: string[];
   ultimate: string | null; // Allows preset ultimates or custom text
   group?: PlayerGroup;
   notes?: string;
@@ -169,7 +173,8 @@ export interface HealerSetup {
  */
 export interface TankSetup {
   playerName?: string;
-  playerNumber?: number; // Optional player identifier (1, 2, etc.)
+  positionTag?: string; // Assignment tag — e.g. "portal", "bridge" (shown before position)
+  playerNumber?: string; // Position within that tag — e.g. "left", "right", "1"
   roleLabel?: string; // e.g., "MT", "OT"
   roleNotes?: string; // e.g., "TOMB 1A", "TOMB 1B"
   labels?: string[]; // Multiple labels/tags for the player
@@ -241,6 +246,7 @@ export const defaultHealerSetup = (): HealerSetup => ({
   set2: undefined,
   skillLines: defaultSkillLineConfig(),
   healerBuff: null,
+  specificSkills: [],
   ultimate: null,
 });
 
@@ -681,6 +687,22 @@ export const ALL_5PIECE_SETS: readonly KnownSetIDs[] = [
   ...TANK_5PIECE_SETS,
   ...HEALER_5PIECE_SETS,
   ...FLEXIBLE_5PIECE_SETS,
+] as const;
+
+/**
+ * DPS mythic items selectable in the Monster/Mythic slot
+ * Alphabetically sorted by display name
+ */
+export const DPS_MYTHIC_SETS: readonly KnownSetIDs[] = [
+  KnownSetIDs.DEATH_DEALERS_FETE, // Death Dealer's Fete — stat stacks in combat
+  KnownSetIDs.HARPOONERS_KILT, // Harpooner's Wading Kilt — stam DPS crit stacks
+  KnownSetIDs.HUNTSMANS_WARMASK, // Huntsman's Warmask — mark for burst damage
+  KnownSetIDs.MARKYN_RING, // Markyn Ring of Majesty — WD+SD per 3-piece set
+  KnownSetIDs.OAKENSOUL, // Oakensoul Ring — one-bar builds
+  KnownSetIDs.PALE_ORDER, // Ring of the Pale Order — solo/self-sustain
+  KnownSetIDs.RAKKHAT_VOIDMANTLE, // Rakkhat's Voidmantle — heavy attack DPS
+  KnownSetIDs.SEA_SERPENTS_COIL, // Sea-Serpent's Coil — melee DPS full-HP bonus
+  KnownSetIDs.VELOTHI_UR_MAGE, // Velothi Ur-Mage's Amulet — magicka DPS pen
 ] as const;
 
 /**

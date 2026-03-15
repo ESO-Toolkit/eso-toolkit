@@ -55,7 +55,8 @@ export interface CompactGroup {
 
 export interface CompactTank {
   pn?: string; // playerName
-  pi?: number; // playerNumber
+  pt?: string; // positionTag (e.g. "portal", "bridge")
+  pi?: string; // playerNumber / position (e.g. "left", "right")
   rl?: string; // roleLabel
   rn?: string; // roleNotes
   lb?: string[]; // labels
@@ -69,7 +70,8 @@ export interface CompactTank {
 
 export interface CompactHealer {
   pn?: string; // playerName
-  pi?: number; // playerNumber
+  pt?: string; // positionTag (e.g. "portal", "tomb")
+  pi?: string; // playerNumber / position (e.g. "left", "right")
   rl?: string; // roleLabel
   rn?: string; // roleNotes
   lb?: string[]; // labels
@@ -80,6 +82,7 @@ export interface CompactHealer {
   sl?: CompactSkills; // skillLines
   hb?: number; // healerBuff: HealerBuff index
   cp?: number; // championPoint: HealerChampionPoint index
+  ss?: string[]; // specificSkills
   ul?: number | string; // ultimate: SupportUltimate index or custom string
   gr?: CompactGroup; // group
   no?: string; // notes
@@ -88,7 +91,8 @@ export interface CompactHealer {
 export interface CompactDPS {
   sn: number; // slotNumber (required)
   pn?: string; // playerName
-  pi?: number; // playerNumber
+  pt?: string; // positionTag (e.g. "portal", "slayer", "banner")
+  pi?: string; // playerNumber / position (e.g. "left", "right", "1")
   rl?: string; // roleLabel
   rn?: string; // roleNotes
   lb?: string[]; // labels
@@ -99,6 +103,7 @@ export interface CompactDPS {
   gs?: number[]; // legacy gearSets (backward compat decode only)
   sl?: CompactSkills; // skillLines
   cp?: string; // championPoint
+  ss?: string[]; // specificSkills
   ul?: number | string; // ultimate: SupportUltimate index or custom string
   gr?: CompactGroup; // group
   no?: string; // notes
@@ -218,7 +223,8 @@ function expandGroup(c?: CompactGroup): PlayerGroup | undefined {
 function compactTank(t: TankSetup): CompactTank {
   const c: CompactTank = {};
   if (t.playerName) c.pn = t.playerName;
-  if (t.playerNumber != null) c.pi = t.playerNumber;
+  if (t.positionTag) c.pt = t.positionTag;
+  if (t.playerNumber) c.pi = t.playerNumber;
   if (t.roleLabel) c.rl = t.roleLabel;
   if (t.roleNotes) c.rn = t.roleNotes;
   if (t.labels?.length) c.lb = t.labels;
@@ -239,7 +245,8 @@ function expandTank(c?: CompactTank): TankSetup {
   return {
     ...defaultTankSetup(),
     playerName: c?.pn,
-    playerNumber: c?.pi,
+    positionTag: c?.pt,
+    playerNumber: c?.pi != null ? String(c.pi) : undefined,
     roleLabel: c?.rl,
     roleNotes: c?.rn,
     labels: c?.lb,
@@ -255,7 +262,8 @@ function expandTank(c?: CompactTank): TankSetup {
 function compactHealer(h: HealerSetup): CompactHealer {
   const c: CompactHealer = {};
   if (h.playerName) c.pn = h.playerName;
-  if (h.playerNumber != null) c.pi = h.playerNumber;
+  if (h.positionTag) c.pt = h.positionTag;
+  if (h.playerNumber) c.pi = h.playerNumber;
   if (h.roleLabel) c.rl = h.roleLabel;
   if (h.roleNotes) c.rn = h.roleNotes;
   if (h.labels?.length) c.lb = h.labels;
@@ -273,6 +281,7 @@ function compactHealer(h: HealerSetup): CompactHealer {
     const idx = CHAMPION_POINT_TO_IDX.get(h.championPoint);
     if (idx !== undefined) c.cp = idx;
   }
+  if (h.specificSkills?.length) c.ss = h.specificSkills;
   const ul = encodeUltimate(h.ultimate);
   if (ul != null) c.ul = ul;
   const gr = compactGroup(h.group);
@@ -285,7 +294,8 @@ function expandHealer(c?: CompactHealer): HealerSetup {
   return {
     ...defaultHealerSetup(),
     playerName: c?.pn,
-    playerNumber: c?.pi,
+    positionTag: c?.pt,
+    playerNumber: c?.pi != null ? String(c.pi) : undefined,
     roleLabel: c?.rl,
     roleNotes: c?.rn,
     labels: c?.lb,
@@ -297,6 +307,7 @@ function expandHealer(c?: CompactHealer): HealerSetup {
     healerBuff: c?.hb != null ? ((HEALER_BUFF_LIST[c.hb] as HealerBuff) ?? null) : null,
     championPoint:
       c?.cp != null ? ((CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint) ?? null) : null,
+    specificSkills: c?.ss ?? [],
     ultimate: decodeUltimate(c?.ul),
     group: expandGroup(c?.gr),
     notes: c?.no,
@@ -306,7 +317,8 @@ function expandHealer(c?: CompactHealer): HealerSetup {
 function compactDPS(d: DPSSlot): CompactDPS {
   const c: CompactDPS = { sn: d.slotNumber };
   if (d.playerName) c.pn = d.playerName;
-  if (d.playerNumber != null) c.pi = d.playerNumber;
+  if (d.positionTag) c.pt = d.positionTag;
+  if (d.playerNumber) c.pi = d.playerNumber;
   if (d.roleLabel) c.rl = d.roleLabel;
   if (d.roleNotes) c.rn = d.roleNotes;
   if (d.labels?.length) c.lb = d.labels;
@@ -317,6 +329,7 @@ function compactDPS(d: DPSSlot): CompactDPS {
   const sl = d.skillLines ? compactSkills(d.skillLines) : undefined;
   if (sl) c.sl = sl;
   if (d.championPoint) c.cp = d.championPoint;
+  if (d.specificSkills?.length) c.ss = d.specificSkills;
   const ul = encodeUltimate(d.ultimate);
   if (ul != null) c.ul = ul;
   const gr = compactGroup(d.group);
@@ -343,7 +356,9 @@ function expandDPS(c: CompactDPS): DPSSlot {
   return {
     slotNumber: c.sn,
     playerName: c.pn,
-    playerNumber: c.pi,
+    positionTag: c.pt,
+    // c.pi was stored as number in old encoded rosters — coerce to string for compat
+    playerNumber: c.pi != null ? String(c.pi) : undefined,
     roleLabel: c.rl,
     roleNotes: c.rn,
     labels: c.lb,
@@ -354,6 +369,7 @@ function expandDPS(c: CompactDPS): DPSSlot {
     ...legacyGear,
     skillLines: c.sl ? expandSkills(c.sl) : undefined,
     championPoint: c.cp || undefined,
+    specificSkills: c.ss ?? [],
     ultimate: c.ul != null ? decodeUltimate(c.ul) : null,
     group: expandGroup(c.gr),
     notes: c.no,
@@ -376,6 +392,7 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
   const filledSlots = roster.dpsSlots.filter(
     (slot) =>
       slot.playerName ||
+      slot.positionTag ||
       slot.playerNumber != null ||
       slot.roleLabel ||
       slot.roleNotes ||
@@ -391,6 +408,7 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
       slot.notes ||
       slot.group ||
       slot.skillLines ||
+      slot.specificSkills?.length ||
       slot.championPoint,
   );
   if (filledSlots.length) c.dp = filledSlots.map(compactDPS);
