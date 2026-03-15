@@ -1,5 +1,6 @@
 /**
  * Guide Section — rich text guide, YouTube link, banner image URL.
+ * Enhanced with GlassPanel wrapper and improved empty state.
  */
 
 import { Box, Stack, TextField, Typography } from '@mui/material';
@@ -29,18 +30,26 @@ export const GuideSection: React.FC = () => {
   const { guide } = build;
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={2}>
       <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}
+        >
           Build Guide
         </Typography>
-        <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mb: 1 }}>
-          Explain your gear choices, rotation, tips, alternatives, etc. Players appreciate detailed guides.
+        <Typography
+          variant="caption"
+          color="text.disabled"
+          sx={{ display: 'block', mb: 1, fontSize: 10 }}
+        >
+          Gear choices, rotation, tips, alternatives.
         </Typography>
         <TextField
           fullWidth
           multiline
-          minRows={10}
+          minRows={8}
           size="small"
           placeholder="Write your guide here…"
           value={guide.content}
@@ -49,7 +58,11 @@ export const GuideSection: React.FC = () => {
       </Box>
 
       <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}
+        >
           YouTube Video URL
         </Typography>
         <TextField
@@ -62,13 +75,17 @@ export const GuideSection: React.FC = () => {
       </Box>
 
       <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}
+        >
           Banner Image URL
         </Typography>
         <TextField
           fullWidth
           size="small"
-          placeholder="https://… (banner image for your build)"
+          placeholder="https://… (banner image)"
           value={guide.bannerImageUrl}
           onChange={(e) => dispatch(setGuideBannerUrl(e.target.value))}
         />
@@ -77,9 +94,9 @@ export const GuideSection: React.FC = () => {
             src={guide.bannerImageUrl}
             alt="Banner preview"
             style={{
-              marginTop: 12,
+              marginTop: 8,
               width: '100%',
-              maxHeight: 160,
+              maxHeight: 140,
               objectFit: 'cover',
               borderRadius: 8,
               display: 'block',
@@ -87,11 +104,9 @@ export const GuideSection: React.FC = () => {
           />
         )}
         {guide.bannerImageUrl && !isValidHttpUrl(guide.bannerImageUrl) && (
-          <Box sx={{ mt: 1 }}>
-            <Typography variant="caption" color="error.main">
-              Invalid URL — must start with http:// or https://
-            </Typography>
-          </Box>
+          <Typography variant="caption" color="error.main" sx={{ mt: 0.5, display: 'block' }}>
+            Invalid URL — must start with http:// or https://
+          </Typography>
         )}
       </Box>
     </Stack>

@@ -1,17 +1,10 @@
 /**
- * Character Section — attributes (Magicka/Health/Stamina), curse, mundus stone.
+ * Character Section — attributes (Magicka/Health/Stamina), mundus stone, curse.
+ * Uses AttributeBar for animated horizontal bars.
+ * Uses IconPickerGrid for mundus and curse selection.
  */
 
-import {
-  Box,
-  ButtonBase,
-  MenuItem,
-  Select,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
+import { Box, Stack, Typography } from '@mui/material';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -19,253 +12,120 @@ import type { RootState } from '@/store/storeWithHistory';
 
 import { ESO_CURSES, ESO_MUNDUS_STONES } from '../../data/esoStaticData';
 import { setAttributes, setCurse, setMundusStone } from '../../store/buildEditorSlice';
+import { BE_TOKENS } from '../../theme/buildEditorTokens';
 import type { BuildAttributes } from '../../types/build.types';
-
-// ─── Attribute Counter ────────────────────────────────────────────────────────
-
-interface AttributeCounterProps {
-  label: string;
-  color: string;
-  value: number;
-  total: number;
-  onChange: (next: number) => void;
-}
+import { AnimatedCounter } from '../primitives/AnimatedCounter';
+import { AttributeBar } from '../primitives/AttributeBar';
+import { IconPickerGrid } from '../primitives/IconPickerGrid';
 
 const ATTR_MAX = 64;
-
-const AttributeCounter: React.FC<AttributeCounterProps> = ({ label, color, value, total, onChange }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-
-  const adjust = (delta: number, e: React.MouseEvent): void => {
-    const step = e.shiftKey ? 10 : 1;
-    // Enforce both per-attribute max and the 64-point total pool
-    const maxIncrease = ATTR_MAX - total;
-    if (delta > 0) {
-      onChange(Math.min(ATTR_MAX, value + Math.min(step, maxIncrease)));
-    } else {
-      onChange(Math.max(0, value + delta * step));
-    }
-  };
-
-  const btnBase = {
-    width: 28,
-    height: 28,
-    borderRadius: '6px',
-    fontWeight: 700,
-    fontSize: 16,
-    lineHeight: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'background 0.12s',
-  } as const;
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1.5,
-        py: 1.5,
-        px: 2,
-        borderRadius: 2,
-        background: isDark ? alpha(color, 0.06) : alpha(color, 0.04),
-        border: `1px solid ${alpha(color, isDark ? 0.25 : 0.18)}`,
-        transition: 'background 0.15s',
-        '&:hover': {
-          background: isDark ? alpha(color, 0.1) : alpha(color, 0.07),
-        },
-      }}
-    >
-      {/* Color dot */}
-      <Box sx={{ width: 12, height: 12, borderRadius: '50%', background: color, flexShrink: 0 }} />
-
-      <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 64, color: 'text.primary' }}>
-        {label}
-      </Typography>
-
-      {/* Minus */}
-      <Tooltip title={`Decrease ${label} (Shift for ×10)`}>
-        <span>
-          <ButtonBase
-            onClick={(e: React.MouseEvent) => adjust(-1, e)}
-            disabled={value === 0}
-            aria-label={`Decrease ${label}`}
-            sx={{
-              ...btnBase,
-              ml: 'auto',
-              background: isDark ? alpha('#fff', 0.07) : alpha('#000', 0.07),
-              color: 'text.primary',
-              '&:hover:not(:disabled)': {
-                background: isDark ? alpha('#fff', 0.15) : alpha('#000', 0.14),
-              },
-              '&:disabled': { opacity: 0.35 },
-            }}
-          >
-            −
-          </ButtonBase>
-        </span>
-      </Tooltip>
-
-      {/* Count */}
-      <Typography
-        component="span"
-        aria-live="polite"
-        aria-label={`${label}: ${value}`}
-        variant="body2"
-        sx={{
-          minWidth: 28,
-          textAlign: 'center',
-          fontWeight: 700,
-          fontVariantNumeric: 'tabular-nums',
-          color: value > 0 ? color : 'text.disabled',
-        }}
-      >
-        {value}
-      </Typography>
-
-      {/* Plus */}
-      <Tooltip title={`Increase ${label} (Shift for ×10)`}>
-        <span>
-          <ButtonBase
-            onClick={(e: React.MouseEvent) => adjust(1, e)}
-            disabled={value === ATTR_MAX || total >= ATTR_MAX}
-            aria-label={`Increase ${label}`}
-            sx={{
-              ...btnBase,
-              background: isDark ? alpha(color, 0.25) : alpha(color, 0.2),
-              color,
-              '&:hover:not(:disabled)': {
-                background: isDark ? alpha(color, 0.4) : alpha(color, 0.35),
-              },
-              '&:disabled': { opacity: 0.35 },
-            }}
-          >
-            +
-          </ButtonBase>
-        </span>
-      </Tooltip>
-    </Box>
-  );
-};
-
-// ─── Main Component ───────────────────────────────────────────────────────────
 
 export const CharacterSection: React.FC = () => {
   const dispatch = useDispatch();
   const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
   const setup = build.setups[activeSetupIndex];
 
-  const handleAttr = (key: keyof BuildAttributes) => (val: number): void => {
-    dispatch(setAttributes({ ...setup.attributes, [key]: val }));
-  };
+  const handleAttr =
+    (key: keyof BuildAttributes) =>
+    (val: number): void => {
+      dispatch(setAttributes({ ...setup.attributes, [key]: val }));
+    };
 
   const total = setup.attributes.magicka + setup.attributes.health + setup.attributes.stamina;
 
   return (
-    <Stack spacing={3}>
-      {/* Tip */}
-      <Box
-        sx={{
-          borderRadius: 1.5,
-          border: '1px solid',
-          borderColor: 'primary.main',
-          p: 1.25,
-          background: (t: import('@mui/material').Theme) =>
-            t.palette.mode === 'dark' ? alpha('#38bdf8', 0.08) : alpha('#0f172a', 0.04),
-        }}
-      >
-        <Typography variant="caption" color="primary.main" sx={{ fontWeight: 600 }}>
-          Hold Shift + click to increase/decrease in steps of 10
-        </Typography>
-      </Box>
-
+    <Stack spacing={2.5}>
       {/* Attributes */}
       <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 1, display: 'block' }}>
-          Attributes{' '}
-          <Box component="span" color="text.disabled">
-            ({total} / {ATTR_MAX} total)
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+            Attributes
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+            <AnimatedCounter
+              value={total}
+              variant="caption"
+              sx={{ fontWeight: 700, color: total >= ATTR_MAX ? 'success.main' : 'text.disabled' }}
+            />
+            <Typography variant="caption" color="text.disabled">
+              / {ATTR_MAX}
+            </Typography>
           </Box>
+        </Box>
+
+        <Typography
+          variant="caption"
+          color="text.disabled"
+          sx={{ display: 'block', mb: 1, fontSize: 10 }}
+        >
+          Shift + click for ×10 steps
         </Typography>
-        <Stack spacing={1}>
-          <AttributeCounter
+
+        <Stack spacing={0.75}>
+          <AttributeBar
             label="Magicka"
-            color="#6c8fff"
+            color={BE_TOKENS.attributes.magicka}
             value={setup.attributes.magicka}
+            max={ATTR_MAX}
             total={total}
+            totalMax={ATTR_MAX}
             onChange={handleAttr('magicka')}
           />
-          <AttributeCounter
+          <AttributeBar
             label="Health"
-            color="#e05c5c"
+            color={BE_TOKENS.attributes.health}
             value={setup.attributes.health}
+            max={ATTR_MAX}
             total={total}
+            totalMax={ATTR_MAX}
             onChange={handleAttr('health')}
           />
-          <AttributeCounter
+          <AttributeBar
             label="Stamina"
-            color="#4caf82"
+            color={BE_TOKENS.attributes.stamina}
             value={setup.attributes.stamina}
+            max={ATTR_MAX}
             total={total}
+            totalMax={ATTR_MAX}
             onChange={handleAttr('stamina')}
           />
         </Stack>
       </Box>
 
-      {/* Curse */}
-      <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}>
-          Curse
-        </Typography>
-        <Select
-          fullWidth
-          size="small"
-          displayEmpty
-          value={setup.curse}
-          onChange={(e) => dispatch(setCurse(e.target.value))}
-        >
-          {ESO_CURSES.map((c) => (
-            <MenuItem key={c.id} value={c.id}>{c.label}</MenuItem>
-          ))}
-        </Select>
-      </Box>
+      {/* Mundus Stone — IconPickerGrid */}
+      <IconPickerGrid
+        label="Mundus Stone"
+        options={[
+          { id: '', label: 'None' },
+          ...ESO_MUNDUS_STONES.map((m) => ({
+            id: m.id,
+            label: m.label.replace('The ', ''),
+            description: m.description,
+          })),
+        ]}
+        value={setup.mundusStone}
+        onChange={(id) => dispatch(setMundusStone(id))}
+        columns={4}
+      />
 
-      {/* Mundus Stone */}
-      <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}>
-          Mundus Stone
+      {/* Mundus description */}
+      {setup.mundusStone && (
+        <Typography variant="caption" color="text.secondary" sx={{ mt: -1.5, px: 0.5 }}>
+          {ESO_MUNDUS_STONES.find((m) => m.id === setup.mundusStone)?.description}
         </Typography>
-        <Select
-          fullWidth
-          size="small"
-          displayEmpty
-          value={setup.mundusStone}
-          onChange={(e) => dispatch(setMundusStone(e.target.value))}
-          renderValue={(val: string) => {
-            if (!val) return <Box component="span" sx={{ color: 'text.disabled' }}>Select Mundus Stone</Box>;
-            return ESO_MUNDUS_STONES.find((m) => m.id === val)?.label ?? val;
-          }}
-        >
-          <MenuItem value="">
-            <em>None</em>
-          </MenuItem>
-          {ESO_MUNDUS_STONES.map((m) => (
-            <MenuItem key={m.id} value={m.id}>
-              <Box>
-                <Typography variant="body2" fontWeight={600}>{m.label}</Typography>
-                <Typography variant="caption" color="text.disabled">{m.description}</Typography>
-              </Box>
-            </MenuItem>
-          ))}
-        </Select>
-        {setup.mundusStone && (
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-            {ESO_MUNDUS_STONES.find((m) => m.id === setup.mundusStone)?.description}
-          </Typography>
-        )}
-      </Box>
+      )}
+
+      {/* Curse — IconPickerGrid */}
+      <IconPickerGrid
+        label="Curse"
+        options={ESO_CURSES.map((c) => ({
+          id: c.id,
+          label: c.label,
+        }))}
+        value={setup.curse}
+        onChange={(id) => dispatch(setCurse(id))}
+        columns={3}
+      />
     </Stack>
   );
 };
