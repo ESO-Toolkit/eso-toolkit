@@ -27,18 +27,25 @@ interface AttributeCounterProps {
   label: string;
   color: string;
   value: number;
+  total: number;
   onChange: (next: number) => void;
 }
 
 const ATTR_MAX = 64;
 
-const AttributeCounter: React.FC<AttributeCounterProps> = ({ label, color, value, onChange }) => {
+const AttributeCounter: React.FC<AttributeCounterProps> = ({ label, color, value, total, onChange }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
   const adjust = (delta: number, e: React.MouseEvent): void => {
     const step = e.shiftKey ? 10 : 1;
-    onChange(Math.max(0, Math.min(ATTR_MAX, value + delta * step)));
+    // Enforce both per-attribute max and the 64-point total pool
+    const maxIncrease = ATTR_MAX - total;
+    if (delta > 0) {
+      onChange(Math.min(ATTR_MAX, value + Math.min(step, maxIncrease)));
+    } else {
+      onChange(Math.max(0, value + delta * step));
+    }
   };
 
   const btnBase = {
@@ -79,11 +86,12 @@ const AttributeCounter: React.FC<AttributeCounterProps> = ({ label, color, value
       </Typography>
 
       {/* Minus */}
-      <Tooltip title="Hold Shift to step by 10">
+      <Tooltip title={`Decrease ${label} (Shift for ×10)`}>
         <span>
           <ButtonBase
             onClick={(e: React.MouseEvent) => adjust(-1, e)}
             disabled={value === 0}
+            aria-label={`Decrease ${label}`}
             sx={{
               ...btnBase,
               ml: 'auto',
@@ -102,6 +110,9 @@ const AttributeCounter: React.FC<AttributeCounterProps> = ({ label, color, value
 
       {/* Count */}
       <Typography
+        component="span"
+        aria-live="polite"
+        aria-label={`${label}: ${value}`}
         variant="body2"
         sx={{
           minWidth: 28,
@@ -115,11 +126,12 @@ const AttributeCounter: React.FC<AttributeCounterProps> = ({ label, color, value
       </Typography>
 
       {/* Plus */}
-      <Tooltip title="Hold Shift to step by 10">
+      <Tooltip title={`Increase ${label} (Shift for ×10)`}>
         <span>
           <ButtonBase
             onClick={(e: React.MouseEvent) => adjust(1, e)}
-            disabled={value === ATTR_MAX}
+            disabled={value === ATTR_MAX || total >= ATTR_MAX}
+            aria-label={`Increase ${label}`}
             sx={{
               ...btnBase,
               background: isDark ? alpha(color, 0.25) : alpha(color, 0.2),
@@ -182,18 +194,21 @@ export const CharacterSection: React.FC = () => {
             label="Magicka"
             color="#6c8fff"
             value={setup.attributes.magicka}
+            total={total}
             onChange={handleAttr('magicka')}
           />
           <AttributeCounter
             label="Health"
             color="#e05c5c"
             value={setup.attributes.health}
+            total={total}
             onChange={handleAttr('health')}
           />
           <AttributeCounter
             label="Stamina"
             color="#4caf82"
             value={setup.attributes.stamina}
+            total={total}
             onChange={handleAttr('stamina')}
           />
         </Stack>

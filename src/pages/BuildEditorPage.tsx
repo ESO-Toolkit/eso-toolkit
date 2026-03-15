@@ -5,13 +5,28 @@
 
 import { Box, Container, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 
+import type { RootState } from '@/store/storeWithHistory';
 import { BuildEditorLayout } from '@features/build-editor/components/BuildEditorLayout';
 
 export const BuildEditorPage: React.FC = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const isDirty = useSelector((s: RootState) => s.buildEditor.isDirty);
+
+  // Warn before unloading if there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent): void => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
 
   return (
     <Box sx={{ minHeight: '100vh', pb: 8 }}>

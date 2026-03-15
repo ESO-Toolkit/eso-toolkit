@@ -65,7 +65,7 @@ const initialState: BuildEditorState = {
   build: makeBuild(),
   activeSetupIndex: 0,
   activeSidebarTab: 'general',
-  activeSetupTab: 'character',
+  activeSetupTab: 'info',
   isDirty: false,
 };
 
@@ -307,7 +307,7 @@ export const buildEditorSlice = createSlice({
       state.build = makeBuild();
       state.activeSetupIndex = 0;
       state.activeSidebarTab = 'general';
-      state.activeSetupTab = 'character';
+      state.activeSetupTab = 'info';
       state.isDirty = false;
     },
     markSaved(state) {

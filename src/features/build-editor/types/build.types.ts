@@ -27,6 +27,7 @@ export type BuildVisibility = 'public' | 'private' | 'link-only';
 export type SidebarTopTab = 'general' | 'guide' | 'settings';
 
 export type SetupTab =
+  | 'info'
   | 'character'
   | 'equipment'
   | 'skills'

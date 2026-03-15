@@ -2,12 +2,7 @@
  * Guide Section — rich text guide, YouTube link, banner image URL.
  */
 
-import {
-  Box,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, Stack, TextField, Typography } from '@mui/material';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -18,6 +13,15 @@ import {
   setGuideContent,
   setGuideYoutubeUrl,
 } from '../../store/buildEditorSlice';
+
+const isValidHttpUrl = (url: string): boolean => {
+  try {
+    const { protocol } = new URL(url);
+    return protocol === 'https:' || protocol === 'http:';
+  } catch {
+    return false;
+  }
+};
 
 export const GuideSection: React.FC = () => {
   const dispatch = useDispatch();
@@ -68,7 +72,7 @@ export const GuideSection: React.FC = () => {
           value={guide.bannerImageUrl}
           onChange={(e) => dispatch(setGuideBannerUrl(e.target.value))}
         />
-        {guide.bannerImageUrl && (
+        {guide.bannerImageUrl && isValidHttpUrl(guide.bannerImageUrl) && (
           <img
             src={guide.bannerImageUrl}
             alt="Banner preview"
@@ -81,6 +85,13 @@ export const GuideSection: React.FC = () => {
               display: 'block',
             }}
           />
+        )}
+        {guide.bannerImageUrl && !isValidHttpUrl(guide.bannerImageUrl) && (
+          <Box sx={{ mt: 1 }}>
+            <Typography variant="caption" color="error.main">
+              Invalid URL — must start with http:// or https://
+            </Typography>
+          </Box>
         )}
       </Box>
     </Stack>

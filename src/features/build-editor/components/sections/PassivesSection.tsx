@@ -15,7 +15,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
 
-import { searchSkills } from '../../../loadout-manager/data/skillLineSkills';
+import { getSkillById, searchSkills } from '../../../loadout-manager/data/skillLineSkills';
 import { togglePassive } from '../../store/buildEditorSlice';
 
 export const PassivesSection: React.FC = () => {
@@ -76,17 +76,20 @@ export const PassivesSection: React.FC = () => {
             Selected Passives ({setup.passives.length})
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-            {setup.passives.map((id) => (
-              <Chip
-                key={id}
-                label={`Passive #${id}`}
-                size="small"
-                onDelete={() => dispatch(togglePassive(id))}
-                color="primary"
-                variant="filled"
-                sx={{ fontWeight: 700 }}
-              />
-            ))}
+            {setup.passives.map((id) => {
+              const skill = getSkillById(id);
+              return (
+                <Chip
+                  key={id}
+                  label={skill?.name ?? `Passive #${id}`}
+                  size="small"
+                  onDelete={() => dispatch(togglePassive(id))}
+                  color="primary"
+                  variant="filled"
+                  sx={{ fontWeight: 700 }}
+                />
+              );
+            })}
           </Box>
         </Box>
       )}

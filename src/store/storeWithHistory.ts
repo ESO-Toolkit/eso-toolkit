@@ -22,7 +22,6 @@ import type { EsoLogsClient } from '@/esologsClient';
 
 import buildEditorReducer from '../features/build-editor/store/buildEditorSlice';
 import loadoutReducer from '../features/loadout-manager/store/loadoutSlice';
-import buildEditorReducer from '../features/build-editor/store/buildEditorSlice';
 
 import dashboardReducer from './dashboard/dashboardSlice';
 import { eventsReducer } from './events_data';
