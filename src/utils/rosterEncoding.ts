@@ -474,7 +474,10 @@ export async function deflateString(str: string): Promise<Uint8Array> {
   const writeAndClose = writer.write(input).then(() => writer.close());
   // Await both sides so neither rejection goes unhandled (ESO-705).
   const [, readResult] = await Promise.allSettled([writeAndClose, readAllChunks(cs.readable)]);
-  if (readResult.status === 'rejected') throw readResult.reason as Error;
+  if (readResult.status === 'rejected') {
+    const reason = readResult.reason;
+    throw reason instanceof Error ? reason : new Error(String(reason));
+  }
   return readResult.value;
 }
 
@@ -487,7 +490,10 @@ export async function inflateBytes(bytes: Uint8Array): Promise<string> {
   const writeAndClose = writer.write(bytes).then(() => writer.close());
   // Await both sides so neither rejection goes unhandled (ESO-705).
   const [, readResult] = await Promise.allSettled([writeAndClose, readAllChunks(ds.readable)]);
-  if (readResult.status === 'rejected') throw readResult.reason as Error;
+  if (readResult.status === 'rejected') {
+    const reason = readResult.reason;
+    throw reason instanceof Error ? reason : new Error(String(reason));
+  }
   return new TextDecoder().decode(readResult.value);
 }
 
@@ -529,7 +535,11 @@ export const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster |
   // Try v1: btoa(encodeURIComponent(json))
   try {
     const json = decodeURIComponent(atob(encoded));
-    return JSON.parse(json) as RaidRoster;
+    const parsed: unknown = JSON.parse(json);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as RaidRoster;
+    }
+    return null;
   } catch {
     return null;
   }
