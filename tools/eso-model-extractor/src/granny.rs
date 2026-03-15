@@ -314,6 +314,54 @@ unsafe extern "C" {
     ) -> c_int;
 }
 
+/// Granny log message types (from granny.h).
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
+pub enum GrannyLogMessageType {
+    Ignored = 0,
+    Note = 1,
+    Warning = 2,
+    Error = 3,
+    OnePastLast = 4,
+}
+
+/// Granny log message origins (from granny.h).
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
+pub enum GrannyLogMessageOrigin {
+    NotSet = 0,
+    FileReading = 1,
+    FileWriting = 2,
+    Exporter = 3,
+    CompressCurves = 4,
+    GameRuntime = 5,
+    OnePastLast = 6,
+}
+
+/// Log callback type: fn(message_type: i32, origin: i32, message: *const c_char, user_data: *mut c_void)
+type GrannyLogCallbackFn = unsafe extern "system" fn(c_int, c_int, *const c_char, *mut c_void);
+
+/// Our log callback — prints Granny SDK diagnostics to stderr.
+unsafe extern "system" fn granny_log_callback(
+    msg_type: c_int,
+    _origin: c_int,
+    message: *const c_char,
+    _user_data: *mut c_void,
+) {
+    let type_name = match msg_type {
+        1 => "NOTE",
+        2 => "WARN",
+        3 => "ERROR",
+        _ => "???",
+    };
+    if !message.is_null() {
+        let msg = CStr::from_ptr(message).to_string_lossy();
+        eprintln!("[Granny/{type_name}] {msg}");
+    }
+}
+
 pub struct Granny2Sdk {
     #[allow(dead_code)]
     lib: Library,
@@ -346,6 +394,14 @@ impl Granny2Sdk {
         };
 
         unsafe {
+            // Register log callback so we can see SDK diagnostics
+            if let Ok(set_log_cb) = lib.get::<unsafe extern "system" fn(GrannyLogCallbackFn)>(
+                b"GrannySetLogCallback\0",
+            ) {
+                set_log_cb(granny_log_callback);
+                eprintln!("[Granny] Log callback registered");
+            }
+
             let fn_read_file: Symbol<unsafe extern "system" fn(c_int, *const c_void) -> *mut GrannyFile> =
                 lib.get(b"GrannyReadEntireFileFromMemory\0")?;
             let fn_free_file: Symbol<unsafe extern "system" fn(*mut GrannyFile)> =

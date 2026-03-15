@@ -1845,14 +1845,14 @@
           "name": "Yolnahkriin",
           "model_type": "creature",
           "species": "Dragon",
-          "notes": "Fire Dragon. ESO dragons do not use 'Dragon' in their GR2 mesh names. Living dragon models are stored as unnamed multi-part files that cannot be identified by name search. BoneDragon_A_Basic (fi=1167549, 3187KB, 41991v) is the skeletal dragon reference model with the same bone structure.",
+          "notes": "Fire Dragon. BoneDragon_A_Basic is the shared dragon mesh for all dragon variants (living and skeletal). ESO uses identical geometry with different textures/materials. Exhaustive scan of all 197,602 GR2 files confirmed no separate living dragon mesh exists. The mesh's 93 bone bindings (mshBn_spineBody, mshBn_wingSpan, mshBn_spineTail) are a subset of the 133-bone dragon skeleton at fi=1167551.",
           "model": {
             "name": "BoneDragon_A_Basic",
             "file_index": 1167549,
             "size_kb": 3187,
             "verts": 41991,
             "tris": 63786,
-            "note": "reference_skeleton"
+            "note": "shared_dragon_mesh"
           },
           "textures": {
             "primary": [],
@@ -1862,22 +1862,25 @@
           },
           "related_gr2": {
             "animations": [],
-            "skeletons": [],
+            "skeletons": [
+              {
+                "file_index": 1167551,
+                "size_kb": 38,
+                "note": "Dragon skeleton (133 bones, shared by living and bone dragon variants)"
+              }
+            ],
             "other": [
               {
                 "file_index": 1167541,
                 "size_kb": 1435,
-                "type": "unknown_gr2"
+                "type": "environment_mesh",
+                "note": "SUM_WAF_ALDFortWall45001 (unrelated)"
               },
               {
                 "file_index": 1167543,
                 "size_kb": 1502,
-                "type": "unknown_gr2"
-              },
-              {
-                "file_index": 1167551,
-                "size_kb": 38,
-                "type": "unknown_gr2"
+                "type": "environment_mesh",
+                "note": "SUM_WAF_ALDFortWallStraight001 (unrelated)"
               },
               {
                 "file_index": 1167571,
@@ -1911,14 +1914,14 @@
           "name": "Lokkestiiz",
           "model_type": "creature",
           "species": "Dragon",
-          "notes": "Ice Dragon. ESO dragons do not use 'Dragon' in their GR2 mesh names. Living dragon models are stored as unnamed multi-part files that cannot be identified by name search. BoneDragon_A_Basic (fi=1167549, 3187KB, 41991v) is the skeletal dragon reference model with the same bone structure.",
+          "notes": "Ice Dragon. BoneDragon_A_Basic is the shared dragon mesh for all dragon variants (living and skeletal). ESO uses identical geometry with different textures/materials. Exhaustive scan of all 197,602 GR2 files confirmed no separate living dragon mesh exists. The mesh's 93 bone bindings (mshBn_spineBody, mshBn_wingSpan, mshBn_spineTail) are a subset of the 133-bone dragon skeleton at fi=1167551.",
           "model": {
             "name": "BoneDragon_A_Basic",
             "file_index": 1167549,
             "size_kb": 3187,
             "verts": 41991,
             "tris": 63786,
-            "note": "reference_skeleton"
+            "note": "shared_dragon_mesh"
           },
           "textures": {
             "primary": [],
@@ -1928,22 +1931,25 @@
           },
           "related_gr2": {
             "animations": [],
-            "skeletons": [],
+            "skeletons": [
+              {
+                "file_index": 1167551,
+                "size_kb": 38,
+                "note": "Dragon skeleton (133 bones, shared by living and bone dragon variants)"
+              }
+            ],
             "other": [
               {
                 "file_index": 1167541,
                 "size_kb": 1435,
-                "type": "unknown_gr2"
+                "type": "environment_mesh",
+                "note": "SUM_WAF_ALDFortWall45001 (unrelated)"
               },
               {
                 "file_index": 1167543,
                 "size_kb": 1502,
-                "type": "unknown_gr2"
-              },
-              {
-                "file_index": 1167551,
-                "size_kb": 38,
-                "type": "unknown_gr2"
+                "type": "environment_mesh",
+                "note": "SUM_WAF_ALDFortWallStraight001 (unrelated)"
               },
               {
                 "file_index": 1167571,
@@ -1977,14 +1983,14 @@
           "name": "Nahviintaas",
           "model_type": "creature",
           "species": "Dragon",
-          "notes": "Storm Dragon (final boss). ESO dragons do not use 'Dragon' in their GR2 mesh names. Living dragon models are stored as unnamed multi-part files that cannot be identified by name search. BoneDragon_A_Basic (fi=1167549, 3187KB, 41991v) is the skeletal dragon reference model with the same bone structure.",
+          "notes": "Storm Dragon (final boss). BoneDragon_A_Basic is the shared dragon mesh for all dragon variants (living and skeletal). ESO uses identical geometry with different textures/materials. Exhaustive scan of all 197,602 GR2 files confirmed no separate living dragon mesh exists. The mesh's 93 bone bindings (mshBn_spineBody, mshBn_wingSpan, mshBn_spineTail) are a subset of the 133-bone dragon skeleton at fi=1167551.",
           "model": {
             "name": "BoneDragon_A_Basic",
             "file_index": 1167549,
             "size_kb": 3187,
             "verts": 41991,
             "tris": 63786,
-            "note": "reference_skeleton"
+            "note": "shared_dragon_mesh"
           },
           "textures": {
             "primary": [],
@@ -1994,22 +2000,25 @@
           },
           "related_gr2": {
             "animations": [],
-            "skeletons": [],
+            "skeletons": [
+              {
+                "file_index": 1167551,
+                "size_kb": 38,
+                "note": "Dragon skeleton (133 bones, shared by living and bone dragon variants)"
+              }
+            ],
             "other": [
               {
                 "file_index": 1167541,
                 "size_kb": 1435,
-                "type": "unknown_gr2"
+                "type": "environment_mesh",
+                "note": "SUM_WAF_ALDFortWall45001 (unrelated)"
               },
               {
                 "file_index": 1167543,
                 "size_kb": 1502,
-                "type": "unknown_gr2"
-              },
-              {
-                "file_index": 1167551,
-                "size_kb": 38,
-                "type": "unknown_gr2"
+                "type": "environment_mesh",
+                "note": "SUM_WAF_ALDFortWallStraight001 (unrelated)"
               },
               {
                 "file_index": 1167571,
