@@ -168,4 +168,13 @@ describeWithStreams('encodeRosterToURL / decodeRosterFromURL – DPS gear round-
     const result = await decodeRosterFromURL('');
     expect(result).toBeNull();
   });
+
+  it('returns null for v1 payload that decodes to a JSON primitive — ESO-706 regression', async () => {
+    // btoa("32") = "MzI=" — JSON.parse("32") produces a number, not a roster object
+    expect(await decodeRosterFromURL(btoa('32'))).toBeNull();
+    expect(await decodeRosterFromURL(btoa('"hello"'))).toBeNull();
+    expect(await decodeRosterFromURL(btoa('true'))).toBeNull();
+    expect(await decodeRosterFromURL(btoa('null'))).toBeNull();
+    expect(await decodeRosterFromURL(btoa('[1,2,3]'))).toBeNull();
+  });
 });
