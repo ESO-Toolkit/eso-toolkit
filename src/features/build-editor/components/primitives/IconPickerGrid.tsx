@@ -1,7 +1,7 @@
 /**
  * IconPickerGrid
- * Visual grid of selectable icon cards, replacing Select dropdowns.
- * Supports single-select mode with keyboard navigation.
+ * Glass-morphism selection grid with gradient-border active state,
+ * glow halos on color dots, and glass-card hover effects.
  */
 
 import { Box, Tooltip, Typography } from '@mui/material';
@@ -72,8 +72,16 @@ export const IconPickerGrid = <T extends string = string>({
       {label && (
         <Typography
           variant="caption"
-          color="text.secondary"
-          sx={{ fontWeight: 600, mb: 0.75, display: 'block' }}
+          sx={{
+            fontWeight: 700,
+            mb: 1,
+            display: 'block',
+            fontSize: 11,
+            letterSpacing: 0.8,
+            textTransform: 'uppercase',
+            color: 'text.secondary',
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+          }}
         >
           {label}
         </Typography>
@@ -85,83 +93,119 @@ export const IconPickerGrid = <T extends string = string>({
         sx={{
           display: 'grid',
           gridTemplateColumns: `repeat(${columns}, 1fr)`,
-          gap: 0.75,
+          gap: 1,
         }}
       >
         {options.map((opt, idx) => {
           const selected = opt.id === value;
           const accentColor = opt.color ?? 'var(--be-accent, #38bdf8)';
-          // MUI's alpha() can't parse CSS vars — use raw rgba when no hex is available
           const selectedBg = opt.color
             ? isDark
-              ? alpha(opt.color, 0.15)
-              : alpha(opt.color, 0.1)
+              ? alpha(opt.color, 0.14)
+              : alpha(opt.color, 0.08)
             : isDark
-              ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)'
-              : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.1)';
+              ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.14)'
+              : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)';
+
+          const selectedBorderGrad = opt.color
+            ? `linear-gradient(135deg, ${alpha(opt.color, 0.7)} 0%, ${alpha(opt.color, 0.15)} 50%, ${alpha(opt.color, 0.4)} 100%)`
+            : 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.7) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.15) 50%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.4) 100%)';
+
+          const glowShadow = opt.color
+            ? `0 0 16px ${alpha(opt.color, 0.3)}, 0 4px 12px ${alpha(opt.color, 0.15)}`
+            : '0 0 16px rgba(var(--be-accent-rgb, 56, 189, 248), 0.3), 0 4px 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)';
 
           return (
             <Tooltip key={opt.id} title={opt.description ?? opt.label} enterDelay={400}>
-              <motion.button
-                role="radio"
-                aria-checked={selected}
-                aria-label={opt.label}
-                tabIndex={selected ? 0 : -1}
-                onClick={() => onChange(opt.id)}
-                onKeyDown={(e) => handleKeyDown(e, idx)}
-                whileHover={prefersReduced ? {} : { scale: 1.04 }}
-                whileTap={prefersReduced ? {} : { scale: 0.97 }}
-                style={{
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 4,
-                  padding: '10px 6px',
-                  borderRadius: 12,
-                  background: selected
-                    ? selectedBg
-                    : isDark
-                      ? 'rgba(255, 255, 255, 0.03)'
-                      : 'rgba(0, 0, 0, 0.02)',
-                  outline: selected
-                    ? `2px solid ${accentColor}`
-                    : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-                  outlineOffset: selected ? -2 : -1,
-                  transition: 'background 0.15s, outline 0.15s',
-                  minHeight: 56,
-                  fontFamily: 'inherit',
-                }}
-              >
-                {/* Color dot */}
-                {opt.color && (
+              <Box sx={{ position: 'relative' }}>
+                <motion.button
+                  role="radio"
+                  aria-checked={selected}
+                  aria-label={opt.label}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => onChange(opt.id)}
+                  onKeyDown={(e) => handleKeyDown(e, idx)}
+                  whileHover={prefersReduced ? {} : { scale: 1.05, y: -2 }}
+                  whileTap={prefersReduced ? {} : { scale: 0.96 }}
+                  style={{
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    padding: '12px 8px',
+                    borderRadius: 14,
+                    width: '100%',
+                    position: 'relative',
+                    background: selected
+                      ? selectedBg
+                      : isDark
+                        ? 'rgba(255, 255, 255, 0.03)'
+                        : 'rgba(0, 0, 0, 0.02)',
+                    outline: selected
+                      ? 'none'
+                      : `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
+                    outlineOffset: -1,
+                    boxShadow: selected ? glowShadow : 'none',
+                    transition: 'background 0.2s, box-shadow 0.25s, outline 0.15s',
+                    minHeight: 62,
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  {/* Color dot with glow halo */}
+                  {opt.color && (
+                    <Box
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        background: opt.color,
+                        boxShadow: selected
+                          ? `0 0 12px ${alpha(opt.color, 0.65)}, 0 0 4px ${alpha(opt.color, 0.9)}`
+                          : `0 0 6px ${alpha(opt.color, 0.25)}`,
+                        transition: 'box-shadow 0.25s',
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: selected ? 700 : 500,
+                      color: selected ? accentColor : 'text.secondary',
+                      lineHeight: 1.2,
+                      textAlign: 'center',
+                      fontSize: 11,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      transition: 'color 0.15s',
+                    }}
+                  >
+                    {opt.label}
+                  </Typography>
+                </motion.button>
+
+                {/* Gradient border mask — only on selected */}
+                {selected && (
                   <Box
                     sx={{
-                      width: 14,
-                      height: 14,
-                      borderRadius: '50%',
-                      background: opt.color,
-                      boxShadow: selected ? `0 0 8px ${alpha(opt.color, 0.5)}` : 'none',
-                      transition: 'box-shadow 0.2s',
-                      flexShrink: 0,
+                      position: 'absolute',
+                      inset: 0,
+                      borderRadius: '14px',
+                      padding: '1.5px',
+                      background: selectedBorderGrad,
+                      WebkitMask:
+                        'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                      WebkitMaskComposite: 'xor',
+                      mask:
+                        'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                      maskComposite: 'exclude',
+                      pointerEvents: 'none',
                     }}
                   />
                 )}
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: selected ? 700 : 500,
-                    color: selected ? accentColor : 'text.secondary',
-                    lineHeight: 1.2,
-                    textAlign: 'center',
-                    fontSize: 11,
-                  }}
-                >
-                  {opt.label}
-                </Typography>
-              </motion.button>
+              </Box>
             </Tooltip>
           );
         })}

@@ -7,18 +7,18 @@
 export const BE_TOKENS = {
   // Glass panel
   glass: {
-    bg: 'rgb(15, 23, 42)',
-    bgLight: 'rgba(255, 255, 255, 0.92)',
-    border: 'rgba(255, 255, 255, 0.08)',
-    borderLight: 'rgba(15, 23, 42, 0.1)',
-    blur: 4,
-    shadow: '0 8px 32px rgba(0, 0, 0, 0.18)',
-    shadowLight: '0 4px 16px rgba(15, 23, 42, 0.06)',
+    bg: 'rgba(15, 23, 42, 0.84)',
+    bgLight: 'rgba(255, 255, 255, 0.84)',
+    border: 'rgba(255, 255, 255, 0.09)',
+    borderLight: 'rgba(15, 23, 42, 0.10)',
+    blur: 16,
+    shadow: '0 8px 32px rgba(0, 0, 0, 0.32), 0 1px 0 rgba(255, 255, 255, 0.05) inset',
+    shadowLight: '0 4px 24px rgba(15, 23, 42, 0.10), 0 1px 0 rgba(255, 255, 255, 0.80) inset',
   },
 
   // Nav rail
   navRail: {
-    width: 56,
+    width: 164,
     mobileHeight: 56,
   },
 
@@ -58,17 +58,17 @@ export const BE_TOKENS = {
     slow: 0.4,
   },
 
-  // Section IDs for scroll-spy
+  // Section IDs — order matches the bento grid render order in BuildEditorLayout
   sectionIds: [
     'general',
     'character',
     'equipment',
     'skills',
-    'champion',
     'consumables',
+    'champion',
     'passives',
-    'guide',
     'screenshots',
+    'guide',
     'settings',
   ] as const,
 } as const;

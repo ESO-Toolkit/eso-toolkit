@@ -1,10 +1,10 @@
 /**
- * Settings Section — visibility, DLC, setup order.
- * Uses IconPickerGrid for visibility, styled DLC select.
+ * Settings Section — glass-style visibility picker, accent-themed DLC select,
+ * glass info panel for setup order.
  */
 
 import { Box, MenuItem, Select, Stack, Typography } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -38,12 +38,20 @@ export const SettingsSection: React.FC = () => {
         columns={3}
       />
 
-      {/* DLC — keep Select (10+ items) */}
+      {/* DLC — glass-style Select */}
       <Box>
         <Typography
           variant="caption"
           color="text.secondary"
-          sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}
+          sx={{
+            fontWeight: 700,
+            mb: 0.75,
+            display: 'block',
+            fontSize: 11,
+            letterSpacing: 0.8,
+            textTransform: 'uppercase',
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+          }}
         >
           Current DLC / Chapter
         </Typography>
@@ -52,6 +60,20 @@ export const SettingsSection: React.FC = () => {
           size="small"
           value={build.settings.dlc}
           onChange={(e) => dispatch(setDlc(e.target.value))}
+          sx={{
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontSize: 13,
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'transparent',
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)',
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'var(--be-accent, #38bdf8)',
+              borderWidth: '1px',
+            },
+          }}
         >
           {ESO_DLCS.map((dlc) => (
             <MenuItem key={dlc} value={dlc}>
@@ -61,13 +83,16 @@ export const SettingsSection: React.FC = () => {
         </Select>
       </Box>
 
-      {/* Setup order info */}
+      {/* Setup order — glass info panel */}
       <Box
         sx={{
           p: 1.5,
-          borderRadius: 2,
-          background: isDark ? alpha('#fff', 0.03) : alpha('#000', 0.02),
-          border: `1px solid ${isDark ? alpha('#fff', 0.06) : alpha('#000', 0.05)}`,
+          borderRadius: 2.5,
+          background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.015)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
+          boxShadow: isDark ? 'inset 0 1px 0 rgba(255,255,255,0.03)' : 'inset 0 1px 0 rgba(255,255,255,0.5)',
         }}
       >
         <Typography
@@ -76,11 +101,20 @@ export const SettingsSection: React.FC = () => {
           fontWeight={700}
           display="block"
           mb={0.25}
-          sx={{ fontSize: 11 }}
+          sx={{
+            fontSize: 11,
+            letterSpacing: 0.8,
+            textTransform: 'uppercase',
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+          }}
         >
           Setup Order
         </Typography>
-        <Typography variant="caption" color="text.disabled" sx={{ fontSize: 10 }}>
+        <Typography
+          variant="caption"
+          color="text.disabled"
+          sx={{ fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+        >
           {build.setups.length} setup{build.setups.length !== 1 ? 's' : ''} configured. Reorder via
           drag-and-drop in the setup bar below.
         </Typography>

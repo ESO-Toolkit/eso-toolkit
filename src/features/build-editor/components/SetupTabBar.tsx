@@ -1,12 +1,12 @@
 /**
  * SetupTabBar
- * Horizontal setup switcher at the bottom of the build editor.
- * Shows setup tabs with an animated active indicator.
+ * Glass-style setup switcher with gradient active pill,
+ * animated glow underline, and glass add button.
  */
 
 import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
 import { Box, ButtonBase, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import { motion, useReducedMotion } from 'framer-motion';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -29,17 +29,31 @@ export const SetupTabBar: React.FC = () => {
       sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: 0.75,
-        px: { xs: 1.5, md: 2 },
-        py: 1,
-        borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-        background: isDark ? 'rgba(11, 18, 32, 0.85)' : 'rgba(248, 250, 252, 0.9)',
-        backdropFilter: 'blur(12px)',
+        gap: 1,
+        px: { xs: 1.5, md: 2.5 },
+        py: 1.25,
+        borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
+        background: isDark ? 'rgba(8, 14, 26, 0.90)' : 'rgba(248, 250, 252, 0.92)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
         overflowX: 'auto',
         scrollbarWidth: 'none',
         '&::-webkit-scrollbar': { display: 'none' },
-        // Add bottom padding on mobile for nav rail
-        pb: isMobile ? 8 : 1,
+        pb: isMobile ? 8 : 1.25,
+        position: 'relative',
+        // Subtle accent gradient bleed from left
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: '30%',
+          background: isDark
+            ? 'linear-gradient(90deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.04) 0%, transparent 100%)'
+            : 'linear-gradient(90deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.03) 0%, transparent 100%)',
+          pointerEvents: 'none',
+        },
       }}
       role="tablist"
       aria-label="Build setups"
@@ -58,23 +72,40 @@ export const SetupTabBar: React.FC = () => {
                 alignItems: 'center',
                 gap: 0.75,
                 px: 2,
-                py: 1,
-                borderRadius: 2,
+                py: 0.85,
+                borderRadius: '99px',
                 background: active
                   ? isDark
-                    ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)'
-                    : 'rgba(15, 23, 42, 0.07)'
+                    ? 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.16) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.06) 100%)'
+                    : 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.10) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.04) 100%)'
                   : 'transparent',
+                border: active
+                  ? '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)'
+                  : '1px solid transparent',
+                boxShadow: active
+                  ? isDark
+                    ? '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.12), inset 0 1px 0 rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
+                    : '0 2px 8px rgba(0,0,0,0.06)'
+                  : 'none',
                 color: active ? 'var(--be-accent, #38bdf8)' : 'text.secondary',
-                transition: 'all 0.15s',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 fontWeight: active ? 700 : 500,
                 fontSize: 13,
+                backdropFilter: active ? 'blur(8px)' : 'none',
+                WebkitBackdropFilter: active ? 'blur(8px)' : 'none',
                 '&:hover': {
-                  background: isDark ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)' : 'rgba(15, 23, 42, 0.04)',
+                  background: active
+                    ? undefined
+                    : isDark
+                      ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)'
+                      : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.04)',
+                  border: active
+                    ? undefined
+                    : '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)',
                 },
               }}
             >
-              {/* Active dot */}
+              {/* Active dot with glow */}
               <Box
                 sx={{
                   width: 6,
@@ -83,9 +114,12 @@ export const SetupTabBar: React.FC = () => {
                   background: active
                     ? 'var(--be-accent, #38bdf8)'
                     : isDark
-                      ? alpha('#fff', 0.2)
-                      : alpha('#000', 0.15),
-                  transition: 'background 0.2s',
+                      ? 'rgba(255,255,255,0.18)'
+                      : 'rgba(0,0,0,0.14)',
+                  boxShadow: active
+                    ? '0 0 6px rgba(var(--be-accent-rgb, 56, 189, 248), 0.6)'
+                    : 'none',
+                  transition: 'all 0.2s',
                   flexShrink: 0,
                 }}
               />
@@ -93,30 +127,43 @@ export const SetupTabBar: React.FC = () => {
                 variant="caption"
                 fontWeight="inherit"
                 color="inherit"
-                sx={{ fontSize: 13 }}
+                sx={{
+                  fontSize: 13,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  letterSpacing: active ? 0.3 : 0,
+                }}
               >
                 {setup.name}
               </Typography>
             </ButtonBase>
 
-            {/* Delete button — outside ButtonBase to avoid nested <button> */}
+            {/* Delete button — glass circle */}
             {active && build.setups.length > 1 && (
               <IconButton
                 size="small"
                 onClick={() => dispatch(deleteSetup(i))}
                 aria-label={`Delete ${setup.name}`}
                 sx={{
-                  p: 0.25,
-                  ml: 0.25,
+                  width: 20,
+                  height: 20,
+                  ml: 0.5,
+                  background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
                   color: 'text.disabled',
-                  '&:hover': { color: 'error.main' },
+                  transition: 'all 0.15s',
+                  '&:hover': {
+                    color: 'error.main',
+                    background: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.08)',
+                    borderColor: isDark ? 'rgba(239, 68, 68, 0.4)' : 'rgba(239, 68, 68, 0.3)',
+                  },
+                  p: 0,
                 }}
               >
-                <CloseIcon sx={{ fontSize: 12 }} />
+                <CloseIcon sx={{ fontSize: 11 }} />
               </IconButton>
             )}
 
-            {/* Animated underline indicator */}
+            {/* Animated gradient glow underline */}
             {active && (
               <motion.div
                 layoutId="setup-active-indicator"
@@ -125,12 +172,13 @@ export const SetupTabBar: React.FC = () => {
                 }
                 style={{
                   position: 'absolute',
-                  bottom: -1,
-                  left: 8,
-                  right: 8,
+                  bottom: -4,
+                  left: 12,
+                  right: 12,
                   height: 2,
                   borderRadius: 1,
-                  background: 'var(--be-accent, #38bdf8)',
+                  background: 'linear-gradient(90deg, transparent, var(--be-accent, #38bdf8), transparent)',
+                  boxShadow: '0 0 8px rgba(var(--be-accent-rgb, 56, 189, 248), 0.4)',
                 }}
               />
             )}
@@ -138,7 +186,7 @@ export const SetupTabBar: React.FC = () => {
         );
       })}
 
-      {/* Add setup */}
+      {/* Add setup — glass circle with accent border */}
       <Tooltip title={build.setups.length >= 5 ? 'Max 5 setups' : 'Add setup'}>
         <Box>
           <IconButton
@@ -150,12 +198,23 @@ export const SetupTabBar: React.FC = () => {
               width: 32,
               height: 32,
               background: isDark
-                ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.1)'
-                : 'rgba(var(--be-accent-rgb, 15, 23, 42), 0.06)',
+                ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
+                : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.05)',
+              border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+              color: 'var(--be-accent, #38bdf8)',
+              transition: 'all 0.2s',
               '&:hover': {
                 background: isDark
-                  ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.2)'
-                  : 'rgba(var(--be-accent-rgb, 15, 23, 42), 0.1)',
+                  ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.18)'
+                  : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)',
+                borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.40)',
+                boxShadow: '0 0 10px rgba(var(--be-accent-rgb, 56, 189, 248), 0.18)',
+              },
+              '&.Mui-disabled': {
+                opacity: 0.3,
+                border: '1px solid transparent',
               },
             }}
           >

@@ -38,16 +38,36 @@ export const CharacterSection: React.FC = () => {
       {/* Attributes */}
       <Box>
         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              fontWeight: 700,
+              fontSize: 11,
+              letterSpacing: 0.8,
+              textTransform: 'uppercase',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+            }}
+          >
             Attributes
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
             <AnimatedCounter
               value={total}
               variant="caption"
-              sx={{ fontWeight: 700, color: total >= ATTR_MAX ? 'success.main' : 'text.disabled' }}
+              sx={{
+                fontWeight: 700,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                color: total >= ATTR_MAX ? 'var(--be-accent, #22c55e)' : 'text.disabled',
+                textShadow: total >= ATTR_MAX ? '0 0 8px rgba(var(--be-accent-rgb, 56, 189, 248), 0.5)' : 'none',
+                transition: 'color 0.3s, text-shadow 0.3s',
+              }}
             />
-            <Typography variant="caption" color="text.disabled">
+            <Typography
+              variant="caption"
+              color="text.disabled"
+              sx={{ fontFamily: 'Space Grotesk, Inter, system-ui' }}
+            >
               / {ATTR_MAX}
             </Typography>
           </Box>
@@ -56,7 +76,7 @@ export const CharacterSection: React.FC = () => {
         <Typography
           variant="caption"
           color="text.disabled"
-          sx={{ display: 'block', mb: 1, fontSize: 10 }}
+          sx={{ display: 'block', mb: 1, fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
         >
           Shift + click for ×10 steps
         </Typography>

@@ -29,6 +29,18 @@ export const BuildEditorThemeProvider: React.FC<{ children: React.ReactNode }> =
           '--be-accent-rgb': classTheme.accentRgb,
           width: '100%',
           minHeight: 0,
+          // Global focus-visible ring scoped to the build editor.
+          // MUI removes outlines by default; this restores keyboard-nav accessibility
+          // without adding rings on mouse clicks (WCAG 2.4.7 / 2.4.11).
+          '& *:focus-visible': {
+            outline: '2px solid var(--be-accent, #38bdf8)',
+            outlineOffset: '2px',
+          },
+          // MUI buttons override outline — target their inner element too
+          '& .MuiButtonBase-root:focus-visible': {
+            outline: '2px solid var(--be-accent, #38bdf8)',
+            outlineOffset: '2px',
+          },
         } as React.CSSProperties
       }
     >
