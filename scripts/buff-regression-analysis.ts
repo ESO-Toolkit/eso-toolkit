@@ -56,7 +56,7 @@ import {
 } from '../src/graphql/gql/graphql';
 
 import { detectRoles } from '../src/features/role_detection';
-import { DetectedRole, ROLE_LABELS } from '../src/features/role_detection/types';
+import { DetectedRole } from '../src/features/role_detection/types';
 import type { RoleDetectionEvents, FightContext } from '../src/features/role_detection/extractSignals';
 
 import { runScript } from './_runner/bootstrap';
@@ -798,13 +798,6 @@ runScript(async ({ getGraphqlHarness, logger }) => {
     'Minor Heroism', 'Cinder Storm', 'Minor Sorcery', 'Minor Savagery',
   ]);
 
-  // Supportive buff categories (standard healing, everyone does)
-  const STANDARD_CATEGORIES = new Set([
-    'Minor Berserk', 'Minor Resolve', 'Energy Orb', 'Radiating Regen',
-    'Echoing Vigor', 'Reviving Barrier', 'Minor Toughness', 'Harvest',
-    'Enlivening Overflow',
-  ]);
-
   function getOffensiveBuffScore(p: HealerProfile): number {
     let score = 0;
     for (const [catName, data] of p.categoryScores) {
@@ -813,16 +806,6 @@ runScript(async ({ getGraphqlHarness, logger }) => {
       }
     }
     return score;
-  }
-
-  function getCategoryCount(p: HealerProfile, categories: Set<string>): number {
-    let count = 0;
-    for (const [catName, data] of p.categoryScores) {
-      if (categories.has(catName) && data.apps > 0) {
-        count++;
-      }
-    }
-    return count;
   }
 
   // Ground truth: within each fight, healer with more offensive categories = Buff
