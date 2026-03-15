@@ -1845,20 +1845,23 @@
           "name": "Yolnahkriin",
           "model_type": "creature",
           "species": "Dragon",
-          "notes": "Fire Dragon. BoneDragon_A_Basic is the shared dragon mesh for all dragon variants (living and skeletal). ESO uses identical geometry with different textures/materials. Exhaustive scan of all 197,602 GR2 files confirmed no separate living dragon mesh exists. The mesh's 93 bone bindings (mshBn_spineBody, mshBn_wingSpan, mshBn_spineTail) are a subset of the 133-bone dragon skeleton at fi=1167551.",
+          "notes": "Fire Dragon. Uses shared BoneDragon_A_Basic geometry with 'Dragon' material textures (diffuse + normal maps from GR2 texture file fi=2366547). 2048x1024 resolution.",
           "model": {
-            "name": "BoneDragon_A_Basic",
+            "name": "Yolnahkriin_Dragon",
             "file_index": 1167549,
-            "size_kb": 3187,
+            "size_kb": 5871,
             "verts": 41991,
             "tris": 63786,
-            "note": "shared_dragon_mesh"
+            "note": "textured_dragon_glb"
           },
           "textures": {
-            "primary": [],
-            "additional": null,
-            "total_count": 0,
-            "note": "Textures not found via adjacent file scan \u2014 stored in non-adjacent archive region"
+            "primary": [
+              {"file_index": 2366551, "role": "diffuse", "format": "DXT5", "width": 2048, "height": 1024, "size_kb": 2731},
+              {"file_index": 2366553, "role": "normal", "format": "DXT5", "width": 2048, "height": 1024, "size_kb": 2731}
+            ],
+            "additional": [{"file_index": 2366555, "role": "specular", "format": "DXT5", "width": 2048, "height": 1024, "size_kb": 2731}],
+            "total_count": 3,
+            "note": "Dragon material from GR2 texture file fi=2366547"
           },
           "related_gr2": {
             "animations": [],
@@ -1914,20 +1917,23 @@
           "name": "Lokkestiiz",
           "model_type": "creature",
           "species": "Dragon",
-          "notes": "Ice Dragon. BoneDragon_A_Basic is the shared dragon mesh for all dragon variants (living and skeletal). ESO uses identical geometry with different textures/materials. Exhaustive scan of all 197,602 GR2 files confirmed no separate living dragon mesh exists. The mesh's 93 bone bindings (mshBn_spineBody, mshBn_wingSpan, mshBn_spineTail) are a subset of the 133-bone dragon skeleton at fi=1167551.",
+          "notes": "Ice Dragon. Uses shared BoneDragon_A_Basic geometry with 'Dragon' material textures (diffuse + normal maps from GR2 texture file fi=2366547). 2048x1024 resolution.",
           "model": {
-            "name": "BoneDragon_A_Basic",
+            "name": "Lokkestiiz_Dragon",
             "file_index": 1167549,
-            "size_kb": 3187,
+            "size_kb": 5871,
             "verts": 41991,
             "tris": 63786,
-            "note": "shared_dragon_mesh"
+            "note": "textured_dragon_glb"
           },
           "textures": {
-            "primary": [],
-            "additional": null,
-            "total_count": 0,
-            "note": "Textures not found via adjacent file scan \u2014 stored in non-adjacent archive region"
+            "primary": [
+              {"file_index": 2366551, "role": "diffuse", "format": "DXT5", "width": 2048, "height": 1024, "size_kb": 2731},
+              {"file_index": 2366553, "role": "normal", "format": "DXT5", "width": 2048, "height": 1024, "size_kb": 2731}
+            ],
+            "additional": [{"file_index": 2366555, "role": "specular", "format": "DXT5", "width": 2048, "height": 1024, "size_kb": 2731}],
+            "total_count": 3,
+            "note": "Dragon material from GR2 texture file fi=2366547"
           },
           "related_gr2": {
             "animations": [],
@@ -1983,20 +1989,23 @@
           "name": "Nahviintaas",
           "model_type": "creature",
           "species": "Dragon",
-          "notes": "Storm Dragon (final boss). BoneDragon_A_Basic is the shared dragon mesh for all dragon variants (living and skeletal). ESO uses identical geometry with different textures/materials. Exhaustive scan of all 197,602 GR2 files confirmed no separate living dragon mesh exists. The mesh's 93 bone bindings (mshBn_spineBody, mshBn_wingSpan, mshBn_spineTail) are a subset of the 133-bone dragon skeleton at fi=1167551.",
+          "notes": "Storm Dragon (final boss). Uses shared BoneDragon_A_Basic geometry with unique 'Nahviintaas001' material textures (diffuse + normal maps from GR2 texture file fi=1531671). 512x1024 resolution.",
           "model": {
-            "name": "BoneDragon_A_Basic",
+            "name": "Nahviintaas_Dragon",
             "file_index": 1167549,
-            "size_kb": 3187,
+            "size_kb": 2843,
             "verts": 41991,
             "tris": 63786,
-            "note": "shared_dragon_mesh"
+            "note": "textured_dragon_glb"
           },
           "textures": {
-            "primary": [],
-            "additional": null,
-            "total_count": 0,
-            "note": "Textures not found via adjacent file scan \u2014 stored in non-adjacent archive region"
+            "primary": [
+              {"file_index": 1531675, "role": "diffuse", "format": "DXT1", "width": 512, "height": 1024, "size_kb": 341},
+              {"file_index": 1531677, "role": "normal", "format": "DXT5", "width": 512, "height": 1024, "size_kb": 683}
+            ],
+            "additional": [{"file_index": 1531679, "role": "specular", "format": "DXT5", "width": 512, "height": 1024, "size_kb": 683}],
+            "total_count": 3,
+            "note": "Unique Nahviintaas001 material from GR2 texture file fi=1531671"
           },
           "related_gr2": {
             "animations": [],
