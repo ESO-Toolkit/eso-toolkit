@@ -5,7 +5,7 @@
  */
 
 import { Box, type SxProps, type Theme } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import React from 'react';
 
 import { BE_TOKENS } from '../../theme/buildEditorTokens';
@@ -44,8 +44,8 @@ export const GlassPanel: React.FC<GlassPanelProps> = ({
           ...(glow && {
             '&:hover': {
               borderColor: isDark
-                ? alpha('var(--be-accent)' as unknown as string, 0.3)
-                : alpha('#0f172a', 0.15),
+                ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.3)'
+                : 'rgba(15, 23, 42, 0.15)',
               boxShadow: isDark
                 ? `0 8px 32px rgba(0, 0, 0, 0.18), 0 0 24px var(--be-glow)`
                 : BE_TOKENS.glass.shadowLight,
