@@ -123,7 +123,7 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
 
       <DialogContent>
         <Box
-          component="form"
+          component={'form' as React.ElementType}
           onSubmit={handleFormSubmit}
           noValidate
           sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}

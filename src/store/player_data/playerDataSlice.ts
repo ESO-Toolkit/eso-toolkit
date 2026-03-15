@@ -5,6 +5,7 @@ import { EsoLogsClient } from '../../esologsClient';
 import { GetPlayersForReportDocument } from '../../graphql/gql/graphql';
 import { PlayerDetails, PlayerDetailsEntry } from '../../types/playerDetails';
 import { Logger, LogLevel } from '../../utils/logger';
+import { detectRole } from '../../utils/roleDetection';
 import {
   KeyedCacheState,
   removeFromCache,
@@ -129,8 +130,9 @@ export const fetchPlayerData = createAsyncThunk<
       };
 
       for (const [key, arr] of Object.entries(playerDetails)) {
-        const role = roleMap[key.toLowerCase()] || 'dps'; // Default to 'dps' if role not found
+        const apiRole = roleMap[key.toLowerCase()] || 'dps';
         for (const player of arr) {
+          const role = detectRole(apiRole, player.combatantInfo?.gear);
           playersById[player.id] = {
             ...player,
             role,

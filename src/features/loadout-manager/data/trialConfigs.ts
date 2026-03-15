@@ -141,6 +141,17 @@ export const TRIALS: TrialConfig[] = [
   },
 
   {
+    id: 'OAC',
+    name: 'Oathsworn Citadel',
+    type: 'trial',
+    bosses: [
+      { name: 'Knight Commander Phantas', trashPacksBefore: 2 },
+      { name: 'The Shining Ones', trashPacksBefore: 2 },
+      { name: 'Vandacia', trashPacksBefore: 1 },
+    ],
+  },
+
+  {
     id: 'OC',
     name: 'Overland/Other Content',
     type: 'general',

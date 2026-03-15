@@ -242,7 +242,6 @@ const WebGLFallbackUI: React.FC<{
             </Button>
             <Button
               variant="outlined"
-              component="a"
               href="https://get.webgl.org/"
               target="_blank"
               rel="noopener"

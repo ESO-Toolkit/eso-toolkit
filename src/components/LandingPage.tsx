@@ -767,7 +767,7 @@ const ToolsGrid = ({ children }: { children: React.ReactNode }): JSX.Element => 
 
   return (
     <Box
-      sx={(theme) => ({
+      sx={(theme: Theme) => ({
         display: 'grid',
         gap: '1.5rem',
         marginTop: '3rem',
@@ -788,7 +788,7 @@ const ToolsGrid = ({ children }: { children: React.ReactNode }): JSX.Element => 
       {React.Children.map(children, (child, index) => (
         <Box
           key={index}
-          sx={(theme) => ({
+          sx={(theme: Theme) => ({
             transformStyle: 'preserve-3d',
             transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             transform:

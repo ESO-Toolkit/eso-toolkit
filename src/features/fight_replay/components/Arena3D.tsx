@@ -658,11 +658,19 @@ export const Arena3D: React.FC<Arena3DProps> = ({
                   COMMON_MARKER_GROUPS.filter((group) => group.options.length > 0).map((group) => (
                     <MenuItem
                       key={group.key}
-                      onMouseEnter={(event) => handleOpenSubmenu(event, group.key)}
+                      onMouseEnter={(event: React.MouseEvent<HTMLLIElement>) =>
+                        handleOpenSubmenu(event, group.key)
+                      }
                       onMouseLeave={handleGroupMouseLeave}
-                      onClick={(event) => handleOpenSubmenu(event, group.key)}
-                      onContextMenu={(event) => handleOpenSubmenu(event, group.key)}
-                      onKeyDown={(event) => handleGroupKeyDown(event, group.key)}
+                      onClick={(event: React.MouseEvent<HTMLLIElement>) =>
+                        handleOpenSubmenu(event, group.key)
+                      }
+                      onContextMenu={(event: React.MouseEvent<HTMLLIElement>) =>
+                        handleOpenSubmenu(event, group.key)
+                      }
+                      onKeyDown={(event: React.KeyboardEvent<HTMLLIElement>) =>
+                        handleGroupKeyDown(event, group.key)
+                      }
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
@@ -718,7 +726,7 @@ export const Arena3D: React.FC<Arena3DProps> = ({
                 {activeSubmenuGroup?.options.map((option) => (
                   <MenuItem
                     key={option.iconKey}
-                    onClick={(event) => {
+                    onClick={(event: React.MouseEvent<HTMLLIElement>) => {
                       event.preventDefault();
                       event.stopPropagation();
                       handleAddMarkerOption(option.iconKey);

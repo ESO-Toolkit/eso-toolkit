@@ -756,20 +756,23 @@ export const Footer: React.FC = React.memo(() => {
             }}
           >
             <Button
-              component="a"
               href="https://discord.gg/mMjwcQYFdc"
               target="_blank"
               rel="noopener noreferrer"
               sx={primaryButtonSx}
               startIcon={
-                <Box component="img" src={discordIcon} alt="" sx={{ width: 20, height: 20 }} />
+                <Box
+                  component={'img' as React.ElementType}
+                  src={discordIcon}
+                  alt=""
+                  sx={{ width: 20, height: 20 }}
+                />
               }
             >
               Join Discord
             </Button>
 
             <Button
-              component="a"
               href="https://github.com/ESO-Toolkit/eso-toolkit"
               target="_blank"
               rel="noopener noreferrer"
@@ -974,28 +977,38 @@ export const Footer: React.FC = React.memo(() => {
                       width: '100%',
                     }}
                   >
-                    {section.links.map((link) => (
-                      <Link
-                        key={link.label}
-                        component={link.external ? 'a' : RouterLink}
-                        href={link.external ? link.href : undefined}
-                        to={!link.external ? link.href : undefined}
-                        target={link.external ? '_blank' : undefined}
-                        rel={link.external ? 'noopener noreferrer' : undefined}
-                        underline="none"
-                        sx={linkBaseSx}
-                      >
-                        <Typography component="span" sx={{ flexGrow: 1 }}>
-                          {link.label}
-                        </Typography>
+                    {section.links.map((link) =>
+                      link.external ? (
+                        <Link
+                          key={link.label}
+                          href={link.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          underline="none"
+                          sx={linkBaseSx}
+                        >
+                          <Typography component="span" sx={{ flexGrow: 1 }}>
+                            {link.label}
+                          </Typography>
 
-                        {link.external ? (
                           <Launch className="footer-link-icon" sx={linkIconSx} />
-                        ) : (
+                        </Link>
+                      ) : (
+                        <Link
+                          key={link.label}
+                          component={RouterLink}
+                          to={link.href}
+                          underline="none"
+                          sx={linkBaseSx}
+                        >
+                          <Typography component="span" sx={{ flexGrow: 1 }}>
+                            {link.label}
+                          </Typography>
+
                           <ChevronRight className="footer-link-icon" sx={linkIconSx} />
-                        )}
-                      </Link>
-                    ))}
+                        </Link>
+                      ),
+                    )}
                   </Box>
                 </Box>
               ))}

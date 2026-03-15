@@ -286,8 +286,7 @@ export const HealerGuide: React.FC = () => {
               desc: 'Drop ground heals, refresh HoTs, weave heavies, and time your buffs.',
             },
           ].map((s) => (
-            // @ts-expect-error - MUI Grid item prop typing issue
-            <Grid item key={s.n} xs={12} md={4}>
+            <Grid key={s.n} size={{ xs: 12, md: 4 }}>
               <Paper sx={frostCardSx(theme)}>
                 <Stack direction="row" spacing={1.5} alignItems="flex-start">
                   <Box
@@ -364,8 +363,7 @@ export const HealerGuide: React.FC = () => {
               'Symphony of Blades',
               "Grand Rejuvenation (Master's Restoration Staff)",
             ].map((name) => (
-              // @ts-expect-error - MUI Grid item prop typing issue
-              <Grid item key={name} xs={12} md={4}>
+              <Grid key={name} size={{ xs: 12, md: 4 }}>
                 <Paper sx={frostCardSx(theme)}>
                   <Typography variant="subtitle1" fontWeight={800}>
                     {name}
@@ -470,8 +468,7 @@ export const HealerGuide: React.FC = () => {
           </Typography>
           <Grid container spacing={2}>
             {outlineSlides.slice(0, 6).map((sl) => (
-              // @ts-expect-error - MUI Grid item prop typing issue
-              <Grid item key={sl.index} xs={12} md={6}>
+              <Grid key={sl.index} size={{ xs: 12, md: 6 }}>
                 <Paper sx={frostCardSx(theme)}>
                   <Typography variant="subtitle1" fontWeight={800}>
                     {sl.title}
@@ -554,8 +551,7 @@ export const HealerGuide: React.FC = () => {
 
             <Grid container spacing={2} sx={{ mt: 1 }}>
               {filtered.map((set) => (
-                // @ts-expect-error - MUI Grid item prop typing issue
-                <Grid item key={`${set.full_name}-${set.category}`} xs={12} sm={6} md={4}>
+                <Grid key={`${set.full_name}-${set.category}`} size={{ xs: 12, sm: 6, md: 4 }}>
                   <Paper sx={frostCardSx(theme)}>
                     <Stack
                       direction="row"
@@ -626,11 +622,15 @@ export const HealerGuide: React.FC = () => {
             </Typography>
             <Grid container spacing={2}>
               {activationEntries.map(([key, desc]) => (
-                // @ts-expect-error - MUI Grid item prop typing issue
-                <Grid item key={key} xs={12} sm={6} md={4}>
+                <Grid key={key} size={{ xs: 12, sm: 6, md: 4 }}>
                   <Paper sx={frostCardSx(theme)}>
                     <Stack direction="row" spacing={1} alignItems="center">
-                      <Box component="span" role="img" aria-label={key} sx={{ fontSize: 18 }}>
+                      <Box
+                        component={'span' as React.ElementType}
+                        role="img"
+                        aria-label={key}
+                        sx={{ fontSize: 18 }}
+                      >
                         {activationIcons[key] || 'ℹ️'}
                       </Box>
                       <Typography
@@ -658,8 +658,7 @@ export const HealerGuide: React.FC = () => {
             <Paper sx={{ ...frostCardSx(theme), mt: 1 }}>
               <Grid container spacing={2}>
                 {healingGuideData.build_strategies.example_builds.map((b) => (
-                  // @ts-expect-error - MUI Grid item prop typing issue
-                  <Grid item key={b.build_name} xs={12} md={6}>
+                  <Grid key={b.build_name} size={{ xs: 12, md: 6 }}>
                     <Paper sx={frostCardSx(theme)}>
                       <Typography variant="subtitle2" fontWeight={800}>
                         {b.build_name}

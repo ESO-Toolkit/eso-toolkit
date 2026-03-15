@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting…</title>
+    <script>
+      // SPA deep-link routing for GitHub Pages preview subdirectories.
+      //
+      // When GitHub Pages 404s on a path like /dev-previews/pr-860/rv?r=…, this
+      // script locates the pr-NNN segment, then redirects to that PR's index.html
+      // with the original path stored so the SPA can restore it before React mounts.
+      //
+      // The SPA's index.html restoration script reads either:
+      //   Method 1 — sessionStorage key "redirectPath"
+      //   Method 2 — ?redirect= query param (fallback when storage is blocked)
+      (function () {
+        var l = window.location;
+        var parts = l.pathname.split('/');
+
+        // Find the pr-NNN segment in the path
+        var prIndex = -1;
+        for (var i = 0; i < parts.length; i++) {
+          if (/^pr-\d+$/.test(parts[i])) {
+            prIndex = i;
+            break;
+          }
+        }
+
+        if (prIndex === -1) {
+          // No PR segment found — nothing to do
+          return;
+        }
+
+        // Base path for this PR preview, e.g. /dev-previews/pr-860/
+        var base = parts.slice(0, prIndex + 1).join('/') + '/';
+
+        // Full original URL to restore in the SPA (path + query + hash)
+        var full = l.pathname + l.search + l.hash;
+
+        // Method 1: sessionStorage (no visible flash)
+        try {
+          sessionStorage.setItem('redirectPath', full);
+          l.replace(l.origin + base);
+          return;
+        } catch (_) {
+          // sessionStorage blocked (strict private browsing, etc.)
+        }
+
+        // Method 2: ?redirect= query param fallback
+        l.replace(l.origin + base + '?redirect=' + encodeURIComponent(full));
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>

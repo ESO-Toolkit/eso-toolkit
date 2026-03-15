@@ -421,7 +421,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       >
         <Tabs
           value={validSelectedTabId}
-          onChange={(_, v) => {
+          onChange={(_: React.SyntheticEvent, v: unknown) => {
             onTabChange(v as TabId);
           }}
           sx={{

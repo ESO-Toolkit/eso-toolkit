@@ -14,6 +14,7 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
 interface DamageTypeHelpModalProps {
@@ -249,10 +250,10 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
                   alignItems: 'flex-start',
                   borderRadius: 2,
                   mb: 2,
-                  bgcolor: (theme) =>
+                  bgcolor: (theme: Theme) =>
                     theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
                   border: '1px solid',
-                  borderColor: (theme) =>
+                  borderColor: (theme: Theme) =>
                     theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
                   p: 2,
                 }}
@@ -287,11 +288,12 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
                     size="small"
                     sx={{
                       mb: 1,
-                      bgcolor: (theme) =>
+                      bgcolor: (theme: Theme) =>
                         theme.palette.mode === 'dark'
                           ? 'rgba(59, 130, 246, 0.15)'
                           : 'rgba(59, 130, 246, 0.1)',
-                      color: (theme) => (theme.palette.mode === 'dark' ? '#60a5fa' : '#2563eb'),
+                      color: (theme: Theme) =>
+                        theme.palette.mode === 'dark' ? '#60a5fa' : '#2563eb',
                       fontWeight: 600,
                     }}
                   />
@@ -301,7 +303,7 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
                     sx={{
                       display: 'block',
                       fontFamily: 'monospace',
-                      bgcolor: (theme) =>
+                      bgcolor: (theme: Theme) =>
                         theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)',
                       p: 1.5,
                       borderRadius: 1,
@@ -330,7 +332,7 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
                   <Box sx={{ width: '100%', mt: 2 }}>
                     <Accordion
                       sx={{
-                        bgcolor: (theme) =>
+                        bgcolor: (theme: Theme) =>
                           theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
                         boxShadow: 'none',
                         '&:before': { display: 'none' },
@@ -370,7 +372,7 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
                                 color: 'text.secondary',
                                 p: 0.5,
                                 borderRadius: 0.5,
-                                bgcolor: (theme) =>
+                                bgcolor: (theme: Theme) =>
                                   theme.palette.mode === 'dark'
                                     ? 'rgba(255,255,255,0.05)'
                                     : 'rgba(0,0,0,0.03)',
@@ -393,12 +395,12 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
               mt: 2,
               p: 2,
               borderRadius: 2,
-              bgcolor: (theme) =>
+              bgcolor: (theme: Theme) =>
                 theme.palette.mode === 'dark'
                   ? 'rgba(59, 130, 246, 0.1)'
                   : 'rgba(59, 130, 246, 0.05)',
               border: '1px solid',
-              borderColor: (theme) =>
+              borderColor: (theme: Theme) =>
                 theme.palette.mode === 'dark'
                   ? 'rgba(59, 130, 246, 0.3)'
                   : 'rgba(59, 130, 246, 0.2)',

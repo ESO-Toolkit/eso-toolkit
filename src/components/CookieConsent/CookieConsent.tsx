@@ -186,7 +186,6 @@ export const CookieConsent: React.FC = () => {
                 and error tracking help us improve your experience. You choose which categories to
                 enable.{' '}
                 <Link
-                  component="button"
                   variant="body2"
                   onClick={handleCustomize}
                   underline="hover"
@@ -201,7 +200,6 @@ export const CookieConsent: React.FC = () => {
                 </Link>{' '}
                 |{' '}
                 <Link
-                  component="a"
                   href="/privacy"
                   variant="body2"
                   underline="hover"

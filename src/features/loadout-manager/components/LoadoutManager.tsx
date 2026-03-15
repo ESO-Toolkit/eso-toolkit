@@ -707,7 +707,9 @@ export const LoadoutManager: React.FC = () => {
                 <Tooltip title="More actions" arrow>
                   <IconButton
                     size="small"
-                    onClick={(e) => setOverflowAnchor(e.currentTarget)}
+                    onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
+                      setOverflowAnchor(e.currentTarget)
+                    }
                     sx={{
                       borderRadius: '8px',
                       '&:hover': {

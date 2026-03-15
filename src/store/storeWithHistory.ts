@@ -28,6 +28,7 @@ import masterDataReducer from './master_data/masterDataSlice';
 import parseAnalysisReducer from './parse_analysis/parseAnalysisSlice';
 import playerDataReducer from './player_data/playerDataSlice';
 import reportReducer from './report/reportSlice';
+import { savedRostersReducer } from './saved_rosters';
 import uiReducer, { UIState } from './ui/uiSlice';
 import userReportsReducer from './user_reports';
 import { workerResultsReducer } from './worker_results';
@@ -41,6 +42,7 @@ const rootReducer = combineReducers({
   parseAnalysis: parseAnalysisReducer,
   playerData: playerDataReducer,
   report: reportReducer,
+  savedRosters: savedRostersReducer,
   ui: uiReducer,
   userReports: userReportsReducer,
   workerResults: workerResultsReducer,
@@ -90,7 +92,7 @@ const persistConfig = {
   key: 'root',
   storage,
   transforms: [uiTransform], // Apply transform to exclude report-specific UI state
-  whitelist: ['ui', 'loadout', 'dashboard'], // Persist essential data and loadout, but not events (too large)
+  whitelist: ['ui', 'loadout', 'dashboard', 'savedRosters'], // Persist essential data, loadout, and saved rosters
 };
 
 const persistedReducer = persistReducer<RootState>(persistConfig, rootReducer);

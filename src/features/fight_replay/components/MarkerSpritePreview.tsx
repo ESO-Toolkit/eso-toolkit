@@ -103,7 +103,7 @@ export const MarkerSpritePreview: React.FC<MarkerSpritePreviewProps> = ({ iconKe
 
   return (
     <Box
-      component="span"
+      component={'span' as React.ElementType}
       role="img"
       aria-label={label ?? `Marker ${iconKey}`}
       sx={{

@@ -30,6 +30,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React, { useCallback, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -385,7 +386,7 @@ export const UserReports: React.FC = () => {
           elevation={isDesktop ? 4 : 1}
           sx={{
             ...cardSx,
-            background: (t) =>
+            background: (t: Theme) =>
               t.palette.mode === 'dark'
                 ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
                 : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
@@ -532,7 +533,7 @@ export const UserReports: React.FC = () => {
         elevation={isDesktop ? 4 : 1}
         sx={{
           ...cardSx,
-          background: (theme) =>
+          background: (theme: Theme) =>
             theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
               : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
@@ -549,7 +550,7 @@ export const UserReports: React.FC = () => {
             ? {}
             : {
                 transform: 'translateY(-2px)',
-                boxShadow: (theme) =>
+                boxShadow: (theme: Theme) =>
                   theme.palette.mode === 'dark'
                     ? '0 8px 32px rgba(56, 189, 248, 0.15)'
                     : '0 8px 32px rgba(25, 118, 210, 0.1)',
@@ -788,8 +789,8 @@ export const UserReports: React.FC = () => {
                       <TableRow
                         key={report.code}
                         hover
-                        onClick={(e) => handleReportClick(report.code, e)}
-                        onMouseDown={(e) => {
+                        onClick={(e: React.MouseEvent) => handleReportClick(report.code, e)}
+                        onMouseDown={(e: React.MouseEvent) => {
                           // Handle middle-click
                           if (e.button === 1) {
                             e.preventDefault();
@@ -805,11 +806,11 @@ export const UserReports: React.FC = () => {
                           },
                           transition: 'all 0.15s ease-in-out',
                           '&:hover': {
-                            backgroundColor: (theme) =>
+                            backgroundColor: (theme: Theme) =>
                               theme.palette.mode === 'dark'
                                 ? 'rgba(56, 189, 248, 0.05)'
                                 : 'rgba(25, 118, 210, 0.04)',
-                            boxShadow: (theme) =>
+                            boxShadow: (theme: Theme) =>
                               theme.palette.mode === 'dark'
                                 ? '0 2px 8px rgba(56, 189, 248, 0.15)'
                                 : '0 2px 8px rgba(25, 118, 210, 0.1)',
@@ -927,17 +928,17 @@ export const UserReports: React.FC = () => {
                 padding: isDesktop ? '0' : '0 8px',
                 '&:hover:not(.Mui-selected):not(:disabled)': {
                   transform: 'translateY(-1px)',
-                  boxShadow: (theme) =>
+                  boxShadow: (theme: Theme) =>
                     theme.palette.mode === 'dark'
                       ? '0 4px 12px rgba(56, 189, 248, 0.25)'
                       : '0 4px 12px rgba(25, 118, 210, 0.2)',
                 },
                 '&.Mui-selected': {
-                  backgroundColor: (theme) =>
+                  backgroundColor: (theme: Theme) =>
                     theme.palette.mode === 'dark'
                       ? 'rgba(56, 189, 248, 0.15)'
                       : 'rgba(25, 118, 210, 0.15)',
-                  boxShadow: (theme) =>
+                  boxShadow: (theme: Theme) =>
                     theme.palette.mode === 'dark'
                       ? '0 4px 12px rgba(56, 189, 248, 0.3)'
                       : '0 4px 12px rgba(25, 118, 210, 0.2)',

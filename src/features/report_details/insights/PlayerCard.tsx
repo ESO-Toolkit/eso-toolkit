@@ -16,6 +16,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
+import type { Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -227,7 +228,7 @@ const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
         }}
       >
         <Box
-          component="img"
+          component={'img' as React.ElementType}
           src={mundusIcon}
           alt=""
           sx={{ width: { xs: 16, sm: 14, md: 12 }, height: { xs: 16, sm: 14, md: 12 } }}
@@ -994,7 +995,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       <Typography
                         variant="caption"
                         sx={{
-                          color: (theme) =>
+                          color: (theme: Theme) =>
                             theme.palette.mode === 'light' ? '#c44e4e' : '#ff7a7a',
                           fontSize: 11,
                           lineHeight: 1,
@@ -1012,7 +1013,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       <Typography
                         variant="caption"
                         sx={{
-                          color: (theme) =>
+                          color: (theme: Theme) =>
                             theme.palette.mode === 'light' ? '#3db03d' : '#93f093',
                           fontSize: 11,
                           lineHeight: 1,
@@ -1071,7 +1072,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           px: 1.25,
                           py: 0.4,
                           borderRadius: '6px',
-                          background: (theme) =>
+                          background: (theme: Theme) =>
                             theme.palette.mode === 'dark'
                               ? 'linear-gradient(90deg, rgba(245,158,11,0.15) 0%, rgba(251,191,36,0.08) 100%)'
                               : 'linear-gradient(90deg, rgba(251,191,36,0.22) 0%, rgba(245,158,11,0.1) 100%)',
@@ -1103,7 +1104,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           sx={{
                             fontSize: '0.7rem',
                             fontWeight: 600,
-                            color: (theme) =>
+                            color: (theme: Theme) =>
                               theme.palette.mode === 'dark'
                                 ? 'rgba(251,191,36,0.85)'
                                 : 'rgba(180,83,9,0.9)',

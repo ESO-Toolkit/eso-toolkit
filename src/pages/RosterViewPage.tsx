@@ -569,12 +569,13 @@ const DPS_JAIL_LABELS: Record<string, string> = {
 
 const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
   const skillLines = formatSkillLines(slot.skillLines);
-  const gearSets = formatGearSets({
-    set1: slot.set1,
-    set2: slot.set2,
-    monsterSet: slot.monsterSet,
-    additionalSets: slot.additionalSets,
-  });
+  const gearSets = slot.gearSets?.length
+    ? formatGearSets({
+        set1: slot.gearSets[0],
+        set2: slot.gearSets[1],
+        additionalSets: slot.gearSets.slice(2),
+      })
+    : [];
 
   const isEmpty = !slot.playerName && !slot.roleNotes && !slot.labels?.length;
 
@@ -820,6 +821,11 @@ export const RosterViewPage: React.FC = () => {
           setNotFound(true);
         }
         setLoading(false);
+
+        // Signal to the parent frame (RosterPreviewDialog) that content is ready
+        if (window.parent !== window) {
+          window.parent.postMessage({ type: 'roster-preview-ready' }, window.location.origin);
+        }
       })
       .catch(() => {
         setNotFound(true);
@@ -845,7 +851,14 @@ export const RosterViewPage: React.FC = () => {
   const handleOpenInBuilder = (): void => {
     // Strip /rv suffix to get base path
     const basePath = window.location.pathname.replace(/\/rv(\/.*)?$/, '');
-    window.location.href = `${window.location.origin}${basePath}/roster-builder?r=${encodedParam}`;
+    const url = `${window.location.origin}${basePath}/roster-builder?r=${encodedParam}`;
+    // When rendered inside an iframe (embed preview), navigate the top-level window
+    // so the builder loads as a full page rather than inside the iframe.
+    if (window.top && window.parent !== window) {
+      window.top.location.href = url;
+    } else {
+      window.location.href = url;
+    }
   };
 
   // Copy discord format text
@@ -1199,8 +1212,16 @@ function buildDiscordText(roster: RaidRoster): string {
     } | null,
   ): string => formatGearSets(sets).join('/');
 
-  // Tanks
+  // Tanks — skip completely empty slots (single-tank comps)
   ([roster.tank1, roster.tank2] as const).forEach((tank, i) => {
+    const hasData =
+      tank.playerName ||
+      tank.roleNotes ||
+      tank.labels?.length ||
+      tank.gearSets?.set1 ||
+      tank.gearSets?.set2 ||
+      tank.notes;
+    if (!hasData) return;
     const lbl = i === 0 ? 'MT' : 'OT';
     const rn = tank.roleNotes ? ` [${tank.roleNotes}]` : '';
     const pn = tank.playerName ? ` ${tank.playerName}` : '';
@@ -1217,8 +1238,10 @@ function buildDiscordText(roster: RaidRoster): string {
 
   lines.push('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬', '');
 
-  // Healers
+  // Healers — skip completely empty slots (single-healer comps)
   ([roster.healer1, roster.healer2] as const).forEach((h, i) => {
+    const hasData = h.playerName || h.roleNotes || h.labels?.length || h.set1 || h.set2 || h.notes;
+    if (!hasData) return;
     const lbl = h.roleLabel || (i === 0 ? 'H1' : 'H2');
     const rn = h.roleNotes ? ` [${h.roleNotes}]` : '';
     const pn = h.playerName ? ` ${h.playerName}` : '';
@@ -1241,9 +1264,10 @@ function buildDiscordText(roster: RaidRoster): string {
 
   lines.push('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬', '');
 
-  // DPS
+  // DPS — skip fully empty slots
   const sorted = [...roster.dpsSlots].sort((a, b) => a.slotNumber - b.slotNumber);
   sorted.forEach((dd) => {
+    if (!dd.playerName && !dd.roleNotes && !dd.labels?.length && !dd.jailDDType) return;
     const rn = dd.roleNotes ? ` [${dd.roleNotes}]` : '';
     const pn = dd.playerName ? ` ${dd.playerName}` : '';
     const jl = dd.jailDDType
