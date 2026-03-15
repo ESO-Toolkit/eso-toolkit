@@ -2,8 +2,8 @@
  * Role Detection Types
  *
  * Types for the multi-signal role detection algorithm that classifies players
- * into one of six roles: Main Tank, Off Tank, Parse DPS, Support DPS,
- * Group Healer, or Shield Healer.
+ * into one of seven roles: Main Tank, Off Tank, Parse DPS, Support DPS,
+ * Group Healer, Shield Healer, or Buff Healer.
  */
 
 /**
@@ -16,6 +16,7 @@ export enum DetectedRole {
   SupportDPS = 'support_dps',
   GroupHealer = 'group_healer',
   ShieldHealer = 'shield_healer',
+  BuffHealer = 'buff_healer',
 }
 
 /**
@@ -28,6 +29,7 @@ export const ROLE_LABELS: Record<DetectedRole, string> = {
   [DetectedRole.SupportDPS]: 'Support DPS',
   [DetectedRole.GroupHealer]: 'Group Healer',
   [DetectedRole.ShieldHealer]: 'Shield Healer',
+  [DetectedRole.BuffHealer]: 'Buff Healer',
 };
 
 /**
@@ -111,6 +113,21 @@ export interface PlayerRoleSignals {
    * estimated from heal events where the target's absorb increased.
    */
   shieldAppliedToOthers: number;
+
+  // --- Buff diversity signals ---
+  /** Number of distinct buff ability IDs this player applied to OTHER players */
+  uniqueBuffTypesApplied: number;
+  /** Number of distinct allies this player applied any buff to */
+  uniqueTargetsBuffed: number;
+
+  // --- Offensive buff category signals ---
+  /**
+   * Number of offensive buff categories this player applied to others.
+   * Categories include: Major Slayer, Powerful Assault, Major Force (Horn),
+   * Major Berserk, Minor Heroism, Cinder Storm, Minor Sorcery, Minor Savagery.
+   * Used by the buff healer classification (Model B hybrid: ≥ 2 = buff healer gate).
+   */
+  offensiveBuffCategoryCount: number;
 }
 
 /**

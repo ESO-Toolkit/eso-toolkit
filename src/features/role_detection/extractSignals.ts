@@ -24,10 +24,10 @@ import {
   HEALER_SET_IDS,
   HORN_ABILITY_IDS,
   MAJOR_COURAGE_BUFF_IDS,
+  OFFENSIVE_BUFF_CATEGORIES,
   SUPPORT_DPS_SET_IDS,
   TANK_MONSTER_SET_IDS,
   TANK_SET_IDS,
-  TAUNT_ABILITY_IDS,
   TAUNT_DEBUFF_ID,
 } from './constants';
 import { PlayerRoleSignals } from './types';
@@ -100,7 +100,6 @@ export function extractSignals(
 
   // --- Pass 5: Taunt tracking ---
   extractTauntSignals(
-    events.castEvents,
     events.applyDebuffEvents,
     events.removeDebuffEvents,
     playerSignals,
@@ -152,6 +151,9 @@ function createEmptySignals(playerId: number, playerName: string): PlayerRoleSig
     barrierCasts: 0,
     majorCourageTargets: 0,
     shieldAppliedToOthers: 0,
+    uniqueBuffTypesApplied: 0,
+    uniqueTargetsBuffed: 0,
+    offensiveBuffCategoryCount: 0,
   };
 }
 
@@ -347,23 +349,24 @@ interface TauntInterval {
 }
 
 function extractTauntSignals(
-  castEvents: CastEvent[],
   applyDebuffEvents: ApplyDebuffEvent[],
   removeDebuffEvents: RemoveDebuffEvent[],
   playerSignals: Map<number, PlayerRoleSignals>,
   context: FightContext,
   fightDurationMs: number,
 ): void {
-  // Count taunt ability casts per player
-  for (const event of castEvents) {
-    if (!event.sourceIsFriendly) continue;
+  // Count taunt applications per player from the debuff events.
+  // The taunt debuff (38254) is the universal signal — it fires for every
+  // taunt source (Puncture, Inner Fire, Frost Clench, Runic Jolt, etc.)
+  // regardless of the cast ability ID, so it's far more reliable than
+  // matching on a limited list of cast ability IDs.
+  for (const event of applyDebuffEvents) {
+    if (event.abilityGameID !== TAUNT_DEBUFF_ID) continue;
     if (event.fight !== context.fightId) continue;
 
-    if (TAUNT_ABILITY_IDS.has(event.abilityGameID)) {
-      const signals = playerSignals.get(event.sourceID);
-      if (signals) {
-        signals.tauntCastCount++;
-      }
+    const signals = playerSignals.get(event.sourceID);
+    if (signals) {
+      signals.tauntCastCount++;
     }
   }
 
@@ -509,6 +512,68 @@ function extractUltimateAndBuffSignals(
     const signals = playerSignals.get(playerId);
     if (signals) {
       signals.majorCourageTargets = targets.size;
+    }
+  }
+
+  // Buff diversity tracking — count distinct buff types and unique targets buffed
+  const playerBuffTypes = new Map<number, Set<number>>();
+  const playerBuffTargets = new Map<number, Set<number>>();
+
+  for (const event of applyBuffEvents) {
+    if (event.fight !== context.fightId) continue;
+    if (event.sourceID === event.targetID) continue;
+
+    const signals = playerSignals.get(event.sourceID);
+    if (!signals) continue;
+
+    if (!playerBuffTypes.has(event.sourceID)) {
+      playerBuffTypes.set(event.sourceID, new Set());
+    }
+    playerBuffTypes.get(event.sourceID)!.add(event.abilityGameID);
+
+    if (!playerBuffTargets.has(event.sourceID)) {
+      playerBuffTargets.set(event.sourceID, new Set());
+    }
+    playerBuffTargets.get(event.sourceID)!.add(event.targetID);
+  }
+
+  for (const [playerId, buffTypes] of playerBuffTypes) {
+    const signals = playerSignals.get(playerId);
+    if (signals) {
+      signals.uniqueBuffTypesApplied = buffTypes.size;
+    }
+  }
+
+  for (const [playerId, buffTargets] of playerBuffTargets) {
+    const signals = playerSignals.get(playerId);
+    if (signals) {
+      signals.uniqueTargetsBuffed = buffTargets.size;
+    }
+  }
+
+  // Offensive buff category tracking — count how many distinct offensive
+  // categories each player applies to others (drives buff healer detection)
+  const playerOffensiveCategories = new Map<number, Set<string>>();
+
+  for (const event of applyBuffEvents) {
+    if (event.fight !== context.fightId) continue;
+    if (event.sourceID === event.targetID) continue;
+
+    for (const [categoryName, abilityIds] of OFFENSIVE_BUFF_CATEGORIES) {
+      if (abilityIds.has(event.abilityGameID)) {
+        if (!playerOffensiveCategories.has(event.sourceID)) {
+          playerOffensiveCategories.set(event.sourceID, new Set());
+        }
+        playerOffensiveCategories.get(event.sourceID)!.add(categoryName);
+        break; // Each ability belongs to one category
+      }
+    }
+  }
+
+  for (const [playerId, categories] of playerOffensiveCategories) {
+    const signals = playerSignals.get(playerId);
+    if (signals) {
+      signals.offensiveBuffCategoryCount = categories.size;
     }
   }
 }

@@ -145,6 +145,13 @@ export const SHIELD_HEALER_SET_IDS = new Set<number>([
   KnownSetIDs.PEARLS_OF_EHLNOFEY,
 ]);
 
+/** Buff-healer-associated sets — buff duration extension and group support */
+export const BUFF_HEALER_SET_IDS = new Set<number>([
+  KnownSetIDs.JORVULDS_GUIDANCE,
+  KnownSetIDs.MASTER_ARCHITECT,
+  KnownSetIDs.POWERFUL_ASSAULT,
+]);
+
 // ============================================================
 // DPS SET IDS — known DPS gear
 // ============================================================
@@ -227,6 +234,13 @@ export const DPS_MONSTER_SET_IDS = new Set<number>([
 /** Minimum taunt uptime ratio (0-1) on boss to be considered Main Tank */
 export const MAIN_TANK_TAUNT_UPTIME_THRESHOLD = 0.3;
 
+/**
+ * Minimum tank score to qualify as a tank.
+ * Players who pass the taunt-evidence gate already score 20+ from taunt signals
+ * alone, so this threshold filters out players with very weak overall tank profiles.
+ */
+export const TANK_SCORE_THRESHOLD = 20;
+
 /** Minimum heavy armor pieces to be a strong tank gear signal */
 export const HEAVY_ARMOR_THRESHOLD = 5;
 
@@ -238,3 +252,37 @@ export const HIGH_HEALING_SHARE_THRESHOLD = 0.15;
 
 /** Players above this damage-taken share are likely tanks */
 export const HIGH_DAMAGE_TAKEN_THRESHOLD = 0.15;
+
+// ============================================================
+// OFFENSIVE BUFF ABILITY IDS
+// These buff categories distinguish dedicated buff healers from standard healers.
+// Based on statistical regression analysis (Model B: ≥ 2 offensive categories = 84.9% accuracy).
+// ============================================================
+
+/**
+ * Offensive buff categories and their associated ability IDs.
+ * A healer applying ≥ 2 of these categories is classified as a Buff Healer.
+ * When multiple healers qualify in the same fight, the one with the most
+ * categories wins (relative tiebreak).
+ */
+export const OFFENSIVE_BUFF_CATEGORIES: ReadonlyMap<string, ReadonlySet<number>> = new Map([
+  // Major Slayer — Roaring Opportunist set (strongest signal, r=0.468)
+  ['Major Slayer', new Set([93109, 135923, 93120])],
+  // Powerful Assault set — Weapon Damage buff (r=0.462)
+  ['Powerful Assault', new Set([61771])],
+  // Major Force — Aggressive Horn ultimate
+  ['Major Force (Horn)', new Set([40225, 61747, 40224, 94800])],
+  // Major Berserk — NB Veil of Blades morph
+  ['Major Berserk', new Set([62195, 61745])],
+  // Minor Heroism — ultimate generation
+  ['Minor Heroism', new Set([61708])],
+  // Cinder Storm — DK specific AoE support
+  ['Cinder Storm', new Set([20780])],
+  // Minor Sorcery — spell damage buff
+  ['Minor Sorcery', new Set([62800, 61685])],
+  // Minor Savagery — weapon crit buff
+  ['Minor Savagery', new Set([61898, 61666])],
+]);
+
+/** Minimum offensive buff categories to qualify as Buff Healer */
+export const BUFF_HEALER_OFFENSIVE_THRESHOLD = 2;

@@ -1,17 +1,20 @@
 /**
  * Role Classification
  *
- * Classifies players into one of six roles based on extracted signals.
+ * Classifies players into one of seven roles based on extracted signals.
  * Uses a hierarchical decision tree: Tanks → Healers → DPS.
  */
 
 import {
+  BUFF_HEALER_OFFENSIVE_THRESHOLD,
+  BUFF_HEALER_SET_IDS,
   HEAVY_ARMOR_THRESHOLD,
   HIGH_DAMAGE_TAKEN_THRESHOLD,
   HIGH_HEALING_SHARE_THRESHOLD,
   LOW_DPS_SHARE_THRESHOLD,
   MAIN_TANK_TAUNT_UPTIME_THRESHOLD,
   SHIELD_HEALER_SET_IDS,
+  TANK_SCORE_THRESHOLD,
 } from './constants';
 import { DetectedRole, PlayerRoleResult, PlayerRoleSignals } from './types';
 
@@ -62,39 +65,45 @@ function identifyTanks(
 ): PlayerRoleResult[] {
   const results: PlayerRoleResult[] = [];
 
-  // Score all remaining players for "tankiness"
+  // Gate: only players with taunt evidence are eligible for tank classification.
+  // Taunt applications (debuff 38254) are the defining tank signal — gear alone
+  // (shield, heavy armor) is not sufficient since tanky healers share those traits.
+  //
+  // Additionally, healers sometimes throw a taunt briefly (e.g., one Inner Fire
+  // to grab a stray add). To prevent these healers from being claimed as tanks,
+  // we compare each candidate's tank score against their healer score — if the
+  // healer score is higher, they're primarily a healer, not a tank.
   const tankScores = allSignals
     .filter((s) => remaining.has(s.playerId))
+    .filter((s) => s.tauntCastCount > 0)
     .map((signals) => ({
       signals,
-      score: computeTankScore(signals, fightDurationMs),
+      tankScore: computeTankScore(signals, fightDurationMs),
+      healerScore: computeHealerScore(signals),
     }))
-    .filter((entry) => entry.score > 0)
-    .sort((a, b) => b.score - a.score);
+    .filter((entry) => entry.tankScore > entry.healerScore)
+    .filter((entry) => entry.tankScore >= TANK_SCORE_THRESHOLD)
+    .sort((a, b) => b.tankScore - a.tankScore);
 
   if (tankScores.length === 0) return results;
 
-  // The highest-scoring tank candidate is Main Tank if they have taunt evidence
-  const mainTankCandidate = tankScores[0];
-  if (mainTankCandidate.score >= 20) {
-    results.push({
-      playerId: mainTankCandidate.signals.playerId,
-      playerName: mainTankCandidate.signals.playerName,
-      role: DetectedRole.MainTank,
-      confidence: clampConfidence(mainTankCandidate.score),
-      signals: mainTankCandidate.signals,
-    });
+  // Highest scorer is Main Tank; all other qualifying candidates are Off Tanks
+  results.push({
+    playerId: tankScores[0].signals.playerId,
+    playerName: tankScores[0].signals.playerName,
+    role: DetectedRole.MainTank,
+    confidence: clampConfidence(tankScores[0].tankScore),
+    signals: tankScores[0].signals,
+  });
 
-    // Second-highest is Off Tank if they also have tank signals
-    if (tankScores.length >= 2 && tankScores[1].score >= 15) {
-      results.push({
-        playerId: tankScores[1].signals.playerId,
-        playerName: tankScores[1].signals.playerName,
-        role: DetectedRole.OffTank,
-        confidence: clampConfidence(tankScores[1].score),
-        signals: tankScores[1].signals,
-      });
-    }
+  for (let i = 1; i < tankScores.length; i++) {
+    results.push({
+      playerId: tankScores[i].signals.playerId,
+      playerName: tankScores[i].signals.playerName,
+      role: DetectedRole.OffTank,
+      confidence: clampConfidence(tankScores[i].tankScore),
+      signals: tankScores[i].signals,
+    });
   }
 
   return results;
@@ -159,17 +168,44 @@ function identifyHealers(
 
   // Pick up to 2 healers from the top candidates
   const healerCount = Math.min(2, healerScores.filter((h) => h.score >= 20).length);
+  const selectedHealers = healerScores.slice(0, healerCount);
 
-  for (let i = 0; i < healerCount; i++) {
-    const candidate = healerScores[i];
+  // --- Buff Healer gate + per-fight relative tiebreak ---
+  // Gate: offensiveBuffCategoryCount >= threshold (Model B).
+  // If 0 pass the gate, no buff healer exists in this fight.
+  // If 1 passes, that healer is Buff Healer.
+  // If 2+ pass, the one with the most offensive categories wins.
+  // If tied at the top, neither gets Buff Healer (ambiguous).
+  const buffCandidates = selectedHealers.filter(
+    (h) => h.signals.offensiveBuffCategoryCount >= BUFF_HEALER_OFFENSIVE_THRESHOLD,
+  );
 
-    // Decide Group Healer vs Shield Healer
-    const isShieldHealer = candidate.shieldScore > 15;
+  let buffHealerPlayerId: number | null = null;
+  if (buffCandidates.length === 1) {
+    buffHealerPlayerId = buffCandidates[0].signals.playerId;
+  } else if (buffCandidates.length > 1) {
+    const sorted = [...buffCandidates].sort(
+      (a, b) => b.signals.offensiveBuffCategoryCount - a.signals.offensiveBuffCategoryCount,
+    );
+    if (sorted[0].signals.offensiveBuffCategoryCount > sorted[1].signals.offensiveBuffCategoryCount) {
+      buffHealerPlayerId = sorted[0].signals.playerId;
+    }
+  }
+
+  for (const candidate of selectedHealers) {
+    let role: DetectedRole;
+    if (candidate.signals.playerId === buffHealerPlayerId) {
+      role = DetectedRole.BuffHealer;
+    } else if (candidate.shieldScore > 15) {
+      role = DetectedRole.ShieldHealer;
+    } else {
+      role = DetectedRole.GroupHealer;
+    }
 
     results.push({
       playerId: candidate.signals.playerId,
       playerName: candidate.signals.playerName,
-      role: isShieldHealer ? DetectedRole.ShieldHealer : DetectedRole.GroupHealer,
+      role,
       confidence: clampConfidence(candidate.score),
       signals: candidate.signals,
     });
@@ -220,6 +256,27 @@ function computeShieldHealerScore(signals: PlayerRoleSignals): number {
 
   // High absorb applied to others
   if (signals.shieldAppliedToOthers > 0) score += 10;
+
+  return score;
+}
+
+function computeBuffHealerScore(signals: PlayerRoleSignals): number {
+  let score = 0;
+
+  // Buff-healer-specific sets (Jorvuld’s, Master Architect, Powerful Assault)
+  const hasBuffHealerSet = signals.healerSetIds.some((id) => BUFF_HEALER_SET_IDS.has(id));
+  if (hasBuffHealerSet) score += 15;
+
+  // Buff diversity — buff healers apply many distinct buff types to others
+  if (signals.uniqueBuffTypesApplied >= 8) score += 15;
+  else if (signals.uniqueBuffTypesApplied >= 5) score += 10;
+
+  // Broad group coverage — buffing many distinct allies
+  if (signals.uniqueTargetsBuffed >= 10) score += 10;
+  else if (signals.uniqueTargetsBuffed >= 6) score += 5;
+
+  // Horn casts — buff healers commonly run Aggressive Horn
+  if (signals.hornCasts >= 2) score += 5;
 
   return score;
 }

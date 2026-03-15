@@ -4,13 +4,9 @@
 
 import { ArmorType, GearSlot, WeaponType } from '@/types/playerDetails';
 import {
-  ApplyBuffEvent,
-  ApplyDebuffEvent,
-  CastEvent,
   CombatantInfoEvent,
   DamageEvent,
   HealEvent,
-  RemoveDebuffEvent,
 } from '@/types/combatlogEvents';
 
 import { extractSignals, FightContext, RoleDetectionEvents } from '../extractSignals';
@@ -319,28 +315,30 @@ describe('extractSignals', () => {
   });
 
   describe('taunt signals', () => {
-    it('should count taunt ability casts', () => {
+    it('should count taunt debuff applications', () => {
       const events = emptyEvents({
-        castEvents: [
+        applyDebuffEvents: [
           {
             timestamp: FIGHT_START + 1000,
-            type: 'cast',
+            type: 'applydebuff',
             sourceID: PLAYER_TANK,
             sourceIsFriendly: true,
             targetID: BOSS_ID,
             targetIsFriendly: false,
-            abilityGameID: 28306, // Puncture
+            abilityGameID: 38254, // TAUNT debuff
             fight: FIGHT_ID,
+            extraAbilityGameID: 0,
           },
           {
             timestamp: FIGHT_START + 16000,
-            type: 'cast',
+            type: 'applydebuff',
             sourceID: PLAYER_TANK,
             sourceIsFriendly: true,
             targetID: BOSS_ID,
             targetIsFriendly: false,
-            abilityGameID: 38250, // Pierce Armor
+            abilityGameID: 38254, // TAUNT debuff
             fight: FIGHT_ID,
+            extraAbilityGameID: 0,
           },
         ],
       });
