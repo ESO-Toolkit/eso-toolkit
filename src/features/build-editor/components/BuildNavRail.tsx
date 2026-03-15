@@ -1,82 +1,40 @@
 /**
  * BuildNavRail
- * Desktop: progress-oriented navigation sidebar. No scroll-spy — just click-to-jump
- * with completion indicators. Avoids the misleading single-highlight problem
- * that scroll-spy causes in a 2-column bento grid.
- *
- * Mobile: compact bottom tab bar with icons + completion dots.
+ * Desktop: 56px vertical icon rail with scroll-spy active indicator.
+ * Mobile: bottom tab bar with horizontal icons.
  */
 
 import {
-  AccountTreeOutlined as SubclassingIcon,
   AutoFixHigh as ChampionIcon,
-  BarChartOutlined as StatsIcon,
   BookOutlined as GuideIcon,
-  CheckCircleOutlineRounded as CheckIcon,
+  CameraAltOutlined as ScreenshotIcon,
   Inventory2Outlined as EquipmentIcon,
   LocalDrinkOutlined as ConsumableIcon,
   PersonOutlined as GeneralIcon,
   PsychologyOutlined as PassiveIcon,
-  RadioButtonUncheckedRounded as EmptyIcon,
   SettingsOutlined as SettingsIcon,
   SportsEsportsOutlined as SkillsIcon,
   TuneOutlined as CharacterIcon,
 } from '@mui/icons-material';
-import { Box, ButtonBase, Tooltip, Typography, useMediaQuery } from '@mui/material';
+import { Box, ButtonBase, Tooltip, useMediaQuery } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import type { SectionProgressMap } from '../hooks/useSectionProgress';
 import { BE_TOKENS, type SectionId } from '../theme/buildEditorTokens';
 
-/* ── Section groups — mirror the bento grid spatial layout ────────────── */
-
-interface NavItem {
-  id: SectionId;
-  label: string;
-  icon: React.ReactNode;
-}
-
-interface NavGroup {
-  label: string;
-  items: NavItem[];
-}
-
-const NAV_GROUPS: NavGroup[] = [
-  {
-    label: 'Build',
-    items: [
-      { id: 'general', label: 'Identity', icon: <GeneralIcon sx={{ fontSize: 18 }} /> },
-      { id: 'character', label: 'Character', icon: <CharacterIcon sx={{ fontSize: 18 }} /> },
-      { id: 'subclassing', label: 'Subclassing', icon: <SubclassingIcon sx={{ fontSize: 18 }} /> },
-    ],
-  },
-  {
-    label: 'Loadout',
-    items: [
-      { id: 'equipment', label: 'Equipment', icon: <EquipmentIcon sx={{ fontSize: 18 }} /> },
-      { id: 'skills', label: 'Skills', icon: <SkillsIcon sx={{ fontSize: 18 }} /> },
-      { id: 'consumables', label: 'Consumables', icon: <ConsumableIcon sx={{ fontSize: 18 }} /> },
-    ],
-  },
-  {
-    label: 'Progression',
-    items: [
-      { id: 'champion', label: 'Champion', icon: <ChampionIcon sx={{ fontSize: 18 }} /> },
-      { id: 'passives', label: 'Passives', icon: <PassiveIcon sx={{ fontSize: 18 }} /> },
-      { id: 'stats', label: 'Stats', icon: <StatsIcon sx={{ fontSize: 18 }} /> },
-    ],
-  },
-  {
-    label: 'Details',
-    items: [
-      { id: 'guide', label: 'Guide & Media', icon: <GuideIcon sx={{ fontSize: 18 }} /> },
-      { id: 'settings', label: 'Settings', icon: <SettingsIcon sx={{ fontSize: 18 }} /> },
-    ],
-  },
+const NAV_ITEMS: { id: SectionId; label: string; icon: React.ReactNode }[] = [
+  { id: 'general', label: 'Identity', icon: <GeneralIcon sx={{ fontSize: 20 }} /> },
+  { id: 'character', label: 'Character', icon: <CharacterIcon sx={{ fontSize: 20 }} /> },
+  { id: 'equipment', label: 'Equipment', icon: <EquipmentIcon sx={{ fontSize: 20 }} /> },
+  { id: 'skills', label: 'Skills', icon: <SkillsIcon sx={{ fontSize: 20 }} /> },
+  { id: 'champion', label: 'Champion', icon: <ChampionIcon sx={{ fontSize: 20 }} /> },
+  { id: 'consumables', label: 'Consumables', icon: <ConsumableIcon sx={{ fontSize: 20 }} /> },
+  { id: 'passives', label: 'Passives', icon: <PassiveIcon sx={{ fontSize: 20 }} /> },
+  { id: 'guide', label: 'Guide', icon: <GuideIcon sx={{ fontSize: 20 }} /> },
+  { id: 'screenshots', label: 'Screenshots', icon: <ScreenshotIcon sx={{ fontSize: 20 }} /> },
+  { id: 'settings', label: 'Settings', icon: <SettingsIcon sx={{ fontSize: 20 }} /> },
 ];
-
-const ALL_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
 interface BuildNavRailProps {
   progress: SectionProgressMap;
@@ -86,83 +44,80 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [activeSection, setActiveSection] = useState<SectionId>('general');
+
+  // Scroll-spy: observe which section is in view
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const sectionId = entry.target.id.replace('section-', '') as SectionId;
+            if (BE_TOKENS.sectionIds.includes(sectionId)) {
+              setActiveSection(sectionId);
+            }
+          }
+        }
+      },
+      { rootMargin: '-20% 0px -60% 0px', threshold: 0.1 },
+    );
+
+    BE_TOKENS.sectionIds.forEach((id) => {
+      const el = document.getElementById(`section-${id}`);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   const scrollToSection = useCallback((sectionId: SectionId) => {
     const el = document.getElementById(`section-${sectionId}`);
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
-  const railBg = isDark ? alpha('#08121a', 0.92) : alpha('#f5f8fc', 0.96);
-  const borderColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
+  const railBg = isDark ? alpha('#0b1220', 0.9) : alpha('#f8fafc', 0.95);
+  const borderColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
 
-  // ── Mobile: bottom bar ──────────────────────────────────────────────────
+  // ── Mobile: bottom bar ──
   if (isMobile) {
-    const fadeBg = isDark ? '8, 18, 26' : '245, 248, 252';
     return (
       <nav
+        role="tablist"
         aria-label="Build editor sections"
         style={{
           position: 'fixed',
           bottom: 0,
           left: 0,
           right: 0,
-          // Height + iOS home indicator clearance
-          height: `calc(${BE_TOKENS.navRail.mobileHeight}px + env(safe-area-inset-bottom, 0px))`,
+          height: BE_TOKENS.navRail.mobileHeight,
           background: railBg,
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           borderTop: `1px solid ${borderColor}`,
           display: 'flex',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           justifyContent: 'space-around',
-          // Pad icons up above the home indicator bar
-          paddingTop: `${(BE_TOKENS.navRail.mobileHeight - 36) / 2}px`,
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          paddingLeft: 'max(4px, env(safe-area-inset-left, 0px))',
-          paddingRight: 'max(4px, env(safe-area-inset-right, 0px))',
+          padding: '0 4px',
           zIndex: 1200,
           overflowX: 'auto',
-          scrollbarWidth: 'none',
         }}
       >
-        {/* Scroll fade indicators */}
-        <Box
-          sx={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            width: 24,
-            height: `calc(${BE_TOKENS.navRail.mobileHeight}px + env(safe-area-inset-bottom, 0px))`,
-            background: `linear-gradient(to right, rgba(${fadeBg}, 0.9), transparent)`,
-            pointerEvents: 'none',
-            zIndex: 1201,
-          }}
-        />
-        <Box
-          sx={{
-            position: 'fixed',
-            bottom: 0,
-            right: 0,
-            width: 24,
-            height: `calc(${BE_TOKENS.navRail.mobileHeight}px + env(safe-area-inset-bottom, 0px))`,
-            background: `linear-gradient(to left, rgba(${fadeBg}, 0.9), transparent)`,
-            pointerEvents: 'none',
-            zIndex: 1201,
-          }}
-        />
-        {ALL_ITEMS.map((item) => {
-          const done = progress[item.id];
+        {NAV_ITEMS.map((item) => {
+          const active = activeSection === item.id;
           return (
             <Tooltip key={item.id} title={item.label} placement="top">
               <ButtonBase
+                role="tab"
+                aria-selected={active}
                 aria-label={item.label}
                 onClick={() => scrollToSection(item.id)}
                 sx={{
-                  color: done
-                    ? 'var(--be-accent, #38bdf8)'
-                    : isDark
-                      ? 'rgba(255,255,255,0.45)'
-                      : 'rgba(0,0,0,0.38)',
+                  background: active
+                    ? isDark
+                      ? 'rgba(56, 189, 248, 0.12)'
+                      : 'rgba(15, 23, 42, 0.07)'
+                    : 'transparent',
+                  color: active ? 'var(--be-accent, #38bdf8)' : 'text.disabled',
                   borderRadius: 1.5,
                   p: 0.75,
                   minWidth: 36,
@@ -170,25 +125,22 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: 0.25,
-                  transition: 'color 0.2s',
+                  transition: 'all 0.15s',
                   position: 'relative',
                   flexShrink: 0,
-                  '&:hover': {
-                    color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.65)',
-                  },
                 }}
               >
                 {item.icon}
-                {done && (
+                {progress[item.id] && (
                   <Box
                     sx={{
                       position: 'absolute',
-                      top: 2,
-                      right: 2,
-                      width: 6,
-                      height: 6,
+                      top: 4,
+                      right: 4,
+                      width: 5,
+                      height: 5,
                       borderRadius: '50%',
-                      background: 'var(--be-accent, #38bdf8)',
+                      background: 'var(--be-accent, #22c55e)',
                     }}
                   />
                 )}
@@ -200,20 +152,23 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
     );
   }
 
-  // ── Desktop: grouped progress navigation ────────────────────────────────
+  // ── Desktop: vertical rail ──
   return (
     <nav
+      role="tablist"
       aria-label="Build editor sections"
       style={{
         width: BE_TOKENS.navRail.width,
         flexShrink: 0,
         background: railBg,
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         borderRight: `1px solid ${borderColor}`,
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
         padding: '12px 0',
+        gap: 2,
         position: 'sticky',
         top: 0,
         alignSelf: 'flex-start',
@@ -221,127 +176,71 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
         overflowY: 'auto',
       }}
     >
-      {NAV_GROUPS.map((group, groupIdx) => (
-        <React.Fragment key={group.label}>
-          {/* Group divider */}
-          {groupIdx > 0 && (
-            <Box
+      {NAV_ITEMS.map((item) => {
+        const active = activeSection === item.id;
+        return (
+          <Tooltip key={item.id} title={item.label} placement="right">
+            <ButtonBase
+              role="tab"
+              aria-selected={active}
+              aria-label={item.label}
+              onClick={() => scrollToSection(item.id)}
               sx={{
-                height: '1px',
-                mx: 1.5,
-                my: 0.75,
-                background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                width: 40,
+                height: 40,
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+                background: active
+                  ? isDark
+                    ? 'rgba(56, 189, 248, 0.15)'
+                    : 'rgba(15, 23, 42, 0.08)'
+                  : 'transparent',
+                color: active
+                  ? 'var(--be-accent, #38bdf8)'
+                  : isDark
+                    ? 'rgba(255,255,255,0.4)'
+                    : 'rgba(0,0,0,0.35)',
+                transition: 'all 0.15s',
+                '&:hover': {
+                  background: isDark ? 'rgba(56, 189, 248, 0.1)' : 'rgba(15, 23, 42, 0.06)',
+                  color: 'var(--be-accent, #38bdf8)',
+                },
               }}
-            />
-          )}
-
-          {/* Group label */}
-          <Typography
-            sx={{
-              fontSize: 10,
-              fontWeight: 600,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              textTransform: 'uppercase',
-              letterSpacing: 1.2,
-              color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.45)',
-              px: 1.5,
-              pt: groupIdx === 0 ? 0.5 : 0.75,
-              pb: 0.5,
-              userSelect: 'none',
-            }}
-          >
-            {group.label}
-          </Typography>
-
-          {/* Section items */}
-          {group.items.map((item) => {
-            const done = progress[item.id];
-
-            return (
-              <ButtonBase
-                key={item.id}
-                aria-label={`${item.label}${done ? ' (complete)' : ''}`}
-                onClick={() => scrollToSection(item.id)}
-                sx={{
-                  width: 'calc(100% - 12px)',
-                  mx: '6px',
-                  minHeight: 34,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  px: 1,
-                  py: 0.4,
-                  borderRadius: 1.5,
-                  justifyContent: 'flex-start',
-
-                  background: 'transparent',
-
-                  color: isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.58)',
-
-                  transition: 'all 0.15s ease',
-
-                  '&:hover': {
-                    background: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-                    color: isDark ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.80)',
-                  },
-                }}
-              >
-                {/* Section icon */}
+            >
+              {item.icon}
+              {active && (
                 <Box
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    width: 22,
-                    height: 22,
+                    position: 'absolute',
+                    left: 0,
+                    top: '20%',
+                    bottom: '20%',
+                    width: 3,
+                    borderRadius: '0 2px 2px 0',
+                    background: 'var(--be-accent, #38bdf8)',
                   }}
-                >
-                  {item.icon}
-                </Box>
-
-                {/* Label */}
-                <Typography
-                  component="span"
+                />
+              )}
+              {progress[item.id] && !active && (
+                <Box
                   sx={{
-                    fontSize: 11.5,
-                    fontWeight: 500,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    letterSpacing: 0.15,
-                    lineHeight: 1.2,
-                    flex: 1,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                    position: 'absolute',
+                    top: 4,
+                    right: 4,
+                    width: 5,
+                    height: 5,
+                    borderRadius: '50%',
+                    background: 'var(--be-accent, #22c55e)',
                   }}
-                >
-                  {item.label}
-                </Typography>
-
-                {/* Completion indicator */}
-                {done ? (
-                  <CheckIcon
-                    sx={{
-                      fontSize: 15,
-                      color: 'var(--be-accent, #38bdf8)',
-                      opacity: 0.8,
-                      flexShrink: 0,
-                    }}
-                  />
-                ) : (
-                  <EmptyIcon
-                    sx={{
-                      fontSize: 15,
-                      color: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
-                      flexShrink: 0,
-                    }}
-                  />
-                )}
-              </ButtonBase>
-            );
-          })}
-        </React.Fragment>
-      ))}
+                />
+              )}
+            </ButtonBase>
+          </Tooltip>
+        );
+      })}
     </nav>
   );
 };

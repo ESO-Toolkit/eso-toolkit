@@ -120,7 +120,18 @@ export interface EquipSlotDef {
   slot: number;
   name: string;
   category: 'apparel' | 'accessories' | 'weapons';
-  slotType: 'head' | 'chest' | 'shoulders' | 'waist' | 'hand' | 'legs' | 'feet' | 'neck' | 'ring' | 'weapon' | 'offhand';
+  slotType:
+    | 'head'
+    | 'chest'
+    | 'shoulders'
+    | 'waist'
+    | 'hand'
+    | 'legs'
+    | 'feet'
+    | 'neck'
+    | 'ring'
+    | 'weapon'
+    | 'offhand';
 }
 
 export const EQUIP_SLOTS: EquipSlotDef[] = [

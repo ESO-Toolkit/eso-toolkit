@@ -1,32 +1,20 @@
 /**
  * Champion Section — three trees (Warfare, Fitness, Craft).
- * Each tree shows 4 slottable CP perks and passive star counters.
+ * Enhanced CP slots as GlassPanel cards with AttributeBar-style passive counters.
  */
 
-import {
-  Box,
-  ButtonBase,
-  Divider,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Box, ButtonBase, Divider, Stack, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React, { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
-import {
-  CHAMPION_POINT_ABILITIES,
-  ChampionPointTree,
-} from '@/types/champion-points';
+import { CHAMPION_POINT_ABILITIES, ChampionPointTree } from '@/types/champion-points';
 
 import { CP_PASSIVES_BY_TREE, type CPPassive } from '../../data/championPassives';
-import {
-  setChampionPassive,
-  setChampionTreeSlot,
-} from '../../store/buildEditorSlice';
+import { setChampionPassive, setChampionTreeSlot } from '../../store/buildEditorSlice';
 import type { BuildChampionPoints } from '../../types/build.types';
+import { GlassPanel } from '../primitives/GlassPanel';
 
 // ─── Tree config ──────────────────────────────────────────────────────────────
 
@@ -43,8 +31,6 @@ const TREES: TreeConfig[] = [
   { key: 'craft', label: 'Craft', color: '#66bb6a', cpTree: ChampionPointTree.Craft },
 ];
 
-// ─── Slottable perk data per tree ─────────────────────────────────────────────
-
 const getSlottableByTree = (
   tree: ChampionPointTree,
 ): NonNullable<(typeof CHAMPION_POINT_ABILITIES)[keyof typeof CHAMPION_POINT_ABILITIES]>[] =>
@@ -52,7 +38,7 @@ const getSlottableByTree = (
     (e) => e != null && e.tree === tree,
   ) as NonNullable<(typeof CHAMPION_POINT_ABILITIES)[keyof typeof CHAMPION_POINT_ABILITIES]>[];
 
-// ─── Champion Slot (active perk) ─────────────────────────────────────────────
+// ─── Champion Slot ────────────────────────────────────────────────────────────
 
 interface CPSlotProps {
   treeKey: keyof BuildChampionPoints;
@@ -66,7 +52,8 @@ const CPSlot: React.FC<CPSlotProps> = ({ treeKey, slotIndex, cpId, treeColor, op
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const entry = cpId != null ? CHAMPION_POINT_ABILITIES[cpId as keyof typeof CHAMPION_POINT_ABILITIES] : null;
+  const entry =
+    cpId != null ? CHAMPION_POINT_ABILITIES[cpId as keyof typeof CHAMPION_POINT_ABILITIES] : null;
 
   const handleClick = (): void => {
     if (!options.length) return;
@@ -77,38 +64,51 @@ const CPSlot: React.FC<CPSlotProps> = ({ treeKey, slotIndex, cpId, treeColor, op
   };
 
   return (
-    <Tooltip title={entry ? entry.name : 'Click to cycle through champion perks'}>
+    <Tooltip title={entry ? entry.name : 'Click to cycle champion perks'}>
       <Box
         onClick={handleClick}
         sx={{
           flex: '0 0 calc(50% - 4px)',
-          minHeight: 52,
+          minHeight: 48,
           borderRadius: 2,
-          border: `1.5px dashed ${cpId ? treeColor : isDark ? alpha('#fff', 0.18) : alpha('#000', 0.15)}`,
+          border: `1.5px ${cpId ? 'solid' : 'dashed'} ${cpId ? treeColor : isDark ? alpha('#fff', 0.15) : alpha('#000', 0.12)}`,
           background: cpId
-            ? isDark ? alpha(treeColor, 0.1) : alpha(treeColor, 0.06)
-            : isDark ? alpha('#fff', 0.02) : alpha('#000', 0.02),
+            ? isDark
+              ? alpha(treeColor, 0.1)
+              : alpha(treeColor, 0.06)
+            : isDark
+              ? alpha('#fff', 0.02)
+              : alpha('#000', 0.02),
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          transition: 'all 0.14s',
+          transition: 'all 0.15s',
           p: 1,
           '&:hover': {
             background: cpId
-              ? isDark ? alpha(treeColor, 0.18) : alpha(treeColor, 0.1)
-              : isDark ? alpha('#fff', 0.06) : alpha('#000', 0.04),
+              ? isDark
+                ? alpha(treeColor, 0.18)
+                : alpha(treeColor, 0.1)
+              : isDark
+                ? alpha('#fff', 0.05)
+                : alpha('#000', 0.04),
             borderStyle: 'solid',
           },
         }}
       >
         {entry ? (
-          <Typography variant="caption" fontWeight={700} color={treeColor} sx={{ textAlign: 'center', lineHeight: 1.3 }}>
+          <Typography
+            variant="caption"
+            fontWeight={700}
+            color={treeColor}
+            sx={{ textAlign: 'center', lineHeight: 1.3, fontSize: 11 }}
+          >
             {entry.name}
           </Typography>
         ) : (
-          <Typography variant="caption" color="text.disabled">
-            Empty Slot
+          <Typography variant="caption" color="text.disabled" sx={{ fontSize: 11 }}>
+            Empty
           </Typography>
         )}
       </Box>
@@ -145,8 +145,8 @@ const PassiveRow: React.FC<PassiveRowProps> = ({ treeKey, passive, points }) => 
         display: 'flex',
         alignItems: 'center',
         gap: 1,
-        py: 0.75,
-        px: 1.25,
+        py: 0.5,
+        px: 1,
         borderRadius: 1.5,
         background: isDark ? alpha('#fff', 0.02) : alpha('#000', 0.015),
         '&:hover': {
@@ -155,14 +155,14 @@ const PassiveRow: React.FC<PassiveRowProps> = ({ treeKey, passive, points }) => 
       }}
     >
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="caption" fontWeight={600} display="block" noWrap>
+        <Typography variant="caption" fontWeight={600} display="block" noWrap sx={{ fontSize: 11 }}>
           {passive.name}
         </Typography>
         <Typography
           variant="caption"
           color="text.disabled"
           display="block"
-          sx={{ fontSize: 10, whiteSpace: 'normal', lineHeight: 1.4 }}
+          sx={{ fontSize: 9, whiteSpace: 'normal', lineHeight: 1.3 }}
         >
           {passive.description}
         </Typography>
@@ -172,12 +172,12 @@ const PassiveRow: React.FC<PassiveRowProps> = ({ treeKey, passive, points }) => 
         <ButtonBase
           onClick={() => adjust(-1)}
           disabled={points === 0}
+          aria-label={`Decrease ${passive.name}`}
           sx={{
             width: 22,
             height: 22,
             borderRadius: '6px',
             background: isDark ? alpha('#fff', 0.07) : alpha('#000', 0.07),
-            color: 'text.primary',
             fontWeight: 700,
             fontSize: 13,
             '&:disabled': { opacity: 0.3 },
@@ -188,11 +188,12 @@ const PassiveRow: React.FC<PassiveRowProps> = ({ treeKey, passive, points }) => 
         <Typography
           variant="caption"
           sx={{
-            minWidth: 22,
+            minWidth: 20,
             textAlign: 'center',
             fontWeight: 700,
             fontVariantNumeric: 'tabular-nums',
             color: points > 0 ? 'text.primary' : 'text.disabled',
+            fontSize: 11,
           }}
         >
           {points}
@@ -200,6 +201,7 @@ const PassiveRow: React.FC<PassiveRowProps> = ({ treeKey, passive, points }) => 
         <ButtonBase
           onClick={() => adjust(1)}
           disabled={points === passive.maxPoints}
+          aria-label={`Increase ${passive.name}`}
           sx={{
             width: 22,
             height: 22,
@@ -218,7 +220,7 @@ const PassiveRow: React.FC<PassiveRowProps> = ({ treeKey, passive, points }) => 
   );
 };
 
-// ─── Tree Panel ───────────────────────────────────────────────────────────────
+// ─── Tree Panel ──────────────────────────────────────────────────────────────
 
 interface TreePanelProps {
   tree: TreeConfig;
@@ -233,10 +235,14 @@ const TreePanel: React.FC<TreePanelProps> = ({ tree }) => {
   if (!cpTree) return null;
 
   return (
-    <Stack spacing={2}>
-      {/* 4 Slottable champion perk slots */}
+    <Stack spacing={1.5}>
+      {/* Champion Slots */}
       <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, mb: 1, display: 'block' }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ fontWeight: 700, mb: 0.75, display: 'block', fontSize: 11 }}
+        >
           Champion Slots
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -253,15 +259,15 @@ const TreePanel: React.FC<TreePanelProps> = ({ tree }) => {
         </Box>
       </Box>
 
-      <Typography variant="caption" color="text.disabled" sx={{ fontSize: 10 }}>
-        Click a slot to cycle through available champion perks
-      </Typography>
-
-      <Divider sx={{ opacity: 0.4 }} />
+      <Divider sx={{ opacity: 0.3 }} />
 
       {/* Passive stars */}
       <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, mb: 0.75, display: 'block' }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ fontWeight: 700, mb: 0.5, display: 'block', fontSize: 11 }}
+        >
           Passive Stars
         </Typography>
         <Stack spacing={0.25}>
@@ -279,7 +285,7 @@ const TreePanel: React.FC<TreePanelProps> = ({ tree }) => {
   );
 };
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Main Component ──────────────────────────────────────────────────────────
 
 export const ChampionSection: React.FC = () => {
   const [activeTree, setActiveTree] = useState<keyof BuildChampionPoints>('warfare');
@@ -289,39 +295,43 @@ export const ChampionSection: React.FC = () => {
   const currentTree = TREES.find((t) => t.key === activeTree)!;
 
   return (
-    <Stack spacing={2}>
-      {/* Tree Tabs */}
-      <Box sx={{ display: 'flex', gap: 1 }}>
+    <Stack spacing={1.5}>
+      {/* Tree tabs */}
+      <Box sx={{ display: 'flex', gap: 0.75 }}>
         {TREES.map((t) => (
-          <Box
+          <GlassPanel
             key={t.key}
-            onClick={() => setActiveTree(t.key)}
             sx={{
               flex: 1,
-              py: 1,
-              px: 1.5,
-              borderRadius: 2,
+              py: 0.75,
+              px: 1,
               cursor: 'pointer',
               textAlign: 'center',
-              border: `2px solid ${activeTree === t.key ? t.color : 'transparent'}`,
+              border: `2px solid ${activeTree === t.key ? t.color : 'transparent'} !important`,
               background:
                 activeTree === t.key
-                  ? isDark ? alpha(t.color, 0.15) : alpha(t.color, 0.1)
-                  : isDark ? alpha('#fff', 0.03) : alpha('#000', 0.02),
+                  ? isDark
+                    ? `${alpha(t.color, 0.15)} !important`
+                    : `${alpha(t.color, 0.1)} !important`
+                  : undefined,
               transition: 'all 0.15s',
               '&:hover': {
-                background: isDark ? alpha(t.color, 0.1) : alpha(t.color, 0.07),
+                background: isDark
+                  ? `${alpha(t.color, 0.1)} !important`
+                  : `${alpha(t.color, 0.07)} !important`,
               },
             }}
+            component="button"
           >
             <Typography
               variant="caption"
               fontWeight={700}
-              sx={{ color: activeTree === t.key ? t.color : 'text.secondary' }}
+              sx={{ color: activeTree === t.key ? t.color : 'text.secondary', fontSize: 12 }}
+              onClick={() => setActiveTree(t.key)}
             >
               {t.label}
             </Typography>
-          </Box>
+          </GlassPanel>
         ))}
       </Box>
 

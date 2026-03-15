@@ -1,49 +1,32 @@
 /**
- * General Section — build name, description, class, role, game mode, races, addon import.
+ * General Section — build identity: class, role, game mode, races, description, addon import.
+ * Uses IconPickerGrid for class/role/gameMode, Chip grid for races.
  */
 
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Alert, Box, Button, Chip, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
 
-import {
-  ESO_CLASSES,
-  ESO_GAME_MODES,
-  ESO_RACES,
-  ESO_ROLES,
-} from '../../data/esoStaticData';
+import { ESO_CLASSES, ESO_GAME_MODES, ESO_RACES, ESO_ROLES } from '../../data/esoStaticData';
 import {
   setAddonImportString,
   setBuildClass,
   setBuildDescription,
   setBuildGameMode,
-  setBuildName,
   setBuildRaces,
   setBuildRole,
 } from '../../store/buildEditorSlice';
+import type { CombatRole, ESOClass, GameMode } from '../../types/build.types';
+import { IconPickerGrid } from '../primitives/IconPickerGrid';
 
 export const GeneralSection: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { build } = useSelector((s: RootState) => s.buildEditor);
-
-  const panelBg = isDark ? alpha('#0f172a', 0.9) : alpha('#ffffff', 0.95);
-  const borderColor = isDark ? alpha('#38bdf8', 0.18) : alpha('#0f172a', 0.12);
 
   const toggleRace = (raceId: string): void => {
     const next = build.races.includes(raceId)
@@ -53,34 +36,21 @@ export const GeneralSection: React.FC = () => {
   };
 
   return (
-    <Stack spacing={3}>
-      {/* Build Name */}
-      <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}>
-          Build Name <Box component="span" color="error.main">*</Box>
-        </Typography>
-        <TextField
-          fullWidth
-          size="small"
-          id="build-name"
-          placeholder="Build Name"
-          value={build.name}
-          onChange={(e) => dispatch(setBuildName(e.target.value))}
-          inputProps={{ maxLength: 80 }}
-        />
-      </Box>
-
+    <Stack spacing={2.5}>
       {/* Short description */}
       <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}>
-          Short description
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}
+        >
+          Short Description
         </Typography>
         <TextField
           fullWidth
           multiline
-          minRows={3}
+          minRows={2}
           size="small"
-          id="build-description"
           placeholder="A short introduction text"
           value={build.shortDescription}
           onChange={(e) => dispatch(setBuildDescription(e.target.value))}
@@ -88,86 +58,52 @@ export const GeneralSection: React.FC = () => {
         />
       </Box>
 
-      {/* Class */}
-      <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}>
-          Class
-        </Typography>
-        <Select
-          fullWidth
-          size="small"
-          value={build.esoClass}
-          onChange={(e) => dispatch(setBuildClass(e.target.value as typeof build.esoClass))}
-        >
-          {ESO_CLASSES.map((c) => (
-            <MenuItem key={c.id} value={c.id}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box
-                  sx={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    background: c.color,
-                    flexShrink: 0,
-                  }}
-                />
-                {c.label}
-              </Box>
-            </MenuItem>
-          ))}
-        </Select>
-      </Box>
+      {/* Class — IconPickerGrid */}
+      <IconPickerGrid
+        label="Class"
+        options={ESO_CLASSES.map((c) => ({
+          id: c.id,
+          label: c.label,
+          color: c.color,
+        }))}
+        value={build.esoClass}
+        onChange={(id) => dispatch(setBuildClass(id as ESOClass))}
+        columns={4}
+      />
 
-      {/* Combat Role */}
-      <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}>
-          Combat Role
-        </Typography>
-        <Select
-          fullWidth
-          size="small"
-          value={build.role}
-          onChange={(e) => dispatch(setBuildRole(e.target.value as typeof build.role))}
-        >
-          {ESO_ROLES.map((r) => (
-            <MenuItem key={r.id} value={r.id}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box
-                  sx={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    background: r.color,
-                    flexShrink: 0,
-                  }}
-                />
-                {r.label}
-              </Box>
-            </MenuItem>
-          ))}
-        </Select>
-      </Box>
+      {/* Combat Role — IconPickerGrid */}
+      <IconPickerGrid
+        label="Combat Role"
+        options={ESO_ROLES.map((r) => ({
+          id: r.id,
+          label: r.shortLabel,
+          color: r.color,
+          description: r.label,
+        }))}
+        value={build.role}
+        onChange={(id) => dispatch(setBuildRole(id as CombatRole))}
+        columns={5}
+      />
 
-      {/* Game Mode */}
-      <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}>
-          Game Mode
-        </Typography>
-        <Select
-          fullWidth
-          size="small"
-          value={build.gameMode}
-          onChange={(e) => dispatch(setBuildGameMode(e.target.value as typeof build.gameMode))}
-        >
-          {ESO_GAME_MODES.map((m) => (
-            <MenuItem key={m.id} value={m.id}>{m.label}</MenuItem>
-          ))}
-        </Select>
-      </Box>
+      {/* Game Mode — IconPickerGrid */}
+      <IconPickerGrid
+        label="Game Mode"
+        options={ESO_GAME_MODES.map((m) => ({
+          id: m.id,
+          label: m.label,
+        }))}
+        value={build.gameMode}
+        onChange={(id) => dispatch(setBuildGameMode(id as GameMode))}
+        columns={3}
+      />
 
-      {/* Optimal Races */}
+      {/* Optimal Races — Chip grid */}
       <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 1, display: 'block' }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ fontWeight: 600, mb: 0.75, display: 'block' }}
+        >
           Optimal Races
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
@@ -195,36 +131,48 @@ export const GeneralSection: React.FC = () => {
       {/* Addon Import */}
       <Box
         sx={{
-          background: panelBg,
-          border: `1px solid ${borderColor}`,
+          background: isDark ? alpha('#0f172a', 0.6) : alpha('#f8fafc', 0.7),
+          border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
           borderRadius: 2,
           p: 2,
         }}
       >
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}
+        >
           Import from addon string
         </Typography>
-        <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mb: 1.5 }}>
-          Import a build from <strong>Combat Metrics</strong> or <strong>Caro&apos;s Skill Point Saver</strong> addon export strings.
+        <Typography
+          variant="caption"
+          color="text.disabled"
+          sx={{ display: 'block', mb: 1.5, fontSize: 10 }}
+        >
+          Import from <strong>Combat Metrics</strong> or{' '}
+          <strong>Caro&apos;s Skill Point Saver</strong>.
         </Typography>
         <Stack direction="row" spacing={1} alignItems="flex-start">
           <TextField
             fullWidth
             size="small"
-            id="addon-import"
             placeholder="Addon export string"
             value={build.addonImportString}
             onChange={(e) => dispatch(setAddonImportString(e.target.value))}
             multiline
             minRows={2}
           />
-          <Tooltip title={build.addonImportString.length < 10 ? 'Paste an export string first' : 'Load build'}>
+          <Tooltip
+            title={
+              build.addonImportString.length < 10 ? 'Paste an export string first' : 'Load build'
+            }
+          >
             <Box>
               <Button
                 variant="contained"
                 size="small"
                 disabled={build.addonImportString.length < 10}
-                sx={{ minWidth: 64, height: 36, alignSelf: 'flex-start', mt: 0.5 }}
+                sx={{ minWidth: 64, height: 36, mt: 0.5 }}
               >
                 Load
               </Button>
@@ -232,7 +180,7 @@ export const GeneralSection: React.FC = () => {
           </Tooltip>
         </Stack>
         <Alert severity="info" sx={{ mt: 1.5, py: 0.25, fontSize: 11 }}>
-          Addon import is coming soon — manually configure your build using the tabs below.
+          Addon import is coming soon — configure your build using the sections on this page.
         </Alert>
       </Box>
     </Stack>

@@ -27,47 +27,38 @@ const ShellInner: React.FC = () => {
       sx={{
         position: 'relative',
         borderRadius: 3,
-        border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.10)'}`,
-        backgroundColor: isDark ? 'rgb(8, 14, 26)' : 'rgb(245, 248, 252)',
-        // Multi-point aurora mesh — class accent bleeds from 3 positions for depth
-        backgroundImage: isDark
-          ? [
-              'radial-gradient(ellipse at 50% 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.12) 0%, transparent 45%)',
-              'radial-gradient(ellipse at 88% 12%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.06) 0%, transparent 35%)',
-              'radial-gradient(ellipse at 12% 18%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.04) 0%, transparent 30%)',
-            ].join(', ')
-          : [
-              'radial-gradient(ellipse at 50% 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.08) 0%, transparent 45%)',
-              'radial-gradient(ellipse at 85% 10%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.04) 0%, transparent 35%)',
-            ].join(', '),
-        overflow: 'clip',
+        border: `1px solid ${isDark ? `rgba(${classTheme.accentRgb}, 0.12)` : 'rgba(15, 23, 42, 0.1)'}`,
+        background: isDark ? 'rgba(15, 23, 42, 0.6)' : 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(16px)',
+        overflow: 'hidden',
         minHeight: 600,
-        // Class-colored accent line at the top edge
+        // Subtle class-colored top border glow
         '&::before': {
           content: '""',
           position: 'absolute',
           top: 0,
-          left: 0,
-          right: 0,
-          height: '3px',
+          left: '10%',
+          right: '10%',
+          height: 1,
           background: classTheme.gradient,
-          opacity: 0.9,
+          opacity: 0.6,
           pointerEvents: 'none',
-          zIndex: 2,
         },
-        // Soft ambient bloom radiating below the accent line
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '180px',
-          background:
-            'linear-gradient(to bottom, rgba(var(--be-accent-rgb, 56, 189, 248), 0.08) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.02) 60%, transparent 100%)',
-          pointerEvents: 'none',
-          zIndex: 0,
-        },
+        // Corner accent glow
+        '&::after': isDark
+          ? {
+              content: '""',
+              position: 'absolute',
+              top: -60,
+              right: -40,
+              width: 200,
+              height: 200,
+              borderRadius: '50%',
+              background: `radial-gradient(ellipse, rgba(${classTheme.accentRgb}, 0.08) 0%, transparent 70%)`,
+              pointerEvents: 'none',
+              transition: 'background 0.5s',
+            }
+          : {},
       }}
       data-class={esoClass}
     >

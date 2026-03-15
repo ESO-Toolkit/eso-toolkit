@@ -7,18 +7,18 @@
 export const BE_TOKENS = {
   // Glass panel
   glass: {
-    bg: 'rgba(15, 23, 42, 0.84)',
-    bgLight: 'rgba(255, 255, 255, 0.84)',
-    border: 'rgba(255, 255, 255, 0.09)',
-    borderLight: 'rgba(15, 23, 42, 0.13)',
-    blur: 16,
-    shadow: '0 8px 32px rgba(0, 0, 0, 0.32), 0 1px 0 rgba(255, 255, 255, 0.05) inset',
-    shadowLight: '0 4px 24px rgba(15, 23, 42, 0.10), 0 1px 0 rgba(255, 255, 255, 0.80) inset',
+    bg: 'rgba(15, 23, 42, 0.45)',
+    bgLight: 'rgba(255, 255, 255, 0.55)',
+    border: 'rgba(255, 255, 255, 0.08)',
+    borderLight: 'rgba(15, 23, 42, 0.1)',
+    blur: 12,
+    shadow: '0 8px 32px rgba(0, 0, 0, 0.18)',
+    shadowLight: '0 4px 16px rgba(15, 23, 42, 0.06)',
   },
 
   // Nav rail
   navRail: {
-    width: 164,
+    width: 56,
     mobileHeight: 56,
   },
 
@@ -51,23 +51,6 @@ export const BE_TOKENS = {
     stamina: '#4caf82',
   },
 
-  // Shared glass input field styling — gives inputs a subtle recessed "well"
-  // so they're visually distinct from the panel background at rest.
-  input: {
-    dark: {
-      bg: 'rgba(0, 0, 0, 0.22)',
-      border: 'rgba(255, 255, 255, 0.08)',
-      hoverBorder: 'rgba(255, 255, 255, 0.18)',
-      placeholder: 'rgba(255, 255, 255, 0.28)',
-    },
-    light: {
-      bg: 'rgba(0, 0, 0, 0.04)',
-      border: 'rgba(0, 0, 0, 0.10)',
-      hoverBorder: 'rgba(0, 0, 0, 0.18)',
-      placeholder: 'rgba(0, 0, 0, 0.36)',
-    },
-  },
-
   // Animation durations
   duration: {
     fast: 0.15,
@@ -75,18 +58,17 @@ export const BE_TOKENS = {
     slow: 0.4,
   },
 
-  // Section IDs — order matches the bento grid render order in BuildEditorLayout
+  // Section IDs for scroll-spy
   sectionIds: [
     'general',
     'character',
-    'subclassing',
     'equipment',
     'skills',
-    'consumables',
     'champion',
+    'consumables',
     'passives',
-    'stats',
     'guide',
+    'screenshots',
     'settings',
   ] as const,
 } as const;

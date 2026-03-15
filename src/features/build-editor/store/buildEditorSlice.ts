@@ -200,10 +200,7 @@ export const buildEditorSlice = createSlice({
         state.isDirty = true;
       }
     },
-    setGearSlot(
-      state,
-      action: PayloadAction<{ slot: number; itemId: number | null }>,
-    ) {
+    setGearSlot(state, action: PayloadAction<{ slot: number; itemId: number | null }>) {
       const setup = state.build.setups[state.activeSetupIndex];
       if (!setup) return;
       if (action.payload.itemId === null) {

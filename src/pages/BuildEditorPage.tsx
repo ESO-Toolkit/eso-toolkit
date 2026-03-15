@@ -1,20 +1,23 @@
 /**
  * Build Editor Page
- * Full-page wrapper for the ESO build editor with hero banner and layout.
+ * Simplified wrapper — delegates to BuildEditorShell which provides
+ * class theming, scoped background, and the bento grid layout.
  */
 
-import { Box, Container, Typography } from '@mui/material';
+import { Box, Container } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
-import { BuildEditorLayout } from '@features/build-editor/components/BuildEditorLayout';
+import { BuildEditorShell } from '@features/build-editor/components/BuildEditorShell';
+import { useClassTheme } from '@features/build-editor/hooks/useClassTheme';
 
-export const BuildEditorPage: React.FC = () => {
+const BuildEditorPageInner: React.FC = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isDirty = useSelector((s: RootState) => s.buildEditor.isDirty);
+  const classTheme = useClassTheme();
 
   // Warn before unloading if there are unsaved changes
   useEffect(() => {
@@ -29,62 +32,40 @@ export const BuildEditorPage: React.FC = () => {
   }, [isDirty]);
 
   return (
-    <Box sx={{ minHeight: '100vh', pb: 8 }}>
-      {/* Hero Banner */}
+    <Box sx={{ minHeight: '100vh', pb: 4 }}>
+      {/* Compact hero with class-colored accent */}
       <Box
         sx={{
           position: 'relative',
-          height: 160,
+          height: 80,
           overflow: 'hidden',
           background: isDark
-            ? 'linear-gradient(135deg, #0b1220 0%, #0f172a 40%, #1a0a2e 100%)'
-            : 'linear-gradient(135deg, #e8f4fd 0%, #f0f7ff 40%, #e8eaf6 100%)',
-          display: 'flex',
-          alignItems: 'flex-end',
-          pb: 2.5,
-          mb: 0,
-        }}
-      >
-        {/* Decorative glow */}
-        <Box
-          sx={{
+            ? `linear-gradient(135deg, #0b1220 0%, #0f172a 40%, rgba(${classTheme.accentRgb}, 0.08) 100%)`
+            : `linear-gradient(135deg, #f0f4f8 0%, #f8fafc 40%, rgba(${classTheme.accentRgb}, 0.06) 100%)`,
+          // Subtle gradient line at bottom
+          '&::after': {
+            content: '""',
             position: 'absolute',
-            top: -40,
-            right: '10%',
-            width: 320,
-            height: 200,
-            borderRadius: '50%',
-            background: isDark
-              ? 'radial-gradient(ellipse, rgba(56,189,248,0.12) 0%, transparent 70%)'
-              : 'radial-gradient(ellipse, rgba(99,102,241,0.08) 0%, transparent 70%)',
-            pointerEvents: 'none',
-          }}
-        />
-        <Container maxWidth="xl">
-          <Box sx={{ px: { xs: 0, sm: 1 } }}>
-            <Typography
-              component="h1"
-              variant="h4"
-              sx={{
-                fontFamily: 'Space Grotesk, sans-serif',
-                fontWeight: 700,
-                color: isDark ? '#e5e7eb' : '#1e293b',
-                mb: 0.5,
-              }}
-            >
-              ESO Build Editor
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Create, configure, and share your Elder Scrolls Online build.
-            </Typography>
-          </Box>
-        </Container>
-      </Box>
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 1,
+            background: classTheme.gradient,
+            opacity: 0.3,
+          },
+        }}
+      />
 
       {/* Editor container */}
-      <Container maxWidth="xl" sx={{ pt: 3 }}>
-        <BuildEditorLayout />
+      <Container maxWidth="xl" sx={{ mt: -3 }}>
+        <BuildEditorShell />
       </Container>
     </Box>
   );
+};
+
+export const BuildEditorPage: React.FC = () => {
+  // Wrap in a minimal boundary — useClassTheme needs Redux context
+  // which is already provided by the store provider
+  return <BuildEditorPageInner />;
 };
