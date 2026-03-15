@@ -47,7 +47,7 @@ export const SetupTabBar: React.FC = () => {
       {build.setups.map((setup, i) => {
         const active = i === activeSetupIndex;
         return (
-          <Box key={setup.id} sx={{ position: 'relative', flexShrink: 0 }}>
+          <Box key={setup.id} sx={{ position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
             <ButtonBase
               role="tab"
               aria-selected={active}
@@ -97,27 +97,24 @@ export const SetupTabBar: React.FC = () => {
               >
                 {setup.name}
               </Typography>
-
-              {/* Delete button (only if >1 setup) */}
-              {active && build.setups.length > 1 && (
-                <IconButton
-                  size="small"
-                  onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    dispatch(deleteSetup(i));
-                  }}
-                  aria-label={`Delete ${setup.name}`}
-                  sx={{
-                    p: 0.25,
-                    ml: 0.25,
-                    color: 'text.disabled',
-                    '&:hover': { color: 'error.main' },
-                  }}
-                >
-                  <CloseIcon sx={{ fontSize: 12 }} />
-                </IconButton>
-              )}
             </ButtonBase>
+
+            {/* Delete button — outside ButtonBase to avoid nested <button> */}
+            {active && build.setups.length > 1 && (
+              <IconButton
+                size="small"
+                onClick={() => dispatch(deleteSetup(i))}
+                aria-label={`Delete ${setup.name}`}
+                sx={{
+                  p: 0.25,
+                  ml: 0.25,
+                  color: 'text.disabled',
+                  '&:hover': { color: 'error.main' },
+                }}
+              >
+                <CloseIcon sx={{ fontSize: 12 }} />
+              </IconButton>
+            )}
 
             {/* Animated underline indicator */}
             {active && (

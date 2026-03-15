@@ -91,6 +91,14 @@ export const IconPickerGrid = <T extends string = string>({
         {options.map((opt, idx) => {
           const selected = opt.id === value;
           const accentColor = opt.color ?? 'var(--be-accent, #38bdf8)';
+          // MUI's alpha() can't parse CSS vars — use raw rgba when no hex is available
+          const selectedBg = opt.color
+            ? isDark
+              ? alpha(opt.color, 0.15)
+              : alpha(opt.color, 0.1)
+            : isDark
+              ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)'
+              : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.1)';
 
           return (
             <Tooltip key={opt.id} title={opt.description ?? opt.label} enterDelay={400}>
@@ -114,9 +122,7 @@ export const IconPickerGrid = <T extends string = string>({
                   padding: '10px 6px',
                   borderRadius: 12,
                   background: selected
-                    ? isDark
-                      ? alpha(accentColor, 0.15)
-                      : alpha(accentColor, 0.1)
+                    ? selectedBg
                     : isDark
                       ? 'rgba(255, 255, 255, 0.03)'
                       : 'rgba(0, 0, 0, 0.02)',
