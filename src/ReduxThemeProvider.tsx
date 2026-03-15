@@ -386,6 +386,20 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               },
             },
           },
+          MuiAccordionSummary: {
+            styleOverrides: {
+              root: {
+                '&.Mui-expanded': {
+                  minHeight: 48, // Prevent height jump from 48→64 on expand
+                },
+              },
+              content: {
+                '&.Mui-expanded': {
+                  margin: '12px 0', // Prevent margin jump from 12px→20px on expand
+                },
+              },
+            },
+          },
         },
       }),
     [darkMode, tokens],

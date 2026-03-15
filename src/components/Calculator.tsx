@@ -3521,12 +3521,6 @@ const CalculatorComponent: React.FC = () => {
           '&:last-child': {
             mb: 2,
           },
-          '&.Mui-expanded': {
-            mb: 4,
-            '&:last-child': {
-              mb: 3,
-            },
-          },
         }}
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
