@@ -471,12 +471,11 @@ export async function deflateString(str: string): Promise<Uint8Array> {
     Uint8Array
   >;
   const writer = cs.writable.getWriter();
-  // Write + close, suppressing rejections — errors also propagate through the readable side.
-  void writer
-    .write(input)
-    .then(() => writer.close())
-    .catch(() => {});
-  return readAllChunks(cs.readable);
+  const writeAndClose = writer.write(input).then(() => writer.close());
+  // Await both sides so neither rejection goes unhandled (ESO-705).
+  const [, readResult] = await Promise.allSettled([writeAndClose, readAllChunks(cs.readable)]);
+  if (readResult.status === 'rejected') throw readResult.reason as Error;
+  return readResult.value;
 }
 
 export async function inflateBytes(bytes: Uint8Array): Promise<string> {
@@ -485,15 +484,11 @@ export async function inflateBytes(bytes: Uint8Array): Promise<string> {
     Uint8Array
   >;
   const writer = ds.writable.getWriter();
-  // Write + close, suppressing rejections — the same decompression error will
-  // also propagate through the readable side for the caller to catch.
-  // This avoids unhandled rejections from pipeThrough's internal pipeTo promise.
-  void writer
-    .write(bytes)
-    .then(() => writer.close())
-    .catch(() => {});
-  const output = await readAllChunks(ds.readable);
-  return new TextDecoder().decode(output);
+  const writeAndClose = writer.write(bytes).then(() => writer.close());
+  // Await both sides so neither rejection goes unhandled (ESO-705).
+  const [, readResult] = await Promise.allSettled([writeAndClose, readAllChunks(ds.readable)]);
+  if (readResult.status === 'rejected') throw readResult.reason as Error;
+  return new TextDecoder().decode(readResult.value);
 }
 
 // ============================================================
