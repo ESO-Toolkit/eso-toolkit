@@ -36,10 +36,15 @@ export function toBroadRole(role: DetectedRole): BroadRole {
       return 'tank';
     case DetectedRole.GroupHealer:
     case DetectedRole.ShieldHealer:
+    case DetectedRole.BuffHealer:
       return 'healer';
     case DetectedRole.ParseDPS:
     case DetectedRole.SupportDPS:
       return 'dps';
+    default: {
+      const _exhaustive: never = role;
+      return _exhaustive;
+    }
   }
 }
 
@@ -58,6 +63,12 @@ export function getRoleEmoji(role: DetectedRole): string {
       return '❤️';
     case DetectedRole.ShieldHealer:
       return '🔮';
+    case DetectedRole.BuffHealer:
+      return '✨';
+    default: {
+      const _exhaustive: never = role;
+      return _exhaustive;
+    }
   }
 }
 
