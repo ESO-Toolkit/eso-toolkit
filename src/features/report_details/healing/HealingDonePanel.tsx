@@ -1,7 +1,8 @@
 import { Box, Typography } from '@mui/material';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { HealingDoneTableSkeleton } from '../../../components/HealingDoneTableSkeleton';
+import { PlayerCardModal } from '../../../components/PlayerCardModal';
 import {
   useCastEvents,
   useHealingEvents,
@@ -180,6 +181,23 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ context }) =
     getPlayerRole,
   ]);
 
+  // --- PlayerCardModal state ---
+  const [modalPlayerId, setModalPlayerId] = useState<string | null>(null);
+
+  const handlePlayerClick = useCallback((playerId: string) => {
+    setModalPlayerId(playerId);
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    setModalPlayerId(null);
+  }, []);
+
+  const handleModalPlayerChange = useCallback((playerId: string | number) => {
+    setModalPlayerId(String(playerId));
+  }, []);
+
+  const orderedPlayerIds = useMemo(() => healingRows.map((row) => row.id), [healingRows]);
+
   // Show table skeleton while data is being fetched
   if (isLoading) {
     return <HealingDoneTableSkeleton rowCount={8} />;
@@ -198,7 +216,17 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ context }) =
 
   return (
     <Box data-testid="healing-done-panel">
-      <HealingDonePanelView healingRows={healingRows} />
+      <HealingDonePanelView healingRows={healingRows} onPlayerClick={handlePlayerClick} />
+      {modalPlayerId !== null && (
+        <PlayerCardModal
+          open
+          onClose={handleModalClose}
+          currentPlayerId={modalPlayerId}
+          orderedPlayerIds={orderedPlayerIds}
+          onPlayerChange={handleModalPlayerChange}
+          context={resolvedContext}
+        />
+      )}
     </Box>
   );
 };

@@ -1,8 +1,9 @@
 import { Box, Typography } from '@mui/material';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { DamageDoneTableSkeleton } from '../../../components/DamageDoneTableSkeleton';
+import { PlayerCardModal } from '../../../components/PlayerCardModal';
 import {
   useDamageEventsLookup,
   useReportMasterData,
@@ -365,6 +366,23 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
     cpmByPlayer,
   ]);
 
+  // --- PlayerCardModal state ---
+  const [modalPlayerId, setModalPlayerId] = useState<string | null>(null);
+
+  const handlePlayerClick = useCallback((playerId: string) => {
+    setModalPlayerId(playerId);
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    setModalPlayerId(null);
+  }, []);
+
+  const handleModalPlayerChange = useCallback((playerId: string | number) => {
+    setModalPlayerId(String(playerId));
+  }, []);
+
+  const orderedPlayerIds = useMemo(() => damageRows.map((row) => row.id), [damageRows]);
+
   // Show table skeleton while data is being fetched
   if (isLoading) {
     return <DamageDoneTableSkeleton rowCount={10} />;
@@ -390,7 +408,18 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
         isDamageOverTimeLoading={isDamageOverTimeLoading}
         selectedTargetIds={selectedTargetIds}
         availableTargets={availableTargets}
+        onPlayerClick={handlePlayerClick}
       />
+      {modalPlayerId !== null && (
+        <PlayerCardModal
+          open
+          onClose={handleModalClose}
+          currentPlayerId={modalPlayerId}
+          orderedPlayerIds={orderedPlayerIds}
+          onPlayerChange={handleModalPlayerChange}
+          context={resolvedContext}
+        />
+      )}
     </Box>
   );
 };

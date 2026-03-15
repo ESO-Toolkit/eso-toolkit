@@ -29,6 +29,8 @@ interface DamageDonePanelViewProps {
   isDamageOverTimeLoading?: boolean;
   selectedTargetIds?: Set<number>;
   availableTargets?: Array<{ id: number; name: string }>;
+  /** Called when a player name is clicked; receives the player ID */
+  onPlayerClick?: (playerId: string) => void;
 }
 
 type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamage';
@@ -44,6 +46,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   isDamageOverTimeLoading = false,
   selectedTargetIds = new Set(),
   availableTargets = [],
+  onPlayerClick,
 }) => {
   const roleColors = useRoleColors();
   const [sortField, setSortField] = useState<SortField>('total');
@@ -509,6 +512,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                       />
                     )}
                     <Typography
+                      component="span"
+                      onClick={onPlayerClick ? () => onPlayerClick(row.id) : undefined}
                       sx={{
                         fontWeight: 500,
                         fontSize: '0.875rem',
@@ -516,6 +521,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
+                        ...(onPlayerClick && {
+                          cursor: 'pointer',
+                          '&:hover': { textDecoration: 'underline' },
+                        }),
                         ...(roleColors.isDarkMode
                           ? {
                               color: roleColors.getPlayerColor(row.role),
@@ -848,13 +857,20 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     )}
                     <Box sx={{ minWidth: 0, flex: 1 }}>
                       <Typography
+                        component="span"
+                        onClick={onPlayerClick ? () => onPlayerClick(row.id) : undefined}
                         sx={{
                           fontSize: '0.875rem',
                           fontWeight: 700,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
+                          display: 'block',
                           color: roleColors.isDarkMode ? playerColor : 'inherit',
+                          ...(onPlayerClick && {
+                            cursor: 'pointer',
+                            '&:hover': { textDecoration: 'underline' },
+                          }),
                         }}
                       >
                         {row.name}
