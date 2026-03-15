@@ -7,7 +7,6 @@
 
 import {
   BUFF_HEALER_OFFENSIVE_THRESHOLD,
-  BUFF_HEALER_SET_IDS,
   HEAVY_ARMOR_THRESHOLD,
   HIGH_DAMAGE_TAKEN_THRESHOLD,
   HIGH_HEALING_SHARE_THRESHOLD,
@@ -187,7 +186,9 @@ function identifyHealers(
     const sorted = [...buffCandidates].sort(
       (a, b) => b.signals.offensiveBuffCategoryCount - a.signals.offensiveBuffCategoryCount,
     );
-    if (sorted[0].signals.offensiveBuffCategoryCount > sorted[1].signals.offensiveBuffCategoryCount) {
+    if (
+      sorted[0].signals.offensiveBuffCategoryCount > sorted[1].signals.offensiveBuffCategoryCount
+    ) {
       buffHealerPlayerId = sorted[0].signals.playerId;
     }
   }
@@ -256,27 +257,6 @@ function computeShieldHealerScore(signals: PlayerRoleSignals): number {
 
   // High absorb applied to others
   if (signals.shieldAppliedToOthers > 0) score += 10;
-
-  return score;
-}
-
-function computeBuffHealerScore(signals: PlayerRoleSignals): number {
-  let score = 0;
-
-  // Buff-healer-specific sets (Jorvuld’s, Master Architect, Powerful Assault)
-  const hasBuffHealerSet = signals.healerSetIds.some((id) => BUFF_HEALER_SET_IDS.has(id));
-  if (hasBuffHealerSet) score += 15;
-
-  // Buff diversity — buff healers apply many distinct buff types to others
-  if (signals.uniqueBuffTypesApplied >= 8) score += 15;
-  else if (signals.uniqueBuffTypesApplied >= 5) score += 10;
-
-  // Broad group coverage — buffing many distinct allies
-  if (signals.uniqueTargetsBuffed >= 10) score += 10;
-  else if (signals.uniqueTargetsBuffed >= 6) score += 5;
-
-  // Horn casts — buff healers commonly run Aggressive Horn
-  if (signals.hornCasts >= 2) score += 5;
 
   return score;
 }

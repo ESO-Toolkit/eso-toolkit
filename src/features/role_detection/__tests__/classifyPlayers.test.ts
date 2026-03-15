@@ -166,7 +166,11 @@ describe('classifyPlayers', () => {
       expect(player2.role).not.toBe(DetectedRole.MainTank);
       expect(player2.role).not.toBe(DetectedRole.OffTank);
       // Should be classified as a healer
-      expect([DetectedRole.GroupHealer, DetectedRole.ShieldHealer, DetectedRole.BuffHealer]).toContain(player2.role);
+      expect([
+        DetectedRole.GroupHealer,
+        DetectedRole.ShieldHealer,
+        DetectedRole.BuffHealer,
+      ]).toContain(player2.role);
     });
 
     it('should classify healer who occasionally taunts as healer, not tank', () => {
@@ -210,7 +214,11 @@ describe('classifyPlayers', () => {
       const player2 = results.find((r) => r.playerId === 2)!;
       expect(player2.role).not.toBe(DetectedRole.MainTank);
       expect(player2.role).not.toBe(DetectedRole.OffTank);
-      expect([DetectedRole.GroupHealer, DetectedRole.ShieldHealer, DetectedRole.BuffHealer]).toContain(player2.role);
+      expect([
+        DetectedRole.GroupHealer,
+        DetectedRole.ShieldHealer,
+        DetectedRole.BuffHealer,
+      ]).toContain(player2.role);
     });
 
     it('should support 1-tank composition', () => {

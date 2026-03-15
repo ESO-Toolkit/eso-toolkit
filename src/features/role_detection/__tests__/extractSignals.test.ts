@@ -3,11 +3,7 @@
  */
 
 import { ArmorType, GearSlot, WeaponType } from '@/types/playerDetails';
-import {
-  CombatantInfoEvent,
-  DamageEvent,
-  HealEvent,
-} from '@/types/combatlogEvents';
+import { CombatantInfoEvent, DamageEvent, HealEvent } from '@/types/combatlogEvents';
 
 import { extractSignals, FightContext, RoleDetectionEvents } from '../extractSignals';
 
