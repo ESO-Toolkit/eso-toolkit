@@ -34,7 +34,6 @@ import {
 } from '../types/abilities';
 import type { CombatantAura, CombatantInfoEvent } from '../types/combatlogEvents';
 import type { PlayerGear, PlayerTalent } from '../types/playerDetails';
-import type { BuffLookupData } from '../utils/BuffLookupUtils';
 import {
   createSkillLineAbilityMapping,
   analyzePlayerClassFromEvents,
@@ -460,7 +459,7 @@ export function usePlayerCardData({
       const isHighland4 = count === 4 && n === normalizeGearName('Highland Sentinel');
       const isFivePiece = count >= 5;
       const isThreePiece = count === 3;
-      let category = 99;
+      let category: number;
       if (isMonster) category = 0;
       else if (isFivePiece) category = 1;
       else if (isHighland4) category = 2;
@@ -524,7 +523,7 @@ export function usePlayerCardData({
 
     return detectBuildIssues(
       gear,
-      friendlyBuffLookup || ({ buffIntervals: {} } as BuffLookupData),
+      friendlyBuffLookup,
       fight.startTime,
       fight.endTime,
       playerAuras,
