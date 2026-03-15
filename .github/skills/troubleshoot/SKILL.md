@@ -16,7 +16,7 @@ Quick-reference fixes for common development environment issues in ESO Log Aggre
 | GraphQL type errors / stale types    | `npm run codegen`                                |
 | TypeScript errors                    | `npm run typecheck` then see fix-types skill     |
 | ESLint errors                        | `npm run lint:fix` then see fix-lint skill       |
-| Port in use                          | Kill process or use next worktree port slot (see below) |
+| Port in use                          | Identify which worktree owns the port (WMI check), then kill or use next slot |
 | Module not found                     | Delete `node_modules/`, run `npm ci`             |
 | Build fails                          | `npm run build` — check error output             |
 | Test failures                        | `npm test -- --watchAll=false`                   |
@@ -71,16 +71,36 @@ npm run build
 
 ### Port Already in Use
 
-```powershell
-# Option 1: Use the next worktree port slot
-$env:PORT = "3002" ; npm run dev
+When encountering a port conflict, first identify whether ANY dev server is already running for the **current** worktree, or if the port is occupied by a different worktree's server:
 
-# Option 2: Kill the process on the occupied port
-netstat -ano | findstr :<port>
-taskkill /PID <PID> /F
+```powershell
+# Step 1: Check all worktree dev server ports (3000, 3002, 3004, 3006, 3008)
+$ports = @(3000, 3002, 3004, 3006, 3008)
+$cwd = (Get-Location).Path
+
+foreach ($port in $ports) {
+    $result = netstat -ano | findstr ":$port " | findstr LISTENING
+    if ($result) {
+        $pid = ($result -split '\s+')[-1]
+        $proc = Get-CimInstance Win32_Process -Filter "ProcessId=$pid" -ErrorAction SilentlyContinue
+        $dir = if ($proc.CommandLine) { [regex]::Match($proc.CommandLine, 'D:\\code\\[^ "]+').Value } else { '<unknown>' }
+        $isCurrent = $proc.CommandLine -match [regex]::Escape($cwd)
+        Write-Host "Port $port -> PID $pid | Dir: $dir | This worktree: $isCurrent"
+    }
+}
 ```
 
-See [.claude-rules.md](../../.claude-rules.md) for the full worktree port allocation table (3000–3009).
+```powershell
+# Step 2a: If THIS worktree already has a server, kill and restart
+taskkill /PID <PID> /F
+
+# Step 2b: If a DIFFERENT worktree owns the port, use the next available slot
+$env:PORT = "3002" ; npm run dev
+```
+
+**Key principle**: When a user asks about port conflicts in a worktree, always match the PID back to a working directory using `Get-CimInstance Win32_Process` so you can tell them exactly which worktree owns the port.
+
+See [CLAUDE.md](../../CLAUDE.md) for the full worktree port allocation table (3000–3009).
 
 ### Playwright Browser Issues
 
