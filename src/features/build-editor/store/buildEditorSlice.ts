@@ -59,11 +59,34 @@ const makeBuild = (): Build => ({
   updatedAt: new Date().toISOString(),
 });
 
+// ─── Persistence helpers ──────────────────────────────────────────────────────
+
+export const BUILD_EDITOR_STORAGE_KEY = 'eso-build-editor-v1';
+
+/** Attempt to restore a previously saved build from localStorage. */
+function loadFromStorage(): Pick<BuildEditorState, 'build' | 'activeSetupIndex'> | null {
+  try {
+    const raw = localStorage.getItem(BUILD_EDITOR_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { build?: Build; activeSetupIndex?: number };
+    // Minimal schema guard — ensure we have at least one setup
+    if (!parsed.build?.setups?.length) return null;
+    return {
+      build: parsed.build,
+      activeSetupIndex: parsed.activeSetupIndex ?? 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // ─── Initial state ────────────────────────────────────────────────────────────
 
+const savedState = loadFromStorage();
+
 const initialState: BuildEditorState = {
-  build: makeBuild(),
-  activeSetupIndex: 0,
+  build: savedState?.build ?? makeBuild(),
+  activeSetupIndex: savedState?.activeSetupIndex ?? 0,
   activeSidebarTab: 'general',
   activeSetupTab: 'info',
   isDirty: false,
@@ -101,14 +124,17 @@ export const buildEditorSlice = createSlice({
     },
     setBuildClass(state, action: PayloadAction<Build['esoClass']>) {
       state.build.esoClass = action.payload;
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     setBuildRole(state, action: PayloadAction<Build['role']>) {
       state.build.role = action.payload;
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     setBuildGameMode(state, action: PayloadAction<Build['gameMode']>) {
       state.build.gameMode = action.payload;
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     setBuildRaces(state, action: PayloadAction<string[]>) {

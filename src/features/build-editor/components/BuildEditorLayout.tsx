@@ -49,9 +49,8 @@ export const BuildEditorLayout: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const prefersReduced = useReducedMotion();
   const progress = useSectionProgress();
-
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
+    <Box component="main" sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
       {/* Header: build name + progress + save/share */}
       <BuildCompletionHeader />
 
@@ -85,17 +84,19 @@ export const BuildEditorLayout: React.FC = () => {
             <Box
               sx={{
                 display: 'grid',
-                gap: 2,
-                // Desktop: 2-column bento grid
+                gap: { xs: 2, md: 2.5, lg: 3 },
+                // Desktop: 2-column bento grid with dense packing
                 gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                gridAutoFlow: isMobile ? undefined : 'dense',
               }}
             >
-              {/* Row 1: Identity + Character */}
+              {/* Row 1: Identity (primary) + Character */}
               <SectionCard
                 id="general"
                 title="Identity"
                 icon={<GeneralIcon />}
                 complete={progress.general}
+                variant="primary"
               >
                 <GeneralSection />
               </SectionCard>
@@ -109,12 +110,14 @@ export const BuildEditorLayout: React.FC = () => {
                 <CharacterSection />
               </SectionCard>
 
-              {/* Row 2: Equipment + Skills */}
+              {/* Row 2–3: Equipment spans 2 rows; Skills + Consumables stack on right */}
               <SectionCard
                 id="equipment"
                 title="Equipment"
                 icon={<EquipmentIcon />}
                 complete={progress.equipment}
+                variant="primary"
+                gridRow={isMobile ? undefined : 'span 2'}
               >
                 <EquipmentSection />
               </SectionCard>
@@ -124,22 +127,11 @@ export const BuildEditorLayout: React.FC = () => {
                 title="Skills"
                 icon={<SkillsIcon />}
                 complete={progress.skills}
+                variant="primary"
               >
                 <SkillsSection />
               </SectionCard>
 
-              {/* Row 3: Champion (full width) */}
-              <SectionCard
-                id="champion"
-                title="Champion Points"
-                icon={<ChampionIcon />}
-                complete={progress.champion}
-                gridColumn={isMobile ? undefined : 'span 2'}
-              >
-                <ChampionSection />
-              </SectionCard>
-
-              {/* Row 4: Consumables + Passives */}
               <SectionCard
                 id="consumables"
                 title="Consumables"
@@ -149,6 +141,19 @@ export const BuildEditorLayout: React.FC = () => {
                 <ConsumablesSection />
               </SectionCard>
 
+              {/* Champion Points — full width */}
+              <SectionCard
+                id="champion"
+                title="Champion Points"
+                icon={<ChampionIcon />}
+                complete={progress.champion}
+                variant="primary"
+                gridColumn={isMobile ? undefined : 'span 2'}
+              >
+                <ChampionSection />
+              </SectionCard>
+
+              {/* Passives + Screenshots */}
               <SectionCard
                 id="passives"
                 title="Passives"
@@ -158,7 +163,17 @@ export const BuildEditorLayout: React.FC = () => {
                 <PassivesSection />
               </SectionCard>
 
-              {/* Row 5: Guide (full width) */}
+              <SectionCard
+                id="screenshots"
+                title="Screenshots"
+                icon={<ScreenshotIcon />}
+                complete={progress.screenshots}
+                variant="subtle"
+              >
+                <ScreenshotsSection />
+              </SectionCard>
+
+              {/* Guide — full width */}
               <SectionCard
                 id="guide"
                 title="Guide"
@@ -169,21 +184,14 @@ export const BuildEditorLayout: React.FC = () => {
                 <GuideSection />
               </SectionCard>
 
-              {/* Row 6: Screenshots + Settings */}
-              <SectionCard
-                id="screenshots"
-                title="Screenshots"
-                icon={<ScreenshotIcon />}
-                complete={progress.screenshots}
-              >
-                <ScreenshotsSection />
-              </SectionCard>
-
+              {/* Settings — full width footer */}
               <SectionCard
                 id="settings"
                 title="Settings"
                 icon={<SettingsIcon />}
                 complete={progress.settings}
+                variant="subtle"
+                gridColumn={isMobile ? undefined : 'span 2'}
               >
                 <SettingsSection />
               </SectionCard>

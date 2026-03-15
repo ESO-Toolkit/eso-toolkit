@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
 
+import { BE_TOKENS } from '../theme/buildEditorTokens';
 import type { SectionId } from '../theme/buildEditorTokens';
 
 export type SectionProgressMap = Record<SectionId, boolean>;
@@ -19,18 +20,7 @@ export const useSectionProgress = (): SectionProgressMap => {
   return useMemo(() => {
     const setup = build.setups[activeSetupIndex];
     if (!setup) {
-      return {
-        general: false,
-        character: false,
-        equipment: false,
-        skills: false,
-        champion: false,
-        consumables: false,
-        passives: false,
-        guide: false,
-        screenshots: false,
-        settings: false,
-      };
+      return Object.fromEntries(BE_TOKENS.sectionIds.map((id) => [id, false])) as SectionProgressMap;
     }
 
     return {

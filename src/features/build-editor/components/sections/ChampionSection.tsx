@@ -1,10 +1,10 @@
 /**
  * Champion Section — three trees (Warfare, Fitness, Craft).
- * Enhanced CP slots as GlassPanel cards with AttributeBar-style passive counters.
+ * Segmented tree selector, prominent slot cards, compact passive list.
  */
 
 import { Box, ButtonBase, Divider, Stack, Tooltip, Typography } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import React, { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -14,7 +14,6 @@ import { CHAMPION_POINT_ABILITIES, ChampionPointTree } from '@/types/champion-po
 import { CP_PASSIVES_BY_TREE, type CPPassive } from '../../data/championPassives';
 import { setChampionPassive, setChampionTreeSlot } from '../../store/buildEditorSlice';
 import type { BuildChampionPoints } from '../../types/build.types';
-import { GlassPanel } from '../primitives/GlassPanel';
 
 // ─── Tree config ──────────────────────────────────────────────────────────────
 
@@ -22,13 +21,36 @@ interface TreeConfig {
   key: keyof BuildChampionPoints;
   label: string;
   color: string;
+  colorRgb: string;
   cpTree: ChampionPointTree;
+  icon: string;
 }
 
 const TREES: TreeConfig[] = [
-  { key: 'warfare', label: 'Warfare', color: '#ef5350', cpTree: ChampionPointTree.Warfare },
-  { key: 'fitness', label: 'Fitness', color: '#42a5f5', cpTree: ChampionPointTree.Fitness },
-  { key: 'craft', label: 'Craft', color: '#66bb6a', cpTree: ChampionPointTree.Craft },
+  {
+    key: 'warfare',
+    label: 'Warfare',
+    color: '#ef5350',
+    colorRgb: '239, 83, 80',
+    cpTree: ChampionPointTree.Warfare,
+    icon: '⚔',
+  },
+  {
+    key: 'fitness',
+    label: 'Fitness',
+    color: '#42a5f5',
+    colorRgb: '66, 165, 245',
+    cpTree: ChampionPointTree.Fitness,
+    icon: '🛡',
+  },
+  {
+    key: 'craft',
+    label: 'Craft',
+    color: '#66bb6a',
+    colorRgb: '102, 187, 106',
+    cpTree: ChampionPointTree.Craft,
+    icon: '⚒',
+  },
 ];
 
 const getSlottableByTree = (
@@ -38,17 +60,17 @@ const getSlottableByTree = (
     (e) => e != null && e.tree === tree,
   ) as NonNullable<(typeof CHAMPION_POINT_ABILITIES)[keyof typeof CHAMPION_POINT_ABILITIES]>[];
 
-// ─── Champion Slot ────────────────────────────────────────────────────────────
+// ─── Champion Slot Card ─────────────────────────────────────────────────────
 
 interface CPSlotProps {
   treeKey: keyof BuildChampionPoints;
   slotIndex: number;
   cpId: number | null;
-  treeColor: string;
+  tree: TreeConfig;
   options: ReturnType<typeof getSlottableByTree>;
 }
 
-const CPSlot: React.FC<CPSlotProps> = ({ treeKey, slotIndex, cpId, treeColor, options }) => {
+const CPSlot: React.FC<CPSlotProps> = ({ treeKey, slotIndex, cpId, tree, options }) => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -64,53 +86,154 @@ const CPSlot: React.FC<CPSlotProps> = ({ treeKey, slotIndex, cpId, treeColor, op
   };
 
   return (
-    <Tooltip title={entry ? entry.name : 'Click to cycle champion perks'}>
+    <Tooltip title={entry ? entry.name : 'Click to cycle champion perks'} placement="top" arrow>
       <Box
         onClick={handleClick}
         sx={{
-          flex: '0 0 calc(50% - 4px)',
-          minHeight: 48,
-          borderRadius: 2,
-          border: `1.5px ${cpId ? 'solid' : 'dashed'} ${cpId ? treeColor : isDark ? alpha('#fff', 0.15) : alpha('#000', 0.12)}`,
-          background: cpId
-            ? isDark
-              ? alpha(treeColor, 0.1)
-              : alpha(treeColor, 0.06)
-            : isDark
-              ? alpha('#fff', 0.02)
-              : alpha('#000', 0.02),
+          flex: '1 1 calc(50% - 6px)',
+          minHeight: 68,
+          borderRadius: 2.5,
+          position: 'relative',
+          overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
+          gap: 1.25,
+          px: 1.5,
+          py: 1,
+          background: cpId
+            ? isDark
+              ? `linear-gradient(135deg, rgba(${tree.colorRgb}, 0.14) 0%, rgba(${tree.colorRgb}, 0.04) 100%)`
+              : `linear-gradient(135deg, rgba(${tree.colorRgb}, 0.10) 0%, rgba(${tree.colorRgb}, 0.02) 100%)`
+            : isDark
+              ? 'rgba(255, 255, 255, 0.025)'
+              : 'rgba(0, 0, 0, 0.018)',
           cursor: 'pointer',
-          transition: 'all 0.15s',
-          p: 1,
+          border: `1.5px ${cpId ? 'solid' : 'dashed'} ${
+            cpId
+              ? isDark
+                ? `rgba(${tree.colorRgb}, 0.40)`
+                : `rgba(${tree.colorRgb}, 0.28)`
+              : isDark
+                ? 'rgba(255, 255, 255, 0.08)'
+                : 'rgba(0, 0, 0, 0.06)'
+          }`,
+          boxShadow: cpId
+            ? `0 4px 16px rgba(${tree.colorRgb}, 0.10), inset 0 1px 0 rgba(${tree.colorRgb}, 0.08)`
+            : isDark
+              ? 'inset 0 1px 0 rgba(255,255,255,0.02)'
+              : 'none',
+          transition: 'all 0.2s ease',
           '&:hover': {
             background: cpId
               ? isDark
-                ? alpha(treeColor, 0.18)
-                : alpha(treeColor, 0.1)
+                ? `rgba(${tree.colorRgb}, 0.22)`
+                : `rgba(${tree.colorRgb}, 0.14)`
               : isDark
-                ? alpha('#fff', 0.05)
-                : alpha('#000', 0.04),
+                ? 'rgba(255,255,255,0.05)'
+                : 'rgba(0,0,0,0.035)',
             borderStyle: 'solid',
+            borderColor: isDark
+              ? `rgba(${tree.colorRgb}, 0.50)`
+              : `rgba(${tree.colorRgb}, 0.35)`,
+            boxShadow: `0 6px 20px rgba(${tree.colorRgb}, 0.14)`,
+            transform: 'translateY(-1px)',
+          },
+          // Left accent bar — always visible, stronger when filled
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            left: 0,
+            top: '15%',
+            bottom: '15%',
+            width: 3,
+            borderRadius: '0 3px 3px 0',
+            background: cpId
+              ? tree.color
+              : isDark
+                ? `rgba(${tree.colorRgb}, 0.25)`
+                : `rgba(${tree.colorRgb}, 0.18)`,
+            boxShadow: cpId ? `0 0 8px rgba(${tree.colorRgb}, 0.40)` : 'none',
+            transition: 'all 0.2s',
           },
         }}
       >
-        {entry ? (
+        {/* Diamond number badge */}
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            flexShrink: 0,
+            transform: 'rotate(45deg)',
+            borderRadius: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: cpId
+              ? isDark
+                ? `linear-gradient(135deg, rgba(${tree.colorRgb}, 0.30) 0%, rgba(${tree.colorRgb}, 0.12) 100%)`
+                : `linear-gradient(135deg, rgba(${tree.colorRgb}, 0.22) 0%, rgba(${tree.colorRgb}, 0.08) 100%)`
+              : isDark
+                ? 'rgba(255,255,255,0.05)'
+                : 'rgba(0,0,0,0.04)',
+            border: `1px solid ${
+              cpId
+                ? `rgba(${tree.colorRgb}, ${isDark ? 0.50 : 0.35})`
+                : isDark
+                  ? 'rgba(255,255,255,0.10)'
+                  : 'rgba(0,0,0,0.08)'
+            }`,
+            boxShadow: cpId ? `0 0 10px rgba(${tree.colorRgb}, 0.20)` : 'none',
+            transition: 'all 0.2s',
+          }}
+        >
           <Typography
-            variant="caption"
-            fontWeight={700}
-            color={treeColor}
-            sx={{ textAlign: 'center', lineHeight: 1.3, fontSize: 11 }}
+            sx={{
+              transform: 'rotate(-45deg)',
+              fontWeight: 800,
+              fontSize: 11,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              color: cpId ? tree.color : isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.22)',
+              lineHeight: 1,
+              textShadow: cpId ? `0 0 6px rgba(${tree.colorRgb}, 0.4)` : 'none',
+            }}
           >
-            {entry.name}
+            {slotIndex + 1}
           </Typography>
-        ) : (
-          <Typography variant="caption" color="text.disabled" sx={{ fontSize: 11 }}>
-            Empty
-          </Typography>
-        )}
+        </Box>
+
+        {/* Perk name or empty label */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          {entry ? (
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              display="block"
+              noWrap
+              sx={{
+                color: tree.color,
+                fontSize: 12,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                textShadow: `0 0 8px rgba(${tree.colorRgb}, 0.3)`,
+                lineHeight: 1.3,
+              }}
+            >
+              {entry.name}
+            </Typography>
+          ) : (
+            <Typography
+              variant="caption"
+              display="block"
+              sx={{
+                color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.28)',
+                fontSize: 11,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontStyle: 'italic',
+              }}
+            >
+              Empty slot
+            </Typography>
+          )}
+        </Box>
       </Box>
     </Tooltip>
   );
@@ -122,12 +245,21 @@ interface PassiveRowProps {
   treeKey: keyof BuildChampionPoints;
   passive: CPPassive;
   points: number;
+  treeColor: string;
+  treeColorRgb: string;
 }
 
-const PassiveRow: React.FC<PassiveRowProps> = ({ treeKey, passive, points }) => {
+const PassiveRow: React.FC<PassiveRowProps> = ({
+  treeKey,
+  passive,
+  points,
+  treeColor,
+  treeColorRgb,
+}) => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const pct = (points / passive.maxPoints) * 100;
 
   const adjust = (delta: number): void => {
     dispatch(
@@ -148,69 +280,146 @@ const PassiveRow: React.FC<PassiveRowProps> = ({ treeKey, passive, points }) => 
         py: 0.5,
         px: 1,
         borderRadius: 1.5,
-        background: isDark ? alpha('#fff', 0.02) : alpha('#000', 0.015),
+        position: 'relative',
+        transition: 'all 0.15s ease',
         '&:hover': {
-          background: isDark ? alpha('#fff', 0.04) : alpha('#000', 0.03),
+          background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
         },
       }}
     >
+      {/* Name + description */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="caption" fontWeight={600} display="block" noWrap sx={{ fontSize: 11 }}>
-          {passive.name}
-        </Typography>
         <Typography
           variant="caption"
-          color="text.disabled"
+          fontWeight={600}
           display="block"
-          sx={{ fontSize: 9, whiteSpace: 'normal', lineHeight: 1.3 }}
+          noWrap
+          sx={{
+            fontSize: 11,
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+            color: points > 0 ? 'text.primary' : 'text.secondary',
+          }}
         >
-          {passive.description}
+          {passive.name}
         </Typography>
       </Box>
 
+      {/* Inline progress bar + controls */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
         <ButtonBase
           onClick={() => adjust(-1)}
           disabled={points === 0}
           aria-label={`Decrease ${passive.name}`}
           sx={{
-            width: 22,
-            height: 22,
+            width: 28,
+            height: 28,
             borderRadius: '6px',
-            background: isDark ? alpha('#fff', 0.07) : alpha('#000', 0.07),
+            background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
             fontWeight: 700,
-            fontSize: 13,
-            '&:disabled': { opacity: 0.3 },
+            fontSize: 12,
+            transition: 'all 0.12s',
+            '&:hover:not(:disabled)': {
+              background: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.07)',
+            },
+            '&:disabled': { opacity: 0.2, border: '1px solid transparent' },
           }}
         >
           −
         </ButtonBase>
+
+        {/* Mini segmented progress bar */}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: '1.5px',
+            alignItems: 'center',
+            mx: 0.25,
+          }}
+        >
+          {passive.maxPoints <= 1 ? (
+            // Toggle-style for single-point passives
+            <Box
+              sx={{
+                width: 28,
+                height: 6,
+                borderRadius: 3,
+                background: points > 0
+                  ? treeColor
+                  : isDark
+                    ? 'rgba(255,255,255,0.08)'
+                    : 'rgba(0,0,0,0.06)',
+                boxShadow: points > 0 ? `0 0 6px rgba(${treeColorRgb}, 0.35)` : 'none',
+                transition: 'all 0.2s',
+              }}
+            />
+          ) : (
+            // Continuous bar for multi-point
+            <Box
+              sx={{
+                width: 36,
+                height: 4,
+                borderRadius: 2,
+                background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                overflow: 'hidden',
+                position: 'relative',
+              }}
+            >
+              <Box
+                sx={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: `${pct}%`,
+                  borderRadius: 2,
+                  background: `linear-gradient(90deg, rgba(${treeColorRgb}, 0.70) 0%, ${treeColor} 100%)`,
+                  boxShadow: points > 0 ? `0 0 4px rgba(${treeColorRgb}, 0.30)` : 'none',
+                  transition: 'width 0.2s ease',
+                }}
+              />
+            </Box>
+          )}
+        </Box>
+
         <Typography
           variant="caption"
           sx={{
-            minWidth: 20,
+            minWidth: 26,
             textAlign: 'center',
             fontWeight: 700,
             fontVariantNumeric: 'tabular-nums',
-            color: points > 0 ? 'text.primary' : 'text.disabled',
-            fontSize: 11,
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+            color: points > 0 ? treeColor : 'text.disabled',
+            fontSize: 10,
           }}
         >
-          {points}
+          {points}/{passive.maxPoints}
         </Typography>
+
         <ButtonBase
           onClick={() => adjust(1)}
           disabled={points === passive.maxPoints}
           aria-label={`Increase ${passive.name}`}
           sx={{
-            width: 22,
-            height: 22,
+            width: 20,
+            height: 20,
             borderRadius: '6px',
-            background: isDark ? alpha('#38bdf8', 0.2) : alpha('#0f172a', 0.12),
-            color: isDark ? '#38bdf8' : 'text.primary',
+            background: isDark
+              ? `rgba(${treeColorRgb}, 0.14)`
+              : `rgba(${treeColorRgb}, 0.10)`,
+            border: `1px solid rgba(${treeColorRgb}, 0.30)`,
+            color: treeColor,
             fontWeight: 700,
-            fontSize: 13,
-            '&:disabled': { opacity: 0.3 },
+            fontSize: 12,
+            transition: 'all 0.12s',
+            '&:hover:not(:disabled)': {
+              background: isDark
+                ? `rgba(${treeColorRgb}, 0.24)`
+                : `rgba(${treeColorRgb}, 0.18)`,
+              boxShadow: `0 0 6px rgba(${treeColorRgb}, 0.20)`,
+            },
+            '&:disabled': { opacity: 0.2, border: '1px solid transparent' },
           }}
         >
           +
@@ -231,52 +440,141 @@ const TreePanel: React.FC<TreePanelProps> = ({ tree }) => {
   const cpTree = build.setups[activeSetupIndex]?.cp[tree.key];
   const slottable = useMemo(() => getSlottableByTree(tree.cpTree), [tree.cpTree]);
   const passives = CP_PASSIVES_BY_TREE[tree.key];
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   if (!cpTree) return null;
 
+  // Compute total allocated passives for this tree
+  const totalAllocated = passives.reduce((sum, p) => sum + (cpTree.passives[p.id] ?? 0), 0);
+  const totalMax = passives.reduce((sum, p) => sum + p.maxPoints, 0);
+
   return (
-    <Stack spacing={1.5}>
-      {/* Champion Slots */}
+    <Stack spacing={2}>
+      {/* ── Champion Slots ── */}
       <Box>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ fontWeight: 700, mb: 0.75, display: 'block', fontSize: 11 }}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mb: 1,
+          }}
         >
-          Champion Slots
-        </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 700,
+              fontSize: 10,
+              letterSpacing: 1,
+              textTransform: 'uppercase',
+              color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.38)',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+            }}
+          >
+            Active Perks
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 600,
+              fontSize: 10,
+              color: tree.color,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              opacity: 0.7,
+            }}
+          >
+            {cpTree.slots.filter(Boolean).length}/4 slotted
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
           {cpTree.slots.map((cpId, i) => (
             <CPSlot
               key={i}
               treeKey={tree.key}
               slotIndex={i}
               cpId={cpId}
-              treeColor={tree.color}
+              tree={tree}
               options={slottable}
             />
           ))}
         </Box>
       </Box>
 
-      <Divider sx={{ opacity: 0.3 }} />
+      <Divider
+        sx={{
+          opacity: 0.15,
+          borderColor: `rgba(${tree.colorRgb}, 0.30)`,
+        }}
+      />
 
-      {/* Passive stars */}
+      {/* ── Passive Stars ── */}
       <Box>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ fontWeight: 700, mb: 0.5, display: 'block', fontSize: 11 }}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mb: 0.75,
+          }}
         >
-          Passive Stars
-        </Typography>
-        <Stack spacing={0.25}>
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 700,
+              fontSize: 10,
+              letterSpacing: 1,
+              textTransform: 'uppercase',
+              color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.38)',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+            }}
+          >
+            Passive Stars
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 600,
+              fontSize: 10,
+              color: totalAllocated > 0 ? tree.color : 'text.disabled',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+            }}
+          >
+            {totalAllocated}/{totalMax}
+          </Typography>
+        </Box>
+
+        {/* Tree progress overview bar */}
+        <Box
+          sx={{
+            height: 3,
+            borderRadius: 2,
+            background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+            overflow: 'hidden',
+            mb: 1,
+          }}
+        >
+          <Box
+            sx={{
+              height: '100%',
+              width: `${totalMax > 0 ? (totalAllocated / totalMax) * 100 : 0}%`,
+              borderRadius: 2,
+              background: `linear-gradient(90deg, rgba(${tree.colorRgb}, 0.50) 0%, ${tree.color} 100%)`,
+              boxShadow: totalAllocated > 0 ? `0 0 6px rgba(${tree.colorRgb}, 0.30)` : 'none',
+              transition: 'width 0.3s ease',
+            }}
+          />
+        </Box>
+
+        <Stack spacing={0.15}>
           {passives.map((p) => (
             <PassiveRow
               key={p.id}
               treeKey={tree.key}
               passive={p}
               points={cpTree.passives[p.id] ?? 0}
+              treeColor={tree.color}
+              treeColorRgb={tree.colorRgb}
             />
           ))}
         </Stack>
@@ -293,48 +591,115 @@ export const ChampionSection: React.FC = () => {
   const isDark = theme.palette.mode === 'dark';
 
   const currentTree = TREES.find((t) => t.key === activeTree)!;
+  const activeIndex = TREES.findIndex((t) => t.key === activeTree);
 
   return (
-    <Stack spacing={1.5}>
-      {/* Tree tabs */}
-      <Box sx={{ display: 'flex', gap: 0.75 }}>
-        {TREES.map((t) => (
-          <GlassPanel
-            key={t.key}
-            sx={{
-              flex: 1,
-              py: 0.75,
-              px: 1,
-              cursor: 'pointer',
-              textAlign: 'center',
-              border: `2px solid ${activeTree === t.key ? t.color : 'transparent'} !important`,
-              background:
-                activeTree === t.key
-                  ? isDark
-                    ? `${alpha(t.color, 0.15)} !important`
-                    : `${alpha(t.color, 0.1)} !important`
-                  : undefined,
-              transition: 'all 0.15s',
-              '&:hover': {
-                background: isDark
-                  ? `${alpha(t.color, 0.1)} !important`
-                  : `${alpha(t.color, 0.07)} !important`,
-              },
-            }}
-            component="button"
-          >
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              sx={{ color: activeTree === t.key ? t.color : 'text.secondary', fontSize: 12 }}
+    <Stack spacing={2}>
+      {/* ── Segmented tree selector ── */}
+      <Box
+        role="tablist"
+        aria-label="Champion point trees"
+        sx={{
+          display: 'flex',
+          position: 'relative',
+          borderRadius: 2,
+          background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.025)',
+          border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+          p: '3px',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Sliding highlight */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 3,
+            bottom: 3,
+            left: `calc(${(activeIndex / 3) * 100}% + 3px)`,
+            width: 'calc(33.333% - 2px)',
+            borderRadius: 1.5,
+            background: isDark
+              ? `linear-gradient(135deg, rgba(${currentTree.colorRgb}, 0.18) 0%, rgba(${currentTree.colorRgb}, 0.06) 100%)`
+              : `linear-gradient(135deg, rgba(${currentTree.colorRgb}, 0.14) 0%, rgba(${currentTree.colorRgb}, 0.04) 100%)`,
+            border: `1px solid rgba(${currentTree.colorRgb}, ${isDark ? 0.30 : 0.20})`,
+            boxShadow: `0 0 12px rgba(${currentTree.colorRgb}, 0.12), inset 0 1px 0 rgba(${currentTree.colorRgb}, 0.08)`,
+            transition: 'left 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s, border-color 0.25s, box-shadow 0.25s',
+            zIndex: 0,
+          }}
+        />
+
+        {TREES.map((t) => {
+          const isActive = activeTree === t.key;
+          return (
+            <Box
+              key={t.key}
+              role="tab"
+              aria-selected={isActive}
+              tabIndex={isActive ? 0 : -1}
               onClick={() => setActiveTree(t.key)}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setActiveTree(t.key);
+                }
+              }}
+              sx={{
+                flex: 1,
+                py: 0.75,
+                cursor: 'pointer',
+                textAlign: 'center',
+                position: 'relative',
+                zIndex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 0.75,
+                borderRadius: 1.5,
+                transition: 'all 0.2s',
+                userSelect: 'none',
+                '&:focus-visible': {
+                  outline: `2px solid rgba(${t.colorRgb}, 0.7)`,
+                  outlineOffset: -2,
+                },
+                '&:hover': {
+                  background: isActive
+                    ? 'transparent'
+                    : isDark
+                      ? 'rgba(255,255,255,0.04)'
+                      : 'rgba(0,0,0,0.03)',
+                },
+              }}
             >
-              {t.label}
-            </Typography>
-          </GlassPanel>
-        ))}
+              <Typography
+                sx={{
+                  fontSize: 14,
+                  lineHeight: 1,
+                  filter: isActive ? `drop-shadow(0 0 4px rgba(${t.colorRgb}, 0.5))` : 'none',
+                  transition: 'filter 0.2s',
+                }}
+              >
+                {t.icon}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: isActive ? 700 : 500,
+                  color: isActive ? t.color : 'text.secondary',
+                  fontSize: 12,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  letterSpacing: isActive ? 0.3 : 0,
+                  textShadow: isActive ? `0 0 8px rgba(${t.colorRgb}, 0.4)` : 'none',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {t.label}
+              </Typography>
+            </Box>
+          );
+        })}
       </Box>
 
+      {/* ── Active tree content ── */}
       <TreePanel tree={currentTree} />
     </Stack>
   );

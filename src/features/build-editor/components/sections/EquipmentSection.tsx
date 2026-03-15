@@ -1,10 +1,13 @@
 /**
- * Equipment Section — paperdoll-style grid of GearSlotCards.
- * Still opens the shared ItemPickerDialog from loadout-manager.
+ * Equipment Section — tile-grid layout matching the loadout-manager GearSelector.
+ *
+ * Apparel, accessories, and weapons are arranged in centered horizontal rows
+ * of square icon tiles.  2H weapons auto-disable the matching off-hand slot.
  */
 
-import { Box, Divider, Stack, Typography } from '@mui/material';
-import React, { useState } from 'react';
+import { Box, Stack, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import React, { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
@@ -15,41 +18,83 @@ import { EQUIP_SLOTS, type EquipSlotDef } from '../../data/esoStaticData';
 import { setGearSlot } from '../../store/buildEditorSlice';
 import { GearSlotCard } from '../primitives/GearSlotCard';
 
-interface SlotGroupProps {
-  title: string;
-  slots: EquipSlotDef[];
+// ── 2H weapon logic ─────────────────────────────────────────────────────────
+
+const TWO_HANDED_KEYWORDS = ['greatsword', 'battle axe', 'battleaxe', 'maul', 'bow', 'staff'];
+
+const FRONT_MAIN = 4;
+const FRONT_OFF = 5;
+const BACK_MAIN = 20;
+const BACK_OFF = 21;
+
+function isTwoHanded(itemId: number | null | undefined): boolean {
+  if (!itemId) return false;
+  const info = getItemInfo(itemId);
+  if (!info) return false;
+  return TWO_HANDED_KEYWORDS.some((kw) => info.name.toLowerCase().includes(kw));
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Look up a slot definition by its numeric index. */
+const slotDef = (idx: number): EquipSlotDef =>
+  EQUIP_SLOTS.find((s) => s.slot === idx)!;
+
+/** Build a tile for a single slot. */
+interface TileProps {
+  def: EquipSlotDef;
   gear: Record<number, { id?: string | number }>;
-  onOpen: (slotDef: EquipSlotDef) => void;
+  disabledSlots: Partial<Record<number, string>>;
+  onOpen: (def: EquipSlotDef) => void;
   onClear: (slot: number) => void;
 }
 
-const SlotGroup: React.FC<SlotGroupProps> = ({ title, slots, gear, onOpen, onClear }) => (
-  <Box>
+const Tile: React.FC<TileProps> = ({ def, gear, disabledSlots, onOpen, onClear }) => {
+  const piece = gear[def.slot];
+  const itemId = piece?.id != null ? Number(piece.id) : null;
+  const info = itemId ? getItemInfo(itemId) : null;
+  const disabledReason = disabledSlots[def.slot];
+
+  return (
+    <GearSlotCard
+      slotDef={def}
+      itemId={itemId}
+      itemName={info?.name ?? null}
+      setName={info?.setName ?? null}
+      isDisabled={Boolean(disabledReason)}
+      disabledReason={disabledReason}
+      onOpen={() => onOpen(def)}
+      onClear={() => onClear(def.slot)}
+    />
+  );
+};
+
+// ── Section header ──────────────────────────────────────────────────────────
+
+const SectionLabel: React.FC<{ label: string }> = ({ label }) => {
+  const isDark = useTheme().palette.mode === 'dark';
+  return (
     <Typography
-      variant="overline"
-      color="text.disabled"
-      sx={{ fontWeight: 700, letterSpacing: 1.5, mb: 0.5, display: 'block', fontSize: 10 }}
+      variant="caption"
+      sx={{
+        fontWeight: 700,
+        textTransform: 'uppercase',
+        letterSpacing: 1.6,
+        fontSize: '0.6rem',
+        fontFamily: 'Space Grotesk, Inter, system-ui',
+        color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.38)',
+        alignSelf: 'stretch',
+        textAlign: 'center',
+        pb: 0.5,
+        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+      }}
     >
-      {title}
+      {label}
     </Typography>
-    <Stack spacing={0.5}>
-      {slots.map((s) => {
-        const piece = gear[s.slot];
-        const itemId = piece?.id != null ? Number(piece.id) : null;
-        const info = itemId ? getItemInfo(itemId) : null;
-        return (
-          <GearSlotCard
-            key={s.slot}
-            slotDef={s}
-            itemName={info?.name ?? null}
-            onOpen={() => onOpen(s)}
-            onClear={() => onClear(s.slot)}
-          />
-        );
-      })}
-    </Stack>
-  </Box>
-);
+  );
+};
+
+// ── Main Component ──────────────────────────────────────────────────────────
 
 export const EquipmentSection: React.FC = () => {
   const dispatch = useDispatch();
@@ -58,12 +103,27 @@ export const EquipmentSection: React.FC = () => {
 
   const [pickerSlot, setPickerSlot] = useState<EquipSlotDef | null>(null);
 
-  const handleOpen = (slotDef: EquipSlotDef): void => setPickerSlot(slotDef);
+  const disabledSlots = useMemo<Partial<Record<number, string>>>(() => {
+    const result: Partial<Record<number, string>> = {};
+    const fId = setup.gear[FRONT_MAIN]?.id != null ? Number(setup.gear[FRONT_MAIN].id) : null;
+    const bId = setup.gear[BACK_MAIN]?.id != null ? Number(setup.gear[BACK_MAIN].id) : null;
+    if (isTwoHanded(fId)) result[FRONT_OFF] = 'Front bar weapon uses both hands';
+    if (isTwoHanded(bId)) result[BACK_OFF] = 'Back bar weapon uses both hands';
+    return result;
+  }, [setup.gear]);
+
+  const handleOpen = (def: EquipSlotDef): void => {
+    if (!disabledSlots[def.slot]) setPickerSlot(def);
+  };
   const handleClose = (): void => setPickerSlot(null);
 
   const handleSelect = (itemId: number): void => {
-    if (pickerSlot) {
-      dispatch(setGearSlot({ slot: pickerSlot.slot, itemId }));
+    if (!pickerSlot) return;
+    dispatch(setGearSlot({ slot: pickerSlot.slot, itemId }));
+    // Auto-clear off-hand when a 2H weapon is selected
+    if ((pickerSlot.slot === FRONT_MAIN || pickerSlot.slot === BACK_MAIN) && isTwoHanded(itemId)) {
+      const offSlot = pickerSlot.slot === FRONT_MAIN ? FRONT_OFF : BACK_OFF;
+      dispatch(setGearSlot({ slot: offSlot, itemId: null }));
     }
     handleClose();
   };
@@ -72,36 +132,41 @@ export const EquipmentSection: React.FC = () => {
     dispatch(setGearSlot({ slot, itemId: null }));
   };
 
-  const apparel = EQUIP_SLOTS.filter((s) => s.category === 'apparel');
-  const accessories = EQUIP_SLOTS.filter((s) => s.category === 'accessories');
-  const weapons = EQUIP_SLOTS.filter((s) => s.category === 'weapons');
+  /** Shorthand to render a row of tiles. */
+  const tileRow = (slots: number[]): React.ReactNode => (
+    <Stack direction="row" spacing={1} justifyContent="center" useFlexGap sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+      {slots.map((idx) => (
+        <Tile
+          key={idx}
+          def={slotDef(idx)}
+          gear={setup.gear}
+          disabledSlots={disabledSlots}
+          onOpen={handleOpen}
+          onClear={handleClear}
+        />
+      ))}
+    </Stack>
+  );
 
   return (
     <>
-      <Stack spacing={2}>
-        <SlotGroup
-          title="Apparel"
-          slots={apparel}
-          gear={setup.gear}
-          onOpen={handleOpen}
-          onClear={handleClear}
-        />
-        <Divider sx={{ opacity: 0.3 }} />
-        <SlotGroup
-          title="Accessories"
-          slots={accessories}
-          gear={setup.gear}
-          onOpen={handleOpen}
-          onClear={handleClear}
-        />
-        <Divider sx={{ opacity: 0.3 }} />
-        <SlotGroup
-          title="Weapons"
-          slots={weapons}
-          gear={setup.gear}
-          onOpen={handleOpen}
-          onClear={handleClear}
-        />
+      <Stack spacing={2} alignItems="center">
+        {/* ── Apparel ──────────────── */}
+        <SectionLabel label="Apparel" />
+        {tileRow([0, 2, 3])}   {/* Head · Body · Shoulders */}
+        {tileRow([16, 6, 8])}  {/* Hands · Waist · Legs */}
+        {tileRow([9])}          {/* Feet */}
+
+        {/* ── Accessories ──────────── */}
+        <Box sx={{ pt: 0.5 }} />
+        <SectionLabel label="Accessories" />
+        {tileRow([1, 11, 12])}  {/* Neck · Ring 1 · Ring 2 */}
+
+        {/* ── Weapons ──────────────── */}
+        <Box sx={{ pt: 0.5 }} />
+        <SectionLabel label="Weapons" />
+        {tileRow([4, 5])}       {/* Front bar */}
+        {tileRow([20, 21])}     {/* Back bar */}
       </Stack>
 
       {pickerSlot && (
@@ -112,7 +177,9 @@ export const EquipmentSection: React.FC = () => {
           targetSlot={pickerSlot.slotType}
           slotName={pickerSlot.name}
           currentItemId={
-            setup.gear[pickerSlot.slot]?.id != null ? Number(setup.gear[pickerSlot.slot].id) : null
+            setup.gear[pickerSlot.slot]?.id != null
+              ? Number(setup.gear[pickerSlot.slot].id)
+              : null
           }
         />
       )}

@@ -1,11 +1,12 @@
 /**
- * Passives Section — searchable skill passives with animated chip selection.
+ * Passives Section — glass-style search input, accent-themed chips,
+ * animated selection with glass empty state.
  */
 
 import { Box, Chip, Stack, TextField, Typography } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import React, { useMemo, useState } from 'react';
+import React, { useDeferredValue, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
@@ -22,31 +23,73 @@ export const PassivesSection: React.FC = () => {
   const setup = build.setups[activeSetupIndex];
 
   const [query, setQuery] = useState('');
+  // Defers the expensive search to a lower-priority update, preventing input lag
+  const deferredQuery = useDeferredValue(query);
 
   const results = useMemo(() => {
-    if (query.length < 2) return [];
-    return searchSkills(query)
+    if (deferredQuery.length < 2) return [];
+    return searchSkills(deferredQuery)
       .filter((s) => s.isPassive)
       .slice(0, 60);
-  }, [query]);
+  }, [deferredQuery]);
+
+  /** Accent chip styles for selected state */
+  const accentChipSx = {
+    cursor: 'pointer',
+    fontWeight: 700,
+    fontSize: 11,
+    fontFamily: 'Space Grotesk, Inter, system-ui',
+    background: 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.22), rgba(var(--be-accent-rgb, 56, 189, 248), 0.10))',
+    border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)',
+    color: 'var(--be-accent, #38bdf8)',
+    boxShadow: '0 0 8px rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)',
+    '& .MuiChip-deleteIcon': {
+      color: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.60)',
+      '&:hover': { color: 'var(--be-accent, #38bdf8)' },
+    },
+  };
 
   return (
     <Stack spacing={1.5}>
+      {/* Glass search input */}
       <TextField
         size="small"
         fullWidth
-        placeholder="Search passives (2+ chars)…"
+        placeholder="Search passives (2+ chars)..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        inputProps={{ 'aria-label': 'Search passive abilities', 'aria-describedby': 'passives-hint' }}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontSize: 13,
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'transparent',
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)',
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'var(--be-accent, #38bdf8)',
+              borderWidth: '1px',
+            },
+          },
+        }}
       />
 
-      {/* Results */}
+      {/* Results — glass-style chips */}
       {results.length > 0 && (
         <Stack spacing={0.5}>
           <Typography
             variant="caption"
             color="text.disabled"
-            sx={{ fontWeight: 700, fontSize: 10 }}
+            sx={{
+              fontWeight: 700,
+              fontSize: 10,
+              letterSpacing: 0.8,
+              textTransform: 'uppercase',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+            }}
           >
             Search Results
           </Typography>
@@ -60,8 +103,23 @@ export const PassivesSection: React.FC = () => {
                   size="small"
                   onClick={() => dispatch(togglePassive(skill.id))}
                   variant={active ? 'filled' : 'outlined'}
-                  color={active ? 'primary' : 'default'}
-                  sx={{ cursor: 'pointer', fontWeight: active ? 700 : 400, fontSize: 11 }}
+                  sx={
+                    active
+                      ? { ...accentChipSx, cursor: 'pointer' }
+                      : {
+                          cursor: 'pointer',
+                          fontWeight: 500,
+                          fontSize: 11,
+                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)',
+                          backdropFilter: 'blur(4px)',
+                          transition: 'all 0.15s',
+                          '&:hover': {
+                            borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.30)',
+                            background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.05)',
+                          },
+                        }
+                  }
                 />
               );
             })}
@@ -69,13 +127,21 @@ export const PassivesSection: React.FC = () => {
         </Stack>
       )}
 
-      {/* Selected passives */}
+      {/* Selected passives — accent-themed with animated layout */}
       {setup.passives.length > 0 && (
         <Box>
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ fontWeight: 700, mb: 0.5, display: 'block', fontSize: 11 }}
+            sx={{
+              fontWeight: 700,
+              mb: 0.75,
+              display: 'block',
+              fontSize: 11,
+              letterSpacing: 0.8,
+              textTransform: 'uppercase',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+            }}
           >
             Selected ({setup.passives.length})
           </Typography>
@@ -96,9 +162,8 @@ export const PassivesSection: React.FC = () => {
                       label={skill?.name ?? `Passive #${id}`}
                       size="small"
                       onDelete={() => dispatch(togglePassive(id))}
-                      color="primary"
                       variant="filled"
-                      sx={{ fontWeight: 700, fontSize: 11 }}
+                      sx={accentChipSx}
                     />
                   </motion.div>
                 );
@@ -108,17 +173,22 @@ export const PassivesSection: React.FC = () => {
         </Box>
       )}
 
+      {/* Glass empty state */}
       {setup.passives.length === 0 && query.length < 2 && (
         <Box
           sx={{
             textAlign: 'center',
             py: 3,
-            background: isDark ? alpha('#fff', 0.02) : alpha('#000', 0.02),
-            border: `1px dashed ${isDark ? alpha('#fff', 0.08) : alpha('#000', 0.06)}`,
-            borderRadius: 2,
+            background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+            border: `1px dashed ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+            borderRadius: 3,
           }}
         >
-          <Typography variant="caption" color="text.disabled">
+          <Typography
+            variant="caption"
+            color="text.disabled"
+            sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
+          >
             Search for passives above to add them
           </Typography>
         </Box>

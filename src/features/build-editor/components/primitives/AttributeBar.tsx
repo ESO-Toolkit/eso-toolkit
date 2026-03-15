@@ -45,8 +45,8 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
   const fillPercent = max > 0 ? (value / max) * 100 : 0;
 
   const btnSx = {
-    width: 28,
-    height: 28,
+    width: 36,
+    height: 36,
     borderRadius: '8px',
     fontWeight: 700,
     fontSize: 16,
@@ -58,6 +58,8 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
     flexShrink: 0,
   } as const;
 
+  const atMax = value >= max || total >= totalMax;
+
   return (
     <Box
       sx={{
@@ -66,22 +68,25 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
         gap: 1.25,
         py: 1,
         px: 1.5,
-        borderRadius: 2,
-        background: isDark ? alpha(color, 0.06) : alpha(color, 0.04),
-        border: `1px solid ${alpha(color, isDark ? 0.2 : 0.15)}`,
-        transition: 'background 0.15s',
+        borderRadius: 2.5,
+        background: isDark ? alpha(color, 0.05) : alpha(color, 0.03),
+        border: `1px solid ${alpha(color, isDark ? 0.18 : 0.12)}`,
+        transition: 'all 0.2s ease',
         '&:hover': {
-          background: isDark ? alpha(color, 0.1) : alpha(color, 0.07),
+          background: isDark ? alpha(color, 0.09) : alpha(color, 0.06),
+          borderColor: alpha(color, isDark ? 0.30 : 0.22),
+          boxShadow: `0 0 16px ${alpha(color, 0.10)}`,
         },
       }}
     >
-      {/* Color dot */}
+      {/* Color dot with glow */}
       <Box
         sx={{
           width: 10,
           height: 10,
           borderRadius: '50%',
           background: color,
+          boxShadow: `0 0 8px ${alpha(color, 0.55)}`,
           flexShrink: 0,
         }}
       />
@@ -89,18 +94,25 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
       {/* Label */}
       <Typography
         variant="caption"
-        sx={{ fontWeight: 600, minWidth: 60, color: 'text.primary', fontSize: 12 }}
+        sx={{
+          fontWeight: 600,
+          minWidth: 60,
+          color: 'text.primary',
+          fontSize: 12,
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+        }}
       >
         {label}
       </Typography>
 
-      {/* Bar track */}
+      {/* Bar track — inner shadow for depth, gradient fill */}
       <Box
         sx={{
           flex: 1,
           height: 8,
           borderRadius: 4,
-          background: isDark ? alpha(color, 0.12) : alpha(color, 0.1),
+          background: isDark ? alpha(color, 0.10) : alpha(color, 0.08),
+          boxShadow: `inset 0 1px 3px ${alpha(color, 0.15)}`,
           overflow: 'hidden',
           minWidth: 48,
         }}
@@ -109,7 +121,10 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
           style={{
             height: '100%',
             borderRadius: 4,
-            background: color,
+            background: `linear-gradient(90deg, ${color} 0%, ${alpha(color, 0.55)} 100%)`,
+            boxShadow: fillPercent > 0
+              ? `0 0 10px ${alpha(color, 0.45)}, inset 0 1px 0 rgba(255,255,255,0.18)`
+              : 'none',
           }}
           initial={false}
           animate={{ width: `${fillPercent}%` }}
@@ -119,7 +134,7 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
         />
       </Box>
 
-      {/* Minus */}
+      {/* Minus — glass-style button */}
       <Tooltip title={`Decrease ${label} (Shift ×10)`}>
         <span>
           <ButtonBase
@@ -128,12 +143,15 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
             aria-label={`Decrease ${label}`}
             sx={{
               ...btnSx,
-              background: isDark ? alpha('#fff', 0.07) : alpha('#000', 0.07),
+              background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
               color: 'text.primary',
               '&:hover:not(:disabled)': {
-                background: isDark ? alpha('#fff', 0.15) : alpha('#000', 0.14),
+                borderColor: alpha(color, 0.45),
+                background: alpha(color, isDark ? 0.14 : 0.10),
+                color,
               },
-              '&:disabled': { opacity: 0.35 },
+              '&:disabled': { opacity: 0.30, border: '1px solid transparent' },
             }}
           >
             −
@@ -141,39 +159,45 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
         </span>
       </Tooltip>
 
-      {/* Value */}
+      {/* Value with glow on max */}
       <Typography
         component="span"
         aria-live="polite"
         aria-label={`${label}: ${value}`}
         variant="caption"
         sx={{
-          minWidth: 24,
+          minWidth: 26,
           textAlign: 'center',
           fontWeight: 700,
           fontVariantNumeric: 'tabular-nums',
+          fontFamily: 'Space Grotesk, Inter, system-ui',
           color: value > 0 ? color : 'text.disabled',
           fontSize: 13,
+          textShadow: atMax && value > 0 ? `0 0 8px ${alpha(color, 0.6)}` : 'none',
+          transition: 'text-shadow 0.3s',
         }}
       >
         {value}
       </Typography>
 
-      {/* Plus */}
+      {/* Plus — glass-style button with accent color */}
       <Tooltip title={`Increase ${label} (Shift ×10)`}>
         <span>
           <ButtonBase
             onClick={(e: React.MouseEvent) => adjust(1, e)}
-            disabled={value >= max || total >= totalMax}
+            disabled={atMax}
             aria-label={`Increase ${label}`}
             sx={{
               ...btnSx,
-              background: isDark ? alpha(color, 0.25) : alpha(color, 0.2),
+              background: isDark ? alpha(color, 0.14) : alpha(color, 0.10),
+              border: `1px solid ${alpha(color, 0.30)}`,
               color,
               '&:hover:not(:disabled)': {
-                background: isDark ? alpha(color, 0.4) : alpha(color, 0.35),
+                background: alpha(color, isDark ? 0.28 : 0.22),
+                borderColor: alpha(color, 0.55),
+                boxShadow: `0 0 10px ${alpha(color, 0.25)}`,
               },
-              '&:disabled': { opacity: 0.35 },
+              '&:disabled': { opacity: 0.30, border: '1px solid transparent' },
             }}
           >
             +
