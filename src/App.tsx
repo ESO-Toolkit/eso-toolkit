@@ -161,6 +161,10 @@ const RosterHubPage = React.lazy(() =>
   })),
 );
 
+const BuildEditorPage = React.lazy(() =>
+  import('./pages/BuildEditorPage').then((module) => ({ default: module.BuildEditorPage })),
+);
+
 // Generic page loading skeleton - used for lazy-loaded routes and PersistGate hydration
 const LoadingFallback: React.FC = () => (
   <Container maxWidth="lg" sx={{ pt: 4, px: 2 }}>
@@ -540,6 +544,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <LoadoutManager />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/build-editor"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <BuildEditorPage />
                   </Suspense>
                 </ErrorBoundary>
               }
