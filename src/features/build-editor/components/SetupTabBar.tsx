@@ -62,7 +62,7 @@ export const SetupTabBar: React.FC = () => {
                 borderRadius: 2,
                 background: active
                   ? isDark
-                    ? 'rgba(56, 189, 248, 0.12)'
+                    ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)'
                     : 'rgba(15, 23, 42, 0.07)'
                   : 'transparent',
                 color: active ? 'var(--be-accent, #38bdf8)' : 'text.secondary',
@@ -70,7 +70,7 @@ export const SetupTabBar: React.FC = () => {
                 fontWeight: active ? 700 : 500,
                 fontSize: 13,
                 '&:hover': {
-                  background: isDark ? 'rgba(56, 189, 248, 0.08)' : 'rgba(15, 23, 42, 0.04)',
+                  background: isDark ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)' : 'rgba(15, 23, 42, 0.04)',
                 },
               }}
             >

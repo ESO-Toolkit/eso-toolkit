@@ -39,9 +39,12 @@ const BuildEditorPageInner: React.FC = () => {
           position: 'relative',
           height: 80,
           overflow: 'hidden',
+          // Stacked gradients: accent tint on top, opaque dark base below.
+          // Avoids the alpha-interpolation artifact where mid-gradient colors
+          // become visibly orange/purple instead of staying near the base tone.
           background: isDark
-            ? `linear-gradient(135deg, #0b1220 0%, #0f172a 40%, rgba(${classTheme.accentRgb}, 0.08) 100%)`
-            : `linear-gradient(135deg, #f0f4f8 0%, #f8fafc 40%, rgba(${classTheme.accentRgb}, 0.06) 100%)`,
+            ? `linear-gradient(135deg, transparent 50%, rgba(${classTheme.accentRgb}, 0.08) 100%), linear-gradient(135deg, #0b1220, #0f172a)`
+            : `linear-gradient(135deg, transparent 50%, rgba(${classTheme.accentRgb}, 0.06) 100%), linear-gradient(135deg, #f0f4f8, #f8fafc)`,
           // Subtle gradient line at bottom
           '&::after': {
             content: '""',
