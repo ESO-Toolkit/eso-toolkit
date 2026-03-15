@@ -18,7 +18,7 @@ import {
 } from '@mui/icons-material';
 import { Box, ButtonBase, Tooltip, useMediaQuery } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { SectionProgressMap } from '../hooks/useSectionProgress';
 import { BE_TOKENS, type SectionId } from '../theme/buildEditorTokens';
@@ -45,21 +45,34 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [activeSection, setActiveSection] = useState<SectionId>('general');
+  const isScrollingRef = useRef(false);
 
-  // Scroll-spy: observe which section is in view
+  // Scroll-spy: observe which section is in view.
+  // Picks the topmost intersecting section to avoid the "last entry wins" bug.
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
+        // Skip observer updates during programmatic scroll
+        if (isScrollingRef.current) return;
+
+        // Find the topmost intersecting section (smallest positive top value)
+        let best: { id: SectionId; top: number } | null = null;
         for (const entry of entries) {
           if (entry.isIntersecting) {
             const sectionId = entry.target.id.replace('section-', '') as SectionId;
             if (BE_TOKENS.sectionIds.includes(sectionId)) {
-              setActiveSection(sectionId);
+              const top = entry.boundingClientRect.top;
+              if (!best || top < best.top) {
+                best = { id: sectionId, top };
+              }
             }
           }
         }
+        if (best) {
+          setActiveSection(best.id);
+        }
       },
-      { rootMargin: '-20% 0px -60% 0px', threshold: 0.1 },
+      { rootMargin: '-10% 0px -70% 0px', threshold: 0 },
     );
 
     BE_TOKENS.sectionIds.forEach((id) => {
@@ -71,8 +84,18 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
   }, []);
 
   const scrollToSection = useCallback((sectionId: SectionId) => {
+    // Immediately set active section on click, then temporarily suppress
+    // the observer so a competing section can't steal the highlight.
+    setActiveSection(sectionId);
+    isScrollingRef.current = true;
+
     const el = document.getElementById(`section-${sectionId}`);
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Re-enable observer after scroll settles
+    setTimeout(() => {
+      isScrollingRef.current = false;
+    }, 800);
   }, []);
 
   const railBg = isDark ? alpha('#0b1220', 0.9) : alpha('#f8fafc', 0.95);
@@ -114,7 +137,7 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
                 sx={{
                   background: active
                     ? isDark
-                      ? 'rgba(56, 189, 248, 0.12)'
+                      ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)'
                       : 'rgba(15, 23, 42, 0.07)'
                     : 'transparent',
                   color: active ? 'var(--be-accent, #38bdf8)' : 'text.disabled',
@@ -195,7 +218,7 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
                 position: 'relative',
                 background: active
                   ? isDark
-                    ? 'rgba(56, 189, 248, 0.15)'
+                    ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)'
                     : 'rgba(15, 23, 42, 0.08)'
                   : 'transparent',
                 color: active
@@ -205,7 +228,7 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
                     : 'rgba(0,0,0,0.35)',
                 transition: 'all 0.15s',
                 '&:hover': {
-                  background: isDark ? 'rgba(56, 189, 248, 0.1)' : 'rgba(15, 23, 42, 0.06)',
+                  background: isDark ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.1)' : 'rgba(15, 23, 42, 0.06)',
                   color: 'var(--be-accent, #38bdf8)',
                 },
               }}
