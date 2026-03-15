@@ -62,6 +62,7 @@ export const GeneralSection: React.FC = () => {
         <TextField
           fullWidth
           size="small"
+          id="build-name"
           placeholder="Build Name"
           value={build.name}
           onChange={(e) => dispatch(setBuildName(e.target.value))}
@@ -79,6 +80,7 @@ export const GeneralSection: React.FC = () => {
           multiline
           minRows={3}
           size="small"
+          id="build-description"
           placeholder="A short introduction text"
           value={build.shortDescription}
           onChange={(e) => dispatch(setBuildDescription(e.target.value))}
@@ -209,6 +211,7 @@ export const GeneralSection: React.FC = () => {
           <TextField
             fullWidth
             size="small"
+            id="addon-import"
             placeholder="Addon export string"
             value={build.addonImportString}
             onChange={(e) => dispatch(setAddonImportString(e.target.value))}

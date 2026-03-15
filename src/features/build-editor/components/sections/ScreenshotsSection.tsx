@@ -76,7 +76,7 @@ export const ScreenshotsSection: React.FC = () => {
         <>
           <Grid container spacing={1.5}>
             {setup.screenshots.map((src, i) => (
-              <Grid item xs={6} sm={4} key={i}>
+              <Grid item xs={6} sm={4} key={src.slice(0, 48) + i}>
                 <Box
                   sx={{
                     position: 'relative',

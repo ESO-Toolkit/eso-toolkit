@@ -4,6 +4,8 @@
  *  - Left sidebar: top-level tabs (General / Guide / Settings) + setup selector + per-setup tabs
  *  - Right content: active section
  *  - Action bar: Save / Share / View
+ *
+ * Mobile: sidebar collapses to a horizontal tab bar above the content panel.
  */
 
 import {
@@ -26,6 +28,7 @@ import {
   Select,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { useSnackbar } from 'notistack';
@@ -79,12 +82,13 @@ const BuildEditorSidebar: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { build, activeSetupIndex, activeSidebarTab, activeSetupTab } = useSelector(
     (s: RootState) => s.buildEditor,
   );
 
   const sidebarBg = isDark ? alpha('#0f172a', 0.97) : alpha('#f8fafc', 0.98);
-  const borderRight = isDark ? alpha('#38bdf8', 0.1) : alpha('#0f172a', 0.1);
+  const borderColor = isDark ? alpha('#38bdf8', 0.1) : alpha('#0f172a', 0.1);
 
   const activeTabStyle = (active: boolean): object => ({
     display: 'flex',
@@ -109,13 +113,161 @@ const BuildEditorSidebar: React.FC = () => {
     },
   });
 
+  const handleTopTabClick = (tabId: SidebarTopTab): void => {
+    dispatch(setSidebarTab(tabId));
+    // "General" top tab shows build-level info (GeneralSection)
+    if (tabId === 'general') {
+      dispatch(setSetupTab('info'));
+    }
+  };
+
+  const handleSetupTabClick = (tabId: SetupTab): void => {
+    dispatch(setSidebarTab('general'));
+    dispatch(setSetupTab(tabId));
+  };
+
+  // ── Mobile layout ──────────────────────────────────────────────────────────
+  if (isMobile) {
+    return (
+      <Box
+        sx={{
+          background: sidebarBg,
+          borderBottom: `1px solid ${borderColor}`,
+          flexShrink: 0,
+        }}
+      >
+        {/* Top-level tabs row */}
+        <Box
+          role="tablist"
+          aria-label="Build editor sections"
+          sx={{ display: 'flex', px: 1, pt: 1, pb: 0.5, gap: 0.25 }}
+        >
+          {TOP_TABS.map((t) => (
+            <ButtonBase
+              key={t.id}
+              role="tab"
+              aria-selected={activeSidebarTab === t.id && (t.id !== 'general' || activeSetupTab === 'info')}
+              onClick={() => handleTopTabClick(t.id)}
+              sx={{
+                ...activeTabStyle(
+                  t.id === 'general'
+                    ? activeSidebarTab === 'general' && activeSetupTab === 'info'
+                    : activeSidebarTab === t.id,
+                ),
+                flex: 1,
+                justifyContent: 'center',
+                py: 0.75,
+              }}
+            >
+              {t.icon}
+              <Typography variant="caption" fontWeight="inherit" color="inherit" sx={{ ml: 0.5 }}>
+                {t.label}
+              </Typography>
+            </ButtonBase>
+          ))}
+        </Box>
+
+        {/* Per-setup tabs (shown when any setup tab is active under 'general') */}
+        {activeSidebarTab === 'general' && activeSetupTab !== 'info' && (
+          <Box
+            role="tablist"
+            aria-label="Setup sections"
+            sx={{ display: 'flex', overflowX: 'auto', px: 1, pb: 1, gap: 0.25, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}
+          >
+            {SETUP_TABS.map((t) => (
+              <ButtonBase
+                key={t.id}
+                role="tab"
+                aria-selected={activeSetupTab === t.id}
+                onClick={() => handleSetupTabClick(t.id)}
+                sx={{
+                  ...activeTabStyle(activeSetupTab === t.id),
+                  px: 1.25,
+                  py: 0.5,
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  width: 'auto',
+                  fontSize: 12,
+                }}
+              >
+                <Typography variant="caption" fontWeight="inherit" color="inherit" sx={{ fontSize: 12 }}>
+                  {t.label}
+                </Typography>
+                {t.id === 'subclassing' && (
+                  <Chip label="New" size="small" color="primary" sx={{ ml: 0.5, height: 14, fontSize: 8 }} />
+                )}
+              </ButtonBase>
+            ))}
+          </Box>
+        )}
+
+        {/* Per-setup entry button — visible on General/Info view to navigate to setup tabs */}
+        {activeSidebarTab === 'general' && activeSetupTab === 'info' && (
+          <Box sx={{ px: 1, pb: 1 }}>
+            <ButtonBase
+              onClick={() => handleSetupTabClick('character')}
+              sx={{
+                ...activeTabStyle(false),
+                width: 'auto',
+                px: 1.5,
+                py: 0.5,
+                border: `1px solid ${borderColor}`,
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant="caption" color="text.secondary">
+                Configure Setups →
+              </Typography>
+            </ButtonBase>
+          </Box>
+        )}
+
+        {/* Setup selector on mobile */}
+        {activeSidebarTab === 'general' && activeSetupTab !== 'info' && (
+          <Box sx={{ px: 1, pb: 1, display: 'flex', gap: 0.75, alignItems: 'center' }}>
+            <Select
+              size="small"
+              value={activeSetupIndex}
+              onChange={(e) => dispatch(setActiveSetupIndex(Number(e.target.value)))}
+              sx={{ flex: 1, fontSize: 12, height: 30 }}
+              inputProps={{ 'aria-label': 'Select setup' }}
+            >
+              {build.setups.map((s, i) => (
+                <MenuItem key={s.id} value={i} sx={{ fontSize: 12 }}>
+                  {s.name}
+                </MenuItem>
+              ))}
+            </Select>
+            <Tooltip title={build.setups.length >= 5 ? 'Max 5 setups' : 'Add setup'}>
+              <Box>
+                <IconButton
+                  size="small"
+                  onClick={() => dispatch(addSetup())}
+                  disabled={build.setups.length >= 5}
+                  aria-label="Add setup"
+                  sx={{
+                    background: isDark ? alpha('#38bdf8', 0.12) : alpha('#0f172a', 0.07),
+                    '&:hover': { background: isDark ? alpha('#38bdf8', 0.22) : alpha('#0f172a', 0.12) },
+                  }}
+                >
+                  <AddIcon sx={{ fontSize: 14 }} />
+                </IconButton>
+              </Box>
+            </Tooltip>
+          </Box>
+        )}
+      </Box>
+    );
+  }
+
+  // ── Desktop layout ─────────────────────────────────────────────────────────
   return (
     <Box
       sx={{
         width: 230,
         flexShrink: 0,
         background: sidebarBg,
-        borderRight: `1px solid ${borderRight}`,
+        borderRight: `1px solid ${borderColor}`,
         display: 'flex',
         flexDirection: 'column',
         py: 2,
@@ -125,12 +277,26 @@ const BuildEditorSidebar: React.FC = () => {
       }}
     >
       {/* Top-level tabs */}
-      <Box sx={{ px: 1.5, mb: 1.5 }}>
+      <Box
+        role="tablist"
+        aria-label="Build editor sections"
+        sx={{ px: 1.5, mb: 1.5 }}
+      >
         {TOP_TABS.map((t) => (
           <ButtonBase
             key={t.id}
-            onClick={() => dispatch(setSidebarTab(t.id))}
-            sx={activeTabStyle(activeSidebarTab === t.id)}
+            role="tab"
+            aria-selected={
+              t.id === 'general'
+                ? activeSidebarTab === 'general' && activeSetupTab === 'info'
+                : activeSidebarTab === t.id
+            }
+            onClick={() => handleTopTabClick(t.id)}
+            sx={activeTabStyle(
+              t.id === 'general'
+                ? activeSidebarTab === 'general' && activeSetupTab === 'info'
+                : activeSidebarTab === t.id,
+            )}
           >
             {t.icon}
             <Typography variant="body2" fontWeight="inherit" color="inherit">
@@ -153,6 +319,7 @@ const BuildEditorSidebar: React.FC = () => {
             value={activeSetupIndex}
             onChange={(e) => dispatch(setActiveSetupIndex(Number(e.target.value)))}
             sx={{ flex: 1, fontSize: 13 }}
+            inputProps={{ 'aria-label': 'Select setup' }}
           >
             {build.setups.map((s, i) => (
               <MenuItem key={s.id} value={i}>
@@ -166,6 +333,7 @@ const BuildEditorSidebar: React.FC = () => {
                 size="small"
                 onClick={() => dispatch(addSetup())}
                 disabled={build.setups.length >= 5}
+                aria-label="Add setup"
                 sx={{
                   background: isDark ? alpha('#38bdf8', 0.12) : alpha('#0f172a', 0.07),
                   '&:hover': {
@@ -181,14 +349,17 @@ const BuildEditorSidebar: React.FC = () => {
       </Box>
 
       {/* Per-setup section tabs */}
-      <Box sx={{ px: 1.5, pt: 1, flex: 1 }}>
+      <Box
+        role="tablist"
+        aria-label="Setup sections"
+        sx={{ px: 1.5, pt: 1, flex: 1 }}
+      >
         {SETUP_TABS.map((t) => (
           <ButtonBase
             key={t.id}
-            onClick={() => {
-              dispatch(setSidebarTab('general'));
-              dispatch(setSetupTab(t.id));
-            }}
+            role="tab"
+            aria-selected={activeSidebarTab === 'general' && activeSetupTab === t.id}
+            onClick={() => handleSetupTabClick(t.id)}
             sx={{
               ...activeTabStyle(activeSidebarTab === 'general' && activeSetupTab === t.id),
               fontSize: 13,
@@ -251,6 +422,7 @@ const ActionBar: React.FC = () => {
         size="small"
         startIcon={<SaveOutlined sx={{ fontSize: 15 }} />}
         onClick={handleSave}
+        aria-label={isDirty ? 'Save build' : 'Build saved'}
         sx={{
           minWidth: 80,
           background: isDirty
@@ -274,6 +446,7 @@ const ActionBar: React.FC = () => {
         size="small"
         startIcon={<VisibilityOutlined sx={{ fontSize: 15 }} />}
         disabled
+        aria-label="View build (coming soon)"
       >
         View
       </Button>
@@ -289,8 +462,10 @@ const ContentPanel: React.FC = () => {
   if (activeSidebarTab === 'guide') return <GuideSection />;
   if (activeSidebarTab === 'settings') return <SettingsSection />;
 
-  // activeSidebarTab === 'general' → delegate to setup tab
+  // activeSidebarTab === 'general'
   switch (activeSetupTab) {
+    case 'info':
+      return <GeneralSection />;
     case 'character':
       return <CharacterSection />;
     case 'equipment':
@@ -321,12 +496,14 @@ const ContentPanel: React.FC = () => {
 export const BuildEditorLayout: React.FC = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { activeSidebarTab, activeSetupTab } = useSelector((s: RootState) => s.buildEditor);
 
-  // Determine human-readable section title
+  // Human-readable section title
   const sectionTitle = (() => {
     if (activeSidebarTab === 'guide') return 'Guide';
     if (activeSidebarTab === 'settings') return 'Settings';
+    if (activeSetupTab === 'info') return 'General';
     return activeSetupTab.charAt(0).toUpperCase() + activeSetupTab.slice(1);
   })();
 
@@ -347,7 +524,7 @@ export const BuildEditorLayout: React.FC = () => {
       <ActionBar />
 
       {/* Body */}
-      <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
+      <Box sx={{ display: 'flex', flex: 1, minHeight: 0, flexDirection: isMobile ? 'column' : 'row' }}>
         <BuildEditorSidebar />
 
         {/* Main content */}
@@ -356,10 +533,14 @@ export const BuildEditorLayout: React.FC = () => {
             flex: 1,
             minWidth: 0,
             overflowY: 'auto',
-            p: 3,
+            p: { xs: 2, md: 3 },
           }}
         >
-          <Typography variant="overline" color="text.disabled" sx={{ fontWeight: 700, letterSpacing: 1.2, mb: 2, display: 'block' }}>
+          <Typography
+            variant="overline"
+            color="text.disabled"
+            sx={{ fontWeight: 700, letterSpacing: 1.2, mb: 2, display: 'block' }}
+          >
             {sectionTitle}
           </Typography>
           <ContentPanel />

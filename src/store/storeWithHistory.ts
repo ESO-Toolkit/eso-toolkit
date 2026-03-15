@@ -20,8 +20,8 @@ import storage from 'redux-persist/lib/storage';
 
 import type { EsoLogsClient } from '@/esologsClient';
 
-import loadoutReducer from '../features/loadout-manager/store/loadoutSlice';
 import buildEditorReducer from '../features/build-editor/store/buildEditorSlice';
+import loadoutReducer from '../features/loadout-manager/store/loadoutSlice';
 
 import dashboardReducer from './dashboard/dashboardSlice';
 import { eventsReducer } from './events_data';
