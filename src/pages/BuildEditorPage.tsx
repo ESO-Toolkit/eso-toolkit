@@ -33,34 +33,17 @@ const BuildEditorPageInner: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', pb: 4 }}>
-      {/* Compact hero with class-colored accent */}
+      {/* Class-colored accent strip — replaces the ambiguous dark hero band */}
       <Box
         sx={{
-          position: 'relative',
-          height: 80,
-          overflow: 'hidden',
-          // Stacked gradients: accent tint on top, opaque dark base below.
-          // Avoids the alpha-interpolation artifact where mid-gradient colors
-          // become visibly orange/purple instead of staying near the base tone.
-          background: isDark
-            ? `linear-gradient(135deg, transparent 50%, rgba(${classTheme.accentRgb}, 0.08) 100%), linear-gradient(135deg, #0b1220, #0f172a)`
-            : `linear-gradient(135deg, transparent 50%, rgba(${classTheme.accentRgb}, 0.06) 100%), linear-gradient(135deg, #f0f4f8, #f8fafc)`,
-          // Subtle gradient line at bottom
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 1,
-            background: classTheme.gradient,
-            opacity: 0.3,
-          },
+          height: 4,
+          background: classTheme.gradient,
+          opacity: 0.85,
         }}
       />
 
       {/* Editor container */}
-      <Container maxWidth="xl" sx={{ mt: -3 }}>
+      <Container maxWidth="xl" sx={{ mt: 2 }}>
         <BuildEditorShell />
       </Container>
     </Box>

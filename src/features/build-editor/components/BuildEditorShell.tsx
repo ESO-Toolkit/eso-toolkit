@@ -28,8 +28,8 @@ const ShellInner: React.FC = () => {
         position: 'relative',
         borderRadius: 3,
         border: `1px solid ${isDark ? `rgba(${classTheme.accentRgb}, 0.12)` : 'rgba(15, 23, 42, 0.1)'}`,
-        background: isDark ? 'rgba(15, 23, 42, 0.6)' : 'rgba(255, 255, 255, 0.85)',
-        backdropFilter: 'blur(16px)',
+        background: isDark ? 'rgb(11, 18, 32)' : 'rgb(255, 255, 255)',
+        backdropFilter: 'blur(4px)',
         overflow: 'hidden',
         minHeight: 600,
         // Subtle class-colored top border glow
@@ -54,7 +54,7 @@ const ShellInner: React.FC = () => {
               width: 200,
               height: 200,
               borderRadius: '50%',
-              background: `radial-gradient(ellipse, rgba(${classTheme.accentRgb}, 0.08) 0%, transparent 70%)`,
+              background: `radial-gradient(ellipse, rgba(${classTheme.accentRgb}, 0.04) 0%, transparent 70%)`,
               pointerEvents: 'none',
               transition: 'background 0.5s',
             }

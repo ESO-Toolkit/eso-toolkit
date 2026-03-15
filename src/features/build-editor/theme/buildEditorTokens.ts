@@ -7,11 +7,11 @@
 export const BE_TOKENS = {
   // Glass panel
   glass: {
-    bg: 'rgba(15, 23, 42, 0.45)',
-    bgLight: 'rgba(255, 255, 255, 0.55)',
+    bg: 'rgb(15, 23, 42)',
+    bgLight: 'rgba(255, 255, 255, 0.92)',
     border: 'rgba(255, 255, 255, 0.08)',
     borderLight: 'rgba(15, 23, 42, 0.1)',
-    blur: 12,
+    blur: 4,
     shadow: '0 8px 32px rgba(0, 0, 0, 0.18)',
     shadowLight: '0 4px 16px rgba(15, 23, 42, 0.06)',
   },
