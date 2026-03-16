@@ -105,7 +105,7 @@ export const ScreenshotsSection: React.FC = () => {
           <Grid container spacing={1}>
             <AnimatePresence>
               {setup.screenshots.map((src, i) => (
-                <Grid item xs={6} sm={4} key={src.slice(0, 48) + i}>
+                <Grid size={{ xs: 6, sm: 4 }} key={src.slice(0, 48) + i}>
                   <motion.div
                     layout={!prefersReduced}
                     initial={prefersReduced ? false : { scale: 0.9, opacity: 0 }}
