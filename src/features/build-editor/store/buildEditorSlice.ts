@@ -340,6 +340,13 @@ export const buildEditorSlice = createSlice({
       state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
+    setPassives(state, action: PayloadAction<number[]>) {
+      const setup = state.build.setups[state.activeSetupIndex];
+      if (!setup) return;
+      setup.passives = action.payload;
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
 
     // ── Screenshots (per-setup) ───────────────────────────────────────────────
     addScreenshot(state, action: PayloadAction<string>) {
@@ -412,6 +419,7 @@ export const {
   setChampionPassive,
   setConsumables,
   togglePassive,
+  setPassives,
   addScreenshot,
   removeScreenshot,
   loadBuild,
