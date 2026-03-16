@@ -414,3 +414,30 @@ export function getSkillStats(): {
 export function preloadSkillData(): Promise<void> {
   return initializeCache();
 }
+
+// ── Skill Line Index (for organized picker UI) ──────────────────────────────
+
+/** Lightweight metadata for a single skill line. */
+export interface SkillLineMeta {
+  /** Skill line display name (e.g. "Ardent Flame", "Destruction Staff") */
+  name: string;
+  /** Broad category: 'class' | 'weapon' | 'guild' | 'alliance' | 'world' */
+  broadCategory: string;
+  /** Owning class or source name (e.g. "Dragonknight", "Weapon") */
+  className: string;
+}
+
+/** Returns metadata for all skill lines, organized for picker UI. */
+export function getSkillLineIndex(): SkillLineMeta[] {
+  return [
+    ...CLASS_SKILL_LINES,
+    ...WEAPON_SKILL_LINES,
+    ...GUILD_SKILL_LINES,
+    ...ALLIANCE_SKILL_LINES,
+    ...WORLD_SKILL_LINES,
+  ].map((l) => ({
+    name: l.name,
+    broadCategory: l.category,
+    className: l.class,
+  }));
+}

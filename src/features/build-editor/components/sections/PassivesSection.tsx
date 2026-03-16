@@ -13,6 +13,7 @@ import type { RootState } from '@/store/storeWithHistory';
 
 import { getSkillById, searchSkills } from '../../../loadout-manager/data/skillLineSkills';
 import { togglePassive } from '../../store/buildEditorSlice';
+import { glassInputSx } from '../primitives/glassInputSx';
 
 export const PassivesSection: React.FC = () => {
   const dispatch = useDispatch();
@@ -59,22 +60,7 @@ export const PassivesSection: React.FC = () => {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         inputProps={{ 'aria-label': 'Search passive abilities', 'aria-describedby': 'passives-hint' }}
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-            fontSize: 13,
-            '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'transparent',
-            },
-            '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)',
-            },
-            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'var(--be-accent, #38bdf8)',
-              borderWidth: '1px',
-            },
-          },
-        }}
+        sx={glassInputSx(isDark)}
       />
 
       {/* Results — glass-style chips */}

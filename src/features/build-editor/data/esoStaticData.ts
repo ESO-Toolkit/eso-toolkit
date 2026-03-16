@@ -3,7 +3,7 @@
  * Classes, races, mundus stones, curses, roles, game modes.
  */
 
-import type { CombatRole, ESOClass, GameMode } from '../types/build.types';
+import type { ClassSkillLineId, CombatRole, ESOClass, GameMode } from '../types/build.types';
 
 // ─── Classes ─────────────────────────────────────────────────────────────────
 
@@ -14,13 +14,14 @@ export interface ClassDef {
 }
 
 export const ESO_CLASSES: ClassDef[] = [
+  { id: 'any-class', label: 'Any Class', color: '#94a3b8' },
   { id: 'dragonknight', label: 'Dragonknight', color: '#e05c00' },
-  { id: 'sorcerer', label: 'Sorcerer', color: '#7c4dff' },
-  { id: 'nightblade', label: 'Nightblade', color: '#26a69a' },
+  { id: 'sorcerer', label: 'Sorcerer', color: '#00acc1' },
+  { id: 'nightblade', label: 'Nightblade', color: '#e53935' },
   { id: 'templar', label: 'Templar', color: '#ffb300' },
-  { id: 'warden', label: 'Warden', color: '#43a047' },
-  { id: 'necromancer', label: 'Necromancer', color: '#546e7a' },
-  { id: 'arcanist', label: 'Arcanist', color: '#00acc1' },
+  { id: 'warden', label: 'Warden', color: '#26a69a' },
+  { id: 'necromancer', label: 'Necromancer', color: '#7c4dff' },
+  { id: 'arcanist', label: 'Arcanist', color: '#43a047' },
 ];
 
 // ─── Races ───────────────────────────────────────────────────────────────────
@@ -71,7 +72,6 @@ export interface GameModeDef {
 export const ESO_GAME_MODES: GameModeDef[] = [
   { id: 'pve', label: 'PvE' },
   { id: 'pvp', label: 'PvP' },
-  { id: 'both', label: 'PvE & PvP' },
 ];
 
 // ─── Mundus Stones ───────────────────────────────────────────────────────────
@@ -153,6 +153,61 @@ export const EQUIP_SLOTS: EquipSlotDef[] = [
   { slot: 20, name: 'Main-Hand Backup', category: 'weapons', slotType: 'weapon' },
   { slot: 21, name: 'Off-Hand Backup', category: 'weapons', slotType: 'offhand' },
 ];
+
+// ─── Class Skill Lines ────────────────────────────────────────────────────────
+
+export interface ClassSkillLineDef {
+  id: ClassSkillLineId;
+  label: string;
+  ownerClass: ESOClass;
+  /** Emoji icon from the skill line data files */
+  icon: string;
+}
+
+export const CLASS_SKILL_LINES: ClassSkillLineDef[] = [
+  // Dragonknight
+  { id: 'class.ardent-flame', label: 'Ardent Flame', ownerClass: 'dragonknight', icon: '🔥' },
+  { id: 'class.draconic-power', label: 'Draconic Power', ownerClass: 'dragonknight', icon: '🛡️' },
+  { id: 'class.earthen-heart', label: 'Earthen Heart', ownerClass: 'dragonknight', icon: '⛰️' },
+  // Sorcerer
+  { id: 'class.dark-magic', label: 'Dark Magic', ownerClass: 'sorcerer', icon: '🌑' },
+  { id: 'class.daedric-summoning', label: 'Daedric Summoning', ownerClass: 'sorcerer', icon: '👾' },
+  { id: 'class.storm-calling', label: 'Storm Calling', ownerClass: 'sorcerer', icon: '⚡' },
+  // Nightblade
+  { id: 'class.assassination', label: 'Assassination', ownerClass: 'nightblade', icon: '🗡️' },
+  { id: 'class.shadow', label: 'Shadow', ownerClass: 'nightblade', icon: '🌑' },
+  { id: 'class.siphoning', label: 'Siphoning', ownerClass: 'nightblade', icon: '🩸' },
+  // Templar
+  { id: 'class.aedric-spear', label: 'Aedric Spear', ownerClass: 'templar', icon: '✨' },
+  { id: 'class.dawns-wrath', label: "Dawn's Wrath", ownerClass: 'templar', icon: '☀️' },
+  { id: 'class.restoring-light', label: 'Restoring Light', ownerClass: 'templar', icon: '💛' },
+  // Warden
+  { id: 'class.animal-companions', label: 'Animal Companions', ownerClass: 'warden', icon: '🐻' },
+  { id: 'class.green-balance', label: 'Green Balance', ownerClass: 'warden', icon: '🌿' },
+  { id: 'class.winters-embrace', label: "Winter's Embrace", ownerClass: 'warden', icon: '❄️' },
+  // Necromancer
+  { id: 'class.grave-lord', label: 'Grave Lord', ownerClass: 'necromancer', icon: '💀' },
+  { id: 'class.bone-tyrant', label: 'Bone Tyrant', ownerClass: 'necromancer', icon: '🦴' },
+  { id: 'class.living-death', label: 'Living Death', ownerClass: 'necromancer', icon: '⚗️' },
+  // Arcanist
+  { id: 'class.herald-of-the-tome', label: 'Herald of the Tome', ownerClass: 'arcanist', icon: '📖' },
+  { id: 'class.soldier-of-apocrypha', label: 'Soldier of Apocrypha', ownerClass: 'arcanist', icon: '🔮' },
+  { id: 'class.curative-runeforms', label: 'Curative Runeforms', ownerClass: 'arcanist', icon: '🌀' },
+];
+
+/** Returns the 3 skill lines belonging to a given class, in canonical order.
+ *  Returns [null, null, null] for 'any-class' so the user picks lines freely. */
+export const getDefaultLinesForClass = (
+  cls: ESOClass,
+): [ClassSkillLineId | null, ClassSkillLineId | null, ClassSkillLineId | null] => {
+  if (cls === 'any-class') return [null, null, null];
+  const lines = CLASS_SKILL_LINES.filter((l) => l.ownerClass === cls);
+  return [lines[0].id, lines[1].id, lines[2].id];
+};
+
+/** Looks up a skill line definition by ID. */
+export const getSkillLineDef = (id: ClassSkillLineId): ClassSkillLineDef | undefined =>
+  CLASS_SKILL_LINES.find((l) => l.id === id);
 
 // ─── DLC List ─────────────────────────────────────────────────────────────────
 

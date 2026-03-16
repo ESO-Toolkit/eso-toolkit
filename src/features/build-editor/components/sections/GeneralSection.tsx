@@ -1,10 +1,10 @@
 /**
- * General Section — build identity: class, role, game mode, races, description, addon import.
- * Glass-style inputs, accent-themed race chips, glass import panel.
+ * General Section — build identity: class, role, game mode, races.
+ * Glass-style inputs, accent-themed race chips.
  */
 
-import { Alert, Box, Button, Chip, Stack, TextField, Tooltip, Typography } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { Box, Stack, Typography } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -12,9 +12,7 @@ import type { RootState } from '@/store/storeWithHistory';
 
 import { ESO_CLASSES, ESO_GAME_MODES, ESO_RACES, ESO_ROLES } from '../../data/esoStaticData';
 import {
-  setAddonImportString,
   setBuildClass,
-  setBuildDescription,
   setBuildGameMode,
   setBuildRaces,
   setBuildRole,
@@ -22,23 +20,27 @@ import {
 import type { CombatRole, ESOClass, GameMode } from '../../types/build.types';
 import { IconPickerGrid } from '../primitives/IconPickerGrid';
 
-/** Shared glass input styles — transparent border until hover/focus */
-const glassInputSx = (isDark: boolean): Record<string, unknown> => ({
-  '& .MuiOutlinedInput-root': {
-    fontFamily: 'Space Grotesk, Inter, system-ui',
-    fontSize: 13,
-    '& .MuiOutlinedInput-notchedOutline': {
-      borderColor: 'transparent',
-    },
-    '&:hover .MuiOutlinedInput-notchedOutline': {
-      borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)',
-    },
-    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: 'var(--be-accent, #38bdf8)',
-      borderWidth: '1px',
-    },
+/** Alliance groups — canonical ESO faction colors */
+const ALLIANCE_GROUPS = [
+  {
+    id: 'ebonheart' as const,
+    label: 'Ebonheart Pact',
+    color: '#ef4444',
+    raceIds: ['nord', 'darkelf', 'argonian'],
   },
-});
+  {
+    id: 'daggerfall' as const,
+    label: 'Daggerfall Covenant',
+    color: '#3b82f6',
+    raceIds: ['breton', 'redguard', 'orc'],
+  },
+  {
+    id: 'aldmeri' as const,
+    label: 'Aldmeri Dominion',
+    color: '#f59e0b',
+    raceIds: ['highelf', 'woodelf', 'khajiit'],
+  },
+];
 
 /** Shared section label styles */
 const sectionLabelSx = {
@@ -66,24 +68,6 @@ export const GeneralSection: React.FC = () => {
 
   return (
     <Stack spacing={2.5}>
-      {/* Short description */}
-      <Box>
-        <Typography variant="caption" color="text.secondary" sx={sectionLabelSx}>
-          Short Description
-        </Typography>
-        <TextField
-          fullWidth
-          multiline
-          minRows={2}
-          size="small"
-          placeholder="A short introduction text"
-          value={build.shortDescription}
-          onChange={(e) => dispatch(setBuildDescription(e.target.value))}
-          inputProps={{ maxLength: 500 }}
-          sx={glassInputSx(isDark)}
-        />
-      </Box>
-
       {/* Class — IconPickerGrid */}
       <IconPickerGrid
         label="Class"
@@ -120,155 +104,305 @@ export const GeneralSection: React.FC = () => {
         }))}
         value={build.gameMode}
         onChange={(id) => dispatch(setBuildGameMode(id as GameMode))}
-        columns={3}
+        columns={2}
       />
 
-      {/* Optimal Races — glass-style chips */}
+      {/* Optimal Races — grouped by alliance */}
       <Box>
         <Typography variant="caption" color="text.secondary" sx={sectionLabelSx}>
           Optimal Races
         </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-          {ESO_RACES.map((race) => {
-            const selected = build.races.includes(race.id);
+        <Stack spacing={1.5}>
+          {ALLIANCE_GROUPS.map(({ id: allianceId, label: allianceLabel, color, raceIds }) => {
+            const races = ESO_RACES.filter((r) => raceIds.includes(r.id));
             return (
-              <Chip
-                key={race.id}
-                label={race.label}
-                size="small"
-                onClick={() => toggleRace(race.id)}
-                variant={selected ? 'filled' : 'outlined'}
-                aria-pressed={selected}
-                sx={{
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  fontWeight: selected ? 700 : 500,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  fontSize: 11,
-                  backdropFilter: 'blur(4px)',
-                  ...(selected
-                    ? {
-                        background:
-                          'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.22), rgba(var(--be-accent-rgb, 56, 189, 248), 0.10))',
-                        border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)',
-                        color: 'var(--be-accent, #38bdf8)',
-                        boxShadow:
-                          '0 0 8px rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
-                        '&:hover': {
-                          background:
-                            'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.28), rgba(var(--be-accent-rgb, 56, 189, 248), 0.14))',
-                        },
-                      }
-                    : {
-                        borderColor: isDark
-                          ? 'rgba(255,255,255,0.10)'
-                          : 'rgba(0,0,0,0.10)',
-                        color: 'text.secondary',
-                        '&:hover': {
-                          borderColor:
-                            'rgba(var(--be-accent-rgb, 56, 189, 248), 0.30)',
-                          background:
-                            'rgba(var(--be-accent-rgb, 56, 189, 248), 0.05)',
-                        },
-                      }),
-                }}
-              />
+              <Box key={allianceId}>
+                {/* Alliance header */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}>
+                  <Box
+                    sx={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: color,
+                      boxShadow: `0 0 6px ${alpha(color, 0.55)}`,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      letterSpacing: 0.6,
+                      textTransform: 'uppercase',
+                      color: alpha(color, isDark ? 0.75 : 0.65),
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {allianceLabel}
+                  </Typography>
+                  <Box
+                    sx={{
+                      flex: 1,
+                      height: '1px',
+                      background: `linear-gradient(to right, ${alpha(color, 0.2)}, transparent)`,
+                    }}
+                  />
+                </Box>
+
+                {/* Race cards grid — 3 per alliance */}
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: 0.75,
+                  }}
+                >
+                  {races.map((race) => {
+                    const selected = build.races.includes(race.id);
+                    return (
+                      <Box key={race.id} sx={{ position: 'relative' }}>
+                        <Box
+                          component="button"
+                          role="checkbox"
+                          aria-checked={selected}
+                          aria-label={race.label}
+                          onClick={() => toggleRace(race.id)}
+                          sx={{
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 0.6,
+                            py: 1.25,
+                            px: 0.75,
+                            borderRadius: '10px',
+                            width: '100%',
+                            fontFamily: 'inherit',
+                            background: selected
+                              ? alpha(color, isDark ? 0.14 : 0.08)
+                              : isDark
+                                ? 'rgba(255,255,255,0.03)'
+                                : 'rgba(0,0,0,0.02)',
+                            outline: selected
+                              ? 'none'
+                              : `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
+                            outlineOffset: -1,
+                            boxShadow: selected
+                              ? `0 0 14px ${alpha(color, 0.25)}, 0 2px 8px ${alpha(color, 0.12)}`
+                              : 'none',
+                            transition: 'background 0.2s, box-shadow 0.25s',
+                            '&:hover': {
+                              background: selected
+                                ? alpha(color, isDark ? 0.19 : 0.12)
+                                : isDark
+                                  ? 'rgba(255,255,255,0.06)'
+                                  : 'rgba(0,0,0,0.04)',
+                            },
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              background: color,
+                              boxShadow: selected
+                                ? `0 0 10px ${alpha(color, 0.7)}, 0 0 4px ${alpha(color, 0.9)}`
+                                : `0 0 4px ${alpha(color, 0.2)}`,
+                              transition: 'box-shadow 0.25s',
+                              flexShrink: 0,
+                            }}
+                          />
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontWeight: selected ? 700 : 500,
+                              color: selected ? color : 'text.secondary',
+                              lineHeight: 1.2,
+                              textAlign: 'center',
+                              fontSize: 11,
+                              fontFamily: 'Space Grotesk, Inter, system-ui',
+                              transition: 'color 0.15s',
+                            }}
+                          >
+                            {race.label}
+                          </Typography>
+                        </Box>
+
+                        {/* Gradient border mask — selected only */}
+                        {selected && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              inset: 0,
+                              borderRadius: '10px',
+                              padding: '1.5px',
+                              background: `linear-gradient(135deg, ${alpha(color, 0.7)} 0%, ${alpha(color, 0.15)} 50%, ${alpha(color, 0.4)} 100%)`,
+                              WebkitMask:
+                                'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                              WebkitMaskComposite: 'xor',
+                              mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                              maskComposite: 'exclude',
+                              pointerEvents: 'none',
+                            }}
+                          />
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
             );
           })}
-        </Box>
+
+          {/* Imperial — spans full width, any alliance */}
+          {(() => {
+            const imperial = ESO_RACES.find((r) => r.alliance === 'any');
+            if (!imperial) return null;
+            const selected = build.races.includes(imperial.id);
+            const color = '#94a3b8';
+            return (
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}>
+                  <Box
+                    sx={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: color,
+                      boxShadow: `0 0 6px ${alpha(color, 0.55)}`,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      letterSpacing: 0.6,
+                      textTransform: 'uppercase',
+                      color: alpha(color, isDark ? 0.75 : 0.65),
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Any Alliance
+                  </Typography>
+                  <Box
+                    sx={{
+                      flex: 1,
+                      height: '1px',
+                      background: `linear-gradient(to right, ${alpha(color, 0.2)}, transparent)`,
+                    }}
+                  />
+                </Box>
+                <Box sx={{ position: 'relative' }}>
+                  <Box
+                    component="button"
+                    role="checkbox"
+                    aria-checked={selected}
+                    aria-label={imperial.label}
+                    onClick={() => toggleRace(imperial.id)}
+                    sx={{
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 1,
+                      py: 1,
+                      px: 2,
+                      borderRadius: '10px',
+                      width: '100%',
+                      fontFamily: 'inherit',
+                      background: selected
+                        ? alpha(color, isDark ? 0.14 : 0.08)
+                        : isDark
+                          ? 'rgba(255,255,255,0.03)'
+                          : 'rgba(0,0,0,0.02)',
+                      outline: selected
+                        ? 'none'
+                        : `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
+                      outlineOffset: -1,
+                      boxShadow: selected
+                        ? `0 0 14px ${alpha(color, 0.25)}, 0 2px 8px ${alpha(color, 0.12)}`
+                        : 'none',
+                      transition: 'background 0.2s, box-shadow 0.25s',
+                      '&:hover': {
+                        background: selected
+                          ? alpha(color, isDark ? 0.19 : 0.12)
+                          : isDark
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.04)',
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: color,
+                        boxShadow: selected
+                          ? `0 0 10px ${alpha(color, 0.7)}, 0 0 4px ${alpha(color, 0.9)}`
+                          : `0 0 4px ${alpha(color, 0.2)}`,
+                        transition: 'box-shadow 0.25s',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: selected ? 700 : 500,
+                        color: selected ? color : 'text.secondary',
+                        fontSize: 11,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        transition: 'color 0.15s',
+                      }}
+                    >
+                      {imperial.label}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontSize: 10,
+                        color: alpha(color, 0.5),
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                      }}
+                    >
+                      · playable in any alliance
+                    </Typography>
+                  </Box>
+                  {selected && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        borderRadius: '10px',
+                        padding: '1.5px',
+                        background: `linear-gradient(135deg, ${alpha(color, 0.7)} 0%, ${alpha(color, 0.15)} 50%, ${alpha(color, 0.4)} 100%)`,
+                        WebkitMask:
+                          'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                        WebkitMaskComposite: 'xor',
+                        mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                        maskComposite: 'exclude',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  )}
+                </Box>
+              </Box>
+            );
+          })()}
+        </Stack>
       </Box>
 
-      {/* Addon Import — glass panel */}
-      <Box
-        sx={{
-          background: isDark
-            ? 'rgba(15, 23, 42, 0.50)'
-            : 'rgba(248, 250, 252, 0.60)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
-          borderRadius: 3,
-          p: 2,
-          boxShadow: isDark
-            ? 'inset 0 1px 0 rgba(255,255,255,0.04)'
-            : 'inset 0 1px 0 rgba(255,255,255,0.6)',
-        }}
-      >
-        <Typography variant="caption" color="text.secondary" sx={sectionLabelSx}>
-          Import from addon string
-        </Typography>
-        <Typography
-          variant="caption"
-          color="text.disabled"
-          sx={{ display: 'block', mb: 1.5, fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
-        >
-          Import from <strong>Combat Metrics</strong> or{' '}
-          <strong>Caro&apos;s Skill Point Saver</strong>.
-        </Typography>
-        <Stack direction="row" spacing={1} alignItems="flex-start">
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Addon export string"
-            value={build.addonImportString}
-            onChange={(e) => dispatch(setAddonImportString(e.target.value))}
-            multiline
-            minRows={2}
-            sx={glassInputSx(isDark)}
-          />
-          <Tooltip
-            title={
-              build.addonImportString.length < 10 ? 'Paste an export string first' : 'Load build'
-            }
-          >
-            <Box>
-              <Button
-                variant="contained"
-                size="small"
-                disabled={build.addonImportString.length < 10}
-                sx={{
-                  minWidth: 64,
-                  height: 36,
-                  mt: 0.5,
-                  borderRadius: '99px',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  fontSize: 12,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  background:
-                    'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
-                  boxShadow: '0 0 10px rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
-                  '&:hover': {
-                    boxShadow: '0 0 16px rgba(var(--be-accent-rgb, 56, 189, 248), 0.30)',
-                  },
-                  '&.Mui-disabled': {
-                    background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-                    boxShadow: 'none',
-                  },
-                }}
-              >
-                Load
-              </Button>
-            </Box>
-          </Tooltip>
-        </Stack>
-        <Alert
-          severity="info"
-          sx={{
-            mt: 1.5,
-            py: 0.25,
-            fontSize: 11,
-            borderRadius: 2,
-            background: isDark
-              ? 'rgba(56, 189, 248, 0.06)'
-              : 'rgba(56, 189, 248, 0.04)',
-            border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-          }}
-        >
-          Addon import is coming soon — configure your build using the sections on this page.
-        </Alert>
-      </Box>
     </Stack>
   );
 };

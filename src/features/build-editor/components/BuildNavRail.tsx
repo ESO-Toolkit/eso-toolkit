@@ -8,9 +8,9 @@
  */
 
 import {
+  AccountTreeOutlined as SubclassingIcon,
   AutoFixHigh as ChampionIcon,
   BookOutlined as GuideIcon,
-  CameraAltOutlined as ScreenshotIcon,
   CheckCircleOutlineRounded as CheckIcon,
   Inventory2Outlined as EquipmentIcon,
   LocalDrinkOutlined as ConsumableIcon,
@@ -47,6 +47,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: 'general', label: 'Identity', icon: <GeneralIcon sx={{ fontSize: 18 }} /> },
       { id: 'character', label: 'Character', icon: <CharacterIcon sx={{ fontSize: 18 }} /> },
+      { id: 'subclassing', label: 'Subclassing', icon: <SubclassingIcon sx={{ fontSize: 18 }} /> },
     ],
   },
   {
@@ -62,13 +63,12 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: 'champion', label: 'Champion', icon: <ChampionIcon sx={{ fontSize: 18 }} /> },
       { id: 'passives', label: 'Passives', icon: <PassiveIcon sx={{ fontSize: 18 }} /> },
-      { id: 'screenshots', label: 'Screenshots', icon: <ScreenshotIcon sx={{ fontSize: 18 }} /> },
     ],
   },
   {
     label: 'Details',
     items: [
-      { id: 'guide', label: 'Guide', icon: <GuideIcon sx={{ fontSize: 18 }} /> },
+      { id: 'guide', label: 'Guide & Media', icon: <GuideIcon sx={{ fontSize: 18 }} /> },
       { id: 'settings', label: 'Settings', icon: <SettingsIcon sx={{ fontSize: 18 }} /> },
     ],
   },

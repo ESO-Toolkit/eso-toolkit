@@ -25,6 +25,7 @@ export const useSectionProgress = (): SectionProgressMap => {
 
     return {
       general: build.name.trim().length > 0,
+      subclassing: build.classSkillLines.every((line) => line != null),
       character:
         setup.attributes.magicka + setup.attributes.health + setup.attributes.stamina > 0 ||
         setup.mundusStone !== '',
@@ -38,8 +39,7 @@ export const useSectionProgress = (): SectionProgressMap => {
         setup.cp.craft.slots.some((s) => s != null),
       consumables: setup.consumables.potions.length > 0 || Boolean(setup.consumables.food.name),
       passives: setup.passives.length > 0,
-      guide: build.guide.content.trim().length > 0,
-      screenshots: setup.screenshots.length > 0,
+      guide: build.guide.content.trim().length > 0 || setup.screenshots.length > 0,
       settings: true, // always has defaults
     };
   }, [build, activeSetupIndex]);

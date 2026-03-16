@@ -51,6 +51,23 @@ export const BE_TOKENS = {
     stamina: '#4caf82',
   },
 
+  // Shared glass input field styling — gives inputs a subtle recessed "well"
+  // so they're visually distinct from the panel background at rest.
+  input: {
+    dark: {
+      bg: 'rgba(0, 0, 0, 0.22)',
+      border: 'rgba(255, 255, 255, 0.08)',
+      hoverBorder: 'rgba(255, 255, 255, 0.18)',
+      placeholder: 'rgba(255, 255, 255, 0.28)',
+    },
+    light: {
+      bg: 'rgba(0, 0, 0, 0.04)',
+      border: 'rgba(0, 0, 0, 0.10)',
+      hoverBorder: 'rgba(0, 0, 0, 0.18)',
+      placeholder: 'rgba(0, 0, 0, 0.36)',
+    },
+  },
+
   // Animation durations
   duration: {
     fast: 0.15,
@@ -62,12 +79,12 @@ export const BE_TOKENS = {
   sectionIds: [
     'general',
     'character',
+    'subclassing',
     'equipment',
     'skills',
     'consumables',
     'champion',
     'passives',
-    'screenshots',
     'guide',
     'settings',
   ] as const,

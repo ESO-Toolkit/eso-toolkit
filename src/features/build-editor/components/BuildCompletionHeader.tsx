@@ -1,10 +1,30 @@
 /**
  * BuildCompletionHeader
- * Top bar with editable build name, progress ring, and Save/Share buttons.
+ * Top bar with editable build name, progress ring, Import/Save/Share buttons,
+ * and the addon import dialog.
  */
 
-import { SaveOutlined, ShareOutlined, VisibilityOutlined } from '@mui/icons-material';
-import { Box, Button, TextField, Tooltip, useMediaQuery } from '@mui/material';
+import {
+  Close as CloseIcon,
+  FileUploadOutlined,
+  SaveOutlined,
+  ShareOutlined,
+  VisibilityOutlined,
+} from '@mui/icons-material';
+import {
+  Alert,
+  Box,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useSnackbar } from 'notistack';
 import React from 'react';
@@ -12,8 +32,10 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
 
+import { BE_TOKENS } from '../theme/buildEditorTokens';
 import { useBuildCompleteness } from '../hooks/useBuildCompleteness';
-import { BUILD_EDITOR_STORAGE_KEY, markSaved, setBuildName } from '../store/buildEditorSlice';
+import { BUILD_EDITOR_STORAGE_KEY, markSaved, setAddonImportString, setBuildName } from '../store/buildEditorSlice';
+import { glassInputSx } from './primitives/glassInputSx';
 
 import { ProgressRing } from './primitives/ProgressRing';
 
@@ -26,6 +48,7 @@ export const BuildCompletionHeader: React.FC = () => {
 
   const { build, isDirty, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
   const completeness = useBuildCompleteness();
+  const [importOpen, setImportOpen] = React.useState(false);
 
   const handleSave = (): void => {
     if (!build.name.trim()) {
@@ -99,11 +122,20 @@ export const BuildCompletionHeader: React.FC = () => {
             fontWeight: 700,
             fontSize: { xs: 15, md: 19 },
             letterSpacing: '-0.3px',
+            background: isDark
+              ? BE_TOKENS.input.dark.bg
+              : BE_TOKENS.input.light.bg,
+            borderRadius: '10px',
             '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'transparent',
+              borderColor: isDark
+                ? BE_TOKENS.input.dark.border
+                : BE_TOKENS.input.light.border,
+              transition: 'border-color 0.2s ease',
             },
             '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
+              borderColor: isDark
+                ? BE_TOKENS.input.dark.hoverBorder
+                : BE_TOKENS.input.light.hoverBorder,
             },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
               borderColor: 'var(--be-accent, #38bdf8)',
@@ -160,6 +192,24 @@ export const BuildCompletionHeader: React.FC = () => {
 
       {/* Action buttons — pill-shaped glass style */}
       <Box sx={{ display: 'flex', gap: 0.75, ml: isMobile ? 'auto' : 0 }}>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<FileUploadOutlined sx={{ fontSize: 14 }} />}
+          onClick={() => setImportOpen(true)}
+          aria-label="Import build from addon"
+          sx={{
+            ...pillBtn,
+            borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
+            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+            '&:hover': {
+              borderColor: 'var(--be-accent, #38bdf8)',
+              background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
+            },
+          }}
+        >
+          Import
+        </Button>
         <Button
           variant="contained"
           size="small"
@@ -218,6 +268,135 @@ export const BuildCompletionHeader: React.FC = () => {
           View
         </Button>
       </Box>
+
+      {/* Import dialog */}
+      <Dialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: isDark
+              ? 'rgba(15, 23, 42, 0.95)'
+              : 'rgba(248, 250, 252, 0.98)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+            borderRadius: 3,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontWeight: 700,
+            fontSize: 16,
+            pb: 0.5,
+          }}
+        >
+          Import from Addon
+          <IconButton
+            onClick={() => setImportOpen(false)}
+            size="small"
+            aria-label="Close import dialog"
+            sx={{ color: 'text.secondary' }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              display: 'block',
+              mb: 2,
+              fontSize: 12,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+            }}
+          >
+            Paste an export string from <strong>Combat Metrics</strong> or{' '}
+            <strong>Caro&apos;s Skill Point Saver</strong> to auto-populate your build.
+          </Typography>
+          <Stack spacing={1.5}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Paste addon export string here…"
+              value={build.addonImportString}
+              onChange={(e) => dispatch(setAddonImportString(e.target.value))}
+              multiline
+              minRows={3}
+              maxRows={8}
+              autoFocus
+              sx={glassInputSx(isDark)}
+            />
+            <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setImportOpen(false)}
+                sx={{
+                  ...pillBtn,
+                  borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
+                  background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                }}
+              >
+                Cancel
+              </Button>
+              <Tooltip
+                title={
+                  build.addonImportString.length < 10
+                    ? 'Paste an export string first'
+                    : 'Load build from addon string'
+                }
+              >
+                <Box>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    disabled={build.addonImportString.length < 10}
+                    sx={{
+                      ...pillBtn,
+                      background:
+                        'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
+                      boxShadow: '0 0 10px rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
+                      '&:hover': {
+                        boxShadow: '0 0 16px rgba(var(--be-accent-rgb, 56, 189, 248), 0.30)',
+                      },
+                      '&.Mui-disabled': {
+                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                        boxShadow: 'none',
+                      },
+                    }}
+                  >
+                    Load Build
+                  </Button>
+                </Box>
+              </Tooltip>
+            </Stack>
+            <Alert
+              severity="info"
+              sx={{
+                py: 0.25,
+                fontSize: 11,
+                borderRadius: 2,
+                background: isDark
+                  ? 'rgba(56, 189, 248, 0.06)'
+                  : 'rgba(56, 189, 248, 0.04)',
+                border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+              }}
+            >
+              Addon import is coming soon — configure your build using the sections on the page.
+            </Alert>
+          </Stack>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };
