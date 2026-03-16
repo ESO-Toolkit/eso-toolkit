@@ -88,6 +88,7 @@ import {
   HealerBuff,
   HealerChampionPoint,
   JailDDType,
+  RosterDetailLevel,
   SkillLineConfig,
   PlayerGroup as _PlayerGroup,
   createDefaultRoster,
@@ -754,7 +755,7 @@ export const RosterBuilderPage: React.FC = () => {
   };
 
   const [roster, setRoster] = useState<RaidRoster>(createDefaultRoster());
-  const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
+  const [mode, setMode] = useState<RosterDetailLevel>('simple');
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -1930,10 +1931,13 @@ export const RosterBuilderPage: React.FC = () => {
                 : '1px solid rgba(0,0,0,0.06)',
             }}
           >
-            {(['simple', 'advanced'] as const).map((value) => (
+            {(['simple', 'advanced', 'full'] as const).map((value) => (
               <Box
                 key={value}
-                onClick={() => setMode(value)}
+                onClick={() => {
+                  setMode(value);
+                  setRoster((prev) => ({ ...prev, rosterDetailLevel: value }));
+                }}
                 sx={{
                   flex: '1 1 auto',
                   minWidth: 0,
@@ -1983,7 +1987,7 @@ export const RosterBuilderPage: React.FC = () => {
                   },
                 }}
               >
-                {value === 'simple' ? 'Simple Mode' : 'Advanced Mode'}
+                {value === 'simple' ? 'Simple' : value === 'advanced' ? 'Advanced' : 'Full'}
               </Box>
             ))}
           </Box>
@@ -2610,8 +2614,8 @@ export const RosterBuilderPage: React.FC = () => {
           />
         </Box>
 
-        {/* Advanced Mode: Full Roster Details */}
-        <Box sx={{ display: mode === 'advanced' ? 'block' : 'none' }}>
+        {/* Advanced / Full Mode: Full Roster Details */}
+        <Box sx={{ display: mode === 'advanced' || mode === 'full' ? 'block' : 'none' }}>
           {/* Player Groups Management */}
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
@@ -2827,6 +2831,7 @@ export const RosterBuilderPage: React.FC = () => {
                 tank={roster.tank1}
                 onChange={handleTank1Change}
                 availableGroups={memoizedGroups}
+                mode={mode}
               />
               <TankCard
                 key={2}
@@ -2834,6 +2839,7 @@ export const RosterBuilderPage: React.FC = () => {
                 tank={roster.tank2}
                 onChange={handleTank2Change}
                 availableGroups={memoizedGroups}
+                mode={mode}
               />
             </Stack>
           </Box>
@@ -2918,6 +2924,7 @@ export const RosterBuilderPage: React.FC = () => {
                 onChange={handleHealer1Change}
                 availableGroups={memoizedGroups}
                 usedBuffs={usedBuffs}
+                mode={mode}
               />
               <HealerCard
                 key={2}
@@ -2926,6 +2933,7 @@ export const RosterBuilderPage: React.FC = () => {
                 onChange={handleHealer2Change}
                 availableGroups={memoizedGroups}
                 usedBuffs={usedBuffs}
+                mode={mode}
               />
             </Stack>
           </Box>
@@ -3018,6 +3026,7 @@ export const RosterBuilderPage: React.FC = () => {
                       onSlotChange={handleDPSSlotChange}
                       onConvertToJail={handleConvertDPSToJail}
                       onConvertToDPS={handleConvertJailToDPS}
+                      mode={mode}
                     />
                   ))}
                 </Stack>

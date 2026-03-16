@@ -28,12 +28,14 @@ import React from 'react';
 import {
   HealerSetup,
   HealerBuff,
+  RosterDetailLevel,
   SupportUltimate,
   CLASS_SKILL_LINES,
   ALL_5PIECE_SETS,
   MONSTER_SETS,
   validateCompatibility,
 } from '../../types/roster';
+import { SlotFullModePanel } from './SlotFullModePanel';
 import { KnownSetIDs } from '../../types/abilities';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColors';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
@@ -59,6 +61,7 @@ export interface HealerCardProps {
   onChange: (updates: Partial<HealerSetup>) => void;
   availableGroups: string[];
   usedBuffs: HealerBuff[];
+  mode?: RosterDetailLevel;
 }
 
 // ---------------------------------------------------------------------------
@@ -66,7 +69,7 @@ export interface HealerCardProps {
 // ---------------------------------------------------------------------------
 
 export const HealerCard = React.memo<HealerCardProps>(
-  ({ healerNum, healer, onChange, availableGroups, usedBuffs }) => {
+  ({ healerNum, healer, onChange, availableGroups, usedBuffs, mode }) => {
     const healerTheme = useTheme();
     const healerIsDark = healerTheme.palette.mode === 'dark';
     const healerRoleColors = healerIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
@@ -719,6 +722,19 @@ export const HealerCard = React.memo<HealerCardProps>(
                 </Stack>
               </AccordionDetails>
             </Accordion>
+
+            {mode === 'full' && (
+              <SlotFullModePanel
+                skills={healer.skills}
+                cpPoints={healer.cpPoints}
+                food={healer.food}
+                passives={healer.passives}
+                onSkillsChange={(skills) => onChange({ skills })}
+                onCpPointsChange={(cpPoints) => onChange({ cpPoints })}
+                onFoodChange={(food) => onChange({ food })}
+                onPassivesChange={(passives) => onChange({ passives })}
+              />
+            )}
           </Stack>
         </CardContent>
       </Card>

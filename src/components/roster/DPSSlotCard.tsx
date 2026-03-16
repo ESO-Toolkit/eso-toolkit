@@ -27,12 +27,14 @@ import React, { useCallback } from 'react';
 import {
   DPSSlot,
   JailDDType,
+  RosterDetailLevel,
   SupportUltimate,
   CLASS_SKILL_LINES,
   ALL_5PIECE_SETS,
   MONSTER_SETS,
 } from '../../types/roster';
 import { KnownSetIDs } from '../../types/abilities';
+import { SlotFullModePanel } from './SlotFullModePanel';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColors';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
 import { makeGlassSx } from './shared/glassSx';
@@ -56,6 +58,7 @@ export interface DPSSlotCardProps {
   onSlotChange: (slotIndex: number, updates: Partial<DPSSlot>) => void;
   onConvertToJail: (slotNumber: number, jailType: JailDDType) => void;
   onConvertToDPS: (slotNumber: number) => void;
+  mode?: RosterDetailLevel;
 }
 
 // ---------------------------------------------------------------------------
@@ -92,7 +95,7 @@ const jailLabels: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 export const DPSSlotCard = React.memo<DPSSlotCardProps>(
-  ({ slot, slotIndex, availableGroups, onSlotChange, onConvertToJail, onConvertToDPS }) => {
+  ({ slot, slotIndex, availableGroups, onSlotChange, onConvertToJail, onConvertToDPS, mode }) => {
     const onChange = useCallback(
       (updates: Partial<DPSSlot>) => onSlotChange(slotIndex, updates),
       [onSlotChange, slotIndex],
@@ -826,6 +829,19 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                 </Stack>
               </AccordionDetails>
             </Accordion>
+
+            {mode === 'full' && (
+              <SlotFullModePanel
+                skills={slot.skills}
+                cpPoints={slot.cpPoints}
+                food={slot.food}
+                passives={slot.passives}
+                onSkillsChange={(skills) => onChange({ skills })}
+                onCpPointsChange={(cpPoints) => onChange({ cpPoints })}
+                onFoodChange={(food) => onChange({ food })}
+                onPassivesChange={(passives) => onChange({ passives })}
+              />
+            )}
           </Stack>
         </CardContent>
       </Card>
