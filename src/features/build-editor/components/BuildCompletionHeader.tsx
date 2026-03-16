@@ -61,6 +61,13 @@ export const BuildCompletionHeader: React.FC = () => {
   const { isLoggedIn, accessToken } = useAuth();
 
   const { build, isDirty, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
+
+  // Get the saved build ID from URL params (set when editing an existing saved build)
+  const savedBuildId = React.useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('id');
+  }, []);
+
   const savedBuildExists = useSelector((s: RootState) =>
     savedBuildId ? s.savedBuilds.builds.some((b) => b.id === savedBuildId) : false,
   );
@@ -69,12 +76,6 @@ export const BuildCompletionHeader: React.FC = () => {
   const [publishOpen, setPublishOpen] = React.useState(false);
   const [encodedBuildData, setEncodedBuildData] = React.useState('');
   const [isPublishing, setIsPublishing] = React.useState(false);
-
-  // Get the saved build ID from URL params (set when editing an existing saved build)
-  const savedBuildId = React.useMemo(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('id');
-  }, []);
 
   const handleSave = (): void => {
     if (!build.name.trim()) {
