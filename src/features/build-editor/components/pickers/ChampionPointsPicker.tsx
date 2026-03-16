@@ -6,7 +6,7 @@
  * ChampionSection wraps this with useSelector / dispatch.
  */
 
-import { Box, ButtonBase, Divider, Stack, Tooltip, Typography, useMediaQuery } from '@mui/material';
+import { Box, ButtonBase, Divider, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useMemo, useState } from 'react';
 
@@ -30,16 +30,16 @@ const TREES: TreeConfig[] = [
   {
     key: 'warfare',
     label: 'Warfare',
-    color: '#42a5f5',
-    colorRgb: '66, 165, 245',
+    color: '#ef5350',
+    colorRgb: '239, 83, 80',
     cpTree: ChampionPointTree.Warfare,
     icon: '⚔',
   },
   {
     key: 'fitness',
     label: 'Fitness',
-    color: '#ef5350',
-    colorRgb: '239, 83, 80',
+    color: '#42a5f5',
+    colorRgb: '66, 165, 245',
     cpTree: ChampionPointTree.Fitness,
     icon: '🛡',
   },
@@ -68,24 +68,12 @@ interface CPSlotProps {
   cpId: number | null;
   tree: TreeConfig;
   options: ReturnType<typeof getSlottableByTree>;
-  onSlotChange: (
-    treeKey: keyof BuildChampionPoints,
-    slotIndex: number,
-    cpId: number | null,
-  ) => void;
+  onSlotChange: (treeKey: keyof BuildChampionPoints, slotIndex: number, cpId: number | null) => void;
 }
 
-const CPSlot: React.FC<CPSlotProps> = ({
-  treeKey,
-  slotIndex,
-  cpId,
-  tree,
-  options,
-  onSlotChange,
-}) => {
+const CPSlot: React.FC<CPSlotProps> = ({ treeKey, slotIndex, cpId, tree, options, onSlotChange }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const entry =
     cpId != null ? CHAMPION_POINT_ABILITIES[cpId as keyof typeof CHAMPION_POINT_ABILITIES] : null;
 
@@ -103,15 +91,15 @@ const CPSlot: React.FC<CPSlotProps> = ({
         onClick={handleClick}
         sx={{
           flex: '1 1 calc(50% - 6px)',
-          minHeight: isMobile ? 60 : 68,
+          minHeight: 68,
           borderRadius: 2.5,
           position: 'relative',
           overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
-          gap: isMobile ? 1 : 1.25,
-          px: isMobile ? 1 : 1.5,
-          py: isMobile ? 0.75 : 1,
+          gap: 1.25,
+          px: 1.5,
+          py: 1,
           background: cpId
             ? isDark
               ? `linear-gradient(135deg, rgba(${tree.colorRgb}, 0.14) 0%, rgba(${tree.colorRgb}, 0.04) 100%)`
@@ -417,11 +405,7 @@ const PassiveRow: React.FC<PassiveRowProps> = ({
 interface TreePanelProps {
   tree: TreeConfig;
   cp: BuildChampionPoints;
-  onSlotChange: (
-    treeKey: keyof BuildChampionPoints,
-    slotIndex: number,
-    cpId: number | null,
-  ) => void;
+  onSlotChange: (treeKey: keyof BuildChampionPoints, slotIndex: number, cpId: number | null) => void;
   onPassiveChange: (treeKey: keyof BuildChampionPoints, cpId: string, points: number) => void;
 }
 
