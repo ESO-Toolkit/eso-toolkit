@@ -14,7 +14,17 @@ import {
   OpenInNew as OpenInNewIcon,
   YouTube as YouTubeIcon,
 } from '@mui/icons-material';
-import { Alert, Box, Button, Chip, Container, Skeleton, Snackbar, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  Container,
+  Skeleton,
+  Snackbar,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
@@ -193,16 +203,25 @@ const SectionLabel: React.FC<{
 
 // ─── Skill slot display ───────────────────────────────────────────────────────
 
+const TILE_SIZE = 58;
+const ULT_SIZE = 66;
+const ULTIMATE_SLOT = 5;
+const SLOT_LABELS: Record<number, string> = { 0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: 'R' };
+
 const SkillSlot: React.FC<{
   slotIndex: number;
   abilityId: number;
   isUltimate?: boolean;
 }> = ({ slotIndex, abilityId, isUltimate = false }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  const skill = getSkillById(abilityId);
+  const isDark = useTheme().palette.mode === 'dark';
+  const skill = abilityId ? getSkillById(abilityId) : null;
   const iconUrl = skill?.icon ? `${SKILL_ICON_URL}${skill.icon}.png` : null;
-  const size = isUltimate ? 62 : 52;
+  const size = isUltimate ? ULT_SIZE : TILE_SIZE;
+  const label = SLOT_LABELS[slotIndex] ?? String(slotIndex);
+
+  /** Gold accent for ultimate, class accent for regular abilities */
+  const accentA = (a: number): string =>
+    isUltimate ? `rgba(255,179,0,${a})` : `rgba(var(--be-accent-rgb, 56,189,248),${a})`;
 
   return (
     <Box
@@ -211,76 +230,117 @@ const SkillSlot: React.FC<{
         flexDirection: 'column',
         alignItems: 'center',
         gap: 0.5,
-        width: size + 16,
+        flex: isUltimate ? undefined : 1,
+        maxWidth: isUltimate ? ULT_SIZE : TILE_SIZE + 16,
+        minWidth: isUltimate ? ULT_SIZE : TILE_SIZE,
       }}
     >
-      <Box
-        sx={{
-          width: size,
-          height: size,
-          borderRadius: isUltimate ? '14px' : '12px',
-          background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          position: 'relative',
-          transition: 'border-color 0.2s, box-shadow 0.2s',
-          '&:hover': {
-            borderColor: 'var(--be-accent, #38bdf8)',
-            boxShadow: '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
-          },
-        }}
+      <Tooltip
+        title={
+          skill
+            ? `${skill.name}${skill.category ? ` \u00b7 ${skill.category}` : ''}`
+            : `Slot ${label}${isUltimate ? ' (Ultimate)' : ''}`
+        }
+        arrow
+        placement="top"
       >
-        {iconUrl ? (
-          <img
-            src={iconUrl}
-            alt={skill?.name ?? `Ability ${abilityId}`}
-            loading="lazy"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-              const parent = (e.target as HTMLImageElement).parentElement;
-              if (parent) {
-                const fallback = document.createElement('span');
-                fallback.textContent = isUltimate ? 'ULT' : String(slotIndex + 1);
-                fallback.style.cssText =
-                  'font-size:10px;font-weight:700;opacity:0.3;user-select:none;';
-                parent.appendChild(fallback);
-              }
-            }}
-          />
-        ) : (
-          <Typography
-            sx={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
-              userSelect: 'none',
-            }}
-          >
-            {isUltimate ? 'ULT' : slotIndex + 1}
-          </Typography>
-        )}
-      </Box>
-      <Typography
-        sx={{
-          fontSize: '0.58rem',
-          fontWeight: 600,
-          color: isDark ? 'rgba(255,255,255,0.60)' : 'rgba(0,0,0,0.55)',
-          textAlign: 'center',
-          lineHeight: 1.2,
-          maxWidth: size + 16,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-        }}
-      >
-        {skill?.name ?? `#${abilityId}`}
-      </Typography>
+        <Box
+          sx={{
+            position: 'relative',
+            width: size,
+            height: size,
+            borderRadius: isUltimate ? '14px' : '12px',
+            overflow: 'hidden',
+            flexShrink: 0,
+            border: `${isUltimate ? 2 : 1.5}px solid ${
+              skill ? accentA(0.45) : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'
+            }`,
+            background: skill
+              ? isDark
+                ? accentA(0.08)
+                : accentA(0.04)
+              : isDark
+                ? 'rgba(255,255,255,0.025)'
+                : 'rgba(0,0,0,0.015)',
+            boxShadow: skill
+              ? isDark
+                ? `0 0 14px ${accentA(0.12)}, inset 0 1px 0 rgba(255,255,255,0.04)`
+                : 'inset 0 1px 0 rgba(255,255,255,0.5)'
+              : isDark
+                ? 'inset 0 1px 0 rgba(255,255,255,0.025)'
+                : 'inset 0 1px 0 rgba(255,255,255,0.4)',
+            transition: 'all 180ms ease',
+            '&:hover': {
+              transform: 'scale(1.08)',
+              borderColor: accentA(0.7),
+              background: isDark ? accentA(0.14) : accentA(0.08),
+              boxShadow: isDark
+                ? `0 6px 20px rgba(0,0,0,0.30), 0 0 18px ${accentA(0.16)}`
+                : '0 6px 16px rgba(0,0,0,0.08)',
+            },
+          }}
+        >
+          {/* Skill icon */}
+          {iconUrl ? (
+            <img
+              src={iconUrl}
+              alt={skill?.name ?? `Ability ${abilityId}`}
+              loading="lazy"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          ) : (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: isUltimate ? 16 : 13,
+                  fontWeight: 800,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  letterSpacing: 0.4,
+                  color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
+                  lineHeight: 1,
+                  userSelect: 'none',
+                }}
+              >
+                {label}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Tooltip>
+
+      {/* Skill name (only when resolved) */}
+      {skill && (
+        <Typography
+          sx={{
+            fontSize: '0.58rem',
+            fontWeight: 600,
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+            color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.45)',
+            lineHeight: 1.15,
+            textAlign: 'center',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            wordBreak: 'break-word',
+            maxWidth: size + 8,
+            userSelect: 'none',
+          }}
+        >
+          {skill.name}
+        </Typography>
+      )}
     </Box>
   );
 };
@@ -576,13 +636,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
         <motion.div variants={fadeInUp}>
           <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
             <SectionLabel label="Skills" />
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                gap: 2,
-              }}
-            >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
               {[
                 { label: 'Front Bar', bar: frontBar },
                 { label: 'Back Bar', bar: backBar },
@@ -590,27 +644,109 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
                 ({ label, bar }) =>
                   bar.length > 0 && (
                     <Box key={label}>
-                      <Typography
+                      {/* Bar header */}
+                      <Box
                         sx={{
-                          fontSize: '0.55rem',
-                          fontWeight: 700,
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
-                          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                          mb: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          mb: 1.5,
+                          px: 0.5,
                         }}
                       >
-                        {label}
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-                        {bar.map(({ slot, id }) => (
-                          <SkillSlot
-                            key={slot}
-                            slotIndex={slot}
-                            abilityId={id}
-                            isUltimate={slot === 5}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontWeight: 700,
+                            letterSpacing: 1.2,
+                            textTransform: 'uppercase',
+                            fontSize: '0.65rem',
+                            fontFamily: 'Space Grotesk, Inter, system-ui',
+                            background: isDark
+                              ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                              : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                          }}
+                        >
+                          {label}
+                        </Typography>
+                        <Box
+                          sx={{
+                            px: 0.75,
+                            py: 0.15,
+                            borderRadius: '999px',
+                            bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{
+                              fontSize: '0.62rem',
+                              fontWeight: 600,
+                              fontFamily: 'Space Grotesk',
+                            }}
+                          >
+                            {bar.filter(({ id }) => id).length} / 6
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      {/* Action bar tray — glass container */}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          justifyContent: 'center',
+                          gap: { xs: 0.75, sm: 1.25 },
+                          py: 1.5,
+                          px: 1.5,
+                          borderRadius: 3,
+                          background: isDark
+                            ? 'rgba(255,255,255,0.015)'
+                            : 'rgba(0,0,0,0.012)',
+                          border: `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
+                          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                          rowGap: 1,
+                        }}
+                      >
+                        {/* Regular ability slots (0-4) */}
+                        {bar
+                          .filter(({ slot }) => slot !== ULTIMATE_SLOT)
+                          .map(({ slot, id }) => (
+                            <SkillSlot key={slot} slotIndex={slot} abilityId={id} />
+                          ))}
+
+                        {/* Gold gradient divider before ultimate */}
+                        {bar.some(({ slot }) => slot === ULTIMATE_SLOT) && (
+                          <Box
+                            sx={{
+                              width: 1.5,
+                              height: ULT_SIZE * 0.7,
+                              borderRadius: 1,
+                              flexShrink: 0,
+                              alignSelf: 'center',
+                              background: isDark
+                                ? 'linear-gradient(180deg, transparent 0%, rgba(255,179,0, 0.40) 50%, transparent 100%)'
+                                : 'linear-gradient(180deg, transparent 0%, rgba(255,179,0, 0.25) 50%, transparent 100%)',
+                            }}
                           />
-                        ))}
+                        )}
+
+                        {/* Ultimate slot */}
+                        {bar
+                          .filter(({ slot }) => slot === ULTIMATE_SLOT)
+                          .map(({ slot, id }) => (
+                            <SkillSlot
+                              key={slot}
+                              slotIndex={slot}
+                              abilityId={id}
+                              isUltimate
+                            />
+                          ))}
                       </Box>
                     </Box>
                   ),
