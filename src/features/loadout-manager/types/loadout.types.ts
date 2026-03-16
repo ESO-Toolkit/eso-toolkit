@@ -44,7 +44,6 @@ export interface GearPiece {
   id?: string | number; // Item ID (string for compatibility with Wizard's Wardrobe)
   trait?: string; // Trait ID (e.g. 'divines', 'bloodthirsty')
   enchant?: string; // Enchant/glyph ID (e.g. 'magicka', 'spell-damage')
-  weight?: ArmorWeight; // Armor weight — only relevant for apparel slots
 }
 
 /**

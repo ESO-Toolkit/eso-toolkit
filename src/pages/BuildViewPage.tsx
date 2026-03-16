@@ -30,6 +30,9 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
+import { getEnchantName } from '../data/esoEnchants';
+import { getTraitName } from '../data/esoTraits';
 import { staggerContainer, fadeInUp } from '../features/build-editor/components/motion/variants';
 import { GlassPanel } from '../features/build-editor/components/primitives/GlassPanel';
 import { BE_TOKENS } from '../features/build-editor/theme/buildEditorTokens';
@@ -348,10 +351,12 @@ const SkillSlot: React.FC<{
 
 // ─── Gear slot display ────────────────────────────────────────────────────────
 
-const GearSlotDisplay: React.FC<{ slotIndex: number; itemId: number }> = ({
-  slotIndex,
-  itemId,
-}) => {
+const GearSlotDisplay: React.FC<{
+  slotIndex: number;
+  itemId: number;
+  trait?: string;
+  enchant?: string;
+}> = ({ slotIndex, itemId, trait, enchant }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const slotName = GEAR_SLOT_NAMES[slotIndex] ?? `Slot ${slotIndex}`;
@@ -368,6 +373,8 @@ const GearSlotDisplay: React.FC<{ slotIndex: number; itemId: number }> = ({
 
   const displayName = itemInfo?.name ?? `Item #${itemId}`;
   const setName = itemInfo?.setName;
+  const traitLabel = trait ? getTraitName(trait) : null;
+  const enchantLabel = enchant ? getEnchantName(enchant) : null;
 
   return (
     <Box
@@ -440,7 +447,7 @@ const GearSlotDisplay: React.FC<{ slotIndex: number; itemId: number }> = ({
         {slotName}
       </Typography>
 
-      {/* Item name + set name */}
+      {/* Item name + set name + trait/enchant */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
           sx={{
@@ -469,6 +476,58 @@ const GearSlotDisplay: React.FC<{ slotIndex: number; itemId: number }> = ({
             {setName}
           </Typography>
         )}
+        {(traitLabel || enchantLabel) && (
+          <Box sx={{ display: 'flex', gap: 0.5, mt: 0.25, flexWrap: 'wrap' }}>
+            {traitLabel && (
+              <Typography
+                component="span"
+                sx={{
+                  fontSize: '0.55rem',
+                  fontWeight: 600,
+                  px: 0.5,
+                  py: 0.1,
+                  borderRadius: 0.75,
+                  background: isDark ? 'rgba(255,179,0,0.12)' : 'rgba(255,179,0,0.10)',
+                  border: '1px solid rgba(255,179,0,0.25)',
+                  color: isDark ? 'rgba(255,200,60,0.85)' : 'rgba(160,100,0,0.85)',
+                  letterSpacing: '0.02em',
+                  lineHeight: 1.6,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {traitLabel}
+              </Typography>
+            )}
+            {enchantLabel && (
+              <Typography
+                component="span"
+                sx={{
+                  fontSize: '0.55rem',
+                  fontWeight: 600,
+                  px: 0.5,
+                  py: 0.1,
+                  borderRadius: 0.75,
+                  background: isDark
+                    ? 'rgba(var(--be-accent-rgb, 56,189,248),0.10)'
+                    : 'rgba(var(--be-accent-rgb, 56,189,248),0.08)',
+                  border: '1px solid rgba(var(--be-accent-rgb, 56,189,248),0.22)',
+                  color: isDark
+                    ? 'rgba(var(--be-accent-rgb, 56,189,248),0.90)'
+                    : 'rgba(var(--be-accent-rgb, 56,189,248),1.0)',
+                  letterSpacing: '0.02em',
+                  lineHeight: 1.6,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: 130,
+                  display: 'block',
+                }}
+              >
+                {enchantLabel}
+              </Typography>
+            )}
+          </Box>
+        )}
       </Box>
     </Box>
   );
@@ -486,7 +545,12 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
     setup.attributes.magicka + setup.attributes.health + setup.attributes.stamina;
 
   const gearEntries = GEAR_SLOT_ORDER.filter((slot) => setup.gear[slot]?.id != null).map(
-    (slot) => ({ slot, id: setup.gear[slot].id as number }),
+    (slot) => ({
+      slot,
+      id: setup.gear[slot].id as number,
+      trait: setup.gear[slot].trait,
+      enchant: setup.gear[slot].enchant,
+    }),
   );
 
   const frontBar = Object.entries(setup.skills[0] ?? {})
@@ -706,9 +770,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
                           py: 1.5,
                           px: 1.5,
                           borderRadius: 3,
-                          background: isDark
-                            ? 'rgba(255,255,255,0.015)'
-                            : 'rgba(0,0,0,0.012)',
+                          background: isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.012)',
                           border: `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
                           flexWrap: { xs: 'wrap', sm: 'nowrap' },
                           rowGap: 1,
@@ -741,12 +803,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
                         {bar
                           .filter(({ slot }) => slot === ULTIMATE_SLOT)
                           .map(({ slot, id }) => (
-                            <SkillSlot
-                              key={slot}
-                              slotIndex={slot}
-                              abilityId={id}
-                              isUltimate
-                            />
+                            <SkillSlot key={slot} slotIndex={slot} abilityId={id} isUltimate />
                           ))}
                       </Box>
                     </Box>
@@ -769,8 +826,14 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
                 gap: 0.5,
               }}
             >
-              {gearEntries.map(({ slot, id }) => (
-                <GearSlotDisplay key={slot} slotIndex={slot} itemId={id} />
+              {gearEntries.map(({ slot, id, trait, enchant }) => (
+                <GearSlotDisplay
+                  key={slot}
+                  slotIndex={slot}
+                  itemId={id}
+                  trait={trait}
+                  enchant={enchant}
+                />
               ))}
             </Box>
           </GlassPanel>
@@ -859,7 +922,10 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
                     ))}
                     {setup.consumables.food.id != null && (
                       <Chip
-                        label={`Food #${setup.consumables.food.id}`}
+                        label={
+                          ESO_CONSUMABLE_LOOKUP[setup.consumables.food.id]?.name ??
+                          `Food #${setup.consumables.food.id}`
+                        }
                         size="small"
                         sx={{
                           fontSize: '0.68rem',
@@ -880,17 +946,29 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
             {setup.passives.length > 0 && (
               <motion.div variants={fadeInUp}>
                 <GlassPanel variant="subtle" sx={{ p: 2 }}>
-                  <SectionLabel label="Passives" />
-                  <Typography
-                    sx={{
-                      fontSize: '0.78rem',
-                      color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)',
-                      fontWeight: 500,
-                    }}
-                  >
-                    {setup.passives.length} passive
-                    {setup.passives.length !== 1 ? 's' : ''} selected
-                  </Typography>
+                  <SectionLabel label="Passives" count={`${setup.passives.length} selected`} />
+                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                    {setup.passives.map((passiveId) => {
+                      const skill = getSkillById(passiveId);
+                      return (
+                        <Chip
+                          key={passiveId}
+                          label={skill?.name ?? `Passive #${passiveId}`}
+                          size="small"
+                          sx={{
+                            fontSize: '0.65rem',
+                            height: 22,
+                            fontWeight: 600,
+                            bgcolor: isDark
+                              ? 'rgba(var(--be-accent-rgb, 56,189,248),0.07)'
+                              : 'rgba(var(--be-accent-rgb, 56,189,248),0.05)',
+                            border: '1px solid rgba(var(--be-accent-rgb, 56,189,248),0.18)',
+                            color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
+                          }}
+                        />
+                      );
+                    })}
+                  </Box>
                 </GlassPanel>
               </motion.div>
             )}
