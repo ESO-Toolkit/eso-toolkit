@@ -1,9 +1,9 @@
 /**
- * Passives Section — glass-style search input, accent-themed chips,
- * animated selection with glass empty state.
+ * Passives Section — glass-style search input, accent-themed chips with
+ * ESO-Hub skill icons, animated selection with glass empty state.
  */
 
-import { Box, Chip, Stack, TextField, Typography } from '@mui/material';
+import { Avatar, Box, Chip, Stack, TextField, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import React, { useDeferredValue, useMemo, useState } from 'react';
@@ -14,6 +14,19 @@ import type { RootState } from '@/store/storeWithHistory';
 import { getSkillById, searchSkills } from '../../../loadout-manager/data/skillLineSkills';
 import { togglePassive } from '../../store/buildEditorSlice';
 import { glassInputSx } from '../primitives/glassInputSx';
+
+const ICON_URL = 'https://eso-hub.com/storage/icons/';
+
+/** Render a skill icon Avatar for Chip usage (or null if no icon). */
+const SkillIcon: React.FC<{ icon?: string; name: string }> = ({ icon, name }) =>
+  icon ? (
+    <Avatar
+      src={`${ICON_URL}${icon}.png`}
+      alt={name}
+      sx={{ width: 20, height: 20, bgcolor: 'transparent' }}
+      imgProps={{ loading: 'lazy' }}
+    />
+  ) : null;
 
 export const PassivesSection: React.FC = () => {
   const dispatch = useDispatch();
@@ -67,7 +80,7 @@ export const PassivesSection: React.FC = () => {
         sx={glassInputSx(isDark)}
       />
 
-      {/* Results — glass-style chips */}
+      {/* Results — glass-style chips with skill icons */}
       {results.length > 0 && (
         <Stack spacing={0.5}>
           <Typography
@@ -89,6 +102,7 @@ export const PassivesSection: React.FC = () => {
               return (
                 <Chip
                   key={skill.id}
+                  avatar={<SkillIcon icon={skill.icon} name={skill.name} />}
                   label={skill.name}
                   size="small"
                   onClick={() => dispatch(togglePassive(skill.id))}
@@ -117,7 +131,7 @@ export const PassivesSection: React.FC = () => {
         </Stack>
       )}
 
-      {/* Selected passives — accent-themed with animated layout */}
+      {/* Selected passives — accent-themed with animated layout & icons */}
       {setup.passives.length > 0 && (
         <Box>
           <Typography
@@ -149,6 +163,7 @@ export const PassivesSection: React.FC = () => {
                     transition={{ duration: 0.2 }}
                   >
                     <Chip
+                      avatar={<SkillIcon icon={skill?.icon} name={skill?.name ?? ''} />}
                       label={skill?.name ?? `Passive #${id}`}
                       size="small"
                       onDelete={() => dispatch(togglePassive(id))}
