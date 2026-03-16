@@ -7,17 +7,83 @@ You are a development and testing assistant for ESO Log Aggregator. All commands
 
 ## Development Server
 
-### Start dev server (background)
-```powershell
-npm run dev
-```
-The server runs at http://localhost:3000 (default). For additional worktrees, set the `PORT` env var: `$env:PORT = "3002" ; npm run dev`. See worktree port table in [.claude-rules.md](../../.claude-rules.md).
+### Worktree Port Mapping
 
-### Check if dev server is running
+Each worktree has a dedicated port based on its directory name:
+
+| Directory Pattern | HTTP Port | HTTPS Port |
+|-------------------|-----------|------------|
+| `eso-log-aggregator` (main) | 3000 | 3001 |
+| `eso-log-aggregator-ESO-*` (worktree 1) | 3002 | 3003 |
+| `eso-log-aggregator-ESO-*` (worktree 2) | 3004 | 3005 |
+| `eso-log-aggregator-ESO-*` (worktree 3) | 3006 | 3007 |
+| `eso-log-aggregator-ESO-*` (worktree 4) | 3008 | 3009 |
+
+To determine the correct port for the current worktree, use the worktree slot:
+- **Main worktree** (`D:\code\eso-log-aggregator`): port 3000 (default, no `PORT` env var needed)
+- **Other worktrees**: use the next available even port (3002, 3004, 3006, 3008)
+
+### Start dev server (background)
+
 ```powershell
-# Check if port 3000 is in use
-netstat -ano | findstr :3000
+# Main worktree (port 3000 — the default)
+npm run dev
+
+# Any other worktree — set the PORT env var first
+$env:PORT = "3002" ; npm run dev
 ```
+
+> **Important**: Always determine the correct port for the current worktree before starting. Do not start on port 3000 from a non-main worktree — it may collide with the main worktree's server.
+
+### Check if dev server is running for THIS worktree
+
+When asked "is a dev server running?" in a worktree context, do **not** just check if any server is running. Instead, check whether a dev server is running **for the current working directory**:
+
+```powershell
+# Step 1: Determine the expected port for this worktree
+$cwd = (Get-Location).Path
+if ($cwd -match 'eso-log-aggregator$') {
+    $expectedPort = 3000  # main worktree
+} else {
+    # For feature worktrees, check which port slot is in use
+    # List all Vite/node dev servers and match by working directory
+    $expectedPort = $null
+}
+
+# Step 2: Find Vite/node processes serving THIS directory
+$devServers = Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
+    Where-Object { $_.CommandLine -match 'vite' } |
+    Select-Object ProcessId, CommandLine
+
+foreach ($proc in $devServers) {
+    # Check if the process was started from the current worktree directory
+    if ($proc.CommandLine -match [regex]::Escape($cwd)) {
+        Write-Host "Dev server running for THIS worktree (PID: $($proc.ProcessId))"
+        # Extract the port from the process or check netstat
+        netstat -ano | findstr $proc.ProcessId | findstr LISTENING
+    }
+}
+
+# Step 3: If no match found by CommandLine, check known ports
+if (-not $devServers) {
+    # Check all worktree ports
+    $ports = @(3000, 3002, 3004, 3006, 3008)
+    foreach ($port in $ports) {
+        $result = netstat -ano | findstr ":$port " | findstr LISTENING
+        if ($result) {
+            $pid = ($result -split '\s+')[-1]
+            $proc = Get-CimInstance Win32_Process -Filter "ProcessId=$pid" -ErrorAction SilentlyContinue
+            if ($proc -and $proc.CommandLine -match [regex]::Escape($cwd)) {
+                Write-Host "Dev server for THIS worktree at port $port (PID: $pid)"
+            } else {
+                Write-Host "Port $port in use by a DIFFERENT worktree (PID: $pid)"
+            }
+        }
+    }
+}
+```
+
+**Key principle**: Always report which worktree a running dev server belongs to. A server on port 3000 started from `D:\code\eso-log-aggregator` is **not** the server for `D:\code\eso-log-aggregator-ESO-647`.
 
 ### Stop dev server
 Kill the process using the PID found from the above command, or press Ctrl+C if running interactively.
@@ -130,7 +196,7 @@ Opens an interactive bundle visualization.
 
 ## Troubleshooting
 
-- **Port in use**: Use the next worktree port slot (`$env:PORT = "3002" ; npm run dev`), or kill the existing process with `netstat -ano | findstr :<port>` then `taskkill /PID <PID> /F`
+- **Port in use**: Determine which worktree owns the port using `Get-CimInstance Win32_Process` (see "Check if dev server is running" above). Then either kill the process or use the next worktree port slot (`$env:PORT = "3002" ; npm run dev`). Use `netstat -ano | findstr :<port>` then `taskkill /PID <PID> /F` to kill a specific process.
 - **Type errors**: Run `npm run codegen` first if errors mention generated types
 - **Test failures**: Playwright configs auto-start the dev server via `webServer` — manual startup is only needed for the `debug` config
 - **Memory issues**: Node heap errors during lint/storybook can be fixed by increasing `--max-old-space-size` in package.json (currently 4096 for lint, 8192 for builds)
