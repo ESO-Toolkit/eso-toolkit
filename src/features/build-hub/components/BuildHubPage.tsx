@@ -24,7 +24,7 @@ import type { HubBuild } from '../types/build-hub.types';
 import { BuildCard } from './BuildCard';
 import { BuildCardSkeleton } from './BuildCardSkeleton';
 import { BuildFilterBar } from './BuildFilterBar';
-import { PublishBuildDialog } from './PublishBuildDialog';
+import { BuildPreviewDialog } from './BuildPreviewDialog';
 
 const SKELETON_COUNT = 8;
 
@@ -37,9 +37,9 @@ export const BuildHubPage: React.FC = () => {
   const { filteredBuilds, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote } =
     useBuildHub(token);
 
+  const [previewBuild, setPreviewBuild] = React.useState<HubBuild | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
-  const [editBuild, setEditBuild] = React.useState<HubBuild | null>(null);
 
   const currentUserId = String(currentUser?.id ?? '');
 
@@ -94,7 +94,6 @@ export const BuildHubPage: React.FC = () => {
             : 'linear-gradient(135deg, rgba(37,99,235,0.06) 0%, rgba(124,58,237,0.04) 50%, rgba(255,255,255,0.6) 100%)',
           border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(0,0,0,0.06)',
           backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
           overflow: 'hidden',
           '&::before': {
             content: '""',
@@ -276,8 +275,8 @@ export const BuildHubPage: React.FC = () => {
                     isOwner={isLoggedIn && build.author_id === currentUserId}
                     isLoggedIn={isLoggedIn}
                     onVote={handleVote}
+                    onPreview={setPreviewBuild}
                     onDelete={setDeleteTarget}
-                    onEdit={setEditBuild}
                   />
                 </Grid>
               ))}
@@ -306,24 +305,8 @@ export const BuildHubPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* Edit published build dialog */}
-      {editBuild && token && (
-        <PublishBuildDialog
-          open={editBuild !== null}
-          buildData={editBuild.build_data}
-          esoClass={editBuild.eso_class}
-          role={editBuild.role}
-          gameMode={editBuild.game_mode}
-          token={token}
-          editingBuild={editBuild}
-          onClose={() => setEditBuild(null)}
-          onPublished={() => {
-            setEditBuild(null);
-            enqueueSnackbar('Build updated!', { variant: 'success' });
-            refresh();
-          }}
-        />
-      )}
+      {/* Preview dialog */}
+      <BuildPreviewDialog build={previewBuild} onClose={() => setPreviewBuild(null)} />
 
       {/* Delete confirmation */}
       <ConfirmDialog

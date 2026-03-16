@@ -158,10 +158,12 @@ export const buildEditorSlice = createSlice({
     },
     setBuildRaces(state, action: PayloadAction<string[]>) {
       state.build.races = action.payload;
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     setAddonImportString(state, action: PayloadAction<string>) {
       state.build.addonImportString = action.payload;
+      state.isDirty = true;
     },
 
     // ── Guide ─────────────────────────────────────────────────────────────────
@@ -219,6 +221,7 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.attributes = action.payload;
+        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -226,6 +229,7 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.curse = action.payload;
+        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -233,6 +237,7 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.mundusStone = action.payload;
+        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -242,6 +247,7 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.gear = action.payload;
+        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -253,6 +259,7 @@ export const buildEditorSlice = createSlice({
       } else {
         setup.gear[action.payload.slot] = { id: action.payload.itemId };
       }
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
 
@@ -261,6 +268,7 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.skills = action.payload;
+        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -270,6 +278,7 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.cp = action.payload;
+        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -284,6 +293,7 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (!setup) return;
       setup.cp[action.payload.tree].slots[action.payload.slotIndex] = action.payload.cpId;
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
     setChampionPassive(
@@ -303,6 +313,7 @@ export const buildEditorSlice = createSlice({
       } else {
         setup.cp[tree].passives[key] = points;
       }
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
 
@@ -311,6 +322,7 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.consumables = action.payload;
+        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -325,6 +337,7 @@ export const buildEditorSlice = createSlice({
       } else {
         setup.passives.splice(idx, 1);
       }
+      state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
 
@@ -333,6 +346,7 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.screenshots.push(action.payload);
+        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
@@ -340,11 +354,20 @@ export const buildEditorSlice = createSlice({
       const setup = state.build.setups[state.activeSetupIndex];
       if (setup) {
         setup.screenshots.splice(action.payload, 1);
+        state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
     },
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
+    /** Load an entire build object (e.g. from a decoded URL share). */
+    loadBuild(state, action: PayloadAction<Build>) {
+      state.build = action.payload;
+      state.activeSetupIndex = 0;
+      state.activeSidebarTab = 'general';
+      state.activeSetupTab = 'info';
+      state.isDirty = false;
+    },
     resetBuild(state) {
       state.build = makeBuild();
       state.activeSetupIndex = 0;
@@ -391,6 +414,7 @@ export const {
   togglePassive,
   addScreenshot,
   removeScreenshot,
+  loadBuild,
   resetBuild,
   markSaved,
 } = buildEditorSlice.actions;

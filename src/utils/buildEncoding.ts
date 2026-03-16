@@ -11,8 +11,6 @@
  *   - id / createdAt / updatedAt  (regenerated on decode)
  */
 
-import { ESO_POTION_LOOKUP } from '@/data/esoPotions';
-
 import type {
   Build,
   BuildSetup,
@@ -93,14 +91,10 @@ interface CompactSetup {
   cu?: string; // curse (omit if 'none' or empty)
   ms?: string; // mundusStone (omit if empty)
   g?: Record<string, number>; // gear: {slotIndex: itemId}
-  gt?: Record<string, string>; // gear traits: {slotIndex: traitId}
-  ge?: Record<string, string>; // gear enchants: {slotIndex: enchantId}
-  gw?: Record<string, number>; // gear weights: {slotIndex: 0=light|1=medium|2=heavy}
   sk?: { 0?: Record<string, number>; 1?: Record<string, number> }; // skills
   cp?: CompactCP; // champion points
   pt?: number[]; // potion IDs
   fo?: number; // food ID
-  fn?: string; // food name (fallback when no item ID matched)
   pa?: number[]; // passive IDs
 }
 
@@ -119,8 +113,6 @@ interface CompactBuild {
   vs?: number; // visibility index (omit if 'public')
   dl?: string; // dlc (omit if 'Base Game')
   so?: number[]; // setupOrder (omit if sequential)
-  ca?: number; // createdAt (unix seconds)
-  ua?: number; // updatedAt (unix seconds)
 }
 
 // ─── Compact helpers ──────────────────────────────────────────────────────────
@@ -135,54 +127,11 @@ function compactGear(gear: GearConfig): Record<string, number> | undefined {
   return Object.keys(result).length > 0 ? result : undefined;
 }
 
-function compactGearTraits(gear: GearConfig): Record<string, string> | undefined {
-  const result: Record<string, string> = {};
-  for (const [slot, piece] of Object.entries(gear)) {
-    if (piece?.trait) result[slot] = piece.trait;
-  }
-  return Object.keys(result).length > 0 ? result : undefined;
-}
-
-function compactGearEnchants(gear: GearConfig): Record<string, string> | undefined {
-  const result: Record<string, string> = {};
-  for (const [slot, piece] of Object.entries(gear)) {
-    if (piece?.enchant) result[slot] = piece.enchant;
-  }
-  return Object.keys(result).length > 0 ? result : undefined;
-}
-
-const WEIGHT_ENCODE: Record<string, number> = { light: 0, medium: 1, heavy: 2 };
-const WEIGHT_DECODE: Record<number, 'light' | 'medium' | 'heavy'> = {
-  0: 'light',
-  1: 'medium',
-  2: 'heavy',
-};
-
-function compactGearWeights(gear: GearConfig): Record<string, number> | undefined {
-  const result: Record<string, number> = {};
-  for (const [slot, piece] of Object.entries(gear)) {
-    if (piece?.weight && WEIGHT_ENCODE[piece.weight] != null) {
-      result[slot] = WEIGHT_ENCODE[piece.weight];
-    }
-  }
-  return Object.keys(result).length > 0 ? result : undefined;
-}
-
-function expandGear(
-  compact?: Record<string, number>,
-  traits?: Record<string, string>,
-  enchants?: Record<string, string>,
-  weights?: Record<string, number>,
-): GearConfig {
+function expandGear(compact?: Record<string, number>): GearConfig {
   if (!compact) return {};
   const result: GearConfig = {};
   for (const [slot, id] of Object.entries(compact)) {
-    result[Number(slot)] = {
-      id,
-      trait: traits?.[slot],
-      enchant: enchants?.[slot],
-      weight: weights?.[slot] != null ? WEIGHT_DECODE[weights[slot]] : undefined,
-    };
+    result[Number(slot)] = { id };
   }
   return result;
 }
@@ -262,16 +211,11 @@ function expandCP(compact?: CompactCP): BuildChampionPoints {
   };
 }
 
-function compactConsumables(consumables: BuildConsumables): {
-  pt?: number[];
-  fo?: number;
-  fn?: string;
-} {
-  const result: { pt?: number[]; fo?: number; fn?: string } = {};
+function compactConsumables(consumables: BuildConsumables): { pt?: number[]; fo?: number } {
+  const result: { pt?: number[]; fo?: number } = {};
   const potionIds = consumables.potions.map((p) => p.id).filter((id) => id != null);
   if (potionIds.length > 0) result.pt = potionIds;
   if (consumables.food.id != null) result.fo = consumables.food.id;
-  if (consumables.food.name) result.fn = consumables.food.name;
   return result;
 }
 
@@ -289,20 +233,13 @@ function compactSetup(setup: BuildSetup): CompactSetup {
   if (setup.mundusStone) c.ms = setup.mundusStone;
   const gear = compactGear(setup.gear);
   if (gear) c.g = gear;
-  const gearTraits = compactGearTraits(setup.gear);
-  if (gearTraits) c.gt = gearTraits;
-  const gearEnchants = compactGearEnchants(setup.gear);
-  if (gearEnchants) c.ge = gearEnchants;
-  const gearWeights = compactGearWeights(setup.gear);
-  if (gearWeights) c.gw = gearWeights;
   const skills = compactSkills(setup.skills);
   if (skills) c.sk = skills;
   const cp = compactCP(setup.cp);
   if (cp) c.cp = cp;
-  const { pt, fo, fn } = compactConsumables(setup.consumables);
+  const { pt, fo } = compactConsumables(setup.consumables);
   if (pt) c.pt = pt;
   if (fo != null) c.fo = fo;
-  if (fn) c.fn = fn;
   if (setup.passives.length > 0) c.pa = setup.passives;
   return c;
 }
@@ -316,20 +253,12 @@ function expandSetup(compact: CompactSetup, index: number): BuildSetup {
       : { magicka: 0, health: 0, stamina: 0 },
     curse: compact.cu ?? 'none',
     mundusStone: compact.ms ?? '',
-    gear: expandGear(compact.g, compact.gt, compact.ge, compact.gw),
+    gear: expandGear(compact.g),
     skills: expandSkills(compact.sk),
     cp: expandCP(compact.cp),
     consumables: {
-      potions: (compact.pt ?? []).map((id) => {
-        const lookup = ESO_POTION_LOOKUP[id];
-        return {
-          id,
-          name: lookup?.name ?? '',
-          effects: lookup ? [...lookup.effects] : [],
-        };
-      }),
-      food:
-        compact.fo != null || compact.fn ? { id: compact.fo ?? undefined, name: compact.fn } : {},
+      potions: (compact.pt ?? []).map((id) => ({ id, name: '', effects: [] })),
+      food: compact.fo != null ? { id: compact.fo } : {},
     },
     passives: compact.pa ?? [],
     screenshots: [], // never encoded
@@ -369,10 +298,6 @@ function compactifyBuild(build: Build): CompactBuild {
   const isSequential = build.settings.setupOrder.every((v, i) => v === i);
   if (!isSequential) c.so = build.settings.setupOrder;
 
-  // Timestamps as unix seconds (compact)
-  if (build.createdAt) c.ca = Math.floor(new Date(build.createdAt).getTime() / 1000);
-  if (build.updatedAt) c.ua = Math.floor(new Date(build.updatedAt).getTime() / 1000);
-
   return c;
 }
 
@@ -409,8 +334,8 @@ function expandCompactBuild(c: CompactBuild): Build {
       setupOrder: c.so ?? setups.map((_, i) => i),
     },
     addonImportString: '', // never encoded
-    createdAt: c.ca ? new Date(c.ca * 1000).toISOString() : now,
-    updatedAt: c.ua ? new Date(c.ua * 1000).toISOString() : now,
+    createdAt: now,
+    updatedAt: now,
   };
 }
 

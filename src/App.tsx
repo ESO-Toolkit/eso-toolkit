@@ -168,6 +168,20 @@ const BuildEditorPage = React.lazy(() =>
   import('./pages/BuildEditorPage').then((module) => ({ default: module.BuildEditorPage })),
 );
 
+const BuildViewPage = React.lazy(() =>
+  import('./pages/BuildViewPage').then((module) => ({ default: module.BuildViewPage })),
+);
+
+const MyBuildsPage = React.lazy(() =>
+  import('./pages/MyBuildsPage').then((module) => ({ default: module.MyBuildsPage })),
+);
+
+const BuildHubPage = React.lazy(() =>
+  import('./features/build-hub/components/BuildHubPage').then((module) => ({
+    default: module.BuildHubPage,
+  })),
+);
+
 // Generic page loading skeleton - used for lazy-loaded routes and PersistGate hydration
 const LoadingFallback: React.FC = () => (
   <Container maxWidth="lg" sx={{ pt: 4, px: 2 }}>
@@ -602,11 +616,13 @@ const AppRoutes: React.FC = () => {
             <Route
               path="/build-editor"
               element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <BuildEditorPage />
-                  </Suspense>
-                </ErrorBoundary>
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <BuildEditorPage />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
               }
             />
             <Route
@@ -681,25 +697,16 @@ const AppRoutes: React.FC = () => {
                 </ErrorBoundary>
               }
             />
-            {/* Temporary build short link — resolves slug and redirects to /bv */}
-            <Route
-              path="/b/:slug"
-              element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <TempBuildViewPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
             <Route
               path="/my-builds"
               element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <MyBuildsPage />
-                  </Suspense>
-                </ErrorBoundary>
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <MyBuildsPage />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
               }
             />
             <Route
@@ -712,16 +719,6 @@ const AppRoutes: React.FC = () => {
                     </Suspense>
                   </ErrorBoundary>
                 </AuthenticatedRoute>
-              }
-            />
-            <Route
-              path="/pack-hub"
-              element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <PackHubPage />
-                  </Suspense>
-                </ErrorBoundary>
               }
             />
             <Route
