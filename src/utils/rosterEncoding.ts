@@ -27,6 +27,7 @@ import {
   HealerSetup,
   DPSSlot,
   SkillLineConfig,
+  PlayerGroup,
   BuildReference,
   defaultTankSetup,
   defaultHealerSetup,
@@ -62,25 +63,6 @@ export interface CompactBuildRef {
 export interface CompactFood {
   i?: number; // id
   n?: string; // name
-}
-
-/** Compact champion point tree */
-export interface CompactCPTree {
-  s?: Array<number | null>; // slots (trailing nulls trimmed)
-  p?: Record<string, number>; // passive allocations (zero values omitted)
-}
-
-/** Compact full champion points (three trees) */
-export interface CompactCPFull {
-  w?: CompactCPTree; // warfare
-  fi?: CompactCPTree; // fitness (avoid 'f' collision with food)
-  c?: CompactCPTree; // craft
-}
-
-/** Compact skill bars: front bar + back bar */
-export interface CompactSkillBars {
-  f?: Record<number, number>; // front bar: slot → abilityId
-  b?: Record<number, number>; // back bar: slot → abilityId
 }
 
 export interface CompactSkills {
@@ -120,9 +102,6 @@ export interface CompactTank {
   no?: string; // notes
   br?: CompactBuildRef; // buildRef
   fo?: CompactFood; // food
-  sk?: CompactSkillBars; // full skill bars (Full mode)
-  cp2?: CompactCPFull; // champion points (Full mode)
-  pa?: number[]; // passive ability IDs (Full mode)
 }
 
 export interface CompactHealer {
@@ -147,9 +126,6 @@ export interface CompactHealer {
   no?: string; // notes
   br?: CompactBuildRef; // buildRef
   fo?: CompactFood; // food
-  sk?: CompactSkillBars; // full skill bars (Full mode)
-  cp2?: CompactCPFull; // champion points (Full mode)
-  pa?: number[]; // passive ability IDs (Full mode)
 }
 
 export interface CompactDPS {
@@ -177,9 +153,6 @@ export interface CompactDPS {
   cd?: string; // customDescription
   br?: CompactBuildRef; // buildRef
   fo?: CompactFood; // food
-  sk?: CompactSkillBars; // full skill bars (Full mode)
-  cp2?: CompactCPFull; // champion points (Full mode)
-  pa?: number[]; // passive ability IDs (Full mode)
 }
 
 /** Compact representation of a PlayerOverride (per-fight set/ultimate/notes changes) */
@@ -333,18 +306,15 @@ function expandBuildRef(c: CompactBuildRef): BuildReference {
   };
 }
 
-function compactFood(food?: { id?: number; name?: string }): CompactFood | undefined {
+function compactFood(food?: {
+  id?: number;
+  name?: string;
+}): CompactFood | undefined {
   if (!food || (food.id == null && !food.name)) return undefined;
   const c: CompactFood = {};
   if (food.id != null) c.i = food.id;
   if (food.name) c.n = food.name;
   return c;
-}
-
-/** Decode specificSkills: keep only numbers (ability IDs). Legacy string entries are dropped. */
-function decodeSpecificSkills(ss?: (number | string)[]): number[] {
-  if (!ss) return [];
-  return ss.filter((v): v is number => typeof v === 'number');
 }
 
 function expandFood(c?: CompactFood): { id?: number; name?: string } | undefined {
@@ -501,11 +471,6 @@ function compactTank(t: TankSetup): CompactTank {
   if (t.buildRef) c.br = compactBuildRef(t.buildRef);
   const fo = compactFood(t.food);
   if (fo) c.fo = fo;
-  const sk = compactSkillBars(t.skills);
-  if (sk) c.sk = sk;
-  const cp2 = compactCPFull(t.cpPoints);
-  if (cp2) c.cp2 = cp2;
-  if (t.passives?.length) c.pa = t.passives;
   return c;
 }
 
@@ -526,9 +491,6 @@ function expandTank(c?: CompactTank, slotNumber = 1): TankSetup {
     notes: c?.no,
     buildRef: c?.br ? expandBuildRef(c.br) : undefined,
     food: expandFood(c?.fo),
-    skills: expandSkillBars(c?.sk),
-    cpPoints: expandCPFull(c?.cp2),
-    passives: c?.pa,
   };
 }
 
@@ -564,11 +526,6 @@ function compactHealer(h: HealerSetup): CompactHealer {
   if (h.buildRef) c.br = compactBuildRef(h.buildRef);
   const fo = compactFood(h.food);
   if (fo) c.fo = fo;
-  const sk = compactSkillBars(h.skills);
-  if (sk) c.sk = sk;
-  const cp2 = compactCPFull(h.cpPoints);
-  if (cp2) c.cp2 = cp2;
-  if (h.passives?.length) c.pa = h.passives;
   return c;
 }
 
@@ -607,9 +564,6 @@ function expandHealer(c?: CompactHealer, slotNumber = 1): HealerSetup {
     notes: c?.no,
     buildRef: c?.br ? expandBuildRef(c.br) : undefined,
     food: expandFood(c?.fo),
-    skills: expandSkillBars(c?.sk),
-    cpPoints: expandCPFull(c?.cp2),
-    passives: c?.pa,
   };
 }
 
@@ -643,11 +597,6 @@ function compactDPS(d: DPSSlot): CompactDPS {
   if (d.buildRef) c.br = compactBuildRef(d.buildRef);
   const fo = compactFood(d.food);
   if (fo) c.fo = fo;
-  const sk = compactSkillBars(d.skills);
-  if (sk) c.sk = sk;
-  const cp2 = compactCPFull(d.cpPoints);
-  if (cp2) c.cp2 = cp2;
-  if (d.passives?.length) c.pa = d.passives;
   return c;
 }
 
@@ -695,9 +644,6 @@ function expandDPS(c: CompactDPS): DPSSlot {
     customDescription: c.cd,
     buildRef: c.br ? expandBuildRef(c.br) : undefined,
     food: expandFood(c.fo),
-    skills: expandSkillBars(c.sk),
-    cpPoints: expandCPFull(c.cp2),
-    passives: c.pa,
   };
 }
 

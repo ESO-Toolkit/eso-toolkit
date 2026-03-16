@@ -107,7 +107,7 @@ export interface PlayerGroup {
 /**
  * Roster display detail level
  */
-export type RosterDetailLevel = 'simple' | 'full';
+export type RosterDetailLevel = 'simple' | 'advanced' | 'full';
 
 /**
  * Reference to a Build Editor build attached to a roster slot.
@@ -177,14 +177,6 @@ export interface DPSSlot {
   buildRef?: BuildReference;
   /** Food/drink consumable for this slot */
   food?: { id?: number; name?: string };
-  /** Full skill bars — populated in Full detail mode */
-  skills?: SkillsConfig;
-  /** Champion points — populated in Full detail mode */
-  cpPoints?: BuildChampionPoints;
-  /** Passive ability IDs — populated in Full detail mode */
-  passives?: number[];
-  /** Per-slot equipment — populated in Full detail mode */
-  gear?: GearConfig;
 }
 
 /**
@@ -216,14 +208,6 @@ export interface HealerSetup {
   buildRef?: BuildReference;
   /** Food/drink consumable for this slot */
   food?: { id?: number; name?: string };
-  /** Full skill bars — populated in Full detail mode */
-  skills?: SkillsConfig;
-  /** Champion points — populated in Full detail mode */
-  cpPoints?: BuildChampionPoints;
-  /** Passive ability IDs — populated in Full detail mode */
-  passives?: number[];
-  /** Per-slot equipment — populated in Full detail mode */
-  gear?: GearConfig;
 }
 
 /**
@@ -249,14 +233,6 @@ export interface TankSetup {
   buildRef?: BuildReference;
   /** Food/drink consumable for this slot */
   food?: { id?: number; name?: string };
-  /** Full skill bars — populated in Full detail mode */
-  skills?: SkillsConfig;
-  /** Champion points — populated in Full detail mode */
-  cpPoints?: BuildChampionPoints;
-  /** Passive ability IDs — populated in Full detail mode */
-  passives?: number[];
-  /** Per-slot equipment — populated in Full detail mode */
-  gear?: GearConfig;
 }
 
 /**

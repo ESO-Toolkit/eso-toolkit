@@ -1,7 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import type { RaidRoster, BuildReference } from '../../types/roster';
-import type { SlotInlineData } from '../../utils/rosterBuildBridge';
 
 export interface SavedRoster {
   id: string;
@@ -54,35 +53,21 @@ const savedRostersSlice = createSlice({
         rosterId: string;
         slotKey: string;
         buildRef: BuildReference | null;
-        inlineData?: SlotInlineData;
       }>,
     ) {
       const saved = state.rosters.find((r) => r.id === action.payload.rosterId);
       if (!saved) return;
-      const { slotKey, buildRef, inlineData } = action.payload;
+      const { slotKey, buildRef } = action.payload;
       const ref = buildRef ?? undefined;
-
-      const applyInline = (slot: { buildRef?: BuildReference } & SlotInlineData): void => {
-        slot.buildRef = ref;
-        if (inlineData) {
-          if (inlineData.skills !== undefined) slot.skills = inlineData.skills;
-          if (inlineData.cpPoints !== undefined) slot.cpPoints = inlineData.cpPoints;
-          if (inlineData.food !== undefined) slot.food = inlineData.food;
-          if (inlineData.passives !== undefined) slot.passives = inlineData.passives;
+      if (slotKey === 'tank1') saved.roster.tank1.buildRef = ref;
+      else if (slotKey === 'tank2') saved.roster.tank2.buildRef = ref;
+      else if (slotKey === 'healer1') saved.roster.healer1.buildRef = ref;
+      else if (slotKey === 'healer2') saved.roster.healer2.buildRef = ref;
+      else if (slotKey.startsWith('dps')) {
+        const idx = parseInt(slotKey.slice(3), 10) - 1;
+        if (idx >= 0 && idx < 8) {
+          saved.roster.dpsSlots[idx].buildRef = ref;
         }
-      };
-
-      // Parse SlotKey format: "tank:0", "healer:1", "dps:3"
-      const colonIdx = slotKey.indexOf(':');
-      if (colonIdx === -1) return; // Invalid key
-      const role = slotKey.slice(0, colonIdx);
-      const index = parseInt(slotKey.slice(colonIdx + 1), 10);
-      if (role === 'tank' && index >= 0 && index < saved.roster.tanks.length) {
-        applyInline(saved.roster.tanks[index]);
-      } else if (role === 'healer' && index >= 0 && index < saved.roster.healers.length) {
-        applyInline(saved.roster.healers[index]);
-      } else if (role === 'dps' && index >= 0 && index < saved.roster.dpsSlots.length) {
-        applyInline(saved.roster.dpsSlots[index]);
       }
       saved.savedAt = new Date().toISOString();
     },
