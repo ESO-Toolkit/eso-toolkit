@@ -962,6 +962,9 @@ export const RosterBuilderPage: React.FC = () => {
           if (cancelled) return;
           if (decoded) {
             setRoster(decoded);
+            if (decoded.rosterDetailLevel) {
+              setMode(decoded.rosterDetailLevel);
+            }
             setSnackbar({
               open: true,
               message: savedId ? 'Roster loaded for editing!' : 'Roster loaded from shared link!',
@@ -1181,6 +1184,9 @@ export const RosterBuilderPage: React.FC = () => {
         const validatedRoster = validateImportedRoster(parsedData);
 
         setRoster(validatedRoster);
+        if (validatedRoster.rosterDetailLevel) {
+          setMode(validatedRoster.rosterDetailLevel);
+        }
         setSnackbar({ open: true, message: 'Roster imported successfully!', severity: 'success' });
       } catch (error) {
         setSnackbar({

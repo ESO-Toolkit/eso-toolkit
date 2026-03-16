@@ -39,6 +39,9 @@ import {
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { getSetDisplayName } from '../utils/setNameUtils';
+import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
+import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
+import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
 
 // ============================================================
 // Local display helpers
@@ -84,6 +87,66 @@ const formatSkillLines = (
   if (!sl) return '';
   if (sl.isFlex) return 'Flexible';
   return [sl.line1, sl.line2, sl.line3].filter(Boolean).join(' / ');
+};
+
+// ── Compact badge strip for Phase-4 inline build data ────────────────────────
+
+interface BuildDataBadgesProps {
+  food?: { id?: number; name?: string };
+  skills?: SkillsConfig;
+  passives?: number[];
+  cpPoints?: BuildChampionPoints;
+  isDarkMode: boolean;
+}
+
+const BuildDataBadges: React.FC<BuildDataBadgesProps> = ({
+  food,
+  skills,
+  passives,
+  cpPoints,
+  isDarkMode,
+}) => {
+  const foodName =
+    food?.id != null ? (ESO_CONSUMABLE_LOOKUP[food.id]?.name ?? food.name) : food?.name;
+  const skillCount = skills
+    ? Object.keys(skills[0] ?? {}).length + Object.keys(skills[1] ?? {}).length
+    : 0;
+  const passiveCount = passives?.length ?? 0;
+  const hasCp =
+    cpPoints &&
+    (cpPoints.warfare.slots.some((s) => s !== null) ||
+      cpPoints.fitness.slots.some((s) => s !== null) ||
+      cpPoints.craft.slots.some((s) => s !== null));
+
+  if (!foodName && skillCount === 0 && passiveCount === 0 && !hasCp) return null;
+
+  const chipSx = {
+    height: 17,
+    fontSize: '0.6rem',
+    fontWeight: 500,
+    backgroundColor: isDarkMode ? 'rgba(56,189,248,0.08)' : 'rgba(56,189,248,0.06)',
+    color: isDarkMode ? 'rgba(56,189,248,0.85)' : 'rgb(3,105,161)',
+    border: `1px solid ${isDarkMode ? 'rgba(56,189,248,0.18)' : 'rgba(56,189,248,0.2)'}`,
+    '& .MuiChip-label': { px: 0.75 },
+  };
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 0.5,
+        mt: 0.75,
+        pt: 0.75,
+        borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
+      }}
+    >
+      {foodName && <Chip label={`Food: ${foodName}`} size="small" sx={chipSx} />}
+      {skillCount > 0 && <Chip label={`${skillCount} skills`} size="small" sx={chipSx} />}
+      {passiveCount > 0 && <Chip label={`${passiveCount} passives`} size="small" sx={chipSx} />}
+      {hasCp && <Chip label="CP" size="small" sx={chipSx} />}
+    </Box>
+  );
 };
 
 // ============================================================
@@ -294,6 +357,13 @@ const TankCard: React.FC<TankCardProps> = ({ tank, label, color, isDarkMode }) =
             {tank.notes}
           </Typography>
         )}
+        <BuildDataBadges
+          food={tank.food}
+          skills={tank.skills}
+          passives={tank.passives}
+          cpPoints={tank.cpPoints}
+          isDarkMode={isDarkMode}
+        />
       </Box>
     </Paper>
   );
@@ -549,6 +619,13 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, label, color, isDarkMod
             {healer.notes}
           </Typography>
         )}
+        <BuildDataBadges
+          food={healer.food}
+          skills={healer.skills}
+          passives={healer.passives}
+          cpPoints={healer.cpPoints}
+          isDarkMode={isDarkMode}
+        />
       </Box>
     </Paper>
   );
@@ -571,11 +648,23 @@ const DPS_JAIL_LABELS: Record<string, string> = {
 
 const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
   const skillLines = formatSkillLines(slot.skillLines);
-  const gearSets = formatGearSets({
-    set1: slot.set1,
-    set2: slot.set2,
-    additionalSets: slot.monsterSet ? [slot.monsterSet] : [],
-  });
+  // Prefer the new set1/set2/monsterSet/additionalSets fields; fall back to the
+  // deprecated gearSets array for rosters encoded before the Phase-1 migration.
+  const gearSets =
+    slot.set1 != null || slot.set2 != null || slot.monsterSet != null || slot.additionalSets?.length
+      ? formatGearSets({
+          set1: slot.set1,
+          set2: slot.set2,
+          monsterSet: slot.monsterSet,
+          additionalSets: slot.additionalSets,
+        })
+      : slot.gearSets?.length
+        ? formatGearSets({
+            set1: slot.gearSets[0],
+            set2: slot.gearSets[1],
+            additionalSets: slot.gearSets.slice(2),
+          })
+        : [];
 
   const isEmpty = !slot.playerName && !slot.labels?.length;
 
@@ -737,6 +826,13 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
             )}
           </Box>
         )}
+        <BuildDataBadges
+          food={slot.food}
+          skills={slot.skills}
+          passives={slot.passives}
+          cpPoints={slot.cpPoints}
+          isDarkMode={isDarkMode}
+        />
       </Box>
     </Box>
   );
