@@ -90,6 +90,16 @@ const BUILDS = [
             0: 173746, 2: 173743, 3: 173748, 6: 173749, 8: 173747, 9: 173744, 16: 173741,
             1: 97218, 11: 97217, 12: 97224,
           },
+          gt: {
+            0: 'divines', 2: 'divines', 3: 'divines', 6: 'divines', 8: 'divines', 9: 'divines', 16: 'divines',
+            1: 'bloodthirsty', 11: 'bloodthirsty', 12: 'bloodthirsty',
+          },
+          ge: {
+            0: 'magicka', 2: 'magicka', 3: 'health', 6: 'stamina', 8: 'magicka', 9: 'stamina', 16: 'magicka',
+            1: 'spell-damage', 11: 'spell-damage', 12: 'spell-damage',
+          },
+          fo: 133556, // Clockwork Citrus Filet (Max Magicka + Stamina Recovery)
+          pa: [3463, 29439, 29430, 29451, 29457], // Combustion, Searing Heat, Warmth, World in Ruin, Burning Heart
         },
       ],
     },
@@ -128,6 +138,16 @@ const BUILDS = [
             0: 129127, 2: 129124, 3: 129130, 6: 129131, 8: 129128, 9: 129125, 16: 129121,
             1: 186419, 11: 186418, 12: 186422,
           },
+          gt: {
+            0: 'divines', 2: 'divines', 3: 'divines', 6: 'divines', 8: 'divines', 9: 'divines', 16: 'divines',
+            1: 'arcane', 11: 'arcane', 12: 'arcane',
+          },
+          ge: {
+            0: 'magicka', 2: 'magicka', 3: 'magicka', 6: 'magicka', 8: 'health', 9: 'magicka', 16: 'magicka',
+            1: 'magicka-recovery', 11: 'magicka-recovery', 12: 'magicka-recovery',
+          },
+          fo: 87697, // Witchmother's Potent Brew (Max Magicka + Magicka Recovery)
+          pa: [31760, 31747, 31751, 31757], // Light Weaver, Master Ritualist, Mending, Sacred Ground
         },
       ],
     },
@@ -166,6 +186,16 @@ const BUILDS = [
             0: 127541, 2: 127538, 3: 127543, 6: 127544, 8: 127542, 9: 127539, 16: 127537,
             1: 87873, 11: 87873, 12: 87876,
           },
+          gt: {
+            0: 'divines', 2: 'divines', 3: 'divines', 6: 'divines', 8: 'divines', 9: 'divines', 16: 'divines',
+            1: 'bloodthirsty', 11: 'bloodthirsty', 12: 'bloodthirsty',
+          },
+          ge: {
+            0: 'stamina', 2: 'stamina', 3: 'health', 6: 'stamina', 8: 'stamina', 9: 'stamina', 16: 'stamina',
+            1: 'weapon-damage', 11: 'weapon-damage', 12: 'weapon-damage',
+          },
+          fo: 139018, // Artaeum Takeaway Broth (Max Health + Max Stamina)
+          pa: [86068, 86064, 86066], // Advanced Species, Bond with Nature, Flourish
         },
       ],
     },
@@ -204,6 +234,16 @@ const BUILDS = [
             0: 97235, 2: 97232, 3: 97238, 6: 97239, 8: 97236, 9: 97233, 16: 97231,
             1: 186419, 11: 186418, 12: 186422,
           },
+          gt: {
+            0: 'divines', 2: 'divines', 3: 'divines', 6: 'divines', 8: 'divines', 9: 'divines', 16: 'divines',
+            1: 'bloodthirsty', 11: 'bloodthirsty', 12: 'bloodthirsty',
+          },
+          ge: {
+            0: 'magicka', 2: 'magicka', 3: 'health', 6: 'stamina', 8: 'magicka', 9: 'stamina', 16: 'magicka',
+            1: 'spell-damage', 11: 'spell-damage', 12: 'spell-damage',
+          },
+          fo: 133556, // Clockwork Citrus Filet (Max Magicka + Stamina Recovery)
+          pa: [31419, 31378], // Capacitor, Persistence
         },
       ],
     },
@@ -242,6 +282,16 @@ const BUILDS = [
             0: 173875, 2: 173872, 3: 173877, 6: 173878, 8: 173876, 9: 173873, 16: 173870,
             1: 177401, 11: 177400, 12: 177404,
           },
+          gt: {
+            0: 'reinforced', 2: 'reinforced', 3: 'sturdy', 6: 'sturdy', 8: 'reinforced', 9: 'sturdy', 16: 'sturdy',
+            1: 'triune', 11: 'triune', 12: 'triune',
+          },
+          ge: {
+            0: 'prismatic-defense', 2: 'health', 3: 'health', 6: 'health', 8: 'health', 9: 'health', 16: 'health',
+            1: 'prismatic-recovery', 11: 'prismatic-recovery', 12: 'reduce-block-cost',
+          },
+          fo: 153629, // Bewitched Sugar Skulls (Max Health + Magicka + Stamina)
+          pa: [116192, 116286], // Dismember, Curative Curse
         },
       ],
     },
@@ -280,6 +330,16 @@ const BUILDS = [
             0: 186428, 2: 186425, 3: 186431, 6: 186432, 8: 186429, 9: 186426, 16: 186423,
             1: 87873, 11: 87873, 12: 87876,
           },
+          gt: {
+            0: 'divines', 2: 'divines', 3: 'divines', 6: 'divines', 8: 'divines', 9: 'divines', 16: 'divines',
+            1: 'bloodthirsty', 11: 'bloodthirsty', 12: 'bloodthirsty',
+          },
+          ge: {
+            0: 'magicka', 2: 'magicka', 3: 'health', 6: 'stamina', 8: 'magicka', 9: 'stamina', 16: 'magicka',
+            1: 'spell-damage', 11: 'spell-damage', 12: 'spell-damage',
+          },
+          fo: 133556, // Clockwork Citrus Filet (Max Magicka + Stamina Recovery)
+          pa: [185238, 185842], // Erudition, Inspired Scholarship
         },
       ],
     },

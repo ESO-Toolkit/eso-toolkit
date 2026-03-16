@@ -91,6 +91,8 @@ interface CompactSetup {
   cu?: string; // curse (omit if 'none' or empty)
   ms?: string; // mundusStone (omit if empty)
   g?: Record<string, number>; // gear: {slotIndex: itemId}
+  gt?: Record<string, string>; // gear traits: {slotIndex: traitId}
+  ge?: Record<string, string>; // gear enchants: {slotIndex: enchantId}
   sk?: { 0?: Record<string, number>; 1?: Record<string, number> }; // skills
   cp?: CompactCP; // champion points
   pt?: number[]; // potion IDs
@@ -127,11 +129,35 @@ function compactGear(gear: GearConfig): Record<string, number> | undefined {
   return Object.keys(result).length > 0 ? result : undefined;
 }
 
-function expandGear(compact?: Record<string, number>): GearConfig {
+function compactGearTraits(gear: GearConfig): Record<string, string> | undefined {
+  const result: Record<string, string> = {};
+  for (const [slot, piece] of Object.entries(gear)) {
+    if (piece?.trait) result[slot] = piece.trait;
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
+function compactGearEnchants(gear: GearConfig): Record<string, string> | undefined {
+  const result: Record<string, string> = {};
+  for (const [slot, piece] of Object.entries(gear)) {
+    if (piece?.enchant) result[slot] = piece.enchant;
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
+function expandGear(
+  compact?: Record<string, number>,
+  traits?: Record<string, string>,
+  enchants?: Record<string, string>,
+): GearConfig {
   if (!compact) return {};
   const result: GearConfig = {};
   for (const [slot, id] of Object.entries(compact)) {
-    result[Number(slot)] = { id };
+    result[Number(slot)] = {
+      id,
+      trait: traits?.[slot],
+      enchant: enchants?.[slot],
+    };
   }
   return result;
 }
@@ -233,6 +259,10 @@ function compactSetup(setup: BuildSetup): CompactSetup {
   if (setup.mundusStone) c.ms = setup.mundusStone;
   const gear = compactGear(setup.gear);
   if (gear) c.g = gear;
+  const gearTraits = compactGearTraits(setup.gear);
+  if (gearTraits) c.gt = gearTraits;
+  const gearEnchants = compactGearEnchants(setup.gear);
+  if (gearEnchants) c.ge = gearEnchants;
   const skills = compactSkills(setup.skills);
   if (skills) c.sk = skills;
   const cp = compactCP(setup.cp);
@@ -253,7 +283,7 @@ function expandSetup(compact: CompactSetup, index: number): BuildSetup {
       : { magicka: 0, health: 0, stamina: 0 },
     curse: compact.cu ?? 'none',
     mundusStone: compact.ms ?? '',
-    gear: expandGear(compact.g),
+    gear: expandGear(compact.g, compact.gt, compact.ge),
     skills: expandSkills(compact.sk),
     cp: expandCP(compact.cp),
     consumables: {

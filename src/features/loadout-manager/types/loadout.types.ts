@@ -40,6 +40,8 @@ export interface FoodConfig {
 export interface GearPiece {
   link?: string; // ESO item link format
   id?: string | number; // Item ID (string for compatibility with Wizard's Wardrobe)
+  trait?: string; // Trait ID (e.g. 'divines', 'bloodthirsty')
+  enchant?: string; // Enchant/glyph ID (e.g. 'magicka', 'spell-damage')
 }
 
 /**
