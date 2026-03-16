@@ -2,41 +2,30 @@
  * BuildViewPage — read-only, shareable view of a build.
  *
  * Accessible via direct link: /bv?b=<encoded>
- * The encoded build is the compact deflate-compressed format from buildEncoding.ts.
- *
- * Note: guide.content, screenshots, and addonImportString are not available in
- * URL-shared builds — only D1-published builds carry those.
+ * Uses the same glassmorphism design system as the build editor but in
+ * read-only presentation mode.
  */
 
 import {
   ContentCopy as CopyIcon,
   Edit as EditIcon,
+  FitnessCenter as FitnessIcon,
+  LocalFireDepartment as WarfareIcon,
   OpenInNew as OpenInNewIcon,
-  SportsEsports as GameIcon,
-  Shield as ShieldIcon,
-  Favorite as HealIcon,
-  AutoAwesome as DpsIcon,
-  Person as PersonIcon,
   YouTube as YouTubeIcon,
 } from '@mui/icons-material';
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  Container,
-  Divider,
-  Paper,
-  Skeleton,
-  Snackbar,
-  Tab,
-  Tabs,
-  Typography,
-} from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { Alert, Box, Button, Chip, Container, Skeleton, Snackbar, Typography } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
 
-import type { Build, BuildSetup } from '../features/build-editor/types/build.types';
+import { staggerContainer, fadeInUp } from '../features/build-editor/components/motion/variants';
+import { GlassPanel } from '../features/build-editor/components/primitives/GlassPanel';
+import { BE_TOKENS } from '../features/build-editor/theme/buildEditorTokens';
+import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
+import type { Build, BuildSetup, CombatRole } from '../features/build-editor/types/build.types';
+import { BuildViewShell } from '../features/build-viewer/components/BuildViewShell';
+import { ViewAttributeBar } from '../features/build-viewer/components/ViewAttributeBar';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
 
 // ─── Display helpers ──────────────────────────────────────────────────────────
@@ -60,12 +49,12 @@ const ROLE_LABELS: Record<string, string> = {
   'hybrid-dps': 'Hybrid DPS',
 };
 
-const ROLE_ICONS: Record<string, React.ReactNode> = {
-  tank: <ShieldIcon sx={{ fontSize: '0.9rem' }} />,
-  healer: <HealIcon sx={{ fontSize: '0.9rem' }} />,
-  'magicka-dps': <DpsIcon sx={{ fontSize: '0.9rem' }} />,
-  'stamina-dps': <DpsIcon sx={{ fontSize: '0.9rem' }} />,
-  'hybrid-dps': <DpsIcon sx={{ fontSize: '0.9rem' }} />,
+const ROLE_EMOJI: Record<CombatRole, string> = {
+  tank: '\u{1F6E1}',
+  healer: '\u{1FA7A}',
+  'magicka-dps': '\u{2728}',
+  'stamina-dps': '\u{2694}',
+  'hybrid-dps': '\u{1F300}',
 };
 
 const SKILL_LINE_LABELS: Record<string, string> = {
@@ -92,212 +81,627 @@ const SKILL_LINE_LABELS: Record<string, string> = {
   'class.curative-runeforms': 'Curative Runeforms',
 };
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+const GEAR_SLOT_NAMES: Record<number, string> = {
+  0: 'Head',
+  1: 'Neck',
+  2: 'Chest',
+  3: 'Shoulders',
+  4: 'Main Hand',
+  5: 'Off Hand',
+  6: 'Belt',
+  8: 'Legs',
+  9: 'Feet',
+  11: 'Ring 1',
+  12: 'Ring 2',
+  16: 'Gloves',
+  20: 'Back Main Hand',
+  21: 'Back Off Hand',
+};
 
-const InfoRow: React.FC<{ label: string; value: string; isDarkMode: boolean }> = ({
-  label,
-  value,
-  isDarkMode,
-}) => (
-  <Box sx={{ display: 'flex', gap: 1, alignItems: 'baseline', mb: 0.5 }}>
-    <Typography
+const GEAR_SLOT_ORDER = [0, 2, 3, 16, 6, 8, 9, 1, 11, 12, 4, 5, 20, 21];
+
+const MUNDUS_LABELS: Record<string, string> = {
+  thief: 'The Thief',
+  atronach: 'The Atronach',
+  shadow: 'The Shadow',
+  lover: 'The Lover',
+  warrior: 'The Warrior',
+  mage: 'The Mage',
+  apprentice: 'The Apprentice',
+  serpent: 'The Serpent',
+  ritual: 'The Ritual',
+  steed: 'The Steed',
+  lady: 'The Lady',
+  lord: 'The Lord',
+  tower: 'The Tower',
+};
+
+// ─── Section label ────────────────────────────────────────────────────────────
+
+const SectionLabel: React.FC<{
+  label: string;
+  count?: string;
+  icon?: React.ReactNode;
+}> = ({ label, count, icon }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+      {icon && (
+        <Box
+          sx={{
+            color: 'var(--be-accent, #38bdf8)',
+            fontSize: 16,
+            display: 'flex',
+            opacity: 0.7,
+          }}
+        >
+          {icon}
+        </Box>
+      )}
+      <Typography
+        sx={{
+          fontSize: '0.6rem',
+          fontWeight: 700,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+        }}
+      >
+        {label}
+      </Typography>
+      {count && (
+        <Typography
+          sx={{
+            fontSize: '0.55rem',
+            fontWeight: 600,
+            color: 'var(--be-accent, #38bdf8)',
+            opacity: 0.7,
+            ml: 'auto',
+          }}
+        >
+          {count}
+        </Typography>
+      )}
+    </Box>
+  );
+};
+
+// ─── Skill slot display ───────────────────────────────────────────────────────
+
+const SkillSlot: React.FC<{
+  slotIndex: number;
+  abilityId: number;
+  isUltimate?: boolean;
+}> = ({ slotIndex, abilityId, isUltimate = false }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const size = isUltimate ? 58 : 50;
+
+  return (
+    <Box
       sx={{
-        fontSize: '0.6rem',
-        fontWeight: 700,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-        color: 'text.disabled',
-        minWidth: 80,
-        flexShrink: 0,
+        width: size,
+        height: size,
+        borderRadius: isUltimate ? '14px' : '12px',
+        background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        transition: 'border-color 0.2s, box-shadow 0.2s',
+        '&:hover': {
+          borderColor: 'var(--be-accent, #38bdf8)',
+          boxShadow: '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
+        },
       }}
     >
-      {label}
-    </Typography>
-    <Typography
-      sx={{
-        fontSize: '0.82rem',
-        color: isDarkMode ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.8)',
-        fontWeight: 500,
-      }}
-    >
-      {value}
-    </Typography>
-  </Box>
-);
+      <Typography
+        sx={{
+          fontSize: '0.55rem',
+          fontWeight: 600,
+          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+          lineHeight: 1,
+        }}
+      >
+        {isUltimate ? 'ULT' : slotIndex + 1}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: '0.65rem',
+          fontWeight: 700,
+          color: 'var(--be-accent, #38bdf8)',
+          fontFamily: 'monospace',
+          lineHeight: 1,
+          mt: 0.25,
+        }}
+      >
+        {abilityId}
+      </Typography>
+    </Box>
+  );
+};
 
-const SectionHeader: React.FC<{ label: string; isDarkMode: boolean }> = ({
-  label,
-  isDarkMode,
-}) => (
-  <Typography
-    sx={{
-      fontSize: '0.6rem',
-      fontWeight: 700,
-      letterSpacing: '0.1em',
-      textTransform: 'uppercase',
-      color: isDarkMode ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-      mb: 1,
-      mt: 2,
-    }}
-  >
-    {label}
-  </Typography>
-);
+// ─── Gear slot display ────────────────────────────────────────────────────────
 
-const SetupCard: React.FC<{ setup: BuildSetup; isDarkMode: boolean }> = ({
-  setup,
-  isDarkMode,
+const GearSlotDisplay: React.FC<{ slotIndex: number; itemId: number }> = ({
+  slotIndex,
+  itemId,
 }) => {
-  const gearSlotNames: Record<number, string> = {
-    0: 'Head', 1: 'Neck', 2: 'Chest', 3: 'Shoulders', 4: 'Main Hand',
-    5: 'Off Hand', 6: 'Belt', 8: 'Legs', 9: 'Feet', 11: 'Ring 1',
-    12: 'Ring 2', 16: 'Gloves', 20: 'Back Main Hand', 21: 'Back Off Hand',
-  };
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const slotName = GEAR_SLOT_NAMES[slotIndex] ?? `Slot ${slotIndex}`;
 
-  const gearEntries = Object.entries(setup.gear);
-  const frontBar = Object.entries(setup.skills[0] ?? {});
-  const backBar = Object.entries(setup.skills[1] ?? {});
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.25,
+        py: 0.5,
+        px: 1,
+        borderRadius: 2,
+        background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+        transition: 'border-color 0.2s',
+        '&:hover': {
+          borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+        },
+      }}
+    >
+      <Box
+        sx={{
+          width: 6,
+          height: 6,
+          borderRadius: '50%',
+          background: 'var(--be-accent, #38bdf8)',
+          opacity: 0.5,
+          flexShrink: 0,
+        }}
+      />
+      <Typography
+        sx={{
+          fontSize: '0.68rem',
+          fontWeight: 600,
+          color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)',
+          minWidth: 90,
+          flexShrink: 0,
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+        }}
+      >
+        {slotName}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: '0.72rem',
+          fontWeight: 700,
+          color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
+          fontFamily: 'monospace',
+        }}
+      >
+        #{itemId}
+      </Typography>
+    </Box>
+  );
+};
+
+// ─── Setup display ────────────────────────────────────────────────────────────
+
+const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const hasAttributes =
+    setup.attributes.magicka > 0 || setup.attributes.health > 0 || setup.attributes.stamina > 0;
+  const totalAttributes =
+    setup.attributes.magicka + setup.attributes.health + setup.attributes.stamina;
+
+  const gearEntries = GEAR_SLOT_ORDER.filter((slot) => setup.gear[slot]?.id != null).map(
+    (slot) => ({ slot, id: setup.gear[slot].id as number }),
+  );
+
+  const frontBar = Object.entries(setup.skills[0] ?? {})
+    .map(([slot, id]) => ({ slot: Number(slot), id }))
+    .sort((a, b) => a.slot - b.slot);
+  const backBar = Object.entries(setup.skills[1] ?? {})
+    .map(([slot, id]) => ({ slot: Number(slot), id }))
+    .sort((a, b) => a.slot - b.slot);
+
   const cpSlots = [
-    ...setup.cp.warfare.slots.filter((s) => s !== null),
-    ...setup.cp.fitness.slots.filter((s) => s !== null),
-    ...setup.cp.craft.slots.filter((s) => s !== null),
+    ...setup.cp.warfare.slots.filter((s): s is number => s !== null),
+    ...setup.cp.fitness.slots.filter((s): s is number => s !== null),
+    ...setup.cp.craft.slots.filter((s): s is number => s !== null),
   ];
-  const cpPassiveCount = Object.keys(setup.cp.warfare.passives).length +
+  const cpPassiveCount =
+    Object.keys(setup.cp.warfare.passives).length +
     Object.keys(setup.cp.fitness.passives).length +
     Object.keys(setup.cp.craft.passives).length;
 
-  const cardBg = isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.7)';
-  const borderColor = isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)';
+  const hasConsumables = setup.consumables.potions.length > 0 || setup.consumables.food.id != null;
+  const hasMundusOrCurse = !!setup.mundusStone || (!!setup.curse && setup.curse !== 'none');
 
   return (
-    <Box>
-      {/* Attributes */}
-      {(setup.attributes.magicka > 0 || setup.attributes.health > 0 || setup.attributes.stamina > 0) && (
-        <>
-          <SectionHeader label="Attributes" isDarkMode={isDarkMode} />
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 1 }}>
-            {setup.attributes.magicka > 0 && (
-              <Chip label={`Magicka: ${setup.attributes.magicka}`} size="small"
-                sx={{ fontSize: '0.72rem', height: 22, bgcolor: '#1e3a5f22', color: '#60a5fa', border: '1px solid #60a5fa33' }} />
-            )}
-            {setup.attributes.health > 0 && (
-              <Chip label={`Health: ${setup.attributes.health}`} size="small"
-                sx={{ fontSize: '0.72rem', height: 22, bgcolor: '#3f1e1e22', color: '#f87171', border: '1px solid #f8717133' }} />
-            )}
-            {setup.attributes.stamina > 0 && (
-              <Chip label={`Stamina: ${setup.attributes.stamina}`} size="small"
-                sx={{ fontSize: '0.72rem', height: 22, bgcolor: '#1e3a1e22', color: '#4ade80', border: '1px solid #4ade8033' }} />
-            )}
-          </Box>
-        </>
-      )}
-
-      {/* Mundus / Curse */}
-      {(setup.mundusStone || (setup.curse && setup.curse !== 'none')) && (
-        <>
-          <SectionHeader label="Character" isDarkMode={isDarkMode} />
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
-            {setup.mundusStone && (
-              <Chip label={`Mundus: ${setup.mundusStone}`} size="small" variant="outlined"
-                sx={{ fontSize: '0.72rem', height: 22, borderColor: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)' }} />
-            )}
-            {setup.curse && setup.curse !== 'none' && (
-              <Chip label={`Curse: ${setup.curse}`} size="small" variant="outlined"
-                sx={{ fontSize: '0.72rem', height: 22, borderColor: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)' }} />
-            )}
-          </Box>
-        </>
-      )}
-
-      {/* Gear */}
-      {gearEntries.length > 0 && (
-        <>
-          <SectionHeader label={`Gear (${gearEntries.length} pieces)`} isDarkMode={isDarkMode} />
-          <Paper elevation={0} sx={{ p: 1.5, borderRadius: '10px', bgcolor: cardBg, border: `1px solid ${borderColor}`, mb: 1 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.375 }}>
-              {gearEntries.map(([slot, piece]) => (
-                <Box key={slot} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                  <Typography sx={{ fontSize: '0.65rem', color: 'text.disabled', minWidth: 100, flexShrink: 0 }}>
-                    {gearSlotNames[Number(slot)] ?? `Slot ${slot}`}
-                  </Typography>
-                  <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontFamily: 'monospace' }}>
-                    #{piece.id ?? '—'}
-                  </Typography>
+    <motion.div variants={staggerContainer} initial="hidden" animate="visible">
+      {/* Row 1: Attributes + Character */}
+      {(hasAttributes || hasMundusOrCurse) && (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              md: hasAttributes && hasMundusOrCurse ? '1fr 1fr' : '1fr',
+            },
+            gap: 2,
+            mb: 2,
+          }}
+        >
+          {hasAttributes && (
+            <motion.div variants={fadeInUp}>
+              <GlassPanel variant="default" sx={{ p: 2 }}>
+                <SectionLabel label="Attributes" count={`${totalAttributes} / 64`} />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                  <ViewAttributeBar
+                    label="Magicka"
+                    color={BE_TOKENS.attributes.magicka}
+                    value={setup.attributes.magicka}
+                    max={64}
+                  />
+                  <ViewAttributeBar
+                    label="Health"
+                    color={BE_TOKENS.attributes.health}
+                    value={setup.attributes.health}
+                    max={64}
+                  />
+                  <ViewAttributeBar
+                    label="Stamina"
+                    color={BE_TOKENS.attributes.stamina}
+                    value={setup.attributes.stamina}
+                    max={64}
+                  />
                 </Box>
+              </GlassPanel>
+            </motion.div>
+          )}
+
+          {hasMundusOrCurse && (
+            <motion.div variants={fadeInUp}>
+              <GlassPanel variant="default" sx={{ p: 2 }}>
+                <SectionLabel label="Character" />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {setup.mundusStone && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: '#ffd54f',
+                          boxShadow: '0 0 6px rgba(255, 213, 79, 0.5)',
+                        }}
+                      />
+                      <Typography
+                        sx={{
+                          fontSize: '0.55rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+                          minWidth: 55,
+                        }}
+                      >
+                        Mundus
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
+                        }}
+                      >
+                        {MUNDUS_LABELS[setup.mundusStone] ?? setup.mundusStone}
+                      </Typography>
+                    </Box>
+                  )}
+                  {setup.curse && setup.curse !== 'none' && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: '#ce93d8',
+                          boxShadow: '0 0 6px rgba(206, 147, 216, 0.5)',
+                        }}
+                      />
+                      <Typography
+                        sx={{
+                          fontSize: '0.55rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+                          minWidth: 55,
+                        }}
+                      >
+                        Curse
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
+                        }}
+                      >
+                        {setup.curse}
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              </GlassPanel>
+            </motion.div>
+          )}
+        </Box>
+      )}
+
+      {/* Row 2: Skills */}
+      {(frontBar.length > 0 || backBar.length > 0) && (
+        <motion.div variants={fadeInUp}>
+          <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
+            <SectionLabel label="Skills" />
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                gap: 2,
+              }}
+            >
+              {[
+                { label: 'Front Bar', bar: frontBar },
+                { label: 'Back Bar', bar: backBar },
+              ].map(
+                ({ label, bar }) =>
+                  bar.length > 0 && (
+                    <Box key={label}>
+                      <Typography
+                        sx={{
+                          fontSize: '0.55rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                          mb: 1,
+                        }}
+                      >
+                        {label}
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                        {bar.map(({ slot, id }) => (
+                          <SkillSlot
+                            key={slot}
+                            slotIndex={slot}
+                            abilityId={id}
+                            isUltimate={slot === 5}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  ),
+              )}
+            </Box>
+          </GlassPanel>
+        </motion.div>
+      )}
+
+      {/* Row 3: Gear */}
+      {gearEntries.length > 0 && (
+        <motion.div variants={fadeInUp}>
+          <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
+            <SectionLabel label="Equipment" count={`${gearEntries.length} pieces`} />
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                gap: 0.5,
+              }}
+            >
+              {gearEntries.map(({ slot, id }) => (
+                <GearSlotDisplay key={slot} slotIndex={slot} itemId={id} />
               ))}
             </Box>
-          </Paper>
-        </>
+          </GlassPanel>
+        </motion.div>
       )}
 
-      {/* Skills */}
-      {(frontBar.length > 0 || backBar.length > 0) && (
-        <>
-          <SectionHeader label="Skills" isDarkMode={isDarkMode} />
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
-            {[['Front Bar', frontBar], ['Back Bar', backBar]].map(([label, bar]) =>
-              (bar as [string, number][]).length > 0 ? (
-                <Paper key={label as string} elevation={0}
-                  sx={{ p: 1.25, borderRadius: '10px', bgcolor: cardBg, border: `1px solid ${borderColor}`, flex: 1, minWidth: 140 }}>
-                  <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'text.disabled', mb: 0.75 }}>
-                    {label as string}
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-                    {(bar as [string, number][]).sort(([a], [b]) => Number(a) - Number(b)).map(([slot, id]) => (
-                      <Typography key={slot} sx={{ fontSize: '0.72rem', color: 'text.secondary', fontFamily: 'monospace' }}>
-                        Slot {slot}: #{id}
-                      </Typography>
+      {/* Row 4: Champion Points + Consumables */}
+      {(cpSlots.length > 0 ||
+        cpPassiveCount > 0 ||
+        hasConsumables ||
+        setup.passives.length > 0) && (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: 2,
+            mb: 2,
+          }}
+        >
+          {(cpSlots.length > 0 || cpPassiveCount > 0) && (
+            <motion.div variants={fadeInUp}>
+              <GlassPanel variant="default" sx={{ p: 2 }}>
+                <SectionLabel label="Champion Points" />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {/* Warfare */}
+                  {(setup.cp.warfare.slots.some((s) => s !== null) ||
+                    Object.keys(setup.cp.warfare.passives).length > 0) && (
+                    <CPTreeSummary
+                      label="Warfare"
+                      color="#ef5350"
+                      icon={<WarfareIcon sx={{ fontSize: 14 }} />}
+                      slots={setup.cp.warfare.slots.filter((s): s is number => s !== null)}
+                      passiveCount={Object.keys(setup.cp.warfare.passives).length}
+                    />
+                  )}
+                  {/* Fitness */}
+                  {(setup.cp.fitness.slots.some((s) => s !== null) ||
+                    Object.keys(setup.cp.fitness.passives).length > 0) && (
+                    <CPTreeSummary
+                      label="Fitness"
+                      color="#66bb6a"
+                      icon={<FitnessIcon sx={{ fontSize: 14 }} />}
+                      slots={setup.cp.fitness.slots.filter((s): s is number => s !== null)}
+                      passiveCount={Object.keys(setup.cp.fitness.passives).length}
+                    />
+                  )}
+                  {/* Craft */}
+                  {(setup.cp.craft.slots.some((s) => s !== null) ||
+                    Object.keys(setup.cp.craft.passives).length > 0) && (
+                    <CPTreeSummary
+                      label="Craft"
+                      color="#42a5f5"
+                      icon={null}
+                      slots={setup.cp.craft.slots.filter((s): s is number => s !== null)}
+                      passiveCount={Object.keys(setup.cp.craft.passives).length}
+                    />
+                  )}
+                </Box>
+              </GlassPanel>
+            </motion.div>
+          )}
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {/* Consumables */}
+            {hasConsumables && (
+              <motion.div variants={fadeInUp}>
+                <GlassPanel variant="subtle" sx={{ p: 2 }}>
+                  <SectionLabel label="Consumables" />
+                  <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                    {setup.consumables.potions.map((p) => (
+                      <Chip
+                        key={p.id}
+                        label={`Potion #${p.id}`}
+                        size="small"
+                        sx={{
+                          fontSize: '0.68rem',
+                          height: 24,
+                          fontWeight: 600,
+                          bgcolor: isDark
+                            ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
+                            : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
+                          border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
+                          color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
+                        }}
+                      />
                     ))}
+                    {setup.consumables.food.id != null && (
+                      <Chip
+                        label={`Food #${setup.consumables.food.id}`}
+                        size="small"
+                        sx={{
+                          fontSize: '0.68rem',
+                          height: 24,
+                          fontWeight: 600,
+                          bgcolor: isDark ? 'rgba(255,179,0,0.08)' : 'rgba(255,179,0,0.06)',
+                          border: '1px solid rgba(255,179,0,0.20)',
+                          color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
+                        }}
+                      />
+                    )}
                   </Box>
-                </Paper>
-              ) : null,
+                </GlassPanel>
+              </motion.div>
+            )}
+
+            {/* Passives */}
+            {setup.passives.length > 0 && (
+              <motion.div variants={fadeInUp}>
+                <GlassPanel variant="subtle" sx={{ p: 2 }}>
+                  <SectionLabel label="Passives" />
+                  <Typography
+                    sx={{
+                      fontSize: '0.78rem',
+                      color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {setup.passives.length} passive
+                    {setup.passives.length !== 1 ? 's' : ''} selected
+                  </Typography>
+                </GlassPanel>
+              </motion.div>
             )}
           </Box>
-        </>
+        </Box>
       )}
+    </motion.div>
+  );
+};
 
-      {/* Champion Points summary */}
-      {(cpSlots.length > 0 || cpPassiveCount > 0) && (
-        <>
-          <SectionHeader label="Champion Points" isDarkMode={isDarkMode} />
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
-            {cpSlots.length > 0 && (
-              <Chip label={`${cpSlots.length} active perk${cpSlots.length !== 1 ? 's' : ''}`} size="small" variant="outlined"
-                sx={{ fontSize: '0.72rem', height: 22 }} />
-            )}
-            {cpPassiveCount > 0 && (
-              <Chip label={`${cpPassiveCount} passive${cpPassiveCount !== 1 ? 's' : ''}`} size="small" variant="outlined"
-                sx={{ fontSize: '0.72rem', height: 22 }} />
-            )}
-          </Box>
-        </>
+// ─── CP tree summary ──────────────────────────────────────────────────────────
+
+const CPTreeSummary: React.FC<{
+  label: string;
+  color: string;
+  icon: React.ReactNode;
+  slots: number[];
+  passiveCount: number;
+}> = ({ label, color, icon, slots, passiveCount }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        py: 0.5,
+        px: 1,
+        borderRadius: 2,
+        background: isDark ? alpha(color, 0.06) : alpha(color, 0.04),
+        border: `1px solid ${alpha(color, isDark ? 0.15 : 0.1)}`,
+      }}
+    >
+      {icon && <Box sx={{ color, opacity: 0.7, display: 'flex' }}>{icon}</Box>}
+      <Typography
+        sx={{
+          fontSize: '0.72rem',
+          fontWeight: 600,
+          color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
+          minWidth: 55,
+        }}
+      >
+        {label}
+      </Typography>
+      {slots.length > 0 && (
+        <Chip
+          label={`${slots.length} active`}
+          size="small"
+          sx={{
+            fontSize: '0.6rem',
+            height: 20,
+            fontWeight: 600,
+            bgcolor: alpha(color, isDark ? 0.15 : 0.1),
+            color: isDark ? alpha(color, 0.9) : color,
+            border: 'none',
+          }}
+        />
       )}
-
-      {/* Passives count */}
-      {setup.passives.length > 0 && (
-        <>
-          <SectionHeader label="Passives" isDarkMode={isDarkMode} />
-          <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary', mb: 1 }}>
-            {setup.passives.length} passive{setup.passives.length !== 1 ? 's' : ''} selected
-          </Typography>
-        </>
-      )}
-
-      {/* Consumables */}
-      {(setup.consumables.potions.length > 0 || setup.consumables.food.id != null) && (
-        <>
-          <SectionHeader label="Consumables" isDarkMode={isDarkMode} />
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {setup.consumables.potions.map((p) => (
-              <Chip key={p.id} label={`Potion #${p.id}`} size="small" variant="outlined"
-                sx={{ fontSize: '0.72rem', height: 22 }} />
-            ))}
-            {setup.consumables.food.id != null && (
-              <Chip label={`Food #${setup.consumables.food.id}`} size="small" variant="outlined"
-                sx={{ fontSize: '0.72rem', height: 22 }} />
-            )}
-          </Box>
-        </>
+      {passiveCount > 0 && (
+        <Chip
+          label={`${passiveCount} passive${passiveCount !== 1 ? 's' : ''}`}
+          size="small"
+          sx={{
+            fontSize: '0.6rem',
+            height: 20,
+            fontWeight: 600,
+            bgcolor: 'transparent',
+            color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
+            border: `1px solid ${alpha(color, 0.2)}`,
+          }}
+        />
       )}
     </Box>
   );
@@ -307,7 +711,8 @@ const SetupCard: React.FC<{ setup: BuildSetup; isDarkMode: boolean }> = ({
 
 export const BuildViewPage: React.FC = () => {
   const theme = useTheme();
-  const isDarkMode = theme.palette.mode === 'dark';
+  const isDark = theme.palette.mode === 'dark';
+  const prefersReduced = useReducedMotion();
 
   const [build, setBuild] = useState<Build | null>(null);
   const [loading, setLoading] = useState(true);
@@ -359,277 +764,485 @@ export const BuildViewPage: React.FC = () => {
     window.location.href = `${window.location.origin}${basePath}/build-editor?b=${encodedParam}`;
   };
 
+  // ── Loading ──
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ pt: 4, pb: 6, px: { xs: 2, sm: 3 } }}>
-        <Skeleton variant="text" width="45%" height={52} sx={{ mb: 1, borderRadius: 2 }} />
-        <Skeleton variant="text" width="30%" height={28} sx={{ mb: 3, borderRadius: 2 }} />
-        <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+        <Skeleton
+          variant="rectangular"
+          height={400}
+          sx={{ borderRadius: 3, bgcolor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }}
+        />
       </Container>
     );
   }
 
+  // ── Not found ──
   if (notFound || !build) {
     return (
       <Container maxWidth="sm" sx={{ pt: 8, pb: 6 }}>
-        <Alert severity="error" sx={{ borderRadius: '14px', mb: 2 }}>
-          No build found in the URL. Please check the link and try again.
-        </Alert>
-        <Button
-          variant="outlined"
-          startIcon={<EditIcon />}
-          onClick={() => { window.location.href = '/build-editor'; }}
-          sx={{ borderRadius: '10px', textTransform: 'none' }}
-        >
-          Open Build Editor
-        </Button>
+        <GlassPanel variant="default" sx={{ p: 3 }}>
+          <Alert severity="error" sx={{ borderRadius: '12px', mb: 2 }}>
+            No build found in the URL. Please check the link and try again.
+          </Alert>
+          <Button
+            variant="outlined"
+            startIcon={<EditIcon />}
+            onClick={() => {
+              window.location.href = '/build-editor';
+            }}
+            sx={{ borderRadius: '10px', textTransform: 'none' }}
+          >
+            Open Build Editor
+          </Button>
+        </GlassPanel>
       </Container>
     );
   }
 
   const classLabel = CLASS_LABELS[build.esoClass] ?? build.esoClass;
   const roleLabel = ROLE_LABELS[build.role] ?? build.role;
+  const classTheme = CLASS_COLOR_MAP[build.esoClass];
   const classSkillLineLabels = build.classSkillLines
     .filter(Boolean)
     .map((sl) => (sl ? (SKILL_LINE_LABELS[sl] ?? sl) : null))
-    .filter(Boolean);
-
-  const cardBg = isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.7)';
-  const borderColor = isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)';
+    .filter(Boolean) as string[];
 
   return (
     <Container maxWidth="lg" sx={{ pt: 3, pb: 6, px: { xs: 2, sm: 3 } }}>
-      {/* ── Banner image ── */}
-      {build.guide.bannerImageUrl && (
-        <Box
-          sx={{
-            width: '100%',
-            height: { xs: 140, sm: 200 },
-            borderRadius: '14px',
-            overflow: 'hidden',
-            mb: 2.5,
-            position: 'relative',
-          }}
-        >
-          <img
-            src={build.guide.bannerImageUrl}
-            alt={`${build.name} banner`}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        </Box>
-      )}
-
-      {/* ── Header ── */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          justifyContent: 'space-between',
-          flexDirection: { xs: 'column', sm: 'row' },
-          gap: 1.5,
-          mb: 2.5,
-        }}
-      >
-        <Box>
-          <Typography
-            sx={{
-              fontSize: '0.6rem',
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: 'text.disabled',
-              mb: 0.25,
-            }}
+      <BuildViewShell esoClass={build.esoClass}>
+        <Box sx={{ position: 'relative', zIndex: 1, p: { xs: 2, sm: 3, md: 4 } }}>
+          <motion.div
+            variants={staggerContainer}
+            initial={prefersReduced ? 'visible' : 'hidden'}
+            animate="visible"
           >
-            Build (Read-Only)
-          </Typography>
-          <Typography
-            component="h1"
-            sx={{
-              fontFamily: '"Space Grotesk", sans-serif',
-              fontWeight: 700,
-              fontSize: { xs: '1.35rem', sm: '1.6rem' },
-              letterSpacing: '-0.02em',
-              lineHeight: 1.1,
-              background: isDarkMode
-                ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-                : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            {build.name || 'Unnamed Build'}
-          </Typography>
-          {build.shortDescription && (
-            <Typography sx={{ fontSize: '0.82rem', color: 'text.secondary', mt: 0.5 }}>
-              {build.shortDescription}
-            </Typography>
-          )}
-        </Box>
-
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          <Button
-            size="small"
-            startIcon={<CopyIcon sx={{ fontSize: '0.85rem !important' }} />}
-            onClick={handleCopyLink}
-            sx={{
-              borderRadius: '8px', textTransform: 'none', fontSize: '0.75rem', fontWeight: 500,
-              color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-              border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.12)',
-              '&:hover': { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' },
-            }}
-          >
-            Copy Link
-          </Button>
-          <Button
-            size="small"
-            startIcon={<EditIcon sx={{ fontSize: '0.85rem !important' }} />}
-            endIcon={<OpenInNewIcon sx={{ fontSize: '0.75rem !important' }} />}
-            onClick={handleOpenInEditor}
-            sx={{
-              borderRadius: '8px', textTransform: 'none', fontSize: '0.75rem', fontWeight: 600,
-              color: isDarkMode ? '#f1f5f9' : '#0f172a',
-              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)',
-              border: isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.12)',
-              '&:hover': { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.09)' },
-            }}
-          >
-            Edit Build
-          </Button>
-        </Box>
-      </Box>
-
-      <Divider sx={{ mb: 2.5, borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }} />
-
-      {/* ── Build overview card ── */}
-      <Paper
-        elevation={0}
-        sx={{ p: 2, borderRadius: '14px', bgcolor: cardBg, border: `1px solid ${borderColor}`, mb: 3 }}
-      >
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-          {/* Left col: class + role + mode */}
-          <Box sx={{ flex: 1, minWidth: 180 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-              {ROLE_ICONS[build.role]}
-              <Typography
-                sx={{
-                  fontFamily: '"Space Grotesk", sans-serif',
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                {classLabel}
-              </Typography>
-            </Box>
-            <InfoRow label="Role" value={roleLabel} isDarkMode={isDarkMode} />
-            <InfoRow label="Mode" value={build.gameMode.toUpperCase()} isDarkMode={isDarkMode} />
-            {build.races.length > 0 && (
-              <InfoRow label="Race" value={build.races.join(', ')} isDarkMode={isDarkMode} />
-            )}
-            {build.settings.dlc && build.settings.dlc !== 'Base Game' && (
-              <InfoRow label="DLC" value={build.settings.dlc} isDarkMode={isDarkMode} />
-            )}
-          </Box>
-
-          {/* Right col: class skill lines */}
-          {classSkillLineLabels.length > 0 && (
-            <Box sx={{ flex: 1, minWidth: 180 }}>
-              <Typography
-                sx={{
-                  fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em',
-                  textTransform: 'uppercase', color: 'text.disabled', mb: 0.75,
-                }}
-              >
-                Class Skill Lines
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                {classSkillLineLabels.map((sl) => (
-                  <Chip
-                    key={sl}
-                    label={sl}
-                    size="small"
-                    icon={<PersonIcon sx={{ fontSize: '0.75rem !important' }} />}
-                    sx={{
-                      height: 22, fontSize: '0.72rem', fontWeight: 500,
-                      bgcolor: isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-                      border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-                      width: 'fit-content',
+            {/* ── Banner image ── */}
+            {build.guide.bannerImageUrl && (
+              <motion.div variants={fadeInUp}>
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: { xs: 140, sm: 200 },
+                    borderRadius: 2.5,
+                    overflow: 'hidden',
+                    mb: 3,
+                    position: 'relative',
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: '50%',
+                      background:
+                        'linear-gradient(to top, rgba(8, 14, 26, 0.7) 0%, transparent 100%)',
+                      pointerEvents: 'none',
+                    },
+                  }}
+                >
+                  <img
+                    src={build.guide.bannerImageUrl}
+                    alt={`${build.name} banner`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block',
+                    }}
+                    onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
-                ))}
-              </Box>
-            </Box>
-          )}
+                </Box>
+              </motion.div>
+            )}
 
-          {/* YouTube link */}
-          {build.guide.youtubeUrl && (
-            <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<YouTubeIcon sx={{ color: '#ef4444' }} />}
-                href={build.guide.youtubeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+            {/* ── Header ── */}
+            <motion.div variants={fadeInUp}>
+              <Box
                 sx={{
-                  borderRadius: '8px', textTransform: 'none', fontSize: '0.75rem',
-                  borderColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
+                  display: 'flex',
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  justifyContent: 'space-between',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: 2,
+                  mb: 3,
                 }}
               >
-                Video Guide
-              </Button>
-            </Box>
-          )}
+                <Box sx={{ flex: 1 }}>
+                  {/* Class + Role badges */}
+                  <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
+                    <Chip
+                      label={classLabel}
+                      size="small"
+                      sx={{
+                        height: 24,
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        bgcolor: alpha(classTheme.accent, isDark ? 0.18 : 0.12),
+                        color: classTheme.accent,
+                        border: `1px solid ${alpha(classTheme.accent, 0.35)}`,
+                        letterSpacing: '0.03em',
+                      }}
+                    />
+                    <Chip
+                      label={`${ROLE_EMOJI[build.role] ?? ''} ${roleLabel}`}
+                      size="small"
+                      sx={{
+                        height: 24,
+                        fontSize: '0.68rem',
+                        fontWeight: 600,
+                        bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                        color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.60)',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                      }}
+                    />
+                    <Chip
+                      label={build.gameMode.toUpperCase()}
+                      size="small"
+                      sx={{
+                        height: 24,
+                        fontSize: '0.6rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.08em',
+                        bgcolor: 'transparent',
+                        color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                      }}
+                    />
+                  </Box>
+
+                  {/* Build name */}
+                  <Typography
+                    component="h1"
+                    sx={{
+                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontWeight: 700,
+                      fontSize: { xs: '1.5rem', sm: '1.8rem' },
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: `linear-gradient(135deg, ${classTheme.accent} 0%, ${isDark ? '#f1f5f9' : '#0f172a'} 60%)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    {build.name || 'Unnamed Build'}
+                  </Typography>
+
+                  {build.shortDescription && (
+                    <Typography
+                      sx={{
+                        fontSize: '0.85rem',
+                        color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)',
+                        mt: 0.75,
+                        maxWidth: 520,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {build.shortDescription}
+                    </Typography>
+                  )}
+                </Box>
+
+                {/* Action buttons */}
+                <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+                  <Button
+                    size="small"
+                    startIcon={<CopyIcon sx={{ fontSize: '0.85rem !important' }} />}
+                    onClick={handleCopyLink}
+                    sx={{
+                      borderRadius: '10px',
+                      textTransform: 'none',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.55)',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
+                      backdropFilter: 'blur(8px)',
+                      '&:hover': {
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                        borderColor: 'var(--be-accent, #38bdf8)',
+                      },
+                    }}
+                  >
+                    Copy Link
+                  </Button>
+                  <Button
+                    size="small"
+                    startIcon={<EditIcon sx={{ fontSize: '0.85rem !important' }} />}
+                    endIcon={<OpenInNewIcon sx={{ fontSize: '0.7rem !important' }} />}
+                    onClick={handleOpenInEditor}
+                    sx={{
+                      borderRadius: '10px',
+                      textTransform: 'none',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      color: isDark ? '#fff' : '#fff',
+                      background: `linear-gradient(135deg, ${classTheme.accent} 0%, ${alpha(classTheme.accent, 0.7)} 100%)`,
+                      border: 'none',
+                      boxShadow: `0 4px 16px ${alpha(classTheme.accent, 0.3)}`,
+                      '&:hover': {
+                        boxShadow: `0 6px 24px ${alpha(classTheme.accent, 0.45)}`,
+                      },
+                    }}
+                  >
+                    Edit Build
+                  </Button>
+                </Box>
+              </Box>
+            </motion.div>
+
+            {/* ── Build overview ── */}
+            <motion.div variants={fadeInUp}>
+              <GlassPanel variant="primary" glow sx={{ p: 2.5, mb: 3 }}>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                    gap: 3,
+                  }}
+                >
+                  {/* Left: Race + DLC */}
+                  <Box>
+                    {build.races.length > 0 && (
+                      <Box sx={{ mb: 1.5 }}>
+                        <Typography
+                          sx={{
+                            fontSize: '0.55rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.1em',
+                            textTransform: 'uppercase',
+                            color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                            mb: 0.75,
+                          }}
+                        >
+                          Recommended Races
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                          {build.races.map((race) => (
+                            <Chip
+                              key={race}
+                              label={race.replace(/-/g, ' ')}
+                              size="small"
+                              sx={{
+                                height: 24,
+                                fontSize: '0.68rem',
+                                fontWeight: 500,
+                                textTransform: 'capitalize',
+                                bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                                color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
+                              }}
+                            />
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+                    {build.settings.dlc && build.settings.dlc !== 'Base Game' && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography
+                          sx={{
+                            fontSize: '0.55rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.1em',
+                            textTransform: 'uppercase',
+                            color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                          }}
+                        >
+                          DLC
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: '0.78rem',
+                            fontWeight: 500,
+                            color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
+                          }}
+                        >
+                          {build.settings.dlc}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+
+                  {/* Right: Class Skill Lines + YouTube */}
+                  <Box>
+                    {classSkillLineLabels.length > 0 && (
+                      <Box sx={{ mb: 1.5 }}>
+                        <Typography
+                          sx={{
+                            fontSize: '0.55rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.1em',
+                            textTransform: 'uppercase',
+                            color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                            mb: 0.75,
+                          }}
+                        >
+                          Class Skill Lines
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 0.5,
+                          }}
+                        >
+                          {classSkillLineLabels.map((sl, i) => (
+                            <Box
+                              key={sl}
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 6,
+                                  height: 6,
+                                  borderRadius: '50%',
+                                  background: classTheme.accent,
+                                  opacity: 1 - i * 0.2,
+                                  boxShadow: `0 0 6px ${alpha(classTheme.accent, 0.5)}`,
+                                }}
+                              />
+                              <Typography
+                                sx={{
+                                  fontSize: '0.78rem',
+                                  fontWeight: 600,
+                                  color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
+                                }}
+                              >
+                                {sl}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+                    {build.guide.youtubeUrl && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<YouTubeIcon sx={{ color: '#ef4444' }} />}
+                        href={build.guide.youtubeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{
+                          borderRadius: '10px',
+                          textTransform: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
+                          '&:hover': {
+                            borderColor: '#ef4444',
+                            bgcolor: 'rgba(239, 68, 68, 0.06)',
+                          },
+                        }}
+                      >
+                        Video Guide
+                      </Button>
+                    )}
+                  </Box>
+                </Box>
+              </GlassPanel>
+            </motion.div>
+
+            {/* ── Setup tabs ── */}
+            {build.setups.length > 1 && (
+              <motion.div variants={fadeInUp}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 0.75,
+                    mb: 2.5,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  {build.setups.map((setup, i) => {
+                    const isActive = i === activeSetup;
+                    return (
+                      <Button
+                        key={setup.id}
+                        size="small"
+                        onClick={() => setActiveSetup(i)}
+                        sx={{
+                          borderRadius: '10px',
+                          textTransform: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: isActive ? 700 : 500,
+                          px: 2,
+                          py: 0.75,
+                          color: isActive
+                            ? '#fff'
+                            : isDark
+                              ? 'rgba(255,255,255,0.55)'
+                              : 'rgba(0,0,0,0.50)',
+                          background: isActive
+                            ? `linear-gradient(135deg, ${classTheme.accent} 0%, ${alpha(classTheme.accent, 0.7)} 100%)`
+                            : isDark
+                              ? 'rgba(255,255,255,0.04)'
+                              : 'rgba(0,0,0,0.03)',
+                          border: `1px solid ${
+                            isActive
+                              ? alpha(classTheme.accent, 0.5)
+                              : isDark
+                                ? 'rgba(255,255,255,0.08)'
+                                : 'rgba(0,0,0,0.06)'
+                          }`,
+                          boxShadow: isActive
+                            ? `0 4px 16px ${alpha(classTheme.accent, 0.3)}`
+                            : 'none',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            borderColor: isActive
+                              ? alpha(classTheme.accent, 0.7)
+                              : 'var(--be-accent, #38bdf8)',
+                          },
+                        }}
+                      >
+                        {setup.name || `Setup ${i + 1}`}
+                      </Button>
+                    );
+                  })}
+                </Box>
+              </motion.div>
+            )}
+
+            {/* ── Active setup ── */}
+            <AnimatePresence mode="wait">
+              {build.setups[activeSetup] && (
+                <motion.div
+                  key={activeSetup}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <SetupDisplay setup={build.setups[activeSetup]} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ── Guide note ── */}
+            {!build.guide.content && build.guide.youtubeUrl && (
+              <motion.div variants={fadeInUp}>
+                <GlassPanel variant="subtle" sx={{ p: 1.5, mt: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>
+                      Full guide content is available when the build is loaded in the editor.
+                    </Typography>
+                  </Box>
+                </GlassPanel>
+              </motion.div>
+            )}
+          </motion.div>
         </Box>
-      </Paper>
+      </BuildViewShell>
 
-      {/* ── Setup tabs ── */}
-      {build.setups.length > 1 && (
-        <Tabs
-          value={activeSetup}
-          onChange={(_event: React.SyntheticEvent, v: number) => setActiveSetup(v)}
-          sx={{ mb: 2, minHeight: 36 }}
-          TabIndicatorProps={{ style: { height: 2 } }}
-        >
-          {build.setups.map((setup, i) => (
-            <Tab
-              key={setup.id}
-              label={setup.name || `Setup ${i + 1}`}
-              value={i}
-              sx={{ minHeight: 36, textTransform: 'none', fontSize: '0.82rem', fontWeight: 500 }}
-            />
-          ))}
-        </Tabs>
-      )}
-
-      {/* ── Active setup ── */}
-      {build.setups[activeSetup] && (
-        <SetupCard setup={build.setups[activeSetup]} isDarkMode={isDarkMode} />
-      )}
-
-      {/* ── Guide note (content not in URL shares) ── */}
-      {!build.guide.content && build.guide.youtubeUrl && (
-        <Box
-          sx={{
-            mt: 3, p: 1.5, borderRadius: '10px',
-            bgcolor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
-            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-            display: 'flex', alignItems: 'center', gap: 1,
-          }}
-        >
-          <GameIcon sx={{ fontSize: '0.9rem', color: 'text.disabled' }} />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-            Full guide content is available when the build is loaded in the editor.
-          </Typography>
-        </Box>
-      )}
-
-      {/* ── Snackbar ── */}
+      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={2500}
