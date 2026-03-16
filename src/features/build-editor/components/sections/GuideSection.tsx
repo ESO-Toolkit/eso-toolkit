@@ -36,12 +36,13 @@ import { glassInputSx } from '../primitives/glassInputSx';
 const MAX_SCREENSHOT_SIZE = 5 * 1024 * 1024; // 5 MB
 
 /** Only allow HTTPS image URLs to prevent mixed-content and protocol-based attacks */
-const isValidImageUrl = (url: string): boolean => {
+/** Returns the sanitized https URL string, or null if invalid/unsafe. */
+const sanitizeImageUrl = (url: string): string | null => {
   try {
     const u = new URL(url);
-    return u.protocol === 'https:';
+    return u.protocol === 'https:' ? u.href : null;
   } catch {
-    return false;
+    return null;
   }
 };
 
@@ -157,7 +158,7 @@ export const GuideSection: React.FC = () => {
             inputProps={{ 'aria-label': 'Banner image URL' }}
             sx={glassInputSx(isDark)}
           />
-          {guide.bannerImageUrl && !isValidImageUrl(guide.bannerImageUrl) && (
+          {guide.bannerImageUrl && !sanitizeImageUrl(guide.bannerImageUrl) && (
             <Typography
               variant="caption"
               color="error.main"
@@ -169,25 +170,30 @@ export const GuideSection: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Banner preview */}
-      {guide.bannerImageUrl && isValidImageUrl(guide.bannerImageUrl) && (
-        <Box
-          sx={{
-            borderRadius: 3,
-            overflow: 'hidden',
-            border: `1px solid ${isDark ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)' : 'rgba(0,0,0,0.08)'}`,
-            boxShadow: isDark
-              ? '0 4px 16px rgba(0,0,0,0.3), 0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
-              : '0 4px 12px rgba(0,0,0,0.08)',
-          }}
-        >
-          <img
-            src={guide.bannerImageUrl}
-            alt="Banner preview"
-            style={{ width: '100%', maxHeight: 160, objectFit: 'cover', display: 'block' }}
-          />
-        </Box>
-      )}
+      {/* Banner preview — src is the sanitized canonical URL, not raw user input */}
+      {(() => {
+        const safeBannerUrl = sanitizeImageUrl(guide.bannerImageUrl);
+        return (
+          safeBannerUrl && (
+            <Box
+              sx={{
+                borderRadius: 3,
+                overflow: 'hidden',
+                border: `1px solid ${isDark ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)' : 'rgba(0,0,0,0.08)'}`,
+                boxShadow: isDark
+                  ? '0 4px 16px rgba(0,0,0,0.3), 0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
+                  : '0 4px 12px rgba(0,0,0,0.08)',
+              }}
+            >
+              <img
+                src={safeBannerUrl}
+                alt="Banner preview"
+                style={{ width: '100%', maxHeight: 160, objectFit: 'cover', display: 'block' }}
+              />
+            </Box>
+          )
+        );
+      })()}
 
       {/* ── Divider ──────────────────────────────────────────────────── */}
       <Divider
