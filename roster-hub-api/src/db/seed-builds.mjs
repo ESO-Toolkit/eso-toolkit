@@ -136,7 +136,7 @@ const BUILDS = [
           // Gear: Jorvuld's Guidance (body) + Whorl of the Depths (jewelry)
           g: {
             0: 129127, 2: 129124, 3: 129130, 6: 129131, 8: 129128, 9: 129125, 16: 129121,
-            1: 186419, 11: 186418, 12: 186422,
+            1: 186411, 11: 186410, 12: 186422,
           },
           gt: {
             0: 'divines', 2: 'divines', 3: 'divines', 6: 'divines', 8: 'divines', 9: 'divines', 16: 'divines',
@@ -184,7 +184,7 @@ const BUILDS = [
           // Gear: Pillar of Nirn (body) + Deadly Strike (jewelry)
           g: {
             0: 127541, 2: 127538, 3: 127543, 6: 127544, 8: 127542, 9: 127539, 16: 127537,
-            1: 87873, 11: 87873, 12: 87876,
+            1: 147513, 11: 87873, 12: 87876,
           },
           gt: {
             0: 'divines', 2: 'divines', 3: 'divines', 6: 'divines', 8: 'divines', 9: 'divines', 16: 'divines',
@@ -232,7 +232,7 @@ const BUILDS = [
           // Gear: Mother's Sorrow (body) + Whorl of the Depths (jewelry)
           g: {
             0: 97235, 2: 97232, 3: 97238, 6: 97239, 8: 97236, 9: 97233, 16: 97231,
-            1: 186419, 11: 186418, 12: 186422,
+            1: 186411, 11: 186410, 12: 186422,
           },
           gt: {
             0: 'divines', 2: 'divines', 3: 'divines', 6: 'divines', 8: 'divines', 9: 'divines', 16: 'divines',
@@ -280,7 +280,7 @@ const BUILDS = [
           // Gear: Saxhleel Champion (body) + Crimson Oath's Rive (jewelry)
           g: {
             0: 173875, 2: 173872, 3: 173877, 6: 173878, 8: 173876, 9: 173873, 16: 173870,
-            1: 177401, 11: 177400, 12: 177404,
+            1: 177393, 11: 177392, 12: 177404,
           },
           gt: {
             0: 'reinforced', 2: 'reinforced', 3: 'sturdy', 6: 'sturdy', 8: 'reinforced', 9: 'sturdy', 16: 'sturdy',
@@ -328,7 +328,7 @@ const BUILDS = [
           // Gear: Whorl of the Depths (body) + Deadly Strike (jewelry)
           g: {
             0: 186428, 2: 186425, 3: 186431, 6: 186432, 8: 186429, 9: 186426, 16: 186423,
-            1: 87873, 11: 87873, 12: 87876,
+            1: 147513, 11: 87873, 12: 87876,
           },
           gt: {
             0: 'divines', 2: 'divines', 3: 'divines', 6: 'divines', 8: 'divines', 9: 'divines', 16: 'divines',
