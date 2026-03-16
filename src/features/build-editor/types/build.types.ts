@@ -10,6 +10,7 @@ import type { GearConfig, SkillsConfig } from '../../loadout-manager/types/loado
 // ─── Enums / Unions ──────────────────────────────────────────────────────────
 
 export type ESOClass =
+  | 'any-class'
   | 'dragonknight'
   | 'sorcerer'
   | 'nightblade'
@@ -18,9 +19,33 @@ export type ESOClass =
   | 'necromancer'
   | 'arcanist';
 
+/** IDs match the `SkillLineData.id` field in src/data/skill-lines/class/ */
+export type ClassSkillLineId =
+  | 'class.ardent-flame'
+  | 'class.draconic-power'
+  | 'class.earthen-heart'
+  | 'class.dark-magic'
+  | 'class.daedric-summoning'
+  | 'class.storm-calling'
+  | 'class.assassination'
+  | 'class.shadow'
+  | 'class.siphoning'
+  | 'class.aedric-spear'
+  | 'class.dawns-wrath'
+  | 'class.restoring-light'
+  | 'class.animal-companions'
+  | 'class.green-balance'
+  | 'class.winters-embrace'
+  | 'class.grave-lord'
+  | 'class.bone-tyrant'
+  | 'class.living-death'
+  | 'class.herald-of-the-tome'
+  | 'class.soldier-of-apocrypha'
+  | 'class.curative-runeforms';
+
 export type CombatRole = 'tank' | 'healer' | 'magicka-dps' | 'stamina-dps' | 'hybrid-dps';
 
-export type GameMode = 'pve' | 'pvp' | 'both';
+export type GameMode = 'pve' | 'pvp';
 
 export type BuildVisibility = 'public' | 'private' | 'link-only';
 
@@ -106,6 +131,8 @@ export interface Build {
   name: string;
   shortDescription: string;
   esoClass: ESOClass;
+  /** Exactly 3 class skill line slots — can be from any class, nullable during editing */
+  classSkillLines: [ClassSkillLineId | null, ClassSkillLineId | null, ClassSkillLineId | null];
   role: CombatRole;
   gameMode: GameMode;
   races: string[];

@@ -7,6 +7,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { GearConfig, SkillsConfig } from '../../loadout-manager/types/loadout.types';
+import { getDefaultLinesForClass } from '../data/esoStaticData';
 import type {
   Build,
   BuildAttributes,
@@ -14,6 +15,7 @@ import type {
   BuildConsumables,
   BuildEditorState,
   BuildSetup,
+  ClassSkillLineId,
   SidebarTopTab,
   SetupTab,
 } from '../types/build.types';
@@ -48,6 +50,7 @@ const makeBuild = (): Build => ({
   name: '',
   shortDescription: '',
   esoClass: 'dragonknight',
+  classSkillLines: getDefaultLinesForClass('dragonknight'),
   role: 'tank',
   gameMode: 'pve',
   races: [],
@@ -71,6 +74,10 @@ function loadFromStorage(): Pick<BuildEditorState, 'build' | 'activeSetupIndex'>
     const parsed = JSON.parse(raw) as { build?: Build; activeSetupIndex?: number };
     // Minimal schema guard — ensure we have at least one setup
     if (!parsed.build?.setups?.length) return null;
+    // Migration: builds saved before subclassing was added won't have classSkillLines
+    if (!parsed.build.classSkillLines) {
+      parsed.build.classSkillLines = getDefaultLinesForClass(parsed.build.esoClass ?? 'dragonknight');
+    }
     return {
       build: parsed.build,
       activeSetupIndex: parsed.activeSetupIndex ?? 0,
@@ -124,6 +131,16 @@ export const buildEditorSlice = createSlice({
     },
     setBuildClass(state, action: PayloadAction<Build['esoClass']>) {
       state.build.esoClass = action.payload;
+      // Pre-fill all 3 skill line slots with the selected class's lines (convenience shortcut)
+      state.build.classSkillLines = getDefaultLinesForClass(action.payload);
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
+    setClassSkillLine(
+      state,
+      action: PayloadAction<{ slot: 0 | 1 | 2; skillLineId: ClassSkillLineId | null }>,
+    ) {
+      state.build.classSkillLines[action.payload.slot] = action.payload.skillLineId;
       state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
@@ -346,6 +363,7 @@ export const {
   setBuildName,
   setBuildDescription,
   setBuildClass,
+  setClassSkillLine,
   setBuildRole,
   setBuildGameMode,
   setBuildRaces,

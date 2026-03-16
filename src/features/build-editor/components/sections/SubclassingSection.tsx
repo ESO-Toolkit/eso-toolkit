@@ -71,7 +71,7 @@ interface SlotPickerProps {
 const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onChange }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const anchorRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
 
   const def = value ? getSkillLineDef(value) : null;
@@ -95,25 +95,13 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
 
   return (
     <>
-      {/* Slot card — uses Box + role="button" to avoid <button> nesting with clear button */}
-      <Box
+      {/* Slot card button */}
+      <ButtonBase
         ref={anchorRef}
-        role="button"
-        tabIndex={0}
-        aria-label={
-          def
-            ? `${slot + 1}, ${def.label}, ${ESO_CLASSES.find((c) => c.id === def.ownerClass)?.label ?? ''}`
-            : `${slot + 1}, empty, click to select a skill line`
-        }
+        aria-label={def ? `Slot ${slot + 1}: ${def.label} — click to change` : `Slot ${slot + 1}: empty — click to select a skill line`}
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        onKeyDown={(e: React.KeyboardEvent) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            setOpen(true);
-          }
-        }}
         sx={{
           width: '100%',
           borderRadius: 2,
@@ -217,13 +205,10 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
                   color: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.28)',
                   flexShrink: 0,
                   borderRadius: 1,
-                  minWidth: 24,
-                  minHeight: 24,
-                  p: 0.625,
+                  p: 0.25,
                   '&:hover': { color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' },
                 }}
               >
@@ -255,7 +240,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
             />
           </>
         )}
-      </Box>
+      </ButtonBase>
 
       {/* Picker menu grouped by class */}
       <Menu
@@ -273,7 +258,9 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
               WebkitBackdropFilter: 'blur(16px)',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)'}`,
               borderRadius: 2,
-              boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.12)',
+              boxShadow: isDark
+                ? '0 8px 32px rgba(0,0,0,0.5)'
+                : '0 8px 32px rgba(0,0,0,0.12)',
             },
           },
         }}
@@ -347,7 +334,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
                       '&:hover': { background: alpha(clsColor, 0.18) },
                     },
                     '&:hover:not(.Mui-disabled)': {
-                      background: isDark ? alpha(clsColor, 0.1) : alpha(clsColor, 0.07),
+                      background: isDark ? alpha(clsColor, 0.10) : alpha(clsColor, 0.07),
                     },
                     '&.Mui-disabled': {
                       opacity: 0.35,
@@ -421,7 +408,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ classSkillLines }) => {
             fontFamily: 'Space Grotesk, Inter, system-ui',
             letterSpacing: 0.5,
             background: alpha(primaryColor, isDark ? 0.14 : 0.08),
-            border: `1px solid ${alpha(primaryColor, 0.3)}`,
+            border: `1px solid ${alpha(primaryColor, 0.30)}`,
             color: primaryColor,
             '& .MuiChip-label': { px: 1 },
           }}
@@ -450,14 +437,8 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ classSkillLines }) => {
         {involvedClasses.map((def) => {
           const color = CLASS_COLOR_MAP[def.ownerClass].accent;
           return (
-            <Tooltip
-              key={def.ownerClass}
-              title={ESO_CLASSES.find((c) => c.id === def.ownerClass)?.label ?? ''}
-              enterDelay={300}
-            >
+            <Tooltip key={def.ownerClass} title={ESO_CLASSES.find((c) => c.id === def.ownerClass)?.label ?? ''} enterDelay={300}>
               <Box
-                role="img"
-                aria-label={ESO_CLASSES.find((c) => c.id === def.ownerClass)?.label ?? ''}
                 sx={{
                   width: 8,
                   height: 8,

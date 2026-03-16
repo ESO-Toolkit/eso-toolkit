@@ -10,9 +10,9 @@
  */
 
 import {
+  AccountTreeOutlined as SubclassingIcon,
   AutoFixHigh as ChampionIcon,
   BookOutlined as GuideIcon,
-  CameraAltOutlined as ScreenshotIcon,
   Inventory2Outlined as EquipmentIcon,
   LocalDrinkOutlined as ConsumableIcon,
   PersonOutlined as GeneralIcon,
@@ -39,9 +39,9 @@ import { EquipmentSection } from './sections/EquipmentSection';
 import { GeneralSection } from './sections/GeneralSection';
 import { GuideSection } from './sections/GuideSection';
 import { PassivesSection } from './sections/PassivesSection';
-import { ScreenshotsSection } from './sections/ScreenshotsSection';
 import { SettingsSection } from './sections/SettingsSection';
 import { SkillsSection } from './sections/SkillsSection';
+import { SubclassingSection } from './sections/SubclassingSection';
 import { SetupTabBar } from './SetupTabBar';
 
 export const BuildEditorLayout: React.FC = () => {
@@ -110,7 +110,17 @@ export const BuildEditorLayout: React.FC = () => {
                 <CharacterSection />
               </SectionCard>
 
-              {/* Row 2–3: Equipment spans 2 rows; Skills + Consumables stack on right */}
+              {/* Row 2: Subclassing */}
+              <SectionCard
+                id="subclassing"
+                title="Subclassing"
+                icon={<SubclassingIcon />}
+                complete={progress.subclassing}
+              >
+                <SubclassingSection />
+              </SectionCard>
+
+              {/* Row 3–4: Equipment spans 2 rows; Skills + Consumables stack on right */}
               <SectionCard
                 id="equipment"
                 title="Equipment"
@@ -153,7 +163,7 @@ export const BuildEditorLayout: React.FC = () => {
                 <ChampionSection />
               </SectionCard>
 
-              {/* Passives + Screenshots */}
+              {/* Passives — half width */}
               <SectionCard
                 id="passives"
                 title="Passives"
@@ -163,20 +173,10 @@ export const BuildEditorLayout: React.FC = () => {
                 <PassivesSection />
               </SectionCard>
 
-              <SectionCard
-                id="screenshots"
-                title="Screenshots"
-                icon={<ScreenshotIcon />}
-                complete={progress.screenshots}
-                variant="subtle"
-              >
-                <ScreenshotsSection />
-              </SectionCard>
-
-              {/* Guide — full width */}
+              {/* Guide & Media — full width */}
               <SectionCard
                 id="guide"
-                title="Guide"
+                title="Guide & Media"
                 icon={<GuideIcon />}
                 complete={progress.guide}
                 gridColumn={isMobile ? undefined : 'span 2'}

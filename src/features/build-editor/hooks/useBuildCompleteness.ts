@@ -70,10 +70,6 @@ export const useBuildCompleteness = (): number => {
     maxScore += 5;
     if (build.guide.content.trim().length > 0) score += 5;
 
-    // Description (weight 5)
-    maxScore += 5;
-    if (build.shortDescription.trim().length > 0) score += 5;
-
     return Math.round((score / maxScore) * 100);
   }, [build, activeSetupIndex]);
 };

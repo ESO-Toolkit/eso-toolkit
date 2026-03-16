@@ -12,6 +12,7 @@ import type { RootState } from '@/store/storeWithHistory';
 
 import { ESO_DLCS } from '../../data/esoStaticData';
 import { setDlc, setVisibility } from '../../store/buildEditorSlice';
+import { BE_TOKENS } from '../../theme/buildEditorTokens';
 import type { BuildVisibility } from '../../types/build.types';
 import { IconPickerGrid } from '../primitives/IconPickerGrid';
 
@@ -63,11 +64,24 @@ export const SettingsSection: React.FC = () => {
           sx={{
             fontFamily: 'Space Grotesk, Inter, system-ui',
             fontSize: 13,
+            background: isDark
+              ? BE_TOKENS.input.dark.bg
+              : BE_TOKENS.input.light.bg,
+            borderRadius: '10px',
+            transition: 'background 0.2s ease',
             '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'transparent',
+              borderColor: isDark
+                ? BE_TOKENS.input.dark.border
+                : BE_TOKENS.input.light.border,
+              transition: 'border-color 0.2s ease',
+            },
+            '&:hover': {
+              background: isDark ? 'rgba(0, 0, 0, 0.28)' : 'rgba(0, 0, 0, 0.06)',
             },
             '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)',
+              borderColor: isDark
+                ? BE_TOKENS.input.dark.hoverBorder
+                : BE_TOKENS.input.light.hoverBorder,
             },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
               borderColor: 'var(--be-accent, #38bdf8)',
