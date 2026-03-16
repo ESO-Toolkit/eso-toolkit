@@ -19,8 +19,6 @@ import {
   HealerChampionPoint,
   JailDDType,
   RaidRoster,
-  RoleComposition,
-  DEFAULT_COMPOSITION,
   RosterDetailLevel,
   TankSetup,
   TankGearSet,
@@ -40,6 +38,8 @@ import type {
   EncounterOverrides,
   PlayerOverride,
 } from '../types/trial-encounters';
+import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
+import type { BuildChampionPoints, ChampionTree } from '../features/build-editor/types/build.types';
 
 import { Logger, LogLevel } from './logger';
 import { makeSlotKey } from './slotKey';
@@ -63,6 +63,25 @@ export interface CompactBuildRef {
 export interface CompactFood {
   i?: number; // id
   n?: string; // name
+}
+
+/** Compact champion point tree */
+export interface CompactCPTree {
+  s?: Array<number | null>; // slots (trailing nulls trimmed)
+  p?: Record<string, number>; // passive allocations (zero values omitted)
+}
+
+/** Compact full champion points (three trees) */
+export interface CompactCPFull {
+  w?: CompactCPTree; // warfare
+  fi?: CompactCPTree; // fitness (avoid 'f' collision with food)
+  c?: CompactCPTree; // craft
+}
+
+/** Compact skill bars: front bar + back bar */
+export interface CompactSkillBars {
+  f?: Record<number, number>; // front bar: slot → abilityId
+  b?: Record<number, number>; // back bar: slot → abilityId
 }
 
 export interface CompactSkills {
@@ -102,6 +121,9 @@ export interface CompactTank {
   no?: string; // notes
   br?: CompactBuildRef; // buildRef
   fo?: CompactFood; // food
+  sk?: CompactSkillBars; // full skill bars (Full mode)
+  cp2?: CompactCPFull; // champion points (Full mode)
+  pa?: number[]; // passive ability IDs (Full mode)
 }
 
 export interface CompactHealer {
@@ -126,6 +148,9 @@ export interface CompactHealer {
   no?: string; // notes
   br?: CompactBuildRef; // buildRef
   fo?: CompactFood; // food
+  sk?: CompactSkillBars; // full skill bars (Full mode)
+  cp2?: CompactCPFull; // champion points (Full mode)
+  pa?: number[]; // passive ability IDs (Full mode)
 }
 
 export interface CompactDPS {
@@ -153,6 +178,9 @@ export interface CompactDPS {
   cd?: string; // customDescription
   br?: CompactBuildRef; // buildRef
   fo?: CompactFood; // food
+  sk?: CompactSkillBars; // full skill bars (Full mode)
+  cp2?: CompactCPFull; // champion points (Full mode)
+  pa?: number[]; // passive ability IDs (Full mode)
 }
 
 /** Compact representation of a PlayerOverride (per-fight set/ultimate/notes changes) */
@@ -194,11 +222,11 @@ export interface CompactRosterV2 {
   t2?: CompactTank;
   h1?: CompactHealer;
   h2?: CompactHealer;
-  dp?: CompactDPS[];
-  ag?: string[];
-  no?: string;
-  to?: CompactTrialOverrides;
-  dl?: number;
+  dp?: CompactDPS[]; // only filled DPS slots
+  ag?: string[]; // availableGroups
+  no?: string; // notes
+  to?: CompactTrialOverrides; // trialOverrides (per-fight builds)
+  dl?: number; // detail level: 0=simple 1=advanced 2=full
 }
 
 /**
@@ -471,6 +499,11 @@ function compactTank(t: TankSetup): CompactTank {
   if (t.buildRef) c.br = compactBuildRef(t.buildRef);
   const fo = compactFood(t.food);
   if (fo) c.fo = fo;
+  const sk = compactSkillBars(t.skills);
+  if (sk) c.sk = sk;
+  const cp2 = compactCPFull(t.cpPoints);
+  if (cp2) c.cp2 = cp2;
+  if (t.passives?.length) c.pa = t.passives;
   return c;
 }
 
@@ -491,6 +524,9 @@ function expandTank(c?: CompactTank, slotNumber = 1): TankSetup {
     notes: c?.no,
     buildRef: c?.br ? expandBuildRef(c.br) : undefined,
     food: expandFood(c?.fo),
+    skills: expandSkillBars(c?.sk),
+    cpPoints: expandCPFull(c?.cp2),
+    passives: c?.pa,
   };
 }
 
@@ -526,6 +562,11 @@ function compactHealer(h: HealerSetup): CompactHealer {
   if (h.buildRef) c.br = compactBuildRef(h.buildRef);
   const fo = compactFood(h.food);
   if (fo) c.fo = fo;
+  const sk = compactSkillBars(h.skills);
+  if (sk) c.sk = sk;
+  const cp2 = compactCPFull(h.cpPoints);
+  if (cp2) c.cp2 = cp2;
+  if (h.passives?.length) c.pa = h.passives;
   return c;
 }
 
@@ -564,6 +605,9 @@ function expandHealer(c?: CompactHealer, slotNumber = 1): HealerSetup {
     notes: c?.no,
     buildRef: c?.br ? expandBuildRef(c.br) : undefined,
     food: expandFood(c?.fo),
+    skills: expandSkillBars(c?.sk),
+    cpPoints: expandCPFull(c?.cp2),
+    passives: c?.pa,
   };
 }
 
@@ -597,6 +641,11 @@ function compactDPS(d: DPSSlot): CompactDPS {
   if (d.buildRef) c.br = compactBuildRef(d.buildRef);
   const fo = compactFood(d.food);
   if (fo) c.fo = fo;
+  const sk = compactSkillBars(d.skills);
+  if (sk) c.sk = sk;
+  const cp2 = compactCPFull(d.cpPoints);
+  if (cp2) c.cp2 = cp2;
+  if (d.passives?.length) c.pa = d.passives;
   return c;
 }
 
@@ -644,6 +693,9 @@ function expandDPS(c: CompactDPS): DPSSlot {
     customDescription: c.cd,
     buildRef: c.br ? expandBuildRef(c.br) : undefined,
     food: expandFood(c.fo),
+    skills: expandSkillBars(c.sk),
+    cpPoints: expandCPFull(c.cp2),
+    passives: c.pa,
   };
 }
 
@@ -766,7 +818,7 @@ export function compactifyRoster(roster: RaidRoster): CompactRosterV3 {
       slot.group ||
       slot.skillLines ||
       slot.specificSkills?.length ||
-      slot.roleNotes ||
+      slot.championPoint ||
       slot.buildRef ||
       slot.food ||
       slot.skills ||
@@ -778,79 +830,16 @@ export function compactifyRoster(roster: RaidRoster): CompactRosterV3 {
   if (roster.notes) c.no = roster.notes;
   if (roster.trialOverrides) c.to = compactTrialOverrides(roster.trialOverrides);
   if (roster.rosterDetailLevel) {
-    const DL_MAP: Record<RosterDetailLevel, number> = { simple: 0, full: 1 };
+    const DL_MAP: Record<RosterDetailLevel, number> = { simple: 0, advanced: 1, full: 2 };
     c.dl = DL_MAP[roster.rosterDetailLevel];
   }
   return c;
 }
 
-const DL_LEVELS: RosterDetailLevel[] = ['simple', 'full'];
+const DL_LEVELS: RosterDetailLevel[] = ['simple', 'advanced', 'full'];
 
-/**
- * Expand a v3 compact roster into a full RaidRoster.
- */
-/** Hard caps to prevent DoS via crafted payloads allocating massive arrays. */
-const MAX_TANKS = 4;
-const MAX_HEALERS = 4;
-const MAX_DPS = 24;
-
-function expandCompactRosterV3(c: CompactRosterV3): RaidRoster {
-  const comp: RoleComposition = c.co
-    ? {
-        tanks: Math.min(Math.max(0, c.co[0] ?? 0), MAX_TANKS),
-        healers: Math.min(Math.max(0, c.co[1] ?? 0), MAX_HEALERS),
-        dps: Math.min(Math.max(0, c.co[2] ?? 0), MAX_DPS),
-      }
-    : { ...DEFAULT_COMPOSITION };
-
-  // Tanks
-  const tanks: TankSetup[] = c.ts
-    ? c.ts.map((ct, i) => expandTank(ct, i + 1))
-    : createDefaultTanks(comp.tanks);
-  // Pad if composition says more tanks than provided
-  while (tanks.length < comp.tanks) tanks.push(defaultTankSetup(tanks.length + 1));
-
-  // Healers
-  const healers: HealerSetup[] = c.hs
-    ? c.hs.map((ch, i) => expandHealer(ch, i + 1))
-    : createDefaultHealers(comp.healers);
-  while (healers.length < comp.healers) healers.push(defaultHealerSetup(healers.length + 1));
-
-  // DPS
-  const dpsSlots = createDefaultDPSSlots(comp.dps);
-  if (c.dp) {
-    for (const compactSlot of c.dp) {
-      const idx = compactSlot.sn - 1;
-      if (idx >= 0 && idx < comp.dps) {
-        dpsSlots[idx] = expandDPS(compactSlot);
-      }
-    }
-  }
-
-  return {
-    rosterName: c.n ?? 'New Roster',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    composition: comp,
-    tanks,
-    healers,
-    dpsSlots,
-    availableGroups: c.ag ?? [],
-    notes: c.no,
-    trialOverrides: c.to ? expandTrialOverrides(c.to) : undefined,
-    rosterDetailLevel: c.dl != null ? DL_LEVELS[c.dl] : undefined,
-  };
-}
-
-/**
- * Expand a v2 compact roster (legacy) into a full RaidRoster.
- * Converts the fixed t1/t2/h1/h2 fields into the array-based format
- * with a default 2/2/8 composition.
- */
-function expandCompactRosterV2(c: CompactRosterV2): RaidRoster {
-  const comp: RoleComposition = { ...DEFAULT_COMPOSITION };
-
-  const dpsSlots = createDefaultDPSSlots(8);
+export function expandCompactRoster(c: CompactRoster): RaidRoster {
+  const dpsSlots = createDefaultDPSSlots();
   if (c.dp) {
     for (const compactSlot of c.dp) {
       const idx = compactSlot.sn - 1;

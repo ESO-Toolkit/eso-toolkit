@@ -193,19 +193,19 @@ describe('compactifyRoster / expandCompactRoster – buildRef and food', () => {
 
   it('round-trips food on a tank slot', () => {
     const roster = createDefaultRoster();
-    roster.tanks[0].food = { id: 99, name: 'Bewitched Sugar Skulls' };
-    roster.tanks[0].buildRef = { setupIndex: 0, buildName: 'Tank Build' };
+    roster.tank1.food = { id: 99, name: 'Bewitched Sugar Skulls' };
+    roster.tank1.buildRef = { setupIndex: 0, buildName: 'Tank Build' };
 
     const compact = compactifyRoster(roster);
     const expanded = expandCompactRoster(compact);
 
-    expect(expanded.tanks[0].food).toEqual({ id: 99, name: 'Bewitched Sugar Skulls' });
-    expect(expanded.tanks[0].buildRef).toEqual({ setupIndex: 0, buildName: 'Tank Build' });
+    expect(expanded.tank1.food).toEqual({ id: 99, name: 'Bewitched Sugar Skulls' });
+    expect(expanded.tank1.buildRef).toEqual({ setupIndex: 0, buildName: 'Tank Build' });
   });
 
   it('round-trips buildRef on a healer slot', () => {
     const roster = createDefaultRoster();
-    roster.healers[1].buildRef = {
+    roster.healer2.buildRef = {
       buildId: 'heal-456',
       setupIndex: 1,
       buildName: 'Healer Build',
@@ -216,7 +216,7 @@ describe('compactifyRoster / expandCompactRoster – buildRef and food', () => {
     const compact = compactifyRoster(roster);
     const expanded = expandCompactRoster(compact);
 
-    expect(expanded.healers[1].buildRef).toEqual({
+    expect(expanded.healer2.buildRef).toEqual({
       buildId: 'heal-456',
       setupIndex: 1,
       buildName: 'Healer Build',
@@ -293,7 +293,7 @@ describe('compactifyRoster / expandCompactRoster – Full mode inline data', () 
 
   it('round-trips cpPoints on a tank slot', () => {
     const roster = createDefaultRoster();
-    roster.tanks[0].cpPoints = {
+    roster.tank1.cpPoints = {
       warfare: { slots: [111, 222, null, null], passives: { war1: 3 } },
       fitness: { slots: [333, null, null, null], passives: {} },
       craft: { slots: [null, null, null, null], passives: {} },
@@ -302,20 +302,20 @@ describe('compactifyRoster / expandCompactRoster – Full mode inline data', () 
     const compact = compactifyRoster(roster);
     const expanded = expandCompactRoster(compact);
 
-    expect(expanded.tanks[0].cpPoints?.warfare.slots[0]).toBe(111);
-    expect(expanded.tanks[0].cpPoints?.warfare.slots[1]).toBe(222);
-    expect(expanded.tanks[0].cpPoints?.warfare.passives).toEqual({ war1: 3 });
-    expect(expanded.tanks[0].cpPoints?.fitness.slots[0]).toBe(333);
+    expect(expanded.tank1.cpPoints?.warfare.slots[0]).toBe(111);
+    expect(expanded.tank1.cpPoints?.warfare.slots[1]).toBe(222);
+    expect(expanded.tank1.cpPoints?.warfare.passives).toEqual({ war1: 3 });
+    expect(expanded.tank1.cpPoints?.fitness.slots[0]).toBe(333);
   });
 
   it('round-trips passives on a healer slot', () => {
     const roster = createDefaultRoster();
-    roster.healers[0].passives = [40001, 40002, 40003];
+    roster.healer1.passives = [40001, 40002, 40003];
 
     const compact = compactifyRoster(roster);
     const expanded = expandCompactRoster(compact);
 
-    expect(expanded.healers[0].passives).toEqual([40001, 40002, 40003]);
+    expect(expanded.healer1.passives).toEqual([40001, 40002, 40003]);
   });
 
   it('round-trips rosterDetailLevel', () => {
@@ -323,7 +323,7 @@ describe('compactifyRoster / expandCompactRoster – Full mode inline data', () 
     roster.rosterDetailLevel = 'full';
 
     const compact = compactifyRoster(roster);
-    expect(compact.dl).toBe(1); // DL_MAP: simple=0, full=1
+    expect(compact.dl).toBe(2);
 
     const expanded = expandCompactRoster(compact);
     expect(expanded.rosterDetailLevel).toBe('full');
