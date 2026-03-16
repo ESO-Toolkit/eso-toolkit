@@ -555,6 +555,11 @@ export const HeaderBar: React.FC = () => {
     setAnchorEl(null);
   };
 
+  const handleViewBuilds = (): void => {
+    navigate('/my-builds');
+    setAnchorEl(null);
+  };
+
   const handleLogoutFromMenu = (): void => {
     handleLogout();
     setAnchorEl(null);
@@ -609,6 +614,12 @@ export const HeaderBar: React.FC = () => {
     setMobileAccountOpen(false);
   }, [navigate]);
 
+  const handleMobileViewBuilds = React.useCallback((): void => {
+    navigate('/my-builds');
+    setMobileOpen(false);
+    setMobileAccountOpen(false);
+  }, [navigate]);
+
   const handleMobileAuthAction = React.useCallback((): void => {
     if (isLoggedIn) {
       handleLogout();
@@ -646,9 +657,19 @@ export const HeaderBar: React.FC = () => {
       path: '/roster-builder',
     },
     {
+      text: 'Build Editor',
+      icon: '🔧',
+      path: '/build-editor',
+    },
+    {
       text: 'Gear Sets',
       icon: '🛡️',
       path: '/gear-sets',
+    },
+    {
+      text: 'Build Hub',
+      icon: '🏗️',
+      path: '/build-hub',
     },
   ];
 
@@ -708,6 +729,12 @@ export const HeaderBar: React.FC = () => {
         colorVariant: 'default',
       });
       items.push({
+        text: 'My builds',
+        icon: <Build sx={{ fontSize: 18 }} />,
+        action: handleMobileViewBuilds,
+        colorVariant: 'default',
+      });
+      items.push({
         text: 'Log out',
         icon: <Logout sx={{ fontSize: 18 }} />,
         action: handleMobileAuthAction,
@@ -722,7 +749,13 @@ export const HeaderBar: React.FC = () => {
       });
     }
     return items;
-  }, [isLoggedIn, handleMobileAuthAction, handleMobileViewReports, handleMobileViewRosters]);
+  }, [
+    isLoggedIn,
+    handleMobileAuthAction,
+    handleMobileViewReports,
+    handleMobileViewRosters,
+    handleMobileViewBuilds,
+  ]);
 
   const navItems = [
     {
@@ -1118,6 +1151,27 @@ export const HeaderBar: React.FC = () => {
             <Build sx={{ fontSize: 20 }} />
           </ListItemIcon>
           My rosters
+        </MenuItem>
+        <MenuItem
+          onClick={handleViewBuilds}
+          sx={{
+            py: 1.5,
+            px: 2,
+            borderRadius: 1,
+            mx: 1,
+            mb: 0.5,
+            '&:hover': {
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.08)'
+                  : 'rgba(59, 130, 246, 0.08)',
+            },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 32 }}>
+            <Build sx={{ fontSize: 20 }} />
+          </ListItemIcon>
+          My builds
         </MenuItem>
         <MenuItem
           onClick={handleLogoutFromMenu}
