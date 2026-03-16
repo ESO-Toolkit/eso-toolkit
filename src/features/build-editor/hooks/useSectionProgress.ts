@@ -20,7 +20,9 @@ export const useSectionProgress = (): SectionProgressMap => {
   return useMemo(() => {
     const setup = build.setups[activeSetupIndex];
     if (!setup) {
-      return Object.fromEntries(BE_TOKENS.sectionIds.map((id) => [id, false])) as SectionProgressMap;
+      return Object.fromEntries(
+        BE_TOKENS.sectionIds.map((id) => [id, false]),
+      ) as SectionProgressMap;
     }
 
     return {

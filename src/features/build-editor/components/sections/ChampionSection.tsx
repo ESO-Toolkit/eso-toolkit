@@ -132,9 +132,7 @@ const CPSlot: React.FC<CPSlotProps> = ({ treeKey, slotIndex, cpId, tree, options
                 ? 'rgba(255,255,255,0.05)'
                 : 'rgba(0,0,0,0.035)',
             borderStyle: 'solid',
-            borderColor: isDark
-              ? `rgba(${tree.colorRgb}, 0.50)`
-              : `rgba(${tree.colorRgb}, 0.35)`,
+            borderColor: isDark ? `rgba(${tree.colorRgb}, 0.50)` : `rgba(${tree.colorRgb}, 0.35)`,
             boxShadow: `0 6px 20px rgba(${tree.colorRgb}, 0.14)`,
             transform: 'translateY(-1px)',
           },
@@ -177,7 +175,7 @@ const CPSlot: React.FC<CPSlotProps> = ({ treeKey, slotIndex, cpId, tree, options
                 : 'rgba(0,0,0,0.04)',
             border: `1px solid ${
               cpId
-                ? `rgba(${tree.colorRgb}, ${isDark ? 0.50 : 0.35})`
+                ? `rgba(${tree.colorRgb}, ${isDark ? 0.5 : 0.35})`
                 : isDark
                   ? 'rgba(255,255,255,0.10)'
                   : 'rgba(0,0,0,0.08)'
@@ -344,11 +342,8 @@ const PassiveRow: React.FC<PassiveRowProps> = ({
                 width: 28,
                 height: 6,
                 borderRadius: 3,
-                background: points > 0
-                  ? treeColor
-                  : isDark
-                    ? 'rgba(255,255,255,0.08)'
-                    : 'rgba(0,0,0,0.06)',
+                background:
+                  points > 0 ? treeColor : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
                 boxShadow: points > 0 ? `0 0 6px rgba(${treeColorRgb}, 0.35)` : 'none',
                 transition: 'all 0.2s',
               }}
@@ -405,18 +400,14 @@ const PassiveRow: React.FC<PassiveRowProps> = ({
             width: 20,
             height: 20,
             borderRadius: '6px',
-            background: isDark
-              ? `rgba(${treeColorRgb}, 0.14)`
-              : `rgba(${treeColorRgb}, 0.10)`,
+            background: isDark ? `rgba(${treeColorRgb}, 0.14)` : `rgba(${treeColorRgb}, 0.10)`,
             border: `1px solid rgba(${treeColorRgb}, 0.30)`,
             color: treeColor,
             fontWeight: 700,
             fontSize: 12,
             transition: 'all 0.12s',
             '&:hover:not(:disabled)': {
-              background: isDark
-                ? `rgba(${treeColorRgb}, 0.24)`
-                : `rgba(${treeColorRgb}, 0.18)`,
+              background: isDark ? `rgba(${treeColorRgb}, 0.24)` : `rgba(${treeColorRgb}, 0.18)`,
               boxShadow: `0 0 6px rgba(${treeColorRgb}, 0.20)`,
             },
             '&:disabled': { opacity: 0.2, border: '1px solid transparent' },
@@ -621,9 +612,10 @@ export const ChampionSection: React.FC = () => {
             background: isDark
               ? `linear-gradient(135deg, rgba(${currentTree.colorRgb}, 0.18) 0%, rgba(${currentTree.colorRgb}, 0.06) 100%)`
               : `linear-gradient(135deg, rgba(${currentTree.colorRgb}, 0.14) 0%, rgba(${currentTree.colorRgb}, 0.04) 100%)`,
-            border: `1px solid rgba(${currentTree.colorRgb}, ${isDark ? 0.30 : 0.20})`,
+            border: `1px solid rgba(${currentTree.colorRgb}, ${isDark ? 0.3 : 0.2})`,
             boxShadow: `0 0 12px rgba(${currentTree.colorRgb}, 0.12), inset 0 1px 0 rgba(${currentTree.colorRgb}, 0.08)`,
-            transition: 'left 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s, border-color 0.25s, box-shadow 0.25s',
+            transition:
+              'left 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s, border-color 0.25s, box-shadow 0.25s',
             zIndex: 0,
           }}
         />

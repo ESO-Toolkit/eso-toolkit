@@ -100,8 +100,7 @@ export const GlassPanel: React.FC<GlassPanelProps> = ({
               padding: '1px',
               background:
                 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.55) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.10) 50%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.22) 100%)',
-              WebkitMask:
-                'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+              WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
               WebkitMaskComposite: 'xor',
               mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
               maskComposite: 'exclude',

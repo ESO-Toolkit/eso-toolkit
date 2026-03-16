@@ -37,8 +37,7 @@ function isTwoHanded(itemId: number | null | undefined): boolean {
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Look up a slot definition by its numeric index. */
-const slotDef = (idx: number): EquipSlotDef =>
-  EQUIP_SLOTS.find((s) => s.slot === idx)!;
+const slotDef = (idx: number): EquipSlotDef => EQUIP_SLOTS.find((s) => s.slot === idx)!;
 
 /** Build a tile for a single slot. */
 interface TileProps {
@@ -134,7 +133,13 @@ export const EquipmentSection: React.FC = () => {
 
   /** Shorthand to render a row of tiles. */
   const tileRow = (slots: number[]): React.ReactNode => (
-    <Stack direction="row" spacing={1} justifyContent="center" useFlexGap sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+    <Stack
+      direction="row"
+      spacing={1}
+      justifyContent="center"
+      useFlexGap
+      sx={{ flexWrap: 'wrap', rowGap: 1 }}
+    >
       {slots.map((idx) => (
         <Tile
           key={idx}
@@ -153,20 +158,18 @@ export const EquipmentSection: React.FC = () => {
       <Stack spacing={2} alignItems="center">
         {/* ── Apparel ──────────────── */}
         <SectionLabel label="Apparel" />
-        {tileRow([0, 2, 3])}   {/* Head · Body · Shoulders */}
-        {tileRow([16, 6, 8])}  {/* Hands · Waist · Legs */}
-        {tileRow([9])}          {/* Feet */}
-
+        {tileRow([0, 2, 3])} {/* Head · Body · Shoulders */}
+        {tileRow([16, 6, 8])} {/* Hands · Waist · Legs */}
+        {tileRow([9])} {/* Feet */}
         {/* ── Accessories ──────────── */}
         <Box sx={{ pt: 0.5 }} />
         <SectionLabel label="Accessories" />
-        {tileRow([1, 11, 12])}  {/* Neck · Ring 1 · Ring 2 */}
-
+        {tileRow([1, 11, 12])} {/* Neck · Ring 1 · Ring 2 */}
         {/* ── Weapons ──────────────── */}
         <Box sx={{ pt: 0.5 }} />
         <SectionLabel label="Weapons" />
-        {tileRow([4, 5])}       {/* Front bar */}
-        {tileRow([20, 21])}     {/* Back bar */}
+        {tileRow([4, 5])} {/* Front bar */}
+        {tileRow([20, 21])} {/* Back bar */}
       </Stack>
 
       {pickerSlot && (
@@ -177,9 +180,7 @@ export const EquipmentSection: React.FC = () => {
           targetSlot={pickerSlot.slotType}
           slotName={pickerSlot.name}
           currentItemId={
-            setup.gear[pickerSlot.slot]?.id != null
-              ? Number(setup.gear[pickerSlot.slot].id)
-              : null
+            setup.gear[pickerSlot.slot]?.id != null ? Number(setup.gear[pickerSlot.slot].id) : null
           }
         />
       )}

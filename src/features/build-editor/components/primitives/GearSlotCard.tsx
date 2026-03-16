@@ -12,10 +12,7 @@ import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useEffect, useState } from 'react';
 
-import {
-  fetchItemIconUrl,
-  getItemIconUrl,
-} from '../../../loadout-manager/utils/itemIconResolver';
+import { fetchItemIconUrl, getItemIconUrl } from '../../../loadout-manager/utils/itemIconResolver';
 import type { EquipSlotDef } from '../../data/esoStaticData';
 
 // ── SVG slot silhouettes ────────────────────────────────────────────────────
@@ -31,7 +28,8 @@ const SLOT_SVG_PATHS: Record<string, string> = {
   neck: 'M12 4a4 4 0 0 0-4 4c0 1.7 1.3 3.2 3 3.8V14h2v-2.2c1.7-.6 3-2.1 3-3.8a4 4 0 0 0-4-4zm0 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm-1 5h2v4h-2v-4z',
   ring: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 13a5 5 0 1 1 0-10 5 5 0 0 1 0 10z',
   weapon: 'M6 20l2-2 8-8 2 2 2-2-4-4-2 2-2-2 2-2-2-2-2 2-8 8z',
-  offhand: 'M12 3L4 7v5c0 4.4 3.4 8.5 8 9.5 4.6-1 8-5.1 8-9.5V7l-8-4zm0 2.2L18 9v3c0 3.5-2.6 6.8-6 7.8V5.2z',
+  offhand:
+    'M12 3L4 7v5c0 4.4 3.4 8.5 8 9.5 4.6-1 8-5.1 8-9.5V7l-8-4zm0 2.2L18 9v3c0 3.5-2.6 6.8-6 7.8V5.2z',
 };
 
 const SlotSvgIcon: React.FC<{ slotType: string; size?: number; color?: string }> = ({
@@ -229,7 +227,11 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
             textAlign: 'center',
             fontFamily: 'Space Grotesk, Inter, system-ui',
             fontWeight: hasItem ? 600 : 400,
-            color: hasItem ? 'text.primary' : (isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)'),
+            color: hasItem
+              ? 'text.primary'
+              : isDark
+                ? 'rgba(255,255,255,0.35)'
+                : 'rgba(0,0,0,0.35)',
             overflow: 'hidden',
             display: '-webkit-box',
             WebkitLineClamp: 2,

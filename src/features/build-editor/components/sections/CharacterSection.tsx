@@ -59,7 +59,10 @@ export const CharacterSection: React.FC = () => {
                 fontWeight: 700,
                 fontFamily: 'Space Grotesk, Inter, system-ui',
                 color: total >= ATTR_MAX ? 'var(--be-accent, #22c55e)' : 'text.disabled',
-                textShadow: total >= ATTR_MAX ? '0 0 8px rgba(var(--be-accent-rgb, 56, 189, 248), 0.5)' : 'none',
+                textShadow:
+                  total >= ATTR_MAX
+                    ? '0 0 8px rgba(var(--be-accent-rgb, 56, 189, 248), 0.5)'
+                    : 'none',
                 transition: 'color 0.3s, text-shadow 0.3s',
               }}
             />
@@ -76,7 +79,12 @@ export const CharacterSection: React.FC = () => {
         <Typography
           variant="caption"
           color="text.disabled"
-          sx={{ display: 'block', mb: 1, fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+          sx={{
+            display: 'block',
+            mb: 1,
+            fontSize: 10,
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+          }}
         >
           Shift + click for ×10 steps
         </Typography>

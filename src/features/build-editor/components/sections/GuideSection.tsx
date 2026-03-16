@@ -99,7 +99,12 @@ export const GuideSection: React.FC = () => {
         <Typography
           variant="caption"
           color="text.disabled"
-          sx={{ display: 'block', mb: 1, fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+          sx={{
+            display: 'block',
+            mb: 1,
+            fontSize: 10,
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+          }}
         >
           Gear choices, rotation, tips, alternatives.
         </Typography>

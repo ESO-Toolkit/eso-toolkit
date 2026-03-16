@@ -32,11 +32,16 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
 
-import { BE_TOKENS } from '../theme/buildEditorTokens';
 import { useBuildCompleteness } from '../hooks/useBuildCompleteness';
-import { BUILD_EDITOR_STORAGE_KEY, markSaved, setAddonImportString, setBuildName } from '../store/buildEditorSlice';
-import { glassInputSx } from './primitives/glassInputSx';
+import {
+  BUILD_EDITOR_STORAGE_KEY,
+  markSaved,
+  setAddonImportString,
+  setBuildName,
+} from '../store/buildEditorSlice';
+import { BE_TOKENS } from '../theme/buildEditorTokens';
 
+import { glassInputSx } from './primitives/glassInputSx';
 import { ProgressRing } from './primitives/ProgressRing';
 
 export const BuildCompletionHeader: React.FC = () => {
@@ -56,10 +61,7 @@ export const BuildCompletionHeader: React.FC = () => {
       return;
     }
     try {
-      localStorage.setItem(
-        BUILD_EDITOR_STORAGE_KEY,
-        JSON.stringify({ build, activeSetupIndex }),
-      );
+      localStorage.setItem(BUILD_EDITOR_STORAGE_KEY, JSON.stringify({ build, activeSetupIndex }));
     } catch {
       enqueueSnackbar('Could not save to browser storage.', { variant: 'warning' });
     }
@@ -122,14 +124,10 @@ export const BuildCompletionHeader: React.FC = () => {
             fontWeight: 700,
             fontSize: { xs: 15, md: 19 },
             letterSpacing: '-0.3px',
-            background: isDark
-              ? BE_TOKENS.input.dark.bg
-              : BE_TOKENS.input.light.bg,
+            background: isDark ? BE_TOKENS.input.dark.bg : BE_TOKENS.input.light.bg,
             borderRadius: '10px',
             '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: isDark
-                ? BE_TOKENS.input.dark.border
-                : BE_TOKENS.input.light.border,
+              borderColor: isDark ? BE_TOKENS.input.dark.border : BE_TOKENS.input.light.border,
               transition: 'border-color 0.2s ease',
             },
             '&:hover .MuiOutlinedInput-notchedOutline': {
@@ -277,9 +275,7 @@ export const BuildCompletionHeader: React.FC = () => {
         fullWidth
         PaperProps={{
           sx: {
-            background: isDark
-              ? 'rgba(15, 23, 42, 0.95)'
-              : 'rgba(248, 250, 252, 0.98)',
+            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
@@ -385,9 +381,7 @@ export const BuildCompletionHeader: React.FC = () => {
                 py: 0.25,
                 fontSize: 11,
                 borderRadius: 2,
-                background: isDark
-                  ? 'rgba(56, 189, 248, 0.06)'
-                  : 'rgba(56, 189, 248, 0.04)',
+                background: isDark ? 'rgba(56, 189, 248, 0.06)' : 'rgba(56, 189, 248, 0.04)',
                 border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
                 fontFamily: 'Space Grotesk, Inter, system-ui',
               }}
