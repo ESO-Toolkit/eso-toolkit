@@ -16,7 +16,6 @@ import {
   Tooltip,
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
-import type { Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -34,7 +33,6 @@ import {
   type PotionStreamResult,
 } from '@/utils/potionDetectionUtils';
 
-import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
 import { GearDetailsPanel } from '../../../components/GearDetailsPanel';
 import { GearSetTooltip } from '../../../components/GearSetTooltip';
@@ -42,6 +40,7 @@ import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillT
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
+import type { PlayerRoleResult } from '../../../features/role_detection';
 import { useCastEvents } from '../../../hooks/events/useCastEvents';
 import { useDamageEvents } from '../../../hooks/events/useDamageEvents';
 import { useDebuffEvents } from '../../../hooks/events/useDebuffEvents';
@@ -49,6 +48,7 @@ import { useFriendlyBuffEvents } from '../../../hooks/events/useFriendlyBuffEven
 import { useHealingEvents } from '../../../hooks/events/useHealingEvents';
 import { useHostileBuffEvents } from '../../../hooks/events/useHostileBuffEvents';
 import { useResourceEvents } from '../../../hooks/events/useResourceEvents';
+import { getRoleEmoji, ROLE_LABELS, toBroadRole } from '../../../hooks/useRoleDetection';
 import { selectPlayersByIdForContext } from '../../../store/player_data/playerDataSelectors';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { selectActiveReportContext } from '../../../store/report/reportSelectors';
@@ -64,6 +64,7 @@ import { ScribedSkillData } from '../../scribing/types';
 
 import type { StatChipId } from './statChipConfig';
 import { formatStatValue, STAT_CHIP_IDS, STAT_CHIP_META } from './statChipConfig';
+import { StatChipIcon } from './StatChipIcon';
 // TODO: Implement proper scribing detection services
 // Temporary stubs to prevent compilation errors
 interface CombatEventData {
@@ -156,6 +157,8 @@ interface PlayerCardProps {
   critChance?: number;
   /** Ordered list of visible stat chip IDs (from customization preferences) */
   visibleChips?: StatChipId[];
+  /** Detected role from the role detection algorithm */
+  detectedRole?: PlayerRoleResult;
 }
 
 // Helper function to consolidate build issues
@@ -218,28 +221,15 @@ const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
 
   return (
     <Tooltip title={`Mundus: ${mundusName}`} enterTouchDelay={0} leaveTouchDelay={3000}>
-      <Box
-        component="span"
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          minWidth: { xs: 44, sm: 'auto', md: 'auto' },
-          minHeight: { xs: 28, sm: 'auto', md: 'auto' },
-        }}
-      >
-        <Box
-          component={'img' as React.ElementType}
-          src={mundusIcon}
-          alt=""
-          sx={{ width: { xs: 16, sm: 14, md: 12 }, height: { xs: 16, sm: 14, md: 12 } }}
-        />
-        <Box component="span" sx={{ margin: { xs: '0 4px', sm: '0 2px', md: '0 1px' } }}></Box>
+      <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+        <StatChipIcon chipId="mundus" />
+        <span style={{ margin: '0 1px' }} />
         <Box
           component="span"
           sx={{
             display: 'inline',
             fontWeight: 700,
-            fontSize: { xs: 11, sm: 10, md: 10 },
+            fontSize: { xs: 8, sm: 9, md: 10 },
             letterSpacing: '.01em',
             color: 'primary.main',
             textTransform: 'uppercase',
@@ -247,7 +237,7 @@ const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
         >
           {mundusName}
         </Box>
-      </Box>
+      </span>
     </Tooltip>
   );
 };
@@ -283,6 +273,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     critDps,
     critChance,
     visibleChips,
+    detectedRole,
   }) => {
     const theme = useTheme();
 
@@ -481,13 +472,19 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       [playerGear, theme],
     );
 
-    // Memoize role information
+    // Memoize role information — prefer detected role when available
     const roleInfo = React.useMemo(() => {
+      if (detectedRole) {
+        return {
+          roleType: ROLE_LABELS[detectedRole.role],
+          roleEmoji: getRoleEmoji(detectedRole.role),
+        };
+      }
       const roleType =
         player.role === 'tank' ? 'Tank' : player.role === 'healer' ? 'Healer' : 'DPS';
       const roleEmoji = player.role === 'tank' ? '🛡️' : player.role === 'healer' ? '❤️' : '⚔️';
       return { roleType, roleEmoji };
-    }, [player.role]);
+    }, [player.role, detectedRole]);
 
     // Memoize food information
     const foodInfo = React.useMemo(() => {
@@ -537,7 +534,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     const statChipEntries = React.useMemo(() => {
       // Collect candidate nodes into a map; order is determined afterwards.
       const candidateMap = new Map<StatChipId, React.ReactNode>();
-      const r = player.role as 'dps' | 'healer' | 'tank';
+      const r: 'dps' | 'healer' | 'tank' = detectedRole
+        ? toBroadRole(detectedRole.role)
+        : (player.role as 'dps' | 'healer' | 'tank');
 
       const add = (id: StatChipId, node: React.ReactNode): void => {
         const meta = STAT_CHIP_META[id];
@@ -549,11 +548,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       if (dpsValue != null) {
         add(
           'dps',
-          <Tooltip title="Damage per second" enterTouchDelay={0} leaveTouchDelay={3000}>
+          <Tooltip title={STAT_CHIP_META.dps.tooltip} enterTouchDelay={0} leaveTouchDelay={3000}>
             <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-              <span role="img" aria-label="dps">
-                ⚔️
-              </span>
+              <StatChipIcon chipId="dps" />
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
@@ -569,11 +566,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       if (hpsValue != null) {
         add(
           'hps',
-          <Tooltip title="Healing per second" enterTouchDelay={0} leaveTouchDelay={3000}>
+          <Tooltip title={STAT_CHIP_META.hps.tooltip} enterTouchDelay={0} leaveTouchDelay={3000}>
             <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-              <span role="img" aria-label="hps">
-                💚
-              </span>
+              <StatChipIcon chipId="hps" />
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
@@ -589,11 +584,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       if (critChance != null) {
         add(
           'critChance',
-          <Tooltip title="Critical hit chance" enterTouchDelay={0} leaveTouchDelay={3000}>
+          <Tooltip
+            title={STAT_CHIP_META.critChance.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
             <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-              <span role="img" aria-label="crit chance">
-                🎯
-              </span>
+              <StatChipIcon chipId="critChance" />
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
@@ -610,14 +607,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         add(
           'critDamage',
           <Tooltip
-            title="Critical Damage: avg is the time-weighted average crit damage multiplier; max is the highest recorded value"
+            title={STAT_CHIP_META.critDamage.tooltip}
             enterTouchDelay={0}
             leaveTouchDelay={3000}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}>
-              <span role="img" aria-label="crit damage">
-                💥
-              </span>
+              <StatChipIcon chipId="critDamage" />
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
@@ -643,11 +638,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       if (totalDamage != null) {
         add(
           'totalDamage',
-          <Tooltip title="Total damage dealt" enterTouchDelay={0} leaveTouchDelay={3000}>
+          <Tooltip
+            title={STAT_CHIP_META.totalDamage.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
             <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-              <span role="img" aria-label="total damage">
-                🗡️
-              </span>
+              <StatChipIcon chipId="totalDamage" />
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
@@ -663,11 +660,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       if (totalCritDamage != null) {
         add(
           'totalCritDamage',
-          <Tooltip title="Total critical hit damage" enterTouchDelay={0} leaveTouchDelay={3000}>
+          <Tooltip
+            title={STAT_CHIP_META.totalCritDamage.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
             <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-              <span role="img" aria-label="total crit damage">
-                ⚡
-              </span>
+              <StatChipIcon chipId="totalCritDamage" />
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
@@ -683,11 +682,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       if (critDps != null) {
         add(
           'critDps',
-          <Tooltip title="Critical damage per second" enterTouchDelay={0} leaveTouchDelay={3000}>
+          <Tooltip
+            title={STAT_CHIP_META.critDps.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
             <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-              <span role="img" aria-label="crit dps">
-                🔥
-              </span>
+              <StatChipIcon chipId="critDps" />
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
@@ -716,9 +717,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
             style={{ display: 'inline-flex', alignItems: 'center' }}
             data-testid={`food-drink-${player.id}`}
           >
-            <span role="img" aria-label="food">
-              🍲
-            </span>
+            <StatChipIcon chipId="food" />
             <span style={{ margin: '0 1px' }} />
             <Box
               component="span"
@@ -747,9 +746,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
             style={{ display: 'inline-flex', alignItems: 'center' }}
             data-testid={`potion-${player.id}`}
           >
-            <span role="img" aria-label="potion">
-              ⚗️
-            </span>
+            <StatChipIcon chipId="potion" />
             <span style={{ margin: '0 1px' }} />
             <Box
               component="span"
@@ -769,11 +766,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
       add(
         'deaths',
-        <Tooltip title="Deaths in this fight" enterTouchDelay={0} leaveTouchDelay={3000}>
+        <Tooltip title={STAT_CHIP_META.deaths.tooltip} enterTouchDelay={0} leaveTouchDelay={3000}>
           <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-            <span role="img" aria-label="deaths">
-              💀
-            </span>
+            <StatChipIcon chipId="deaths" />
             <span style={{ margin: '0 1px' }} />
             {deaths}
           </span>
@@ -782,11 +777,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
       add(
         'resurrects',
-        <Tooltip title="Successful resurrects performed" enterTouchDelay={0} leaveTouchDelay={3000}>
+        <Tooltip
+          title={STAT_CHIP_META.resurrects.tooltip}
+          enterTouchDelay={0}
+          leaveTouchDelay={3000}
+        >
           <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-            <span role="img" aria-label="resurrects">
-              ❤️
-            </span>
+            <StatChipIcon chipId="resurrects" />
             <span style={{ margin: '0 1px' }} />
             {resurrects}
           </span>
@@ -795,11 +792,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
       add(
         'cpm',
-        <Tooltip title="Casts per Minute" enterTouchDelay={0} leaveTouchDelay={3000}>
+        <Tooltip title={STAT_CHIP_META.cpm.tooltip} enterTouchDelay={0} leaveTouchDelay={3000}>
           <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-            <span role="img" aria-label="cpm">
-              🐭
-            </span>
+            <StatChipIcon chipId="cpm" />
             <span style={{ margin: '0 1px' }} />
             {reportId ? (
               <a
@@ -821,14 +816,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         add(
           'distance',
           <Tooltip
-            title="Distance traveled during this fight"
+            title={STAT_CHIP_META.distance.tooltip}
             enterTouchDelay={0}
             leaveTouchDelay={3000}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-              <span role="img" aria-label="distance">
-                🛤️
-              </span>
+              <StatChipIcon chipId="distance" />
               <span style={{ margin: '0 1px' }} />
               {distanceDisplay}
             </span>
@@ -840,14 +833,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         add(
           'barPattern',
           <Tooltip
-            title="Bar rotation pattern — each letter is one bar-trip between swaps: F = front bar, B = back bar, S = setup trip"
+            title={STAT_CHIP_META.barPattern.tooltip}
             enterTouchDelay={0}
             leaveTouchDelay={3000}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-              <span role="img" aria-label="bar pattern">
-                🔄
-              </span>
+              <StatChipIcon chipId="barPattern" />
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
@@ -876,6 +867,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     }, [
       visibleChips,
       player.role,
+      detectedRole,
       player.id,
       dpsValue,
       hpsValue,
@@ -995,7 +987,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       <Typography
                         variant="caption"
                         sx={{
-                          color: (theme: Theme) =>
+                          color: (theme) =>
                             theme.palette.mode === 'light' ? '#c44e4e' : '#ff7a7a',
                           fontSize: 11,
                           lineHeight: 1,
@@ -1013,7 +1005,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       <Typography
                         variant="caption"
                         sx={{
-                          color: (theme: Theme) =>
+                          color: (theme) =>
                             theme.palette.mode === 'light' ? '#3db03d' : '#93f093',
                           fontSize: 11,
                           lineHeight: 1,
@@ -1072,7 +1064,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           px: 1.25,
                           py: 0.4,
                           borderRadius: '6px',
-                          background: (theme: Theme) =>
+                          background: (theme) =>
                             theme.palette.mode === 'dark'
                               ? 'linear-gradient(90deg, rgba(245,158,11,0.15) 0%, rgba(251,191,36,0.08) 100%)'
                               : 'linear-gradient(90deg, rgba(251,191,36,0.22) 0%, rgba(245,158,11,0.1) 100%)',
@@ -1104,7 +1096,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           sx={{
                             fontSize: '0.7rem',
                             fontWeight: 600,
-                            color: (theme: Theme) =>
+                            color: (theme) =>
                               theme.palette.mode === 'dark'
                                 ? 'rgba(251,191,36,0.85)'
                                 : 'rgba(180,83,9,0.9)',

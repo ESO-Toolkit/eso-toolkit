@@ -17,6 +17,8 @@ import React, { useState, useMemo, useCallback } from 'react';
 
 import { PlayersSkeleton } from '../../../components/PlayersSkeleton';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
+import type { PlayerRoleResult } from '../../../features/role_detection';
+import { toBroadRole, type BroadRole } from '../../../hooks/useRoleDetection';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
@@ -71,6 +73,8 @@ interface PlayersPanelViewProps {
   barSwapByPlayer?: Record<string, BarSwapAnalysisResult>;
   /** Per-player potion classification from the live fight event stream (Path B detection) */
   potionResultsByPlayer?: Record<string, PotionStreamResult>;
+  /** Detected roles from the role detection algorithm, keyed by player ID */
+  rolesByPlayerId?: Record<number, PlayerRoleResult>;
 }
 
 type SortOption =
@@ -114,6 +118,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     criticalDamageByPlayer,
     barSwapByPlayer,
     potionResultsByPlayer,
+    rolesByPlayerId,
   }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState<SortOption>('alphabetical');
@@ -124,20 +129,29 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     const handleOpenChipModal = useCallback(() => setChipModalOpen(true), []);
     const handleCloseChipModal = useCallback(() => setChipModalOpen(false), []);
 
+    // Helper: get the effective broad role for a player, preferring detected role
+    const getEffectiveBroadRole = useCallback(
+      (playerId: string | number): BroadRole => {
+        const detected = rolesByPlayerId?.[Number(playerId)];
+        if (detected) return toBroadRole(detected.role);
+        return 'dps'; // fallback
+      },
+      [rolesByPlayerId],
+    );
+
     // Identify the top DPS player (highest DPS value among DPS-role players)
     const { topDpsPlayerId, topDpsValue } = useMemo(() => {
       if (!dpsValueByPlayer || !playerActors) return { topDpsPlayerId: null, topDpsValue: 0 };
       let bestId: string | null = null;
       let bestDps = 0;
       for (const [id, dps] of Object.entries(dpsValueByPlayer)) {
-        const player = playerActors[id];
-        if (player?.role === 'dps' && dps > bestDps) {
+        if (getEffectiveBroadRole(id) === 'dps' && dps > bestDps) {
           bestDps = dps;
           bestId = id;
         }
       }
       return { topDpsPlayerId: bestId, topDpsValue: bestDps };
-    }, [dpsValueByPlayer, playerActors]);
+    }, [dpsValueByPlayer, playerActors, getEffectiveBroadRole]);
 
     // Memoize player data transformations to prevent recreating objects on each render
     const playerCards = React.useMemo(() => {
@@ -250,10 +264,14 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       if (roleFilter !== 'all') {
         if (roleFilter === 'supports') {
           // Filter for non-DPS (tanks and healers)
-          filtered = filtered.filter((playerData) => playerData.player.role !== 'dps');
+          filtered = filtered.filter(
+            (playerData) => getEffectiveBroadRole(playerData.player.id) !== 'dps',
+          );
         } else {
           // Filter for specific role
-          filtered = filtered.filter((playerData) => playerData.player.role === roleFilter);
+          filtered = filtered.filter(
+            (playerData) => getEffectiveBroadRole(playerData.player.id) === roleFilter,
+          );
         }
       }
 
@@ -280,7 +298,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       });
 
       return sorted;
-    }, [playerCards, searchTerm, roleFilter, sortOption]);
+    }, [playerCards, searchTerm, roleFilter, sortOption, getEffectiveBroadRole]);
 
     if (isLoading) {
       return <PlayersSkeleton />;
@@ -449,6 +467,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 critDps={playerData.critDps}
                 critChance={playerData.critChance}
                 visibleChips={visibleChips}
+                detectedRole={rolesByPlayerId?.[Number(playerData.player.id)]}
               />
             </Box>
           ))}

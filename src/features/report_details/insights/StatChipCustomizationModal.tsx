@@ -39,6 +39,7 @@ import React, { useCallback, useState } from 'react';
 
 import type { StatChipId } from './statChipConfig';
 import { STAT_CHIP_IDS, STAT_CHIP_META } from './statChipConfig';
+import { StatChipIcon } from './StatChipIcon';
 
 // ---------------------------------------------------------------------------
 // SortableChipRow — a single draggable row inside the customization list
@@ -97,7 +98,7 @@ const SortableChipRow: React.FC<SortableChipRowProps> = ({ chipId, checked, onTo
 
       {/* Label */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flex: 1 }}>
-        <span>{meta.emoji}</span>
+        <StatChipIcon chipId={chipId} />
         <Typography variant="body2" sx={{ fontWeight: 500 }}>
           {meta.label}
         </Typography>
