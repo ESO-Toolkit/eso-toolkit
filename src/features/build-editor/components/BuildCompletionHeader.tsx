@@ -7,6 +7,7 @@
 import {
   Close as CloseIcon,
   FileUploadOutlined,
+  Groups as GroupsIcon,
   PublishOutlined,
   SaveOutlined,
   ShareOutlined,
@@ -36,8 +37,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
 import { PublishBuildDialog } from '@/features/build-hub/components/PublishBuildDialog';
 import { saveBuild, updateSavedBuild } from '@/store/saved_builds';
+import { selectSavedRosters } from '@/store/saved_rosters';
 import type { RootState } from '@/store/storeWithHistory';
 import { encodeBuildToURL } from '@/utils/buildEncoding';
+
+import { AddToRosterDialog } from './AddToRosterDialog';
 
 import { useBuildCompleteness } from '../hooks/useBuildCompleteness';
 import {
@@ -72,8 +76,10 @@ export const BuildCompletionHeader: React.FC = () => {
     savedBuildId ? s.savedBuilds.builds.some((b) => b.id === savedBuildId) : false,
   );
   const completeness = useBuildCompleteness();
+  const savedRostersCount = useSelector((s: RootState) => selectSavedRosters(s).length);
   const [importOpen, setImportOpen] = React.useState(false);
   const [publishOpen, setPublishOpen] = React.useState(false);
+  const [addToRosterOpen, setAddToRosterOpen] = React.useState(false);
   const [encodedBuildData, setEncodedBuildData] = React.useState('');
   const [isPublishing, setIsPublishing] = React.useState(false);
 
@@ -337,6 +343,55 @@ export const BuildCompletionHeader: React.FC = () => {
         >
           View
         </Button>
+        <Tooltip
+          title={
+            savedRostersCount === 0
+              ? 'Create a roster in the Roster Builder first'
+              : 'Attach this build to a roster slot'
+          }
+        >
+          <Box component="span">
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<GroupsIcon sx={{ fontSize: 14 }} />}
+              onClick={() => setAddToRosterOpen(true)}
+              aria-label="Add build to roster"
+              sx={{
+                ...pillBtn,
+                borderColor:
+                  savedRostersCount > 0
+                    ? isDark
+                      ? 'rgba(139,92,246,0.4)'
+                      : 'rgba(109,40,217,0.25)'
+                    : isDark
+                      ? 'rgba(255,255,255,0.10)'
+                      : 'rgba(0,0,0,0.10)',
+                background:
+                  savedRostersCount > 0
+                    ? isDark
+                      ? 'rgba(139,92,246,0.08)'
+                      : 'rgba(109,40,217,0.05)'
+                    : isDark
+                      ? 'rgba(255,255,255,0.03)'
+                      : 'rgba(0,0,0,0.02)',
+                color:
+                  savedRostersCount > 0
+                    ? isDark
+                      ? 'rgb(167,139,250)'
+                      : 'rgb(109,40,217)'
+                    : 'text.disabled',
+                '&:hover': {
+                  borderColor: 'rgba(139,92,246,0.6)',
+                  background: 'rgba(139,92,246,0.12)',
+                  color: isDark ? 'rgb(196,181,253)' : 'rgb(109,40,217)',
+                },
+              }}
+            >
+              Roster
+            </Button>
+          </Box>
+        </Tooltip>
         {isLoggedIn && (
           <Button
             variant="contained"
@@ -388,6 +443,13 @@ export const BuildCompletionHeader: React.FC = () => {
           token={accessToken}
         />
       )}
+
+      {/* Add to roster dialog */}
+      <AddToRosterDialog
+        open={addToRosterOpen}
+        onClose={() => setAddToRosterOpen(false)}
+        build={build}
+      />
 
       {/* Import dialog */}
       <Dialog

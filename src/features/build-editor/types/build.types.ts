@@ -141,6 +141,8 @@ export interface Build {
   settings: BuildSettings;
   /** Raw addon import string (Combat Metrics / Caro's Skill Point Saver) */
   addonImportString: string;
+  /** Trial IDs this build is designed for (e.g. 'lucent_citadel') */
+  trialTags?: string[];
   /** ISO timestamp */
   createdAt: string;
   updatedAt: string;

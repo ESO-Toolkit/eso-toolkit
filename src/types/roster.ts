@@ -102,6 +102,30 @@ export interface PlayerGroup {
 }
 
 /**
+ * Roster display detail level
+ */
+export type RosterDetailLevel = 'simple' | 'advanced' | 'full';
+
+/**
+ * Reference to a Build Editor build attached to a roster slot.
+ * Stores build.id (not SavedBuild.id) so the reference survives re-saves.
+ * Metadata fields (buildName, esoClass, role) are cached for display
+ * without needing to load the full build.
+ */
+export interface BuildReference {
+  /** build.id from the Build type */
+  buildId?: string;
+  /** Which of the build's setups (0-indexed) to use */
+  setupIndex: number;
+  /** Build name cached for display */
+  buildName?: string;
+  /** ESO class cached for display (e.g. 'dragonknight') */
+  esoClass?: string;
+  /** Combat role cached for display (e.g. 'tank') */
+  role?: string;
+}
+
+/**
  * Tank gear set configuration
  */
 export interface TankGearSet {
@@ -146,6 +170,10 @@ export interface DPSSlot {
   notes?: string;
   jailDDType?: JailDDType; // If set, this slot is configured as a jail DD
   customDescription?: string; // For 'custom' jail DD type
+  /** Attached build from the Build Editor */
+  buildRef?: BuildReference;
+  /** Food/drink consumable for this slot */
+  food?: { id?: number; name?: string };
 }
 
 /**
@@ -172,6 +200,10 @@ export interface HealerSetup {
   /** @deprecated Use groups instead. Kept for backward-compat URL decoding. */
   group?: PlayerGroup;
   notes?: string;
+  /** Attached build from the Build Editor */
+  buildRef?: BuildReference;
+  /** Food/drink consumable for this slot */
+  food?: { id?: number; name?: string };
 }
 
 /**
@@ -192,6 +224,10 @@ export interface TankSetup {
   /** @deprecated Use groups instead. Kept for backward-compat URL decoding. */
   group?: PlayerGroup;
   notes?: string;
+  /** Attached build from the Build Editor */
+  buildRef?: BuildReference;
+  /** Food/drink consumable for this slot */
+  food?: { id?: number; name?: string };
 }
 
 /**
@@ -218,6 +254,9 @@ export interface RaidRoster {
 
   // General notes
   notes?: string;
+
+  // UI preference for how much detail to show per slot
+  rosterDetailLevel?: RosterDetailLevel;
 
   // Per-fight build overrides (optional, advanced feature)
   trialOverrides?: TrialBuildOverrides;

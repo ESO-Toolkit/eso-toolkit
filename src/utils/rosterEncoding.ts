@@ -22,6 +22,8 @@ import {
   HealerSetup,
   DPSSlot,
   SkillLineConfig,
+  PlayerGroup,
+  BuildReference,
   defaultTankSetup,
   defaultHealerSetup,
   createDefaultDPSSlots,
@@ -39,6 +41,21 @@ const logger = new Logger({ level: LogLevel.WARN, contextPrefix: 'rosterEncoding
 // ============================================================
 // Compact interfaces — short key names for minimal JSON size
 // ============================================================
+
+/** Compact form of BuildReference — stored inline with the slot */
+export interface CompactBuildRef {
+  bi?: string; // buildId
+  si: number; // setupIndex
+  bn?: string; // buildName
+  cl?: string; // esoClass
+  ro?: string; // role
+}
+
+/** Compact food selection */
+export interface CompactFood {
+  i?: number; // id
+  n?: string; // name
+}
 
 export interface CompactSkills {
   l1?: number | string; // line1: CLASS_SKILL_LINES index or custom string
@@ -74,6 +91,8 @@ export interface CompactTank {
   grs?: string[]; // groups (multi-group memberships)
   gr?: CompactGroup; // @deprecated — legacy single group, decode only
   no?: string; // notes
+  br?: CompactBuildRef; // buildRef
+  fo?: CompactFood; // food
 }
 
 export interface CompactHealer {
@@ -95,6 +114,8 @@ export interface CompactHealer {
   grs?: string[]; // groups (multi-group memberships)
   gr?: CompactGroup; // @deprecated — legacy single group, decode only
   no?: string; // notes
+  br?: CompactBuildRef; // buildRef
+  fo?: CompactFood; // food
 }
 
 export interface CompactDPS {
@@ -119,6 +140,8 @@ export interface CompactDPS {
   no?: string; // notes
   jt?: number; // jailDDType index
   cd?: string; // customDescription
+  br?: CompactBuildRef; // buildRef
+  fo?: CompactFood; // food
 }
 
 /** Compact representation of a PlayerOverride (per-fight set/ultimate/notes changes) */
@@ -224,6 +247,41 @@ function decodeUltimate(v?: number | string): string | null {
   return v;
 }
 
+function compactBuildRef(ref: BuildReference): CompactBuildRef {
+  const c: CompactBuildRef = { si: ref.setupIndex };
+  if (ref.buildId) c.bi = ref.buildId;
+  if (ref.buildName) c.bn = ref.buildName;
+  if (ref.esoClass) c.cl = ref.esoClass;
+  if (ref.role) c.ro = ref.role;
+  return c;
+}
+
+function expandBuildRef(c: CompactBuildRef): BuildReference {
+  return {
+    buildId: c.bi,
+    setupIndex: c.si,
+    buildName: c.bn,
+    esoClass: c.cl,
+    role: c.ro,
+  };
+}
+
+function compactFood(food?: {
+  id?: number;
+  name?: string;
+}): CompactFood | undefined {
+  if (!food || (food.id == null && !food.name)) return undefined;
+  const c: CompactFood = {};
+  if (food.id != null) c.i = food.id;
+  if (food.name) c.n = food.name;
+  return c;
+}
+
+function expandFood(c?: CompactFood): { id?: number; name?: string } | undefined {
+  if (!c) return undefined;
+  return { id: c.i, name: c.n };
+}
+
 function compactSkills(sl: SkillLineConfig): CompactSkills | undefined {
   const c: CompactSkills = {};
   const l1 = encodeSkillLine(sl.line1);
@@ -301,6 +359,9 @@ function compactTank(t: TankSetup): CompactTank {
   const grs = compactGroups(t.groups);
   if (grs) c.grs = grs;
   if (t.notes) c.no = t.notes;
+  if (t.buildRef) c.br = compactBuildRef(t.buildRef);
+  const fo = compactFood(t.food);
+  if (fo) c.fo = fo;
   return c;
 }
 
@@ -318,6 +379,8 @@ function expandTank(c?: CompactTank): TankSetup {
     specificSkills: c?.ss ?? [],
     groups: expandGroups(c?.grs, c?.gr),
     notes: c?.no,
+    buildRef: c?.br ? expandBuildRef(c.br) : undefined,
+    food: expandFood(c?.fo),
   };
 }
 
@@ -349,6 +412,9 @@ function compactHealer(h: HealerSetup): CompactHealer {
   const grs = compactGroups(h.groups);
   if (grs) c.grs = grs;
   if (h.notes) c.no = h.notes;
+  if (h.buildRef) c.br = compactBuildRef(h.buildRef);
+  const fo = compactFood(h.food);
+  if (fo) c.fo = fo;
   return c;
 }
 
@@ -380,6 +446,8 @@ function expandHealer(c?: CompactHealer): HealerSetup {
     ultimate: decodeUltimate(c?.ul),
     groups: expandGroups(c?.grs, c?.gr),
     notes: c?.no,
+    buildRef: c?.br ? expandBuildRef(c.br) : undefined,
+    food: expandFood(c?.fo),
   };
 }
 
@@ -409,6 +477,9 @@ function compactDPS(d: DPSSlot): CompactDPS {
     if (idx !== undefined) c.jt = idx;
   }
   if (d.customDescription) c.cd = d.customDescription;
+  if (d.buildRef) c.br = compactBuildRef(d.buildRef);
+  const fo = compactFood(d.food);
+  if (fo) c.fo = fo;
   return c;
 }
 
@@ -453,6 +524,8 @@ function expandDPS(c: CompactDPS): DPSSlot {
           : undefined
         : undefined,
     customDescription: c.cd,
+    buildRef: c.br ? expandBuildRef(c.br) : undefined,
+    food: expandFood(c.fo),
   };
 }
 
