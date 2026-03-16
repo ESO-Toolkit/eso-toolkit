@@ -61,7 +61,10 @@ export const SetupTabBar: React.FC = () => {
       {build.setups.map((setup, i) => {
         const active = i === activeSetupIndex;
         return (
-          <Box key={setup.id} sx={{ position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+          <Box
+            key={setup.id}
+            sx={{ position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+          >
             <ButtonBase
               role="tab"
               aria-selected={active}
@@ -177,7 +180,8 @@ export const SetupTabBar: React.FC = () => {
                   right: 12,
                   height: 2,
                   borderRadius: 1,
-                  background: 'linear-gradient(90deg, transparent, var(--be-accent, #38bdf8), transparent)',
+                  background:
+                    'linear-gradient(90deg, transparent, var(--be-accent, #38bdf8), transparent)',
                   boxShadow: '0 0 8px rgba(var(--be-accent-rgb, 56, 189, 248), 0.4)',
                 }}
               />

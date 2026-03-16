@@ -190,9 +190,24 @@ export const CLASS_SKILL_LINES: ClassSkillLineDef[] = [
   { id: 'class.bone-tyrant', label: 'Bone Tyrant', ownerClass: 'necromancer', icon: '🦴' },
   { id: 'class.living-death', label: 'Living Death', ownerClass: 'necromancer', icon: '⚗️' },
   // Arcanist
-  { id: 'class.herald-of-the-tome', label: 'Herald of the Tome', ownerClass: 'arcanist', icon: '📖' },
-  { id: 'class.soldier-of-apocrypha', label: 'Soldier of Apocrypha', ownerClass: 'arcanist', icon: '🔮' },
-  { id: 'class.curative-runeforms', label: 'Curative Runeforms', ownerClass: 'arcanist', icon: '🌀' },
+  {
+    id: 'class.herald-of-the-tome',
+    label: 'Herald of the Tome',
+    ownerClass: 'arcanist',
+    icon: '📖',
+  },
+  {
+    id: 'class.soldier-of-apocrypha',
+    label: 'Soldier of Apocrypha',
+    ownerClass: 'arcanist',
+    icon: '🔮',
+  },
+  {
+    id: 'class.curative-runeforms',
+    label: 'Curative Runeforms',
+    ownerClass: 'arcanist',
+    icon: '🌀',
+  },
 ];
 
 /** Returns the 3 skill lines belonging to a given class, in canonical order.

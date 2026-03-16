@@ -40,7 +40,8 @@ export const PassivesSection: React.FC = () => {
     fontWeight: 700,
     fontSize: 11,
     fontFamily: 'Space Grotesk, Inter, system-ui',
-    background: 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.22), rgba(var(--be-accent-rgb, 56, 189, 248), 0.10))',
+    background:
+      'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.22), rgba(var(--be-accent-rgb, 56, 189, 248), 0.10))',
     border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)',
     color: 'var(--be-accent, #38bdf8)',
     boxShadow: '0 0 8px rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)',
@@ -59,7 +60,10 @@ export const PassivesSection: React.FC = () => {
         placeholder="Search passives (2+ chars)..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        inputProps={{ 'aria-label': 'Search passive abilities', 'aria-describedby': 'passives-hint' }}
+        inputProps={{
+          'aria-label': 'Search passive abilities',
+          'aria-describedby': 'passives-hint',
+        }}
         sx={glassInputSx(isDark)}
       />
 

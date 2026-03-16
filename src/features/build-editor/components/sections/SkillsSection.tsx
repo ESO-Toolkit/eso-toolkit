@@ -120,9 +120,7 @@ const PickerTile: React.FC<PickerTileProps> = ({ skill, onSelect, isMorph }) => 
       title={
         <Box>
           <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{skill.name}</Typography>
-          {isMorph && (
-            <Typography sx={{ fontSize: 10, opacity: 0.7 }}>Morph</Typography>
-          )}
+          {isMorph && <Typography sx={{ fontSize: 10, opacity: 0.7 }}>Morph</Typography>}
           {skill.category && (
             <Typography sx={{ fontSize: 10, opacity: 0.7 }}>{skill.category}</Typography>
           )}
@@ -393,9 +391,7 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
           backdropFilter: 'blur(24px)',
           background: isDark ? 'rgba(12,12,22,0.96)' : 'rgba(255,255,255,0.97)',
           border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
-          boxShadow: isDark
-            ? '0 24px 64px rgba(0,0,0,0.55)'
-            : '0 24px 64px rgba(0,0,0,0.12)',
+          boxShadow: isDark ? '0 24px 64px rgba(0,0,0,0.55)' : '0 24px 64px rgba(0,0,0,0.12)',
           maxHeight: '80vh',
         },
       }}
@@ -474,9 +470,7 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
                       width: '100%',
                       textAlign: 'left',
                       '&:hover': {
-                        background: isDark
-                          ? 'rgba(255,255,255,0.06)'
-                          : 'rgba(0,0,0,0.04)',
+                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                       },
                     }}
                   >
@@ -502,9 +496,7 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
                           width: 32,
                           height: 32,
                           borderRadius: '6px',
-                          bgcolor: isDark
-                            ? 'rgba(255,255,255,0.06)'
-                            : 'rgba(0,0,0,0.04)',
+                          bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                           flexShrink: 0,
                         }}
                       />
@@ -524,9 +516,7 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
                         <Typography
                           sx={{
                             fontSize: 10,
-                            color: isDark
-                              ? 'rgba(255,255,255,0.40)'
-                              : 'rgba(0,0,0,0.40)',
+                            color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
                             lineHeight: 1.2,
                           }}
                         >
@@ -589,9 +579,7 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
                     }`,
                     transition: 'all 0.15s',
                     '&:hover': {
-                      background: isDark
-                        ? 'rgba(255,255,255,0.06)'
-                        : 'rgba(0,0,0,0.04)',
+                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                     },
                   }}
                 >
@@ -668,65 +656,63 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
 
             {/* Skill lines for active tab */}
             <Box sx={{ maxHeight: 400, overflowY: 'auto', px: 1, pb: 1 }}>
-              {activeTab === 0 ? (
-                // Class tab: grouped by ESO class with colored headers
-                // Uses filteredClassLinesByClass when "My Lines" is active
-                filteredClassLinesByClass.map(({ cls, lines }) => {
-                  const clsColor = CLASS_COLOR_MAP[cls.id].accent;
-                  return (
-                    <Box key={cls.id}>
-                      <ListSubheader
-                        disableSticky
-                        sx={{
-                          fontSize: 9,
-                          fontWeight: 700,
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
-                          letterSpacing: 1,
-                          textTransform: 'uppercase',
-                          color: clsColor,
-                          lineHeight: '28px',
-                          background: 'transparent',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 0.75,
-                          px: 1,
-                        }}
-                      >
-                        <Box
+              {activeTab === 0
+                ? // Class tab: grouped by ESO class with colored headers
+                  // Uses filteredClassLinesByClass when "My Lines" is active
+                  filteredClassLinesByClass.map(({ cls, lines }) => {
+                    const clsColor = CLASS_COLOR_MAP[cls.id].accent;
+                    return (
+                      <Box key={cls.id}>
+                        <ListSubheader
+                          disableSticky
                           sx={{
-                            width: 7,
-                            height: 7,
-                            borderRadius: '50%',
-                            background: clsColor,
-                            boxShadow: `0 0 5px ${alpha(clsColor, 0.6)}`,
-                            flexShrink: 0,
+                            fontSize: 9,
+                            fontWeight: 700,
+                            fontFamily: 'Space Grotesk, Inter, system-ui',
+                            letterSpacing: 1,
+                            textTransform: 'uppercase',
+                            color: clsColor,
+                            lineHeight: '28px',
+                            background: 'transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.75,
+                            px: 1,
                           }}
-                        />
-                        {cls.label}
-                      </ListSubheader>
-                      {lines.map((line) => (
-                        <SkillLineSection
-                          key={line.name}
-                          lineName={line.name}
-                          isUltimate={isUltimate}
-                          onSelect={handleSelect}
-                          defaultExpanded={myBuildOnly && selectedLineNames.has(line.name)}
-                        />
-                      ))}
-                    </Box>
-                  );
-                })
-              ) : (
-                // Other tabs: just list skill lines directly
-                linesByTab[activeTab].map((line) => (
-                  <SkillLineSection
-                    key={line.name}
-                    lineName={line.name}
-                    isUltimate={isUltimate}
-                    onSelect={handleSelect}
-                  />
-                ))
-              )}
+                        >
+                          <Box
+                            sx={{
+                              width: 7,
+                              height: 7,
+                              borderRadius: '50%',
+                              background: clsColor,
+                              boxShadow: `0 0 5px ${alpha(clsColor, 0.6)}`,
+                              flexShrink: 0,
+                            }}
+                          />
+                          {cls.label}
+                        </ListSubheader>
+                        {lines.map((line) => (
+                          <SkillLineSection
+                            key={line.name}
+                            lineName={line.name}
+                            isUltimate={isUltimate}
+                            onSelect={handleSelect}
+                            defaultExpanded={myBuildOnly && selectedLineNames.has(line.name)}
+                          />
+                        ))}
+                      </Box>
+                    );
+                  })
+                : // Other tabs: just list skill lines directly
+                  linesByTab[activeTab].map((line) => (
+                    <SkillLineSection
+                      key={line.name}
+                      lineName={line.name}
+                      isUltimate={isUltimate}
+                      onSelect={handleSelect}
+                    />
+                  ))}
             </Box>
           </>
         )}
@@ -875,9 +861,7 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
                 cursor: 'pointer',
               }}
             >
-              <CloseIcon
-                sx={{ fontSize: isUlt ? 22 : 17, color: 'rgba(255,255,255,0.90)' }}
-              />
+              <CloseIcon sx={{ fontSize: isUlt ? 22 : 17, color: 'rgba(255,255,255,0.90)' }} />
             </Box>
           )}
         </Box>

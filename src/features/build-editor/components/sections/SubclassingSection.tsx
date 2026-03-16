@@ -98,7 +98,11 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
       {/* Slot card button */}
       <ButtonBase
         ref={anchorRef}
-        aria-label={def ? `Slot ${slot + 1}: ${def.label} — click to change` : `Slot ${slot + 1}: empty — click to select a skill line`}
+        aria-label={
+          def
+            ? `Slot ${slot + 1}: ${def.label} — click to change`
+            : `Slot ${slot + 1}: empty — click to select a skill line`
+        }
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen(true)}
@@ -258,9 +262,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
               WebkitBackdropFilter: 'blur(16px)',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)'}`,
               borderRadius: 2,
-              boxShadow: isDark
-                ? '0 8px 32px rgba(0,0,0,0.5)'
-                : '0 8px 32px rgba(0,0,0,0.12)',
+              boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.12)',
             },
           },
         }}
@@ -334,7 +336,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
                       '&:hover': { background: alpha(clsColor, 0.18) },
                     },
                     '&:hover:not(.Mui-disabled)': {
-                      background: isDark ? alpha(clsColor, 0.10) : alpha(clsColor, 0.07),
+                      background: isDark ? alpha(clsColor, 0.1) : alpha(clsColor, 0.07),
                     },
                     '&.Mui-disabled': {
                       opacity: 0.35,
@@ -408,7 +410,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ classSkillLines }) => {
             fontFamily: 'Space Grotesk, Inter, system-ui',
             letterSpacing: 0.5,
             background: alpha(primaryColor, isDark ? 0.14 : 0.08),
-            border: `1px solid ${alpha(primaryColor, 0.30)}`,
+            border: `1px solid ${alpha(primaryColor, 0.3)}`,
             color: primaryColor,
             '& .MuiChip-label': { px: 1 },
           }}
@@ -437,7 +439,11 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ classSkillLines }) => {
         {involvedClasses.map((def) => {
           const color = CLASS_COLOR_MAP[def.ownerClass].accent;
           return (
-            <Tooltip key={def.ownerClass} title={ESO_CLASSES.find((c) => c.id === def.ownerClass)?.label ?? ''} enterDelay={300}>
+            <Tooltip
+              key={def.ownerClass}
+              title={ESO_CLASSES.find((c) => c.id === def.ownerClass)?.label ?? ''}
+              enterDelay={300}
+            >
               <Box
                 sx={{
                   width: 8,

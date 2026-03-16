@@ -76,7 +76,9 @@ function loadFromStorage(): Pick<BuildEditorState, 'build' | 'activeSetupIndex'>
     if (!parsed.build?.setups?.length) return null;
     // Migration: builds saved before subclassing was added won't have classSkillLines
     if (!parsed.build.classSkillLines) {
-      parsed.build.classSkillLines = getDefaultLinesForClass(parsed.build.esoClass ?? 'dragonknight');
+      parsed.build.classSkillLines = getDefaultLinesForClass(
+        parsed.build.esoClass ?? 'dragonknight',
+      );
     }
     return {
       build: parsed.build,

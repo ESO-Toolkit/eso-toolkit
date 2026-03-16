@@ -74,8 +74,8 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
         transition: 'all 0.2s ease',
         '&:hover': {
           background: isDark ? alpha(color, 0.09) : alpha(color, 0.06),
-          borderColor: alpha(color, isDark ? 0.30 : 0.22),
-          boxShadow: `0 0 16px ${alpha(color, 0.10)}`,
+          borderColor: alpha(color, isDark ? 0.3 : 0.22),
+          boxShadow: `0 0 16px ${alpha(color, 0.1)}`,
         },
       }}
     >
@@ -111,7 +111,7 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
           flex: 1,
           height: 8,
           borderRadius: 4,
-          background: isDark ? alpha(color, 0.10) : alpha(color, 0.08),
+          background: isDark ? alpha(color, 0.1) : alpha(color, 0.08),
           boxShadow: `inset 0 1px 3px ${alpha(color, 0.15)}`,
           overflow: 'hidden',
           minWidth: 48,
@@ -122,9 +122,10 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
             height: '100%',
             borderRadius: 4,
             background: `linear-gradient(90deg, ${color} 0%, ${alpha(color, 0.55)} 100%)`,
-            boxShadow: fillPercent > 0
-              ? `0 0 10px ${alpha(color, 0.45)}, inset 0 1px 0 rgba(255,255,255,0.18)`
-              : 'none',
+            boxShadow:
+              fillPercent > 0
+                ? `0 0 10px ${alpha(color, 0.45)}, inset 0 1px 0 rgba(255,255,255,0.18)`
+                : 'none',
           }}
           initial={false}
           animate={{ width: `${fillPercent}%` }}
@@ -148,10 +149,10 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
               color: 'text.primary',
               '&:hover:not(:disabled)': {
                 borderColor: alpha(color, 0.45),
-                background: alpha(color, isDark ? 0.14 : 0.10),
+                background: alpha(color, isDark ? 0.14 : 0.1),
                 color,
               },
-              '&:disabled': { opacity: 0.30, border: '1px solid transparent' },
+              '&:disabled': { opacity: 0.3, border: '1px solid transparent' },
             }}
           >
             −
@@ -189,15 +190,15 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
             aria-label={`Increase ${label}`}
             sx={{
               ...btnSx,
-              background: isDark ? alpha(color, 0.14) : alpha(color, 0.10),
-              border: `1px solid ${alpha(color, 0.30)}`,
+              background: isDark ? alpha(color, 0.14) : alpha(color, 0.1),
+              border: `1px solid ${alpha(color, 0.3)}`,
               color,
               '&:hover:not(:disabled)': {
                 background: alpha(color, isDark ? 0.28 : 0.22),
                 borderColor: alpha(color, 0.55),
                 boxShadow: `0 0 10px ${alpha(color, 0.25)}`,
               },
-              '&:disabled': { opacity: 0.30, border: '1px solid transparent' },
+              '&:disabled': { opacity: 0.3, border: '1px solid transparent' },
             }}
           >
             +

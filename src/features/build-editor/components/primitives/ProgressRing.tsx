@@ -56,18 +56,11 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
       aria-valuemax={100}
       aria-label={`Build ${value}% complete`}
     >
-      <svg
-        width={size}
-        height={size}
-        style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}
-      >
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
         <defs>
           {/* Gradient for progress stroke — accent fading to 30% opacity */}
           <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-            <stop
-              offset="0%"
-              style={{ stopColor: 'var(--be-accent, #38bdf8)', stopOpacity: 1 }}
-            />
+            <stop offset="0%" style={{ stopColor: 'var(--be-accent, #38bdf8)', stopOpacity: 1 }} />
             <stop
               offset="100%"
               style={{ stopColor: 'var(--be-accent, #38bdf8)', stopOpacity: 0.35 }}
@@ -98,9 +91,7 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
             strokeDasharray={circumference}
             initial={{ strokeDashoffset: circumference }}
             animate={{ strokeDashoffset: offset }}
-            transition={
-              prefersReduced ? { duration: 0 } : { duration: 0.8, ease: easing }
-            }
+            transition={prefersReduced ? { duration: 0 } : { duration: 0.8, ease: easing }}
             style={{ filter: 'blur(4px)', opacity: 0.3 }}
           />
         )}
@@ -117,9 +108,7 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: offset }}
-          transition={
-            prefersReduced ? { duration: 0 } : { duration: 0.8, ease: easing }
-          }
+          transition={prefersReduced ? { duration: 0 } : { duration: 0.8, ease: easing }}
         />
       </svg>
 

@@ -64,15 +64,11 @@ export const SettingsSection: React.FC = () => {
           sx={{
             fontFamily: 'Space Grotesk, Inter, system-ui',
             fontSize: 13,
-            background: isDark
-              ? BE_TOKENS.input.dark.bg
-              : BE_TOKENS.input.light.bg,
+            background: isDark ? BE_TOKENS.input.dark.bg : BE_TOKENS.input.light.bg,
             borderRadius: '10px',
             transition: 'background 0.2s ease',
             '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: isDark
-                ? BE_TOKENS.input.dark.border
-                : BE_TOKENS.input.light.border,
+              borderColor: isDark ? BE_TOKENS.input.dark.border : BE_TOKENS.input.light.border,
               transition: 'border-color 0.2s ease',
             },
             '&:hover': {
@@ -106,7 +102,9 @@ export const SettingsSection: React.FC = () => {
           backdropFilter: 'blur(6px)',
           WebkitBackdropFilter: 'blur(6px)',
           border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
-          boxShadow: isDark ? 'inset 0 1px 0 rgba(255,255,255,0.03)' : 'inset 0 1px 0 rgba(255,255,255,0.5)',
+          boxShadow: isDark
+            ? 'inset 0 1px 0 rgba(255,255,255,0.03)'
+            : 'inset 0 1px 0 rgba(255,255,255,0.5)',
         }}
       >
         <Typography

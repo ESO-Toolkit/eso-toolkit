@@ -3,7 +3,7 @@
  * Glass-style inputs, accent-themed race chips.
  */
 
-import { Box, Stack, Typography } from '@mui/material';
+import { Box, ButtonBase, Stack, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -164,8 +164,7 @@ export const GeneralSection: React.FC = () => {
                     const selected = build.races.includes(race.id);
                     return (
                       <Box key={race.id} sx={{ position: 'relative' }}>
-                        <Box
-                          component="button"
+                        <ButtonBase
                           role="checkbox"
                           aria-checked={selected}
                           aria-label={race.label}
@@ -232,7 +231,7 @@ export const GeneralSection: React.FC = () => {
                           >
                             {race.label}
                           </Typography>
-                        </Box>
+                        </ButtonBase>
 
                         {/* Gradient border mask — selected only */}
                         {selected && (
@@ -302,8 +301,7 @@ export const GeneralSection: React.FC = () => {
                   />
                 </Box>
                 <Box sx={{ position: 'relative' }}>
-                  <Box
-                    component="button"
+                  <ButtonBase
                     role="checkbox"
                     aria-checked={selected}
                     aria-label={imperial.label}
@@ -378,7 +376,7 @@ export const GeneralSection: React.FC = () => {
                     >
                       · playable in any alliance
                     </Typography>
-                  </Box>
+                  </ButtonBase>
                   {selected && (
                     <Box
                       sx={{
@@ -402,7 +400,6 @@ export const GeneralSection: React.FC = () => {
           })()}
         </Stack>
       </Box>
-
     </Stack>
   );
 };
