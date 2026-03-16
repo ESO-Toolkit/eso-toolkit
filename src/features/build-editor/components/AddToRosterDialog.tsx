@@ -37,7 +37,10 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { attachBuildToSlot, selectSavedRosters } from '@/store/saved_rosters';
 
+import type { RaidRoster } from '@/types/roster';
+
 import type { Build } from '../types/build.types';
+import { snapshotBuildToSlot } from '../../../utils/rosterBuildBridge';
 
 // ─── Slot definitions ────────────────────────────────────────────────────────
 
@@ -91,19 +94,23 @@ const SLOTS: SlotDef[] = [
 
 // ─── Helper to get the existing buildRef for a slot ──────────────────────────
 
-function getExistingBuildName(
-  roster: { tank1: { buildRef?: { buildName?: string } }; tank2: { buildRef?: { buildName?: string } }; healer1: { buildRef?: { buildName?: string } }; healer2: { buildRef?: { buildName?: string } }; dpsSlots: Array<{ buildRef?: { buildName?: string } }> },
+function getSlotInfo(
+  roster: RaidRoster,
   slotKey: SlotKey,
-): string | undefined {
-  if (slotKey === 'tank1') return roster.tank1.buildRef?.buildName;
-  if (slotKey === 'tank2') return roster.tank2.buildRef?.buildName;
-  if (slotKey === 'healer1') return roster.healer1.buildRef?.buildName;
-  if (slotKey === 'healer2') return roster.healer2.buildRef?.buildName;
-  if (slotKey.startsWith('dps')) {
+): { buildName?: string; playerName?: string } {
+  let slot: { buildRef?: { buildName?: string }; playerName?: string } | undefined;
+  if (slotKey === 'tank1') slot = roster.tank1;
+  else if (slotKey === 'tank2') slot = roster.tank2;
+  else if (slotKey === 'healer1') slot = roster.healer1;
+  else if (slotKey === 'healer2') slot = roster.healer2;
+  else if (slotKey.startsWith('dps')) {
     const idx = parseInt(slotKey.slice(3), 10) - 1;
-    return roster.dpsSlots[idx]?.buildRef?.buildName;
+    slot = roster.dpsSlots[idx];
   }
-  return undefined;
+  return {
+    buildName: slot?.buildRef?.buildName,
+    playerName: slot?.playerName,
+  };
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -124,26 +131,38 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
   const [selectedRosterId, setSelectedRosterId] = React.useState('');
   const [selectedSlot, setSelectedSlot] = React.useState<SlotKey | null>(null);
   const [selectedSetupIndex, setSelectedSetupIndex] = React.useState(0);
+  const [showAllSlots, setShowAllSlots] = React.useState(false);
 
-  // Reset when dialog opens
+  // Reset only when dialog opens (not on every savedRosters change)
+  const prevOpen = React.useRef(false);
   React.useEffect(() => {
-    if (open) {
+    if (open && !prevOpen.current) {
       setSelectedRosterId(savedRosters[0]?.id ?? '');
       setSelectedSlot(null);
       setSelectedSetupIndex(0);
+      setShowAllSlots(false);
     }
+    prevOpen.current = open;
   }, [open, savedRosters]);
+
+  // Guard: clamp setupIndex if setups array is shorter than expected
+  const safeSetupIndex =
+    build.setups.length > 0 ? Math.min(selectedSetupIndex, build.setups.length - 1) : 0;
 
   // Map build.role → which slot group to show
   const roleGroup: 'tank' | 'healer' | 'dps' =
     build.role === 'tank' ? 'tank' : build.role === 'healer' ? 'healer' : 'dps';
 
-  const filteredSlots = SLOTS.filter((s) => s.roleGroup === roleGroup);
+  const visibleSlots = showAllSlots ? SLOTS : SLOTS.filter((s) => s.roleGroup === roleGroup);
 
   const selectedRoster = savedRosters.find((r) => r.id === selectedRosterId);
 
   const handleAttach = (): void => {
     if (!selectedRosterId || !selectedSlot || !selectedRoster) return;
+    if (build.setups.length === 0) {
+      enqueueSnackbar('This build has no setups to attach.', { variant: 'warning' });
+      return;
+    }
 
     dispatch(
       attachBuildToSlot({
@@ -151,11 +170,12 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
         slotKey: selectedSlot,
         buildRef: {
           buildId: build.id,
-          setupIndex: selectedSetupIndex,
+          setupIndex: safeSetupIndex,
           buildName: build.name || 'Untitled Build',
           esoClass: build.esoClass,
           role: build.role,
         },
+        inlineData: snapshotBuildToSlot(build, safeSetupIndex),
       }),
     );
 
@@ -166,6 +186,26 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
     );
     onClose();
   };
+
+  const handleDetach = (): void => {
+    if (!selectedRosterId || !selectedSlot || !selectedRoster) return;
+
+    dispatch(
+      attachBuildToSlot({
+        rosterId: selectedRosterId,
+        slotKey: selectedSlot,
+        buildRef: null,
+      }),
+    );
+
+    const slotLabel = SLOTS.find((s) => s.key === selectedSlot)?.label ?? selectedSlot;
+    enqueueSnackbar(`Build removed from ${slotLabel}`, { variant: 'info' });
+    setSelectedSlot(null);
+  };
+
+  const selectedSlotHasBuild = selectedSlot && selectedRoster
+    ? !!getSlotInfo(selectedRoster.roster, selectedSlot).buildName
+    : false;
 
   // Shared dialog paper styles
   const paperSx = {
@@ -287,34 +327,51 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
 
           {/* ── Slot picker ── */}
           <Box>
-            <Typography
-              sx={{
-                mb: 1.5,
-                display: 'block',
-                fontFamily: 'Space Grotesk, Inter, system-ui',
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: 0.8,
-                textTransform: 'uppercase',
-                color: 'text.secondary',
-              }}
-            >
-              Select Slot
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+              <Typography
+                sx={{
+                  display: 'block',
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: 0.8,
+                  textTransform: 'uppercase',
+                  color: 'text.secondary',
+                }}
+              >
+                Select Slot
+              </Typography>
+              <ButtonBase
+                onClick={() => setShowAllSlots((prev) => !prev)}
+                sx={{
+                  fontSize: 11,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontWeight: 600,
+                  color: showAllSlots ? 'var(--be-accent, #38bdf8)' : 'text.disabled',
+                  px: 1,
+                  py: 0.25,
+                  borderRadius: 1,
+                  '&:hover': { color: 'var(--be-accent, #38bdf8)' },
+                }}
+              >
+                {showAllSlots ? 'Show matching only' : 'Show all slots'}
+              </ButtonBase>
+            </Box>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {filteredSlots.map((slot) => {
-                const existingName = selectedRoster
-                  ? getExistingBuildName(selectedRoster.roster, slot.key)
-                  : undefined;
+              {visibleSlots.map((slot) => {
+                const info = selectedRoster
+                  ? getSlotInfo(selectedRoster.roster, slot.key)
+                  : { buildName: undefined, playerName: undefined };
                 const isSelected = selectedSlot === slot.key;
+                const isOtherRole = slot.roleGroup !== roleGroup;
 
                 return (
                   <Tooltip
                     key={slot.key}
                     title={
-                      existingName
-                        ? `Currently: "${existingName}" — click to replace`
-                        : `Attach to ${slot.label}`
+                      info.buildName
+                        ? `Currently: "${info.buildName}"${info.playerName ? ` (${info.playerName})` : ''} — click to replace`
+                        : `Attach to ${slot.label}${info.playerName ? ` (${info.playerName})` : ''}`
                     }
                   >
                     <ButtonBase
@@ -337,11 +394,13 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
                           : isDark
                             ? 'rgba(255,255,255,0.04)'
                             : 'rgba(0,0,0,0.02)',
+                        opacity: isOtherRole ? 0.5 : 1,
                         transition: 'all 0.15s ease',
                         position: 'relative',
                         '&:hover': {
                           borderColor: 'var(--be-accent, #38bdf8)',
                           background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.07)',
+                          opacity: 1,
                         },
                         '&:focus-visible': {
                           outline: '2px solid var(--be-accent, #38bdf8)',
@@ -350,7 +409,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
                       }}
                     >
                       {/* Green dot when a build is already attached */}
-                      {existingName && (
+                      {info.buildName && (
                         <Box
                           sx={{
                             position: 'absolute',
@@ -391,6 +450,22 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
                       >
                         {slot.shortLabel}
                       </Typography>
+                      {info.playerName && (
+                        <Typography
+                          sx={{
+                            fontSize: 8,
+                            fontFamily: 'Space Grotesk, Inter, system-ui',
+                            color: 'text.disabled',
+                            lineHeight: 1,
+                            maxWidth: 54,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {info.playerName}
+                        </Typography>
+                      )}
                     </ButtonBase>
                   </Tooltip>
                 );
@@ -407,7 +482,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
                 Setup
               </InputLabel>
               <Select
-                value={selectedSetupIndex}
+                value={safeSetupIndex}
                 label="Setup"
                 onChange={(e) => setSelectedSetupIndex(e.target.value as number)}
                 sx={{
@@ -451,7 +526,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
               >
                 <strong>{build.name || 'This build'}</strong>
                 {build.setups.length > 1
-                  ? ` · ${build.setups[selectedSetupIndex]?.name || `Setup ${selectedSetupIndex + 1}`}`
+                  ? ` · ${build.setups[safeSetupIndex]?.name || `Setup ${safeSetupIndex + 1}`}`
                   : ''}{' '}
                 will be attached to{' '}
                 <strong>{SLOTS.find((s) => s.key === selectedSlot)?.label}</strong> in{' '}
@@ -466,6 +541,27 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
         <Button onClick={onClose} variant="outlined" size="small" sx={cancelBtnSx}>
           Cancel
         </Button>
+        {selectedSlotHasBuild && (
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleDetach}
+            sx={{
+              borderRadius: '99px',
+              textTransform: 'none',
+              fontSize: 13,
+              fontWeight: 600,
+              borderColor: isDark ? 'rgba(239,68,68,0.4)' : 'rgba(220,38,38,0.3)',
+              color: isDark ? '#f87171' : '#dc2626',
+              '&:hover': {
+                borderColor: isDark ? 'rgba(239,68,68,0.6)' : 'rgba(220,38,38,0.5)',
+                background: isDark ? 'rgba(239,68,68,0.08)' : 'rgba(220,38,38,0.04)',
+              },
+            }}
+          >
+            Detach
+          </Button>
+        )}
         <Button
           variant="contained"
           size="small"
@@ -489,7 +585,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
             },
           }}
         >
-          Attach to Roster
+          {selectedSlotHasBuild ? 'Replace' : 'Attach to Roster'}
         </Button>
       </DialogActions>
     </Dialog>
