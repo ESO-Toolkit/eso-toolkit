@@ -7,6 +7,7 @@
 import {
   Close as CloseIcon,
   FileUploadOutlined,
+  PublishOutlined,
   SaveOutlined,
   ShareOutlined,
   VisibilityOutlined,
@@ -15,6 +16,7 @@ import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -29,8 +31,13 @@ import { useTheme } from '@mui/material/styles';
 import { useSnackbar } from 'notistack';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
+import { useAuth } from '@/features/auth/AuthContext';
+import { PublishBuildDialog } from '@/features/build-hub/components/PublishBuildDialog';
+import { saveBuild, updateSavedBuild } from '@/store/saved_builds';
 import type { RootState } from '@/store/storeWithHistory';
+import { encodeBuildToURL } from '@/utils/buildEncoding';
 
 import { useBuildCompleteness } from '../hooks/useBuildCompleteness';
 import {
@@ -46,34 +53,90 @@ import { ProgressRing } from './primitives/ProgressRing';
 
 export const BuildCompletionHeader: React.FC = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { enqueueSnackbar } = useSnackbar();
+  const { isLoggedIn, accessToken } = useAuth();
 
   const { build, isDirty, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
+  const savedBuildExists = useSelector((s: RootState) =>
+    savedBuildId ? s.savedBuilds.builds.some((b) => b.id === savedBuildId) : false,
+  );
   const completeness = useBuildCompleteness();
   const [importOpen, setImportOpen] = React.useState(false);
+  const [publishOpen, setPublishOpen] = React.useState(false);
+  const [encodedBuildData, setEncodedBuildData] = React.useState('');
+  const [isPublishing, setIsPublishing] = React.useState(false);
+
+  // Get the saved build ID from URL params (set when editing an existing saved build)
+  const savedBuildId = React.useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('id');
+  }, []);
 
   const handleSave = (): void => {
     if (!build.name.trim()) {
       enqueueSnackbar('Please enter a build name before saving.', { variant: 'warning' });
       return;
     }
+    // Persist to localStorage (quick restore on next visit)
     try {
       localStorage.setItem(BUILD_EDITOR_STORAGE_KEY, JSON.stringify({ build, activeSetupIndex }));
     } catch {
       enqueueSnackbar('Could not save to browser storage.', { variant: 'warning' });
+    }
+    // Persist to Redux (persisted via redux-persist, powers My Builds page)
+    // savedBuildExists guards against silent no-op when the build was deleted in another tab
+    if (savedBuildId && savedBuildExists) {
+      dispatch(updateSavedBuild({ id: savedBuildId, build }));
+    } else {
+      dispatch(saveBuild(build));
     }
     dispatch(markSaved());
     enqueueSnackbar('Build saved!', { variant: 'success' });
   };
 
   const handleShare = (): void => {
-    navigator.clipboard
-      .writeText(window.location.href)
-      .then(() => enqueueSnackbar('Link copied to clipboard!', { variant: 'info' }))
-      .catch(() => enqueueSnackbar('Could not copy link.', { variant: 'error' }));
+    void encodeBuildToURL(build).then((encoded) => {
+      if (!encoded) {
+        enqueueSnackbar('Could not encode build for sharing.', { variant: 'error' });
+        return;
+      }
+      const url = `${window.location.origin}${import.meta.env.BASE_URL}bv?b=${encoded}`;
+      navigator.clipboard
+        .writeText(url)
+        .then(() => enqueueSnackbar('Share link copied to clipboard!', { variant: 'info' }))
+        .catch(() => enqueueSnackbar('Could not copy link.', { variant: 'error' }));
+    });
+  };
+
+  const handleView = (): void => {
+    void encodeBuildToURL(build).then((encoded) => {
+      if (!encoded) {
+        enqueueSnackbar('Could not encode build.', { variant: 'error' });
+        return;
+      }
+      window.open(`${import.meta.env.BASE_URL}bv?b=${encoded}`, '_blank', 'noopener,noreferrer');
+    });
+  };
+
+  const handlePublishClick = (): void => {
+    if (!build.name.trim()) {
+      enqueueSnackbar('Please enter a build name before publishing.', { variant: 'warning' });
+      return;
+    }
+    setIsPublishing(true);
+    void encodeBuildToURL(build).then((encoded) => {
+      setIsPublishing(false);
+      if (!encoded) {
+        enqueueSnackbar('Could not encode build for publishing.', { variant: 'error' });
+        return;
+      }
+      setEncodedBuildData(encoded);
+      setPublishOpen(true);
+    });
   };
 
   // Shared glass-pill button styles
@@ -259,13 +322,71 @@ export const BuildCompletionHeader: React.FC = () => {
           variant="outlined"
           size="small"
           startIcon={<VisibilityOutlined sx={{ fontSize: 14 }} />}
-          disabled
-          aria-label="View build (coming soon)"
-          sx={{ ...pillBtn }}
+          onClick={handleView}
+          aria-label="View build in read-only mode"
+          sx={{
+            ...pillBtn,
+            borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
+            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+            '&:hover': {
+              borderColor: 'var(--be-accent, #38bdf8)',
+              background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
+            },
+          }}
         >
           View
         </Button>
+        {isLoggedIn && (
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={
+              isPublishing ? (
+                <CircularProgress size={12} color="inherit" />
+              ) : (
+                <PublishOutlined sx={{ fontSize: 14 }} />
+              )
+            }
+            onClick={handlePublishClick}
+            disabled={isPublishing}
+            aria-label="Publish build to Build Hub"
+            sx={{
+              ...pillBtn,
+              background: 'linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)',
+              color: '#fff',
+              border: 'none',
+              boxShadow: '0 0 12px rgba(6,182,212,0.35)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
+                boxShadow: '0 0 18px rgba(6,182,212,0.5)',
+              },
+              '&.Mui-disabled': {
+                background: 'linear-gradient(135deg, #22d3ee80 0%, #06b6d480 100%)',
+                color: 'rgba(255,255,255,0.7)',
+              },
+            }}
+          >
+            {isPublishing ? 'Encoding…' : 'Publish'}
+          </Button>
+        )}
       </Box>
+
+      {/* Publish dialog */}
+      {isLoggedIn && accessToken && (
+        <PublishBuildDialog
+          open={publishOpen}
+          buildData={encodedBuildData}
+          esoClass={build.esoClass}
+          role={build.role}
+          gameMode={build.gameMode}
+          onClose={() => setPublishOpen(false)}
+          onPublished={() => {
+            enqueueSnackbar('Build published to the Hub!', { variant: 'success' });
+            navigate('/build-hub');
+          }}
+          token={accessToken}
+        />
+      )}
 
       {/* Import dialog */}
       <Dialog
