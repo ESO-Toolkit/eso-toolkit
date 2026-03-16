@@ -26,7 +26,30 @@ import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
 import type { Build, BuildSetup, CombatRole } from '../features/build-editor/types/build.types';
 import { BuildViewShell } from '../features/build-viewer/components/BuildViewShell';
 import { ViewAttributeBar } from '../features/build-viewer/components/ViewAttributeBar';
+import { getItemInfo } from '../features/loadout-manager/data/itemIdMap';
+import { getSkillById, preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
+import {
+  getItemIconUrl,
+  fetchItemIconUrl,
+} from '../features/loadout-manager/utils/itemIconResolver';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
+
+// ─── Icon CDNs ────────────────────────────────────────────────────────────────
+
+const SKILL_ICON_URL = 'https://eso-hub.com/storage/icons/';
+
+/**
+ * Hook to ensure the skill cache is populated before rendering skill slots.
+ * getSkillById uses a lazy async cache — returns undefined until ready.
+ * This calls preloadSkillData() and re-renders once the cache is warm.
+ */
+function useSkillCacheReady(): boolean {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    void preloadSkillData().then(() => setReady(true));
+  }, []);
+  return ready;
+}
 
 // ─── Display helpers ──────────────────────────────────────────────────────────
 
@@ -177,49 +200,86 @@ const SkillSlot: React.FC<{
 }> = ({ slotIndex, abilityId, isUltimate = false }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const size = isUltimate ? 58 : 50;
+  const skill = getSkillById(abilityId);
+  const iconUrl = skill?.icon ? `${SKILL_ICON_URL}${skill.icon}.png` : null;
+  const size = isUltimate ? 62 : 52;
 
   return (
     <Box
       sx={{
-        width: size,
-        height: size,
-        borderRadius: isUltimate ? '14px' : '12px',
-        background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-        border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
-        '&:hover': {
-          borderColor: 'var(--be-accent, #38bdf8)',
-          boxShadow: '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
-        },
+        gap: 0.5,
+        width: size + 16,
       }}
     >
+      <Box
+        sx={{
+          width: size,
+          height: size,
+          borderRadius: isUltimate ? '14px' : '12px',
+          background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+          border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          position: 'relative',
+          transition: 'border-color 0.2s, box-shadow 0.2s',
+          '&:hover': {
+            borderColor: 'var(--be-accent, #38bdf8)',
+            boxShadow: '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
+          },
+        }}
+      >
+        {iconUrl ? (
+          <img
+            src={iconUrl}
+            alt={skill?.name ?? `Ability ${abilityId}`}
+            loading="lazy"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+              const parent = (e.target as HTMLImageElement).parentElement;
+              if (parent) {
+                const fallback = document.createElement('span');
+                fallback.textContent = isUltimate ? 'ULT' : String(slotIndex + 1);
+                fallback.style.cssText =
+                  'font-size:10px;font-weight:700;opacity:0.3;user-select:none;';
+                parent.appendChild(fallback);
+              }
+            }}
+          />
+        ) : (
+          <Typography
+            sx={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+              userSelect: 'none',
+            }}
+          >
+            {isUltimate ? 'ULT' : slotIndex + 1}
+          </Typography>
+        )}
+      </Box>
       <Typography
         sx={{
-          fontSize: '0.55rem',
+          fontSize: '0.58rem',
           fontWeight: 600,
-          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-          lineHeight: 1,
+          color: isDark ? 'rgba(255,255,255,0.60)' : 'rgba(0,0,0,0.55)',
+          textAlign: 'center',
+          lineHeight: 1.2,
+          maxWidth: size + 16,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
         }}
       >
-        {isUltimate ? 'ULT' : slotIndex + 1}
-      </Typography>
-      <Typography
-        sx={{
-          fontSize: '0.65rem',
-          fontWeight: 700,
-          color: 'var(--be-accent, #38bdf8)',
-          fontFamily: 'monospace',
-          lineHeight: 1,
-          mt: 0.25,
-        }}
-      >
-        {abilityId}
+        {skill?.name ?? `#${abilityId}`}
       </Typography>
     </Box>
   );
@@ -234,6 +294,19 @@ const GearSlotDisplay: React.FC<{ slotIndex: number; itemId: number }> = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const slotName = GEAR_SLOT_NAMES[slotIndex] ?? `Slot ${slotIndex}`;
+  const itemInfo = getItemInfo(itemId);
+  const [iconUrl, setIconUrl] = useState<string | null>(() => getItemIconUrl(itemId));
+
+  // Async fallback for items not in local data
+  useEffect(() => {
+    if (iconUrl || !itemId) return;
+    void fetchItemIconUrl(itemId).then((url) => {
+      if (url) setIconUrl(url);
+    });
+  }, [itemId, iconUrl]);
+
+  const displayName = itemInfo?.name ?? `Item #${itemId}`;
+  const setName = itemInfo?.setName;
 
   return (
     <Box
@@ -252,38 +325,90 @@ const GearSlotDisplay: React.FC<{ slotIndex: number; itemId: number }> = ({
         },
       }}
     >
+      {/* Item icon */}
       <Box
         sx={{
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          background: 'var(--be-accent, #38bdf8)',
-          opacity: 0.5,
+          width: 32,
+          height: 32,
+          borderRadius: '8px',
+          overflow: 'hidden',
           flexShrink: 0,
+          background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+          border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
-      />
+      >
+        {iconUrl ? (
+          <img
+            src={iconUrl}
+            alt={displayName}
+            loading="lazy"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: 'var(--be-accent, #38bdf8)',
+              opacity: 0.4,
+            }}
+          />
+        )}
+      </Box>
+
+      {/* Slot label */}
       <Typography
         sx={{
-          fontSize: '0.68rem',
-          fontWeight: 600,
-          color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)',
-          minWidth: 90,
+          fontSize: '0.6rem',
+          fontWeight: 700,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+          minWidth: 75,
           flexShrink: 0,
           fontFamily: 'Space Grotesk, Inter, system-ui',
         }}
       >
         {slotName}
       </Typography>
-      <Typography
-        sx={{
-          fontSize: '0.72rem',
-          fontWeight: 700,
-          color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
-          fontFamily: 'monospace',
-        }}
-      >
-        #{itemId}
-      </Typography>
+
+      {/* Item name + set name */}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography
+          sx={{
+            fontSize: '0.72rem',
+            fontWeight: 600,
+            color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {displayName}
+        </Typography>
+        {setName && setName !== displayName && (
+          <Typography
+            sx={{
+              fontSize: '0.6rem',
+              fontWeight: 500,
+              color: 'var(--be-accent, #38bdf8)',
+              opacity: 0.7,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {setName}
+          </Typography>
+        )}
+      </Box>
     </Box>
   );
 };
@@ -713,6 +838,7 @@ export const BuildViewPage: React.FC = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();
+  const skillCacheReady = useSkillCacheReady();
 
   const [build, setBuild] = useState<Build | null>(null);
   const [loading, setLoading] = useState(true);
@@ -765,7 +891,7 @@ export const BuildViewPage: React.FC = () => {
   };
 
   // ── Loading ──
-  if (loading) {
+  if (loading || !skillCacheReady) {
     return (
       <Container maxWidth="lg" sx={{ pt: 4, pb: 6, px: { xs: 2, sm: 3 } }}>
         <Skeleton
