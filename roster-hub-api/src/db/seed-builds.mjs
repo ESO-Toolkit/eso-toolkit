@@ -85,6 +85,11 @@ const BUILDS = [
             // Back: Endless Hail, Unstable Wall, Degeneration, Cauterize, Barbed Trap, Standard of Might (ult)
             1: { 0: 38692, 1: 39052, 2: 40457, 3: 32881, 4: 40382, 5: 32947 },
           },
+          // Gear: Sul-Xan's Torment (body) + Mother's Sorrow (jewelry+weapons)
+          g: {
+            0: 173746, 2: 173743, 3: 173748, 6: 173749, 8: 173747, 9: 173744, 16: 173741,
+            1: 97218, 11: 97217, 12: 97224,
+          },
         },
       ],
     },
@@ -117,6 +122,11 @@ const BUILDS = [
             0: { 0: 22256, 1: 22240, 2: 26858, 3: 21765, 4: 40094, 5: 22229 },
             // Back: Healing Springs, Radiating Regen, Extended Ritual, Energy Orb, Elemental Drain, Aggressive Horn (ult)
             1: { 0: 40060, 1: 40079, 2: 22262, 3: 42038, 4: 39095, 5: 40223 },
+          },
+          // Gear: Jorvuld's Guidance (body) + Whorl of the Depths (jewelry)
+          g: {
+            0: 129127, 2: 129124, 3: 129130, 6: 129131, 8: 129128, 9: 129125, 16: 129121,
+            1: 186419, 11: 186418, 12: 186422,
           },
         },
       ],
@@ -151,6 +161,11 @@ const BUILDS = [
             // Back: Endless Hail, Unstable Wall, Growing Swarm, Ice Fortress, Deceptive Predator, Wild Guardian (ult)
             1: { 0: 38692, 1: 39052, 2: 86031, 3: 86130, 4: 86041, 5: 85990 },
           },
+          // Gear: Pillar of Nirn (body) + Deadly Strike (jewelry)
+          g: {
+            0: 127541, 2: 127538, 3: 127543, 6: 127544, 8: 127542, 9: 127539, 16: 127537,
+            1: 87873, 11: 87873, 12: 87876,
+          },
         },
       ],
     },
@@ -183,6 +198,11 @@ const BUILDS = [
             0: { 0: 46324, 1: 24330, 2: 24328, 3: 23213, 4: 23678, 5: 23492 },
             // Back: Unstable Wall, Liquid Lightning, Volatile Familiar, Bound Aegis, Force Pulse, Greater Storm Atronach (ult)
             1: { 0: 39052, 1: 23200, 2: 23316, 3: 24163, 4: 46356, 5: 23492 },
+          },
+          // Gear: Mother's Sorrow (body) + Whorl of the Depths (jewelry)
+          g: {
+            0: 97235, 2: 97232, 3: 97238, 6: 97239, 8: 97236, 9: 97233, 16: 97231,
+            1: 186419, 11: 186418, 12: 186422,
           },
         },
       ],
@@ -217,6 +237,11 @@ const BUILDS = [
             // Back: Spirit Guardian, Resistant Flesh, Unnerving Boneyard, Inner Rage, Elemental Drain, Aggressive Horn (ult)
             1: { 0: 118912, 1: 117883, 2: 117805, 3: 42056, 4: 39095, 5: 40223 },
           },
+          // Gear: Saxhleel Champion (body) + Crimson Oath's Rive (jewelry)
+          g: {
+            0: 173875, 2: 173872, 3: 173877, 6: 173878, 8: 173876, 9: 173873, 16: 173870,
+            1: 177401, 11: 177400, 12: 177404,
+          },
         },
       ],
     },
@@ -247,8 +272,13 @@ const BUILDS = [
           sk: {
             // Front: Cephaliarch's Flail, Escalating Runeblades, Runic Sunder, Fulminating Rune, Degeneration, The Languid Eye (ult)
             0: { 0: 183006, 1: 182977, 2: 183430, 3: 182988, 4: 40457, 5: 189867 },
-            // Back: Unstable Wall, Inspired Scholarship, Cruxweaver Armor, Channeled Focus(?→BarTrap), Inner Light, Pragmatic Fatecarver (ult)
+            // Back: Unstable Wall, Inspired Scholarship, Cruxweaver Armor, Barbed Trap, Inner Light, Pragmatic Fatecarver (ult)
             1: { 0: 39052, 1: 185842, 2: 185908, 3: 40382, 4: 40478, 5: 186366 },
+          },
+          // Gear: Whorl of the Depths (body) + Deadly Strike (jewelry)
+          g: {
+            0: 186428, 2: 186425, 3: 186431, 6: 186432, 8: 186429, 9: 186426, 16: 186423,
+            1: 87873, 11: 87873, 12: 87876,
           },
         },
       ],
