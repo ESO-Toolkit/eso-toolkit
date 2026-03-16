@@ -23,6 +23,7 @@ import React from 'react';
 
 import {
   TankSetup,
+  RosterDetailLevel,
   SupportUltimate,
   CLASS_SKILL_LINES,
   ALL_5PIECE_SETS,
@@ -30,6 +31,7 @@ import {
   validateCompatibility,
 } from '../../types/roster';
 import { KnownSetIDs } from '../../types/abilities';
+import { SlotFullModePanel } from './SlotFullModePanel';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColors';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
 import { makeGlassSx } from './shared/glassSx';
@@ -52,13 +54,14 @@ export interface TankCardProps {
   tank: TankSetup;
   onChange: (updates: Partial<TankSetup>) => void;
   availableGroups: string[];
+  mode?: RosterDetailLevel;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export const TankCard = React.memo<TankCardProps>(({ tankNum, tank, onChange, availableGroups }) => {
+export const TankCard = React.memo<TankCardProps>(({ tankNum, tank, onChange, availableGroups, mode }) => {
   const tankTheme = useTheme();
   const tankIsDark = tankTheme.palette.mode === 'dark';
   const tankRoleColors = tankIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
@@ -725,6 +728,19 @@ export const TankCard = React.memo<TankCardProps>(({ tankNum, tank, onChange, av
               </Stack>
             </AccordionDetails>
           </Accordion>
+
+          {mode === 'full' && (
+            <SlotFullModePanel
+              skills={tank.skills}
+              cpPoints={tank.cpPoints}
+              food={tank.food}
+              passives={tank.passives}
+              onSkillsChange={(skills) => onChange({ skills })}
+              onCpPointsChange={(cpPoints) => onChange({ cpPoints })}
+              onFoodChange={(food) => onChange({ food })}
+              onPassivesChange={(passives) => onChange({ passives })}
+            />
+          )}
         </Stack>
       </CardContent>
     </Card>

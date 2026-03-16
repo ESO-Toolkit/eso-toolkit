@@ -87,6 +87,7 @@ import {
   HealerBuff,
   HealerChampionPoint,
   JailDDType,
+  RosterDetailLevel,
   SkillLineConfig,
   PlayerGroup as _PlayerGroup,
   RoleComposition,
@@ -1569,34 +1570,12 @@ export const RosterBuilderPage: React.FC = () => {
                 : '1px solid rgba(0,0,0,0.06)',
             }}
           >
-            {(['simple', 'full'] as const).map((value) => (
+            {(['simple', 'advanced', 'full'] as const).map((value) => (
               <Box
                 key={value}
-                role="tab"
-                tabIndex={mode === value ? 0 : -1}
-                aria-selected={mode === value}
-                aria-label={`${value === 'simple' ? 'Simple' : 'Full'} mode`}
                 onClick={() => {
                   setMode(value);
                   setRoster((prev) => ({ ...prev, rosterDetailLevel: value }));
-                }}
-                onKeyDown={(e: React.KeyboardEvent) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setMode(value);
-                    setRoster((prev) => ({ ...prev, rosterDetailLevel: value }));
-                  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                    e.preventDefault();
-                    const next = value === 'simple' ? 'full' : 'simple';
-                    setMode(next);
-                    setRoster((prev) => ({ ...prev, rosterDetailLevel: next }));
-                    // Focus the newly selected tab
-                    const sibling =
-                      e.key === 'ArrowRight'
-                        ? (e.currentTarget.nextElementSibling as HTMLElement)
-                        : (e.currentTarget.previousElementSibling as HTMLElement);
-                    sibling?.focus();
-                  }
                 }}
                 sx={{
                   flex: '1 1 auto',
@@ -1647,7 +1626,7 @@ export const RosterBuilderPage: React.FC = () => {
                   },
                 }}
               >
-                {value === 'simple' ? 'Simple' : 'Full'}
+                {value === 'simple' ? 'Simple' : value === 'advanced' ? 'Advanced' : 'Full'}
               </Box>
             ))}
           </Box>
@@ -2269,27 +2248,25 @@ export const RosterBuilderPage: React.FC = () => {
           }}
         />
 
-        {/* ─── Roster Setup Section ─── */}
-        <Box sx={{ mb: 3 }}>
-          {/* Section header */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '9px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: isDarkMode
-                  ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
-                  : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
-                border: isDarkMode
-                  ? '1px solid rgba(255,255,255,0.08)'
-                  : '1px solid rgba(0,0,0,0.08)',
-              }}
-            >
-              <TuneIcon
+        {/* Simple Mode: Set Assignment Manager */}
+        <Box sx={{ display: mode === 'simple' ? 'block' : 'none' }}>
+          <SetAssignmentManager
+            tank1={roster.tank1}
+            tank2={roster.tank2}
+            healer1={roster.healer1}
+            healer2={roster.healer2}
+            onAssignSet={handleSetAssignment}
+            onUpdateUltimate={handleUltimateUpdate}
+            onUpdateHealerCP={handleHealerCPUpdate}
+          />
+        </Box>
+
+        {/* Advanced / Full Mode: Full Roster Details */}
+        <Box sx={{ display: mode === 'advanced' || mode === 'full' ? 'block' : 'none' }}>
+          {/* Player Groups Management */}
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
+              <Box
                 sx={{
                   fontSize: '1rem',
                   color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
@@ -2465,6 +2442,24 @@ export const RosterBuilderPage: React.FC = () => {
                 }
               />
             </Box>
+            <Stack spacing={2} mb={3}>
+              <TankCard
+                key={1}
+                tankNum={1}
+                tank={roster.tank1}
+                onChange={handleTank1Change}
+                availableGroups={memoizedGroups}
+                mode={mode}
+              />
+              <TankCard
+                key={2}
+                tankNum={2}
+                tank={roster.tank2}
+                onChange={handleTank2Change}
+                availableGroups={memoizedGroups}
+                mode={mode}
+              />
+            </Stack>
           </Box>
         </Box>
 
@@ -2479,27 +2474,188 @@ export const RosterBuilderPage: React.FC = () => {
           />
         </Box>
 
-        {/* Full Mode: Full Roster Details */}
-        <Box sx={{ display: mode === 'full' ? 'block' : 'none' }}>
-          <RosterCardSections
-            tanks={roster.tanks}
-            healers={roster.healers}
-            dpsSlots={roster.dpsSlots}
-            tankChangeCallbacks={tankChangeCallbacks}
-            healerChangeCallbacks={healerChangeCallbacks}
-            handleDPSSlotChange={handleDPSSlotChange}
-            handleConvertDPSToJail={handleConvertDPSToJail}
-            handleConvertJailToDPS={handleConvertJailToDPS}
-            handleMoveDPSSlot={handleMoveDPSSlot}
-            availableGroups={memoizedGroups}
-            usedBuffs={usedBuffs}
-            mode={mode}
-            savedRosterId={savedRosterIdRef.current ?? undefined}
-            isDarkMode={isDarkMode}
-            dpsSlotIds={dpsSlotIds}
-            sensors={sensors}
-            handleDPSDragEnd={handleDPSDragEnd}
+          {/* Healers Section */}
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${roleColors.healer}20 0%, ${roleColors.healer}08 100%)`,
+                  border: `1px solid ${roleColors.healer}25`,
+                }}
+              >
+                <FavoriteIcon sx={{ fontSize: '1rem', color: roleColors.healer }} />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
+                  }}
+                >
+                  Role
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontWeight: 700,
+                      fontSize: '1.05rem',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: `linear-gradient(135deg, ${roleColors.healer} 0%, ${roleColors.healer}99 100%)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    Healers
+                  </Typography>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      px: 0.75,
+                      py: 0.125,
+                      borderRadius: '6px',
+                      backgroundColor: `${roleColors.healer}12`,
+                      color: roleColors.healer,
+                      border: `1px solid ${roleColors.healer}25`,
+                    }}
+                  >
+                    2
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            <Stack spacing={2} mb={3}>
+              <HealerCard
+                key={1}
+                healerNum={1}
+                healer={roster.healer1}
+                onChange={handleHealer1Change}
+                availableGroups={memoizedGroups}
+                usedBuffs={usedBuffs}
+                mode={mode}
+              />
+              <HealerCard
+                key={2}
+                healerNum={2}
+                healer={roster.healer2}
+                onChange={handleHealer2Change}
+                availableGroups={memoizedGroups}
+                usedBuffs={usedBuffs}
+                mode={mode}
+              />
+            </Stack>
+          </Box>
+
+          <Divider
+            sx={{
+              my: 1.5,
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+            }}
           />
+
+          {/* DPS Slots Section */}
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${roleColors.dps}20 0%, ${roleColors.dps}08 100%)`,
+                  border: `1px solid ${roleColors.dps}25`,
+                }}
+              >
+                <AutoAwesomeIcon sx={{ fontSize: '1rem', color: roleColors.dps }} />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'text.disabled',
+                    lineHeight: 1,
+                    mb: 0.375,
+                  }}
+                >
+                  Roster
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontWeight: 700,
+                      fontSize: '1.05rem',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      background: `linear-gradient(135deg, ${roleColors.dps} 0%, ${roleColors.dps}99 100%)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    DPS Roster
+                  </Typography>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      px: 0.75,
+                      py: 0.125,
+                      borderRadius: '6px',
+                      backgroundColor: `${roleColors.dps}12`,
+                      color: roleColors.dps,
+                      border: `1px solid ${roleColors.dps}25`,
+                    }}
+                  >
+                    {roster.dpsSlots.length} Slots
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDPSDragEnd}
+            >
+              <SortableContext items={dpsSlotIds} strategy={verticalListSortingStrategy}>
+                <Stack spacing={1.5} mb={3}>
+                  {roster.dpsSlots.map((slot, index) => (
+                    <DPSSlotCard
+                      key={slot.slotNumber}
+                      slot={slot}
+                      slotIndex={index}
+                      availableGroups={memoizedGroups}
+                      onSlotChange={handleDPSSlotChange}
+                      onConvertToJail={handleConvertDPSToJail}
+                      onConvertToDPS={handleConvertJailToDPS}
+                      mode={mode}
+                    />
+                  ))}
+                </Stack>
+              </SortableContext>
+            </DndContext>
+          </Box>
 
           {/* Per-Fight Builds */}
           <Box sx={{ my: 2 }}>
