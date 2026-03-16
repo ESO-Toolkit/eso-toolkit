@@ -28,6 +28,7 @@ import {
 import { alpha, useTheme } from '@mui/material/styles';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { staggerContainer, fadeInUp } from '../features/build-editor/components/motion/variants';
 import { GlassPanel } from '../features/build-editor/components/primitives/GlassPanel';
@@ -975,6 +976,7 @@ export const BuildViewPage: React.FC = () => {
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();
   const skillCacheReady = useSkillCacheReady();
+  const navigate = useNavigate();
 
   const [build, setBuild] = useState<Build | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1022,8 +1024,7 @@ export const BuildViewPage: React.FC = () => {
   };
 
   const handleOpenInEditor = (): void => {
-    const basePath = window.location.pathname.replace(/\/bv(\/.*)?$/, '');
-    window.location.href = `${window.location.origin}${basePath}/build-editor?b=${encodedParam}`;
+    navigate(`/build-editor?b=${encodeURIComponent(encodedParam)}`);
   };
 
   // ── Loading ──
