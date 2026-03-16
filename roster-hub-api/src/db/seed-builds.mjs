@@ -100,6 +100,57 @@ const BUILDS = [
           },
           fo: 133556, // Clockwork Citrus Filet (Max Magicka + Stamina Recovery)
           pa: [3463, 29439, 29430, 29451, 29457], // Combustion, Searing Heat, Warmth, World in Ruin, Burning Heart
+          cp: {
+            c: {
+              s: [66, null, null, null], // Steed's Blessing; Coxswain (unmapped)
+              p: {
+                'breakfall': 10,             // Cushioning
+                'fleet-phantom': 10,         // Quick Ghost
+                'fortunes-favor': 10,        // Favor and Fortune
+                'gilded-fingers': 10,        // Golden Hands
+                'inspiration-boost': 10,     // Renewed Inspiration
+                'out-of-sight': 10,          // Not Seen, Not Taken
+                'soul-reservoir': 1,         // Soul Reservoir
+                'steadfast-enchantment': 10, // Unwavering Enchantment
+                'wanderer': 10,              // Wandering
+              },
+            },
+            w: {
+              s: [277, 23, 8, null], // Exploiter, Biting Aura, Wrathful Strikes (Enraged Strikes)
+              p: {
+                'battle-mastery': 10,      // Combat Mastery
+                'blessed': 10,             // Blessing
+                'eldritch-insight': 10,    // Unspeakable Intuition
+                'elemental-aegis': 10,     // Elemental Aegis
+                'flawless-ritual': 10,     // Impeccable Ritual
+                'hardy': 10,               // Robust
+                'mighty': 10,              // Power
+                'piercing': 10,            // Breakthrough
+                'precision': 10,           // Accuracy
+                'preparation': 10,         // Preparation
+                'quick-recovery': 10,      // Fast Recovery
+                'tireless-discipline': 10, // Tireless Discipline
+                'war-mage': 10,            // The War Mage
+              },
+            },
+            f: {
+              s: [270, 2, 34, 35], // Celerity (Swiftness), Boundless Vitality, Fortified, Rejuvenation
+              p: {
+                'bashing-brutality': 10, // Striking Brutality
+                'defiance': 10,          // Resistance
+                'fortification': 10,     // Fortification
+                'hasty': 10,             // Early
+                'heros-vigor': 10,       // Heroic Vigor
+                'mystic-tenacity': 10,   // Mystical Tenacity
+                'nimble-protector': 10,  // Agile Protector
+                'piercing-gaze': 10,     // The Piercing Gaze
+                'savage-defense': 10,    // Wild Defense
+                'sprinter': 10,          // Sprinter
+                'tireless-guardian': 10, // Tireless Guardian
+                'tumbling': 10,          // Acrobat
+              },
+            },
+          },
         },
       ],
     },
