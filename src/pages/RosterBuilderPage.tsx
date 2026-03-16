@@ -2,6 +2,22 @@ import { gql } from '@apollo/client';
 import { KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  AutoAwesome as AutoAwesomeIcon,
   Bookmark as BookmarkIcon,
   Download as DownloadIcon,
   Upload as UploadIcon,
@@ -20,6 +36,8 @@ import {
   Button,
   ButtonBase,
   Container,
+  FormControl,
+  IconButton,
   Menu,
   MenuItem,
   ListItemIcon,
@@ -44,6 +62,9 @@ import React, { useState, useCallback, useMemo, useRef, useTransition } from 're
 import { useNavigate } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
+import { DPSSlotCard } from '../components/roster/DPSSlotCard';
+import { HealerCard } from '../components/roster/HealerSlotCard';
+import { TankCard } from '../components/roster/TankSlotCard';
 import { PerFightBuilds } from '../components/PerFightBuilds';
 import { RoleCompositionPicker } from '../components/RoleCompositionPicker';
 import { RosterCardSections } from '../components/roster/RosterCardSections';
@@ -66,7 +87,6 @@ import {
   HealerBuff,
   HealerChampionPoint,
   JailDDType,
-  RosterDetailLevel,
   SkillLineConfig,
   PlayerGroup as _PlayerGroup,
   RoleComposition,
@@ -74,7 +94,8 @@ import {
   defaultTankSetup,
   defaultHealerSetup,
   createDefaultDPSSlots,
-  CLASS_SKILL_LINES,
+  MONSTER_SETS,
+  ALL_5PIECE_SETS,
 } from '../types/roster';
 import type { TrialBuildOverrides } from '../types/trial-encounters';
 import {
