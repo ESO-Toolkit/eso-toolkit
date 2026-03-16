@@ -525,8 +525,36 @@ export const HeaderBar: React.FC = () => {
     if (currentUser?.name) {
       navigate(`/u/${currentUser.name}`);
     }
-    setMobileOpen(false);
-  }, [currentUser, navigate]);
+    setMobileAccountOpen(!mobileAccountOpen);
+  };
+
+  const handleAccountClick = (event: React.MouseEvent<HTMLElement>): void => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = (): void => {
+    setAnchorEl(null);
+  };
+
+  const handleViewReports = (): void => {
+    navigate('/my-reports');
+    setAnchorEl(null);
+  };
+
+  const handleViewRosters = (): void => {
+    navigate('/my-rosters');
+    setAnchorEl(null);
+  };
+
+  const handleViewBuilds = (): void => {
+    navigate('/my-builds');
+    setAnchorEl(null);
+  };
+
+  const handleLogoutFromMenu = (): void => {
+    handleLogout();
+    setAnchorEl(null);
+  };
 
   const handleToolsClick = (event: React.MouseEvent<HTMLElement>): void => {
     setToolsAnchorEl(event.currentTarget);
@@ -564,6 +592,34 @@ export const HeaderBar: React.FC = () => {
     setMobileReportsOpen(false);
   }, [navigate]);
 
+  const handleMobileViewReports = React.useCallback((): void => {
+    navigate('/my-reports');
+    setMobileOpen(false);
+    setMobileAccountOpen(false);
+  }, [navigate]);
+
+  const handleMobileViewRosters = React.useCallback((): void => {
+    navigate('/my-rosters');
+    setMobileOpen(false);
+    setMobileAccountOpen(false);
+  }, [navigate]);
+
+  const handleMobileViewBuilds = React.useCallback((): void => {
+    navigate('/my-builds');
+    setMobileOpen(false);
+    setMobileAccountOpen(false);
+  }, [navigate]);
+
+  const handleMobileAuthAction = React.useCallback((): void => {
+    if (isLoggedIn) {
+      handleLogout();
+    } else {
+      handleLogin();
+    }
+    setMobileOpen(false);
+    setMobileAccountOpen(false);
+  }, [isLoggedIn, handleLogout, handleLogin]);
+
   const toolsItems = [
     {
       text: 'Text Editor',
@@ -594,6 +650,16 @@ export const HeaderBar: React.FC = () => {
       text: 'Build Editor',
       icon: '🔧',
       path: '/build-editor',
+    },
+    {
+      text: 'Gear Sets',
+      icon: '🛡️',
+      path: '/gear-sets',
+    },
+    {
+      text: 'Build Hub',
+      icon: '🏗️',
+      path: '/build-hub',
     },
   ];
 
@@ -630,6 +696,56 @@ export const HeaderBar: React.FC = () => {
 
     return items;
   }, [isLoggedIn, handleSampleReport]);
+
+  const accountItems = React.useMemo(() => {
+    const items: Array<{
+      text: string;
+      icon: React.ReactElement;
+      action: () => void;
+      colorVariant: 'default' | 'destructive' | 'positive';
+    }> = [];
+
+    if (isLoggedIn) {
+      items.push({
+        text: 'My reports',
+        icon: <Person sx={{ fontSize: 18 }} />,
+        action: handleMobileViewReports,
+        colorVariant: 'default',
+      });
+      items.push({
+        text: 'My rosters',
+        icon: <Build sx={{ fontSize: 18 }} />,
+        action: handleMobileViewRosters,
+        colorVariant: 'default',
+      });
+      items.push({
+        text: 'My builds',
+        icon: <Build sx={{ fontSize: 18 }} />,
+        action: handleMobileViewBuilds,
+        colorVariant: 'default',
+      });
+      items.push({
+        text: 'Log out',
+        icon: <Logout sx={{ fontSize: 18 }} />,
+        action: handleMobileAuthAction,
+        colorVariant: 'destructive',
+      });
+    } else {
+      items.push({
+        text: 'Log in',
+        icon: <Login sx={{ fontSize: 18 }} />,
+        action: handleMobileAuthAction,
+        colorVariant: 'positive',
+      });
+    }
+    return items;
+  }, [
+    isLoggedIn,
+    handleMobileAuthAction,
+    handleMobileViewReports,
+    handleMobileViewRosters,
+    handleMobileViewBuilds,
+  ]);
 
   const navItems = [
     {
@@ -959,6 +1075,130 @@ export const HeaderBar: React.FC = () => {
           </Toolbar>
         </Container>
       </AppBar>
+
+      {/* Account Menu for Logged In Users */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        onClick={handleMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        slotProps={{
+          paper: {
+            elevation: 0,
+            sx: {
+              overflow: 'visible',
+              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+              mt: 1.5,
+              minWidth: 180,
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)'
+                  : 'linear-gradient(135deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.98) 100%)',
+              backdropFilter: 'blur(20px)',
+              border:
+                theme.palette.mode === 'dark'
+                  ? '1px solid rgba(56, 189, 248, 0.2)'
+                  : '1px solid rgba(59, 130, 246, 0.15)',
+              borderRadius: 2,
+              '&::before': {
+                content: '""',
+                display: 'block',
+                position: 'absolute',
+                top: 0,
+                right: 14,
+                width: 10,
+                height: 10,
+                bgcolor: 'background.paper',
+                transform: 'translateY(-50%) rotate(45deg)',
+                zIndex: 0,
+              },
+            },
+          },
+        }}
+      >
+        <MenuItem
+          onClick={handleViewReports}
+          sx={{
+            py: 1.5,
+            px: 2,
+            borderRadius: 1,
+            mx: 1,
+            mb: 0.5,
+            '&:hover': {
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.08)'
+                  : 'rgba(59, 130, 246, 0.08)',
+            },
+          }}
+        >
+          <Person sx={{ mr: 1.5, fontSize: 20 }} />
+          My reports
+        </MenuItem>
+        <MenuItem
+          onClick={handleViewRosters}
+          sx={{
+            py: 1.5,
+            px: 2,
+            borderRadius: 1,
+            mx: 1,
+            mb: 0.5,
+            '&:hover': {
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.08)'
+                  : 'rgba(59, 130, 246, 0.08)',
+            },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 32 }}>
+            <Build sx={{ fontSize: 20 }} />
+          </ListItemIcon>
+          My rosters
+        </MenuItem>
+        <MenuItem
+          onClick={handleViewBuilds}
+          sx={{
+            py: 1.5,
+            px: 2,
+            borderRadius: 1,
+            mx: 1,
+            mb: 0.5,
+            '&:hover': {
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.08)'
+                  : 'rgba(59, 130, 246, 0.08)',
+            },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 32 }}>
+            <Build sx={{ fontSize: 20 }} />
+          </ListItemIcon>
+          My builds
+        </MenuItem>
+        <MenuItem
+          onClick={handleLogoutFromMenu}
+          sx={{
+            py: 1.5,
+            px: 2,
+            borderRadius: 1,
+            mx: 1,
+            color: 'error.main',
+            '&:hover': {
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(239, 68, 68, 0.08)'
+                  : 'rgba(220, 38, 38, 0.08)',
+            },
+          }}
+        >
+          <Logout sx={{ mr: 1.5, fontSize: 20 }} />
+          Log out
+        </MenuItem>
+      </Menu>
 
       {/* Tools Submenu */}
       <Menu
