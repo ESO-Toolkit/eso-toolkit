@@ -17,6 +17,7 @@ import {
   HealerChampionPoint,
   JailDDType,
   RaidRoster,
+  RosterDetailLevel,
   TankSetup,
   TankGearSet,
   HealerSetup,
@@ -33,6 +34,8 @@ import type {
   EncounterOverrides,
   PlayerOverride,
 } from '../types/trial-encounters';
+import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
+import type { BuildChampionPoints, ChampionTree } from '../features/build-editor/types/build.types';
 
 import { Logger, LogLevel } from './logger';
 
@@ -55,6 +58,25 @@ export interface CompactBuildRef {
 export interface CompactFood {
   i?: number; // id
   n?: string; // name
+}
+
+/** Compact champion point tree */
+export interface CompactCPTree {
+  s?: Array<number | null>; // slots (trailing nulls trimmed)
+  p?: Record<string, number>; // passive allocations (zero values omitted)
+}
+
+/** Compact full champion points (three trees) */
+export interface CompactCPFull {
+  w?: CompactCPTree; // warfare
+  fi?: CompactCPTree; // fitness (avoid 'f' collision with food)
+  c?: CompactCPTree; // craft
+}
+
+/** Compact skill bars: front bar + back bar */
+export interface CompactSkillBars {
+  f?: Record<number, number>; // front bar: slot → abilityId
+  b?: Record<number, number>; // back bar: slot → abilityId
 }
 
 export interface CompactSkills {
@@ -93,6 +115,9 @@ export interface CompactTank {
   no?: string; // notes
   br?: CompactBuildRef; // buildRef
   fo?: CompactFood; // food
+  sk?: CompactSkillBars; // full skill bars (Full mode)
+  cp2?: CompactCPFull; // champion points (Full mode)
+  pa?: number[]; // passive ability IDs (Full mode)
 }
 
 export interface CompactHealer {
@@ -116,6 +141,9 @@ export interface CompactHealer {
   no?: string; // notes
   br?: CompactBuildRef; // buildRef
   fo?: CompactFood; // food
+  sk?: CompactSkillBars; // full skill bars (Full mode)
+  cp2?: CompactCPFull; // champion points (Full mode)
+  pa?: number[]; // passive ability IDs (Full mode)
 }
 
 export interface CompactDPS {
@@ -142,6 +170,9 @@ export interface CompactDPS {
   cd?: string; // customDescription
   br?: CompactBuildRef; // buildRef
   fo?: CompactFood; // food
+  sk?: CompactSkillBars; // full skill bars (Full mode)
+  cp2?: CompactCPFull; // champion points (Full mode)
+  pa?: number[]; // passive ability IDs (Full mode)
 }
 
 /** Compact representation of a PlayerOverride (per-fight set/ultimate/notes changes) */
@@ -180,6 +211,7 @@ export interface CompactRoster {
   ag?: string[]; // availableGroups
   no?: string; // notes
   to?: CompactTrialOverrides; // trialOverrides (per-fight builds)
+  dl?: number; // detail level: 0=simple 1=advanced 2=full
 }
 
 // ============================================================
@@ -342,6 +374,74 @@ function expandGroups(grs?: string[], gr?: CompactGroup): string[] | undefined {
   return undefined;
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Skill bars + Champion points helpers (Full detail mode)
+// ──────────────────────────────────────────────────────────────────────────────
+
+function compactSkillBars(skills?: SkillsConfig): CompactSkillBars | undefined {
+  if (!skills) return undefined;
+  const f = Object.keys(skills[0]).length > 0 ? (skills[0] as Record<number, number>) : undefined;
+  const b = Object.keys(skills[1]).length > 0 ? (skills[1] as Record<number, number>) : undefined;
+  if (!f && !b) return undefined;
+  const c: CompactSkillBars = {};
+  if (f) c.f = f;
+  if (b) c.b = b;
+  return c;
+}
+
+function expandSkillBars(c?: CompactSkillBars): SkillsConfig | undefined {
+  if (!c) return undefined;
+  return { 0: (c.f as SkillsConfig[0]) ?? {}, 1: (c.b as SkillsConfig[1]) ?? {} };
+}
+
+function compactCPTree(tree: ChampionTree): CompactCPTree | undefined {
+  const trimmedSlots = [...tree.slots];
+  // Trim trailing nulls
+  while (trimmedSlots.length > 0 && trimmedSlots[trimmedSlots.length - 1] === null) {
+    trimmedSlots.pop();
+  }
+  const hasSlots = trimmedSlots.length > 0;
+  const nonZeroPassives = Object.fromEntries(
+    Object.entries(tree.passives).filter(([, v]) => v !== 0),
+  );
+  const hasPassives = Object.keys(nonZeroPassives).length > 0;
+  if (!hasSlots && !hasPassives) return undefined;
+  const c: CompactCPTree = {};
+  if (hasSlots) c.s = trimmedSlots;
+  if (hasPassives) c.p = nonZeroPassives;
+  return c;
+}
+
+function expandCPTree(c?: CompactCPTree): ChampionTree {
+  const rawSlots = c?.s ?? [];
+  // Pad back to 4 slots
+  const slots: Array<number | null> = [...rawSlots];
+  while (slots.length < 4) slots.push(null);
+  return { slots: slots as ChampionTree['slots'], passives: c?.p ?? {} };
+}
+
+function compactCPFull(cp?: BuildChampionPoints): CompactCPFull | undefined {
+  if (!cp) return undefined;
+  const w = compactCPTree(cp.warfare);
+  const fi = compactCPTree(cp.fitness);
+  const c = compactCPTree(cp.craft);
+  if (!w && !fi && !c) return undefined;
+  const out: CompactCPFull = {};
+  if (w) out.w = w;
+  if (fi) out.fi = fi;
+  if (c) out.c = c;
+  return out;
+}
+
+function expandCPFull(c?: CompactCPFull): BuildChampionPoints | undefined {
+  if (!c) return undefined;
+  return {
+    warfare: expandCPTree(c.w),
+    fitness: expandCPTree(c.fi),
+    craft: expandCPTree(c.c),
+  };
+}
+
 function compactTank(t: TankSetup): CompactTank {
   const c: CompactTank = {};
   if (t.playerName) c.pn = t.playerName;
@@ -362,6 +462,11 @@ function compactTank(t: TankSetup): CompactTank {
   if (t.buildRef) c.br = compactBuildRef(t.buildRef);
   const fo = compactFood(t.food);
   if (fo) c.fo = fo;
+  const sk = compactSkillBars(t.skills);
+  if (sk) c.sk = sk;
+  const cp2 = compactCPFull(t.cpPoints);
+  if (cp2) c.cp2 = cp2;
+  if (t.passives?.length) c.pa = t.passives;
   return c;
 }
 
@@ -381,6 +486,9 @@ function expandTank(c?: CompactTank): TankSetup {
     notes: c?.no,
     buildRef: c?.br ? expandBuildRef(c.br) : undefined,
     food: expandFood(c?.fo),
+    skills: expandSkillBars(c?.sk),
+    cpPoints: expandCPFull(c?.cp2),
+    passives: c?.pa,
   };
 }
 
@@ -415,6 +523,11 @@ function compactHealer(h: HealerSetup): CompactHealer {
   if (h.buildRef) c.br = compactBuildRef(h.buildRef);
   const fo = compactFood(h.food);
   if (fo) c.fo = fo;
+  const sk = compactSkillBars(h.skills);
+  if (sk) c.sk = sk;
+  const cp2 = compactCPFull(h.cpPoints);
+  if (cp2) c.cp2 = cp2;
+  if (h.passives?.length) c.pa = h.passives;
   return c;
 }
 
@@ -448,6 +561,9 @@ function expandHealer(c?: CompactHealer): HealerSetup {
     notes: c?.no,
     buildRef: c?.br ? expandBuildRef(c.br) : undefined,
     food: expandFood(c?.fo),
+    skills: expandSkillBars(c?.sk),
+    cpPoints: expandCPFull(c?.cp2),
+    passives: c?.pa,
   };
 }
 
@@ -480,6 +596,11 @@ function compactDPS(d: DPSSlot): CompactDPS {
   if (d.buildRef) c.br = compactBuildRef(d.buildRef);
   const fo = compactFood(d.food);
   if (fo) c.fo = fo;
+  const sk = compactSkillBars(d.skills);
+  if (sk) c.sk = sk;
+  const cp2 = compactCPFull(d.cpPoints);
+  if (cp2) c.cp2 = cp2;
+  if (d.passives?.length) c.pa = d.passives;
   return c;
 }
 
@@ -526,6 +647,9 @@ function expandDPS(c: CompactDPS): DPSSlot {
     customDescription: c.cd,
     buildRef: c.br ? expandBuildRef(c.br) : undefined,
     food: expandFood(c.fo),
+    skills: expandSkillBars(c.sk),
+    cpPoints: expandCPFull(c.cp2),
+    passives: c.pa,
   };
 }
 
@@ -619,19 +743,31 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
       slot.championPoint ||
       slot.ultimate ||
       slot.jailDDType ||
+      slot.customDescription ||
       slot.notes ||
       slot.groups?.length ||
       slot.group ||
       slot.skillLines ||
       slot.specificSkills?.length ||
-      slot.championPoint,
+      slot.championPoint ||
+      slot.buildRef ||
+      slot.food ||
+      slot.skills ||
+      slot.cpPoints ||
+      slot.passives?.length,
   );
   if (filledSlots.length) c.dp = filledSlots.map(compactDPS);
   if (roster.availableGroups?.length) c.ag = roster.availableGroups;
   if (roster.notes) c.no = roster.notes;
   if (roster.trialOverrides) c.to = compactTrialOverrides(roster.trialOverrides);
+  if (roster.rosterDetailLevel) {
+    const DL_MAP: Record<RosterDetailLevel, number> = { simple: 0, advanced: 1, full: 2 };
+    c.dl = DL_MAP[roster.rosterDetailLevel];
+  }
   return c;
 }
+
+const DL_LEVELS: RosterDetailLevel[] = ['simple', 'advanced', 'full'];
 
 export function expandCompactRoster(c: CompactRoster): RaidRoster {
   const dpsSlots = createDefaultDPSSlots();
@@ -655,6 +791,7 @@ export function expandCompactRoster(c: CompactRoster): RaidRoster {
     availableGroups: c.ag ?? [],
     notes: c.no,
     trialOverrides: c.to ? expandTrialOverrides(c.to) : undefined,
+    rosterDetailLevel: c.dl != null ? DL_LEVELS[c.dl] : undefined,
   };
 }
 

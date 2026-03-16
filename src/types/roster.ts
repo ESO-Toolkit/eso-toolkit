@@ -5,6 +5,8 @@
 
 import { KnownSetIDs } from './abilities';
 import type { TrialBuildOverrides } from './trial-encounters';
+import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
+import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
 
 /**
  * Role types in a raid
@@ -174,6 +176,12 @@ export interface DPSSlot {
   buildRef?: BuildReference;
   /** Food/drink consumable for this slot */
   food?: { id?: number; name?: string };
+  /** Full skill bars — populated in Full detail mode */
+  skills?: SkillsConfig;
+  /** Champion points — populated in Full detail mode */
+  cpPoints?: BuildChampionPoints;
+  /** Passive ability IDs — populated in Full detail mode */
+  passives?: number[];
 }
 
 /**
@@ -204,6 +212,12 @@ export interface HealerSetup {
   buildRef?: BuildReference;
   /** Food/drink consumable for this slot */
   food?: { id?: number; name?: string };
+  /** Full skill bars — populated in Full detail mode */
+  skills?: SkillsConfig;
+  /** Champion points — populated in Full detail mode */
+  cpPoints?: BuildChampionPoints;
+  /** Passive ability IDs — populated in Full detail mode */
+  passives?: number[];
 }
 
 /**
@@ -228,6 +242,12 @@ export interface TankSetup {
   buildRef?: BuildReference;
   /** Food/drink consumable for this slot */
   food?: { id?: number; name?: string };
+  /** Full skill bars — populated in Full detail mode */
+  skills?: SkillsConfig;
+  /** Champion points — populated in Full detail mode */
+  cpPoints?: BuildChampionPoints;
+  /** Passive ability IDs — populated in Full detail mode */
+  passives?: number[];
 }
 
 /**

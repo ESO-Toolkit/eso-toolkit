@@ -137,6 +137,96 @@ describe('compactifyRoster / expandCompactRoster – DPS gear fields', () => {
 });
 
 // ============================================================
+// buildRef / food edge cases
+// ============================================================
+
+describe('compactifyRoster / expandCompactRoster – buildRef and food', () => {
+  it('round-trips buildRef on a DPS slot', () => {
+    const roster = createDefaultRoster();
+    roster.dpsSlots[0] = {
+      slotNumber: 1,
+      buildRef: {
+        buildId: 'abc-123',
+        setupIndex: 2,
+        buildName: 'My DK Build',
+        esoClass: 'dragonknight',
+        role: 'dps',
+      },
+    };
+
+    const compact = compactifyRoster(roster);
+    expect(compact.dp).toBeDefined();
+    expect(compact.dp!.length).toBeGreaterThanOrEqual(1);
+
+    const expanded = expandCompactRoster(compact);
+    const slot = expanded.dpsSlots[0];
+    expect(slot.buildRef).toEqual({
+      buildId: 'abc-123',
+      setupIndex: 2,
+      buildName: 'My DK Build',
+      esoClass: 'dragonknight',
+      role: 'dps',
+    });
+  });
+
+  it('does NOT drop a DPS slot that only has a buildRef (no other fields)', () => {
+    const roster = createDefaultRoster();
+    roster.dpsSlots[3] = {
+      slotNumber: 4,
+      buildRef: { setupIndex: 0, buildName: 'Lone Build' },
+    };
+
+    const compact = compactifyRoster(roster);
+    expect(compact.dp?.some((d) => d.sn === 4)).toBe(true);
+  });
+
+  it('does NOT drop a DPS slot that only has food (no other fields)', () => {
+    const roster = createDefaultRoster();
+    roster.dpsSlots[5] = {
+      slotNumber: 6,
+      food: { id: 42, name: 'Artaeum Pickled Fish Bowl' },
+    };
+
+    const compact = compactifyRoster(roster);
+    expect(compact.dp?.some((d) => d.sn === 6)).toBe(true);
+  });
+
+  it('round-trips food on a tank slot', () => {
+    const roster = createDefaultRoster();
+    roster.tank1.food = { id: 99, name: 'Bewitched Sugar Skulls' };
+    roster.tank1.buildRef = { setupIndex: 0, buildName: 'Tank Build' };
+
+    const compact = compactifyRoster(roster);
+    const expanded = expandCompactRoster(compact);
+
+    expect(expanded.tank1.food).toEqual({ id: 99, name: 'Bewitched Sugar Skulls' });
+    expect(expanded.tank1.buildRef).toEqual({ setupIndex: 0, buildName: 'Tank Build' });
+  });
+
+  it('round-trips buildRef on a healer slot', () => {
+    const roster = createDefaultRoster();
+    roster.healer2.buildRef = {
+      buildId: 'heal-456',
+      setupIndex: 1,
+      buildName: 'Healer Build',
+      esoClass: 'templar',
+      role: 'healer',
+    };
+
+    const compact = compactifyRoster(roster);
+    const expanded = expandCompactRoster(compact);
+
+    expect(expanded.healer2.buildRef).toEqual({
+      buildId: 'heal-456',
+      setupIndex: 1,
+      buildName: 'Healer Build',
+      esoClass: 'templar',
+      role: 'healer',
+    });
+  });
+});
+
+// ============================================================
 // encodeRosterToURL / decodeRosterFromURL (async, needs Web Streams)
 // ============================================================
 
@@ -176,5 +266,88 @@ describeWithStreams('encodeRosterToURL / decodeRosterFromURL – DPS gear round-
     expect(await decodeRosterFromURL(btoa('true'))).toBeNull();
     expect(await decodeRosterFromURL(btoa('null'))).toBeNull();
     expect(await decodeRosterFromURL(btoa('[1,2,3]'))).toBeNull();
+  });
+});
+
+// ============================================================
+// Full mode inline data: skills, cpPoints, passives, rosterDetailLevel
+// ============================================================
+
+describe('compactifyRoster / expandCompactRoster – Full mode inline data', () => {
+  it('round-trips skills on a DPS slot', () => {
+    const roster = createDefaultRoster();
+    roster.dpsSlots[0] = {
+      slotNumber: 1,
+      playerName: 'Tester',
+      skills: { 0: { 3: 100001, 4: 100002, 8: 100003 }, 1: { 3: 200001, 8: 200002 } },
+    };
+
+    const compact = compactifyRoster(roster);
+    const expanded = expandCompactRoster(compact);
+
+    const slot = expanded.dpsSlots[0];
+    expect(slot.skills?.[0][3]).toBe(100001);
+    expect(slot.skills?.[1][3]).toBe(200001);
+    expect(slot.skills?.[1][8]).toBe(200002);
+  });
+
+  it('round-trips cpPoints on a tank slot', () => {
+    const roster = createDefaultRoster();
+    roster.tank1.cpPoints = {
+      warfare: { slots: [111, 222, null, null], passives: { war1: 3 } },
+      fitness: { slots: [333, null, null, null], passives: {} },
+      craft: { slots: [null, null, null, null], passives: {} },
+    };
+
+    const compact = compactifyRoster(roster);
+    const expanded = expandCompactRoster(compact);
+
+    expect(expanded.tank1.cpPoints?.warfare.slots[0]).toBe(111);
+    expect(expanded.tank1.cpPoints?.warfare.slots[1]).toBe(222);
+    expect(expanded.tank1.cpPoints?.warfare.passives).toEqual({ war1: 3 });
+    expect(expanded.tank1.cpPoints?.fitness.slots[0]).toBe(333);
+  });
+
+  it('round-trips passives on a healer slot', () => {
+    const roster = createDefaultRoster();
+    roster.healer1.passives = [40001, 40002, 40003];
+
+    const compact = compactifyRoster(roster);
+    const expanded = expandCompactRoster(compact);
+
+    expect(expanded.healer1.passives).toEqual([40001, 40002, 40003]);
+  });
+
+  it('round-trips rosterDetailLevel', () => {
+    const roster = createDefaultRoster();
+    roster.rosterDetailLevel = 'full';
+
+    const compact = compactifyRoster(roster);
+    expect(compact.dl).toBe(2);
+
+    const expanded = expandCompactRoster(compact);
+    expect(expanded.rosterDetailLevel).toBe('full');
+  });
+
+  it('does not emit new fields when they are empty', () => {
+    const roster = createDefaultRoster();
+    roster.dpsSlots[0] = { slotNumber: 1, playerName: 'Player' };
+
+    const compact = compactifyRoster(roster);
+    const dp = compact.dp?.[0];
+    expect(dp?.sk).toBeUndefined();
+    expect(dp?.cp2).toBeUndefined();
+    expect(dp?.pa).toBeUndefined();
+    expect(compact.dl).toBeUndefined();
+  });
+
+  it('backward-compat: old roster without new fields expands with undefined inline data', () => {
+    const oldCompact = { v: 2 as const, dp: [{ sn: 1, pn: 'OldPlayer' }] };
+    const expanded = expandCompactRoster(oldCompact);
+    const slot = expanded.dpsSlots[0];
+    expect(slot.skills).toBeUndefined();
+    expect(slot.cpPoints).toBeUndefined();
+    expect(slot.passives).toBeUndefined();
+    expect(expanded.rosterDetailLevel).toBeUndefined();
   });
 });
