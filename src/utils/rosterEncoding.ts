@@ -22,11 +22,19 @@ import {
   HealerSetup,
   DPSSlot,
   SkillLineConfig,
-  PlayerGroup,
   defaultTankSetup,
   defaultHealerSetup,
   createDefaultDPSSlots,
 } from '../types/roster';
+import type {
+  TrialBuildOverrides,
+  EncounterOverrides,
+  PlayerOverride,
+} from '../types/trial-encounters';
+
+import { Logger, LogLevel } from './logger';
+
+const logger = new Logger({ level: LogLevel.WARN, contextPrefix: 'rosterEncoding' });
 
 // ============================================================
 // Compact interfaces — short key names for minimal JSON size
@@ -57,13 +65,13 @@ export interface CompactTank {
   pn?: string; // playerName
   pi?: number; // playerNumber
   rl?: string; // roleLabel
-  rn?: string; // roleNotes
   lb?: string[]; // labels
   gs?: CompactGear; // gearSets
   sl?: CompactSkills; // skillLines
   ul?: number | string; // ultimate: SupportUltimate index or custom string
   ss?: string[]; // specificSkills
-  gr?: CompactGroup; // group
+  grs?: string[]; // groups (multi-group memberships)
+  gr?: CompactGroup; // @deprecated — legacy single group, decode only
   no?: string; // notes
 }
 
@@ -71,17 +79,18 @@ export interface CompactHealer {
   pn?: string; // playerName
   pi?: number; // playerNumber
   rl?: string; // roleLabel
-  rn?: string; // roleNotes
   lb?: string[]; // labels
   s1?: number; // set1
   s2?: number; // set2
   ms?: number; // monsterSet
+  aw?: string; // arenaWeapon (free text)
   a?: number[]; // additionalSets
   sl?: CompactSkills; // skillLines
   hb?: number; // healerBuff: HealerBuff index
   cp?: number; // championPoint: HealerChampionPoint index
   ul?: number | string; // ultimate: SupportUltimate index or custom string
-  gr?: CompactGroup; // group
+  grs?: string[]; // groups (multi-group memberships)
+  gr?: CompactGroup; // @deprecated — legacy single group, decode only
   no?: string; // notes
 }
 
@@ -90,20 +99,46 @@ export interface CompactDPS {
   pn?: string; // playerName
   pi?: number; // playerNumber
   rl?: string; // roleLabel
-  rn?: string; // roleNotes
   lb?: string[]; // labels
   s1?: number; // set1 (primary 5-piece)
   s2?: number; // set2 (secondary 5-piece)
   ms?: number; // monsterSet
+  aw?: string; // arenaWeapon (free text)
   as?: number[]; // additionalSets
   gs?: number[]; // legacy gearSets (backward compat decode only)
   sl?: CompactSkills; // skillLines
   cp?: string; // championPoint
   ul?: number | string; // ultimate: SupportUltimate index or custom string
-  gr?: CompactGroup; // group
+  grs?: string[]; // groups (multi-group memberships)
+  gr?: CompactGroup; // @deprecated — legacy single group, decode only
   no?: string; // notes
   jt?: number; // jailDDType index
   cd?: string; // customDescription
+}
+
+/** Compact representation of a PlayerOverride (per-fight set/ultimate/notes changes) */
+export interface CompactPlayerOverride {
+  s1?: number; // set1
+  s2?: number; // set2
+  ms?: number; // monsterSet
+  ul?: string | null; // ultimate
+  no?: string; // notes
+}
+
+/** Compact representation of EncounterOverrides (overrides per player for one encounter) */
+export interface CompactEncounterOverrides {
+  t1?: CompactPlayerOverride; // tank1
+  t2?: CompactPlayerOverride; // tank2
+  h1?: CompactPlayerOverride; // healer1
+  h2?: CompactPlayerOverride; // healer2
+  dp?: Array<{ sn: number } & CompactPlayerOverride>; // dpsSlots (sparse)
+}
+
+/** Compact representation of TrialBuildOverrides */
+export interface CompactTrialOverrides {
+  ti: string; // trialId
+  sa: boolean; // useSameBuildForAll
+  eb: Record<string, CompactEncounterOverrides>; // encounterBuilds
 }
 
 export interface CompactRoster {
@@ -116,6 +151,7 @@ export interface CompactRoster {
   dp?: CompactDPS[]; // only filled DPS slots
   ag?: string[]; // availableGroups
   no?: string; // notes
+  to?: CompactTrialOverrides; // trialOverrides (per-fight builds)
 }
 
 // ============================================================
@@ -136,6 +172,25 @@ const JAIL_DD_TYPE_TO_IDX = new Map(JAIL_DD_TYPE_LIST.map((t, i) => [t, i] as co
 // Primitive encode/decode helpers
 // ============================================================
 
+/**
+ * Safely validate a number is a valid enum index in an array
+ */
+function isValidEnumIndex(value: number, arrayLength: number): boolean {
+  return Number.isInteger(value) && value >= 0 && value < arrayLength;
+}
+
+/**
+ * Safely convert a number to KnownSetIDs, returning undefined if invalid
+ * Since KnownSetIDs is a numeric enum, we can't validate the exact values,
+ * but we can at least ensure it's a safe integer
+ */
+function toValidSetId(value: unknown): KnownSetIDs | undefined {
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 0) {
+    return value as KnownSetIDs;
+  }
+  return undefined;
+}
+
 function encodeSkillLine(s?: string): number | string | undefined {
   if (!s) return undefined;
   const idx = SKILL_LINE_TO_IDX.get(s as (typeof CLASS_SKILL_LINES)[number]);
@@ -144,7 +199,9 @@ function encodeSkillLine(s?: string): number | string | undefined {
 
 function decodeSkillLine(v?: number | string): string {
   if (v == null) return '';
-  if (typeof v === 'number') return CLASS_SKILL_LINES[v] ?? '';
+  if (typeof v === 'number') {
+    return isValidEnumIndex(v, CLASS_SKILL_LINES.length) ? CLASS_SKILL_LINES[v] : '';
+  }
   return v;
 }
 
@@ -156,7 +213,9 @@ function encodeUltimate(u?: string | null): number | string | undefined {
 
 function decodeUltimate(v?: number | string): string | null {
   if (v == null) return null;
-  if (typeof v === 'number') return ULTIMATE_LIST[v] ?? null;
+  if (typeof v === 'number') {
+    return isValidEnumIndex(v, ULTIMATE_LIST.length) ? (ULTIMATE_LIST[v] ?? null) : null;
+  }
   return v;
 }
 
@@ -195,24 +254,29 @@ function compactGear(gs: TankGearSet): CompactGear | undefined {
 
 function expandGear(c?: CompactGear): TankGearSet {
   return {
-    set1: c?.s1 as KnownSetIDs | undefined,
-    set2: c?.s2 as KnownSetIDs | undefined,
-    monsterSet: c?.ms as KnownSetIDs | undefined,
-    additionalSets: c?.a as KnownSetIDs[] | undefined,
+    set1: toValidSetId(c?.s1),
+    set2: toValidSetId(c?.s2),
+    monsterSet: toValidSetId(c?.ms),
+    additionalSets: c?.a?.map(toValidSetId).filter((id) => id !== undefined) as
+      | KnownSetIDs[]
+      | undefined,
     notes: c?.no,
   };
 }
 
-function compactGroup(gr?: PlayerGroup): CompactGroup | undefined {
-  if (!gr?.groupName) return undefined;
-  const c: CompactGroup = { g: gr.groupName };
-  if (gr.groupNumber != null) c.n = gr.groupNumber;
-  return c;
+/** Encode groups array; returns undefined when empty. */
+function compactGroups(groups?: string[]): string[] | undefined {
+  return groups?.length ? groups : undefined;
 }
 
-function expandGroup(c?: CompactGroup): PlayerGroup | undefined {
-  if (!c?.g) return undefined;
-  return { groupName: c.g, groupNumber: c.n };
+/**
+ * Decode groups from the new `grs` field, falling back to the legacy single
+ * `gr` CompactGroup so that old share URLs continue to decode correctly.
+ */
+function expandGroups(grs?: string[], gr?: CompactGroup): string[] | undefined {
+  if (grs?.length) return grs;
+  if (gr?.g) return [gr.g];
+  return undefined;
 }
 
 function compactTank(t: TankSetup): CompactTank {
@@ -220,7 +284,6 @@ function compactTank(t: TankSetup): CompactTank {
   if (t.playerName) c.pn = t.playerName;
   if (t.playerNumber != null) c.pi = t.playerNumber;
   if (t.roleLabel) c.rl = t.roleLabel;
-  if (t.roleNotes) c.rn = t.roleNotes;
   if (t.labels?.length) c.lb = t.labels;
   const gs = compactGear(t.gearSets);
   if (gs) c.gs = gs;
@@ -229,8 +292,8 @@ function compactTank(t: TankSetup): CompactTank {
   const ul = encodeUltimate(t.ultimate);
   if (ul != null) c.ul = ul;
   if (t.specificSkills?.length) c.ss = t.specificSkills;
-  const gr = compactGroup(t.group);
-  if (gr) c.gr = gr;
+  const grs = compactGroups(t.groups);
+  if (grs) c.grs = grs;
   if (t.notes) c.no = t.notes;
   return c;
 }
@@ -241,13 +304,12 @@ function expandTank(c?: CompactTank): TankSetup {
     playerName: c?.pn,
     playerNumber: c?.pi,
     roleLabel: c?.rl,
-    roleNotes: c?.rn,
     labels: c?.lb,
     gearSets: expandGear(c?.gs),
     skillLines: expandSkills(c?.sl),
     ultimate: decodeUltimate(c?.ul),
     specificSkills: c?.ss ?? [],
-    group: expandGroup(c?.gr),
+    groups: expandGroups(c?.grs, c?.gr),
     notes: c?.no,
   };
 }
@@ -257,11 +319,11 @@ function compactHealer(h: HealerSetup): CompactHealer {
   if (h.playerName) c.pn = h.playerName;
   if (h.playerNumber != null) c.pi = h.playerNumber;
   if (h.roleLabel) c.rl = h.roleLabel;
-  if (h.roleNotes) c.rn = h.roleNotes;
   if (h.labels?.length) c.lb = h.labels;
   if (h.set1 != null) c.s1 = h.set1 as number;
   if (h.set2 != null) c.s2 = h.set2 as number;
   if (h.monsterSet != null) c.ms = h.monsterSet as number;
+  if (h.arenaWeapon) c.aw = h.arenaWeapon;
   if (h.additionalSets?.length) c.a = h.additionalSets as number[];
   const sl = compactSkills(h.skillLines);
   if (sl) c.sl = sl;
@@ -275,8 +337,8 @@ function compactHealer(h: HealerSetup): CompactHealer {
   }
   const ul = encodeUltimate(h.ultimate);
   if (ul != null) c.ul = ul;
-  const gr = compactGroup(h.group);
-  if (gr) c.gr = gr;
+  const grs = compactGroups(h.groups);
+  if (grs) c.grs = grs;
   if (h.notes) c.no = h.notes;
   return c;
 }
@@ -287,18 +349,29 @@ function expandHealer(c?: CompactHealer): HealerSetup {
     playerName: c?.pn,
     playerNumber: c?.pi,
     roleLabel: c?.rl,
-    roleNotes: c?.rn,
     labels: c?.lb,
-    set1: c?.s1 as KnownSetIDs | undefined,
-    set2: c?.s2 as KnownSetIDs | undefined,
-    monsterSet: c?.ms as KnownSetIDs | undefined,
-    additionalSets: c?.a as KnownSetIDs[] | undefined,
+    set1: toValidSetId(c?.s1),
+    set2: toValidSetId(c?.s2),
+    monsterSet: toValidSetId(c?.ms),
+    arenaWeapon: c?.aw,
+    additionalSets: c?.a?.map(toValidSetId).filter((id) => id !== undefined) as
+      | KnownSetIDs[]
+      | undefined,
     skillLines: expandSkills(c?.sl),
-    healerBuff: c?.hb != null ? ((HEALER_BUFF_LIST[c.hb] as HealerBuff) ?? null) : null,
+    healerBuff:
+      c?.hb != null
+        ? isValidEnumIndex(c.hb, HEALER_BUFF_LIST.length)
+          ? (HEALER_BUFF_LIST[c.hb] as HealerBuff)
+          : null
+        : null,
     championPoint:
-      c?.cp != null ? ((CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint) ?? null) : null,
+      c?.cp != null
+        ? isValidEnumIndex(c.cp, CHAMPION_POINT_LIST.length)
+          ? (CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint)
+          : null
+        : null,
     ultimate: decodeUltimate(c?.ul),
-    group: expandGroup(c?.gr),
+    groups: expandGroups(c?.grs, c?.gr),
     notes: c?.no,
   };
 }
@@ -308,7 +381,6 @@ function compactDPS(d: DPSSlot): CompactDPS {
   if (d.playerName) c.pn = d.playerName;
   if (d.playerNumber != null) c.pi = d.playerNumber;
   if (d.roleLabel) c.rl = d.roleLabel;
-  if (d.roleNotes) c.rn = d.roleNotes;
   if (d.labels?.length) c.lb = d.labels;
   if (d.set1 != null) c.s1 = d.set1 as number;
   if (d.set2 != null) c.s2 = d.set2 as number;
@@ -319,8 +391,9 @@ function compactDPS(d: DPSSlot): CompactDPS {
   if (d.championPoint) c.cp = d.championPoint;
   const ul = encodeUltimate(d.ultimate);
   if (ul != null) c.ul = ul;
-  const gr = compactGroup(d.group);
-  if (gr) c.gr = gr;
+  const grs = compactGroups(d.groups);
+  if (grs) c.grs = grs;
+  if (d.arenaWeapon) c.aw = d.arenaWeapon;
   if (d.notes) c.no = d.notes;
   if (d.jailDDType) {
     const idx = JAIL_DD_TYPE_TO_IDX.get(d.jailDDType);
@@ -331,35 +404,108 @@ function compactDPS(d: DPSSlot): CompactDPS {
 }
 
 function expandDPS(c: CompactDPS): DPSSlot {
-  // Migrate legacy flat gearSets (gs) to structured fields when no new fields present.
-  const legacyGear =
-    c.gs && !c.s1 && !c.s2
-      ? {
-          set1: (c.gs[0] as KnownSetIDs) ?? undefined,
-          set2: (c.gs[1] as KnownSetIDs) ?? undefined,
-          additionalSets: (c.gs.slice(2) as KnownSetIDs[]) || undefined,
-        }
-      : {};
+  // Legacy migration: if old compact data has gs but no structured s1/s2, promote to set1/set2
+  const legacySet1 = c.gs && c.s1 == null ? toValidSetId(c.gs[0]) : undefined;
+  const legacySet2 = c.gs && c.s2 == null ? toValidSetId(c.gs[1]) : undefined;
+  const legacyAdditional =
+    c.gs && c.s1 == null && c.s2 == null
+      ? (c.gs
+          .slice(2)
+          .map(toValidSetId)
+          .filter((id) => id !== undefined) as KnownSetIDs[])
+      : undefined;
+
   return {
     slotNumber: c.sn,
     playerName: c.pn,
     playerNumber: c.pi,
     roleLabel: c.rl,
-    roleNotes: c.rn,
     labels: c.lb,
-    set1: c.s1 as KnownSetIDs | undefined,
-    set2: c.s2 as KnownSetIDs | undefined,
-    monsterSet: c.ms as KnownSetIDs | undefined,
-    additionalSets: c.as as KnownSetIDs[] | undefined,
-    ...legacyGear,
+    set1: toValidSetId(c.s1) ?? legacySet1,
+    set2: toValidSetId(c.s2) ?? legacySet2,
+    monsterSet: toValidSetId(c.ms),
+    arenaWeapon: c.aw,
+    additionalSets:
+      c.as != null
+        ? (c.as.map(toValidSetId).filter((id) => id !== undefined) as KnownSetIDs[])
+        : legacyAdditional,
     skillLines: c.sl ? expandSkills(c.sl) : undefined,
     championPoint: c.cp || undefined,
     ultimate: c.ul != null ? decodeUltimate(c.ul) : null,
-    group: expandGroup(c.gr),
+    groups: expandGroups(c.grs, c.gr),
     notes: c.no,
-    jailDDType: c.jt != null ? JAIL_DD_TYPE_LIST[c.jt] : undefined,
+    jailDDType:
+      c.jt != null
+        ? isValidEnumIndex(c.jt, JAIL_DD_TYPE_LIST.length)
+          ? JAIL_DD_TYPE_LIST[c.jt]
+          : undefined
+        : undefined,
     customDescription: c.cd,
   };
+}
+
+// ============================================================
+// Per-fight build (TrialBuildOverrides) compact/expand helpers
+// ============================================================
+
+function compactPlayerOverride(o: PlayerOverride): CompactPlayerOverride {
+  const c: CompactPlayerOverride = {};
+  if (o.set1 != null) c.s1 = o.set1;
+  if (o.set2 != null) c.s2 = o.set2;
+  if (o.monsterSet != null) c.ms = o.monsterSet;
+  if (o.ultimate !== undefined) c.ul = o.ultimate;
+  if (o.notes) c.no = o.notes;
+  return c;
+}
+
+function expandPlayerOverride(c: CompactPlayerOverride): PlayerOverride {
+  const o: PlayerOverride = {};
+  if (c.s1 != null) o.set1 = c.s1;
+  if (c.s2 != null) o.set2 = c.s2;
+  if (c.ms != null) o.monsterSet = c.ms;
+  if (c.ul !== undefined) o.ultimate = c.ul;
+  if (c.no) o.notes = c.no;
+  return o;
+}
+
+function compactEncounterOverrides(o: EncounterOverrides): CompactEncounterOverrides {
+  const c: CompactEncounterOverrides = {};
+  if (o.tank1) c.t1 = compactPlayerOverride(o.tank1);
+  if (o.tank2) c.t2 = compactPlayerOverride(o.tank2);
+  if (o.healer1) c.h1 = compactPlayerOverride(o.healer1);
+  if (o.healer2) c.h2 = compactPlayerOverride(o.healer2);
+  if (o.dpsSlots?.length) {
+    c.dp = o.dpsSlots.map((s) => ({ sn: s.slotNumber, ...compactPlayerOverride(s) }));
+  }
+  return c;
+}
+
+function expandEncounterOverrides(c: CompactEncounterOverrides): EncounterOverrides {
+  const o: EncounterOverrides = {};
+  if (c.t1) o.tank1 = expandPlayerOverride(c.t1);
+  if (c.t2) o.tank2 = expandPlayerOverride(c.t2);
+  if (c.h1) o.healer1 = expandPlayerOverride(c.h1);
+  if (c.h2) o.healer2 = expandPlayerOverride(c.h2);
+  if (c.dp?.length) {
+    o.dpsSlots = c.dp.map(({ sn, ...rest }) => ({ slotNumber: sn, ...expandPlayerOverride(rest) }));
+  }
+  return o;
+}
+
+function compactTrialOverrides(t: TrialBuildOverrides): CompactTrialOverrides {
+  const eb: Record<string, CompactEncounterOverrides> = {};
+  for (const [encId, overrides] of Object.entries(t.encounterBuilds)) {
+    eb[encId] = compactEncounterOverrides(overrides);
+  }
+  return { ti: t.trialId, sa: t.useSameBuildForAll, eb };
+}
+
+function expandTrialOverrides(c: CompactTrialOverrides): TrialBuildOverrides {
+  const encounterBuilds: Record<string, EncounterOverrides> = {};
+  for (const [encId, compact] of Object.entries(c.eb)) {
+    encounterBuilds[encId] = expandEncounterOverrides(compact);
+  }
+  return { trialId: c.ti, useSameBuildForAll: c.sa, encounterBuilds };
 }
 
 // ============================================================
@@ -378,7 +524,6 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
       slot.playerName ||
       slot.playerNumber != null ||
       slot.roleLabel ||
-      slot.roleNotes ||
       slot.labels?.length ||
       slot.set1 != null ||
       slot.set2 != null ||
@@ -389,6 +534,7 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
       slot.ultimate ||
       slot.jailDDType ||
       slot.notes ||
+      slot.groups?.length ||
       slot.group ||
       slot.skillLines ||
       slot.championPoint,
@@ -396,6 +542,7 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
   if (filledSlots.length) c.dp = filledSlots.map(compactDPS);
   if (roster.availableGroups?.length) c.ag = roster.availableGroups;
   if (roster.notes) c.no = roster.notes;
+  if (roster.trialOverrides) c.to = compactTrialOverrides(roster.trialOverrides);
   return c;
 }
 
@@ -420,6 +567,7 @@ export function expandCompactRoster(c: CompactRoster): RaidRoster {
     dpsSlots,
     availableGroups: c.ag ?? [],
     notes: c.no,
+    trialOverrides: c.to ? expandTrialOverrides(c.to) : undefined,
   };
 }
 
@@ -504,6 +652,7 @@ export async function inflateBytes(bytes: Uint8Array): Promise<string> {
 /**
  * Encode a roster to a compact, deflate-compressed, URL-safe base64 string.
  * Result goes into `?r=<returned>`.
+ * Returns empty string on error (with console warning logged).
  */
 export const encodeRosterToURL = async (roster: RaidRoster): Promise<string> => {
   try {
@@ -511,7 +660,8 @@ export const encodeRosterToURL = async (roster: RaidRoster): Promise<string> => 
     const json = JSON.stringify(compact);
     const compressed = await deflateString(json);
     return toBase64Url(compressed);
-  } catch {
+  } catch (error) {
+    logger.warn('Failed to encode roster to URL:', error);
     return '';
   }
 };
@@ -519,6 +669,7 @@ export const encodeRosterToURL = async (roster: RaidRoster): Promise<string> => 
 /**
  * Decode a roster from the `?r=` URL param value.
  * Supports v2 (deflate-raw + compact) and legacy v1 (plain base64 JSON).
+ * Logs warnings on decode failures for debugging.
  */
 export const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster | null> => {
   // Try v2: deflate-raw + compact format
@@ -529,8 +680,9 @@ export const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster |
     if (parsed.v === 2) {
       return expandCompactRoster(parsed as CompactRoster);
     }
-  } catch {
-    // fall through to v1
+  } catch (error) {
+    // fall through to v1, but log v2 errors for debugging
+    logger.debug('v2 decode failed, trying v1:', error);
   }
   // Try v1: btoa(encodeURIComponent(json))
   try {
@@ -540,7 +692,8 @@ export const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster |
       return parsed as RaidRoster;
     }
     return null;
-  } catch {
+  } catch (error) {
+    logger.warn('Failed to decode roster from URL:', error);
     return null;
   }
 };

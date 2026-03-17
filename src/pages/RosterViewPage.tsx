@@ -13,6 +13,7 @@ import {
   Favorite as FavoriteIcon,
   AutoAwesome as DPSIcon,
   OpenInNew as OpenInNewIcon,
+  SwapHoriz as PerFightIcon,
 } from '@mui/icons-material';
 import {
   Box,
@@ -30,6 +31,11 @@ import { useTheme } from '@mui/material/styles';
 import React, { useEffect, useState } from 'react';
 
 import { RaidRoster, TankSetup, HealerSetup, DPSSlot, MONSTER_SETS } from '../types/roster';
+import {
+  TrialBuildOverrides,
+  getTrialById,
+  encounterHasOverrides,
+} from '../types/trial-encounters';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { getSetDisplayName } from '../utils/setNameUtils';
@@ -96,7 +102,6 @@ const TankCard: React.FC<TankCardProps> = ({ tank, label, color, isDarkMode }) =
   const skillLines = formatSkillLines(tank.skillLines);
   const hasContent =
     tank.playerName ||
-    tank.roleNotes ||
     tank.labels?.length ||
     gearSets.length > 0 ||
     skillLines ||
@@ -155,7 +160,6 @@ const TankCard: React.FC<TankCardProps> = ({ tank, label, color, isDarkMode }) =
             }}
           >
             {label}
-            {tank.roleNotes ? ` · ${tank.roleNotes}` : ''}
           </Typography>
           <Typography
             sx={{
@@ -312,7 +316,6 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, label, color, isDarkMod
   const skillLines = formatSkillLines(healer.skillLines);
   const hasContent =
     healer.playerName ||
-    healer.roleNotes ||
     healer.labels?.length ||
     gearSets.length > 0 ||
     skillLines ||
@@ -372,7 +375,6 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, label, color, isDarkMod
             }}
           >
             {healer.roleLabel || label}
-            {healer.roleNotes ? ` · ${healer.roleNotes}` : ''}
           </Typography>
           <Typography
             sx={{
@@ -569,15 +571,13 @@ const DPS_JAIL_LABELS: Record<string, string> = {
 
 const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
   const skillLines = formatSkillLines(slot.skillLines);
-  const gearSets = slot.gearSets?.length
-    ? formatGearSets({
-        set1: slot.gearSets[0],
-        set2: slot.gearSets[1],
-        additionalSets: slot.gearSets.slice(2),
-      })
-    : [];
+  const gearSets = formatGearSets({
+    set1: slot.set1,
+    set2: slot.set2,
+    additionalSets: slot.monsterSet ? [slot.monsterSet] : [],
+  });
 
-  const isEmpty = !slot.playerName && !slot.roleNotes && !slot.labels?.length;
+  const isEmpty = !slot.playerName && !slot.labels?.length;
 
   return (
     <Box
@@ -658,13 +658,6 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
             {slot.playerName || (isEmpty ? 'Empty' : '')}
           </Typography>
 
-          {/* Role notes */}
-          {slot.roleNotes && (
-            <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-              [{slot.roleNotes}]
-            </Typography>
-          )}
-
           {/* Labels */}
           {slot.labels?.map((lbl) => (
             <Chip
@@ -722,6 +715,21 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
                 }}
               />
             ))}
+            {slot.arenaWeapon && (
+              <Chip
+                label={slot.arenaWeapon}
+                size="small"
+                sx={{
+                  height: 17,
+                  fontSize: '0.62rem',
+                  fontWeight: 500,
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                  color: 'text.secondary',
+                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                  '& .MuiChip-label': { px: 0.625 },
+                }}
+              />
+            )}
             {slot.notes && (
               <Typography sx={{ fontSize: '0.7rem', color: 'text.disabled', fontStyle: 'italic' }}>
                 {slot.notes}
@@ -781,6 +789,217 @@ const SectionLabel: React.FC<{
     />
   </Box>
 );
+
+// ============================================================
+// Per-fight builds section
+// ============================================================
+
+interface PerFightSectionProps {
+  trialOverrides: TrialBuildOverrides;
+  isDarkMode: boolean;
+}
+
+const PerFightSection: React.FC<PerFightSectionProps> = ({ trialOverrides, isDarkMode }) => {
+  const trial = getTrialById(trialOverrides.trialId);
+  if (!trial) return null;
+
+  const encountersWithOverrides = trial.encounters.filter((enc) =>
+    encounterHasOverrides(trialOverrides.encounterBuilds[enc.id]),
+  );
+
+  const borderColor = isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const bgColor = isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
+  const accentColor = isDarkMode ? '#9c88ff' : '#6c5ce7';
+
+  return (
+    <Box sx={{ mb: 3 }}>
+      <SectionLabel
+        icon={<PerFightIcon sx={{ fontSize: '0.85rem', color: accentColor }} />}
+        label={`Per-Fight Builds — ${trial.name}`}
+        color={accentColor}
+        isDarkMode={isDarkMode}
+      />
+      {trialOverrides.useSameBuildForAll ? (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 1.5,
+            borderRadius: '10px',
+            backgroundColor: bgColor,
+            border: `1px solid ${borderColor}`,
+          }}
+        >
+          <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>
+            Same build used for all encounters.
+          </Typography>
+        </Paper>
+      ) : encountersWithOverrides.length === 0 ? (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 1.5,
+            borderRadius: '10px',
+            backgroundColor: bgColor,
+            border: `1px solid ${borderColor}`,
+          }}
+        >
+          <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>
+            No per-fight overrides configured.
+          </Typography>
+        </Paper>
+      ) : (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+          {encountersWithOverrides.map((enc) => {
+            const overrides = trialOverrides.encounterBuilds[enc.id];
+            const playerKeys = ['tank1', 'tank2', 'healer1', 'healer2'] as const;
+            const labelMap: Record<string, string> = {
+              tank1: 'MT',
+              tank2: 'OT',
+              healer1: 'H1',
+              healer2: 'H2',
+            };
+
+            return (
+              <Paper
+                key={enc.id}
+                elevation={0}
+                sx={{
+                  p: 1.25,
+                  borderRadius: '10px',
+                  backgroundColor: bgColor,
+                  border: `1px solid ${borderColor}`,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    color: accentColor,
+                    mb: 0.5,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  {enc.name}
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {playerKeys.map((key) => {
+                    const o = overrides[key];
+                    if (!o) return null;
+                    const sets = [
+                      o.set1
+                        ? getSetDisplayName(o.set1 as import('../types/abilities').KnownSetIDs)
+                        : null,
+                      o.set2
+                        ? getSetDisplayName(o.set2 as import('../types/abilities').KnownSetIDs)
+                        : null,
+                      o.monsterSet
+                        ? getSetDisplayName(
+                            o.monsterSet as import('../types/abilities').KnownSetIDs,
+                          )
+                        : null,
+                    ].filter(Boolean);
+                    if (!sets.length && !o.ultimate && !o.notes) return null;
+                    return (
+                      <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+                        <Typography
+                          sx={{
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            color: 'text.disabled',
+                            minWidth: 20,
+                          }}
+                        >
+                          {labelMap[key]}:
+                        </Typography>
+                        {sets.map((s) => (
+                          <Chip
+                            key={s}
+                            label={s}
+                            size="small"
+                            sx={{
+                              height: 16,
+                              fontSize: '0.6rem',
+                              fontWeight: 500,
+                              backgroundColor: `${accentColor}18`,
+                              color: accentColor,
+                              border: `1px solid ${accentColor}30`,
+                              '& .MuiChip-label': { px: 0.5 },
+                            }}
+                          />
+                        ))}
+                        {o.ultimate && (
+                          <Typography
+                            sx={{
+                              fontSize: '0.68rem',
+                              color: 'text.secondary',
+                              fontStyle: 'italic',
+                            }}
+                          >
+                            {o.ultimate}
+                          </Typography>
+                        )}
+                      </Box>
+                    );
+                  })}
+                  {overrides.dpsSlots?.map((slot) => {
+                    const sets = [
+                      slot.set1
+                        ? getSetDisplayName(slot.set1 as import('../types/abilities').KnownSetIDs)
+                        : null,
+                      slot.set2
+                        ? getSetDisplayName(slot.set2 as import('../types/abilities').KnownSetIDs)
+                        : null,
+                      slot.monsterSet
+                        ? getSetDisplayName(
+                            slot.monsterSet as import('../types/abilities').KnownSetIDs,
+                          )
+                        : null,
+                    ].filter(Boolean);
+                    if (!sets.length && !slot.ultimate && !slot.notes) return null;
+                    return (
+                      <Box
+                        key={slot.slotNumber}
+                        sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            color: 'text.disabled',
+                            minWidth: 20,
+                          }}
+                        >
+                          D{slot.slotNumber}:
+                        </Typography>
+                        {sets.map((s) => (
+                          <Chip
+                            key={s}
+                            label={s}
+                            size="small"
+                            sx={{
+                              height: 16,
+                              fontSize: '0.6rem',
+                              fontWeight: 500,
+                              backgroundColor: `${accentColor}18`,
+                              color: accentColor,
+                              border: `1px solid ${accentColor}30`,
+                              '& .MuiChip-label': { px: 0.5 },
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Paper>
+            );
+          })}
+        </Box>
+      )}
+    </Box>
+  );
+};
 
 // ============================================================
 // Main page component
@@ -1104,6 +1323,11 @@ export const RosterViewPage: React.FC = () => {
         </Box>
       </Box>
 
+      {/* ── Per-fight builds ── */}
+      {roster.trialOverrides && (
+        <PerFightSection trialOverrides={roster.trialOverrides} isDarkMode={isDarkMode} />
+      )}
+
       {/* ── Notes ── */}
       {roster.notes && (
         <Box sx={{ mb: 3 }}>
@@ -1216,17 +1440,15 @@ function buildDiscordText(roster: RaidRoster): string {
   ([roster.tank1, roster.tank2] as const).forEach((tank, i) => {
     const hasData =
       tank.playerName ||
-      tank.roleNotes ||
       tank.labels?.length ||
       tank.gearSets?.set1 ||
       tank.gearSets?.set2 ||
       tank.notes;
     if (!hasData) return;
     const lbl = i === 0 ? 'MT' : 'OT';
-    const rn = tank.roleNotes ? ` [${tank.roleNotes}]` : '';
     const pn = tank.playerName ? ` ${tank.playerName}` : '';
     const lbs = tank.labels?.length ? ` (${tank.labels.join(', ')})` : '';
-    lines.push(`${lbl}${rn}:${pn}${lbs}`);
+    lines.push(`${lbl}:${pn}${lbs}`);
     const g = fmtGear(tank.gearSets);
     if (g) lines.push(g);
     const sl = fmtSkillLines(tank.skillLines);
@@ -1240,13 +1462,12 @@ function buildDiscordText(roster: RaidRoster): string {
 
   // Healers — skip completely empty slots (single-healer comps)
   ([roster.healer1, roster.healer2] as const).forEach((h, i) => {
-    const hasData = h.playerName || h.roleNotes || h.labels?.length || h.set1 || h.set2 || h.notes;
+    const hasData = h.playerName || h.labels?.length || h.set1 || h.set2 || h.notes;
     if (!hasData) return;
     const lbl = h.roleLabel || (i === 0 ? 'H1' : 'H2');
-    const rn = h.roleNotes ? ` [${h.roleNotes}]` : '';
     const pn = h.playerName ? ` ${h.playerName}` : '';
     const lbs = h.labels?.length ? ` [${h.labels.join(', ')}]` : '';
-    lines.push(`${lbl}${rn}:${pn}${lbs}`);
+    lines.push(`${lbl}:${pn}${lbs}`);
     const g = fmtGear({
       set1: h.set1,
       set2: h.set2,
@@ -1267,16 +1488,33 @@ function buildDiscordText(roster: RaidRoster): string {
   // DPS — skip fully empty slots
   const sorted = [...roster.dpsSlots].sort((a, b) => a.slotNumber - b.slotNumber);
   sorted.forEach((dd) => {
-    if (!dd.playerName && !dd.roleNotes && !dd.labels?.length && !dd.jailDDType) return;
-    const rn = dd.roleNotes ? ` [${dd.roleNotes}]` : '';
+    if (!dd.playerName && !dd.labels?.length && !dd.jailDDType) return;
     const pn = dd.playerName ? ` ${dd.playerName}` : '';
     const jl = dd.jailDDType
       ? ` [${DPS_JAIL_LABELS[dd.jailDDType] ?? dd.customDescription ?? ''}]`
       : '';
     const lbs = dd.labels?.length ? ` (${dd.labels.join(', ')})` : '';
-    lines.push(`${dd.slotNumber}${jl}${rn}:${pn}${lbs}`);
+    lines.push(`${dd.slotNumber}${jl}:${pn}${lbs}`);
+    // Prefer structured fields; fall back to legacy gearSets flat array
+    const dpsGear =
+      dd.set1 != null || dd.set2 != null || dd.monsterSet != null
+        ? [
+            ...formatGearSets({
+              set1: dd.set1,
+              set2: dd.set2,
+              monsterSet: dd.monsterSet,
+              additionalSets: dd.additionalSets,
+            }),
+            ...(dd.arenaWeapon ? [dd.arenaWeapon] : []),
+          ].join('/')
+        : (dd.gearSets ?? [])
+            .map((id) => getSetDisplayName(id))
+            .filter(Boolean)
+            .join('/');
+    if (dpsGear) lines.push(dpsGear);
     const sl = dd.skillLines ? fmtSkillLines(dd.skillLines) : '';
-    if (sl) lines.push(sl);
+    const ult = dd.ultimate ? fmtUlt(dd.ultimate) : '';
+    if (sl || ult) lines.push(`${sl}${ult}`);
   });
   lines.push('');
 

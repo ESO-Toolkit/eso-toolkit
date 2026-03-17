@@ -46,6 +46,7 @@ import {
   HEALER_SETS,
   FLEXIBLE_SETS,
   MONSTER_SETS,
+  ALL_5PIECE_SETS,
   SetCategory,
   TankSetup,
   HealerSetup,
@@ -55,8 +56,11 @@ import {
   canAssignToMonsterSlot,
   validateCompatibility,
 } from '../types/roster';
+import { Logger, LogLevel } from '../utils/logger';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
+
+const logger = new Logger({ level: LogLevel.WARN, contextPrefix: 'SetAssignmentManager' });
 
 /**
  * Determine the primary role(s) for a set in Quick Assignment UI
@@ -142,7 +146,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
     return selectedSetForAssign ? findSetIdByName(selectedSetForAssign) : undefined;
   }, [selectedSetForAssign]);
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number): void => {
+  const handleTabChange = (newValue: number): void => {
     setActiveTab(newValue);
   };
 
@@ -535,7 +539,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
       setList.forEach((setId) => {
         const setName = getSetDisplayName(setId);
         const isRecommended = recommendedSetIds.includes(setId);
-        const is5PieceCompatible = !requireFivePieceCheck || canAssignToFivePieceSlot(setId);
+        const is5PieceCompatible = !requireFivePieceCheck || ALL_5PIECE_SETS.includes(setId);
 
         if (!isRecommended && is5PieceCompatible) {
           addSet(setName, category);
@@ -671,7 +675,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
       // Convert set name to ID for validation
       const setId = findSetIdByName(selectedSetForAssign);
       if (!setId) {
-        // Invalid set - silently ignore
+        // Invalid set - log and ignore
+        logger.warn('Unknown set name:', selectedSetForAssign);
         setAssignMenuAnchor(null);
         setSelectedSetForAssign(null);
         return;
@@ -681,7 +686,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
       if (slot === 'monster') {
         // Monster slot can only accept monster sets (2-piece)
         if (!canAssignToMonsterSlot(setId)) {
-          // Invalid assignment - silently ignore
+          // Invalid assignment - log and ignore
+          logger.warn('Cannot assign 5-piece set to monster slot:', selectedSetForAssign);
           setAssignMenuAnchor(null);
           setSelectedSetForAssign(null);
           return;
@@ -689,7 +695,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
       } else if (slot === 'set1' || slot === 'set2') {
         // Set1/Set2 slots can only accept 5-piece sets
         if (!canAssignToFivePieceSlot(setId)) {
-          // Invalid assignment - silently ignore
+          // Invalid assignment - log and ignore
+          logger.warn(`Cannot assign monster/mythic set to ${slot} slot:`, selectedSetForAssign);
           setAssignMenuAnchor(null);
           setSelectedSetForAssign(null);
           return;
@@ -969,7 +976,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
           {(['Quick Assign', 'All Sets'] as const).map((label, index) => (
             <Box
               key={label}
-              onClick={() => handleTabChange(null as unknown as React.SyntheticEvent, index)}
+              onClick={() => handleTabChange(index)}
               sx={{
                 flex: '1 1 auto',
                 minWidth: 0,
