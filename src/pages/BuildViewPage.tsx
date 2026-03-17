@@ -147,25 +147,14 @@ const MUNDUS_LABELS: Record<string, string> = {
 // ─── Passive grid helper ──────────────────────────────────────────────────────
 
 /**
- * Returns the optimal column count so the passive grid either divides perfectly
- * or leaves exactly 1 item on the last row (which then stretches full-width).
- *
- * Priority: perfect division (4→4, 3→3) first, then cols that yield remainder=1
- * so the lone last item can span the full row.
- *
- * Examples: 4→4, 5→4(4+1full), 6→3(3+3), 7→3(3+3+1full),
- *           8→4(4+4), 9→3(3+3+3), 10→3(3+3+3+1full), 12→4(4+4+4)
+ * Returns the optimal column count for the passive grid.
+ * Last-row items always stretch to fill available space via a flex fallback row.
+ * 6→3(3+3), 8→4(4+4), 5→3(3+2 stretched), 7→3(3+3+1 stretched)
  */
 const getPassiveCols = (n: number): number => {
   if (n <= 3) return Math.max(n, 1);
-  // Perfect rows — no leftover
   if (n % 4 === 0) return 4;
   if (n % 3 === 0) return 3;
-  // Prefer cols that leave exactly 1 item (gets full-width stretch)
-  if (n % 4 === 1) return 4;  // 5→4+[1], 13→4+4+4+[1]
-  if (n % 3 === 1) return 3;  // 7→3+3+[1], 10→3+3+3+[1]
-  // Even counts not caught above (e.g. 14, 18) — 4 cols, last row may be 2 short
-  if (n % 2 === 0) return 4;
   return 3;
 };
 
@@ -1018,32 +1007,22 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
             count={setup.passives.length > 0 ? `${setup.passives.length} selected` : undefined}
           />
           {setup.passives.length > 0 ? (
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: (() => {
-                  const cols = getPassiveCols(setup.passives.length);
-                  return {
-                    xs: '1fr 1fr',
-                    sm: `repeat(${Math.min(cols, 3)}, 1fr)`,
-                    md: `repeat(${cols}, 1fr)`,
-                  };
-                })(),
-                gap: 0.75,
-              }}
-            >
-              {setup.passives.map((passiveId, index) => {
+            (() => {
+              const n = setup.passives.length;
+              const cols = getPassiveCols(n);
+              const remainder = n % cols;
+              const fullItems = remainder > 0 ? setup.passives.slice(0, n - remainder) : setup.passives;
+              const lastRowItems = remainder > 0 ? setup.passives.slice(n - remainder) : [];
+
+              const renderPassiveItem = (passiveId: number, key: string | number) => {
                 const skill = getSkillById(passiveId);
                 const iconUrl = skill?.icon ? `${SKILL_ICON_URL}${skill.icon}.png` : null;
-                const n = setup.passives.length;
-                const cols = getPassiveCols(n);
-                const isLoneLastItem = index === n - 1 && n % cols === 1;
                 return (
                   <Box
-                    key={passiveId}
+                    key={key}
                     sx={{
                       display: 'flex',
-                      gridColumn: isLoneLastItem ? '1 / -1' : undefined,
+                      flex: 1,
                       alignItems: 'center',
                       gap: 1,
                       py: 0.6,
@@ -1075,26 +1054,13 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
                           src={iconUrl}
                           alt={skill?.name ?? `Passive ${passiveId}`}
                           loading="lazy"
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            display: 'block',
-                          }}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
                       ) : (
-                        <Box
-                          sx={{
-                            width: 5,
-                            height: 5,
-                            borderRadius: '50%',
-                            background: 'var(--be-accent, #38bdf8)',
-                            opacity: 0.4,
-                          }}
-                        />
+                        <Box sx={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--be-accent, #38bdf8)', opacity: 0.4 }} />
                       )}
                     </Box>
                     <Typography
@@ -1114,8 +1080,31 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
                     </Typography>
                   </Box>
                 );
-              })}
-            </Box>
+              };
+
+              return (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                  {/* Full rows — uniform grid */}
+                  {fullItems.length > 0 && (
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr 1fr', sm: `repeat(${Math.min(cols, 3)}, 1fr)`, md: `repeat(${cols}, 1fr)` },
+                        gap: 0.75,
+                      }}
+                    >
+                      {fullItems.map((id) => renderPassiveItem(id, id))}
+                    </Box>
+                  )}
+                  {/* Partial last row — flex so items share width equally */}
+                  {lastRowItems.length > 0 && (
+                    <Box sx={{ display: 'flex', gap: 0.75 }}>
+                      {lastRowItems.map((id) => renderPassiveItem(id, `last-${id}`))}
+                    </Box>
+                  )}
+                </Box>
+              );
+            })()
           ) : (
             <EmptyState message="No passives selected" />
           )}
