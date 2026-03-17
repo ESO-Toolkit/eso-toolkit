@@ -16,6 +16,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
+import type { Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -159,6 +160,8 @@ interface PlayerCardProps {
   visibleChips?: StatChipId[];
   /** Detected role from the role detection algorithm */
   detectedRole?: PlayerRoleResult;
+  /** Whether the metrics row wraps chips vertically or scrolls horizontally */
+  metricsLayout?: 'scroll' | 'wrap';
 }
 
 // Helper function to consolidate build issues
@@ -274,6 +277,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     critChance,
     visibleChips,
     detectedRole,
+    metricsLayout = 'scroll',
   }) => {
     const theme = useTheme();
 
@@ -987,7 +991,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       <Typography
                         variant="caption"
                         sx={{
-                          color: (theme) =>
+                          color: (theme: Theme) =>
                             theme.palette.mode === 'light' ? '#c44e4e' : '#ff7a7a',
                           fontSize: 11,
                           lineHeight: 1,
@@ -1005,7 +1009,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       <Typography
                         variant="caption"
                         sx={{
-                          color: (theme) =>
+                          color: (theme: Theme) =>
                             theme.palette.mode === 'light' ? '#3db03d' : '#93f093',
                           fontSize: 11,
                           lineHeight: 1,
@@ -1064,7 +1068,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           px: 1.25,
                           py: 0.4,
                           borderRadius: '6px',
-                          background: (theme) =>
+                          background: (theme: Theme) =>
                             theme.palette.mode === 'dark'
                               ? 'linear-gradient(90deg, rgba(245,158,11,0.15) 0%, rgba(251,191,36,0.08) 100%)'
                               : 'linear-gradient(90deg, rgba(251,191,36,0.22) 0%, rgba(245,158,11,0.1) 100%)',
@@ -1096,7 +1100,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           sx={{
                             fontSize: '0.7rem',
                             fontWeight: 600,
-                            color: (theme) =>
+                            color: (theme: Theme) =>
                               theme.palette.mode === 'dark'
                                 ? 'rgba(251,191,36,0.85)'
                                 : 'rgba(180,83,9,0.9)',
@@ -1579,15 +1583,22 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       alignItems: 'center',
                       justifyContent: 'flex-start',
                       minWidth: 0,
-                      minHeight: { xs: 40, sm: 28, md: 28 },
+                      minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 40, sm: 28, md: 28 },
                     }}
                   >
                     <MetricsScrollContainer
                       sx={{
                         display: 'flex',
-                        flexWrap: 'nowrap',
+                        flexWrap:
+                          metricsLayout === 'wrap'
+                            ? 'wrap'
+                            : { xs: 'wrap', sm: 'nowrap', md: 'nowrap' },
+                        overflowX:
+                          metricsLayout === 'wrap'
+                            ? 'hidden'
+                            : { xs: 'hidden', sm: 'auto', md: 'auto' },
                         gap: { xs: 0.75, sm: 0.5, md: 0.5 },
-                        minHeight: { xs: 40, sm: 24, md: 24 },
+                        minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 40, sm: 24, md: 24 },
                         flex: '1 1 auto',
                         minWidth: 0,
                         mr: 0.5,
@@ -1599,14 +1610,21 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: { xs: 0.75, sm: 0.5, md: 0.25 },
-                          whiteSpace: { xs: 'normal', sm: 'nowrap', md: 'nowrap' },
+                          flexWrap: metricsLayout === 'wrap' ? 'wrap' : 'nowrap',
+                          gap:
+                            metricsLayout === 'wrap'
+                              ? { xs: 1, sm: 0.75, md: 0.5 }
+                              : { xs: 0.75, sm: 0.5, md: 0.25 },
+                          whiteSpace:
+                            metricsLayout === 'wrap'
+                              ? 'normal'
+                              : { xs: 'normal', sm: 'nowrap', md: 'nowrap' },
                           fontSize: { xs: '0.85rem', sm: '0.8rem', md: 'body2.fontSize' },
                         }}
                       >
                         {statChipEntries.map((entry, i) => (
                           <React.Fragment key={entry.id}>
-                            {i > 0 && ' · '}
+                            {i > 0 && metricsLayout !== 'wrap' && ' · '}
                             {entry.node}
                           </React.Fragment>
                         ))}

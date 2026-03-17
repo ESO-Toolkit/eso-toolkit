@@ -11,6 +11,7 @@ import type { PotionStreamResult } from '../../../utils/potionDetectionUtils';
 import type { BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 
 import type { StatChipId } from './statChipConfig';
+import type { MetricsLayout } from './useMetricsLayout';
 
 // Lazy load the PlayerCard component
 const PlayerCard = React.lazy(() =>
@@ -63,6 +64,8 @@ export interface PlayerCardProps {
   visibleChips?: StatChipId[];
   /** Detected role from the role detection algorithm */
   detectedRole?: PlayerRoleResult;
+  /** Whether the metrics row wraps chips vertically or scrolls horizontally */
+  metricsLayout?: MetricsLayout;
   /** Test ID for testing */
   'data-testid'?: string;
 }
