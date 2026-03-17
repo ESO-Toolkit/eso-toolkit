@@ -40,7 +40,7 @@ test.describe('RosterBuilderPage — load', () => {
     await expect(page.getByText('Advanced Mode')).toBeVisible();
     // Action buttons
     await expect(page.getByText('Quick Fill')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Import' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Import roster from file or log' })).toBeVisible();
   });
 });
 

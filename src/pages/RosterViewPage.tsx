@@ -571,13 +571,11 @@ const DPS_JAIL_LABELS: Record<string, string> = {
 
 const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
   const skillLines = formatSkillLines(slot.skillLines);
-  const gearSets = slot.gearSets?.length
-    ? formatGearSets({
-        set1: slot.gearSets[0],
-        set2: slot.gearSets[1],
-        additionalSets: slot.gearSets.slice(2),
-      })
-    : [];
+  const gearSets = formatGearSets({
+    set1: slot.set1,
+    set2: slot.set2,
+    additionalSets: slot.monsterSet ? [slot.monsterSet] : [],
+  });
 
   const isEmpty = !slot.playerName && !slot.labels?.length;
 
