@@ -147,13 +147,25 @@ const MUNDUS_LABELS: Record<string, string> = {
 // ─── Passive grid helper ──────────────────────────────────────────────────────
 
 /**
- * Returns the optimal column count for an evenly distributed passive grid.
- * 6 → 3 (3+3), 8 → 4 (4+4), 7 → 3 (3+3+1), 9 → 3 (3+3+3), 12 → 4 (4+4+4)
+ * Returns the optimal column count so the passive grid either divides perfectly
+ * or leaves exactly 1 item on the last row (which then stretches full-width).
+ *
+ * Priority: perfect division (4→4, 3→3) first, then cols that yield remainder=1
+ * so the lone last item can span the full row.
+ *
+ * Examples: 4→4, 5→4(4+1full), 6→3(3+3), 7→3(3+3+1full),
+ *           8→4(4+4), 9→3(3+3+3), 10→3(3+3+3+1full), 12→4(4+4+4)
  */
 const getPassiveCols = (n: number): number => {
   if (n <= 3) return Math.max(n, 1);
+  // Perfect rows — no leftover
   if (n % 4 === 0) return 4;
   if (n % 3 === 0) return 3;
+  // Prefer cols that leave exactly 1 item (gets full-width stretch)
+  if (n % 4 === 1) return 4;  // 5→4+[1], 13→4+4+4+[1]
+  if (n % 3 === 1) return 3;  // 7→3+3+[1], 10→3+3+3+[1]
+  // Even counts not caught above (e.g. 14, 18) — 4 cols, last row may be 2 short
+  if (n % 2 === 0) return 4;
   return 3;
 };
 
