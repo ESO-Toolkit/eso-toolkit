@@ -20,6 +20,7 @@ import {
   Button,
   Chip,
   Container,
+  Divider,
   Skeleton,
   Snackbar,
   Tooltip,
@@ -37,7 +38,9 @@ import { staggerContainer, fadeInUp } from '../features/build-editor/components/
 import { GlassPanel } from '../features/build-editor/components/primitives/GlassPanel';
 import { BE_TOKENS } from '../features/build-editor/theme/buildEditorTokens';
 import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
-import type { Build, BuildSetup, CombatRole } from '../features/build-editor/types/build.types';
+import { CP_PASSIVES_BY_TREE } from '../features/build-editor/data/championPassives';
+import type { Build, BuildChampionPoints, BuildSetup, CombatRole } from '../features/build-editor/types/build.types';
+import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { BuildViewShell } from '../features/build-viewer/components/BuildViewShell';
 import { ViewAttributeBar } from '../features/build-viewer/components/ViewAttributeBar';
 import { getItemInfo } from '../features/loadout-manager/data/itemIdMap';
@@ -539,8 +542,6 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const hasAttributes =
-    setup.attributes.magicka > 0 || setup.attributes.health > 0 || setup.attributes.stamina > 0;
   const totalAttributes =
     setup.attributes.magicka + setup.attributes.health + setup.attributes.stamina;
 
@@ -576,45 +577,43 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="visible">
       {/* Row 1: Attributes + Character */}
-      {(hasAttributes || hasMundusOrCurse) && (
+      {(true || hasMundusOrCurse) && (
         <Box
           sx={{
             display: 'grid',
             gridTemplateColumns: {
               xs: '1fr',
-              md: hasAttributes && hasMundusOrCurse ? '1fr 1fr' : '1fr',
+              md: hasMundusOrCurse ? '1fr 1fr' : '1fr',
             },
             gap: 2,
             mb: 2,
           }}
         >
-          {hasAttributes && (
-            <motion.div variants={fadeInUp}>
-              <GlassPanel variant="default" sx={{ p: 2 }}>
-                <SectionLabel label="Attributes" count={`${totalAttributes} / 64`} />
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-                  <ViewAttributeBar
-                    label="Magicka"
-                    color={BE_TOKENS.attributes.magicka}
-                    value={setup.attributes.magicka}
-                    max={64}
-                  />
-                  <ViewAttributeBar
-                    label="Health"
-                    color={BE_TOKENS.attributes.health}
-                    value={setup.attributes.health}
-                    max={64}
-                  />
-                  <ViewAttributeBar
-                    label="Stamina"
-                    color={BE_TOKENS.attributes.stamina}
-                    value={setup.attributes.stamina}
-                    max={64}
-                  />
-                </Box>
-              </GlassPanel>
-            </motion.div>
-          )}
+          <motion.div variants={fadeInUp}>
+            <GlassPanel variant="default" sx={{ p: 2 }}>
+              <SectionLabel label="Attributes" count={`${totalAttributes} / 64`} />
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                <ViewAttributeBar
+                  label="Magicka"
+                  color={BE_TOKENS.attributes.magicka}
+                  value={setup.attributes.magicka}
+                  max={64}
+                />
+                <ViewAttributeBar
+                  label="Health"
+                  color={BE_TOKENS.attributes.health}
+                  value={setup.attributes.health}
+                  max={64}
+                />
+                <ViewAttributeBar
+                  label="Stamina"
+                  color={BE_TOKENS.attributes.stamina}
+                  value={setup.attributes.stamina}
+                  max={64}
+                />
+              </Box>
+            </GlassPanel>
+          </motion.div>
 
           {hasMundusOrCurse && (
             <motion.div variants={fadeInUp}>
@@ -840,11 +839,43 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
         </motion.div>
       )}
 
-      {/* Row 4: Champion Points + Consumables */}
-      {(cpSlots.length > 0 ||
-        cpPassiveCount > 0 ||
-        hasConsumables ||
-        setup.passives.length > 0) && (
+      {/* Row 4: Champion Points (full width) */}
+      {(cpSlots.length > 0 || cpPassiveCount > 0) && (
+        <motion.div variants={fadeInUp}>
+          <GlassPanel variant="default" sx={{ p: 2, mb: 2 }}>
+            <SectionLabel label="Champion Points" />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <CPTreeDetail
+                label="Warfare"
+                color="#ef5350"
+                icon={<WarfareIcon sx={{ fontSize: 14 }} />}
+                slots={setup.cp.warfare.slots}
+                passives={setup.cp.warfare.passives}
+                passivesList={CP_PASSIVES_BY_TREE.warfare}
+              />
+              <CPTreeDetail
+                label="Fitness"
+                color="#66bb6a"
+                icon={<FitnessIcon sx={{ fontSize: 14 }} />}
+                slots={setup.cp.fitness.slots}
+                passives={setup.cp.fitness.passives}
+                passivesList={CP_PASSIVES_BY_TREE.fitness}
+              />
+              <CPTreeDetail
+                label="Craft"
+                color="#42a5f5"
+                icon={null}
+                slots={setup.cp.craft.slots}
+                passives={setup.cp.craft.passives}
+                passivesList={CP_PASSIVES_BY_TREE.craft}
+              />
+            </Box>
+          </GlassPanel>
+        </motion.div>
+      )}
+
+      {/* Row 5: Consumables + Passives */}
+      {(hasConsumables || setup.passives.length > 0) && (
         <Box
           sx={{
             display: 'grid',
@@ -853,42 +884,44 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
             mb: 2,
           }}
         >
-          {(cpSlots.length > 0 || cpPassiveCount > 0) && (
+          {/* Consumables */}
+          {hasConsumables && (
             <motion.div variants={fadeInUp}>
-              <GlassPanel variant="default" sx={{ p: 2 }}>
-                <SectionLabel label="Champion Points" />
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {/* Warfare */}
-                  {(setup.cp.warfare.slots.some((s) => s !== null) ||
-                    Object.keys(setup.cp.warfare.passives).length > 0) && (
-                    <CPTreeSummary
-                      label="Warfare"
-                      color="#ef5350"
-                      icon={<WarfareIcon sx={{ fontSize: 14 }} />}
-                      slots={setup.cp.warfare.slots.filter((s): s is number => s !== null)}
-                      passiveCount={Object.keys(setup.cp.warfare.passives).length}
+              <GlassPanel variant="subtle" sx={{ p: 2 }}>
+                <SectionLabel label="Consumables" />
+                <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                  {setup.consumables.potions.map((p) => (
+                    <Chip
+                      key={p.id}
+                      label={`Potion #${p.id}`}
+                      size="small"
+                      sx={{
+                        fontSize: '0.68rem',
+                        height: 24,
+                        fontWeight: 600,
+                        bgcolor: isDark
+                          ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
+                          : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
+                        border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
+                        color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
+                      }}
                     />
-                  )}
-                  {/* Fitness */}
-                  {(setup.cp.fitness.slots.some((s) => s !== null) ||
-                    Object.keys(setup.cp.fitness.passives).length > 0) && (
-                    <CPTreeSummary
-                      label="Fitness"
-                      color="#66bb6a"
-                      icon={<FitnessIcon sx={{ fontSize: 14 }} />}
-                      slots={setup.cp.fitness.slots.filter((s): s is number => s !== null)}
-                      passiveCount={Object.keys(setup.cp.fitness.passives).length}
-                    />
-                  )}
-                  {/* Craft */}
-                  {(setup.cp.craft.slots.some((s) => s !== null) ||
-                    Object.keys(setup.cp.craft.passives).length > 0) && (
-                    <CPTreeSummary
-                      label="Craft"
-                      color="#42a5f5"
-                      icon={null}
-                      slots={setup.cp.craft.slots.filter((s): s is number => s !== null)}
-                      passiveCount={Object.keys(setup.cp.craft.passives).length}
+                  ))}
+                  {setup.consumables.food.id != null && (
+                    <Chip
+                      label={
+                        ESO_CONSUMABLE_LOOKUP[setup.consumables.food.id]?.name ??
+                        `Food #${setup.consumables.food.id}`
+                      }
+                      size="small"
+                      sx={{
+                        fontSize: '0.68rem',
+                        height: 24,
+                        fontWeight: 600,
+                        bgcolor: isDark ? 'rgba(255,179,0,0.08)' : 'rgba(255,179,0,0.06)',
+                        border: '1px solid rgba(255,179,0,0.20)',
+                        color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
+                      }}
                     />
                   )}
                 </Box>
@@ -896,153 +929,159 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
             </motion.div>
           )}
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {/* Consumables */}
-            {hasConsumables && (
-              <motion.div variants={fadeInUp}>
-                <GlassPanel variant="subtle" sx={{ p: 2 }}>
-                  <SectionLabel label="Consumables" />
-                  <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-                    {setup.consumables.potions.map((p) => (
+          {/* Passives */}
+          {setup.passives.length > 0 && (
+            <motion.div variants={fadeInUp}>
+              <GlassPanel variant="subtle" sx={{ p: 2 }}>
+                <SectionLabel label="Passives" count={`${setup.passives.length} selected`} />
+                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                  {setup.passives.map((passiveId) => {
+                    const skill = getSkillById(passiveId);
+                    return (
                       <Chip
-                        key={p.id}
-                        label={`Potion #${p.id}`}
+                        key={passiveId}
+                        label={skill?.name ?? `Passive #${passiveId}`}
                         size="small"
                         sx={{
-                          fontSize: '0.68rem',
-                          height: 24,
+                          fontSize: '0.65rem',
+                          height: 22,
                           fontWeight: 600,
                           bgcolor: isDark
-                            ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
-                            : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
-                          border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
-                          color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
+                            ? 'rgba(var(--be-accent-rgb, 56,189,248),0.07)'
+                            : 'rgba(var(--be-accent-rgb, 56,189,248),0.05)',
+                          border: '1px solid rgba(var(--be-accent-rgb, 56,189,248),0.18)',
+                          color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
                         }}
                       />
-                    ))}
-                    {setup.consumables.food.id != null && (
-                      <Chip
-                        label={
-                          ESO_CONSUMABLE_LOOKUP[setup.consumables.food.id]?.name ??
-                          `Food #${setup.consumables.food.id}`
-                        }
-                        size="small"
-                        sx={{
-                          fontSize: '0.68rem',
-                          height: 24,
-                          fontWeight: 600,
-                          bgcolor: isDark ? 'rgba(255,179,0,0.08)' : 'rgba(255,179,0,0.06)',
-                          border: '1px solid rgba(255,179,0,0.20)',
-                          color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
-                        }}
-                      />
-                    )}
-                  </Box>
-                </GlassPanel>
-              </motion.div>
-            )}
-
-            {/* Passives */}
-            {setup.passives.length > 0 && (
-              <motion.div variants={fadeInUp}>
-                <GlassPanel variant="subtle" sx={{ p: 2 }}>
-                  <SectionLabel label="Passives" count={`${setup.passives.length} selected`} />
-                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                    {setup.passives.map((passiveId) => {
-                      const skill = getSkillById(passiveId);
-                      return (
-                        <Chip
-                          key={passiveId}
-                          label={skill?.name ?? `Passive #${passiveId}`}
-                          size="small"
-                          sx={{
-                            fontSize: '0.65rem',
-                            height: 22,
-                            fontWeight: 600,
-                            bgcolor: isDark
-                              ? 'rgba(var(--be-accent-rgb, 56,189,248),0.07)'
-                              : 'rgba(var(--be-accent-rgb, 56,189,248),0.05)',
-                            border: '1px solid rgba(var(--be-accent-rgb, 56,189,248),0.18)',
-                            color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
-                          }}
-                        />
-                      );
-                    })}
-                  </Box>
-                </GlassPanel>
-              </motion.div>
-            )}
-          </Box>
+                    );
+                  })}
+                </Box>
+              </GlassPanel>
+            </motion.div>
+          )}
         </Box>
       )}
     </motion.div>
   );
 };
 
-// ─── CP tree summary ──────────────────────────────────────────────────────────
+// ─── CP tree detail ───────────────────────────────────────────────────────────
 
-const CPTreeSummary: React.FC<{
+const CPTreeDetail: React.FC<{
   label: string;
   color: string;
   icon: React.ReactNode;
-  slots: number[];
-  passiveCount: number;
-}> = ({ label, color, icon, slots, passiveCount }) => {
+  slots: (number | null)[];
+  passives: Record<string, number>;
+  passivesList: readonly { id: string; name: string; maxPoints: number; description: string }[];
+}> = ({ label, color, icon, slots, passives, passivesList }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+
+  const activeSlots = slots.filter((s): s is number => s !== null);
+  const passiveEntries = Object.entries(passives).filter(([, v]) => v > 0);
+
+  if (activeSlots.length === 0 && passiveEntries.length === 0) return null;
 
   return (
     <Box
       sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-        py: 0.5,
-        px: 1,
         borderRadius: 2,
-        background: isDark ? alpha(color, 0.06) : alpha(color, 0.04),
+        background: isDark ? alpha(color, 0.04) : alpha(color, 0.03),
         border: `1px solid ${alpha(color, isDark ? 0.15 : 0.1)}`,
+        overflow: 'hidden',
       }}
     >
-      {icon && <Box sx={{ color, opacity: 0.7, display: 'flex' }}>{icon}</Box>}
-      <Typography
+      {/* Tree header */}
+      <Box
         sx={{
-          fontSize: '0.72rem',
-          fontWeight: 600,
-          color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
-          minWidth: 55,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.75,
+          px: 1.5,
+          py: 0.75,
+          borderBottom: `1px solid ${alpha(color, 0.12)}`,
+          background: isDark ? alpha(color, 0.07) : alpha(color, 0.05),
         }}
       >
-        {label}
-      </Typography>
-      {slots.length > 0 && (
-        <Chip
-          label={`${slots.length} active`}
-          size="small"
+        {icon && (
+          <Box sx={{ color, opacity: 0.8, display: 'flex', fontSize: 14 }}>{icon}</Box>
+        )}
+        <Typography
           sx={{
-            fontSize: '0.6rem',
-            height: 20,
-            fontWeight: 600,
-            bgcolor: alpha(color, isDark ? 0.15 : 0.1),
-            color: isDark ? alpha(color, 0.9) : color,
-            border: 'none',
+            fontSize: '0.72rem',
+            fontWeight: 700,
+            color,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
           }}
-        />
-      )}
-      {passiveCount > 0 && (
-        <Chip
-          label={`${passiveCount} passive${passiveCount !== 1 ? 's' : ''}`}
-          size="small"
+        >
+          {label}
+        </Typography>
+        <Typography
           sx={{
-            fontSize: '0.6rem',
-            height: 20,
-            fontWeight: 600,
-            bgcolor: 'transparent',
-            color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
-            border: `1px solid ${alpha(color, 0.2)}`,
+            fontSize: '0.62rem',
+            color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+            ml: 0.5,
           }}
-        />
-      )}
+        >
+          {activeSlots.length > 0 && `${activeSlots.length} perk${activeSlots.length !== 1 ? 's' : ''}`}
+          {activeSlots.length > 0 && passiveEntries.length > 0 && ' · '}
+          {passiveEntries.length > 0 && `${passiveEntries.length} passive${passiveEntries.length !== 1 ? 's' : ''}`}
+        </Typography>
+      </Box>
+
+      <Box sx={{ px: 1.5, py: 1, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+        {/* Slottable perks */}
+        {activeSlots.length > 0 && (
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+            {activeSlots.map((id, i) => {
+              const name =
+                CHAMPION_POINT_ABILITIES[id as ChampionPointAbilityId]?.name ?? `Perk #${id}`;
+              return (
+                <Chip
+                  key={i}
+                  label={name}
+                  size="small"
+                  sx={{
+                    fontSize: '0.65rem',
+                    height: 22,
+                    fontWeight: 700,
+                    bgcolor: alpha(color, isDark ? 0.18 : 0.12),
+                    color: isDark ? alpha(color, 0.95) : color,
+                    border: 'none',
+                  }}
+                />
+              );
+            })}
+          </Box>
+        )}
+
+        {/* Passive stars */}
+        {passiveEntries.length > 0 && (
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+            {passiveEntries.map(([key, points]) => {
+              const passive = passivesList.find((p) => p.id === key);
+              const name = passive?.name ?? key;
+              return (
+                <Chip
+                  key={key}
+                  label={`${name} ${points}`}
+                  size="small"
+                  sx={{
+                    fontSize: '0.62rem',
+                    height: 20,
+                    fontWeight: 600,
+                    bgcolor: 'transparent',
+                    color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)',
+                    border: `1px solid ${alpha(color, isDark ? 0.22 : 0.18)}`,
+                  }}
+                />
+              );
+            })}
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 };

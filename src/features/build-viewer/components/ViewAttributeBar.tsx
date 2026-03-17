@@ -21,8 +21,7 @@ export const ViewAttributeBar: React.FC<ViewAttributeBarProps> = ({ label, color
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();
   const fillPercent = max > 0 ? (value / max) * 100 : 0;
-
-  if (value === 0) return null;
+  const isEmpty = value === 0;
 
   return (
     <Box
@@ -33,8 +32,13 @@ export const ViewAttributeBar: React.FC<ViewAttributeBarProps> = ({ label, color
         py: 0.75,
         px: 1.5,
         borderRadius: 2.5,
-        background: isDark ? alpha(color, 0.05) : alpha(color, 0.03),
-        border: `1px solid ${alpha(color, isDark ? 0.18 : 0.12)}`,
+        background: isEmpty
+          ? isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)'
+          : isDark ? alpha(color, 0.05) : alpha(color, 0.03),
+        border: `1px solid ${isEmpty
+          ? isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'
+          : alpha(color, isDark ? 0.18 : 0.12)}`,
+        opacity: isEmpty ? 0.5 : 1,
       }}
     >
       <Box
@@ -98,9 +102,9 @@ export const ViewAttributeBar: React.FC<ViewAttributeBarProps> = ({ label, color
           fontWeight: 700,
           fontVariantNumeric: 'tabular-nums',
           fontFamily: 'Space Grotesk, Inter, system-ui',
-          color,
+          color: isEmpty ? (isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.28)') : color,
           fontSize: 13,
-          textShadow: `0 0 8px ${alpha(color, 0.4)}`,
+          textShadow: isEmpty ? 'none' : `0 0 8px ${alpha(color, 0.4)}`,
         }}
       >
         {value}
