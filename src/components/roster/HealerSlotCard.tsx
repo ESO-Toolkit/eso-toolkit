@@ -11,10 +11,8 @@ import {
   Box,
   Card,
   CardContent,
-  Checkbox,
   Chip,
   FormControl,
-  FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
@@ -25,31 +23,33 @@ import {
 import { useTheme } from '@mui/material/styles';
 import React from 'react';
 
+import { KnownSetIDs } from '../../types/abilities';
 import {
   HealerSetup,
   HealerBuff,
   RosterDetailLevel,
   SupportUltimate,
-  CLASS_SKILL_LINES,
   ALL_5PIECE_SETS,
   MONSTER_SETS,
   validateCompatibility,
 } from '../../types/roster';
-import { SlotFullModePanel } from './SlotFullModePanel';
-import { KnownSetIDs } from '../../types/abilities';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColors';
+import { healerSlotToBuild } from '../../utils/rosterSlotToBuild';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
+
 import { makeGlassSx } from './shared/glassSx';
 import {
   HEALER_5PIECE_OPTIONS,
   HEALER_MONSTER_OPTIONS,
   getUltimateIcon,
   getHealerBuffIcon,
-  getSkillLineIcon,
   isHealer5PieceSet,
   isFlexible5PieceSet,
   isMonsterSet,
 } from './shared/rosterCardHelpers';
+import { SkillLinePickerGroup } from './shared/skill-line-picker';
+import { SlotActionPill } from './shared/slot-action-pill';
+import { SlotFullModePanel } from './SlotFullModePanel';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -138,6 +138,11 @@ export const HealerCard = React.memo<HealerCardProps>(
                 Healer {healerNum}
               </Typography>
             </Box>
+            <SlotActionPill
+              buildFactory={() => healerSlotToBuild(healer, healerNum)}
+              color={healerRoleColors.healer}
+              label={`Healer ${healerNum}`}
+            />
           </Box>
           <Stack spacing={1.5}>
             {/* Essential Fields - Always Visible */}
@@ -578,136 +583,10 @@ export const HealerCard = React.memo<HealerCardProps>(
                   />
 
                   {/* Build */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      mt: 0.5,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: '0.6rem',
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        color: healerIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-                      }}
-                    >
-                      Build
-                    </Typography>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          size="small"
-                          checked={healer.skillLines.isFlex}
-                          onChange={(e) =>
-                            onChange({
-                              skillLines: {
-                                ...healer.skillLines,
-                                isFlex: e.target.checked,
-                              },
-                            })
-                          }
-                          sx={{ p: 0.5 }}
-                        />
-                      }
-                      label="Any class"
-                      sx={{
-                        ml: 'auto',
-                        mr: 0,
-                        '& .MuiFormControlLabel-label': {
-                          fontSize: '0.75rem',
-                          color: healerIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-                        },
-                      }}
-                    />
-                  </Box>
-                  {!healer.skillLines.isFlex && (
-                    <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                      <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
-                        <Autocomplete
-                          freeSolo
-                          size="small"
-                          options={[...CLASS_SKILL_LINES].sort()}
-                          value={healer.skillLines.line1}
-                          onChange={(_, value) =>
-                            onChange({
-                              skillLines: {
-                                ...healer.skillLines,
-                                line1: value || '',
-                              },
-                            })
-                          }
-                          renderInput={(params) => (
-                            <TextField {...params} label="Skill Line 1" sx={glassSx} />
-                          )}
-                          renderOption={(props, option) => (
-                            <li {...props}>
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                {getSkillLineIcon(option)}
-                                {option}
-                              </Box>
-                            </li>
-                          )}
-                        />
-                      </Box>
-                      <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
-                        <Autocomplete
-                          freeSolo
-                          size="small"
-                          options={[...CLASS_SKILL_LINES].sort()}
-                          value={healer.skillLines.line2}
-                          onChange={(_, value) =>
-                            onChange({
-                              skillLines: {
-                                ...healer.skillLines,
-                                line2: value || '',
-                              },
-                            })
-                          }
-                          renderInput={(params) => (
-                            <TextField {...params} label="Skill Line 2" sx={glassSx} />
-                          )}
-                          renderOption={(props, option) => (
-                            <li {...props}>
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                {getSkillLineIcon(option)}
-                                {option}
-                              </Box>
-                            </li>
-                          )}
-                        />
-                      </Box>
-                      <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
-                        <Autocomplete
-                          freeSolo
-                          size="small"
-                          options={[...CLASS_SKILL_LINES].sort()}
-                          value={healer.skillLines.line3}
-                          onChange={(_, value) =>
-                            onChange({
-                              skillLines: {
-                                ...healer.skillLines,
-                                line3: value || '',
-                              },
-                            })
-                          }
-                          renderInput={(params) => (
-                            <TextField {...params} label="Skill Line 3" sx={glassSx} />
-                          )}
-                          renderOption={(props, option) => (
-                            <li {...props}>
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                {getSkillLineIcon(option)}
-                                {option}
-                              </Box>
-                            </li>
-                          )}
-                        />
-                      </Box>
-                    </Box>
-                  )}
+                  <SkillLinePickerGroup
+                    value={healer.skillLines}
+                    onChange={(skillLines) => onChange({ skillLines })}
+                  />
 
                   <TextField
                     fullWidth

@@ -1,3 +1,5 @@
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   AutoAwesome as AutoAwesomeIcon,
   DragIndicator as DragIndicatorIcon,
@@ -11,41 +13,39 @@ import {
   Box,
   Card,
   CardContent,
-  Checkbox,
   Chip,
-  FormControlLabel,
   IconButton,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { CSS } from '@dnd-kit/utilities';
-import { useSortable } from '@dnd-kit/sortable';
 import React, { useCallback } from 'react';
 
+import { KnownSetIDs } from '../../types/abilities';
 import {
   DPSSlot,
   JailDDType,
   RosterDetailLevel,
   SupportUltimate,
-  CLASS_SKILL_LINES,
   ALL_5PIECE_SETS,
   MONSTER_SETS,
 } from '../../types/roster';
-import { KnownSetIDs } from '../../types/abilities';
-import { SlotFullModePanel } from './SlotFullModePanel';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColors';
+import { dpsSlotToBuild } from '../../utils/rosterSlotToBuild';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
+
 import { makeGlassSx } from './shared/glassSx';
 import {
   DPS_5PIECE_OPTIONS,
   DPS_MONSTER_OPTIONS,
   getUltimateIcon,
-  getSkillLineIcon,
   isDDSpecialSet,
   isMonsterSet,
 } from './shared/rosterCardHelpers';
+import { SkillLinePickerGroup } from './shared/skill-line-picker';
+import { SlotActionPill } from './shared/slot-action-pill';
+import { SlotFullModePanel } from './SlotFullModePanel';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -225,6 +225,11 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                 }}
               />
             )}
+            <SlotActionPill
+              buildFactory={() => dpsSlotToBuild(slot)}
+              color={dpsRoleColors.dps}
+              label={`DPS ${slot.slotNumber}`}
+            />
           </Box>
           <Stack spacing={1.5}>
             {/* Essential Fields - Always Visible */}
@@ -679,142 +684,10 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                     renderOption={(props, option) => <li {...props}>{option}</li>}
                   />
 
-                  {/* Build */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      mt: 0.5,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: '0.6rem',
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        color: dpsIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-                      }}
-                    >
-                      Build
-                    </Typography>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          size="small"
-                          checked={slot.skillLines?.isFlex ?? true}
-                          onChange={(e) =>
-                            onChange({
-                              skillLines: {
-                                ...(slot.skillLines || {
-                                  line1: '',
-                                  line2: '',
-                                  line3: '',
-                                  isFlex: true,
-                                }),
-                                isFlex: e.target.checked,
-                              },
-                            })
-                          }
-                          sx={{ p: 0.5 }}
-                        />
-                      }
-                      label="Any class"
-                      sx={{
-                        ml: 'auto',
-                        mr: 0,
-                        '& .MuiFormControlLabel-label': {
-                          fontSize: '0.75rem',
-                          color: dpsIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-                        },
-                      }}
-                    />
-                  </Box>
-                  {slot.skillLines && !slot.skillLines.isFlex && (
-                    <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                      <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
-                        <Autocomplete
-                          freeSolo
-                          size="small"
-                          options={[...CLASS_SKILL_LINES].sort()}
-                          value={slot.skillLines.line1}
-                          onChange={(_, value) =>
-                            onChange({
-                              skillLines: {
-                                ...slot.skillLines!,
-                                line1: value || '',
-                              },
-                            })
-                          }
-                          renderInput={(params) => (
-                            <TextField {...params} label="Skill Line 1" sx={glassSx} />
-                          )}
-                          renderOption={(props, option) => (
-                            <li {...props}>
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                {getSkillLineIcon(option)}
-                                {option}
-                              </Box>
-                            </li>
-                          )}
-                        />
-                      </Box>
-                      <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
-                        <Autocomplete
-                          freeSolo
-                          size="small"
-                          options={[...CLASS_SKILL_LINES].sort()}
-                          value={slot.skillLines.line2}
-                          onChange={(_, value) =>
-                            onChange({
-                              skillLines: {
-                                ...slot.skillLines!,
-                                line2: value || '',
-                              },
-                            })
-                          }
-                          renderInput={(params) => (
-                            <TextField {...params} label="Skill Line 2" sx={glassSx} />
-                          )}
-                          renderOption={(props, option) => (
-                            <li {...props}>
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                {getSkillLineIcon(option)}
-                                {option}
-                              </Box>
-                            </li>
-                          )}
-                        />
-                      </Box>
-                      <Box sx={{ flex: '1 1 30%', minWidth: 200 }}>
-                        <Autocomplete
-                          freeSolo
-                          size="small"
-                          options={[...CLASS_SKILL_LINES].sort()}
-                          value={slot.skillLines.line3}
-                          onChange={(_, value) =>
-                            onChange({
-                              skillLines: {
-                                ...slot.skillLines!,
-                                line3: value || '',
-                              },
-                            })
-                          }
-                          renderInput={(params) => (
-                            <TextField {...params} label="Skill Line 3" sx={glassSx} />
-                          )}
-                          renderOption={(props, option) => (
-                            <li {...props}>
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                {getSkillLineIcon(option)}
-                                {option}
-                              </Box>
-                            </li>
-                          )}
-                        />
-                      </Box>
-                    </Box>
-                  )}
+                  <SkillLinePickerGroup
+                    value={slot.skillLines ?? { line1: '', line2: '', line3: '', isFlex: true }}
+                    onChange={(skillLines) => onChange({ skillLines })}
+                  />
 
                   <TextField
                     fullWidth
