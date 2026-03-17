@@ -88,7 +88,6 @@ import { KnownAbilities, KnownSetIDs } from '../types/abilities';
 import {
   RaidRoster,
   TankSetup,
-  TankGearSet,
   HealerSetup,
   DPSSlot,
   SupportUltimate,
@@ -97,7 +96,6 @@ import {
   JailDDType,
   CLASS_SKILL_LINES,
   SkillLineConfig,
-  PlayerGroup,
   createDefaultRoster,
   defaultTankSetup,
   defaultHealerSetup,
@@ -116,7 +114,7 @@ import {
 } from '../types/roster';
 import type { TrialBuildOverrides } from '../types/trial-encounters';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
-import { encodeRosterToURL as encodeRosterToURLShared } from '../utils/rosterEncoding';
+import { encodeRosterToURL, decodeRosterFromURL } from '../utils/rosterEncoding';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
 
 /**
@@ -698,112 +696,6 @@ function encodeAddonExport(roster: RaidRoster): string {
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-/** Base64url encode a byte array (URL-safe, no padding) */
-function toBase64Url(bytes: Uint8Array): string {
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-/** Base64url decode back to byte array */
-function fromBase64Url(str: string): Uint8Array {
-  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-  const binary = atob(padded);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
-}
-
-async function readAllChunks(readable: ReadableStream<Uint8Array>): Promise<Uint8Array> {
-  const chunks: Uint8Array[] = [];
-  const reader = readable.getReader();
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-  }
-  const total = chunks.reduce((s, c) => s + c.length, 0);
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    out.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return out;
-}
-
-async function deflateString(str: string): Promise<Uint8Array> {
-  const input = new TextEncoder().encode(str);
-  const cs = new CompressionStream('deflate-raw') as unknown as TransformStream<
-    Uint8Array,
-    Uint8Array
-  >;
-  const writer = cs.writable.getWriter();
-  // Write + close, suppressing rejections — errors also propagate through the readable side.
-  void writer
-    .write(input)
-    .then(() => writer.close())
-    .catch(() => {});
-  return readAllChunks(cs.readable);
-}
-
-async function inflateBytes(bytes: Uint8Array): Promise<string> {
-  const ds = new DecompressionStream('deflate-raw') as unknown as TransformStream<
-    Uint8Array,
-    Uint8Array
-  >;
-  const writer = ds.writable.getWriter();
-  // Write + close, suppressing rejections — the same decompression error will
-  // also propagate through the readable side for the caller to catch.
-  void writer
-    .write(bytes)
-    .then(() => writer.close())
-    .catch(() => {});
-  const output = await readAllChunks(ds.readable);
-  return new TextDecoder().decode(output);
-}
-
-/**
- * Encode roster to a compact, deflate-compressed, URL-safe base64 string (v2).
- */
-const encodeRosterToURL = async (roster: RaidRoster): Promise<string> => {
-  try {
-    const compact = compactifyRoster(roster);
-    const json = JSON.stringify(compact);
-    const compressed = await deflateString(json);
-    return toBase64Url(compressed);
-  } catch {
-    return '';
-  }
-};
-
-/**
- * Decode roster from URL hash. Supports v2 (deflate + compact) and v1 (plain base64 JSON).
- */
-const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster | null> => {
-  // Try v2: deflate-raw + compact format
-  try {
-    const bytes = fromBase64Url(encoded);
-    const json = await inflateBytes(bytes);
-    const parsed = JSON.parse(json) as { v?: number };
-    if (parsed.v === 2) {
-      return expandCompactRoster(parsed as CompactRoster);
-    }
-  } catch {
-    // fall through to v1
-  }
-  // Try v1: btoa(encodeURIComponent(json))
-  try {
-    const json = decodeURIComponent(atob(encoded));
-    return JSON.parse(json) as RaidRoster;
-  } catch {
-    return null;
-  }
-};
-
 // Icon mappings for ESO abilities
 const ULTIMATE_ICONS: Record<string, string> = {
   [SupportUltimate.WARHORN]: 'ability_ava_003_a',
@@ -1298,7 +1190,7 @@ export const RosterBuilderPage: React.FC = () => {
 
   // Generate shareable read-only link (points to /rv, the dedicated share view)
   const handleCopyLink = useCallback(() => {
-    void encodeRosterToURLShared(roster)
+    void encodeRosterToURL(roster)
       .then((encoded) => {
         if (encoded) {
           // Derive base path to support subdirectory deployments (e.g. /dev-previews/pr-xxx/)

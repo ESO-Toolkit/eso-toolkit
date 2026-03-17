@@ -305,7 +305,7 @@ jobs:
               build:    '1481787727614705685',
             };
 
-            const commitTypeMatch = pr.title.match(/^(\w+)(?:\(.+?\))?[!]?:/);
+            const commitTypeMatch = pr.title.match(/^(?:\w+-\d+\s+)?(\w+)(?:\(.+?\))?[!]?:/);
             const commitType = commitTypeMatch ? commitTypeMatch[1].toLowerCase() : 'chore';
             const threadId = THREAD_MAP[commitType] || THREAD_MAP['chore'];
             const postUrl = `${webhookUrl}?thread_id=${threadId}&wait=true`;

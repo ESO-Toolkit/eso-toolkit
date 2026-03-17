@@ -3,6 +3,9 @@ export { useReportMasterData } from './useReportMasterData';
 export { useReportData } from './useReportData';
 export { usePlayerData } from './usePlayerData';
 
+// Role detection
+export { useRoleDetection } from './useRoleDetection';
+
 // UI hooks
 export { useRoleColors } from './useRoleColors';
 export { useBrowserAwareDarkMode } from './useBrowserAwareDarkMode';

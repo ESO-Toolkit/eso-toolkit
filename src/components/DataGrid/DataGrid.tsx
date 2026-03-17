@@ -117,7 +117,7 @@ const ColumnFilter = <T,>({ column }: { column: Column<T, unknown> }): React.JSX
         type={isNumeric ? 'number' : 'text'}
         placeholder={`Filter ${columnDef.header?.toString() || column.id}...`}
         value={(columnFilterValue as string | number | undefined) ?? ''}
-        onChange={(e) => {
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           const value = e.target.value;
           if (isNumeric) {
             // For numeric columns, set the raw string value and let TanStack handle the filtering

@@ -4,11 +4,14 @@ import React from 'react';
 import { CriticalDamageSkeleton } from '../components/CriticalDamageSkeleton';
 import { DamageDoneTableSkeleton } from '../components/DamageDoneTableSkeleton';
 import { DamageReductionSkeleton } from '../components/DamageReductionSkeleton';
+import { DataGridPanelSkeleton } from '../components/DataGridPanelSkeleton';
 import { GenericTabSkeleton } from '../components/GenericTabSkeleton';
 import { HealingDoneTableSkeleton } from '../components/HealingDoneTableSkeleton';
 import { InsightsSkeletonLayout } from '../components/InsightsSkeletonLayout';
 import { PenetrationSkeleton } from '../components/PenetrationSkeleton';
 import { PlayersSkeleton } from '../components/PlayersSkeleton';
+import { RotationAnalysisSkeleton } from '../components/RotationAnalysisSkeleton';
+import { SynergyPanelSkeleton } from '../components/SynergyPanelSkeleton';
 
 // Tab identifiers as strings (matching FightDetailsView)
 export enum TabId {
@@ -411,7 +414,7 @@ export const getSkeletonForTab = (
           <DamageReductionSkeleton />
         );
       case TabId.SYNERGIES:
-        return <GenericTabSkeleton title="Synergies" showTable={true} tableRows={8} />;
+        return <SynergyPanelSkeleton />;
       case TabId.LOCATION_HEATMAP:
         return (
           <GenericTabSkeleton
@@ -430,22 +433,45 @@ export const getSkeletonForTab = (
       case TabId.ACTORS:
         return <GenericTabSkeleton title="Actors" showTable={true} tableRows={8} />;
       case TabId.TALENTS:
-        return <GenericTabSkeleton title="Talents Grid" showTable={false} />;
-      case TabId.ROTATION_ANALYSIS:
         return (
-          <GenericTabSkeleton
-            title="Rotation Analysis"
-            showChart={true}
-            chartHeight={500}
-            showTable={false}
+          <DataGridPanelSkeleton
+            columns={6}
+            rows={10}
+            showDescription={true}
+            data-testid="talents-skeleton"
           />
         );
+      case TabId.ROTATION_ANALYSIS:
+        return <RotationAnalysisSkeleton />;
       case TabId.AURAS_OVERVIEW:
-        return <GenericTabSkeleton title="Auras" showTable={true} tableRows={15} />;
+        return (
+          <DataGridPanelSkeleton
+            columns={6}
+            rows={10}
+            showBetaChip={true}
+            showDescription={true}
+            data-testid="auras-skeleton"
+          />
+        );
       case TabId.BUFFS_OVERVIEW:
-        return <GenericTabSkeleton title="Buffs Overview" showChart={true} showTable={true} />;
+        return (
+          <DataGridPanelSkeleton
+            columns={4}
+            rows={10}
+            showDescription={true}
+            data-testid="buffs-skeleton"
+          />
+        );
       case TabId.DEBUFFS_OVERVIEW:
-        return <GenericTabSkeleton title="Debuffs Overview" showTable={true} tableRows={15} />;
+        return (
+          <DataGridPanelSkeleton
+            columns={5}
+            rows={10}
+            showFilter={true}
+            showDescription={true}
+            data-testid="debuffs-skeleton"
+          />
+        );
       case TabId.MAPS:
         return <GenericTabSkeleton title="Maps" showTable={false} />;
       default:

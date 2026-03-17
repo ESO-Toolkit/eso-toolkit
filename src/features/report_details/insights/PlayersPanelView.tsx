@@ -1,8 +1,10 @@
 import TuneIcon from '@mui/icons-material/Tune';
+import WrapTextIcon from '@mui/icons-material/WrapText';
 import {
   Badge,
   Box,
   Button,
+  IconButton,
   Typography,
   TextField,
   Select,
@@ -11,14 +13,14 @@ import {
   InputLabel,
   Stack,
   Chip,
-  Card,
-  CardContent,
-  Skeleton,
   Tooltip,
 } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
 
+import { PlayersSkeleton } from '../../../components/PlayersSkeleton';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
+import type { PlayerRoleResult } from '../../../features/role_detection';
+import { toBroadRole, type BroadRole } from '../../../hooks/useRoleDetection';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
@@ -30,6 +32,7 @@ import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnal
 import { LazyPlayerCard as PlayerCard } from './LazyPlayerCard';
 import { STAT_CHIP_IDS } from './statChipConfig';
 import { StatChipCustomizationModal } from './StatChipCustomizationModal';
+import { useMetricsLayout } from './useMetricsLayout';
 import { useStatChipPreferences } from './useStatChipPreferences';
 
 interface PlayersPanelViewProps {
@@ -73,6 +76,8 @@ interface PlayersPanelViewProps {
   barSwapByPlayer?: Record<string, BarSwapAnalysisResult>;
   /** Per-player potion classification from the live fight event stream (Path B detection) */
   potionResultsByPlayer?: Record<string, PotionStreamResult>;
+  /** Detected roles from the role detection algorithm, keyed by player ID */
+  rolesByPlayerId?: Record<number, PlayerRoleResult>;
 }
 
 type SortOption =
@@ -116,6 +121,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     criticalDamageByPlayer,
     barSwapByPlayer,
     potionResultsByPlayer,
+    rolesByPlayerId,
   }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState<SortOption>('alphabetical');
@@ -123,8 +129,19 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     const [chipModalOpen, setChipModalOpen] = useState(false);
 
     const { visibleChips, setVisibleChips } = useStatChipPreferences();
+    const { metricsLayout, toggleMetricsLayout } = useMetricsLayout();
     const handleOpenChipModal = useCallback(() => setChipModalOpen(true), []);
     const handleCloseChipModal = useCallback(() => setChipModalOpen(false), []);
+
+    // Helper: get the effective broad role for a player, preferring detected role
+    const getEffectiveBroadRole = useCallback(
+      (playerId: string | number): BroadRole => {
+        const detected = rolesByPlayerId?.[Number(playerId)];
+        if (detected) return toBroadRole(detected.role);
+        return 'dps'; // fallback
+      },
+      [rolesByPlayerId],
+    );
 
     // Identify the top DPS player (highest DPS value among DPS-role players)
     const { topDpsPlayerId, topDpsValue } = useMemo(() => {
@@ -132,14 +149,13 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       let bestId: string | null = null;
       let bestDps = 0;
       for (const [id, dps] of Object.entries(dpsValueByPlayer)) {
-        const player = playerActors[id];
-        if (player?.role === 'dps' && dps > bestDps) {
+        if (getEffectiveBroadRole(id) === 'dps' && dps > bestDps) {
           bestDps = dps;
           bestId = id;
         }
       }
       return { topDpsPlayerId: bestId, topDpsValue: bestDps };
-    }, [dpsValueByPlayer, playerActors]);
+    }, [dpsValueByPlayer, playerActors, getEffectiveBroadRole]);
 
     // Memoize player data transformations to prevent recreating objects on each render
     const playerCards = React.useMemo(() => {
@@ -252,10 +268,14 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       if (roleFilter !== 'all') {
         if (roleFilter === 'supports') {
           // Filter for non-DPS (tanks and healers)
-          filtered = filtered.filter((playerData) => playerData.player.role !== 'dps');
+          filtered = filtered.filter(
+            (playerData) => getEffectiveBroadRole(playerData.player.id) !== 'dps',
+          );
         } else {
           // Filter for specific role
-          filtered = filtered.filter((playerData) => playerData.player.role === roleFilter);
+          filtered = filtered.filter(
+            (playerData) => getEffectiveBroadRole(playerData.player.id) === roleFilter,
+          );
         }
       }
 
@@ -282,138 +302,10 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       });
 
       return sorted;
-    }, [playerCards, searchTerm, roleFilter, sortOption]);
+    }, [playerCards, searchTerm, roleFilter, sortOption, getEffectiveBroadRole]);
 
     if (isLoading) {
-      return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {/* Controls skeleton */}
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="stretch">
-            <Skeleton variant="rounded" height={40} sx={{ minWidth: { sm: 200 } }} />
-            <Skeleton variant="rounded" height={40} sx={{ minWidth: { sm: 180 } }} />
-            <Skeleton variant="rounded" height={40} sx={{ minWidth: { sm: 120 } }} />
-          </Stack>
-
-          {/* Results summary skeleton */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-            <Skeleton variant="text" width={150} height={20} />
-          </Box>
-
-          {/* Player cards grid */}
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                // Use 2 columns only for screens 772px and above
-                '@media (min-width: 772px)': {
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                },
-              },
-              gap: { xs: 2, md: 2 },
-              alignItems: 'stretch',
-              minHeight: '400px',
-              width: '100%', // Ensure container doesn't exceed viewport
-              maxWidth: '100vw', // Hard constraint to viewport width
-            }}
-          >
-            {/* Generate 4 player card skeletons (typical party size) */}
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Card key={index} sx={{ marginBottom: 2, minHeight: 380, height: '100%' }}>
-                <CardContent
-                  sx={{ p: 2, pb: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
-                >
-                  {/* Player header section */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                    <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1.5 }} />
-                    <Box sx={{ flexGrow: 1 }}>
-                      <Skeleton variant="text" height={22} width="45%" sx={{ mb: 0.5 }} />
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Skeleton variant="circular" width={16} height={16} />
-                        <Skeleton variant="text" height={14} width="20%" />
-                      </Box>
-                    </Box>
-                  </Box>
-
-                  {/* Class/skill line info */}
-                  <Box sx={{ mb: 1.5 }}>
-                    <Skeleton variant="text" height={16} width="70%" sx={{ mb: 0.5 }} />
-                    <Skeleton variant="text" height={14} width="50%" />
-                  </Box>
-
-                  {/* Abilities/talents grid - 2 rows of 6 */}
-                  <Box sx={{ mb: 1.5 }}>
-                    <Box sx={{ display: 'flex', gap: 1.25, mb: 1.25 }}>
-                      {Array.from({ length: 6 }).map((_, abilityIndex) => (
-                        <Skeleton
-                          key={abilityIndex}
-                          variant="rounded"
-                          width={abilityIndex === 5 ? 34 : 32}
-                          height={abilityIndex === 5 ? 34 : 32}
-                        />
-                      ))}
-                    </Box>
-                    <Box sx={{ display: 'flex', gap: 1.25 }}>
-                      {Array.from({ length: 6 }).map((_, abilityIndex) => (
-                        <Skeleton key={abilityIndex + 6} variant="rounded" width={32} height={32} />
-                      ))}
-                    </Box>
-                  </Box>
-
-                  {/* Gear chips */}
-                  <Box sx={{ mb: 1.5, pt: 0.9, pb: 0 }}>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.25, minHeight: 48 }}>
-                      <Skeleton variant="rounded" height={24} width={80} />
-                      <Skeleton variant="rounded" height={24} width={100} />
-                      <Skeleton variant="rounded" height={24} width={90} />
-                      <Skeleton variant="rounded" height={24} width={70} />
-                    </Box>
-                  </Box>
-
-                  {/* Bottom status section */}
-                  <Box
-                    sx={{
-                      mt: 'auto',
-                      p: 1,
-                      border: '1px solid rgba(0,0,0,0.12)',
-                      borderRadius: 1,
-                      backgroundColor: 'rgba(0,0,0,0.04)',
-                      minHeight: 120,
-                    }}
-                  >
-                    {/* Mundus and stats row */}
-                    <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', minHeight: 28 }}>
-                      <Box sx={{ display: 'flex', gap: 1, flex: 1 }}>
-                        <Skeleton variant="rounded" height={20} width={60} />
-                      </Box>
-                      <Skeleton variant="text" height={16} width="40%" />
-                    </Box>
-
-                    {/* Notable auras */}
-                    <Box sx={{ mb: 1 }}>
-                      <Skeleton variant="text" height={16} width="35%" sx={{ mb: 1 }} />
-                      <Box sx={{ display: 'flex', gap: 1, minHeight: 24 }}>
-                        <Skeleton variant="rounded" height={24} width={70} />
-                        <Skeleton variant="rounded" height={24} width={80} />
-                        <Skeleton variant="rounded" height={24} width={60} />
-                      </Box>
-                    </Box>
-
-                    {/* Champion points */}
-                    <Box>
-                      <Skeleton variant="text" height={16} width="40%" sx={{ mb: 1 }} />
-                      <Box sx={{ display: 'flex', gap: 1, minHeight: 24 }}>
-                        <Skeleton variant="rounded" height={24} width={90} />
-                        <Skeleton variant="rounded" height={24} width={85} />
-                      </Box>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
-        </Box>
-      );
+      return <PlayersSkeleton />;
     }
 
     if (!playerActors || Object.keys(playerActors).length === 0) {
@@ -490,6 +382,43 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 Stats
               </Button>
             </Badge>
+          </Tooltip>
+
+          <Tooltip
+            title={
+              metricsLayout === 'wrap'
+                ? 'Metrics: wrap view — click to switch to scroll view'
+                : 'Metrics: scroll view — click to switch to wrap view'
+            }
+            arrow
+          >
+            <IconButton
+              size="small"
+              onClick={toggleMetricsLayout}
+              sx={{
+                alignSelf: 'center',
+                border: '1px solid',
+                borderColor: metricsLayout === 'wrap' ? 'primary.main' : 'divider',
+                borderRadius: 1,
+                px: 1,
+                color: metricsLayout === 'wrap' ? 'primary.main' : 'inherit',
+                bgcolor: metricsLayout === 'wrap' ? 'primary.main' : 'transparent',
+                '&:hover': {
+                  bgcolor: metricsLayout === 'wrap' ? 'primary.dark' : undefined,
+                },
+              }}
+              aria-label={
+                metricsLayout === 'wrap'
+                  ? 'Switch to scroll view for metrics'
+                  : 'Switch to wrap view for metrics'
+              }
+              aria-pressed={metricsLayout === 'wrap'}
+            >
+              <WrapTextIcon
+                fontSize="small"
+                sx={{ color: metricsLayout === 'wrap' ? 'primary.contrastText' : 'inherit' }}
+              />
+            </IconButton>
           </Tooltip>
         </Stack>
 
@@ -579,6 +508,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 critDps={playerData.critDps}
                 critChance={playerData.critChance}
                 visibleChips={visibleChips}
+                detectedRole={rolesByPlayerId?.[Number(playerData.player.id)]}
+                metricsLayout={metricsLayout}
               />
             </Box>
           ))}

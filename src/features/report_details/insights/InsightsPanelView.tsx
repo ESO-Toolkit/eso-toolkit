@@ -193,6 +193,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                   display: 'grid',
                   gridTemplateColumns: '1fr',
                   gap: 1,
+                  overflow: 'hidden',
                 }}
               >
                 {ABILITY_DATA.map((ability) => {
@@ -226,7 +227,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                           theme.palette.mode === 'dark'
                             ? '1px solid rgba(255, 255, 255, 0.1)'
                             : '1px solid rgba(15, 23, 42, 0.1)',
-                        height: '100%',
+                        minHeight: 56,
                       }}
                     >
                       <Box

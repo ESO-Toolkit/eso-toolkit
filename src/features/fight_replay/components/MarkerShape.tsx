@@ -48,15 +48,11 @@ function createHexagonShape(radius: number): ThreeShape {
   const sides = 6;
   const angleStep = (Math.PI * 2) / sides;
 
-  // Start at the top point
   shape.moveTo(0, radius);
-
-  // Draw the hexagon
   for (let i = 1; i <= sides; i++) {
-    const angle = angleStep * i - Math.PI / 2; // Offset to start at top
+    const angle = angleStep * i - Math.PI / 2;
     shape.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
   }
-
   return shape;
 }
 
@@ -68,15 +64,11 @@ function createOctagonShape(radius: number): ThreeShape {
   const sides = 8;
   const angleStep = (Math.PI * 2) / sides;
 
-  // Start at the top point
   shape.moveTo(0, radius);
-
-  // Draw the octagon
   for (let i = 1; i <= sides; i++) {
-    const angle = angleStep * i - Math.PI / 2; // Offset to start at top
+    const angle = angleStep * i - Math.PI / 2;
     shape.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
   }
-
   return shape;
 }
 
@@ -93,7 +85,6 @@ function createDiamondShape(radius: number): ThreeShape {
   shape.lineTo(0, -radius);
   shape.lineTo(-radius, 0);
   shape.lineTo(0, radius);
-
   return shape;
 }
 
@@ -104,13 +95,11 @@ function createSquareShape(radius: number): ThreeShape {
   const shape = new ThreeShape();
   const halfSize = radius * 0.85; // Slightly smaller to match visual size
 
-  // Square corners
   shape.moveTo(-halfSize, halfSize);
   shape.lineTo(halfSize, halfSize);
   shape.lineTo(halfSize, -halfSize);
   shape.lineTo(-halfSize, -halfSize);
   shape.lineTo(-halfSize, halfSize);
-
   return shape;
 }
 
@@ -160,10 +149,9 @@ export const MarkerShape: React.FC<MarkerShapeProps> = ({ texturePath, size, col
       /* eslint-enable @typescript-eslint/no-explicit-any */
 
       case 'circle':
-      case 'blank': // Blank uses circle as base (text will show on top)
-      case 'sharkpog': // For now, render as circle (could add custom SVG later)
+      case 'blank':
+      case 'sharkpog':
       default:
-        // Use circle geometry for circle, blank, and any unknown types
         return new THREE.CircleGeometry(radius, 32);
     }
   }, [shapeType, radius]);

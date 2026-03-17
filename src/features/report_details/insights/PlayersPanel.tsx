@@ -30,6 +30,7 @@ import {
   useReportMasterData,
   useResolvedReportFightContext,
   useResourceEvents,
+  useRoleDetection,
 } from '../../../hooks';
 import { useDebuffEvents } from '../../../hooks/events/useDebuffEvents';
 import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
@@ -151,6 +152,19 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     context: resolvedContext,
   });
   const isFightLoading = resolvedContext.fightId !== null && !fight;
+
+  // --- Role detection ---
+  const { rolesByPlayerId } = useRoleDetection({
+    fight,
+    actorsById: reportMasterData.actorsById,
+    damageEvents,
+    healingEvents,
+    castEvents,
+    debuffEvents,
+    friendlyBuffEvents,
+    hostileBuffEvents,
+    combatantInfoEvents,
+  });
 
   const fightIdNumber = resolvedContext.fightId;
 
@@ -1342,6 +1356,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         criticalDamageByPlayer={criticalDamageByPlayer}
         barSwapByPlayer={barSwapByPlayer}
         potionResultsByPlayer={potionResultsByPlayer}
+        rolesByPlayerId={rolesByPlayerId}
       />
     </div>
   );
