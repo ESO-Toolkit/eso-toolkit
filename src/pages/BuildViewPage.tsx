@@ -39,6 +39,7 @@ import { GlassPanel } from '../features/build-editor/components/primitives/Glass
 import { BE_TOKENS } from '../features/build-editor/theme/buildEditorTokens';
 import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
 import { CP_PASSIVES_BY_TREE } from '../features/build-editor/data/championPassives';
+import { CLASS_SKILL_LINES } from '../features/build-editor/data/esoStaticData';
 import type { Build, BuildChampionPoints, BuildSetup, CombatRole } from '../features/build-editor/types/build.types';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { BuildViewShell } from '../features/build-viewer/components/BuildViewShell';
@@ -95,30 +96,6 @@ const ROLE_EMOJI: Record<CombatRole, string> = {
   'magicka-dps': '\u{2728}',
   'stamina-dps': '\u{2694}',
   'hybrid-dps': '\u{1F300}',
-};
-
-const SKILL_LINE_LABELS: Record<string, string> = {
-  'class.ardent-flame': 'Ardent Flame',
-  'class.draconic-power': 'Draconic Power',
-  'class.earthen-heart': 'Earthen Heart',
-  'class.dark-magic': 'Dark Magic',
-  'class.daedric-summoning': 'Daedric Summoning',
-  'class.storm-calling': 'Storm Calling',
-  'class.assassination': 'Assassination',
-  'class.shadow': 'Shadow',
-  'class.siphoning': 'Siphoning',
-  'class.aedric-spear': 'Aedric Spear',
-  'class.dawns-wrath': "Dawn's Wrath",
-  'class.restoring-light': 'Restoring Light',
-  'class.animal-companions': 'Animal Companions',
-  'class.green-balance': 'Green Balance',
-  'class.winters-embrace': "Winter's Embrace",
-  'class.grave-lord': 'Grave Lord',
-  'class.bone-tyrant': 'Bone Tyrant',
-  'class.living-death': 'Living Death',
-  'class.herald-of-the-tome': 'Herald of the Tome',
-  'class.soldier-of-apocrypha': 'Soldier of Apocrypha',
-  'class.curative-runeforms': 'Curative Runeforms',
 };
 
 const GEAR_SLOT_NAMES: Record<number, string> = {
@@ -204,6 +181,39 @@ const SectionLabel: React.FC<{
           {count}
         </Typography>
       )}
+    </Box>
+  );
+};
+
+// ─── Empty state placeholder ──────────────────────────────────────────────────
+
+const EmptyState: React.FC<{ message?: string }> = ({ message = 'Not configured' }) => {
+  const isDark = useTheme().palette.mode === 'dark';
+  return (
+    <Box
+      sx={{
+        py: 2.5,
+        px: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 2,
+        border: `1px dashed ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
+        background: isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.012)',
+      }}
+    >
+      <Typography
+        sx={{
+          fontSize: '0.72rem',
+          fontWeight: 500,
+          fontStyle: 'italic',
+          color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)',
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+          letterSpacing: '0.02em',
+        }}
+      >
+        {message}
+      </Typography>
     </Box>
   );
 };
@@ -588,10 +598,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            md: hasCharacterData ? '1fr 1fr' : '1fr',
-          },
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
           gap: 2,
           mb: 2,
         }}
@@ -622,10 +629,10 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
             </GlassPanel>
           </motion.div>
 
-          {hasCharacterData && (
-            <motion.div variants={fadeInUp}>
-              <GlassPanel variant="default" sx={{ p: 2 }}>
-                <SectionLabel label="Character" />
+          <motion.div variants={fadeInUp}>
+            <GlassPanel variant="default" sx={{ p: 2 }}>
+              <SectionLabel label="Character" />
+              {hasCharacterData ? (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
                   {/* Recommended races */}
                   {races.length > 0 && (
@@ -775,16 +782,18 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
                     </Box>
                   )}
                 </Box>
-              </GlassPanel>
-            </motion.div>
-          )}
+              ) : (
+                <EmptyState message="No character details configured" />
+              )}
+            </GlassPanel>
+          </motion.div>
         </Box>
 
       {/* Row 2: Skills */}
-      {(frontBar.length > 0 || backBar.length > 0) && (
-        <motion.div variants={fadeInUp}>
-          <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
-            <SectionLabel label="Skills" />
+      <motion.div variants={fadeInUp}>
+        <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
+          <SectionLabel label="Skills" />
+          {frontBar.length > 0 || backBar.length > 0 ? (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
               {[
                 { label: 'Front Bar', bar: frontBar },
@@ -894,15 +903,17 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
                   ),
               )}
             </Box>
-          </GlassPanel>
-        </motion.div>
-      )}
+          ) : (
+            <EmptyState message="No skills configured" />
+          )}
+        </GlassPanel>
+      </motion.div>
 
       {/* Row 3: Gear */}
-      {gearEntries.length > 0 && (
-        <motion.div variants={fadeInUp}>
-          <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
-            <SectionLabel label="Equipment" count={`${gearEntries.length} pieces`} />
+      <motion.div variants={fadeInUp}>
+        <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
+          <SectionLabel label="Equipment" count={gearEntries.length > 0 ? `${gearEntries.length} pieces` : undefined} />
+          {gearEntries.length > 0 ? (
             <Box
               sx={{
                 display: 'grid',
@@ -920,15 +931,17 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
                 />
               ))}
             </Box>
-          </GlassPanel>
-        </motion.div>
-      )}
+          ) : (
+            <EmptyState message="No equipment configured" />
+          )}
+        </GlassPanel>
+      </motion.div>
 
       {/* Row 4: Champion Points (full width) */}
-      {(cpSlots.length > 0 || cpPassiveCount > 0) && (
-        <motion.div variants={fadeInUp}>
-          <GlassPanel variant="default" sx={{ p: 2, mb: 2 }}>
-            <SectionLabel label="Champion Points" />
+      <motion.div variants={fadeInUp}>
+        <GlassPanel variant="default" sx={{ p: 2, mb: 2 }}>
+          <SectionLabel label="Champion Points" />
+          {cpSlots.length > 0 || cpPassiveCount > 0 ? (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <CPTreeDetail
                 label="Warfare"
@@ -955,80 +968,142 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
                 passivesList={CP_PASSIVES_BY_TREE.craft}
               />
             </Box>
-          </GlassPanel>
-        </motion.div>
-      )}
+          ) : (
+            <EmptyState message="No champion points configured" />
+          )}
+        </GlassPanel>
+      </motion.div>
 
-      {/* Row 5: Consumables + Passives */}
-      {(hasConsumables || setup.passives.length > 0) && (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-            gap: 2,
-            mb: 2,
-          }}
-        >
-          {/* Consumables */}
-          {hasConsumables && (
-            <motion.div variants={fadeInUp}>
-              <GlassPanel variant="subtle" sx={{ p: 2 }}>
-                <SectionLabel label="Consumables" />
-                <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-                  {setup.consumables.potions.map((p) => (
-                    <Chip
-                      key={p.id}
-                      label={`Potion #${p.id}`}
-                      size="small"
+      {/* Row 5: Passives (full width) */}
+      <motion.div variants={fadeInUp}>
+        <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
+          <SectionLabel
+            label="Passives"
+            count={setup.passives.length > 0 ? `${setup.passives.length} selected` : undefined}
+          />
+          {setup.passives.length > 0 ? (
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr 1fr', md: 'repeat(4, 1fr)' },
+                gap: 0.75,
+              }}
+            >
+              {setup.passives.map((passiveId) => {
+                const skill = getSkillById(passiveId);
+                const iconUrl = skill?.icon ? `${SKILL_ICON_URL}${skill.icon}.png` : null;
+                return (
+                  <Box
+                    key={passiveId}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      py: 0.6,
+                      px: 1,
+                      borderRadius: 2,
+                      background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
+                      transition: 'border-color 0.15s',
+                      '&:hover': {
+                        borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)',
+                      },
+                    }}
+                  >
+                    <Box
                       sx={{
-                        fontSize: '0.68rem',
+                        width: 24,
                         height: 24,
-                        fontWeight: 600,
-                        bgcolor: isDark
-                          ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
-                          : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
-                        border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
-                        color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
+                        borderRadius: '6px',
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
-                    />
-                  ))}
-                </Box>
-              </GlassPanel>
-            </motion.div>
+                    >
+                      {iconUrl ? (
+                        <img
+                          src={iconUrl}
+                          alt={skill?.name ?? `Passive ${passiveId}`}
+                          loading="lazy"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block',
+                          }}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            width: 5,
+                            height: 5,
+                            borderRadius: '50%',
+                            background: 'var(--be-accent, #38bdf8)',
+                            opacity: 0.4,
+                          }}
+                        />
+                      )}
+                    </Box>
+                    <Typography
+                      sx={{
+                        fontSize: '0.62rem',
+                        fontWeight: 600,
+                        color: isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.68)',
+                        lineHeight: 1.2,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                    >
+                      {skill?.name ?? `Passive #${passiveId}`}
+                    </Typography>
+                  </Box>
+                );
+              })}
+            </Box>
+          ) : (
+            <EmptyState message="No passives selected" />
           )}
+        </GlassPanel>
+      </motion.div>
 
-          {/* Passives */}
-          {setup.passives.length > 0 && (
-            <motion.div variants={fadeInUp}>
-              <GlassPanel variant="subtle" sx={{ p: 2 }}>
-                <SectionLabel label="Passives" count={`${setup.passives.length} selected`} />
-                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                  {setup.passives.map((passiveId) => {
-                    const skill = getSkillById(passiveId);
-                    return (
-                      <Chip
-                        key={passiveId}
-                        label={skill?.name ?? `Passive #${passiveId}`}
-                        size="small"
-                        sx={{
-                          fontSize: '0.65rem',
-                          height: 22,
-                          fontWeight: 600,
-                          bgcolor: isDark
-                            ? 'rgba(var(--be-accent-rgb, 56,189,248),0.07)'
-                            : 'rgba(var(--be-accent-rgb, 56,189,248),0.05)',
-                          border: '1px solid rgba(var(--be-accent-rgb, 56,189,248),0.18)',
-                          color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
-                        }}
-                      />
-                    );
-                  })}
-                </Box>
-              </GlassPanel>
-            </motion.div>
+      {/* Row 6: Consumables (potions) */}
+      <motion.div variants={fadeInUp}>
+        <GlassPanel variant="subtle" sx={{ p: 2, mb: 2 }}>
+          <SectionLabel label="Potions" />
+          {hasConsumables ? (
+            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+              {setup.consumables.potions.map((p) => (
+                <Chip
+                  key={p.id}
+                  label={`Potion #${p.id}`}
+                  size="small"
+                  sx={{
+                    fontSize: '0.68rem',
+                    height: 24,
+                    fontWeight: 600,
+                    bgcolor: isDark
+                      ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
+                      : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
+                    border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
+                    color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
+                  }}
+                />
+              ))}
+            </Box>
+          ) : (
+            <EmptyState message="No potions configured" />
           )}
-        </Box>
-      )}
+        </GlassPanel>
+      </motion.div>
     </motion.div>
   );
 };
@@ -1251,10 +1326,14 @@ export const BuildViewPage: React.FC = () => {
   const classLabel = CLASS_LABELS[build.esoClass] ?? build.esoClass;
   const roleLabel = ROLE_LABELS[build.role] ?? build.role;
   const classTheme = CLASS_COLOR_MAP[build.esoClass];
-  const classSkillLineLabels = build.classSkillLines
+  /** Rich skill line data for the hero section — includes icons from esoStaticData */
+  const classSkillLineData = build.classSkillLines
     .filter(Boolean)
-    .map((sl) => (sl ? (SKILL_LINE_LABELS[sl] ?? sl) : null))
-    .filter(Boolean) as string[];
+    .map((slId) => {
+      const def = CLASS_SKILL_LINES.find((d) => d.id === slId);
+      return def ?? null;
+    })
+    .filter(Boolean) as typeof CLASS_SKILL_LINES;
 
   return (
     <Container maxWidth="lg" sx={{ pt: 3, pb: 6, px: { xs: 2, sm: 3 } }}>
@@ -1502,73 +1581,90 @@ export const BuildViewPage: React.FC = () => {
             )}
 
             {/* ── Class Skill Lines ── */}
-            {classSkillLineLabels.length > 0 && (
-              <motion.div variants={fadeInUp}>
-                <GlassPanel variant="primary" sx={{ p: 2, mb: 3 }}>
-                  <SectionLabel label="Class Skill Lines" />
+            <motion.div variants={fadeInUp}>
+              <GlassPanel variant="primary" sx={{ p: 2, mb: 3 }}>
+                <SectionLabel label="Class Skill Lines" />
+                {classSkillLineData.length > 0 ? (
                   <Box
                     sx={{
                       display: 'grid',
                       gridTemplateColumns: {
                         xs: '1fr',
-                        sm: `repeat(${classSkillLineLabels.length}, 1fr)`,
+                        sm: `repeat(${classSkillLineData.length}, 1fr)`,
                       },
                       gap: 1.5,
                     }}
                   >
-                    {classSkillLineLabels.map((sl, i) => (
-                      <Box
-                        key={sl}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1.5,
-                          py: 1.5,
-                          px: 2,
-                          borderRadius: 2.5,
-                          background: isDark
-                            ? alpha(classTheme.accent, 0.07)
-                            : alpha(classTheme.accent, 0.05),
-                          border: `1px solid ${alpha(classTheme.accent, isDark ? 0.22 : 0.14)}`,
-                          transition: 'all 0.18s ease',
-                          '&:hover': {
-                            background: isDark
-                              ? alpha(classTheme.accent, 0.13)
-                              : alpha(classTheme.accent, 0.09),
-                            borderColor: alpha(classTheme.accent, isDark ? 0.38 : 0.26),
-                            transform: 'translateY(-1px)',
-                            boxShadow: `0 4px 16px ${alpha(classTheme.accent, 0.14)}`,
-                          },
-                        }}
-                      >
+                    {classSkillLineData.map((sl) => {
+                      const slColor = CLASS_COLOR_MAP[sl.ownerClass]?.accent ?? classTheme.accent;
+                      return (
                         <Box
+                          key={sl.id}
                           sx={{
-                            width: 12,
-                            height: 12,
-                            borderRadius: '50%',
-                            background: classTheme.accent,
-                            opacity: 1 - i * 0.18,
-                            boxShadow: `0 0 10px ${alpha(classTheme.accent, 0.65)}`,
-                            flexShrink: 0,
-                          }}
-                        />
-                        <Typography
-                          sx={{
-                            fontSize: '0.90rem',
-                            fontWeight: 700,
-                            fontFamily: 'Space Grotesk, Inter, system-ui',
-                            color: isDark ? 'rgba(255,255,255,0.90)' : 'rgba(0,0,0,0.82)',
-                            letterSpacing: '-0.01em',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            py: 1.5,
+                            px: 2,
+                            borderRadius: 2.5,
+                            background: isDark
+                              ? alpha(slColor, 0.07)
+                              : alpha(slColor, 0.04),
+                            border: `1px solid ${alpha(slColor, isDark ? 0.22 : 0.14)}`,
+                            transition: 'all 0.18s ease',
+                            '&:hover': {
+                              background: isDark
+                                ? alpha(slColor, 0.14)
+                                : alpha(slColor, 0.09),
+                              borderColor: alpha(slColor, isDark ? 0.40 : 0.28),
+                              transform: 'translateY(-1px)',
+                              boxShadow: `0 4px 16px ${alpha(slColor, 0.16)}`,
+                            },
                           }}
                         >
-                          {sl}
-                        </Typography>
-                      </Box>
-                    ))}
+                          <Typography
+                            sx={{ fontSize: '1.2rem', lineHeight: 1, flexShrink: 0 }}
+                            aria-hidden
+                          >
+                            {sl.icon}
+                          </Typography>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography
+                              sx={{
+                                fontSize: '0.88rem',
+                                fontWeight: 700,
+                                fontFamily: 'Space Grotesk, Inter, system-ui',
+                                color: isDark ? 'rgba(255,255,255,0.92)' : 'rgba(0,0,0,0.82)',
+                                letterSpacing: '-0.01em',
+                                lineHeight: 1.2,
+                              }}
+                            >
+                              {sl.label}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: '0.58rem',
+                                fontWeight: 600,
+                                color: slColor,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.06em',
+                                mt: 0.15,
+                              }}
+                            >
+                              {sl.ownerClass === build.esoClass
+                                ? 'Class'
+                                : sl.ownerClass.replace(/-/g, ' ')}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      );
+                    })}
                   </Box>
-                </GlassPanel>
-              </motion.div>
-            )}
+                ) : (
+                  <EmptyState message="No class skill lines selected" />
+                )}
+              </GlassPanel>
+            </motion.div>
 
             {/* ── Setup tabs ── */}
             {build.setups.length > 1 && (
