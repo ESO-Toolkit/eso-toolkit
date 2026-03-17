@@ -1020,14 +1020,18 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
                 gap: 0.75,
               }}
             >
-              {setup.passives.map((passiveId) => {
+              {setup.passives.map((passiveId, index) => {
                 const skill = getSkillById(passiveId);
                 const iconUrl = skill?.icon ? `${SKILL_ICON_URL}${skill.icon}.png` : null;
+                const n = setup.passives.length;
+                const cols = getPassiveCols(n);
+                const isLoneLastItem = index === n - 1 && n % cols === 1;
                 return (
                   <Box
                     key={passiveId}
                     sx={{
                       display: 'flex',
+                      gridColumn: isLoneLastItem ? '1 / -1' : undefined,
                       alignItems: 'center',
                       gap: 1,
                       py: 0.6,
