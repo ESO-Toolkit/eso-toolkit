@@ -44,7 +44,8 @@ import type { Build, BuildChampionPoints, BuildSetup, CombatRole } from '../feat
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { BuildViewShell } from '../features/build-viewer/components/BuildViewShell';
 import { ViewAttributeBar } from '../features/build-viewer/components/ViewAttributeBar';
-import { getItemInfo } from '../features/loadout-manager/data/itemIdMap';
+import { getItemInfo, getSetItemsBySlot } from '../features/loadout-manager/data/itemIdMap';
+import type { SlotType } from '../features/loadout-manager/data/slotTypes';
 import { getSkillById, preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
 import {
   getItemIconUrl,
@@ -144,6 +145,24 @@ const GEAR_SLOT_ICONS: Record<number, string> = {
   16: '🧤', // Gloves
   20: '⚔️',  // Back Main Hand
   21: '🛡️',  // Back Off Hand
+};
+
+/** Maps ESO equipment slot indices to the SlotType used in itemIdMap. */
+const SLOT_INDEX_TO_TYPE: Record<number, SlotType> = {
+  0: 'head',
+  1: 'neck',
+  2: 'chest',
+  3: 'shoulders',
+  4: 'weapon',
+  5: 'offhand',
+  6: 'waist',
+  8: 'legs',
+  9: 'feet',
+  11: 'ring',
+  12: 'ring',
+  16: 'hand',
+  20: 'weapon',
+  21: 'offhand',
 };
 
 const MUNDUS_LABELS: Record<string, string> = {
@@ -417,22 +436,33 @@ const GearSlotDisplay: React.FC<{
   const isDark = theme.palette.mode === 'dark';
   const slotName = GEAR_SLOT_NAMES[slotIndex] ?? `Slot ${slotIndex}`;
   const itemInfo = getItemInfo(itemId);
-  // itemIdMap uses LibSets set IDs (small ints), while itemIcons.json uses UESP's
-  // actual ESO item IDs — these are completely different namespaces. If getItemInfo()
-  // resolves the ID it's a LibSets ID and the UESP icon lookup would return a wrong item.
-  // Only attempt icon resolution for IDs that are NOT in itemIdMap (e.g. addon imports).
-  const isLibSetsId = itemInfo != null;
+
+  // itemIdMap contains two types of entries:
+  //   1. Slot-specific items (e.g. 97217 = "Mother's Sorrow Ring", slot: 'ring') — have correct icons
+  //   2. Generic set pieces (e.g. 2558 = "Mother's Sorrow Gear", no slot field) — LibSets set IDs
+  //      whose numeric values collide with unrelated items in UESP's icon database.
+  //
+  // For type 2, resolve the correct slot-specific ID via getSetItemsBySlot so we get the right icon.
+  const resolvedIconId = (() => {
+    if (!itemInfo) return itemId; // not in itemIdMap → treat as real UESP ID
+    if (itemInfo.slot) return itemId; // already slot-specific → icon lookup is correct
+    // Generic set ID: find the slot-specific item for this set + slot
+    const slotType = SLOT_INDEX_TO_TYPE[slotIndex];
+    if (!slotType) return null;
+    const slotItems = getSetItemsBySlot(itemInfo.setName, slotType);
+    return slotItems[0] ?? null; // use first match (all CP160 variants share the same icon)
+  })();
+
   const [iconUrl, setIconUrl] = useState<string | null>(() =>
-    isLibSetsId ? null : getItemIconUrl(itemId),
+    resolvedIconId != null ? getItemIconUrl(resolvedIconId) : null,
   );
 
-  // Async fallback for items not in local data and not LibSets IDs
   useEffect(() => {
-    if (iconUrl || !itemId || isLibSetsId) return;
-    void fetchItemIconUrl(itemId).then((url) => {
+    if (iconUrl || resolvedIconId == null) return;
+    void fetchItemIconUrl(resolvedIconId).then((url) => {
       if (url) setIconUrl(url);
     });
-  }, [itemId, iconUrl, isLibSetsId]);
+  }, [resolvedIconId, iconUrl]);
 
   const displayName = itemInfo?.name ?? `Item #${itemId}`;
   const setName = itemInfo?.setName;
