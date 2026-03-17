@@ -603,8 +603,8 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
           mb: 2,
         }}
       >
-          <motion.div variants={fadeInUp}>
-            <GlassPanel variant="default" sx={{ p: 2 }}>
+          <motion.div variants={fadeInUp} style={{ height: '100%' }}>
+            <GlassPanel variant="default" sx={{ p: 2, height: '100%', boxSizing: 'border-box' }}>
               <SectionLabel label="Attributes" count={`${totalAttributes} / 64`} />
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
                 <ViewAttributeBar
@@ -629,8 +629,8 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
             </GlassPanel>
           </motion.div>
 
-          <motion.div variants={fadeInUp}>
-            <GlassPanel variant="default" sx={{ p: 2 }}>
+          <motion.div variants={fadeInUp} style={{ height: '100%' }}>
+            <GlassPanel variant="default" sx={{ p: 2, height: '100%', boxSizing: 'border-box' }}>
               <SectionLabel label="Character" />
               {hasCharacterData ? (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
