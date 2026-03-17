@@ -117,7 +117,10 @@ const RosterCard: React.FC<RosterCardProps> = ({ saved, onEdit, onView, onDelete
             sx={{ ml: 1, flexShrink: 0, fontSize: '0.7rem' }}
           />
         </Box>
-        <Typography variant="caption" sx={{ color: isDarkMode ? '#94a3b8' : '#64748b', mt: 0.5, display: 'block' }}>
+        <Typography
+          variant="caption"
+          sx={{ color: isDarkMode ? '#94a3b8' : '#64748b', mt: 0.5, display: 'block' }}
+        >
           Saved {formatDate(saved.savedAt)}
         </Typography>
         {saved.roster.notes && (
