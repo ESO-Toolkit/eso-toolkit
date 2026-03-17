@@ -628,9 +628,14 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
         }}
       >
           <motion.div variants={fadeInUp} style={{ height: '100%' }}>
-            <GlassPanel variant="default" sx={{ p: 2, height: '100%', boxSizing: 'border-box' }}>
+            <GlassPanel
+              variant="default"
+              sx={{ p: 2, height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}
+            >
               <SectionLabel label="Attributes" count={`${totalAttributes} / 64`} />
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+
+              {/* Bars — flex so they spread to fill available height */}
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
                 <ViewAttributeBar
                   label="Magicka"
                   color={BE_TOKENS.attributes.magicka}
@@ -650,6 +655,85 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
                   max={64}
                 />
               </Box>
+
+              {/* Distribution summary */}
+              {totalAttributes > 0 && (
+                <Box sx={{ pt: 1.5, mt: 'auto' }}>
+                  <Typography
+                    sx={{
+                      fontSize: '0.52rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.09em',
+                      textTransform: 'uppercase',
+                      color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+                      mb: 0.6,
+                    }}
+                  >
+                    Distribution
+                  </Typography>
+
+                  {/* Segmented bar */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      height: 10,
+                      borderRadius: 5,
+                      overflow: 'hidden',
+                      gap: '2px',
+                      background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                    }}
+                  >
+                    {[
+                      { value: setup.attributes.magicka, color: BE_TOKENS.attributes.magicka },
+                      { value: setup.attributes.health,  color: BE_TOKENS.attributes.health  },
+                      { value: setup.attributes.stamina, color: BE_TOKENS.attributes.stamina },
+                    ]
+                      .filter((seg) => seg.value > 0)
+                      .map((seg, i) => (
+                        <Box
+                          key={i}
+                          sx={{
+                            flex: seg.value,
+                            background: `linear-gradient(90deg, ${seg.color} 0%, ${alpha(seg.color, 0.7)} 100%)`,
+                            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.15)`,
+                          }}
+                        />
+                      ))}
+                  </Box>
+
+                  {/* Legend row */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.75 }}>
+                    {[
+                      { label: 'Mag', value: setup.attributes.magicka, color: BE_TOKENS.attributes.magicka },
+                      { label: 'HP',  value: setup.attributes.health,  color: BE_TOKENS.attributes.health  },
+                      { label: 'Stam',value: setup.attributes.stamina, color: BE_TOKENS.attributes.stamina },
+                    ].map(({ label, value, color }) => (
+                      <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+                        <Box
+                          sx={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: '50%',
+                            background: color,
+                            boxShadow: `0 0 4px ${alpha(color, 0.5)}`,
+                            opacity: value > 0 ? 1 : 0.3,
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            fontSize: '0.58rem',
+                            fontWeight: 600,
+                            fontVariantNumeric: 'tabular-nums',
+                            color: value > 0 ? color : (isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)'),
+                          }}
+                        >
+                          {label} {value > 0 ? `${Math.round((value / totalAttributes) * 100)}%` : '—'}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
             </GlassPanel>
           </motion.div>
 
