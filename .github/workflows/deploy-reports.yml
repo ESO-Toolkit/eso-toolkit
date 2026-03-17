@@ -246,7 +246,7 @@ jobs:
       - name: Generate Deploy Token
         if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
         id: generate-deploy-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.DEPLOY_APP_ID }}
           private-key: ${{ secrets.DEPLOY_APP_PRIVATE_KEY }}
