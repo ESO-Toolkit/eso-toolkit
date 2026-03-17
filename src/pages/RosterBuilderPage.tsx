@@ -816,26 +816,25 @@ export const RosterBuilderPage: React.FC = () => {
 
   // Generate shareable read-only link (points to /rv, the dedicated share view)
   const handleCopyLink = useCallback(() => {
-    void encodeRosterToURL(roster)
-      .then((encoded) => {
-        if (encoded) {
-          // Derive base path to support subdirectory deployments (e.g. /dev-previews/pr-xxx/)
-          const basePath = window.location.pathname.replace(/\/roster-builder(\/.*)?$/, '');
-          const url = `${window.location.origin}${basePath}/rv?r=${encoded}`;
-          navigator.clipboard
-            .writeText(url)
-            .then(() => {
-              setSnackbar({
-                open: true,
-                message: 'Read-only link copied to clipboard!',
-                severity: 'success',
-              });
-            })
-            .catch(() => {
-              setSnackbar({ open: true, message: 'Failed to copy link', severity: 'error' });
+    void encodeRosterToURL(roster).then((encoded) => {
+      if (encoded) {
+        // Derive base path to support subdirectory deployments (e.g. /dev-previews/pr-xxx/)
+        const basePath = window.location.pathname.replace(/\/roster-builder(\/.*)?$/, '');
+        const url = `${window.location.origin}${basePath}/rv?r=${encoded}`;
+        navigator.clipboard
+          .writeText(url)
+          .then(() => {
+            setSnackbar({
+              open: true,
+              message: 'Read-only link copied to clipboard!',
+              severity: 'success',
             });
-        }
-      });
+          })
+          .catch(() => {
+            setSnackbar({ open: true, message: 'Failed to copy link', severity: 'error' });
+          });
+      }
+    });
   }, [roster]);
 
   // Save roster to My Rosters (Redux/localStorage)
