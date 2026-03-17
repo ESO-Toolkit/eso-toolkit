@@ -609,13 +609,12 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
     Object.keys(setup.cp.fitness.passives).length +
     Object.keys(setup.cp.craft.passives).length;
 
-  // Food moved to Character panel — consumables here = potions only
-  const hasConsumables = setup.consumables.potions.length > 0;
   const hasCharacterData =
     !!setup.mundusStone ||
     (!!setup.curse && setup.curse !== 'none') ||
     races.length > 0 ||
-    setup.consumables.food.id != null;
+    setup.consumables.food.id != null ||
+    setup.consumables.potions.length > 0;
 
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="visible">
@@ -732,6 +731,43 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
                       </Typography>
                     </Box>
                   )}
+
+                  {/* Potions */}
+                  {setup.consumables.potions.map((p) => (
+                    <Box key={p.id} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: '#26c6da',
+                          boxShadow: '0 0 6px rgba(38,198,218,0.55)',
+                          flexShrink: 0,
+                        }}
+                      />
+                      <Typography
+                        sx={{
+                          fontSize: '0.55rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+                          minWidth: 38,
+                        }}
+                      >
+                        Potion
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: '0.80rem',
+                          fontWeight: 600,
+                          color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
+                        }}
+                      >
+                        {p.name}
+                      </Typography>
+                    </Box>
+                  ))}
 
                   {/* Mundus Stone */}
                   {setup.mundusStone && (
@@ -1111,35 +1147,6 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
         </GlassPanel>
       </motion.div>
 
-      {/* Row 6: Consumables (potions) */}
-      <motion.div variants={fadeInUp}>
-        <GlassPanel variant="subtle" sx={{ p: 2, mb: 2 }}>
-          <SectionLabel label="Potions" />
-          {hasConsumables ? (
-            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-              {setup.consumables.potions.map((p) => (
-                <Chip
-                  key={p.id}
-                  label={`Potion #${p.id}`}
-                  size="small"
-                  sx={{
-                    fontSize: '0.68rem',
-                    height: 24,
-                    fontWeight: 600,
-                    bgcolor: isDark
-                      ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
-                      : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
-                    border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
-                    color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
-                  }}
-                />
-              ))}
-            </Box>
-          ) : (
-            <EmptyState message="No potions configured" />
-          )}
-        </GlassPanel>
-      </motion.div>
     </motion.div>
   );
 };
