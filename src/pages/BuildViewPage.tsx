@@ -98,6 +98,17 @@ const ROLE_EMOJI: Record<CombatRole, string> = {
   'hybrid-dps': '\u{1F300}',
 };
 
+const CLASS_EMOJI: Record<string, string> = {
+  'any-class': '⚔️',
+  dragonknight: '🐉',
+  sorcerer: '⚡',
+  nightblade: '🗡️',
+  templar: '☀️',
+  warden: '🌿',
+  necromancer: '💀',
+  arcanist: '📖',
+};
+
 const GEAR_SLOT_NAMES: Record<number, string> = {
   0: 'Head',
   1: 'Neck',
@@ -131,6 +142,19 @@ const MUNDUS_LABELS: Record<string, string> = {
   lady: 'The Lady',
   lord: 'The Lord',
   tower: 'The Tower',
+};
+
+// ─── Passive grid helper ──────────────────────────────────────────────────────
+
+/**
+ * Returns the optimal column count for an evenly distributed passive grid.
+ * 6 → 3 (3+3), 8 → 4 (4+4), 7 → 3 (3+3+1), 9 → 3 (3+3+3), 12 → 4 (4+4+4)
+ */
+const getPassiveCols = (n: number): number => {
+  if (n <= 3) return Math.max(n, 1);
+  if (n % 4 === 0) return 4;
+  if (n % 3 === 0) return 3;
+  return 3;
 };
 
 // ─── Section label ────────────────────────────────────────────────────────────
@@ -985,7 +1009,14 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
             <Box
               sx={{
                 display: 'grid',
-                gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr 1fr', md: 'repeat(4, 1fr)' },
+                gridTemplateColumns: (() => {
+                  const cols = getPassiveCols(setup.passives.length);
+                  return {
+                    xs: '1fr 1fr',
+                    sm: `repeat(${Math.min(cols, 3)}, 1fr)`,
+                    md: `repeat(${cols}, 1fr)`,
+                  };
+                })(),
                 gap: 0.75,
               }}
             >
@@ -1399,21 +1430,38 @@ export const BuildViewPage: React.FC = () => {
               >
                 <Box sx={{ flex: 1 }}>
                   {/* Class + Role badges */}
-                  <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
-                    <Chip
-                      label={classLabel}
-                      size="small"
+                  <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {/* Class identity badge — prominent pill with glow */}
+                    <Box
                       sx={{
-                        height: 24,
-                        fontSize: '0.68rem',
-                        fontWeight: 700,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
-                        bgcolor: alpha(classTheme.accent, isDark ? 0.18 : 0.12),
-                        color: classTheme.accent,
-                        border: `1px solid ${alpha(classTheme.accent, 0.35)}`,
-                        letterSpacing: '0.03em',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.75,
+                        px: 1.5,
+                        py: 0.55,
+                        borderRadius: '999px',
+                        background: `linear-gradient(135deg, ${alpha(classTheme.accent, isDark ? 0.24 : 0.15)} 0%, ${alpha(classTheme.accent, isDark ? 0.10 : 0.06)} 100%)`,
+                        border: `1.5px solid ${alpha(classTheme.accent, isDark ? 0.48 : 0.32)}`,
+                        boxShadow: `0 2px 14px ${alpha(classTheme.accent, 0.24)}, inset 0 1px 0 ${alpha(classTheme.accent, 0.18)}`,
                       }}
-                    />
+                    >
+                      <Typography sx={{ fontSize: '0.88rem', lineHeight: 1, flexShrink: 0 }} aria-hidden>
+                        {CLASS_EMOJI[build.esoClass] ?? '⚔️'}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          color: classTheme.accent,
+                          letterSpacing: '0.05em',
+                          textTransform: 'uppercase',
+                          lineHeight: 1,
+                        }}
+                      >
+                        {classLabel}
+                      </Typography>
+                    </Box>
                     <Chip
                       label={`${ROLE_EMOJI[build.role] ?? ''} ${roleLabel}`}
                       size="small"
