@@ -609,12 +609,12 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
     Object.keys(setup.cp.fitness.passives).length +
     Object.keys(setup.cp.craft.passives).length;
 
-  const hasCharacterData =
-    !!setup.mundusStone ||
-    (!!setup.curse && setup.curse !== 'none') ||
-    races.length > 0 ||
-    setup.consumables.food.id != null ||
-    setup.consumables.potions.length > 0;
+  const foodName =
+    setup.consumables.food.id != null
+      ? (ESO_CONSUMABLE_LOOKUP[setup.consumables.food.id]?.name ?? `Food #${setup.consumables.food.id}`)
+      : null;
+  const mundusLabel = setup.mundusStone ? (MUNDUS_LABELS[setup.mundusStone] ?? setup.mundusStone) : null;
+  const curseLabel = setup.curse && setup.curse !== 'none' ? setup.curse : null;
 
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="visible">
@@ -656,10 +656,11 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
           <motion.div variants={fadeInUp} style={{ height: '100%' }}>
             <GlassPanel variant="default" sx={{ p: 2, height: '100%', boxSizing: 'border-box' }}>
               <SectionLabel label="Character" />
-              {hasCharacterData ? (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-                  {/* Recommended races */}
-                  {races.length > 0 && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+
+                {/* ── Recommended Races ── */}
+                {races.length > 0 && (
+                  <>
                     <Box>
                       <Typography
                         sx={{
@@ -692,160 +693,272 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
                         ))}
                       </Box>
                     </Box>
-                  )}
+                    <Divider sx={{ borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)' }} />
+                  </>
+                )}
 
-                  {/* Food */}
-                  {setup.consumables.food.id != null && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {/* ── Mundus + Curse (2-col info chips) ── */}
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                  {[
+                    { label: 'Mundus', color: '#ffd54f', value: mundusLabel },
+                    { label: 'Curse',  color: '#ce93d8', value: curseLabel  },
+                  ].map(({ label, color, value }) => {
+                    const isSet = value != null;
+                    return (
                       <Box
+                        key={label}
                         sx={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: '#ffb300',
-                          boxShadow: '0 0 6px rgba(255,179,0,0.55)',
-                          flexShrink: 0,
-                        }}
-                      />
-                      <Typography
-                        sx={{
-                          fontSize: '0.55rem',
-                          fontWeight: 700,
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
-                          color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
-                          minWidth: 38,
-                        }}
-                      >
-                        Food
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: '0.80rem',
-                          fontWeight: 600,
-                          color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 0.35,
+                          px: 1.25,
+                          py: 0.9,
+                          borderRadius: 2,
+                          border: `1px ${isSet ? 'solid' : 'dashed'} ${
+                            isSet
+                              ? alpha(color, isDark ? 0.28 : 0.20)
+                              : isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)'
+                          }`,
+                          background: isSet
+                            ? (isDark ? alpha(color, 0.07) : alpha(color, 0.05))
+                            : 'transparent',
                         }}
                       >
-                        {ESO_CONSUMABLE_LOOKUP[setup.consumables.food.id]?.name ??
-                          `Food #${setup.consumables.food.id}`}
-                      </Typography>
-                    </Box>
-                  )}
-
-                  {/* Potions */}
-                  {setup.consumables.potions.map((p) => (
-                    <Box key={p.id} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box
-                        sx={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: '#26c6da',
-                          boxShadow: '0 0 6px rgba(38,198,218,0.55)',
-                          flexShrink: 0,
-                        }}
-                      />
-                      <Typography
-                        sx={{
-                          fontSize: '0.55rem',
-                          fontWeight: 700,
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
-                          color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
-                          minWidth: 38,
-                        }}
-                      >
-                        Potion
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: '0.80rem',
-                          fontWeight: 600,
-                          color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
-                        }}
-                      >
-                        {p.name}
-                      </Typography>
-                    </Box>
-                  ))}
-
-                  {/* Mundus Stone */}
-                  {setup.mundusStone && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box
-                        sx={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: '#ffd54f',
-                          boxShadow: '0 0 6px rgba(255, 213, 79, 0.5)',
-                          flexShrink: 0,
-                        }}
-                      />
-                      <Typography
-                        sx={{
-                          fontSize: '0.55rem',
-                          fontWeight: 700,
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
-                          color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
-                          minWidth: 38,
-                        }}
-                      >
-                        Mundus
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: '0.80rem',
-                          fontWeight: 600,
-                          color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
-                        }}
-                      >
-                        {MUNDUS_LABELS[setup.mundusStone] ?? setup.mundusStone}
-                      </Typography>
-                    </Box>
-                  )}
-
-                  {/* Curse */}
-                  {setup.curse && setup.curse !== 'none' && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box
-                        sx={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: '#ce93d8',
-                          boxShadow: '0 0 6px rgba(206, 147, 216, 0.5)',
-                          flexShrink: 0,
-                        }}
-                      />
-                      <Typography
-                        sx={{
-                          fontSize: '0.55rem',
-                          fontWeight: 700,
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
-                          color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
-                          minWidth: 38,
-                        }}
-                      >
-                        Curse
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: '0.80rem',
-                          fontWeight: 600,
-                          color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
-                        }}
-                      >
-                        {setup.curse}
-                      </Typography>
-                    </Box>
-                  )}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                          <Box
+                            sx={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: '50%',
+                              flexShrink: 0,
+                              background: isSet ? color : 'transparent',
+                              border: isSet ? 'none' : `1.5px dashed ${alpha(color, 0.5)}`,
+                              boxShadow: isSet ? `0 0 5px ${alpha(color, 0.55)}` : 'none',
+                            }}
+                          />
+                          <Typography
+                            sx={{
+                              fontSize: '0.52rem',
+                              fontWeight: 700,
+                              letterSpacing: '0.09em',
+                              textTransform: 'uppercase',
+                              color: isSet
+                                ? (isDark ? alpha(color, 0.75) : alpha(color, 0.85))
+                                : (isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.28)'),
+                            }}
+                          >
+                            {label}
+                          </Typography>
+                        </Box>
+                        <Typography
+                          sx={{
+                            fontSize: isSet ? '0.76rem' : '0.72rem',
+                            fontWeight: isSet ? 600 : 400,
+                            fontStyle: isSet ? 'normal' : 'italic',
+                            color: isSet
+                              ? (isDark ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.82)')
+                              : (isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)'),
+                            lineHeight: 1.2,
+                            pl: 0.25,
+                          }}
+                        >
+                          {value ?? 'Not set'}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
                 </Box>
-              ) : (
-                <EmptyState message="No character details configured" />
-              )}
+
+                <Divider sx={{ borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)' }} />
+
+                {/* ── Consumables ── */}
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: '0.52rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.09em',
+                      textTransform: 'uppercase',
+                      color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+                      mb: 0.75,
+                    }}
+                  >
+                    Consumables
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.6 }}>
+                    {/* Food row — always shown */}
+                    {(() => {
+                      const isSet = foodName != null;
+                      const color = '#ffb300';
+                      return (
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            py: 0.65,
+                            px: 1.1,
+                            borderRadius: 1.5,
+                            border: `1px ${isSet ? 'solid' : 'dashed'} ${
+                              isSet
+                                ? alpha(color, isDark ? 0.28 : 0.20)
+                                : isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)'
+                            }`,
+                            background: isSet
+                              ? (isDark ? alpha(color, 0.07) : alpha(color, 0.04))
+                              : 'transparent',
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 7,
+                              height: 7,
+                              borderRadius: '50%',
+                              flexShrink: 0,
+                              background: isSet ? color : 'transparent',
+                              border: isSet ? 'none' : `1.5px dashed ${alpha(color, 0.5)}`,
+                              boxShadow: isSet ? `0 0 6px ${alpha(color, 0.55)}` : 'none',
+                            }}
+                          />
+                          <Typography
+                            sx={{
+                              fontSize: '0.52rem',
+                              fontWeight: 700,
+                              letterSpacing: '0.09em',
+                              textTransform: 'uppercase',
+                              color: isSet
+                                ? (isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.42)')
+                                : (isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)'),
+                              minWidth: 36,
+                            }}
+                          >
+                            Food
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontSize: isSet ? '0.78rem' : '0.72rem',
+                              fontWeight: isSet ? 600 : 400,
+                              fontStyle: isSet ? 'normal' : 'italic',
+                              color: isSet
+                                ? (isDark ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.82)')
+                                : (isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)'),
+                              flex: 1,
+                            }}
+                          >
+                            {foodName ?? 'Not set'}
+                          </Typography>
+                        </Box>
+                      );
+                    })()}
+
+                    {/* Potion rows — always show at least one slot */}
+                    {setup.consumables.potions.length > 0
+                      ? setup.consumables.potions.map((p) => {
+                          const color = '#26c6da';
+                          return (
+                            <Box
+                              key={p.id}
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                py: 0.65,
+                                px: 1.1,
+                                borderRadius: 1.5,
+                                border: `1px solid ${alpha(color, isDark ? 0.28 : 0.20)}`,
+                                background: isDark ? alpha(color, 0.07) : alpha(color, 0.04),
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 7,
+                                  height: 7,
+                                  borderRadius: '50%',
+                                  flexShrink: 0,
+                                  background: color,
+                                  boxShadow: `0 0 6px ${alpha(color, 0.55)}`,
+                                }}
+                              />
+                              <Typography
+                                sx={{
+                                  fontSize: '0.52rem',
+                                  fontWeight: 700,
+                                  letterSpacing: '0.09em',
+                                  textTransform: 'uppercase',
+                                  color: isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.42)',
+                                  minWidth: 36,
+                                }}
+                              >
+                                Potion
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  fontSize: '0.78rem',
+                                  fontWeight: 600,
+                                  color: isDark ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.82)',
+                                  flex: 1,
+                                }}
+                              >
+                                {p.name}
+                              </Typography>
+                            </Box>
+                          );
+                        })
+                      : (() => {
+                          const color = '#26c6da';
+                          return (
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                py: 0.65,
+                                px: 1.1,
+                                borderRadius: 1.5,
+                                border: `1px dashed ${isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)'}`,
+                                background: 'transparent',
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 7,
+                                  height: 7,
+                                  borderRadius: '50%',
+                                  flexShrink: 0,
+                                  background: 'transparent',
+                                  border: `1.5px dashed ${alpha(color, 0.5)}`,
+                                }}
+                              />
+                              <Typography
+                                sx={{
+                                  fontSize: '0.52rem',
+                                  fontWeight: 700,
+                                  letterSpacing: '0.09em',
+                                  textTransform: 'uppercase',
+                                  color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)',
+                                  minWidth: 36,
+                                }}
+                              >
+                                Potion
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 400,
+                                  fontStyle: 'italic',
+                                  color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)',
+                                  flex: 1,
+                                }}
+                              >
+                                Not set
+                              </Typography>
+                            </Box>
+                          );
+                        })()}
+                  </Box>
+                </Box>
+
+              </Box>
             </GlassPanel>
           </motion.div>
         </Box>
