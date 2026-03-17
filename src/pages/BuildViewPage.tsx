@@ -538,7 +538,10 @@ const GearSlotDisplay: React.FC<{
 
 // ─── Setup display ────────────────────────────────────────────────────────────
 
-const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
+const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
+  setup,
+  races = [],
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -571,24 +574,28 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
     Object.keys(setup.cp.fitness.passives).length +
     Object.keys(setup.cp.craft.passives).length;
 
-  const hasConsumables = setup.consumables.potions.length > 0 || setup.consumables.food.id != null;
-  const hasMundusOrCurse = !!setup.mundusStone || (!!setup.curse && setup.curse !== 'none');
+  // Food moved to Character panel — consumables here = potions only
+  const hasConsumables = setup.consumables.potions.length > 0;
+  const hasCharacterData =
+    !!setup.mundusStone ||
+    (!!setup.curse && setup.curse !== 'none') ||
+    races.length > 0 ||
+    setup.consumables.food.id != null;
 
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="visible">
       {/* Row 1: Attributes + Character */}
-      {(true || hasMundusOrCurse) && (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              md: hasMundusOrCurse ? '1fr 1fr' : '1fr',
-            },
-            gap: 2,
-            mb: 2,
-          }}
-        >
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            md: hasCharacterData ? '1fr 1fr' : '1fr',
+          },
+          gap: 2,
+          mb: 2,
+        }}
+      >
           <motion.div variants={fadeInUp}>
             <GlassPanel variant="default" sx={{ p: 2 }}>
               <SectionLabel label="Attributes" count={`${totalAttributes} / 64`} />
@@ -615,11 +622,86 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
             </GlassPanel>
           </motion.div>
 
-          {hasMundusOrCurse && (
+          {hasCharacterData && (
             <motion.div variants={fadeInUp}>
               <GlassPanel variant="default" sx={{ p: 2 }}>
                 <SectionLabel label="Character" />
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+                  {/* Recommended races */}
+                  {races.length > 0 && (
+                    <Box>
+                      <Typography
+                        sx={{
+                          fontSize: '0.55rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                          mb: 0.6,
+                        }}
+                      >
+                        Recommended Races
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                        {races.map((race) => (
+                          <Chip
+                            key={race}
+                            label={race.replace(/-/g, ' ')}
+                            size="small"
+                            sx={{
+                              height: 22,
+                              fontSize: '0.65rem',
+                              fontWeight: 600,
+                              textTransform: 'capitalize',
+                              bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                              border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                              color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+
+                  {/* Food */}
+                  {setup.consumables.food.id != null && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: '#ffb300',
+                          boxShadow: '0 0 6px rgba(255,179,0,0.55)',
+                          flexShrink: 0,
+                        }}
+                      />
+                      <Typography
+                        sx={{
+                          fontSize: '0.55rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+                          minWidth: 38,
+                        }}
+                      >
+                        Food
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: '0.80rem',
+                          fontWeight: 600,
+                          color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
+                        }}
+                      >
+                        {ESO_CONSUMABLE_LOOKUP[setup.consumables.food.id]?.name ??
+                          `Food #${setup.consumables.food.id}`}
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {/* Mundus Stone */}
                   {setup.mundusStone && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Box
@@ -629,6 +711,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
                           borderRadius: '50%',
                           background: '#ffd54f',
                           boxShadow: '0 0 6px rgba(255, 213, 79, 0.5)',
+                          flexShrink: 0,
                         }}
                       />
                       <Typography
@@ -638,14 +721,14 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
                           letterSpacing: '0.1em',
                           textTransform: 'uppercase',
                           color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
-                          minWidth: 55,
+                          minWidth: 38,
                         }}
                       >
                         Mundus
                       </Typography>
                       <Typography
                         sx={{
-                          fontSize: '0.82rem',
+                          fontSize: '0.80rem',
                           fontWeight: 600,
                           color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
                         }}
@@ -654,6 +737,8 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
                       </Typography>
                     </Box>
                   )}
+
+                  {/* Curse */}
                   {setup.curse && setup.curse !== 'none' && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Box
@@ -663,6 +748,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
                           borderRadius: '50%',
                           background: '#ce93d8',
                           boxShadow: '0 0 6px rgba(206, 147, 216, 0.5)',
+                          flexShrink: 0,
                         }}
                       />
                       <Typography
@@ -672,14 +758,14 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
                           letterSpacing: '0.1em',
                           textTransform: 'uppercase',
                           color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
-                          minWidth: 55,
+                          minWidth: 38,
                         }}
                       >
                         Curse
                       </Typography>
                       <Typography
                         sx={{
-                          fontSize: '0.82rem',
+                          fontSize: '0.80rem',
                           fontWeight: 600,
                           color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
                         }}
@@ -693,7 +779,6 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
             </motion.div>
           )}
         </Box>
-      )}
 
       {/* Row 2: Skills */}
       {(frontBar.length > 0 || backBar.length > 0) && (
@@ -907,23 +992,6 @@ const SetupDisplay: React.FC<{ setup: BuildSetup }> = ({ setup }) => {
                       }}
                     />
                   ))}
-                  {setup.consumables.food.id != null && (
-                    <Chip
-                      label={
-                        ESO_CONSUMABLE_LOOKUP[setup.consumables.food.id]?.name ??
-                        `Food #${setup.consumables.food.id}`
-                      }
-                      size="small"
-                      sx={{
-                        fontSize: '0.68rem',
-                        height: 24,
-                        fontWeight: 600,
-                        bgcolor: isDark ? 'rgba(255,179,0,0.08)' : 'rgba(255,179,0,0.06)',
-                        border: '1px solid rgba(255,179,0,0.20)',
-                        color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
-                      }}
-                    />
-                  )}
                 </Box>
               </GlassPanel>
             </motion.div>
@@ -1374,161 +1442,133 @@ export const BuildViewPage: React.FC = () => {
               </Box>
             </motion.div>
 
-            {/* ── Build overview ── */}
-            <motion.div variants={fadeInUp}>
-              <GlassPanel variant="primary" glow sx={{ p: 2.5, mb: 3 }}>
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                    gap: 3,
-                  }}
+            {/* ── Meta strip: DLC + YouTube ── */}
+            {((build.settings.dlc && build.settings.dlc !== 'Base Game') ||
+              build.guide.youtubeUrl) && (
+              <motion.div variants={fadeInUp}>
+                <GlassPanel
+                  variant="subtle"
+                  sx={{ p: 1.5, mb: 3, display: 'flex', alignItems: 'center', gap: 2.5, flexWrap: 'wrap' }}
                 >
-                  {/* Left: Race + DLC */}
-                  <Box>
-                    {build.races.length > 0 && (
-                      <Box sx={{ mb: 1.5 }}>
-                        <Typography
-                          sx={{
-                            fontSize: '0.55rem',
-                            fontWeight: 700,
-                            letterSpacing: '0.1em',
-                            textTransform: 'uppercase',
-                            color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                            mb: 0.75,
-                          }}
-                        >
-                          Recommended Races
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-                          {build.races.map((race) => (
-                            <Chip
-                              key={race}
-                              label={race.replace(/-/g, ' ')}
-                              size="small"
-                              sx={{
-                                height: 24,
-                                fontSize: '0.68rem',
-                                fontWeight: 500,
-                                textTransform: 'capitalize',
-                                bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-                                color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
-                              }}
-                            />
-                          ))}
-                        </Box>
-                      </Box>
-                    )}
-                    {build.settings.dlc && build.settings.dlc !== 'Base Game' && (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography
-                          sx={{
-                            fontSize: '0.55rem',
-                            fontWeight: 700,
-                            letterSpacing: '0.1em',
-                            textTransform: 'uppercase',
-                            color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                          }}
-                        >
-                          DLC
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: '0.78rem',
-                            fontWeight: 500,
-                            color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
-                          }}
-                        >
-                          {build.settings.dlc}
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
-
-                  {/* Right: Class Skill Lines + YouTube */}
-                  <Box>
-                    {classSkillLineLabels.length > 0 && (
-                      <Box sx={{ mb: 1.5 }}>
-                        <Typography
-                          sx={{
-                            fontSize: '0.55rem',
-                            fontWeight: 700,
-                            letterSpacing: '0.1em',
-                            textTransform: 'uppercase',
-                            color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                            mb: 0.75,
-                          }}
-                        >
-                          Class Skill Lines
-                        </Typography>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 0.5,
-                          }}
-                        >
-                          {classSkillLineLabels.map((sl, i) => (
-                            <Box
-                              key={sl}
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1,
-                              }}
-                            >
-                              <Box
-                                sx={{
-                                  width: 6,
-                                  height: 6,
-                                  borderRadius: '50%',
-                                  background: classTheme.accent,
-                                  opacity: 1 - i * 0.2,
-                                  boxShadow: `0 0 6px ${alpha(classTheme.accent, 0.5)}`,
-                                }}
-                              />
-                              <Typography
-                                sx={{
-                                  fontSize: '0.78rem',
-                                  fontWeight: 600,
-                                  color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
-                                }}
-                              >
-                                {sl}
-                              </Typography>
-                            </Box>
-                          ))}
-                        </Box>
-                      </Box>
-                    )}
-                    {build.guide.youtubeUrl && (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<YouTubeIcon sx={{ color: '#ef4444' }} />}
-                        href={build.guide.youtubeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                  {build.settings.dlc && build.settings.dlc !== 'Base Game' && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography
                         sx={{
-                          borderRadius: '10px',
-                          textTransform: 'none',
-                          fontSize: '0.75rem',
+                          fontSize: '0.55rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                        }}
+                      >
+                        DLC
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: '0.78rem',
                           fontWeight: 600,
-                          borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
+                          color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
+                        }}
+                      >
+                        {build.settings.dlc}
+                      </Typography>
+                    </Box>
+                  )}
+                  {build.guide.youtubeUrl && (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<YouTubeIcon sx={{ color: '#ef4444' }} />}
+                      href={build.guide.youtubeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{
+                        borderRadius: '10px',
+                        textTransform: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
+                        '&:hover': {
+                          borderColor: '#ef4444',
+                          bgcolor: 'rgba(239, 68, 68, 0.06)',
+                        },
+                      }}
+                    >
+                      Video Guide
+                    </Button>
+                  )}
+                </GlassPanel>
+              </motion.div>
+            )}
+
+            {/* ── Class Skill Lines ── */}
+            {classSkillLineLabels.length > 0 && (
+              <motion.div variants={fadeInUp}>
+                <GlassPanel variant="primary" sx={{ p: 2, mb: 3 }}>
+                  <SectionLabel label="Class Skill Lines" />
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: {
+                        xs: '1fr',
+                        sm: `repeat(${classSkillLineLabels.length}, 1fr)`,
+                      },
+                      gap: 1.5,
+                    }}
+                  >
+                    {classSkillLineLabels.map((sl, i) => (
+                      <Box
+                        key={sl}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1.5,
+                          py: 1.5,
+                          px: 2,
+                          borderRadius: 2.5,
+                          background: isDark
+                            ? alpha(classTheme.accent, 0.07)
+                            : alpha(classTheme.accent, 0.05),
+                          border: `1px solid ${alpha(classTheme.accent, isDark ? 0.22 : 0.14)}`,
+                          transition: 'all 0.18s ease',
                           '&:hover': {
-                            borderColor: '#ef4444',
-                            bgcolor: 'rgba(239, 68, 68, 0.06)',
+                            background: isDark
+                              ? alpha(classTheme.accent, 0.13)
+                              : alpha(classTheme.accent, 0.09),
+                            borderColor: alpha(classTheme.accent, isDark ? 0.38 : 0.26),
+                            transform: 'translateY(-1px)',
+                            boxShadow: `0 4px 16px ${alpha(classTheme.accent, 0.14)}`,
                           },
                         }}
                       >
-                        Video Guide
-                      </Button>
-                    )}
+                        <Box
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: '50%',
+                            background: classTheme.accent,
+                            opacity: 1 - i * 0.18,
+                            boxShadow: `0 0 10px ${alpha(classTheme.accent, 0.65)}`,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            fontSize: '0.90rem',
+                            fontWeight: 700,
+                            fontFamily: 'Space Grotesk, Inter, system-ui',
+                            color: isDark ? 'rgba(255,255,255,0.90)' : 'rgba(0,0,0,0.82)',
+                            letterSpacing: '-0.01em',
+                          }}
+                        >
+                          {sl}
+                        </Typography>
+                      </Box>
+                    ))}
                   </Box>
-                </Box>
-              </GlassPanel>
-            </motion.div>
+                </GlassPanel>
+              </motion.div>
+            )}
 
             {/* ── Setup tabs ── */}
             {build.setups.length > 1 && (
@@ -1601,7 +1641,7 @@ export const BuildViewPage: React.FC = () => {
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <SetupDisplay setup={build.setups[activeSetup]} />
+                  <SetupDisplay setup={build.setups[activeSetup]} races={build.races} />
                 </motion.div>
               )}
             </AnimatePresence>
