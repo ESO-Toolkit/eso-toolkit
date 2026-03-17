@@ -128,6 +128,24 @@ const GEAR_SLOT_NAMES: Record<number, string> = {
 
 const GEAR_SLOT_ORDER = [0, 2, 3, 16, 6, 8, 9, 1, 11, 12, 4, 5, 20, 21];
 
+/** Slot-type emoji fallback shown when no icon URL is available (e.g. LibSets IDs). */
+const GEAR_SLOT_ICONS: Record<number, string> = {
+  0: '🪖', // Head
+  1: '📿', // Neck
+  2: '🧥', // Chest
+  3: '🦺', // Shoulders
+  4: '⚔️',  // Main Hand
+  5: '🛡️',  // Off Hand
+  6: '🩲', // Belt
+  8: '👖', // Legs
+  9: '👢', // Feet
+  11: '💍', // Ring 1
+  12: '💍', // Ring 2
+  16: '🧤', // Gloves
+  20: '⚔️',  // Back Main Hand
+  21: '🛡️',  // Back Off Hand
+};
+
 const MUNDUS_LABELS: Record<string, string> = {
   thief: 'The Thief',
   atronach: 'The Atronach',
@@ -399,15 +417,22 @@ const GearSlotDisplay: React.FC<{
   const isDark = theme.palette.mode === 'dark';
   const slotName = GEAR_SLOT_NAMES[slotIndex] ?? `Slot ${slotIndex}`;
   const itemInfo = getItemInfo(itemId);
-  const [iconUrl, setIconUrl] = useState<string | null>(() => getItemIconUrl(itemId));
+  // itemIdMap uses LibSets set IDs (small ints), while itemIcons.json uses UESP's
+  // actual ESO item IDs — these are completely different namespaces. If getItemInfo()
+  // resolves the ID it's a LibSets ID and the UESP icon lookup would return a wrong item.
+  // Only attempt icon resolution for IDs that are NOT in itemIdMap (e.g. addon imports).
+  const isLibSetsId = itemInfo != null;
+  const [iconUrl, setIconUrl] = useState<string | null>(() =>
+    isLibSetsId ? null : getItemIconUrl(itemId),
+  );
 
-  // Async fallback for items not in local data
+  // Async fallback for items not in local data and not LibSets IDs
   useEffect(() => {
-    if (iconUrl || !itemId) return;
+    if (iconUrl || !itemId || isLibSetsId) return;
     void fetchItemIconUrl(itemId).then((url) => {
       if (url) setIconUrl(url);
     });
-  }, [itemId, iconUrl]);
+  }, [itemId, iconUrl, isLibSetsId]);
 
   const displayName = itemInfo?.name ?? `Item #${itemId}`;
   const setName = itemInfo?.setName;
@@ -457,15 +482,9 @@ const GearSlotDisplay: React.FC<{
             }}
           />
         ) : (
-          <Box
-            sx={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: 'var(--be-accent, #38bdf8)',
-              opacity: 0.4,
-            }}
-          />
+          <Typography sx={{ fontSize: 16, lineHeight: 1, userSelect: 'none' }}>
+            {GEAR_SLOT_ICONS[slotIndex] ?? '📦'}
+          </Typography>
         )}
       </Box>
 
