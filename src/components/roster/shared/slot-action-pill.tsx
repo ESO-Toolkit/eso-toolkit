@@ -52,7 +52,6 @@ export const SlotActionPill = React.memo<SlotActionPillProps>(
     const dispatch = useDispatch();
     const { enqueueSnackbar } = useSnackbar();
     const [editLoading, setEditLoading] = useState(false);
-    const [saveLoading, setSaveLoading] = useState(false);
 
     // ── Edit: same-tab navigation to build editor ──────────────────
     const handleEdit = useCallback(async () => {
@@ -67,25 +66,22 @@ export const SlotActionPill = React.memo<SlotActionPillProps>(
           if (rosterId) params.set('rid', rosterId);
           if (slotKey || rosterId) params.set('from', 'roster');
           navigate(`/build-editor?${params.toString()}`);
+        } else {
+          enqueueSnackbar('Could not encode build — please try again.', { variant: 'error' });
         }
       } finally {
         setEditLoading(false);
       }
-    }, [buildFactory, navigate, slotKey, rosterId]);
+    }, [buildFactory, navigate, slotKey, rosterId, enqueueSnackbar]);
 
     // ── Save: persist to My Builds without navigating ──────────────
     const handleSave = useCallback(() => {
-      setSaveLoading(true);
-      try {
-        const build = buildFactory();
-        dispatch(saveBuild(build));
-        enqueueSnackbar(`${build.name} saved to My Builds`, {
-          variant: 'success',
-          autoHideDuration: 3000,
-        });
-      } finally {
-        setSaveLoading(false);
-      }
+      const build = buildFactory();
+      dispatch(saveBuild(build));
+      enqueueSnackbar(`${build.name} saved to My Builds`, {
+        variant: 'success',
+        autoHideDuration: 3000,
+      });
     }, [buildFactory, dispatch, enqueueSnackbar]);
 
     const iconSx = { fontSize: '0.9rem' };
@@ -174,7 +170,6 @@ export const SlotActionPill = React.memo<SlotActionPillProps>(
             <IconButton
               size="small"
               onClick={handleSave}
-              disabled={saveLoading}
               aria-label={`Save ${label} to My Builds`}
               sx={{
                 borderRadius: 0,
@@ -189,11 +184,7 @@ export const SlotActionPill = React.memo<SlotActionPillProps>(
                 },
               }}
             >
-              {saveLoading ? (
-                <CircularProgress size={14} color="inherit" />
-              ) : (
-                <BookmarkAddIcon sx={iconSx} />
-              )}
+              <BookmarkAddIcon sx={iconSx} />
             </IconButton>
           </Tooltip>
         </Box>

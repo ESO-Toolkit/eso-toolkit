@@ -90,6 +90,13 @@ export const BuildCompletionHeader: React.FC = () => {
     );
   });
 
+  // Detect if the originating roster was deleted since this editor was opened
+  const rosterStillExists = useSelector((s: RootState) =>
+    rosterContext?.rosterId
+      ? selectSavedRosters(s).some((r) => r.id === rosterContext.rosterId)
+      : false,
+  );
+
   // Human-readable slot label (e.g. "dps3" → "DPS 3", "tank1" → "Tank 1")
   const slotLabel = React.useMemo(() => {
     if (!rosterContext) return '';
@@ -160,6 +167,13 @@ export const BuildCompletionHeader: React.FC = () => {
   // ── Roster round-trip: apply changes back to the originating slot ──
   const handleApplyToRoster = (): void => {
     if (!rosterContext?.rosterId || !rosterContext.slotKey) return;
+    if (!rosterStillExists) {
+      enqueueSnackbar(
+        `Roster "${rosterName ?? 'Roster'}" no longer exists — changes could not be applied.`,
+        { variant: 'error' },
+      );
+      return;
+    }
     dispatch(
       attachBuildToSlot({
         rosterId: rosterContext.rosterId,
@@ -689,18 +703,18 @@ export const BuildCompletionHeader: React.FC = () => {
               >
                 Cancel
               </Button>
-              <Tooltip
-                title={
-                  build.addonImportString.length < 10
-                    ? 'Paste an export string first'
-                    : 'Load build from addon string'
-                }
-              >
+              <Tooltip title="Addon import coming soon — configure your build manually for now">
                 <Box>
                   <Button
                     variant="contained"
                     size="small"
                     disabled={build.addonImportString.length < 10}
+                    onClick={() => {
+                      enqueueSnackbar(
+                        'Addon import coming soon — configure your build manually for now.',
+                        { variant: 'info', autoHideDuration: 4000 },
+                      );
+                    }}
                     sx={{
                       ...pillBase,
                       background:
