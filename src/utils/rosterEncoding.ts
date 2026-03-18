@@ -105,6 +105,7 @@ export interface CompactTank {
   pi?: string; // playerNumber / position (e.g. "left", "right")
   rl?: string; // roleLabel
   lb?: string[]; // labels
+  rn?: string; // roleNotes
   gs?: CompactGear; // gearSets
   sl?: CompactSkills; // skillLines
   ul?: number | string; // ultimate: SupportUltimate index or custom string
@@ -125,6 +126,7 @@ export interface CompactHealer {
   pi?: string; // playerNumber / position (e.g. "left", "right")
   rl?: string; // roleLabel
   lb?: string[]; // labels
+  rn?: string; // roleNotes
   s1?: number; // set1
   s2?: number; // set2
   ms?: number; // monsterSet
@@ -152,6 +154,7 @@ export interface CompactDPS {
   pi?: string; // playerNumber / position (e.g. "left", "right", "1")
   rl?: string; // roleLabel
   lb?: string[]; // labels
+  rn?: string; // roleNotes
   s1?: number; // set1 (primary 5-piece)
   s2?: number; // set2 (secondary 5-piece)
   ms?: number; // monsterSet
@@ -451,6 +454,7 @@ function compactTank(t: TankSetup): CompactTank {
   if (t.playerNumber) c.pi = t.playerNumber;
   if (t.roleLabel) c.rl = t.roleLabel;
   if (t.labels?.length) c.lb = t.labels;
+  if (t.roleNotes) c.rn = t.roleNotes;
   const gs = compactGear(t.gearSets);
   if (gs) c.gs = gs;
   const sl = compactSkills(t.skillLines);
@@ -480,6 +484,7 @@ function expandTank(c?: CompactTank): TankSetup {
     playerNumber: c?.pi != null ? String(c.pi) : undefined,
     roleLabel: c?.rl,
     labels: c?.lb,
+    roleNotes: c?.rn,
     gearSets: expandGear(c?.gs),
     skillLines: expandSkills(c?.sl),
     ultimate: decodeUltimate(c?.ul),
@@ -501,6 +506,7 @@ function compactHealer(h: HealerSetup): CompactHealer {
   if (h.playerNumber) c.pi = h.playerNumber;
   if (h.roleLabel) c.rl = h.roleLabel;
   if (h.labels?.length) c.lb = h.labels;
+  if (h.roleNotes) c.rn = h.roleNotes;
   if (h.set1 != null) c.s1 = h.set1 as number;
   if (h.set2 != null) c.s2 = h.set2 as number;
   if (h.monsterSet != null) c.ms = h.monsterSet as number;
@@ -541,6 +547,7 @@ function expandHealer(c?: CompactHealer): HealerSetup {
     playerNumber: c?.pi != null ? String(c.pi) : undefined,
     roleLabel: c?.rl,
     labels: c?.lb,
+    roleNotes: c?.rn,
     set1: toValidSetId(c?.s1),
     set2: toValidSetId(c?.s2),
     monsterSet: toValidSetId(c?.ms),
@@ -576,6 +583,7 @@ function compactDPS(d: DPSSlot): CompactDPS {
   if (d.playerNumber) c.pi = d.playerNumber;
   if (d.roleLabel) c.rl = d.roleLabel;
   if (d.labels?.length) c.lb = d.labels;
+  if (d.roleNotes) c.rn = d.roleNotes;
   if (d.set1 != null) c.s1 = d.set1 as number;
   if (d.set2 != null) c.s2 = d.set2 as number;
   if (d.monsterSet != null) c.ms = d.monsterSet as number;
@@ -626,6 +634,7 @@ function expandDPS(c: CompactDPS): DPSSlot {
     playerNumber: c.pi != null ? String(c.pi) : undefined,
     roleLabel: c.rl,
     labels: c.lb,
+    roleNotes: c.rn,
     set1: toValidSetId(c.s1) ?? legacySet1,
     set2: toValidSetId(c.s2) ?? legacySet2,
     monsterSet: toValidSetId(c.ms),
@@ -752,6 +761,7 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
       slot.skillLines ||
       slot.specificSkills?.length ||
       slot.championPoint ||
+      slot.roleNotes ||
       slot.buildRef ||
       slot.food ||
       slot.skills ||
@@ -897,10 +907,14 @@ export const encodeRosterToURL = async (roster: RaidRoster): Promise<string> => 
  * Supports v2 (deflate-raw + compact) and legacy v1 (plain base64 JSON).
  * Logs warnings on decode failures for debugging.
  */
+// 500 KB max compressed roster payload — guards against decompression bomb attacks
+const MAX_ROSTER_COMPRESSED_BYTES = 500 * 1024;
+
 export const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster | null> => {
   // Try v2: deflate-raw + compact format
   try {
     const bytes = fromBase64Url(encoded);
+    if (bytes.length > MAX_ROSTER_COMPRESSED_BYTES) return null;
     const json = await inflateBytes(bytes);
     const parsed = JSON.parse(json) as { v?: number };
     if (parsed.v === 2) {
