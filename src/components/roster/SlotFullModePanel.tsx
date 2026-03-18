@@ -11,11 +11,11 @@ import { Box, ButtonBase, Collapse, Divider, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useState } from 'react';
 
-import type { BuildChampionPoints } from '../../features/build-editor/types/build.types';
 import { ChampionPointsPicker } from '../../features/build-editor/components/pickers/ChampionPointsPicker';
 import { FoodPicker } from '../../features/build-editor/components/pickers/FoodPicker';
 import { PassivesPicker } from '../../features/build-editor/components/pickers/PassivesPicker';
 import { SkillBarPicker } from '../../features/build-editor/components/pickers/SkillBarPicker';
+import type { BuildChampionPoints } from '../../features/build-editor/types/build.types';
 import type { SkillsConfig } from '../../features/loadout-manager/types/loadout.types';
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -66,7 +66,7 @@ export const SlotFullModePanel: React.FC<SlotFullModePanelProps> = ({
   const isDark = useTheme().palette.mode === 'dark';
   const [activeTab, setActiveTab] = useState<FullTab | null>(null);
 
-  const toggle = (tab: FullTab) => setActiveTab((prev) => (prev === tab ? null : tab));
+  const toggle = (tab: FullTab): void => setActiveTab((prev) => (prev === tab ? null : tab));
 
   return (
     <Box sx={{ mt: 1.5 }}>
@@ -148,28 +148,19 @@ export const SlotFullModePanel: React.FC<SlotFullModePanelProps> = ({
 
       <Collapse in={activeTab === 'champion'} unmountOnExit>
         <Box sx={{ pt: 0.5, pb: 1.5 }}>
-          <ChampionPointsPicker
-            cp={cpPoints ?? EMPTY_CP}
-            onChange={onCpPointsChange}
-          />
+          <ChampionPointsPicker cp={cpPoints ?? EMPTY_CP} onChange={onCpPointsChange} />
         </Box>
       </Collapse>
 
       <Collapse in={activeTab === 'food'} unmountOnExit>
         <Box sx={{ pt: 0.5, pb: 1.5 }}>
-          <FoodPicker
-            food={food ?? {}}
-            onChange={onFoodChange}
-          />
+          <FoodPicker food={food ?? {}} onChange={onFoodChange} />
         </Box>
       </Collapse>
 
       <Collapse in={activeTab === 'passives'} unmountOnExit>
         <Box sx={{ pt: 0.5, pb: 1.5 }}>
-          <PassivesPicker
-            passives={passives ?? []}
-            onChange={onPassivesChange}
-          />
+          <PassivesPicker passives={passives ?? []} onChange={onPassivesChange} />
         </Box>
       </Collapse>
     </Box>

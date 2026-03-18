@@ -36,13 +36,12 @@ import {
   Button,
   ButtonBase,
   Container,
-  FormControl,
-  IconButton,
   Menu,
   MenuItem,
   ListItemIcon,
   ListItemText,
   Paper,
+  Stack,
   TextField,
   Typography,
   Autocomplete,
@@ -62,12 +61,10 @@ import React, { useState, useCallback, useMemo, useRef, useTransition } from 're
 import { useNavigate } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
+import { PerFightBuilds } from '../components/PerFightBuilds';
 import { DPSSlotCard } from '../components/roster/DPSSlotCard';
 import { HealerCard } from '../components/roster/HealerSlotCard';
 import { TankCard } from '../components/roster/TankSlotCard';
-import { PerFightBuilds } from '../components/PerFightBuilds';
-import { RoleCompositionPicker } from '../components/RoleCompositionPicker';
-import { RosterCardSections } from '../components/roster/RosterCardSections';
 import { SetAssignmentManager } from '../components/SetAssignmentManager';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
@@ -97,6 +94,7 @@ import {
   createDefaultDPSSlots,
   MONSTER_SETS,
   ALL_5PIECE_SETS,
+  CLASS_SKILL_LINES,
 } from '../types/roster';
 import type { TrialBuildOverrides } from '../types/trial-encounters';
 import {
@@ -1570,7 +1568,7 @@ export const RosterBuilderPage: React.FC = () => {
                 : '1px solid rgba(0,0,0,0.06)',
             }}
           >
-            {(['simple', 'advanced', 'full'] as const).map((value) => (
+            {(['simple', 'full'] as const).map((value) => (
               <Box
                 key={value}
                 onClick={() => {
@@ -1626,7 +1624,7 @@ export const RosterBuilderPage: React.FC = () => {
                   },
                 }}
               >
-                {value === 'simple' ? 'Simple' : value === 'advanced' ? 'Advanced' : 'Full'}
+                {value === 'simple' ? 'Simple' : 'Full'}
               </Box>
             ))}
           </Box>
@@ -2261,8 +2259,8 @@ export const RosterBuilderPage: React.FC = () => {
           />
         </Box>
 
-        {/* Advanced / Full Mode: Full Roster Details */}
-        <Box sx={{ display: mode === 'advanced' || mode === 'full' ? 'block' : 'none' }}>
+        {/* Full Mode: Full Roster Details */}
+        <Box sx={{ display: mode === 'full' ? 'block' : 'none' }}>
           {/* Player Groups Management */}
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
@@ -2450,6 +2448,7 @@ export const RosterBuilderPage: React.FC = () => {
                 onChange={handleTank1Change}
                 availableGroups={memoizedGroups}
                 mode={mode}
+                savedRosterId={savedRosterIdRef.current ?? undefined}
               />
               <TankCard
                 key={2}
@@ -2458,6 +2457,7 @@ export const RosterBuilderPage: React.FC = () => {
                 onChange={handleTank2Change}
                 availableGroups={memoizedGroups}
                 mode={mode}
+                savedRosterId={savedRosterIdRef.current ?? undefined}
               />
             </Stack>
           </Box>
@@ -2548,6 +2548,7 @@ export const RosterBuilderPage: React.FC = () => {
                 availableGroups={memoizedGroups}
                 usedBuffs={usedBuffs}
                 mode={mode}
+                savedRosterId={savedRosterIdRef.current ?? undefined}
               />
               <HealerCard
                 key={2}
@@ -2557,6 +2558,7 @@ export const RosterBuilderPage: React.FC = () => {
                 availableGroups={memoizedGroups}
                 usedBuffs={usedBuffs}
                 mode={mode}
+                savedRosterId={savedRosterIdRef.current ?? undefined}
               />
             </Stack>
           </Box>
@@ -2650,6 +2652,7 @@ export const RosterBuilderPage: React.FC = () => {
                       onConvertToJail={handleConvertDPSToJail}
                       onConvertToDPS={handleConvertJailToDPS}
                       mode={mode}
+                      savedRosterId={savedRosterIdRef.current ?? undefined}
                     />
                   ))}
                 </Stack>

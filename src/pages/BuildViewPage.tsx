@@ -33,24 +33,25 @@ import { useNavigate } from 'react-router-dom';
 
 import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
 import { getEnchantName } from '../data/esoEnchants';
+import { ESO_POTION_LOOKUP } from '../data/esoPotions';
 import { getTraitName } from '../data/esoTraits';
 import { staggerContainer, fadeInUp } from '../features/build-editor/components/motion/variants';
 import { GlassPanel } from '../features/build-editor/components/primitives/GlassPanel';
-import { BE_TOKENS } from '../features/build-editor/theme/buildEditorTokens';
-import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
 import { CP_PASSIVES_BY_TREE } from '../features/build-editor/data/championPassives';
 import { CLASS_SKILL_LINES } from '../features/build-editor/data/esoStaticData';
-import type { Build, BuildChampionPoints, BuildSetup, CombatRole } from '../features/build-editor/types/build.types';
-import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
+import { BE_TOKENS } from '../features/build-editor/theme/buildEditorTokens';
+import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
+import type { Build, BuildSetup, CombatRole } from '../features/build-editor/types/build.types';
 import { BuildViewShell } from '../features/build-viewer/components/BuildViewShell';
 import { ViewAttributeBar } from '../features/build-viewer/components/ViewAttributeBar';
 import { getItemInfo, getSetItemsBySlot } from '../features/loadout-manager/data/itemIdMap';
-import type { SlotType } from '../features/loadout-manager/data/slotTypes';
 import { getSkillById, preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
+import type { SlotType } from '../features/loadout-manager/data/slotTypes';
 import {
   getItemIconUrl,
   fetchItemIconUrl,
 } from '../features/loadout-manager/utils/itemIconResolver';
+import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
 
 // ─── Icon CDNs ────────────────────────────────────────────────────────────────
@@ -135,16 +136,16 @@ const GEAR_SLOT_ICONS: Record<number, string> = {
   1: '📿', // Neck
   2: '🧥', // Chest
   3: '🦺', // Shoulders
-  4: '⚔️',  // Main Hand
-  5: '🛡️',  // Off Hand
+  4: '⚔️', // Main Hand
+  5: '🛡️', // Off Hand
   6: '🩲', // Belt
   8: '👖', // Legs
   9: '👢', // Feet
   11: '💍', // Ring 1
   12: '💍', // Ring 2
   16: '🧤', // Gloves
-  20: '⚔️',  // Back Main Hand
-  21: '🛡️',  // Back Off Hand
+  20: '⚔️', // Back Main Hand
+  21: '🛡️', // Back Off Hand
 };
 
 /** Maps ESO equipment slot indices to the SlotType used in itemIdMap. */
@@ -622,10 +623,7 @@ const GearSlotDisplay: React.FC<{
 
 // ─── Setup display ────────────────────────────────────────────────────────────
 
-const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
-  setup,
-  races = [],
-}) => {
+const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({ setup, races = [] }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -660,9 +658,12 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
 
   const foodName =
     setup.consumables.food.id != null
-      ? (ESO_CONSUMABLE_LOOKUP[setup.consumables.food.id]?.name ?? `Food #${setup.consumables.food.id}`)
+      ? (ESO_CONSUMABLE_LOOKUP[setup.consumables.food.id]?.name ??
+        `Food #${setup.consumables.food.id}`)
       : null;
-  const mundusLabel = setup.mundusStone ? (MUNDUS_LABELS[setup.mundusStone] ?? setup.mundusStone) : null;
+  const mundusLabel = setup.mundusStone
+    ? (MUNDUS_LABELS[setup.mundusStone] ?? setup.mundusStone)
+    : null;
   const curseLabel = setup.curse && setup.curse !== 'none' ? setup.curse : null;
 
   return (
@@ -676,425 +677,502 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
           mb: 2,
         }}
       >
-          <motion.div variants={fadeInUp} style={{ height: '100%' }}>
-            <GlassPanel
-              variant="default"
-              sx={{ p: 2, height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}
+        <motion.div variants={fadeInUp} style={{ height: '100%' }}>
+          <GlassPanel
+            variant="default"
+            sx={{
+              p: 2,
+              height: '100%',
+              boxSizing: 'border-box',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <SectionLabel label="Attributes" count={`${totalAttributes} / 64`} />
+
+            {/* Bars — flex so they spread to fill available height */}
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-evenly',
+              }}
             >
-              <SectionLabel label="Attributes" count={`${totalAttributes} / 64`} />
+              <ViewAttributeBar
+                label="Magicka"
+                color={BE_TOKENS.attributes.magicka}
+                value={setup.attributes.magicka}
+                max={64}
+              />
+              <ViewAttributeBar
+                label="Health"
+                color={BE_TOKENS.attributes.health}
+                value={setup.attributes.health}
+                max={64}
+              />
+              <ViewAttributeBar
+                label="Stamina"
+                color={BE_TOKENS.attributes.stamina}
+                value={setup.attributes.stamina}
+                max={64}
+              />
+            </Box>
 
-              {/* Bars — flex so they spread to fill available height */}
-              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
-                <ViewAttributeBar
-                  label="Magicka"
-                  color={BE_TOKENS.attributes.magicka}
-                  value={setup.attributes.magicka}
-                  max={64}
-                />
-                <ViewAttributeBar
-                  label="Health"
-                  color={BE_TOKENS.attributes.health}
-                  value={setup.attributes.health}
-                  max={64}
-                />
-                <ViewAttributeBar
-                  label="Stamina"
-                  color={BE_TOKENS.attributes.stamina}
-                  value={setup.attributes.stamina}
-                  max={64}
-                />
+            {/* Distribution summary */}
+            {totalAttributes > 0 && (
+              <Box sx={{ pt: 1.5, mt: 'auto' }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.52rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.09em',
+                    textTransform: 'uppercase',
+                    color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+                    mb: 0.6,
+                  }}
+                >
+                  Distribution
+                </Typography>
+
+                {/* Segmented bar */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    height: 10,
+                    borderRadius: 5,
+                    overflow: 'hidden',
+                    gap: '2px',
+                    background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                  }}
+                >
+                  {[
+                    { value: setup.attributes.magicka, color: BE_TOKENS.attributes.magicka },
+                    { value: setup.attributes.health, color: BE_TOKENS.attributes.health },
+                    { value: setup.attributes.stamina, color: BE_TOKENS.attributes.stamina },
+                  ]
+                    .filter((seg) => seg.value > 0)
+                    .map((seg, i) => (
+                      <Box
+                        key={i}
+                        sx={{
+                          flex: seg.value,
+                          background: `linear-gradient(90deg, ${seg.color} 0%, ${alpha(seg.color, 0.7)} 100%)`,
+                          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.15)`,
+                        }}
+                      />
+                    ))}
+                </Box>
+
+                {/* Legend row */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.75 }}>
+                  {[
+                    {
+                      label: 'Mag',
+                      value: setup.attributes.magicka,
+                      color: BE_TOKENS.attributes.magicka,
+                    },
+                    {
+                      label: 'HP',
+                      value: setup.attributes.health,
+                      color: BE_TOKENS.attributes.health,
+                    },
+                    {
+                      label: 'Stam',
+                      value: setup.attributes.stamina,
+                      color: BE_TOKENS.attributes.stamina,
+                    },
+                  ].map(({ label, value, color }) => (
+                    <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          background: color,
+                          boxShadow: `0 0 4px ${alpha(color, 0.5)}`,
+                          opacity: value > 0 ? 1 : 0.3,
+                        }}
+                      />
+                      <Typography
+                        sx={{
+                          fontSize: '0.58rem',
+                          fontWeight: 600,
+                          fontVariantNumeric: 'tabular-nums',
+                          color:
+                            value > 0
+                              ? color
+                              : isDark
+                                ? 'rgba(255,255,255,0.25)'
+                                : 'rgba(0,0,0,0.25)',
+                        }}
+                      >
+                        {label}{' '}
+                        {value > 0 ? `${Math.round((value / totalAttributes) * 100)}%` : '—'}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
               </Box>
+            )}
+          </GlassPanel>
+        </motion.div>
 
-              {/* Distribution summary */}
-              {totalAttributes > 0 && (
-                <Box sx={{ pt: 1.5, mt: 'auto' }}>
-                  <Typography
-                    sx={{
-                      fontSize: '0.52rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.09em',
-                      textTransform: 'uppercase',
-                      color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-                      mb: 0.6,
-                    }}
-                  >
-                    Distribution
-                  </Typography>
-
-                  {/* Segmented bar */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      height: 10,
-                      borderRadius: 5,
-                      overflow: 'hidden',
-                      gap: '2px',
-                      background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                    }}
-                  >
-                    {[
-                      { value: setup.attributes.magicka, color: BE_TOKENS.attributes.magicka },
-                      { value: setup.attributes.health,  color: BE_TOKENS.attributes.health  },
-                      { value: setup.attributes.stamina, color: BE_TOKENS.attributes.stamina },
-                    ]
-                      .filter((seg) => seg.value > 0)
-                      .map((seg, i) => (
-                        <Box
-                          key={i}
+        <motion.div variants={fadeInUp} style={{ height: '100%' }}>
+          <GlassPanel variant="default" sx={{ p: 2, height: '100%', boxSizing: 'border-box' }}>
+            <SectionLabel label="Character" />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {/* ── Recommended Races ── */}
+              {races.length > 0 && (
+                <>
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontSize: '0.55rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                        mb: 0.6,
+                      }}
+                    >
+                      Recommended Races
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                      {races.map((race) => (
+                        <Chip
+                          key={race}
+                          label={race.replace(/-/g, ' ')}
+                          size="small"
                           sx={{
-                            flex: seg.value,
-                            background: `linear-gradient(90deg, ${seg.color} 0%, ${alpha(seg.color, 0.7)} 100%)`,
-                            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.15)`,
+                            height: 22,
+                            fontSize: '0.65rem',
+                            fontWeight: 600,
+                            textTransform: 'capitalize',
+                            bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                            color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
                           }}
                         />
                       ))}
+                    </Box>
                   </Box>
+                  <Divider
+                    sx={{ borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)' }}
+                  />
+                </>
+              )}
 
-                  {/* Legend row */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.75 }}>
-                    {[
-                      { label: 'Mag', value: setup.attributes.magicka, color: BE_TOKENS.attributes.magicka },
-                      { label: 'HP',  value: setup.attributes.health,  color: BE_TOKENS.attributes.health  },
-                      { label: 'Stam',value: setup.attributes.stamina, color: BE_TOKENS.attributes.stamina },
-                    ].map(({ label, value, color }) => (
-                      <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+              {/* ── Mundus + Curse (2-col info chips) ── */}
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                {[
+                  { label: 'Mundus', color: '#ffd54f', value: mundusLabel },
+                  { label: 'Curse', color: '#ce93d8', value: curseLabel },
+                ].map(({ label, color, value }) => {
+                  const isSet = value != null;
+                  return (
+                    <Box
+                      key={label}
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 0.35,
+                        px: 1.25,
+                        py: 0.9,
+                        borderRadius: 2,
+                        border: `1px ${isSet ? 'solid' : 'dashed'} ${
+                          isSet
+                            ? alpha(color, isDark ? 0.28 : 0.2)
+                            : isDark
+                              ? 'rgba(255,255,255,0.09)'
+                              : 'rgba(0,0,0,0.08)'
+                        }`,
+                        background: isSet
+                          ? isDark
+                            ? alpha(color, 0.07)
+                            : alpha(color, 0.05)
+                          : 'transparent',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
                         <Box
                           sx={{
                             width: 6,
                             height: 6,
                             borderRadius: '50%',
-                            background: color,
-                            boxShadow: `0 0 4px ${alpha(color, 0.5)}`,
-                            opacity: value > 0 ? 1 : 0.3,
+                            flexShrink: 0,
+                            background: isSet ? color : 'transparent',
+                            border: isSet ? 'none' : `1.5px dashed ${alpha(color, 0.5)}`,
+                            boxShadow: isSet ? `0 0 5px ${alpha(color, 0.55)}` : 'none',
                           }}
                         />
                         <Typography
                           sx={{
-                            fontSize: '0.58rem',
-                            fontWeight: 600,
-                            fontVariantNumeric: 'tabular-nums',
-                            color: value > 0 ? color : (isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)'),
+                            fontSize: '0.52rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.09em',
+                            textTransform: 'uppercase',
+                            color: isSet
+                              ? isDark
+                                ? alpha(color, 0.75)
+                                : alpha(color, 0.85)
+                              : isDark
+                                ? 'rgba(255,255,255,0.28)'
+                                : 'rgba(0,0,0,0.28)',
                           }}
                         >
-                          {label} {value > 0 ? `${Math.round((value / totalAttributes) * 100)}%` : '—'}
+                          {label}
                         </Typography>
                       </Box>
-                    ))}
-                  </Box>
-                </Box>
-              )}
-            </GlassPanel>
-          </motion.div>
-
-          <motion.div variants={fadeInUp} style={{ height: '100%' }}>
-            <GlassPanel variant="default" sx={{ p: 2, height: '100%', boxSizing: 'border-box' }}>
-              <SectionLabel label="Character" />
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-
-                {/* ── Recommended Races ── */}
-                {races.length > 0 && (
-                  <>
-                    <Box>
                       <Typography
                         sx={{
-                          fontSize: '0.55rem',
-                          fontWeight: 700,
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
-                          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                          mb: 0.6,
+                          fontSize: isSet ? '0.76rem' : '0.72rem',
+                          fontWeight: isSet ? 600 : 400,
+                          fontStyle: isSet ? 'normal' : 'italic',
+                          color: isSet
+                            ? isDark
+                              ? 'rgba(255,255,255,0.88)'
+                              : 'rgba(0,0,0,0.82)'
+                            : isDark
+                              ? 'rgba(255,255,255,0.22)'
+                              : 'rgba(0,0,0,0.22)',
+                          lineHeight: 1.2,
+                          pl: 0.25,
                         }}
                       >
-                        Recommended Races
+                        {value ?? 'Not set'}
                       </Typography>
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        {races.map((race) => (
-                          <Chip
-                            key={race}
-                            label={race.replace(/-/g, ' ')}
-                            size="small"
-                            sx={{
-                              height: 22,
-                              fontSize: '0.65rem',
-                              fontWeight: 600,
-                              textTransform: 'capitalize',
-                              bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                              border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-                              color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
-                            }}
-                          />
-                        ))}
-                      </Box>
                     </Box>
-                    <Divider sx={{ borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)' }} />
-                  </>
-                )}
+                  );
+                })}
+              </Box>
 
-                {/* ── Mundus + Curse (2-col info chips) ── */}
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-                  {[
-                    { label: 'Mundus', color: '#ffd54f', value: mundusLabel },
-                    { label: 'Curse',  color: '#ce93d8', value: curseLabel  },
-                  ].map(({ label, color, value }) => {
-                    const isSet = value != null;
+              <Divider
+                sx={{ borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)' }}
+              />
+
+              {/* ── Consumables ── */}
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: '0.52rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.09em',
+                    textTransform: 'uppercase',
+                    color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+                    mb: 0.75,
+                  }}
+                >
+                  Consumables
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.6 }}>
+                  {/* Food row — always shown */}
+                  {(() => {
+                    const isSet = foodName != null;
+                    const color = '#ffb300';
                     return (
                       <Box
-                        key={label}
                         sx={{
                           display: 'flex',
-                          flexDirection: 'column',
-                          gap: 0.35,
-                          px: 1.25,
-                          py: 0.9,
-                          borderRadius: 2,
+                          alignItems: 'center',
+                          gap: 1,
+                          py: 0.65,
+                          px: 1.1,
+                          borderRadius: 1.5,
                           border: `1px ${isSet ? 'solid' : 'dashed'} ${
                             isSet
-                              ? alpha(color, isDark ? 0.28 : 0.20)
-                              : isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)'
+                              ? alpha(color, isDark ? 0.28 : 0.2)
+                              : isDark
+                                ? 'rgba(255,255,255,0.09)'
+                                : 'rgba(0,0,0,0.07)'
                           }`,
                           background: isSet
-                            ? (isDark ? alpha(color, 0.07) : alpha(color, 0.05))
+                            ? isDark
+                              ? alpha(color, 0.07)
+                              : alpha(color, 0.04)
                             : 'transparent',
                         }}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
-                          <Box
-                            sx={{
-                              width: 6,
-                              height: 6,
-                              borderRadius: '50%',
-                              flexShrink: 0,
-                              background: isSet ? color : 'transparent',
-                              border: isSet ? 'none' : `1.5px dashed ${alpha(color, 0.5)}`,
-                              boxShadow: isSet ? `0 0 5px ${alpha(color, 0.55)}` : 'none',
-                            }}
-                          />
-                          <Typography
-                            sx={{
-                              fontSize: '0.52rem',
-                              fontWeight: 700,
-                              letterSpacing: '0.09em',
-                              textTransform: 'uppercase',
-                              color: isSet
-                                ? (isDark ? alpha(color, 0.75) : alpha(color, 0.85))
-                                : (isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.28)'),
-                            }}
-                          >
-                            {label}
-                          </Typography>
-                        </Box>
+                        <Box
+                          sx={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: '50%',
+                            flexShrink: 0,
+                            background: isSet ? color : 'transparent',
+                            border: isSet ? 'none' : `1.5px dashed ${alpha(color, 0.5)}`,
+                            boxShadow: isSet ? `0 0 6px ${alpha(color, 0.55)}` : 'none',
+                          }}
+                        />
                         <Typography
                           sx={{
-                            fontSize: isSet ? '0.76rem' : '0.72rem',
+                            fontSize: '0.52rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.09em',
+                            textTransform: 'uppercase',
+                            color: isSet
+                              ? isDark
+                                ? 'rgba(255,255,255,0.42)'
+                                : 'rgba(0,0,0,0.42)'
+                              : isDark
+                                ? 'rgba(255,255,255,0.22)'
+                                : 'rgba(0,0,0,0.22)',
+                            minWidth: 36,
+                          }}
+                        >
+                          Food
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: isSet ? '0.78rem' : '0.72rem',
                             fontWeight: isSet ? 600 : 400,
                             fontStyle: isSet ? 'normal' : 'italic',
                             color: isSet
-                              ? (isDark ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.82)')
-                              : (isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)'),
-                            lineHeight: 1.2,
-                            pl: 0.25,
+                              ? isDark
+                                ? 'rgba(255,255,255,0.88)'
+                                : 'rgba(0,0,0,0.82)'
+                              : isDark
+                                ? 'rgba(255,255,255,0.22)'
+                                : 'rgba(0,0,0,0.22)',
+                            flex: 1,
                           }}
                         >
-                          {value ?? 'Not set'}
+                          {foodName ?? 'Not set'}
                         </Typography>
                       </Box>
                     );
-                  })}
-                </Box>
+                  })()}
 
-                <Divider sx={{ borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)' }} />
-
-                {/* ── Consumables ── */}
-                <Box>
-                  <Typography
-                    sx={{
-                      fontSize: '0.52rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.09em',
-                      textTransform: 'uppercase',
-                      color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-                      mb: 0.75,
-                    }}
-                  >
-                    Consumables
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.6 }}>
-                    {/* Food row — always shown */}
-                    {(() => {
-                      const isSet = foodName != null;
-                      const color = '#ffb300';
-                      return (
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            py: 0.65,
-                            px: 1.1,
-                            borderRadius: 1.5,
-                            border: `1px ${isSet ? 'solid' : 'dashed'} ${
-                              isSet
-                                ? alpha(color, isDark ? 0.28 : 0.20)
-                                : isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)'
-                            }`,
-                            background: isSet
-                              ? (isDark ? alpha(color, 0.07) : alpha(color, 0.04))
-                              : 'transparent',
-                          }}
-                        >
+                  {/* Potion rows — always show at least one slot */}
+                  {setup.consumables.potions.length > 0
+                    ? setup.consumables.potions.map((p) => {
+                        const color = '#26c6da';
+                        const potionLookup = ESO_POTION_LOOKUP[p.id];
+                        const potionName = p.name || potionLookup?.name || 'Unknown Potion';
+                        const potionEffects =
+                          p.effects.length > 0
+                            ? p.effects
+                            : potionLookup
+                              ? [...potionLookup.effects]
+                              : [];
+                        return (
                           <Box
+                            key={p.id}
                             sx={{
-                              width: 7,
-                              height: 7,
-                              borderRadius: '50%',
-                              flexShrink: 0,
-                              background: isSet ? color : 'transparent',
-                              border: isSet ? 'none' : `1.5px dashed ${alpha(color, 0.5)}`,
-                              boxShadow: isSet ? `0 0 6px ${alpha(color, 0.55)}` : 'none',
-                            }}
-                          />
-                          <Typography
-                            sx={{
-                              fontSize: '0.52rem',
-                              fontWeight: 700,
-                              letterSpacing: '0.09em',
-                              textTransform: 'uppercase',
-                              color: isSet
-                                ? (isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.42)')
-                                : (isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)'),
-                              minWidth: 36,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              py: 0.65,
+                              px: 1.1,
+                              borderRadius: 1.5,
+                              border: `1px solid ${alpha(color, isDark ? 0.28 : 0.2)}`,
+                              background: isDark ? alpha(color, 0.07) : alpha(color, 0.04),
                             }}
                           >
-                            Food
-                          </Typography>
-                          <Typography
-                            sx={{
-                              fontSize: isSet ? '0.78rem' : '0.72rem',
-                              fontWeight: isSet ? 600 : 400,
-                              fontStyle: isSet ? 'normal' : 'italic',
-                              color: isSet
-                                ? (isDark ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.82)')
-                                : (isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)'),
-                              flex: 1,
-                            }}
-                          >
-                            {foodName ?? 'Not set'}
-                          </Typography>
-                        </Box>
-                      );
-                    })()}
-
-                    {/* Potion rows — always show at least one slot */}
-                    {setup.consumables.potions.length > 0
-                      ? setup.consumables.potions.map((p) => {
-                          const color = '#26c6da';
-                          return (
                             <Box
-                              key={p.id}
                               sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1,
-                                py: 0.65,
-                                px: 1.1,
-                                borderRadius: 1.5,
-                                border: `1px solid ${alpha(color, isDark ? 0.28 : 0.20)}`,
-                                background: isDark ? alpha(color, 0.07) : alpha(color, 0.04),
+                                width: 7,
+                                height: 7,
+                                borderRadius: '50%',
+                                flexShrink: 0,
+                                background: color,
+                                boxShadow: `0 0 6px ${alpha(color, 0.55)}`,
+                              }}
+                            />
+                            <Typography
+                              sx={{
+                                fontSize: '0.52rem',
+                                fontWeight: 700,
+                                letterSpacing: '0.09em',
+                                textTransform: 'uppercase',
+                                color: isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.42)',
+                                minWidth: 36,
                               }}
                             >
-                              <Box
-                                sx={{
-                                  width: 7,
-                                  height: 7,
-                                  borderRadius: '50%',
-                                  flexShrink: 0,
-                                  background: color,
-                                  boxShadow: `0 0 6px ${alpha(color, 0.55)}`,
-                                }}
-                              />
-                              <Typography
-                                sx={{
-                                  fontSize: '0.52rem',
-                                  fontWeight: 700,
-                                  letterSpacing: '0.09em',
-                                  textTransform: 'uppercase',
-                                  color: isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.42)',
-                                  minWidth: 36,
-                                }}
-                              >
-                                Potion
-                              </Typography>
+                              Potion
+                            </Typography>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
                               <Typography
                                 sx={{
                                   fontSize: '0.78rem',
                                   fontWeight: 600,
                                   color: isDark ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.82)',
-                                  flex: 1,
                                 }}
                               >
-                                {p.name}
+                                {potionName}
                               </Typography>
+                              {potionEffects.length > 0 && (
+                                <Typography
+                                  sx={{
+                                    fontSize: '0.6rem',
+                                    color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)',
+                                    lineHeight: 1.2,
+                                  }}
+                                >
+                                  {potionEffects.join(' · ')}
+                                </Typography>
+                              )}
                             </Box>
-                          );
-                        })
-                      : (() => {
-                          const color = '#26c6da';
-                          return (
+                          </Box>
+                        );
+                      })
+                    : (() => {
+                        const color = '#26c6da';
+                        return (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              py: 0.65,
+                              px: 1.1,
+                              borderRadius: 1.5,
+                              border: `1px dashed ${isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)'}`,
+                              background: 'transparent',
+                            }}
+                          >
                             <Box
                               sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1,
-                                py: 0.65,
-                                px: 1.1,
-                                borderRadius: 1.5,
-                                border: `1px dashed ${isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)'}`,
+                                width: 7,
+                                height: 7,
+                                borderRadius: '50%',
+                                flexShrink: 0,
                                 background: 'transparent',
+                                border: `1.5px dashed ${alpha(color, 0.5)}`,
+                              }}
+                            />
+                            <Typography
+                              sx={{
+                                fontSize: '0.52rem',
+                                fontWeight: 700,
+                                letterSpacing: '0.09em',
+                                textTransform: 'uppercase',
+                                color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)',
+                                minWidth: 36,
                               }}
                             >
-                              <Box
-                                sx={{
-                                  width: 7,
-                                  height: 7,
-                                  borderRadius: '50%',
-                                  flexShrink: 0,
-                                  background: 'transparent',
-                                  border: `1.5px dashed ${alpha(color, 0.5)}`,
-                                }}
-                              />
-                              <Typography
-                                sx={{
-                                  fontSize: '0.52rem',
-                                  fontWeight: 700,
-                                  letterSpacing: '0.09em',
-                                  textTransform: 'uppercase',
-                                  color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)',
-                                  minWidth: 36,
-                                }}
-                              >
-                                Potion
-                              </Typography>
-                              <Typography
-                                sx={{
-                                  fontSize: '0.72rem',
-                                  fontWeight: 400,
-                                  fontStyle: 'italic',
-                                  color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)',
-                                  flex: 1,
-                                }}
-                              >
-                                Not set
-                              </Typography>
-                            </Box>
-                          );
-                        })()}
-                  </Box>
+                              Potion
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: '0.72rem',
+                                fontWeight: 400,
+                                fontStyle: 'italic',
+                                color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)',
+                                flex: 1,
+                              }}
+                            >
+                              Not set
+                            </Typography>
+                          </Box>
+                        );
+                      })()}
                 </Box>
-
               </Box>
-            </GlassPanel>
-          </motion.div>
-        </Box>
+            </Box>
+          </GlassPanel>
+        </motion.div>
+      </Box>
 
       {/* Row 2: Skills */}
       <motion.div variants={fadeInUp}>
@@ -1219,7 +1297,10 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
       {/* Row 3: Gear */}
       <motion.div variants={fadeInUp}>
         <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
-          <SectionLabel label="Equipment" count={gearEntries.length > 0 ? `${gearEntries.length} pieces` : undefined} />
+          <SectionLabel
+            label="Equipment"
+            count={gearEntries.length > 0 ? `${gearEntries.length} pieces` : undefined}
+          />
           {gearEntries.length > 0 ? (
             <Box
               sx={{
@@ -1293,10 +1374,14 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
               const n = setup.passives.length;
               const cols = getPassiveCols(n);
               const remainder = n % cols;
-              const fullItems = remainder > 0 ? setup.passives.slice(0, n - remainder) : setup.passives;
+              const fullItems =
+                remainder > 0 ? setup.passives.slice(0, n - remainder) : setup.passives;
               const lastRowItems = remainder > 0 ? setup.passives.slice(n - remainder) : [];
 
-              const renderPassiveItem = (passiveId: number, key: string | number) => {
+              const renderPassiveItem = (
+                passiveId: number,
+                key: string | number,
+              ): React.ReactNode => {
                 const skill = getSkillById(passiveId);
                 const iconUrl = skill?.icon ? `${SKILL_ICON_URL}${skill.icon}.png` : null;
                 return (
@@ -1336,13 +1421,26 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
                           src={iconUrl}
                           alt={skill?.name ?? `Passive ${passiveId}`}
                           loading="lazy"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block',
+                          }}
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
                       ) : (
-                        <Box sx={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--be-accent, #38bdf8)', opacity: 0.4 }} />
+                        <Box
+                          sx={{
+                            width: 5,
+                            height: 5,
+                            borderRadius: '50%',
+                            background: 'var(--be-accent, #38bdf8)',
+                            opacity: 0.4,
+                          }}
+                        />
                       )}
                     </Box>
                     <Typography
@@ -1371,7 +1469,11 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
                     <Box
                       sx={{
                         display: 'grid',
-                        gridTemplateColumns: { xs: '1fr 1fr', sm: `repeat(${Math.min(cols, 3)}, 1fr)`, md: `repeat(${cols}, 1fr)` },
+                        gridTemplateColumns: {
+                          xs: '1fr 1fr',
+                          sm: `repeat(${Math.min(cols, 3)}, 1fr)`,
+                          md: `repeat(${cols}, 1fr)`,
+                        },
                         gap: 0.75,
                       }}
                     >
@@ -1392,7 +1494,6 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({
           )}
         </GlassPanel>
       </motion.div>
-
     </motion.div>
   );
 };
@@ -1436,9 +1537,7 @@ const CPTreeDetail: React.FC<{
           background: isDark ? alpha(color, 0.07) : alpha(color, 0.05),
         }}
       >
-        {icon && (
-          <Box sx={{ color, opacity: 0.8, display: 'flex', fontSize: 14 }}>{icon}</Box>
-        )}
+        {icon && <Box sx={{ color, opacity: 0.8, display: 'flex', fontSize: 14 }}>{icon}</Box>}
         <Typography
           sx={{
             fontSize: '0.72rem',
@@ -1457,9 +1556,11 @@ const CPTreeDetail: React.FC<{
             ml: 0.5,
           }}
         >
-          {activeSlots.length > 0 && `${activeSlots.length} perk${activeSlots.length !== 1 ? 's' : ''}`}
+          {activeSlots.length > 0 &&
+            `${activeSlots.length} perk${activeSlots.length !== 1 ? 's' : ''}`}
           {activeSlots.length > 0 && passiveEntries.length > 0 && ' · '}
-          {passiveEntries.length > 0 && `${passiveEntries.length} passive${passiveEntries.length !== 1 ? 's' : ''}`}
+          {passiveEntries.length > 0 &&
+            `${passiveEntries.length} passive${passiveEntries.length !== 1 ? 's' : ''}`}
         </Typography>
       </Box>
 
@@ -1688,7 +1789,9 @@ export const BuildViewPage: React.FC = () => {
               >
                 <Box sx={{ flex: 1 }}>
                   {/* Class + Role badges */}
-                  <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <Box
+                    sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap', alignItems: 'center' }}
+                  >
                     {/* Class identity badge — prominent pill with glow */}
                     <Box
                       sx={{
@@ -1698,12 +1801,15 @@ export const BuildViewPage: React.FC = () => {
                         px: 1.5,
                         py: 0.55,
                         borderRadius: '999px',
-                        background: `linear-gradient(135deg, ${alpha(classTheme.accent, isDark ? 0.24 : 0.15)} 0%, ${alpha(classTheme.accent, isDark ? 0.10 : 0.06)} 100%)`,
+                        background: `linear-gradient(135deg, ${alpha(classTheme.accent, isDark ? 0.24 : 0.15)} 0%, ${alpha(classTheme.accent, isDark ? 0.1 : 0.06)} 100%)`,
                         border: `1.5px solid ${alpha(classTheme.accent, isDark ? 0.48 : 0.32)}`,
                         boxShadow: `0 2px 14px ${alpha(classTheme.accent, 0.24)}, inset 0 1px 0 ${alpha(classTheme.accent, 0.18)}`,
                       }}
                     >
-                      <Typography sx={{ fontSize: '0.88rem', lineHeight: 1, flexShrink: 0 }} aria-hidden>
+                      <Typography
+                        sx={{ fontSize: '0.88rem', lineHeight: 1, flexShrink: 0 }}
+                        aria-hidden
+                      >
                         {CLASS_EMOJI[build.esoClass] ?? '⚔️'}
                       </Typography>
                       <Typography
@@ -1833,7 +1939,14 @@ export const BuildViewPage: React.FC = () => {
               <motion.div variants={fadeInUp}>
                 <GlassPanel
                   variant="subtle"
-                  sx={{ p: 1.5, mb: 3, display: 'flex', alignItems: 'center', gap: 2.5, flexWrap: 'wrap' }}
+                  sx={{
+                    p: 1.5,
+                    mb: 3,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2.5,
+                    flexWrap: 'wrap',
+                  }}
                 >
                   {build.settings.dlc && build.settings.dlc !== 'Base Game' && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1913,16 +2026,12 @@ export const BuildViewPage: React.FC = () => {
                             py: 1.5,
                             px: 2,
                             borderRadius: 2.5,
-                            background: isDark
-                              ? alpha(slColor, 0.07)
-                              : alpha(slColor, 0.04),
+                            background: isDark ? alpha(slColor, 0.07) : alpha(slColor, 0.04),
                             border: `1px solid ${alpha(slColor, isDark ? 0.22 : 0.14)}`,
                             transition: 'all 0.18s ease',
                             '&:hover': {
-                              background: isDark
-                                ? alpha(slColor, 0.14)
-                                : alpha(slColor, 0.09),
-                              borderColor: alpha(slColor, isDark ? 0.40 : 0.28),
+                              background: isDark ? alpha(slColor, 0.14) : alpha(slColor, 0.09),
+                              borderColor: alpha(slColor, isDark ? 0.4 : 0.28),
                               transform: 'translateY(-1px)',
                               boxShadow: `0 4px 16px ${alpha(slColor, 0.16)}`,
                             },

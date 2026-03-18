@@ -34,36 +34,21 @@ import {
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { BuildDetailPanel } from '../components/roster/build-detail-panel';
-import { getAddonManagerDeepLink } from '../features/build-hub/api/packs-api';
-import { preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
-import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
-import type {
-  RecommendedAddonEntry,
-  RecommendedAddons,
-} from '../features/roster-hub/types/roster-hub.types';
-import {
-  RaidRoster,
-  TankSetup,
-  HealerSetup,
-  DPSSlot,
-  MONSTER_SETS,
-  ARENA_WEAPON_SETS,
-} from '../types/roster';
+import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
+import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
+import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
+import { RaidRoster, TankSetup, HealerSetup, DPSSlot, MONSTER_SETS } from '../types/roster';
 import {
   TrialBuildOverrides,
   getTrialById,
   encounterHasOverrides,
 } from '../types/trial-encounters';
 import { encodeBuildToURL } from '../utils/buildEncoding';
-import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
+import { createBuildFromSlot } from '../utils/rosterBuildBridge';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { dpsSlotToBuild, tankSlotToBuild, healerSlotToBuild } from '../utils/rosterSlotToBuild';
 import { getSetDisplayName } from '../utils/setNameUtils';
-import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
-import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
-import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
 
 // ============================================================
 // Local display helpers
@@ -275,7 +260,7 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
   const handleViewBuild = useCallback(async () => {
     setViewLoading(true);
     try {
-      const build = tankSlotToBuild(tank, slotNum);
+      const build = createBuildFromSlot(tank, 'any-class', 'tank');
       const encoded = await encodeBuildToURL(build);
       if (encoded) {
         const basePath = window.location.pathname.replace(/\/rv(\/.*)?$/, '');
@@ -288,7 +273,7 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
     } finally {
       setViewLoading(false);
     }
-  }, [tank, slotNum]);
+  }, [tank]);
 
   return (
     <Paper
@@ -549,7 +534,7 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
   const handleViewBuild = useCallback(async () => {
     setViewLoading(true);
     try {
-      const build = healerSlotToBuild(healer, slotNum);
+      const build = createBuildFromSlot(healer, 'any-class', 'healer');
       const encoded = await encodeBuildToURL(build);
       if (encoded) {
         const basePath = window.location.pathname.replace(/\/rv(\/.*)?$/, '');
@@ -562,7 +547,7 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
     } finally {
       setViewLoading(false);
     }
-  }, [healer, slotNum]);
+  }, [healer]);
 
   return (
     <Paper
@@ -878,7 +863,7 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
   const handleViewBuild = useCallback(async () => {
     setViewLoading(true);
     try {
-      const build = dpsSlotToBuild(slot);
+      const build = createBuildFromSlot(slot, 'any-class', 'magicka-dps');
       const encoded = await encodeBuildToURL(build);
       if (encoded) {
         const basePath = window.location.pathname.replace(/\/rv(\/.*)?$/, '');
@@ -999,19 +984,9 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
           {/* Group(s) — prefer new groups[] array, fall back to deprecated group.groupName */}
           {(slot.groups?.length ? slot.groups : slot.group?.groupName ? [slot.group.groupName] : [])
             .length > 0 && (
-            <Chip
-              label={(slot.groups?.length ? slot.groups : [slot.group!.groupName]).join(', ')}
-              size="small"
-              sx={{
-                height: 18,
-                fontSize: '0.6rem',
-                fontWeight: 500,
-                background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                color: 'text.disabled',
-                border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-                '& .MuiChip-label': { px: 0.75 },
-              }}
-            />
+            <Typography sx={{ fontSize: '0.7rem', color: 'text.disabled', ml: 'auto' }}>
+              {(slot.groups?.length ? slot.groups : [slot.group!.groupName]).join(', ')}
+            </Typography>
           )}
           {/* View Build button */}
           {!isEmpty && (

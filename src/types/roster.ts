@@ -4,12 +4,10 @@
  */
 
 import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
-import type { GearConfig, SkillsConfig } from '../features/loadout-manager/types/loadout.types';
+import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 
 import { KnownSetIDs } from './abilities';
 import type { TrialBuildOverrides } from './trial-encounters';
-import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
-import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
 
 /**
  * Role types in a raid
@@ -109,7 +107,7 @@ export interface PlayerGroup {
 /**
  * Roster display detail level
  */
-export type RosterDetailLevel = 'simple' | 'advanced' | 'full';
+export type RosterDetailLevel = 'simple' | 'full';
 
 /**
  * Reference to a Build Editor build attached to a roster slot.

@@ -25,7 +25,6 @@ import {
   HealerSetup,
   DPSSlot,
   SkillLineConfig,
-  PlayerGroup,
   BuildReference,
   defaultTankSetup,
   defaultHealerSetup,
@@ -38,8 +37,6 @@ import type {
   EncounterOverrides,
   PlayerOverride,
 } from '../types/trial-encounters';
-import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
-import type { BuildChampionPoints, ChampionTree } from '../features/build-editor/types/build.types';
 
 import { Logger, LogLevel } from './logger';
 import { makeSlotKey } from './slotKey';
@@ -226,7 +223,7 @@ export interface CompactRosterV2 {
   ag?: string[]; // availableGroups
   no?: string; // notes
   to?: CompactTrialOverrides; // trialOverrides (per-fight builds)
-  dl?: number; // detail level: 0=simple 1=advanced 2=full
+  dl?: number; // detail level: 0=simple 1=full
 }
 
 /**
@@ -334,15 +331,18 @@ function expandBuildRef(c: CompactBuildRef): BuildReference {
   };
 }
 
-function compactFood(food?: {
-  id?: number;
-  name?: string;
-}): CompactFood | undefined {
+function compactFood(food?: { id?: number; name?: string }): CompactFood | undefined {
   if (!food || (food.id == null && !food.name)) return undefined;
   const c: CompactFood = {};
   if (food.id != null) c.i = food.id;
   if (food.name) c.n = food.name;
   return c;
+}
+
+/** Decode specificSkills: keep only numbers (ability IDs). Legacy string entries are dropped. */
+function decodeSpecificSkills(ss?: (number | string)[]): number[] {
+  if (!ss) return [];
+  return ss.filter((v): v is number => typeof v === 'number');
 }
 
 function expandFood(c?: CompactFood): { id?: number; name?: string } | undefined {
@@ -594,11 +594,7 @@ function expandHealer(c?: CompactHealer, slotNumber = 1): HealerSetup {
           : null
         : null,
     championPoint:
-      c?.cp != null
-        ? isValidEnumIndex(c.cp, CHAMPION_POINT_LIST.length)
-          ? (CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint)
-          : null
-        : null,
+      c?.cp != null ? ((CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint) ?? null) : null,
     specificSkills: decodeSpecificSkills(c?.ss),
     ultimate: decodeUltimate(c?.ul),
     groups: expandGroups(c?.grs, c?.gr),
@@ -830,13 +826,13 @@ export function compactifyRoster(roster: RaidRoster): CompactRosterV3 {
   if (roster.notes) c.no = roster.notes;
   if (roster.trialOverrides) c.to = compactTrialOverrides(roster.trialOverrides);
   if (roster.rosterDetailLevel) {
-    const DL_MAP: Record<RosterDetailLevel, number> = { simple: 0, advanced: 1, full: 2 };
+    const DL_MAP: Record<RosterDetailLevel, number> = { simple: 0, full: 1 };
     c.dl = DL_MAP[roster.rosterDetailLevel];
   }
   return c;
 }
 
-const DL_LEVELS: RosterDetailLevel[] = ['simple', 'advanced', 'full'];
+const DL_LEVELS: RosterDetailLevel[] = ['simple', 'full'];
 
 export function expandCompactRoster(c: CompactRoster): RaidRoster {
   const dpsSlots = createDefaultDPSSlots();
