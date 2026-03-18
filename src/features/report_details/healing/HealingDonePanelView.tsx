@@ -21,6 +21,7 @@ interface HealingRow {
 
 interface HealingDonePanelViewProps {
   healingRows: HealingRow[];
+  onPlayerClick?: (playerId: string) => void;
 }
 
 type SortField = 'name' | 'raw' | 'hps' | 'overheal' | 'rawHps';
@@ -29,7 +30,10 @@ type SortDirection = 'asc' | 'desc';
 /**
  * Dumb component that only handles rendering the healing done panel UI
  */
-export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ healingRows }) => {
+export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
+  healingRows,
+  onPlayerClick,
+}) => {
   const roleColors = useRoleColors();
   const { reportId, fightId } = useSelectedReportAndFight();
   const [sortField, setSortField] = useState<SortField>('raw');
@@ -476,6 +480,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                     />
                   )}
                   <Typography
+                    component="span"
+                    onClick={onPlayerClick ? () => onPlayerClick(row.id) : undefined}
                     sx={{
                       fontWeight: 500,
                       fontSize: '0.875rem',
@@ -485,6 +491,10 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                       whiteSpace: 'nowrap',
                       flex: 1,
                       minWidth: 0,
+                      ...(onPlayerClick && {
+                        cursor: 'pointer',
+                        '&:hover': { textDecoration: 'underline' },
+                      }),
                       ...(roleColors.isDarkMode
                         ? {
                             color: playerColor,
@@ -710,6 +720,10 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
                         maxWidth: '150px',
+                        ...(onPlayerClick && {
+                          cursor: 'pointer',
+                          '&:hover': { textDecoration: 'underline' },
+                        }),
                         ...(roleColors.isDarkMode
                           ? { color: playerColor }
                           : {
@@ -720,6 +734,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                               textShadow: '0 1px 1px rgba(0,0,0,0.2)',
                             }),
                       }}
+                      onClick={onPlayerClick ? () => onPlayerClick(row.id) : undefined}
                     >
                       {row.name}
                     </Typography>
