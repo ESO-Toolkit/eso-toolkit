@@ -158,9 +158,8 @@ export const EquipmentSection: React.FC = () => {
       <Stack spacing={2} alignItems="center">
         {/* ── Apparel ──────────────── */}
         <SectionLabel label="Apparel" />
-        {tileRow([0, 2, 3])} {/* Head · Body · Shoulders */}
-        {tileRow([16, 6, 8])} {/* Hands · Waist · Legs */}
-        {tileRow([9])} {/* Feet */}
+        {tileRow([0, 3, 2])} {/* Head · Shoulders · Chest */}
+        {tileRow([16, 6, 8, 9])} {/* Hands · Waist · Legs · Feet */}
         {/* ── Accessories ──────────── */}
         <Box sx={{ pt: 0.5 }} />
         <SectionLabel label="Accessories" />

@@ -5,7 +5,7 @@
 
 import { Box, ButtonBase, Stack, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
@@ -66,6 +66,23 @@ export const GeneralSection: React.FC = () => {
     dispatch(setBuildRaces(next));
   };
 
+  // Arrow-key navigation within a race group
+  const handleRaceKeyDown = useCallback(
+    (e: React.KeyboardEvent, allIds: string[], currentId: string) => {
+      const idx = allIds.indexOf(currentId);
+      let nextIdx = idx;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextIdx = (idx + 1) % allIds.length;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp')
+        nextIdx = (idx - 1 + allIds.length) % allIds.length;
+      else return;
+      e.preventDefault();
+      const nextId = allIds[nextIdx];
+      const btn = document.querySelector<HTMLElement>(`[data-race-id="${nextId}"]`);
+      btn?.focus();
+    },
+    [],
+  );
+
   return (
     <Stack spacing={2.5}>
       {/* Class — IconPickerGrid */}
@@ -115,10 +132,15 @@ export const GeneralSection: React.FC = () => {
         <Stack spacing={1.5}>
           {ALLIANCE_GROUPS.map(({ id: allianceId, label: allianceLabel, color, raceIds }) => {
             const races = ESO_RACES.filter((r) => raceIds.includes(r.id));
+            const headerId = `alliance-header-${allianceId}`;
+            const allRaceIds = races.map((r) => r.id);
             return (
               <Box key={allianceId}>
                 {/* Alliance header */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}>
+                <Box
+                  id={headerId}
+                  sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}
+                >
                   <Box
                     sx={{
                       width: 6,
@@ -152,8 +174,10 @@ export const GeneralSection: React.FC = () => {
                   />
                 </Box>
 
-                {/* Race cards grid — 3 per alliance */}
+                {/* Race cards grid — 3 per alliance, with group ARIA */}
                 <Box
+                  role="group"
+                  aria-labelledby={headerId}
                   sx={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(3, 1fr)',
@@ -168,7 +192,9 @@ export const GeneralSection: React.FC = () => {
                           role="checkbox"
                           aria-checked={selected}
                           aria-label={race.label}
+                          data-race-id={race.id}
                           onClick={() => toggleRace(race.id)}
+                          onKeyDown={(e: React.KeyboardEvent) => handleRaceKeyDown(e, allRaceIds, race.id)}
                           sx={{
                             border: 'none',
                             cursor: 'pointer',

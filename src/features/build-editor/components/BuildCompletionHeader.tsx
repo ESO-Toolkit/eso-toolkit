@@ -16,7 +16,6 @@ import {
   VisibilityOutlined,
 } from '@mui/icons-material';
 import {
-  Alert,
   Box,
   Button,
   CircularProgress,
@@ -45,6 +44,7 @@ import type { RootState } from '@/store/storeWithHistory';
 import { encodeBuildToURL } from '@/utils/buildEncoding';
 import { snapshotBuildToSlot } from '@/utils/rosterBuildBridge';
 
+import { ESO_CLASSES } from '../data/esoStaticData';
 import { useBuildCompleteness } from '../hooks/useBuildCompleteness';
 import {
   BUILD_EDITOR_STORAGE_KEY,
@@ -109,6 +109,12 @@ export const BuildCompletionHeader: React.FC = () => {
 
   const savedBuildExists = useSelector((s: RootState) =>
     savedBuildId ? s.savedBuilds.builds.some((b) => b.id === savedBuildId) : false,
+  );
+
+  // Human-readable class label for the identity badge
+  const classLabel = React.useMemo(
+    () => ESO_CLASSES.find((c) => c.id === build.esoClass)?.label ?? build.esoClass,
+    [build.esoClass],
   );
   const completeness = useBuildCompleteness();
   const savedRostersCount = useSelector((s: RootState) => selectSavedRosters(s).length);
@@ -268,7 +274,8 @@ export const BuildCompletionHeader: React.FC = () => {
           'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.07) 0%, transparent 55%)',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
-        flexWrap: 'nowrap',
+        flexWrap: { xs: 'wrap', md: 'nowrap' },
+        rowGap: 1,
         position: 'relative',
         zIndex: 1,
       }}
@@ -330,7 +337,7 @@ export const BuildCompletionHeader: React.FC = () => {
             boxShadow: '0 0 8px rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)',
           }}
         >
-          {build.esoClass}
+          {classLabel}
         </Box>
       )}
 
@@ -558,51 +565,59 @@ export const BuildCompletionHeader: React.FC = () => {
               </Button>
             </Box>
           </Tooltip>
-          {isLoggedIn && (
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={
-                !isMobile ? (
+          <Tooltip
+            title={
+              isLoggedIn ? '' : 'Log in to publish your build to the Build Hub'
+            }
+          >
+            <Box component="span">
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={
+                  !isMobile ? (
+                    isPublishing ? (
+                      <CircularProgress size={12} color="inherit" />
+                    ) : (
+                      <PublishOutlined sx={{ fontSize: 14 }} />
+                    )
+                  ) : undefined
+                }
+                onClick={isLoggedIn ? handlePublishClick : undefined}
+                disabled={isPublishing || !isLoggedIn}
+                aria-label={
+                  isLoggedIn ? 'Publish build to Build Hub' : 'Log in to publish your build'
+                }
+                sx={{
+                  ...pillBase,
+                  background: 'linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  boxShadow: isLoggedIn ? '0 0 12px rgba(6,182,212,0.35)' : 'none',
+                  '&:hover:not(:disabled)': {
+                    background: 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
+                    boxShadow: '0 0 18px rgba(6,182,212,0.5)',
+                  },
+                  '&.Mui-disabled': {
+                    background: 'linear-gradient(135deg, #22d3ee80 0%, #06b6d480 100%)',
+                    color: 'rgba(255,255,255,0.7)',
+                  },
+                }}
+              >
+                {isMobile ? (
                   isPublishing ? (
-                    <CircularProgress size={12} color="inherit" />
+                    <CircularProgress size={14} color="inherit" />
                   ) : (
-                    <PublishOutlined sx={{ fontSize: 14 }} />
+                    <PublishOutlined sx={{ fontSize: 16 }} />
                   )
-                ) : undefined
-              }
-              onClick={handlePublishClick}
-              disabled={isPublishing}
-              aria-label="Publish build to Build Hub"
-              sx={{
-                ...pillBase,
-                background: 'linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)',
-                color: '#fff',
-                border: 'none',
-                boxShadow: '0 0 12px rgba(6,182,212,0.35)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
-                  boxShadow: '0 0 18px rgba(6,182,212,0.5)',
-                },
-                '&.Mui-disabled': {
-                  background: 'linear-gradient(135deg, #22d3ee80 0%, #06b6d480 100%)',
-                  color: 'rgba(255,255,255,0.7)',
-                },
-              }}
-            >
-              {isMobile ? (
-                isPublishing ? (
-                  <CircularProgress size={14} color="inherit" />
+                ) : isPublishing ? (
+                  'Encoding\u2026'
                 ) : (
-                  <PublishOutlined sx={{ fontSize: 16 }} />
-                )
-              ) : isPublishing ? (
-                'Encoding\u2026'
-              ) : (
-                'Publish'
-              )}
-            </Button>
-          )}
+                  'Publish'
+                )}
+              </Button>
+            </Box>
+          </Tooltip>
         </Box>
       </Box>
 
@@ -678,8 +693,10 @@ export const BuildCompletionHeader: React.FC = () => {
               fontFamily: 'Space Grotesk, Inter, system-ui',
             }}
           >
-            Paste an export string from <strong>Combat Metrics</strong> or{' '}
+            Addon import is <strong>coming soon</strong>. In a future update you&apos;ll be able
+            to paste an export string from <strong>Combat Metrics</strong> or{' '}
             <strong>Caro&apos;s Skill Point Saver</strong> to auto-populate your build.
+            For now, configure your build using the sections on the page.
           </Typography>
           <Stack spacing={1.5}>
             <TextField
@@ -701,52 +718,9 @@ export const BuildCompletionHeader: React.FC = () => {
                 onClick={() => setImportOpen(false)}
                 sx={outlinedPill}
               >
-                Cancel
+                Close
               </Button>
-              <Tooltip title="Addon import coming soon — configure your build manually for now">
-                <Box>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    disabled={build.addonImportString.length < 10}
-                    onClick={() => {
-                      enqueueSnackbar(
-                        'Addon import coming soon — configure your build manually for now.',
-                        { variant: 'info', autoHideDuration: 4000 },
-                      );
-                    }}
-                    sx={{
-                      ...pillBase,
-                      background:
-                        'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
-                      boxShadow: '0 0 10px rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
-                      '&:hover': {
-                        boxShadow: '0 0 16px rgba(var(--be-accent-rgb, 56, 189, 248), 0.30)',
-                      },
-                      '&.Mui-disabled': {
-                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-                        boxShadow: 'none',
-                      },
-                    }}
-                  >
-                    Load Build
-                  </Button>
-                </Box>
-              </Tooltip>
             </Stack>
-            <Alert
-              severity="info"
-              sx={{
-                py: 0.25,
-                fontSize: 11,
-                borderRadius: 2,
-                background: isDark ? 'rgba(56, 189, 248, 0.06)' : 'rgba(56, 189, 248, 0.04)',
-                border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
-                fontFamily: 'Space Grotesk, Inter, system-ui',
-              }}
-            >
-              Addon import is coming soon — configure your build using the sections on the page.
-            </Alert>
           </Stack>
         </DialogContent>
       </Dialog>

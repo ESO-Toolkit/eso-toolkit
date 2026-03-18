@@ -116,6 +116,13 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
     if (!isDisabled) onOpen();
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent): void => {
+    if (!isDisabled && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onOpen();
+    }
+  };
+
   return (
     <Tooltip
       title={tooltipLines.join('\n')}
@@ -124,7 +131,16 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
       slotProps={{ tooltip: { sx: { whiteSpace: 'pre-line', textAlign: 'center' } } }}
     >
       <Box
+        role="button"
+        tabIndex={isDisabled ? -1 : 0}
+        aria-label={
+          hasItem
+            ? `${slotDef.name}: ${primaryLabel ?? ''} — click to change`
+            : `${slotDef.name} — click to equip`
+        }
+        aria-disabled={isDisabled}
         onClick={handleClick}
+        onKeyDown={handleKeyDown}
         sx={{
           position: 'relative',
           width: TILE_SIZE,
@@ -161,6 +177,11 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
               ? 'inset 0 1px 0 rgba(255,255,255,0.03)'
               : 'inset 0 1px 0 rgba(255,255,255,0.5)',
           transition: 'all 180ms ease',
+          // Focus-visible ring using the class accent
+          '&:focus-visible': {
+            outline: '2px solid var(--be-accent, #38bdf8)',
+            outlineOffset: '2px',
+          },
           ...(!isDisabled && {
             '&:hover': {
               transform: 'scale(1.06)',
@@ -182,7 +203,11 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
                 ? '0 4px 20px rgba(0,0,0,0.3), 0 0 16px rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)'
                 : '0 4px 16px rgba(0,0,0,0.08)',
             },
+            // Show remove button on hover (pointer devices) or always on touch devices
             '&:hover .gear-tile-remove': { opacity: 1 },
+            '@media (hover: none)': {
+              '& .gear-tile-remove': { opacity: 1 },
+            },
           }),
         }}
       >
@@ -242,14 +267,19 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
           {hasItem ? (primaryLabel ?? slotDef.name) : slotDef.name}
         </Typography>
 
-        {/* Remove button — hover-reveal, top-right */}
+        {/* Remove button — visible on hover (pointer) or always on touch */}
         {hasItem && !isDisabled && (
           <IconButton
             className="gear-tile-remove"
             size="small"
+            aria-label={`Remove ${primaryLabel ?? slotDef.name}`}
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
               onClear();
+            }}
+            onKeyDown={(e: React.KeyboardEvent) => {
+              // Prevent tile's onKeyDown from also firing
+              e.stopPropagation();
             }}
             sx={{
               position: 'absolute',

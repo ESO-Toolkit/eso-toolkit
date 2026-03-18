@@ -22,6 +22,8 @@ interface SectionCardProps {
   gridRow?: string;
   /** Visual emphasis tier — controls border brightness and hover glow intensity */
   variant?: GlassPanelVariant;
+  /** Whether the section starts expanded. Defaults to true. Pass false to start collapsed on mobile. */
+  defaultExpanded?: boolean;
 }
 
 export const SectionCard: React.FC<SectionCardProps> = ({
@@ -33,11 +35,12 @@ export const SectionCard: React.FC<SectionCardProps> = ({
   gridColumn,
   gridRow,
   variant = 'default',
+  defaultExpanded = true,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
     <GlassPanel
