@@ -1,4 +1,5 @@
 import { Box, Container, Skeleton } from '@mui/material';
+import { SnackbarProvider } from 'notistack';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
@@ -11,6 +12,8 @@ import { HashRouteRedirect } from './components/HashRouteRedirect';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
+import { RosterBuilderSkeleton } from './components/RosterBuilderSkeleton';
+import { RosterHubSkeleton } from './components/RosterHubSkeleton';
 import { ScrollRestoration } from './components/ScrollRestoration';
 import { SiteBackground } from './components/shared';
 import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
@@ -152,6 +155,12 @@ const GearSetsPage = React.lazy(() =>
   import('./pages/GearSetsPage').then((module) => ({ default: module.GearSetsPage })),
 );
 
+const RosterHubPage = React.lazy(() =>
+  import('./features/roster-hub/components/RosterHubPage').then((module) => ({
+    default: module.RosterHubPage,
+  })),
+);
+
 // Generic page loading skeleton - used for lazy-loaded routes and PersistGate hydration
 const LoadingFallback: React.FC = () => (
   <Container maxWidth="lg" sx={{ pt: 4, px: 2 }}>
@@ -172,6 +181,12 @@ const ReportFightsLoadingFallback: React.FC = () => <ReportFightsSkeleton />;
 
 // Calculator specific loading fallback
 const CalculatorLoadingFallback: React.FC = () => <SmartCalculatorSkeleton />;
+
+// Roster Builder specific loading fallback
+const RosterBuilderLoadingFallback: React.FC = () => <RosterBuilderSkeleton />;
+
+// Roster Hub specific loading fallback
+const RosterHubLoadingFallback: React.FC = () => <RosterHubSkeleton />;
 
 const MainApp: React.FC = () => {
   return (
@@ -232,13 +247,20 @@ const App: React.FC = () => {
           <ReduxThemeProvider>
             <EsoLogsClientProvider>
               <AuthProvider>
-                {/* Global cosmic/nebula background */}
-                <SiteBackground />
-                <AppRoutes />
-                {/* Update notification for new versions */}
-                <UpdateNotification />
-                {/* Cookie consent banner */}
-                <CookieConsent />
+                <SnackbarProvider
+                  maxSnack={3}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                  autoHideDuration={4000}
+                  preventDuplicate
+                >
+                  {/* Global cosmic/nebula background — suppressed in embed/iframe mode */}
+                  {!window.location.search.includes('embed=1') && <SiteBackground />}
+                  <AppRoutes />
+                  {/* Update notification for new versions */}
+                  {!window.location.search.includes('embed=1') && <UpdateNotification />}
+                  {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
+                  {!window.location.search.includes('embed=1') && <CookieConsent />}
+                </SnackbarProvider>
               </AuthProvider>
             </EsoLogsClientProvider>
           </ReduxThemeProvider>
@@ -546,8 +568,18 @@ const AppRoutes: React.FC = () => {
               path="/roster-builder"
               element={
                 <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
+                  <Suspense fallback={<RosterBuilderLoadingFallback />}>
                     <RosterBuilderPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/roster-hub"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<RosterHubLoadingFallback />}>
+                    <RosterHubPage />
                   </Suspense>
                 </ErrorBoundary>
               }

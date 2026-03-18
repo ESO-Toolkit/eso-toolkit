@@ -953,7 +953,7 @@ export enum KnownSetIDs {
   // ============================================================
   // UNKNOWN SETS
   // ============================================================
-  UNKNOWN_SET_845 = 845, // Unknown Set (ID 845)
+  HUNTSMANS_WARMASK = 845, // Huntsman's Warmask
   UNKNOWN_SET_846 = 846, // Unknown Set (ID 846)
   UNKNOWN_SET_2268 = 2268, // Unknown Set (ID 2268) — newer ESO content
   UNKNOWN_SET_2342 = 2342, // Unknown Set (ID 2342) — newer ESO content

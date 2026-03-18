@@ -1,6 +1,6 @@
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import { Box, Button, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Button, ButtonBase, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -275,8 +275,7 @@ export const ReportFightHeader: React.FC = () => {
           </Button>
         </Tooltip>
       </Box>
-      <Box
-        component={'button' as React.ElementType}
+      <ButtonBase
         onClick={() => {
           navigate(`/report/${reportId}`);
         }}
@@ -340,7 +339,7 @@ export const ReportFightHeader: React.FC = () => {
         }}
       >
         Back to Fight List
-      </Box>
+      </ButtonBase>
 
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 4 }}>
         <Typography

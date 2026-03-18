@@ -789,8 +789,10 @@ export const UserReports: React.FC = () => {
                       <TableRow
                         key={report.code}
                         hover
-                        onClick={(e: React.MouseEvent) => handleReportClick(report.code, e)}
-                        onMouseDown={(e: React.MouseEvent) => {
+                        onClick={(e: React.MouseEvent<HTMLTableRowElement>) =>
+                          handleReportClick(report.code, e)
+                        }
+                        onMouseDown={(e: React.MouseEvent<HTMLTableRowElement>) => {
                           // Handle middle-click
                           if (e.button === 1) {
                             e.preventDefault();

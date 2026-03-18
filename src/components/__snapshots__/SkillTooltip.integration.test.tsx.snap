@@ -150,8 +150,8 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle non-scribing ab
           >
             <img
               alt="Bash"
-              class="MuiBox-root css-ykomfw"
               src="https://assets.rpglogs.com/img/eso/abilities/ability_warrior_031.png"
+              style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
             />
           </div>
           <div
@@ -215,8 +215,8 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           >
             <img
               alt="Shattering Knife"
-              class="MuiBox-root css-ykomfw"
               src="https://assets.rpglogs.com/img/eso/abilities/ability_scribing_affix_001.png"
+              style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
             />
           </div>
           <div
@@ -389,8 +389,8 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           >
             <img
               alt="Shattering Knife"
-              class="MuiBox-root css-ykomfw"
               src="https://assets.rpglogs.com/img/eso/abilities/ability_scribing_affix_001.png"
+              style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
             />
           </div>
           <div
@@ -557,8 +557,8 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           >
             <img
               alt="Shattering Knife"
-              class="MuiBox-root css-ykomfw"
               src="https://assets.rpglogs.com/img/eso/abilities/ability_scribing_affix_001.png"
+              style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
             />
           </div>
           <div
@@ -686,8 +686,8 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           >
             <img
               alt="Cephaliarch's Flail"
-              class="MuiBox-root css-ykomfw"
               src="https://assets.rpglogs.com/img/eso/abilities/ability_arcanist_003_a.png"
+              style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
             />
           </div>
           <div

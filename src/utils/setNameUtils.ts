@@ -239,7 +239,7 @@ export const SET_DISPLAY_NAMES: Record<KnownSetIDs, string> = {
   [KnownSetIDs.RECOVERY_CONVERGENCE_PERFECTED]: 'Perfected Recovery Convergence',
   [KnownSetIDs.KAZPIAN_PERFECTED]: "Perfected Kazpian's",
   [KnownSetIDs.STONEHULK_DOMINATION]: 'Stonehulk Domination',
-  [KnownSetIDs.UNKNOWN_SET_845]: 'Unknown',
+  [KnownSetIDs.HUNTSMANS_WARMASK]: "Huntsman's Warmask",
   [KnownSetIDs.ARMOR_OF_THE_VEILED_HERITANCE]: 'Armor of the Veiled Heritance',
   [KnownSetIDs.ARMOR_OF_THE_SEDUCER]: 'Armor of the Seducer',
   [KnownSetIDs.ASHEN_GRIP]: 'Ashen Grip',

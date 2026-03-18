@@ -1,4 +1,3 @@
-import { Box } from '@mui/material';
 import React from 'react';
 
 import type { MorMarker } from '@/types/mapMarkers';
@@ -102,11 +101,10 @@ export const MarkerSpritePreview: React.FC<MarkerSpritePreviewProps> = ({ iconKe
   const displaySymbol = symbol && symbol.trim().length > 0 ? symbol : undefined;
 
   return (
-    <Box
-      component={'span' as React.ElementType}
+    <span
       role="img"
       aria-label={label ?? `Marker ${iconKey}`}
-      sx={{
+      style={{
         width: 32,
         height: 32,
         minWidth: 32,
@@ -129,6 +127,6 @@ export const MarkerSpritePreview: React.FC<MarkerSpritePreviewProps> = ({ iconKe
       }}
     >
       {displaySymbol ?? null}
-    </Box>
+    </span>
   );
 };

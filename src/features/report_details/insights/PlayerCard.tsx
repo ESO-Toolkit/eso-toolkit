@@ -34,6 +34,7 @@ import {
   type PotionStreamResult,
 } from '@/utils/potionDetectionUtils';
 
+import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
 import { GearDetailsPanel } from '../../../components/GearDetailsPanel';
 import { GearSetTooltip } from '../../../components/GearSetTooltip';
@@ -224,9 +225,17 @@ const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
 
   return (
     <Tooltip title={`Mundus: ${mundusName}`} enterTouchDelay={0} leaveTouchDelay={3000}>
-      <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-        <StatChipIcon chipId="mundus" />
-        <span style={{ margin: '0 1px' }} />
+      <Box
+        component="span"
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          minWidth: { xs: 44, sm: 'auto', md: 'auto' },
+          minHeight: { xs: 28, sm: 'auto', md: 'auto' },
+        }}
+      >
+        <img src={mundusIcon} alt="" style={{ width: 12, height: 12 }} />
+        <Box component="span" sx={{ margin: { xs: '0 4px', sm: '0 2px', md: '0 1px' } }}></Box>
         <Box
           component="span"
           sx={{
@@ -240,7 +249,7 @@ const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
         >
           {mundusName}
         </Box>
-      </span>
+      </Box>
     </Tooltip>
   );
 };

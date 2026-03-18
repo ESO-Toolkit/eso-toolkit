@@ -503,11 +503,10 @@ const AbilityIcon: React.FC<{ abilityId?: number; size: number; highlight?: bool
         })}
       >
         {iconUrl && !loadFailed ? (
-          <Box
-            component={'img' as React.ElementType}
+          <img
             src={iconUrl}
             alt={skill?.name ?? 'Empty slot'}
-            sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             onError={() => setLoadFailed(true)}
           />
         ) : (

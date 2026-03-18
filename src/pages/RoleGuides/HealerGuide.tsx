@@ -625,14 +625,9 @@ export const HealerGuide: React.FC = () => {
                 <Grid key={key} size={{ xs: 12, sm: 6, md: 4 }}>
                   <Paper sx={frostCardSx(theme)}>
                     <Stack direction="row" spacing={1} alignItems="center">
-                      <Box
-                        component={'span' as React.ElementType}
-                        role="img"
-                        aria-label={key}
-                        sx={{ fontSize: 18 }}
-                      >
+                      <span role="img" aria-label={key} style={{ fontSize: 18 }}>
                         {activationIcons[key] || 'ℹ️'}
-                      </Box>
+                      </span>
                       <Typography
                         variant="subtitle2"
                         fontWeight={700}

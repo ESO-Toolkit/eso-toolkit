@@ -342,16 +342,15 @@ const GearTile: React.FC<GearTileProps> = ({
       >
         {/* Item icon: actual image from UESP or SVG fallback */}
         {hasGear && iconUrl && !iconFailed ? (
-          <Box
-            component={'img' as React.ElementType}
+          <img
             src={iconUrl}
             alt={gearLabel}
             onError={() => setIconFailed(true)}
-            sx={{
+            style={{
               width: tileSize * 0.55,
               height: tileSize * 0.55,
               objectFit: 'contain',
-              borderRadius: 0.5,
+              borderRadius: 4,
               filter: isMythic ? 'drop-shadow(0 0 3px rgba(255,167,38,0.6))' : 'none',
             }}
           />

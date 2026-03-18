@@ -154,16 +154,15 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
                   flex: '0 0 auto',
                 })}
               >
-                <Box
-                  component={'img' as React.ElementType}
+                <img
                   src={iconUrl}
                   alt={setName}
-                  sx={{
+                  style={{
                     width: '100%',
                     height: '100%',
                     display: 'block',
                     objectFit: 'cover',
-                    borderRadius: 'inherit !important',
+                    borderRadius: 'inherit',
                   }}
                 />
               </Box>

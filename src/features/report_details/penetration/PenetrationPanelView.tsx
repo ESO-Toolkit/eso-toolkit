@@ -2,7 +2,6 @@ import {
   Box,
   Typography,
   Alert,
-  Link,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -118,13 +117,23 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
               ? 'the selected target'
               : `${selectedTargetIds.size} available targets`}
             . Click to expand details.{' '}
-            <Link
-              variant="body2"
+            <button
+              type="button"
               onClick={() => setCmxDialogOpen(true)}
-              sx={{ verticalAlign: 'baseline', cursor: 'pointer' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                color: 'inherit',
+                cursor: 'pointer',
+                font: 'inherit',
+                fontSize: '0.875rem',
+                textDecoration: 'underline',
+                verticalAlign: 'baseline',
+              }}
             >
               Why is my value different from CMX?
-            </Link>
+            </button>
           </Typography>
 
           {players.map((player) => {

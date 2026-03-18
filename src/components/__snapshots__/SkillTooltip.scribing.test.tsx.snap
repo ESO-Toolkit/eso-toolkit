@@ -36,8 +36,8 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         >
           <img
             alt="Shattering Knife"
-            class="MuiBox-root css-ykomfw"
             src="https://assets.rpglogs.com/img/eso/abilities/ability_grimoire_dualwield.png"
+            style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
           />
         </div>
         <div
@@ -135,8 +135,8 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         >
           <img
             alt="Shattering Knife"
-            class="MuiBox-root css-ykomfw"
             src="https://assets.rpglogs.com/img/eso/abilities/ability_grimoire_dualwield.png"
+            style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
           />
         </div>
         <div
@@ -384,8 +384,8 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         >
           <img
             alt="Shattering Knife"
-            class="MuiBox-root css-ykomfw"
             src="https://assets.rpglogs.com/img/eso/abilities/ability_grimoire_dualwield.png"
+            style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
           />
         </div>
         <div
@@ -551,8 +551,8 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         >
           <img
             alt="Shattering Knife"
-            class="MuiBox-root css-ykomfw"
             src="https://assets.rpglogs.com/img/eso/abilities/ability_grimoire_dualwield.png"
+            style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
           />
         </div>
         <div
@@ -650,8 +650,8 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
         >
           <img
             alt="Shattering Knife"
-            class="MuiBox-root css-ykomfw"
             src="https://assets.rpglogs.com/img/eso/abilities/ability_grimoire_dualwield.png"
+            style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
           />
         </div>
         <div

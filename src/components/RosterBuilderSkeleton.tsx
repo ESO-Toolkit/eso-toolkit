@@ -16,7 +16,7 @@ export const RosterBuilderSkeleton: React.FC = () => {
   const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
 
   /** Reusable gear set row skeleton */
-  const GearSetRow = ({ width = '70%' }: { width?: string }): React.JSX.Element => (
+  const GearSetRow = ({ width = '70%' }: { width?: string }): React.ReactElement => (
     <Box
       sx={{
         display: 'flex',
@@ -40,7 +40,7 @@ export const RosterBuilderSkeleton: React.FC = () => {
   );
 
   /** Section header badge skeleton (e.g. TANK, HEALER, FLEXIBLE) */
-  const SectionBadge = ({ width = 60 }: { width?: number }): React.JSX.Element => (
+  const SectionBadge = ({ width = 60 }: { width?: number }): React.ReactElement => (
     <Skeleton
       variant="rounded"
       width={width}
@@ -50,7 +50,7 @@ export const RosterBuilderSkeleton: React.FC = () => {
   );
 
   /** Ultimate row skeleton (role badge + 4 ultimate buttons) */
-  const UltimateRow = (): React.JSX.Element => (
+  const UltimateRow = (): React.ReactElement => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 4 }}>
       <Skeleton
         variant="rounded"

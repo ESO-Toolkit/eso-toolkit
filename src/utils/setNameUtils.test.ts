@@ -95,8 +95,8 @@ describe('setNameUtils', () => {
     });
 
     it('should not report error for known Unknown Set IDs', () => {
-      const result = getSetDisplayName(KnownSetIDs.UNKNOWN_SET_845);
-      expect(result).toBe('Unknown');
+      const result = getSetDisplayName(KnownSetIDs.HUNTSMANS_WARMASK);
+      expect(result).toBe("Huntsman's Warmask");
       expect(errorTracking.reportError).not.toHaveBeenCalled();
     });
 

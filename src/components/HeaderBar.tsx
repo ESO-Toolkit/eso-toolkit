@@ -788,14 +788,13 @@ export const HeaderBar: React.FC = () => {
                   rel="noopener noreferrer"
                   startIcon={
                     typeof item.icon === 'string' ? (
-                      <Box
-                        component={'span' as React.ElementType}
+                      <span
                         role="img"
                         aria-label={item.text.toLowerCase()}
-                        sx={{ fontSize: 16, lineHeight: 1, display: 'inline-block' }}
+                        style={{ fontSize: 16, lineHeight: 1, display: 'inline-block' }}
                       >
                         {item.icon}
-                      </Box>
+                      </span>
                     ) : (
                       item.icon
                     )

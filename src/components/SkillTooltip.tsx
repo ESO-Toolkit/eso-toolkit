@@ -252,16 +252,15 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                   flex: '0 0 auto',
                 })}
               >
-                <Box
-                  component={'img' as React.ElementType}
+                <img
                   src={resolvedIconUrl}
                   alt={name}
-                  sx={{
+                  style={{
                     width: '100%',
                     height: '100%',
                     display: 'block',
                     objectFit: 'cover',
-                    borderRadius: 'inherit !important',
+                    borderRadius: 'inherit',
                   }}
                 />
               </Box>

@@ -63,7 +63,8 @@ export interface CompactGroup {
 
 export interface CompactTank {
   pn?: string; // playerName
-  pi?: number; // playerNumber
+  pt?: string; // positionTag (e.g. "portal", "bridge")
+  pi?: string; // playerNumber / position (e.g. "left", "right")
   rl?: string; // roleLabel
   lb?: string[]; // labels
   gs?: CompactGear; // gearSets
@@ -77,7 +78,8 @@ export interface CompactTank {
 
 export interface CompactHealer {
   pn?: string; // playerName
-  pi?: number; // playerNumber
+  pt?: string; // positionTag (e.g. "portal", "tomb")
+  pi?: string; // playerNumber / position (e.g. "left", "right")
   rl?: string; // roleLabel
   lb?: string[]; // labels
   s1?: number; // set1
@@ -88,6 +90,7 @@ export interface CompactHealer {
   sl?: CompactSkills; // skillLines
   hb?: number; // healerBuff: HealerBuff index
   cp?: number; // championPoint: HealerChampionPoint index
+  ss?: string[]; // specificSkills
   ul?: number | string; // ultimate: SupportUltimate index or custom string
   grs?: string[]; // groups (multi-group memberships)
   gr?: CompactGroup; // @deprecated — legacy single group, decode only
@@ -97,7 +100,8 @@ export interface CompactHealer {
 export interface CompactDPS {
   sn: number; // slotNumber (required)
   pn?: string; // playerName
-  pi?: number; // playerNumber
+  pt?: string; // positionTag (e.g. "portal", "slayer", "banner")
+  pi?: string; // playerNumber / position (e.g. "left", "right", "1")
   rl?: string; // roleLabel
   lb?: string[]; // labels
   s1?: number; // set1 (primary 5-piece)
@@ -108,6 +112,7 @@ export interface CompactDPS {
   gs?: number[]; // legacy gearSets (backward compat decode only)
   sl?: CompactSkills; // skillLines
   cp?: string; // championPoint
+  ss?: string[]; // specificSkills
   ul?: number | string; // ultimate: SupportUltimate index or custom string
   grs?: string[]; // groups (multi-group memberships)
   gr?: CompactGroup; // @deprecated — legacy single group, decode only
@@ -282,7 +287,8 @@ function expandGroups(grs?: string[], gr?: CompactGroup): string[] | undefined {
 function compactTank(t: TankSetup): CompactTank {
   const c: CompactTank = {};
   if (t.playerName) c.pn = t.playerName;
-  if (t.playerNumber != null) c.pi = t.playerNumber;
+  if (t.positionTag) c.pt = t.positionTag;
+  if (t.playerNumber) c.pi = t.playerNumber;
   if (t.roleLabel) c.rl = t.roleLabel;
   if (t.labels?.length) c.lb = t.labels;
   const gs = compactGear(t.gearSets);
@@ -302,7 +308,8 @@ function expandTank(c?: CompactTank): TankSetup {
   return {
     ...defaultTankSetup(),
     playerName: c?.pn,
-    playerNumber: c?.pi,
+    positionTag: c?.pt,
+    playerNumber: c?.pi != null ? String(c.pi) : undefined,
     roleLabel: c?.rl,
     labels: c?.lb,
     gearSets: expandGear(c?.gs),
@@ -317,7 +324,8 @@ function expandTank(c?: CompactTank): TankSetup {
 function compactHealer(h: HealerSetup): CompactHealer {
   const c: CompactHealer = {};
   if (h.playerName) c.pn = h.playerName;
-  if (h.playerNumber != null) c.pi = h.playerNumber;
+  if (h.positionTag) c.pt = h.positionTag;
+  if (h.playerNumber) c.pi = h.playerNumber;
   if (h.roleLabel) c.rl = h.roleLabel;
   if (h.labels?.length) c.lb = h.labels;
   if (h.set1 != null) c.s1 = h.set1 as number;
@@ -335,6 +343,7 @@ function compactHealer(h: HealerSetup): CompactHealer {
     const idx = CHAMPION_POINT_TO_IDX.get(h.championPoint);
     if (idx !== undefined) c.cp = idx;
   }
+  if (h.specificSkills?.length) c.ss = h.specificSkills;
   const ul = encodeUltimate(h.ultimate);
   if (ul != null) c.ul = ul;
   const grs = compactGroups(h.groups);
@@ -347,7 +356,8 @@ function expandHealer(c?: CompactHealer): HealerSetup {
   return {
     ...defaultHealerSetup(),
     playerName: c?.pn,
-    playerNumber: c?.pi,
+    positionTag: c?.pt,
+    playerNumber: c?.pi != null ? String(c.pi) : undefined,
     roleLabel: c?.rl,
     labels: c?.lb,
     set1: toValidSetId(c?.s1),
@@ -365,11 +375,8 @@ function expandHealer(c?: CompactHealer): HealerSetup {
           : null
         : null,
     championPoint:
-      c?.cp != null
-        ? isValidEnumIndex(c.cp, CHAMPION_POINT_LIST.length)
-          ? (CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint)
-          : null
-        : null,
+      c?.cp != null ? ((CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint) ?? null) : null,
+    specificSkills: c?.ss ?? [],
     ultimate: decodeUltimate(c?.ul),
     groups: expandGroups(c?.grs, c?.gr),
     notes: c?.no,
@@ -379,7 +386,8 @@ function expandHealer(c?: CompactHealer): HealerSetup {
 function compactDPS(d: DPSSlot): CompactDPS {
   const c: CompactDPS = { sn: d.slotNumber };
   if (d.playerName) c.pn = d.playerName;
-  if (d.playerNumber != null) c.pi = d.playerNumber;
+  if (d.positionTag) c.pt = d.positionTag;
+  if (d.playerNumber) c.pi = d.playerNumber;
   if (d.roleLabel) c.rl = d.roleLabel;
   if (d.labels?.length) c.lb = d.labels;
   if (d.set1 != null) c.s1 = d.set1 as number;
@@ -389,6 +397,7 @@ function compactDPS(d: DPSSlot): CompactDPS {
   const sl = d.skillLines ? compactSkills(d.skillLines) : undefined;
   if (sl) c.sl = sl;
   if (d.championPoint) c.cp = d.championPoint;
+  if (d.specificSkills?.length) c.ss = d.specificSkills;
   const ul = encodeUltimate(d.ultimate);
   if (ul != null) c.ul = ul;
   const grs = compactGroups(d.groups);
@@ -418,7 +427,9 @@ function expandDPS(c: CompactDPS): DPSSlot {
   return {
     slotNumber: c.sn,
     playerName: c.pn,
-    playerNumber: c.pi,
+    positionTag: c.pt,
+    // c.pi was stored as number in old encoded rosters — coerce to string for compat
+    playerNumber: c.pi != null ? String(c.pi) : undefined,
     roleLabel: c.rl,
     labels: c.lb,
     set1: toValidSetId(c.s1) ?? legacySet1,
@@ -431,6 +442,7 @@ function expandDPS(c: CompactDPS): DPSSlot {
         : legacyAdditional,
     skillLines: c.sl ? expandSkills(c.sl) : undefined,
     championPoint: c.cp || undefined,
+    specificSkills: c.ss ?? [],
     ultimate: c.ul != null ? decodeUltimate(c.ul) : null,
     groups: expandGroups(c.grs, c.gr),
     notes: c.no,
@@ -522,6 +534,7 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
   const filledSlots = roster.dpsSlots.filter(
     (slot) =>
       slot.playerName ||
+      slot.positionTag ||
       slot.playerNumber != null ||
       slot.roleLabel ||
       slot.labels?.length ||
@@ -537,6 +550,7 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
       slot.groups?.length ||
       slot.group ||
       slot.skillLines ||
+      slot.specificSkills?.length ||
       slot.championPoint,
   );
   if (filledSlots.length) c.dp = filledSlots.map(compactDPS);

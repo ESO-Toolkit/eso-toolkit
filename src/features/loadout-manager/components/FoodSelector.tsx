@@ -277,11 +277,10 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
             <li {...props}>
               <Stack direction="row" spacing={1.5} alignItems="center" width="100%">
                 {iconUrl && (
-                  <Box
-                    component={'img' as React.ElementType}
+                  <img
                     src={iconUrl}
                     alt=""
-                    sx={{ width: 28, height: 28, flexShrink: 0, opacity: 0.85 }}
+                    style={{ width: 28, height: 28, flexShrink: 0, opacity: 0.85 }}
                   />
                 )}
                 <Stack spacing={0} flex={1} minWidth={0}>
@@ -361,12 +360,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
               }}
             >
               {iconUrl && (
-                <Box
-                  component={'img' as React.ElementType}
-                  src={iconUrl}
-                  alt=""
-                  sx={{ width: 36, height: 36, flexShrink: 0 }}
-                />
+                <img src={iconUrl} alt="" style={{ width: 36, height: 36, flexShrink: 0 }} />
               )}
               <Box flex={1} minWidth={0}>
                 <Stack direction="row" spacing={1} alignItems="center">

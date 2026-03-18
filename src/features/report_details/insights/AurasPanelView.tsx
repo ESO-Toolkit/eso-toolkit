@@ -61,7 +61,7 @@ export const AurasPanelView: React.FC<AurasPanelViewProps> = ({
                   flexShrink: 0,
                   cursor: 'help',
                 }}
-                onClick={(event: React.MouseEvent<HTMLElement>) =>
+                onClick={(event: React.MouseEvent<HTMLDivElement>) =>
                   handleTooltipOpen(event, row.original)
                 }
               />

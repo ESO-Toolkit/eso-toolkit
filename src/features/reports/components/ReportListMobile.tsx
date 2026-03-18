@@ -33,8 +33,8 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
         <Paper
           key={report.code}
           variant="outlined"
-          onClick={(e: React.MouseEvent) => onSelect(report.code, e)}
-          onMouseDown={(e: React.MouseEvent) => {
+          onClick={(e: React.MouseEvent<HTMLDivElement>) => onSelect(report.code, e)}
+          onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {
             // Handle middle-click
             if (e.button === 1) {
               e.preventDefault();

@@ -4,13 +4,15 @@
 import React, { useMemo } from 'react';
 import * as THREE from 'three';
 
-// @types/three 0.183.x is missing extras/core/Shape.d.ts — Shape exists at runtime.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ThreeShape = (THREE as any).Shape as new () => {
+// THREE.Shape is missing from @types/three 0.183.x (packaging bug — the class exists at runtime).
+// This local interface provides the minimum surface needed by the shape factory functions below.
+/* eslint-disable no-redeclare, @typescript-eslint/no-explicit-any */
+interface ThreeShape {
   moveTo(x: number, y: number): void;
   lineTo(x: number, y: number): void;
-  closePath(): void;
-};
+}
+const ThreeShape = (THREE as any).Shape as new () => ThreeShape;
+/* eslint-enable no-redeclare, @typescript-eslint/no-explicit-any */
 
 interface MarkerShapeProps {
   /** Texture path from M0RMarkers (e.g., "M0RMarkers/textures/circle.dds") */
@@ -41,7 +43,7 @@ function getShapeFromTexture(texturePath: string): string {
 /**
  * Creates a hexagon shape
  */
-function createHexagonShape(radius: number): InstanceType<typeof ThreeShape> {
+function createHexagonShape(radius: number): ThreeShape {
   const shape = new ThreeShape();
   const sides = 6;
   const angleStep = (Math.PI * 2) / sides;
@@ -57,7 +59,7 @@ function createHexagonShape(radius: number): InstanceType<typeof ThreeShape> {
 /**
  * Creates an octagon shape
  */
-function createOctagonShape(radius: number): InstanceType<typeof ThreeShape> {
+function createOctagonShape(radius: number): ThreeShape {
   const shape = new ThreeShape();
   const sides = 8;
   const angleStep = (Math.PI * 2) / sides;
@@ -73,8 +75,11 @@ function createOctagonShape(radius: number): InstanceType<typeof ThreeShape> {
 /**
  * Creates a diamond (45-degree rotated square) shape
  */
-function createDiamondShape(radius: number): InstanceType<typeof ThreeShape> {
+function createDiamondShape(radius: number): ThreeShape {
   const shape = new ThreeShape();
+  // const _halfSize = radius * 0.707; // Adjust for diagonal (unused, kept for reference)
+
+  // Diamond points (top, right, bottom, left)
   shape.moveTo(0, radius);
   shape.lineTo(radius, 0);
   shape.lineTo(0, -radius);
@@ -86,9 +91,9 @@ function createDiamondShape(radius: number): InstanceType<typeof ThreeShape> {
 /**
  * Creates a square shape
  */
-function createSquareShape(radius: number): InstanceType<typeof ThreeShape> {
+function createSquareShape(radius: number): ThreeShape {
   const shape = new ThreeShape();
-  const halfSize = radius * 0.85;
+  const halfSize = radius * 0.85; // Slightly smaller to match visual size
 
   shape.moveTo(-halfSize, halfSize);
   shape.lineTo(halfSize, halfSize);
@@ -101,15 +106,19 @@ function createSquareShape(radius: number): InstanceType<typeof ThreeShape> {
 /**
  * Creates a chevron (arrow/V shape) pointing up
  */
-function createChevronShape(radius: number): InstanceType<typeof ThreeShape> {
+function createChevronShape(radius: number): ThreeShape {
   const shape = new ThreeShape();
-  shape.moveTo(0, radius);
-  shape.lineTo(radius * 0.8, -radius * 0.4);
-  shape.lineTo(radius * 0.5, -radius * 0.1);
-  shape.lineTo(0, radius * 0.5);
-  shape.lineTo(-radius * 0.5, -radius * 0.1);
-  shape.lineTo(-radius * 0.8, -radius * 0.4);
-  shape.lineTo(0, radius);
+  // const _thickness = radius * 0.25; // Thickness of the chevron arms (unused, kept for reference)
+
+  // Outer V shape
+  shape.moveTo(0, radius); // Top point
+  shape.lineTo(radius * 0.8, -radius * 0.4); // Right outer point
+  shape.lineTo(radius * 0.5, -radius * 0.1); // Right inner point
+  shape.lineTo(0, radius * 0.5); // Top inner point
+  shape.lineTo(-radius * 0.5, -radius * 0.1); // Left inner point
+  shape.lineTo(-radius * 0.8, -radius * 0.4); // Left outer point
+  shape.lineTo(0, radius); // Back to top
+
   return shape;
 }
 
@@ -125,15 +134,20 @@ export const MarkerShape: React.FC<MarkerShapeProps> = ({ texturePath, size, col
     switch (shapeType) {
       case 'hexagon':
         return new THREE.ShapeGeometry(createHexagonShape(radius) as any);
+
       case 'octagon':
         return new THREE.ShapeGeometry(createOctagonShape(radius) as any);
+
       case 'diamond':
         return new THREE.ShapeGeometry(createDiamondShape(radius) as any);
+
       case 'square':
         return new THREE.ShapeGeometry(createSquareShape(radius) as any);
+
       case 'chevron':
         return new THREE.ShapeGeometry(createChevronShape(radius) as any);
       /* eslint-enable @typescript-eslint/no-explicit-any */
+
       case 'circle':
       case 'blank':
       case 'sharkpog':

@@ -760,14 +760,7 @@ export const Footer: React.FC = React.memo(() => {
               target="_blank"
               rel="noopener noreferrer"
               sx={primaryButtonSx}
-              startIcon={
-                <Box
-                  component={'img' as React.ElementType}
-                  src={discordIcon}
-                  alt=""
-                  sx={{ width: 20, height: 20 }}
-                />
-              }
+              startIcon={<img src={discordIcon} alt="" style={{ width: 20, height: 20 }} />}
             >
               Join Discord
             </Button>
@@ -990,7 +983,6 @@ export const Footer: React.FC = React.memo(() => {
                           <Typography component="span" sx={{ flexGrow: 1 }}>
                             {link.label}
                           </Typography>
-
                           <Launch className="footer-link-icon" sx={linkIconSx} />
                         </Link>
                       ) : (
@@ -1004,7 +996,6 @@ export const Footer: React.FC = React.memo(() => {
                           <Typography component="span" sx={{ flexGrow: 1 }}>
                             {link.label}
                           </Typography>
-
                           <ChevronRight className="footer-link-icon" sx={linkIconSx} />
                         </Link>
                       ),

@@ -111,7 +111,10 @@ import {
   MONSTER_SETS,
   ALL_5PIECE_SETS,
   DD_SPECIAL_SETS,
+  DPS_MYTHIC_SETS,
   validateCompatibility,
+  TankGearSet,
+  PlayerGroup,
 } from '../types/roster';
 import type { TrialBuildOverrides } from '../types/trial-encounters';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
@@ -189,6 +192,405 @@ const GET_PLAYERS_FOR_REPORT = gql`
     }
   }
 `;
+
+/**
+ * Encode roster to base64 for URL sharing
+ */
+// ============================================================
+// COMPACT URL ENCODING (v2)
+// Short key names + deflate-raw compression = smallest possible URL
+// Backwards compatible: falls back to v1 (plain base64 JSON) on decode
+// ============================================================
+
+interface CompactSkills {
+  l1?: number | string; // line1: CLASS_SKILL_LINES index or custom string
+  l2?: number | string; // line2: CLASS_SKILL_LINES index or custom string
+  l3?: number | string; // line3: CLASS_SKILL_LINES index or custom string
+  fl?: 1; // isFlex (only stored when true)
+  no?: string; // notes
+}
+
+interface CompactGear {
+  s1?: number; // set1
+  s2?: number; // set2
+  ms?: number; // monsterSet
+  a?: number[]; // additionalSets
+  no?: string; // notes
+}
+
+interface CompactGroup {
+  g?: string; // groupName
+  n?: number; // groupNumber
+}
+
+interface CompactTank {
+  pn?: string; // playerName
+  pt?: string; // positionTag (e.g. "portal", "bridge")
+  pi?: string; // playerNumber / position (e.g. "left", "right")
+  rl?: string; // roleLabel
+  rn?: string; // roleNotes
+  lb?: string[]; // labels
+  gs?: CompactGear; // gearSets
+  sl?: CompactSkills; // skillLines
+  ul?: number | string; // ultimate: SupportUltimate index or custom string
+  ss?: string[]; // specificSkills
+  gr?: CompactGroup; // group
+  no?: string; // notes
+}
+
+interface CompactHealer {
+  pn?: string; // playerName
+  pt?: string; // positionTag (e.g. "portal", "tomb")
+  pi?: string; // playerNumber / position (e.g. "left", "right")
+  rl?: string; // roleLabel
+  rn?: string; // roleNotes
+  lb?: string[]; // labels
+  s1?: number; // set1
+  s2?: number; // set2
+  ms?: number; // monsterSet
+  a?: number[]; // additionalSets
+  sl?: CompactSkills; // skillLines
+  hb?: number; // healerBuff: HealerBuff index
+  cp?: number; // championPoint: HealerChampionPoint index
+  ul?: number | string; // ultimate: SupportUltimate index or custom string
+  gr?: CompactGroup; // group
+  no?: string; // notes
+}
+
+interface CompactDPS {
+  sn: number; // slotNumber (required)
+  pn?: string; // playerName
+  pt?: string; // positionTag (e.g. "portal", "slayer", "banner")
+  pi?: string; // playerNumber / position (e.g. "left", "right", "1")
+  rl?: string; // roleLabel
+  rn?: string; // roleNotes
+  lb?: string[]; // labels
+  s1?: number; // set1
+  s2?: number; // set2
+  ms?: number; // monsterSet
+  as?: number[]; // additionalSets
+  gs?: number[]; // legacy gearSets (backward compat)
+  sl?: CompactSkills; // skillLines
+  cp?: string; // championPoint
+  ul?: number | string; // ultimate (index or custom string)
+  gr?: CompactGroup; // group
+  no?: string; // notes
+  jt?: number; // jailDDType index
+  cd?: string; // customDescription
+}
+
+interface CompactRoster {
+  v: 2; // version marker
+  n?: string; // rosterName
+  t1?: CompactTank;
+  t2?: CompactTank;
+  h1?: CompactHealer;
+  h2?: CompactHealer;
+  dp?: CompactDPS[]; // only filled DPS slots
+  ag?: string[]; // availableGroups
+  no?: string; // notes
+}
+
+// Lookup tables for encoding/decoding fixed-vocabulary strings as integers
+const SKILL_LINE_TO_IDX = new Map(CLASS_SKILL_LINES.map((sl, i) => [sl, i] as const));
+const ULTIMATE_LIST = Object.values(SupportUltimate); // 4 preset ultimates
+const ULTIMATE_TO_IDX = new Map(ULTIMATE_LIST.map((u, i) => [u, i] as const));
+const HEALER_BUFF_LIST = Object.values(HealerBuff); // 2 values
+const HEALER_BUFF_TO_IDX = new Map(HEALER_BUFF_LIST.map((b, i) => [b, i] as const));
+const CHAMPION_POINT_LIST = Object.values(HealerChampionPoint); // 2 values
+const CHAMPION_POINT_TO_IDX = new Map(CHAMPION_POINT_LIST.map((cp, i) => [cp, i] as const));
+const JAIL_DD_TYPE_LIST: JailDDType[] = ['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'];
+const JAIL_DD_TYPE_TO_IDX = new Map(JAIL_DD_TYPE_LIST.map((t, i) => [t, i] as const));
+
+/** Encode a skill line string: known index or raw string for custom values */
+function encodeSkillLine(s?: string): number | string | undefined {
+  if (!s) return undefined;
+  const idx = SKILL_LINE_TO_IDX.get(s as (typeof CLASS_SKILL_LINES)[number]);
+  return idx !== undefined ? idx : s;
+}
+
+/** Decode a skill line: index → lookup, string → pass-through */
+function decodeSkillLine(v?: number | string): string {
+  if (v == null) return '';
+  if (typeof v === 'number') return CLASS_SKILL_LINES[v] ?? '';
+  return v;
+}
+
+/** Encode an ultimate: known SupportUltimate index or raw string for custom */
+function encodeUltimate(u?: string | null): number | string | undefined {
+  if (!u) return undefined;
+  const idx = ULTIMATE_TO_IDX.get(u as SupportUltimate);
+  return idx !== undefined ? idx : u;
+}
+
+/** Decode an ultimate */
+function decodeUltimate(v?: number | string): string | null {
+  if (v == null) return null;
+  if (typeof v === 'number') return ULTIMATE_LIST[v] ?? null;
+  return v;
+}
+
+function compactSkills(sl: SkillLineConfig): CompactSkills | undefined {
+  const c: CompactSkills = {};
+  const l1 = encodeSkillLine(sl.line1);
+  if (l1 != null) c.l1 = l1;
+  const l2 = encodeSkillLine(sl.line2);
+  if (l2 != null) c.l2 = l2;
+  const l3 = encodeSkillLine(sl.line3);
+  if (l3 != null) c.l3 = l3;
+  if (sl.isFlex) c.fl = 1;
+  if (sl.notes) c.no = sl.notes;
+  return Object.keys(c).length > 0 ? c : undefined;
+}
+
+function expandSkills(c?: CompactSkills): SkillLineConfig {
+  return {
+    line1: decodeSkillLine(c?.l1),
+    line2: decodeSkillLine(c?.l2),
+    line3: decodeSkillLine(c?.l3),
+    isFlex: c?.fl === 1,
+    notes: c?.no,
+  };
+}
+
+function compactGear(gs: TankGearSet): CompactGear | undefined {
+  const c: CompactGear = {};
+  if (gs.set1 != null) c.s1 = gs.set1 as number;
+  if (gs.set2 != null) c.s2 = gs.set2 as number;
+  if (gs.monsterSet != null) c.ms = gs.monsterSet as number;
+  if (gs.additionalSets?.length) c.a = gs.additionalSets as number[];
+  if (gs.notes) c.no = gs.notes;
+  return Object.keys(c).length > 0 ? c : undefined;
+}
+
+function expandGear(c?: CompactGear): TankGearSet {
+  return {
+    set1: c?.s1 as KnownSetIDs | undefined,
+    set2: c?.s2 as KnownSetIDs | undefined,
+    monsterSet: c?.ms as KnownSetIDs | undefined,
+    additionalSets: c?.a as KnownSetIDs[] | undefined,
+    notes: c?.no,
+  };
+}
+
+function compactGroup(gr?: PlayerGroup): CompactGroup | undefined {
+  if (!gr?.groupName) return undefined;
+  const c: CompactGroup = { g: gr.groupName };
+  if (gr.groupNumber != null) c.n = gr.groupNumber;
+  return c;
+}
+
+function expandGroup(c?: CompactGroup): PlayerGroup | undefined {
+  if (!c?.g) return undefined;
+  return { groupName: c.g, groupNumber: c.n };
+}
+
+function compactTank(t: TankSetup): CompactTank {
+  const c: CompactTank = {};
+  if (t.playerName) c.pn = t.playerName;
+  if (t.positionTag) c.pt = t.positionTag;
+  if (t.playerNumber) c.pi = t.playerNumber;
+  if (t.roleLabel) c.rl = t.roleLabel;
+  if (t.roleNotes) c.rn = t.roleNotes;
+  if (t.labels?.length) c.lb = t.labels;
+  const gs = compactGear(t.gearSets);
+  if (gs) c.gs = gs;
+  const sl = compactSkills(t.skillLines);
+  if (sl) c.sl = sl;
+  const ul = encodeUltimate(t.ultimate);
+  if (ul != null) c.ul = ul;
+  if (t.specificSkills?.length) c.ss = t.specificSkills;
+  const gr = compactGroup(t.group);
+  if (gr) c.gr = gr;
+  if (t.notes) c.no = t.notes;
+  return c;
+}
+
+function expandTank(c?: CompactTank): TankSetup {
+  return {
+    ...defaultTankSetup(),
+    playerName: c?.pn,
+    positionTag: c?.pt,
+    playerNumber: c?.pi != null ? String(c.pi) : undefined,
+    roleLabel: c?.rl,
+    roleNotes: c?.rn,
+    labels: c?.lb,
+    gearSets: expandGear(c?.gs),
+    skillLines: expandSkills(c?.sl),
+    ultimate: decodeUltimate(c?.ul),
+    specificSkills: c?.ss ?? [],
+    group: expandGroup(c?.gr),
+    notes: c?.no,
+  };
+}
+
+function compactHealer(h: HealerSetup): CompactHealer {
+  const c: CompactHealer = {};
+  if (h.playerName) c.pn = h.playerName;
+  if (h.positionTag) c.pt = h.positionTag;
+  if (h.playerNumber) c.pi = h.playerNumber;
+  if (h.roleLabel) c.rl = h.roleLabel;
+  if (h.roleNotes) c.rn = h.roleNotes;
+  if (h.labels?.length) c.lb = h.labels;
+  if (h.set1 != null) c.s1 = h.set1 as number;
+  if (h.set2 != null) c.s2 = h.set2 as number;
+  if (h.monsterSet != null) c.ms = h.monsterSet as number;
+  if (h.additionalSets?.length) c.a = h.additionalSets as number[];
+  const sl = compactSkills(h.skillLines);
+  if (sl) c.sl = sl;
+  if (h.healerBuff != null) {
+    const idx = HEALER_BUFF_TO_IDX.get(h.healerBuff);
+    if (idx !== undefined) c.hb = idx;
+  }
+  if (h.championPoint != null) {
+    const idx = CHAMPION_POINT_TO_IDX.get(h.championPoint);
+    if (idx !== undefined) c.cp = idx;
+  }
+  const ul = encodeUltimate(h.ultimate);
+  if (ul != null) c.ul = ul;
+  const gr = compactGroup(h.group);
+  if (gr) c.gr = gr;
+  if (h.notes) c.no = h.notes;
+  return c;
+}
+
+function expandHealer(c?: CompactHealer): HealerSetup {
+  return {
+    ...defaultHealerSetup(),
+    playerName: c?.pn,
+    positionTag: c?.pt,
+    playerNumber: c?.pi != null ? String(c.pi) : undefined,
+    roleLabel: c?.rl,
+    roleNotes: c?.rn,
+    labels: c?.lb,
+    set1: c?.s1 as KnownSetIDs | undefined,
+    set2: c?.s2 as KnownSetIDs | undefined,
+    monsterSet: c?.ms as KnownSetIDs | undefined,
+    additionalSets: c?.a as KnownSetIDs[] | undefined,
+    skillLines: expandSkills(c?.sl),
+    healerBuff: c?.hb != null ? ((HEALER_BUFF_LIST[c.hb] as HealerBuff) ?? null) : null,
+    championPoint:
+      c?.cp != null ? ((CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint) ?? null) : null,
+    ultimate: decodeUltimate(c?.ul),
+    group: expandGroup(c?.gr),
+    notes: c?.no,
+  };
+}
+
+function compactDPS(d: DPSSlot): CompactDPS {
+  const c: CompactDPS = { sn: d.slotNumber };
+  if (d.playerName) c.pn = d.playerName;
+  if (d.positionTag) c.pt = d.positionTag;
+  if (d.playerNumber) c.pi = d.playerNumber;
+  if (d.roleLabel) c.rl = d.roleLabel;
+  if (d.roleNotes) c.rn = d.roleNotes;
+  if (d.labels?.length) c.lb = d.labels;
+  if (d.set1 != null) c.s1 = d.set1 as number;
+  if (d.set2 != null) c.s2 = d.set2 as number;
+  if (d.monsterSet != null) c.ms = d.monsterSet as number;
+  if (d.additionalSets?.length) c.as = d.additionalSets as number[];
+  const sl = d.skillLines ? compactSkills(d.skillLines) : undefined;
+  if (sl) c.sl = sl;
+  if (d.championPoint) c.cp = d.championPoint;
+  if (d.ultimate) c.ul = encodeUltimate(d.ultimate);
+  const gr = compactGroup(d.group);
+  if (gr) c.gr = gr;
+  if (d.notes) c.no = d.notes;
+  if (d.jailDDType) {
+    const idx = JAIL_DD_TYPE_TO_IDX.get(d.jailDDType);
+    if (idx !== undefined) c.jt = idx;
+  }
+  if (d.customDescription) c.cd = d.customDescription;
+  return c;
+}
+
+function expandDPS(c: CompactDPS): DPSSlot {
+  return {
+    slotNumber: c.sn,
+    playerName: c.pn,
+    positionTag: c.pt,
+    // c.pi was stored as number in old encoded rosters — coerce to string for compat
+    playerNumber: c.pi != null ? String(c.pi) : undefined,
+    roleLabel: c.rl,
+    roleNotes: c.rn,
+    labels: c.lb,
+    set1: c.s1 as KnownSetIDs | undefined,
+    set2: c.s2 as KnownSetIDs | undefined,
+    monsterSet: c.ms as KnownSetIDs | undefined,
+    additionalSets: c.as as KnownSetIDs[] | undefined,
+    // Legacy: if old compact data has gs but no s1/s2, migrate first two to set1/set2
+    ...(c.gs && !c.s1 && !c.s2
+      ? {
+          set1: (c.gs[0] as KnownSetIDs) ?? undefined,
+          set2: (c.gs[1] as KnownSetIDs) ?? undefined,
+          additionalSets: (c.gs.slice(2) as KnownSetIDs[]) || undefined,
+        }
+      : {}),
+    skillLines: c.sl ? expandSkills(c.sl) : undefined,
+    championPoint: c.cp || undefined,
+    ultimate: c.ul != null ? decodeUltimate(c.ul) : null,
+    group: expandGroup(c.gr),
+    notes: c.no,
+    jailDDType: c.jt != null ? JAIL_DD_TYPE_LIST[c.jt] : undefined,
+    customDescription: c.cd,
+  };
+}
+
+function _compactifyRoster(roster: RaidRoster): CompactRoster {
+  const c: CompactRoster = { v: 2 };
+  if (roster.rosterName && roster.rosterName !== 'New Roster') c.n = roster.rosterName;
+  c.t1 = compactTank(roster.tank1);
+  c.t2 = compactTank(roster.tank2);
+  c.h1 = compactHealer(roster.healer1);
+  c.h2 = compactHealer(roster.healer2);
+  const filledSlots = roster.dpsSlots.filter(
+    (slot) =>
+      slot.playerName ||
+      slot.playerNumber != null ||
+      slot.roleLabel ||
+      slot.roleNotes ||
+      slot.labels?.length ||
+      slot.set1 != null ||
+      slot.set2 != null ||
+      slot.monsterSet != null ||
+      slot.additionalSets?.length ||
+      slot.championPoint ||
+      slot.ultimate ||
+      slot.jailDDType ||
+      slot.notes ||
+      slot.group ||
+      slot.skillLines ||
+      slot.championPoint,
+  );
+  if (filledSlots.length) c.dp = filledSlots.map(compactDPS);
+  if (roster.availableGroups?.length) c.ag = roster.availableGroups;
+  if (roster.notes) c.no = roster.notes;
+  return c;
+}
+
+function _expandCompactRoster(c: CompactRoster): RaidRoster {
+  const dpsSlots = createDefaultDPSSlots();
+  if (c.dp) {
+    for (const compactSlot of c.dp) {
+      const idx = compactSlot.sn - 1;
+      if (idx >= 0 && idx < 8) {
+        dpsSlots[idx] = expandDPS(compactSlot);
+      }
+    }
+  }
+  return {
+    rosterName: c.n ?? 'New Roster',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    tank1: expandTank(c.t1),
+    tank2: expandTank(c.t2),
+    healer1: expandHealer(c.h1),
+    healer2: expandHealer(c.h2),
+    dpsSlots,
+    availableGroups: c.ag ?? [],
+    notes: c.no,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Addon export helpers (ESO-658)
@@ -450,10 +852,17 @@ const DPS_5PIECE_OPTIONS: readonly string[] = (() => {
   return [...ddSets, ...otherSets];
 })();
 
+const DPS_MONSTER_SET_NAMES: ReadonlySet<string> = new Set(
+  MONSTER_SETS.map((id) => getSetDisplayName(id)),
+);
+const DPS_MYTHIC_SET_NAMES: ReadonlySet<string> = new Set(
+  DPS_MYTHIC_SETS.map((id) => getSetDisplayName(id)),
+);
+
 const DPS_MONSTER_OPTIONS: readonly string[] = (() => {
-  const sets = new Set<string>();
-  MONSTER_SETS.forEach((id) => sets.add(getSetDisplayName(id)));
-  return Array.from(sets).sort();
+  const monster = Array.from(DPS_MONSTER_SET_NAMES).sort();
+  const mythic = Array.from(DPS_MYTHIC_SET_NAMES).sort();
+  return [...monster, ...mythic];
 })();
 
 const ARENA_WEAPON_OPTIONS: readonly string[] = [
@@ -1463,6 +1872,7 @@ export const RosterBuilderPage: React.FC = () => {
           },
           healerBuff: extractHealerBuff(healer.combatantInfo, healer.id),
           championPoint: extractHealerChampionPoint(healer.combatantInfo, healer.id),
+          specificSkills: [],
           ultimate: finalUltimate,
         };
       });
@@ -2981,8 +3391,7 @@ export const RosterBuilderPage: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Box
-            component={'button' as React.ElementType}
+          <ButtonBase
             onClick={() => setQuickFillDialog(false)}
             sx={{
               px: 1.5,
@@ -3003,7 +3412,7 @@ export const RosterBuilderPage: React.FC = () => {
             }}
           >
             Cancel
-          </Box>
+          </ButtonBase>
           <Button
             onClick={handleQuickFill}
             variant="contained"
@@ -3083,8 +3492,7 @@ export const RosterBuilderPage: React.FC = () => {
           </Paper>
         </DialogContent>
         <DialogActions>
-          <Box
-            component={'button' as React.ElementType}
+          <ButtonBase
             onClick={() => setPreviewDialog(false)}
             sx={{
               px: 1.5,
@@ -3105,7 +3513,7 @@ export const RosterBuilderPage: React.FC = () => {
             }}
           >
             Close
-          </Box>
+          </ButtonBase>
           <Button
             onClick={() => {
               handleCopyDiscordFormat();
@@ -3194,8 +3602,7 @@ export const RosterBuilderPage: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Box
-            component={'button' as React.ElementType}
+          <ButtonBase
             onClick={() => {
               setImportUrlDialog(false);
               setImportUrl('');
@@ -3221,7 +3628,7 @@ export const RosterBuilderPage: React.FC = () => {
             }}
           >
             Cancel
-          </Box>
+          </ButtonBase>
           <Button
             onClick={handleImportFromUrl}
             variant="contained"
@@ -3646,19 +4053,38 @@ const TankCard = React.memo<TankCardProps>(({ tankNum, tank, onChange, available
                       sx={glassSx}
                     />
                   </Box>
-                  <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
-                    <TextField
-                      fullWidth
+                  <Box sx={{ flex: '1 1 20%', minWidth: 100 }}>
+                    <Autocomplete
+                      freeSolo
                       size="small"
-                      type="number"
-                      label="Player #"
-                      value={tank.playerNumber || ''}
-                      onChange={(e) =>
-                        onChange({
-                          playerNumber: e.target.value ? parseInt(e.target.value, 10) : undefined,
-                        })
-                      }
-                      sx={glassSx}
+                      options={['portal', 'bridge', 'tomb']}
+                      value={tank.positionTag ?? null}
+                      onChange={(_, value) => onChange({ positionTag: value ?? undefined })}
+                      onInputChange={(_, value, reason) => {
+                        if (reason === 'input') {
+                          onChange({ positionTag: value || undefined });
+                        }
+                      }}
+                      slotProps={{ popper: { disablePortal: true } }}
+                      renderInput={(params) => <TextField {...params} label="Tag" sx={glassSx} />}
+                    />
+                  </Box>
+                  <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
+                    <Autocomplete
+                      freeSolo
+                      size="small"
+                      options={[]}
+                      value={tank.playerNumber ?? null}
+                      onChange={(_, value) => onChange({ playerNumber: value ?? undefined })}
+                      onInputChange={(_, value, reason) => {
+                        if (reason === 'input') {
+                          onChange({ playerNumber: value || undefined });
+                        }
+                      }}
+                      slotProps={{ popper: { disablePortal: true } }}
+                      renderInput={(params) => (
+                        <TextField {...params} label="Position" sx={glassSx} />
+                      )}
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
@@ -4396,19 +4822,38 @@ const HealerCard = React.memo<HealerCardProps>(
                         sx={glassSx}
                       />
                     </Box>
-                    <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
-                      <TextField
-                        fullWidth
+                    <Box sx={{ flex: '1 1 20%', minWidth: 100 }}>
+                      <Autocomplete
+                        freeSolo
                         size="small"
-                        type="number"
-                        label="Player #"
-                        value={healer.playerNumber || ''}
-                        onChange={(e) =>
-                          onChange({
-                            playerNumber: e.target.value ? parseInt(e.target.value, 10) : undefined,
-                          })
-                        }
-                        sx={glassSx}
+                        options={['portal', 'bridge', 'tomb']}
+                        value={healer.positionTag ?? null}
+                        onChange={(_, value) => onChange({ positionTag: value ?? undefined })}
+                        onInputChange={(_, value, reason) => {
+                          if (reason === 'input') {
+                            onChange({ positionTag: value || undefined });
+                          }
+                        }}
+                        slotProps={{ popper: { disablePortal: true } }}
+                        renderInput={(params) => <TextField {...params} label="Tag" sx={glassSx} />}
+                      />
+                    </Box>
+                    <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
+                      <Autocomplete
+                        freeSolo
+                        size="small"
+                        options={[]}
+                        value={healer.playerNumber ?? null}
+                        onChange={(_, value) => onChange({ playerNumber: value ?? undefined })}
+                        onInputChange={(_, value, reason) => {
+                          if (reason === 'input') {
+                            onChange({ playerNumber: value || undefined });
+                          }
+                        }}
+                        slotProps={{ popper: { disablePortal: true } }}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Position" sx={glassSx} />
+                        )}
                       />
                     </Box>
                     <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
@@ -4630,6 +5075,57 @@ const HealerCard = React.memo<HealerCardProps>(
                       </Box>
                     </Box>
                   )}
+
+                  <Autocomplete
+                    multiple
+                    freeSolo
+                    size="small"
+                    options={[]}
+                    value={healer.specificSkills}
+                    onChange={(_, value) => onChange({ specificSkills: value })}
+                    slotProps={{
+                      popper: {
+                        disablePortal: true,
+                      },
+                    }}
+                    ChipProps={{
+                      onMouseDown: (event) => {
+                        event.stopPropagation();
+                      },
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Specific Skills Required"
+                        placeholder="Add skill..."
+                        sx={glassSx}
+                      />
+                    )}
+                    renderTags={(value, getTagProps) =>
+                      value.map((option, index) => {
+                        const { key, ...chipProps } = getTagProps({ index });
+                        return (
+                          <Chip
+                            label={option}
+                            {...chipProps}
+                            key={key}
+                            size="small"
+                            sx={{
+                              borderRadius: '6px',
+                              backgroundColor: healerIsDark
+                                ? 'rgba(255,255,255,0.06)'
+                                : 'rgba(0,0,0,0.05)',
+                              border: healerIsDark
+                                ? '1px solid rgba(255,255,255,0.1)'
+                                : '1px solid rgba(0,0,0,0.1)',
+                              fontWeight: 500,
+                              fontSize: '0.75rem',
+                            }}
+                          />
+                        );
+                      })
+                    }
+                  />
 
                   <TextField
                     fullWidth
@@ -4948,7 +5444,9 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                           monsterSet: value ? findSetIdByName(value) : undefined,
                         })
                       }
-                      groupBy={() => 'Monster Sets'}
+                      groupBy={(option) =>
+                        DPS_MYTHIC_SET_NAMES.has(option) ? 'Mythic Sets' : 'Monster Sets'
+                      }
                       renderInput={(params) => (
                         <TextField
                           {...params}
@@ -5068,9 +5566,8 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                   }}
                 >
                   {(['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'] as const).map((type) => (
-                    <Box
+                    <ButtonBase
                       key={type}
-                      component={'button' as React.ElementType}
                       onClick={() => onConvertToJail(slot.slotNumber, type)}
                       sx={{
                         px: 1.25,
@@ -5091,14 +5588,13 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                       }}
                     >
                       {jailLabels[type]}
-                    </Box>
+                    </ButtonBase>
                   ))}
                 </Box>
               </Box>
             ) : (
               <Box>
-                <Box
-                  component={'button' as React.ElementType}
+                <ButtonBase
                   onClick={() => onConvertToDPS(slot.slotNumber)}
                   sx={{
                     display: 'inline-flex',
@@ -5123,7 +5619,7 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                   }}
                 >
                   Convert Back to Regular DPS
-                </Box>
+                </ButtonBase>
               </Box>
             )}
 
@@ -5183,19 +5679,38 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                         sx={glassSx}
                       />
                     </Box>
-                    <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
-                      <TextField
-                        fullWidth
+                    <Box sx={{ flex: '1 1 20%', minWidth: 100 }}>
+                      <Autocomplete
+                        freeSolo
                         size="small"
-                        type="number"
-                        label="Player #"
-                        value={slot.playerNumber || ''}
-                        onChange={(e) =>
-                          onChange({
-                            playerNumber: e.target.value ? parseInt(e.target.value, 10) : undefined,
-                          })
-                        }
-                        sx={glassSx}
+                        options={['portal', 'bridge', 'tomb']}
+                        value={slot.positionTag ?? null}
+                        onChange={(_, value) => onChange({ positionTag: value ?? undefined })}
+                        onInputChange={(_, value, reason) => {
+                          if (reason === 'input') {
+                            onChange({ positionTag: value || undefined });
+                          }
+                        }}
+                        slotProps={{ popper: { disablePortal: true } }}
+                        renderInput={(params) => <TextField {...params} label="Tag" sx={glassSx} />}
+                      />
+                    </Box>
+                    <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
+                      <Autocomplete
+                        freeSolo
+                        size="small"
+                        options={[]}
+                        value={slot.playerNumber ?? null}
+                        onChange={(_, value) => onChange({ playerNumber: value ?? undefined })}
+                        onInputChange={(_, value, reason) => {
+                          if (reason === 'input') {
+                            onChange({ playerNumber: value || undefined });
+                          }
+                        }}
+                        slotProps={{ popper: { disablePortal: true } }}
+                        renderInput={(params) => (
+                          <TextField {...params} label="Position" sx={glassSx} />
+                        )}
                       />
                     </Box>
                     <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
@@ -5421,6 +5936,57 @@ const DPSSlotCard = React.memo<DPSSlotCardProps>(
                     </Box>
                   )}
 
+                  <Autocomplete
+                    multiple
+                    freeSolo
+                    size="small"
+                    options={[]}
+                    value={slot.specificSkills ?? []}
+                    onChange={(_, value) => onChange({ specificSkills: value })}
+                    slotProps={{
+                      popper: {
+                        disablePortal: true,
+                      },
+                    }}
+                    ChipProps={{
+                      onMouseDown: (event) => {
+                        event.stopPropagation();
+                      },
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Specific Skills Required"
+                        placeholder="Add skill..."
+                        sx={glassSx}
+                      />
+                    )}
+                    renderTags={(value, getTagProps) =>
+                      value.map((option, index) => {
+                        const { key, ...chipProps } = getTagProps({ index });
+                        return (
+                          <Chip
+                            label={option}
+                            {...chipProps}
+                            key={key}
+                            size="small"
+                            sx={{
+                              borderRadius: '6px',
+                              backgroundColor: dpsIsDark
+                                ? 'rgba(255,255,255,0.06)'
+                                : 'rgba(0,0,0,0.05)',
+                              border: dpsIsDark
+                                ? '1px solid rgba(255,255,255,0.1)'
+                                : '1px solid rgba(0,0,0,0.1)',
+                              fontWeight: 500,
+                              fontSize: '0.75rem',
+                            }}
+                          />
+                        );
+                      })
+                    }
+                  />
+
                   <TextField
                     fullWidth
                     multiline
@@ -5450,120 +6016,129 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
   lines.push(`**${roster.rosterName}**`);
   lines.push('');
 
-  // Helper to format ultimate in brackets
-  const formatUlt = (ult: string | null): string => {
-    if (!ult) return '';
-    // Return custom ultimates as-is, or use preset names
-    return ` [${ult}]`;
+  // Wrap a value in brackets as a header token — returns empty string if falsy
+  const bracket = (val: string | null | undefined): string => (val ? ` [${val}]` : '');
+
+  // Wrap an array of values as bracket tokens
+  const bracketed = (vals: string[]): string => vals.map((v) => ` [${v}]`).join('');
+
+  // Derive group arrow from group name: "left" → ⬅️, "right" → ➡️
+  const groupArrow = (groupName?: string): string => {
+    if (!groupName) return '';
+    const lower = groupName.toLowerCase();
+    if (lower.includes('left')) return '⬅️';
+    if (lower.includes('right')) return '➡️';
+    return '';
   };
 
-  // Helper to format healer buff
-  const formatBuff = (buff: HealerBuff | null): string => {
-    if (!buff) return '';
-    // Enum values already contain the display names
-    return buff;
+  // Convert playerNumber to a pointing emoji, or return the raw value
+  const positionEmoji = (playerNumber?: string): string => {
+    if (!playerNumber) return '';
+    const lower = playerNumber.toLowerCase();
+    if (lower === 'left') return '👈';
+    if (lower === 'right') return '👉';
+    if (lower === 'center') return '👇';
+    return playerNumber;
   };
 
-  // Helper to format skill lines compactly (returns empty string if nothing)
-  const formatSkillLines = (skillLines: SkillLineConfig): string => {
-    if (skillLines.isFlex) return 'Flexible';
-    const lines = [skillLines.line1, skillLines.line2, skillLines.line3].filter(Boolean);
-    return lines.join('/');
-  };
-
-  // Helper to format gear sets (returns empty string if no sets)
-  const formatGearSets = (
-    tank?: {
-      set1?: KnownSetIDs;
-      set2?: KnownSetIDs;
-      monsterSet?: KnownSetIDs;
-      additionalSets?: KnownSetIDs[];
-    },
-    healer?: {
-      set1?: KnownSetIDs;
-      set2?: KnownSetIDs;
-      monsterSet?: KnownSetIDs;
-      additionalSets?: KnownSetIDs[];
-    },
-  ): string => {
-    const fivePieceSets: string[] = [];
-    const monsterSets: string[] = [];
-
-    const categorizeSet = (setId: KnownSetIDs): void => {
-      const displayName = getSetDisplayName(setId);
-      if (!displayName) return;
-
-      // Check if it's a monster set
-      if (MONSTER_SETS.includes(setId)) {
-        monsterSets.push(displayName);
-      } else {
-        fivePieceSets.push(displayName);
-      }
-    };
-
-    if (tank) {
-      if (tank.set1) categorizeSet(tank.set1);
-      if (tank.set2) categorizeSet(tank.set2);
-      if (tank.monsterSet) categorizeSet(tank.monsterSet);
-      if (tank.additionalSets) {
-        tank.additionalSets.forEach(categorizeSet);
-      }
+  // Format positionTag + playerNumber as bracket tokens
+  const formatPosition = (positionTag?: string, playerNumber?: string): string => {
+    if (!positionTag && !playerNumber) return '';
+    const emoji = positionEmoji(playerNumber);
+    const isEmoji = emoji === '👈' || emoji === '👉' || emoji === '👇';
+    if (positionTag && emoji && isEmoji) {
+      // Directional position → separate brackets: [Portal] [👈]
+      return ` [${positionTag}] [${emoji}]`;
     }
-    if (healer) {
-      if (healer.set1) categorizeSet(healer.set1);
-      if (healer.set2) categorizeSet(healer.set2);
-      if (healer.monsterSet) categorizeSet(healer.monsterSet);
-      if (healer.additionalSets) {
-        healer.additionalSets.forEach(categorizeSet);
-      }
+    if (positionTag && emoji) {
+      // Non-directional position → combined: [Tomb 2a]
+      return ` [${positionTag} ${emoji}]`;
     }
-
-    // Remove duplicates and sort
-    const uniqueFivePiece = Array.from(new Set(fivePieceSets)).sort((a, b) =>
-      a.localeCompare(b, 'en', { sensitivity: 'base' }),
-    );
-    const uniqueMonster = Array.from(new Set(monsterSets));
-
-    // Combine: five-piece sets alphabetically, then monster sets
-    return [...uniqueFivePiece, ...uniqueMonster].join('/');
+    if (positionTag) return ` [${positionTag}]`;
+    if (emoji) return ` [${emoji}]`;
+    return '';
   };
 
-  // Tanks - always MT/OT
+  // Format gear sets as a `GEAR: \`Set1\` \`Set2\`` line
+  const formatGearLine = (names: string[]): string => {
+    const filtered = names.filter(Boolean);
+    if (!filtered.length) return '';
+    return `GEAR: ${filtered.map((s) => `\`${s}\``).join(' ')}`;
+  };
+
+  // Format skill lines as a `LINES: \`Line1\` \`Line2\`` line
+  const formatSkillLinesLine = (skillLines: SkillLineConfig): string => {
+    if (skillLines.isFlex) return 'LINES: `Flexible`';
+    const parts = [skillLines.line1, skillLines.line2, skillLines.line3].filter(Boolean);
+    if (!parts.length) return '';
+    return `LINES: ${parts.map((l) => `\`${l}\``).join(' ')}`;
+  };
+
+  // Collect display names from a structured gear config
+  const collectGearNames = (config: {
+    set1?: KnownSetIDs;
+    set2?: KnownSetIDs;
+    monsterSet?: KnownSetIDs;
+    additionalSets?: KnownSetIDs[];
+  }): string[] => {
+    const result: string[] = [];
+    if (config.set1) result.push(getSetDisplayName(config.set1));
+    if (config.set2) result.push(getSetDisplayName(config.set2));
+    if (config.monsterSet) result.push(getSetDisplayName(config.monsterSet));
+    if (config.additionalSets)
+      config.additionalSets.forEach((id) => result.push(getSetDisplayName(id)));
+    return result.filter(Boolean);
+  };
+
+  // Tanks — arrow from group name, defaults MT=⬅️ OT=➡️
   [1, 2].forEach((num) => {
     const tank = roster[`tank${num}` as 'tank1' | 'tank2'];
-    const label = num === 1 ? 'MT' : 'OT';
-    const playerName = tank.playerName ? ` ${tank.playerName}` : '';
-    const labels = tank.labels && tank.labels.length > 0 ? ` (${tank.labels.join(', ')})` : '';
+    const arrow = groupArrow(tank.group?.groupName) || (num === 1 ? '⬅️' : '➡️');
+    const label = tank.roleLabel || (num === 1 ? 'MT' : 'OT');
+    const ult = bracket(tank.ultimate);
+    const pos = formatPosition(tank.positionTag, tank.playerNumber);
+    const roleNote = bracket(tank.roleNotes);
+    const labelsPart = tank.labels?.length ? bracketed(tank.labels) : '';
+    const player = tank.playerName ? ` @${tank.playerName}` : '';
 
-    lines.push(`${label}:${playerName}${labels}`);
-    const gearSets = formatGearSets(tank.gearSets);
-    if (gearSets) lines.push(gearSets);
-    const skillLines = formatSkillLines(tank.skillLines);
-    const ult = formatUlt(tank.ultimate);
-    if (skillLines || ult) lines.push(`${skillLines}${ult}`);
-    if (tank.notes) lines.push(`Notes: ${tank.notes}`);
+    lines.push(`${arrow}🛡️ **${label}**:${ult}${pos}${roleNote}${labelsPart}${player}`);
+
+    const gear = formatGearLine(collectGearNames(tank.gearSets));
+    if (gear) lines.push(gear);
+
+    const sl = formatSkillLinesLine(tank.skillLines);
+    if (sl) lines.push(sl);
+
+    if (tank.notes) lines.push(`*${tank.notes}*`);
+
     lines.push('');
   });
 
   lines.push('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
   lines.push('');
 
-  // Healers
+  // Healers — arrow from group name, defaults H1=⬅️ H2=➡️
   [roster.healer1, roster.healer2].forEach((h, index) => {
+    const arrow = groupArrow(h.group?.groupName) || (index === 0 ? '⬅️' : '➡️');
     const label = h.roleLabel || (index === 0 ? 'H1' : 'H2');
-    const playerName = h.playerName ? ` ${h.playerName}` : '';
-    const groupName = h.groups && h.groups.length > 0 ? ` (${h.groups.join(', ')})` : '';
-    const labels = h.labels && h.labels.length > 0 ? ` [${h.labels.join(', ')}]` : '';
+    const pos = formatPosition(h.positionTag, h.playerNumber);
+    const roleNote = bracket(h.roleNotes);
+    const ult = bracket(h.ultimate);
+    const buff = bracket(h.healerBuff);
+    const cp = bracket(h.championPoint);
+    const labelsPart = h.labels?.length ? bracketed(h.labels) : '';
+    const player = h.playerName ? ` @${h.playerName}` : '';
 
-    lines.push(`${label}:${playerName}${groupName}${labels}`);
-    const gearSets = formatGearSets(undefined, h);
-    if (gearSets) lines.push(gearSets);
-    const buff = formatBuff(h.healerBuff);
-    if (buff) lines.push(buff);
-    const skillLines = formatSkillLines(h.skillLines);
-    const ult = formatUlt(h.ultimate);
-    if (skillLines || ult) lines.push(`${skillLines}${ult}`);
-    if (h.notes) lines.push(`Notes: ${h.notes}`);
+    lines.push(`${arrow}💖 **${label}**:${pos}${roleNote}${ult}${buff}${cp}${labelsPart}${player}`);
+
+    const gear = formatGearLine(collectGearNames(h));
+    if (gear) lines.push(gear);
+
+    const sl = formatSkillLinesLine(h.skillLines);
+    if (sl) lines.push(sl);
+
+    if (h.notes) lines.push(`*${h.notes}*`);
+
     lines.push('');
   });
 
@@ -5590,71 +6165,42 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
     }
   };
 
-  // DPS - all slots are now in dpsSlots array, some may have jailDDType
+  // DPS — arrow from group name, no default arrow if no group
   const sortedDPS = [...roster.dpsSlots].sort((a, b) => a.slotNumber - b.slotNumber);
 
-  // Format a single DPS slot's gear/build line
-  const formatDPSDetails = (dd: DPSSlot): void => {
-    const gearParts: string[] = [];
-    if (dd.set1) gearParts.push(getSetDisplayName(dd.set1));
-    if (dd.set2) gearParts.push(getSetDisplayName(dd.set2));
-    if (dd.monsterSet) gearParts.push(getSetDisplayName(dd.monsterSet));
-    if (dd.arenaWeapon) gearParts.push(dd.arenaWeapon);
-    dd.additionalSets?.forEach((id) => gearParts.push(getSetDisplayName(id)));
-    if (gearParts.length) lines.push(gearParts.join('/'));
-    if (dd.skillLines) {
-      const sl = formatSkillLines(dd.skillLines);
-      const ult = dd.ultimate ? formatUlt(dd.ultimate) : '';
-      if (sl || ult) lines.push(`${sl}${ult}`);
-    } else if (dd.ultimate) {
-      lines.push(formatUlt(dd.ultimate).trim());
-    }
-  };
-
-  const formatDPSRow = (dd: DPSSlot): void => {
-    const playerName = dd.playerName ? ` ${dd.playerName}` : '';
-    const typeLabel = dd.jailDDType
+  sortedDPS.forEach((dd) => {
+    const arrow = groupArrow(dd.group?.groupName);
+    const jailType = dd.jailDDType
       ? ` [${formatJailDDType(dd.jailDDType, dd.customDescription)}]`
       : '';
-    const labels = dd.labels && dd.labels.length > 0 ? ` (${dd.labels.join(', ')})` : '';
-    lines.push(`${dd.slotNumber}${typeLabel}:${playerName}${labels}`);
-    formatDPSDetails(dd);
-  };
+    const pos = formatPosition(dd.positionTag, dd.playerNumber);
+    const roleNote = bracket(dd.roleNotes);
+    const labelsPart = dd.labels?.length ? bracketed(dd.labels) : '';
+    const player = dd.playerName ? ` @${dd.playerName}` : '';
 
-  // Check if any DDs have groups assigned
-  const hasGroups = sortedDPS.some((dd) => dd.groups?.length);
+    lines.push(
+      `${arrow}⚔️ **#${dd.slotNumber}${jailType}**:${pos}${roleNote}${labelsPart}${player}`,
+    );
 
-  if (hasGroups) {
-    // Preserve group order from availableGroups; append any unlisted groups at end
-    const groupOrder = [
-      ...roster.availableGroups,
-      ...sortedDPS
-        .flatMap((dd) => dd.groups ?? [])
-        .filter((g) => !roster.availableGroups.includes(g)),
-    ];
-    const groupedDDs = new Map<string, DPSSlot[]>(groupOrder.map((g) => [g, []]));
-    groupedDDs.set('Unassigned', []);
-    sortedDPS.forEach((dd) => {
-      if (dd.groups?.length) {
-        // A player in multiple groups appears under each group
-        dd.groups.forEach((g) => {
-          if (!groupedDDs.has(g)) groupedDDs.set(g, []);
-          groupedDDs.get(g)!.push(dd);
-        });
-      } else {
-        groupedDDs.get('Unassigned')!.push(dd);
-      }
-    });
-    groupedDDs.forEach((dds, groupName) => {
-      if (!dds.length) return;
-      lines.push(groupName);
-      dds.forEach(formatDPSRow);
-      lines.push('');
-    });
-  } else {
-    sortedDPS.forEach(formatDPSRow);
+    const ddGearParts: string[] = [];
+    if (dd.set1) ddGearParts.push(getSetDisplayName(dd.set1));
+    if (dd.set2) ddGearParts.push(getSetDisplayName(dd.set2));
+    if (dd.monsterSet) ddGearParts.push(getSetDisplayName(dd.monsterSet));
+    if (dd.additionalSets)
+      dd.additionalSets.forEach((id) => ddGearParts.push(getSetDisplayName(id)));
+
+    const gear = formatGearLine(ddGearParts.filter(Boolean));
+    if (gear) lines.push(gear);
+
+    if (dd.skillLines) {
+      const sl = formatSkillLinesLine(dd.skillLines);
+      if (sl) lines.push(sl);
+    }
+    if (dd.ultimate) lines.push(`[${dd.ultimate}]`);
+    if (dd.notes) lines.push(`*${dd.notes}*`);
+
     lines.push('');
-  }
+  });
 
   // General Notes
   if (roster.notes) {
