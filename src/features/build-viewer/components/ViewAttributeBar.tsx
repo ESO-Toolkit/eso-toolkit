@@ -33,11 +33,19 @@ export const ViewAttributeBar: React.FC<ViewAttributeBarProps> = ({ label, color
         px: 1.5,
         borderRadius: 2.5,
         background: isEmpty
-          ? isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)'
-          : isDark ? alpha(color, 0.05) : alpha(color, 0.03),
-        border: `1px solid ${isEmpty
-          ? isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'
-          : alpha(color, isDark ? 0.18 : 0.12)}`,
+          ? isDark
+            ? 'rgba(255,255,255,0.02)'
+            : 'rgba(0,0,0,0.015)'
+          : isDark
+            ? alpha(color, 0.05)
+            : alpha(color, 0.03),
+        border: `1px solid ${
+          isEmpty
+            ? isDark
+              ? 'rgba(255,255,255,0.06)'
+              : 'rgba(0,0,0,0.05)'
+            : alpha(color, isDark ? 0.18 : 0.12)
+        }`,
         opacity: isEmpty ? 0.5 : 1,
       }}
     >
