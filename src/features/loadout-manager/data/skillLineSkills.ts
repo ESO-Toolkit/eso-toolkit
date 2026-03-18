@@ -387,6 +387,40 @@ export function getSkillsByCategory(category: string): SkillData[] {
 }
 
 /**
+ * Get all passive skills for a given skill line name.
+ */
+export function getPassivesByCategory(lineName: string): SkillData[] {
+  if (!passiveSkillsCache) {
+    initializeCache();
+    return [];
+  }
+
+  return passiveSkillsCache.filter((skill) => skill.category === lineName);
+}
+
+/**
+ * Search passive skills by name.
+ */
+export function searchPassives(query: string, limit = 50): SkillData[] {
+  if (!passiveSkillsCache) {
+    initializeCache();
+    return [];
+  }
+
+  const lowerQuery = query.toLowerCase().trim();
+  const results: SkillData[] = [];
+
+  for (const skill of passiveSkillsCache) {
+    if (skill.name.toLowerCase().includes(lowerQuery)) {
+      results.push(skill);
+      if (results.length >= limit) break;
+    }
+  }
+
+  return results;
+}
+
+/**
  * Get skill by name (case-insensitive exact match)
  */
 export function getSkillByName(name: string): SkillData | undefined {
