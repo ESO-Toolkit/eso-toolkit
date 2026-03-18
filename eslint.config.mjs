@@ -62,26 +62,26 @@ export default [
         performance: 'readonly',
         location: 'readonly',
         caches: 'readonly',
-        
+
         // Node.js globals
         process: 'readonly',
         global: 'readonly',
         module: 'readonly',
         NodeJS: 'readonly',
-        
+
         // Service Worker globals
         ServiceWorkerGlobalScope: 'readonly',
         FetchEvent: 'readonly',
         ExtendableEvent: 'readonly',
         ExtendableMessageEvent: 'readonly',
-        
+
         // Test globals
         describe: 'readonly',
         it: 'readonly',
         expect: 'readonly',
         beforeEach: 'readonly',
         jest: 'readonly',
-        
+
         // React globals
         React: 'readonly',
       },
@@ -105,33 +105,33 @@ export default [
     rules: {
       // ESLint recommended rules
       ...js.configs.recommended.rules,
-      
+
       // TypeScript recommended rules
       ...typescript.configs.recommended.rules,
-      
+
       // React recommended rules
       ...react.configs.recommended.rules,
-      
+
       // React Hooks recommended rules
       ...reactHooks.configs.recommended.rules,
-      
+
       // React Hooks exhaustive deps (what Strict Mode helps find)
       'react-hooks/exhaustive-deps': 'error', // Ensure all dependencies are listed
-      'react-hooks/rules-of-hooks': 'error',   // Ensure hooks are called correctly
-      
+      'react-hooks/rules-of-hooks': 'error', // Ensure hooks are called correctly
+
       // Import recommended rules
       ...importPlugin.configs.recommended.rules,
       ...importPlugin.configs.typescript.rules,
-      
+
       // Custom rules
       'no-console': 'error',
       'import/no-default-export': 'error',
       'comma-dangle': ['error', 'always-multiline'],
-      
+
       // Disable React in JSX scope rule (not needed in React 17+)
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off', // Using TypeScript for prop validation
-      
+
       // Import order rules
       'import/order': [
         'error',
@@ -141,7 +141,7 @@ export default [
           alphabetize: { order: 'asc', caseInsensitive: true },
         },
       ],
-      
+
       // TypeScript specific rules
       '@typescript-eslint/explicit-function-return-type': [
         'error',
@@ -160,7 +160,7 @@ export default [
         },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
-      
+
       // Allow Three.js properties in React components
       'react/no-unknown-property': [
         'error',
@@ -177,7 +177,7 @@ export default [
             'receiveShadow',
             'args',
             'object', // For primitive components
-            
+
             // Three.js material properties
             'transparent',
             'opacity',
@@ -186,7 +186,7 @@ export default [
             'alphaTest',
             'shininess',
             'depthWrite',
-            
+
             // Three.js light properties
             'intensity',
             'shadow-mapSize-width',
@@ -196,17 +196,22 @@ export default [
       ],
     },
   },
-  
-  // Configuration for test files
+
+  // Configuration for test files (unit tests and Playwright specs)
   {
-    files: ['**/*.test.ts', '**/*.test.tsx'],
+    files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
     languageOptions: {
       parserOptions: {
         project: null,
       },
     },
+    rules: {
+      // Playwright specs use dynamic import() strings that run in the browser context;
+      // the Node-side resolver cannot resolve paths like '/src/utils/foo.ts'.
+      'import/no-unresolved': 'off',
+    },
   },
-  
+
   // Configuration for story files
   {
     files: ['**/*.stories.@(ts|tsx|js|jsx|mjs|cjs)', '.storybook/main.ts'],
@@ -215,7 +220,7 @@ export default [
       'storybook/default-exports': 'error',
     },
   },
-  
+
   // Configuration for specific files that need default exports
   {
     files: [
@@ -233,7 +238,7 @@ export default [
       'import/no-default-export': 'off',
     },
   },
-  
+
   // Configuration for logger context (allow console)
   {
     files: ['src/contexts/LoggerContext.tsx'],
@@ -241,7 +246,7 @@ export default [
       'no-console': 'off',
     },
   },
-  
+
   // Configuration for skill lines data (no project)
   {
     files: ['src/data/skill-lines/**/*'],

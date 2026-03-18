@@ -333,6 +333,16 @@ export function getSetDisplayName(setId: KnownSetIDs | undefined | null): string
   return displayName;
 }
 
+// Pre-built O(1) index: lowercase display name → set ID.
+// Avoids linear scans in findSetIdByName, which is called in hot paths like
+// Autocomplete groupBy callbacks (fires per-option, per render).
+const SET_NAME_TO_ID_INDEX: ReadonlyMap<string, KnownSetIDs> = new Map(
+  Object.entries(SET_DISPLAY_NAMES).map(([id, name]) => [
+    name.toLowerCase(),
+    Number(id) as KnownSetIDs,
+  ]),
+);
+
 /**
  * Find a set ID by its display name (case-insensitive, handles variations)
  * Returns undefined if not found
@@ -342,23 +352,13 @@ export function findSetIdByName(displayName: string | undefined | null): KnownSe
 
   const normalized = displayName.toLowerCase().trim();
 
-  // Try exact match first
-  for (const [setId, name] of Object.entries(SET_DISPLAY_NAMES)) {
-    if (name.toLowerCase() === normalized) {
-      return Number(setId) as KnownSetIDs;
-    }
-  }
+  // O(1) exact match
+  const direct = SET_NAME_TO_ID_INDEX.get(normalized);
+  if (direct !== undefined) return direct;
 
-  // If no exact match, try removing "Perfected" prefix and search again
-  // This handles cases like "Perfected Saxhleel Champion" → "Saxhleel Champion"
+  // Strip "Perfected" prefix and try again — handles inputs like "Perfected Saxhleel Champion"
   const withoutPerfected = normalized.replace(/^perfected\s+/, '');
-  if (withoutPerfected !== normalized) {
-    for (const [setId, name] of Object.entries(SET_DISPLAY_NAMES)) {
-      if (name.toLowerCase() === withoutPerfected) {
-        return Number(setId) as KnownSetIDs;
-      }
-    }
-  }
+  if (withoutPerfected !== normalized) return SET_NAME_TO_ID_INDEX.get(withoutPerfected);
 
   return undefined;
 }

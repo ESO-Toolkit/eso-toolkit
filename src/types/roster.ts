@@ -126,12 +126,12 @@ export interface DPSSlot {
   positionTag?: string; // Assignment tag — e.g. "portal", "slayer", "banner"
   playerNumber?: string; // Position within that tag — e.g. "left", "right", "1"
   roleLabel?: string; // e.g., "DD1", "Portal DD"
-  roleNotes?: string; // e.g., "Portal L - Ele sus", "Z'en", etc.
   labels?: string[]; // Multiple labels/tags for the player
   // Structured gear (matches tank/healer pattern)
   set1?: KnownSetIDs; // Primary 5-piece set (Body)
   set2?: KnownSetIDs; // Secondary 5-piece set (Jewelry)
   monsterSet?: KnownSetIDs; // Monster/Mythic set
+  arenaWeapon?: string; // Arena weapon (e.g., "Maelstrom's Bow", "Asylum Restoration Staff")
   additionalSets?: KnownSetIDs[]; // Extra gear sets
   /** @deprecated Use set1/set2/monsterSet instead. Kept for backward compat decoding. */
   gearSets?: KnownSetIDs[]; // Legacy flat gear set tracking
@@ -139,6 +139,8 @@ export interface DPSSlot {
   championPoint?: string | null; // Champion point selection (free text or preset)
   specificSkills?: string[]; // Specific skills required for this slot
   ultimate?: string | null; // Ultimate ability
+  groups?: string[]; // Multiple group memberships (e.g., ["Left Stack", "Portal"])
+  /** @deprecated Use groups instead. Kept for backward-compat URL decoding. */
   group?: PlayerGroup;
   notes?: string;
   jailDDType?: JailDDType; // If set, this slot is configured as a jail DD
@@ -153,17 +155,19 @@ export interface HealerSetup {
   positionTag?: string; // Assignment tag — e.g. "portal", "tomb" (shown before position)
   playerNumber?: string; // Position within that tag — e.g. "left", "right", "1"
   roleLabel?: string; // e.g., "H1", "H2"
-  roleNotes?: string; // e.g., "TOMB HEALER", "TOMB 1B"
   labels?: string[]; // Multiple labels/tags for the player
   set1: KnownSetIDs | undefined; // First 5-piece set
   set2: KnownSetIDs | undefined; // Second 5-piece set
   monsterSet?: KnownSetIDs; // 2-piece monster set (head + shoulders)
+  arenaWeapon?: string; // Arena weapon (e.g., "Asylum Restoration Staff")
   additionalSets?: KnownSetIDs[]; // For mythics or special items
   skillLines: SkillLineConfig;
   healerBuff: HealerBuff | null;
   championPoint?: HealerChampionPoint | null; // Champion point slotted
   specificSkills: string[];
   ultimate: string | null; // Allows preset ultimates or custom text
+  groups?: string[]; // Multiple group memberships
+  /** @deprecated Use groups instead. Kept for backward-compat URL decoding. */
   group?: PlayerGroup;
   notes?: string;
 }
@@ -176,12 +180,13 @@ export interface TankSetup {
   positionTag?: string; // Assignment tag — e.g. "portal", "bridge" (shown before position)
   playerNumber?: string; // Position within that tag — e.g. "left", "right", "1"
   roleLabel?: string; // e.g., "MT", "OT"
-  roleNotes?: string; // e.g., "TOMB 1A", "TOMB 1B"
   labels?: string[]; // Multiple labels/tags for the player
   gearSets: TankGearSet;
   skillLines: SkillLineConfig;
   ultimate: string | null; // Allows preset ultimates or custom text
   specificSkills: string[];
+  groups?: string[]; // Multiple group memberships (e.g., ["Left Stack", "Portal"])
+  /** @deprecated Use groups instead. Kept for backward-compat URL decoding. */
   group?: PlayerGroup;
   notes?: string;
 }
@@ -601,7 +606,7 @@ export const TANK_SETS: readonly KnownSetIDs[] = [
 ] as const;
 
 /**
- * Healer-specific 5-piece support setsasass
+ * Healer-specific 5-piece support sets
  * Alphabetically sorted
  * Can only be assigned to set1/set2 slots
  */
