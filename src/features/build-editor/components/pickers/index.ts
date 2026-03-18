@@ -6,3 +6,5 @@ export { FoodPicker } from './FoodPicker';
 export type { FoodPickerProps } from './FoodPicker';
 export { PassivesPicker } from './PassivesPicker';
 export type { PassivesPickerProps } from './PassivesPicker';
+export { PotionPicker } from './PotionPicker';
+export type { PotionPickerProps } from './PotionPicker';

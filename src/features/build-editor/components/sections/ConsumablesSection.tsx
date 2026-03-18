@@ -1,10 +1,9 @@
 /**
  * Consumables Section — potions and food/drink buffs.
- * Glass-style tabs; food tab delegates to FoodPicker; potions tab is placeholder.
+ * Glass-style tabs; food tab delegates to FoodPicker; potions tab delegates to PotionPicker.
  */
 
-import { Add as AddIcon } from '@mui/icons-material';
-import { Box, Button, Stack, Typography } from '@mui/material';
+import { Box, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,41 +11,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/store/storeWithHistory';
 
 import { setConsumables } from '../../store/buildEditorSlice';
-import { GlassPanel } from '../primitives/GlassPanel';
 import { FoodPicker } from '../pickers/FoodPicker';
-
-// ─── Style helpers ────────────────────────────────────────────────────────────
-
-const glassAddBtnSx = (isDark: boolean): Record<string, unknown> => ({
-  alignSelf: 'flex-start' as const,
-  fontSize: 11,
-  fontFamily: 'Space Grotesk, Inter, system-ui',
-  fontWeight: 600,
-  borderRadius: '99px',
-  textTransform: 'none' as const,
-  borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
-  color: 'var(--be-accent, #38bdf8)',
-  backdropFilter: 'blur(6px)',
-  '&:hover': {
-    borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.40)',
-    background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
-  },
-  '&.Mui-disabled': {
-    borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
-    color: 'text.disabled',
-  },
-});
-
-const glassEmptySx = (isDark: boolean): Record<string, unknown> => ({
-  background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
-  backdropFilter: 'blur(6px)',
-  WebkitBackdropFilter: 'blur(6px)',
-  border: `1px dashed ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-  borderRadius: 3,
-  p: 3,
-  textAlign: 'center' as const,
-  boxShadow: isDark ? 'inset 0 1px 0 rgba(255,255,255,0.02)' : 'none',
-});
+import { PotionPicker } from '../pickers/PotionPicker';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -113,52 +79,16 @@ export const ConsumablesSection: React.FC = () => {
         </Box>
 
         {tab === 'potions' && (
-          <Stack spacing={1}>
-            {setup.consumables.potions.length === 0 ? (
-              <Box sx={glassEmptySx(isDark)}>
-                <Typography
-                  variant="caption"
-                  color="text.disabled"
-                  sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
-                >
-                  No potions added yet
-                </Typography>
-              </Box>
-            ) : (
-              setup.consumables.potions.map((p, i) => (
-                <GlassPanel key={i} sx={{ p: 1.25 }}>
-                  <Typography
-                    variant="caption"
-                    fontWeight={700}
-                    display="block"
-                    sx={{ fontSize: 12, fontFamily: 'Space Grotesk, Inter, system-ui' }}
-                  >
-                    {p.name}
-                  </Typography>
-                  <Typography variant="caption" color="text.disabled" sx={{ fontSize: 10 }}>
-                    {p.effects.join(', ')}
-                  </Typography>
-                </GlassPanel>
-              ))
-            )}
-            <Button
-              startIcon={<AddIcon sx={{ fontSize: 14 }} />}
-              variant="outlined"
-              size="small"
-              disabled
-              sx={glassAddBtnSx(isDark)}
-            >
-              Add Potion (coming soon)
-            </Button>
-          </Stack>
+          <PotionPicker
+            potions={setup.consumables.potions}
+            onChange={(potions) => dispatch(setConsumables({ ...setup.consumables, potions }))}
+          />
         )}
 
         {tab === 'food' && (
           <FoodPicker
             food={setup.consumables.food}
-            onChange={(food) =>
-              dispatch(setConsumables({ ...setup.consumables, food }))
-            }
+            onChange={(food) => dispatch(setConsumables({ ...setup.consumables, food }))}
           />
         )}
       </Stack>

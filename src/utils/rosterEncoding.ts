@@ -9,6 +9,8 @@
  * than naïve base64 encoding.
  */
 
+import type { BuildChampionPoints, ChampionTree } from '../features/build-editor/types/build.types';
+import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 import { KnownSetIDs } from '../types/abilities';
 import {
   CLASS_SKILL_LINES,
@@ -23,7 +25,6 @@ import {
   HealerSetup,
   DPSSlot,
   SkillLineConfig,
-  PlayerGroup,
   BuildReference,
   defaultTankSetup,
   defaultHealerSetup,
@@ -34,8 +35,6 @@ import type {
   EncounterOverrides,
   PlayerOverride,
 } from '../types/trial-encounters';
-import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
-import type { BuildChampionPoints, ChampionTree } from '../features/build-editor/types/build.types';
 
 import { Logger, LogLevel } from './logger';
 
@@ -109,7 +108,7 @@ export interface CompactTank {
   gs?: CompactGear; // gearSets
   sl?: CompactSkills; // skillLines
   ul?: number | string; // ultimate: SupportUltimate index or custom string
-  ss?: string[]; // specificSkills
+  ss?: (number | string)[]; // specificSkills: ability IDs (new) or names (legacy)
   grs?: string[]; // groups (multi-group memberships)
   gr?: CompactGroup; // @deprecated — legacy single group, decode only
   no?: string; // notes
@@ -134,7 +133,7 @@ export interface CompactHealer {
   sl?: CompactSkills; // skillLines
   hb?: number; // healerBuff: HealerBuff index
   cp?: number; // championPoint: HealerChampionPoint index
-  ss?: string[]; // specificSkills
+  ss?: (number | string)[]; // specificSkills: ability IDs (new) or names (legacy)
   ul?: number | string; // ultimate: SupportUltimate index or custom string
   grs?: string[]; // groups (multi-group memberships)
   gr?: CompactGroup; // @deprecated — legacy single group, decode only
@@ -161,7 +160,7 @@ export interface CompactDPS {
   gs?: number[]; // legacy gearSets (backward compat decode only)
   sl?: CompactSkills; // skillLines
   cp?: string; // championPoint
-  ss?: string[]; // specificSkills
+  ss?: (number | string)[]; // specificSkills: ability IDs (new) or names (legacy)
   ul?: number | string; // ultimate: SupportUltimate index or custom string
   grs?: string[]; // groups (multi-group memberships)
   gr?: CompactGroup; // @deprecated — legacy single group, decode only
@@ -211,7 +210,7 @@ export interface CompactRoster {
   ag?: string[]; // availableGroups
   no?: string; // notes
   to?: CompactTrialOverrides; // trialOverrides (per-fight builds)
-  dl?: number; // detail level: 0=simple 1=advanced 2=full
+  dl?: number; // detail level: 0=simple 1=full
 }
 
 // ============================================================
@@ -298,15 +297,18 @@ function expandBuildRef(c: CompactBuildRef): BuildReference {
   };
 }
 
-function compactFood(food?: {
-  id?: number;
-  name?: string;
-}): CompactFood | undefined {
+function compactFood(food?: { id?: number; name?: string }): CompactFood | undefined {
   if (!food || (food.id == null && !food.name)) return undefined;
   const c: CompactFood = {};
   if (food.id != null) c.i = food.id;
   if (food.name) c.n = food.name;
   return c;
+}
+
+/** Decode specificSkills: keep only numbers (ability IDs). Legacy string entries are dropped. */
+function decodeSpecificSkills(ss?: (number | string)[]): number[] {
+  if (!ss) return [];
+  return ss.filter((v): v is number => typeof v === 'number');
 }
 
 function expandFood(c?: CompactFood): { id?: number; name?: string } | undefined {
@@ -481,7 +483,7 @@ function expandTank(c?: CompactTank): TankSetup {
     gearSets: expandGear(c?.gs),
     skillLines: expandSkills(c?.sl),
     ultimate: decodeUltimate(c?.ul),
-    specificSkills: c?.ss ?? [],
+    specificSkills: decodeSpecificSkills(c?.ss),
     groups: expandGroups(c?.grs, c?.gr),
     notes: c?.no,
     buildRef: c?.br ? expandBuildRef(c.br) : undefined,
@@ -555,7 +557,7 @@ function expandHealer(c?: CompactHealer): HealerSetup {
         : null,
     championPoint:
       c?.cp != null ? ((CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint) ?? null) : null,
-    specificSkills: c?.ss ?? [],
+    specificSkills: decodeSpecificSkills(c?.ss),
     ultimate: decodeUltimate(c?.ul),
     groups: expandGroups(c?.grs, c?.gr),
     notes: c?.no,
@@ -634,7 +636,7 @@ function expandDPS(c: CompactDPS): DPSSlot {
         : legacyAdditional,
     skillLines: c.sl ? expandSkills(c.sl) : undefined,
     championPoint: c.cp || undefined,
-    specificSkills: c.ss ?? [],
+    specificSkills: decodeSpecificSkills(c.ss),
     ultimate: c.ul != null ? decodeUltimate(c.ul) : null,
     groups: expandGroups(c.grs, c.gr),
     notes: c.no,
@@ -761,13 +763,13 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
   if (roster.notes) c.no = roster.notes;
   if (roster.trialOverrides) c.to = compactTrialOverrides(roster.trialOverrides);
   if (roster.rosterDetailLevel) {
-    const DL_MAP: Record<RosterDetailLevel, number> = { simple: 0, advanced: 1, full: 2 };
+    const DL_MAP: Record<RosterDetailLevel, number> = { simple: 0, full: 1 };
     c.dl = DL_MAP[roster.rosterDetailLevel];
   }
   return c;
 }
 
-const DL_LEVELS: RosterDetailLevel[] = ['simple', 'advanced', 'full'];
+const DL_LEVELS: RosterDetailLevel[] = ['simple', 'full'];
 
 export function expandCompactRoster(c: CompactRoster): RaidRoster {
   const dpsSlots = createDefaultDPSSlots();

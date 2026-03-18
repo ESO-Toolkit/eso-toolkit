@@ -19,29 +19,34 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Container,
   Divider,
+  IconButton,
   Paper,
   Skeleton,
   Snackbar,
   Alert,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
+import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
+import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
+import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 import { RaidRoster, TankSetup, HealerSetup, DPSSlot, MONSTER_SETS } from '../types/roster';
 import {
   TrialBuildOverrides,
   getTrialById,
   encounterHasOverrides,
 } from '../types/trial-encounters';
+import { encodeBuildToURL } from '../utils/buildEncoding';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
+import { createBuildFromSlot } from '../utils/rosterBuildBridge';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { getSetDisplayName } from '../utils/setNameUtils';
-import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
-import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
-import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
 
 // ============================================================
 // Local display helpers
@@ -171,6 +176,25 @@ const TankCard: React.FC<TankCardProps> = ({ tank, label, color, isDarkMode }) =
     tank.ultimate ||
     tank.notes;
 
+  const [viewLoading, setViewLoading] = useState(false);
+  const handleViewBuild = useCallback(async () => {
+    setViewLoading(true);
+    try {
+      const build = createBuildFromSlot(tank, 'any-class', 'tank');
+      const encoded = await encodeBuildToURL(build);
+      if (encoded) {
+        const basePath = window.location.pathname.replace(/\/rv(\/.*)?$/, '');
+        window.open(
+          `${window.location.origin}${basePath}/bv?b=${encoded}`,
+          '_blank',
+          'noopener,noreferrer',
+        );
+      }
+    } finally {
+      setViewLoading(false);
+    }
+  }, [tank]);
+
   return (
     <Paper
       elevation={0}
@@ -259,6 +283,27 @@ const TankCard: React.FC<TankCardProps> = ({ tank, label, color, isDarkMode }) =
               />
             ))}
           </Box>
+        )}
+        {hasContent && (
+          <Tooltip title="View build in Build Viewer" arrow placement="top">
+            <IconButton
+              size="small"
+              onClick={() => void handleViewBuild()}
+              disabled={viewLoading}
+              aria-label={`View ${label} build`}
+              sx={{
+                color,
+                opacity: 0.65,
+                '&:hover': { opacity: 1, backgroundColor: `${color}18` },
+              }}
+            >
+              {viewLoading ? (
+                <CircularProgress size={14} color="inherit" />
+              ) : (
+                <OpenInNewIcon sx={{ fontSize: '0.85rem' }} />
+              )}
+            </IconButton>
+          </Tooltip>
         )}
       </Box>
 
@@ -393,6 +438,25 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, label, color, isDarkMod
     healer.healerBuff ||
     healer.notes;
 
+  const [viewLoading, setViewLoading] = useState(false);
+  const handleViewBuild = useCallback(async () => {
+    setViewLoading(true);
+    try {
+      const build = createBuildFromSlot(healer, 'any-class', 'healer');
+      const encoded = await encodeBuildToURL(build);
+      if (encoded) {
+        const basePath = window.location.pathname.replace(/\/rv(\/.*)?$/, '');
+        window.open(
+          `${window.location.origin}${basePath}/bv?b=${encoded}`,
+          '_blank',
+          'noopener,noreferrer',
+        );
+      }
+    } finally {
+      setViewLoading(false);
+    }
+  }, [healer]);
+
   return (
     <Paper
       elevation={0}
@@ -481,6 +545,27 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, label, color, isDarkMod
               />
             ))}
           </Box>
+        )}
+        {hasContent && (
+          <Tooltip title="View build in Build Viewer" arrow placement="top">
+            <IconButton
+              size="small"
+              onClick={() => void handleViewBuild()}
+              disabled={viewLoading}
+              aria-label={`View ${healer.roleLabel ?? label} build`}
+              sx={{
+                color,
+                opacity: 0.65,
+                '&:hover': { opacity: 1, backgroundColor: `${color}18` },
+              }}
+            >
+              {viewLoading ? (
+                <CircularProgress size={14} color="inherit" />
+              ) : (
+                <OpenInNewIcon sx={{ fontSize: '0.85rem' }} />
+              )}
+            </IconButton>
+          </Tooltip>
         )}
       </Box>
 
@@ -668,6 +753,25 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
 
   const isEmpty = !slot.playerName && !slot.labels?.length;
 
+  const [viewLoading, setViewLoading] = useState(false);
+  const handleViewBuild = useCallback(async () => {
+    setViewLoading(true);
+    try {
+      const build = createBuildFromSlot(slot, 'any-class', 'magicka-dps');
+      const encoded = await encodeBuildToURL(build);
+      if (encoded) {
+        const basePath = window.location.pathname.replace(/\/rv(\/.*)?$/, '');
+        window.open(
+          `${window.location.origin}${basePath}/bv?b=${encoded}`,
+          '_blank',
+          'noopener,noreferrer',
+        );
+      }
+    } finally {
+      setViewLoading(false);
+    }
+  }, [slot]);
+
   return (
     <Box
       sx={{
@@ -765,11 +869,35 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
             />
           ))}
 
-          {/* Group */}
-          {slot.group?.groupName && (
+          {/* Group(s) — prefer new groups[] array, fall back to deprecated group.groupName */}
+          {(slot.groups?.length ? slot.groups : slot.group?.groupName ? [slot.group.groupName] : [])
+            .length > 0 && (
             <Typography sx={{ fontSize: '0.7rem', color: 'text.disabled', ml: 'auto' }}>
-              {slot.group.groupName}
+              {(slot.groups?.length ? slot.groups : [slot.group!.groupName]).join(', ')}
             </Typography>
+          )}
+          {/* View Build button */}
+          {!isEmpty && (
+            <Tooltip title="View build in Build Viewer" arrow placement="top">
+              <IconButton
+                size="small"
+                onClick={() => void handleViewBuild()}
+                disabled={viewLoading}
+                aria-label={`View DPS ${slot.slotNumber} build`}
+                sx={{
+                  color,
+                  opacity: 0.55,
+                  p: 0.25,
+                  '&:hover': { opacity: 1, backgroundColor: `${color}18` },
+                }}
+              >
+                {viewLoading ? (
+                  <CircularProgress size={12} color="inherit" />
+                ) : (
+                  <OpenInNewIcon sx={{ fontSize: '0.78rem' }} />
+                )}
+              </IconButton>
+            </Tooltip>
           )}
         </Box>
 

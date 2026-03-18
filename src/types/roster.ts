@@ -3,10 +3,11 @@
  * Defines the structure for raid roster management including roles, gear sets, and assignments
  */
 
+import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
+import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
+
 import { KnownSetIDs } from './abilities';
 import type { TrialBuildOverrides } from './trial-encounters';
-import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
-import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
 
 /**
  * Role types in a raid
@@ -106,7 +107,7 @@ export interface PlayerGroup {
 /**
  * Roster display detail level
  */
-export type RosterDetailLevel = 'simple' | 'advanced' | 'full';
+export type RosterDetailLevel = 'simple' | 'full';
 
 /**
  * Reference to a Build Editor build attached to a roster slot.
@@ -164,7 +165,7 @@ export interface DPSSlot {
   gearSets?: KnownSetIDs[]; // Legacy flat gear set tracking
   skillLines?: SkillLineConfig;
   championPoint?: string | null; // Champion point selection (free text or preset)
-  specificSkills?: string[]; // Specific skills required for this slot
+  specificSkills?: number[]; // Specific skill ability IDs required for this slot
   ultimate?: string | null; // Ultimate ability
   groups?: string[]; // Multiple group memberships (e.g., ["Left Stack", "Portal"])
   /** @deprecated Use groups instead. Kept for backward-compat URL decoding. */
@@ -202,7 +203,7 @@ export interface HealerSetup {
   skillLines: SkillLineConfig;
   healerBuff: HealerBuff | null;
   championPoint?: HealerChampionPoint | null; // Champion point slotted
-  specificSkills: string[];
+  specificSkills: number[];
   ultimate: string | null; // Allows preset ultimates or custom text
   groups?: string[]; // Multiple group memberships
   /** @deprecated Use groups instead. Kept for backward-compat URL decoding. */
@@ -233,7 +234,7 @@ export interface TankSetup {
   gearSets: TankGearSet;
   skillLines: SkillLineConfig;
   ultimate: string | null; // Allows preset ultimates or custom text
-  specificSkills: string[];
+  specificSkills: number[];
   groups?: string[]; // Multiple group memberships (e.g., ["Left Stack", "Portal"])
   /** @deprecated Use groups instead. Kept for backward-compat URL decoding. */
   group?: PlayerGroup;

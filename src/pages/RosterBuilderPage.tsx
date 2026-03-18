@@ -34,17 +34,12 @@ import {
 import {
   Button,
   ButtonBase,
-  Card,
-  CardContent,
   Container,
-  FormControl,
-  IconButton,
   Menu,
   MenuItem,
   ListItemIcon,
   ListItemText,
   Paper,
-  Select,
   Stack,
   TextField,
   Typography,
@@ -65,10 +60,10 @@ import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
+import { PerFightBuilds } from '../components/PerFightBuilds';
 import { DPSSlotCard } from '../components/roster/DPSSlotCard';
 import { HealerCard } from '../components/roster/HealerSlotCard';
 import { TankCard } from '../components/roster/TankSlotCard';
-import { PerFightBuilds } from '../components/PerFightBuilds';
 import { SetAssignmentManager } from '../components/SetAssignmentManager';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
@@ -97,6 +92,7 @@ import {
   createDefaultDPSSlots,
   MONSTER_SETS,
   ALL_5PIECE_SETS,
+  CLASS_SKILL_LINES,
 } from '../types/roster';
 import type { TrialBuildOverrides } from '../types/trial-encounters';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
@@ -215,7 +211,7 @@ interface CompactTank {
   gs?: CompactGear; // gearSets
   sl?: CompactSkills; // skillLines
   ul?: number | string; // ultimate: SupportUltimate index or custom string
-  ss?: string[]; // specificSkills
+  ss?: (number | string)[]; // specificSkills: ability IDs (new) or names (legacy)
   gr?: CompactGroup; // group
   no?: string; // notes
 }
@@ -400,7 +396,7 @@ function expandTank(c?: CompactTank): TankSetup {
     gearSets: expandGear(c?.gs),
     skillLines: expandSkills(c?.sl),
     ultimate: decodeUltimate(c?.ul),
-    specificSkills: c?.ss ?? [],
+    specificSkills: (c?.ss ?? []).filter((v): v is number => typeof v === 'number'),
     group: expandGroup(c?.gr),
     notes: c?.no,
   };
@@ -1937,7 +1933,7 @@ export const RosterBuilderPage: React.FC = () => {
                 : '1px solid rgba(0,0,0,0.06)',
             }}
           >
-            {(['simple', 'advanced', 'full'] as const).map((value) => (
+            {(['simple', 'full'] as const).map((value) => (
               <Box
                 key={value}
                 onClick={() => {
@@ -1993,7 +1989,7 @@ export const RosterBuilderPage: React.FC = () => {
                   },
                 }}
               >
-                {value === 'simple' ? 'Simple' : value === 'advanced' ? 'Advanced' : 'Full'}
+                {value === 'simple' ? 'Simple' : 'Full'}
               </Box>
             ))}
           </Box>
@@ -2620,8 +2616,8 @@ export const RosterBuilderPage: React.FC = () => {
           />
         </Box>
 
-        {/* Advanced / Full Mode: Full Roster Details */}
-        <Box sx={{ display: mode === 'advanced' || mode === 'full' ? 'block' : 'none' }}>
+        {/* Full Mode: Full Roster Details */}
+        <Box sx={{ display: mode === 'full' ? 'block' : 'none' }}>
           {/* Player Groups Management */}
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
@@ -2838,6 +2834,7 @@ export const RosterBuilderPage: React.FC = () => {
                 onChange={handleTank1Change}
                 availableGroups={memoizedGroups}
                 mode={mode}
+                savedRosterId={savedRosterIdRef.current ?? undefined}
               />
               <TankCard
                 key={2}
@@ -2846,6 +2843,7 @@ export const RosterBuilderPage: React.FC = () => {
                 onChange={handleTank2Change}
                 availableGroups={memoizedGroups}
                 mode={mode}
+                savedRosterId={savedRosterIdRef.current ?? undefined}
               />
             </Stack>
           </Box>
@@ -2931,6 +2929,7 @@ export const RosterBuilderPage: React.FC = () => {
                 availableGroups={memoizedGroups}
                 usedBuffs={usedBuffs}
                 mode={mode}
+                savedRosterId={savedRosterIdRef.current ?? undefined}
               />
               <HealerCard
                 key={2}
@@ -2940,6 +2939,7 @@ export const RosterBuilderPage: React.FC = () => {
                 availableGroups={memoizedGroups}
                 usedBuffs={usedBuffs}
                 mode={mode}
+                savedRosterId={savedRosterIdRef.current ?? undefined}
               />
             </Stack>
           </Box>
@@ -3033,6 +3033,7 @@ export const RosterBuilderPage: React.FC = () => {
                       onConvertToJail={handleConvertDPSToJail}
                       onConvertToDPS={handleConvertJailToDPS}
                       mode={mode}
+                      savedRosterId={savedRosterIdRef.current ?? undefined}
                     />
                   ))}
                 </Stack>

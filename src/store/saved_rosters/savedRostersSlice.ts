@@ -62,7 +62,7 @@ const savedRostersSlice = createSlice({
       const { slotKey, buildRef, inlineData } = action.payload;
       const ref = buildRef ?? undefined;
 
-      const applyInline = (slot: { buildRef?: BuildReference } & SlotInlineData) => {
+      const applyInline = (slot: { buildRef?: BuildReference } & SlotInlineData): void => {
         slot.buildRef = ref;
         if (inlineData) {
           if (inlineData.skills !== undefined) slot.skills = inlineData.skills;

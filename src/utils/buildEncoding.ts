@@ -11,6 +11,8 @@
  *   - id / createdAt / updatedAt  (regenerated on decode)
  */
 
+import { ESO_POTION_LOOKUP } from '@/data/esoPotions';
+
 import type {
   Build,
   BuildSetup,
@@ -287,7 +289,14 @@ function expandSetup(compact: CompactSetup, index: number): BuildSetup {
     skills: expandSkills(compact.sk),
     cp: expandCP(compact.cp),
     consumables: {
-      potions: (compact.pt ?? []).map((id) => ({ id, name: '', effects: [] })),
+      potions: (compact.pt ?? []).map((id) => {
+        const lookup = ESO_POTION_LOOKUP[id];
+        return {
+          id,
+          name: lookup?.name ?? '',
+          effects: lookup ? [...lookup.effects] : [],
+        };
+      }),
       food: compact.fo != null ? { id: compact.fo } : {},
     },
     passives: compact.pa ?? [],

@@ -36,11 +36,10 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { attachBuildToSlot, selectSavedRosters } from '@/store/saved_rosters';
-
 import type { RaidRoster } from '@/types/roster';
 
-import type { Build } from '../types/build.types';
 import { snapshotBuildToSlot } from '../../../utils/rosterBuildBridge';
+import type { Build } from '../types/build.types';
 
 // ─── Slot definitions ────────────────────────────────────────────────────────
 
@@ -203,9 +202,10 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
     setSelectedSlot(null);
   };
 
-  const selectedSlotHasBuild = selectedSlot && selectedRoster
-    ? !!getSlotInfo(selectedRoster.roster, selectedSlot).buildName
-    : false;
+  const selectedSlotHasBuild =
+    selectedSlot && selectedRoster
+      ? !!getSlotInfo(selectedRoster.roster, selectedSlot).buildName
+      : false;
 
   // Shared dialog paper styles
   const paperSx = {
@@ -238,13 +238,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
   // ── Empty state ──
   if (savedRosters.length === 0) {
     return (
-      <Dialog
-        open={open}
-        onClose={onClose}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{ sx: paperSx }}
-      >
+      <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth PaperProps={{ sx: paperSx }}>
         <DialogTitle sx={titleSx}>
           Add to Roster
           <IconButton onClick={onClose} size="small" aria-label="Close dialog">
@@ -295,9 +289,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
         <Stack spacing={3}>
           {/* ── Roster picker ── */}
           <FormControl size="small" fullWidth>
-            <InputLabel
-              sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13 }}
-            >
+            <InputLabel sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13 }}>
               Roster
             </InputLabel>
             <Select
@@ -327,7 +319,14 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
 
           {/* ── Slot picker ── */}
           <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 1.5,
+              }}
+            >
               <Typography
                 sx={{
                   display: 'block',
@@ -476,9 +475,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
           {/* ── Setup picker — only when multiple setups ── */}
           {build.setups.length > 1 && (
             <FormControl size="small" fullWidth>
-              <InputLabel
-                sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13 }}
-              >
+              <InputLabel sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13 }}>
                 Setup
               </InputLabel>
               <Select
@@ -510,9 +507,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
               sx={{
                 p: 1.5,
                 borderRadius: 2,
-                background: isDark
-                  ? 'rgba(34, 197, 94, 0.06)'
-                  : 'rgba(5, 150, 105, 0.06)',
+                background: isDark ? 'rgba(34, 197, 94, 0.06)' : 'rgba(5, 150, 105, 0.06)',
                 border: `1px solid ${isDark ? 'rgba(34, 197, 94, 0.2)' : 'rgba(5, 150, 105, 0.2)'}`,
               }}
             >
@@ -530,7 +525,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
                   : ''}{' '}
                 will be attached to{' '}
                 <strong>{SLOTS.find((s) => s.key === selectedSlot)?.label}</strong> in{' '}
-                <strong>"{selectedRoster?.roster.rosterName}"</strong>
+                <strong>&ldquo;{selectedRoster?.roster.rosterName}&rdquo;</strong>
               </Typography>
             </Box>
           )}

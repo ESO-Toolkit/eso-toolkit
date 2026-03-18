@@ -22,26 +22,18 @@ import {
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback } from 'react';
 
-import { KnownSetIDs } from '../../types/abilities';
-import {
-  DPSSlot,
-  JailDDType,
-  RosterDetailLevel,
-  SupportUltimate,
-  ALL_5PIECE_SETS,
-  MONSTER_SETS,
-} from '../../types/roster';
+import { DPSSlot, JailDDType, RosterDetailLevel, SupportUltimate } from '../../types/roster';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColors';
 import { dpsSlotToBuild } from '../../utils/rosterSlotToBuild';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
 
-import { makeGlassSx } from './shared/glassSx';
+import { ExtraGearPicker } from './shared/extra-gear-picker';
+import { makeGlassSx, makeSectionBoxSx, makeSectionHeaderSx } from './shared/glassSx';
 import {
   DPS_5PIECE_OPTIONS,
   DPS_MONSTER_OPTIONS,
   getUltimateIcon,
   isDDSpecialSet,
-  isMonsterSet,
 } from './shared/rosterCardHelpers';
 import { SkillLinePickerGroup } from './shared/skill-line-picker';
 import { SlotActionPill } from './shared/slot-action-pill';
@@ -59,6 +51,8 @@ export interface DPSSlotCardProps {
   onConvertToJail: (slotNumber: number, jailType: JailDDType) => void;
   onConvertToDPS: (slotNumber: number) => void;
   mode?: RosterDetailLevel;
+  /** Saved roster ID — enables round-trip editing via the build editor. */
+  savedRosterId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -95,7 +89,16 @@ const jailLabels: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 export const DPSSlotCard = React.memo<DPSSlotCardProps>(
-  ({ slot, slotIndex, availableGroups, onSlotChange, onConvertToJail, onConvertToDPS, mode }) => {
+  ({
+    slot,
+    slotIndex,
+    availableGroups,
+    onSlotChange,
+    onConvertToJail,
+    onConvertToDPS,
+    mode,
+    savedRosterId,
+  }) => {
     const onChange = useCallback(
       (updates: Partial<DPSSlot>) => onSlotChange(slotIndex, updates),
       [onSlotChange, slotIndex],
@@ -229,6 +232,9 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
               buildFactory={() => dpsSlotToBuild(slot)}
               color={dpsRoleColors.dps}
               label={`DPS ${slot.slotNumber}`}
+              slotKey={`dps${slot.slotNumber}`}
+              rosterId={savedRosterId}
+              buildRef={slot.buildRef}
             />
           </Box>
           <Stack spacing={1.5}>
@@ -246,17 +252,43 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
               </Box>
               <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
                 <Autocomplete
+                  multiple
                   freeSolo
                   size="small"
                   options={[...availableGroups].sort()}
-                  value={slot.group?.groupName || ''}
+                  value={slot.groups ?? []}
                   onChange={(_, value) =>
-                    onChange({
-                      group: value ? { groupName: value } : undefined,
-                    })
+                    onChange({ groups: value.length > 0 ? value : undefined })
+                  }
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        {...getTagProps({ index })}
+                        key={option}
+                        label={option}
+                        size="small"
+                        sx={{
+                          borderRadius: '6px',
+                          backgroundColor: dpsIsDark
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.05)',
+                          border: dpsIsDark
+                            ? '1px solid rgba(255,255,255,0.1)'
+                            : '1px solid rgba(0,0,0,0.1)',
+                          fontWeight: 500,
+                          fontSize: '0.75rem',
+                        }}
+                      />
+                    ))
                   }
                   renderInput={(params) => (
-                    <TextField {...params} size="small" label="Group" sx={glassSx} />
+                    <TextField
+                      {...params}
+                      size="small"
+                      label="Groups"
+                      placeholder="Add groups"
+                      sx={glassSx}
+                    />
                   )}
                 />
               </Box>
@@ -521,184 +553,160 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
               sx={{
                 mt: 2,
                 borderRadius: '10px !important',
-                backgroundColor: 'transparent',
+                backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.01)' : 'rgba(0,0,0,0.008)',
                 border: dpsIsDark
-                  ? '1px solid rgba(255,255,255,0.08)'
-                  : '1px solid rgba(0,0,0,0.08)',
+                  ? `1px solid ${dpsRoleColors.dps}15`
+                  : `1px solid ${dpsRoleColors.dps}12`,
                 '&:before': { display: 'none' },
                 '&.Mui-expanded': { margin: 0, marginTop: 2 },
+                transition: 'border-color 0.2s ease',
+                '&:hover': {
+                  borderColor: dpsIsDark ? `${dpsRoleColors.dps}28` : `${dpsRoleColors.dps}20`,
+                },
               }}
             >
               <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
+                expandIcon={
+                  <ExpandMoreIcon
+                    sx={{
+                      fontSize: 18,
+                      color: dpsIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
+                    }}
+                  />
+                }
                 sx={{ px: 1.5, minHeight: 40, '&.Mui-expanded': { minHeight: 40 } }}
               >
                 <Typography
-                  variant="body2"
                   sx={{
-                    color: dpsIsDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-                    fontWeight: 500,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    letterSpacing: 0.5,
+                    color: dpsIsDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
                   }}
                 >
                   Advanced Options
                 </Typography>
               </AccordionSummary>
-              <AccordionDetails sx={{ px: 1.5, pt: 0.5, pb: 1.5 }}>
-                <Stack spacing={1.25}>
-                  {/* Assignment */}
-                  <Typography
-                    sx={{
-                      fontSize: '0.6rem',
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                      color: dpsIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-                      mt: 0.5,
-                    }}
-                  >
-                    Assignment
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                    <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        label="Role Label"
-                        placeholder={`DD${slot.slotNumber}`}
-                        value={slot.roleLabel || ''}
-                        onChange={(e) => onChange({ roleLabel: e.target.value })}
-                        sx={glassSx}
-                      />
-                    </Box>
-                    <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        type="number"
-                        label="Player #"
-                        value={slot.playerNumber || ''}
-                        onChange={(e) =>
-                          onChange({
-                            playerNumber: e.target.value ? parseInt(e.target.value, 10) : undefined,
-                          })
-                        }
-                        sx={glassSx}
-                      />
-                    </Box>
-                    <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
-                      <Autocomplete
-                        multiple
-                        freeSolo
-                        size="small"
-                        options={[]}
-                        value={slot.labels || []}
-                        onChange={(_, value) => onChange({ labels: value })}
-                        renderTags={(value, getTagProps) =>
-                          value.map((option, index) => (
-                            <Chip
-                              {...getTagProps({ index })}
-                              key={option}
-                              label={option}
-                              size="small"
-                              sx={{
-                                borderRadius: '6px',
-                                backgroundColor: dpsIsDark
-                                  ? 'rgba(255,255,255,0.06)'
-                                  : 'rgba(0,0,0,0.05)',
-                                border: dpsIsDark
-                                  ? '1px solid rgba(255,255,255,0.1)'
-                                  : '1px solid rgba(0,0,0,0.1)',
-                                fontWeight: 500,
-                                fontSize: '0.75rem',
-                              }}
-                            />
-                          ))
-                        }
-                        renderInput={(params) => (
+              <AccordionDetails sx={{ px: 1.5, pt: 1, pb: 1.5 }}>
+                <Stack spacing={1.5}>
+                  {/* ── Assignment ─────────────────────────── */}
+                  <Box sx={makeSectionBoxSx(dpsIsDark)}>
+                    <Typography sx={makeSectionHeaderSx(dpsIsDark)}>Assignment</Typography>
+                    <Stack spacing={1.25}>
+                      <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                        <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
                           <TextField
-                            {...params}
+                            fullWidth
                             size="small"
-                            label="Tags"
-                            placeholder="Add tags"
+                            label="Role Label"
+                            placeholder={`DD${slot.slotNumber}`}
+                            value={slot.roleLabel || ''}
+                            onChange={(e) => onChange({ roleLabel: e.target.value })}
                             sx={glassSx}
                           />
-                        )}
-                      />
-                    </Box>
-                  </Box>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    multiline
-                    minRows={1}
-                    maxRows={4}
-                    label="Role Notes"
-                    placeholder="e.g., Portal L, Z'en, Ele sus"
-                    value={slot.roleNotes || ''}
-                    onChange={(e) => onChange({ roleNotes: e.target.value })}
-                    sx={glassSx}
-                  />
-
-                  {/* Extra Gear */}
-                  <Typography
-                    sx={{
-                      fontSize: '0.6rem',
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                      color: dpsIsDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-                      mt: 0.5,
-                    }}
-                  >
-                    Extra Gear
-                  </Typography>
-                  <Autocomplete
-                    multiple
-                    freeSolo
-                    size="small"
-                    options={[...ALL_5PIECE_SETS, ...MONSTER_SETS]
-                      .map((id) => getSetDisplayName(id))
-                      .sort()}
-                    value={(slot.additionalSets || []).map((id) => getSetDisplayName(id))}
-                    onChange={(_, value) =>
-                      onChange({
-                        additionalSets: value
-                          .map((name) => findSetIdByName(name))
-                          .filter((id): id is KnownSetIDs => id !== undefined),
-                      })
-                    }
-                    groupBy={(option) => {
-                      const setId = findSetIdByName(option);
-                      if (setId && isDDSpecialSet(setId)) return 'DD Special Sets';
-                      if (setId && isMonsterSet(setId)) return 'Monster Sets';
-                      return 'Other';
-                    }}
-                    renderInput={(params) => (
+                        </Box>
+                        <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            type="number"
+                            label="Player #"
+                            value={slot.playerNumber || ''}
+                            onChange={(e) =>
+                              onChange({
+                                playerNumber: e.target.value || undefined,
+                              })
+                            }
+                            sx={glassSx}
+                          />
+                        </Box>
+                        <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
+                          <Autocomplete
+                            multiple
+                            freeSolo
+                            size="small"
+                            options={[]}
+                            value={slot.labels || []}
+                            onChange={(_, value) => onChange({ labels: value })}
+                            renderTags={(value, getTagProps) =>
+                              value.map((option, index) => (
+                                <Chip
+                                  {...getTagProps({ index })}
+                                  key={option}
+                                  label={option}
+                                  size="small"
+                                  sx={{
+                                    borderRadius: '6px',
+                                    backgroundColor: dpsIsDark
+                                      ? 'rgba(255,255,255,0.06)'
+                                      : 'rgba(0,0,0,0.05)',
+                                    border: dpsIsDark
+                                      ? '1px solid rgba(255,255,255,0.1)'
+                                      : '1px solid rgba(0,0,0,0.1)',
+                                    fontWeight: 500,
+                                    fontSize: '0.75rem',
+                                  }}
+                                />
+                              ))
+                            }
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                size="small"
+                                label="Tags"
+                                placeholder="Add tags"
+                                sx={glassSx}
+                              />
+                            )}
+                          />
+                        </Box>
+                      </Box>
                       <TextField
-                        {...params}
-                        label="Additional Sets"
-                        helperText="e.g., arena weapons, mythics (type custom set name if not listed)"
+                        fullWidth
+                        size="small"
+                        multiline
+                        minRows={1}
+                        maxRows={4}
+                        label="Role Notes"
+                        placeholder="e.g., Portal L, Z'en, Ele sus"
+                        value={slot.roleNotes || ''}
+                        onChange={(e) => onChange({ roleNotes: e.target.value })}
                         sx={glassSx}
                       />
-                    )}
-                    renderOption={(props, option) => <li {...props}>{option}</li>}
-                  />
+                    </Stack>
+                  </Box>
 
-                  <SkillLinePickerGroup
-                    value={slot.skillLines ?? { line1: '', line2: '', line3: '', isFlex: true }}
-                    onChange={(skillLines) => onChange({ skillLines })}
-                  />
+                  {/* ── Build Requirements ─────────────────── */}
+                  <Box sx={makeSectionBoxSx(dpsIsDark)}>
+                    <Typography sx={makeSectionHeaderSx(dpsIsDark)}>Build Requirements</Typography>
+                    <Stack spacing={1.5}>
+                      <ExtraGearPicker
+                        value={slot.additionalSets || []}
+                        onChange={(additionalSets) => onChange({ additionalSets })}
+                      />
+                      <SkillLinePickerGroup
+                        value={slot.skillLines ?? { line1: '', line2: '', line3: '', isFlex: true }}
+                        onChange={(skillLines) => onChange({ skillLines })}
+                      />
+                    </Stack>
+                  </Box>
 
-                  <TextField
-                    fullWidth
-                    multiline
-                    size="small"
-                    rows={2}
-                    label="Notes"
-                    value={slot.notes || ''}
-                    onChange={(e) => onChange({ notes: e.target.value })}
-                    sx={glassSx}
-                  />
+                  {/* ── Notes ──────────────────────────────── */}
+                  <Box sx={makeSectionBoxSx(dpsIsDark)}>
+                    <Typography sx={makeSectionHeaderSx(dpsIsDark)}>Notes</Typography>
+                    <TextField
+                      fullWidth
+                      multiline
+                      size="small"
+                      minRows={2}
+                      maxRows={6}
+                      placeholder="General notes, fight-specific instructions, etc."
+                      value={slot.notes || ''}
+                      onChange={(e) => onChange({ notes: e.target.value })}
+                      sx={glassSx}
+                    />
+                  </Box>
                 </Stack>
               </AccordionDetails>
             </Accordion>

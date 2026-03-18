@@ -5,12 +5,14 @@
  */
 
 import {
+  ArrowBack as ArrowBackIcon,
   Close as CloseIcon,
   FileUploadOutlined,
   Groups as GroupsIcon,
   PublishOutlined,
   SaveOutlined,
   ShareOutlined,
+  SyncAlt as SyncAltIcon,
   VisibilityOutlined,
 } from '@mui/icons-material';
 import {
@@ -21,6 +23,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  Divider,
   IconButton,
   Stack,
   TextField,
@@ -32,16 +35,15 @@ import { useTheme } from '@mui/material/styles';
 import { useSnackbar } from 'notistack';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/AuthContext';
 import { PublishBuildDialog } from '@/features/build-hub/components/PublishBuildDialog';
 import { saveBuild, updateSavedBuild } from '@/store/saved_builds';
-import { selectSavedRosters } from '@/store/saved_rosters';
+import { attachBuildToSlot, selectSavedRosters } from '@/store/saved_rosters';
 import type { RootState } from '@/store/storeWithHistory';
 import { encodeBuildToURL } from '@/utils/buildEncoding';
-
-import { AddToRosterDialog } from './AddToRosterDialog';
+import { snapshotBuildToSlot } from '@/utils/rosterBuildBridge';
 
 import { useBuildCompleteness } from '../hooks/useBuildCompleteness';
 import {
@@ -52,6 +54,7 @@ import {
 } from '../store/buildEditorSlice';
 import { BE_TOKENS } from '../theme/buildEditorTokens';
 
+import { AddToRosterDialog } from './AddToRosterDialog';
 import { glassInputSx } from './primitives/glassInputSx';
 import { ProgressRing } from './primitives/ProgressRing';
 
@@ -65,12 +68,37 @@ export const BuildCompletionHeader: React.FC = () => {
   const { isLoggedIn, accessToken } = useAuth();
 
   const { build, isDirty, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
+  const [searchParams] = useSearchParams();
 
   // Get the saved build ID from URL params (set when editing an existing saved build)
-  const savedBuildId = React.useMemo(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('id');
-  }, []);
+  const savedBuildId = React.useMemo(() => searchParams.get('id'), [searchParams]);
+
+  // ── Roster context — present when launched via SlotActionPill from Roster Builder
+  const rosterContext = React.useMemo(() => {
+    const from = searchParams.get('from');
+    const slotKey = searchParams.get('slot');
+    const rosterId = searchParams.get('rid');
+    if (from !== 'roster' || !slotKey) return null;
+    return { slotKey, rosterId };
+  }, [searchParams]);
+
+  // Look up the roster name for the context banner
+  const rosterName = useSelector((s: RootState) => {
+    if (!rosterContext?.rosterId) return null;
+    return (
+      selectSavedRosters(s).find((r) => r.id === rosterContext.rosterId)?.roster.rosterName ?? null
+    );
+  });
+
+  // Human-readable slot label (e.g. "dps3" → "DPS 3", "tank1" → "Tank 1")
+  const slotLabel = React.useMemo(() => {
+    if (!rosterContext) return '';
+    const key = rosterContext.slotKey;
+    if (key.startsWith('dps')) return `DPS ${key.slice(3)}`;
+    if (key.startsWith('tank')) return `Tank ${key.slice(4)}`;
+    if (key.startsWith('healer')) return `Healer ${key.slice(6)}`;
+    return key;
+  }, [rosterContext]);
 
   const savedBuildExists = useSelector((s: RootState) =>
     savedBuildId ? s.savedBuilds.builds.some((b) => b.id === savedBuildId) : false,
@@ -129,6 +157,33 @@ export const BuildCompletionHeader: React.FC = () => {
     });
   };
 
+  // ── Roster round-trip: apply changes back to the originating slot ──
+  const handleApplyToRoster = (): void => {
+    if (!rosterContext?.rosterId || !rosterContext.slotKey) return;
+    dispatch(
+      attachBuildToSlot({
+        rosterId: rosterContext.rosterId,
+        slotKey: rosterContext.slotKey,
+        buildRef: {
+          buildId: build.id,
+          setupIndex: activeSetupIndex,
+          buildName: build.name || 'Untitled Build',
+          esoClass: build.esoClass,
+          role: build.role,
+        },
+        inlineData: snapshotBuildToSlot(build, activeSetupIndex),
+      }),
+    );
+    enqueueSnackbar(`Changes applied to ${slotLabel} in "${rosterName ?? 'Roster'}"`, {
+      variant: 'success',
+    });
+    navigate('/roster-builder');
+  };
+
+  const handleBackToRoster = (): void => {
+    navigate('/roster-builder');
+  };
+
   const handlePublishClick = (): void => {
     if (!build.name.trim()) {
       enqueueSnackbar('Please enter a build name before publishing.', { variant: 'warning' });
@@ -146,17 +201,43 @@ export const BuildCompletionHeader: React.FC = () => {
     });
   };
 
-  // Shared glass-pill button styles
-  const pillBtn = {
+  // ── Shared button styles ──────────────────────────────────────────────
+  const pillBase = {
     borderRadius: '99px',
     textTransform: 'none' as const,
-    fontSize: 13,
     fontWeight: 600,
     letterSpacing: 0.2,
-    px: 1.75,
     backdropFilter: 'blur(8px)',
     WebkitBackdropFilter: 'blur(8px)',
-  };
+    // Mobile: compact icon-only pills; desktop: full labels
+    fontSize: isMobile ? 12 : 13,
+    px: isMobile ? 1 : 1.75,
+    minWidth: isMobile ? 36 : undefined,
+  } as const;
+
+  const outlinedPill = {
+    ...pillBase,
+    borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
+    background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+    '&:hover': {
+      borderColor: 'var(--be-accent, #38bdf8)',
+      background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
+    },
+  } as const;
+
+  // Vertical divider between button groups
+  const groupDivider = (
+    <Divider
+      orientation="vertical"
+      flexItem
+      sx={{
+        mx: 0.5,
+        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+        alignSelf: 'center',
+        height: 20,
+      }}
+    />
+  );
 
   return (
     <Box
@@ -173,7 +254,7 @@ export const BuildCompletionHeader: React.FC = () => {
           'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.07) 0%, transparent 55%)',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
-        flexWrap: isMobile ? 'wrap' : 'nowrap',
+        flexWrap: 'nowrap',
         position: 'relative',
         zIndex: 1,
       }}
@@ -258,173 +339,257 @@ export const BuildCompletionHeader: React.FC = () => {
         </Box>
       </Tooltip>
 
-      {/* Action buttons — pill-shaped glass style */}
-      <Box sx={{ display: 'flex', gap: 0.75, ml: isMobile ? 'auto' : 0 }}>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<FileUploadOutlined sx={{ fontSize: 14 }} />}
-          onClick={() => setImportOpen(true)}
-          aria-label="Import build from addon"
+      {/* ── Roster context banner — shown when editing from a roster slot ── */}
+      {rosterContext && (
+        <Box
           sx={{
-            ...pillBtn,
-            borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
-            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-            '&:hover': {
-              borderColor: 'var(--be-accent, #38bdf8)',
-              background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
-            },
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.75,
+            flexShrink: 0,
           }}
         >
-          Import
-        </Button>
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<SaveOutlined sx={{ fontSize: 14 }} />}
-          onClick={handleSave}
-          aria-label={isDirty ? 'Save build' : 'Build saved'}
-          sx={{
-            ...pillBtn,
-            minWidth: 80,
-            ...(isDirty
-              ? {
-                  background:
-                    'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.9), rgba(var(--be-accent-rgb, 56, 189, 248), 0.7))',
-                  border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.5)',
-                  boxShadow: '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)',
-                  color: isDark ? '#fff' : '#0b1220',
-                  '&:hover': {
-                    boxShadow: '0 0 18px rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)',
-                  },
-                }
-              : {
-                  background: isDark ? 'rgba(34, 197, 94, 0.18)' : 'rgba(5, 150, 105, 0.12)',
-                  border: `1px solid ${isDark ? 'rgba(34, 197, 94, 0.35)' : 'rgba(5, 150, 105, 0.3)'}`,
-                  color: isDark ? '#4ade80' : '#059669',
-                  boxShadow: 'none',
-                }),
-          }}
-        >
-          {isDirty ? 'Save' : 'Saved'}
-        </Button>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<ShareOutlined sx={{ fontSize: 14 }} />}
-          onClick={handleShare}
-          sx={{
-            ...pillBtn,
-            borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
-            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-            '&:hover': {
-              borderColor: 'var(--be-accent, #38bdf8)',
-              background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
-            },
-          }}
-        >
-          Share
-        </Button>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<VisibilityOutlined sx={{ fontSize: 14 }} />}
-          onClick={handleView}
-          aria-label="View build in read-only mode"
-          sx={{
-            ...pillBtn,
-            borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
-            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-            '&:hover': {
-              borderColor: 'var(--be-accent, #38bdf8)',
-              background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
-            },
-          }}
-        >
-          View
-        </Button>
-        <Tooltip
-          title={
-            savedRostersCount === 0
-              ? 'Create a roster in the Roster Builder first'
-              : 'Attach this build to a roster slot'
-          }
-        >
-          <Box component="span">
+          <Tooltip title="Return to Roster Builder without applying">
             <Button
               variant="outlined"
               size="small"
-              startIcon={<GroupsIcon sx={{ fontSize: 14 }} />}
-              onClick={() => setAddToRosterOpen(true)}
-              aria-label="Add build to roster"
+              startIcon={!isMobile ? <ArrowBackIcon sx={{ fontSize: 14 }} /> : undefined}
+              onClick={handleBackToRoster}
+              aria-label="Back to Roster"
               sx={{
-                ...pillBtn,
-                borderColor:
-                  savedRostersCount > 0
-                    ? isDark
-                      ? 'rgba(139,92,246,0.4)'
-                      : 'rgba(109,40,217,0.25)'
-                    : isDark
-                      ? 'rgba(255,255,255,0.10)'
-                      : 'rgba(0,0,0,0.10)',
-                background:
-                  savedRostersCount > 0
-                    ? isDark
-                      ? 'rgba(139,92,246,0.08)'
-                      : 'rgba(109,40,217,0.05)'
-                    : isDark
-                      ? 'rgba(255,255,255,0.03)'
-                      : 'rgba(0,0,0,0.02)',
-                color:
-                  savedRostersCount > 0
-                    ? isDark
-                      ? 'rgb(167,139,250)'
-                      : 'rgb(109,40,217)'
-                    : 'text.disabled',
+                ...pillBase,
+                borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
+                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
                 '&:hover': {
-                  borderColor: 'rgba(139,92,246,0.6)',
-                  background: 'rgba(139,92,246,0.12)',
-                  color: isDark ? 'rgb(196,181,253)' : 'rgb(109,40,217)',
+                  borderColor: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
+                  background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
                 },
               }}
             >
-              Roster
+              {isMobile ? <ArrowBackIcon sx={{ fontSize: 16 }} /> : 'Back'}
             </Button>
-          </Box>
-        </Tooltip>
-        {isLoggedIn && (
+          </Tooltip>
+          {rosterContext.rosterId && (
+            <Tooltip title={`Apply changes to ${slotLabel} in "${rosterName ?? 'Roster'}"`}>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={!isMobile ? <SyncAltIcon sx={{ fontSize: 14 }} /> : undefined}
+                onClick={handleApplyToRoster}
+                aria-label="Apply changes to roster slot"
+                sx={{
+                  ...pillBase,
+                  background: 'linear-gradient(135deg, rgba(139,92,246,0.9), rgba(109,40,217,0.8))',
+                  border: '1px solid rgba(139,92,246,0.5)',
+                  boxShadow: '0 0 12px rgba(139,92,246,0.30)',
+                  color: '#fff',
+                  '&:hover': {
+                    boxShadow: '0 0 18px rgba(139,92,246,0.45)',
+                  },
+                }}
+              >
+                {isMobile ? <SyncAltIcon sx={{ fontSize: 16 }} /> : `Apply to ${slotLabel}`}
+              </Button>
+            </Tooltip>
+          )}
+          <Divider
+            orientation="vertical"
+            flexItem
+            sx={{
+              mx: 0.25,
+              borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+              alignSelf: 'center',
+              height: 20,
+            }}
+          />
+        </Box>
+      )}
+
+      {/* ── Action buttons — grouped with dividers ─────────────────── */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.75,
+          ml: rosterContext ? 0 : 'auto',
+          flexShrink: 0,
+        }}
+      >
+        {/* Group 1: Data — Import + Save */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Tooltip title="Import build from addon">
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={!isMobile ? <FileUploadOutlined sx={{ fontSize: 14 }} /> : undefined}
+              onClick={() => setImportOpen(true)}
+              aria-label="Import build from addon"
+              sx={outlinedPill}
+            >
+              {isMobile ? <FileUploadOutlined sx={{ fontSize: 16 }} /> : 'Import'}
+            </Button>
+          </Tooltip>
           <Button
             variant="contained"
             size="small"
-            startIcon={
-              isPublishing ? (
-                <CircularProgress size={12} color="inherit" />
-              ) : (
-                <PublishOutlined sx={{ fontSize: 14 }} />
-              )
-            }
-            onClick={handlePublishClick}
-            disabled={isPublishing}
-            aria-label="Publish build to Build Hub"
+            startIcon={!isMobile ? <SaveOutlined sx={{ fontSize: 14 }} /> : undefined}
+            onClick={handleSave}
+            aria-label={isDirty ? 'Save build' : 'Build saved'}
             sx={{
-              ...pillBtn,
-              background: 'linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)',
-              color: '#fff',
-              border: 'none',
-              boxShadow: '0 0 12px rgba(6,182,212,0.35)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
-                boxShadow: '0 0 18px rgba(6,182,212,0.5)',
-              },
-              '&.Mui-disabled': {
-                background: 'linear-gradient(135deg, #22d3ee80 0%, #06b6d480 100%)',
-                color: 'rgba(255,255,255,0.7)',
-              },
+              ...pillBase,
+              minWidth: isMobile ? 36 : 80,
+              ...(isDirty
+                ? {
+                    background:
+                      'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.9), rgba(var(--be-accent-rgb, 56, 189, 248), 0.7))',
+                    border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.5)',
+                    boxShadow: '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)',
+                    color: isDark ? '#fff' : '#0b1220',
+                    '&:hover': {
+                      boxShadow: '0 0 18px rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)',
+                    },
+                  }
+                : {
+                    background: isDark ? 'rgba(34, 197, 94, 0.18)' : 'rgba(5, 150, 105, 0.12)',
+                    border: `1px solid ${isDark ? 'rgba(34, 197, 94, 0.35)' : 'rgba(5, 150, 105, 0.3)'}`,
+                    color: isDark ? '#4ade80' : '#059669',
+                    boxShadow: 'none',
+                  }),
             }}
           >
-            {isPublishing ? 'Encoding…' : 'Publish'}
+            {isMobile ? <SaveOutlined sx={{ fontSize: 16 }} /> : isDirty ? 'Save' : 'Saved'}
           </Button>
-        )}
+        </Box>
+
+        {groupDivider}
+
+        {/* Group 2: Output — Share + View */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Tooltip title="Copy share link to clipboard">
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={!isMobile ? <ShareOutlined sx={{ fontSize: 14 }} /> : undefined}
+              onClick={handleShare}
+              aria-label="Share build"
+              sx={outlinedPill}
+            >
+              {isMobile ? <ShareOutlined sx={{ fontSize: 16 }} /> : 'Share'}
+            </Button>
+          </Tooltip>
+          <Tooltip title="View build in read-only mode">
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={!isMobile ? <VisibilityOutlined sx={{ fontSize: 14 }} /> : undefined}
+              onClick={handleView}
+              aria-label="View build in read-only mode"
+              sx={outlinedPill}
+            >
+              {isMobile ? <VisibilityOutlined sx={{ fontSize: 16 }} /> : 'View'}
+            </Button>
+          </Tooltip>
+        </Box>
+
+        {groupDivider}
+
+        {/* Group 3: Distribution — Roster + Publish */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Tooltip
+            title={
+              savedRostersCount === 0
+                ? 'Create a roster in the Roster Builder first'
+                : 'Attach this build to a roster slot'
+            }
+          >
+            <Box component="span">
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={!isMobile ? <GroupsIcon sx={{ fontSize: 14 }} /> : undefined}
+                onClick={() => setAddToRosterOpen(true)}
+                aria-label="Add build to roster"
+                sx={{
+                  ...pillBase,
+                  borderColor:
+                    savedRostersCount > 0
+                      ? isDark
+                        ? 'rgba(139,92,246,0.4)'
+                        : 'rgba(109,40,217,0.25)'
+                      : isDark
+                        ? 'rgba(255,255,255,0.10)'
+                        : 'rgba(0,0,0,0.10)',
+                  background:
+                    savedRostersCount > 0
+                      ? isDark
+                        ? 'rgba(139,92,246,0.08)'
+                        : 'rgba(109,40,217,0.05)'
+                      : isDark
+                        ? 'rgba(255,255,255,0.03)'
+                        : 'rgba(0,0,0,0.02)',
+                  color:
+                    savedRostersCount > 0
+                      ? isDark
+                        ? 'rgb(167,139,250)'
+                        : 'rgb(109,40,217)'
+                      : 'text.disabled',
+                  '&:hover': {
+                    borderColor: 'rgba(139,92,246,0.6)',
+                    background: 'rgba(139,92,246,0.12)',
+                    color: isDark ? 'rgb(196,181,253)' : 'rgb(109,40,217)',
+                  },
+                }}
+              >
+                {isMobile ? <GroupsIcon sx={{ fontSize: 16 }} /> : 'Roster'}
+              </Button>
+            </Box>
+          </Tooltip>
+          {isLoggedIn && (
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={
+                !isMobile ? (
+                  isPublishing ? (
+                    <CircularProgress size={12} color="inherit" />
+                  ) : (
+                    <PublishOutlined sx={{ fontSize: 14 }} />
+                  )
+                ) : undefined
+              }
+              onClick={handlePublishClick}
+              disabled={isPublishing}
+              aria-label="Publish build to Build Hub"
+              sx={{
+                ...pillBase,
+                background: 'linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)',
+                color: '#fff',
+                border: 'none',
+                boxShadow: '0 0 12px rgba(6,182,212,0.35)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
+                  boxShadow: '0 0 18px rgba(6,182,212,0.5)',
+                },
+                '&.Mui-disabled': {
+                  background: 'linear-gradient(135deg, #22d3ee80 0%, #06b6d480 100%)',
+                  color: 'rgba(255,255,255,0.7)',
+                },
+              }}
+            >
+              {isMobile ? (
+                isPublishing ? (
+                  <CircularProgress size={14} color="inherit" />
+                ) : (
+                  <PublishOutlined sx={{ fontSize: 16 }} />
+                )
+              ) : isPublishing ? (
+                'Encoding\u2026'
+              ) : (
+                'Publish'
+              )}
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {/* Publish dialog */}
@@ -520,11 +685,7 @@ export const BuildCompletionHeader: React.FC = () => {
                 variant="outlined"
                 size="small"
                 onClick={() => setImportOpen(false)}
-                sx={{
-                  ...pillBtn,
-                  borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
-                  background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                }}
+                sx={outlinedPill}
               >
                 Cancel
               </Button>
@@ -541,7 +702,7 @@ export const BuildCompletionHeader: React.FC = () => {
                     size="small"
                     disabled={build.addonImportString.length < 10}
                     sx={{
-                      ...pillBtn,
+                      ...pillBase,
                       background:
                         'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
                       boxShadow: '0 0 10px rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
