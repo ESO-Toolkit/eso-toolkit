@@ -26,6 +26,7 @@ import type { RootState } from '@/store/storeWithHistory';
 
 import {
   addScreenshot,
+  MAX_SCREENSHOTS,
   removeScreenshot,
   setGuideBannerUrl,
   setGuideContent,
@@ -70,23 +71,37 @@ export const GuideSection: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const files = e.target.files;
     if (!files) return;
-    Array.from(files).forEach((file) => {
-      if (file.size > MAX_SCREENSHOT_SIZE) {
-        enqueueSnackbar(`"${file.name}" exceeds 5 MB — please resize before uploading.`, {
-          variant: 'warning',
-        });
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        if (ev.target?.result) {
-          dispatch(addScreenshot(ev.target.result as string));
+    const remaining = MAX_SCREENSHOTS - setup.screenshots.length;
+    if (remaining <= 0) {
+      enqueueSnackbar(`Screenshot limit reached (${MAX_SCREENSHOTS} max).`, { variant: 'warning' });
+      e.target.value = '';
+      return;
+    }
+    Array.from(files)
+      .slice(0, remaining)
+      .forEach((file) => {
+        if (file.size > MAX_SCREENSHOT_SIZE) {
+          enqueueSnackbar(`"${file.name}" exceeds 5 MB — please resize before uploading.`, {
+            variant: 'warning',
+          });
+          return;
         }
-      };
-      reader.onerror = () =>
-        enqueueSnackbar(`Failed to read "${file.name}".`, { variant: 'error' });
-      reader.readAsDataURL(file);
-    });
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          if (ev.target?.result) {
+            dispatch(addScreenshot(ev.target.result as string));
+          }
+        };
+        reader.onerror = () =>
+          enqueueSnackbar(`Failed to read "${file.name}".`, { variant: 'error' });
+        reader.readAsDataURL(file);
+      });
+    if (files.length > remaining) {
+      enqueueSnackbar(
+        `Only ${remaining} screenshot${remaining === 1 ? '' : 's'} added — limit is ${MAX_SCREENSHOTS}.`,
+        { variant: 'warning' },
+      );
+    }
     e.target.value = '';
   };
 
@@ -213,7 +228,7 @@ export const GuideSection: React.FC = () => {
             px: 1,
           }}
         >
-          Screenshots
+          Screenshots{setup.screenshots.length > 0 ? ` (${setup.screenshots.length}/${MAX_SCREENSHOTS})` : ''}
         </Typography>
       </Divider>
 
@@ -347,6 +362,7 @@ export const GuideSection: React.FC = () => {
             startIcon={<AddIcon sx={{ fontSize: 14 }} />}
             variant="outlined"
             size="small"
+            disabled={setup.screenshots.length >= MAX_SCREENSHOTS}
             onClick={() => inputRef.current?.click()}
             sx={{
               alignSelf: 'flex-start',
@@ -357,13 +373,13 @@ export const GuideSection: React.FC = () => {
               textTransform: 'none',
               borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
               color: 'var(--be-accent, #38bdf8)',
-              '&:hover': {
+              '&:hover:not(:disabled)': {
                 borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.40)',
                 background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
               },
             }}
           >
-            Add More
+            {setup.screenshots.length >= MAX_SCREENSHOTS ? 'Limit reached' : 'Add More'}
           </Button>
         </>
       )}

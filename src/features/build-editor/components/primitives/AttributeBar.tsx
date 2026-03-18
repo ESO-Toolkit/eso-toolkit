@@ -2,12 +2,14 @@
  * AttributeBar
  * Animated horizontal stat bar with +/- controls.
  * Shows a filled bar proportional to value/max.
+ *
+ * UX improvement: click the numeric value to type directly.
  */
 
-import { Box, ButtonBase, Tooltip, Typography } from '@mui/material';
+import { Box, ButtonBase, InputBase, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { motion, useReducedMotion } from 'framer-motion';
-import React from 'react';
+import React, { useRef, useState } from 'react';
 
 interface AttributeBarProps {
   label: string;
@@ -32,6 +34,33 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();
 
+  // ── Inline editing state ────────────────────────────────────────────────
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const startEdit = (): void => {
+    setDraft(String(value));
+    setEditing(true);
+    requestAnimationFrame(() => {
+      inputRef.current?.select();
+    });
+  };
+
+  const commitEdit = (): void => {
+    const parsed = parseInt(draft, 10);
+    if (!isNaN(parsed)) {
+      const maxAllowed = Math.min(max, value + (totalMax - total));
+      onChange(Math.max(0, Math.min(maxAllowed, parsed)));
+    }
+    setEditing(false);
+  };
+
+  const cancelEdit = (): void => {
+    setEditing(false);
+  };
+
+  // ── +/- adjustment ──────────────────────────────────────────────────────
   const adjust = (delta: number, e: React.MouseEvent): void => {
     const step = e.shiftKey ? 10 : 1;
     const maxIncrease = totalMax - total;
@@ -160,26 +189,79 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
         </span>
       </Tooltip>
 
-      {/* Value with glow on max */}
-      <Typography
-        component="span"
-        aria-live="polite"
-        aria-label={`${label}: ${value}`}
-        variant="caption"
-        sx={{
-          minWidth: 26,
-          textAlign: 'center',
-          fontWeight: 700,
-          fontVariantNumeric: 'tabular-nums',
-          fontFamily: 'Space Grotesk, Inter, system-ui',
-          color: value > 0 ? color : 'text.disabled',
-          fontSize: 13,
-          textShadow: atMax && value > 0 ? `0 0 8px ${alpha(color, 0.6)}` : 'none',
-          transition: 'text-shadow 0.3s',
-        }}
-      >
-        {value}
-      </Typography>
+      {/* Value — click to type directly */}
+      <Tooltip title={editing ? '' : 'Click to type a value'} enterDelay={600}>
+        <Box
+          sx={{ minWidth: 26, textAlign: 'center', flexShrink: 0 }}
+          onClick={!editing ? startEdit : undefined}
+        >
+          {editing ? (
+            <InputBase
+              inputRef={inputRef}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={commitEdit}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitEdit();
+                if (e.key === 'Escape') cancelEdit();
+              }}
+              inputProps={{
+                type: 'number',
+                min: 0,
+                max: max,
+                'aria-label': `${label} value`,
+              }}
+              sx={{
+                width: 36,
+                '& input': {
+                  textAlign: 'center',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  color,
+                  fontVariantNumeric: 'tabular-nums',
+                  background: alpha(color, isDark ? 0.12 : 0.08),
+                  borderRadius: '6px',
+                  border: `1px solid ${alpha(color, 0.4)}`,
+                  px: 0.5,
+                  py: 0.25,
+                  // Remove number input arrows
+                  '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
+                    WebkitAppearance: 'none',
+                    margin: 0,
+                  },
+                  '&[type=number]': { MozAppearance: 'textfield' },
+                },
+              }}
+            />
+          ) : (
+            <Typography
+              aria-live="polite"
+              aria-label={`${label}: ${value}`}
+              variant="caption"
+              sx={{
+                display: 'block',
+                fontWeight: 700,
+                fontVariantNumeric: 'tabular-nums',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                color: value > 0 ? color : 'text.disabled',
+                fontSize: 13,
+                textShadow: atMax && value > 0 ? `0 0 8px ${alpha(color, 0.6)}` : 'none',
+                transition: 'text-shadow 0.3s',
+                cursor: 'text',
+                borderRadius: '4px',
+                px: 0.5,
+                py: 0.25,
+                '&:hover': {
+                  background: alpha(color, isDark ? 0.12 : 0.08),
+                },
+              }}
+            >
+              {value}
+            </Typography>
+          )}
+        </Box>
+      </Tooltip>
 
       {/* Plus — glass-style button with accent color */}
       <Tooltip title={`Increase ${label} (Shift ×10)`}>

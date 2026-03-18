@@ -20,6 +20,11 @@ import type {
   SetupTab,
 } from '../types/build.types';
 
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+/** Maximum screenshots per setup — guards against localStorage bloat from base64 data-URLs */
+export const MAX_SCREENSHOTS = 8;
+
 // ─── Factories ───────────────────────────────────────────────────────────────
 
 const makeChampionPoints = (): BuildChampionPoints => ({
@@ -351,7 +356,7 @@ export const buildEditorSlice = createSlice({
     // ── Screenshots (per-setup) ───────────────────────────────────────────────
     addScreenshot(state, action: PayloadAction<string>) {
       const setup = state.build.setups[state.activeSetupIndex];
-      if (setup) {
+      if (setup && setup.screenshots.length < MAX_SCREENSHOTS) {
         setup.screenshots.push(action.payload);
         state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;

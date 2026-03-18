@@ -748,7 +748,20 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
         placement="top"
       >
         <Box
+          role="button"
+          tabIndex={0}
+          aria-label={
+            skill
+              ? `${isUlt ? 'Ultimate' : `Skill slot ${label}`}: ${skill.name} — click to change`
+              : `${isUlt ? 'Ultimate slot' : `Skill slot ${label}`} — click to assign`
+          }
           onClick={onOpenPicker}
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onOpenPicker();
+            }
+          }}
           sx={{
             position: 'relative',
             width: size,
@@ -775,6 +788,10 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
                 ? 'inset 0 1px 0 rgba(255,255,255,0.025)'
                 : 'inset 0 1px 0 rgba(255,255,255,0.4)',
             transition: 'all 180ms ease',
+            '&:focus-visible': {
+              outline: '2px solid var(--be-accent, #38bdf8)',
+              outlineOffset: '2px',
+            },
             '&:hover': {
               transform: 'scale(1.08)',
               borderColor: accentA(0.7),
@@ -784,6 +801,10 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
                 : '0 6px 16px rgba(0,0,0,0.08)',
             },
             '&:hover .skill-clear': { opacity: 1 },
+            // Always show clear on touch devices
+            '@media (hover: none)': {
+              '& .skill-clear': { opacity: skill ? 1 : 0 },
+            },
           }}
         >
           {skill?.icon ? (
@@ -823,9 +844,18 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
           {skill && (
             <Box
               className="skill-clear"
+              role="button"
+              aria-label={`Remove ${skill.name}`}
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 onRemove();
+              }}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onRemove();
+                }
               }}
               sx={{
                 position: 'absolute',

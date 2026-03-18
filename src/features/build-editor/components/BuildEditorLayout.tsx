@@ -97,6 +97,7 @@ export const BuildEditorLayout: React.FC = () => {
                 icon={<GeneralIcon />}
                 complete={progress.general}
                 variant="primary"
+                defaultExpanded={!isMobile}
               >
                 <GeneralSection />
               </SectionCard>
@@ -106,6 +107,7 @@ export const BuildEditorLayout: React.FC = () => {
                 title="Character"
                 icon={<CharacterIcon />}
                 complete={progress.character}
+                defaultExpanded={!isMobile}
               >
                 <CharacterSection />
               </SectionCard>
@@ -116,6 +118,7 @@ export const BuildEditorLayout: React.FC = () => {
                 title="Subclassing"
                 icon={<SubclassingIcon />}
                 complete={progress.subclassing}
+                defaultExpanded={!isMobile}
               >
                 <SubclassingSection />
               </SectionCard>
@@ -128,6 +131,7 @@ export const BuildEditorLayout: React.FC = () => {
                 complete={progress.equipment}
                 variant="primary"
                 gridRow={isMobile ? undefined : 'span 2'}
+                defaultExpanded={!isMobile}
               >
                 <EquipmentSection />
               </SectionCard>
@@ -138,6 +142,7 @@ export const BuildEditorLayout: React.FC = () => {
                 icon={<SkillsIcon />}
                 complete={progress.skills}
                 variant="primary"
+                defaultExpanded={!isMobile}
               >
                 <SkillsSection />
               </SectionCard>
@@ -147,6 +152,7 @@ export const BuildEditorLayout: React.FC = () => {
                 title="Consumables"
                 icon={<ConsumableIcon />}
                 complete={progress.consumables}
+                defaultExpanded={!isMobile}
               >
                 <ConsumablesSection />
               </SectionCard>
@@ -159,6 +165,7 @@ export const BuildEditorLayout: React.FC = () => {
                 complete={progress.champion}
                 variant="primary"
                 gridColumn={isMobile ? undefined : 'span 2'}
+                defaultExpanded={!isMobile}
               >
                 <ChampionSection />
               </SectionCard>
@@ -169,6 +176,7 @@ export const BuildEditorLayout: React.FC = () => {
                 title="Passives"
                 icon={<PassiveIcon />}
                 complete={progress.passives}
+                defaultExpanded={!isMobile}
               >
                 <PassivesSection />
               </SectionCard>
@@ -180,6 +188,7 @@ export const BuildEditorLayout: React.FC = () => {
                 icon={<GuideIcon />}
                 complete={progress.guide}
                 gridColumn={isMobile ? undefined : 'span 2'}
+                defaultExpanded={!isMobile}
               >
                 <GuideSection />
               </SectionCard>
@@ -192,6 +201,7 @@ export const BuildEditorLayout: React.FC = () => {
                 complete={progress.settings}
                 variant="subtle"
                 gridColumn={isMobile ? undefined : 'span 2'}
+                defaultExpanded={!isMobile}
               >
                 <SettingsSection />
               </SectionCard>
