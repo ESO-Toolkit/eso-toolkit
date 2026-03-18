@@ -96,6 +96,8 @@ const buildEnhancedScribingTooltipProps = (options: {
 const MetricsScrollContainer = styled(Box)(({ theme }) => ({
   overflowX: 'auto',
   overflowY: 'hidden',
+  // iOS Safari: enable native-style touch scrolling inside modals/dialogs
+  WebkitOverflowScrolling: 'touch',
   // Firefox: thin scrollbar
   scrollbarWidth: 'thin',
   // WebKit: thin horizontal scrollbar (8px vs default ~17px)
