@@ -323,7 +323,7 @@ describe('compactifyRoster / expandCompactRoster – Full mode inline data', () 
     roster.rosterDetailLevel = 'full';
 
     const compact = compactifyRoster(roster);
-    expect(compact.dl).toBe(2);
+    expect(compact.dl).toBe(1); // DL_MAP: simple=0, full=1
 
     const expanded = expandCompactRoster(compact);
     expect(expanded.rosterDetailLevel).toBe('full');
