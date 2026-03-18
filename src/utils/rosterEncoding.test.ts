@@ -17,8 +17,12 @@
  * native globals, which are spec-compatible with the browser version.
  */
 
+import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
+import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 import { KnownSetIDs } from '../types/abilities';
 import {
+  type RaidRoster,
+  type BuildReference,
   SupportUltimate,
   HealerBuff,
   HealerChampionPoint,
@@ -421,6 +425,297 @@ describe('compactifyRoster / expandCompactRoster', () => {
       roster.availableGroups = ['Stack 1', 'Stack 2', 'Range'];
       const expanded = expandCompactRoster(compactifyRoster(roster));
       expect(expanded.availableGroups).toEqual(['Stack 1', 'Stack 2', 'Range']);
+    });
+  });
+
+  describe('buildRef round-trip (roster ↔ build editor link)', () => {
+    const buildRef: BuildReference = {
+      buildId: 'build-abc-123',
+      setupIndex: 2,
+      buildName: 'My DK Tank Build',
+      esoClass: 'dragonknight',
+      role: 'tank',
+    };
+
+    it('round-trips buildRef on tank1', () => {
+      const roster = createDefaultRoster();
+      roster.tank1 = { ...defaultTankSetup(), buildRef };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.tank1.buildRef).toEqual(buildRef);
+    });
+
+    it('round-trips buildRef on healer1', () => {
+      const roster = createDefaultRoster();
+      roster.healer1 = { ...defaultHealerSetup(), buildRef };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.healer1.buildRef).toEqual(buildRef);
+    });
+
+    it('round-trips buildRef on a DPS slot', () => {
+      const roster = createDefaultRoster();
+      roster.dpsSlots[3] = { slotNumber: 4, playerName: 'Ref DPS', buildRef };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.dpsSlots[3].buildRef).toEqual(buildRef);
+    });
+
+    it('encodes setupIndex=0 correctly (zero is falsy — regression guard)', () => {
+      const roster = createDefaultRoster();
+      roster.tank1 = { ...defaultTankSetup(), buildRef: { ...buildRef, setupIndex: 0 } };
+      const compact = compactifyRoster(roster);
+      expect(compact.t1?.br?.si).toBe(0);
+      const expanded = expandCompactRoster(compact);
+      expect(expanded.tank1.buildRef?.setupIndex).toBe(0);
+    });
+
+    it('omits buildRef when not set', () => {
+      const roster = createDefaultRoster();
+      const compact = compactifyRoster(roster);
+      expect(compact.t1?.br).toBeUndefined();
+      expect(compact.h1?.br).toBeUndefined();
+    });
+
+    it('round-trips minimal buildRef (setupIndex only, all optionals absent)', () => {
+      const roster = createDefaultRoster();
+      roster.tank1 = { ...defaultTankSetup(), buildRef: { setupIndex: 1 } };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.tank1.buildRef?.setupIndex).toBe(1);
+      expect(expanded.tank1.buildRef?.buildId).toBeUndefined();
+      expect(expanded.tank1.buildRef?.buildName).toBeUndefined();
+    });
+  });
+
+  describe('groups (multi-group memberships) encoding', () => {
+    it('round-trips a single group on tank1', () => {
+      const roster = createDefaultRoster();
+      roster.tank1 = { ...defaultTankSetup(), groups: ['Left Stack'] };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.tank1.groups).toEqual(['Left Stack']);
+    });
+
+    it('round-trips multiple groups on a DPS slot', () => {
+      const roster = createDefaultRoster();
+      roster.dpsSlots[0] = {
+        slotNumber: 1,
+        playerName: 'Multi DPS',
+        groups: ['Left Stack', 'Portal', 'Slayer'],
+      };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.dpsSlots[0].groups).toEqual(['Left Stack', 'Portal', 'Slayer']);
+    });
+
+    it('round-trips multiple groups on healer1', () => {
+      const roster = createDefaultRoster();
+      roster.healer1 = { ...defaultHealerSetup(), groups: ['Stack 1', 'Anchor'] };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.healer1.groups).toEqual(['Stack 1', 'Anchor']);
+    });
+
+    it('encodes groups as grs[] in compact form — not legacy gr', () => {
+      const roster = createDefaultRoster();
+      roster.dpsSlots[0] = { slotNumber: 1, groups: ['Group A', 'Group B'] };
+      const compact = compactifyRoster(roster);
+      const dps1 = compact.dp?.find((d) => d.sn === 1);
+      expect(dps1?.grs).toEqual(['Group A', 'Group B']);
+      expect(dps1?.gr).toBeUndefined();
+    });
+
+    it('migrates legacy single gr to groups[] on decode', () => {
+      const compact = compactifyRoster(createDefaultRoster());
+      compact.dp = [{ sn: 2, gr: { g: 'Legacy Group', n: 1 } }];
+      const expanded = expandCompactRoster(compact);
+      expect(expanded.dpsSlots[1].groups).toEqual(['Legacy Group']);
+    });
+
+    it('returns undefined groups when slot has no groups set', () => {
+      const roster = createDefaultRoster();
+      roster.dpsSlots[0] = { slotNumber: 1, playerName: 'No Group DPS' };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.dpsSlots[0].groups).toBeUndefined();
+    });
+  });
+
+  describe('Full-mode inline data (food / skills / cpPoints / passives)', () => {
+    describe('food round-trip', () => {
+      it('round-trips food with id and name on tank1', () => {
+        const roster = createDefaultRoster();
+        roster.tank1 = {
+          ...defaultTankSetup(),
+          food: { id: 101, name: 'Solitude Salmon-Millet Soup' },
+        };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.tank1.food).toEqual({ id: 101, name: 'Solitude Salmon-Millet Soup' });
+      });
+
+      it('round-trips food id-only on a DPS slot', () => {
+        const roster = createDefaultRoster();
+        roster.dpsSlots[2] = { slotNumber: 3, food: { id: 42 } };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.dpsSlots[2].food?.id).toBe(42);
+      });
+
+      it('round-trips food on healer2', () => {
+        const roster = createDefaultRoster();
+        roster.healer2 = {
+          ...defaultHealerSetup(),
+          food: { id: 77, name: "Witchmother's Potent Brew" },
+        };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.healer2.food).toEqual({ id: 77, name: "Witchmother's Potent Brew" });
+      });
+
+      it('omits food when not set', () => {
+        const roster = createDefaultRoster();
+        const compact = compactifyRoster(roster);
+        expect(compact.t1?.fo).toBeUndefined();
+        expect(compact.h1?.fo).toBeUndefined();
+      });
+    });
+
+    describe('skill bars (SkillsConfig) round-trip', () => {
+      const skills: SkillsConfig = {
+        0: { 3: 123, 4: 456, 5: 789, 6: 111, 7: 222, 8: 333 },
+        1: { 3: 444, 4: 555, 5: 666, 6: 777, 7: 888, 8: 999 },
+      };
+
+      it('round-trips front and back bars on tank1', () => {
+        const roster = createDefaultRoster();
+        roster.tank1 = { ...defaultTankSetup(), skills };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.tank1.skills?.[0]).toEqual(skills[0]);
+        expect(expanded.tank1.skills?.[1]).toEqual(skills[1]);
+      });
+
+      it('round-trips skill bars on a DPS slot', () => {
+        const roster = createDefaultRoster();
+        roster.dpsSlots[1] = { slotNumber: 2, skills };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.dpsSlots[1].skills?.[0]).toEqual(skills[0]);
+      });
+
+      it('round-trips front-bar-only skills (empty back bar omitted)', () => {
+        const roster = createDefaultRoster();
+        const frontOnly: SkillsConfig = { 0: { 3: 100, 4: 200 }, 1: {} };
+        roster.tank1 = { ...defaultTankSetup(), skills: frontOnly };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.tank1.skills?.[0]).toEqual({ 3: 100, 4: 200 });
+      });
+
+      it('omits skills when not set', () => {
+        const roster = createDefaultRoster();
+        const compact = compactifyRoster(roster);
+        expect(compact.t1?.sk).toBeUndefined();
+        expect(compact.h1?.sk).toBeUndefined();
+      });
+    });
+
+    describe('champion points (cpPoints) round-trip', () => {
+      const cpPoints: BuildChampionPoints = {
+        warfare: {
+          slots: [12345, 67890, null, null],
+          passives: { 'warrior-poet': 50, 'wrathful-strikes': 20 },
+        },
+        fitness: { slots: [11111, null, null, null], passives: {} },
+        craft: { slots: [null, null, null, null], passives: { 'treasure-hunter': 10 } },
+      };
+
+      it('round-trips cpPoints on tank1', () => {
+        const roster = createDefaultRoster();
+        roster.tank1 = { ...defaultTankSetup(), cpPoints };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.tank1.cpPoints?.warfare.slots[0]).toBe(12345);
+        expect(expanded.tank1.cpPoints?.warfare.slots[1]).toBe(67890);
+        expect(expanded.tank1.cpPoints?.warfare.passives['warrior-poet']).toBe(50);
+        expect(expanded.tank1.cpPoints?.fitness.slots[0]).toBe(11111);
+      });
+
+      it('round-trips cpPoints on healer1', () => {
+        const roster = createDefaultRoster();
+        roster.healer1 = { ...defaultHealerSetup(), cpPoints };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.healer1.cpPoints?.warfare.slots[0]).toBe(12345);
+      });
+
+      it('round-trips cpPoints on a DPS slot', () => {
+        const roster = createDefaultRoster();
+        roster.dpsSlots[5] = { slotNumber: 6, cpPoints };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.dpsSlots[5].cpPoints?.warfare.slots[0]).toBe(12345);
+        expect(expanded.dpsSlots[5].cpPoints?.craft.passives['treasure-hunter']).toBe(10);
+      });
+
+      it('trims trailing null slots in compact CP tree (reduces URL size)', () => {
+        const roster = createDefaultRoster();
+        roster.tank1 = {
+          ...defaultTankSetup(),
+          cpPoints: {
+            warfare: { slots: [99, null, null, null], passives: {} },
+            fitness: { slots: [null, null, null, null], passives: {} },
+            craft: { slots: [null, null, null, null], passives: {} },
+          },
+        };
+        const compact = compactifyRoster(roster);
+        // Trailing nulls trimmed: [99, null, null, null] → [99]
+        expect(compact.t1?.cp2?.w?.s).toEqual([99]);
+        // And re-pads to 4 slots on expand
+        const expanded = expandCompactRoster(compact);
+        expect(expanded.tank1.cpPoints?.warfare.slots).toEqual([99, null, null, null]);
+      });
+
+      it('omits cpPoints when all trees are empty', () => {
+        const roster = createDefaultRoster();
+        const compact = compactifyRoster(roster);
+        expect(compact.t1?.cp2).toBeUndefined();
+        expect(compact.h1?.cp2).toBeUndefined();
+      });
+
+      it('omits zero-value passives in compact form', () => {
+        const roster = createDefaultRoster();
+        roster.tank1 = {
+          ...defaultTankSetup(),
+          cpPoints: {
+            warfare: {
+              slots: [null, null, null, null],
+              passives: { 'warrior-poet': 0, 'wrathful-strikes': 5 },
+            },
+            fitness: { slots: [null, null, null, null], passives: {} },
+            craft: { slots: [null, null, null, null], passives: {} },
+          },
+        };
+        const compact = compactifyRoster(roster);
+        // 'warrior-poet': 0 omitted; 'wrathful-strikes': 5 kept
+        expect(compact.t1?.cp2?.w?.p?.['warrior-poet']).toBeUndefined();
+        expect(compact.t1?.cp2?.w?.p?.['wrathful-strikes']).toBe(5);
+      });
+    });
+
+    describe('passives (ability IDs) round-trip', () => {
+      it('round-trips passives on tank1', () => {
+        const roster = createDefaultRoster();
+        roster.tank1 = { ...defaultTankSetup(), passives: [40001, 40002, 40003] };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.tank1.passives).toEqual([40001, 40002, 40003]);
+      });
+
+      it('round-trips passives on healer1', () => {
+        const roster = createDefaultRoster();
+        roster.healer1 = { ...defaultHealerSetup(), passives: [50001] };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.healer1.passives).toEqual([50001]);
+      });
+
+      it('round-trips passives on a DPS slot', () => {
+        const roster = createDefaultRoster();
+        roster.dpsSlots[7] = { slotNumber: 8, passives: [60001, 60002] };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.dpsSlots[7].passives).toEqual([60001, 60002]);
+      });
+
+      it('omits passives when empty', () => {
+        const roster = createDefaultRoster();
+        const compact = compactifyRoster(roster);
+        expect(compact.t1?.pa).toBeUndefined();
+        expect(compact.h1?.pa).toBeUndefined();
+      });
     });
   });
 });
