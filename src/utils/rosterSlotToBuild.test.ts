@@ -117,6 +117,11 @@ describe('dpsSlotToBuild', () => {
       expect(dpsSlotToBuild(slot).shortDescription).toContain('Thaumaturge');
     });
 
+    it('includes arenaWeapon when set', () => {
+      const slot: DPSSlot = { slotNumber: 1, arenaWeapon: "Maelstrom's Bow" };
+      expect(dpsSlotToBuild(slot).shortDescription).toContain("Maelstrom's Bow");
+    });
+
     it('is empty string when no gear info provided', () => {
       expect(dpsSlotToBuild({ slotNumber: 1 }).shortDescription).toBe('');
     });
@@ -351,6 +356,14 @@ describe('healerSlotToBuild', () => {
     it('includes ultimate when set', () => {
       const healer: HealerSetup = { ...defaultHealerSetup(), ultimate: 'Barrier' };
       expect(healerSlotToBuild(healer, 1).shortDescription).toContain('Barrier');
+    });
+
+    it('includes arenaWeapon when set', () => {
+      const healer: HealerSetup = {
+        ...defaultHealerSetup(),
+        arenaWeapon: 'Asylum Restoration Staff',
+      };
+      expect(healerSlotToBuild(healer, 1).shortDescription).toContain('Asylum Restoration Staff');
     });
 
     it('is empty string when no gear info', () => {

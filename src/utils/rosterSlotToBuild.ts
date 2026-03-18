@@ -92,6 +92,7 @@ function buildGearDescription(
   additionalSets?: KnownSetIDs[],
   ultimate?: string | null,
   championPoint?: string | null,
+  arenaWeapon?: string,
 ): string {
   const parts: string[] = [];
 
@@ -108,6 +109,7 @@ function buildGearDescription(
     if (extra.length) parts.push(`Additional: ${extra.join(', ')}`);
   }
 
+  if (arenaWeapon) parts.push(`Arena: ${arenaWeapon}`);
   if (ultimate) parts.push(`Ultimate: ${ultimate}`);
   if (championPoint) parts.push(`CP: ${championPoint}`);
 
@@ -163,6 +165,7 @@ export function dpsSlotToBuild(slot: DPSSlot): Build {
     slot.additionalSets,
     slot.ultimate,
     slot.championPoint,
+    slot.arenaWeapon,
   );
 
   const now = new Date().toISOString();
@@ -245,6 +248,8 @@ export function healerSlotToBuild(healer: HealerSetup, healerNum: 1 | 2): Build 
     healer.monsterSet,
     healer.additionalSets,
     healer.ultimate,
+    undefined,
+    healer.arenaWeapon,
   );
 
   const now = new Date().toISOString();

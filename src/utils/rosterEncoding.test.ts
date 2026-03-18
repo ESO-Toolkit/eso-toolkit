@@ -719,6 +719,36 @@ describe('compactifyRoster / expandCompactRoster', () => {
         expect(compact.h1?.pa).toBeUndefined();
       });
     });
+
+    describe('roleNotes round-trip', () => {
+      it('round-trips roleNotes on a tank slot', () => {
+        const roster = createDefaultRoster();
+        roster.tank1 = { ...defaultTankSetup(), roleNotes: 'TOMB Main Tank, portal duty' };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.tank1.roleNotes).toBe('TOMB Main Tank, portal duty');
+      });
+
+      it('round-trips roleNotes on a healer slot', () => {
+        const roster = createDefaultRoster();
+        roster.healer1 = { ...defaultHealerSetup(), roleNotes: 'Main healer, shield uptime focus' };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.healer1.roleNotes).toBe('Main healer, shield uptime focus');
+      });
+
+      it('round-trips roleNotes on a DPS slot', () => {
+        const roster = createDefaultRoster();
+        roster.dpsSlots[0] = { slotNumber: 1, roleNotes: "Portal L, Z'en, Ele sus" };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.dpsSlots[0].roleNotes).toBe("Portal L, Z'en, Ele sus");
+      });
+
+      it('omits roleNotes when not set (no empty-string bloat)', () => {
+        const roster = createDefaultRoster();
+        const compact = compactifyRoster(roster);
+        expect(compact.t1?.rn).toBeUndefined();
+        expect(compact.h1?.rn).toBeUndefined();
+      });
+    });
   });
 });
 

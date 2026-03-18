@@ -815,6 +815,7 @@ export function compactifyRoster(roster: RaidRoster): CompactRosterV3 {
       slot.skillLines ||
       slot.specificSkills?.length ||
       slot.championPoint ||
+      slot.roleNotes ||
       slot.buildRef ||
       slot.food ||
       slot.skills ||
