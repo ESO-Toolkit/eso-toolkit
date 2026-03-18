@@ -127,6 +127,7 @@ export interface DPSSlot {
   playerNumber?: string; // Position within that tag — e.g. "left", "right", "1"
   roleLabel?: string; // e.g., "DD1", "Portal DD"
   labels?: string[]; // Multiple labels/tags for the player
+  roleNotes?: string | null; // Role-specific notes for the player
   // Structured gear (matches tank/healer pattern)
   set1?: KnownSetIDs; // Primary 5-piece set (Body)
   set2?: KnownSetIDs; // Secondary 5-piece set (Jewelry)
@@ -156,6 +157,7 @@ export interface HealerSetup {
   playerNumber?: string; // Position within that tag — e.g. "left", "right", "1"
   roleLabel?: string; // e.g., "H1", "H2"
   labels?: string[]; // Multiple labels/tags for the player
+  roleNotes?: string | null; // Role-specific notes for the player
   set1: KnownSetIDs | undefined; // First 5-piece set
   set2: KnownSetIDs | undefined; // Second 5-piece set
   monsterSet?: KnownSetIDs; // 2-piece monster set (head + shoulders)
@@ -181,6 +183,7 @@ export interface TankSetup {
   playerNumber?: string; // Position within that tag — e.g. "left", "right", "1"
   roleLabel?: string; // e.g., "MT", "OT"
   labels?: string[]; // Multiple labels/tags for the player
+  roleNotes?: string | null; // Role-specific notes for the player
   gearSets: TankGearSet;
   skillLines: SkillLineConfig;
   ultimate: string | null; // Allows preset ultimates or custom text
