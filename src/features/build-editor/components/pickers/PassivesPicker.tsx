@@ -245,11 +245,7 @@ const PickerPassiveTile: React.FC<PickerPassiveTileProps> = ({ skill, isSelected
           height: TILE_SIZE,
           borderRadius: '10px',
           border: `1.5px solid ${
-            isSelected
-              ? `${accent}0.55)`
-              : isDark
-                ? 'rgba(255,255,255,0.10)'
-                : 'rgba(0,0,0,0.08)'
+            isSelected ? `${accent}0.55)` : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'
           }`,
           background: isSelected
             ? `${accent}0.12)`
@@ -328,10 +324,7 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
   const isDark = useTheme().palette.mode === 'dark';
   const [expanded, setExpanded] = useState(defaultExpanded);
 
-  const passives = useMemo(
-    () => deduplicatePassives(getPassivesByCategory(lineName)),
-    [lineName],
-  );
+  const passives = useMemo(() => deduplicatePassives(getPassivesByCategory(lineName)), [lineName]);
 
   if (passives.length === 0) return null;
 
@@ -795,14 +788,7 @@ export const PassivesPicker: React.FC<PassivesPickerProps> = ({ passives, onChan
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
           {passives.map((id) => {
             const skill = getSkillById(id);
-            return (
-              <PassiveTile
-                key={id}
-                skill={skill}
-                id={id}
-                onRemove={() => handleToggle(id)}
-              />
-            );
+            return <PassiveTile key={id} skill={skill} id={id} onRemove={() => handleToggle(id)} />;
           })}
           <AddPassiveTile onClick={() => setDialogOpen(true)} />
         </Box>

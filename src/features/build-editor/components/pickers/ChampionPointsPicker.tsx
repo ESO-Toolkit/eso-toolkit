@@ -68,10 +68,21 @@ interface CPSlotProps {
   cpId: number | null;
   tree: TreeConfig;
   options: ReturnType<typeof getSlottableByTree>;
-  onSlotChange: (treeKey: keyof BuildChampionPoints, slotIndex: number, cpId: number | null) => void;
+  onSlotChange: (
+    treeKey: keyof BuildChampionPoints,
+    slotIndex: number,
+    cpId: number | null,
+  ) => void;
 }
 
-const CPSlot: React.FC<CPSlotProps> = ({ treeKey, slotIndex, cpId, tree, options, onSlotChange }) => {
+const CPSlot: React.FC<CPSlotProps> = ({
+  treeKey,
+  slotIndex,
+  cpId,
+  tree,
+  options,
+  onSlotChange,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const entry =
@@ -405,7 +416,11 @@ const PassiveRow: React.FC<PassiveRowProps> = ({
 interface TreePanelProps {
   tree: TreeConfig;
   cp: BuildChampionPoints;
-  onSlotChange: (treeKey: keyof BuildChampionPoints, slotIndex: number, cpId: number | null) => void;
+  onSlotChange: (
+    treeKey: keyof BuildChampionPoints,
+    slotIndex: number,
+    cpId: number | null,
+  ) => void;
   onPassiveChange: (treeKey: keyof BuildChampionPoints, cpId: string, points: number) => void;
 }
 

@@ -8,7 +8,10 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { CLASS_SKILL_LINES, getDefaultLinesForClass } from '../features/build-editor/data/esoStaticData';
+import {
+  CLASS_SKILL_LINES,
+  getDefaultLinesForClass,
+} from '../features/build-editor/data/esoStaticData';
 import type {
   Build,
   BuildSetup,
@@ -37,9 +40,10 @@ function resolveSkillLineId(label: string): ClassSkillLineId | null {
  * Infer the ESO class from skill line labels.
  * Picks the class that owns the majority of selected lines.
  */
-function inferClassFromSkillLines(
-  lines: (string | undefined)[],
-): { esoClass: ESOClass; classSkillLines: [ClassSkillLineId | null, ClassSkillLineId | null, ClassSkillLineId | null] } {
+function inferClassFromSkillLines(lines: (string | undefined)[]): {
+  esoClass: ESOClass;
+  classSkillLines: [ClassSkillLineId | null, ClassSkillLineId | null, ClassSkillLineId | null];
+} {
   const resolvedIds = lines
     .filter((l): l is string => !!l)
     .map(resolveSkillLineId)
@@ -70,11 +74,11 @@ function inferClassFromSkillLines(
   // If we identified a clear class, fill all 3 default lines for that class
   // but override with the user's actual selections where available
   const defaults = getDefaultLinesForClass(bestClass);
-  const classSkillLines: [ClassSkillLineId | null, ClassSkillLineId | null, ClassSkillLineId | null] = [
-    resolvedIds[0] ?? defaults[0],
-    resolvedIds[1] ?? defaults[1],
-    resolvedIds[2] ?? defaults[2],
-  ];
+  const classSkillLines: [
+    ClassSkillLineId | null,
+    ClassSkillLineId | null,
+    ClassSkillLineId | null,
+  ] = [resolvedIds[0] ?? defaults[0], resolvedIds[1] ?? defaults[1], resolvedIds[2] ?? defaults[2]];
 
   return { esoClass: bestClass, classSkillLines };
 }
@@ -165,21 +169,21 @@ export function dpsSlotToBuild(slot: DPSSlot): Build {
 
   return {
     id: uuidv4(),
-    name: slot.playerName
-      ? `${slot.playerName}'s Build`
-      : `DPS ${slot.slotNumber} Build`,
+    name: slot.playerName ? `${slot.playerName}'s Build` : `DPS ${slot.slotNumber} Build`,
     shortDescription: description,
     esoClass,
     classSkillLines,
     role: 'hybrid-dps' as CombatRole,
     gameMode: 'pve',
     races: [],
-    setups: [makeSetupFromSlot({
-      skills: slot.skills,
-      cpPoints: slot.cpPoints,
-      food: slot.food,
-      passives: slot.passives,
-    })],
+    setups: [
+      makeSetupFromSlot({
+        skills: slot.skills,
+        cpPoints: slot.cpPoints,
+        food: slot.food,
+        passives: slot.passives,
+      }),
+    ],
     guide: { content: '', youtubeUrl: '', bannerImageUrl: '' },
     settings: { visibility: 'private', dlc: 'Base Game', setupOrder: [0] },
     addonImportString: '',
@@ -206,21 +210,21 @@ export function tankSlotToBuild(tank: TankSetup, tankNum: 1 | 2): Build {
 
   return {
     id: uuidv4(),
-    name: tank.playerName
-      ? `${tank.playerName}'s Build`
-      : `Tank ${tankNum} Build`,
+    name: tank.playerName ? `${tank.playerName}'s Build` : `Tank ${tankNum} Build`,
     shortDescription: description,
     esoClass,
     classSkillLines,
     role: 'tank',
     gameMode: 'pve',
     races: [],
-    setups: [makeSetupFromSlot({
-      skills: tank.skills,
-      cpPoints: tank.cpPoints,
-      food: tank.food,
-      passives: tank.passives,
-    })],
+    setups: [
+      makeSetupFromSlot({
+        skills: tank.skills,
+        cpPoints: tank.cpPoints,
+        food: tank.food,
+        passives: tank.passives,
+      }),
+    ],
     guide: { content: '', youtubeUrl: '', bannerImageUrl: '' },
     settings: { visibility: 'private', dlc: 'Base Game', setupOrder: [0] },
     addonImportString: '',
@@ -247,21 +251,21 @@ export function healerSlotToBuild(healer: HealerSetup, healerNum: 1 | 2): Build 
 
   return {
     id: uuidv4(),
-    name: healer.playerName
-      ? `${healer.playerName}'s Build`
-      : `Healer ${healerNum} Build`,
+    name: healer.playerName ? `${healer.playerName}'s Build` : `Healer ${healerNum} Build`,
     shortDescription: description,
     esoClass,
     classSkillLines,
     role: 'healer',
     gameMode: 'pve',
     races: [],
-    setups: [makeSetupFromSlot({
-      skills: healer.skills,
-      cpPoints: healer.cpPoints,
-      food: healer.food,
-      passives: healer.passives,
-    })],
+    setups: [
+      makeSetupFromSlot({
+        skills: healer.skills,
+        cpPoints: healer.cpPoints,
+        food: healer.food,
+        passives: healer.passives,
+      }),
+    ],
     guide: { content: '', youtubeUrl: '', bannerImageUrl: '' },
     settings: { visibility: 'private', dlc: 'Base Game', setupOrder: [0] },
     addonImportString: '',
