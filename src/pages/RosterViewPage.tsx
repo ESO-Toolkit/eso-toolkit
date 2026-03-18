@@ -44,8 +44,8 @@ import {
 } from '../types/trial-encounters';
 import { encodeBuildToURL } from '../utils/buildEncoding';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
-import { createBuildFromSlot } from '../utils/rosterBuildBridge';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
+import { dpsSlotToBuild, tankSlotToBuild, healerSlotToBuild } from '../utils/rosterSlotToBuild';
 import { getSetDisplayName } from '../utils/setNameUtils';
 
 // ============================================================
@@ -160,12 +160,13 @@ const BuildDataBadges: React.FC<BuildDataBadgesProps> = ({
 
 interface TankCardProps {
   tank: TankSetup;
+  slotNum: 1 | 2;
   label: string;
   color: string;
   isDarkMode: boolean;
 }
 
-const TankCard: React.FC<TankCardProps> = ({ tank, label, color, isDarkMode }) => {
+const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDarkMode }) => {
   const gearSets = formatGearSets(tank.gearSets);
   const skillLines = formatSkillLines(tank.skillLines);
   const hasContent =
@@ -180,7 +181,7 @@ const TankCard: React.FC<TankCardProps> = ({ tank, label, color, isDarkMode }) =
   const handleViewBuild = useCallback(async () => {
     setViewLoading(true);
     try {
-      const build = createBuildFromSlot(tank, 'any-class', 'tank');
+      const build = tankSlotToBuild(tank, slotNum);
       const encoded = await encodeBuildToURL(build);
       if (encoded) {
         const basePath = window.location.pathname.replace(/\/rv(\/.*)?$/, '');
@@ -193,7 +194,7 @@ const TankCard: React.FC<TankCardProps> = ({ tank, label, color, isDarkMode }) =
     } finally {
       setViewLoading(false);
     }
-  }, [tank]);
+  }, [tank, slotNum]);
 
   return (
     <Paper
@@ -246,7 +247,7 @@ const TankCard: React.FC<TankCardProps> = ({ tank, label, color, isDarkMode }) =
               mb: 0.25,
             }}
           >
-            {label}
+            {tank.roleLabel || label}
           </Typography>
           <Typography
             sx={{
@@ -416,12 +417,13 @@ const TankCard: React.FC<TankCardProps> = ({ tank, label, color, isDarkMode }) =
 
 interface HealerCardProps {
   healer: HealerSetup;
+  slotNum: 1 | 2;
   label: string;
   color: string;
   isDarkMode: boolean;
 }
 
-const HealerCard: React.FC<HealerCardProps> = ({ healer, label, color, isDarkMode }) => {
+const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, isDarkMode }) => {
   const gearSets = formatGearSets({
     set1: healer.set1,
     set2: healer.set2,
@@ -442,7 +444,7 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, label, color, isDarkMod
   const handleViewBuild = useCallback(async () => {
     setViewLoading(true);
     try {
-      const build = createBuildFromSlot(healer, 'any-class', 'healer');
+      const build = healerSlotToBuild(healer, slotNum);
       const encoded = await encodeBuildToURL(build);
       if (encoded) {
         const basePath = window.location.pathname.replace(/\/rv(\/.*)?$/, '');
@@ -455,7 +457,7 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, label, color, isDarkMod
     } finally {
       setViewLoading(false);
     }
-  }, [healer]);
+  }, [healer, slotNum]);
 
   return (
     <Paper
@@ -757,7 +759,7 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
   const handleViewBuild = useCallback(async () => {
     setViewLoading(true);
     try {
-      const build = createBuildFromSlot(slot, 'any-class', 'magicka-dps');
+      const build = dpsSlotToBuild(slot);
       const encoded = await encodeBuildToURL(build);
       if (encoded) {
         const basePath = window.location.pathname.replace(/\/rv(\/.*)?$/, '');
@@ -1484,12 +1486,14 @@ export const RosterViewPage: React.FC = () => {
         >
           <TankCard
             tank={roster.tank1}
+            slotNum={1}
             label="MT"
             color={roleColors.tank}
             isDarkMode={isDarkMode}
           />
           <TankCard
             tank={roster.tank2}
+            slotNum={2}
             label="OT"
             color={roleColors.tank}
             isDarkMode={isDarkMode}
@@ -1514,12 +1518,14 @@ export const RosterViewPage: React.FC = () => {
         >
           <HealerCard
             healer={roster.healer1}
+            slotNum={1}
             label="H1"
             color={roleColors.healer}
             isDarkMode={isDarkMode}
           />
           <HealerCard
             healer={roster.healer2}
+            slotNum={2}
             label="H2"
             color={roleColors.healer}
             isDarkMode={isDarkMode}
