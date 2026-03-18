@@ -675,21 +675,21 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
       roster.tank1 = {
         ...defaultTankSetup(),
         playerName: 'TankA',
-        playerNumber: 1,
+        playerNumber: '1',
         roleLabel: 'MT',
         notes: 'TOMB Main Tank (1A)',
       };
       roster.healer1 = {
         ...defaultHealerSetup(),
         playerName: 'HealerA',
-        playerNumber: 1,
+        playerNumber: '1',
         roleLabel: 'H1',
         notes: 'TOMB Healer 1',
       };
       roster.dpsSlots[0] = {
         slotNumber: 1,
         playerName: 'DPS1',
-        playerNumber: 1,
+        playerNumber: '1',
         roleLabel: 'DD1',
         notes: 'Front Bar DPS',
       };
@@ -719,7 +719,7 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
     expect(playerData).not.toBeNull();
     expect(playerData.tank1.name).toBe('TankA');
-    expect(playerData.tank1.number).toBe(1);
+    expect(playerData.tank1.number).toBe('1');
     expect(playerData.tank1.label).toBe('MT');
     expect(playerData.tank1.notes).toBe('TOMB Main Tank (1A)');
 

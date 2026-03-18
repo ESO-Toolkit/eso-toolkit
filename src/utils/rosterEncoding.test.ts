@@ -50,7 +50,7 @@ function buildFullRoster() {
   roster.tank1 = {
     ...defaultTankSetup(),
     playerName: 'TankPlayer',
-    playerNumber: 1,
+    playerNumber: '1',
     roleLabel: 'MT',
     labels: ['carry', 'veteran'],
     gearSets: {
@@ -201,7 +201,7 @@ describe('compactifyRoster / expandCompactRoster', () => {
 
       const t1 = expanded.tank1;
       expect(t1.playerName).toBe('TankPlayer');
-      expect(t1.playerNumber).toBe(1);
+      expect(t1.playerNumber).toBe('1');
       expect(t1.roleLabel).toBe('MT');
       expect(t1.labels).toEqual(['carry', 'veteran']);
       expect(t1.gearSets.set1).toBe(KnownSetIDs.LUCENT_ECHOES);
