@@ -34,6 +34,7 @@ import {
   type PotionStreamResult,
 } from '@/utils/potionDetectionUtils';
 
+import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
 import { GearDetailsPanel } from '../../../components/GearDetailsPanel';
 import { GearSetTooltip } from '../../../components/GearSetTooltip';
@@ -248,7 +249,7 @@ const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
         >
           {mundusName}
         </Box>
-      </span>
+      </Box>
     </Tooltip>
   );
 };

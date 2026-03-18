@@ -111,6 +111,8 @@ import {
   DD_SPECIAL_SETS,
   DPS_MYTHIC_SETS,
   validateCompatibility,
+  TankGearSet,
+  PlayerGroup,
 } from '../types/roster';
 import type { TrialBuildOverrides } from '../types/trial-encounters';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
@@ -532,7 +534,7 @@ function expandDPS(c: CompactDPS): DPSSlot {
   };
 }
 
-function compactifyRoster(roster: RaidRoster): CompactRoster {
+function _compactifyRoster(roster: RaidRoster): CompactRoster {
   const c: CompactRoster = { v: 2 };
   if (roster.rosterName && roster.rosterName !== 'New Roster') c.n = roster.rosterName;
   c.t1 = compactTank(roster.tank1);
@@ -564,7 +566,7 @@ function compactifyRoster(roster: RaidRoster): CompactRoster {
   return c;
 }
 
-function expandCompactRoster(c: CompactRoster): RaidRoster {
+function _expandCompactRoster(c: CompactRoster): RaidRoster {
   const dpsSlots = createDefaultDPSSlots();
   if (c.dp) {
     for (const compactSlot of c.dp) {
@@ -2568,7 +2570,7 @@ export const RosterBuilderPage: React.FC = () => {
                     <Tooltip title="Publish to Roster Hub — share with the community" arrow>
                       <ButtonBase
                         onClick={() => {
-                          void encodeRosterToURLShared(roster).then((encoded) => {
+                          void encodeRosterToURL(roster).then((encoded) => {
                             setPublishRosterData(encoded);
                             setPublishDialogOpen(true);
                           });
