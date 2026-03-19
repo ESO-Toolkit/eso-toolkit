@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Validate all SKILL.md files in .github/skills/ against the agentskills.io spec.
+Validate all SKILL.md files in .agents/skills/ against the agentskills.io spec.
 
 Usage:
   pip install skills-ref
@@ -18,7 +18,7 @@ except ImportError:
     print("Error: skills-ref is not installed. Run: pip install skills-ref")
     sys.exit(1)
 
-SKILLS_DIR = Path(__file__).parent.parent / ".github" / "skills"
+SKILLS_DIR = Path(__file__).parent.parent / ".agents" / "skills"
 
 if not SKILLS_DIR.exists():
     print(f"Error: skills directory not found at {SKILLS_DIR}")

@@ -255,7 +255,7 @@ npm test          # Unit tests (changed files)
 - **Post-Squash Rebase** - Automated branch tree rebasing
 
 ### Implementations
-- **GitHub Copilot (VS Code)**: `.github/skills/*/SKILL.md` files — agent skills invoked via natural language in chat
+- **GitHub Copilot (VS Code)**: `.agents/skills/*/SKILL.md` files — agent skills invoked via natural language in chat
 
 ### Documentation
 - See [AGENTS.md](AGENTS.md) for the full skill list and invocation examples

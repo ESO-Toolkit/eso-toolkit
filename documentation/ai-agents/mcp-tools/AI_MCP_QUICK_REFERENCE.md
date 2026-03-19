@@ -57,7 +57,7 @@ await page.reload();
 
 ### Other MCP Servers
 - **GitKraken** - Git operations, PRs, issues
-- **Rollbar** - Error tracking, issue search (via `.github/skills/rollbar/SKILL.md`)
+- **Rollbar** - Error tracking, issue search (via `.agents/skills/rollbar/SKILL.md`)
 - **Atlassian** - Jira work items, Confluence docs
 - **Pylance** - Python language server
 

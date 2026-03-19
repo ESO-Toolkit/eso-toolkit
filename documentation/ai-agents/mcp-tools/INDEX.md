@@ -36,7 +36,7 @@ This project integrates with several MCP servers for enhanced AI agent capabilit
 
 ### 2. **Rollbar** (via REST API skill)
 **Purpose**: Error tracking and monitoring  
-**Status**: ✅ Available via `.github/skills/rollbar/SKILL.md`
+**Status**: ✅ Available via `.agents/skills/rollbar/SKILL.md`
 
 **Key Features**:
 - Item (error) search and analysis
