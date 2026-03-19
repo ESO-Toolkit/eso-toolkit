@@ -12,10 +12,10 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
 
-import { ItemPickerDialog } from '../../../loadout-manager/components/ItemPickerDialog';
 import { getItemInfo } from '../../../loadout-manager/data/itemIdMap';
 import { EQUIP_SLOTS, type EquipSlotDef } from '../../data/esoStaticData';
 import { setGearSlot } from '../../store/buildEditorSlice';
+import { GearPickerDialog } from '../pickers/GearPicker';
 import { GearSlotCard } from '../primitives/GearSlotCard';
 
 // ── 2H weapon logic ─────────────────────────────────────────────────────────
@@ -172,7 +172,7 @@ export const EquipmentSection: React.FC = () => {
       </Stack>
 
       {pickerSlot && (
-        <ItemPickerDialog
+        <GearPickerDialog
           open={Boolean(pickerSlot)}
           onClose={handleClose}
           onSelect={handleSelect}
