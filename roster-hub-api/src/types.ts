@@ -97,3 +97,12 @@ export interface BuildCommentRow {
 export interface BuildCommentWithReplies extends BuildCommentRow {
   replies: BuildCommentRow[];
 }
+
+// ─── Temp builds (guest, expiring) ───────────────────────────────────────────
+
+export interface TempBuildRow {
+  id: string;
+  build_data: string;
+  created_at: string;
+  expires_at: string;
+}

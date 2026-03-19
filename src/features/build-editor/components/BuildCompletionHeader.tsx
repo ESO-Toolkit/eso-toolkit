@@ -7,8 +7,11 @@
 import {
   ArrowBack as ArrowBackIcon,
   Close as CloseIcon,
+  ContentCopyOutlined,
+  FileDownloadOutlined,
   FileUploadOutlined,
   Groups as GroupsIcon,
+  LinkOutlined,
   PublishOutlined,
   SaveOutlined,
   ShareOutlined,
@@ -36,7 +39,9 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { setIntendedDestination } from '@/features/auth/auth';
 import { useAuth } from '@/features/auth/AuthContext';
+import { tempBuildApi } from '@/features/build-editor/api/temp-build-api';
 import { PublishBuildDialog } from '@/features/build-hub/components/PublishBuildDialog';
 import { saveBuild, updateSavedBuild } from '@/store/saved_builds';
 import { attachBuildToSlot, selectSavedRosters } from '@/store/saved_rosters';
@@ -119,10 +124,17 @@ export const BuildCompletionHeader: React.FC = () => {
   const completeness = useBuildCompleteness();
   const savedRostersCount = useSelector((s: RootState) => selectSavedRosters(s).length);
   const [importOpen, setImportOpen] = React.useState(false);
+  const [exportOpen, setExportOpen] = React.useState(false);
+  const [exportString, setExportString] = React.useState('');
+  const [isExporting, setIsExporting] = React.useState(false);
   const [publishOpen, setPublishOpen] = React.useState(false);
   const [addToRosterOpen, setAddToRosterOpen] = React.useState(false);
   const [encodedBuildData, setEncodedBuildData] = React.useState('');
   const [isPublishing, setIsPublishing] = React.useState(false);
+  const [isCreatingLink, setIsCreatingLink] = React.useState(false);
+  const [tempLinkDialogOpen, setTempLinkDialogOpen] = React.useState(false);
+  const [tempLink, setTempLink] = React.useState('');
+  const [tempLinkExpiry, setTempLinkExpiry] = React.useState('');
 
   const handleSave = (): void => {
     if (!build.name.trim()) {
@@ -219,6 +231,80 @@ export const BuildCompletionHeader: React.FC = () => {
       setEncodedBuildData(encoded);
       setPublishOpen(true);
     });
+  };
+
+  const handleGetLink = (): void => {
+    if (!build.name.trim()) {
+      enqueueSnackbar('Please enter a build name before getting a link.', { variant: 'warning' });
+      return;
+    }
+    setIsCreatingLink(true);
+    void encodeBuildToURL(build).then((encoded) => {
+      if (!encoded) {
+        setIsCreatingLink(false);
+        enqueueSnackbar('Could not encode build.', { variant: 'error' });
+        return;
+      }
+      void tempBuildApi
+        .create(encoded)
+        .then((result) => {
+          setIsCreatingLink(false);
+          const url = `${window.location.origin}${import.meta.env.BASE_URL}b/${result.id}`;
+          setTempLink(url);
+          setTempLinkExpiry(result.expires_at);
+          setTempLinkDialogOpen(true);
+        })
+        .catch((err: Error) => {
+          setIsCreatingLink(false);
+          enqueueSnackbar(err.message || 'Could not create temporary link.', { variant: 'error' });
+        });
+    });
+  };
+
+  const handleGuestPublishRedirect = (): void => {
+    void encodeBuildToURL(build).then((encoded) => {
+      if (encoded) {
+        setIntendedDestination(`/build-editor?b=${encodeURIComponent(encoded)}`);
+      } else {
+        setIntendedDestination('/build-editor');
+      }
+      navigate('/login');
+    });
+  };
+
+  const handleExportClick = (): void => {
+    setIsExporting(true);
+    void encodeBuildToURL(build).then((encoded) => {
+      setIsExporting(false);
+      if (!encoded) {
+        enqueueSnackbar('Could not encode build for export.', { variant: 'error' });
+        return;
+      }
+      setExportString(encoded);
+      setExportOpen(true);
+    });
+  };
+
+  const handleCopyExport = (): void => {
+    navigator.clipboard
+      .writeText(exportString)
+      .then(() => enqueueSnackbar('Build data copied to clipboard!', { variant: 'info' }))
+      .catch(() => enqueueSnackbar('Could not copy to clipboard.', { variant: 'error' }));
+  };
+
+  const handleDownloadExport = (): void => {
+    const fileName = `${(build.name || 'untitled-build')
+      .replace(/[^a-zA-Z0-9-_ ]/g, '')
+      .replace(/\s+/g, '-')
+      .toLowerCase()}.esobuild`;
+    const blob = new Blob([exportString], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+    enqueueSnackbar(`Exported as ${fileName}`, { variant: 'success' });
   };
 
   // ── Shared button styles ──────────────────────────────────────────────
@@ -436,7 +522,7 @@ export const BuildCompletionHeader: React.FC = () => {
           flexShrink: 0,
         }}
       >
-        {/* Group 1: Data — Import + Save */}
+        {/* Group 1: Transfer — Import + Export */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Tooltip title="Import build from addon">
             <Button
@@ -450,6 +536,43 @@ export const BuildCompletionHeader: React.FC = () => {
               {isMobile ? <FileUploadOutlined sx={{ fontSize: 16 }} /> : 'Import'}
             </Button>
           </Tooltip>
+          <Tooltip title="Export build data">
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={
+                !isMobile ? (
+                  isExporting ? (
+                    <CircularProgress size={12} color="inherit" />
+                  ) : (
+                    <FileDownloadOutlined sx={{ fontSize: 14 }} />
+                  )
+                ) : undefined
+              }
+              onClick={handleExportClick}
+              disabled={isExporting}
+              aria-label="Export build data"
+              sx={outlinedPill}
+            >
+              {isMobile ? (
+                isExporting ? (
+                  <CircularProgress size={14} color="inherit" />
+                ) : (
+                  <FileDownloadOutlined sx={{ fontSize: 16 }} />
+                )
+              ) : isExporting ? (
+                'Encoding\u2026'
+              ) : (
+                'Export'
+              )}
+            </Button>
+          </Tooltip>
+        </Box>
+
+        {groupDivider}
+
+        {/* Group 2: Save + Get Link (guest) */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Button
             variant="contained"
             size="small"
@@ -480,11 +603,54 @@ export const BuildCompletionHeader: React.FC = () => {
           >
             {isMobile ? <SaveOutlined sx={{ fontSize: 16 }} /> : isDirty ? 'Save' : 'Saved'}
           </Button>
+          {!isLoggedIn && (
+            <Tooltip title="Save and get a shareable short link (expires in 5 days)">
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={
+                  !isMobile ? (
+                    isCreatingLink ? (
+                      <CircularProgress size={12} color="inherit" />
+                    ) : (
+                      <LinkOutlined sx={{ fontSize: 14 }} />
+                    )
+                  ) : undefined
+                }
+                onClick={handleGetLink}
+                disabled={isCreatingLink}
+                aria-label="Get shareable link"
+                sx={{
+                  ...pillBase,
+                  background: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  boxShadow: '0 0 12px rgba(139,92,246,0.30)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #c4b5fd 0%, #a78bfa 100%)',
+                    boxShadow: '0 0 18px rgba(139,92,246,0.45)',
+                  },
+                }}
+              >
+                {isMobile ? (
+                  isCreatingLink ? (
+                    <CircularProgress size={14} color="inherit" />
+                  ) : (
+                    <LinkOutlined sx={{ fontSize: 16 }} />
+                  )
+                ) : isCreatingLink ? (
+                  'Creating\u2026'
+                ) : (
+                  'Get Link'
+                )}
+              </Button>
+            </Tooltip>
+          )}
         </Box>
 
         {groupDivider}
 
-        {/* Group 2: Output — Share + View */}
+        {/* Group 3: Output — Share + View */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Tooltip title="Copy share link to clipboard">
             <Button
@@ -514,7 +680,7 @@ export const BuildCompletionHeader: React.FC = () => {
 
         {groupDivider}
 
-        {/* Group 3: Distribution — Roster + Publish */}
+        {/* Group 4: Distribution — Roster + Publish */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Tooltip
             title={
@@ -565,11 +731,7 @@ export const BuildCompletionHeader: React.FC = () => {
               </Button>
             </Box>
           </Tooltip>
-          <Tooltip
-            title={
-              isLoggedIn ? '' : 'Log in to publish your build to the Build Hub'
-            }
-          >
+          <Tooltip title={isLoggedIn ? '' : 'Log in to publish your build to the Build Hub'}>
             <Box component="span">
               <Button
                 variant="contained"
@@ -583,8 +745,8 @@ export const BuildCompletionHeader: React.FC = () => {
                     )
                   ) : undefined
                 }
-                onClick={isLoggedIn ? handlePublishClick : undefined}
-                disabled={isPublishing || !isLoggedIn}
+                onClick={isLoggedIn ? handlePublishClick : handleGuestPublishRedirect}
+                disabled={isPublishing}
                 aria-label={
                   isLoggedIn ? 'Publish build to Build Hub' : 'Log in to publish your build'
                 }
@@ -693,10 +855,10 @@ export const BuildCompletionHeader: React.FC = () => {
               fontFamily: 'Space Grotesk, Inter, system-ui',
             }}
           >
-            Addon import is <strong>coming soon</strong>. In a future update you&apos;ll be able
-            to paste an export string from <strong>Combat Metrics</strong> or{' '}
-            <strong>Caro&apos;s Skill Point Saver</strong> to auto-populate your build.
-            For now, configure your build using the sections on the page.
+            Addon import is <strong>coming soon</strong>. In a future update you&apos;ll be able to
+            paste an export string from <strong>Combat Metrics</strong> or{' '}
+            <strong>Caro&apos;s Skill Point Saver</strong> to auto-populate your build. For now,
+            configure your build using the sections on the page.
           </Typography>
           <Stack spacing={1.5}>
             <TextField
@@ -719,6 +881,206 @@ export const BuildCompletionHeader: React.FC = () => {
                 sx={outlinedPill}
               >
                 Close
+              </Button>
+            </Stack>
+          </Stack>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export dialog */}
+      <Dialog
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+            borderRadius: 3,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontWeight: 700,
+            fontSize: 16,
+            pb: 0.5,
+          }}
+        >
+          Export Build
+          <IconButton
+            onClick={() => setExportOpen(false)}
+            size="small"
+            aria-label="Close export dialog"
+            sx={{ color: 'text.secondary' }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              display: 'block',
+              mb: 2,
+              fontSize: 12,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+            }}
+          >
+            Copy the encoded build string below or download it as a file. This data includes your
+            full build configuration — class, gear, skills, champion points, and consumables.
+          </Typography>
+          <Stack spacing={1.5}>
+            <TextField
+              fullWidth
+              size="small"
+              value={exportString}
+              multiline
+              minRows={3}
+              maxRows={8}
+              slotProps={{ input: { readOnly: true } }}
+              onFocus={(e) => e.target.select()}
+              sx={glassInputSx(isDark)}
+            />
+            <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<FileDownloadOutlined sx={{ fontSize: 14 }} />}
+                onClick={handleDownloadExport}
+                sx={outlinedPill}
+              >
+                Download .esobuild
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<ContentCopyOutlined sx={{ fontSize: 14 }} />}
+                onClick={handleCopyExport}
+                sx={{
+                  ...pillBase,
+                  background:
+                    'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.9), rgba(var(--be-accent-rgb, 56, 189, 248), 0.7))',
+                  border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.5)',
+                  boxShadow: '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)',
+                  color: isDark ? '#fff' : '#0b1220',
+                  '&:hover': {
+                    boxShadow: '0 0 18px rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)',
+                  },
+                }}
+              >
+                Copy to Clipboard
+              </Button>
+            </Stack>
+          </Stack>
+        </DialogContent>
+      </Dialog>
+
+      {/* Temp link dialog — shown after creating a guest build link */}
+      <Dialog
+        open={tempLinkDialogOpen}
+        onClose={() => setTempLinkDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+            borderRadius: 3,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontWeight: 700,
+            fontSize: 16,
+            pb: 0.5,
+          }}
+        >
+          Build Link Created
+          <IconButton
+            onClick={() => setTempLinkDialogOpen(false)}
+            size="small"
+            aria-label="Close link dialog"
+            sx={{ color: 'text.secondary' }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              display: 'block',
+              mb: 2,
+              fontSize: 12,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+            }}
+          >
+            Share this link with anyone — no login required to view.
+            {tempLinkExpiry && (
+              <>
+                {' '}
+                This link expires on{' '}
+                <strong>
+                  {new Date(tempLinkExpiry + 'Z').toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </strong>
+                .
+              </>
+            )}
+          </Typography>
+          <Stack spacing={1.5}>
+            <TextField
+              fullWidth
+              size="small"
+              value={tempLink}
+              slotProps={{ input: { readOnly: true } }}
+              onFocus={(e) => e.target.select()}
+              sx={glassInputSx(isDark)}
+            />
+            <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<ContentCopyOutlined sx={{ fontSize: 14 }} />}
+                onClick={() => {
+                  navigator.clipboard
+                    .writeText(tempLink)
+                    .then(() => enqueueSnackbar('Link copied to clipboard!', { variant: 'info' }))
+                    .catch(() => enqueueSnackbar('Could not copy link.', { variant: 'error' }));
+                }}
+                sx={{
+                  ...pillBase,
+                  background:
+                    'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.9), rgba(var(--be-accent-rgb, 56, 189, 248), 0.7))',
+                  border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.5)',
+                  boxShadow: '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)',
+                  color: isDark ? '#fff' : '#0b1220',
+                  '&:hover': {
+                    boxShadow: '0 0 18px rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)',
+                  },
+                }}
+              >
+                Copy Link
               </Button>
             </Stack>
           </Stack>

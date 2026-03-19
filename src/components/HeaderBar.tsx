@@ -652,6 +652,11 @@ export const HeaderBar: React.FC = () => {
       path: '/build-editor',
     },
     {
+      text: 'My Builds',
+      icon: '📋',
+      path: '/my-builds',
+    },
+    {
       text: 'Gear Sets',
       icon: '🛡️',
       path: '/gear-sets',
@@ -705,6 +710,14 @@ export const HeaderBar: React.FC = () => {
       colorVariant: 'default' | 'destructive' | 'positive';
     }> = [];
 
+    // My Builds is always accessible (localStorage-backed)
+    items.push({
+      text: 'My builds',
+      icon: <Build sx={{ fontSize: 18 }} />,
+      action: handleMobileViewBuilds,
+      colorVariant: 'default',
+    });
+
     if (isLoggedIn) {
       items.push({
         text: 'My reports',
@@ -716,12 +729,6 @@ export const HeaderBar: React.FC = () => {
         text: 'My rosters',
         icon: <Build sx={{ fontSize: 18 }} />,
         action: handleMobileViewRosters,
-        colorVariant: 'default',
-      });
-      items.push({
-        text: 'My builds',
-        icon: <Build sx={{ fontSize: 18 }} />,
-        action: handleMobileViewBuilds,
         colorVariant: 'default',
       });
       items.push({
