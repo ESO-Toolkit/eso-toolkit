@@ -12,7 +12,7 @@ git checkout -b ESO-XXX/description
 
 Branch naming: `ESO-<issue-number>/<kebab-case-description>`
 
-Use the **Ensure Feature Branch** skill (`.github/skills/workflow/SKILL.md`) to automate branch creation.
+Use the **Ensure Feature Branch** skill (`.agents/skills/workflow/SKILL.md`) to automate branch creation.
 
 ---
 
@@ -40,7 +40,7 @@ Use the **Ensure Feature Branch** skill (`.github/skills/workflow/SKILL.md`) to 
 
 ## Agent Skills
 
-All agent skills are `SKILL.md` files in `.github/skills/`. Use natural language in chat:
+All agent skills are `SKILL.md` files in `.agents/skills/`. Use natural language in chat:
 
 | Skill | Usage |
 |-------|-------|
@@ -82,8 +82,8 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
 
 - Run unit tests before committing: `npm test`
 - Run all validation before committing: `npm run validate`
-- For E2E tests, use the **Run Playwright Tests** skill (`.github/skills/playwright/SKILL.md`)
-- For dev server and build tools, use the **Dev and Testing Tools** skill (`.github/skills/testing/SKILL.md`)
+- For E2E tests, use the **Run Playwright Tests** skill (`.agents/skills/playwright/SKILL.md`)
+- For dev server and build tools, use the **Dev and Testing Tools** skill (`.agents/skills/testing/SKILL.md`)
 
 See [playwright/AI_PLAYWRIGHT_INSTRUCTIONS.md](./playwright/AI_PLAYWRIGHT_INSTRUCTIONS.md) for Playwright visual testing patterns (skeleton detection, screenshot timing).
 

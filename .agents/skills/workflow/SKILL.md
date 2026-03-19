@@ -243,7 +243,7 @@ If `$hasUIChanges` is non-empty, follow the screenshot process in the **create-p
 
 ### 7b — Write the PR body to a temp file (use create_file tool — never Set-Content with backticks)
 
-Use the PR body template from [.github/skills/create-pr/SKILL.md](.github/skills/create-pr/SKILL.md). Write it to `.github/tmp-pr-body.md`.
+Use the PR body template from [.agents/skills/create-pr/SKILL.md](.agents/skills/create-pr/SKILL.md). Write it to `.github/tmp-pr-body.md`.
 
 For non-UI PRs omit the Screenshots section. A minimal body for data/logic PRs:
 
@@ -296,7 +296,7 @@ Use the appropriate status based on state:
 - **Implementation done, PR open**: Move ticket to `In Review`
 - **Merged and deployed**: Move ticket to `Done`
 
-See the Jira skill for full transition commands: [.github/skills/jira/SKILL.md](.github/skills/jira/SKILL.md)
+See the Jira skill for full transition commands: [.agents/skills/jira/SKILL.md](.agents/skills/jira/SKILL.md)
 
 ## Recovery: If Changes Were Made on Main
 
