@@ -173,6 +173,10 @@ const MyBuildsPage = React.lazy(() =>
   import('./pages/MyBuildsPage').then((module) => ({ default: module.MyBuildsPage })),
 );
 
+const TempBuildViewPage = React.lazy(() =>
+  import('./pages/TempBuildViewPage').then((module) => ({ default: module.TempBuildViewPage })),
+);
+
 const BuildHubPage = React.lazy(() =>
   import('./features/build-hub/components/BuildHubPage').then((module) => ({
     default: module.BuildHubPage,
@@ -565,13 +569,11 @@ const AppRoutes: React.FC = () => {
             <Route
               path="/build-editor"
               element={
-                <AuthenticatedRoute>
-                  <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <BuildEditorPage />
-                    </Suspense>
-                  </ErrorBoundary>
-                </AuthenticatedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <BuildEditorPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
@@ -646,16 +648,25 @@ const AppRoutes: React.FC = () => {
                 </ErrorBoundary>
               }
             />
+            {/* Temporary build short link — resolves slug and redirects to /bv */}
+            <Route
+              path="/b/:slug"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <TempBuildViewPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
             <Route
               path="/my-builds"
               element={
-                <AuthenticatedRoute>
-                  <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <MyBuildsPage />
-                    </Suspense>
-                  </ErrorBoundary>
-                </AuthenticatedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <MyBuildsPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route

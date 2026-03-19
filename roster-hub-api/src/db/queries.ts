@@ -698,3 +698,71 @@ async function insertBuildTags(db: D1Database, buildId: string, tags: string[]):
     );
   await db.batch(stmts);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Temp builds — guest-created builds with 5-day expiry
+// ═══════════════════════════════════════════════════════════════════════════════
+
+import type { TempBuildRow } from '../types';
+
+const TEMP_BUILD_RATE_LIMIT_WINDOW_SEC = 3600;
+const TEMP_BUILD_RATE_LIMIT_MAX = 10;
+
+export async function createTempBuild(
+  db: D1Database,
+  data: { id: string; buildData: string },
+): Promise<TempBuildRow> {
+  await db
+    .prepare(
+      "INSERT INTO temp_builds (id, build_data, created_at, expires_at) VALUES (?, ?, datetime('now'), datetime('now', '+5 days'))",
+    )
+    .bind(data.id, data.buildData)
+    .run();
+
+  const row = await db
+    .prepare('SELECT * FROM temp_builds WHERE id = ?')
+    .bind(data.id)
+    .first<TempBuildRow>();
+
+  return row!;
+}
+
+export async function getTempBuild(
+  db: D1Database,
+  id: string,
+): Promise<TempBuildRow | null> {
+  const row = await db
+    .prepare("SELECT * FROM temp_builds WHERE id = ? AND expires_at > datetime('now')")
+    .bind(id)
+    .first<TempBuildRow>();
+
+  return row ?? null;
+}
+
+export async function checkTempBuildRateLimit(db: D1Database, ip: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM temp_build_rate_limits
+       WHERE ip = ? AND created_at > datetime('now', '-${TEMP_BUILD_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(ip)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < TEMP_BUILD_RATE_LIMIT_MAX;
+}
+
+export async function recordTempBuildRateLimit(db: D1Database, ip: string): Promise<void> {
+  await db
+    .prepare("INSERT INTO temp_build_rate_limits (ip, created_at) VALUES (?, datetime('now'))")
+    .bind(ip)
+    .run();
+}
+
+export async function cleanupExpiredTempBuilds(db: D1Database): Promise<void> {
+  await db.prepare("DELETE FROM temp_builds WHERE expires_at < datetime('now')").run();
+  // Also clean up old rate limit entries (older than the window)
+  await db
+    .prepare(
+      `DELETE FROM temp_build_rate_limits WHERE created_at < datetime('now', '-${TEMP_BUILD_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .run();
+}

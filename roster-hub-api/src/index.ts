@@ -32,6 +32,11 @@ import {
   checkBuildCommentRateLimit,
   checkBuildVoteRateLimit,
   checkBuildCreateRateLimit,
+  createTempBuild,
+  getTempBuild,
+  checkTempBuildRateLimit,
+  recordTempBuildRateLimit,
+  cleanupExpiredTempBuilds,
 } from './db/queries';
 import type { Env } from './types';
 
@@ -592,6 +597,65 @@ app.delete('/builds/:buildId/comments/:commentId', async (c) => {
   const deleted = await deleteBuildComment(c.env.DB, c.req.param('commentId'), user.id);
   if (!deleted) return c.json({ error: 'Not found or forbidden' }, 404);
   return c.json({ ok: true });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Temp builds — guest-created builds with 5-day expiry, no auth required
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── POST /temp-builds — create a temporary build link ──────────────────────
+
+app.post('/temp-builds', async (c) => {
+  interface TempBuildBody {
+    build_data: string;
+  }
+
+  let body: TempBuildBody;
+  try {
+    body = await c.req.json<TempBuildBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.build_data?.trim()) return c.json({ error: 'build_data is required' }, 400);
+  if (body.build_data.length > 50_000)
+    return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
+
+  // Rate limit by IP (10 per hour)
+  const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For') ?? 'unknown';
+  const allowed = await checkTempBuildRateLimit(c.env.DB, ip);
+  if (!allowed)
+    return c.json({ error: 'Rate limit exceeded. You can create up to 10 temp builds per hour.' }, 429);
+
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
+    .map((b) => b.toString(36).padStart(2, '0'))
+    .join('')
+    .slice(0, 12);
+
+  const row = await createTempBuild(c.env.DB, { id, buildData: body.build_data });
+  await recordTempBuildRateLimit(c.env.DB, ip);
+
+  return c.json({ id: row.id, expires_at: row.expires_at }, 201);
+});
+
+// ─── GET /temp-builds/:id — fetch a temporary build ──────────────────────────
+
+app.get('/temp-builds/:id', async (c) => {
+  const id = c.req.param('id');
+
+  // Lazy cleanup: remove expired builds on read
+  await cleanupExpiredTempBuilds(c.env.DB);
+
+  const row = await getTempBuild(c.env.DB, id);
+  if (!row) {
+    return c.json({ error: 'This build link has expired or does not exist.' }, 410);
+  }
+
+  return c.json({
+    build_data: row.build_data,
+    created_at: row.created_at,
+    expires_at: row.expires_at,
+  });
 });
 
 export default app;
