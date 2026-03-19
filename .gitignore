@@ -169,3 +169,4 @@ discord-notify-worker/node_modules/
 /*-snapshot.md
 /*-failure.md
 /missing-*.txt
+.claude/settings.local.json
