@@ -1,6 +1,7 @@
 import {
   ChatBubbleOutline,
   ContentCopy,
+  EditOutlined,
   Fullscreen,
   FullscreenExit,
   KeyboardArrowDown,
@@ -45,6 +46,7 @@ interface RosterPreviewDialogProps {
   currentUserId: string;
   token?: string;
   onClose: () => void;
+  onEdit?: (roster: HubRoster) => void;
 }
 
 export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
@@ -53,7 +55,9 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
   currentUserId,
   token,
   onClose,
+  onEdit,
 }) => {
+  const isOwner = isLoggedIn && roster?.author_id === currentUserId;
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -710,6 +714,22 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
             Copy link
           </Button>
         </Tooltip>
+        {isOwner && onEdit && roster && (
+          <Button
+            size="small"
+            startIcon={<EditOutlined />}
+            onClick={() => onEdit(roster)}
+            variant="outlined"
+            sx={{
+              fontWeight: 600,
+              borderColor: `${accentColor}50`,
+              color: accentColor,
+              '&:hover': { borderColor: accentColor, background: `${accentColor}18` },
+            }}
+          >
+            Edit Details
+          </Button>
+        )}
         <Button
           size="small"
           startIcon={<OpenInNew />}

@@ -1,4 +1,4 @@
-import { ContentCopy, DeleteOutline } from '@mui/icons-material';
+import { ContentCopy, DeleteOutline, EditOutlined } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -25,6 +25,7 @@ interface RosterCardProps {
   onVote: (id: string) => void;
   onPreview: (roster: HubRoster) => void;
   onDelete: (id: string) => void;
+  onEdit: (roster: HubRoster) => void;
 }
 
 // Shared trial label map — single source of truth
@@ -98,7 +99,7 @@ function formatDate(iso: string): string {
 }
 
 export const RosterCard: React.FC<RosterCardProps> = React.memo(
-  ({ roster, isOwner, isLoggedIn, onVote, onPreview, onDelete }) => {
+  ({ roster, isOwner, isLoggedIn, onVote, onPreview, onDelete, onEdit }) => {
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
@@ -380,6 +381,23 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                 <ContentCopy sx={{ fontSize: 17 }} />
               </IconButton>
             </Tooltip>
+            {isOwner && (
+              <Tooltip title="Edit roster details">
+                <IconButton
+                  size="small"
+                  onClick={() => onEdit(roster)}
+                  aria-label="Edit roster details"
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    color: 'text.disabled',
+                    '&:hover': { color: 'text.secondary' },
+                  }}
+                >
+                  <EditOutlined sx={{ fontSize: 17 }} />
+                </IconButton>
+              </Tooltip>
+            )}
             {isOwner && (
               <Tooltip title="Delete roster">
                 <IconButton

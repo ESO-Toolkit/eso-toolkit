@@ -22,6 +22,7 @@ import type { HubRoster } from '../types/roster-hub.types';
 
 import { ConfirmDialog } from './ConfirmDialog';
 import { FilterBar } from './FilterBar';
+import { PublishRosterDialog } from './PublishRosterDialog';
 import { RosterCard } from './RosterCard';
 import { RosterCardSkeleton } from './RosterCardSkeleton';
 import { RosterPreviewDialog } from './RosterPreviewDialog';
@@ -40,6 +41,7 @@ export const RosterHubPage: React.FC = () => {
   const [previewRoster, setPreviewRoster] = React.useState<HubRoster | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
+  const [editRoster, setEditRoster] = React.useState<HubRoster | null>(null);
 
   const currentUserId = String(currentUser?.id ?? '');
 
@@ -281,6 +283,7 @@ export const RosterHubPage: React.FC = () => {
                     onVote={handleVote}
                     onPreview={setPreviewRoster}
                     onDelete={setDeleteTarget}
+                    onEdit={setEditRoster}
                   />
                 </Grid>
               ))}
@@ -316,7 +319,27 @@ export const RosterHubPage: React.FC = () => {
         currentUserId={currentUserId}
         token={token}
         onClose={() => setPreviewRoster(null)}
+        onEdit={(r) => {
+          setPreviewRoster(null);
+          setEditRoster(r);
+        }}
       />
+
+      {/* Edit published roster dialog */}
+      {editRoster && token && (
+        <PublishRosterDialog
+          open={editRoster !== null}
+          rosterData={editRoster.roster_data}
+          token={token}
+          editingRoster={editRoster}
+          onClose={() => setEditRoster(null)}
+          onPublished={() => {
+            setEditRoster(null);
+            enqueueSnackbar('Roster updated!', { variant: 'success' });
+            refresh();
+          }}
+        />
+      )}
 
       {/* Delete confirmation dialog */}
       <ConfirmDialog

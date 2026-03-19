@@ -1,4 +1,4 @@
-import { ContentCopy, OpenInNew } from '@mui/icons-material';
+import { ContentCopy, EditOutlined, OpenInNew } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -30,7 +30,9 @@ const SlideUpTransition = React.forwardRef(function Transition(
 
 interface BuildPreviewDialogProps {
   build: HubBuild | null;
+  isOwner?: boolean;
   onClose: () => void;
+  onEdit?: (build: HubBuild) => void;
 }
 
 const CLASS_LABELS: Record<string, string> = {
@@ -43,7 +45,7 @@ const CLASS_LABELS: Record<string, string> = {
   arcanist: 'Arcanist',
 };
 
-export const BuildPreviewDialog: React.FC<BuildPreviewDialogProps> = ({ build, onClose }) => {
+export const BuildPreviewDialog: React.FC<BuildPreviewDialogProps> = ({ build, isOwner, onClose, onEdit }) => {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -364,6 +366,22 @@ export const BuildPreviewDialog: React.FC<BuildPreviewDialogProps> = ({ build, o
             Copy link
           </Button>
         </Tooltip>
+        {isOwner && onEdit && build && (
+          <Button
+            size="small"
+            startIcon={<EditOutlined />}
+            onClick={() => onEdit(build)}
+            variant="outlined"
+            sx={{
+              fontWeight: 600,
+              borderColor: `${accentColor}50`,
+              color: accentColor,
+              '&:hover': { borderColor: accentColor, background: `${accentColor}18` },
+            }}
+          >
+            Edit Details
+          </Button>
+        )}
         <Button
           size="small"
           startIcon={<OpenInNew />}

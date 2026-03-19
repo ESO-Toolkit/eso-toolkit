@@ -25,6 +25,7 @@ import { BuildCard } from './BuildCard';
 import { BuildCardSkeleton } from './BuildCardSkeleton';
 import { BuildFilterBar } from './BuildFilterBar';
 import { BuildPreviewDialog } from './BuildPreviewDialog';
+import { PublishBuildDialog } from './PublishBuildDialog';
 
 const SKELETON_COUNT = 8;
 
@@ -40,6 +41,7 @@ export const BuildHubPage: React.FC = () => {
   const [previewBuild, setPreviewBuild] = React.useState<HubBuild | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
+  const [editBuild, setEditBuild] = React.useState<HubBuild | null>(null);
 
   const currentUserId = String(currentUser?.id ?? '');
 
@@ -277,6 +279,7 @@ export const BuildHubPage: React.FC = () => {
                     onVote={handleVote}
                     onPreview={setPreviewBuild}
                     onDelete={setDeleteTarget}
+                    onEdit={setEditBuild}
                   />
                 </Grid>
               ))}
@@ -306,7 +309,34 @@ export const BuildHubPage: React.FC = () => {
       )}
 
       {/* Preview dialog */}
-      <BuildPreviewDialog build={previewBuild} onClose={() => setPreviewBuild(null)} />
+      <BuildPreviewDialog
+        build={previewBuild}
+        isOwner={isLoggedIn && previewBuild?.author_id === currentUserId}
+        onClose={() => setPreviewBuild(null)}
+        onEdit={(b) => {
+          setPreviewBuild(null);
+          setEditBuild(b);
+        }}
+      />
+
+      {/* Edit published build dialog */}
+      {editBuild && token && (
+        <PublishBuildDialog
+          open={editBuild !== null}
+          buildData={editBuild.build_data}
+          esoClass={editBuild.eso_class}
+          role={editBuild.role}
+          gameMode={editBuild.game_mode}
+          token={token}
+          editingBuild={editBuild}
+          onClose={() => setEditBuild(null)}
+          onPublished={() => {
+            setEditBuild(null);
+            enqueueSnackbar('Build updated!', { variant: 'success' });
+            refresh();
+          }}
+        />
+      )}
 
       {/* Delete confirmation */}
       <ConfirmDialog

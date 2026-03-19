@@ -17,7 +17,7 @@ import {
 import React from 'react';
 
 import { buildHubApi } from '../api/build-hub-api';
-import type { PublishBuildPayload } from '../types/build-hub.types';
+import type { HubBuild, PublishBuildPayload } from '../types/build-hub.types';
 import { BUILD_TAG_COLORS, PRESET_BUILD_TAGS } from '../types/build-hub.types';
 
 interface PublishBuildDialogProps {
@@ -29,6 +29,8 @@ interface PublishBuildDialogProps {
   onClose: () => void;
   onPublished: () => void;
   token: string;
+  /** When provided, the dialog operates in edit mode — updates the existing hub build. */
+  editingBuild?: HubBuild;
 }
 
 const MAX_TAGS = 5;
@@ -42,7 +44,9 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
   onClose,
   onPublished,
   token,
+  editingBuild,
 }) => {
+  const isEditMode = !!editingBuild;
   const [title, setTitle] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
@@ -76,26 +80,37 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
         tags: selectedTags,
         is_anonymous: isAnonymous,
       };
-      await buildHubApi.create(payload, token);
+      if (isEditMode) {
+        await buildHubApi.update(editingBuild.id, payload, token);
+      } else {
+        await buildHubApi.create(payload, token);
+      }
       onPublished();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to publish');
+      setError(err instanceof Error ? err.message : isEditMode ? 'Failed to update' : 'Failed to publish');
     } finally {
       setLoading(false);
     }
   };
 
-  // Reset on open
+  // Reset / pre-fill on open
   React.useEffect(() => {
     if (open) {
-      setTitle('');
-      setDescription('');
-      setSelectedTags([]);
-      setIsAnonymous(false);
+      if (editingBuild) {
+        setTitle(editingBuild.title);
+        setDescription(editingBuild.description ?? '');
+        setSelectedTags(editingBuild.tags ?? []);
+        setIsAnonymous(editingBuild.is_anonymous ?? false);
+      } else {
+        setTitle('');
+        setDescription('');
+        setSelectedTags([]);
+        setIsAnonymous(false);
+      }
       setError(null);
     }
-  }, [open]);
+  }, [open, editingBuild]);
 
   const atTagLimit = selectedTags.length >= MAX_TAGS;
 
@@ -107,7 +122,7 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
       fullWidth
       disableEscapeKeyDown={loading}
     >
-      <DialogTitle>Publish to Build Hub</DialogTitle>
+      <DialogTitle>{isEditMode ? 'Edit Published Build' : 'Publish to Build Hub'}</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
         <TextField
           label="Title"
@@ -218,7 +233,7 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
           disabled={loading}
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
-          {loading ? 'Publishing…' : 'Publish'}
+          {loading ? (isEditMode ? 'Updating…' : 'Publishing…') : (isEditMode ? 'Update' : 'Publish')}
         </Button>
       </DialogActions>
     </Dialog>
