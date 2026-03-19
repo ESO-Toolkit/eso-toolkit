@@ -39,11 +39,7 @@ import { packsApi } from '../../build-hub/api/packs-api';
 import type { Pack, PackAddonEntry, PackIndexItem } from '../../build-hub/api/packs-api';
 import { TRIALS } from '../../loadout-manager/data/trialConfigs';
 import { rosterHubApi } from '../api/roster-hub-api';
-import type {
-  HubRoster,
-  RecommendedAddonEntry,
-  RecommendedAddons,
-} from '../types/roster-hub.types';
+import type { HubRoster } from '../types/roster-hub.types';
 import { PRESET_TAGS, TAG_COLORS } from '../types/roster-hub.types';
 
 interface PublishRosterDialogProps {
@@ -216,7 +212,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         roster_data: rosterData,
         tags: selectedTags,
         is_anonymous: isAnonymous,
-        recommended_addons: buildRecommendedAddons(),
       };
       if (isEditMode) {
         await rosterHubApi.update(editingRoster.id, payload, token);
@@ -226,9 +221,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       onPublished();
       onClose();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : isEditMode ? 'Failed to update' : 'Failed to publish',
-      );
+      setError(err instanceof Error ? err.message : isEditMode ? 'Failed to update' : 'Failed to publish');
     } finally {
       setLoading(false);
     }
@@ -243,31 +236,12 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         setTrialId(editingRoster.trial_id ?? '');
         setSelectedTags(editingRoster.tags ?? []);
         setIsAnonymous(editingRoster.is_anonymous ?? false);
-        // Restore addon recommendations
-        if (editingRoster.recommended_addons) {
-          setAddonSectionOpen(true);
-          setSelectedPackId(editingRoster.recommended_addons.packId ?? null);
-          setAddonList(editingRoster.recommended_addons.addons);
-          setEnabledAddons(new Set(editingRoster.recommended_addons.addons.map((a) => a.esouiId)));
-        } else {
-          setAddonSectionOpen(false);
-          setSelectedPackId(null);
-          setAddonList([]);
-          setEnabledAddons(new Set());
-        }
       } else {
         setTitle('');
         setDescription('');
         setTrialId('');
         setSelectedTags([]);
         setIsAnonymous(false);
-        setAddonSectionOpen(false);
-        setSelectedPackId(null);
-        setSelectedPack(null);
-        setAddonList([]);
-        setEnabledAddons(new Set());
-        setCustomAddonName('');
-        setCustomAddonId('');
       }
       setError(null);
     }
@@ -667,7 +641,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           disabled={loading}
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
-          {loading ? (isEditMode ? 'Updating…' : 'Publishing…') : isEditMode ? 'Update' : 'Publish'}
+          {loading ? (isEditMode ? 'Updating…' : 'Publishing…') : (isEditMode ? 'Update' : 'Publish')}
         </Button>
       </DialogActions>
     </Dialog>

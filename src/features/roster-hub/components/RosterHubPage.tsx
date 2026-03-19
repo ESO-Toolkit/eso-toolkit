@@ -309,6 +309,19 @@ export const RosterHubPage: React.FC = () => {
         </Alert>
       )}
 
+      {/* Roster preview dialog */}
+      <RosterPreviewDialog
+        roster={previewRoster}
+        isLoggedIn={isLoggedIn}
+        currentUserId={currentUserId}
+        token={token}
+        onClose={() => setPreviewRoster(null)}
+        onEdit={(r) => {
+          setPreviewRoster(null);
+          setEditRoster(r);
+        }}
+      />
+
       {/* Edit published roster dialog */}
       {editRoster && token && (
         <PublishRosterDialog

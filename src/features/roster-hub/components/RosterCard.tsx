@@ -1,4 +1,4 @@
-import { ContentCopy, DeleteOutline, EditOutlined, Extension } from '@mui/icons-material';
+import { ContentCopy, DeleteOutline, EditOutlined } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -90,7 +90,7 @@ export const TRIAL_ACCENT: Record<string, string> = {
 const formatDate = formatRelativeDate;
 
 export const RosterCard: React.FC<RosterCardProps> = React.memo(
-  ({ roster, isOwner, isLoggedIn, onVote, onDelete, onEdit }) => {
+  ({ roster, isOwner, isLoggedIn, onVote, onPreview, onDelete, onEdit }) => {
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
     const navigate = useViewTransitionNavigate();

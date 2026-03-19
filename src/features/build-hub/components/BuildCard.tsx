@@ -1,4 +1,4 @@
-import { ContentCopy, DeleteOutline } from '@mui/icons-material';
+import { ContentCopy, DeleteOutline, EditOutlined } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -24,6 +24,7 @@ interface BuildCardProps {
   onVote: (id: string) => void;
   onPreview: (build: HubBuild) => void;
   onDelete: (id: string) => void;
+  onEdit: (build: HubBuild) => void;
 }
 
 const CLASS_LABELS: Record<string, string> = {
@@ -58,7 +59,7 @@ function formatDate(iso: string): string {
 }
 
 export const BuildCard: React.FC<BuildCardProps> = React.memo(
-  ({ build, isOwner, isLoggedIn, onVote, onPreview, onDelete }) => {
+  ({ build, isOwner, isLoggedIn, onVote, onPreview, onDelete, onEdit }) => {
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
@@ -350,6 +351,23 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                 <ContentCopy sx={{ fontSize: 17 }} />
               </IconButton>
             </Tooltip>
+            {isOwner && (
+              <Tooltip title="Edit build details">
+                <IconButton
+                  size="small"
+                  onClick={() => onEdit(build)}
+                  aria-label="Edit build details"
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    color: 'text.disabled',
+                    '&:hover': { color: 'text.secondary' },
+                  }}
+                >
+                  <EditOutlined sx={{ fontSize: 17 }} />
+                </IconButton>
+              </Tooltip>
+            )}
             {isOwner && (
               <Tooltip title="Delete build">
                 <IconButton
