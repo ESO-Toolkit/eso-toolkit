@@ -11,7 +11,7 @@
 
 import { getRegisteredSlot } from '../utils/wizardWardrobeSlotRegistry';
 
-import { getCollectionItem } from './itemSetCollections';
+import { getCollectionItem, getCollectionItemIdsBySlot } from './itemSetCollections';
 import type { SlotType } from './slotTypes';
 export type { SlotType } from './slotTypes';
 
@@ -203627,13 +203627,37 @@ export function getSetItemsBySlot(setName: string, slot: SlotType): number[] {
 
 export function getItemsBySlot(slot: SlotType): { itemId: number; info: ItemInfo }[] {
   if (!itemsBySlotCache[slot]) {
-    itemsBySlotCache[slot] = Object.entries(itemIdMap)
-      .map(([id, info]) => ({ itemId: parseInt(id, 10), info }))
-      .filter(({ info }) => info.slot === slot)
-      .sort(
-        (a, b) =>
-          a.info.setName.localeCompare(b.info.setName) || a.info.name.localeCompare(b.info.name),
-      );
+    // Merge two item-id sources:
+    //  1. Items with a hardcoded slot in itemIdMap  (~13K total across all slots)
+    //  2. Items from the collection JSON index      (~10K total across all slots)
+    // Using a Set avoids duplicates when an item appears in both.
+    const candidateIds = new Set<number>();
+
+    // Source 1: hardcoded slots — scan only items that already have the slot field
+    for (const [id, info] of Object.entries(itemIdMap)) {
+      if (info.slot === slot) candidateIds.add(parseInt(id, 10));
+    }
+
+    // Source 2: collection-based slots — pre-indexed, O(1) lookup per slot type
+    for (const id of getCollectionItemIdsBySlot(slot)) {
+      candidateIds.add(id);
+    }
+
+    // Enrich and filter — only iterate the small candidate set, not all 119K items
+    const results: { itemId: number; info: ItemInfo }[] = [];
+    for (const itemId of candidateIds) {
+      const enriched = getItemInfo(itemId);
+      if (enriched?.slot === slot) {
+        results.push({ itemId, info: enriched });
+      }
+    }
+
+    results.sort(
+      (a, b) =>
+        a.info.setName.localeCompare(b.info.setName) || a.info.name.localeCompare(b.info.name),
+    );
+
+    itemsBySlotCache[slot] = results;
   }
   return itemsBySlotCache[slot]!;
 }
