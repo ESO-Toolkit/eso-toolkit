@@ -56,7 +56,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
@@ -924,9 +924,17 @@ export const RosterBuilderPage: React.FC = () => {
   );
 
   // ── Composition change handler ──
-  const handleCompositionChange = useCallback((newComp: RoleComposition) => {
-    setRoster((prev) => resizeRoster(prev, newComp));
-  }, []);
+  // Wrapped in startTransition so the stepper button press feels instant while
+  // React defers the expensive re-render of all tank/healer/DPS cards.
+  const [, startTransition] = useTransition();
+  const handleCompositionChange = useCallback(
+    (newComp: RoleComposition) => {
+      startTransition(() => {
+        setRoster((prev) => resizeRoster(prev, newComp));
+      });
+    },
+    [startTransition],
+  );
 
   // Drag and drop sensors
   const sensors = useSensors(
