@@ -4,19 +4,22 @@
  */
 
 import { ExpandMore as ExpandIcon } from '@mui/icons-material';
-import { Box, Checkbox, Collapse, FormControlLabel, Stack, Typography } from '@mui/material';
+import {
+  Box,
+  Checkbox,
+  Collapse,
+  FormControlLabel,
+  Slider,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
 
-import {
-  CRIT_DMG_BUFFS,
-  CRIT_DMG_GEAR,
-  DEFAULT_STAT_OVERRIDES,
-  PEN_BUFFS,
-} from '../../engine/stat-constants';
+import { PEN_BUFFS, CRIT_DMG_BUFFS, CRIT_DMG_GEAR } from '../../engine/stat-constants';
 import { calculateBuildStats } from '../../engine/stat-engine';
 import type { StatOverrides } from '../../engine/stat-types';
 import { setStatOverrides as setStatOverridesAction } from '../../store/buildEditorSlice';
@@ -33,9 +36,22 @@ export const StatsSection: React.FC = () => {
   const [buffsExpanded, setBuffsExpanded] = useState(false);
   const [breakdownExpanded, setBreakdownExpanded] = useState(false);
 
-  // Resolve overrides — use stored overrides or canonical defaults
+  // Resolve overrides — use stored overrides or defaults
   const overrides: StatOverrides = useMemo(
-    () => setup.statOverrides ?? DEFAULT_STAT_OVERRIDES,
+    () =>
+      setup.statOverrides ?? {
+        buffs: {
+          'Major Breach': true,
+          'Minor Breach': true,
+          'Crusher Enchant': true,
+          'Minor Force': true,
+          'Minor Brittle': true,
+        },
+        lightArmorCount: 1,
+        mediumArmorCount: 6,
+        weaponDamage: 0,
+        balorghUltimate: 0,
+      },
     [setup.statOverrides],
   );
 
@@ -140,6 +156,60 @@ export const StatsSection: React.FC = () => {
 
         <Collapse in={buffsExpanded} timeout={200}>
           <Box sx={{ pl: 1, pt: 0.5 }}>
+            {/* Armor piece counts */}
+            <Box sx={{ mb: 1.5 }}>
+              <Typography
+                sx={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
+                  mb: 0.5,
+                }}
+              >
+                Light Armor Pieces: {overrides.lightArmorCount}
+              </Typography>
+              <Slider
+                value={overrides.lightArmorCount}
+                onChange={(_: Event, v: number | number[]) =>
+                  updateOverrides({ lightArmorCount: v as number })
+                }
+                min={0}
+                max={7}
+                step={1}
+                marks
+                size="small"
+                sx={{ width: '80%', ml: 1, color: 'var(--be-accent, #38bdf8)' }}
+                aria-label="Light armor piece count"
+              />
+
+              <Typography
+                sx={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
+                  mb: 0.5,
+                  mt: 1,
+                }}
+              >
+                Medium Armor Pieces: {overrides.mediumArmorCount}
+              </Typography>
+              <Slider
+                value={overrides.mediumArmorCount}
+                onChange={(_: Event, v: number | number[]) =>
+                  updateOverrides({ mediumArmorCount: v as number })
+                }
+                min={0}
+                max={7}
+                step={1}
+                marks
+                size="small"
+                sx={{ width: '80%', ml: 1, color: 'var(--be-accent, #38bdf8)' }}
+                aria-label="Medium armor piece count"
+              />
+            </Box>
+
             {/* Buff checkboxes */}
             <Box
               sx={{

@@ -12,6 +12,7 @@
 import {
   AccountTreeOutlined as SubclassingIcon,
   AutoFixHigh as ChampionIcon,
+  BarChartOutlined as StatsIcon,
   BookOutlined as GuideIcon,
   Inventory2Outlined as EquipmentIcon,
   LocalDrinkOutlined as ConsumableIcon,
@@ -41,6 +42,7 @@ import { GuideSection } from './sections/GuideSection';
 import { PassivesSection } from './sections/PassivesSection';
 import { SettingsSection } from './sections/SettingsSection';
 import { SkillsSection } from './sections/SkillsSection';
+import { StatsSection } from './sections/StatsSection';
 import { SubclassingSection } from './sections/SubclassingSection';
 import { SetupTabBar } from './SetupTabBar';
 
@@ -179,6 +181,19 @@ export const BuildEditorLayout: React.FC = () => {
                 defaultExpanded={!isMobile}
               >
                 <PassivesSection />
+              </SectionCard>
+
+              {/* Stats — full width */}
+              <SectionCard
+                id="stats"
+                title="Stats"
+                icon={<StatsIcon />}
+                complete={progress.stats}
+                variant="primary"
+                gridColumn={isMobile ? undefined : 'span 2'}
+                defaultExpanded={!isMobile}
+              >
+                <StatsSection />
               </SectionCard>
 
               {/* Guide & Media — full width */}

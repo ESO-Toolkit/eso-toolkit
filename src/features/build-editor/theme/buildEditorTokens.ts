@@ -85,6 +85,7 @@ export const BE_TOKENS = {
     'consumables',
     'champion',
     'passives',
+    'stats',
     'guide',
     'settings',
   ] as const,

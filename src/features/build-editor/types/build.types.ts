@@ -6,6 +6,7 @@
  */
 
 import type { GearConfig, SkillsConfig } from '../../loadout-manager/types/loadout.types';
+import type { StatOverrides } from '../engine/stat-types';
 
 // ─── Enums / Unions ──────────────────────────────────────────────────────────
 
@@ -109,6 +110,8 @@ export interface BuildSetup {
   passives: number[];
   /** Screenshot URLs / data-urls */
   screenshots: string[];
+  /** Manual stat overrides for buff toggles and armor counts */
+  statOverrides?: StatOverrides;
 }
 
 // ─── Top-level build ─────────────────────────────────────────────────────────
