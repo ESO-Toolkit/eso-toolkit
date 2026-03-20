@@ -72,15 +72,17 @@ const savedRostersSlice = createSlice({
         }
       };
 
-      if (slotKey === 'tank1') applyInline(saved.roster.tank1);
-      else if (slotKey === 'tank2') applyInline(saved.roster.tank2);
-      else if (slotKey === 'healer1') applyInline(saved.roster.healer1);
-      else if (slotKey === 'healer2') applyInline(saved.roster.healer2);
-      else if (slotKey.startsWith('dps')) {
-        const idx = parseInt(slotKey.slice(3), 10) - 1;
-        if (idx >= 0 && idx < 8) {
-          applyInline(saved.roster.dpsSlots[idx]);
-        }
+      // Parse SlotKey format: "tank:0", "healer:1", "dps:3"
+      const colonIdx = slotKey.indexOf(':');
+      if (colonIdx === -1) return; // Invalid key
+      const role = slotKey.slice(0, colonIdx);
+      const index = parseInt(slotKey.slice(colonIdx + 1), 10);
+      if (role === 'tank' && index >= 0 && index < saved.roster.tanks.length) {
+        applyInline(saved.roster.tanks[index]);
+      } else if (role === 'healer' && index >= 0 && index < saved.roster.healers.length) {
+        applyInline(saved.roster.healers[index]);
+      } else if (role === 'dps' && index >= 0 && index < saved.roster.dpsSlots.length) {
+        applyInline(saved.roster.dpsSlots[index]);
       }
       saved.savedAt = new Date().toISOString();
     },

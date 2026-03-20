@@ -19,6 +19,8 @@ import {
   HealerChampionPoint,
   JailDDType,
   RaidRoster,
+  RoleComposition,
+  DEFAULT_COMPOSITION,
   RosterDetailLevel,
   TankSetup,
   TankGearSet,
@@ -219,11 +221,11 @@ export interface CompactRosterV2 {
   t2?: CompactTank;
   h1?: CompactHealer;
   h2?: CompactHealer;
-  dp?: CompactDPS[]; // only filled DPS slots
-  ag?: string[]; // availableGroups
-  no?: string; // notes
-  to?: CompactTrialOverrides; // trialOverrides (per-fight builds)
-  dl?: number; // detail level: 0=simple 1=full
+  dp?: CompactDPS[];
+  ag?: string[];
+  no?: string;
+  to?: CompactTrialOverrides;
+  dl?: number;
 }
 
 /**
@@ -814,7 +816,6 @@ export function compactifyRoster(roster: RaidRoster): CompactRosterV3 {
       slot.group ||
       slot.skillLines ||
       slot.specificSkills?.length ||
-      slot.championPoint ||
       slot.roleNotes ||
       slot.buildRef ||
       slot.food ||
@@ -835,8 +836,62 @@ export function compactifyRoster(roster: RaidRoster): CompactRosterV3 {
 
 const DL_LEVELS: RosterDetailLevel[] = ['simple', 'full'];
 
-export function expandCompactRoster(c: CompactRoster): RaidRoster {
-  const dpsSlots = createDefaultDPSSlots();
+/**
+ * Expand a v3 compact roster into a full RaidRoster.
+ */
+function expandCompactRosterV3(c: CompactRosterV3): RaidRoster {
+  const comp: RoleComposition = c.co
+    ? { tanks: c.co[0], healers: c.co[1], dps: c.co[2] }
+    : { ...DEFAULT_COMPOSITION };
+
+  // Tanks
+  const tanks: TankSetup[] = c.ts
+    ? c.ts.map((ct, i) => expandTank(ct, i + 1))
+    : createDefaultTanks(comp.tanks);
+  // Pad if composition says more tanks than provided
+  while (tanks.length < comp.tanks) tanks.push(defaultTankSetup(tanks.length + 1));
+
+  // Healers
+  const healers: HealerSetup[] = c.hs
+    ? c.hs.map((ch, i) => expandHealer(ch, i + 1))
+    : createDefaultHealers(comp.healers);
+  while (healers.length < comp.healers) healers.push(defaultHealerSetup(healers.length + 1));
+
+  // DPS
+  const dpsSlots = createDefaultDPSSlots(comp.dps);
+  if (c.dp) {
+    for (const compactSlot of c.dp) {
+      const idx = compactSlot.sn - 1;
+      if (idx >= 0 && idx < comp.dps) {
+        dpsSlots[idx] = expandDPS(compactSlot);
+      }
+    }
+  }
+
+  return {
+    rosterName: c.n ?? 'New Roster',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    composition: comp,
+    tanks,
+    healers,
+    dpsSlots,
+    availableGroups: c.ag ?? [],
+    notes: c.no,
+    trialOverrides: c.to ? expandTrialOverrides(c.to) : undefined,
+    rosterDetailLevel: c.dl != null ? DL_LEVELS[c.dl] : undefined,
+  };
+}
+
+/**
+ * Expand a v2 compact roster (legacy) into a full RaidRoster.
+ * Converts the fixed t1/t2/h1/h2 fields into the array-based format
+ * with a default 2/2/8 composition.
+ */
+function expandCompactRosterV2(c: CompactRosterV2): RaidRoster {
+  const comp: RoleComposition = { ...DEFAULT_COMPOSITION };
+
+  const dpsSlots = createDefaultDPSSlots(8);
   if (c.dp) {
     for (const compactSlot of c.dp) {
       const idx = compactSlot.sn - 1;

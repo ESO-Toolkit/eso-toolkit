@@ -45,7 +45,7 @@ import { SlotFullModePanel } from './SlotFullModePanel';
 // ---------------------------------------------------------------------------
 
 export interface TankCardProps {
-  tankNum: 1 | 2;
+  tankNum: number;
   tank: TankSetup;
   onChange: (updates: Partial<TankSetup>) => void;
   availableGroups: string[];

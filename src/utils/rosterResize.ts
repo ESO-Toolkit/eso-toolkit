@@ -20,8 +20,7 @@ import { makeSlotKey } from './slotKey';
 function resizeTanks(tanks: TankSetup[], newCount: number): TankSetup[] {
   const result: TankSetup[] = [];
   for (let i = 0; i < newCount; i++) {
-    const existing =
-      i < tanks.length ? JSON.parse(JSON.stringify(tanks[i])) : defaultTankSetup(i + 1);
+    const existing = i < tanks.length ? { ...tanks[i] } : defaultTankSetup(i + 1);
     existing.slotNumber = i + 1;
     result.push(existing);
   }
@@ -31,8 +30,7 @@ function resizeTanks(tanks: TankSetup[], newCount: number): TankSetup[] {
 function resizeHealers(healers: HealerSetup[], newCount: number): HealerSetup[] {
   const result: HealerSetup[] = [];
   for (let i = 0; i < newCount; i++) {
-    const existing =
-      i < healers.length ? JSON.parse(JSON.stringify(healers[i])) : defaultHealerSetup(i + 1);
+    const existing = i < healers.length ? { ...healers[i] } : defaultHealerSetup(i + 1);
     existing.slotNumber = i + 1;
     result.push(existing);
   }
@@ -42,10 +40,7 @@ function resizeHealers(healers: HealerSetup[], newCount: number): HealerSetup[] 
 function resizeDPS(dpsSlots: DPSSlot[], newCount: number): DPSSlot[] {
   const result: DPSSlot[] = [];
   for (let i = 0; i < newCount; i++) {
-    const existing: DPSSlot =
-      i < dpsSlots.length
-        ? JSON.parse(JSON.stringify(dpsSlots[i]))
-        : ({ slotNumber: i + 1 } as DPSSlot);
+    const existing = i < dpsSlots.length ? { ...dpsSlots[i] } : { slotNumber: i + 1 };
     existing.slotNumber = i + 1;
     result.push(existing);
   }

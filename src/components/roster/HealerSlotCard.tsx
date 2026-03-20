@@ -50,7 +50,7 @@ import { SlotFullModePanel } from './SlotFullModePanel';
 // ---------------------------------------------------------------------------
 
 export interface HealerCardProps {
-  healerNum: 1 | 2;
+  healerNum: number;
   healer: HealerSetup;
   onChange: (updates: Partial<HealerSetup>) => void;
   availableGroups: string[];

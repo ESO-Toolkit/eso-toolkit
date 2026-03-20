@@ -237,7 +237,7 @@ const BuildDataBadges: React.FC<BuildDataBadgesProps> = ({
 
 interface TankCardProps {
   tank: TankSetup;
-  slotNum: 1 | 2;
+  slotNum: number;
   label: string;
   color: string;
   isDarkMode: boolean;
@@ -503,7 +503,7 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
 
 interface HealerCardProps {
   healer: HealerSetup;
-  slotNum: 1 | 2;
+  slotNum: number;
   label: string;
   color: string;
   isDarkMode: boolean;
@@ -1638,20 +1638,16 @@ export const RosterViewPage: React.FC = () => {
             alignItems: 'stretch',
           }}
         >
-          <TankCard
-            tank={roster.tank1}
-            slotNum={1}
-            label="MT"
-            color={roleColors.tank}
-            isDarkMode={isDarkMode}
-          />
-          <TankCard
-            tank={roster.tank2}
-            slotNum={2}
-            label="OT"
-            color={roleColors.tank}
-            isDarkMode={isDarkMode}
-          />
+          {roster.tanks.map((tank, i) => (
+            <TankCard
+              key={i}
+              tank={tank}
+              slotNum={i + 1}
+              label={i === 0 ? 'MT' : i === 1 ? 'OT' : `T${i + 1}`}
+              color={roleColors.tank}
+              isDarkMode={isDarkMode}
+            />
+          ))}
         </Box>
       </Box>
 
@@ -1671,20 +1667,16 @@ export const RosterViewPage: React.FC = () => {
             alignItems: 'stretch',
           }}
         >
-          <HealerCard
-            healer={roster.healer1}
-            slotNum={1}
-            label="H1"
-            color={roleColors.healer}
-            isDarkMode={isDarkMode}
-          />
-          <HealerCard
-            healer={roster.healer2}
-            slotNum={2}
-            label="H2"
-            color={roleColors.healer}
-            isDarkMode={isDarkMode}
-          />
+          {roster.healers.map((healer, i) => (
+            <HealerCard
+              key={i}
+              healer={healer}
+              slotNum={i + 1}
+              label={`H${i + 1}`}
+              color={roleColors.healer}
+              isDarkMode={isDarkMode}
+            />
+          ))}
         </Box>
       </Box>
 
