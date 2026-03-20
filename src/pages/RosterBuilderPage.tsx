@@ -839,6 +839,7 @@ export const RosterBuilderPage: React.FC = () => {
   }, []);
 
   // Memoized callbacks for SetAssignmentManager
+  // Uses setRoster functional form to avoid depending on `roster` (prevents re-creation on every state change)
   const handleSetAssignment = useCallback(
     (setName: string, slotKey: SlotKey, slot: string) => {
       const { role, index } = parseSlotKey(slotKey);
@@ -846,10 +847,13 @@ export const RosterBuilderPage: React.FC = () => {
 
       if (setName === '') {
         if (role === 'tank') {
-          const currentTank = roster.tanks[index];
-          handleTankChange(index, {
-            gearSets: { ...currentTank.gearSets, [gearSlot]: undefined },
-          });
+          setRoster((prev) => ({
+            ...prev,
+            tanks: prev.tanks.map((t, i) =>
+              i === index ? { ...t, gearSets: { ...t.gearSets, [gearSlot]: undefined } } : t,
+            ),
+            updatedAt: new Date().toISOString(),
+          }));
         } else {
           handleHealerChange(index, { [gearSlot]: undefined });
         }
@@ -863,15 +867,18 @@ export const RosterBuilderPage: React.FC = () => {
       }
 
       if (role === 'tank') {
-        const currentTank = roster.tanks[index];
-        handleTankChange(index, {
-          gearSets: { ...currentTank.gearSets, [gearSlot]: setId },
-        });
+        setRoster((prev) => ({
+          ...prev,
+          tanks: prev.tanks.map((t, i) =>
+            i === index ? { ...t, gearSets: { ...t.gearSets, [gearSlot]: setId } } : t,
+          ),
+          updatedAt: new Date().toISOString(),
+        }));
       } else {
         handleHealerChange(index, { [gearSlot]: setId });
       }
     },
-    [roster, handleTankChange, handleHealerChange],
+    [handleHealerChange],
   );
 
   const handleUltimateUpdate = useCallback(
@@ -892,6 +899,28 @@ export const RosterBuilderPage: React.FC = () => {
       handleHealerChange(index, { championPoint });
     },
     [handleHealerChange],
+  );
+
+  // Stable per-index onChange callbacks — avoids creating new functions in .map() JSX
+  // which would defeat React.memo on TankCard/HealerCard.
+  // Only recreated when the number of slots changes, not when slot data changes.
+  const tankCount = roster.tanks.length;
+  const tankChangeCallbacks = useMemo(
+    () =>
+      Array.from(
+        { length: tankCount },
+        (_, i) => (updates: Partial<TankSetup>) => handleTankChange(i, updates),
+      ),
+    [tankCount, handleTankChange],
+  );
+  const healerCount = roster.healers.length;
+  const healerChangeCallbacks = useMemo(
+    () =>
+      Array.from(
+        { length: healerCount },
+        (_, i) => (updates: Partial<HealerSetup>) => handleHealerChange(i, updates),
+      ),
+    [healerCount, handleHealerChange],
   );
 
   // ── Composition change handler ──
@@ -1095,9 +1124,12 @@ export const RosterBuilderPage: React.FC = () => {
   );
 
   // Memoized derived values for stable prop references
+  // Use a stable key derived from buff values, not the array reference (which changes on every state update)
+  const healerBuffKey = roster.healers.map((h) => h.healerBuff ?? '').join(',');
   const usedBuffs = useMemo(
     () => roster.healers.map((h) => h.healerBuff).filter(Boolean) as HealerBuff[],
-    [roster.healers],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [healerBuffKey],
   );
 
   const memoizedGroups = useMemo(
@@ -2831,10 +2863,10 @@ export const RosterBuilderPage: React.FC = () => {
             <Stack spacing={2} mb={3}>
               {roster.tanks.map((tank, i) => (
                 <TankCard
-                  key={i}
+                  key={tank.slotNumber}
                   tankNum={i + 1}
                   tank={tank}
-                  onChange={(updates) => handleTankChange(i, updates)}
+                  onChange={tankChangeCallbacks[i]}
                   availableGroups={memoizedGroups}
                   mode={mode}
                   savedRosterId={savedRosterIdRef.current ?? undefined}
@@ -2918,10 +2950,10 @@ export const RosterBuilderPage: React.FC = () => {
             <Stack spacing={2} mb={3}>
               {roster.healers.map((healer, i) => (
                 <HealerCard
-                  key={i}
+                  key={healer.slotNumber}
                   healerNum={i + 1}
                   healer={healer}
-                  onChange={(updates) => handleHealerChange(i, updates)}
+                  onChange={healerChangeCallbacks[i]}
                   availableGroups={memoizedGroups}
                   usedBuffs={usedBuffs}
                   mode={mode}

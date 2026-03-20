@@ -41,249 +41,248 @@ interface RoleCompositionPickerProps {
 
 // ─── Component ──────────────────────────────────────────────────
 
-export const RoleCompositionPicker: React.FC<RoleCompositionPickerProps> = ({
-  composition,
-  onChange,
-}) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  const roleColors = isDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
+export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
+  function RoleCompositionPicker({ composition, onChange }) {
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
+    const roleColors = isDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
 
-  const handleIncrement = useCallback(
-    (role: 'tanks' | 'healers') => {
-      const newComp = { ...composition };
-      if (newComp.dps <= 0) return; // Can't take from DPS if none left
-      newComp[role] += 1;
-      newComp.dps -= 1;
-      onChange(newComp);
-    },
-    [composition, onChange],
-  );
+    const handleIncrement = useCallback(
+      (role: 'tanks' | 'healers') => {
+        const newComp = { ...composition };
+        if (newComp.dps <= 0) return; // Can't take from DPS if none left
+        newComp[role] += 1;
+        newComp.dps -= 1;
+        onChange(newComp);
+      },
+      [composition, onChange],
+    );
 
-  const handleDecrement = useCallback(
-    (role: 'tanks' | 'healers') => {
-      const newComp = { ...composition };
-      if (newComp[role] <= 0) return;
-      newComp[role] -= 1;
-      newComp.dps += 1;
-      onChange(newComp);
-    },
-    [composition, onChange],
-  );
+    const handleDecrement = useCallback(
+      (role: 'tanks' | 'healers') => {
+        const newComp = { ...composition };
+        if (newComp[role] <= 0) return;
+        newComp[role] -= 1;
+        newComp.dps += 1;
+        onChange(newComp);
+      },
+      [composition, onChange],
+    );
 
-  const handlePreset = useCallback(
-    (preset: CompositionPreset) => {
-      onChange({ ...preset.comp });
-    },
-    [onChange],
-  );
+    const handlePreset = useCallback(
+      (preset: CompositionPreset) => {
+        onChange({ ...preset.comp });
+      },
+      [onChange],
+    );
 
-  const isPresetActive = (preset: CompositionPreset): boolean =>
-    composition.tanks === preset.comp.tanks &&
-    composition.healers === preset.comp.healers &&
-    composition.dps === preset.comp.dps;
+    const isPresetActive = (preset: CompositionPreset): boolean =>
+      composition.tanks === preset.comp.tanks &&
+      composition.healers === preset.comp.healers &&
+      composition.dps === preset.comp.dps;
 
-  const bgBase = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.03)';
-  const borderBase = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)';
+    const bgBase = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.03)';
+    const borderBase = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)';
 
-  const renderRoleStepper = (
-    role: 'tanks' | 'healers',
-    icon: React.ReactNode,
-    label: string,
-    color: string,
-  ): React.ReactNode => {
-    const count = composition[role];
-    const canIncrement = composition.dps > 0 && composition[role] < ROSTER_SIZE;
-    const canDecrement = count > 0;
+    const renderRoleStepper = (
+      role: 'tanks' | 'healers',
+      icon: React.ReactNode,
+      label: string,
+      color: string,
+    ): React.ReactNode => {
+      const count = composition[role];
+      const canIncrement = composition.dps > 0 && composition[role] < ROSTER_SIZE;
+      const canDecrement = count > 0;
+
+      return (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.75,
+            px: 1,
+            py: 0.5,
+            borderRadius: '8px',
+            bgcolor: `${color}10`,
+            border: `1px solid ${color}25`,
+          }}
+        >
+          {icon}
+          <Typography
+            sx={{
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              color,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              minWidth: 48,
+            }}
+          >
+            {label}
+          </Typography>
+
+          <ButtonBase
+            onClick={() => handleDecrement(role)}
+            disabled={!canDecrement}
+            sx={{
+              width: 22,
+              height: 22,
+              borderRadius: '6px',
+              bgcolor: canDecrement ? `${color}18` : 'transparent',
+              border: `1px solid ${canDecrement ? `${color}40` : borderBase}`,
+              color: canDecrement ? color : 'text.disabled',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              lineHeight: 1,
+              '&:hover': canDecrement ? { bgcolor: `${color}30` } : {},
+            }}
+          >
+            −
+          </ButtonBase>
+
+          <Typography
+            sx={{
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              color,
+              minWidth: 16,
+              textAlign: 'center',
+              fontFamily: '"Space Grotesk", monospace',
+            }}
+          >
+            {count}
+          </Typography>
+
+          <ButtonBase
+            onClick={() => handleIncrement(role)}
+            disabled={!canIncrement}
+            sx={{
+              width: 22,
+              height: 22,
+              borderRadius: '6px',
+              bgcolor: canIncrement ? `${color}18` : 'transparent',
+              border: `1px solid ${canIncrement ? `${color}40` : borderBase}`,
+              color: canIncrement ? color : 'text.disabled',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              lineHeight: 1,
+              '&:hover': canIncrement ? { bgcolor: `${color}30` } : {},
+            }}
+          >
+            +
+          </ButtonBase>
+        </Box>
+      );
+    };
 
     return (
       <Box
         sx={{
           display: 'flex',
+          flexWrap: 'wrap',
           alignItems: 'center',
-          gap: 0.75,
-          px: 1,
-          py: 0.5,
-          borderRadius: '8px',
-          bgcolor: `${color}10`,
-          border: `1px solid ${color}25`,
+          gap: 1.5,
+          p: 1,
+          borderRadius: '10px',
+          bgcolor: bgBase,
+          border: `1px solid ${borderBase}`,
         }}
       >
-        {icon}
-        <Typography
-          sx={{
-            fontSize: '0.7rem',
-            fontWeight: 600,
-            color,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-            minWidth: 48,
-          }}
-        >
-          {label}
-        </Typography>
+        {/* Role steppers */}
+        {renderRoleStepper(
+          'tanks',
+          <TankIcon sx={{ fontSize: '0.85rem', color: roleColors.tank }} />,
+          'Tanks',
+          roleColors.tank,
+        )}
 
-        <ButtonBase
-          onClick={() => handleDecrement(role)}
-          disabled={!canDecrement}
-          sx={{
-            width: 22,
-            height: 22,
-            borderRadius: '6px',
-            bgcolor: canDecrement ? `${color}18` : 'transparent',
-            border: `1px solid ${canDecrement ? `${color}40` : borderBase}`,
-            color: canDecrement ? color : 'text.disabled',
-            fontSize: '0.85rem',
-            fontWeight: 700,
-            lineHeight: 1,
-            '&:hover': canDecrement ? { bgcolor: `${color}30` } : {},
-          }}
-        >
-          −
-        </ButtonBase>
+        {renderRoleStepper(
+          'healers',
+          <HealerIcon sx={{ fontSize: '0.85rem', color: roleColors.healer }} />,
+          'Healers',
+          roleColors.healer,
+        )}
 
-        <Typography
+        {/* DPS counter (read-only, auto-adjusts) */}
+        <Box
           sx={{
-            fontSize: '0.9rem',
-            fontWeight: 700,
-            color,
-            minWidth: 16,
-            textAlign: 'center',
-            fontFamily: '"Space Grotesk", monospace',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.75,
+            px: 1,
+            py: 0.5,
+            borderRadius: '8px',
+            bgcolor: `${roleColors.dps}10`,
+            border: `1px solid ${roleColors.dps}25`,
           }}
         >
-          {count}
-        </Typography>
+          <DpsIcon sx={{ fontSize: '0.85rem', color: roleColors.dps }} />
+          <Typography
+            sx={{
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              color: roleColors.dps,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              minWidth: 24,
+            }}
+          >
+            DPS
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              color: roleColors.dps,
+              fontFamily: '"Space Grotesk", monospace',
+            }}
+          >
+            {composition.dps}
+          </Typography>
+        </Box>
 
-        <ButtonBase
-          onClick={() => handleIncrement(role)}
-          disabled={!canIncrement}
-          sx={{
-            width: 22,
-            height: 22,
-            borderRadius: '6px',
-            bgcolor: canIncrement ? `${color}18` : 'transparent',
-            border: `1px solid ${canIncrement ? `${color}40` : borderBase}`,
-            color: canIncrement ? color : 'text.disabled',
-            fontSize: '0.85rem',
-            fontWeight: 700,
-            lineHeight: 1,
-            '&:hover': canIncrement ? { bgcolor: `${color}30` } : {},
-          }}
-        >
-          +
-        </ButtonBase>
+        {/* Divider */}
+        <Box sx={{ width: 1, height: 24, bgcolor: borderBase, mx: 0.25 }} />
+
+        {/* Presets */}
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          {PRESETS.map((preset) => {
+            const active = isPresetActive(preset);
+            return (
+              <Tooltip
+                key={preset.label}
+                title={`${preset.comp.tanks}T / ${preset.comp.healers}H / ${preset.comp.dps}DPS`}
+                arrow
+              >
+                <ButtonBase
+                  onClick={() => handlePreset(preset)}
+                  sx={{
+                    px: 1,
+                    py: 0.4,
+                    borderRadius: '6px',
+                    fontSize: '0.68rem',
+                    fontWeight: active ? 700 : 500,
+                    fontFamily: '"Space Grotesk", sans-serif',
+                    letterSpacing: '0.02em',
+                    color: active ? (isDark ? '#fff' : '#0f172a') : 'text.secondary',
+                    bgcolor: active
+                      ? isDark
+                        ? 'rgba(255,255,255,0.12)'
+                        : 'rgba(15,23,42,0.08)'
+                      : 'transparent',
+                    border: `1px solid ${active ? (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)') : 'transparent'}`,
+                    '&:hover': {
+                      bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
+                    },
+                  }}
+                >
+                  {preset.label}
+                </ButtonBase>
+              </Tooltip>
+            );
+          })}
+        </Box>
       </Box>
     );
-  };
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        gap: 1.5,
-        p: 1,
-        borderRadius: '10px',
-        bgcolor: bgBase,
-        border: `1px solid ${borderBase}`,
-      }}
-    >
-      {/* Role steppers */}
-      {renderRoleStepper(
-        'tanks',
-        <TankIcon sx={{ fontSize: '0.85rem', color: roleColors.tank }} />,
-        'Tanks',
-        roleColors.tank,
-      )}
-
-      {renderRoleStepper(
-        'healers',
-        <HealerIcon sx={{ fontSize: '0.85rem', color: roleColors.healer }} />,
-        'Healers',
-        roleColors.healer,
-      )}
-
-      {/* DPS counter (read-only, auto-adjusts) */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 0.75,
-          px: 1,
-          py: 0.5,
-          borderRadius: '8px',
-          bgcolor: `${roleColors.dps}10`,
-          border: `1px solid ${roleColors.dps}25`,
-        }}
-      >
-        <DpsIcon sx={{ fontSize: '0.85rem', color: roleColors.dps }} />
-        <Typography
-          sx={{
-            fontSize: '0.7rem',
-            fontWeight: 600,
-            color: roleColors.dps,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-            minWidth: 24,
-          }}
-        >
-          DPS
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: '0.9rem',
-            fontWeight: 700,
-            color: roleColors.dps,
-            fontFamily: '"Space Grotesk", monospace',
-          }}
-        >
-          {composition.dps}
-        </Typography>
-      </Box>
-
-      {/* Divider */}
-      <Box sx={{ width: 1, height: 24, bgcolor: borderBase, mx: 0.25 }} />
-
-      {/* Presets */}
-      <Box sx={{ display: 'flex', gap: 0.5 }}>
-        {PRESETS.map((preset) => {
-          const active = isPresetActive(preset);
-          return (
-            <Tooltip
-              key={preset.label}
-              title={`${preset.comp.tanks}T / ${preset.comp.healers}H / ${preset.comp.dps}DPS`}
-              arrow
-            >
-              <ButtonBase
-                onClick={() => handlePreset(preset)}
-                sx={{
-                  px: 1,
-                  py: 0.4,
-                  borderRadius: '6px',
-                  fontSize: '0.68rem',
-                  fontWeight: active ? 700 : 500,
-                  fontFamily: '"Space Grotesk", sans-serif',
-                  letterSpacing: '0.02em',
-                  color: active ? (isDark ? '#fff' : '#0f172a') : 'text.secondary',
-                  bgcolor: active
-                    ? isDark
-                      ? 'rgba(255,255,255,0.12)'
-                      : 'rgba(15,23,42,0.08)'
-                    : 'transparent',
-                  border: `1px solid ${active ? (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)') : 'transparent'}`,
-                  '&:hover': {
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
-                  },
-                }}
-              >
-                {preset.label}
-              </ButtonBase>
-            </Tooltip>
-          );
-        })}
-      </Box>
-    </Box>
-  );
-};
+  },
+);
