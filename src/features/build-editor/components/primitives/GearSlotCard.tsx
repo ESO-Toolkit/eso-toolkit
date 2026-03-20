@@ -89,6 +89,7 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
       setIconFailed(false);
       return;
     }
+    let cancelled = false;
     setIconFailed(false);
     const sync = getItemIconUrl(itemId);
     if (sync) {
@@ -96,8 +97,13 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
       return;
     }
     fetchItemIconUrl(itemId)
-      .then((url) => setIconUrl(url))
+      .then((url) => {
+        if (!cancelled) setIconUrl(url);
+      })
       .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [itemId]);
 
   const primaryLabel = setName ?? itemName ?? null;

@@ -19,7 +19,12 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
 
-import { PEN_BUFFS, CRIT_DMG_BUFFS, CRIT_DMG_GEAR } from '../../engine/stat-constants';
+import {
+  CRIT_DMG_BUFFS,
+  CRIT_DMG_GEAR,
+  DEFAULT_STAT_OVERRIDES,
+  PEN_BUFFS,
+} from '../../engine/stat-constants';
 import { calculateBuildStats } from '../../engine/stat-engine';
 import type { StatOverrides } from '../../engine/stat-types';
 import { setStatOverrides as setStatOverridesAction } from '../../store/buildEditorSlice';
@@ -36,22 +41,9 @@ export const StatsSection: React.FC = () => {
   const [buffsExpanded, setBuffsExpanded] = useState(false);
   const [breakdownExpanded, setBreakdownExpanded] = useState(false);
 
-  // Resolve overrides — use stored overrides or defaults
+  // Resolve overrides — use stored overrides or canonical defaults
   const overrides: StatOverrides = useMemo(
-    () =>
-      setup.statOverrides ?? {
-        buffs: {
-          'Major Breach': true,
-          'Minor Breach': true,
-          'Crusher Enchant': true,
-          'Minor Force': true,
-          'Minor Brittle': true,
-        },
-        lightArmorCount: 1,
-        mediumArmorCount: 6,
-        weaponDamage: 0,
-        balorghUltimate: 0,
-      },
+    () => setup.statOverrides ?? DEFAULT_STAT_OVERRIDES,
     [setup.statOverrides],
   );
 

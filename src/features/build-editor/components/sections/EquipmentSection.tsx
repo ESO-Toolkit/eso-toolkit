@@ -36,8 +36,15 @@ function isTwoHanded(itemId: number | null | undefined): boolean {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Look up a slot definition by its numeric index. */
-const slotDef = (idx: number): EquipSlotDef => EQUIP_SLOTS.find((s) => s.slot === idx)!;
+/** Look up a slot definition by its numeric index.
+ *  Falls back to a synthetic def if the slot is somehow missing from EQUIP_SLOTS. */
+const slotDef = (idx: number): EquipSlotDef =>
+  EQUIP_SLOTS.find((s) => s.slot === idx) ?? {
+    slot: idx,
+    name: `Slot ${idx}`,
+    category: 'apparel',
+    slotType: 'chest',
+  };
 
 /** Build a tile for a single slot. */
 interface TileProps {

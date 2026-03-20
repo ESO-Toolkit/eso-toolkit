@@ -254,9 +254,10 @@ export const BuildCompletionHeader: React.FC = () => {
           setTempLinkExpiry(result.expires_at);
           setTempLinkDialogOpen(true);
         })
-        .catch((err: Error) => {
+        .catch((err: unknown) => {
           setIsCreatingLink(false);
-          enqueueSnackbar(err.message || 'Could not create temporary link.', { variant: 'error' });
+          const message = err instanceof Error ? err.message : String(err);
+          enqueueSnackbar(message || 'Could not create temporary link.', { variant: 'error' });
         });
     });
   };
