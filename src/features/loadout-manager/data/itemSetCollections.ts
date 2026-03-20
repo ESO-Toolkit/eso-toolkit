@@ -60,7 +60,7 @@ const slotAliasMap: Record<string, SlotType> = {
   feet: 'feet',
   neck: 'neck',
   ring: 'ring',
-  'ring-backup': 'weapon',
+  'ring-backup': 'ring',
   weapon: 'weapon',
   offhand: 'offhand',
 };
@@ -68,6 +68,8 @@ const slotAliasMap: Record<string, SlotType> = {
 const slotTypeOverrides: Record<number, SlotType> = {
   // Perfected Sul-Xan weapon drops export with an offhand mask even though the slot is a weapon bar item.
   174583: 'weapon',
+  // Harpooner's Wading Kilt is leg armor (UESP confirmed), but collection data exports as waist.
+  175524: 'legs',
 };
 
 const data = collectionsRaw as ItemSetCollectionsFile;

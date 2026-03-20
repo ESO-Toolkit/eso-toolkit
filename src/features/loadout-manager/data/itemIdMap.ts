@@ -141755,10 +141755,10 @@ export const itemIdMap: Record<number, ItemInfo> = {
     type: 'Gear',
   },
   175524: {
-    name: "Harpooner's Wading Kilt Waist",
+    name: "Harpooner's Wading Kilt Legs",
     setName: "Harpooner's Wading Kilt",
     type: 'Gear',
-    slot: 'waist',
+    slot: 'legs',
   },
   175525: { name: 'Gaze of Sithis Head', setName: 'Gaze of Sithis', type: 'Gear', slot: 'head' },
   175527: {
@@ -203226,7 +203226,7 @@ export const itemIdMap: Record<number, ItemInfo> = {
   219645: { name: 'Unflinching Ultimate Gear', setName: 'Unflinching Ultimate', type: 'Gear' },
   219646: { name: 'Unflinching Ultimate Gear', setName: 'Unflinching Ultimate', type: 'Gear' },
   219647: { name: 'Unflinching Ultimate Gear', setName: 'Unflinching Ultimate', type: 'Gear' },
-  223189: { name: "Huntsman's Warmask Gear", setName: "Huntsman's Warmask", type: 'Gear' },
+  223189: { name: "Huntsman's Warmask Head", setName: "Huntsman's Warmask", type: 'Gear', slot: 'head' },
   223227: { name: 'Xanmeer Genesis Gear', setName: 'Xanmeer Genesis', type: 'Gear' },
   223228: { name: 'Xanmeer Genesis Gear', setName: 'Xanmeer Genesis', type: 'Gear' },
   223229: { name: 'Xanmeer Genesis Gear', setName: 'Xanmeer Genesis', type: 'Gear' },
@@ -203555,7 +203555,11 @@ export function getItemInfo(itemId: number): ItemInfo | undefined {
 
   const collectionItem = getCollectionItem(itemId);
   const wardrobeSlot = getRegisteredSlot(itemId);
-  const slot = wardrobeSlot ?? info.slot ?? collectionItem?.slotType;
+  // Collection data (ESO's Item Set Collection API) is more authoritative than
+  // the auto-generated info.slot values, which have known mismatches (e.g. all
+  // hand items tagged as 'weapon'). Wizard's Wardrobe is player-confirmed, so
+  // it stays highest priority.
+  const slot = wardrobeSlot ?? collectionItem?.slotType ?? info.slot;
   const slotLabel = resolveSlotLabel(slot, collectionItem?.weight);
   const updatedName = applySlotLabel(info.name, slotLabel);
 
