@@ -37,25 +37,13 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { attachBuildToSlot, selectSavedRosters } from '@/store/saved_rosters';
 import type { RaidRoster } from '@/types/roster';
+import type { SlotKey } from '@/utils/slotKey';
+import { makeSlotKey, getSlotFromRoster } from '@/utils/slotKey';
 
 import { snapshotBuildToSlot } from '../../../utils/rosterBuildBridge';
 import type { Build } from '../types/build.types';
 
 // ─── Slot definitions ────────────────────────────────────────────────────────
-
-type SlotKey =
-  | 'tank1'
-  | 'tank2'
-  | 'healer1'
-  | 'healer2'
-  | 'dps1'
-  | 'dps2'
-  | 'dps3'
-  | 'dps4'
-  | 'dps5'
-  | 'dps6'
-  | 'dps7'
-  | 'dps8';
 
 interface SlotDef {
   key: SlotKey;
@@ -65,31 +53,55 @@ interface SlotDef {
   roleGroup: 'tank' | 'healer' | 'dps';
 }
 
-const SLOTS: SlotDef[] = [
-  { key: 'tank1', label: 'Main Tank', shortLabel: 'MT', icon: <TankIcon />, roleGroup: 'tank' },
-  { key: 'tank2', label: 'Off Tank', shortLabel: 'OT', icon: <TankIcon />, roleGroup: 'tank' },
-  {
-    key: 'healer1',
-    label: 'Healer 1',
-    shortLabel: 'H1',
-    icon: <HealerIcon />,
-    roleGroup: 'healer',
-  },
-  {
-    key: 'healer2',
-    label: 'Healer 2',
-    shortLabel: 'H2',
-    icon: <HealerIcon />,
-    roleGroup: 'healer',
-  },
-  ...Array.from({ length: 8 }, (_, i) => ({
-    key: `dps${i + 1}` as SlotKey,
-    label: `DPS Slot ${i + 1}`,
-    shortLabel: `DD${i + 1}`,
-    icon: <DpsIcon />,
-    roleGroup: 'dps' as const,
-  })),
-];
+/** Generate SLOTS dynamically from a roster's composition */
+function buildSlotDefs(roster: RaidRoster): SlotDef[] {
+  const slots: SlotDef[] = [];
+
+  // Tanks
+  for (let i = 0; i < roster.composition.tanks; i++) {
+    const label = i === 0 ? 'Main Tank' : i === 1 ? 'Off Tank' : `Tank ${i + 1}`;
+    const shortLabel = i === 0 ? 'MT' : i === 1 ? 'OT' : `T${i + 1}`;
+    slots.push({
+      key: makeSlotKey('tank', i),
+      label,
+      shortLabel,
+      icon: <TankIcon />,
+      roleGroup: 'tank',
+    });
+  }
+
+  // Healers
+  for (let i = 0; i < roster.composition.healers; i++) {
+    slots.push({
+      key: makeSlotKey('healer', i),
+      label: `Healer ${i + 1}`,
+      shortLabel: `H${i + 1}`,
+      icon: <HealerIcon />,
+      roleGroup: 'healer',
+    });
+  }
+
+  // DPS
+  for (let i = 0; i < roster.composition.dps; i++) {
+    slots.push({
+      key: makeSlotKey('dps', i),
+      label: `DPS Slot ${i + 1}`,
+      shortLabel: `DD${i + 1}`,
+      icon: <DpsIcon />,
+      roleGroup: 'dps',
+    });
+  }
+
+  return slots;
+}
+
+// Fallback SLOTS for when no roster is selected (default 2/2/8 composition)
+const DEFAULT_SLOTS: SlotDef[] = buildSlotDefs({
+  composition: { tanks: 2, healers: 2, dps: 8 },
+  tanks: [],
+  healers: [],
+  dpsSlots: [],
+} as unknown as RaidRoster);
 
 // ─── Helper to get the existing buildRef for a slot ──────────────────────────
 
@@ -97,15 +109,7 @@ function getSlotInfo(
   roster: RaidRoster,
   slotKey: SlotKey,
 ): { buildName?: string; playerName?: string } {
-  let slot: { buildRef?: { buildName?: string }; playerName?: string } | undefined;
-  if (slotKey === 'tank1') slot = roster.tank1;
-  else if (slotKey === 'tank2') slot = roster.tank2;
-  else if (slotKey === 'healer1') slot = roster.healer1;
-  else if (slotKey === 'healer2') slot = roster.healer2;
-  else if (slotKey.startsWith('dps')) {
-    const idx = parseInt(slotKey.slice(3), 10) - 1;
-    slot = roster.dpsSlots[idx];
-  }
+  const slot = getSlotFromRoster(roster, slotKey);
   return {
     buildName: slot?.buildRef?.buildName,
     playerName: slot?.playerName,
@@ -152,9 +156,15 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
   const roleGroup: 'tank' | 'healer' | 'dps' =
     build.role === 'tank' ? 'tank' : build.role === 'healer' ? 'healer' : 'dps';
 
-  const visibleSlots = showAllSlots ? SLOTS : SLOTS.filter((s) => s.roleGroup === roleGroup);
-
   const selectedRoster = savedRosters.find((r) => r.id === selectedRosterId);
+
+  // Build SLOTS dynamically from the selected roster's composition
+  const SLOTS = React.useMemo(
+    () => (selectedRoster ? buildSlotDefs(selectedRoster.roster) : DEFAULT_SLOTS),
+    [selectedRoster],
+  );
+
+  const visibleSlots = showAllSlots ? SLOTS : SLOTS.filter((s) => s.roleGroup === roleGroup);
 
   const handleAttach = (): void => {
     if (!selectedRosterId || !selectedSlot || !selectedRoster) return;

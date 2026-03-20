@@ -189,6 +189,7 @@ export interface DPSSlot {
  * Healer configuration
  */
 export interface HealerSetup {
+  slotNumber: number; // 1-based index within the healer array
   playerName?: string;
   positionTag?: string; // Assignment tag — e.g. "portal", "tomb" (shown before position)
   playerNumber?: string; // Position within that tag — e.g. "left", "right", "1"
@@ -225,6 +226,7 @@ export interface HealerSetup {
  * Tank configuration
  */
 export interface TankSetup {
+  slotNumber: number; // 1-based index within the tank array
   playerName?: string;
   positionTag?: string; // Assignment tag — e.g. "portal", "bridge" (shown before position)
   playerNumber?: string; // Position within that tag — e.g. "left", "right", "1"
@@ -252,6 +254,22 @@ export interface TankSetup {
 }
 
 /**
+ * Role composition for a trial roster.
+ * tanks + healers + dps must always sum to 12.
+ */
+export interface RoleComposition {
+  tanks: number;
+  healers: number;
+  dps: number;
+}
+
+/** Default ESO trial composition: 2 tanks, 2 healers, 8 DPS */
+export const DEFAULT_COMPOSITION: RoleComposition = { tanks: 2, healers: 2, dps: 8 };
+
+/** Total roster size — ESO trials are always 12 players */
+export const ROSTER_SIZE = 12;
+
+/**
  * Complete roster configuration
  */
 export interface RaidRoster {
@@ -259,15 +277,16 @@ export interface RaidRoster {
   createdAt: string;
   updatedAt: string;
 
-  // 2 Tanks
-  tank1: TankSetup;
-  tank2: TankSetup;
+  /** Role composition — defines how many of each role */
+  composition: RoleComposition;
 
-  // 2 Healers
-  healer1: HealerSetup;
-  healer2: HealerSetup;
+  /** Tank setups (length matches composition.tanks) */
+  tanks: TankSetup[];
 
-  // DPS Slots (1-8) - can be regular DPS or jail DDs with jailDDType set
+  /** Healer setups (length matches composition.healers) */
+  healers: HealerSetup[];
+
+  /** DPS slots (length matches composition.dps) */
   dpsSlots: DPSSlot[];
 
   // Available player groups (for organizing players)
@@ -296,7 +315,8 @@ export const defaultSkillLineConfig = (): SkillLineConfig => ({
 /**
  * Default tank setup
  */
-export const defaultTankSetup = (): TankSetup => ({
+export const defaultTankSetup = (slotNumber = 1): TankSetup => ({
+  slotNumber,
   gearSets: {
     set1: undefined,
     set2: undefined,
@@ -309,7 +329,8 @@ export const defaultTankSetup = (): TankSetup => ({
 /**
  * Default healer setup
  */
-export const defaultHealerSetup = (): HealerSetup => ({
+export const defaultHealerSetup = (slotNumber = 1): HealerSetup => ({
+  slotNumber,
   set1: undefined,
   set2: undefined,
   skillLines: defaultSkillLineConfig(),
@@ -319,26 +340,39 @@ export const defaultHealerSetup = (): HealerSetup => ({
 });
 
 /**
- * Create default DPS slots (1-8)
+ * Create default tank slots for a given count
  */
-export const createDefaultDPSSlots = (): DPSSlot[] => {
-  return Array.from({ length: 8 }, (_, i) => ({
+export const createDefaultTanks = (count: number): TankSetup[] => {
+  return Array.from({ length: count }, (_, i) => defaultTankSetup(i + 1));
+};
+
+/**
+ * Create default healer slots for a given count
+ */
+export const createDefaultHealers = (count: number): HealerSetup[] => {
+  return Array.from({ length: count }, (_, i) => defaultHealerSetup(i + 1));
+};
+
+/**
+ * Create default DPS slots for a given count (default 8)
+ */
+export const createDefaultDPSSlots = (count = 8): DPSSlot[] => {
+  return Array.from({ length: count }, (_, i) => ({
     slotNumber: i + 1,
   }));
 };
 
 /**
- * Default roster
+ * Default roster. Accepts an optional composition to create non-standard layouts.
  */
-export const createDefaultRoster = (): RaidRoster => ({
+export const createDefaultRoster = (comp: RoleComposition = DEFAULT_COMPOSITION): RaidRoster => ({
   rosterName: 'New Roster',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-  tank1: defaultTankSetup(),
-  tank2: defaultTankSetup(),
-  healer1: defaultHealerSetup(),
-  healer2: defaultHealerSetup(),
-  dpsSlots: createDefaultDPSSlots(),
+  composition: { ...comp },
+  tanks: createDefaultTanks(comp.tanks),
+  healers: createDefaultHealers(comp.healers),
+  dpsSlots: createDefaultDPSSlots(comp.dps),
   availableGroups: [],
 });
 

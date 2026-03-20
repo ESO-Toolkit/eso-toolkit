@@ -41,11 +41,9 @@ function formatDate(iso: string): string {
 
 function countPlayers(roster: SavedRoster['roster']): number {
   const filledDps = roster.dpsSlots.filter((s) => s.playerName).length;
-  const hasT1 = !!roster.tank1.playerName;
-  const hasT2 = !!roster.tank2.playerName;
-  const hasH1 = !!roster.healer1.playerName;
-  const hasH2 = !!roster.healer2.playerName;
-  return (hasT1 ? 1 : 0) + (hasT2 ? 1 : 0) + (hasH1 ? 1 : 0) + (hasH2 ? 1 : 0) + filledDps;
+  const filledTanks = roster.tanks.filter((t) => !!t.playerName).length;
+  const filledHealers = roster.healers.filter((h) => !!h.playerName).length;
+  return filledTanks + filledHealers + filledDps;
 }
 
 interface DeleteDialogProps {

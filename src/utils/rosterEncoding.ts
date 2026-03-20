@@ -19,6 +19,8 @@ import {
   HealerChampionPoint,
   JailDDType,
   RaidRoster,
+  RoleComposition,
+  DEFAULT_COMPOSITION,
   RosterDetailLevel,
   TankSetup,
   TankGearSet,
@@ -29,6 +31,8 @@ import {
   defaultTankSetup,
   defaultHealerSetup,
   createDefaultDPSSlots,
+  createDefaultTanks,
+  createDefaultHealers,
 } from '../types/roster';
 import type {
   TrialBuildOverrides,
@@ -37,6 +41,7 @@ import type {
 } from '../types/trial-encounters';
 
 import { Logger, LogLevel } from './logger';
+import { makeSlotKey } from './slotKey';
 
 const logger = new Logger({ level: LogLevel.WARN, contextPrefix: 'rosterEncoding' });
 
@@ -188,6 +193,9 @@ export interface CompactPlayerOverride {
 
 /** Compact representation of EncounterOverrides (overrides per player for one encounter) */
 export interface CompactEncounterOverrides {
+  /** v3: SlotKey-keyed record (e.g., {"tank:0": {...}, "dps:3": {...}}) */
+  sk?: Record<string, CompactPlayerOverride>;
+  /** @deprecated v2 fields — decode only */
   t1?: CompactPlayerOverride; // tank1
   t2?: CompactPlayerOverride; // tank2
   h1?: CompactPlayerOverride; // healer1
@@ -202,19 +210,44 @@ export interface CompactTrialOverrides {
   eb: Record<string, CompactEncounterOverrides>; // encounterBuilds
 }
 
-export interface CompactRoster {
-  v: 2; // version marker
-  n?: string; // rosterName
+/**
+ * v2 compact roster — decode only (kept for backward compat).
+ * Uses named t1/t2/h1/h2 fields for the fixed 2-tank/2-healer layout.
+ */
+export interface CompactRosterV2 {
+  v: 2;
+  n?: string;
   t1?: CompactTank;
   t2?: CompactTank;
   h1?: CompactHealer;
   h2?: CompactHealer;
-  dp?: CompactDPS[]; // only filled DPS slots
-  ag?: string[]; // availableGroups
-  no?: string; // notes
-  to?: CompactTrialOverrides; // trialOverrides (per-fight builds)
-  dl?: number; // detail level: 0=simple 1=full
+  dp?: CompactDPS[];
+  ag?: string[];
+  no?: string;
+  to?: CompactTrialOverrides;
+  dl?: number;
 }
+
+/**
+ * v3 compact roster — current format.
+ * Uses arrays for tanks/healers and a composition tuple.
+ */
+export interface CompactRosterV3 {
+  v: 3;
+  n?: string;
+  /** Composition: [tanks, healers, dps] */
+  co?: [number, number, number];
+  ts?: CompactTank[];
+  hs?: CompactHealer[];
+  dp?: CompactDPS[];
+  ag?: string[];
+  no?: string;
+  to?: CompactTrialOverrides;
+  dl?: number;
+}
+
+/** Union of all compact roster formats */
+export type CompactRoster = CompactRosterV2 | CompactRosterV3;
 
 // ============================================================
 // Look-up tables for encoding/decoding fixed-vocabulary strings
@@ -476,9 +509,9 @@ function compactTank(t: TankSetup): CompactTank {
   return c;
 }
 
-function expandTank(c?: CompactTank): TankSetup {
+function expandTank(c?: CompactTank, slotNumber = 1): TankSetup {
   return {
-    ...defaultTankSetup(),
+    ...defaultTankSetup(slotNumber),
     playerName: c?.pn,
     positionTag: c?.pt,
     playerNumber: c?.pi != null ? String(c.pi) : undefined,
@@ -539,9 +572,9 @@ function compactHealer(h: HealerSetup): CompactHealer {
   return c;
 }
 
-function expandHealer(c?: CompactHealer): HealerSetup {
+function expandHealer(c?: CompactHealer, slotNumber = 1): HealerSetup {
   return {
-    ...defaultHealerSetup(),
+    ...defaultHealerSetup(slotNumber),
     playerName: c?.pn,
     positionTag: c?.pt,
     playerNumber: c?.pi != null ? String(c.pi) : undefined,
@@ -690,26 +723,37 @@ function expandPlayerOverride(c: CompactPlayerOverride): PlayerOverride {
 
 function compactEncounterOverrides(o: EncounterOverrides): CompactEncounterOverrides {
   const c: CompactEncounterOverrides = {};
-  if (o.tank1) c.t1 = compactPlayerOverride(o.tank1);
-  if (o.tank2) c.t2 = compactPlayerOverride(o.tank2);
-  if (o.healer1) c.h1 = compactPlayerOverride(o.healer1);
-  if (o.healer2) c.h2 = compactPlayerOverride(o.healer2);
-  if (o.dpsSlots?.length) {
-    c.dp = o.dpsSlots.map((s) => ({ sn: s.slotNumber, ...compactPlayerOverride(s) }));
+  // v3: write as SlotKey-keyed record
+  const sk: Record<string, CompactPlayerOverride> = {};
+  for (const [slotKey, override] of Object.entries(o.slots)) {
+    sk[slotKey] = compactPlayerOverride(override);
   }
+  if (Object.keys(sk).length > 0) c.sk = sk;
   return c;
 }
 
 function expandEncounterOverrides(c: CompactEncounterOverrides): EncounterOverrides {
-  const o: EncounterOverrides = {};
-  if (c.t1) o.tank1 = expandPlayerOverride(c.t1);
-  if (c.t2) o.tank2 = expandPlayerOverride(c.t2);
-  if (c.h1) o.healer1 = expandPlayerOverride(c.h1);
-  if (c.h2) o.healer2 = expandPlayerOverride(c.h2);
-  if (c.dp?.length) {
-    o.dpsSlots = c.dp.map(({ sn, ...rest }) => ({ slotNumber: sn, ...expandPlayerOverride(rest) }));
+  const slots: Record<string, PlayerOverride> = {};
+
+  // v3: SlotKey-keyed record
+  if (c.sk) {
+    for (const [slotKey, compact] of Object.entries(c.sk)) {
+      slots[slotKey] = expandPlayerOverride(compact);
+    }
   }
-  return o;
+
+  // v2 backward compat: named t1/t2/h1/h2 + dpsSlots
+  if (c.t1) slots[makeSlotKey('tank', 0)] = expandPlayerOverride(c.t1);
+  if (c.t2) slots[makeSlotKey('tank', 1)] = expandPlayerOverride(c.t2);
+  if (c.h1) slots[makeSlotKey('healer', 0)] = expandPlayerOverride(c.h1);
+  if (c.h2) slots[makeSlotKey('healer', 1)] = expandPlayerOverride(c.h2);
+  if (c.dp?.length) {
+    for (const { sn, ...rest } of c.dp) {
+      slots[makeSlotKey('dps', sn - 1)] = expandPlayerOverride(rest);
+    }
+  }
+
+  return { slots };
 }
 
 function compactTrialOverrides(t: TrialBuildOverrides): CompactTrialOverrides {
@@ -732,13 +776,25 @@ function expandTrialOverrides(c: CompactTrialOverrides): TrialBuildOverrides {
 // Top-level compact/expand for a full roster
 // ============================================================
 
-export function compactifyRoster(roster: RaidRoster): CompactRoster {
-  const c: CompactRoster = { v: 2 };
+export function compactifyRoster(roster: RaidRoster): CompactRosterV3 {
+  const c: CompactRosterV3 = { v: 3 };
   if (roster.rosterName && roster.rosterName !== 'New Roster') c.n = roster.rosterName;
-  c.t1 = compactTank(roster.tank1);
-  c.t2 = compactTank(roster.tank2);
-  c.h1 = compactHealer(roster.healer1);
-  c.h2 = compactHealer(roster.healer2);
+
+  // Only encode composition if it differs from the default 2/2/8
+  const comp = roster.composition;
+  if (comp.tanks !== 2 || comp.healers !== 2 || comp.dps !== 8) {
+    c.co = [comp.tanks, comp.healers, comp.dps];
+  }
+
+  // Tanks array
+  const compactTanks = roster.tanks.map(compactTank);
+  if (compactTanks.length > 0) c.ts = compactTanks;
+
+  // Healers array
+  const compactHealers = roster.healers.map(compactHealer);
+  if (compactHealers.length > 0) c.hs = compactHealers;
+
+  // DPS — only encode filled slots
   const filledSlots = roster.dpsSlots.filter(
     (slot) =>
       slot.playerName ||
@@ -760,7 +816,6 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
       slot.group ||
       slot.skillLines ||
       slot.specificSkills?.length ||
-      slot.championPoint ||
       slot.roleNotes ||
       slot.buildRef ||
       slot.food ||
@@ -781,8 +836,62 @@ export function compactifyRoster(roster: RaidRoster): CompactRoster {
 
 const DL_LEVELS: RosterDetailLevel[] = ['simple', 'full'];
 
-export function expandCompactRoster(c: CompactRoster): RaidRoster {
-  const dpsSlots = createDefaultDPSSlots();
+/**
+ * Expand a v3 compact roster into a full RaidRoster.
+ */
+function expandCompactRosterV3(c: CompactRosterV3): RaidRoster {
+  const comp: RoleComposition = c.co
+    ? { tanks: c.co[0], healers: c.co[1], dps: c.co[2] }
+    : { ...DEFAULT_COMPOSITION };
+
+  // Tanks
+  const tanks: TankSetup[] = c.ts
+    ? c.ts.map((ct, i) => expandTank(ct, i + 1))
+    : createDefaultTanks(comp.tanks);
+  // Pad if composition says more tanks than provided
+  while (tanks.length < comp.tanks) tanks.push(defaultTankSetup(tanks.length + 1));
+
+  // Healers
+  const healers: HealerSetup[] = c.hs
+    ? c.hs.map((ch, i) => expandHealer(ch, i + 1))
+    : createDefaultHealers(comp.healers);
+  while (healers.length < comp.healers) healers.push(defaultHealerSetup(healers.length + 1));
+
+  // DPS
+  const dpsSlots = createDefaultDPSSlots(comp.dps);
+  if (c.dp) {
+    for (const compactSlot of c.dp) {
+      const idx = compactSlot.sn - 1;
+      if (idx >= 0 && idx < comp.dps) {
+        dpsSlots[idx] = expandDPS(compactSlot);
+      }
+    }
+  }
+
+  return {
+    rosterName: c.n ?? 'New Roster',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    composition: comp,
+    tanks,
+    healers,
+    dpsSlots,
+    availableGroups: c.ag ?? [],
+    notes: c.no,
+    trialOverrides: c.to ? expandTrialOverrides(c.to) : undefined,
+    rosterDetailLevel: c.dl != null ? DL_LEVELS[c.dl] : undefined,
+  };
+}
+
+/**
+ * Expand a v2 compact roster (legacy) into a full RaidRoster.
+ * Converts the fixed t1/t2/h1/h2 fields into the array-based format
+ * with a default 2/2/8 composition.
+ */
+function expandCompactRosterV2(c: CompactRosterV2): RaidRoster {
+  const comp: RoleComposition = { ...DEFAULT_COMPOSITION };
+
+  const dpsSlots = createDefaultDPSSlots(8);
   if (c.dp) {
     for (const compactSlot of c.dp) {
       const idx = compactSlot.sn - 1;
@@ -791,20 +900,25 @@ export function expandCompactRoster(c: CompactRoster): RaidRoster {
       }
     }
   }
+
   return {
     rosterName: c.n ?? 'New Roster',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    tank1: expandTank(c.t1),
-    tank2: expandTank(c.t2),
-    healer1: expandHealer(c.h1),
-    healer2: expandHealer(c.h2),
+    composition: comp,
+    tanks: [expandTank(c.t1, 1), expandTank(c.t2, 2)],
+    healers: [expandHealer(c.h1, 1), expandHealer(c.h2, 2)],
     dpsSlots,
     availableGroups: c.ag ?? [],
     notes: c.no,
     trialOverrides: c.to ? expandTrialOverrides(c.to) : undefined,
     rosterDetailLevel: c.dl != null ? DL_LEVELS[c.dl] : undefined,
   };
+}
+
+export function expandCompactRoster(c: CompactRoster): RaidRoster {
+  if (c.v === 3) return expandCompactRosterV3(c as CompactRosterV3);
+  return expandCompactRosterV2(c as CompactRosterV2);
 }
 
 // ============================================================
@@ -911,25 +1025,29 @@ export const encodeRosterToURL = async (roster: RaidRoster): Promise<string> => 
 const MAX_ROSTER_COMPRESSED_BYTES = 500 * 1024;
 
 export const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster | null> => {
-  // Try v2: deflate-raw + compact format
+  // Try v3/v2: deflate-raw + compact format
   try {
     const bytes = fromBase64Url(encoded);
     if (bytes.length > MAX_ROSTER_COMPRESSED_BYTES) return null;
     const json = await inflateBytes(bytes);
     const parsed = JSON.parse(json) as { v?: number };
+    if (parsed.v === 3) {
+      return expandCompactRoster(parsed as CompactRosterV3);
+    }
     if (parsed.v === 2) {
-      return expandCompactRoster(parsed as CompactRoster);
+      return expandCompactRoster(parsed as CompactRosterV2);
     }
   } catch (error) {
-    // fall through to v1, but log v2 errors for debugging
-    logger.debug('v2 decode failed, trying v1:', error);
+    // fall through to v1, but log errors for debugging
+    logger.debug('v3/v2 decode failed, trying v1:', error);
   }
-  // Try v1: btoa(encodeURIComponent(json))
+  // Try v1: btoa(encodeURIComponent(json)) — legacy format with named fields
   try {
     const json = decodeURIComponent(atob(encoded));
     const parsed: unknown = JSON.parse(json);
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      return parsed as RaidRoster;
+      // Legacy v1 may have old named fields — migrate to array format
+      return migrateLegacyRoster(parsed as Record<string, unknown>);
     }
     return null;
   } catch (error) {
@@ -937,3 +1055,40 @@ export const decodeRosterFromURL = async (encoded: string): Promise<RaidRoster |
     return null;
   }
 };
+
+/**
+ * Migrate a legacy v1 roster (with tank1/tank2/healer1/healer2 named fields)
+ * into the new array-based RaidRoster format.
+ */
+function migrateLegacyRoster(raw: Record<string, unknown>): RaidRoster {
+  // If it already has the new format fields, use it directly
+  if (Array.isArray(raw.tanks) && Array.isArray(raw.healers)) {
+    return raw as unknown as RaidRoster;
+  }
+
+  // Convert old named fields to arrays
+  const tank1 = (raw.tank1 as TankSetup) ?? defaultTankSetup(1);
+  const tank2 = (raw.tank2 as TankSetup) ?? defaultTankSetup(2);
+  const healer1 = (raw.healer1 as HealerSetup) ?? defaultHealerSetup(1);
+  const healer2 = (raw.healer2 as HealerSetup) ?? defaultHealerSetup(2);
+
+  // Ensure slotNumbers are set
+  tank1.slotNumber = 1;
+  tank2.slotNumber = 2;
+  healer1.slotNumber = 1;
+  healer2.slotNumber = 2;
+
+  return {
+    rosterName: (raw.rosterName as string) ?? 'New Roster',
+    createdAt: (raw.createdAt as string) ?? new Date().toISOString(),
+    updatedAt: (raw.updatedAt as string) ?? new Date().toISOString(),
+    composition: { ...DEFAULT_COMPOSITION },
+    tanks: [tank1, tank2],
+    healers: [healer1, healer2],
+    dpsSlots: (raw.dpsSlots as DPSSlot[]) ?? createDefaultDPSSlots(),
+    availableGroups: (raw.availableGroups as string[]) ?? [],
+    notes: raw.notes as string | undefined,
+    rosterDetailLevel: raw.rosterDetailLevel as RosterDetailLevel | undefined,
+    trialOverrides: raw.trialOverrides as TrialBuildOverrides | undefined,
+  };
+}

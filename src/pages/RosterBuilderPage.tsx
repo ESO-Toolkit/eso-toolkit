@@ -61,6 +61,7 @@ import { useNavigate } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
 import { PerFightBuilds } from '../components/PerFightBuilds';
+import { RoleCompositionPicker } from '../components/RoleCompositionPicker';
 import { DPSSlotCard } from '../components/roster/DPSSlotCard';
 import { HealerCard } from '../components/roster/HealerSlotCard';
 import { TankCard } from '../components/roster/TankSlotCard';
@@ -86,6 +87,7 @@ import {
   RosterDetailLevel,
   SkillLineConfig,
   PlayerGroup as _PlayerGroup,
+  RoleComposition,
   createDefaultRoster,
   defaultTankSetup,
   defaultHealerSetup,
@@ -97,7 +99,10 @@ import {
 import type { TrialBuildOverrides } from '../types/trial-encounters';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { encodeRosterToURL, decodeRosterFromURL } from '../utils/rosterEncoding';
+import { resizeRoster } from '../utils/rosterResize';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
+import type { SlotKey } from '../utils/slotKey';
+import { parseSlotKey } from '../utils/slotKey';
 
 /**
  * Type definitions for log file import
@@ -517,10 +522,10 @@ function expandDPS(c: CompactDPS): DPSSlot {
 function _compactifyRoster(roster: RaidRoster): CompactRoster {
   const c: CompactRoster = { v: 2 };
   if (roster.rosterName && roster.rosterName !== 'New Roster') c.n = roster.rosterName;
-  c.t1 = compactTank(roster.tank1);
-  c.t2 = compactTank(roster.tank2);
-  c.h1 = compactHealer(roster.healer1);
-  c.h2 = compactHealer(roster.healer2);
+  c.t1 = compactTank(roster.tanks[0] ?? defaultTankSetup(1));
+  c.t2 = compactTank(roster.tanks[1] ?? defaultTankSetup(2));
+  c.h1 = compactHealer(roster.healers[0] ?? defaultHealerSetup(1));
+  c.h2 = compactHealer(roster.healers[1] ?? defaultHealerSetup(2));
   const filledSlots = roster.dpsSlots.filter(
     (slot) =>
       slot.playerName ||
@@ -560,10 +565,15 @@ function _expandCompactRoster(c: CompactRoster): RaidRoster {
     rosterName: c.n ?? 'New Roster',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    tank1: expandTank(c.t1),
-    tank2: expandTank(c.t2),
-    healer1: expandHealer(c.h1),
-    healer2: expandHealer(c.h2),
+    composition: { tanks: 2, healers: 2, dps: dpsSlots.length },
+    tanks: [
+      { ...expandTank(c.t1), slotNumber: 1 },
+      { ...expandTank(c.t2), slotNumber: 2 },
+    ],
+    healers: [
+      { ...expandHealer(c.h1), slotNumber: 1 },
+      { ...expandHealer(c.h2), slotNumber: 2 },
+    ],
     dpsSlots,
     availableGroups: c.ag ?? [],
     notes: c.no,
@@ -595,10 +605,8 @@ interface AddonDPSSlot {
 /** The addon-import format: plain JSON, no compression, set names resolved. */
 interface AddonExportRoster {
   rosterName: string;
-  tank1?: AddonSlot;
-  tank2?: AddonSlot;
-  healer1?: AddonSlot;
-  healer2?: AddonSlot;
+  [key: `tank${number}`]: AddonSlot;
+  [key: `healer${number}`]: AddonSlot;
   dpsSlots?: AddonDPSSlot[];
 }
 
@@ -655,15 +663,14 @@ function dpsToAddonSlot(dps: DPSSlot): AddonDPSSlot | undefined {
 function rosterToAddonExport(roster: RaidRoster): AddonExportRoster {
   const addonRoster: AddonExportRoster = { rosterName: roster.rosterName };
 
-  const t1 = tankToAddonSlot(roster.tank1);
-  const t2 = tankToAddonSlot(roster.tank2);
-  const h1 = healerToAddonSlot(roster.healer1);
-  const h2 = healerToAddonSlot(roster.healer2);
-
-  if (t1) addonRoster.tank1 = t1;
-  if (t2) addonRoster.tank2 = t2;
-  if (h1) addonRoster.healer1 = h1;
-  if (h2) addonRoster.healer2 = h2;
+  roster.tanks.forEach((tank, i) => {
+    const t = tankToAddonSlot(tank);
+    if (t) addonRoster[`tank${i + 1}`] = t;
+  });
+  roster.healers.forEach((healer, i) => {
+    const h = healerToAddonSlot(healer);
+    if (h) addonRoster[`healer${i + 1}`] = h;
+  });
 
   const dpsSlots = roster.dpsSlots
     .map(dpsToAddonSlot)
@@ -690,41 +697,70 @@ function encodeAddonExport(roster: RaidRoster): string {
  * @returns Validated RaidRoster with all required fields
  */
 const validateImportedRoster = (data: unknown): RaidRoster => {
-  // Type guard to check if data is an object
   if (!data || typeof data !== 'object') {
     throw new Error('Invalid roster data: expected an object');
   }
+  const parsedData = data as Record<string, unknown>;
+  const base = createDefaultRoster();
 
-  const parsedData = data as Partial<RaidRoster>;
+  // Support both old named-field format and new array format
+  let tanks: TankSetup[];
+  let healers: HealerSetup[];
 
-  // Create a validated roster by merging with defaults
-  const validatedRoster: RaidRoster = {
-    ...createDefaultRoster(),
-    ...parsedData,
-    // Explicitly validate and provide defaults for required complex fields
-    tank1:
+  if (Array.isArray(parsedData.tanks)) {
+    tanks = (parsedData.tanks as TankSetup[]).map((t, i) => ({
+      ...defaultTankSetup(i + 1),
+      ...t,
+      slotNumber: i + 1,
+    }));
+  } else {
+    // Legacy: convert tank1/tank2 to array
+    const t1 =
       parsedData.tank1 && typeof parsedData.tank1 === 'object'
-        ? { ...defaultTankSetup(), ...parsedData.tank1 }
-        : defaultTankSetup(),
-    tank2:
+        ? { ...defaultTankSetup(1), ...(parsedData.tank1 as object) }
+        : defaultTankSetup(1);
+    const t2 =
       parsedData.tank2 && typeof parsedData.tank2 === 'object'
-        ? { ...defaultTankSetup(), ...parsedData.tank2 }
-        : defaultTankSetup(),
-    healer1:
+        ? { ...defaultTankSetup(2), ...(parsedData.tank2 as object) }
+        : defaultTankSetup(2);
+    tanks = [t1, t2];
+  }
+
+  if (Array.isArray(parsedData.healers)) {
+    healers = (parsedData.healers as HealerSetup[]).map((h, i) => ({
+      ...defaultHealerSetup(i + 1),
+      ...h,
+      slotNumber: i + 1,
+    }));
+  } else {
+    const h1 =
       parsedData.healer1 && typeof parsedData.healer1 === 'object'
-        ? { ...defaultHealerSetup(), ...parsedData.healer1 }
-        : defaultHealerSetup(),
-    healer2:
+        ? { ...defaultHealerSetup(1), ...(parsedData.healer1 as object) }
+        : defaultHealerSetup(1);
+    const h2 =
       parsedData.healer2 && typeof parsedData.healer2 === 'object'
-        ? { ...defaultHealerSetup(), ...parsedData.healer2 }
-        : defaultHealerSetup(),
-    dpsSlots:
-      Array.isArray(parsedData.dpsSlots) && parsedData.dpsSlots.length > 0
-        ? parsedData.dpsSlots
-        : createDefaultDPSSlots(),
+        ? { ...defaultHealerSetup(2), ...(parsedData.healer2 as object) }
+        : defaultHealerSetup(2);
+    healers = [h1, h2];
+  }
+
+  const comp: RoleComposition = (parsedData.composition as RoleComposition) ?? {
+    tanks: tanks.length,
+    healers: healers.length,
+    dps: 12 - tanks.length - healers.length,
   };
 
-  return validatedRoster;
+  return {
+    ...base,
+    ...parsedData,
+    composition: comp,
+    tanks,
+    healers,
+    dpsSlots:
+      Array.isArray(parsedData.dpsSlots) && (parsedData.dpsSlots as unknown[]).length > 0
+        ? (parsedData.dpsSlots as DPSSlot[])
+        : createDefaultDPSSlots(comp.dps),
+  } as RaidRoster;
 };
 
 /**
@@ -784,135 +820,84 @@ export const RosterBuilderPage: React.FC = () => {
   // Client is only available when ready and logged in
   const client = isReady && clientLoggedIn ? esoLogsClient : null;
 
-  // Helper functions for role mapping
-  const getRoleNumber = useCallback((role: 'tank1' | 'tank2' | 'healer1' | 'healer2'): 1 | 2 => {
-    return role === 'tank1' || role === 'healer1' ? 1 : 2;
-  }, []);
-
-  const isTankRole = useCallback(
-    (role: 'tank1' | 'tank2' | 'healer1' | 'healer2'): role is 'tank1' | 'tank2' => {
-      return role === 'tank1' || role === 'tank2';
-    },
-    [],
-  );
-
-  // Update tank setup
-  const handleTankChange = useCallback((tankNum: 1 | 2, updates: Partial<TankSetup>): void => {
+  // Update tank setup by array index
+  const handleTankChange = useCallback((index: number, updates: Partial<TankSetup>): void => {
     setRoster((prev) => ({
       ...prev,
-      [`tank${tankNum}`]: {
-        ...prev[`tank${tankNum}` as 'tank1' | 'tank2'],
-        ...updates,
-      },
+      tanks: prev.tanks.map((t, i) => (i === index ? { ...t, ...updates } : t)),
       updatedAt: new Date().toISOString(),
     }));
   }, []);
 
-  // Stable per-card tank callbacks
-  const handleTank1Change = useCallback(
-    (updates: Partial<TankSetup>) => handleTankChange(1, updates),
-    [handleTankChange],
-  );
-  const handleTank2Change = useCallback(
-    (updates: Partial<TankSetup>) => handleTankChange(2, updates),
-    [handleTankChange],
-  );
-
-  // Update healer setup
-  const handleHealerChange = useCallback(
-    (healerNum: 1 | 2, updates: Partial<HealerSetup>): void => {
-      setRoster((prev) => ({
-        ...prev,
-        [`healer${healerNum}`]: {
-          ...prev[`healer${healerNum}` as 'healer1' | 'healer2'],
-          ...updates,
-        },
-        updatedAt: new Date().toISOString(),
-      }));
-    },
-    [],
-  );
-
-  // Stable per-card healer callbacks
-  const handleHealer1Change = useCallback(
-    (updates: Partial<HealerSetup>) => handleHealerChange(1, updates),
-    [handleHealerChange],
-  );
-  const handleHealer2Change = useCallback(
-    (updates: Partial<HealerSetup>) => handleHealerChange(2, updates),
-    [handleHealerChange],
-  );
+  // Update healer setup by array index
+  const handleHealerChange = useCallback((index: number, updates: Partial<HealerSetup>): void => {
+    setRoster((prev) => ({
+      ...prev,
+      healers: prev.healers.map((h, i) => (i === index ? { ...h, ...updates } : h)),
+      updatedAt: new Date().toISOString(),
+    }));
+  }, []);
 
   // Memoized callbacks for SetAssignmentManager
   const handleSetAssignment = useCallback(
-    (setName: string, role: 'tank1' | 'tank2' | 'healer1' | 'healer2', slot: string) => {
-      const roleNum = getRoleNumber(role);
-      // Convert 'monster' to 'monsterSet' for internal state
-      const slotKey = (slot === 'monster' ? 'monsterSet' : slot) as 'set1' | 'set2' | 'monsterSet';
+    (setName: string, slotKey: SlotKey, slot: string) => {
+      const { role, index } = parseSlotKey(slotKey);
+      const gearSlot = (slot === 'monster' ? 'monsterSet' : slot) as 'set1' | 'set2' | 'monsterSet';
 
-      // Empty string means clear the slot
       if (setName === '') {
-        if (isTankRole(role)) {
-          const currentTank = roster[role];
-          handleTankChange(roleNum, {
-            gearSets: {
-              ...currentTank.gearSets,
-              [slotKey]: undefined,
-            },
+        if (role === 'tank') {
+          const currentTank = roster.tanks[index];
+          handleTankChange(index, {
+            gearSets: { ...currentTank.gearSets, [gearSlot]: undefined },
           });
         } else {
-          handleHealerChange(roleNum, {
-            [slotKey]: undefined,
-          });
+          handleHealerChange(index, { [gearSlot]: undefined });
         }
         return;
       }
 
-      // Convert set name to set ID for proper type safety
       const setId = findSetIdByName(setName);
       if (!setId) {
-        // Set not found, skip assignment silently
+        setSnackbar({ open: true, message: `Unknown set name: ${setName}`, severity: 'error' });
         return;
       }
 
-      if (isTankRole(role)) {
-        const currentTank = roster[role];
-        handleTankChange(roleNum, {
-          gearSets: {
-            ...currentTank.gearSets,
-            [slotKey]: setId,
-          },
+      if (role === 'tank') {
+        const currentTank = roster.tanks[index];
+        handleTankChange(index, {
+          gearSets: { ...currentTank.gearSets, [gearSlot]: setId },
         });
       } else {
-        handleHealerChange(roleNum, {
-          [slotKey]: setId,
-        });
+        handleHealerChange(index, { [gearSlot]: setId });
       }
     },
-    [roster, getRoleNumber, isTankRole, handleTankChange, handleHealerChange],
+    [roster, handleTankChange, handleHealerChange],
   );
 
   const handleUltimateUpdate = useCallback(
-    (role: 'tank1' | 'tank2' | 'healer1' | 'healer2', ultimate: string | null) => {
-      const roleNum = getRoleNumber(role);
-      if (isTankRole(role)) {
-        handleTankChange(roleNum, { ultimate });
+    (slotKey: SlotKey, ultimate: string | null) => {
+      const { role, index } = parseSlotKey(slotKey);
+      if (role === 'tank') {
+        handleTankChange(index, { ultimate });
       } else {
-        handleHealerChange(roleNum, { ultimate });
+        handleHealerChange(index, { ultimate });
       }
     },
-    [getRoleNumber, isTankRole, handleTankChange, handleHealerChange],
+    [handleTankChange, handleHealerChange],
   );
 
   const handleHealerCPUpdate = useCallback(
-    (role: 'healer1' | 'healer2', championPoint: HealerChampionPoint | null) => {
-      const healerNum = getRoleNumber(role);
-      handleHealerChange(healerNum, {
-        championPoint,
-      });
+    (slotKey: SlotKey, championPoint: HealerChampionPoint | null) => {
+      const { index } = parseSlotKey(slotKey);
+      handleHealerChange(index, { championPoint });
     },
-    [getRoleNumber, handleHealerChange],
+    [handleHealerChange],
   );
+
+  // ── Composition change handler ──
+  const handleCompositionChange = useCallback((newComp: RoleComposition) => {
+    setRoster((prev) => resizeRoster(prev, newComp));
+  }, []);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -1111,8 +1096,8 @@ export const RosterBuilderPage: React.FC = () => {
 
   // Memoized derived values for stable prop references
   const usedBuffs = useMemo(
-    () => [roster.healer1?.healerBuff, roster.healer2?.healerBuff].filter(Boolean) as HealerBuff[],
-    [roster.healer1?.healerBuff, roster.healer2?.healerBuff],
+    () => roster.healers.map((h) => h.healerBuff).filter(Boolean) as HealerBuff[],
+    [roster.healers],
   );
 
   const memoizedGroups = useMemo(
@@ -1576,7 +1561,7 @@ export const RosterBuilderPage: React.FC = () => {
         const extractedUltimate = extractUltimate(tank.combatantInfo);
 
         // Get existing ultimate for this tank (if roster already has data)
-        const existingUltimate = index === 0 ? roster.tank1.ultimate : roster.tank2.ultimate;
+        const existingUltimate = roster.tanks[index]?.ultimate ?? null;
 
         // Only replace ultimate if:
         // 1. There's no existing ultimate, OR
@@ -1590,6 +1575,7 @@ export const RosterBuilderPage: React.FC = () => {
         const finalUltimate = shouldReplaceUltimate ? extractedUltimate : existingUltimate;
 
         return {
+          slotNumber: index + 1,
           playerName: tank.name || `Tank ${index + 1}`,
           roleLabel: `T${index + 1}`,
           gearSets: {
@@ -1620,7 +1606,7 @@ export const RosterBuilderPage: React.FC = () => {
         const extractedUltimate = extractUltimate(healer.combatantInfo);
 
         // Get existing ultimate for this healer (if roster already has data)
-        const existingUltimate = index === 0 ? roster.healer1.ultimate : roster.healer2.ultimate;
+        const existingUltimate = roster.healers[index]?.ultimate ?? null;
 
         // Only replace ultimate if:
         // 1. There's no existing ultimate, OR
@@ -1634,6 +1620,7 @@ export const RosterBuilderPage: React.FC = () => {
         const finalUltimate = shouldReplaceUltimate ? extractedUltimate : existingUltimate;
 
         return {
+          slotNumber: index + 1,
           playerName: healer.name || `Healer ${index + 1}`,
           roleLabel: `H${index + 1}`,
           set1: fivePieceSets[0] ? findSetIdByName(fivePieceSets[0]) : undefined,
@@ -1684,19 +1671,27 @@ export const RosterBuilderPage: React.FC = () => {
         };
       });
 
-      // Update roster with parsed data (tank1, tank2, healer1, healer2, and DPS slots)
-      setRoster((prev) => ({
-        ...prev,
-        tank1: parsedTanks[0] || prev.tank1,
-        tank2: parsedTanks[1] || prev.tank2,
-        healer1: parsedHealers[0] || prev.healer1,
-        healer2: parsedHealers[1] || prev.healer2,
-        dpsSlots: parsedDPS.length > 0 ? parsedDPS : prev.dpsSlots,
-        updatedAt: new Date().toISOString(),
-      }));
+      // Update roster with parsed data (tanks, healers, and DPS slots)
+      setRoster((prev) => {
+        const newTanks = prev.tanks.map((t, i) =>
+          i < parsedTanks.length && parsedTanks[i] ? { ...parsedTanks[i], slotNumber: i + 1 } : t,
+        );
+        const newHealers = prev.healers.map((h, i) =>
+          i < parsedHealers.length && parsedHealers[i]
+            ? { ...parsedHealers[i], slotNumber: i + 1 }
+            : h,
+        );
+        return {
+          ...prev,
+          tanks: newTanks,
+          healers: newHealers,
+          dpsSlots: parsedDPS.length > 0 ? parsedDPS : prev.dpsSlots,
+          updatedAt: new Date().toISOString(),
+        };
+      });
 
-      const tankCount = Math.min(parsedTanks.length, 2);
-      const healerCount = Math.min(parsedHealers.length, 2);
+      const tankCount = Math.min(parsedTanks.length, roster.tanks.length);
+      const healerCount = Math.min(parsedHealers.length, roster.healers.length);
       const dpsCount = Math.min(parsedDPS.length, 8);
 
       setSnackbar({
@@ -1717,14 +1712,7 @@ export const RosterBuilderPage: React.FC = () => {
     } finally {
       setImportLoading(false);
     }
-  }, [
-    importUrl,
-    client,
-    roster.tank1.ultimate,
-    roster.tank2.ultimate,
-    roster.healer1.ultimate,
-    roster.healer2.ultimate,
-  ]);
+  }, [importUrl, client, roster.tanks, roster.healers]);
 
   // Quick fill player names from text
   const handleQuickFill = useCallback((): void => {
@@ -1741,20 +1729,28 @@ export const RosterBuilderPage: React.FC = () => {
       return;
     }
 
-    setRoster((prev) => ({
-      ...prev,
-      tank1: lines[0] ? { ...prev.tank1, playerName: lines[0].trim() } : prev.tank1,
-      tank2: lines[1] ? { ...prev.tank2, playerName: lines[1].trim() } : prev.tank2,
-      healer1: lines[2] ? { ...prev.healer1, playerName: lines[2].trim() } : prev.healer1,
-      healer2: lines[3] ? { ...prev.healer2, playerName: lines[3].trim() } : prev.healer2,
-      dpsSlots: prev.dpsSlots.map((slot, idx) => {
-        const lineIndex = idx + 4;
-        return lineIndex < lines.length && lines[lineIndex]
-          ? { ...slot, playerName: lines[lineIndex].trim() }
-          : slot;
-      }),
-      updatedAt: new Date().toISOString(),
-    }));
+    setRoster((prev) => {
+      let lineIdx = 0;
+      const newTanks = prev.tanks.map((t) => {
+        const name = lineIdx < lines.length ? lines[lineIdx++]?.trim() : undefined;
+        return name ? { ...t, playerName: name } : t;
+      });
+      const newHealers = prev.healers.map((h) => {
+        const name = lineIdx < lines.length ? lines[lineIdx++]?.trim() : undefined;
+        return name ? { ...h, playerName: name } : h;
+      });
+      const newDps = prev.dpsSlots.map((d) => {
+        const name = lineIdx < lines.length ? lines[lineIdx++]?.trim() : undefined;
+        return name ? { ...d, playerName: name } : d;
+      });
+      return {
+        ...prev,
+        tanks: newTanks,
+        healers: newHealers,
+        dpsSlots: newDps,
+        updatedAt: new Date().toISOString(),
+      };
+    });
 
     setQuickFillDialog(false);
     setQuickFillText('');
@@ -2603,13 +2599,19 @@ export const RosterBuilderPage: React.FC = () => {
           }}
         />
 
+        {/* Role Composition Picker */}
+        <Box sx={{ mb: 2 }}>
+          <RoleCompositionPicker
+            composition={roster.composition}
+            onChange={handleCompositionChange}
+          />
+        </Box>
+
         {/* Simple Mode: Set Assignment Manager */}
         <Box sx={{ display: mode === 'simple' ? 'block' : 'none' }}>
           <SetAssignmentManager
-            tank1={roster.tank1}
-            tank2={roster.tank2}
-            healer1={roster.healer1}
-            healer2={roster.healer2}
+            tanks={roster.tanks}
+            healers={roster.healers}
             onAssignSet={handleSetAssignment}
             onUpdateUltimate={handleUltimateUpdate}
             onUpdateHealerCP={handleHealerCPUpdate}
@@ -2821,30 +2823,23 @@ export const RosterBuilderPage: React.FC = () => {
                       border: `1px solid ${roleColors.tank}25`,
                     }}
                   >
-                    2
+                    {roster.tanks.length}
                   </Box>
                 </Box>
               </Box>
             </Box>
             <Stack spacing={2} mb={3}>
-              <TankCard
-                key={1}
-                tankNum={1}
-                tank={roster.tank1}
-                onChange={handleTank1Change}
-                availableGroups={memoizedGroups}
-                mode={mode}
-                savedRosterId={savedRosterIdRef.current ?? undefined}
-              />
-              <TankCard
-                key={2}
-                tankNum={2}
-                tank={roster.tank2}
-                onChange={handleTank2Change}
-                availableGroups={memoizedGroups}
-                mode={mode}
-                savedRosterId={savedRosterIdRef.current ?? undefined}
-              />
+              {roster.tanks.map((tank, i) => (
+                <TankCard
+                  key={i}
+                  tankNum={i + 1}
+                  tank={tank}
+                  onChange={(updates) => handleTankChange(i, updates)}
+                  availableGroups={memoizedGroups}
+                  mode={mode}
+                  savedRosterId={savedRosterIdRef.current ?? undefined}
+                />
+              ))}
             </Stack>
           </Box>
 
@@ -2915,32 +2910,24 @@ export const RosterBuilderPage: React.FC = () => {
                       border: `1px solid ${roleColors.healer}25`,
                     }}
                   >
-                    2
+                    {roster.healers.length}
                   </Box>
                 </Box>
               </Box>
             </Box>
             <Stack spacing={2} mb={3}>
-              <HealerCard
-                key={1}
-                healerNum={1}
-                healer={roster.healer1}
-                onChange={handleHealer1Change}
-                availableGroups={memoizedGroups}
-                usedBuffs={usedBuffs}
-                mode={mode}
-                savedRosterId={savedRosterIdRef.current ?? undefined}
-              />
-              <HealerCard
-                key={2}
-                healerNum={2}
-                healer={roster.healer2}
-                onChange={handleHealer2Change}
-                availableGroups={memoizedGroups}
-                usedBuffs={usedBuffs}
-                mode={mode}
-                savedRosterId={savedRosterIdRef.current ?? undefined}
-              />
+              {roster.healers.map((healer, i) => (
+                <HealerCard
+                  key={i}
+                  healerNum={i + 1}
+                  healer={healer}
+                  onChange={(updates) => handleHealerChange(i, updates)}
+                  availableGroups={memoizedGroups}
+                  usedBuffs={usedBuffs}
+                  mode={mode}
+                  savedRosterId={savedRosterIdRef.current ?? undefined}
+                />
+              ))}
             </Stack>
           </Box>
 
@@ -3557,8 +3544,8 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
   };
 
   // Tanks — arrow from group name, defaults MT=⬅️ OT=➡️
-  [1, 2].forEach((num) => {
-    const tank = roster[`tank${num}` as 'tank1' | 'tank2'];
+  roster.tanks.forEach((tank, idx) => {
+    const num = idx + 1;
     const arrow = groupArrow(tank.group?.groupName) || (num === 1 ? '⬅️' : '➡️');
     const label = tank.roleLabel || (num === 1 ? 'MT' : 'OT');
     const ult = bracket(tank.ultimate);
@@ -3584,9 +3571,9 @@ const generateDiscordFormat = (roster: RaidRoster): string => {
   lines.push('');
 
   // Healers — arrow from group name, defaults H1=⬅️ H2=➡️
-  [roster.healer1, roster.healer2].forEach((h, index) => {
+  roster.healers.forEach((h, index) => {
     const arrow = groupArrow(h.group?.groupName) || (index === 0 ? '⬅️' : '➡️');
-    const label = h.roleLabel || (index === 0 ? 'H1' : 'H2');
+    const label = h.roleLabel || `H${index + 1}`;
     const pos = formatPosition(h.positionTag, h.playerNumber);
     const roleNote = bracket(h.roleNotes);
     const ult = bracket(h.ultimate);

@@ -160,7 +160,7 @@ const BuildDataBadges: React.FC<BuildDataBadgesProps> = ({
 
 interface TankCardProps {
   tank: TankSetup;
-  slotNum: 1 | 2;
+  slotNum: number;
   label: string;
   color: string;
   isDarkMode: boolean;
@@ -417,7 +417,7 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
 
 interface HealerCardProps {
   healer: HealerSetup;
-  slotNum: 1 | 2;
+  slotNum: number;
   label: string;
   color: string;
   isDarkMode: boolean;
@@ -1021,11 +1021,16 @@ const SectionLabel: React.FC<{
 // ============================================================
 
 interface PerFightSectionProps {
+  roster: RaidRoster;
   trialOverrides: TrialBuildOverrides;
   isDarkMode: boolean;
 }
 
-const PerFightSection: React.FC<PerFightSectionProps> = ({ trialOverrides, isDarkMode }) => {
+const PerFightSection: React.FC<PerFightSectionProps> = ({
+  roster,
+  trialOverrides,
+  isDarkMode,
+}) => {
   const trial = getTrialById(trialOverrides.trialId);
   if (!trial) return null;
 
@@ -1077,13 +1082,19 @@ const PerFightSection: React.FC<PerFightSectionProps> = ({ trialOverrides, isDar
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
           {encountersWithOverrides.map((enc) => {
             const overrides = trialOverrides.encounterBuilds[enc.id];
-            const playerKeys = ['tank1', 'tank2', 'healer1', 'healer2'] as const;
-            const labelMap: Record<string, string> = {
-              tank1: 'MT',
-              tank2: 'OT',
-              healer1: 'H1',
-              healer2: 'H2',
-            };
+            // Build player keys + labels from the roster composition
+            const playerKeys: string[] = [];
+            const labelMap: Record<string, string> = {};
+            roster.tanks.forEach((_, i) => {
+              const key = `tank:${i}`;
+              playerKeys.push(key);
+              labelMap[key] = i === 0 ? 'MT' : i === 1 ? 'OT' : `T${i + 1}`;
+            });
+            roster.healers.forEach((_, i) => {
+              const key = `healer:${i}`;
+              playerKeys.push(key);
+              labelMap[key] = `H${i + 1}`;
+            });
 
             return (
               <Paper
@@ -1110,7 +1121,7 @@ const PerFightSection: React.FC<PerFightSectionProps> = ({ trialOverrides, isDar
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                   {playerKeys.map((key) => {
-                    const o = overrides[key];
+                    const o = overrides?.slots?.[key];
                     if (!o) return null;
                     const sets = [
                       o.set1
@@ -1168,55 +1179,55 @@ const PerFightSection: React.FC<PerFightSectionProps> = ({ trialOverrides, isDar
                       </Box>
                     );
                   })}
-                  {overrides.dpsSlots?.map((slot) => {
-                    const sets = [
-                      slot.set1
-                        ? getSetDisplayName(slot.set1 as import('../types/abilities').KnownSetIDs)
-                        : null,
-                      slot.set2
-                        ? getSetDisplayName(slot.set2 as import('../types/abilities').KnownSetIDs)
-                        : null,
-                      slot.monsterSet
-                        ? getSetDisplayName(
-                            slot.monsterSet as import('../types/abilities').KnownSetIDs,
-                          )
-                        : null,
-                    ].filter(Boolean);
-                    if (!sets.length && !slot.ultimate && !slot.notes) return null;
-                    return (
-                      <Box
-                        key={slot.slotNumber}
-                        sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}
-                      >
-                        <Typography
-                          sx={{
-                            fontSize: '0.68rem',
-                            fontWeight: 700,
-                            color: 'text.disabled',
-                            minWidth: 20,
-                          }}
-                        >
-                          D{slot.slotNumber}:
-                        </Typography>
-                        {sets.map((s) => (
-                          <Chip
-                            key={s}
-                            label={s}
-                            size="small"
+                  {Object.entries(overrides?.slots ?? {})
+                    .filter(([key]) => key.startsWith('dps:'))
+                    .map(([key, slot]) => {
+                      const dpsIdx = parseInt(key.split(':')[1], 10);
+                      const sets = [
+                        slot.set1
+                          ? getSetDisplayName(slot.set1 as import('../types/abilities').KnownSetIDs)
+                          : null,
+                        slot.set2
+                          ? getSetDisplayName(slot.set2 as import('../types/abilities').KnownSetIDs)
+                          : null,
+                        slot.monsterSet
+                          ? getSetDisplayName(
+                              slot.monsterSet as import('../types/abilities').KnownSetIDs,
+                            )
+                          : null,
+                      ].filter(Boolean);
+                      if (!sets.length && !slot.ultimate && !slot.notes) return null;
+                      return (
+                        <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+                          <Typography
                             sx={{
-                              height: 16,
-                              fontSize: '0.6rem',
-                              fontWeight: 500,
-                              backgroundColor: `${accentColor}18`,
-                              color: accentColor,
-                              border: `1px solid ${accentColor}30`,
-                              '& .MuiChip-label': { px: 0.5 },
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              color: 'text.disabled',
+                              minWidth: 20,
                             }}
-                          />
-                        ))}
-                      </Box>
-                    );
-                  })}
+                          >
+                            D{dpsIdx + 1}:
+                          </Typography>
+                          {sets.map((s) => (
+                            <Chip
+                              key={s}
+                              label={s}
+                              size="small"
+                              sx={{
+                                height: 16,
+                                fontSize: '0.6rem',
+                                fontWeight: 500,
+                                backgroundColor: `${accentColor}18`,
+                                color: accentColor,
+                                border: `1px solid ${accentColor}30`,
+                                '& .MuiChip-label': { px: 0.5 },
+                              }}
+                            />
+                          ))}
+                        </Box>
+                      );
+                    })}
                 </Box>
               </Paper>
             );
@@ -1484,20 +1495,16 @@ export const RosterViewPage: React.FC = () => {
             gap: 1.5,
           }}
         >
-          <TankCard
-            tank={roster.tank1}
-            slotNum={1}
-            label="MT"
-            color={roleColors.tank}
-            isDarkMode={isDarkMode}
-          />
-          <TankCard
-            tank={roster.tank2}
-            slotNum={2}
-            label="OT"
-            color={roleColors.tank}
-            isDarkMode={isDarkMode}
-          />
+          {roster.tanks.map((tank, i) => (
+            <TankCard
+              key={i}
+              tank={tank}
+              slotNum={i + 1}
+              label={i === 0 ? 'MT' : i === 1 ? 'OT' : `T${i + 1}`}
+              color={roleColors.tank}
+              isDarkMode={isDarkMode}
+            />
+          ))}
         </Box>
       </Box>
 
@@ -1516,20 +1523,16 @@ export const RosterViewPage: React.FC = () => {
             gap: 1.5,
           }}
         >
-          <HealerCard
-            healer={roster.healer1}
-            slotNum={1}
-            label="H1"
-            color={roleColors.healer}
-            isDarkMode={isDarkMode}
-          />
-          <HealerCard
-            healer={roster.healer2}
-            slotNum={2}
-            label="H2"
-            color={roleColors.healer}
-            isDarkMode={isDarkMode}
-          />
+          {roster.healers.map((healer, i) => (
+            <HealerCard
+              key={i}
+              healer={healer}
+              slotNum={i + 1}
+              label={`H${i + 1}`}
+              color={roleColors.healer}
+              isDarkMode={isDarkMode}
+            />
+          ))}
         </Box>
       </Box>
 
@@ -1555,7 +1558,11 @@ export const RosterViewPage: React.FC = () => {
 
       {/* ── Per-fight builds ── */}
       {roster.trialOverrides && (
-        <PerFightSection trialOverrides={roster.trialOverrides} isDarkMode={isDarkMode} />
+        <PerFightSection
+          roster={roster}
+          trialOverrides={roster.trialOverrides}
+          isDarkMode={isDarkMode}
+        />
       )}
 
       {/* ── Notes ── */}
@@ -1667,7 +1674,7 @@ function buildDiscordText(roster: RaidRoster): string {
   ): string => formatGearSets(sets).join('/');
 
   // Tanks — skip completely empty slots (single-tank comps)
-  ([roster.tank1, roster.tank2] as const).forEach((tank, i) => {
+  roster.tanks.forEach((tank, i) => {
     const hasData =
       tank.playerName ||
       tank.labels?.length ||
@@ -1675,7 +1682,7 @@ function buildDiscordText(roster: RaidRoster): string {
       tank.gearSets?.set2 ||
       tank.notes;
     if (!hasData) return;
-    const lbl = i === 0 ? 'MT' : 'OT';
+    const lbl = i === 0 ? 'MT' : i === 1 ? 'OT' : `T${i + 1}`;
     const pn = tank.playerName ? ` ${tank.playerName}` : '';
     const lbs = tank.labels?.length ? ` (${tank.labels.join(', ')})` : '';
     lines.push(`${lbl}:${pn}${lbs}`);
@@ -1691,10 +1698,10 @@ function buildDiscordText(roster: RaidRoster): string {
   lines.push('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬', '');
 
   // Healers — skip completely empty slots (single-healer comps)
-  ([roster.healer1, roster.healer2] as const).forEach((h, i) => {
+  roster.healers.forEach((h, i) => {
     const hasData = h.playerName || h.labels?.length || h.set1 || h.set2 || h.notes;
     if (!hasData) return;
-    const lbl = h.roleLabel || (i === 0 ? 'H1' : 'H2');
+    const lbl = h.roleLabel || `H${i + 1}`;
     const pn = h.playerName ? ` ${h.playerName}` : '';
     const lbs = h.labels?.length ? ` [${h.labels.join(', ')}]` : '';
     lines.push(`${lbl}:${pn}${lbs}`);

@@ -195,7 +195,7 @@ export function dpsSlotToBuild(slot: DPSSlot): Build {
   };
 }
 
-export function tankSlotToBuild(tank: TankSetup, tankNum: 1 | 2): Build {
+export function tankSlotToBuild(tank: TankSetup, tankNum: number): Build {
   const skillLines = tank.skillLines
     ? [tank.skillLines.line1, tank.skillLines.line2, tank.skillLines.line3]
     : [];
@@ -236,7 +236,7 @@ export function tankSlotToBuild(tank: TankSetup, tankNum: 1 | 2): Build {
   };
 }
 
-export function healerSlotToBuild(healer: HealerSetup, healerNum: 1 | 2): Build {
+export function healerSlotToBuild(healer: HealerSetup, healerNum: number): Build {
   const skillLines = healer.skillLines
     ? [healer.skillLines.line1, healer.skillLines.line2, healer.skillLines.line3]
     : [];

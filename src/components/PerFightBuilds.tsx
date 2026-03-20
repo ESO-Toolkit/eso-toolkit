@@ -27,7 +27,7 @@ import { useTheme } from '@mui/material/styles';
 import React, { useState, useCallback, useMemo } from 'react';
 
 import { KnownSetIDs } from '../types/abilities';
-import type { RaidRoster, TankSetup, HealerSetup } from '../types/roster';
+import type { RaidRoster } from '../types/roster';
 import { ALL_5PIECE_SETS, MONSTER_SETS, SupportUltimate } from '../types/roster';
 import type {
   TrialBuildOverrides,
@@ -43,6 +43,8 @@ import {
   isOverrideEmpty,
 } from '../types/trial-encounters';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
+import type { SlotKey } from '../utils/slotKey';
+import { makeSlotKey } from '../utils/slotKey';
 
 import { EncounterTimeline } from './EncounterTimeline';
 
@@ -69,7 +71,7 @@ const ULTIMATE_OPTIONS = [
 
 // ─── Player identifier helpers ──────────────────────────────────
 
-type PlayerKey = 'tank1' | 'tank2' | 'healer1' | 'healer2' | `dps_${number}`;
+type PlayerKey = SlotKey;
 
 interface PlayerInfo {
   key: PlayerKey;
@@ -86,12 +88,11 @@ function getPlayersFromRoster(roster: RaidRoster): PlayerInfo[] {
   const players: PlayerInfo[] = [];
 
   // Tanks
-  for (const num of [1, 2] as const) {
-    const tank = roster[`tank${num}`] as TankSetup;
+  roster.tanks.forEach((tank, i) => {
     players.push({
-      key: `tank${num}`,
-      label: tank.roleLabel || `Tank ${num}`,
-      name: tank.playerName || `Tank ${num}`,
+      key: makeSlotKey('tank', i),
+      label: tank.roleLabel || `Tank ${i + 1}`,
+      name: tank.playerName || `Tank ${i + 1}`,
       role: 'tank',
       currentSet1: tank.gearSets.set1 ? getSetDisplayName(tank.gearSets.set1) : undefined,
       currentSet2: tank.gearSets.set2 ? getSetDisplayName(tank.gearSets.set2) : undefined,
@@ -100,27 +101,26 @@ function getPlayersFromRoster(roster: RaidRoster): PlayerInfo[] {
         : undefined,
       currentUltimate: tank.ultimate,
     });
-  }
+  });
 
   // Healers
-  for (const num of [1, 2] as const) {
-    const healer = roster[`healer${num}`] as HealerSetup;
+  roster.healers.forEach((healer, i) => {
     players.push({
-      key: `healer${num}`,
-      label: healer.roleLabel || `Healer ${num}`,
-      name: healer.playerName || `Healer ${num}`,
+      key: makeSlotKey('healer', i),
+      label: healer.roleLabel || `Healer ${i + 1}`,
+      name: healer.playerName || `Healer ${i + 1}`,
       role: 'healer',
       currentSet1: healer.set1 ? getSetDisplayName(healer.set1) : undefined,
       currentSet2: healer.set2 ? getSetDisplayName(healer.set2) : undefined,
       currentMonster: healer.monsterSet ? getSetDisplayName(healer.monsterSet) : undefined,
       currentUltimate: healer.ultimate,
     });
-  }
+  });
 
   // DPS
   for (const slot of roster.dpsSlots) {
     players.push({
-      key: `dps_${slot.slotNumber}`,
+      key: makeSlotKey('dps', slot.slotNumber - 1),
       label: slot.roleLabel || `DD${slot.slotNumber}`,
       name: slot.playerName || `DD ${slot.slotNumber}`,
       role: 'dps',
@@ -139,15 +139,7 @@ function getPlayerOverride(
   playerKey: PlayerKey,
 ): PlayerOverride | undefined {
   if (!encounterOverrides) return undefined;
-  if (playerKey === 'tank1') return encounterOverrides.tank1;
-  if (playerKey === 'tank2') return encounterOverrides.tank2;
-  if (playerKey === 'healer1') return encounterOverrides.healer1;
-  if (playerKey === 'healer2') return encounterOverrides.healer2;
-  if (playerKey.startsWith('dps_')) {
-    const slotNum = parseInt(playerKey.split('_')[1], 10);
-    return encounterOverrides.dpsSlots?.find((s) => s.slotNumber === slotNum);
-  }
-  return undefined;
+  return encounterOverrides.slots[playerKey];
 }
 
 function setPlayerOverride(
@@ -155,26 +147,13 @@ function setPlayerOverride(
   playerKey: PlayerKey,
   override: PlayerOverride | undefined,
 ): EncounterOverrides {
-  const updated = { ...encounterOverrides };
-
-  if (playerKey === 'tank1') {
-    updated.tank1 = override;
-  } else if (playerKey === 'tank2') {
-    updated.tank2 = override;
-  } else if (playerKey === 'healer1') {
-    updated.healer1 = override;
-  } else if (playerKey === 'healer2') {
-    updated.healer2 = override;
-  } else if (playerKey.startsWith('dps_')) {
-    const slotNum = parseInt(playerKey.split('_')[1], 10);
-    const existing = updated.dpsSlots?.filter((s) => s.slotNumber !== slotNum) ?? [];
-    if (override && !isOverrideEmpty(override)) {
-      existing.push({ slotNumber: slotNum, ...override });
-    }
-    updated.dpsSlots = existing.length > 0 ? existing : undefined;
+  const newSlots = { ...encounterOverrides.slots };
+  if (override && !isOverrideEmpty(override)) {
+    newSlots[playerKey] = override;
+  } else {
+    delete newSlots[playerKey];
   }
-
-  return updated;
+  return { slots: newSlots };
 }
 
 // ─── Role color helpers ─────────────────────────────────────────
@@ -537,7 +516,9 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
     const handlePlayerOverrideUpdate = useCallback(
       (playerKey: PlayerKey, override: PlayerOverride | undefined) => {
         if (!trialOverrides || !selectedEncounterId) return;
-        const currentEncounter = trialOverrides.encounterBuilds[selectedEncounterId] ?? {};
+        const currentEncounter = trialOverrides.encounterBuilds[selectedEncounterId] ?? {
+          slots: {},
+        };
         const updatedEncounter = setPlayerOverride(currentEncounter, playerKey, override);
         const updatedBuilds = { ...trialOverrides.encounterBuilds };
 
