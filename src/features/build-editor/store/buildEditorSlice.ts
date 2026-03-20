@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { GearConfig, SkillsConfig } from '../../loadout-manager/types/loadout.types';
 import { getDefaultLinesForClass } from '../data/esoStaticData';
+import type { StatOverrides } from '../engine/stat-types';
 import type {
   Build,
   BuildAttributes,
@@ -353,6 +354,16 @@ export const buildEditorSlice = createSlice({
       state.isDirty = true;
     },
 
+    // ── Stat Overrides (per-setup) ────────────────────────────────────────────
+    setStatOverrides(state, action: PayloadAction<StatOverrides>) {
+      const setup = state.build.setups[state.activeSetupIndex];
+      if (setup) {
+        setup.statOverrides = action.payload;
+        state.build.updatedAt = new Date().toISOString();
+        state.isDirty = true;
+      }
+    },
+
     // ── Screenshots (per-setup) ───────────────────────────────────────────────
     addScreenshot(state, action: PayloadAction<string>) {
       const setup = state.build.setups[state.activeSetupIndex];
@@ -425,6 +436,7 @@ export const {
   setConsumables,
   togglePassive,
   setPassives,
+  setStatOverrides,
   addScreenshot,
   removeScreenshot,
   loadBuild,

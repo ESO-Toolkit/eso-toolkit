@@ -37,8 +37,11 @@ import { ESO_POTION_LOOKUP } from '../data/esoPotions';
 import { getTraitName } from '../data/esoTraits';
 import { staggerContainer, fadeInUp } from '../features/build-editor/components/motion/variants';
 import { GlassPanel } from '../features/build-editor/components/primitives/GlassPanel';
+import { StatBreakdown } from '../features/build-editor/components/primitives/StatBreakdown';
+import { StatGauge } from '../features/build-editor/components/primitives/StatGauge';
 import { CP_PASSIVES_BY_TREE } from '../features/build-editor/data/championPassives';
 import { CLASS_SKILL_LINES } from '../features/build-editor/data/esoStaticData';
+import { calculateBuildStats } from '../features/build-editor/engine/stat-engine';
 import { BE_TOKENS } from '../features/build-editor/theme/buildEditorTokens';
 import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
 import type { Build, BuildSetup, CombatRole } from '../features/build-editor/types/build.types';
@@ -623,7 +626,11 @@ const GearSlotDisplay: React.FC<{
 
 // ─── Setup display ────────────────────────────────────────────────────────────
 
-const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({ setup, races = [] }) => {
+const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[] }> = ({
+  setup,
+  build: viewBuild,
+  races = [],
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -1494,7 +1501,45 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; races?: string[] }> = ({ setup
           )}
         </GlassPanel>
       </motion.div>
+
+      {/* Row 6: Stats (full width) */}
+      <motion.div variants={fadeInUp}>
+        <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
+          <SectionLabel label="Stats" />
+          <ViewStats setup={setup} build={viewBuild} />
+        </GlassPanel>
+      </motion.div>
     </motion.div>
+  );
+};
+
+// ─── View Stats (read-only) ───────────────────────────────────────────────────
+
+const ViewStats: React.FC<{ setup: BuildSetup; build: Build }> = ({ setup, build: vBuild }) => {
+  const stats = React.useMemo(() => calculateBuildStats(setup, vBuild), [setup, vBuild]);
+
+  return (
+    <Box>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))',
+          gap: 2,
+          justifyItems: 'center',
+          py: 1,
+          mb: 2,
+        }}
+      >
+        <StatGauge label="Penetration" result={stats.penetration} />
+        <StatGauge label="Crit Damage" result={stats.critDamage} isPercent />
+        <StatGauge label="Crit Chance" result={stats.critChance} isPercent />
+        <StatGauge label="Armor" result={stats.armor} />
+      </Box>
+      <StatBreakdown label="Penetration" result={stats.penetration} />
+      <StatBreakdown label="Critical Damage" result={stats.critDamage} isPercent />
+      <StatBreakdown label="Critical Chance" result={stats.critChance} isPercent />
+      <StatBreakdown label="Armor" result={stats.armor} />
+    </Box>
   );
 };
 
@@ -2152,7 +2197,11 @@ export const BuildViewPage: React.FC = () => {
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <SetupDisplay setup={build.setups[activeSetup]} races={build.races} />
+                  <SetupDisplay
+                    setup={build.setups[activeSetup]}
+                    build={build}
+                    races={build.races}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>

@@ -41,6 +41,7 @@ export const useSectionProgress = (): SectionProgressMap => {
         setup.cp.craft.slots.some((s) => s != null),
       consumables: setup.consumables.potions.length > 0 || Boolean(setup.consumables.food.name),
       passives: setup.passives.length > 0,
+      stats: true, // always complete — stats are derived, not user-entered
       guide: build.guide.content.trim().length > 0 || setup.screenshots.length > 0,
       settings: true, // always has defaults
     };

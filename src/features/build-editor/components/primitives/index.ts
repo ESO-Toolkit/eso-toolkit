@@ -5,3 +5,5 @@ export { AttributeBar } from './AttributeBar';
 export { AnimatedCounter } from './AnimatedCounter';
 export { SectionCard } from './SectionCard';
 export { GearSlotCard } from './GearSlotCard';
+export { StatGauge } from './StatGauge';
+export { StatBreakdown } from './StatBreakdown';

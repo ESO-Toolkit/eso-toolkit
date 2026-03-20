@@ -10,6 +10,7 @@
 import {
   AccountTreeOutlined as SubclassingIcon,
   AutoFixHigh as ChampionIcon,
+  BarChartOutlined as StatsIcon,
   BookOutlined as GuideIcon,
   CheckCircleOutlineRounded as CheckIcon,
   Inventory2Outlined as EquipmentIcon,
@@ -63,6 +64,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: 'champion', label: 'Champion', icon: <ChampionIcon sx={{ fontSize: 18 }} /> },
       { id: 'passives', label: 'Passives', icon: <PassiveIcon sx={{ fontSize: 18 }} /> },
+      { id: 'stats', label: 'Stats', icon: <StatsIcon sx={{ fontSize: 18 }} /> },
     ],
   },
   {
