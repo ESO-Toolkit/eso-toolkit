@@ -71,7 +71,7 @@ interface SlotPickerProps {
 const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onChange }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const anchorRef = useRef<HTMLButtonElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
 
   const def = value ? getSkillLineDef(value) : null;
@@ -95,9 +95,11 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
 
   return (
     <>
-      {/* Slot card button */}
-      <ButtonBase
+      {/* Slot card — uses Box + role="button" to avoid <button> nesting with clear button */}
+      <Box
         ref={anchorRef}
+        role="button"
+        tabIndex={0}
         aria-label={
           def
             ? `Slot ${slot + 1}: ${def.label} — click to change`
@@ -106,6 +108,12 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen(true)}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setOpen(true);
+          }
+        }}
         sx={{
           width: '100%',
           borderRadius: 2,
@@ -244,7 +252,7 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
             />
           </>
         )}
-      </ButtonBase>
+      </Box>
 
       {/* Picker menu grouped by class */}
       <Menu
