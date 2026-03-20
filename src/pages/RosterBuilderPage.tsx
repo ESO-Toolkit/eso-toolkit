@@ -930,9 +930,17 @@ export const RosterBuilderPage: React.FC = () => {
   );
 
   // ── Composition change handler ──
-  const handleCompositionChange = useCallback((newComp: RoleComposition) => {
-    setRoster((prev) => resizeRoster(prev, newComp));
-  }, []);
+  // Wrapped in startTransition so the stepper button press feels instant while
+  // React defers the expensive re-render of all tank/healer/DPS cards.
+  const [, startTransition] = useTransition();
+  const handleCompositionChange = useCallback(
+    (newComp: RoleComposition) => {
+      startTransition(() => {
+        setRoster((prev) => resizeRoster(prev, newComp));
+      });
+    },
+    [startTransition],
+  );
 
   // Drag and drop sensors
   const sensors = useSensors(
