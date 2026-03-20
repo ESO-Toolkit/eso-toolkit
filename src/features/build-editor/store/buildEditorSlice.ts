@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { GearConfig, SkillsConfig } from '../../loadout-manager/types/loadout.types';
 import { getDefaultLinesForClass } from '../data/esoStaticData';
+import { DEFAULT_STAT_OVERRIDES } from '../engine/stat-constants';
 import type { StatOverrides } from '../engine/stat-types';
 import type {
   Build,
@@ -49,6 +50,7 @@ const makeSetup = (name = 'Default'): BuildSetup => ({
   consumables: { potions: [], food: {} },
   passives: [],
   screenshots: [],
+  statOverrides: { ...DEFAULT_STAT_OVERRIDES, buffs: { ...DEFAULT_STAT_OVERRIDES.buffs } },
 });
 
 const makeBuild = (): Build => ({
@@ -85,6 +87,15 @@ function loadFromStorage(): Pick<BuildEditorState, 'build' | 'activeSetupIndex'>
       parsed.build.classSkillLines = getDefaultLinesForClass(
         parsed.build.esoClass ?? 'dragonknight',
       );
+    }
+    // Migration: builds saved before stats feature won't have statOverrides
+    for (const setup of parsed.build.setups) {
+      if (!setup.statOverrides) {
+        setup.statOverrides = {
+          ...DEFAULT_STAT_OVERRIDES,
+          buffs: { ...DEFAULT_STAT_OVERRIDES.buffs },
+        };
+      }
     }
     return {
       build: parsed.build,

@@ -1516,7 +1516,10 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
 // ─── View Stats (read-only) ───────────────────────────────────────────────────
 
 const ViewStats: React.FC<{ setup: BuildSetup; build: Build }> = ({ setup, build: vBuild }) => {
-  const stats = React.useMemo(() => calculateBuildStats(setup, vBuild), [setup, vBuild]);
+  const stats = React.useMemo(
+    () => calculateBuildStats(setup, vBuild, setup.statOverrides),
+    [setup, vBuild],
+  );
 
   return (
     <Box>

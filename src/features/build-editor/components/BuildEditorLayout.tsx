@@ -25,7 +25,10 @@ import {
 import { Box, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { motion, useReducedMotion } from 'framer-motion';
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+
+import type { RootState } from '@/store/storeWithHistory';
 
 import { useSectionProgress } from '../hooks/useSectionProgress';
 
@@ -51,6 +54,22 @@ export const BuildEditorLayout: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const prefersReduced = useReducedMotion();
   const progress = useSectionProgress();
+  const isDirty = useSelector((s: RootState) => s.buildEditor.isDirty);
+
+  // Warn user before leaving with unsaved changes
+  const handleBeforeUnload = useCallback(
+    (e: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      e.preventDefault();
+    },
+    [isDirty],
+  );
+
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [handleBeforeUnload]);
+
   return (
     <Box component="main" sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
       {/* Header: build name + progress + save/share */}

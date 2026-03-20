@@ -80,6 +80,13 @@ export const PEN_BUFFS: BuffDef[] = [
   },
   { name: 'Tremorscale', value: 2640, defaultEnabled: false, stat: 'penetration', modes: ['pve'] },
   {
+    name: 'Runic Sunder',
+    value: 2200,
+    defaultEnabled: false,
+    stat: 'penetration',
+    modes: ['pve'],
+  },
+  {
     name: 'Crystal Weapon',
     value: 1000,
     defaultEnabled: false,
@@ -345,6 +352,7 @@ export const DEFAULT_STAT_OVERRIDES = {
     'Roar of Alkosh': false,
     "Crimson Oath's Rive": false,
     Tremorscale: false,
+    'Runic Sunder': false,
     'Crystal Weapon': false,
     'Major Force': false,
     'Major Brittle': false,
