@@ -203226,12 +203226,7 @@ export const itemIdMap: Record<number, ItemInfo> = {
   219645: { name: 'Unflinching Ultimate Gear', setName: 'Unflinching Ultimate', type: 'Gear' },
   219646: { name: 'Unflinching Ultimate Gear', setName: 'Unflinching Ultimate', type: 'Gear' },
   219647: { name: 'Unflinching Ultimate Gear', setName: 'Unflinching Ultimate', type: 'Gear' },
-  223189: {
-    name: "Huntsman's Warmask Head",
-    setName: "Huntsman's Warmask",
-    type: 'Gear',
-    slot: 'head',
-  },
+  223189: { name: "Huntsman's Warmask Head", setName: "Huntsman's Warmask", type: 'Gear', slot: 'head' },
   223227: { name: 'Xanmeer Genesis Gear', setName: 'Xanmeer Genesis', type: 'Gear' },
   223228: { name: 'Xanmeer Genesis Gear', setName: 'Xanmeer Genesis', type: 'Gear' },
   223229: { name: 'Xanmeer Genesis Gear', setName: 'Xanmeer Genesis', type: 'Gear' },
