@@ -19,6 +19,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PersonIcon from '@mui/icons-material/Person';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import RestoreIcon from '@mui/icons-material/Restore';
 import RotateRightIcon from '@mui/icons-material/RotateRight';
 import SpeedIcon from '@mui/icons-material/Speed';
 import {
@@ -415,6 +416,21 @@ const ParseAnalysisPageContent: React.FC = () => {
 
   /** Supported dummy fights found in the current report — drives the navigation strip and polling */
   const [availableFights, setAvailableFights] = useState<Array<{ id: number; name: string }>>([]);
+
+  /** Fight IDs excluded from the visible fight list via the dismiss (x) button */
+  const [excludedFightIds, setExcludedFightIds] = useState<Set<number>>(new Set());
+
+  const excludeFight = useCallback((fightId: number) => {
+    setExcludedFightIds((prev) => {
+      const next = new Set(prev);
+      next.add(fightId);
+      return next;
+    });
+  }, []);
+
+  const resetExcludedFights = useCallback(() => {
+    setExcludedFightIds(new Set());
+  }, []);
 
   // Core analysis function - fetches fight/player data and triggers event loading
   const analyzeReport = useCallback(
@@ -2180,18 +2196,40 @@ const ParseAnalysisPageContent: React.FC = () => {
                 — next check in {pollCountdown}s
               </Typography>
             </Stack>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {availableFights.map((fight) => (
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+              {availableFights
+                .filter((fight) => !excludedFightIds.has(fight.id))
+                .map((fight) => (
+                  <Chip
+                    key={fight.id}
+                    label={`#${fight.id} — ${fight.name}`}
+                    onClick={() => handleSelectFight(fight.id)}
+                    onDelete={() => excludeFight(fight.id)}
+                    deleteIcon={
+                      <IconButton
+                        size="small"
+                        sx={{ p: 0, ml: -0.25 }}
+                        aria-label="Exclude fight"
+                      >
+                        <span style={{ fontSize: 16, lineHeight: 1 }}>&times;</span>
+                      </IconButton>
+                    }
+                    color={state.fightId === fight.id ? 'primary' : 'default'}
+                    variant={state.fightId === fight.id ? 'filled' : 'outlined'}
+                    size="small"
+                    disabled={state.loading}
+                  />
+                ))}
+              {excludedFightIds.size > 0 && (
                 <Chip
-                  key={fight.id}
-                  label={`#${fight.id} — ${fight.name}`}
-                  onClick={() => handleSelectFight(fight.id)}
-                  color={state.fightId === fight.id ? 'primary' : 'default'}
-                  variant={state.fightId === fight.id ? 'filled' : 'outlined'}
+                  icon={<RestoreIcon sx={{ fontSize: 14 }} />}
+                  label={`${excludedFightIds.size} hidden — Reset`}
+                  onClick={resetExcludedFights}
                   size="small"
-                  disabled={state.loading}
+                  variant="outlined"
+                  color="warning"
                 />
-              ))}
+              )}
             </Box>
           </CardContent>
         </Card>
