@@ -1,3 +1,5 @@
+export { EquipmentPicker } from './EquipmentPicker';
+export type { EquipmentPickerProps } from './EquipmentPicker';
 export { SkillBarPicker } from './SkillBarPicker';
 export type { SkillBarPickerProps } from './SkillBarPicker';
 export { ChampionPointsPicker } from './ChampionPointsPicker';

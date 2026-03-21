@@ -10,7 +10,7 @@ export const BE_TOKENS = {
     bg: 'rgba(15, 23, 42, 0.84)',
     bgLight: 'rgba(255, 255, 255, 0.84)',
     border: 'rgba(255, 255, 255, 0.09)',
-    borderLight: 'rgba(15, 23, 42, 0.10)',
+    borderLight: 'rgba(15, 23, 42, 0.13)',
     blur: 16,
     shadow: '0 8px 32px rgba(0, 0, 0, 0.32), 0 1px 0 rgba(255, 255, 255, 0.05) inset',
     shadowLight: '0 4px 24px rgba(15, 23, 42, 0.10), 0 1px 0 rgba(255, 255, 255, 0.80) inset',

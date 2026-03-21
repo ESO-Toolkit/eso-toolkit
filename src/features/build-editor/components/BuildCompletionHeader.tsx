@@ -12,6 +12,7 @@ import {
   FileUploadOutlined,
   Groups as GroupsIcon,
   LinkOutlined,
+  MoreVert as MoreVertIcon,
   PublishOutlined,
   SaveOutlined,
   ShareOutlined,
@@ -27,6 +28,10 @@ import {
   DialogTitle,
   Divider,
   IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem as MuiMenuItem,
   Stack,
   TextField,
   Tooltip,
@@ -132,6 +137,8 @@ export const BuildCompletionHeader: React.FC = () => {
   const [encodedBuildData, setEncodedBuildData] = React.useState('');
   const [isPublishing, setIsPublishing] = React.useState(false);
   const [isCreatingLink, setIsCreatingLink] = React.useState(false);
+  const isMedium = useMediaQuery(theme.breakpoints.down('lg'));
+  const [moreAnchor, setMoreAnchor] = React.useState<null | HTMLElement>(null);
   const [tempLinkDialogOpen, setTempLinkDialogOpen] = React.useState(false);
   const [tempLink, setTempLink] = React.useState('');
   const [tempLinkExpiry, setTempLinkExpiry] = React.useState('');
@@ -523,54 +530,46 @@ export const BuildCompletionHeader: React.FC = () => {
           flexShrink: 0,
         }}
       >
-        {/* Group 1: Transfer — Import + Export */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Tooltip title="Import build from addon">
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={!isMobile ? <FileUploadOutlined sx={{ fontSize: 14 }} /> : undefined}
-              onClick={() => setImportOpen(true)}
-              aria-label="Import build from addon"
-              sx={outlinedPill}
-            >
-              {isMobile ? <FileUploadOutlined sx={{ fontSize: 16 }} /> : 'Import'}
-            </Button>
-          </Tooltip>
-          <Tooltip title="Export build data">
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={
-                !isMobile ? (
-                  isExporting ? (
-                    <CircularProgress size={12} color="inherit" />
-                  ) : (
-                    <FileDownloadOutlined sx={{ fontSize: 14 }} />
-                  )
-                ) : undefined
-              }
-              onClick={handleExportClick}
-              disabled={isExporting}
-              aria-label="Export build data"
-              sx={outlinedPill}
-            >
-              {isMobile ? (
-                isExporting ? (
-                  <CircularProgress size={14} color="inherit" />
-                ) : (
-                  <FileDownloadOutlined sx={{ fontSize: 16 }} />
-                )
-              ) : isExporting ? (
-                'Encoding\u2026'
-              ) : (
-                'Export'
-              )}
-            </Button>
-          </Tooltip>
-        </Box>
+        {/* Group 1: Transfer — Import + Export (hidden on medium/mobile, moved to overflow) */}
+        {!isMedium && (
+          <>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Tooltip title="Import build from addon">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<FileUploadOutlined sx={{ fontSize: 14 }} />}
+                  onClick={() => setImportOpen(true)}
+                  aria-label="Import build from addon"
+                  sx={outlinedPill}
+                >
+                  Import
+                </Button>
+              </Tooltip>
+              <Tooltip title="Export build data">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={
+                    isExporting ? (
+                      <CircularProgress size={12} color="inherit" />
+                    ) : (
+                      <FileDownloadOutlined sx={{ fontSize: 14 }} />
+                    )
+                  }
+                  onClick={handleExportClick}
+                  disabled={isExporting}
+                  aria-label="Export build data"
+                  sx={outlinedPill}
+                >
+                  {isExporting ? 'Encoding\u2026' : 'Export'}
+                </Button>
+              </Tooltip>
+            </Box>
 
-        {groupDivider}
+            {groupDivider}
+          </>
+        )}
 
         {/* Group 2: Save + Get Link (guest) */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -649,35 +648,39 @@ export const BuildCompletionHeader: React.FC = () => {
           )}
         </Box>
 
-        {groupDivider}
+        {/* Group 3: Output — Share + View (hidden on medium/mobile, moved to overflow) */}
+        {!isMedium && (
+          <>
+            {groupDivider}
 
-        {/* Group 3: Output — Share + View */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Tooltip title="Copy share link to clipboard">
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={!isMobile ? <ShareOutlined sx={{ fontSize: 14 }} /> : undefined}
-              onClick={handleShare}
-              aria-label="Share build"
-              sx={outlinedPill}
-            >
-              {isMobile ? <ShareOutlined sx={{ fontSize: 16 }} /> : 'Share'}
-            </Button>
-          </Tooltip>
-          <Tooltip title="View build in read-only mode">
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={!isMobile ? <VisibilityOutlined sx={{ fontSize: 14 }} /> : undefined}
-              onClick={handleView}
-              aria-label="View build in read-only mode"
-              sx={outlinedPill}
-            >
-              {isMobile ? <VisibilityOutlined sx={{ fontSize: 16 }} /> : 'View'}
-            </Button>
-          </Tooltip>
-        </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Tooltip title="Copy share link to clipboard">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<ShareOutlined sx={{ fontSize: 14 }} />}
+                  onClick={handleShare}
+                  aria-label="Share build"
+                  sx={outlinedPill}
+                >
+                  Share
+                </Button>
+              </Tooltip>
+              <Tooltip title="View build in read-only mode">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<VisibilityOutlined sx={{ fontSize: 14 }} />}
+                  onClick={handleView}
+                  aria-label="View build in read-only mode"
+                  sx={outlinedPill}
+                >
+                  View
+                </Button>
+              </Tooltip>
+            </Box>
+          </>
+        )}
 
         {groupDivider}
 
@@ -782,6 +785,100 @@ export const BuildCompletionHeader: React.FC = () => {
             </Box>
           </Tooltip>
         </Box>
+
+        {/* Overflow menu — visible only on medium/mobile viewports */}
+        {isMedium && (
+          <>
+            <Tooltip title="More actions">
+              <IconButton
+                size="small"
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => setMoreAnchor(e.currentTarget)}
+                aria-label="More actions"
+                sx={{
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)'}`,
+                  background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  borderRadius: '99px',
+                  width: 36,
+                  height: 36,
+                  '&:hover': {
+                    borderColor: 'var(--be-accent, #38bdf8)',
+                    background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
+                  },
+                }}
+              >
+                <MoreVertIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+            <Menu
+              anchorEl={moreAnchor}
+              open={Boolean(moreAnchor)}
+              onClose={() => setMoreAnchor(null)}
+              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              slotProps={{
+                paper: {
+                  sx: {
+                    background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.97)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                    borderRadius: 2,
+                    minWidth: 180,
+                  },
+                },
+              }}
+            >
+              <MuiMenuItem
+                onClick={() => {
+                  setMoreAnchor(null);
+                  setImportOpen(true);
+                }}
+              >
+                <ListItemIcon>
+                  <FileUploadOutlined sx={{ fontSize: 18 }} />
+                </ListItemIcon>
+                <ListItemText>Import</ListItemText>
+              </MuiMenuItem>
+              <MuiMenuItem
+                onClick={() => {
+                  setMoreAnchor(null);
+                  handleExportClick();
+                }}
+                disabled={isExporting}
+              >
+                <ListItemIcon>
+                  <FileDownloadOutlined sx={{ fontSize: 18 }} />
+                </ListItemIcon>
+                <ListItemText>{isExporting ? 'Encoding\u2026' : 'Export'}</ListItemText>
+              </MuiMenuItem>
+              <Divider />
+              <MuiMenuItem
+                onClick={() => {
+                  setMoreAnchor(null);
+                  handleShare();
+                }}
+              >
+                <ListItemIcon>
+                  <ShareOutlined sx={{ fontSize: 18 }} />
+                </ListItemIcon>
+                <ListItemText>Share</ListItemText>
+              </MuiMenuItem>
+              <MuiMenuItem
+                onClick={() => {
+                  setMoreAnchor(null);
+                  handleView();
+                }}
+              >
+                <ListItemIcon>
+                  <VisibilityOutlined sx={{ fontSize: 18 }} />
+                </ListItemIcon>
+                <ListItemText>View</ListItemText>
+              </MuiMenuItem>
+            </Menu>
+          </>
+        )}
       </Box>
 
       {/* Publish dialog */}

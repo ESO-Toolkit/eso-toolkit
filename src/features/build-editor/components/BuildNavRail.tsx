@@ -97,6 +97,7 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
 
   // ── Mobile: bottom bar ──────────────────────────────────────────────────
   if (isMobile) {
+    const fadeBg = isDark ? '8, 18, 26' : '245, 248, 252';
     return (
       <nav
         aria-label="Build editor sections"
@@ -116,8 +117,34 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
           padding: '0 4px',
           zIndex: 1200,
           overflowX: 'auto',
+          scrollbarWidth: 'none',
         }}
       >
+        {/* Scroll fade indicators */}
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            width: 24,
+            height: BE_TOKENS.navRail.mobileHeight,
+            background: `linear-gradient(to right, rgba(${fadeBg}, 0.9), transparent)`,
+            pointerEvents: 'none',
+            zIndex: 1201,
+          }}
+        />
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            right: 0,
+            width: 24,
+            height: BE_TOKENS.navRail.mobileHeight,
+            background: `linear-gradient(to left, rgba(${fadeBg}, 0.9), transparent)`,
+            pointerEvents: 'none',
+            zIndex: 1201,
+          }}
+        />
         {ALL_ITEMS.map((item) => {
           const done = progress[item.id];
           return (

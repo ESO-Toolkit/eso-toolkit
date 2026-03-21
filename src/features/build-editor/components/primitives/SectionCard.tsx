@@ -58,6 +58,20 @@ export const SectionCard: React.FC<SectionCardProps> = ({
       {/* Header */}
       <Box
         onClick={isMobile ? () => setExpanded((p) => !p) : undefined}
+        role={isMobile ? 'button' : undefined}
+        aria-expanded={isMobile ? expanded : undefined}
+        aria-controls={isMobile ? `section-${id}-content` : undefined}
+        tabIndex={isMobile ? 0 : undefined}
+        onKeyDown={
+          isMobile
+            ? (e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setExpanded((p) => !p);
+                }
+              }
+            : undefined
+        }
         sx={{
           display: 'flex',
           alignItems: 'center',
@@ -159,8 +173,10 @@ export const SectionCard: React.FC<SectionCardProps> = ({
 
       {/* Content */}
       {isMobile ? (
-        <Collapse in={expanded}>
-          <Box sx={{ p: 2 }}>{children}</Box>
+        <Collapse in={expanded} unmountOnExit>
+          <Box id={`section-${id}-content`} sx={{ p: 2 }}>
+            {children}
+          </Box>
         </Collapse>
       ) : (
         <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>{children}</Box>

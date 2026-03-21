@@ -12,6 +12,7 @@ import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useEffect, useState } from 'react';
 
+import type { ArmorWeight } from '../../../loadout-manager/types/loadout.types';
 import { fetchItemIconUrl, getItemIconUrl } from '../../../loadout-manager/utils/itemIconResolver';
 import type { EquipSlotDef } from '../../data/esoStaticData';
 
@@ -50,6 +51,20 @@ const SlotSvgIcon: React.FC<{ slotType: string; size?: number; color?: string }>
 
 const TILE_SIZE = 78;
 
+const WEIGHT_COLORS: Record<ArmorWeight, string> = {
+  light: '#60a5fa', // blue
+  medium: '#4ade80', // green
+  heavy: '#f87171', // red
+};
+
+const WEIGHT_LABELS: Record<ArmorWeight, string> = {
+  light: 'L',
+  medium: 'M',
+  heavy: 'H',
+};
+
+const WEIGHT_CYCLE: ArmorWeight[] = ['light', 'medium', 'heavy'];
+
 interface GearSlotCardProps {
   slotDef: EquipSlotDef;
   itemId?: number | null;
@@ -57,6 +72,10 @@ interface GearSlotCardProps {
   setName?: string | null;
   isDisabled?: boolean;
   disabledReason?: string;
+  /** Current armor weight — only relevant for apparel slots */
+  weight?: ArmorWeight;
+  /** Called when the user cycles armor weight — only for apparel slots with an item */
+  onWeightChange?: (weight: ArmorWeight) => void;
   onOpen: () => void;
   onClear: () => void;
 }
@@ -70,6 +89,8 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
   setName,
   isDisabled = false,
   disabledReason,
+  weight,
+  onWeightChange,
   onOpen,
   onClear,
 }) => {
@@ -303,6 +324,48 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
           >
             <CloseIcon sx={{ fontSize: 11 }} />
           </IconButton>
+        )}
+
+        {/* Armor weight badge — apparel slots with an item equipped */}
+        {hasItem && !isDisabled && slotDef.category === 'apparel' && onWeightChange && (
+          <Tooltip title={`Armor weight: ${weight ?? 'heavy'} — click to cycle`}>
+            <IconButton
+              size="small"
+              aria-label={`Armor weight: ${weight ?? 'heavy'}`}
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                const current = weight ?? 'heavy';
+                const idx = WEIGHT_CYCLE.indexOf(current);
+                const next = WEIGHT_CYCLE[(idx + 1) % WEIGHT_CYCLE.length];
+                onWeightChange(next);
+              }}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                e.stopPropagation();
+              }}
+              sx={{
+                position: 'absolute',
+                bottom: -2,
+                left: -2,
+                p: 0,
+                width: 18,
+                height: 18,
+                fontSize: 9,
+                fontWeight: 800,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                color: '#fff',
+                bgcolor: WEIGHT_COLORS[weight ?? 'heavy'],
+                border: `1.5px solid ${isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.8)'}`,
+                transition: 'all 150ms',
+                zIndex: 2,
+                '&:hover': {
+                  transform: 'scale(1.15)',
+                  bgcolor: WEIGHT_COLORS[weight ?? 'heavy'],
+                },
+              }}
+            >
+              {WEIGHT_LABELS[weight ?? 'heavy']}
+            </IconButton>
+          </Tooltip>
         )}
       </Box>
     </Tooltip>

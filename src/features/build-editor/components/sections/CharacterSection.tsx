@@ -76,18 +76,7 @@ export const CharacterSection: React.FC = () => {
           </Box>
         </Box>
 
-        <Typography
-          variant="caption"
-          color="text.disabled"
-          sx={{
-            display: 'block',
-            mb: 1,
-            fontSize: 10,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-          }}
-        >
-          Shift + click for ×10 steps
-        </Typography>
+        {/* Hint removed — Shift ×10 info is already in each +/- button's tooltip */}
 
         <Stack spacing={0.75}>
           <AttributeBar
