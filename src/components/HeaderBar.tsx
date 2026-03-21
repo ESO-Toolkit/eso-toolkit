@@ -1007,23 +1007,28 @@ export const HeaderBar: React.FC = () => {
               </Button>
               <ThemeToggle />
               {isLoggedIn ? (
-                <>
-                  <Tooltip title="My profile" arrow placement="bottom">
-                    <Button
-                      onClick={handleNavigateToProfile}
-                      aria-label={userLabel ? `Profile: ${userLabel}` : 'Profile'}
-                      startIcon={<Person />}
-                      sx={{
-                        display: { xs: 'none', sm: 'flex' },
-                        maxWidth: 220,
-                        fontWeight: 600,
-                        color:
-                          theme.palette.mode === 'dark'
-                            ? theme.palette.grey[100]
-                            : theme.palette.text.primary,
-                        px: 1.5,
-                        py: 0.5,
-                        borderRadius: '999px',
+                <Tooltip title="Account" arrow placement="bottom">
+                  <Button
+                    onClick={handleAccountClick}
+                    aria-label={userLabel ? `Account: ${userLabel}` : 'Account'}
+                    startIcon={<Person />}
+                    sx={{
+                      display: { xs: 'none', sm: 'flex' },
+                      maxWidth: 220,
+                      fontWeight: 600,
+                      color:
+                        theme.palette.mode === 'dark'
+                          ? theme.palette.grey[100]
+                          : theme.palette.text.primary,
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: '999px',
+                      bgcolor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(59,130,246,0.12)'
+                          : 'rgba(59,130,246,0.16)',
+                      textTransform: 'none',
+                      '&:hover': {
                         bgcolor:
                           theme.palette.mode === 'dark'
                             ? 'rgba(59,130,246,0.12)'

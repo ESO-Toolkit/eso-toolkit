@@ -330,7 +330,7 @@ export const GeneralSection: React.FC = () => {
                   <ButtonBase
                     role="checkbox"
                     aria-checked={selected}
-                    aria-label={imperial.label}
+                    aria-label={`${imperial.label}, playable in any alliance`}
                     onClick={() => toggleRace(imperial.id)}
                     sx={{
                       border: 'none',

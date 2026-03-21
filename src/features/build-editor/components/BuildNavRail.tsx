@@ -233,12 +233,12 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
           {/* Group label */}
           <Typography
             sx={{
-              fontSize: 9,
+              fontSize: 10,
               fontWeight: 600,
               fontFamily: 'Space Grotesk, Inter, system-ui',
               textTransform: 'uppercase',
               letterSpacing: 1.2,
-              color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+              color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.45)',
               px: 1.5,
               pt: groupIdx === 0 ? 0.5 : 0.75,
               pb: 0.5,
@@ -271,13 +271,13 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
 
                   background: 'transparent',
 
-                  color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)',
+                  color: isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.58)',
 
                   transition: 'all 0.15s ease',
 
                   '&:hover': {
                     background: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-                    color: isDark ? 'rgba(255,255,255,0.90)' : 'rgba(0,0,0,0.75)',
+                    color: isDark ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.80)',
                   },
                 }}
               >

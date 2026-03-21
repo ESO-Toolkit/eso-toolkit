@@ -102,8 +102,8 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
         tabIndex={0}
         aria-label={
           def
-            ? `Slot ${slot + 1}: ${def.label} — click to change`
-            : `Slot ${slot + 1}: empty — click to select a skill line`
+            ? `${slot + 1}, ${def.label}, ${ESO_CLASSES.find((c) => c.id === def.ownerClass)?.label ?? ''}`
+            : `${slot + 1}, empty, click to select a skill line`
         }
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -217,10 +217,13 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   color: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.28)',
                   flexShrink: 0,
                   borderRadius: 1,
-                  p: 0.25,
+                  minWidth: 24,
+                  minHeight: 24,
+                  p: 0.625,
                   '&:hover': { color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' },
                 }}
               >
@@ -453,6 +456,8 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ classSkillLines }) => {
               enterDelay={300}
             >
               <Box
+                role="img"
+                aria-label={ESO_CLASSES.find((c) => c.id === def.ownerClass)?.label ?? ''}
                 sx={{
                   width: 8,
                   height: 8,
