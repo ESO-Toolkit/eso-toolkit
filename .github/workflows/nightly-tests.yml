@@ -477,6 +477,8 @@ jobs:
             const icon   = passed ? '✅' : '❌';
 
             const payload = {
+              // Ping users on failure (mentions must be in content, not embeds)
+              ...(!passed && { content: '<@205483185893670912> <@266089059028434944>' }),
               embeds: [{
                 title: `${icon} Nightly Tests ${status}`,
                 color,
