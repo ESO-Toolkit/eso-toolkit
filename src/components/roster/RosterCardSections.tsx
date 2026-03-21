@@ -30,26 +30,18 @@ import type {
   RosterDetailLevel,
   HealerBuff,
   JailDDType,
-  RoleComposition,
 } from '../../types/roster';
-import { ROSTER_SIZE, defaultTankSetup, defaultHealerSetup } from '../../types/roster';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColors';
 
 import { DPSSlotCard } from './DPSSlotCard';
 import { HealerCard } from './HealerSlotCard';
 import { TankCard } from './TankSlotCard';
 
-// Stable no-op callback for hidden card slots
+// Stable no-op callback for edge cases where callbacks array is shorter than data
 const NOOP_TANK = (): void => {};
 const NOOP_HEALER = (): void => {};
 
-// Pre-built default slots for the pool (indices 0..11)
-const POOL_TANKS = Array.from({ length: ROSTER_SIZE }, (_, i) => defaultTankSetup(i + 1));
-const POOL_HEALERS = Array.from({ length: ROSTER_SIZE }, (_, i) => defaultHealerSetup(i + 1));
-const POOL_DPS: DPSSlot[] = Array.from({ length: ROSTER_SIZE }, (_, i) => ({ slotNumber: i + 1 }));
-
 interface RosterCardSectionsProps {
-  composition: RoleComposition;
   tanks: TankSetup[];
   healers: HealerSetup[];
   dpsSlots: DPSSlot[];
@@ -69,7 +61,6 @@ interface RosterCardSectionsProps {
 }
 
 export const RosterCardSections = React.memo<RosterCardSectionsProps>(function RosterCardSections({
-  composition,
   tanks,
   healers,
   dpsSlots,
@@ -89,15 +80,8 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
 }) {
   const roleColors = isDarkMode ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
 
-  // ── Fixed pool approach ─────────────────────────────────────────
-  // Always render ROSTER_SIZE (12) card slots across all roles.
-  // Active slots get real data; inactive slots get defaults + display:none.
-  // This means composition changes toggle CSS instead of mount/unmount,
-  // eliminating MUI Autocomplete forced reflow lag entirely.
-
-  const maxTanks = Math.max(composition.tanks, tanks.length);
-  const maxHealers = Math.max(composition.healers, healers.length);
-  const maxDPS = Math.max(composition.dps, dpsSlots.length);
+  // Only render active slots — startTransition in the parent ensures
+  // the picker updates instantly while this re-render is deferred.
 
   const renderSectionHeader = (
     icon: React.ReactNode,
@@ -178,27 +162,22 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
         {renderSectionHeader(
           <ShieldIcon sx={{ fontSize: '1rem', color: roleColors.tank }} />,
           'Tanks',
-          composition.tanks,
-          String(composition.tanks),
+          tanks.length,
+          String(tanks.length),
           roleColors.tank,
         )}
         <Stack spacing={2} mb={3}>
-          {Array.from({ length: maxTanks }, (_, i) => {
-            const visible = i < composition.tanks;
-            const tank = tanks[i] ?? POOL_TANKS[i];
-            return (
-              <Box key={i} sx={{ display: visible ? 'block' : 'none' }}>
-                <TankCard
-                  tankNum={i + 1}
-                  tank={tank}
-                  onChange={tankChangeCallbacks[i] ?? NOOP_TANK}
-                  availableGroups={availableGroups}
-                  mode={mode}
-                  savedRosterId={savedRosterId}
-                />
-              </Box>
-            );
-          })}
+          {tanks.map((tank, i) => (
+            <TankCard
+              key={tank.slotNumber}
+              tankNum={i + 1}
+              tank={tank}
+              onChange={tankChangeCallbacks[i] ?? NOOP_TANK}
+              availableGroups={availableGroups}
+              mode={mode}
+              savedRosterId={savedRosterId}
+            />
+          ))}
         </Stack>
       </Box>
 
@@ -214,28 +193,23 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
         {renderSectionHeader(
           <FavoriteIcon sx={{ fontSize: '1rem', color: roleColors.healer }} />,
           'Healers',
-          composition.healers,
-          String(composition.healers),
+          healers.length,
+          String(healers.length),
           roleColors.healer,
         )}
         <Stack spacing={2} mb={3}>
-          {Array.from({ length: maxHealers }, (_, i) => {
-            const visible = i < composition.healers;
-            const healer = healers[i] ?? POOL_HEALERS[i];
-            return (
-              <Box key={i} sx={{ display: visible ? 'block' : 'none' }}>
-                <HealerCard
-                  healerNum={i + 1}
-                  healer={healer}
-                  onChange={healerChangeCallbacks[i] ?? NOOP_HEALER}
-                  availableGroups={availableGroups}
-                  usedBuffs={usedBuffs}
-                  mode={mode}
-                  savedRosterId={savedRosterId}
-                />
-              </Box>
-            );
-          })}
+          {healers.map((healer, i) => (
+            <HealerCard
+              key={healer.slotNumber}
+              healerNum={i + 1}
+              healer={healer}
+              onChange={healerChangeCallbacks[i] ?? NOOP_HEALER}
+              availableGroups={availableGroups}
+              usedBuffs={usedBuffs}
+              mode={mode}
+              savedRosterId={savedRosterId}
+            />
+          ))}
         </Stack>
       </Box>
 
@@ -251,8 +225,8 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
         {renderSectionHeader(
           <DPSIcon sx={{ fontSize: '1rem', color: roleColors.dps }} />,
           'DPS',
-          composition.dps,
-          `${composition.dps} Slots`,
+          dpsSlots.length,
+          `${dpsSlots.length} Slots`,
           roleColors.dps,
         )}
         <DndContext
@@ -262,24 +236,19 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
         >
           <SortableContext items={dpsSlotIds} strategy={verticalListSortingStrategy}>
             <Stack spacing={1.5} mb={3}>
-              {Array.from({ length: maxDPS }, (_, i) => {
-                const visible = i < composition.dps;
-                const slot = dpsSlots[i] ?? POOL_DPS[i];
-                return (
-                  <Box key={i} sx={{ display: visible ? 'block' : 'none' }}>
-                    <DPSSlotCard
-                      slot={slot}
-                      slotIndex={i}
-                      availableGroups={availableGroups}
-                      onSlotChange={handleDPSSlotChange}
-                      onConvertToJail={handleConvertDPSToJail}
-                      onConvertToDPS={handleConvertJailToDPS}
-                      mode={mode}
-                      savedRosterId={savedRosterId}
-                    />
-                  </Box>
-                );
-              })}
+              {dpsSlots.map((slot, index) => (
+                <DPSSlotCard
+                  key={slot.slotNumber}
+                  slot={slot}
+                  slotIndex={index}
+                  availableGroups={availableGroups}
+                  onSlotChange={handleDPSSlotChange}
+                  onConvertToJail={handleConvertDPSToJail}
+                  onConvertToDPS={handleConvertJailToDPS}
+                  mode={mode}
+                  savedRosterId={savedRosterId}
+                />
+              ))}
             </Stack>
           </SortableContext>
         </DndContext>
