@@ -1,5 +1,7 @@
 // Third-party imports
+import CloseIcon from '@mui/icons-material/Close';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import RestoreIcon from '@mui/icons-material/Restore';
 import SummarizeIcon from '@mui/icons-material/Summarize';
 import {
   Box,
@@ -12,6 +14,8 @@ import {
   Switch,
   FormControlLabel,
   Button,
+  IconButton,
+  Chip,
 } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
@@ -696,6 +700,20 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     return finalizedTrialRuns;
   }, [fights, reportData]);
 
+  const [excludedFightIds, setExcludedFightIds] = React.useState<Set<number>>(new Set());
+
+  const excludeFight = React.useCallback((fightId: number) => {
+    setExcludedFightIds((prev) => {
+      const next = new Set(prev);
+      next.add(fightId);
+      return next;
+    });
+  }, []);
+
+  const resetExcludedFights = React.useCallback(() => {
+    setExcludedFightIds(new Set());
+  }, []);
+
   const [showTrashForEncounter, setShowTrashForEncounter] = React.useState<Set<string>>(new Set());
 
   const toggleTrashForEncounter = (encounterId: string): void => {
@@ -815,11 +833,40 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               backgroundColor: getThemeColors.hoverBg,
               borderColor: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(100, 116, 139, 0.6)',
             },
+            '&:hover .fight-exclude-btn': {
+              opacity: 1,
+            },
             '&:active': {
               transform: 'translateY(0.5px)',
             },
           }}
         >
+          {/* Exclude (x) button */}
+          <IconButton
+            className="fight-exclude-btn"
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              excludeFight(fight.id);
+            }}
+            sx={{
+              position: 'absolute',
+              top: 2,
+              right: 2,
+              zIndex: 3,
+              opacity: 0,
+              transition: 'opacity 150ms ease',
+              p: 0.25,
+              color: darkMode ? 'rgba(255,255,255,0.6)' : 'rgba(100, 116, 139, 0.7)',
+              '&:hover': {
+                color: darkMode ? '#ff6b6b' : '#dc2626',
+                backgroundColor: darkMode ? 'rgba(255,107,107,0.15)' : 'rgba(220,38,38,0.1)',
+              },
+            }}
+            aria-label="Exclude fight"
+          >
+            <CloseIcon sx={{ fontSize: 14 }} />
+          </IconButton>
           {/* Progress gradient background */}
           <Box
             sx={{
@@ -1030,6 +1077,35 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           </Button>
         </Box>
 
+        {excludedFightIds.size > 0 && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              mb: 1.5,
+              gap: 1,
+            }}
+          >
+            <Chip
+              label={`${excludedFightIds.size} fight${excludedFightIds.size === 1 ? '' : 's'} hidden`}
+              size="small"
+              variant="outlined"
+              sx={{
+                color: darkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary',
+                borderColor: darkMode ? 'rgba(255,255,255,0.2)' : 'divider',
+              }}
+            />
+            <Button
+              size="small"
+              startIcon={<RestoreIcon />}
+              onClick={resetExcludedFights}
+              sx={{ textTransform: 'none' }}
+            >
+              Reset
+            </Button>
+          </Box>
+        )}
         {encounters.length === 0 && <Typography> No Fights Found </Typography>}
         <Box data-testid="fight-list">
           {encounters.map((trialRun) => (
@@ -1259,6 +1335,25 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
               {/* Boss Encounters (always visible) */}
               {trialRun.encounters.map((encounter) => {
+                const visibleBossFights = encounter.bossFights.filter(
+                  (f) => !excludedFightIds.has(f.id),
+                );
+                const visiblePreTrash = encounter.preTrash.filter(
+                  (f) => !excludedFightIds.has(f.id),
+                );
+                const visiblePostTrash = encounter.postTrash.filter(
+                  (f) => !excludedFightIds.has(f.id),
+                );
+
+                // Hide the entire encounter if all fights are excluded
+                if (
+                  visibleBossFights.length === 0 &&
+                  visiblePreTrash.length === 0 &&
+                  visiblePostTrash.length === 0
+                ) {
+                  return null;
+                }
+
                 return (
                   <Box
                     key={encounter.id}
@@ -1288,7 +1383,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                           {encounter.name}{' '}
                           {(() => {
                             // Get difficulty from the first boss fight
-                            const bossFight = encounter.bossFights.find(
+                            const bossFight = visibleBossFights.find(
                               (f) => f.difficulty != null,
                             );
                             if (bossFight && bossFight.difficulty != null) {
@@ -1317,11 +1412,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                             return null;
                           })()}{' '}
                           <Box component="span" sx={{ fontWeight: 200 }}>
-                            ({encounter.bossFights.length})
+                            ({visibleBossFights.length})
                           </Box>
                         </Typography>
                       </Box>
-                      {(encounter.preTrash.length > 0 || encounter.postTrash.length > 0) && (
+                      {(visiblePreTrash.length > 0 || visiblePostTrash.length > 0) && (
                         <FormControlLabel
                           control={
                             <Switch
@@ -1344,7 +1439,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                               }}
                             />
                           }
-                          label={`🗑️ ${encounter.preTrash.length + encounter.postTrash.length}`}
+                          label={`🗑️ ${visiblePreTrash.length + visiblePostTrash.length}`}
                           sx={{ ml: 2, mr: 0 }}
                           onClick={(e) => e.stopPropagation()}
                         />
@@ -1353,7 +1448,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
                     {/* Pre-encounter trash */}
                     <Collapse
-                      in={showTrashForEncounter.has(encounter.id) && encounter.preTrash.length > 0}
+                      in={showTrashForEncounter.has(encounter.id) && visiblePreTrash.length > 0}
                     >
                       <Box sx={{ mb: 2 }}>
                         <Typography
@@ -1370,7 +1465,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                             overflow: 'visible',
                           }}
                         >
-                          {encounter.preTrash.map((fight, idx) => renderFightCard(fight, idx))}
+                          {visiblePreTrash.map((fight, idx) => renderFightCard(fight, idx))}
                         </List>
                       </Box>
                     </Collapse>
@@ -1389,12 +1484,12 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                         overflow: 'visible',
                       }}
                     >
-                      {encounter.bossFights.map((fight, idx) => renderFightCard(fight, idx))}
+                      {visibleBossFights.map((fight, idx) => renderFightCard(fight, idx))}
                     </List>
 
                     {/* Post-encounter trash */}
                     <Collapse
-                      in={showTrashForEncounter.has(encounter.id) && encounter.postTrash.length > 0}
+                      in={showTrashForEncounter.has(encounter.id) && visiblePostTrash.length > 0}
                     >
                       <Box>
                         <Typography
@@ -1418,7 +1513,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                             overflow: 'visible',
                           }}
                         >
-                          {encounter.postTrash.map((fight, idx) => renderFightCard(fight, idx))}
+                          {visiblePostTrash.map((fight, idx) => renderFightCard(fight, idx))}
                         </List>
                       </Box>
                     </Collapse>
