@@ -5,6 +5,8 @@
  * No React, no Redux — just math. Components call this via useMemo.
  */
 
+import type { GearConfig } from '../../loadout-manager/types/loadout.types';
+import { EQUIP_SLOTS } from '../data/esoStaticData';
 import type { Build, BuildSetup, GameMode } from '../types/build.types';
 
 import {
@@ -34,6 +36,27 @@ import {
   RACE_PASSIVES,
 } from './stat-constants';
 import type { BuildStats, StatItem, StatOverrides, StatResult, StatStatus } from './stat-types';
+
+// ─── Armor weight counting ──────────────────────────────────────────────────
+
+const APPAREL_SLOTS = EQUIP_SLOTS.filter((s) => s.category === 'apparel').map((s) => s.slot);
+
+interface ArmorWeightCounts {
+  light: number;
+  medium: number;
+  heavy: number;
+}
+
+export function countArmorWeights(gear: GearConfig): ArmorWeightCounts {
+  const counts: ArmorWeightCounts = { light: 0, medium: 0, heavy: 0 };
+  for (const slot of APPAREL_SLOTS) {
+    const piece = gear[slot];
+    if (!piece?.id) continue;
+    const weight = piece.weight ?? 'heavy';
+    counts[weight]++;
+  }
+  return counts;
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -78,15 +101,15 @@ export function calculatePenetration(
     });
   }
 
-  // Light Armor Concentration
-  const lightCount = overrides.lightArmorCount;
-  if (lightCount > 0) {
+  // Light Armor Concentration — auto-detected from gear weight
+  const armorCounts = countArmorWeights(setup.gear);
+  if (armorCounts.light > 0) {
     items.push({
-      name: `Light Armor (${lightCount}pc)`,
-      value: lightCount * LIGHT_ARMOR_PEN_PER_PIECE,
+      name: `Light Armor (${armorCounts.light}pc)`,
+      value: armorCounts.light * LIGHT_ARMOR_PEN_PER_PIECE,
       source: 'passive',
       enabled: true,
-      autoDetected: false,
+      autoDetected: true,
     });
   }
 
@@ -222,12 +245,12 @@ export function calculateCritDamage(
     });
   }
 
-  // Medium Armor Dexterity
-  const medCount = overrides.mediumArmorCount;
-  if (medCount > 0) {
+  // Medium Armor Dexterity — auto-detected from gear weight
+  const critArmorCounts = countArmorWeights(setup.gear);
+  if (critArmorCounts.medium > 0) {
     items.push({
-      name: `Medium Armor (${medCount}pc)`,
-      value: medCount * MEDIUM_ARMOR_CRIT_DMG_PER_PIECE,
+      name: `Medium Armor (${critArmorCounts.medium}pc)`,
+      value: critArmorCounts.medium * MEDIUM_ARMOR_CRIT_DMG_PER_PIECE,
       source: 'passive',
       enabled: true,
       isPercent: true,

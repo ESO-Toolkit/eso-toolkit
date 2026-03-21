@@ -3,7 +3,7 @@
  * Glass-style tabs; food tab delegates to FoodPicker; potions tab delegates to PotionPicker.
  */
 
-import { Box, Stack, Typography } from '@mui/material';
+import { Box, ButtonBase, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -28,20 +28,30 @@ export const ConsumablesSection: React.FC = () => {
     <>
       <Stack spacing={1.5}>
         {/* Glass pill tab switcher */}
-        <Box sx={{ display: 'flex', gap: 0.75 }}>
+        <Box role="tablist" aria-label="Consumable type" sx={{ display: 'flex', gap: 0.75 }}>
           {(['potions', 'food'] as const).map((t) => {
             const isActive = tab === t;
             const label = t === 'potions' ? 'Potions' : 'Foods / Drinks';
+            const panelId = `consumables-panel-${t}`;
             return (
-              <Box
+              <ButtonBase
                 key={t}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={panelId}
+                tabIndex={isActive ? 0 : -1}
                 onClick={() => setTab(t)}
+                onKeyDown={(e: React.KeyboardEvent) => {
+                  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    setTab(t === 'potions' ? 'food' : 'potions');
+                  }
+                }}
                 sx={{
                   flex: 1,
                   py: 0.75,
                   textAlign: 'center',
                   borderRadius: '99px',
-                  cursor: 'pointer',
                   background: isActive
                     ? isDark
                       ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)'
@@ -73,23 +83,27 @@ export const ConsumablesSection: React.FC = () => {
                 >
                   {label}
                 </Typography>
-              </Box>
+              </ButtonBase>
             );
           })}
         </Box>
 
         {tab === 'potions' && (
-          <PotionPicker
-            potions={setup.consumables.potions}
-            onChange={(potions) => dispatch(setConsumables({ ...setup.consumables, potions }))}
-          />
+          <div role="tabpanel" id="consumables-panel-potions" aria-label="Potions">
+            <PotionPicker
+              potions={setup.consumables.potions}
+              onChange={(potions) => dispatch(setConsumables({ ...setup.consumables, potions }))}
+            />
+          </div>
         )}
 
         {tab === 'food' && (
-          <FoodPicker
-            food={setup.consumables.food}
-            onChange={(food) => dispatch(setConsumables({ ...setup.consumables, food }))}
-          />
+          <div role="tabpanel" id="consumables-panel-food" aria-label="Foods / Drinks">
+            <FoodPicker
+              food={setup.consumables.food}
+              onChange={(food) => dispatch(setConsumables({ ...setup.consumables, food }))}
+            />
+          </div>
         )}
       </Stack>
     </>

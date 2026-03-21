@@ -6,7 +6,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 
-import type { GearConfig, SkillsConfig } from '../../loadout-manager/types/loadout.types';
+import type {
+  ArmorWeight,
+  GearConfig,
+  SkillsConfig,
+} from '../../loadout-manager/types/loadout.types';
 import { getDefaultLinesForClass } from '../data/esoStaticData';
 import { DEFAULT_STAT_OVERRIDES } from '../engine/stat-constants';
 import type { StatOverrides } from '../engine/stat-types';
@@ -280,6 +284,20 @@ export const buildEditorSlice = createSlice({
       state.isDirty = true;
     },
 
+    setGearWeight(
+      state,
+      action: PayloadAction<{ slot: number; weight: ArmorWeight | undefined }>,
+    ) {
+      const setup = state.build.setups[state.activeSetupIndex];
+      if (!setup) return;
+      const piece = setup.gear[action.payload.slot];
+      if (piece) {
+        piece.weight = action.payload.weight;
+        state.build.updatedAt = new Date().toISOString();
+        state.isDirty = true;
+      }
+    },
+
     // ── Skills (per-setup) ────────────────────────────────────────────────────
     setSkills(state, action: PayloadAction<SkillsConfig>) {
       const setup = state.build.setups[state.activeSetupIndex];
@@ -440,6 +458,7 @@ export const {
   setMundusStone,
   setGear,
   setGearSlot,
+  setGearWeight,
   setSkills,
   setChampionPoints,
   setChampionTreeSlot,

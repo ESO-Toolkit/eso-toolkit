@@ -9,7 +9,6 @@ import {
   Checkbox,
   Collapse,
   FormControlLabel,
-  Slider,
   Stack,
   Typography,
 } from '@mui/material';
@@ -148,60 +147,6 @@ export const StatsSection: React.FC = () => {
 
         <Collapse in={buffsExpanded} timeout={200}>
           <Box sx={{ pl: 1, pt: 0.5 }}>
-            {/* Armor piece counts */}
-            <Box sx={{ mb: 1.5 }}>
-              <Typography
-                sx={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
-                  mb: 0.5,
-                }}
-              >
-                Light Armor Pieces: {overrides.lightArmorCount}
-              </Typography>
-              <Slider
-                value={overrides.lightArmorCount}
-                onChange={(_: Event, v: number | number[]) =>
-                  updateOverrides({ lightArmorCount: v as number })
-                }
-                min={0}
-                max={7}
-                step={1}
-                marks
-                size="small"
-                sx={{ width: '80%', ml: 1, color: 'var(--be-accent, #38bdf8)' }}
-                aria-label="Light armor piece count"
-              />
-
-              <Typography
-                sx={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
-                  mb: 0.5,
-                  mt: 1,
-                }}
-              >
-                Medium Armor Pieces: {overrides.mediumArmorCount}
-              </Typography>
-              <Slider
-                value={overrides.mediumArmorCount}
-                onChange={(_: Event, v: number | number[]) =>
-                  updateOverrides({ mediumArmorCount: v as number })
-                }
-                min={0}
-                max={7}
-                step={1}
-                marks
-                size="small"
-                sx={{ width: '80%', ml: 1, color: 'var(--be-accent, #38bdf8)' }}
-                aria-label="Medium armor piece count"
-              />
-            </Box>
-
             {/* Buff checkboxes */}
             <Box
               sx={{

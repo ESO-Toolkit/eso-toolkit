@@ -51,7 +51,7 @@ export const StatGauge: React.FC<StatGaugeProps> = ({
   const offset = circumference - (fillPercent / 100) * circumference;
 
   const colors = STATUS_COLORS[result.status];
-  const trackColor = isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(15, 23, 42, 0.07)';
+  const trackColor = isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(15, 23, 42, 0.14)';
   const easing: [number, number, number, number] = [0.25, 0.46, 0.45, 0.94];
 
   const formatted = isPercent ? `${result.total}%` : result.total.toLocaleString();
@@ -178,7 +178,7 @@ export const StatGauge: React.FC<StatGaugeProps> = ({
           fontSize: 9,
           fontWeight: 500,
           fontFamily: 'Space Grotesk, Inter, system-ui',
-          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.30)',
+          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.45)',
           textAlign: 'center',
         }}
       >

@@ -26,11 +26,13 @@ import { Box, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { motion, useReducedMotion } from 'framer-motion';
 import React, { useCallback, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
+import { saveBuild } from '@/store/saved_builds';
 import type { RootState } from '@/store/storeWithHistory';
 
 import { useSectionProgress } from '../hooks/useSectionProgress';
+import { BUILD_EDITOR_STORAGE_KEY, markSaved } from '../store/buildEditorSlice';
 
 import { BuildCompletionHeader } from './BuildCompletionHeader';
 import { BuildNavRail } from './BuildNavRail';
@@ -51,10 +53,11 @@ import { SetupTabBar } from './SetupTabBar';
 
 export const BuildEditorLayout: React.FC = () => {
   const theme = useTheme();
+  const dispatch = useDispatch();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const prefersReduced = useReducedMotion();
   const progress = useSectionProgress();
-  const isDirty = useSelector((s: RootState) => s.buildEditor.isDirty);
+  const { isDirty, build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
 
   // Warn user before leaving with unsaved changes
   const handleBeforeUnload = useCallback(
@@ -69,6 +72,28 @@ export const BuildEditorLayout: React.FC = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [handleBeforeUnload]);
+
+  // Ctrl+S / Cmd+S keyboard shortcut to save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (!build.name.trim()) return;
+        try {
+          localStorage.setItem(
+            BUILD_EDITOR_STORAGE_KEY,
+            JSON.stringify({ build, activeSetupIndex }),
+          );
+        } catch {
+          // Silently fail — localStorage might be full
+        }
+        dispatch(saveBuild(build));
+        dispatch(markSaved());
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [build, activeSetupIndex, dispatch]);
 
   return (
     <Box component="main" sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>

@@ -1086,7 +1086,7 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
               letterSpacing: 2,
               textTransform: 'uppercase',
               fontFamily: 'Space Grotesk, Inter, system-ui',
-              color: isDark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.18)',
+              color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.30)',
               flexShrink: 0,
               userSelect: 'none',
             }}
