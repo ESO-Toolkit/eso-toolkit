@@ -57,34 +57,32 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
 
     const handleIncrement = useCallback(
       (role: 'tanks' | 'healers') => {
-        setLocal((prev) => {
-          if (prev.dps <= 0) return prev;
-          const next = { ...prev, [role]: prev[role] + 1, dps: prev.dps - 1 };
-          // Fire onChange async so the UI updates first
-          setTimeout(() => onChange(next), 0);
-          return next;
-        });
+        const next = { ...local, [role]: local[role] + 1, dps: local.dps - 1 };
+        if (local.dps <= 0) return;
+        setLocal(next);
+        // onChange wraps in startTransition in the parent — React will
+        // paint this component's local state update (urgent) before
+        // processing the heavy roster resize (transition).
+        onChange(next);
       },
-      [onChange],
+      [local, onChange],
     );
 
     const handleDecrement = useCallback(
       (role: 'tanks' | 'healers') => {
-        setLocal((prev) => {
-          if (prev[role] <= 0) return prev;
-          const next = { ...prev, [role]: prev[role] - 1, dps: prev.dps + 1 };
-          setTimeout(() => onChange(next), 0);
-          return next;
-        });
+        if (local[role] <= 0) return;
+        const next = { ...local, [role]: local[role] - 1, dps: local.dps + 1 };
+        setLocal(next);
+        onChange(next);
       },
-      [onChange],
+      [local, onChange],
     );
 
     const handlePreset = useCallback(
       (preset: CompositionPreset) => {
         const next = { ...preset.comp };
         setLocal(next);
-        setTimeout(() => onChange(next), 0);
+        onChange(next);
       },
       [onChange],
     );
