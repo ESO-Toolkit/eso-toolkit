@@ -2,22 +2,6 @@ import { gql } from '@apollo/client';
 import { KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import {
-  AutoAwesome as AutoAwesomeIcon,
   Bookmark as BookmarkIcon,
   Download as DownloadIcon,
   Upload as UploadIcon,
@@ -63,9 +47,7 @@ import { useNavigate } from 'react-router-dom';
 import discordIcon from '../assets/discord-icon.svg';
 import { PerFightBuilds } from '../components/PerFightBuilds';
 import { RoleCompositionPicker } from '../components/RoleCompositionPicker';
-import { DPSSlotCard } from '../components/roster/DPSSlotCard';
-import { HealerCard } from '../components/roster/HealerSlotCard';
-import { TankCard } from '../components/roster/TankSlotCard';
+import { RosterCardSections } from '../components/roster/RosterCardSections';
 import { SetAssignmentManager } from '../components/SetAssignmentManager';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
@@ -98,11 +80,6 @@ import {
   CLASS_SKILL_LINES,
 } from '../types/roster';
 import type { TrialBuildOverrides } from '../types/trial-encounters';
-import {
-  convertLogPlayersToRoster,
-  type LogCombatantInfoEvent,
-  type LogPlayerDetails,
-} from '../utils/logToRoster';
 // roleColors used by RosterCardSections
 import { encodeRosterToURL, decodeRosterFromURL } from '../utils/rosterEncoding';
 import { resizeRoster } from '../utils/rosterResize';
@@ -2878,275 +2855,25 @@ export const RosterBuilderPage: React.FC = () => {
             }}
           />
 
-          {/* Tanks Section */}
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
-              <Box
-                sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '9px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: `linear-gradient(135deg, ${roleColors.tank}20 0%, ${roleColors.tank}08 100%)`,
-                  border: `1px solid ${roleColors.tank}25`,
-                }}
-              >
-                <ShieldIcon sx={{ fontSize: '1rem', color: roleColors.tank }} />
-              </Box>
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'text.disabled',
-                    lineHeight: 1,
-                    mb: 0.375,
-                  }}
-                >
-                  Role
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography
-                    sx={{
-                      fontFamily: '"Space Grotesk", sans-serif',
-                      fontWeight: 700,
-                      fontSize: '1.05rem',
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1.1,
-                      background: `linear-gradient(135deg, ${roleColors.tank} 0%, ${roleColors.tank}99 100%)`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}
-                  >
-                    Tanks
-                  </Typography>
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: '0.65rem',
-                      fontWeight: 600,
-                      px: 0.75,
-                      py: 0.125,
-                      borderRadius: '6px',
-                      backgroundColor: `${roleColors.tank}12`,
-                      color: roleColors.tank,
-                      border: `1px solid ${roleColors.tank}25`,
-                    }}
-                  >
-                    {roster.tanks.length}
-                  </Box>
-                </Box>
-              </Box>
-            </Box>
-            <Stack spacing={2} mb={3}>
-              {roster.tanks.map((tank, i) => (
-                <TankCard
-                  key={tank.slotNumber}
-                  tankNum={i + 1}
-                  tank={tank}
-                  onChange={tankChangeCallbacks[i]}
-                  availableGroups={memoizedGroups}
-                  mode={mode}
-                  savedRosterId={savedRosterIdRef.current ?? undefined}
-                />
-              ))}
-            </Stack>
-          </Box>
-        </Box>
-
-        {/* Simple Mode: Set Assignment Manager */}
-        <Box sx={{ display: mode === 'simple' ? 'block' : 'none' }}>
-          <SetAssignmentManager
+          <RosterCardSections
             tanks={roster.tanks}
             healers={roster.healers}
-            onAssignSet={handleSetAssignment}
-            onUpdateUltimate={handleUltimateUpdate}
-            onUpdateHealerCP={handleHealerCPUpdate}
+            dpsSlots={roster.dpsSlots}
+            tankChangeCallbacks={tankChangeCallbacks}
+            healerChangeCallbacks={healerChangeCallbacks}
+            handleDPSSlotChange={handleDPSSlotChange}
+            handleConvertDPSToJail={handleConvertDPSToJail}
+            handleConvertJailToDPS={handleConvertJailToDPS}
+            availableGroups={memoizedGroups}
+            usedBuffs={usedBuffs}
+            mode={mode}
+            savedRosterId={savedRosterIdRef.current ?? undefined}
+            isDarkMode={isDarkMode}
+            dpsSlotIds={dpsSlotIds}
+            sensors={sensors}
+            handleDPSDragEnd={handleDPSDragEnd}
           />
         </Box>
-
-          {/* Healers Section */}
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
-              <Box
-                sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '9px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: `linear-gradient(135deg, ${roleColors.healer}20 0%, ${roleColors.healer}08 100%)`,
-                  border: `1px solid ${roleColors.healer}25`,
-                }}
-              >
-                <FavoriteIcon sx={{ fontSize: '1rem', color: roleColors.healer }} />
-              </Box>
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'text.disabled',
-                    lineHeight: 1,
-                    mb: 0.375,
-                  }}
-                >
-                  Role
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography
-                    sx={{
-                      fontFamily: '"Space Grotesk", sans-serif',
-                      fontWeight: 700,
-                      fontSize: '1.05rem',
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1.1,
-                      background: `linear-gradient(135deg, ${roleColors.healer} 0%, ${roleColors.healer}99 100%)`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}
-                  >
-                    Healers
-                  </Typography>
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: '0.65rem',
-                      fontWeight: 600,
-                      px: 0.75,
-                      py: 0.125,
-                      borderRadius: '6px',
-                      backgroundColor: `${roleColors.healer}12`,
-                      color: roleColors.healer,
-                      border: `1px solid ${roleColors.healer}25`,
-                    }}
-                  >
-                    {roster.healers.length}
-                  </Box>
-                </Box>
-              </Box>
-            </Box>
-            <Stack spacing={2} mb={3}>
-              {roster.healers.map((healer, i) => (
-                <HealerCard
-                  key={healer.slotNumber}
-                  healerNum={i + 1}
-                  healer={healer}
-                  onChange={healerChangeCallbacks[i]}
-                  availableGroups={memoizedGroups}
-                  usedBuffs={usedBuffs}
-                  mode={mode}
-                  savedRosterId={savedRosterIdRef.current ?? undefined}
-                />
-              ))}
-            </Stack>
-          </Box>
-
-          <Divider
-            sx={{
-              my: 1.5,
-              borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-            }}
-          />
-
-          {/* DPS Slots Section */}
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
-              <Box
-                sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '9px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: `linear-gradient(135deg, ${roleColors.dps}20 0%, ${roleColors.dps}08 100%)`,
-                  border: `1px solid ${roleColors.dps}25`,
-                }}
-              >
-                <AutoAwesomeIcon sx={{ fontSize: '1rem', color: roleColors.dps }} />
-              </Box>
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'text.disabled',
-                    lineHeight: 1,
-                    mb: 0.375,
-                  }}
-                >
-                  Roster
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography
-                    sx={{
-                      fontFamily: '"Space Grotesk", sans-serif',
-                      fontWeight: 700,
-                      fontSize: '1.05rem',
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1.1,
-                      background: `linear-gradient(135deg, ${roleColors.dps} 0%, ${roleColors.dps}99 100%)`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}
-                  >
-                    DPS Roster
-                  </Typography>
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: '0.65rem',
-                      fontWeight: 600,
-                      px: 0.75,
-                      py: 0.125,
-                      borderRadius: '6px',
-                      backgroundColor: `${roleColors.dps}12`,
-                      color: roleColors.dps,
-                      border: `1px solid ${roleColors.dps}25`,
-                    }}
-                  >
-                    {roster.dpsSlots.length} Slots
-                  </Box>
-                </Box>
-              </Box>
-            </Box>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDPSDragEnd}
-            >
-              <SortableContext items={dpsSlotIds} strategy={verticalListSortingStrategy}>
-                <Stack spacing={1.5} mb={3}>
-                  {roster.dpsSlots.map((slot, index) => (
-                    <DPSSlotCard
-                      key={slot.slotNumber}
-                      slot={slot}
-                      slotIndex={index}
-                      availableGroups={memoizedGroups}
-                      onSlotChange={handleDPSSlotChange}
-                      onConvertToJail={handleConvertDPSToJail}
-                      onConvertToDPS={handleConvertJailToDPS}
-                      mode={mode}
-                      savedRosterId={savedRosterIdRef.current ?? undefined}
-                    />
-                  ))}
-                </Stack>
-              </SortableContext>
-            </DndContext>
-          </Box>
 
           {/* Per-Fight Builds */}
           <Box sx={{ my: 2 }}>

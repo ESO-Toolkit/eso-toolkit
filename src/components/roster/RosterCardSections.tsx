@@ -37,10 +37,6 @@ import { DPSSlotCard } from './DPSSlotCard';
 import { HealerCard } from './HealerSlotCard';
 import { TankCard } from './TankSlotCard';
 
-// Stable no-op callback for edge cases where callbacks array is shorter than data
-const NOOP_TANK = (): void => {};
-const NOOP_HEALER = (): void => {};
-
 interface RosterCardSectionsProps {
   tanks: TankSetup[];
   healers: HealerSetup[];
@@ -50,7 +46,6 @@ interface RosterCardSectionsProps {
   handleDPSSlotChange: (index: number, updates: Partial<DPSSlot>) => void;
   handleConvertDPSToJail: (slotNumber: number, type: JailDDType) => void;
   handleConvertJailToDPS: (slotNumber: number) => void;
-  handleMoveDPSSlot: (slotIndex: number, direction: 'up' | 'down') => void;
   availableGroups: string[];
   usedBuffs: HealerBuff[];
   mode: RosterDetailLevel;
@@ -70,7 +65,6 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
   handleDPSSlotChange,
   handleConvertDPSToJail,
   handleConvertJailToDPS,
-  handleMoveDPSSlot,
   availableGroups,
   usedBuffs,
   mode,
@@ -82,99 +76,80 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
 }) {
   const roleColors = isDarkMode ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
 
-  // Only render active slots — startTransition in the parent ensures
-  // the picker updates instantly while this re-render is deferred.
-
-  const renderSectionHeader = (
-    icon: React.ReactNode,
-    label: string,
-    count: number,
-    countLabel: string,
-    color: string,
-  ): React.ReactNode => (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
-      <Box
-        sx={{
-          width: 32,
-          height: 32,
-          borderRadius: '9px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: `linear-gradient(135deg, ${color}20 0%, ${color}08 100%)`,
-          border: `1px solid ${color}25`,
-        }}
-      >
-        {icon}
-      </Box>
-      <Box>
-        <Typography
-          sx={{
-            fontSize: '0.6rem',
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: 'text.disabled',
-            lineHeight: 1,
-            mb: 0.375,
-          }}
-        >
-          Role
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography
-            sx={{
-              fontFamily: '"Space Grotesk", sans-serif',
-              fontWeight: 700,
-              fontSize: '1.05rem',
-              letterSpacing: '-0.02em',
-              lineHeight: 1.1,
-              background: `linear-gradient(135deg, ${color} 0%, ${color}99 100%)`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            {label}
-          </Typography>
-          <Box
-            component="span"
-            sx={{
-              fontSize: '0.65rem',
-              fontWeight: 600,
-              px: 0.75,
-              py: 0.125,
-              borderRadius: '6px',
-              backgroundColor: `${color}12`,
-              color,
-              border: `1px solid ${color}25`,
-            }}
-          >
-            {countLabel}
-          </Box>
-        </Box>
-      </Box>
-    </Box>
-  );
-
   return (
     <>
       {/* Tanks Section */}
       <Box>
-        {renderSectionHeader(
-          <ShieldIcon sx={{ fontSize: '1rem', color: roleColors.tank }} />,
-          'Tanks',
-          tanks.length,
-          String(tanks.length),
-          roleColors.tank,
-        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
+          <Box
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: '9px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: `linear-gradient(135deg, ${roleColors.tank}20 0%, ${roleColors.tank}08 100%)`,
+              border: `1px solid ${roleColors.tank}25`,
+            }}
+          >
+            <ShieldIcon sx={{ fontSize: '1rem', color: roleColors.tank }} />
+          </Box>
+          <Box>
+            <Typography
+              sx={{
+                fontSize: '0.6rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'text.disabled',
+                lineHeight: 1,
+                mb: 0.375,
+              }}
+            >
+              Role
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography
+                sx={{
+                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontWeight: 700,
+                  fontSize: '1.05rem',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
+                  background: `linear-gradient(135deg, ${roleColors.tank} 0%, ${roleColors.tank}99 100%)`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                Tanks
+              </Typography>
+              <Box
+                component="span"
+                sx={{
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  px: 0.75,
+                  py: 0.125,
+                  borderRadius: '6px',
+                  backgroundColor: `${roleColors.tank}12`,
+                  color: roleColors.tank,
+                  border: `1px solid ${roleColors.tank}25`,
+                }}
+              >
+                {tanks.length}
+              </Box>
+            </Box>
+          </Box>
+        </Box>
         <Stack spacing={2} mb={3}>
           {tanks.map((tank, i) => (
             <TankCard
               key={tank.slotNumber}
               tankNum={i + 1}
               tank={tank}
-              onChange={tankChangeCallbacks[i] ?? NOOP_TANK}
+              onChange={tankChangeCallbacks[i]}
               availableGroups={availableGroups}
               mode={mode}
               savedRosterId={savedRosterId}
@@ -192,20 +167,76 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
 
       {/* Healers Section */}
       <Box>
-        {renderSectionHeader(
-          <FavoriteIcon sx={{ fontSize: '1rem', color: roleColors.healer }} />,
-          'Healers',
-          healers.length,
-          String(healers.length),
-          roleColors.healer,
-        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
+          <Box
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: '9px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: `linear-gradient(135deg, ${roleColors.healer}20 0%, ${roleColors.healer}08 100%)`,
+              border: `1px solid ${roleColors.healer}25`,
+            }}
+          >
+            <FavoriteIcon sx={{ fontSize: '1rem', color: roleColors.healer }} />
+          </Box>
+          <Box>
+            <Typography
+              sx={{
+                fontSize: '0.6rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'text.disabled',
+                lineHeight: 1,
+                mb: 0.375,
+              }}
+            >
+              Role
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography
+                sx={{
+                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontWeight: 700,
+                  fontSize: '1.05rem',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
+                  background: `linear-gradient(135deg, ${roleColors.healer} 0%, ${roleColors.healer}99 100%)`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                Healers
+              </Typography>
+              <Box
+                component="span"
+                sx={{
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  px: 0.75,
+                  py: 0.125,
+                  borderRadius: '6px',
+                  backgroundColor: `${roleColors.healer}12`,
+                  color: roleColors.healer,
+                  border: `1px solid ${roleColors.healer}25`,
+                }}
+              >
+                {healers.length}
+              </Box>
+            </Box>
+          </Box>
+        </Box>
         <Stack spacing={2} mb={3}>
           {healers.map((healer, i) => (
             <HealerCard
               key={healer.slotNumber}
               healerNum={i + 1}
               healer={healer}
-              onChange={healerChangeCallbacks[i] ?? NOOP_HEALER}
+              onChange={healerChangeCallbacks[i]}
               availableGroups={availableGroups}
               usedBuffs={usedBuffs}
               mode={mode}
@@ -224,13 +255,69 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
 
       {/* DPS Section */}
       <Box>
-        {renderSectionHeader(
-          <DPSIcon sx={{ fontSize: '1rem', color: roleColors.dps }} />,
-          'DPS',
-          dpsSlots.length,
-          `${dpsSlots.length} Slots`,
-          roleColors.dps,
-        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
+          <Box
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: '9px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: `linear-gradient(135deg, ${roleColors.dps}20 0%, ${roleColors.dps}08 100%)`,
+              border: `1px solid ${roleColors.dps}25`,
+            }}
+          >
+            <DPSIcon sx={{ fontSize: '1rem', color: roleColors.dps }} />
+          </Box>
+          <Box>
+            <Typography
+              sx={{
+                fontSize: '0.6rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'text.disabled',
+                lineHeight: 1,
+                mb: 0.375,
+              }}
+            >
+              Damage Dealers
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography
+                sx={{
+                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontWeight: 700,
+                  fontSize: '1.05rem',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
+                  background: `linear-gradient(135deg, ${roleColors.dps} 0%, ${roleColors.dps}99 100%)`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                DPS
+              </Typography>
+              <Box
+                component="span"
+                sx={{
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  px: 0.75,
+                  py: 0.125,
+                  borderRadius: '6px',
+                  backgroundColor: `${roleColors.dps}12`,
+                  color: roleColors.dps,
+                  border: `1px solid ${roleColors.dps}25`,
+                }}
+              >
+                {dpsSlots.length} Slots
+              </Box>
+            </Box>
+          </Box>
+        </Box>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -247,8 +334,6 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
                   onSlotChange={handleDPSSlotChange}
                   onConvertToJail={handleConvertDPSToJail}
                   onConvertToDPS={handleConvertJailToDPS}
-                  onMoveSlot={handleMoveDPSSlot}
-                  totalDpsSlots={dpsSlots.length}
                   mode={mode}
                   savedRosterId={savedRosterId}
                 />
