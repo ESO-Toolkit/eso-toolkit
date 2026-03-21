@@ -25,7 +25,6 @@ import {
   ListItemIcon,
   ListItemText,
   Paper,
-  Stack,
   TextField,
   Typography,
   Autocomplete,
@@ -946,17 +945,20 @@ export const RosterBuilderPage: React.FC = () => {
     }
   };
 
-  const handleMoveDPSSlot = useCallback((slotIndex: number, direction: 'up' | 'down') => {
-    setRoster((prev) => {
-      const newIndex = direction === 'up' ? slotIndex - 1 : slotIndex + 1;
-      if (newIndex < 0 || newIndex >= prev.dpsSlots.length) return prev;
-      return {
-        ...prev,
-        dpsSlots: arrayMove(prev.dpsSlots, slotIndex, newIndex),
-        updatedAt: new Date().toISOString(),
-      };
-    });
-  }, []);
+  const handleMoveDPSSlot = useCallback(
+    (slotIndex: number, direction: 'up' | 'down') => {
+      setRoster((prev) => {
+        const newIndex = direction === 'up' ? slotIndex - 1 : slotIndex + 1;
+        if (newIndex < 0 || newIndex >= prev.dpsSlots.length) return prev;
+        return {
+          ...prev,
+          dpsSlots: arrayMove(prev.dpsSlots, slotIndex, newIndex),
+          updatedAt: new Date().toISOString(),
+        };
+      });
+    },
+    [],
+  );
 
   // Gate URL sync until the initial load has settled so we don't clobber the incoming ?r= param
   const urlSyncReady = React.useRef(false);
@@ -1971,9 +1973,30 @@ export const RosterBuilderPage: React.FC = () => {
             {(['simple', 'full'] as const).map((value) => (
               <Box
                 key={value}
+                role="tab"
+                tabIndex={mode === value ? 0 : -1}
+                aria-selected={mode === value}
+                aria-label={`${value === 'simple' ? 'Simple' : 'Full'} mode`}
                 onClick={() => {
                   setMode(value);
                   setRoster((prev) => ({ ...prev, rosterDetailLevel: value }));
+                }}
+                onKeyDown={(e: React.KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setMode(value);
+                    setRoster((prev) => ({ ...prev, rosterDetailLevel: value }));
+                  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const next = value === 'simple' ? 'full' : 'simple';
+                    setMode(next);
+                    setRoster((prev) => ({ ...prev, rosterDetailLevel: next }));
+                    // Focus the newly selected tab
+                    const sibling = e.key === 'ArrowRight'
+                      ? (e.currentTarget.nextElementSibling as HTMLElement)
+                      : (e.currentTarget.previousElementSibling as HTMLElement);
+                    sibling?.focus();
+                  }
                 }}
                 sx={{
                   flex: '1 1 auto',
@@ -2646,31 +2669,27 @@ export const RosterBuilderPage: React.FC = () => {
           }}
         />
 
-        {/* Role Composition Picker */}
-        <Box sx={{ mb: 2 }}>
-          <RoleCompositionPicker
-            composition={roster.composition}
-            onChange={handleCompositionChange}
-          />
-        </Box>
-
-        {/* Simple Mode: Set Assignment Manager */}
-        <Box sx={{ display: mode === 'simple' ? 'block' : 'none' }}>
-          <SetAssignmentManager
-            tanks={roster.tanks}
-            healers={roster.healers}
-            onAssignSet={handleSetAssignment}
-            onUpdateUltimate={handleUltimateUpdate}
-            onUpdateHealerCP={handleHealerCPUpdate}
-          />
-        </Box>
-
-        {/* Full Mode: Full Roster Details */}
-        <Box sx={{ display: mode === 'full' ? 'block' : 'none' }}>
-          {/* Player Groups Management */}
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
-              <Box
+        {/* ─── Roster Setup Section ─── */}
+        <Box sx={{ mb: 3 }}>
+          {/* Section header */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '9px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
+                  : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
+                border: isDarkMode
+                  ? '1px solid rgba(255,255,255,0.08)'
+                  : '1px solid rgba(0,0,0,0.08)',
+              }}
+            >
+              <TuneIcon
                 sx={{
                   fontSize: '1rem',
                   color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
@@ -2834,9 +2853,13 @@ export const RosterBuilderPage: React.FC = () => {
                           fontSize: '0.8rem',
                           letterSpacing: '0.01em',
                           '& .MuiChip-deleteIcon': {
-                            color: isDarkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                            color: isDarkMode
+                              ? 'rgba(255,255,255,0.3)'
+                              : 'rgba(0,0,0,0.3)',
                             '&:hover': {
-                              color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
+                              color: isDarkMode
+                                ? 'rgba(255,255,255,0.6)'
+                                : 'rgba(0,0,0,0.6)',
                             },
                           },
                         }}
@@ -2845,15 +2868,23 @@ export const RosterBuilderPage: React.FC = () => {
                   })
                 }
               />
-            </Stack>
+            </Box>
           </Box>
+        </Box>
 
-          <Divider
-            sx={{
-              my: 1.5,
-              borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-            }}
+        {/* Simple Mode: Set Assignment Manager */}
+        <Box sx={{ display: mode === 'simple' ? 'block' : 'none' }}>
+          <SetAssignmentManager
+            tanks={roster.tanks}
+            healers={roster.healers}
+            onAssignSet={handleSetAssignment}
+            onUpdateUltimate={handleUltimateUpdate}
+            onUpdateHealerCP={handleHealerCPUpdate}
           />
+        </Box>
+
+        {/* Full Mode: Full Roster Details */}
+        <Box sx={{ display: mode === 'full' ? 'block' : 'none' }}>
 
           <RosterCardSections
             tanks={roster.tanks}
@@ -2864,6 +2895,7 @@ export const RosterBuilderPage: React.FC = () => {
             handleDPSSlotChange={handleDPSSlotChange}
             handleConvertDPSToJail={handleConvertDPSToJail}
             handleConvertJailToDPS={handleConvertJailToDPS}
+            handleMoveDPSSlot={handleMoveDPSSlot}
             availableGroups={memoizedGroups}
             usedBuffs={usedBuffs}
             mode={mode}

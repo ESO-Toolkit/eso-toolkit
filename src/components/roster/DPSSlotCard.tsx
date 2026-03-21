@@ -4,6 +4,8 @@ import {
   AutoAwesome as AutoAwesomeIcon,
   DragIndicator as DragIndicatorIcon,
   ExpandMore as ExpandMoreIcon,
+  KeyboardArrowUp as KeyboardArrowUpIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
 } from '@mui/icons-material';
 import {
   Accordion,
@@ -17,6 +19,7 @@ import {
   IconButton,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -27,7 +30,6 @@ import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColor
 import { dpsSlotToBuild } from '../../utils/rosterSlotToBuild';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
 
-import { ExtraGearPicker } from './shared/extra-gear-picker';
 import { makeGlassSx, makeSectionBoxSx, makeSectionHeaderSx } from './shared/glassSx';
 import { LazyCardContent } from './shared/LazyCardContent';
 import {
@@ -36,7 +38,6 @@ import {
   getUltimateIcon,
   isDDSpecialSet,
 } from './shared/rosterCardHelpers';
-import { SkillLinePickerGroup } from './shared/skill-line-picker';
 import { SlotActionPill } from './shared/slot-action-pill';
 import { SlotFullModePanel } from './SlotFullModePanel';
 
@@ -51,6 +52,8 @@ export interface DPSSlotCardProps {
   onSlotChange: (slotIndex: number, updates: Partial<DPSSlot>) => void;
   onConvertToJail: (slotNumber: number, jailType: JailDDType) => void;
   onConvertToDPS: (slotNumber: number) => void;
+  onMoveSlot?: (slotIndex: number, direction: 'up' | 'down') => void;
+  totalDpsSlots?: number;
   mode?: RosterDetailLevel;
   /** Saved roster ID — enables round-trip editing via the build editor. */
   savedRosterId?: string;
@@ -85,6 +88,15 @@ const jailLabels: Record<string, string> = {
   custom: 'Custom',
 };
 
+const jailTooltips: Record<string, string> = {
+  banner: 'Carries Powerful Assault + Banner of the Orc King',
+  zenkosh: 'Carries Saxhleel Champion (Zenkosh)',
+  wm: 'Carries War Machine',
+  'wm-mk': 'Carries War Machine + Master Kilt',
+  mk: 'Carries Master Kilt',
+  custom: 'Custom jail DD configuration',
+};
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -97,6 +109,8 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
     onSlotChange,
     onConvertToJail,
     onConvertToDPS,
+    onMoveSlot,
+    totalDpsSlots,
     mode,
     savedRosterId,
   }) => {
@@ -188,6 +202,40 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
             >
               <DragIndicatorIcon />
             </IconButton>
+            {onMoveSlot && (
+              <>
+                <IconButton
+                  size="small"
+                  onClick={() => onMoveSlot(slotIndex, 'up')}
+                  disabled={slotIndex === 0}
+                  sx={{
+                    borderRadius: '6px',
+                    p: 0.25,
+                    backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                    color: dpsIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
+                    '&.Mui-disabled': { opacity: 0.3 },
+                  }}
+                  aria-label={`Move DPS ${slot.slotNumber} up`}
+                >
+                  <KeyboardArrowUpIcon sx={{ fontSize: '1rem' }} />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={() => onMoveSlot(slotIndex, 'down')}
+                  disabled={totalDpsSlots != null && slotIndex >= totalDpsSlots - 1}
+                  sx={{
+                    borderRadius: '6px',
+                    p: 0.25,
+                    backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                    color: dpsIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
+                    '&.Mui-disabled': { opacity: 0.3 },
+                  }}
+                  aria-label={`Move DPS ${slot.slotNumber} down`}
+                >
+                  <KeyboardArrowDownIcon sx={{ fontSize: '1rem' }} />
+                </IconButton>
+              </>
+            )}
             <Box
               sx={{
                 display: 'inline-flex',
@@ -245,9 +293,10 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                 <TextField
                   fullWidth
                   size="small"
-                  label="Player Name (Optional)"
+                  label="Player Name"
                   value={slot.playerName || ''}
                   onChange={(e) => onChange({ playerName: e.target.value })}
+                  placeholder="Enter player name"
                   sx={glassSx}
                 />
               </Box>
@@ -489,30 +538,31 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                     }}
                   >
                     {(['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'] as const).map((type) => (
-                      <Box
-                        key={type}
-                        component={'button' as React.ElementType}
-                        onClick={() => onConvertToJail(slot.slotNumber, type)}
-                        sx={{
-                          px: 1.25,
-                          py: 0.5,
-                          borderRadius: '7px',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontFamily: 'inherit',
-                          fontSize: '0.72rem',
-                          fontWeight: 500,
-                          color: dpsIsDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                          background: 'transparent',
-                          transition: 'all 0.15s ease',
-                          '&:hover': {
-                            color: dpsRoleColors.dps,
-                            background: dpsIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                          },
-                        }}
-                      >
-                        {jailLabels[type]}
-                      </Box>
+                      <Tooltip key={type} title={jailTooltips[type]} enterDelay={400} arrow>
+                        <Box
+                          component={'button' as React.ElementType}
+                          onClick={() => onConvertToJail(slot.slotNumber, type)}
+                          sx={{
+                            px: 1.25,
+                            py: 0.5,
+                            borderRadius: '7px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                            fontSize: '0.72rem',
+                            fontWeight: 500,
+                            color: dpsIsDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                            background: 'transparent',
+                            transition: 'all 0.15s ease',
+                            '&:hover': {
+                              color: dpsRoleColors.dps,
+                              background: dpsIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                            },
+                          }}
+                        >
+                          {jailLabels[type]}
+                        </Box>
+                      </Tooltip>
                     ))}
                   </Box>
                 </Box>
@@ -679,24 +729,7 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                       </Stack>
                     </Box>
 
-                    {/* ── Build Requirements ─────────────────── */}
-                    <Box sx={makeSectionBoxSx(dpsIsDark)}>
-                      <Typography sx={makeSectionHeaderSx(dpsIsDark)}>
-                        Build Requirements
-                      </Typography>
-                      <Stack spacing={1.5}>
-                        <ExtraGearPicker
-                          value={slot.additionalSets || []}
-                          onChange={(additionalSets) => onChange({ additionalSets })}
-                        />
-                        <SkillLinePickerGroup
-                          value={
-                            slot.skillLines ?? { line1: '', line2: '', line3: '', isFlex: true }
-                          }
-                          onChange={(skillLines) => onChange({ skillLines })}
-                        />
-                      </Stack>
-                    </Box>
+                    {/* Build Requirements (gear + skill lines) moved to SlotFullModePanel */}
 
                     {/* ── Notes ──────────────────────────────── */}
                     <Box sx={makeSectionBoxSx(dpsIsDark)}>
@@ -720,10 +753,14 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
 
             {mode === 'full' && (
               <SlotFullModePanel
+                gear={slot.gear}
+                skillLines={slot.skillLines}
                 skills={slot.skills}
                 cpPoints={slot.cpPoints}
                 food={slot.food}
                 passives={slot.passives}
+                onGearChange={(gear) => onChange({ gear })}
+                onSkillLinesChange={(skillLines) => onChange({ skillLines })}
                 onSkillsChange={(skills) => onChange({ skills })}
                 onCpPointsChange={(cpPoints) => onChange({ cpPoints })}
                 onFoodChange={(food) => onChange({ food })}

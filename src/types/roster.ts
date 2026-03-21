@@ -4,7 +4,7 @@
  */
 
 import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
-import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
+import type { GearConfig, SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 
 import { KnownSetIDs } from './abilities';
 import type { TrialBuildOverrides } from './trial-encounters';
@@ -183,6 +183,8 @@ export interface DPSSlot {
   cpPoints?: BuildChampionPoints;
   /** Passive ability IDs — populated in Full detail mode */
   passives?: number[];
+  /** Per-slot equipment — populated in Full detail mode */
+  gear?: GearConfig;
 }
 
 /**
@@ -220,6 +222,8 @@ export interface HealerSetup {
   cpPoints?: BuildChampionPoints;
   /** Passive ability IDs — populated in Full detail mode */
   passives?: number[];
+  /** Per-slot equipment — populated in Full detail mode */
+  gear?: GearConfig;
 }
 
 /**
@@ -251,6 +255,8 @@ export interface TankSetup {
   cpPoints?: BuildChampionPoints;
   /** Passive ability IDs — populated in Full detail mode */
   passives?: number[];
+  /** Per-slot equipment — populated in Full detail mode */
+  gear?: GearConfig;
 }
 
 /**

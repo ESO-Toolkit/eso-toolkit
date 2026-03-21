@@ -1,22 +1,27 @@
 /**
  * SlotFullModePanel — collapsible tabs that appear below a roster slot card
- * when mode === 'full'. Shows Skills, Champion, Food, and Passives pickers
- * using the Redux-free picker components from the build editor.
+ * when mode === 'full'. Shows Gear, Skill Lines, Skills, Champion, Food,
+ * and Passives pickers using the Redux-free picker components from the
+ * build editor.
  *
  * Props are fully generic (no slot-type coupling) — callers pass the current
  * values and individual onChange callbacks.
  */
 
-import { Box, ButtonBase, Collapse, Divider, Typography } from '@mui/material';
+import { Box, ButtonBase, Collapse, Divider, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useState } from 'react';
 
 import { ChampionPointsPicker } from '../../features/build-editor/components/pickers/ChampionPointsPicker';
+import { EquipmentPicker } from '../../features/build-editor/components/pickers/EquipmentPicker';
 import { FoodPicker } from '../../features/build-editor/components/pickers/FoodPicker';
 import { PassivesPicker } from '../../features/build-editor/components/pickers/PassivesPicker';
 import { SkillBarPicker } from '../../features/build-editor/components/pickers/SkillBarPicker';
 import type { BuildChampionPoints } from '../../features/build-editor/types/build.types';
-import type { SkillsConfig } from '../../features/loadout-manager/types/loadout.types';
+import type { GearConfig, SkillsConfig } from '../../features/loadout-manager/types/loadout.types';
+import type { SkillLineConfig } from '../../types/roster';
+
+import { SkillLinePickerGroup } from './shared/skill-line-picker';
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
 
@@ -26,11 +31,13 @@ const EMPTY_CP: BuildChampionPoints = {
   fitness: { slots: [null, null, null, null], passives: {} },
   craft: { slots: [null, null, null, null], passives: {} },
 };
+const EMPTY_GEAR: GearConfig = {};
 
 // ─── Tab pill strip ───────────────────────────────────────────────────────────
 
 const FULL_TABS = [
   { id: 'skills', label: 'Skills' },
+  { id: 'gear', label: 'Gear' },
   { id: 'champion', label: 'Champion' },
   { id: 'food', label: 'Food' },
   { id: 'passives', label: 'Passives' },
@@ -41,10 +48,14 @@ type FullTab = (typeof FULL_TABS)[number]['id'];
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export interface SlotFullModePanelProps {
+  gear: GearConfig | undefined;
+  skillLines: SkillLineConfig | undefined;
   skills: SkillsConfig | undefined;
   cpPoints: BuildChampionPoints | undefined;
   food: { id?: number; name?: string } | undefined;
   passives: number[] | undefined;
+  onGearChange: (gear: GearConfig) => void;
+  onSkillLinesChange: (config: SkillLineConfig) => void;
   onSkillsChange: (skills: SkillsConfig) => void;
   onCpPointsChange: (cpPoints: BuildChampionPoints) => void;
   onFoodChange: (food: { id?: number; name?: string }) => void;
@@ -54,10 +65,14 @@ export interface SlotFullModePanelProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const SlotFullModePanel: React.FC<SlotFullModePanelProps> = ({
+  gear,
+  skillLines,
   skills,
   cpPoints,
   food,
   passives,
+  onGearChange,
+  onSkillLinesChange,
   onSkillsChange,
   onCpPointsChange,
   onFoodChange,
@@ -138,11 +153,20 @@ export const SlotFullModePanel: React.FC<SlotFullModePanelProps> = ({
       {/* Panel content */}
       <Collapse in={activeTab === 'skills'} unmountOnExit>
         <Box sx={{ pt: 0.5, pb: 1.5 }}>
-          <SkillBarPicker
-            skills={skills ?? EMPTY_SKILLS}
-            selectedClassLineIds={[null, null, null]}
-            onChange={onSkillsChange}
-          />
+          <Stack spacing={2.5}>
+            <SkillLinePickerGroup value={skillLines} onChange={onSkillLinesChange} />
+            <SkillBarPicker
+              skills={skills ?? EMPTY_SKILLS}
+              selectedClassLineIds={[null, null, null]}
+              onChange={onSkillsChange}
+            />
+          </Stack>
+        </Box>
+      </Collapse>
+
+      <Collapse in={activeTab === 'gear'} unmountOnExit>
+        <Box sx={{ pt: 0.5, pb: 1.5 }}>
+          <EquipmentPicker gear={gear ?? EMPTY_GEAR} onChange={onGearChange} />
         </Box>
       </Collapse>
 
