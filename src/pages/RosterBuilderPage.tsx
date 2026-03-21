@@ -56,7 +56,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useState, useCallback, useMemo, useRef, useTransition } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
@@ -923,18 +923,33 @@ export const RosterBuilderPage: React.FC = () => {
     [healerCount, handleHealerChange],
   );
 
-  // ── Composition change handler ──
-  // Wrapped in startTransition so the stepper button press feels instant while
-  // React defers the expensive re-render of all tank/healer/DPS cards.
-  const [, startTransition] = useTransition();
-  const handleCompositionChange = useCallback(
-    (newComp: RoleComposition) => {
-      startTransition(() => {
-        setRoster((prev) => resizeRoster(prev, newComp));
+  // ── Composition change: progressive rendering ──
+  // When composition changes, unmount all cards and remount them in batches
+  // across multiple frames to avoid MUI Autocomplete forced reflows (716ms+).
+  // Phase 0: nothing rendered (instant paint of empty shells)
+  // Phase 1: SetAssignmentManager + tanks
+  // Phase 2: healers
+  // Phase 3: DPS cards (fully ready)
+  const RENDER_PHASE_READY = 3;
+  const [renderPhase, setRenderPhase] = useState(RENDER_PHASE_READY);
+  const handleCompositionChange = useCallback((newComp: RoleComposition) => {
+    setRenderPhase(0);
+    setRoster((prev) => resizeRoster(prev, newComp));
+  }, []);
+
+  // Progress through render phases, one per animation frame
+  useEffect(() => {
+    if (renderPhase < RENDER_PHASE_READY) {
+      const raf = requestAnimationFrame(() => {
+        setRenderPhase((p) => p + 1);
       });
-    },
-    [startTransition],
-  );
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [renderPhase]);
+
+  const showTanks = renderPhase >= 1;
+  const showHealers = renderPhase >= 2;
+  const showDPS = renderPhase >= RENDER_PHASE_READY;
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -2649,13 +2664,15 @@ export const RosterBuilderPage: React.FC = () => {
 
         {/* Simple Mode: Set Assignment Manager */}
         <Box sx={{ display: mode === 'simple' ? 'block' : 'none' }}>
-          <SetAssignmentManager
-            tanks={roster.tanks}
-            healers={roster.healers}
-            onAssignSet={handleSetAssignment}
-            onUpdateUltimate={handleUltimateUpdate}
-            onUpdateHealerCP={handleHealerCPUpdate}
-          />
+          {showTanks && (
+            <SetAssignmentManager
+              tanks={roster.tanks}
+              healers={roster.healers}
+              onAssignSet={handleSetAssignment}
+              onUpdateUltimate={handleUltimateUpdate}
+              onUpdateHealerCP={handleHealerCPUpdate}
+            />
+          )}
         </Box>
 
         {/* Full Mode: Full Roster Details */}
@@ -2869,17 +2886,18 @@ export const RosterBuilderPage: React.FC = () => {
               </Box>
             </Box>
             <Stack spacing={2} mb={3}>
-              {roster.tanks.map((tank, i) => (
-                <TankCard
-                  key={tank.slotNumber}
-                  tankNum={i + 1}
-                  tank={tank}
-                  onChange={tankChangeCallbacks[i]}
-                  availableGroups={memoizedGroups}
-                  mode={mode}
-                  savedRosterId={savedRosterIdRef.current ?? undefined}
-                />
-              ))}
+              {showTanks &&
+                roster.tanks.map((tank, i) => (
+                  <TankCard
+                    key={tank.slotNumber}
+                    tankNum={i + 1}
+                    tank={tank}
+                    onChange={tankChangeCallbacks[i]}
+                    availableGroups={memoizedGroups}
+                    mode={mode}
+                    savedRosterId={savedRosterIdRef.current ?? undefined}
+                  />
+                ))}
             </Stack>
           </Box>
 
@@ -2956,18 +2974,19 @@ export const RosterBuilderPage: React.FC = () => {
               </Box>
             </Box>
             <Stack spacing={2} mb={3}>
-              {roster.healers.map((healer, i) => (
-                <HealerCard
-                  key={healer.slotNumber}
-                  healerNum={i + 1}
-                  healer={healer}
-                  onChange={healerChangeCallbacks[i]}
-                  availableGroups={memoizedGroups}
-                  usedBuffs={usedBuffs}
-                  mode={mode}
-                  savedRosterId={savedRosterIdRef.current ?? undefined}
-                />
-              ))}
+              {showHealers &&
+                roster.healers.map((healer, i) => (
+                  <HealerCard
+                    key={healer.slotNumber}
+                    healerNum={i + 1}
+                    healer={healer}
+                    onChange={healerChangeCallbacks[i]}
+                    availableGroups={memoizedGroups}
+                    usedBuffs={usedBuffs}
+                    mode={mode}
+                    savedRosterId={savedRosterIdRef.current ?? undefined}
+                  />
+                ))}
             </Stack>
           </Box>
 
@@ -3050,19 +3069,20 @@ export const RosterBuilderPage: React.FC = () => {
             >
               <SortableContext items={dpsSlotIds} strategy={verticalListSortingStrategy}>
                 <Stack spacing={1.5} mb={3}>
-                  {roster.dpsSlots.map((slot, index) => (
-                    <DPSSlotCard
-                      key={slot.slotNumber}
-                      slot={slot}
-                      slotIndex={index}
-                      availableGroups={memoizedGroups}
-                      onSlotChange={handleDPSSlotChange}
-                      onConvertToJail={handleConvertDPSToJail}
-                      onConvertToDPS={handleConvertJailToDPS}
-                      mode={mode}
-                      savedRosterId={savedRosterIdRef.current ?? undefined}
-                    />
-                  ))}
+                  {showDPS &&
+                    roster.dpsSlots.map((slot, index) => (
+                      <DPSSlotCard
+                        key={slot.slotNumber}
+                        slot={slot}
+                        slotIndex={index}
+                        availableGroups={memoizedGroups}
+                        onSlotChange={handleDPSSlotChange}
+                        onConvertToJail={handleConvertDPSToJail}
+                        onConvertToDPS={handleConvertJailToDPS}
+                        mode={mode}
+                        savedRosterId={savedRosterIdRef.current ?? undefined}
+                      />
+                    ))}
                 </Stack>
               </SortableContext>
             </DndContext>
