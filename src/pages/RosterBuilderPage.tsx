@@ -56,7 +56,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
@@ -924,11 +924,18 @@ export const RosterBuilderPage: React.FC = () => {
   );
 
   // ── Composition change handler ──
-  // Card-level LazyCardContent handles staggered Autocomplete mounting,
-  // so the parent just resizes immediately.
-  const handleCompositionChange = useCallback((newComp: RoleComposition) => {
-    setRoster((prev) => resizeRoster(prev, newComp));
-  }, []);
+  // The picker uses optimistic local state for instant number updates.
+  // startTransition defers the heavy roster resize so React doesn't block
+  // the main thread — the picker paints first, cards update later.
+  const [, startTransition] = useTransition();
+  const handleCompositionChange = useCallback(
+    (newComp: RoleComposition) => {
+      startTransition(() => {
+        setRoster((prev) => resizeRoster(prev, newComp));
+      });
+    },
+    [startTransition],
+  );
 
   // Drag and drop sensors
   const sensors = useSensors(
