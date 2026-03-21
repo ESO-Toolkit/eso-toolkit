@@ -12,7 +12,7 @@ import {
 } from '@mui/icons-material';
 import { Box, ButtonBase, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import type { RoleComposition } from '../types/roster';
 import { ROSTER_SIZE } from '../types/roster';
@@ -47,39 +47,52 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
     const isDark = theme.palette.mode === 'dark';
     const roleColors = isDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
 
+    // Optimistic local state — updates numbers instantly on click.
+    // The parent's onChange triggers the slow roster resize; when it completes,
+    // the composition prop updates and syncs back here.
+    const [local, setLocal] = useState(composition);
+    React.useEffect(() => {
+      setLocal(composition);
+    }, [composition]);
+
     const handleIncrement = useCallback(
       (role: 'tanks' | 'healers') => {
-        const newComp = { ...composition };
-        if (newComp.dps <= 0) return; // Can't take from DPS if none left
-        newComp[role] += 1;
-        newComp.dps -= 1;
-        onChange(newComp);
+        setLocal((prev) => {
+          if (prev.dps <= 0) return prev;
+          const next = { ...prev, [role]: prev[role] + 1, dps: prev.dps - 1 };
+          // Fire onChange async so the UI updates first
+          setTimeout(() => onChange(next), 0);
+          return next;
+        });
       },
-      [composition, onChange],
+      [onChange],
     );
 
     const handleDecrement = useCallback(
       (role: 'tanks' | 'healers') => {
-        const newComp = { ...composition };
-        if (newComp[role] <= 0) return;
-        newComp[role] -= 1;
-        newComp.dps += 1;
-        onChange(newComp);
+        setLocal((prev) => {
+          if (prev[role] <= 0) return prev;
+          const next = { ...prev, [role]: prev[role] - 1, dps: prev.dps + 1 };
+          setTimeout(() => onChange(next), 0);
+          return next;
+        });
       },
-      [composition, onChange],
+      [onChange],
     );
 
     const handlePreset = useCallback(
       (preset: CompositionPreset) => {
-        onChange({ ...preset.comp });
+        const next = { ...preset.comp };
+        setLocal(next);
+        setTimeout(() => onChange(next), 0);
       },
       [onChange],
     );
 
     const isPresetActive = (preset: CompositionPreset): boolean =>
-      composition.tanks === preset.comp.tanks &&
-      composition.healers === preset.comp.healers &&
-      composition.dps === preset.comp.dps;
+      local.tanks === preset.comp.tanks &&
+      local.healers === preset.comp.healers &&
+      local.dps === preset.comp.dps;
 
     const bgBase = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.03)';
     const borderBase = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)';
@@ -90,8 +103,8 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
       label: string,
       color: string,
     ): React.ReactNode => {
-      const count = composition[role];
-      const canIncrement = composition.dps > 0 && composition[role] < ROSTER_SIZE;
+      const count = local[role];
+      const canIncrement = local.dps > 0 && local[role] < ROSTER_SIZE;
       const canDecrement = count > 0;
 
       return (
@@ -237,7 +250,7 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
               fontFamily: '"Space Grotesk", monospace',
             }}
           >
-            {composition.dps}
+            {local.dps}
           </Typography>
         </Box>
 
