@@ -33,6 +33,7 @@ import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
 
 import { ExtraGearPicker } from './shared/extra-gear-picker';
 import { makeGlassSx, makeSectionBoxSx, makeSectionHeaderSx } from './shared/glassSx';
+import { LazyCardContent } from './shared/LazyCardContent';
 import {
   HEALER_5PIECE_OPTIONS,
   HEALER_MONSTER_OPTIONS,
@@ -174,409 +175,411 @@ export const HealerCard = React.memo<HealerCardProps>(
               </Box>
             </Box>
 
-            {/* Equipment */}
-            <Box
-              sx={{
-                p: 1.25,
-                borderRadius: '10px',
-                backgroundColor: healerIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
-                border: healerIsDark
-                  ? '1px solid rgba(255,255,255,0.04)'
-                  : '1px solid rgba(0,0,0,0.04)',
-              }}
-            >
-              <Typography
+            {/* Equipment — lazy-mounted to avoid MUI Autocomplete forced reflows */}
+            <LazyCardContent>
+              <Box
                 sx={{
-                  fontSize: '0.65rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  color: healerIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                  mb: 1,
+                  p: 1.25,
+                  borderRadius: '10px',
+                  backgroundColor: healerIsDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+                  border: healerIsDark
+                    ? '1px solid rgba(255,255,255,0.04)'
+                    : '1px solid rgba(0,0,0,0.04)',
                 }}
-              >
-                Equipment
-              </Typography>
-              <Stack spacing={1.5}>
-                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                    <Autocomplete
-                      freeSolo
-                      size="small"
-                      options={HEALER_5PIECE_OPTIONS}
-                      value={healer.set1 ? getSetDisplayName(healer.set1) : ''}
-                      onChange={(_, value) =>
-                        onChange({ set1: value ? findSetIdByName(value) : undefined })
-                      }
-                      groupBy={(option) => {
-                        const setId = findSetIdByName(option);
-                        if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
-                        if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
-                        return 'Other';
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          size="small"
-                          label="Primary Set (Body)"
-                          placeholder="e.g., Stone-Talker's Oath"
-                          sx={glassSx}
-                          InputProps={{
-                            ...params.InputProps,
-                          }}
-                        />
-                      )}
-                      renderOption={(props, option) => <li {...props}>{option}</li>}
-                    />
-                  </Box>
-                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                    <Autocomplete
-                      freeSolo
-                      size="small"
-                      options={HEALER_5PIECE_OPTIONS}
-                      value={healer.set2 ? getSetDisplayName(healer.set2) : ''}
-                      onChange={(_, value) =>
-                        onChange({ set2: value ? findSetIdByName(value) : undefined })
-                      }
-                      groupBy={(option) => {
-                        const setId = findSetIdByName(option);
-                        if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
-                        if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
-                        return 'Other';
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          size="small"
-                          label="Secondary Set (Jewelry)"
-                          placeholder="e.g., Worm's Raiment"
-                          sx={glassSx}
-                          InputProps={{
-                            ...params.InputProps,
-                          }}
-                        />
-                      )}
-                      renderOption={(props, option) => <li {...props}>{option}</li>}
-                    />
-                  </Box>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                    <Autocomplete
-                      freeSolo
-                      size="small"
-                      options={HEALER_MONSTER_OPTIONS}
-                      value={healer.monsterSet ? getSetDisplayName(healer.monsterSet) : ''}
-                      onChange={(_, value) =>
-                        onChange({
-                          monsterSet: value ? findSetIdByName(value) : undefined,
-                        })
-                      }
-                      groupBy={(_option) => {
-                        return 'Monster Sets';
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          size="small"
-                          label="Monster/Mythic Set"
-                          placeholder="e.g., Symphony of Blades"
-                          sx={glassSx}
-                          InputProps={{
-                            ...params.InputProps,
-                          }}
-                        />
-                      )}
-                      renderOption={(props, option) => <li {...props}>{option}</li>}
-                    />
-                  </Box>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                    <FormControl
-                      fullWidth
-                      size="small"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: '10px',
-                          backgroundColor: healerIsDark
-                            ? 'rgba(255,255,255,0.03)'
-                            : 'rgba(0,0,0,0.02)',
-                          '& fieldset': {
-                            borderColor: healerIsDark
-                              ? 'rgba(255,255,255,0.08)'
-                              : 'rgba(0,0,0,0.12)',
-                          },
-                          '&:hover fieldset': {
-                            borderColor: healerIsDark
-                              ? 'rgba(255,255,255,0.15)'
-                              : 'rgba(0,0,0,0.2)',
-                          },
-                        },
-                      }}
-                    >
-                      <InputLabel>Champion Points</InputLabel>
-                      <Select
-                        value={healer.healerBuff || ''}
-                        onChange={(e) =>
-                          onChange({
-                            healerBuff: (e.target.value as HealerBuff) || null,
-                          })
-                        }
-                        label="Champion Points"
-                        renderValue={(value) => (
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            {getHealerBuffIcon(value)}
-                            {value || <em>None</em>}
-                          </Box>
-                        )}
-                      >
-                        <MenuItem value="">
-                          <em>None</em>
-                        </MenuItem>
-                        {availableBuffs.map((buff) => (
-                          <MenuItem key={buff} value={buff}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              {getHealerBuffIcon(buff)}
-                              {buff}
-                            </Box>
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Box>
-                  <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                    <Autocomplete
-                      freeSolo
-                      size="small"
-                      options={availableUltimates}
-                      value={healer.ultimate || null}
-                      onChange={(_event, newValue) =>
-                        onChange({ ultimate: newValue as string | null })
-                      }
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          size="small"
-                          label="Ultimate"
-                          placeholder="Select or type custom ultimate"
-                          sx={glassSx}
-                        />
-                      )}
-                      renderOption={(props, option) => (
-                        <li {...props} key={option}>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            {getUltimateIcon(option)}
-                            {option}
-                          </Box>
-                        </li>
-                      )}
-                    />
-                  </Box>
-                </Box>
-              </Stack>
-            </Box>
-
-            {/* Compatibility Warnings */}
-            {(() => {
-              const warnings = validateCompatibility(
-                [
-                  healer.set1 ? getSetDisplayName(healer.set1) : undefined,
-                  healer.set2 ? getSetDisplayName(healer.set2) : undefined,
-                  healer.monsterSet ? getSetDisplayName(healer.monsterSet) : undefined,
-                  ...(healer.additionalSets || []).map((id) => getSetDisplayName(id)),
-                ].filter((s): s is string => s !== undefined),
-                healer.ultimate,
-              );
-              if (warnings.length === 0) return null;
-              return (
-                <Stack spacing={1}>
-                  {warnings.map((warning, index) => (
-                    <Alert
-                      key={index}
-                      severity="warning"
-                      sx={{
-                        py: 0.5,
-                        borderRadius: '8px',
-                        backgroundColor: 'rgba(255,167,38,0.08)',
-                        border: '1px solid rgba(255,167,38,0.2)',
-                      }}
-                    >
-                      {warning}
-                    </Alert>
-                  ))}
-                </Stack>
-              );
-            })()}
-
-            {/* Advanced Options - Collapsible */}
-            <Accordion
-              elevation={0}
-              disableGutters
-              sx={{
-                mt: 2,
-                borderRadius: '10px !important',
-                backgroundColor: healerIsDark ? 'rgba(255,255,255,0.01)' : 'rgba(0,0,0,0.008)',
-                border: healerIsDark
-                  ? `1px solid ${healerRoleColors.healer}15`
-                  : `1px solid ${healerRoleColors.healer}12`,
-                '&:before': { display: 'none' },
-                '&.Mui-expanded': { margin: 0, marginTop: 2 },
-                transition: 'border-color 0.2s ease',
-                '&:hover': {
-                  borderColor: healerIsDark
-                    ? `${healerRoleColors.healer}28`
-                    : `${healerRoleColors.healer}20`,
-                },
-              }}
-            >
-              <AccordionSummary
-                expandIcon={
-                  <ExpandMoreIcon
-                    sx={{
-                      fontSize: 18,
-                      color: healerIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
-                    }}
-                  />
-                }
-                sx={{ px: 1.5, minHeight: 40, '&.Mui-expanded': { minHeight: 40 } }}
               >
                 <Typography
                   sx={{
-                    fontSize: 11,
+                    fontSize: '0.65rem',
                     fontWeight: 600,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    letterSpacing: 0.5,
-                    color: healerIsDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    color: healerIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                    mb: 1,
                   }}
                 >
-                  Advanced Options
+                  Equipment
                 </Typography>
-              </AccordionSummary>
-              <AccordionDetails sx={{ px: 1.5, pt: 1, pb: 1.5 }}>
                 <Stack spacing={1.5}>
-                  {/* ── Assignment ─────────────────────────── */}
-                  <Box sx={makeSectionBoxSx(healerIsDark)}>
-                    <Typography sx={makeSectionHeaderSx(healerIsDark)}>Assignment</Typography>
-                    <Stack spacing={1.25}>
-                      <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                        <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
+                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                    <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                      <Autocomplete
+                        freeSolo
+                        size="small"
+                        options={HEALER_5PIECE_OPTIONS}
+                        value={healer.set1 ? getSetDisplayName(healer.set1) : ''}
+                        onChange={(_, value) =>
+                          onChange({ set1: value ? findSetIdByName(value) : undefined })
+                        }
+                        groupBy={(option) => {
+                          const setId = findSetIdByName(option);
+                          if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
+                          if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
+                          return 'Other';
+                        }}
+                        renderInput={(params) => (
                           <TextField
-                            fullWidth
+                            {...params}
                             size="small"
-                            label="Role Label"
-                            placeholder={`H${healerNum}`}
-                            value={healer.roleLabel || ''}
-                            onChange={(e) => onChange({ roleLabel: e.target.value })}
+                            label="Primary Set (Body)"
+                            placeholder="e.g., Stone-Talker's Oath"
                             sx={glassSx}
+                            InputProps={{
+                              ...params.InputProps,
+                            }}
                           />
-                        </Box>
-                        <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
+                        )}
+                        renderOption={(props, option) => <li {...props}>{option}</li>}
+                      />
+                    </Box>
+                    <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                      <Autocomplete
+                        freeSolo
+                        size="small"
+                        options={HEALER_5PIECE_OPTIONS}
+                        value={healer.set2 ? getSetDisplayName(healer.set2) : ''}
+                        onChange={(_, value) =>
+                          onChange({ set2: value ? findSetIdByName(value) : undefined })
+                        }
+                        groupBy={(option) => {
+                          const setId = findSetIdByName(option);
+                          if (setId && isHealer5PieceSet(setId)) return 'Healer Sets';
+                          if (setId && isFlexible5PieceSet(setId)) return 'Hybrid Sets';
+                          return 'Other';
+                        }}
+                        renderInput={(params) => (
                           <TextField
-                            fullWidth
+                            {...params}
                             size="small"
-                            type="number"
-                            label="Player #"
-                            value={healer.playerNumber || ''}
-                            onChange={(e) =>
-                              onChange({
-                                playerNumber: e.target.value || undefined,
-                              })
-                            }
+                            label="Secondary Set (Jewelry)"
+                            placeholder="e.g., Worm's Raiment"
                             sx={glassSx}
+                            InputProps={{
+                              ...params.InputProps,
+                            }}
                           />
-                        </Box>
-                        <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
-                          <Autocomplete
-                            multiple
-                            freeSolo
+                        )}
+                        renderOption={(props, option) => <li {...props}>{option}</li>}
+                      />
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                    <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                      <Autocomplete
+                        freeSolo
+                        size="small"
+                        options={HEALER_MONSTER_OPTIONS}
+                        value={healer.monsterSet ? getSetDisplayName(healer.monsterSet) : ''}
+                        onChange={(_, value) =>
+                          onChange({
+                            monsterSet: value ? findSetIdByName(value) : undefined,
+                          })
+                        }
+                        groupBy={(_option) => {
+                          return 'Monster Sets';
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
                             size="small"
-                            options={[]}
-                            value={healer.labels || []}
-                            onChange={(_, value) => onChange({ labels: value })}
-                            renderTags={(value, getTagProps) =>
-                              value.map((option, index) => (
-                                <Chip
-                                  {...getTagProps({ index })}
-                                  key={option}
-                                  label={option}
-                                  size="small"
-                                  sx={{
-                                    borderRadius: '6px',
-                                    backgroundColor: healerIsDark
-                                      ? 'rgba(255,255,255,0.06)'
-                                      : 'rgba(0,0,0,0.05)',
-                                    border: healerIsDark
-                                      ? '1px solid rgba(255,255,255,0.1)'
-                                      : '1px solid rgba(0,0,0,0.1)',
-                                    fontWeight: 500,
-                                    fontSize: '0.75rem',
-                                  }}
-                                />
-                              ))
-                            }
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                size="small"
-                                label="Tags"
-                                placeholder="Add tags"
-                                sx={glassSx}
-                              />
-                            )}
+                            label="Monster/Mythic Set"
+                            placeholder="e.g., Symphony of Blades"
+                            sx={glassSx}
+                            InputProps={{
+                              ...params.InputProps,
+                            }}
                           />
-                        </Box>
-                      </Box>
-                      <TextField
+                        )}
+                        renderOption={(props, option) => <li {...props}>{option}</li>}
+                      />
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                    <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                      <FormControl
                         fullWidth
                         size="small"
-                        multiline
-                        minRows={1}
-                        maxRows={4}
-                        label="Role Notes"
-                        placeholder="e.g., Main healer, ramp healing, shield uptime focus"
-                        value={healer.roleNotes || ''}
-                        onChange={(e) => onChange({ roleNotes: e.target.value })}
-                        sx={glassSx}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '10px',
+                            backgroundColor: healerIsDark
+                              ? 'rgba(255,255,255,0.03)'
+                              : 'rgba(0,0,0,0.02)',
+                            '& fieldset': {
+                              borderColor: healerIsDark
+                                ? 'rgba(255,255,255,0.08)'
+                                : 'rgba(0,0,0,0.12)',
+                            },
+                            '&:hover fieldset': {
+                              borderColor: healerIsDark
+                                ? 'rgba(255,255,255,0.15)'
+                                : 'rgba(0,0,0,0.2)',
+                            },
+                          },
+                        }}
+                      >
+                        <InputLabel>Champion Points</InputLabel>
+                        <Select
+                          value={healer.healerBuff || ''}
+                          onChange={(e) =>
+                            onChange({
+                              healerBuff: (e.target.value as HealerBuff) || null,
+                            })
+                          }
+                          label="Champion Points"
+                          renderValue={(value) => (
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              {getHealerBuffIcon(value)}
+                              {value || <em>None</em>}
+                            </Box>
+                          )}
+                        >
+                          <MenuItem value="">
+                            <em>None</em>
+                          </MenuItem>
+                          {availableBuffs.map((buff) => (
+                            <MenuItem key={buff} value={buff}>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {getHealerBuffIcon(buff)}
+                                {buff}
+                              </Box>
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Box>
+                    <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
+                      <Autocomplete
+                        freeSolo
+                        size="small"
+                        options={availableUltimates}
+                        value={healer.ultimate || null}
+                        onChange={(_event, newValue) =>
+                          onChange({ ultimate: newValue as string | null })
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            size="small"
+                            label="Ultimate"
+                            placeholder="Select or type custom ultimate"
+                            sx={glassSx}
+                          />
+                        )}
+                        renderOption={(props, option) => (
+                          <li {...props} key={option}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              {getUltimateIcon(option)}
+                              {option}
+                            </Box>
+                          </li>
+                        )}
                       />
-                    </Stack>
-                  </Box>
-
-                  {/* ── Build Requirements ─────────────────── */}
-                  <Box sx={makeSectionBoxSx(healerIsDark)}>
-                    <Typography sx={makeSectionHeaderSx(healerIsDark)}>
-                      Build Requirements
-                    </Typography>
-                    <Stack spacing={1.5}>
-                      <ExtraGearPicker
-                        value={healer.additionalSets || []}
-                        onChange={(additionalSets) => onChange({ additionalSets })}
-                      />
-                      <SkillLinePickerGroup
-                        value={healer.skillLines}
-                        onChange={(skillLines) => onChange({ skillLines })}
-                      />
-                    </Stack>
-                  </Box>
-
-                  {/* ── Notes ──────────────────────────────── */}
-                  <Box sx={makeSectionBoxSx(healerIsDark)}>
-                    <Typography sx={makeSectionHeaderSx(healerIsDark)}>Notes</Typography>
-                    <TextField
-                      fullWidth
-                      multiline
-                      size="small"
-                      minRows={2}
-                      maxRows={6}
-                      placeholder="General notes, fight-specific instructions, etc."
-                      value={healer.notes || ''}
-                      onChange={(e) => onChange({ notes: e.target.value })}
-                      sx={glassSx}
-                    />
+                    </Box>
                   </Box>
                 </Stack>
-              </AccordionDetails>
-            </Accordion>
+              </Box>
+
+              {/* Compatibility Warnings */}
+              {(() => {
+                const warnings = validateCompatibility(
+                  [
+                    healer.set1 ? getSetDisplayName(healer.set1) : undefined,
+                    healer.set2 ? getSetDisplayName(healer.set2) : undefined,
+                    healer.monsterSet ? getSetDisplayName(healer.monsterSet) : undefined,
+                    ...(healer.additionalSets || []).map((id) => getSetDisplayName(id)),
+                  ].filter((s): s is string => s !== undefined),
+                  healer.ultimate,
+                );
+                if (warnings.length === 0) return null;
+                return (
+                  <Stack spacing={1}>
+                    {warnings.map((warning, index) => (
+                      <Alert
+                        key={index}
+                        severity="warning"
+                        sx={{
+                          py: 0.5,
+                          borderRadius: '8px',
+                          backgroundColor: 'rgba(255,167,38,0.08)',
+                          border: '1px solid rgba(255,167,38,0.2)',
+                        }}
+                      >
+                        {warning}
+                      </Alert>
+                    ))}
+                  </Stack>
+                );
+              })()}
+
+              {/* Advanced Options - Collapsible */}
+              <Accordion
+                elevation={0}
+                disableGutters
+                sx={{
+                  mt: 2,
+                  borderRadius: '10px !important',
+                  backgroundColor: healerIsDark ? 'rgba(255,255,255,0.01)' : 'rgba(0,0,0,0.008)',
+                  border: healerIsDark
+                    ? `1px solid ${healerRoleColors.healer}15`
+                    : `1px solid ${healerRoleColors.healer}12`,
+                  '&:before': { display: 'none' },
+                  '&.Mui-expanded': { margin: 0, marginTop: 2 },
+                  transition: 'border-color 0.2s ease',
+                  '&:hover': {
+                    borderColor: healerIsDark
+                      ? `${healerRoleColors.healer}28`
+                      : `${healerRoleColors.healer}20`,
+                  },
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={
+                    <ExpandMoreIcon
+                      sx={{
+                        fontSize: 18,
+                        color: healerIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
+                      }}
+                    />
+                  }
+                  sx={{ px: 1.5, minHeight: 40, '&.Mui-expanded': { minHeight: 40 } }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      letterSpacing: 0.5,
+                      color: healerIsDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                    }}
+                  >
+                    Advanced Options
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={{ px: 1.5, pt: 1, pb: 1.5 }}>
+                  <Stack spacing={1.5}>
+                    {/* ── Assignment ─────────────────────────── */}
+                    <Box sx={makeSectionBoxSx(healerIsDark)}>
+                      <Typography sx={makeSectionHeaderSx(healerIsDark)}>Assignment</Typography>
+                      <Stack spacing={1.25}>
+                        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                          <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Role Label"
+                              placeholder={`H${healerNum}`}
+                              value={healer.roleLabel || ''}
+                              onChange={(e) => onChange({ roleLabel: e.target.value })}
+                              sx={glassSx}
+                            />
+                          </Box>
+                          <Box sx={{ flex: '1 1 15%', minWidth: 80 }}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              type="number"
+                              label="Player #"
+                              value={healer.playerNumber || ''}
+                              onChange={(e) =>
+                                onChange({
+                                  playerNumber: e.target.value || undefined,
+                                })
+                              }
+                              sx={glassSx}
+                            />
+                          </Box>
+                          <Box sx={{ flex: '1 1 40%', minWidth: 200 }}>
+                            <Autocomplete
+                              multiple
+                              freeSolo
+                              size="small"
+                              options={[]}
+                              value={healer.labels || []}
+                              onChange={(_, value) => onChange({ labels: value })}
+                              renderTags={(value, getTagProps) =>
+                                value.map((option, index) => (
+                                  <Chip
+                                    {...getTagProps({ index })}
+                                    key={option}
+                                    label={option}
+                                    size="small"
+                                    sx={{
+                                      borderRadius: '6px',
+                                      backgroundColor: healerIsDark
+                                        ? 'rgba(255,255,255,0.06)'
+                                        : 'rgba(0,0,0,0.05)',
+                                      border: healerIsDark
+                                        ? '1px solid rgba(255,255,255,0.1)'
+                                        : '1px solid rgba(0,0,0,0.1)',
+                                      fontWeight: 500,
+                                      fontSize: '0.75rem',
+                                    }}
+                                  />
+                                ))
+                              }
+                              renderInput={(params) => (
+                                <TextField
+                                  {...params}
+                                  size="small"
+                                  label="Tags"
+                                  placeholder="Add tags"
+                                  sx={glassSx}
+                                />
+                              )}
+                            />
+                          </Box>
+                        </Box>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          multiline
+                          minRows={1}
+                          maxRows={4}
+                          label="Role Notes"
+                          placeholder="e.g., Main healer, ramp healing, shield uptime focus"
+                          value={healer.roleNotes || ''}
+                          onChange={(e) => onChange({ roleNotes: e.target.value })}
+                          sx={glassSx}
+                        />
+                      </Stack>
+                    </Box>
+
+                    {/* ── Build Requirements ─────────────────── */}
+                    <Box sx={makeSectionBoxSx(healerIsDark)}>
+                      <Typography sx={makeSectionHeaderSx(healerIsDark)}>
+                        Build Requirements
+                      </Typography>
+                      <Stack spacing={1.5}>
+                        <ExtraGearPicker
+                          value={healer.additionalSets || []}
+                          onChange={(additionalSets) => onChange({ additionalSets })}
+                        />
+                        <SkillLinePickerGroup
+                          value={healer.skillLines}
+                          onChange={(skillLines) => onChange({ skillLines })}
+                        />
+                      </Stack>
+                    </Box>
+
+                    {/* ── Notes ──────────────────────────────── */}
+                    <Box sx={makeSectionBoxSx(healerIsDark)}>
+                      <Typography sx={makeSectionHeaderSx(healerIsDark)}>Notes</Typography>
+                      <TextField
+                        fullWidth
+                        multiline
+                        size="small"
+                        minRows={2}
+                        maxRows={6}
+                        placeholder="General notes, fight-specific instructions, etc."
+                        value={healer.notes || ''}
+                        onChange={(e) => onChange({ notes: e.target.value })}
+                        sx={glassSx}
+                      />
+                    </Box>
+                  </Stack>
+                </AccordionDetails>
+              </Accordion>
+            </LazyCardContent>
 
             {mode === 'full' && (
               <SlotFullModePanel
