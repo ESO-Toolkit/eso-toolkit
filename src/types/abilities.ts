@@ -426,6 +426,300 @@ export enum KnownAbilities {
 
   // Necromancer abilities used for filtering
   UNNERVING_BONEYARD = 117815,
+
+  // ========================================
+  // LIGHT / HEAVY ATTACKS (by weapon type)
+  // ========================================
+
+  // Generic
+  HEAVY_ATTACK_GENERIC = 14096,
+
+  // One Handed
+  LIGHT_ATTACK_ONE_HANDED = 15435,
+  HEAVY_ATTACK_ONE_HANDED = 15279,
+  HEAVY_ATTACK_ONE_HANDED_2 = 15282,
+  HEAVY_ATTACK_ONE_HANDED_3 = 15829,
+  HEAVY_ATTACK_ONE_HANDED_RESOURCE = 60759,
+
+  // Two Handed
+  LIGHT_ATTACK_TWO_HANDED = 16037,
+  HEAVY_ATTACK_TWO_HANDED = 16041,
+  HEAVY_ATTACK_TWO_HANDED_2 = 17162,
+  HEAVY_ATTACK_TWO_HANDED_3 = 17163,
+  HEAVY_ATTACK_TWO_HANDED_RESOURCE = 60757,
+
+  // Dual Wield
+  LIGHT_ATTACK_DUAL_WIELD = 16499,
+  HEAVY_ATTACK_DUAL_WIELD = 16420,
+  HEAVY_ATTACK_DUAL_WIELD_2 = 17169,
+  HEAVY_ATTACK_DUAL_WIELD_3 = 17170,
+  HEAVY_ATTACK_DUAL_WIELD_4 = 18622,
+  HEAVY_ATTACK_DUAL_WIELD_RESOURCE = 60758,
+
+  // Bow
+  LIGHT_ATTACK_BOW = 16688,
+  HEAVY_ATTACK_BOW = 16691,
+  HEAVY_ATTACK_BOW_2 = 17173,
+  HEAVY_ATTACK_BOW_3 = 17174,
+  HEAVY_ATTACK_BOW_RESOURCE = 60761,
+
+  // Inferno Staff
+  LIGHT_ATTACK_INFERNO = 16165,
+  HEAVY_ATTACK_INFERNO = 15383,
+  HEAVY_ATTACK_INFERNO_2 = 15385,
+  HEAVY_ATTACK_INFERNO_3 = 16321,
+  HEAVY_ATTACK_INFERNO_RESOURCE = 60763,
+
+  // Ice Staff
+  LIGHT_ATTACK_ICE = 16277,
+  HEAVY_ATTACK_ICE = 16261,
+  HEAVY_ATTACK_ICE_2 = 18405,
+  HEAVY_ATTACK_ICE_3 = 18406,
+  HEAVY_ATTACK_ICE_RESOURCE = 60762,
+
+  // Lightning Staff
+  LIGHT_ATTACK_LIGHTNING = 18350,
+  HEAVY_ATTACK_LIGHTNING = 18396,
+  HEAVY_ATTACK_LIGHTNING_2 = 19277,
+  HEAVY_ATTACK_LIGHTNING_RESOURCE = 60764,
+
+  // Restoration Staff
+  LIGHT_ATTACK_RESTORATION = 16145,
+  HEAVY_ATTACK_RESTORATION = 16212,
+  HEAVY_ATTACK_RESTORATION_2 = 32760,
+  HEAVY_ATTACK_RESTORATION_3 = 67022,
+
+  // Unarmed
+  LIGHT_ATTACK_UNARMED = 23604,
+
+  // Heavy Attack Damage Bonus (resource restore component)
+  HEAVY_ATTACK_DAMAGE_BONUS = 17694,
+  HEAVY_ATTACK_DAMAGE_BONUS_2 = 17700,
+  HEAVY_ATTACK_DAMAGE_BONUS_3 = 17701,
+  HEAVY_ATTACK_DAMAGE_BONUS_4 = 18404,
+  HEAVY_ATTACK_DAMAGE_BONUS_5 = 23429,
+
+  // ========================================
+  // SCRIBED SKILL SUB-ABILITIES
+  // ========================================
+  // Sub-effect IDs for grimoire skills (damage ticks, buff applications, healing components).
+  // The base grimoire skill IDs are defined above (BANNER_BEARER, TRAMPLE, etc.).
+
+  // Vault (Bow grimoire)
+  SUNDERING_VAULT = 214960,
+  REMEDYING_VAULT = 214987,
+  VAULT_FATIGUE = 214997,
+  HEALING_VAULT = 217777,
+
+  // Wield Soul (Soul Magic 1 grimoire)
+  SUNDERING_SOUL = 215731,
+  HEALING_SOUL = 216813,
+  POTENT_SOUL = 216940,
+  REMEDYING_SOUL = 216941,
+  LEASHING_SOUL = 217784,
+  MAGICAL_SOUL = 219780,
+  DAZING_SOUL = 221930,
+
+  // Shield Throw (One Hand grimoire)
+  PARRYING_THROW = 217089,
+  SWIFT_THROW = 217091,
+  MAGICAL_THROW = 217808,
+  GOADING_THROW = 222966,
+
+  // Mender's Bond (Restoration Staff grimoire)
+  WARDING_BOND = 217279,
+  REMEDYING_BOND = 217298,
+  DEFENSIVE_BOND = 217300,
+  MENDERS_BOND_BUFF = 219951,
+  WARDING_BOND_HEAL = 243686,
+
+  // Traveling Knife (Dual Wield grimoire)
+  MISERY_KNIFE = 217353,
+  OPPORTUNISTIC_KNIFE = 217358,
+  SUNDERING_KNIFE = 217359,
+  TRAVELING_KNIFE_BUFF = 217372,
+  TRAVELING_KNIFE_2 = 217474,
+  TRAVELING_KNIFE_3 = 217481,
+  SUNDERING_KNIFE_DAMAGE = 217872,
+
+  // Soul Burst (Soul Magic 2 grimoire)
+  WARDING_BURST = 217460,
+  HEALING_BURST = 217462,
+  SUNDERING_BURST = 217465,
+  CRUEL_BURST = 217475,
+  SOUL_BURST_BUFFS = 217522,
+  LEASHING_BURST = 217979,
+
+  // Ulfsild's Contingency (Mage's Guild grimoire)
+  MAGICAL_CONTINGENCY = 217605,
+  WARDING_CONTINGENCY = 217608,
+  LINGERING_CONTINGENCY = 217621,
+  REMEDYING_CONTINGENCY = 217652,
+  TENACIOUS_CONTINGENCY = 217654,
+  ULFSILDS_CONTINGENCY_2 = 222285,
+  ULFSILDS_CONTINGENCY_3 = 240150,
+
+  // Torchbearer (Fighter's Guild grimoire)
+  HEALING_TORCH = 217607,
+  TENACIOUS_TORCH = 217649,
+  TORCHBEARER_BUFF = 219108,
+  HEROIC_TORCH = 220531,
+  HEROIC_TORCH_2 = 223292,
+
+  // Trample (Assault grimoire)
+  TRAMPLE_BUFF = 217674,
+  SUNDERING_TRAMPLE = 217679,
+  MAGICAL_TRAMPLE = 217682,
+  LINGERING_TRAMPLE = 217688,
+  SWIFT_TRAMPLE = 217696,
+  SNARING_TRAMPLE = 217697,
+  SUNDERING_TRAMPLE_2 = 220541,
+  MAGICAL_TRAMPLE_2 = 220542,
+  LINGERING_TRAMPLE_2 = 220739,
+
+  // Banner Bearer (Support grimoire)
+  SHATTERING_BANNER = 227004,
+  BANNERMAN = 227030,
+  REMEDYING_BANNER = 227066,
+  CHARGING_BANNER = 227082,
+  BANNER_BEARER_BUFF = 227085,
+  ARCANISTS_BANNER = 227116,
+  BANNERMAN_2 = 227120,
+  BANNER_BEARER_2 = 227600,
+  BANNER_BEARER_3 = 239692,
+  SHOCKING_BANNER_2 = 252143,
+
+  // Scribing buff application IDs
+  SCRIBING_MAJOR_PROPHECY = 217341,
+  SCRIBING_MAJOR_SAVAGERY = 217360,
+  SCRIBING_MINOR_MAIM = 217405,
+  SCRIBING_MINOR_RESOLVE = 217625,
+  SCRIBING_MINOR_INTELLECT = 217661,
+  SCRIBING_MINOR_ENDURANCE = 217662,
+  SCRIBING_MAJOR_PROPHECY_TRAMPLE = 217673,
+  SCRIBING_MAJOR_PROPHECY_BURST = 218001,
+  SCRIBING_MAJOR_SAVAGERY_BURST = 218004,
+  SCRIBING_MINOR_ENDURANCE_BANNER = 227123,
+
+  // ========================================
+  // GEAR SET PROC ABILITY IDs
+  // ========================================
+  // Ability IDs for gear set proc effects (distinct from KnownSetIDs which are set IDs).
+  // These IDs appear in combat log events when sets trigger.
+
+  // Roar of Alkosh (debuff 102094 and AOE 75752 already tracked above)
+  ROAR_OF_ALKOSH_TRIGGER = 75751,
+  ROAR_OF_ALKOSH_DAMAGE = 76667,
+  ROAR_OF_ALKOSH_MISS = 78835,
+  ROAR_OF_ALKOSH_ALT = 120018,
+
+  // Rage of Alkosh (separate set from Roar)
+  RAGE_OF_ALKOSH_DAMAGE = 116962,
+  RAGE_OF_ALKOSH_BUFF = 116965,
+  RAGE_OF_ALKOSH_DAMAGE_2 = 116971,
+
+  // Tremorscale (debuff 80866 already tracked above)
+  TREMORSCALE_TRIGGER = 80513,
+  TREMORSCALE_DAMAGE = 80865,
+
+  // Pillar of Nirn
+  PILLAR_OF_NIRN_DOT = 97712,
+  PILLAR_OF_NIRN_PROC = 97716,
+  PILLAR_OF_NIRN_DOT_2 = 97743,
+
+  // Zaan
+  ZAAN_BEAM = 102125,
+
+  // Tzogvin's Warband
+  TZOGVINS_WARBAND_STACKS = 116734,
+
+  // Azureblight Reaper (multiple IDs across patches)
+  AZUREBLIGHT_REAPER_PROC = 126629,
+  AZUREBLIGHT_REAPER_PROC_2 = 126634,
+  AZUREBLIGHT_REAPER_PROC_3 = 204981,
+  AZUREBLIGHT_REAPER_PROC_4 = 220750,
+  AZUREBLIGHT_REAPER_PROC_5 = 234185,
+
+  // Way of Martial Knowledge
+  WAY_OF_MARTIAL_KNOWLEDGE_BUFF = 52704,
+  WAY_OF_MARTIAL_KNOWLEDGE_BUFF_2 = 127070,
+
+  // Vicious Serpent
+  VICIOUS_SERPENT_PROC = 61440,
+
+  // War Machine
+  WAR_MACHINE_BUFF = 93441,
+
+  // Roaring Opportunist
+  ROARING_OPPORTUNIST_BUFF = 135920,
+  ROARING_OPPORTUNIST_COOLDOWN = 135924,
+
+  // Encratis's Behemoth
+  ENCRATIS_BEHEMOTH_AURA = 150975,
+
+  // Bahsei's Mania
+  BAHSEIS_MANIA_PASSIVE = 154691,
+
+  // Sul-Xan's Torment
+  SUL_XAN_TORMENT_PROC = 154716,
+  SUL_XAN_SOULBOUND = 154737,
+  SUL_XAN_TORMENT_PROC_2 = 157738,
+
+  // Harpooner's Wading Kilt
+  HARPOONERS_KILT_STACKS = 155149,
+
+  // Crimson Oath's Rive (debuff 159288 already tracked above)
+  CRIMSON_OATHS_RIVE_PROC = 159287,
+  CRIMSON_OATHS_RIVE_PROC_2 = 159291,
+
+  // Aegis Caller
+  AEGIS_CALLER_PROC = 133490,
+
+  // Coral Riptide / Coral Slam
+  CORAL_SLAM_DAMAGE = 163987,
+  CORAL_RIPTIDE_BUFF = 172646,
+
+  // Whorl of the Depths
+  WHORL_OF_THE_DEPTHS_BUFF = 172670,
+  WHORL_OF_THE_DEPTHS_TICK = 172671,
+
+  // Chakram of Destiny
+  CHAKRAM_OF_DESTINY_PROC = 186208,
+  CHAKRAM_OF_DESTINY_PROC_2 = 194237,
+
+  // Ansuul's Torment
+  ANSUULS_TORMENT_PROC = 194100,
+  ANSUULS_TORMENT_PROC_2 = 194105,
+
+  // Tide-Born Wildstalker
+  TIDEBORN_WILDSTALKER_PROC = 240281,
+
+  // ========================================
+  // WEAPON ENCHANT ABILITY IDs
+  // ========================================
+
+  // Weakening (reduces target weapon/spell damage)
+  WEAKENING_ENCHANT = 17945,
+
+  // Absorb (generic resource drain)
+  ABSORB_ENCHANT = 45522,
+
+  // Absorb Magicka
+  ABSORB_MAGICKA = 46743,
+  ABSORB_MAGICKA_2 = 46744,
+
+  // Absorb Stamina
+  ABSORB_STAMINA = 46746,
+  ABSORB_STAMINA_2 = 46747,
+
+  // Crusher (alternate ID — canonical CRUSHER = 17906 defined above)
+  CRUSHER_ALT = 120007,
+
+  // Absorbed (enchant debuff on target)
+  ABSORBED_DEBUFF = 140265,
+
+  // Soul Crusher (arena weapon enchant variant)
+  SOUL_CRUSHER = 153443,
 }
 
 /**
@@ -1059,24 +1353,28 @@ export const GREEN_CHAMPION_POINTS = Object.freeze(
 );
 
 // Food Buffs
-export const TRI_STAT_FOOD = Object.freeze(new Set([68411, 68411, 61218, 127596]));
+export const TRI_STAT_FOOD = Object.freeze(
+  new Set([68411, 61218, 84734, 100487, 107793, 127595, 127596]),
+);
 export const HEALTH_AND_REGEN_FOOD = Object.freeze(
-  new Set([89971, 72824, 61322, 66132, 66137, 66586, 66590, 66594, 89953, 89954, 89939]),
-); // Added: Jester foods with regen
+  new Set([89971, 72824, 61322, 66132, 66137, 66586, 66590, 66594, 89953, 89954, 89939, 73553]),
+); // Added: Jester foods with regen, Unique Food: H All Reg
 export const HEALTH_FOOD = Object.freeze(
   new Set([84732, 84733, 89973, 17407, 61259, 66125, 66551, 72957, 72960, 72962]),
 );
 export const MAGICKA_FOOD = Object.freeze(
-  new Set([89972, 84720, 61260, 66128, 66568, 84678, 85486, 89956, 61325, 61326, 89919]),
-); // Added: Jesters Food Max M
+  new Set([89972, 84720, 61260, 66128, 66568, 84678, 85486, 89956, 61325, 61326, 89919, 84711, 84723]),
+); // Added: Jesters Food Max M, Witchfest Food Max M variants
 export const STAMINA_FOOD = Object.freeze(
-  new Set([61255, 86673, 61261, 66130, 66576, 68412, 85485, 61328]),
+  new Set([61255, 86673, 61261, 66130, 66576, 68412, 85485, 61328, 61314, 86669]),
 );
-export const INCREASE_MAX_HEALTH_AND_STAMINA = Object.freeze(new Set([89957, 107789, 61255]));
+export const INCREASE_MAX_HEALTH_AND_STAMINA = Object.freeze(
+  new Set([89957, 107789, 61255, 61264, 61278]),
+);
 export const INCREASE_MAX_HEALTH_AND_MAGICKA = Object.freeze(
   new Set([84731, 61257, 100498, 100499]),
 );
-export const INCREASE_MAX_MAGICKA_AND_STAMINA = Object.freeze(new Set([17577, 61294, 93376]));
+export const INCREASE_MAX_MAGICKA_AND_STAMINA = Object.freeze(new Set([17577, 61294, 93376, 61298]));
 export const MAX_STAMINA_AND_MAGICKA_RECOVERY = Object.freeze(new Set([89955])); // Candied Jester's Coins
 export const WITCHES_BREW = Object.freeze(
   new Set([
@@ -1213,8 +1511,8 @@ export const AURA_EXCLUDED_ABILITIES = Object.freeze(
 // All entries in abilities.json are named "Major Maim" with icon "ability_debuff_major_maim".
 export const MAJOR_MAIM_ABILITY_IDS = Object.freeze(
   new Set<number>([
-    21754, 21760, 61725, 94277, 94285, 94293, 133214, 133292, 134444, 141927, 147746, 159664,
-    163064, 183389, 212073,
+    21754, 21760, 61725, 92041, 94277, 94285, 94293, 133214, 133292, 134444, 141927, 147746,
+    159664, 163064, 183389, 212073, 217105, 244075,
   ]),
 );
 
@@ -1226,6 +1524,6 @@ export const MINOR_MAIM_ABILITY_IDS = Object.freeze(
     31899, 33228, 33512, 37472, 38068, 38072, 38076, 46204, 46246, 51558, 61723, 61854, 61855,
     61856, 62492, 62493, 62494, 62500, 62501, 62503, 62507, 62509, 62511, 68368, 79083, 79085,
     79280, 79282, 88469, 102097, 108939, 118313, 121517, 123946, 124808, 127162, 130815, 137311,
-    196187, 213304, 221722, 224389, 238229,
+    183431, 196187, 212397, 213304, 218990, 221722, 224389, 234094, 238229,
   ]),
 );
