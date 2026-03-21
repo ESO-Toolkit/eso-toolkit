@@ -145,6 +145,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
         )}
         {complete === false && (
           <Box
+            role="img"
             aria-label={`${title} section incomplete`}
             sx={{
               width: 6,

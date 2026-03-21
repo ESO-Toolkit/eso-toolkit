@@ -1012,6 +1012,7 @@ export const HeaderBar: React.FC = () => {
                 <Tooltip title="Account" arrow placement="bottom">
                   <Button
                     onClick={handleAccountClick}
+                    aria-label={userLabel ? `Account: ${userLabel}` : 'Account'}
                     startIcon={<Person />}
                     sx={{
                       display: { xs: 'none', sm: 'flex' },

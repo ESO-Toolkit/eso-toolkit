@@ -690,6 +690,7 @@ export const Footer: React.FC = React.memo(() => {
 
             <Typography
               variant="h4"
+              component="h2"
               sx={{
                 fontWeight: 800,
 
@@ -844,6 +845,7 @@ export const Footer: React.FC = React.memo(() => {
               >
                 <Typography
                   variant="h5"
+                  component="h3"
                   sx={{
                     fontWeight: 800,
 

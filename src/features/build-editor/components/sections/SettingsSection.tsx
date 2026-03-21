@@ -61,6 +61,7 @@ export const SettingsSection: React.FC = () => {
           size="small"
           value={build.settings.dlc}
           onChange={(e) => dispatch(setDlc(e.target.value))}
+          inputProps={{ 'aria-label': 'Current DLC or Chapter' }}
           sx={{
             fontFamily: 'Space Grotesk, Inter, system-ui',
             fontSize: 13,
