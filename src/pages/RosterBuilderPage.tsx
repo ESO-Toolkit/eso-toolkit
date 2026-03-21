@@ -2787,7 +2787,6 @@ export const RosterBuilderPage: React.FC = () => {
           />
 
           <RosterCardSections
-            composition={roster.composition}
             tanks={roster.tanks}
             healers={roster.healers}
             dpsSlots={roster.dpsSlots}

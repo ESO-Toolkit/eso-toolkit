@@ -55,36 +55,56 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
       setLocal(composition);
     }, [composition]);
 
+    // Refs for direct DOM updates — bypasses React render entirely for
+    // instant number feedback. React syncs on the next render via local state.
+    const tanksRef = React.useRef<HTMLSpanElement>(null);
+    const healersRef = React.useRef<HTMLSpanElement>(null);
+    const dpsRef = React.useRef<HTMLSpanElement>(null);
+
+    const updateDOMImmediate = useCallback((comp: RoleComposition): void => {
+      if (tanksRef.current) tanksRef.current.textContent = String(comp.tanks);
+      if (healersRef.current) healersRef.current.textContent = String(comp.healers);
+      if (dpsRef.current) dpsRef.current.textContent = String(comp.dps);
+    }, []);
+
+    // Deferred onChange: update DOM refs instantly, then yield to the browser
+    // for a paint frame, THEN trigger the heavy roster resize via onChange.
+    const onChangeRef = React.useRef(onChange);
+    onChangeRef.current = onChange;
+
+    const applyChange = useCallback(
+      (next: RoleComposition) => {
+        setLocal(next);
+        updateDOMImmediate(next);
+        // setTimeout(0) yields to the browser paint loop before React starts
+        // the heavy roster resize. This ensures the number visually updates
+        // before the main thread blocks.
+        setTimeout(() => onChangeRef.current(next), 0);
+      },
+      [updateDOMImmediate],
+    );
+
     const handleIncrement = useCallback(
       (role: 'tanks' | 'healers') => {
-        const next = { ...local, [role]: local[role] + 1, dps: local.dps - 1 };
         if (local.dps <= 0) return;
-        setLocal(next);
-        // onChange wraps in startTransition in the parent — React will
-        // paint this component's local state update (urgent) before
-        // processing the heavy roster resize (transition).
-        onChange(next);
+        applyChange({ ...local, [role]: local[role] + 1, dps: local.dps - 1 });
       },
-      [local, onChange],
+      [local, applyChange],
     );
 
     const handleDecrement = useCallback(
       (role: 'tanks' | 'healers') => {
         if (local[role] <= 0) return;
-        const next = { ...local, [role]: local[role] - 1, dps: local.dps + 1 };
-        setLocal(next);
-        onChange(next);
+        applyChange({ ...local, [role]: local[role] - 1, dps: local.dps + 1 });
       },
-      [local, onChange],
+      [local, applyChange],
     );
 
     const handlePreset = useCallback(
       (preset: CompositionPreset) => {
-        const next = { ...preset.comp };
-        setLocal(next);
-        onChange(next);
+        applyChange({ ...preset.comp });
       },
-      [onChange],
+      [applyChange],
     );
 
     const isPresetActive = (preset: CompositionPreset): boolean =>
@@ -152,6 +172,7 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
           </ButtonBase>
 
           <Typography
+            ref={role === 'tanks' ? tanksRef : healersRef}
             sx={{
               fontSize: '0.9rem',
               fontWeight: 700,
@@ -241,6 +262,7 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
             DPS
           </Typography>
           <Typography
+            ref={dpsRef}
             sx={{
               fontSize: '0.9rem',
               fontWeight: 700,
