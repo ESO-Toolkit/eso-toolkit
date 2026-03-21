@@ -167,7 +167,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
 
       const isPrimary = roleLabel === 'MT' || roleLabel === 'H1';
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+        <Box key={slotKey} sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
           <Box
             sx={{
               display: 'inline-flex',
@@ -213,7 +213,17 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               return (
                 <Box
                   key={ult}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isSelected}
+                  aria-label={`${formatUltimateLabel(ult)} ultimate for ${roleLabel}`}
                   onClick={() => onUpdateUltimate(slotKey, roleData.ultimate === ult ? null : ult)}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onUpdateUltimate(slotKey, roleData.ultimate === ult ? null : ult);
+                    }
+                  }}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
@@ -305,7 +315,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
 
       const isPrimary = roleLabel === 'H1';
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+        <Box key={slotKey} sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
           <Box
             sx={{
               display: 'inline-flex',
@@ -350,7 +360,17 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
               return (
                 <Box
                   key={cp}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isSelected}
+                  aria-label={`${cp} champion point for ${roleLabel}`}
                   onClick={() => onUpdateHealerCP(slotKey, healer.championPoint === cp ? null : cp)}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onUpdateHealerCP(slotKey, healer.championPoint === cp ? null : cp);
+                    }
+                  }}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',

@@ -26,7 +26,6 @@ import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColor
 import { tankSlotToBuild } from '../../utils/rosterSlotToBuild';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
 
-import { ExtraGearPicker } from './shared/extra-gear-picker';
 import { makeGlassSx, makeSectionBoxSx, makeSectionHeaderSx } from './shared/glassSx';
 import { LazyCardContent } from './shared/LazyCardContent';
 import {
@@ -36,9 +35,7 @@ import {
   isTank5PieceSet,
   isFlexible5PieceSet,
 } from './shared/rosterCardHelpers';
-import { SkillLinePickerGroup } from './shared/skill-line-picker';
 import { SlotActionPill } from './shared/slot-action-pill';
-import { SpecificSkillsPicker } from './shared/specific-skills-picker';
 import { SlotFullModePanel } from './SlotFullModePanel';
 
 // ---------------------------------------------------------------------------
@@ -504,30 +501,7 @@ export const TankCard = React.memo<TankCardProps>(
                       </Stack>
                     </Box>
 
-                    {/* ── Build Requirements ─────────────────── */}
-                    <Box sx={makeSectionBoxSx(tankIsDark)}>
-                      <Typography sx={makeSectionHeaderSx(tankIsDark)}>
-                        Build Requirements
-                      </Typography>
-                      <Stack spacing={1.5}>
-                        <ExtraGearPicker
-                          value={tank.gearSets.additionalSets || []}
-                          onChange={(additionalSets) =>
-                            onChange({
-                              gearSets: { ...tank.gearSets, additionalSets },
-                            })
-                          }
-                        />
-                        <SkillLinePickerGroup
-                          value={tank.skillLines}
-                          onChange={(skillLines) => onChange({ skillLines })}
-                        />
-                        <SpecificSkillsPicker
-                          value={tank.specificSkills}
-                          onChange={(specificSkills) => onChange({ specificSkills })}
-                        />
-                      </Stack>
-                    </Box>
+                    {/* Build Requirements (gear + skill lines) moved to SlotFullModePanel */}
 
                     {/* ── Notes ──────────────────────────────── */}
                     <Box sx={makeSectionBoxSx(tankIsDark)}>
@@ -551,10 +525,14 @@ export const TankCard = React.memo<TankCardProps>(
 
             {mode === 'full' && (
               <SlotFullModePanel
+                gear={tank.gear}
+                skillLines={tank.skillLines}
                 skills={tank.skills}
                 cpPoints={tank.cpPoints}
                 food={tank.food}
                 passives={tank.passives}
+                onGearChange={(gear) => onChange({ gear })}
+                onSkillLinesChange={(skillLines) => onChange({ skillLines })}
                 onSkillsChange={(skills) => onChange({ skills })}
                 onCpPointsChange={(cpPoints) => onChange({ cpPoints })}
                 onFoodChange={(food) => onChange({ food })}

@@ -14,6 +14,7 @@ import {
   Visibility as VisibilityIcon,
   Groups as GroupsIcon,
   SportsEsports as AddonIcon,
+  Tune as TuneIcon,
 } from '@mui/icons-material';
 import {
   Button,
@@ -24,7 +25,6 @@ import {
   ListItemIcon,
   ListItemText,
   Paper,
-  Stack,
   TextField,
   Typography,
   Autocomplete,
@@ -945,6 +945,21 @@ export const RosterBuilderPage: React.FC = () => {
     }
   };
 
+  const handleMoveDPSSlot = useCallback(
+    (slotIndex: number, direction: 'up' | 'down') => {
+      setRoster((prev) => {
+        const newIndex = direction === 'up' ? slotIndex - 1 : slotIndex + 1;
+        if (newIndex < 0 || newIndex >= prev.dpsSlots.length) return prev;
+        return {
+          ...prev,
+          dpsSlots: arrayMove(prev.dpsSlots, slotIndex, newIndex),
+          updatedAt: new Date().toISOString(),
+        };
+      });
+    },
+    [],
+  );
+
   // Gate URL sync until the initial load has settled so we don't clobber the incoming ?r= param
   const urlSyncReady = React.useRef(false);
 
@@ -1802,7 +1817,7 @@ export const RosterBuilderPage: React.FC = () => {
   }, [roster]);
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container component="main" maxWidth="lg" sx={{ py: 4 }}>
       {/* Development Banner */}
       <WorkInProgressDisclaimer featureName="Roster Builder" sx={{ mb: 3 }} />
 
@@ -1941,6 +1956,8 @@ export const RosterBuilderPage: React.FC = () => {
 
           {/* Segmented pill toggle */}
           <Box
+            role="tablist"
+            aria-label="Roster detail level"
             sx={{
               display: 'flex',
               borderRadius: '10px',
@@ -1955,9 +1972,30 @@ export const RosterBuilderPage: React.FC = () => {
             {(['simple', 'full'] as const).map((value) => (
               <Box
                 key={value}
+                role="tab"
+                tabIndex={mode === value ? 0 : -1}
+                aria-selected={mode === value}
+                aria-label={`${value === 'simple' ? 'Simple' : 'Full'} mode`}
                 onClick={() => {
                   setMode(value);
                   setRoster((prev) => ({ ...prev, rosterDetailLevel: value }));
+                }}
+                onKeyDown={(e: React.KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setMode(value);
+                    setRoster((prev) => ({ ...prev, rosterDetailLevel: value }));
+                  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const next = value === 'simple' ? 'full' : 'simple';
+                    setMode(next);
+                    setRoster((prev) => ({ ...prev, rosterDetailLevel: next }));
+                    // Focus the newly selected tab
+                    const sibling = e.key === 'ArrowRight'
+                      ? (e.currentTarget.nextElementSibling as HTMLElement)
+                      : (e.currentTarget.previousElementSibling as HTMLElement);
+                    sibling?.focus();
+                  }
                 }}
                 sx={{
                   flex: '1 1 auto',
@@ -2622,106 +2660,135 @@ export const RosterBuilderPage: React.FC = () => {
           }}
         />
 
-        {/* Role Composition Picker */}
-        <Box sx={{ mb: 2 }}>
-          <RoleCompositionPicker
-            composition={roster.composition}
-            onChange={handleCompositionChange}
-          />
-        </Box>
-
-        {/* Simple Mode: Set Assignment Manager */}
-        <Box sx={{ display: mode === 'simple' ? 'block' : 'none' }}>
-          <SetAssignmentManager
-            tanks={roster.tanks}
-            healers={roster.healers}
-            onAssignSet={handleSetAssignment}
-            onUpdateUltimate={handleUltimateUpdate}
-            onUpdateHealerCP={handleHealerCPUpdate}
-          />
-        </Box>
-
-        {/* Full Mode: Full Roster Details */}
-        <Box sx={{ display: mode === 'full' ? 'block' : 'none' }}>
-          {/* Player Groups Management */}
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
-              <Box
+        {/* ─── Roster Setup Section ─── */}
+        <Box sx={{ mb: 3 }}>
+          {/* Section header */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '9px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
+                  : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
+                border: isDarkMode
+                  ? '1px solid rgba(255,255,255,0.08)'
+                  : '1px solid rgba(0,0,0,0.08)',
+              }}
+            >
+              <TuneIcon
                 sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '9px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: isDarkMode
-                    ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)'
-                    : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 100%)',
-                  border: isDarkMode
-                    ? '1px solid rgba(255,255,255,0.08)'
-                    : '1px solid rgba(0,0,0,0.08)',
+                  fontSize: '1rem',
+                  color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                }}
+              />
+            </Box>
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: 'text.disabled',
+                  lineHeight: 1,
+                  mb: 0.375,
                 }}
               >
+                Configuration
+              </Typography>
+              <Typography
+                component="h2"
+                sx={{
+                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontWeight: 700,
+                  fontSize: '1.05rem',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+                    : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                Roster Setup
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Shared container card */}
+          <Box
+            sx={{
+              borderRadius: '12px',
+              bgcolor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(15,23,42,0.015)',
+              border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)'}`,
+              p: 2,
+            }}
+          >
+            {/* Role Composition Picker */}
+            <RoleCompositionPicker
+              composition={roster.composition}
+              onChange={handleCompositionChange}
+              variant="embedded"
+            />
+
+            {/* Player Groups subsection (full mode only) */}
+            <Box sx={{ display: mode === 'full' ? 'block' : 'none' }}>
+              {/* Inner divider */}
+              <Box
+                sx={{
+                  my: 2,
+                  height: '1px',
+                  background: isDarkMode
+                    ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 15%, rgba(255,255,255,0.06) 85%, transparent 100%)'
+                    : 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.05) 15%, rgba(0,0,0,0.05) 85%, transparent 100%)',
+                }}
+              />
+
+              {/* Subsection label */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1.25 }}>
                 <GroupIcon
                   sx={{
-                    fontSize: '1rem',
-                    color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                    fontSize: '0.9rem',
+                    color: isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)',
                   }}
                 />
-              </Box>
-              <Box>
                 <Typography
                   sx={{
-                    fontSize: '0.6rem',
+                    fontSize: '0.75rem',
                     fontWeight: 700,
-                    letterSpacing: '0.1em',
+                    letterSpacing: '0.08em',
                     textTransform: 'uppercase',
-                    color: 'text.disabled',
-                    lineHeight: 1,
-                    mb: 0.375,
+                    color: isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
                   }}
                 >
-                  Groups
+                  Player Groups
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography
-                    sx={{
-                      fontFamily: '"Space Grotesk", sans-serif',
-                      fontWeight: 700,
-                      fontSize: '1.05rem',
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1.1,
-                      background: isDarkMode
-                        ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-                        : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}
-                  >
-                    Player Groups
-                  </Typography>
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: '0.65rem',
-                      fontWeight: 600,
-                      px: 0.75,
-                      py: 0.125,
-                      borderRadius: '6px',
-                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                      color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-                      border: isDarkMode
-                        ? '1px solid rgba(255,255,255,0.08)'
-                        : '1px solid rgba(0,0,0,0.08)',
-                    }}
-                  >
-                    {roster.availableGroups.length}
-                  </Box>
+                <Box
+                  component="span"
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 600,
+                    px: 0.625,
+                    py: 0.125,
+                    borderRadius: '6px',
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                    color: isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)',
+                    border: isDarkMode
+                      ? '1px solid rgba(255,255,255,0.06)'
+                      : '1px solid rgba(0,0,0,0.06)',
+                  }}
+                >
+                  {roster.availableGroups.length}
                 </Box>
               </Box>
-            </Box>
-            <Stack spacing={2} mb={3}>
+
               <Autocomplete
                 multiple
                 freeSolo
@@ -2747,9 +2814,13 @@ export const RosterBuilderPage: React.FC = () => {
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Available Groups (e.g., Slayer Stack 1, Group A)"
-                    placeholder="Add group..."
-                    helperText="Create groups to organize players. Common examples: Slayer Stack 1, Slayer Stack 2, Group A, Group B"
+                    label="Add Groups"
+                    placeholder="Type a name and press Enter"
+                    helperText={
+                      roster.availableGroups.length === 0
+                        ? 'e.g. Slayer Stack 1, Group A, Group B'
+                        : undefined
+                    }
                     sx={glassTextField}
                   />
                 )}
@@ -2765,26 +2836,46 @@ export const RosterBuilderPage: React.FC = () => {
                           borderRadius: '6px',
                           backgroundColor: isDarkMode
                             ? 'rgba(255,255,255,0.06)'
-                            : 'rgba(0,0,0,0.05)',
+                            : 'rgba(0,0,0,0.04)',
                           border: isDarkMode
                             ? '1px solid rgba(255,255,255,0.1)'
                             : '1px solid rgba(0,0,0,0.1)',
-                          fontWeight: 500,
+                          fontWeight: 600,
+                          fontSize: '0.8rem',
+                          letterSpacing: '0.01em',
+                          '& .MuiChip-deleteIcon': {
+                            color: isDarkMode
+                              ? 'rgba(255,255,255,0.3)'
+                              : 'rgba(0,0,0,0.3)',
+                            '&:hover': {
+                              color: isDarkMode
+                                ? 'rgba(255,255,255,0.6)'
+                                : 'rgba(0,0,0,0.6)',
+                            },
+                          },
                         }}
                       />
                     );
                   })
                 }
               />
-            </Stack>
+            </Box>
           </Box>
+        </Box>
 
-          <Divider
-            sx={{
-              my: 1.5,
-              borderColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-            }}
+        {/* Simple Mode: Set Assignment Manager */}
+        <Box sx={{ display: mode === 'simple' ? 'block' : 'none' }}>
+          <SetAssignmentManager
+            tanks={roster.tanks}
+            healers={roster.healers}
+            onAssignSet={handleSetAssignment}
+            onUpdateUltimate={handleUltimateUpdate}
+            onUpdateHealerCP={handleHealerCPUpdate}
           />
+        </Box>
+
+        {/* Full Mode: Full Roster Details */}
+        <Box sx={{ display: mode === 'full' ? 'block' : 'none' }}>
 
           <RosterCardSections
             tanks={roster.tanks}
@@ -2795,6 +2886,7 @@ export const RosterBuilderPage: React.FC = () => {
             handleDPSSlotChange={handleDPSSlotChange}
             handleConvertDPSToJail={handleConvertDPSToJail}
             handleConvertJailToDPS={handleConvertJailToDPS}
+            handleMoveDPSSlot={handleMoveDPSSlot}
             availableGroups={memoizedGroups}
             usedBuffs={usedBuffs}
             mode={mode}
@@ -2857,6 +2949,7 @@ export const RosterBuilderPage: React.FC = () => {
                 Notes
               </Typography>
               <Typography
+                component="h2"
                 sx={{
                   fontFamily: '"Space Grotesk", sans-serif',
                   fontWeight: 700,

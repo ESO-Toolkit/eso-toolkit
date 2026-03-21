@@ -50,6 +50,7 @@ interface RosterCardSectionsProps {
   handleDPSSlotChange: (index: number, updates: Partial<DPSSlot>) => void;
   handleConvertDPSToJail: (slotNumber: number, type: JailDDType) => void;
   handleConvertJailToDPS: (slotNumber: number) => void;
+  handleMoveDPSSlot: (slotIndex: number, direction: 'up' | 'down') => void;
   availableGroups: string[];
   usedBuffs: HealerBuff[];
   mode: RosterDetailLevel;
@@ -69,6 +70,7 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
   handleDPSSlotChange,
   handleConvertDPSToJail,
   handleConvertJailToDPS,
+  handleMoveDPSSlot,
   availableGroups,
   usedBuffs,
   mode,
@@ -245,6 +247,8 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
                   onSlotChange={handleDPSSlotChange}
                   onConvertToJail={handleConvertDPSToJail}
                   onConvertToDPS={handleConvertJailToDPS}
+                  onMoveSlot={handleMoveDPSSlot}
+                  totalDpsSlots={dpsSlots.length}
                   mode={mode}
                   savedRosterId={savedRosterId}
                 />

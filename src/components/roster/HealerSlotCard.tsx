@@ -31,7 +31,6 @@ import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColor
 import { healerSlotToBuild } from '../../utils/rosterSlotToBuild';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
 
-import { ExtraGearPicker } from './shared/extra-gear-picker';
 import { makeGlassSx, makeSectionBoxSx, makeSectionHeaderSx } from './shared/glassSx';
 import { LazyCardContent } from './shared/LazyCardContent';
 import {
@@ -42,7 +41,6 @@ import {
   isHealer5PieceSet,
   isFlexible5PieceSet,
 } from './shared/rosterCardHelpers';
-import { SkillLinePickerGroup } from './shared/skill-line-picker';
 import { SlotActionPill } from './shared/slot-action-pill';
 import { SlotFullModePanel } from './SlotFullModePanel';
 
@@ -151,9 +149,10 @@ export const HealerCard = React.memo<HealerCardProps>(
                 <TextField
                   fullWidth
                   size="small"
-                  label="Player Name (Optional)"
+                  label="Player Name"
                   value={healer.playerName || ''}
                   onChange={(e) => onChange({ playerName: e.target.value })}
+                  placeholder="Enter player name"
                   sx={glassSx}
                 />
               </Box>
@@ -544,22 +543,7 @@ export const HealerCard = React.memo<HealerCardProps>(
                       </Stack>
                     </Box>
 
-                    {/* ── Build Requirements ─────────────────── */}
-                    <Box sx={makeSectionBoxSx(healerIsDark)}>
-                      <Typography sx={makeSectionHeaderSx(healerIsDark)}>
-                        Build Requirements
-                      </Typography>
-                      <Stack spacing={1.5}>
-                        <ExtraGearPicker
-                          value={healer.additionalSets || []}
-                          onChange={(additionalSets) => onChange({ additionalSets })}
-                        />
-                        <SkillLinePickerGroup
-                          value={healer.skillLines}
-                          onChange={(skillLines) => onChange({ skillLines })}
-                        />
-                      </Stack>
-                    </Box>
+                    {/* Build Requirements (gear + skill lines) moved to SlotFullModePanel */}
 
                     {/* ── Notes ──────────────────────────────── */}
                     <Box sx={makeSectionBoxSx(healerIsDark)}>
@@ -583,10 +567,14 @@ export const HealerCard = React.memo<HealerCardProps>(
 
             {mode === 'full' && (
               <SlotFullModePanel
+                gear={healer.gear}
+                skillLines={healer.skillLines}
                 skills={healer.skills}
                 cpPoints={healer.cpPoints}
                 food={healer.food}
                 passives={healer.passives}
+                onGearChange={(gear) => onChange({ gear })}
+                onSkillLinesChange={(skillLines) => onChange({ skillLines })}
                 onSkillsChange={(skills) => onChange({ skills })}
                 onCpPointsChange={(cpPoints) => onChange({ cpPoints })}
                 onFoodChange={(food) => onChange({ food })}
