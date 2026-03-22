@@ -1,20 +1,33 @@
 /**
- * GearSlotCard — Square icon tile for a single equipment slot.
+ * GearSlotCard — Horizontal row card for a single equipment slot.
  *
- * Matches the loadout-manager GearTile pattern: a square tile with an
- * item icon (UESP CDN), a 2-line label, validation dot, and a
- * hover-reveal remove button.  Re-themed with the build-editor
- * glass-morphism design language.
+ * Layout: [icon] | slot name + set name | trait chip · enchant chip | [×]
+ *
+ * Empty state shows a dashed outline with the slot silhouette and name.
+ * Filled state shows item icon, set name, and inline clickable chips
+ * for weight, trait, and enchant.
  */
 
-import { Close as CloseIcon } from '@mui/icons-material';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import {
+  AutoFixHigh as TraitIcon,
+  Close as CloseIcon,
+  LocalFireDepartment as EnchantIcon,
+} from '@mui/icons-material';
+import { Box, ButtonBase, IconButton, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { ArmorWeight } from '../../../loadout-manager/types/loadout.types';
 import { fetchItemIconUrl, getItemIconUrl } from '../../../loadout-manager/utils/itemIconResolver';
 import type { EquipSlotDef } from '../../data/esoStaticData';
+import {
+  getEnchantShortName,
+  getEnchantsForSlot,
+  getTraitName,
+  getTraitsForSlot,
+} from '../../data/gear-traits-enchants';
+
+import { TraitEnchantPicker } from './TraitEnchantPicker';
 
 // ── SVG slot silhouettes ────────────────────────────────────────────────────
 
@@ -47,23 +60,98 @@ const SlotSvgIcon: React.FC<{ slotType: string; size?: number; color?: string }>
   );
 };
 
-// ── Props ───────────────────────────────────────────────────────────────────
+// ── Constants ───────────────────────────────────────────────────────────────
 
-const TILE_SIZE = 78;
+const ICON_SIZE = 36;
 
 const WEIGHT_COLORS: Record<ArmorWeight, string> = {
-  light: '#60a5fa', // blue
-  medium: '#4ade80', // green
-  heavy: '#f87171', // red
+  light: '#60a5fa',
+  medium: '#4ade80',
+  heavy: '#f87171',
 };
 
-const WEIGHT_LABELS: Record<ArmorWeight, string> = {
-  light: 'L',
-  medium: 'M',
-  heavy: 'H',
+const WEIGHT_FULL_LABELS: Record<ArmorWeight, string> = {
+  light: 'Light',
+  medium: 'Medium',
+  heavy: 'Heavy',
 };
 
 const WEIGHT_CYCLE: ArmorWeight[] = ['light', 'medium', 'heavy'];
+
+// ── Inline Chip ─────────────────────────────────────────────────────────────
+
+interface InlineChipProps {
+  icon: React.ReactNode;
+  label: string;
+  activeColor: string;
+  isSet: boolean;
+  onClick: (e: React.MouseEvent) => void;
+  anchorRef?: React.Ref<HTMLButtonElement>;
+}
+
+const InlineChip: React.FC<InlineChipProps> = ({
+  icon,
+  label,
+  activeColor,
+  isSet,
+  onClick,
+  anchorRef,
+}) => {
+  const isDark = useTheme().palette.mode === 'dark';
+
+  return (
+    <ButtonBase
+      ref={anchorRef}
+      onClick={onClick}
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 0.35,
+        px: 0.6,
+        py: 0.2,
+        borderRadius: 1,
+        fontSize: 10,
+        fontWeight: isSet ? 600 : 400,
+        fontFamily: 'Space Grotesk, Inter, system-ui',
+        lineHeight: 1,
+        whiteSpace: 'nowrap',
+        color: isSet
+          ? activeColor
+          : isDark
+            ? 'rgba(255,255,255,0.35)'
+            : 'rgba(0,0,0,0.35)',
+        background: isSet
+          ? isDark
+            ? `${activeColor}14`
+            : `${activeColor}0C`
+          : 'transparent',
+        border: `1px solid ${
+          isSet
+            ? isDark
+              ? `${activeColor}30`
+              : `${activeColor}25`
+            : isDark
+              ? 'rgba(255,255,255,0.08)'
+              : 'rgba(0,0,0,0.08)'
+        }`,
+        transition: 'all 150ms ease',
+        '&:hover': {
+          background: isDark
+            ? `${activeColor}20`
+            : `${activeColor}14`,
+          borderColor: isDark
+            ? `${activeColor}50`
+            : `${activeColor}40`,
+        },
+      }}
+    >
+      {icon}
+      {label}
+    </ButtonBase>
+  );
+};
+
+// ── Props ───────────────────────────────────────────────────────────────────
 
 interface GearSlotCardProps {
   slotDef: EquipSlotDef;
@@ -72,10 +160,12 @@ interface GearSlotCardProps {
   setName?: string | null;
   isDisabled?: boolean;
   disabledReason?: string;
-  /** Current armor weight — only relevant for apparel slots */
   weight?: ArmorWeight;
-  /** Called when the user cycles armor weight — only for apparel slots with an item */
   onWeightChange?: (weight: ArmorWeight) => void;
+  trait?: string;
+  onTraitChange?: (trait: string | undefined) => void;
+  enchant?: string;
+  onEnchantChange?: (enchant: string | undefined) => void;
   onOpen: () => void;
   onClear: () => void;
 }
@@ -91,18 +181,44 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
   disabledReason,
   weight,
   onWeightChange,
+  trait,
+  onTraitChange,
+  enchant,
+  onEnchantChange,
   onOpen,
   onClear,
 }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
+  const isDark = useTheme().palette.mode === 'dark';
   const hasItem = Boolean(itemId && (itemName || setName));
 
-  // Icon resolution: sync first, async UESP fallback for unknowns
+  // Icon resolution
   const [iconUrl, setIconUrl] = useState<string | null>(() =>
     itemId ? getItemIconUrl(itemId) : null,
   );
   const [iconFailed, setIconFailed] = useState(false);
+
+  // Trait/enchant popover state
+  const [pickerMode, setPickerMode] = useState<'trait' | 'enchant' | null>(null);
+  const traitAnchorRef = useRef<HTMLButtonElement>(null);
+  const enchantAnchorRef = useRef<HTMLButtonElement>(null);
+
+  const traitItems = useMemo(() => getTraitsForSlot(slotDef.category), [slotDef.category]);
+  const enchantItems = useMemo(() => getEnchantsForSlot(slotDef.category), [slotDef.category]);
+
+  const traitLabel = trait ? getTraitName(trait, slotDef.category) : undefined;
+  const enchantLabel = enchant ? getEnchantShortName(enchant, slotDef.category) : undefined;
+
+  const handleOpenTrait = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPickerMode('trait');
+  }, []);
+
+  const handleOpenEnchant = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPickerMode('enchant');
+  }, []);
+
+  const handleClosePicker = useCallback(() => setPickerMode(null), []);
 
   useEffect(() => {
     if (!itemId) {
@@ -129,16 +245,6 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
 
   const primaryLabel = setName ?? itemName ?? null;
 
-  // Tooltip
-  const tooltipLines: string[] = [slotDef.name];
-  if (isDisabled) {
-    tooltipLines.push(disabledReason ?? 'Locked');
-  } else if (hasItem) {
-    if (primaryLabel) tooltipLines.push(primaryLabel);
-  } else {
-    tooltipLines.push('Click to equip');
-  }
-
   const handleClick = (): void => {
     if (!isDisabled) onOpen();
   };
@@ -150,224 +256,327 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
     }
   };
 
-  return (
-    <Tooltip
-      title={tooltipLines.join('\n')}
-      placement="top"
-      arrow
-      slotProps={{ tooltip: { sx: { whiteSpace: 'pre-line', textAlign: 'center' } } }}
-    >
+  // ── Empty slot ──────────────────────────────────────────────────────────
+
+  if (!hasItem) {
+    return (
       <Box
         role="button"
         tabIndex={isDisabled ? -1 : 0}
         aria-label={
-          hasItem
-            ? `${slotDef.name}: ${primaryLabel ?? ''} — click to change`
+          isDisabled
+            ? `${slotDef.name} — ${disabledReason ?? 'Locked'}`
             : `${slotDef.name} — click to equip`
         }
         aria-disabled={isDisabled}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         sx={{
-          position: 'relative',
-          width: TILE_SIZE,
-          height: TILE_SIZE,
-          borderRadius: 2,
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
+          gap: 1.25,
+          px: 1.25,
+          py: 0.75,
+          borderRadius: 2,
           cursor: isDisabled ? 'not-allowed' : 'pointer',
           opacity: isDisabled ? 0.3 : 1,
-          overflow: 'visible',
-          border: `1.5px solid ${
-            hasItem
-              ? isDark
-                ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.40)'
-                : 'rgba(var(--be-accent-rgb, 15, 23, 42), 0.25)'
-              : isDark
-                ? 'rgba(255, 255, 255, 0.08)'
-                : 'rgba(0, 0, 0, 0.07)'
-          }`,
-          background: hasItem
-            ? isDark
-              ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
-              : 'rgba(var(--be-accent-rgb, 15, 23, 42), 0.04)'
-            : isDark
-              ? 'rgba(255, 255, 255, 0.03)'
-              : 'rgba(0, 0, 0, 0.02)',
-          boxShadow: hasItem
-            ? isDark
-              ? '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.10), inset 0 1px 0 rgba(255,255,255,0.05)'
-              : '0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.6)'
-            : isDark
-              ? 'inset 0 1px 0 rgba(255,255,255,0.03)'
-              : 'inset 0 1px 0 rgba(255,255,255,0.5)',
+          border: `1.5px dashed ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
+          background: isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.01)',
           transition: 'all 180ms ease',
-          // Focus-visible ring using the class accent
           '&:focus-visible': {
             outline: '2px solid var(--be-accent, #38bdf8)',
             outlineOffset: '2px',
           },
           ...(!isDisabled && {
             '&:hover': {
-              transform: 'scale(1.06)',
-              borderColor: hasItem
-                ? isDark
-                  ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.60)'
-                  : 'rgba(var(--be-accent-rgb, 15, 23, 42), 0.38)'
-                : isDark
-                  ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)'
-                  : 'rgba(var(--be-accent-rgb, 15, 23, 42), 0.18)',
-              background: hasItem
-                ? isDark
-                  ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.14)'
-                  : 'rgba(var(--be-accent-rgb, 15, 23, 42), 0.07)'
-                : isDark
-                  ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)'
-                  : 'rgba(var(--be-accent-rgb, 15, 23, 42), 0.03)',
-              boxShadow: isDark
-                ? '0 4px 20px rgba(0,0,0,0.3), 0 0 16px rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)'
-                : '0 4px 16px rgba(0,0,0,0.08)',
-            },
-            // Show remove button on hover (pointer devices) or always on touch devices
-            '&:hover .gear-tile-remove': { opacity: 1 },
-            '@media (hover: none)': {
-              '& .gear-tile-remove': { opacity: 1 },
+              borderColor: isDark
+                ? 'rgba(var(--be-accent-rgb, 56,189,248), 0.30)'
+                : 'rgba(var(--be-accent-rgb, 15,23,42), 0.18)',
+              background: isDark
+                ? 'rgba(var(--be-accent-rgb, 56,189,248), 0.04)'
+                : 'rgba(var(--be-accent-rgb, 15,23,42), 0.02)',
             },
           }),
         }}
       >
-        {/* Icon — UESP photo or SVG silhouette */}
-        {hasItem && iconUrl && !iconFailed ? (
-          <img
-            src={iconUrl}
-            alt={primaryLabel ?? slotDef.name}
-            onError={() => setIconFailed(true)}
-            style={{
-              width: TILE_SIZE * 0.52,
-              height: TILE_SIZE * 0.52,
-              objectFit: 'contain',
-              borderRadius: 4,
-            }}
-          />
-        ) : (
-          <SlotSvgIcon
-            slotType={slotDef.slotType}
-            size={TILE_SIZE * 0.36}
-            color={
-              hasItem
-                ? isDark
-                  ? 'rgba(var(--be-accent-rgb, 56,189,248), 0.80)'
-                  : 'rgba(var(--be-accent-rgb, 15,23,42), 0.55)'
-                : isDark
-                  ? 'rgba(255,255,255,0.20)'
-                  : 'rgba(0,0,0,0.18)'
-            }
-          />
-        )}
-
-        {/* Label — set name (equipped) or slot name (empty) */}
-        <Typography
-          variant="caption"
+        {/* Slot icon */}
+        <Box
           sx={{
-            fontSize: '0.58rem',
-            lineHeight: 1.15,
-            mt: 0.25,
-            px: 0.25,
-            width: TILE_SIZE - 10,
-            textAlign: 'center',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-            fontWeight: hasItem ? 600 : 400,
-            color: hasItem
-              ? 'text.primary'
-              : isDark
-                ? 'rgba(255,255,255,0.35)'
-                : 'rgba(0,0,0,0.35)',
-            overflow: 'hidden',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            wordBreak: 'break-word',
+            width: ICON_SIZE,
+            height: ICON_SIZE,
+            borderRadius: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.025)',
           }}
         >
-          {hasItem ? (primaryLabel ?? slotDef.name) : slotDef.name}
+          <SlotSvgIcon
+            slotType={slotDef.slotType}
+            size={20}
+            color={isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.16)'}
+          />
+        </Box>
+
+        <Typography
+          sx={{
+            fontSize: 12,
+            fontWeight: 400,
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+            color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+          }}
+        >
+          {slotDef.name}
         </Typography>
+      </Box>
+    );
+  }
 
-        {/* Remove button — visible on hover (pointer) or always on touch */}
-        {hasItem && !isDisabled && (
-          <IconButton
-            className="gear-tile-remove"
-            size="small"
-            aria-label={`Remove ${primaryLabel ?? slotDef.name}`}
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              onClear();
-            }}
-            onKeyDown={(e: React.KeyboardEvent) => {
-              // Prevent tile's onKeyDown from also firing
-              e.stopPropagation();
-            }}
-            sx={{
-              position: 'absolute',
-              top: -4,
-              right: -4,
-              p: 0,
-              width: 24,
-              height: 24,
-              bgcolor: isDark ? 'rgba(239,68,68,0.85)' : 'rgba(239,68,68,0.90)',
-              color: 'white',
-              opacity: 0,
-              transition: 'opacity 150ms',
-              '&:hover': { bgcolor: 'error.dark', opacity: 1 },
-            }}
-          >
-            <CloseIcon sx={{ fontSize: 11 }} />
-          </IconButton>
-        )}
+  // ── Filled slot ─────────────────────────────────────────────────────────
 
-        {/* Armor weight badge — apparel slots with an item equipped */}
-        {hasItem && !isDisabled && slotDef.category === 'apparel' && onWeightChange && (
-          <Tooltip title={`Armor weight: ${weight ?? 'heavy'} — click to cycle`}>
-            <IconButton
-              size="small"
-              aria-label={`Armor weight: ${weight ?? 'heavy'}`}
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                const current = weight ?? 'heavy';
-                const idx = WEIGHT_CYCLE.indexOf(current);
-                const next = WEIGHT_CYCLE[(idx + 1) % WEIGHT_CYCLE.length];
-                onWeightChange(next);
+  const showWeight = slotDef.category === 'apparel' && onWeightChange;
+  const currentWeight = weight ?? 'heavy';
+
+  return (
+    <>
+      <Box
+        role="button"
+        tabIndex={0}
+        aria-label={`${slotDef.name}: ${primaryLabel ?? ''} — click to change`}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+        sx={{
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.25,
+          px: 1.25,
+          py: 0.75,
+          borderRadius: 2,
+          cursor: 'pointer',
+          border: `1.5px solid ${
+            isDark
+              ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)'
+              : 'rgba(var(--be-accent-rgb, 15, 23, 42), 0.12)'
+          }`,
+          background: isDark
+            ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.04)'
+            : 'rgba(var(--be-accent-rgb, 15, 23, 42), 0.02)',
+          transition: 'all 180ms ease',
+          '&:focus-visible': {
+            outline: '2px solid var(--be-accent, #38bdf8)',
+            outlineOffset: '2px',
+          },
+          '&:hover': {
+            borderColor: isDark
+              ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.40)'
+              : 'rgba(var(--be-accent-rgb, 15, 23, 42), 0.22)',
+            background: isDark
+              ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
+              : 'rgba(var(--be-accent-rgb, 15, 23, 42), 0.04)',
+            boxShadow: isDark
+              ? '0 2px 12px rgba(0,0,0,0.25)'
+              : '0 2px 8px rgba(0,0,0,0.06)',
+          },
+          '&:hover .gear-row-remove': { opacity: 1 },
+          '@media (hover: none)': {
+            '& .gear-row-remove': { opacity: 1 },
+          },
+        }}
+      >
+        {/* Item icon */}
+        <Box
+          sx={{
+            width: ICON_SIZE,
+            height: ICON_SIZE,
+            borderRadius: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            overflow: 'hidden',
+            background: isDark
+              ? 'rgba(var(--be-accent-rgb, 56,189,248), 0.08)'
+              : 'rgba(var(--be-accent-rgb, 15,23,42), 0.04)',
+          }}
+        >
+          {iconUrl && !iconFailed ? (
+            <img
+              src={iconUrl}
+              alt={primaryLabel ?? slotDef.name}
+              onError={() => setIconFailed(true)}
+              style={{
+                width: ICON_SIZE - 4,
+                height: ICON_SIZE - 4,
+                objectFit: 'contain',
               }}
-              onKeyDown={(e: React.KeyboardEvent) => {
-                e.stopPropagation();
-              }}
+            />
+          ) : (
+            <SlotSvgIcon
+              slotType={slotDef.slotType}
+              size={20}
+              color={
+                isDark
+                  ? 'rgba(var(--be-accent-rgb, 56,189,248), 0.60)'
+                  : 'rgba(var(--be-accent-rgb, 15,23,42), 0.40)'
+              }
+            />
+          )}
+        </Box>
+
+        {/* Info column */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          {/* Row 1: slot name + set name */}
+          <Stack direction="row" spacing={0.75} alignItems="baseline">
+            <Typography
               sx={{
-                position: 'absolute',
-                bottom: -2,
-                left: -2,
-                p: 0,
-                width: 18,
-                height: 18,
                 fontSize: 9,
-                fontWeight: 800,
+                fontWeight: 600,
                 fontFamily: 'Space Grotesk, Inter, system-ui',
-                color: '#fff',
-                bgcolor: WEIGHT_COLORS[weight ?? 'heavy'],
-                border: `1.5px solid ${isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.8)'}`,
-                transition: 'all 150ms',
-                zIndex: 2,
-                '&:hover': {
-                  transform: 'scale(1.15)',
-                  bgcolor: WEIGHT_COLORS[weight ?? 'heavy'],
-                },
+                textTransform: 'uppercase',
+                letterSpacing: 0.6,
+                color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                lineHeight: 1,
+                flexShrink: 0,
               }}
             >
-              {WEIGHT_LABELS[weight ?? 'heavy']}
-            </IconButton>
-          </Tooltip>
-        )}
+              {slotDef.name}
+            </Typography>
+            <Typography
+              noWrap
+              sx={{
+                fontSize: 12,
+                fontWeight: 600,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                lineHeight: 1.2,
+                color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
+              }}
+            >
+              {primaryLabel}
+            </Typography>
+          </Stack>
+
+          {/* Row 2: weight + trait + enchant chips */}
+          <Stack
+            direction="row"
+            spacing={0.5}
+            alignItems="center"
+            sx={{ mt: 0.4, flexWrap: 'wrap', rowGap: 0.35 }}
+          >
+            {/* Weight chip — apparel only */}
+            {showWeight && (
+              <ButtonBase
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  const idx = WEIGHT_CYCLE.indexOf(currentWeight);
+                  const next = WEIGHT_CYCLE[(idx + 1) % WEIGHT_CYCLE.length];
+                  onWeightChange(next);
+                }}
+                onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
+                aria-label={`Weight: ${WEIGHT_FULL_LABELS[currentWeight]} — click to cycle`}
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.3,
+                  px: 0.6,
+                  py: 0.2,
+                  borderRadius: 1,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  lineHeight: 1,
+                  color: WEIGHT_COLORS[currentWeight],
+                  background: isDark
+                    ? `${WEIGHT_COLORS[currentWeight]}14`
+                    : `${WEIGHT_COLORS[currentWeight]}0C`,
+                  border: `1px solid ${
+                    isDark
+                      ? `${WEIGHT_COLORS[currentWeight]}30`
+                      : `${WEIGHT_COLORS[currentWeight]}25`
+                  }`,
+                  transition: 'all 150ms ease',
+                  '&:hover': {
+                    background: isDark
+                      ? `${WEIGHT_COLORS[currentWeight]}28`
+                      : `${WEIGHT_COLORS[currentWeight]}18`,
+                  },
+                }}
+              >
+                {WEIGHT_FULL_LABELS[currentWeight]}
+              </ButtonBase>
+            )}
+
+            {/* Trait chip */}
+            {onTraitChange && (
+              <InlineChip
+                anchorRef={traitAnchorRef}
+                icon={<TraitIcon sx={{ fontSize: 10 }} />}
+                label={traitLabel ?? 'Trait'}
+                activeColor="#a78bfa"
+                isSet={Boolean(trait)}
+                onClick={handleOpenTrait}
+              />
+            )}
+
+            {/* Enchant chip */}
+            {onEnchantChange && (
+              <InlineChip
+                anchorRef={enchantAnchorRef}
+                icon={<EnchantIcon sx={{ fontSize: 10 }} />}
+                label={enchantLabel ?? 'Enchant'}
+                activeColor="#fb923c"
+                isSet={Boolean(enchant)}
+                onClick={handleOpenEnchant}
+              />
+            )}
+          </Stack>
+        </Box>
+
+        {/* Remove button */}
+        <IconButton
+          className="gear-row-remove"
+          size="small"
+          aria-label={`Remove ${primaryLabel ?? slotDef.name}`}
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            onClear();
+          }}
+          onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
+          sx={{
+            p: 0.25,
+            opacity: 0,
+            flexShrink: 0,
+            color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)',
+            transition: 'opacity 150ms, color 150ms',
+            '&:hover': {
+              color: isDark ? '#ef4444' : '#dc2626',
+            },
+          }}
+        >
+          <CloseIcon sx={{ fontSize: 14 }} />
+        </IconButton>
       </Box>
-    </Tooltip>
+
+      {/* Trait/Enchant Picker Popovers */}
+      <TraitEnchantPicker
+        open={pickerMode === 'trait'}
+        anchorEl={traitAnchorRef.current}
+        onClose={handleClosePicker}
+        mode="trait"
+        items={traitItems}
+        currentValue={trait}
+        onSelect={(v) => onTraitChange?.(v)}
+      />
+      <TraitEnchantPicker
+        open={pickerMode === 'enchant'}
+        anchorEl={enchantAnchorRef.current}
+        onClose={handleClosePicker}
+        mode="enchant"
+        items={enchantItems}
+        currentValue={enchant}
+        onSelect={(v) => onEnchantChange?.(v)}
+      />
+    </>
   );
 };

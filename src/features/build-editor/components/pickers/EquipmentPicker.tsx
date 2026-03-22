@@ -1,9 +1,13 @@
 /**
- * EquipmentPicker — prop-driven version of EquipmentSection.
+ * EquipmentPicker — prop-driven equipment layout for the build editor.
  *
- * Renders the same tile-grid layout (Apparel → Accessories → Weapons) with
- * GearSlotCard tiles and GearPickerDialog. No Redux coupling — takes gear
- * via props and calls onChange on mutation.
+ * Renders a vertical list of gear slots grouped by category:
+ * Apparel → Accessories → Weapons (Front) → Weapons (Back)
+ *
+ * Each slot is a horizontal card (GearSlotCard) with inline chips
+ * for weight, trait, and enchant.
+ *
+ * No Redux coupling — takes gear via props and calls onChange on mutation.
  * EquipmentSection wraps this with useSelector / dispatch.
  */
 
@@ -44,24 +48,28 @@ const slotDef = (idx: number): EquipSlotDef =>
     slotType: 'chest',
   };
 
-// ── Tile ────────────────────────────────────────────────────────────────────
+// ── Slot Row ────────────────────────────────────────────────────────────────
 
-interface TileProps {
+interface SlotRowProps {
   def: EquipSlotDef;
   gear: GearConfig;
   disabledSlots: Partial<Record<number, string>>;
   onOpen: (def: EquipSlotDef) => void;
   onClear: (slot: number) => void;
   onWeightChange?: (slot: number, weight: ArmorWeight) => void;
+  onTraitChange?: (slot: number, trait: string | undefined) => void;
+  onEnchantChange?: (slot: number, enchant: string | undefined) => void;
 }
 
-const Tile: React.FC<TileProps> = ({
+const SlotRow: React.FC<SlotRowProps> = ({
   def,
   gear,
   disabledSlots,
   onOpen,
   onClear,
   onWeightChange,
+  onTraitChange,
+  onEnchantChange,
 }) => {
   const piece = gear[def.slot];
   const itemId = piece?.id != null ? Number(piece.id) : null;
@@ -80,6 +88,14 @@ const Tile: React.FC<TileProps> = ({
       onWeightChange={
         onWeightChange ? (w: ArmorWeight) => onWeightChange(def.slot, w) : undefined
       }
+      trait={piece?.trait}
+      onTraitChange={
+        onTraitChange ? (t: string | undefined) => onTraitChange(def.slot, t) : undefined
+      }
+      enchant={piece?.enchant}
+      onEnchantChange={
+        onEnchantChange ? (e: string | undefined) => onEnchantChange(def.slot, e) : undefined
+      }
       onOpen={() => onOpen(def)}
       onClear={() => onClear(def.slot)}
     />
@@ -97,13 +113,10 @@ const SectionLabel: React.FC<{ label: string }> = ({ label }) => {
         fontWeight: 700,
         textTransform: 'uppercase',
         letterSpacing: 1.6,
-        fontSize: '0.6rem',
+        fontSize: '0.55rem',
         fontFamily: 'Space Grotesk, Inter, system-ui',
-        color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.38)',
-        alignSelf: 'stretch',
-        textAlign: 'center',
-        pb: 0.5,
-        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+        color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.32)',
+        py: 0.25,
       }}
     >
       {label}
@@ -117,7 +130,16 @@ export interface EquipmentPickerProps {
   gear: GearConfig;
   onChange: (gear: GearConfig) => void;
   onWeightChange?: (slot: number, weight: ArmorWeight) => void;
+  onTraitChange?: (slot: number, trait: string | undefined) => void;
+  onEnchantChange?: (slot: number, enchant: string | undefined) => void;
 }
+
+// ── Slot groups ─────────────────────────────────────────────────────────────
+
+const APPAREL_SLOTS = [0, 3, 2, 16, 6, 8, 9]; // Head, Shoulders, Body, Hands, Waist, Legs, Feet
+const ACCESSORY_SLOTS = [1, 11, 12]; // Neck, Ring 1, Ring 2
+const FRONT_WEAPON_SLOTS = [4, 5]; // Main-Hand, Off-Hand
+const BACK_WEAPON_SLOTS = [20, 21]; // Back bar Main-Hand, Off-Hand
 
 // ── Main Component ──────────────────────────────────────────────────────────
 
@@ -125,6 +147,8 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
   gear,
   onChange,
   onWeightChange,
+  onTraitChange,
+  onEnchantChange,
 }) => {
   const [pickerSlot, setPickerSlot] = useState<EquipSlotDef | null>(null);
 
@@ -170,44 +194,42 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
     [gear, onChange],
   );
 
-  const tileRow = (slots: number[]): React.ReactNode => (
-    <Stack
-      direction="row"
-      spacing={1}
-      justifyContent="center"
-      useFlexGap
-      sx={{ flexWrap: 'wrap', rowGap: 1 }}
-    >
-      {slots.map((idx) => (
-        <Tile
-          key={idx}
-          def={slotDef(idx)}
-          gear={gear}
-          disabledSlots={disabledSlots}
-          onOpen={handleOpen}
-          onClear={handleClear}
-          onWeightChange={onWeightChange}
-        />
-      ))}
-    </Stack>
-  );
+  const renderSlots = (slots: number[]): React.ReactNode =>
+    slots.map((idx) => (
+      <SlotRow
+        key={idx}
+        def={slotDef(idx)}
+        gear={gear}
+        disabledSlots={disabledSlots}
+        onOpen={handleOpen}
+        onClear={handleClear}
+        onWeightChange={onWeightChange}
+        onTraitChange={onTraitChange}
+        onEnchantChange={onEnchantChange}
+      />
+    ));
 
   return (
     <>
-      <Stack spacing={2} alignItems="center">
-        {/* ── Apparel ──────────────── */}
+      <Stack spacing={0.5}>
+        {/* ── Apparel ────────────────── */}
         <SectionLabel label="Apparel" />
-        {tileRow([0, 3, 2])} {/* Head · Shoulders · Chest */}
-        {tileRow([16, 6, 8, 9])} {/* Hands · Waist · Legs · Feet */}
-        {/* ── Accessories ──────────── */}
-        <Box sx={{ pt: 0.5 }} />
+        <Stack spacing={0.5}>{renderSlots(APPAREL_SLOTS)}</Stack>
+
+        {/* ── Accessories ────────────── */}
+        <Box sx={{ pt: 0.75 }} />
         <SectionLabel label="Accessories" />
-        {tileRow([1, 11, 12])} {/* Neck · Ring 1 · Ring 2 */}
-        {/* ── Weapons ──────────────── */}
-        <Box sx={{ pt: 0.5 }} />
-        <SectionLabel label="Weapons" />
-        {tileRow([4, 5])} {/* Front bar */}
-        {tileRow([20, 21])} {/* Back bar */}
+        <Stack spacing={0.5}>{renderSlots(ACCESSORY_SLOTS)}</Stack>
+
+        {/* ── Weapons — Front ────────── */}
+        <Box sx={{ pt: 0.75 }} />
+        <SectionLabel label="Front Bar" />
+        <Stack spacing={0.5}>{renderSlots(FRONT_WEAPON_SLOTS)}</Stack>
+
+        {/* ── Weapons — Back ─────────── */}
+        <Box sx={{ pt: 0.25 }} />
+        <SectionLabel label="Back Bar" />
+        <Stack spacing={0.5}>{renderSlots(BACK_WEAPON_SLOTS)}</Stack>
       </Stack>
 
       {pickerSlot && (
