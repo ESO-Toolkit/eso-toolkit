@@ -117,6 +117,8 @@ interface CompactBuild {
   vs?: number; // visibility index (omit if 'public')
   dl?: string; // dlc (omit if 'Base Game')
   so?: number[]; // setupOrder (omit if sequential)
+  ca?: number; // createdAt (unix seconds)
+  ua?: number; // updatedAt (unix seconds)
 }
 
 // ─── Compact helpers ──────────────────────────────────────────────────────────
@@ -337,6 +339,10 @@ function compactifyBuild(build: Build): CompactBuild {
   const isSequential = build.settings.setupOrder.every((v, i) => v === i);
   if (!isSequential) c.so = build.settings.setupOrder;
 
+  // Timestamps as unix seconds (compact)
+  if (build.createdAt) c.ca = Math.floor(new Date(build.createdAt).getTime() / 1000);
+  if (build.updatedAt) c.ua = Math.floor(new Date(build.updatedAt).getTime() / 1000);
+
   return c;
 }
 
@@ -373,8 +379,8 @@ function expandCompactBuild(c: CompactBuild): Build {
       setupOrder: c.so ?? setups.map((_, i) => i),
     },
     addonImportString: '', // never encoded
-    createdAt: now,
-    updatedAt: now,
+    createdAt: c.ca ? new Date(c.ca * 1000).toISOString() : now,
+    updatedAt: c.ua ? new Date(c.ua * 1000).toISOString() : now,
   };
 }
 
