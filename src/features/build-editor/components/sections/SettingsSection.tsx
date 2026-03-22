@@ -1,18 +1,16 @@
 /**
- * Settings Section — glass-style visibility picker, accent-themed DLC select,
+ * Settings Section — glass-style visibility picker and
  * glass info panel for setup order.
  */
 
-import { Box, MenuItem, Select, Stack, Typography } from '@mui/material';
+import { Box, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
 
-import { ESO_DLCS } from '../../data/esoStaticData';
-import { setDlc, setVisibility } from '../../store/buildEditorSlice';
-import { BE_TOKENS } from '../../theme/buildEditorTokens';
+import { setVisibility } from '../../store/buildEditorSlice';
 import type { BuildVisibility } from '../../types/build.types';
 import { IconPickerGrid } from '../primitives/IconPickerGrid';
 
@@ -38,61 +36,6 @@ export const SettingsSection: React.FC = () => {
         onChange={(id) => dispatch(setVisibility(id as BuildVisibility))}
         columns={3}
       />
-
-      {/* DLC — glass-style Select */}
-      <Box>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{
-            fontWeight: 700,
-            mb: 0.75,
-            display: 'block',
-            fontSize: 11,
-            letterSpacing: 0.8,
-            textTransform: 'uppercase',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-          }}
-        >
-          Current DLC / Chapter
-        </Typography>
-        <Select
-          fullWidth
-          size="small"
-          value={build.settings.dlc}
-          onChange={(e) => dispatch(setDlc(e.target.value))}
-          inputProps={{ 'aria-label': 'Current DLC or Chapter' }}
-          sx={{
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-            fontSize: 13,
-            background: isDark ? BE_TOKENS.input.dark.bg : BE_TOKENS.input.light.bg,
-            borderRadius: '10px',
-            transition: 'background 0.2s ease',
-            '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: isDark ? BE_TOKENS.input.dark.border : BE_TOKENS.input.light.border,
-              transition: 'border-color 0.2s ease',
-            },
-            '&:hover': {
-              background: isDark ? 'rgba(0, 0, 0, 0.28)' : 'rgba(0, 0, 0, 0.06)',
-            },
-            '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: isDark
-                ? BE_TOKENS.input.dark.hoverBorder
-                : BE_TOKENS.input.light.hoverBorder,
-            },
-            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'var(--be-accent, #38bdf8)',
-              borderWidth: '1px',
-            },
-          }}
-        >
-          {ESO_DLCS.map((dlc) => (
-            <MenuItem key={dlc} value={dlc}>
-              {dlc}
-            </MenuItem>
-          ))}
-        </Select>
-      </Box>
 
       {/* Setup order — glass info panel */}
       <Box

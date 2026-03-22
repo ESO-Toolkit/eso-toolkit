@@ -60,6 +60,7 @@ import {
   BUILD_EDITOR_STORAGE_KEY,
   markSaved,
   setAddonImportString,
+  setBuildDescription,
   setBuildName,
 } from '../store/buildEditorSlice';
 import { BE_TOKENS } from '../theme/buildEditorTokens';
@@ -360,10 +361,9 @@ export const BuildCompletionHeader: React.FC = () => {
         alignItems: 'center',
         gap: { xs: 1.5, md: 2 },
         px: { xs: 2, md: 3 },
-        py: 1.75,
+        py: 1.5,
         borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
         backgroundColor: isDark ? 'rgba(11, 18, 32, 0.88)' : 'rgba(248, 250, 252, 0.92)',
-        // Subtle class-accent gradient bleeds from top-left
         backgroundImage:
           'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.07) 0%, transparent 55%)',
         backdropFilter: 'blur(14px)',
@@ -374,87 +374,156 @@ export const BuildCompletionHeader: React.FC = () => {
         zIndex: 1,
       }}
     >
-      {/* Build name — heading-style: no visible border until hover/focus */}
-      <TextField
-        size="small"
-        placeholder="Untitled Build"
-        value={build.name}
-        onChange={(e) => dispatch(setBuildName(e.target.value))}
-        inputProps={{ maxLength: 80, 'aria-label': 'Build name' }}
+      {/* Build name + short description — single glass container */}
+      <Box
         sx={{
           flex: 1,
           minWidth: 160,
           maxWidth: 480,
-          '& .MuiOutlinedInput-root': {
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-            fontWeight: 700,
-            fontSize: { xs: 15, md: 19 },
-            letterSpacing: '-0.3px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+        }}
+      >
+        <Box
+          sx={{
+            flex: 1,
             background: isDark ? BE_TOKENS.input.dark.bg : BE_TOKENS.input.light.bg,
             borderRadius: '10px',
-            '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: isDark ? BE_TOKENS.input.dark.border : BE_TOKENS.input.light.border,
-              transition: 'border-color 0.2s ease',
-            },
-            '&:hover .MuiOutlinedInput-notchedOutline': {
+            border: `1px solid ${isDark ? BE_TOKENS.input.dark.border : BE_TOKENS.input.light.border}`,
+            transition: 'border-color 0.2s ease',
+            '&:hover': {
               borderColor: isDark
                 ? BE_TOKENS.input.dark.hoverBorder
                 : BE_TOKENS.input.light.hoverBorder,
             },
-            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            '&:focus-within': {
               borderColor: 'var(--be-accent, #38bdf8)',
-              borderWidth: '1px',
             },
-          },
-        }}
-      />
-
-      {/* Class identity badge — only on desktop, only when class is selected */}
-      {build.esoClass && !isMobile && (
-        <Box
-          sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            px: 1.5,
-            py: 0.6,
-            borderRadius: '99px',
-            background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)',
-            border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.28)',
-            fontSize: 9.5,
-            fontWeight: 700,
-            letterSpacing: 1.4,
-            textTransform: 'uppercase',
-            color: 'var(--be-accent, #38bdf8)',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-            flexShrink: 0,
-            whiteSpace: 'nowrap',
-            boxShadow: '0 0 8px rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)',
           }}
         >
-          {classLabel}
+          <input
+            placeholder="Untitled Build"
+            value={build.name}
+            onChange={(e) => dispatch(setBuildName(e.target.value))}
+            maxLength={80}
+            aria-label="Build name"
+            style={{
+              width: '100%',
+              border: 'none',
+              outline: 'none',
+              background: 'transparent',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontWeight: 700,
+              fontSize: isMobile ? 15 : 19,
+              letterSpacing: '-0.3px',
+              color: isDark ? '#e2e8f0' : '#0f172a',
+              padding: '8px 12px 0',
+              boxSizing: 'border-box',
+            }}
+          />
+          <input
+            placeholder="Short description (e.g. Runic Sunder + Fatecarver rotation)"
+            value={build.shortDescription}
+            onChange={(e) => dispatch(setBuildDescription(e.target.value))}
+            maxLength={140}
+            aria-label="Build short description"
+            style={{
+              width: '100%',
+              border: 'none',
+              outline: 'none',
+              background: 'transparent',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontWeight: 400,
+              fontSize: isMobile ? 11 : 12,
+              color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+              padding: '2px 12px 6px',
+              boxSizing: 'border-box',
+            }}
+          />
         </Box>
-      )}
+      </Box>
 
-      {/* Progress ring — with glowing halo that brightens as build fills out */}
-      <Tooltip title={`Build ${completeness}% complete`}>
+      {/* Class + completion badge — combined element */}
+      <Tooltip title={`${classLabel} · ${completeness}% complete`}>
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
+            gap: 0,
             flexShrink: 0,
-            borderRadius: '50%',
-            boxShadow:
-              completeness > 10
-                ? '0 0 20px rgba(var(--be-accent-rgb, 56, 189, 248), 0.22), 0 0 40px rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
-                : 'none',
-            transition: 'box-shadow 0.4s ease',
+            borderRadius: '10px',
+            overflow: 'hidden',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'}`,
+            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
+            height: 36,
           }}
+          role="progressbar"
+          aria-valuenow={completeness}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`${classLabel} build, ${completeness}% complete`}
         >
-          <ProgressRing value={completeness} size={52} showLabel />
+          {/* Class name */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              px: 1.5,
+              height: '100%',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontSize: { xs: 11, md: 12 },
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--be-accent, #38bdf8)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {classLabel}
+          </Box>
+          {/* Progress fill + percentage */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              px: 1,
+              height: '100%',
+              position: 'relative',
+              minWidth: 42,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontSize: 12,
+              fontWeight: 700,
+              fontVariantNumeric: 'tabular-nums',
+              color: completeness >= 80
+                ? (isDark ? '#fff' : '#fff')
+                : (isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)'),
+              borderLeft: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+            }}
+          >
+            {/* Fill bar behind the number */}
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: `${completeness}%`,
+                background: `var(--be-accent, #38bdf8)`,
+                opacity: completeness >= 80 ? 0.85 : 0.15,
+                transition: 'width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease',
+                borderRadius: completeness >= 100 ? '0 9px 9px 0' : 0,
+              }}
+            />
+            <Box component="span" sx={{ position: 'relative', zIndex: 1 }}>
+              {completeness}%
+            </Box>
+          </Box>
         </Box>
       </Tooltip>
 
-      {/* ── Roster context banner — shown when editing from a roster slot ── */}
+      {/* ── Roster context — shown when editing from a roster slot ── */}
       {rosterContext && (
         <Box
           sx={{
@@ -520,172 +589,229 @@ export const BuildCompletionHeader: React.FC = () => {
         </Box>
       )}
 
-      {/* ── Action buttons — grouped with dividers ─────────────────── */}
+      {/* ── Action buttons ─────────────────────────────────────────── */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 0.75,
-          ml: rosterContext ? 0 : 'auto',
+          gap: { xs: 0.5, md: 1 },
+          ml: 'auto',
           flexShrink: 0,
         }}
       >
-        {/* Group 1: Transfer — Import + Export (hidden on medium/mobile, moved to overflow) */}
+        {/* ── Transfer segment: Import | Export (icon-only, hidden on medium/mobile) ── */}
         {!isMedium && (
-          <>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Tooltip title="Import build from addon">
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<FileUploadOutlined sx={{ fontSize: 14 }} />}
-                  onClick={() => setImportOpen(true)}
-                  aria-label="Import build from addon"
-                  sx={outlinedPill}
-                >
-                  Import
-                </Button>
-              </Tooltip>
-              <Tooltip title="Export build data">
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={
-                    isExporting ? (
-                      <CircularProgress size={12} color="inherit" />
-                    ) : (
-                      <FileDownloadOutlined sx={{ fontSize: 14 }} />
-                    )
-                  }
-                  onClick={handleExportClick}
-                  disabled={isExporting}
-                  aria-label="Export build data"
-                  sx={outlinedPill}
-                >
-                  {isExporting ? 'Encoding\u2026' : 'Export'}
-                </Button>
-              </Tooltip>
-            </Box>
-
-            {groupDivider}
-          </>
-        )}
-
-        {/* Group 2: Save + Get Link (guest) */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={!isMobile ? <SaveOutlined sx={{ fontSize: 14 }} /> : undefined}
-            onClick={handleSave}
-            aria-label={isDirty ? 'Save build' : 'Build saved'}
+          <Box
             sx={{
-              ...pillBase,
-              minWidth: isMobile ? 36 : 80,
-              ...(isDirty
-                ? {
-                    background:
-                      'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.9), rgba(var(--be-accent-rgb, 56, 189, 248), 0.7))',
-                    border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.5)',
-                    boxShadow: '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)',
-                    color: isDark ? '#fff' : '#0b1220',
-                    '&:hover': {
-                      boxShadow: '0 0 18px rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)',
-                    },
-                  }
-                : {
-                    background: isDark ? 'rgba(34, 197, 94, 0.18)' : 'rgba(5, 150, 105, 0.12)',
-                    border: `1px solid ${isDark ? 'rgba(34, 197, 94, 0.35)' : 'rgba(5, 150, 105, 0.3)'}`,
-                    color: isDark ? '#4ade80' : '#059669',
-                    boxShadow: 'none',
-                  }),
+              display: 'flex',
+              borderRadius: '10px',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'}`,
+              background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
+              overflow: 'hidden',
+              transition: 'border-color 0.2s ease',
+              '&:hover': {
+                borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)',
+              },
             }}
           >
-            {isMobile ? <SaveOutlined sx={{ fontSize: 16 }} /> : isDirty ? 'Save' : 'Saved'}
-          </Button>
-          {!isLoggedIn && (
-            <Tooltip title="Save and get a shareable short link (expires in 5 days)">
-              <Button
-                variant="contained"
+            <Tooltip title="Import build from addon">
+              <IconButton
                 size="small"
-                startIcon={
-                  !isMobile ? (
-                    isCreatingLink ? (
-                      <CircularProgress size={12} color="inherit" />
-                    ) : (
-                      <LinkOutlined sx={{ fontSize: 14 }} />
-                    )
-                  ) : undefined
-                }
-                onClick={handleGetLink}
-                disabled={isCreatingLink}
-                aria-label="Get shareable link"
+                onClick={() => setImportOpen(true)}
+                aria-label="Import build from addon"
                 sx={{
-                  ...pillBase,
-                  background: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
-                  color: '#fff',
-                  border: 'none',
-                  boxShadow: '0 0 12px rgba(139,92,246,0.30)',
+                  borderRadius: 0,
+                  width: 34,
+                  height: 34,
+                  color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                  transition: 'all 0.15s ease',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #c4b5fd 0%, #a78bfa 100%)',
-                    boxShadow: '0 0 18px rgba(139,92,246,0.45)',
+                    background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                    color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.75)',
                   },
                 }}
               >
-                {isMobile ? (
-                  isCreatingLink ? (
-                    <CircularProgress size={14} color="inherit" />
-                  ) : (
-                    <LinkOutlined sx={{ fontSize: 16 }} />
-                  )
-                ) : isCreatingLink ? (
-                  'Creating\u2026'
-                ) : (
-                  'Get Link'
-                )}
-              </Button>
+                <FileUploadOutlined sx={{ fontSize: 16 }} />
+              </IconButton>
             </Tooltip>
-          )}
-        </Box>
-
-        {/* Group 3: Output — Share + View (hidden on medium/mobile, moved to overflow) */}
-        {!isMedium && (
-          <>
-            {groupDivider}
-
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Tooltip title="Copy share link to clipboard">
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<ShareOutlined sx={{ fontSize: 14 }} />}
-                  onClick={handleShare}
-                  aria-label="Share build"
-                  sx={outlinedPill}
-                >
-                  Share
-                </Button>
-              </Tooltip>
-              <Tooltip title="View build in read-only mode">
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<VisibilityOutlined sx={{ fontSize: 14 }} />}
-                  onClick={handleView}
-                  aria-label="View build in read-only mode"
-                  sx={outlinedPill}
-                >
-                  View
-                </Button>
-              </Tooltip>
-            </Box>
-          </>
+            <Divider orientation="vertical" flexItem sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
+            <Tooltip title="Export build data">
+              <IconButton
+                size="small"
+                onClick={handleExportClick}
+                disabled={isExporting}
+                aria-label="Export build data"
+                sx={{
+                  borderRadius: 0,
+                  width: 34,
+                  height: 34,
+                  color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                  transition: 'all 0.15s ease',
+                  '&:hover': {
+                    background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                    color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.75)',
+                  },
+                }}
+              >
+                {isExporting ? <CircularProgress size={14} color="inherit" /> : <FileDownloadOutlined sx={{ fontSize: 16 }} />}
+              </IconButton>
+            </Tooltip>
+          </Box>
         )}
 
-        {groupDivider}
+        {/* ── Preview segment: Share | View (icon-only, hidden on medium/mobile) ── */}
+        {!isMedium && (
+          <Box
+            sx={{
+              display: 'flex',
+              borderRadius: '10px',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'}`,
+              background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
+              overflow: 'hidden',
+              transition: 'border-color 0.2s ease',
+              '&:hover': {
+                borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)',
+              },
+            }}
+          >
+            <Tooltip title="Copy share link to clipboard">
+              <IconButton
+                size="small"
+                onClick={handleShare}
+                aria-label="Share build"
+                sx={{
+                  borderRadius: 0,
+                  width: 34,
+                  height: 34,
+                  color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                  transition: 'all 0.15s ease',
+                  '&:hover': {
+                    background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                    color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.75)',
+                  },
+                }}
+              >
+                <ShareOutlined sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+            <Divider orientation="vertical" flexItem sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
+            <Tooltip title="View build in read-only mode">
+              <IconButton
+                size="small"
+                onClick={handleView}
+                aria-label="View build in read-only mode"
+                sx={{
+                  borderRadius: 0,
+                  width: 34,
+                  height: 34,
+                  color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                  transition: 'all 0.15s ease',
+                  '&:hover': {
+                    background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                    color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.75)',
+                  },
+                }}
+              >
+                <VisibilityOutlined sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        )}
 
-        {/* Group 4: Distribution — Roster + Publish */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* ── Primary action strip: Save | Get Link | Roster | Publish ── */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            borderRadius: '12px',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'}`,
+            background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            overflow: 'hidden',
+            boxShadow: isDark
+              ? '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)'
+              : '0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8)',
+          }}
+        >
+          {/* Save */}
+          <Tooltip title={isDirty ? 'Save build' : 'Build saved'}>
+            <Button
+              size="small"
+              onClick={handleSave}
+              aria-label={isDirty ? 'Save build' : 'Build saved'}
+              sx={{
+                borderRadius: 0,
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: 13,
+                px: 1.5,
+                minWidth: 0,
+                height: 36,
+                transition: 'all 0.15s ease',
+                color: isDirty
+                  ? (isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)')
+                  : (isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)'),
+                background: isDirty
+                  ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)'
+                  : 'transparent',
+                '&:hover': {
+                  background: isDirty
+                    ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.22)'
+                    : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+                  color: isDirty
+                    ? (isDark ? '#fff' : '#0b1220')
+                    : (isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.75)'),
+                },
+              }}
+            >
+              <SaveOutlined sx={{ fontSize: 16, mr: isMobile ? 0 : 0.5 }} />
+              {!isMobile && (isDirty ? 'Save' : 'Saved')}
+            </Button>
+          </Tooltip>
+
+          <Divider orientation="vertical" flexItem sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
+
+          {/* Get Link (guest only) */}
+          {!isLoggedIn && (
+            <>
+              <Tooltip title="Save and get a shareable short link (expires in 5 days)">
+                <Button
+                  size="small"
+                  onClick={handleGetLink}
+                  disabled={isCreatingLink}
+                  aria-label="Get shareable link"
+                  sx={{
+                    borderRadius: 0,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontSize: 13,
+                    px: 1.5,
+                    minWidth: 0,
+                    height: 36,
+                    color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.6)',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                      color: isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)',
+                    },
+                  }}
+                >
+                  {isCreatingLink ? (
+                    <CircularProgress size={14} color="inherit" />
+                  ) : (
+                    <>
+                      <LinkOutlined sx={{ fontSize: 16, mr: isMobile ? 0 : 0.5 }} />
+                      {!isMobile && 'Link'}
+                    </>
+                  )}
+                </Button>
+              </Tooltip>
+              <Divider orientation="vertical" flexItem sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
+            </>
+          )}
+
+          {/* Roster */}
           <Tooltip
             title={
               savedRostersCount === 0
@@ -693,100 +819,80 @@ export const BuildCompletionHeader: React.FC = () => {
                 : 'Attach this build to a roster slot'
             }
           >
-            <Box component="span">
+            <Box component="span" sx={{ display: 'flex' }}>
               <Button
-                variant="outlined"
                 size="small"
-                startIcon={!isMobile ? <GroupsIcon sx={{ fontSize: 14 }} /> : undefined}
                 onClick={() => setAddToRosterOpen(true)}
                 aria-label="Add build to roster"
                 sx={{
-                  ...pillBase,
-                  borderColor:
-                    savedRostersCount > 0
-                      ? isDark
-                        ? 'rgba(139,92,246,0.4)'
-                        : 'rgba(109,40,217,0.25)'
-                      : isDark
-                        ? 'rgba(255,255,255,0.10)'
-                        : 'rgba(0,0,0,0.10)',
-                  background:
-                    savedRostersCount > 0
-                      ? isDark
-                        ? 'rgba(139,92,246,0.08)'
-                        : 'rgba(109,40,217,0.05)'
-                      : isDark
-                        ? 'rgba(255,255,255,0.03)'
-                        : 'rgba(0,0,0,0.02)',
-                  color:
-                    savedRostersCount > 0
-                      ? isDark
-                        ? 'rgb(167,139,250)'
-                        : 'rgb(109,40,217)'
-                      : 'text.disabled',
+                  borderRadius: 0,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  px: 1.5,
+                  minWidth: 0,
+                  height: 36,
+                  color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
+                  transition: 'all 0.15s ease',
                   '&:hover': {
-                    borderColor: 'rgba(139,92,246,0.6)',
-                    background: 'rgba(139,92,246,0.12)',
-                    color: isDark ? 'rgb(196,181,253)' : 'rgb(109,40,217)',
+                    background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                    color: isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)',
                   },
                 }}
               >
-                {isMobile ? <GroupsIcon sx={{ fontSize: 16 }} /> : 'Roster'}
+                <GroupsIcon sx={{ fontSize: 16, mr: isMobile ? 0 : 0.5 }} />
+                {!isMobile && 'Roster'}
               </Button>
             </Box>
           </Tooltip>
-          <Tooltip title={isLoggedIn ? '' : 'Log in to publish your build to the Build Hub'}>
-            <Box component="span">
+
+          <Divider orientation="vertical" flexItem sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
+
+          {/* Publish — accent end-cap */}
+          <Tooltip title={isLoggedIn ? 'Publish to Build Hub' : 'Log in to publish your build'}>
+            <Box component="span" sx={{ display: 'flex' }}>
               <Button
-                variant="contained"
                 size="small"
-                startIcon={
-                  !isMobile ? (
-                    isPublishing ? (
-                      <CircularProgress size={12} color="inherit" />
-                    ) : (
-                      <PublishOutlined sx={{ fontSize: 14 }} />
-                    )
-                  ) : undefined
-                }
                 onClick={isLoggedIn ? handlePublishClick : handleGuestPublishRedirect}
                 disabled={isPublishing}
                 aria-label={
                   isLoggedIn ? 'Publish build to Build Hub' : 'Log in to publish your build'
                 }
                 sx={{
-                  ...pillBase,
-                  background: 'linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)',
+                  borderRadius: 0,
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  px: 1.75,
+                  minWidth: 0,
+                  height: 36,
                   color: '#fff',
-                  border: 'none',
-                  boxShadow: isLoggedIn ? '0 0 12px rgba(6,182,212,0.35)' : 'none',
+                  background: 'var(--be-accent, #38bdf8)',
+                  transition: 'all 0.18s ease',
                   '&:hover:not(:disabled)': {
-                    background: 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
-                    boxShadow: '0 0 18px rgba(6,182,212,0.5)',
+                    filter: 'brightness(1.25)',
+                    boxShadow: '0 0 16px rgba(var(--be-accent-rgb, 56, 189, 248), 0.45)',
                   },
                   '&.Mui-disabled': {
-                    background: 'linear-gradient(135deg, #22d3ee80 0%, #06b6d480 100%)',
-                    color: 'rgba(255,255,255,0.7)',
+                    background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)',
+                    color: 'rgba(255,255,255,0.5)',
                   },
                 }}
               >
-                {isMobile ? (
-                  isPublishing ? (
-                    <CircularProgress size={14} color="inherit" />
-                  ) : (
-                    <PublishOutlined sx={{ fontSize: 16 }} />
-                  )
-                ) : isPublishing ? (
-                  'Encoding\u2026'
+                {isPublishing ? (
+                  <CircularProgress size={14} sx={{ color: '#fff' }} />
                 ) : (
-                  'Publish'
+                  <>
+                    <PublishOutlined sx={{ fontSize: 16, mr: isMobile ? 0 : 0.5 }} />
+                    {!isMobile && 'Publish'}
+                  </>
                 )}
               </Button>
             </Box>
           </Tooltip>
         </Box>
 
-        {/* Overflow menu — visible only on medium/mobile viewports */}
+        {/* ── Overflow menu — visible only on medium/mobile viewports ── */}
         {isMedium && (
           <>
             <Tooltip title="More actions">
@@ -799,7 +905,7 @@ export const BuildCompletionHeader: React.FC = () => {
                   background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
                   backdropFilter: 'blur(8px)',
                   WebkitBackdropFilter: 'blur(8px)',
-                  borderRadius: '99px',
+                  borderRadius: '10px',
                   width: 36,
                   height: 36,
                   '&:hover': {

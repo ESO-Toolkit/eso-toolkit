@@ -311,6 +311,9 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                   }}
                 >
                   {formatDate(build.created_at)}
+                  {build.updated_at &&
+                    build.updated_at !== build.created_at &&
+                    ` · updated ${formatDate(build.updated_at)}`}
                 </Typography>
               </Box>
             </Box>

@@ -1981,71 +1981,98 @@ export const BuildViewPage: React.FC = () => {
               </Box>
             </motion.div>
 
-            {/* ── Meta strip: DLC + YouTube ── */}
-            {((build.settings.dlc && build.settings.dlc !== 'Base Game') ||
-              build.guide.youtubeUrl) && (
-              <motion.div variants={fadeInUp}>
-                <GlassPanel
-                  variant="subtle"
-                  sx={{
-                    p: 1.5,
-                    mb: 3,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2.5,
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  {build.settings.dlc && build.settings.dlc !== 'Base Game' && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography
-                        sx={{
-                          fontSize: '0.55rem',
-                          fontWeight: 700,
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
-                          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                        }}
-                      >
-                        DLC
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: '0.78rem',
-                          fontWeight: 600,
-                          color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
-                        }}
-                      >
-                        {build.settings.dlc}
-                      </Typography>
-                    </Box>
-                  )}
-                  {build.guide.youtubeUrl && (
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      startIcon={<YouTubeIcon sx={{ color: '#ef4444' }} />}
-                      href={build.guide.youtubeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+            {/* ── Meta strip: timestamps + YouTube ── */}
+            <motion.div variants={fadeInUp}>
+              <GlassPanel
+                variant="subtle"
+                sx={{
+                  p: 1.5,
+                  mb: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2.5,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    sx={{
+                      fontSize: '0.55rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                    }}
+                  >
+                    Created
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
+                    }}
+                  >
+                    {new Date(build.createdAt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </Typography>
+                </Box>
+                {build.updatedAt !== build.createdAt && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
                       sx={{
-                        borderRadius: '10px',
-                        textTransform: 'none',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
-                        '&:hover': {
-                          borderColor: '#ef4444',
-                          bgcolor: 'rgba(239, 68, 68, 0.06)',
-                        },
+                        fontSize: '0.55rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
                       }}
                     >
-                      Video Guide
-                    </Button>
-                  )}
-                </GlassPanel>
-              </motion.div>
-            )}
+                      Updated
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.70)',
+                      }}
+                    >
+                      {new Date(build.updatedAt).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </Typography>
+                  </Box>
+                )}
+                {build.guide.youtubeUrl && (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<YouTubeIcon sx={{ color: '#ef4444' }} />}
+                    href={build.guide.youtubeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      borderRadius: '10px',
+                      textTransform: 'none',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
+                      '&:hover': {
+                        borderColor: '#ef4444',
+                        bgcolor: 'rgba(239, 68, 68, 0.06)',
+                      },
+                    }}
+                  >
+                    Video Guide
+                  </Button>
+                )}
+              </GlassPanel>
+            </motion.div>
 
             {/* ── Class Skill Lines ── */}
             <motion.div variants={fadeInUp}>
