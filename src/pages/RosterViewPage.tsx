@@ -34,9 +34,8 @@ import {
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
-import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
-import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
+import { BuildDetailPanel } from '../components/roster/build-detail-panel';
+import { preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
 import { RaidRoster, TankSetup, HealerSetup, DPSSlot, MONSTER_SETS } from '../types/roster';
 import {
   TrialBuildOverrides,
@@ -171,66 +170,6 @@ const formatSkillLines = (
   return [sl.line1, sl.line2, sl.line3].filter(Boolean).join(' / ');
 };
 
-// ── Compact badge strip for Phase-4 inline build data ────────────────────────
-
-interface BuildDataBadgesProps {
-  food?: { id?: number; name?: string };
-  skills?: SkillsConfig;
-  passives?: number[];
-  cpPoints?: BuildChampionPoints;
-  isDarkMode: boolean;
-}
-
-const BuildDataBadges: React.FC<BuildDataBadgesProps> = ({
-  food,
-  skills,
-  passives,
-  cpPoints,
-  isDarkMode,
-}) => {
-  const foodName =
-    food?.id != null ? (ESO_CONSUMABLE_LOOKUP[food.id]?.name ?? food.name) : food?.name;
-  const skillCount = skills
-    ? Object.keys(skills[0] ?? {}).length + Object.keys(skills[1] ?? {}).length
-    : 0;
-  const passiveCount = passives?.length ?? 0;
-  const hasCp =
-    cpPoints &&
-    (cpPoints.warfare.slots.some((s) => s !== null) ||
-      cpPoints.fitness.slots.some((s) => s !== null) ||
-      cpPoints.craft.slots.some((s) => s !== null));
-
-  if (!foodName && skillCount === 0 && passiveCount === 0 && !hasCp) return null;
-
-  const chipSx = {
-    height: 17,
-    fontSize: '0.6rem',
-    fontWeight: 500,
-    backgroundColor: isDarkMode ? 'rgba(56,189,248,0.08)' : 'rgba(56,189,248,0.06)',
-    color: isDarkMode ? 'rgba(56,189,248,0.85)' : 'rgb(3,105,161)',
-    border: `1px solid ${isDarkMode ? 'rgba(56,189,248,0.18)' : 'rgba(56,189,248,0.2)'}`,
-    '& .MuiChip-label': { px: 0.75 },
-  };
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 0.5,
-        mt: 0.75,
-        pt: 0.75,
-        borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
-      }}
-    >
-      {foodName && <Chip label={`Food: ${foodName}`} size="small" sx={chipSx} />}
-      {skillCount > 0 && <Chip label={`${skillCount} skills`} size="small" sx={chipSx} />}
-      {passiveCount > 0 && <Chip label={`${passiveCount} passives`} size="small" sx={chipSx} />}
-      {hasCp && <Chip label="CP" size="small" sx={chipSx} />}
-    </Box>
-  );
-};
-
 // ============================================================
 // Individual role-card sub-components
 // ============================================================
@@ -282,8 +221,6 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
         border: `1px solid ${color}30`,
         backdropFilter: 'blur(12px)',
         overflow: 'visible',
-        display: 'flex',
-        flexDirection: 'column',
       }}
     >
       {/* Card header */}
@@ -489,12 +426,14 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
             {tank.notes}
           </Typography>
         )}
-        <BuildDataBadges
+        <BuildDetailPanel
           food={tank.food}
           skills={tank.skills}
           passives={tank.passives}
           cpPoints={tank.cpPoints}
+          gear={tank.gear}
           isDarkMode={isDarkMode}
+          color={color}
         />
       </Box>
     </Paper>
@@ -555,8 +494,6 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
         border: `1px solid ${color}30`,
         backdropFilter: 'blur(12px)',
         overflow: 'visible',
-        display: 'flex',
-        flexDirection: 'column',
       }}
     >
       {/* Card header */}
@@ -806,12 +743,14 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
             {healer.notes}
           </Typography>
         )}
-        <BuildDataBadges
+        <BuildDetailPanel
           food={healer.food}
           skills={healer.skills}
           passives={healer.passives}
           cpPoints={healer.cpPoints}
+          gear={healer.gear}
           isDarkMode={isDarkMode}
+          color={color}
         />
       </Box>
     </Paper>
@@ -1054,12 +993,14 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
             )}
           </Box>
         )}
-        <BuildDataBadges
+        <BuildDetailPanel
           food={slot.food}
           skills={slot.skills}
           passives={slot.passives}
           cpPoints={slot.cpPoints}
+          gear={slot.gear}
           isDarkMode={isDarkMode}
+          color={color}
         />
       </Box>
     </Box>
@@ -1635,7 +1576,7 @@ export const RosterViewPage: React.FC = () => {
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
             gap: 1.5,
-            alignItems: 'stretch',
+            alignItems: 'start',
           }}
         >
           {roster.tanks.map((tank, i) => (
@@ -1664,7 +1605,7 @@ export const RosterViewPage: React.FC = () => {
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
             gap: 1.5,
-            alignItems: 'stretch',
+            alignItems: 'start',
           }}
         >
           {roster.healers.map((healer, i) => (
