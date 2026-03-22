@@ -481,9 +481,14 @@ export const BuildCompletionHeader: React.FC = () => {
               fontSize: 12,
               fontWeight: 700,
               fontVariantNumeric: 'tabular-nums',
-              color: completeness >= 80
-                ? (isDark ? '#fff' : '#fff')
-                : (isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)'),
+              color:
+                completeness >= 80
+                  ? isDark
+                    ? '#fff'
+                    : '#fff'
+                  : isDark
+                    ? 'rgba(255,255,255,0.7)'
+                    : 'rgba(0,0,0,0.6)',
               borderLeft: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
             }}
           >
@@ -619,7 +624,11 @@ export const BuildCompletionHeader: React.FC = () => {
                 <FileUploadOutlined sx={{ fontSize: 16 }} />
               </IconButton>
             </Tooltip>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
+            />
             <Tooltip title="Export build data">
               <IconButton
                 size="small"
@@ -638,7 +647,11 @@ export const BuildCompletionHeader: React.FC = () => {
                   },
                 }}
               >
-                {isExporting ? <CircularProgress size={14} color="inherit" /> : <FileDownloadOutlined sx={{ fontSize: 16 }} />}
+                {isExporting ? (
+                  <CircularProgress size={14} color="inherit" />
+                ) : (
+                  <FileDownloadOutlined sx={{ fontSize: 16 }} />
+                )}
               </IconButton>
             </Tooltip>
           </Box>
@@ -679,7 +692,11 @@ export const BuildCompletionHeader: React.FC = () => {
                 <ShareOutlined sx={{ fontSize: 16 }} />
               </IconButton>
             </Tooltip>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
+            />
             <Tooltip title="View build in read-only mode">
               <IconButton
                 size="small"
@@ -735,18 +752,28 @@ export const BuildCompletionHeader: React.FC = () => {
                 height: 36,
                 transition: 'all 0.15s ease',
                 color: isDirty
-                  ? (isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)')
-                  : (isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)'),
+                  ? isDark
+                    ? 'rgba(255,255,255,0.9)'
+                    : 'rgba(0,0,0,0.8)'
+                  : isDark
+                    ? 'rgba(255,255,255,0.45)'
+                    : 'rgba(0,0,0,0.4)',
                 background: isDirty
                   ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)'
                   : 'transparent',
                 '&:hover': {
                   background: isDirty
                     ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.22)'
-                    : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+                    : isDark
+                      ? 'rgba(255,255,255,0.08)'
+                      : 'rgba(0,0,0,0.05)',
                   color: isDirty
-                    ? (isDark ? '#fff' : '#0b1220')
-                    : (isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.75)'),
+                    ? isDark
+                      ? '#fff'
+                      : '#0b1220'
+                    : isDark
+                      ? 'rgba(255,255,255,0.85)'
+                      : 'rgba(0,0,0,0.75)',
                 },
               }}
             >
@@ -755,7 +782,11 @@ export const BuildCompletionHeader: React.FC = () => {
             </Button>
           </Tooltip>
 
-          <Divider orientation="vertical" flexItem sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
+          <Divider
+            orientation="vertical"
+            flexItem
+            sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
+          />
 
           {/* Get Link (guest only) */}
           {!isLoggedIn && (
@@ -792,7 +823,11 @@ export const BuildCompletionHeader: React.FC = () => {
                   )}
                 </Button>
               </Tooltip>
-              <Divider orientation="vertical" flexItem sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
+              <Divider
+                orientation="vertical"
+                flexItem
+                sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
+              />
             </>
           )}
 
@@ -831,7 +866,11 @@ export const BuildCompletionHeader: React.FC = () => {
             </Box>
           </Tooltip>
 
-          <Divider orientation="vertical" flexItem sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
+          <Divider
+            orientation="vertical"
+            flexItem
+            sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
+          />
 
           {/* Publish — accent end-cap */}
           <Tooltip title={isLoggedIn ? 'Publish to Build Hub' : 'Log in to publish your build'}>
