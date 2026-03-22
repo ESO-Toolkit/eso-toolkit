@@ -44,27 +44,23 @@ interface LogGearItem {
   setName?: string;
   setID?: number;
   permanentEnchant?: number;
-  [key: string]: unknown;
 }
 
 interface LogCombatantInfo {
   gear?: LogGearItem[];
   talents?: PlayerTalent[];
-  [key: string]: unknown;
 }
 
 interface LogPlayerData {
   name?: string;
   id?: number;
   combatantInfo?: LogCombatantInfo;
-  [key: string]: unknown;
 }
 
 export interface LogPlayerDetails {
   tanks?: LogPlayerData[];
   healers?: LogPlayerData[];
   dps?: LogPlayerData[];
-  [key: string]: unknown;
 }
 
 interface LogAuraInfo {
