@@ -95,10 +95,12 @@ interface CompactSetup {
   g?: Record<string, number>; // gear: {slotIndex: itemId}
   gt?: Record<string, string>; // gear traits: {slotIndex: traitId}
   ge?: Record<string, string>; // gear enchants: {slotIndex: enchantId}
+  gw?: Record<string, number>; // gear weights: {slotIndex: 0=light|1=medium|2=heavy}
   sk?: { 0?: Record<string, number>; 1?: Record<string, number> }; // skills
   cp?: CompactCP; // champion points
   pt?: number[]; // potion IDs
   fo?: number; // food ID
+  fn?: string; // food name (fallback when no item ID matched)
   pa?: number[]; // passive IDs
 }
 
@@ -149,10 +151,24 @@ function compactGearEnchants(gear: GearConfig): Record<string, string> | undefin
   return Object.keys(result).length > 0 ? result : undefined;
 }
 
+const WEIGHT_ENCODE: Record<string, number> = { light: 0, medium: 1, heavy: 2 };
+const WEIGHT_DECODE: Record<number, 'light' | 'medium' | 'heavy'> = { 0: 'light', 1: 'medium', 2: 'heavy' };
+
+function compactGearWeights(gear: GearConfig): Record<string, number> | undefined {
+  const result: Record<string, number> = {};
+  for (const [slot, piece] of Object.entries(gear)) {
+    if (piece?.weight && WEIGHT_ENCODE[piece.weight] != null) {
+      result[slot] = WEIGHT_ENCODE[piece.weight];
+    }
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
 function expandGear(
   compact?: Record<string, number>,
   traits?: Record<string, string>,
   enchants?: Record<string, string>,
+  weights?: Record<string, number>,
 ): GearConfig {
   if (!compact) return {};
   const result: GearConfig = {};
@@ -161,6 +177,7 @@ function expandGear(
       id,
       trait: traits?.[slot],
       enchant: enchants?.[slot],
+      weight: weights?.[slot] != null ? WEIGHT_DECODE[weights[slot]] : undefined,
     };
   }
   return result;
@@ -241,11 +258,12 @@ function expandCP(compact?: CompactCP): BuildChampionPoints {
   };
 }
 
-function compactConsumables(consumables: BuildConsumables): { pt?: number[]; fo?: number } {
-  const result: { pt?: number[]; fo?: number } = {};
+function compactConsumables(consumables: BuildConsumables): { pt?: number[]; fo?: number; fn?: string } {
+  const result: { pt?: number[]; fo?: number; fn?: string } = {};
   const potionIds = consumables.potions.map((p) => p.id).filter((id) => id != null);
   if (potionIds.length > 0) result.pt = potionIds;
   if (consumables.food.id != null) result.fo = consumables.food.id;
+  if (consumables.food.name) result.fn = consumables.food.name;
   return result;
 }
 
@@ -267,13 +285,16 @@ function compactSetup(setup: BuildSetup): CompactSetup {
   if (gearTraits) c.gt = gearTraits;
   const gearEnchants = compactGearEnchants(setup.gear);
   if (gearEnchants) c.ge = gearEnchants;
+  const gearWeights = compactGearWeights(setup.gear);
+  if (gearWeights) c.gw = gearWeights;
   const skills = compactSkills(setup.skills);
   if (skills) c.sk = skills;
   const cp = compactCP(setup.cp);
   if (cp) c.cp = cp;
-  const { pt, fo } = compactConsumables(setup.consumables);
+  const { pt, fo, fn } = compactConsumables(setup.consumables);
   if (pt) c.pt = pt;
   if (fo != null) c.fo = fo;
+  if (fn) c.fn = fn;
   if (setup.passives.length > 0) c.pa = setup.passives;
   return c;
 }
@@ -287,7 +308,7 @@ function expandSetup(compact: CompactSetup, index: number): BuildSetup {
       : { magicka: 0, health: 0, stamina: 0 },
     curse: compact.cu ?? 'none',
     mundusStone: compact.ms ?? '',
-    gear: expandGear(compact.g, compact.gt, compact.ge),
+    gear: expandGear(compact.g, compact.gt, compact.ge, compact.gw),
     skills: expandSkills(compact.sk),
     cp: expandCP(compact.cp),
     consumables: {
@@ -299,7 +320,9 @@ function expandSetup(compact: CompactSetup, index: number): BuildSetup {
           effects: lookup ? [...lookup.effects] : [],
         };
       }),
-      food: compact.fo != null ? { id: compact.fo } : {},
+      food: compact.fo != null || compact.fn
+        ? { id: compact.fo ?? undefined, name: compact.fn }
+        : {},
     },
     passives: compact.pa ?? [],
     screenshots: [], // never encoded
