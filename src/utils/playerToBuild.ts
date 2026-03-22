@@ -26,13 +26,8 @@ import type {
   ESOClass,
 } from '../features/build-editor/types/build.types';
 import type { GearConfig, GearPiece } from '../features/loadout-manager/types/loadout.types';
-import {
-  RED_CHAMPION_POINTS,
-  BLUE_CHAMPION_POINTS,
-  GREEN_CHAMPION_POINTS,
-} from '../types/abilities';
+import { RED_CHAMPION_POINTS, BLUE_CHAMPION_POINTS, GREEN_CHAMPION_POINTS } from '../types/abilities';
 import type { PlayerGear, PlayerTalent } from '../types/playerDetails';
-
 import type { ClassAnalysisResult } from './classDetectionUtils';
 import type { PotionType } from './potionDetectionUtils';
 
@@ -41,18 +36,18 @@ import type { PotionType } from './potionDetectionUtils';
 // while GearConfig uses ESO's native equipment slot numbering (EQUIP_SLOTS).
 
 const PLAYER_GEAR_SLOT_TO_EQUIP_SLOT: Record<number, number> = {
-  0: 0, // HEAD → Head
-  1: 2, // CHEST → Body
-  2: 3, // SHOULDERS → Shoulders
-  3: 6, // WAIST → Waist
-  4: 16, // HANDS → Hands
-  5: 8, // LEGS → Legs
-  6: 9, // FEET → Feet
-  7: 1, // NECK → Neck
-  8: 11, // RING1 → Ring 1
-  9: 12, // RING2 → Ring 2
-  10: 4, // MAIN_HAND → Main-Hand
-  11: 5, // OFF_HAND → Off-Hand
+  0: 0,   // HEAD → Head
+  1: 2,   // CHEST → Body
+  2: 3,   // SHOULDERS → Shoulders
+  3: 6,   // WAIST → Waist
+  4: 16,  // HANDS → Hands
+  5: 8,   // LEGS → Legs
+  6: 9,   // FEET → Feet
+  7: 1,   // NECK → Neck
+  8: 11,  // RING1 → Ring 1
+  9: 12,  // RING2 → Ring 2
+  10: 4,  // MAIN_HAND → Main-Hand
+  11: 5,  // OFF_HAND → Off-Hand
   12: 20, // BACKUP_MAIN_HAND → Main-Hand Backup
   13: 21, // BACKUP_OFF_HAND → Off-Hand Backup
 };
@@ -71,14 +66,10 @@ function resolveArmorWeight(
 ): 'light' | 'medium' | 'heavy' | undefined {
   if (!APPAREL_SLOTS.has(slotIdx)) return undefined;
   switch (gearType) {
-    case 1:
-      return 'light';
-    case 2:
-      return 'medium';
-    case 3:
-      return 'heavy';
-    default:
-      return undefined;
+    case 1: return 'light';
+    case 2: return 'medium';
+    case 3: return 'heavy';
+    default: return undefined;
   }
 }
 
@@ -90,10 +81,7 @@ const MUNDUS_NAME_TO_ID = new Map<string, string>(
 
 function resolveMundusId(mundusName: string): string {
   // Mundus buffs from logs often arrive as "Boon: The Thief" or just "The Thief"
-  const cleaned = mundusName
-    .replace(/^(?:boon|bonus\s*\(\d+\)):\s*/i, '')
-    .trim()
-    .toLowerCase();
+  const cleaned = mundusName.replace(/^(?:boon|bonus\s*\(\d+\)):\s*/i, '').trim().toLowerCase();
   return MUNDUS_NAME_TO_ID.get(cleaned) ?? '';
 }
 
@@ -103,7 +91,7 @@ const LABEL_TO_SKILL_LINE_ID = new Map<string, ClassSkillLineId>(
   CLASS_SKILL_LINES.map((sl) => [sl.label.toLowerCase(), sl.id]),
 );
 
-export function resolveClassFromAnalysis(classAnalysis?: ClassAnalysisResult): {
+function resolveClassFromAnalysis(classAnalysis?: ClassAnalysisResult): {
   esoClass: ESOClass;
   classSkillLines: [ClassSkillLineId | null, ClassSkillLineId | null, ClassSkillLineId | null];
 } {
@@ -115,21 +103,14 @@ export function resolveClassFromAnalysis(classAnalysis?: ClassAnalysisResult): {
   // The actual class name lives on each skillLine entry's className field.
   const classNameLower = classAnalysis.skillLines[0].className.toLowerCase();
   const esoClass: ESOClass =
-    classNameLower === 'dragonknight'
-      ? 'dragonknight'
-      : classNameLower === 'sorcerer'
-        ? 'sorcerer'
-        : classNameLower === 'nightblade'
-          ? 'nightblade'
-          : classNameLower === 'templar'
-            ? 'templar'
-            : classNameLower === 'warden'
-              ? 'warden'
-              : classNameLower === 'necromancer'
-                ? 'necromancer'
-                : classNameLower === 'arcanist'
-                  ? 'arcanist'
-                  : 'any-class';
+    classNameLower === 'dragonknight' ? 'dragonknight' :
+    classNameLower === 'sorcerer' ? 'sorcerer' :
+    classNameLower === 'nightblade' ? 'nightblade' :
+    classNameLower === 'templar' ? 'templar' :
+    classNameLower === 'warden' ? 'warden' :
+    classNameLower === 'necromancer' ? 'necromancer' :
+    classNameLower === 'arcanist' ? 'arcanist' :
+    'any-class';
 
   // Resolve skill lines from the analysis
   const resolvedIds: ClassSkillLineId[] = (classAnalysis.skillLines ?? [])
@@ -159,18 +140,15 @@ export function resolveClassFromAnalysis(classAnalysis?: ClassAnalysisResult): {
 
 function resolveRole(playerRole?: string): CombatRole {
   switch (playerRole?.toLowerCase()) {
-    case 'tank':
-      return 'tank';
-    case 'healer':
-      return 'healer';
-    default:
-      return 'hybrid-dps';
+    case 'tank': return 'tank';
+    case 'healer': return 'healer';
+    default: return 'hybrid-dps';
   }
 }
 
 // ─── Gear Conversion ────────────────────────────────────────────────────────
 
-export function convertGear(gear: PlayerGear[]): GearConfig {
+function convertGear(gear: PlayerGear[]): GearConfig {
   const config: GearConfig = {};
 
   for (let slotIdx = 0; slotIdx < gear.length; slotIdx++) {
@@ -197,7 +175,7 @@ export function convertGear(gear: PlayerGear[]): GearConfig {
 //   [6-10] = Back bar abilities, [11] = Back bar ultimate
 // SkillsConfig uses slots 3-7 (abilities) and 8 (ultimate) per bar.
 
-export function convertSkills(talents: PlayerTalent[]): {
+function convertSkills(talents: PlayerTalent[]): {
   skills: BuildSetup['skills'];
   passives: number[];
 } {
@@ -236,7 +214,7 @@ export function convertSkills(talents: PlayerTalent[]): {
 
 // ─── Champion Points Conversion ─────────────────────────────────────────────
 
-export function convertChampionPoints(
+function convertChampionPoints(
   cpList: Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>,
 ): BuildChampionPoints {
   const cp: BuildChampionPoints = {
@@ -283,10 +261,7 @@ const CONSUMABLE_NAME_INDEX = new Map<string, number>(
   ESO_CONSUMABLES.map((c) => [c.name.toLowerCase(), c.id]),
 );
 
-export function resolveFood(foodAura?: { id?: number; name?: string }): {
-  id?: number;
-  name?: string;
-} {
+function resolveFood(foodAura?: { id?: number; name?: string }): { id?: number; name?: string } {
   if (!foodAura?.name) return {};
 
   // Try exact match first
@@ -310,13 +285,13 @@ export function resolveFood(foodAura?: { id?: number; name?: string }): {
 // Map that to the best-matching curated potion from ESO_POTIONS.
 
 const POTION_TYPE_TO_ID: Record<string, number> = {
-  'spell-power': 9001, // Essence of Spell Power
-  'weapon-power': 9011, // Essence of Weapon Power
-  'tri-stat': 9021, // Essence of Health (Tri-Stat)
-  heroism: 9051, // Essence of Heroism
-  health: 9022, // Essence of Health
-  magicka: 9023, // Essence of Magicka
-  stamina: 9024, // Essence of Stamina
+  'spell-power': 9001,   // Essence of Spell Power
+  'weapon-power': 9011,  // Essence of Weapon Power
+  'tri-stat': 9021,      // Essence of Health (Tri-Stat)
+  'heroism': 9051,       // Essence of Heroism
+  'health': 9022,        // Essence of Health
+  'magicka': 9023,       // Essence of Magicka
+  'stamina': 9024,       // Essence of Stamina
 };
 
 function resolvePotions(potionType?: PotionType): BuildPotion[] {
@@ -382,7 +357,9 @@ export function playerToBuild(data: PlayerBuildExtractionData): Build {
   const gearConfig = convertGear(data.gear);
   const { skills, passives } = convertSkills(data.talents);
   const cp = convertChampionPoints(data.championPoints);
-  const mundusStone = data.mundusBuffs.length > 0 ? resolveMundusId(data.mundusBuffs[0].name) : '';
+  const mundusStone = data.mundusBuffs.length > 0
+    ? resolveMundusId(data.mundusBuffs[0].name)
+    : '';
   const description = buildGearDescription(data.gear);
 
   const now = new Date().toISOString();
