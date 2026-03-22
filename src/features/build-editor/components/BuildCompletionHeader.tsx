@@ -67,7 +67,6 @@ import { BE_TOKENS } from '../theme/buildEditorTokens';
 
 import { AddToRosterDialog } from './AddToRosterDialog';
 import { glassInputSx } from './primitives/glassInputSx';
-import { ProgressRing } from './primitives/ProgressRing';
 
 export const BuildCompletionHeader: React.FC = () => {
   const dispatch = useDispatch();
@@ -339,20 +338,6 @@ export const BuildCompletionHeader: React.FC = () => {
       background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
     },
   } as const;
-
-  // Vertical divider between button groups
-  const groupDivider = (
-    <Divider
-      orientation="vertical"
-      flexItem
-      sx={{
-        mx: 0.5,
-        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
-        alignSelf: 'center',
-        height: 20,
-      }}
-    />
-  );
 
   return (
     <Box

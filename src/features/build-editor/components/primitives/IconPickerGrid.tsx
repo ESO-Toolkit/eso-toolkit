@@ -38,7 +38,7 @@ export const IconPickerGrid = <T extends string = string>({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent, idx: number) => {
-      let nextIdx = idx;
+      let nextIdx: number;
       switch (e.key) {
         case 'ArrowRight':
           nextIdx = (idx + 1) % options.length;
