@@ -236,6 +236,31 @@ export const buildEditorSlice = createSlice({
       }
       state.isDirty = true;
     },
+    reorderSetups(state, action: PayloadAction<{ fromIndex: number; toIndex: number }>) {
+      const { fromIndex, toIndex } = action.payload;
+      if (fromIndex === toIndex) return;
+      if (fromIndex < 0 || toIndex < 0) return;
+      if (fromIndex >= state.build.setups.length || toIndex >= state.build.setups.length) return;
+
+      // Track the currently active setup's id so we can follow it after reorder
+      const activeSetupId = state.build.setups[state.activeSetupIndex]?.id;
+
+      // Move the setup from fromIndex to toIndex
+      const [moved] = state.build.setups.splice(fromIndex, 1);
+      state.build.setups.splice(toIndex, 0, moved);
+
+      // Update setupOrder to match new positions
+      state.build.settings.setupOrder = state.build.setups.map((_, i) => i);
+
+      // Keep the same setup active (follow it to its new index)
+      if (activeSetupId) {
+        const newIdx = state.build.setups.findIndex((s) => s.id === activeSetupId);
+        if (newIdx !== -1) state.activeSetupIndex = newIdx;
+      }
+
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
 
     // ── Character (per-setup) ─────────────────────────────────────────────────
     setAttributes(state, action: PayloadAction<BuildAttributes>) {
@@ -293,6 +318,34 @@ export const buildEditorSlice = createSlice({
       const piece = setup.gear[action.payload.slot];
       if (piece) {
         piece.weight = action.payload.weight;
+        state.build.updatedAt = new Date().toISOString();
+        state.isDirty = true;
+      }
+    },
+
+    setGearTrait(
+      state,
+      action: PayloadAction<{ slot: number; trait: string | undefined }>,
+    ) {
+      const setup = state.build.setups[state.activeSetupIndex];
+      if (!setup) return;
+      const piece = setup.gear[action.payload.slot];
+      if (piece) {
+        piece.trait = action.payload.trait;
+        state.build.updatedAt = new Date().toISOString();
+        state.isDirty = true;
+      }
+    },
+
+    setGearEnchant(
+      state,
+      action: PayloadAction<{ slot: number; enchant: string | undefined }>,
+    ) {
+      const setup = state.build.setups[state.activeSetupIndex];
+      if (!setup) return;
+      const piece = setup.gear[action.payload.slot];
+      if (piece) {
+        piece.enchant = action.payload.enchant;
         state.build.updatedAt = new Date().toISOString();
         state.isDirty = true;
       }
@@ -453,12 +506,15 @@ export const {
   addSetup,
   renameSetup,
   deleteSetup,
+  reorderSetups,
   setAttributes,
   setCurse,
   setMundusStone,
   setGear,
   setGearSlot,
   setGearWeight,
+  setGearTrait,
+  setGearEnchant,
   setSkills,
   setChampionPoints,
   setChampionTreeSlot,

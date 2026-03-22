@@ -63,8 +63,10 @@ const STAT_ITEM_DESCRIPTIONS: Record<string, string> = {
     'Trial set (Maw of Lorkhaj). Tank applies up to 6000 pen debuff by activating synergies.',
   "Crimson Oath's Rive":
     'Dungeon set (The Cauldron). Tank applies 3541 pen debuff to enemies within 12 meters.',
-  Tremorscale: 'Monster set (Volenfell). Applies 2640 pen debuff to the enemy when taunting.',
-  'Runic Sunder': 'Arcanist class ability. Applies 2200 pen debuff via Crux consumption.',
+  Tremorscale:
+    'Monster set (Volenfell). Applies 2640 pen debuff to the enemy when taunting.',
+  'Runic Sunder':
+    'Arcanist class ability. Applies 2200 pen debuff via Crux consumption.',
   'Crystal Weapon':
     'Sorcerer skill. Next light attack applies 1000 pen debuff to the target. PvP only.',
 
@@ -81,11 +83,14 @@ const STAT_ITEM_DESCRIPTIONS: Record<string, string> = {
   'The Lover': 'Mundus stone. Grants 2752 pen at base, plus ~220 per Divines trait piece.',
 
   // ── Penetration: Passive (armor/weapon) ─────────────────────────────────
-  'Twin Blade & Blunt (Mace)': 'Dual Wield passive. Each mace increases penetration by 1487.',
-  'Heavy Weapons (Maul)': 'Two-Handed passive. Mauls grant 2974 penetration.',
+  'Twin Blade & Blunt (Mace)':
+    'Dual Wield passive. Each mace increases penetration by 1487.',
+  'Heavy Weapons (Maul)':
+    'Two-Handed passive. Mauls grant 2974 penetration.',
 
   // ── Penetration: CP ─────────────────────────────────────────────────────
-  'CP: Piercing': 'Warfare constellation passive. Grants 350 penetration per stage allocated.',
+  'CP: Piercing':
+    'Warfare constellation passive. Grants 350 penetration per stage allocated.',
   'CP: Force of Nature':
     'Warfare slottable star. Grants 220 penetration per status effect on the target.',
 
@@ -101,15 +106,17 @@ const STAT_ITEM_DESCRIPTIONS: Record<string, string> = {
   'Major Force':
     'Increases Critical Damage by 20%. Applied by Aggressive Horn or Saxhleel Champion set.',
   'Minor Brittle':
-    "Target takes 10% more Critical Damage. Applied by Frost Clench, Winter's Revenge, or Chilled status.",
+    'Target takes 10% more Critical Damage. Applied by Frost Clench, Winter\'s Revenge, or Chilled status.',
   'Major Brittle':
     'Target takes 20% more Critical Damage. Applied by specific sets or abilities (rare).',
   'Elemental Catalyst':
     'Warden skill. Each status effect on the target grants 5% crit damage, up to 3 stacks (15%).',
 
   // ── Crit Damage: Gear ───────────────────────────────────────────────────
-  'Lucent Echoes': 'Gold Road gear set. Grants 11% Critical Damage when dealing direct damage.',
-  "Sul-Xan's Torment": 'Rockgrove trial set. Grants 12% Critical Damage. PvE only.',
+  'Lucent Echoes':
+    'Gold Road gear set. Grants 11% Critical Damage when dealing direct damage.',
+  "Sul-Xan's Torment":
+    'Rockgrove trial set. Grants 12% Critical Damage. PvE only.',
   "Harpooner's Wading Kilt":
     'Mythic item. Stacks up to 10% Critical Damage (1% per stack), lost on taking damage.',
 
@@ -117,19 +124,23 @@ const STAT_ITEM_DESCRIPTIONS: Record<string, string> = {
   'Feline Ambush': 'Khajiit racial passive. Grants 12% Critical Damage.',
 
   // ── Crit Damage: Class ──────────────────────────────────────────────────
-  'Fated Fortune': 'Arcanist Herald of the Tome passive. Grants 12% Critical Damage (6% per rank).',
-  Hemorrhage: 'Nightblade Assassination passive. Grants 10% Critical Damage (5% per rank).',
-  'Piercing Spear': 'Templar Aedric Spear passive. Grants 12% Critical Damage (6% per rank).',
+  'Fated Fortune':
+    'Arcanist Herald of the Tome passive. Grants 12% Critical Damage (6% per rank).',
+  Hemorrhage:
+    'Nightblade Assassination passive. Grants 10% Critical Damage (5% per rank).',
+  'Piercing Spear':
+    'Templar Aedric Spear passive. Grants 12% Critical Damage (6% per rank).',
   'Advanced Species':
     'Warden Animal Companions passive. Grants 15% Critical Damage when an Animal Companions ability is slotted.',
 
   // ── Crit Damage: Passive (armor) ────────────────────────────────────────
-  'Twin Blade & Blunt (Axe)': 'Dual Wield passive. Each axe increases Critical Damage by 6%.',
-  'Heavy Weapons (Axe)': 'Two-Handed passive. Axes grant 6% Critical Damage.',
+  'Twin Blade & Blunt (Axe)':
+    'Dual Wield passive. Each axe increases Critical Damage by 6%.',
+  'Heavy Weapons (Axe)':
+    'Two-Handed passive. Axes grant 6% Critical Damage.',
 
   // ── Crit Damage: Mundus ─────────────────────────────────────────────────
-  'The Shadow':
-    'Mundus stone. Grants 13% Critical Damage at base, plus ~1% per Divines trait piece.',
+  'The Shadow': 'Mundus stone. Grants 13% Critical Damage at base, plus ~1% per Divines trait piece.',
 
   // ── Crit Damage: CP ─────────────────────────────────────────────────────
   'CP: Fighting Finesse':
@@ -138,15 +149,15 @@ const STAT_ITEM_DESCRIPTIONS: Record<string, string> = {
     'Warfare slottable star. Grants 2% Critical Damage per stage when attacking from behind or flanking.',
 
   // ── Crit Chance: Base ───────────────────────────────────────────────────
-  'Base Crit Chance': 'Every character starts with 10% base Critical Chance at level 50.',
+  'Base Crit Chance':
+    'Every character starts with 10% base Critical Chance at level 50.',
 
   // ── Crit Chance: Race ───────────────────────────────────────────────────
   'Lunar Blessings':
     'Khajiit racial passive. Grants 2284 Critical Rating (~10.4% Critical Chance).',
 
   // ── Crit Chance: Mundus ─────────────────────────────────────────────────
-  'The Thief':
-    'Mundus stone. Grants ~7% Critical Chance at base, plus ~0.6% per Divines trait piece.',
+  'The Thief': 'Mundus stone. Grants ~7% Critical Chance at base, plus ~0.6% per Divines trait piece.',
 
   // ── Crit Chance: Passive (weapon) ───────────────────────────────────────
   'Twin Blade & Blunt (Dagger)':
@@ -165,15 +176,15 @@ const STAT_ITEM_DESCRIPTIONS: Record<string, string> = {
   'The Lady': 'Mundus stone. Grants 2752 resistance at base, plus ~220 per Divines trait piece.',
 
   // ── Crit Damage: Base ───────────────────────────────────────────────────
-  'Base Crit Damage': 'Every character starts with 50% base Critical Damage at level 50.',
+  'Base Crit Damage':
+    'Every character starts with 50% base Critical Damage at level 50.',
 };
 
 /** Descriptions for source category headers */
 export const SOURCE_CATEGORY_DESCRIPTIONS: Record<string, string> = {
   base: 'Innate character stats at level 50, before any gear or passives.',
-  race: "Bonuses from your character's racial passive abilities.",
-  class:
-    'Bonuses from class-specific passive abilities. Requires a skill from that line to be slotted.',
+  race: 'Bonuses from your character\'s racial passive abilities.',
+  class: 'Bonuses from class-specific passive abilities. Requires a skill from that line to be slotted.',
   mundus: 'Bonus from your active Mundus stone. Divines trait on armor amplifies the effect.',
   gear: 'Bonuses from equipped gear sets and mythic items.',
   passive: 'Bonuses from armor weight passives and weapon type passives.',

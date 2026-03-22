@@ -48,11 +48,7 @@ export const ARMOR_TRAITS: TraitDef[] = [
   { id: 'sturdy', name: 'Sturdy', description: 'Reduces block cost' },
   { id: 'impenetrable', name: 'Impenetrable', description: 'Increases Critical Resistance' },
   { id: 'training', name: 'Training', description: 'Increases experience gained from kills' },
-  {
-    id: 'invigorating',
-    name: 'Invigorating',
-    description: 'Increases Health, Magicka, and Stamina Recovery',
-  },
+  { id: 'invigorating', name: 'Invigorating', description: 'Increases Health, Magicka, and Stamina Recovery' },
   { id: 'nirnhoned', name: 'Nirnhoned', description: 'Increases Physical and Spell Resistance' },
 ];
 
@@ -60,11 +56,7 @@ export const ARMOR_TRAITS: TraitDef[] = [
 
 export const WEAPON_TRAITS: TraitDef[] = [
   { id: 'precise', name: 'Precise', description: 'Increases Weapon and Spell Critical' },
-  {
-    id: 'infused',
-    name: 'Infused',
-    description: 'Increases weapon enchantment effect and reduces cooldown',
-  },
+  { id: 'infused', name: 'Infused', description: 'Increases weapon enchantment effect and reduces cooldown' },
   { id: 'sharpened', name: 'Sharpened', description: 'Increases Physical and Spell Penetration' },
   { id: 'powered', name: 'Powered', description: 'Increases healing done' },
   { id: 'charged', name: 'Charged', description: 'Increases chance to apply status effects' },
@@ -77,11 +69,7 @@ export const WEAPON_TRAITS: TraitDef[] = [
 // ─── Jewelry Traits (9) ─────────────────────────────────────────────────────
 
 export const JEWELRY_TRAITS: TraitDef[] = [
-  {
-    id: 'bloodthirsty',
-    name: 'Bloodthirsty',
-    description: 'Increases damage against low-health enemies',
-  },
+  { id: 'bloodthirsty', name: 'Bloodthirsty', description: 'Increases damage against low-health enemies' },
   { id: 'arcane', name: 'Arcane', description: 'Increases Maximum Magicka' },
   { id: 'robust', name: 'Robust', description: 'Increases Maximum Stamina' },
   { id: 'healthy', name: 'Healthy', description: 'Increases Maximum Health' },
@@ -98,46 +86,18 @@ export const ARMOR_ENCHANTS: EnchantDef[] = [
   { id: 'health', name: 'Glyph of Health', description: 'Adds Maximum Health' },
   { id: 'magicka', name: 'Glyph of Magicka', description: 'Adds Maximum Magicka' },
   { id: 'stamina', name: 'Glyph of Stamina', description: 'Adds Maximum Stamina' },
-  {
-    id: 'prismatic-defense',
-    name: 'Glyph of Prismatic Defense',
-    description: 'Adds Maximum Health, Magicka, and Stamina',
-  },
+  { id: 'prismatic-defense', name: 'Glyph of Prismatic Defense', description: 'Adds Maximum Health, Magicka, and Stamina' },
 ];
 
 // ─── Weapon Enchantments (14) ───────────────────────────────────────────────
 
 export const WEAPON_ENCHANTS: EnchantDef[] = [
-  {
-    id: 'weapon-damage',
-    name: 'Glyph of Weapon Damage',
-    description: 'Increases Weapon and Spell Damage',
-  },
-  {
-    id: 'absorb-stamina',
-    name: 'Glyph of Absorb Stamina',
-    description: 'Deals Physical Damage and recovers Stamina',
-  },
-  {
-    id: 'absorb-magicka',
-    name: 'Glyph of Absorb Magicka',
-    description: 'Deals Magic Damage and recovers Magicka',
-  },
-  {
-    id: 'absorb-health',
-    name: 'Glyph of Absorb Health',
-    description: 'Deals Magic Damage and recovers Health',
-  },
-  {
-    id: 'crushing',
-    name: 'Glyph of Crushing',
-    description: "Reduces target's Physical and Spell Resistance",
-  },
-  {
-    id: 'weakening',
-    name: 'Glyph of Weakening',
-    description: "Reduces target's Weapon and Spell Damage",
-  },
+  { id: 'weapon-damage', name: 'Glyph of Weapon Damage', description: 'Increases Weapon and Spell Damage' },
+  { id: 'absorb-stamina', name: 'Glyph of Absorb Stamina', description: 'Deals Physical Damage and recovers Stamina' },
+  { id: 'absorb-magicka', name: 'Glyph of Absorb Magicka', description: 'Deals Magic Damage and recovers Magicka' },
+  { id: 'absorb-health', name: 'Glyph of Absorb Health', description: 'Deals Magic Damage and recovers Health' },
+  { id: 'crushing', name: 'Glyph of Crushing', description: "Reduces target's Physical and Spell Resistance" },
+  { id: 'weakening', name: 'Glyph of Weakening', description: "Reduces target's Weapon and Spell Damage" },
   { id: 'flame', name: 'Glyph of Flame', description: 'Deals Fire Damage' },
   { id: 'frost', name: 'Glyph of Frost', description: 'Deals Frost Damage' },
   { id: 'shock', name: 'Glyph of Shock', description: 'Deals Shock Damage' },
@@ -145,72 +105,24 @@ export const WEAPON_ENCHANTS: EnchantDef[] = [
   { id: 'foulness', name: 'Glyph of Foulness', description: 'Deals Disease Damage' },
   { id: 'decrease-health', name: 'Glyph of Decrease Health', description: 'Deals Oblivion Damage' },
   { id: 'hardening', name: 'Glyph of Hardening', description: 'Grants a Damage Shield' },
-  {
-    id: 'prismatic-onslaught',
-    name: 'Glyph of Prismatic Onslaught',
-    description: 'Deals Magic Damage and recovers resources',
-  },
+  { id: 'prismatic-onslaught', name: 'Glyph of Prismatic Onslaught', description: 'Deals Magic Damage and recovers resources' },
 ];
 
 // ─── Jewelry Enchantments (20) ──────────────────────────────────────────────
 
 export const JEWELRY_ENCHANTS: EnchantDef[] = [
-  {
-    id: 'increase-spell-damage',
-    name: 'Glyph of Increase Magical Harm',
-    description: 'Adds Spell and Weapon Damage plus Magicka Recovery',
-  },
-  {
-    id: 'increase-physical-damage',
-    name: 'Glyph of Increase Physical Harm',
-    description: 'Adds Weapon and Spell Damage plus Stamina Recovery',
-  },
-  {
-    id: 'magicka-recovery',
-    name: 'Glyph of Magicka Recovery',
-    description: 'Adds Magicka Recovery',
-  },
-  {
-    id: 'stamina-recovery',
-    name: 'Glyph of Stamina Recovery',
-    description: 'Adds Stamina Recovery',
-  },
+  { id: 'increase-spell-damage', name: 'Glyph of Increase Magical Harm', description: 'Adds Spell and Weapon Damage plus Magicka Recovery' },
+  { id: 'increase-physical-damage', name: 'Glyph of Increase Physical Harm', description: 'Adds Weapon and Spell Damage plus Stamina Recovery' },
+  { id: 'magicka-recovery', name: 'Glyph of Magicka Recovery', description: 'Adds Magicka Recovery' },
+  { id: 'stamina-recovery', name: 'Glyph of Stamina Recovery', description: 'Adds Stamina Recovery' },
   { id: 'health-recovery', name: 'Glyph of Health Recovery', description: 'Adds Health Recovery' },
-  {
-    id: 'prismatic-recovery',
-    name: 'Glyph of Prismatic Recovery',
-    description: 'Adds Health, Magicka, and Stamina Recovery',
-  },
-  {
-    id: 'reduce-spell-cost',
-    name: 'Glyph of Reduce Spell Cost',
-    description: 'Reduces Magicka cost of abilities',
-  },
-  {
-    id: 'reduce-feat-cost',
-    name: 'Glyph of Reduce Feat Cost',
-    description: 'Reduces Stamina cost of abilities',
-  },
-  {
-    id: 'reduce-skill-cost',
-    name: 'Glyph of Reduce Skill Cost',
-    description: 'Reduces Health, Magicka, and Stamina ability costs',
-  },
-  {
-    id: 'decrease-spell-harm',
-    name: 'Glyph of Decrease Spell Harm',
-    description: 'Adds Spell Resistance',
-  },
-  {
-    id: 'decrease-physical-harm',
-    name: 'Glyph of Decrease Physical Harm',
-    description: 'Adds Physical Resistance',
-  },
-  {
-    id: 'potion-boost',
-    name: 'Glyph of Potion Boost',
-    description: 'Increases duration of Potion effects',
-  },
+  { id: 'prismatic-recovery', name: 'Glyph of Prismatic Recovery', description: 'Adds Health, Magicka, and Stamina Recovery' },
+  { id: 'reduce-spell-cost', name: 'Glyph of Reduce Spell Cost', description: 'Reduces Magicka cost of abilities' },
+  { id: 'reduce-feat-cost', name: 'Glyph of Reduce Feat Cost', description: 'Reduces Stamina cost of abilities' },
+  { id: 'reduce-skill-cost', name: 'Glyph of Reduce Skill Cost', description: 'Reduces Health, Magicka, and Stamina ability costs' },
+  { id: 'decrease-spell-harm', name: 'Glyph of Decrease Spell Harm', description: 'Adds Spell Resistance' },
+  { id: 'decrease-physical-harm', name: 'Glyph of Decrease Physical Harm', description: 'Adds Physical Resistance' },
+  { id: 'potion-boost', name: 'Glyph of Potion Boost', description: 'Increases duration of Potion effects' },
   { id: 'potion-speed', name: 'Glyph of Potion Speed', description: 'Reduces Potion cooldown' },
   { id: 'bashing', name: 'Glyph of Bashing', description: 'Increases Bash damage' },
   { id: 'bracing', name: 'Glyph of Bracing', description: 'Reduces cost of Blocking' },

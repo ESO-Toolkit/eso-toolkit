@@ -11,7 +11,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/store/storeWithHistory';
 
 import type { ArmorWeight, GearConfig } from '../../../loadout-manager/types/loadout.types';
-import { setGear, setGearWeight } from '../../store/buildEditorSlice';
+import { setGear, setGearEnchant, setGearTrait, setGearWeight } from '../../store/buildEditorSlice';
 import { EquipmentPicker } from '../pickers/EquipmentPicker';
 
 export const EquipmentSection: React.FC = () => {
@@ -33,11 +33,27 @@ export const EquipmentSection: React.FC = () => {
     [dispatch],
   );
 
+  const handleTraitChange = useCallback(
+    (slot: number, trait: string | undefined) => {
+      dispatch(setGearTrait({ slot, trait }));
+    },
+    [dispatch],
+  );
+
+  const handleEnchantChange = useCallback(
+    (slot: number, enchant: string | undefined) => {
+      dispatch(setGearEnchant({ slot, enchant }));
+    },
+    [dispatch],
+  );
+
   return (
     <EquipmentPicker
       gear={setup.gear}
       onChange={handleChange}
       onWeightChange={handleWeightChange}
+      onTraitChange={handleTraitChange}
+      onEnchantChange={handleEnchantChange}
     />
   );
 };

@@ -335,6 +335,20 @@ export const ANTHELMIR_DIVISOR = 2.5;
 /** Balorgh pen = ultimateCost × 23 */
 export const BALORGH_MULTIPLIER = 23;
 
+// ─── Trait stat contributions (gold quality, CP160) ─────────────────────────
+
+/** Sharpened weapon trait: flat penetration per weapon */
+export const TRAIT_SHARPENED_PEN = 2752;
+
+/** Precise weapon trait: flat crit rating per weapon */
+export const TRAIT_PRECISE_CRIT_RATING = 2295;
+
+/** Nirnhoned armor trait: flat resistance per armor piece */
+export const TRAIT_NIRNHONED_ARMOR_RESISTANCE = 253;
+
+/** Defending weapon trait: flat resistance per weapon */
+export const TRAIT_DEFENDING_RESISTANCE = 2752;
+
 // ─── Armor base values ──────────────────────────────────────────────────────
 
 /** Base resistance at level 50 (before any gear) */

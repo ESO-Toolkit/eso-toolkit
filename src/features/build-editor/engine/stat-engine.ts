@@ -34,6 +34,10 @@ import {
   PEN_BUFFS,
   PEN_CAPS,
   RACE_PASSIVES,
+  TRAIT_DEFENDING_RESISTANCE,
+  TRAIT_NIRNHONED_ARMOR_RESISTANCE,
+  TRAIT_PRECISE_CRIT_RATING,
+  TRAIT_SHARPENED_PEN,
 } from './stat-constants';
 import type { BuildStats, StatItem, StatOverrides, StatResult, StatStatus } from './stat-types';
 
@@ -56,6 +60,48 @@ export function countArmorWeights(gear: GearConfig): ArmorWeightCounts {
     counts[weight]++;
   }
   return counts;
+}
+
+// ─── Trait counting ────────────────────────────────────────────────────────
+
+/**
+ * Count how many Divines-traited apparel pieces are equipped.
+ * Used to scale Mundus Stone bonuses via MundusDef.perDivines.
+ */
+export function countDivinesPieces(gear: GearConfig): number {
+  let count = 0;
+  for (const slot of APPAREL_SLOTS) {
+    const piece = gear[slot];
+    if (piece?.id && piece.trait === 'divines') count++;
+  }
+  return count;
+}
+
+/** Weapon slots: front bar main + off, back bar main + off */
+const WEAPON_SLOTS = EQUIP_SLOTS.filter((s) => s.category === 'weapons').map((s) => s.slot);
+
+/**
+ * Count how many equipped weapons have a specific trait.
+ */
+export function countWeaponTrait(gear: GearConfig, traitId: string): number {
+  let count = 0;
+  for (const slot of WEAPON_SLOTS) {
+    const piece = gear[slot];
+    if (piece?.id && piece.trait === traitId) count++;
+  }
+  return count;
+}
+
+/**
+ * Count how many equipped armor pieces have a specific trait.
+ */
+export function countArmorTrait(gear: GearConfig, traitId: string): number {
+  let count = 0;
+  for (const slot of APPAREL_SLOTS) {
+    const piece = gear[slot];
+    if (piece?.id && piece.trait === traitId) count++;
+  }
+  return count;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -145,18 +191,32 @@ export function calculatePenetration(
     }
   }
 
-  // Mundus stone
+  // Mundus stone (scaled by Divines trait count)
+  const divinesCount = countDivinesPieces(setup.gear);
   for (const md of MUNDUS_BONUSES) {
     if (md.stat !== 'penetration') continue;
     if (setup.mundusStone === md.mundusId) {
+      const value = md.baseValue + divinesCount * md.perDivines;
       items.push({
-        name: md.name,
-        value: md.baseValue,
+        name: divinesCount > 0 ? `${md.name} (${divinesCount} Divines)` : md.name,
+        value,
         source: 'mundus',
         enabled: true,
         autoDetected: true,
       });
     }
+  }
+
+  // Sharpened weapon trait — auto-detected from gear
+  const sharpenedCount = countWeaponTrait(setup.gear, 'sharpened');
+  if (sharpenedCount > 0) {
+    items.push({
+      name: `Sharpened (${sharpenedCount} weapon${sharpenedCount > 1 ? 's' : ''})`,
+      value: sharpenedCount * TRAIT_SHARPENED_PEN,
+      source: 'gear',
+      enabled: true,
+      autoDetected: true,
+    });
   }
 
   // CP passive: Piercing
@@ -290,13 +350,15 @@ export function calculateCritDamage(
     }
   }
 
-  // Mundus stone
+  // Mundus stone (scaled by Divines trait count)
+  const critDivinesCount = countDivinesPieces(setup.gear);
   for (const md of MUNDUS_BONUSES) {
     if (md.stat !== 'critDamage') continue;
     if (setup.mundusStone === md.mundusId) {
+      const value = md.baseValue + critDivinesCount * md.perDivines;
       items.push({
-        name: md.name,
-        value: md.baseValue,
+        name: critDivinesCount > 0 ? `${md.name} (${critDivinesCount} Divines)` : md.name,
+        value,
         source: 'mundus',
         enabled: true,
         isPercent: md.isPercent,
@@ -359,13 +421,15 @@ export function calculateCritChance(
     }
   }
 
-  // Mundus stone (Thief: crit rating → %)
+  // Mundus stone (Thief: crit rating → %, scaled by Divines)
+  const critChanceDivines = countDivinesPieces(setup.gear);
   for (const md of MUNDUS_BONUSES) {
     if (md.stat !== 'critChance') continue;
     if (setup.mundusStone === md.mundusId) {
-      const pct = parseFloat((md.baseValue / CRIT_CHANCE_DIVISOR).toFixed(1));
+      const scaledValue = md.baseValue + critChanceDivines * md.perDivines;
+      const pct = parseFloat((scaledValue / CRIT_CHANCE_DIVISOR).toFixed(1));
       items.push({
-        name: md.name,
+        name: critChanceDivines > 0 ? `${md.name} (${critChanceDivines} Divines)` : md.name,
         value: pct,
         source: 'mundus',
         enabled: true,
@@ -373,6 +437,21 @@ export function calculateCritChance(
         autoDetected: true,
       });
     }
+  }
+
+  // Precise weapon trait — auto-detected from gear
+  const preciseCount = countWeaponTrait(setup.gear, 'precise');
+  if (preciseCount > 0) {
+    const rating = preciseCount * TRAIT_PRECISE_CRIT_RATING;
+    const pct = parseFloat((rating / CRIT_CHANCE_DIVISOR).toFixed(1));
+    items.push({
+      name: `Precise (${preciseCount} weapon${preciseCount > 1 ? 's' : ''})`,
+      value: pct,
+      source: 'gear',
+      enabled: true,
+      isPercent: true,
+      autoDetected: true,
+    });
   }
 
   // CP passive: Precision (160 crit rating per stage → %)
@@ -417,18 +496,44 @@ export function calculateArmor(
     }
   }
 
-  // Mundus stone (The Lady)
+  // Mundus stone (The Lady, scaled by Divines)
+  const armorDivinesCount = countDivinesPieces(setup.gear);
   for (const md of MUNDUS_BONUSES) {
     if (md.stat !== 'armor') continue;
     if (setup.mundusStone === md.mundusId) {
+      const value = md.baseValue + armorDivinesCount * md.perDivines;
       items.push({
-        name: md.name,
-        value: md.baseValue,
+        name: armorDivinesCount > 0 ? `${md.name} (${armorDivinesCount} Divines)` : md.name,
+        value,
         source: 'mundus',
         enabled: true,
         autoDetected: true,
       });
     }
+  }
+
+  // Nirnhoned armor trait — auto-detected from gear
+  const nirnhonedCount = countArmorTrait(setup.gear, 'nirnhoned');
+  if (nirnhonedCount > 0) {
+    items.push({
+      name: `Nirnhoned (${nirnhonedCount}pc)`,
+      value: nirnhonedCount * TRAIT_NIRNHONED_ARMOR_RESISTANCE,
+      source: 'gear',
+      enabled: true,
+      autoDetected: true,
+    });
+  }
+
+  // Defending weapon trait — auto-detected from gear
+  const defendingCount = countWeaponTrait(setup.gear, 'defending');
+  if (defendingCount > 0) {
+    items.push({
+      name: `Defending (${defendingCount} weapon${defendingCount > 1 ? 's' : ''})`,
+      value: defendingCount * TRAIT_DEFENDING_RESISTANCE,
+      source: 'gear',
+      enabled: true,
+      autoDetected: true,
+    });
   }
 
   return makeResult(items, ARMOR_CAP, ARMOR_MAX);
