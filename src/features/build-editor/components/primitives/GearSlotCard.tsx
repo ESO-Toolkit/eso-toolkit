@@ -179,7 +179,7 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
           justifyContent: 'center',
           cursor: isDisabled ? 'not-allowed' : 'pointer',
           opacity: isDisabled ? 0.3 : 1,
-          overflow: 'hidden',
+          overflow: 'visible',
           border: `1.5px solid ${
             hasItem
               ? isDark
