@@ -1363,7 +1363,9 @@ export const HEALTH_FOOD = Object.freeze(
   new Set([84732, 84733, 89973, 17407, 61259, 66125, 66551, 72957, 72960, 72962]),
 );
 export const MAGICKA_FOOD = Object.freeze(
-  new Set([89972, 84720, 61260, 66128, 66568, 84678, 85486, 89956, 61325, 61326, 89919, 84711, 84723]),
+  new Set([
+    89972, 84720, 61260, 66128, 66568, 84678, 85486, 89956, 61325, 61326, 89919, 84711, 84723,
+  ]),
 ); // Added: Jesters Food Max M, Witchfest Food Max M variants
 export const STAMINA_FOOD = Object.freeze(
   new Set([61255, 86673, 61261, 66130, 66576, 68412, 85485, 61328, 61314, 86669]),
@@ -1374,7 +1376,9 @@ export const INCREASE_MAX_HEALTH_AND_STAMINA = Object.freeze(
 export const INCREASE_MAX_HEALTH_AND_MAGICKA = Object.freeze(
   new Set([84731, 61257, 100498, 100499]),
 );
-export const INCREASE_MAX_MAGICKA_AND_STAMINA = Object.freeze(new Set([17577, 61294, 93376, 61298]));
+export const INCREASE_MAX_MAGICKA_AND_STAMINA = Object.freeze(
+  new Set([17577, 61294, 93376, 61298]),
+);
 export const MAX_STAMINA_AND_MAGICKA_RECOVERY = Object.freeze(new Set([89955])); // Candied Jester's Coins
 export const WITCHES_BREW = Object.freeze(
   new Set([
@@ -1511,8 +1515,8 @@ export const AURA_EXCLUDED_ABILITIES = Object.freeze(
 // All entries in abilities.json are named "Major Maim" with icon "ability_debuff_major_maim".
 export const MAJOR_MAIM_ABILITY_IDS = Object.freeze(
   new Set<number>([
-    21754, 21760, 61725, 92041, 94277, 94285, 94293, 133214, 133292, 134444, 141927, 147746,
-    159664, 163064, 183389, 212073, 217105, 244075,
+    21754, 21760, 61725, 92041, 94277, 94285, 94293, 133214, 133292, 134444, 141927, 147746, 159664,
+    163064, 183389, 212073, 217105, 244075,
   ]),
 );
 
