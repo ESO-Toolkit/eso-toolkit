@@ -95,6 +95,21 @@ export interface BuildConsumables {
   food: { id?: number; name?: string };
 }
 
+/** Active skill entry from werte.prog: ability ID with morph choice */
+export interface SkilledAbility {
+  abilityId: number;
+  /** 0 = base (unmorphed), 1 = morph 1, 2 = morph 2 */
+  morph: number;
+}
+
+/** Quickslot entry */
+export interface QuickslotEntry {
+  /** Action type (e.g. 5=collectible, 1=item, 6=emote) */
+  type: number;
+  /** Primary ID (item/collectible/emote ID) */
+  id: number;
+}
+
 export interface BuildSetup {
   id: string;
   name: string;
@@ -110,8 +125,14 @@ export interface BuildSetup {
   passives: number[];
   /** Screenshot URLs / data-urls */
   screenshots: string[];
-  /** Manual stat overrides for buff toggles and armor counts */
-  statOverrides?: StatOverrides;
+  /** All purchased active skills with morph choices (from CSPS werte.prog) */
+  skilledAbilities?: SkilledAbility[];
+  /** Ability IDs that are scribed/crafted (need "c" prefix in CSPS export) */
+  scribedAbilityIds?: number[];
+  /** Quickslot assignments (from CSPS comp1.quickslots) */
+  quickslots?: QuickslotEntry[];
+  /** Stat calculation overrides (buff toggles, armor counts, etc.) */
+  statOverrides?: import('../engine/stat-types').StatOverrides;
 }
 
 // ─── Top-level build ─────────────────────────────────────────────────────────

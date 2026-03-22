@@ -102,6 +102,9 @@ interface CompactSetup {
   fo?: number; // food ID
   fn?: string; // food name (fallback when no item ID matched)
   pa?: number[]; // passive IDs
+  sa?: Array<[number, number]>; // skilledAbilities: [abilityId, morph][]
+  sc?: number[]; // scribedAbilityIds
+  qs?: Array<[number, number]>; // quickslots: [type, id][]
 }
 
 interface CompactBuild {
@@ -296,6 +299,11 @@ function compactSetup(setup: BuildSetup): CompactSetup {
   if (fo != null) c.fo = fo;
   if (fn) c.fn = fn;
   if (setup.passives.length > 0) c.pa = setup.passives;
+  if (setup.skilledAbilities?.length)
+    c.sa = setup.skilledAbilities.map((a) => [a.abilityId, a.morph] as [number, number]);
+  if (setup.scribedAbilityIds?.length) c.sc = setup.scribedAbilityIds;
+  if (setup.quickslots?.length)
+    c.qs = setup.quickslots.map((q) => [q.type, q.id] as [number, number]);
   return c;
 }
 
@@ -326,6 +334,13 @@ function expandSetup(compact: CompactSetup, index: number): BuildSetup {
     },
     passives: compact.pa ?? [],
     screenshots: [], // never encoded
+    ...(compact.sa?.length
+      ? { skilledAbilities: compact.sa.map(([a, m]) => ({ abilityId: a, morph: m })) }
+      : {}),
+    ...(compact.sc?.length ? { scribedAbilityIds: compact.sc } : {}),
+    ...(compact.qs?.length
+      ? { quickslots: compact.qs.map(([t, i]) => ({ type: t, id: i })) }
+      : {}),
   };
 }
 

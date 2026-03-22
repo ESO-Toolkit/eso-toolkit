@@ -20,6 +20,7 @@ import {
   VisibilityOutlined,
 } from '@mui/icons-material';
 import {
+  Alert,
   Box,
   Button,
   CircularProgress,
@@ -58,12 +59,19 @@ import { ESO_CLASSES } from '../data/esoStaticData';
 import { useBuildCompleteness } from '../hooks/useBuildCompleteness';
 import {
   BUILD_EDITOR_STORAGE_KEY,
+  loadBuild,
   markSaved,
   setAddonImportString,
   setBuildDescription,
   setBuildName,
 } from '../store/buildEditorSlice';
 import { BE_TOKENS } from '../theme/buildEditorTokens';
+import { exportBuildToCSPSLua } from '../utils/cspsExport';
+import {
+  parseCSPSInput,
+  convertCSPSCharacterToBuild,
+  type CSPSCharacterOption,
+} from '../utils/cspsImport';
 
 import { AddToRosterDialog } from './AddToRosterDialog';
 import { glassInputSx } from './primitives/glassInputSx';
@@ -142,6 +150,16 @@ export const BuildCompletionHeader: React.FC = () => {
   const [tempLinkDialogOpen, setTempLinkDialogOpen] = React.useState(false);
   const [tempLink, setTempLink] = React.useState('');
   const [tempLinkExpiry, setTempLinkExpiry] = React.useState('');
+
+  // CSPS import state
+  const [cspsCharacters, setCspsCharacters] = React.useState<CSPSCharacterOption[]>([]);
+  const [selectedCharIndex, setSelectedCharIndex] = React.useState(0);
+  const [importError, setImportError] = React.useState<string | null>(null);
+  const [importParsed, setImportParsed] = React.useState(false);
+
+  // CSPS export state
+  const [cspsExportOpen, setCspsExportOpen] = React.useState(false);
+  const [exportLua, setExportLua] = React.useState('');
 
   const handleSave = (): void => {
     if (!build.name.trim()) {
@@ -313,6 +331,71 @@ export const BuildCompletionHeader: React.FC = () => {
     a.click();
     URL.revokeObjectURL(url);
     enqueueSnackbar(`Exported as ${fileName}`, { variant: 'success' });
+  };
+
+  // ── CSPS Import handlers ─────────────────────────────────────────────
+  const handleImportParse = (): void => {
+    setImportError(null);
+    try {
+      const result = parseCSPSInput(build.addonImportString);
+
+      if (result.format === 'export-code' && result.directBuild) {
+        dispatch(loadBuild(result.directBuild));
+        setImportOpen(false);
+        setCspsCharacters([]);
+        setImportParsed(false);
+        setImportError(null);
+        enqueueSnackbar(
+          `Imported build from CSPS export code (${result.directBuild.esoClass}).`,
+          { variant: 'success', autoHideDuration: 6000 },
+        );
+        return;
+      }
+
+      setCspsCharacters(result.characters);
+      setSelectedCharIndex(0);
+      setImportParsed(true);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Failed to parse CSPS data.');
+      setImportParsed(false);
+    }
+  };
+
+  const handleImportLoad = (): void => {
+    const character = cspsCharacters[selectedCharIndex];
+    if (!character) return;
+    try {
+      const imported = convertCSPSCharacterToBuild(character);
+      dispatch(loadBuild(imported));
+      setImportOpen(false);
+      setCspsCharacters([]);
+      setImportParsed(false);
+      setImportError(null);
+      enqueueSnackbar(
+        `Imported "${character.name}" — set your class, role, and gear to complete the build.`,
+        { variant: 'success', autoHideDuration: 6000 },
+      );
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Failed to convert CSPS data.');
+    }
+  };
+
+  const handleImportClose = (): void => {
+    setImportOpen(false);
+    setCspsCharacters([]);
+    setImportParsed(false);
+    setImportError(null);
+  };
+
+  // ── CSPS Export handlers ────────────────────────────────────────────
+  const handleCspsExportOpen = (): void => {
+    try {
+      const lua = exportBuildToCSPSLua(build);
+      setExportLua(lua);
+      setCspsExportOpen(true);
+    } catch {
+      enqueueSnackbar('Could not export build to CSPS format.', { variant: 'error' });
+    }
   };
 
   // ── Shared button styles ──────────────────────────────────────────────
@@ -983,6 +1066,17 @@ export const BuildCompletionHeader: React.FC = () => {
                 </ListItemIcon>
                 <ListItemText>{isExporting ? 'Encoding\u2026' : 'Export'}</ListItemText>
               </MuiMenuItem>
+              <MuiMenuItem
+                onClick={() => {
+                  setMoreAnchor(null);
+                  handleCspsExportOpen();
+                }}
+              >
+                <ListItemIcon>
+                  <SyncAltIcon sx={{ fontSize: 18 }} />
+                </ListItemIcon>
+                <ListItemText>Export to CSPS</ListItemText>
+              </MuiMenuItem>
               <Divider />
               <MuiMenuItem
                 onClick={() => {
@@ -1035,10 +1129,10 @@ export const BuildCompletionHeader: React.FC = () => {
         build={build}
       />
 
-      {/* Import dialog */}
+      {/* CSPS Import dialog */}
       <Dialog
         open={importOpen}
-        onClose={() => setImportOpen(false)}
+        onClose={handleImportClose}
         maxWidth="sm"
         fullWidth
         PaperProps={{
@@ -1064,7 +1158,7 @@ export const BuildCompletionHeader: React.FC = () => {
         >
           Import from Addon
           <IconButton
-            onClick={() => setImportOpen(false)}
+            onClick={handleImportClose}
             size="small"
             aria-label="Close import dialog"
             sx={{ color: 'text.secondary' }}
@@ -1083,33 +1177,114 @@ export const BuildCompletionHeader: React.FC = () => {
               fontFamily: 'Space Grotesk, Inter, system-ui',
             }}
           >
-            Addon import is <strong>coming soon</strong>. In a future update you&apos;ll be able to
-            paste an export string from <strong>Combat Metrics</strong> or{' '}
-            <strong>Caro&apos;s Skill Point Saver</strong> to auto-populate your build. For now,
-            configure your build using the sections on the page.
+            Paste a <strong>Caro&apos;s Skill Point Saver</strong> export code or SavedVariables file
+            content to import skills, attributes, champion points, and gear into your build.
           </Typography>
           <Stack spacing={1.5}>
             <TextField
               fullWidth
               size="small"
-              placeholder="Paste addon export string here…"
+              placeholder="Paste CSPS export code or SavedVariables content here…"
               value={build.addonImportString}
-              onChange={(e) => dispatch(setAddonImportString(e.target.value))}
+              onChange={(e) => {
+                dispatch(setAddonImportString(e.target.value));
+                if (importParsed) {
+                  setImportParsed(false);
+                  setCspsCharacters([]);
+                  setImportError(null);
+                }
+              }}
               multiline
               minRows={3}
               maxRows={8}
               autoFocus
               sx={glassInputSx(isDark)}
             />
-            <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => setImportOpen(false)}
-                sx={outlinedPill}
+
+            {importError && (
+              <Alert
+                severity="error"
+                sx={{ py: 0.25, fontSize: 11, borderRadius: 2, fontFamily: 'Space Grotesk, Inter, system-ui' }}
               >
-                Close
+                {importError}
+              </Alert>
+            )}
+
+            {importParsed && cspsCharacters.length > 0 && (
+              <Box>
+                <Typography
+                  variant="caption"
+                  sx={{ display: 'block', mb: 1, fontSize: 11, fontWeight: 600, fontFamily: 'Space Grotesk, Inter, system-ui', color: 'text.secondary' }}
+                >
+                  {cspsCharacters.length === 1
+                    ? 'Found 1 character:'
+                    : `Found ${cspsCharacters.length} characters — select one to import:`}
+                </Typography>
+                <Stack spacing={0.5}>
+                  {cspsCharacters.map((char, idx) => (
+                    <Button
+                      key={char.compositeKey}
+                      variant={idx === selectedCharIndex ? 'contained' : 'outlined'}
+                      size="small"
+                      onClick={() => setSelectedCharIndex(idx)}
+                      sx={{
+                        textTransform: 'none',
+                        justifyContent: 'flex-start',
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontSize: 12,
+                        borderRadius: 2,
+                        ...(idx === selectedCharIndex
+                          ? {
+                              background: 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
+                              color: isDark ? '#fff' : '#0b1220',
+                            }
+                          : { borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)' }),
+                      }}
+                    >
+                      <Box component="span" sx={{ fontWeight: 700, mr: 1 }}>{char.name}</Box>
+                      <Box component="span" sx={{ opacity: 0.7, fontSize: 10 }}>
+                        {char.accountName}
+                        {char.profileCount > 0 && ` · ${char.profileCount} profiles`}
+                      </Box>
+                    </Button>
+                  ))}
+                </Stack>
+              </Box>
+            )}
+
+            <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
+              <Button variant="outlined" size="small" onClick={handleImportClose} sx={outlinedPill}>
+                Cancel
               </Button>
+              {!importParsed ? (
+                <Button
+                  variant="contained"
+                  size="small"
+                  disabled={build.addonImportString.length < 10}
+                  onClick={handleImportParse}
+                  sx={{
+                    ...pillBase,
+                    background: 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
+                    '&.Mui-disabled': { background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
+                  }}
+                >
+                  Parse
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  size="small"
+                  disabled={cspsCharacters.length === 0}
+                  onClick={handleImportLoad}
+                  sx={{
+                    ...pillBase,
+                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.85), rgba(22, 163, 74, 0.75))',
+                    '&.Mui-disabled': { background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
+                  }}
+                >
+                  Load Build
+                </Button>
+              )}
             </Stack>
           </Stack>
         </DialogContent>
@@ -1207,6 +1382,108 @@ export const BuildCompletionHeader: React.FC = () => {
               >
                 Copy to Clipboard
               </Button>
+            </Stack>
+          </Stack>
+        </DialogContent>
+      </Dialog>
+
+      {/* CSPS Export dialog */}
+      <Dialog
+        open={cspsExportOpen}
+        onClose={() => setCspsExportOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+            borderRadius: 3,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontWeight: 700,
+            fontSize: 16,
+            pb: 0.5,
+          }}
+        >
+          Export to CSPS
+          <IconButton
+            onClick={() => setCspsExportOpen(false)}
+            size="small"
+            aria-label="Close CSPS export dialog"
+            sx={{ color: 'text.secondary' }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block', mb: 2, fontSize: 12, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+          >
+            Your build as a <strong>Caro&apos;s Skill Point Saver</strong> SavedVariables file.
+          </Typography>
+          <Stack spacing={1.5}>
+            <TextField
+              fullWidth
+              size="small"
+              value={exportLua}
+              multiline
+              minRows={6}
+              maxRows={12}
+              slotProps={{ input: { readOnly: true } }}
+              sx={{ ...glassInputSx(isDark), '& textarea': { fontFamily: 'monospace', fontSize: 11 } }}
+            />
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <Button variant="outlined" size="small" onClick={() => setCspsExportOpen(false)} sx={outlinedPill}>
+                Close
+              </Button>
+              <Tooltip title="Copy to clipboard">
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<ContentCopyOutlined sx={{ fontSize: 14 }} />}
+                  onClick={() => {
+                    navigator.clipboard
+                      .writeText(exportLua)
+                      .then(() => enqueueSnackbar('Copied CSPS Lua to clipboard!', { variant: 'info' }))
+                      .catch(() => enqueueSnackbar('Could not copy.', { variant: 'error' }));
+                  }}
+                  sx={pillBase}
+                >
+                  Copy
+                </Button>
+              </Tooltip>
+              <Tooltip title="Download as .lua file">
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<FileDownloadOutlined sx={{ fontSize: 14 }} />}
+                  onClick={() => {
+                    const fileName = `CSPSSavedVariables_${(build.name || 'build').replace(/[^a-zA-Z0-9-_ ]/g, '').replace(/\s+/g, '-').toLowerCase()}.lua`;
+                    const blob = new Blob([exportLua], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    enqueueSnackbar(`Downloaded ${fileName}`, { variant: 'success' });
+                  }}
+                  sx={pillBase}
+                >
+                  Download
+                </Button>
+              </Tooltip>
             </Stack>
           </Stack>
         </DialogContent>

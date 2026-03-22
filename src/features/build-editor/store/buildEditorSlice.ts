@@ -22,8 +22,10 @@ import type {
   BuildEditorState,
   BuildSetup,
   ClassSkillLineId,
+  QuickslotEntry,
   SidebarTopTab,
   SetupTab,
+  SkilledAbility,
 } from '../types/build.types';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -435,6 +437,27 @@ export const buildEditorSlice = createSlice({
       state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
+    setQuickslots(state, action: PayloadAction<QuickslotEntry[]>) {
+      const setup = state.build.setups[state.activeSetupIndex];
+      if (!setup) return;
+      setup.quickslots = action.payload;
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
+    setSkilledAbilities(state, action: PayloadAction<SkilledAbility[]>) {
+      const setup = state.build.setups[state.activeSetupIndex];
+      if (!setup) return;
+      setup.skilledAbilities = action.payload;
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
+    setScribedAbilityIds(state, action: PayloadAction<number[]>) {
+      const setup = state.build.setups[state.activeSetupIndex];
+      if (!setup) return;
+      setup.scribedAbilityIds = action.payload;
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
 
     // ── Stat Overrides (per-setup) ────────────────────────────────────────────
     setStatOverrides(state, action: PayloadAction<StatOverrides>) {
@@ -522,6 +545,9 @@ export const {
   setConsumables,
   togglePassive,
   setPassives,
+  setQuickslots,
+  setSkilledAbilities,
+  setScribedAbilityIds,
   setStatOverrides,
   addScreenshot,
   removeScreenshot,
