@@ -261,10 +261,9 @@ export function buildTooltipPropsFromAbilityId(
   abilityId: number,
   scribedSkillData?: ScribedSkillData,
 ): SkillTooltipProps | null {
+  // abilityIdMapper may not be loaded yet (async). Don't bail out — fall through
+  // to the static skill lines registry which is always available.
   const abilityData = abilityIdMapper.getAbilityById(abilityId);
-  if (!abilityData) {
-    return null;
-  }
 
   // Check if this is a scribed skill using ability ID lookup from scribing database
   const scribingInfo = getScribingSkillByAbilityId(abilityId);
@@ -286,9 +285,9 @@ export function buildTooltipPropsFromAbilityId(
         }
       : undefined);
 
-  // Try to find detailed skill data by name
+  // Try to find detailed skill data — by name from abilityIdMapper, or by ID from static registry
   const found =
-    (abilityData.name ? findSkillByName(abilityData.name) : null) ?? findSkillById(abilityId);
+    (abilityData?.name ? findSkillByName(abilityData.name) : null) ?? findSkillById(abilityId);
   if (found) {
     const { node, skillLineName, skillLineData, parent } = found;
     const className = getClassKey(skillLineData);
@@ -306,15 +305,19 @@ export function buildTooltipPropsFromAbilityId(
     });
   }
 
-  // Fallback to basic tooltip with just ability data
-  return {
-    name: abilityData.name || 'Unknown Ability',
-    description: `${abilityData.name || 'Unknown Ability'} (ID: ${abilityId})`,
-    abilityId,
-    iconUrl: abilityIdMapper.getIconUrl(abilityId) || undefined,
-    lineText: scribingInfo ? 'Scribing' : 'Unknown Skill Line',
-    stats: [],
-  };
+  // Fallback to basic tooltip with just ability data (only if mapper has loaded)
+  if (abilityData) {
+    return {
+      name: abilityData.name || 'Unknown Ability',
+      description: `${abilityData.name || 'Unknown Ability'} (ID: ${abilityId})`,
+      abilityId,
+      iconUrl: abilityIdMapper.getIconUrl(abilityId) || undefined,
+      lineText: scribingInfo ? 'Scribing' : 'Unknown Skill Line',
+      stats: [],
+    };
+  }
+
+  return null;
 }
 
 // Public helper: build rich SkillTooltipProps from class key and ability name
@@ -481,10 +484,12 @@ export function buildTooltipProps(options: {
 
   // Prefer ID-based lookup if available
   if (abilityId) {
-    return buildTooltipPropsFromAbilityId(abilityId, scribedSkillData);
+    const result = buildTooltipPropsFromAbilityId(abilityId, scribedSkillData);
+    if (result) return result;
   }
 
-  // Fall back to name-based lookup
+  // Fall back to name-based lookup (also covers cases where ID lookup returns null
+  // because abilityIdMapper hasn't finished loading)
   if (abilityName) {
     return buildTooltipPropsFromClassAndName(classKey || '', abilityName, scribedSkillData);
   }

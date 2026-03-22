@@ -1,4 +1,3 @@
-import { Box, Container, Skeleton } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
@@ -183,17 +182,9 @@ const BuildHubPage = React.lazy(() =>
   })),
 );
 
-// Generic page loading skeleton - used for lazy-loaded routes and PersistGate hydration
-const LoadingFallback: React.FC = () => (
-  <Container maxWidth="lg" sx={{ pt: 4, px: 2 }}>
-    <Skeleton variant="text" width="35%" height={52} sx={{ mb: 2, borderRadius: 1 }} />
-    <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 2, mb: 2 }} />
-    <Box sx={{ display: 'flex', gap: 2 }}>
-      <Skeleton variant="rectangular" height={160} sx={{ flex: 1, borderRadius: 2 }} />
-      <Skeleton variant="rectangular" height={160} sx={{ flex: 1, borderRadius: 2 }} />
-    </Box>
-  </Container>
-);
+// Null fallback for lazy-loaded routes — view transitions provide visual
+// feedback during navigation, so a skeleton loader is unnecessary and jarring.
+const LoadingFallback: React.FC = () => null;
 
 // Text Editor specific loading fallback
 const TextEditorLoadingFallback: React.FC = () => <TextEditorSkeleton />;

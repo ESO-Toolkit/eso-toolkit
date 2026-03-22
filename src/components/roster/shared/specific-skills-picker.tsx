@@ -8,27 +8,23 @@
 import {
   Add as AddIcon,
   Close as CloseIcon,
-  ExpandMore as ExpandIcon,
-  Search as SearchIcon,
 } from '@mui/icons-material';
 import {
   Box,
   ButtonBase,
-  Collapse,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  InputAdornment,
   ListSubheader,
   Stack,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { LazySkillTooltip } from '@/components/LazySkillTooltip';
 import type { SkillData } from '@/data/types/skill-line-types';
+import { CollapsibleSection } from '@/features/build-editor/components/primitives/CollapsibleSection';
+import { PickerDialog } from '@/features/build-editor/components/primitives/PickerDialog';
+import { PickerTabBar } from '@/features/build-editor/components/primitives/PickerTabBar';
 import { ESO_CLASSES } from '@/features/build-editor/data/esoStaticData';
 import { CLASS_COLOR_MAP } from '@/features/build-editor/theme/classColorMap';
 import {
@@ -37,6 +33,7 @@ import {
   getSkillsByCategory,
   searchSkills,
 } from '@/features/loadout-manager/data/skillLineSkills';
+import { buildTooltipProps } from '@/utils/skillTooltipMapper';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -46,12 +43,12 @@ const MAX_RESULTS = 100;
 const ICON_URL = 'https://eso-hub.com/storage/icons/';
 
 const PICKER_TABS = [
-  { label: 'Class', category: 'class' },
-  { label: 'Weapon', category: 'weapon' },
-  { label: 'Guild', category: 'guild' },
-  { label: 'Alliance', category: 'alliance' },
-  { label: 'World', category: 'world' },
-] as const;
+  { key: 'class' as const, label: 'Class' },
+  { key: 'weapon' as const, label: 'Weapon' },
+  { key: 'guild' as const, label: 'Guild' },
+  { key: 'alliance' as const, label: 'Alliance' },
+  { key: 'world' as const, label: 'World' },
+];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -87,6 +84,19 @@ interface SkillTileProps {
 const SkillTile: React.FC<SkillTileProps> = ({ skill, onRemove }) => {
   const isDark = useTheme().palette.mode === 'dark';
 
+  const tooltipContent = useMemo(() => {
+    const props = buildTooltipProps({ abilityId: skill.id, abilityName: skill.name });
+    if (props) return <LazySkillTooltip {...props} />;
+    return (
+      <Box>
+        <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{skill.name}</Typography>
+        {skill.category && (
+          <Typography sx={{ fontSize: 10, opacity: 0.7 }}>{skill.category}</Typography>
+        )}
+      </Box>
+    );
+  }, [skill.id, skill.name, skill.category]);
+
   return (
     <Box
       sx={{
@@ -98,16 +108,12 @@ const SkillTile: React.FC<SkillTileProps> = ({ skill, onRemove }) => {
       }}
     >
       <Tooltip
-        title={
-          <Box>
-            <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{skill.name}</Typography>
-            {skill.category && (
-              <Typography sx={{ fontSize: 10, opacity: 0.7 }}>{skill.category}</Typography>
-            )}
-          </Box>
-        }
+        title={tooltipContent}
         arrow
         placement="top"
+        enterDelay={300}
+        enterTouchDelay={0}
+        leaveTouchDelay={3000}
       >
         <Box
           sx={{
@@ -224,24 +230,33 @@ const PickerTile: React.FC<PickerTileProps> = ({ skill, onSelect, isMorph, isSel
   const isDark = useTheme().palette.mode === 'dark';
   const accent = 'rgba(56,189,248,';
 
+  const richTooltip = useMemo(() => {
+    const props = buildTooltipProps({ abilityId: skill.id, abilityName: skill.name });
+    if (props) return <LazySkillTooltip {...props} />;
+    return (
+      <Box>
+        <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{skill.name}</Typography>
+        {isMorph && <Typography sx={{ fontSize: 10, opacity: 0.7 }}>Morph</Typography>}
+        {skill.category && (
+          <Typography sx={{ fontSize: 10, opacity: 0.7 }}>{skill.category}</Typography>
+        )}
+        {isSelected && (
+          <Typography sx={{ fontSize: 10, opacity: 0.7, fontStyle: 'italic' }}>
+            Already added
+          </Typography>
+        )}
+      </Box>
+    );
+  }, [skill.id, skill.name, skill.category, isMorph, isSelected]);
+
   return (
     <Tooltip
-      title={
-        <Box>
-          <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{skill.name}</Typography>
-          {isMorph && <Typography sx={{ fontSize: 10, opacity: 0.7 }}>Morph</Typography>}
-          {skill.category && (
-            <Typography sx={{ fontSize: 10, opacity: 0.7 }}>{skill.category}</Typography>
-          )}
-          {isSelected && (
-            <Typography sx={{ fontSize: 10, opacity: 0.7, fontStyle: 'italic' }}>
-              Already added
-            </Typography>
-          )}
-        </Box>
-      }
+      title={richTooltip}
       arrow
       placement="top"
+      enterDelay={300}
+      enterTouchDelay={0}
+      leaveTouchDelay={3000}
     >
       <ButtonBase
         onClick={() => !isSelected && onSelect(skill)}
@@ -323,122 +338,75 @@ const SkillLineSection: React.FC<SkillLineSectionProps> = ({
   selectedIds,
   defaultExpanded = false,
 }) => {
-  const isDark = useTheme().palette.mode === 'dark';
-  const [expanded, setExpanded] = useState(defaultExpanded);
-
   const skills = useMemo(() => getSkillsByCategory(lineName), [lineName]);
-  // Show only active skills (non-passive, non-ultimate) for required skills
   const filtered = useMemo(() => skills.filter((s) => !s.isUltimate && !s.isPassive), [skills]);
   const groups = useMemo(() => groupSkillsByBase(filtered), [filtered]);
 
   if (groups.length === 0) return null;
 
   return (
-    <Box>
-      <ButtonBase
-        onClick={() => setExpanded(!expanded)}
-        sx={{
-          width: '100%',
-          py: 0.75,
-          px: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderRadius: 1.5,
-          '&:hover': {
-            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-          },
-        }}
-      >
-        <Typography
-          sx={{
-            fontSize: 12,
-            fontWeight: 600,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-            color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
-          }}
-        >
-          {lineName}
-        </Typography>
-        <Stack direction="row" alignItems="center" spacing={0.5}>
-          <Typography
-            sx={{
-              fontSize: 10,
-              color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-              fontFamily: 'Space Grotesk',
-            }}
-          >
-            {groups.length}
-          </Typography>
-          <ExpandIcon
-            sx={{
-              fontSize: 16,
-              transition: 'transform 0.2s',
-              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-              color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
-            }}
-          />
-        </Stack>
-      </ButtonBase>
-
-      <Collapse in={expanded} unmountOnExit>
-        <Stack spacing={1.25} sx={{ pl: 1.5, pr: 0.5, pb: 1.5, pt: 0.5 }}>
-          {groups.map((group) => (
-            <Box key={group.base.id}>
-              <Typography
-                sx={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
-                  mb: 0.5,
-                  letterSpacing: 0.3,
-                }}
-              >
-                {group.base.name}
-              </Typography>
-              <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+    <CollapsibleSection label={lineName} count={groups.length} defaultExpanded={defaultExpanded}>
+      <Stack spacing={1.25} sx={{ pl: 1.5, pr: 0.5, pb: 1.5, pt: 0.5 }}>
+        {groups.map((group) => (
+          <Box key={group.base.id}>
+            <Typography
+              sx={{
+                fontSize: 10,
+                fontWeight: 600,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                color: 'text.secondary',
+                mb: 0.5,
+                letterSpacing: 0.3,
+              }}
+            >
+              {group.base.name}
+            </Typography>
+            <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+              <PickerTile
+                skill={group.base}
+                onSelect={onSelect}
+                isSelected={selectedIds.has(group.base.id)}
+              />
+              {group.morphs.map((m) => (
                 <PickerTile
-                  skill={group.base}
+                  key={m.id}
+                  skill={m}
                   onSelect={onSelect}
-                  isSelected={selectedIds.has(group.base.id)}
+                  isMorph
+                  isSelected={selectedIds.has(m.id)}
                 />
-                {group.morphs.map((m) => (
-                  <PickerTile
-                    key={m.id}
-                    skill={m}
-                    onSelect={onSelect}
-                    isMorph
-                    isSelected={selectedIds.has(m.id)}
-                  />
-                ))}
-              </Stack>
-            </Box>
-          ))}
-        </Stack>
-      </Collapse>
-    </Box>
+              ))}
+            </Stack>
+          </Box>
+        ))}
+      </Stack>
+    </CollapsibleSection>
   );
 };
 
 // ── Picker Dialog ────────────────────────────────────────────────────────────
 
-interface PickerDialogProps {
+interface PickerDialogWrapperProps {
   open: boolean;
   onClose: () => void;
   onSelect: (skill: SkillData) => void;
   selectedIds: Set<number>;
 }
 
-const PickerDialog: React.FC<PickerDialogProps> = ({ open, onClose, onSelect, selectedIds }) => {
+const PickerDialogWrapper: React.FC<PickerDialogWrapperProps> = ({
+  open,
+  onClose,
+  onSelect,
+  selectedIds,
+}) => {
   const isDark = useTheme().palette.mode === 'dark';
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState<string>('class');
   const [search, setSearch] = useState('');
 
   const lineIndex = useMemo(() => getSkillLineIndex(), []);
 
   const linesByTab = useMemo(
-    () => PICKER_TABS.map((tab) => lineIndex.filter((l) => l.broadCategory === tab.category)),
+    () => PICKER_TABS.map((tab) => lineIndex.filter((l) => l.broadCategory === tab.key)),
     [lineIndex],
   );
 
@@ -470,280 +438,165 @@ const PickerDialog: React.FC<PickerDialogProps> = ({ open, onClose, onSelect, se
     [onSelect],
   );
 
+  const activeTabIndex = PICKER_TABS.findIndex((t) => t.key === activeTab);
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: '16px',
-          backdropFilter: 'blur(24px)',
-          background: isDark ? 'rgba(12,12,22,0.96)' : 'rgba(255,255,255,0.97)',
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
-          boxShadow: isDark ? '0 24px 64px rgba(0,0,0,0.55)' : '0 24px 64px rgba(0,0,0,0.12)',
-          maxHeight: '80vh',
-        },
-      }}
-    >
-      <DialogTitle
-        sx={{
-          fontWeight: 700,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
-          fontSize: '1rem',
-          pb: 1,
-          background: isDark
-            ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-            : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-        }}
-      >
-        Add Required Skill
-      </DialogTitle>
+    <PickerDialog open={open} onClose={onClose} title="Add Required Skill">
+      <PickerDialog.Search
+        value={search}
+        onChange={setSearch}
+        placeholder="Search skills..."
+        resultCount={isSearching ? searchResults.length : undefined}
+      />
 
-      <DialogContent sx={{ p: 0 }}>
-        <Box sx={{ px: 2, pb: 1.5 }}>
-          <TextField
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search skills..."
-            size="small"
-            fullWidth
-            autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
-                borderRadius: 2,
-                fontSize: 13,
-              },
-            }}
-          />
-        </Box>
-
-        {isSearching ? (
-          <Box sx={{ px: 2, pb: 2, maxHeight: 400, overflowY: 'auto' }}>
-            {searchResults.length === 0 ? (
-              <Typography
-                sx={{
-                  fontSize: 12,
-                  color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                  textAlign: 'center',
-                  py: 3,
-                }}
-              >
-                No skills found
-              </Typography>
-            ) : (
-              <Stack spacing={0.5}>
-                {searchResults.map((skill) => {
-                  const alreadyAdded = selectedIds.has(skill.id);
-                  return (
-                    <ButtonBase
-                      key={skill.id}
-                      onClick={() => !alreadyAdded && handleSelect(skill)}
-                      disabled={alreadyAdded}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1.25,
-                        py: 0.75,
-                        px: 1,
-                        borderRadius: 1.5,
-                        width: '100%',
-                        textAlign: 'left',
-                        opacity: alreadyAdded ? 0.4 : 1,
-                        '&:hover': alreadyAdded
-                          ? {}
-                          : {
-                              background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                            },
-                      }}
-                    >
-                      {skill.icon ? (
-                        <img
-                          src={`${ICON_URL}${skill.icon}.png`}
-                          alt=""
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: 6,
-                            flexShrink: 0,
-                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-                            objectFit: 'cover',
-                          }}
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <Box
-                          sx={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: '6px',
-                            bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                            flexShrink: 0,
-                          }}
-                        />
-                      )}
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography
-                          sx={{
-                            fontSize: 12,
-                            fontWeight: 600,
-                            fontFamily: 'Space Grotesk, Inter, system-ui',
-                            lineHeight: 1.3,
-                          }}
-                        >
-                          {skill.name}
-                        </Typography>
-                        {skill.category && (
-                          <Typography
-                            sx={{
-                              fontSize: 10,
-                              color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
-                              lineHeight: 1.2,
-                            }}
-                          >
-                            {skill.category}
-                            {skill.isUltimate ? ' \u00b7 Ultimate' : ''}
-                          </Typography>
-                        )}
-                      </Box>
-                    </ButtonBase>
-                  );
-                })}
-              </Stack>
-            )}
-          </Box>
-        ) : (
-          <>
-            {/* Category tabs */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                px: 2,
-                pb: 1.5,
-                overflowX: 'auto',
-              }}
-            >
-              {PICKER_TABS.map((tab, idx) => (
+      {isSearching ? (
+        <PickerDialog.Body empty={searchResults.length === 0} emptyMessage="No skills found">
+          <Stack spacing={0.5} sx={{ px: 1 }}>
+            {searchResults.map((skill) => {
+              const alreadyAdded = selectedIds.has(skill.id);
+              return (
                 <ButtonBase
-                  key={tab.category}
-                  onClick={() => setActiveTab(idx)}
+                  key={skill.id}
+                  onClick={() => !alreadyAdded && handleSelect(skill)}
+                  disabled={alreadyAdded}
                   sx={{
-                    px: 1.25,
-                    py: 0.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.25,
+                    py: 0.75,
+                    px: 1,
                     borderRadius: 1.5,
-                    fontSize: 11,
-                    fontWeight: activeTab === idx ? 700 : 500,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    letterSpacing: 0.3,
-                    flexShrink: 0,
-                    color:
-                      activeTab === idx
-                        ? isDark
-                          ? '#fff'
-                          : '#0f172a'
-                        : isDark
-                          ? 'rgba(255,255,255,0.45)'
-                          : 'rgba(0,0,0,0.45)',
-                    background:
-                      activeTab === idx
-                        ? isDark
-                          ? 'rgba(255,255,255,0.08)'
-                          : 'rgba(0,0,0,0.06)'
-                        : 'transparent',
-                    border: `1px solid ${
-                      activeTab === idx
-                        ? isDark
-                          ? 'rgba(255,255,255,0.12)'
-                          : 'rgba(0,0,0,0.10)'
-                        : 'transparent'
-                    }`,
-                    transition: 'all 0.15s',
-                    '&:hover': {
-                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    },
+                    width: '100%',
+                    textAlign: 'left',
+                    opacity: alreadyAdded ? 0.4 : 1,
+                    transition: 'all 0.12s ease',
+                    '&:hover': alreadyAdded
+                      ? {}
+                      : {
+                          background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                        },
                   }}
                 >
-                  {tab.label}
-                </ButtonBase>
-              ))}
-            </Box>
-
-            {/* Skill line sections */}
-            <Box sx={{ maxHeight: 400, overflowY: 'auto', px: 1, pb: 1 }}>
-              {activeTab === 0
-                ? classLinesByClass.map(({ cls, lines }) => {
-                    const clsColor = CLASS_COLOR_MAP[cls.id].accent;
-                    return (
-                      <Box key={cls.id}>
-                        <ListSubheader
-                          disableSticky
-                          sx={{
-                            fontSize: 9,
-                            fontWeight: 700,
-                            fontFamily: 'Space Grotesk, Inter, system-ui',
-                            letterSpacing: 1,
-                            textTransform: 'uppercase',
-                            color: clsColor,
-                            lineHeight: '28px',
-                            background: 'transparent',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.75,
-                            px: 1,
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              width: 7,
-                              height: 7,
-                              borderRadius: '50%',
-                              background: clsColor,
-                              boxShadow: `0 0 5px ${alpha(clsColor, 0.6)}`,
-                              flexShrink: 0,
-                            }}
-                          />
-                          {cls.label}
-                        </ListSubheader>
-                        {lines.map((line) => (
-                          <SkillLineSection
-                            key={line.name}
-                            lineName={line.name}
-                            onSelect={handleSelect}
-                            selectedIds={selectedIds}
-                          />
-                        ))}
-                      </Box>
-                    );
-                  })
-                : linesByTab[activeTab].map((line) => (
-                    <SkillLineSection
-                      key={line.name}
-                      lineName={line.name}
-                      onSelect={handleSelect}
-                      selectedIds={selectedIds}
+                  {skill.icon ? (
+                    <img
+                      src={`${ICON_URL}${skill.icon}.png`}
+                      alt=""
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 6,
+                        flexShrink: 0,
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                        objectFit: 'cover',
+                      }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
                     />
-                  ))}
-            </Box>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+                  ) : (
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '6px',
+                        bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {skill.name}
+                    </Typography>
+                    {skill.category && (
+                      <Typography
+                        sx={{
+                          fontSize: 10,
+                          color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {skill.category}
+                        {skill.isUltimate ? ' \u00b7 Ultimate' : ''}
+                      </Typography>
+                    )}
+                  </Box>
+                </ButtonBase>
+              );
+            })}
+          </Stack>
+        </PickerDialog.Body>
+      ) : (
+        <>
+          <PickerDialog.Tabs>
+            <PickerTabBar tabs={PICKER_TABS} activeKey={activeTab} onChange={setActiveTab} />
+          </PickerDialog.Tabs>
+
+          <PickerDialog.Body>
+            {activeTab === 'class'
+              ? classLinesByClass.map(({ cls, lines }) => {
+                  const clsColor = CLASS_COLOR_MAP[cls.id].accent;
+                  return (
+                    <Box key={cls.id}>
+                      <ListSubheader
+                        disableSticky
+                        sx={{
+                          fontSize: 9,
+                          fontWeight: 700,
+                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          letterSpacing: 1,
+                          textTransform: 'uppercase',
+                          color: clsColor,
+                          lineHeight: '28px',
+                          background: 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.75,
+                          px: 1,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: '50%',
+                            background: clsColor,
+                            boxShadow: `0 0 5px ${alpha(clsColor, 0.6)}`,
+                            flexShrink: 0,
+                          }}
+                        />
+                        {cls.label}
+                      </ListSubheader>
+                      {lines.map((line) => (
+                        <SkillLineSection
+                          key={line.name}
+                          lineName={line.name}
+                          onSelect={handleSelect}
+                          selectedIds={selectedIds}
+                        />
+                      ))}
+                    </Box>
+                  );
+                })
+              : linesByTab[activeTabIndex >= 0 ? activeTabIndex : 0].map((line) => (
+                  <SkillLineSection
+                    key={line.name}
+                    lineName={line.name}
+                    onSelect={handleSelect}
+                    selectedIds={selectedIds}
+                  />
+                ))}
+          </PickerDialog.Body>
+        </>
+      )}
+    </PickerDialog>
   );
 };
 
@@ -821,7 +674,6 @@ export const SpecificSkillsPicker: React.FC<SpecificSkillsPickerProps> = ({ valu
           <SkillTile key={skill.id} skill={skill} onRemove={() => handleRemove(skill.id)} />
         ))}
 
-        {/* Add button */}
         <Tooltip title="Add a required skill" arrow placement="top">
           <ButtonBase
             onClick={() => setDialogOpen(true)}
@@ -854,7 +706,7 @@ export const SpecificSkillsPicker: React.FC<SpecificSkillsPickerProps> = ({ valu
         </Tooltip>
       </Box>
 
-      <PickerDialog
+      <PickerDialogWrapper
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onSelect={handleAdd}

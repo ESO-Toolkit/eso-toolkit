@@ -2,9 +2,9 @@ import { Link as LinkIcon, Assignment as AssignmentIcon } from '@mui/icons-mater
 import { Box, Button, TextField, Typography, Skeleton, useTheme } from '@mui/material';
 import { format } from 'date-fns';
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { useLatestReport } from '../hooks/useLatestReport';
+import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 import { clearAllEvents } from '../store/events_data/actions';
 import { clearMasterData } from '../store/master_data/masterDataSlice';
 import { clearReport } from '../store/report/reportSlice';
@@ -14,7 +14,7 @@ import { LogInputContainer } from './LandingPage';
 
 export const AuthenticatedLandingSection: React.FC = () => {
   const [logUrl, setLogUrl] = useState('');
-  const navigate = useNavigate();
+  const navigate = useViewTransitionNavigate();
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const { report: latestReport, loading: latestReportLoading } = useLatestReport();

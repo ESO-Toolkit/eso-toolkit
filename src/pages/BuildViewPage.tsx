@@ -28,9 +28,11 @@ import {
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { GearSetTooltip } from '../components/GearSetTooltip';
+import { LazySkillTooltip } from '../components/LazySkillTooltip';
 import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
 import { getEnchantName } from '../data/esoEnchants';
 import { ESO_POTION_LOOKUP } from '../data/esoPotions';
@@ -56,6 +58,8 @@ import {
 } from '../features/loadout-manager/utils/itemIconResolver';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
+import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
+import { buildTooltipProps } from '../utils/skillTooltipMapper';
 
 // ─── Icon CDNs ────────────────────────────────────────────────────────────────
 
@@ -306,6 +310,13 @@ const SkillSlot: React.FC<{
   const accentA = (a: number): string =>
     isUltimate ? `rgba(255,179,0,${a})` : `rgba(var(--be-accent-rgb, 56,189,248),${a})`;
 
+  const tooltipContent = useMemo(() => {
+    if (!skill) return `Slot ${label}${isUltimate ? ' (Ultimate)' : ''}`;
+    const props = buildTooltipProps({ abilityId: skill.id, abilityName: skill.name });
+    if (props) return <LazySkillTooltip {...props} />;
+    return `${skill.name}${skill.category ? ` \u00b7 ${skill.category}` : ''}`;
+  }, [skill, label, isUltimate]);
+
   return (
     <Box
       sx={{
@@ -319,13 +330,12 @@ const SkillSlot: React.FC<{
       }}
     >
       <Tooltip
-        title={
-          skill
-            ? `${skill.name}${skill.category ? ` \u00b7 ${skill.category}` : ''}`
-            : `Slot ${label}${isUltimate ? ' (Ultimate)' : ''}`
-        }
+        title={tooltipContent}
         arrow
         placement="top"
+        enterDelay={300}
+        enterTouchDelay={0}
+        leaveTouchDelay={3000}
       >
         <Box
           sx={{
@@ -473,6 +483,13 @@ const GearSlotDisplay: React.FC<{
   const traitLabel = trait ? getTraitName(trait) : null;
   const enchantLabel = enchant ? getEnchantName(enchant) : null;
 
+  const gearTooltipContent = useMemo(() => {
+    if (!setName) return null;
+    const props = getGearSetTooltipPropsByName(setName);
+    if (props) return <GearSetTooltip {...props} />;
+    return null;
+  }, [setName]);
+
   return (
     <Box
       sx={{
@@ -540,32 +557,79 @@ const GearSlotDisplay: React.FC<{
 
       {/* Item name + set name + trait/enchant */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography
-          sx={{
-            fontSize: '0.72rem',
-            fontWeight: 600,
-            color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {displayName}
-        </Typography>
-        {setName && setName !== displayName && (
-          <Typography
-            sx={{
-              fontSize: '0.6rem',
-              fontWeight: 500,
-              color: 'var(--be-accent, #38bdf8)',
-              opacity: 0.7,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
+        {gearTooltipContent ? (
+          <Tooltip
+            title={gearTooltipContent}
+            arrow
+            placement="top"
+            enterDelay={400}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
           >
-            {setName}
-          </Typography>
+            <Box sx={{ cursor: 'help' }}>
+              <Typography
+                sx={{
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {displayName}
+              </Typography>
+              {setName && setName !== displayName && (
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    fontWeight: 500,
+                    color: 'var(--be-accent, #38bdf8)',
+                    opacity: 0.7,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    '&:hover': {
+                      textDecoration: 'underline dotted',
+                      textUnderlineOffset: 2,
+                    },
+                  }}
+                >
+                  {setName}
+                </Typography>
+              )}
+            </Box>
+          </Tooltip>
+        ) : (
+          <>
+            <Typography
+              sx={{
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {displayName}
+            </Typography>
+            {setName && setName !== displayName && (
+              <Typography
+                sx={{
+                  fontSize: '0.6rem',
+                  fontWeight: 500,
+                  color: 'var(--be-accent, #38bdf8)',
+                  opacity: 0.7,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {setName}
+              </Typography>
+            )}
+          </>
         )}
         {(traitLabel || enchantLabel) && (
           <Box sx={{ display: 'flex', gap: 0.5, mt: 0.25, flexWrap: 'wrap' }}>

@@ -4,11 +4,13 @@
  */
 
 import { ExpandMore as ExpandIcon } from '@mui/icons-material';
-import { Box, Collapse, Typography } from '@mui/material';
+import { Box, Collapse, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React, { useState } from 'react';
 
 import type { StatItem, StatResult, StatSource } from '../../engine/stat-types';
+
+import { getItemDescription, SOURCE_CATEGORY_DESCRIPTIONS } from './stat-descriptions';
 
 interface StatBreakdownProps {
   label: string;
@@ -153,75 +155,133 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
         >
           {Object.entries(grouped).map(([source, items]) => (
             <Box key={source} sx={{ mb: 0.75 }}>
-              <Typography
-                sx={{
-                  fontSize: 9,
-                  fontWeight: 600,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  textTransform: 'uppercase',
-                  letterSpacing: 1,
-                  color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.28)',
-                  mb: 0.25,
+              <Tooltip
+                title={SOURCE_CATEGORY_DESCRIPTIONS[source] ?? ''}
+                placement="right"
+                arrow
+                enterDelay={400}
+                slotProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: 11,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      maxWidth: 260,
+                      px: 1.5,
+                      py: 1,
+                    },
+                  },
                 }}
               >
-                {SOURCE_LABELS[source as StatSource]}
-              </Typography>
-              {items.map((item, idx) => (
-                <Box
-                  key={`${item.name}-${idx}`}
+                <Typography
                   sx={{
-                    display: 'flex',
-                    alignItems: 'baseline',
-                    justifyContent: 'space-between',
-                    py: 0.15,
+                    fontSize: 9,
+                    fontWeight: 600,
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                    color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.28)',
+                    mb: 0.25,
+                    cursor: 'help',
+                    width: 'fit-content',
                   }}
                 >
-                  <Typography
+                  {SOURCE_LABELS[source as StatSource]}
+                </Typography>
+              </Tooltip>
+              {items.map((item, idx) => {
+                const description = getItemDescription(item.name);
+                const row = (
+                  <Box
+                    key={`${item.name}-${idx}`}
                     sx={{
-                      fontSize: 11,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
-                      color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)',
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      justifyContent: 'space-between',
+                      py: 0.15,
+                      cursor: description ? 'help' : 'default',
+                      borderRadius: 0.5,
+                      transition: 'background 0.15s',
+                      px: 0.5,
+                      mx: -0.5,
+                      '&:hover': description
+                        ? {
+                            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                          }
+                        : undefined,
                     }}
                   >
-                    {item.name}
-                    {item.autoDetected && (
-                      <Box
-                        component="span"
-                        sx={{
-                          fontSize: 8,
-                          ml: 0.5,
-                          px: 0.5,
-                          py: 0.1,
-                          borderRadius: 0.5,
-                          background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                          verticalAlign: 'middle',
-                        }}
-                      >
-                        auto
-                      </Box>
-                    )}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
-                      fontVariantNumeric: 'tabular-nums',
-                      color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.65)',
-                      flexShrink: 0,
-                      ml: 1,
+                    <Typography
+                      sx={{
+                        fontSize: 11,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)',
+                      }}
+                    >
+                      {item.name}
+                      {item.autoDetected && (
+                        <Box
+                          component="span"
+                          sx={{
+                            fontSize: 8,
+                            ml: 0.5,
+                            px: 0.5,
+                            py: 0.1,
+                            borderRadius: 0.5,
+                            background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                            color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                            verticalAlign: 'middle',
+                          }}
+                        >
+                          auto
+                        </Box>
+                      )}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        fontVariantNumeric: 'tabular-nums',
+                        color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.65)',
+                        flexShrink: 0,
+                        ml: 1,
+                      }}
+                    >
+                      {formatValue(item)}
+                    </Typography>
+                  </Box>
+                );
+
+                return description ? (
+                  <Tooltip
+                    key={`${item.name}-${idx}`}
+                    title={description}
+                    placement="top"
+                    arrow
+                    enterDelay={300}
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          fontSize: 11,
+                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          maxWidth: 280,
+                          px: 1.5,
+                          py: 1,
+                        },
+                      },
                     }}
                   >
-                    {formatValue(item)}
-                  </Typography>
-                </Box>
-              ))}
+                    {row}
+                  </Tooltip>
+                ) : (
+                  row
+                );
+              })}
             </Box>
           ))}
 
           {/* Disabled items (collapsed) */}
-          {result.items.filter((i) => !i.enabled).length > 0 && (
+          {result.items.length - enabledItems.length > 0 && (
             <Typography
               sx={{
                 fontSize: 9,
@@ -231,7 +291,7 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
                 fontStyle: 'italic',
               }}
             >
-              +{result.items.filter((i) => !i.enabled).length} inactive sources
+              +{result.items.length - enabledItems.length} inactive sources
             </Typography>
           )}
         </Box>

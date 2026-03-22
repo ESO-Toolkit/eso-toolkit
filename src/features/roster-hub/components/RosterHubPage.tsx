@@ -25,7 +25,6 @@ import { FilterBar } from './FilterBar';
 import { PublishRosterDialog } from './PublishRosterDialog';
 import { RosterCard } from './RosterCard';
 import { RosterCardSkeleton } from './RosterCardSkeleton';
-import { RosterPreviewDialog } from './RosterPreviewDialog';
 
 const SKELETON_COUNT = 8;
 
@@ -38,7 +37,6 @@ export const RosterHubPage: React.FC = () => {
   const { filteredRosters, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote } =
     useRosterHub(token);
 
-  const [previewRoster, setPreviewRoster] = React.useState<HubRoster | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [editRoster, setEditRoster] = React.useState<HubRoster | null>(null);
@@ -281,7 +279,6 @@ export const RosterHubPage: React.FC = () => {
                     isOwner={isLoggedIn && roster.author_id === currentUserId}
                     isLoggedIn={isLoggedIn}
                     onVote={handleVote}
-                    onPreview={setPreviewRoster}
                     onDelete={setDeleteTarget}
                     onEdit={setEditRoster}
                   />
@@ -311,19 +308,6 @@ export const RosterHubPage: React.FC = () => {
           Log in with your ESO Logs account to vote on rosters or publish your own.
         </Alert>
       )}
-
-      {/* Roster preview dialog */}
-      <RosterPreviewDialog
-        roster={previewRoster}
-        isLoggedIn={isLoggedIn}
-        currentUserId={currentUserId}
-        token={token}
-        onClose={() => setPreviewRoster(null)}
-        onEdit={(r) => {
-          setPreviewRoster(null);
-          setEditRoster(r);
-        }}
-      />
 
       {/* Edit published roster dialog */}
       {editRoster && token && (

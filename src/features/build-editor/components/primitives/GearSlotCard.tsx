@@ -13,10 +13,12 @@ import {
   Close as CloseIcon,
   LocalFireDepartment as EnchantIcon,
 } from '@mui/icons-material';
-import { Box, ButtonBase, IconButton, Stack, Typography } from '@mui/material';
+import { Box, ButtonBase, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { GearSetTooltip } from '../../../../components/GearSetTooltip';
+import { getGearSetTooltipPropsByName } from '../../../../utils/gearSetTooltipMapper';
 import type { ArmorWeight } from '../../../loadout-manager/types/loadout.types';
 import { fetchItemIconUrl, getItemIconUrl } from '../../../loadout-manager/utils/itemIconResolver';
 import type { EquipSlotDef } from '../../data/esoStaticData';
@@ -245,6 +247,13 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
 
   const primaryLabel = setName ?? itemName ?? null;
 
+  const gearTooltipContent = useMemo(() => {
+    if (!setName) return null;
+    const props = getGearSetTooltipPropsByName(setName);
+    if (props) return <GearSetTooltip {...props} />;
+    return null;
+  }, [setName]);
+
   const handleClick = (): void => {
     if (!isDisabled) onOpen();
   };
@@ -443,18 +452,47 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
             >
               {slotDef.name}
             </Typography>
-            <Typography
-              noWrap
-              sx={{
-                fontSize: 12,
-                fontWeight: 600,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
-                lineHeight: 1.2,
-                color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
-              }}
-            >
-              {primaryLabel}
-            </Typography>
+            {gearTooltipContent ? (
+              <Tooltip
+                title={gearTooltipContent}
+                arrow
+                placement="top"
+                enterDelay={400}
+                enterTouchDelay={0}
+                leaveTouchDelay={3000}
+              >
+                <Typography
+                  noWrap
+                  sx={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    lineHeight: 1.2,
+                    color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
+                    cursor: 'help',
+                    '&:hover': {
+                      textDecoration: 'underline dotted',
+                      textUnderlineOffset: 2,
+                    },
+                  }}
+                >
+                  {primaryLabel}
+                </Typography>
+              </Tooltip>
+            ) : (
+              <Typography
+                noWrap
+                sx={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  lineHeight: 1.2,
+                  color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
+                }}
+              >
+                {primaryLabel}
+              </Typography>
+            )}
           </Stack>
 
           {/* Row 2: weight + trait + enchant chips */}

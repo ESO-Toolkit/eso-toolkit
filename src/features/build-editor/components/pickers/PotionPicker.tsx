@@ -9,25 +9,14 @@
  *   onChange  — called with the new potions array
  */
 
-import {
-  Add as AddIcon,
-  Close as CloseIcon,
-  ExpandMore as ExpandIcon,
-  Search as SearchIcon,
-} from '@mui/icons-material';
+import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
 import {
   Box,
   Button,
   ButtonBase,
   Chip,
-  Collapse,
-  Dialog,
-  DialogContent,
-  DialogTitle,
   IconButton,
-  InputAdornment,
   Stack,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -38,7 +27,10 @@ import { ESO_POTION_CATEGORIES, ESO_POTION_LOOKUP, ESO_POTIONS } from '@/data/es
 import type { EsoPotion, PotionCategory } from '@/data/esoPotions';
 
 import type { BuildPotion } from '../../types/build.types';
+import { CollapsibleSection } from '../primitives/CollapsibleSection';
+import { glassAddBtnSx, glassEmptySx } from '../primitives/glass-styles';
 import { GlassPanel } from '../primitives/GlassPanel';
+import { PickerDialog } from '../primitives/PickerDialog';
 
 // ─── Potion category → UESP alchemy icon mapping ────────────────────────────
 
@@ -67,39 +59,6 @@ const CATEGORY_COLOR: Record<PotionCategory, string> = {
   Ultimate: '#ffee58',
 };
 
-// ─── Style helpers ──────────────────────────────────────────────────────────
-
-const glassAddBtnSx = (isDark: boolean): Record<string, unknown> => ({
-  alignSelf: 'flex-start' as const,
-  fontSize: 11,
-  fontFamily: 'Space Grotesk, Inter, system-ui',
-  fontWeight: 600,
-  borderRadius: '99px',
-  textTransform: 'none' as const,
-  borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
-  color: 'var(--be-accent, #38bdf8)',
-  backdropFilter: 'blur(6px)',
-  '&:hover': {
-    borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.40)',
-    background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
-  },
-  '&.Mui-disabled': {
-    borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
-    color: 'text.disabled',
-  },
-});
-
-const glassEmptySx = (isDark: boolean): Record<string, unknown> => ({
-  background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
-  backdropFilter: 'blur(6px)',
-  WebkitBackdropFilter: 'blur(6px)',
-  border: `1px dashed ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-  borderRadius: 3,
-  p: 3,
-  textAlign: 'center' as const,
-  boxShadow: isDark ? 'inset 0 1px 0 rgba(255,255,255,0.02)' : 'none',
-});
-
 const MIN_SEARCH_LENGTH = 2;
 const MAX_POTIONS = 3;
 
@@ -114,100 +73,6 @@ const POTION_GROUPS: CategoryGroup[] = ESO_POTION_CATEGORIES.map((cat) => ({
   category: cat,
   items: ESO_POTIONS.filter((p) => p.category === cat),
 }));
-
-// ─── Potion Category Section (collapsible) ──────────────────────────────────
-
-interface PotionCategorySectionProps {
-  group: CategoryGroup;
-  selectedIds: Set<number>;
-  onSelect: (item: EsoPotion) => void;
-}
-
-const PotionCategorySection: React.FC<PotionCategorySectionProps> = ({
-  group,
-  selectedIds,
-  onSelect,
-}) => {
-  const isDark = useTheme().palette.mode === 'dark';
-  const [expanded, setExpanded] = useState(false);
-  const iconUrl = getCategoryIconUrl(group.category);
-  const catColor = CATEGORY_COLOR[group.category];
-
-  return (
-    <Box>
-      <ButtonBase
-        onClick={() => setExpanded(!expanded)}
-        sx={{
-          width: '100%',
-          py: 0.75,
-          px: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderRadius: 1.5,
-          '&:hover': {
-            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-          },
-        }}
-      >
-        <Stack direction="row" alignItems="center" spacing={0.75}>
-          <Box
-            component={'img' as React.ElementType}
-            src={iconUrl}
-            alt=""
-            sx={{ width: 20, height: 20, flexShrink: 0, opacity: 0.75 }}
-          />
-          <Typography
-            sx={{
-              fontSize: 12,
-              fontWeight: 600,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
-            }}
-          >
-            {group.category}
-          </Typography>
-        </Stack>
-        <Stack direction="row" alignItems="center" spacing={0.5}>
-          <Typography
-            sx={{
-              fontSize: 10,
-              color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-              fontFamily: 'Space Grotesk',
-            }}
-          >
-            {group.items.length}
-          </Typography>
-          <ExpandIcon
-            sx={{
-              fontSize: 16,
-              transition: 'transform 0.2s',
-              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-              color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
-            }}
-          />
-        </Stack>
-      </ButtonBase>
-
-      <Collapse in={expanded} unmountOnExit>
-        <Stack spacing={0} sx={{ pl: 1, pr: 0.5, pb: 1, pt: 0.25 }}>
-          {group.items.map((item) => {
-            const isSelected = selectedIds.has(item.id);
-            return (
-              <PotionRow
-                key={item.id}
-                item={item}
-                isSelected={isSelected}
-                catColor={catColor}
-                onSelect={onSelect}
-              />
-            );
-          })}
-        </Stack>
-      </Collapse>
-    </Box>
-  );
-};
 
 // ─── Potion Row ─────────────────────────────────────────────────────────────
 
@@ -242,8 +107,15 @@ const PotionRow: React.FC<PotionRowProps> = ({ item, isSelected, catColor, onSel
         border: isSelected
           ? '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)'
           : '1px solid transparent',
+        transition: 'all 0.12s ease',
         '&:hover': {
-          background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: isSelected
+            ? isDark
+              ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.14)'
+              : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
+            : isDark
+              ? 'rgba(255,255,255,0.05)'
+              : 'rgba(0,0,0,0.03)',
         },
       }}
     >
@@ -309,7 +181,6 @@ const PotionPickerDialog: React.FC<PotionPickerDialogProps> = ({
   selectedIds,
   onSelect,
 }) => {
-  const isDark = useTheme().palette.mode === 'dark';
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -339,107 +210,63 @@ const PotionPickerDialog: React.FC<PotionPickerDialogProps> = ({
   );
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: '16px',
-          backdropFilter: 'blur(24px)',
-          background: isDark ? 'rgba(12,12,22,0.96)' : 'rgba(255,255,255,0.97)',
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
-          boxShadow: isDark ? '0 24px 64px rgba(0,0,0,0.55)' : '0 24px 64px rgba(0,0,0,0.12)',
-          maxHeight: '80vh',
-        },
-      }}
-    >
-      <DialogTitle
-        sx={{
-          fontWeight: 700,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
-          fontSize: '1rem',
-          pb: 1,
-          background: isDark
-            ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-            : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-        }}
-      >
-        Select Potion
-      </DialogTitle>
+    <PickerDialog open={open} onClose={onClose} title="Select Potion">
+      <PickerDialog.Search
+        value={search}
+        onChange={setSearch}
+        placeholder="Search potions by name, effect, or role..."
+        resultCount={isSearching ? searchResults.length : undefined}
+      />
 
-      <DialogContent sx={{ p: 0 }}>
-        {/* Search bar */}
-        <Box sx={{ px: 2, pb: 1.5 }}>
-          <TextField
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search potions by name, effect, or role..."
-            size="small"
-            fullWidth
-            autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
-                borderRadius: 2,
-                fontSize: 13,
-              },
-            }}
-          />
-        </Box>
-
-        {isSearching ? (
-          <Box sx={{ px: 2, pb: 2, maxHeight: 400, overflowY: 'auto' }}>
-            {searchResults.length === 0 ? (
-              <Typography
-                sx={{
-                  fontSize: 12,
-                  color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                  textAlign: 'center',
-                  py: 3,
-                }}
-              >
-                No potions found
-              </Typography>
-            ) : (
-              <Stack spacing={0.5}>
-                {searchResults.map((item) => (
-                  <PotionRow
-                    key={item.id}
-                    item={item}
-                    isSelected={selectedIds.has(item.id)}
-                    catColor={CATEGORY_COLOR[item.category]}
-                    onSelect={handleSelect}
-                  />
-                ))}
-              </Stack>
-            )}
-          </Box>
-        ) : (
-          <Box sx={{ maxHeight: 400, overflowY: 'auto', px: 1, pb: 1 }}>
-            {POTION_GROUPS.map((group) => (
-              <PotionCategorySection
-                key={group.category}
-                group={group}
-                selectedIds={selectedIds}
+      {isSearching ? (
+        <PickerDialog.Body empty={searchResults.length === 0} emptyMessage="No potions found">
+          <Stack spacing={0.5} sx={{ px: 1 }}>
+            {searchResults.map((item) => (
+              <PotionRow
+                key={item.id}
+                item={item}
+                isSelected={selectedIds.has(item.id)}
+                catColor={CATEGORY_COLOR[item.category]}
                 onSelect={handleSelect}
               />
             ))}
-          </Box>
-        )}
-      </DialogContent>
-    </Dialog>
+          </Stack>
+        </PickerDialog.Body>
+      ) : (
+        <PickerDialog.Body>
+          {POTION_GROUPS.map((group) => {
+            const iconUrl = getCategoryIconUrl(group.category);
+            return (
+              <CollapsibleSection
+                key={group.category}
+                label={group.category}
+                count={group.items.length}
+                icon={
+                  <Box
+                    component={'img' as React.ElementType}
+                    src={iconUrl}
+                    alt=""
+                    sx={{ width: 20, height: 20, flexShrink: 0, opacity: 0.75 }}
+                  />
+                }
+              >
+                <Stack spacing={0} sx={{ pl: 1, pr: 0.5, pb: 1, pt: 0.25 }}>
+                  {group.items.map((item) => (
+                    <PotionRow
+                      key={item.id}
+                      item={item}
+                      isSelected={selectedIds.has(item.id)}
+                      catColor={CATEGORY_COLOR[group.category]}
+                      onSelect={handleSelect}
+                    />
+                  ))}
+                </Stack>
+              </CollapsibleSection>
+            );
+          })}
+        </PickerDialog.Body>
+      )}
+    </PickerDialog>
   );
 };
 

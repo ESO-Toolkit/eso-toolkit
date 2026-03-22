@@ -1,12 +1,12 @@
 import { LockOpen as LockOpenIcon } from '@mui/icons-material';
 import { Box, Button, Typography, useTheme } from '@mui/material';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { startPKCEAuth } from '../features/auth/auth';
+import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 
 export const UnauthenticatedLandingSection: React.FC = () => {
-  const navigate = useNavigate();
+  const navigate = useViewTransitionNavigate();
   const theme = useTheme();
 
   const handleLogin = (): void => {

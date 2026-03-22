@@ -6,30 +6,14 @@
  * SkillsSection wraps this with useSelector / dispatch.
  */
 
-import {
-  Close as CloseIcon,
-  ExpandMore as ExpandIcon,
-  FilterList as FilterListIcon,
-  Search as SearchIcon,
-} from '@mui/icons-material';
-import {
-  Box,
-  ButtonBase,
-  Collapse,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  InputAdornment,
-  ListSubheader,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Close as CloseIcon, FilterList as FilterListIcon } from '@mui/icons-material';
+import { Box, ButtonBase, ListSubheader, Stack, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { LazySkillTooltip } from '../../../../components/LazySkillTooltip';
 import type { SkillData } from '../../../../data/types/skill-line-types';
+import { buildTooltipProps } from '../../../../utils/skillTooltipMapper';
 import {
   getSkillById,
   getSkillLineIndex,
@@ -39,6 +23,9 @@ import {
 import type { SkillsConfig } from '../../../loadout-manager/types/loadout.types';
 import { CLASS_SKILL_LINES, ESO_CLASSES } from '../../data/esoStaticData';
 import { CLASS_COLOR_MAP } from '../../theme/classColorMap';
+import { CollapsibleSection } from '../primitives/CollapsibleSection';
+import { PickerDialog } from '../primitives/PickerDialog';
+import { PickerTabBar } from '../primitives/PickerTabBar';
 
 // ── Constants ───────────────────────────────────────────────────────────────
 
@@ -74,12 +61,12 @@ interface SkillGroup {
 }
 
 const PICKER_TABS = [
-  { label: 'Class', category: 'class' },
-  { label: 'Weapon', category: 'weapon' },
-  { label: 'Guild', category: 'guild' },
-  { label: 'Alliance', category: 'alliance' },
-  { label: 'World', category: 'world' },
-] as const;
+  { key: 'class' as const, label: 'Class' },
+  { key: 'weapon' as const, label: 'Weapon' },
+  { key: 'guild' as const, label: 'Guild' },
+  { key: 'alliance' as const, label: 'Alliance' },
+  { key: 'world' as const, label: 'World' },
+];
 
 function groupSkillsByBase(skills: SkillData[]): SkillGroup[] {
   const map = new Map<number, { base?: SkillData; morphs: SkillData[] }>();
@@ -108,22 +95,32 @@ interface PickerTileProps {
 
 const PickerTile: React.FC<PickerTileProps> = ({ skill, onSelect, isMorph }) => {
   const isDark = useTheme().palette.mode === 'dark';
+  const [imgBroken, setImgBroken] = useState(false);
   const isUlt = skill.isUltimate;
   const accent = isUlt ? 'rgba(255,179,0,' : 'rgba(56,189,248,';
 
+  const richTooltip = useMemo(() => {
+    const props = buildTooltipProps({ abilityId: skill.id, abilityName: skill.name });
+    if (props) return <LazySkillTooltip {...props} />;
+    return (
+      <Box>
+        <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{skill.name}</Typography>
+        {isMorph && <Typography sx={{ fontSize: 10, opacity: 0.7 }}>Morph</Typography>}
+        {skill.category && (
+          <Typography sx={{ fontSize: 10, opacity: 0.7 }}>{skill.category}</Typography>
+        )}
+      </Box>
+    );
+  }, [skill.id, skill.name, skill.category, isMorph]);
+
   return (
     <Tooltip
-      title={
-        <Box>
-          <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{skill.name}</Typography>
-          {isMorph && <Typography sx={{ fontSize: 10, opacity: 0.7 }}>Morph</Typography>}
-          {skill.category && (
-            <Typography sx={{ fontSize: 10, opacity: 0.7 }}>{skill.category}</Typography>
-          )}
-        </Box>
-      }
+      title={richTooltip}
       arrow
       placement="top"
+      enterDelay={300}
+      enterTouchDelay={0}
+      leaveTouchDelay={3000}
     >
       <ButtonBase
         onClick={() => onSelect(skill)}
@@ -145,15 +142,13 @@ const PickerTile: React.FC<PickerTileProps> = ({ skill, onSelect, isMorph }) => 
           },
         }}
       >
-        {skill.icon ? (
+        {skill.icon && !imgBroken ? (
           <img
             src={`${ICON_URL}${skill.icon}.png`}
             alt={skill.name}
             loading="lazy"
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
+            onError={() => setImgBroken(true)}
           />
         ) : (
           <Typography
@@ -187,9 +182,6 @@ const SkillLineSection: React.FC<SkillLineSectionProps> = ({
   onSelect,
   defaultExpanded = false,
 }) => {
-  const isDark = useTheme().palette.mode === 'dark';
-  const [expanded, setExpanded] = useState(defaultExpanded);
-
   const skills = useMemo(() => getSkillsByCategory(lineName), [lineName]);
   const filtered = useMemo(
     () => skills.filter((s) => (isUltimate ? s.isUltimate : !s.isUltimate)),
@@ -200,80 +192,32 @@ const SkillLineSection: React.FC<SkillLineSectionProps> = ({
   if (groups.length === 0) return null;
 
   return (
-    <Box>
-      <ButtonBase
-        onClick={() => setExpanded(!expanded)}
-        sx={{
-          width: '100%',
-          py: 0.75,
-          px: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderRadius: 1.5,
-          '&:hover': {
-            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-          },
-        }}
-      >
-        <Typography
-          sx={{
-            fontSize: 12,
-            fontWeight: 600,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-            color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
-          }}
-        >
-          {lineName}
-        </Typography>
-        <Stack direction="row" alignItems="center" spacing={0.5}>
-          <Typography
-            sx={{
-              fontSize: 10,
-              color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-              fontFamily: 'Space Grotesk',
-            }}
-          >
-            {groups.length}
-          </Typography>
-          <ExpandIcon
-            sx={{
-              fontSize: 16,
-              transition: 'transform 0.2s',
-              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-              color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
-            }}
-          />
-        </Stack>
-      </ButtonBase>
-
-      <Collapse in={expanded} unmountOnExit>
-        <Stack spacing={1.25} sx={{ pl: 1.5, pr: 0.5, pb: 1.5, pt: 0.5 }}>
-          {groups.map((group) => (
-            <Box key={group.base.id}>
-              <Typography
-                sx={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
-                  mb: 0.5,
-                  letterSpacing: 0.3,
-                }}
-              >
-                {group.base.name}
-              </Typography>
-              <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
-                <PickerTile skill={group.base} onSelect={onSelect} />
-                {group.morphs.map((m) => (
-                  <PickerTile key={m.id} skill={m} onSelect={onSelect} isMorph />
-                ))}
-              </Stack>
-            </Box>
-          ))}
-        </Stack>
-      </Collapse>
-    </Box>
+    <CollapsibleSection label={lineName} count={groups.length} defaultExpanded={defaultExpanded}>
+      <Stack spacing={1.25} sx={{ pl: 1.5, pr: 0.5, pb: 1.5, pt: 0.5 }}>
+        {groups.map((group) => (
+          <Box key={group.base.id}>
+            <Typography
+              sx={{
+                fontSize: 10,
+                fontWeight: 600,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                color: 'text.secondary',
+                mb: 0.5,
+                letterSpacing: 0.3,
+              }}
+            >
+              {group.base.name}
+            </Typography>
+            <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+              <PickerTile skill={group.base} onSelect={onSelect} />
+              {group.morphs.map((m) => (
+                <PickerTile key={m.id} skill={m} onSelect={onSelect} isMorph />
+              ))}
+            </Stack>
+          </Box>
+        ))}
+      </Stack>
+    </CollapsibleSection>
   );
 };
 
@@ -297,13 +241,13 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
   selectedClassLineIds,
 }) => {
   const isDark = useTheme().palette.mode === 'dark';
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState<string>('class');
   const [search, setSearch] = useState('');
 
   const lineIndex = useMemo(() => getSkillLineIndex(), []);
 
   const linesByTab = useMemo(
-    () => PICKER_TABS.map((tab) => lineIndex.filter((l) => l.broadCategory === tab.category)),
+    () => PICKER_TABS.map((tab) => lineIndex.filter((l) => l.broadCategory === tab.key)),
     [lineIndex],
   );
 
@@ -368,337 +312,232 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
     setSearch('');
   }, [onClose]);
 
+  const activeTabIndex = PICKER_TABS.findIndex((t) => t.key === activeTab);
+
   return (
-    <Dialog
+    <PickerDialog
       open={open}
       onClose={handleClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: '16px',
-          backdropFilter: 'blur(24px)',
-          background: isDark ? 'rgba(12,12,22,0.96)' : 'rgba(255,255,255,0.97)',
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
-          boxShadow: isDark ? '0 24px 64px rgba(0,0,0,0.55)' : '0 24px 64px rgba(0,0,0,0.12)',
-          maxHeight: '80vh',
-        },
-      }}
+      title={isUltimate ? 'Assign Ultimate' : `Assign Skill \u00b7 Slot ${slotLabel}`}
     >
-      <DialogTitle
-        sx={{
-          fontWeight: 700,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
-          fontSize: '1rem',
-          pb: 1,
-          background: isDark
-            ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-            : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-        }}
-      >
-        {isUltimate ? 'Assign Ultimate' : `Assign Skill \u00b7 Slot ${slotLabel}`}
-      </DialogTitle>
+      <PickerDialog.Search
+        value={search}
+        onChange={setSearch}
+        placeholder="Search skills..."
+        resultCount={isSearching ? searchResults.length : undefined}
+      />
 
-      <DialogContent sx={{ p: 0 }}>
-        <Box sx={{ px: 2, pb: 1.5 }}>
-          <TextField
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search skills..."
-            size="small"
-            fullWidth
-            autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
-                borderRadius: 2,
-                fontSize: 13,
-              },
-            }}
-          />
-        </Box>
-
-        {isSearching ? (
-          <Box sx={{ px: 2, pb: 2, maxHeight: 400, overflowY: 'auto' }}>
-            {searchResults.length === 0 ? (
-              <Typography
+      {isSearching ? (
+        <PickerDialog.Body
+          empty={searchResults.length === 0}
+          emptyMessage={`No ${isUltimate ? 'ultimates' : 'skills'} found`}
+        >
+          <Stack spacing={0.5} sx={{ px: 1 }}>
+            {searchResults.map((skill) => (
+              <ButtonBase
+                key={skill.id}
+                onClick={() => handleSelect(skill)}
                 sx={{
-                  fontSize: 12,
-                  color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                  textAlign: 'center',
-                  py: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.25,
+                  py: 0.75,
+                  px: 1,
+                  borderRadius: 1.5,
+                  width: '100%',
+                  textAlign: 'left',
+                  transition: 'all 0.12s ease',
+                  '&:hover': {
+                    background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                  },
                 }}
               >
-                No {isUltimate ? 'ultimates' : 'skills'} found
-              </Typography>
-            ) : (
-              <Stack spacing={0.5}>
-                {searchResults.map((skill) => (
-                  <ButtonBase
-                    key={skill.id}
-                    onClick={() => handleSelect(skill)}
+                {skill.icon ? (
+                  <img
+                    src={`${ICON_URL}${skill.icon}.png`}
+                    alt=""
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 6,
+                      flexShrink: 0,
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                      objectFit: 'cover',
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <Box
                     sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '6px',
+                      bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    sx={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {skill.name}
+                  </Typography>
+                  {skill.category && (
+                    <Typography
+                      sx={{
+                        fontSize: 10,
+                        color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {skill.category}
+                      {skill.isUltimate ? ' \u00b7 Ultimate' : ''}
+                    </Typography>
+                  )}
+                </Box>
+              </ButtonBase>
+            ))}
+          </Stack>
+        </PickerDialog.Body>
+      ) : (
+        <>
+          <PickerDialog.Tabs>
+            <PickerTabBar tabs={PICKER_TABS} activeKey={activeTab} onChange={setActiveTab} />
+
+            {activeTab === 'class' && hasSelectedLines && (
+              <>
+                <Box sx={{ flex: 1, minWidth: 4 }} />
+                <Tooltip
+                  title={
+                    myBuildOnly
+                      ? 'Showing your 3 selected class lines \u00b7 click to show all'
+                      : 'Show only your selected class lines'
+                  }
+                  arrow
+                  placement="top"
+                >
+                  <ButtonBase
+                    onClick={() => setMyBuildOnly((v) => !v)}
+                    aria-pressed={myBuildOnly}
+                    sx={{
+                      px: 1.25,
+                      py: 0.5,
+                      borderRadius: 1.5,
+                      fontSize: 11,
+                      fontWeight: myBuildOnly ? 700 : 500,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      letterSpacing: 0.3,
+                      flexShrink: 0,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 1.25,
-                      py: 0.75,
-                      px: 1,
-                      borderRadius: 1.5,
-                      width: '100%',
-                      textAlign: 'left',
+                      gap: 0.4,
+                      color: myBuildOnly
+                        ? isDark
+                          ? '#38bdf8'
+                          : '#0284c7'
+                        : isDark
+                          ? 'rgba(255,255,255,0.40)'
+                          : 'rgba(0,0,0,0.40)',
+                      background: myBuildOnly
+                        ? isDark
+                          ? 'rgba(56,189,248,0.10)'
+                          : 'rgba(2,132,199,0.06)'
+                        : 'transparent',
+                      border: `1px solid ${
+                        myBuildOnly
+                          ? isDark
+                            ? 'rgba(56,189,248,0.28)'
+                            : 'rgba(2,132,199,0.22)'
+                          : 'transparent'
+                      }`,
+                      transition: 'all 0.15s',
                       '&:hover': {
-                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                        background: myBuildOnly
+                          ? isDark
+                            ? 'rgba(56,189,248,0.16)'
+                            : 'rgba(2,132,199,0.10)'
+                          : isDark
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.04)',
                       },
                     }}
                   >
-                    {skill.icon ? (
-                      <img
-                        src={`${ICON_URL}${skill.icon}.png`}
-                        alt=""
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 6,
-                          flexShrink: 0,
-                          border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-                          objectFit: 'cover',
-                        }}
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <Box
+                    <FilterListIcon sx={{ fontSize: 12 }} />
+                    My Lines
+                  </ButtonBase>
+                </Tooltip>
+              </>
+            )}
+          </PickerDialog.Tabs>
+
+          <PickerDialog.Body>
+            {activeTab === 'class'
+              ? filteredClassLinesByClass.map(({ cls, lines }) => {
+                  const clsColor = CLASS_COLOR_MAP[cls.id].accent;
+                  return (
+                    <Box key={cls.id}>
+                      <ListSubheader
+                        disableSticky
                         sx={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: '6px',
-                          bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                          flexShrink: 0,
-                        }}
-                      />
-                    )}
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography
-                        sx={{
-                          fontSize: 12,
-                          fontWeight: 600,
+                          fontSize: 9,
+                          fontWeight: 700,
                           fontFamily: 'Space Grotesk, Inter, system-ui',
-                          lineHeight: 1.3,
+                          letterSpacing: 1,
+                          textTransform: 'uppercase',
+                          color: clsColor,
+                          lineHeight: '28px',
+                          background: 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.75,
+                          px: 1,
                         }}
                       >
-                        {skill.name}
-                      </Typography>
-                      {skill.category && (
-                        <Typography
+                        <Box
                           sx={{
-                            fontSize: 10,
-                            color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
-                            lineHeight: 1.2,
+                            width: 7,
+                            height: 7,
+                            borderRadius: '50%',
+                            background: clsColor,
+                            boxShadow: `0 0 5px ${alpha(clsColor, 0.6)}`,
+                            flexShrink: 0,
                           }}
-                        >
-                          {skill.category}
-                          {skill.isUltimate ? ' \u00b7 Ultimate' : ''}
-                        </Typography>
-                      )}
+                        />
+                        {cls.label}
+                      </ListSubheader>
+                      {lines.map((line) => (
+                        <SkillLineSection
+                          key={line.name}
+                          lineName={line.name}
+                          isUltimate={isUltimate}
+                          onSelect={handleSelect}
+                          defaultExpanded={myBuildOnly && selectedLineNames.has(line.name)}
+                        />
+                      ))}
                     </Box>
-                  </ButtonBase>
+                  );
+                })
+              : linesByTab[activeTabIndex >= 0 ? activeTabIndex : 0].map((line) => (
+                  <SkillLineSection
+                    key={line.name}
+                    lineName={line.name}
+                    isUltimate={isUltimate}
+                    onSelect={handleSelect}
+                  />
                 ))}
-              </Stack>
-            )}
-          </Box>
-        ) : (
-          <>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                px: 2,
-                pb: 1.5,
-                overflowX: 'auto',
-              }}
-            >
-              {PICKER_TABS.map((tab, idx) => (
-                <ButtonBase
-                  key={tab.category}
-                  onClick={() => setActiveTab(idx)}
-                  sx={{
-                    px: 1.25,
-                    py: 0.5,
-                    borderRadius: 1.5,
-                    fontSize: 11,
-                    fontWeight: activeTab === idx ? 700 : 500,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    letterSpacing: 0.3,
-                    flexShrink: 0,
-                    color:
-                      activeTab === idx
-                        ? isDark
-                          ? '#fff'
-                          : '#0f172a'
-                        : isDark
-                          ? 'rgba(255,255,255,0.45)'
-                          : 'rgba(0,0,0,0.45)',
-                    background:
-                      activeTab === idx
-                        ? isDark
-                          ? 'rgba(255,255,255,0.08)'
-                          : 'rgba(0,0,0,0.06)'
-                        : 'transparent',
-                    border: `1px solid ${
-                      activeTab === idx
-                        ? isDark
-                          ? 'rgba(255,255,255,0.12)'
-                          : 'rgba(0,0,0,0.10)'
-                        : 'transparent'
-                    }`,
-                    transition: 'all 0.15s',
-                    '&:hover': {
-                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    },
-                  }}
-                >
-                  {tab.label}
-                </ButtonBase>
-              ))}
-
-              {activeTab === 0 && hasSelectedLines && (
-                <>
-                  <Box sx={{ flex: 1, minWidth: 4 }} />
-                  <Tooltip
-                    title={
-                      myBuildOnly
-                        ? 'Showing your 3 selected class lines · click to show all'
-                        : 'Show only your selected class lines'
-                    }
-                    arrow
-                    placement="top"
-                  >
-                    <ButtonBase
-                      onClick={() => setMyBuildOnly((v) => !v)}
-                      aria-pressed={myBuildOnly}
-                      sx={{
-                        px: 1.25,
-                        py: 0.5,
-                        borderRadius: 1.5,
-                        fontSize: 11,
-                        fontWeight: myBuildOnly ? 700 : 500,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
-                        letterSpacing: 0.3,
-                        flexShrink: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.4,
-                        color: myBuildOnly
-                          ? isDark
-                            ? '#38bdf8'
-                            : '#0284c7'
-                          : isDark
-                            ? 'rgba(255,255,255,0.40)'
-                            : 'rgba(0,0,0,0.40)',
-                        background: myBuildOnly
-                          ? isDark
-                            ? 'rgba(56,189,248,0.10)'
-                            : 'rgba(2,132,199,0.06)'
-                          : 'transparent',
-                        border: `1px solid ${
-                          myBuildOnly
-                            ? isDark
-                              ? 'rgba(56,189,248,0.28)'
-                              : 'rgba(2,132,199,0.22)'
-                            : 'transparent'
-                        }`,
-                        transition: 'all 0.15s',
-                        '&:hover': {
-                          background: myBuildOnly
-                            ? isDark
-                              ? 'rgba(56,189,248,0.16)'
-                              : 'rgba(2,132,199,0.10)'
-                            : isDark
-                              ? 'rgba(255,255,255,0.06)'
-                              : 'rgba(0,0,0,0.04)',
-                        },
-                      }}
-                    >
-                      <FilterListIcon sx={{ fontSize: 12 }} />
-                      My Lines
-                    </ButtonBase>
-                  </Tooltip>
-                </>
-              )}
-            </Box>
-
-            <Box sx={{ maxHeight: 400, overflowY: 'auto', px: 1, pb: 1 }}>
-              {activeTab === 0
-                ? filteredClassLinesByClass.map(({ cls, lines }) => {
-                    const clsColor = CLASS_COLOR_MAP[cls.id].accent;
-                    return (
-                      <Box key={cls.id}>
-                        <ListSubheader
-                          disableSticky
-                          sx={{
-                            fontSize: 9,
-                            fontWeight: 700,
-                            fontFamily: 'Space Grotesk, Inter, system-ui',
-                            letterSpacing: 1,
-                            textTransform: 'uppercase',
-                            color: clsColor,
-                            lineHeight: '28px',
-                            background: 'transparent',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.75,
-                            px: 1,
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              width: 7,
-                              height: 7,
-                              borderRadius: '50%',
-                              background: clsColor,
-                              boxShadow: `0 0 5px ${alpha(clsColor, 0.6)}`,
-                              flexShrink: 0,
-                            }}
-                          />
-                          {cls.label}
-                        </ListSubheader>
-                        {lines.map((line) => (
-                          <SkillLineSection
-                            key={line.name}
-                            lineName={line.name}
-                            isUltimate={isUltimate}
-                            onSelect={handleSelect}
-                            defaultExpanded={myBuildOnly && selectedLineNames.has(line.name)}
-                          />
-                        ))}
-                      </Box>
-                    );
-                  })
-                : linesByTab[activeTab].map((line) => (
-                    <SkillLineSection
-                      key={line.name}
-                      lineName={line.name}
-                      isUltimate={isUltimate}
-                      onSelect={handleSelect}
-                    />
-                  ))}
-            </Box>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+          </PickerDialog.Body>
+        </>
+      )}
+    </PickerDialog>
   );
 };
 
@@ -718,6 +557,7 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
   onRemove,
 }) => {
   const isDark = useTheme().palette.mode === 'dark';
+  const [imgBroken, setImgBroken] = useState(false);
   const isUlt = slotIndex === ULTIMATE_SLOT;
   const skill = abilityId ? getSkillById(abilityId) : null;
   const size = isUlt ? ULT_SIZE : TILE_SIZE;
@@ -725,6 +565,13 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
 
   const accentA = (a: number): string =>
     isUlt ? `rgba(255,179,0,${a})` : `rgba(var(--be-accent-rgb, 56,189,248),${a})`;
+
+  const tooltipContent = useMemo(() => {
+    if (!skill) return `Slot ${label}${isUlt ? ' (Ultimate)' : ''} \u2014 click to assign`;
+    const props = buildTooltipProps({ abilityId: skill.id, abilityName: skill.name });
+    if (props) return <LazySkillTooltip {...props} />;
+    return `${skill.name}${skill.category ? ` \u00b7 ${skill.category}` : ''}`;
+  }, [skill, label, isUlt]);
 
   return (
     <Box
@@ -739,13 +586,12 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
       }}
     >
       <Tooltip
-        title={
-          skill
-            ? `${skill.name}${skill.category ? ` \u00b7 ${skill.category}` : ''}`
-            : `Slot ${label}${isUlt ? ' (Ultimate)' : ''} \u2014 click to assign`
-        }
+        title={tooltipContent}
         arrow
         placement="top"
+        enterDelay={300}
+        enterTouchDelay={0}
+        leaveTouchDelay={3000}
       >
         <Box
           role="button"
@@ -801,20 +647,17 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
                 : '0 6px 16px rgba(0,0,0,0.08)',
             },
             '&:hover .skill-clear': { opacity: 1 },
-            // Always show clear on touch devices
             '@media (hover: none)': {
               '& .skill-clear': { opacity: skill ? 1 : 0 },
             },
           }}
         >
-          {skill?.icon ? (
+          {skill?.icon && !imgBroken ? (
             <img
               src={`${ICON_URL}${skill.icon}.png`}
               alt={skill.name}
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
+              onError={() => setImgBroken(true)}
             />
           ) : (
             <Box

@@ -84,25 +84,22 @@ export const useLogger = (context?: string): ILogger => {
     throw new Error('useLogger must be used within a LoggerProvider');
   }
 
-  // Memoize the context-aware logger to prevent re-creation on every render
+  // Memoize the context-aware logger to prevent re-creation on every render.
+  // Always return a plain object (not the class instance directly) so that
+  // object spread in downstream hooks copies all methods as own properties.
   const contextLogger = React.useMemo(() => {
-    // Return a context-aware logger if context is provided
-    if (context) {
-      return {
-        debug: (message: string, data?: unknown) => logger.debug(message, data, context),
-        info: (message: string, data?: unknown) => logger.info(message, data, context),
-        warn: (message: string, data?: unknown) => logger.warn(message, data, context),
-        error: (message: string, error?: Error, data?: unknown) =>
-          logger.error(message, error, data, context),
-        setLevel: logger.setLevel.bind(logger),
-        getLevel: logger.getLevel.bind(logger),
-        getEntries: logger.getEntries.bind(logger),
-        clearEntries: logger.clearEntries.bind(logger),
-        exportLogs: logger.exportLogs.bind(logger),
-      };
-    }
-
-    return logger;
+    return {
+      debug: (message: string, data?: unknown) => logger.debug(message, data, context),
+      info: (message: string, data?: unknown) => logger.info(message, data, context),
+      warn: (message: string, data?: unknown) => logger.warn(message, data, context),
+      error: (message: string, error?: Error, data?: unknown) =>
+        logger.error(message, error, data, context),
+      setLevel: logger.setLevel.bind(logger),
+      getLevel: logger.getLevel.bind(logger),
+      getEntries: logger.getEntries.bind(logger),
+      clearEntries: logger.clearEntries.bind(logger),
+      exportLogs: logger.exportLogs.bind(logger),
+    };
   }, [logger, context]);
 
   return contextLogger;

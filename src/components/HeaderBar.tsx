@@ -24,12 +24,13 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
+import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 
 import { ThemeToggle } from './ThemeToggle';
 
@@ -439,7 +440,7 @@ export const HeaderBar: React.FC = () => {
   const { isLoggedIn, currentUser, userLoading, userError, refetchUser, rebindAccessToken } =
     useAuth();
   const hasRequestedUser = React.useRef(false);
-  const navigate = useNavigate();
+  const navigate = useViewTransitionNavigate();
   const location = useLocation();
   const theme = useTheme();
   const [scrolled, setScrolled] = React.useState(false);

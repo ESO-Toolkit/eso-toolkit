@@ -6,22 +6,19 @@
  * Stores KnownSetIDs (numbers).
  */
 
-import { Add as AddIcon, Close as CloseIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
 import {
   Box,
   ButtonBase,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  InputAdornment,
   Stack,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import { GearSetTooltip } from '@/components/GearSetTooltip';
+import { PickerDialog } from '@/features/build-editor/components/primitives/PickerDialog';
 import { KnownSetIDs } from '@/types/abilities';
 import {
   ALL_5PIECE_SETS,
@@ -34,13 +31,13 @@ import {
   FLEXIBLE_5PIECE_SETS,
   FLEXIBLE_MONSTER_SETS,
 } from '@/types/roster';
+import { getGearSetTooltipPropsByName } from '@/utils/gearSetTooltipMapper';
 import { getSetDisplayName } from '@/utils/setNameUtils';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const TILE_HEIGHT = 36;
 
-// Category colors for visual distinction
 const CATEGORY_COLORS = {
   ddSpecial: '#ef6c00',
   tank: '#1e88e5',
@@ -97,12 +94,10 @@ function buildSetGroups(): SetGroup[] {
     grouped.get(cat)!.push({ id, name: getSetDisplayName(id) });
   }
 
-  // Sort each group alphabetically by name
   for (const sets of grouped.values()) {
     sets.sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  // Order: DD Special, Monster, Tank, Healer, Flexible, Other
   const order: SetCategory[] = ['ddSpecial', 'monster', 'tank', 'healer', 'flexible', 'other'];
   return order
     .filter((cat) => grouped.has(cat))
@@ -128,8 +123,14 @@ const SetTile: React.FC<SetTileProps> = ({ setId, onRemove }) => {
   const cat = getSetCategory(setId);
   const color = getCategoryColor(cat);
 
+  const tooltipContent = useMemo(() => {
+    const props = getGearSetTooltipPropsByName(name);
+    if (props) return <GearSetTooltip {...props} />;
+    return `${name} · ${CATEGORY_LABELS[cat]}`;
+  }, [name, cat]);
+
   return (
-    <Tooltip title={`${name} · ${CATEGORY_LABELS[cat]}`} arrow placement="top" enterDelay={400}>
+    <Tooltip title={tooltipContent} arrow placement="top" enterDelay={400} enterTouchDelay={0} leaveTouchDelay={3000}>
       <Box
         sx={{
           position: 'relative',
@@ -149,7 +150,6 @@ const SetTile: React.FC<SetTileProps> = ({ setId, onRemove }) => {
           '&:hover .set-clear': { opacity: 1 },
         }}
       >
-        {/* Category dot */}
         <Box
           sx={{
             width: 7,
@@ -160,7 +160,6 @@ const SetTile: React.FC<SetTileProps> = ({ setId, onRemove }) => {
             flexShrink: 0,
           }}
         />
-        {/* Set name */}
         <Typography
           sx={{
             fontSize: 11,
@@ -176,7 +175,6 @@ const SetTile: React.FC<SetTileProps> = ({ setId, onRemove }) => {
         >
           {name}
         </Typography>
-        {/* Remove button */}
         <ButtonBase
           className="set-clear"
           onClick={onRemove}
@@ -203,14 +201,19 @@ const SetTile: React.FC<SetTileProps> = ({ setId, onRemove }) => {
 
 // ── Picker Dialog ────────────────────────────────────────────────────────────
 
-interface PickerDialogProps {
+interface GearSetPickerDialogProps {
   open: boolean;
   onClose: () => void;
   onSelect: (setId: KnownSetIDs) => void;
   selectedIds: Set<KnownSetIDs>;
 }
 
-const PickerDialog: React.FC<PickerDialogProps> = ({ open, onClose, onSelect, selectedIds }) => {
+const GearSetPickerDialog: React.FC<GearSetPickerDialogProps> = ({
+  open,
+  onClose,
+  onSelect,
+  selectedIds,
+}) => {
   const isDark = useTheme().palette.mode === 'dark';
   const [search, setSearch] = useState('');
 
@@ -223,202 +226,158 @@ const PickerDialog: React.FC<PickerDialogProps> = ({ open, onClose, onSelect, se
     })).filter((g) => g.sets.length > 0);
   }, [search]);
 
+  const totalResults = useMemo(
+    () => filteredGroups.reduce((sum, g) => sum + g.sets.length, 0),
+    [filteredGroups],
+  );
+
   return (
-    <Dialog
+    <PickerDialog
       open={open}
       onClose={() => {
         onClose();
         setSearch('');
       }}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: '16px',
-          backdropFilter: 'blur(24px)',
-          background: isDark ? 'rgba(12,12,22,0.96)' : 'rgba(255,255,255,0.97)',
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
-          boxShadow: isDark ? '0 24px 64px rgba(0,0,0,0.55)' : '0 24px 64px rgba(0,0,0,0.12)',
-          maxHeight: '80vh',
-        },
-      }}
+      title="Add Gear Set"
     >
-      <DialogTitle
-        sx={{
-          fontWeight: 700,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
-          fontSize: '1rem',
-          pb: 1,
-          background: isDark
-            ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-            : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-        }}
-      >
-        Add Gear Set
-      </DialogTitle>
+      <PickerDialog.Search
+        value={search}
+        onChange={setSearch}
+        placeholder="Search sets..."
+        resultCount={search.trim().length >= 2 ? totalResults : undefined}
+      />
 
-      <DialogContent sx={{ p: 0 }}>
-        <Box sx={{ px: 2, pb: 1.5 }}>
-          <TextField
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search sets..."
-            size="small"
-            fullWidth
-            autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
-                borderRadius: 2,
-                fontSize: 13,
-              },
-            }}
-          />
-        </Box>
+      <PickerDialog.Body empty={filteredGroups.length === 0} emptyMessage="No sets found">
+        <Stack spacing={2} sx={{ px: 0.5 }}>
+          {filteredGroups.map((group) => {
+            const color = getCategoryColor(group.category);
+            return (
+              <Box key={group.label}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    px: 0.5,
+                    mb: 0.75,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      background: color,
+                      boxShadow: `0 0 5px ${color}88`,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: 9,
+                      fontWeight: 700,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      letterSpacing: 1,
+                      textTransform: 'uppercase',
+                      color,
+                    }}
+                  >
+                    {group.label}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 9,
+                      color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
+                      fontFamily: 'Space Grotesk',
+                    }}
+                  >
+                    {group.sets.length}
+                  </Typography>
+                </Box>
 
-        <Box sx={{ maxHeight: 400, overflowY: 'auto', px: 1.5, pb: 2 }}>
-          {filteredGroups.length === 0 ? (
-            <Typography
-              sx={{
-                fontSize: 12,
-                color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                textAlign: 'center',
-                py: 3,
-              }}
-            >
-              No sets found
-            </Typography>
-          ) : (
-            <Stack spacing={2}>
-              {filteredGroups.map((group) => {
-                const color = getCategoryColor(group.category);
-                return (
-                  <Box key={group.label}>
-                    {/* Group header */}
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.75,
-                        px: 0.5,
-                        mb: 0.75,
-                      }}
-                    >
-                      <Box
+                <Stack spacing={0.25}>
+                  {group.sets.map((set) => {
+                    const isSelected = selectedIds.has(set.id);
+                    return (
+                      <Tooltip
+                        key={set.id}
+                        title={(() => {
+                          const props = getGearSetTooltipPropsByName(set.name);
+                          if (props) return <GearSetTooltip {...props} />;
+                          return set.name;
+                        })()}
+                        arrow
+                        placement="right"
+                        enterDelay={400}
+                        enterTouchDelay={0}
+                        leaveTouchDelay={3000}
+                      >
+                      <ButtonBase
+                        onClick={() => !isSelected && onSelect(set.id)}
+                        disabled={isSelected}
                         sx={{
-                          width: 7,
-                          height: 7,
-                          borderRadius: '50%',
-                          background: color,
-                          boxShadow: `0 0 5px ${color}88`,
-                          flexShrink: 0,
-                        }}
-                      />
-                      <Typography
-                        sx={{
-                          fontSize: 9,
-                          fontWeight: 700,
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
-                          letterSpacing: 1,
-                          textTransform: 'uppercase',
-                          color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          py: 0.6,
+                          px: 1,
+                          borderRadius: 1.5,
+                          width: '100%',
+                          textAlign: 'left',
+                          opacity: isSelected ? 0.4 : 1,
+                          transition: 'all 0.12s ease',
+                          '&:hover:not(:disabled)': {
+                            background: isDark ? `${color}15` : `${color}0A`,
+                          },
                         }}
                       >
-                        {group.label}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: 9,
-                          color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
-                          fontFamily: 'Space Grotesk',
-                        }}
-                      >
-                        {group.sets.length}
-                      </Typography>
-                    </Box>
-
-                    {/* Set items */}
-                    <Stack spacing={0.25}>
-                      {group.sets.map((set) => {
-                        const isSelected = selectedIds.has(set.id);
-                        return (
-                          <ButtonBase
-                            key={set.id}
-                            onClick={() => !isSelected && onSelect(set.id)}
-                            disabled={isSelected}
+                        <Box
+                          sx={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: '50%',
+                            background: color,
+                            flexShrink: 0,
+                            opacity: isSelected ? 0.4 : 1,
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            fontSize: 12,
+                            fontWeight: isSelected ? 600 : 400,
+                            fontFamily: 'Space Grotesk, Inter, system-ui',
+                            color: isSelected
+                              ? color
+                              : isDark
+                                ? 'rgba(255,255,255,0.80)'
+                                : 'rgba(0,0,0,0.75)',
+                          }}
+                        >
+                          {set.name}
+                        </Typography>
+                        {isSelected && (
+                          <Typography
                             sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1,
-                              py: 0.6,
-                              px: 1,
-                              borderRadius: 1.5,
-                              width: '100%',
-                              textAlign: 'left',
-                              opacity: isSelected ? 0.4 : 1,
-                              '&:hover:not(:disabled)': {
-                                background: isDark ? `${color}15` : `${color}0A`,
-                              },
+                              fontSize: 10,
+                              fontStyle: 'italic',
+                              color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                              ml: 'auto',
                             }}
                           >
-                            <Box
-                              sx={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: '50%',
-                                background: color,
-                                flexShrink: 0,
-                                opacity: isSelected ? 0.4 : 1,
-                              }}
-                            />
-                            <Typography
-                              sx={{
-                                fontSize: 12,
-                                fontWeight: isSelected ? 600 : 400,
-                                fontFamily: 'Space Grotesk, Inter, system-ui',
-                                color: isSelected
-                                  ? color
-                                  : isDark
-                                    ? 'rgba(255,255,255,0.80)'
-                                    : 'rgba(0,0,0,0.75)',
-                              }}
-                            >
-                              {set.name}
-                            </Typography>
-                            {isSelected && (
-                              <Typography
-                                sx={{
-                                  fontSize: 10,
-                                  fontStyle: 'italic',
-                                  color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-                                  ml: 'auto',
-                                }}
-                              >
-                                added
-                              </Typography>
-                            )}
-                          </ButtonBase>
-                        );
-                      })}
-                    </Stack>
-                  </Box>
-                );
-              })}
-            </Stack>
-          )}
-        </Box>
-      </DialogContent>
-    </Dialog>
+                            added
+                          </Typography>
+                        )}
+                      </ButtonBase>
+                      </Tooltip>
+                    );
+                  })}
+                </Stack>
+              </Box>
+            );
+          })}
+        </Stack>
+      </PickerDialog.Body>
+    </PickerDialog>
   );
 };
 
@@ -479,7 +438,6 @@ export const ExtraGearPicker: React.FC<ExtraGearPickerProps> = ({ value, onChang
           <SetTile key={setId} setId={setId} onRemove={() => handleRemove(setId)} />
         ))}
 
-        {/* Add button */}
         <Tooltip title="Add a gear set" arrow placement="top">
           <ButtonBase
             onClick={() => setDialogOpen(true)}
@@ -523,7 +481,7 @@ export const ExtraGearPicker: React.FC<ExtraGearPickerProps> = ({ value, onChang
         </Tooltip>
       </Box>
 
-      <PickerDialog
+      <GearSetPickerDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onSelect={handleAdd}
