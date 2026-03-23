@@ -21,7 +21,7 @@ export const nord: SkillLineData = {
       isUltimate: false,
       maxRank: 2,
     },
-    { id: AbilityId.STALWART, icon: 'ability_sorcerer_018', name: 'Stalwart', isPassive: true, isUltimate: false, maxRank: 2 },
-    { id: AbilityId.RUGGED, icon: 'ability_dragonknight_020', name: 'Rugged', isPassive: true, isUltimate: false, maxRank: 2 },
+    { id: AbilityId.STALWART, alternateIds: [45297, 45298, 84637, 84639, 84640, 118182, 118183, 118184, 118185, 118186, 118187], icon: 'ability_sorcerer_018', name: 'Stalwart', isPassive: true, isUltimate: false, maxRank: 2 },
+    { id: AbilityId.RUGGED, alternateIds: [45305, 45306, 117898, 117899, 117900], icon: 'ability_dragonknight_020', name: 'Rugged', isPassive: true, isUltimate: false, maxRank: 2 },
   ],
 };

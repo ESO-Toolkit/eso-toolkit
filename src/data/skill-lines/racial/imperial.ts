@@ -12,7 +12,7 @@ export const imperial: SkillLineData = {
   category: 'racial',
   skills: [
     { id: AbilityId.DIPLOMAT, icon: 'ability_templar_027', name: 'Diplomat', isPassive: true, isUltimate: false, maxRank: 2 },
-    { id: AbilityId.TOUGH, icon: 'ability_dragonknight_020', name: 'Tough', isPassive: true, isUltimate: false, maxRank: 2 },
+    { id: AbilityId.TOUGH, alternateIds: [50906, 50907, 157245, 157249], icon: 'ability_dragonknight_020', name: 'Tough', isPassive: true, isUltimate: false, maxRank: 2 },
     {
       id: AbilityId.IMPERIAL_METTLE,
       icon: 'ability_dragonknight_021',
