@@ -142,24 +142,28 @@ export const shadow: SkillLineData = {
     // Passive Abilities (4 skills)
     {
       id: 33195,
+      alternateIds: [36549, 45103, 69995, 69996, 69997, 69998],
       name: 'Refreshing Shadows',
       type: 'passive',
       baseAbilityId: 33195,
     },
     {
       id: 33211,
+      alternateIds: [18866, 45071, 88658, 88659, 228663],
       name: 'Shadow Barrier',
       type: 'passive',
       baseAbilityId: 33211,
     },
     {
       id: 33231,
+      alternateIds: [36532, 45084, 138925],
       name: 'Dark Vigor',
       type: 'passive',
       baseAbilityId: 33231,
     },
     {
       id: 33237,
+      alternateIds: [36552, 45115],
       name: 'Dark Veil',
       type: 'passive',
       baseAbilityId: 33237,

@@ -18,6 +18,10 @@ export const altmer: SkillLineData = {
     },
     {
       id: AbilityId.SPELL_RECHARGE,
+      alternateIds: [
+        35993, 45273, 45274, 118110, 118111, 118112, 118113, 118114, 118115, 118116,
+        118117, 118118,
+      ],
       name: 'Spell Recharge',
       isPassive: true,
       isUltimate: false,
@@ -32,6 +36,7 @@ export const altmer: SkillLineData = {
     },
     {
       id: AbilityId.ELEMENTAL_TALENT,
+      alternateIds: [35998, 45275, 45276],
       name: 'Elemental Talent',
       isPassive: true,
       isUltimate: false,

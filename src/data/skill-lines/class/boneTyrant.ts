@@ -182,6 +182,7 @@ export const boneTyrant: SkillLineData = {
     },
     {
       id: ClassSkillId.NECROMANCER_DEATH_GLEANING,
+      alternateIds: [116230, 116235, 119156, 119158, 119164, 119165],
       name: 'Death Gleaning',
       type: 'passive',
       icon: 'passive_necromancer_005',
@@ -191,6 +192,7 @@ export const boneTyrant: SkillLineData = {
     },
     {
       id: ClassSkillId.NECROMANCER_DISDAIN_HARM,
+      alternateIds: [116239, 116240],
       name: 'Disdain Harm',
       type: 'passive',
       icon: 'passive_necromancer_006',
@@ -200,6 +202,7 @@ export const boneTyrant: SkillLineData = {
     },
     {
       id: ClassSkillId.NECROMANCER_HEALTH_AVARICE,
+      alternateIds: [116269, 116270],
       name: 'Health Avarice',
       type: 'passive',
       icon: 'passive_necromancer_007',
@@ -208,6 +211,7 @@ export const boneTyrant: SkillLineData = {
     },
     {
       id: ClassSkillId.NECROMANCER_LAST_GASP,
+      alternateIds: [116271, 116272],
       name: 'Last Gasp',
       type: 'passive',
       icon: 'passive_necromancer_008',

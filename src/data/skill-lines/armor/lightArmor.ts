@@ -54,6 +54,7 @@ export const lightArmor: SkillLineData = {
     },
     {
       id: AbilityId.GRACE,
+      alternateIds: [29639, 45548, 45549, 114971, 114972, 114973, 182259],
       name: 'Grace',
       type: 'passive',
       baseAbilityId: AbilityId.GRACE,
@@ -62,6 +63,7 @@ export const lightArmor: SkillLineData = {
     },
     {
       id: AbilityId.EVOCATION,
+      alternateIds: [29665, 45557, 114959, 114962],
       name: 'Evocation',
       type: 'passive',
       baseAbilityId: AbilityId.EVOCATION,
@@ -70,6 +72,7 @@ export const lightArmor: SkillLineData = {
     },
     {
       id: AbilityId.SPELL_WARDING,
+      alternateIds: [29663, 45559, 88543, 88544],
       name: 'Spell Warding',
       type: 'passive',
       baseAbilityId: AbilityId.SPELL_WARDING,
@@ -77,6 +80,7 @@ export const lightArmor: SkillLineData = {
     },
     {
       id: AbilityId.PRODIGY,
+      alternateIds: [29668, 45561],
       name: 'Prodigy',
       type: 'passive',
       baseAbilityId: AbilityId.PRODIGY,
@@ -85,6 +89,7 @@ export const lightArmor: SkillLineData = {
     },
     {
       id: AbilityId.CONCENTRATION,
+      alternateIds: [29667, 45562, 149152, 149153],
       name: 'Concentration',
       type: 'passive',
       baseAbilityId: AbilityId.CONCENTRATION,

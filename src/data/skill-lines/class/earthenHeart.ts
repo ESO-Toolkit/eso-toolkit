@@ -219,6 +219,7 @@ export const earthenHeart: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_ETERNAL_MOUNTAIN,
+      alternateIds: [29468, 44996],
       name: 'Eternal Mountain',
       type: 'passive',
       icon: 'ability_dragonknight_023',

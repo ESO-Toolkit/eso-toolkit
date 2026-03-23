@@ -157,6 +157,7 @@ export const support: SkillLineData = {
     // Passive abilities
     {
       id: AbilityId.MAGICKA_AID,
+      alternateIds: [39255, 45622],
       name: 'Magicka Aid',
       description: 'Increases your Magicka Recovery by 10% for each Support ability slotted.',
       isUltimate: false,
@@ -165,6 +166,7 @@ export const support: SkillLineData = {
     },
     {
       id: AbilityId.COMBAT_MEDIC,
+      alternateIds: [39259, 45624],
       name: 'Combat Medic',
       description: 'Increases your healing done by 20% when you are near a Keep.',
       isUltimate: false,
@@ -173,6 +175,7 @@ export const support: SkillLineData = {
     },
     {
       id: AbilityId.BATTLE_RESURRECTION,
+      alternateIds: [39261, 45625],
       name: 'Battle Resurrection',
       description:
         'Reduces the time it takes you to resurrect another player by 30% while you are in a PvP area.',

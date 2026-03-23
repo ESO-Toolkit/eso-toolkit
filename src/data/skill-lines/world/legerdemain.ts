@@ -21,6 +21,7 @@ export const legerdemain: SkillLineData = {
     // Passive Skill 1: Improved Hiding - Stealth efficiency
     {
       id: AbilityId.IMPROVED_HIDING,
+      alternateIds: [63799, 63800, 63801, 63802],
       name: 'Improved Hiding',
       icon: 'https://eso-hub.com/storage/icons/ability_world_legerdemain_001.png',
       description: 'Reduces the cost of Sneak by 40%.',
@@ -32,6 +33,7 @@ export const legerdemain: SkillLineData = {
     // Passive Skill 2: Light Fingers - Pickpocketing success
     {
       id: AbilityId.LIGHT_FINGERS,
+      alternateIds: [63803, 63804, 63805, 63806],
       name: 'Light Fingers',
       icon: 'https://eso-hub.com/storage/icons/ability_world_legerdemain_002.png',
       description: 'Increases your chances of successfully Pickpocketing by 50%',
@@ -43,6 +45,7 @@ export const legerdemain: SkillLineData = {
     // Passive Skill 3: Trafficker - Fence interaction limit
     {
       id: AbilityId.TRAFFICKER,
+      alternateIds: [63807, 63808, 63809, 63810],
       name: 'Trafficker',
       icon: 'https://eso-hub.com/storage/icons/ability_world_legerdemain_003.png',
       description: 'Increases the number of fence interactions you can use each day by 180%.',
@@ -54,6 +57,7 @@ export const legerdemain: SkillLineData = {
     // Passive Skill 4: Locksmith - Lockpicking success
     {
       id: AbilityId.LOCKSMITH,
+      alternateIds: [63811, 63812, 63813, 63814],
       name: 'Locksmith',
       icon: 'https://eso-hub.com/storage/icons/ability_world_legerdemain_004.png',
       description: 'Improves your chances of forcing locks by 70%.',
@@ -65,6 +69,7 @@ export const legerdemain: SkillLineData = {
     // Passive Skill 5: Kickback - Bounty payment reduction
     {
       id: AbilityId.KICKBACK,
+      alternateIds: [63815, 63816, 63817, 63818],
       name: 'Kickback',
       icon: 'https://eso-hub.com/storage/icons/ability_world_legerdemain_005.png',
       description: 'Reduces bounties you willingly pay to guards and fences by 40%.',

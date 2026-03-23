@@ -16,6 +16,7 @@ export const excavation: SkillLineData = {
   skills: [
     {
       id: AbilityId.HAND_BRUSH,
+      alternateIds: [139908, 139909],
       name: 'Hand Brush',
       icon: 'https://eso-hub.com/storage/icons/ability_world_excavation_hand_brush.png',
       description:
@@ -26,6 +27,7 @@ export const excavation: SkillLineData = {
     },
     {
       id: AbilityId.AUGUR,
+      alternateIds: [139904, 139905],
       name: 'Augur',
       icon: 'https://eso-hub.com/storage/icons/ability_world_excavation_augur.png',
       description:
@@ -36,6 +38,7 @@ export const excavation: SkillLineData = {
     },
     {
       id: AbilityId.TROWEL,
+      alternateIds: [139943, 140093],
       name: 'Trowel',
       icon: 'https://eso-hub.com/storage/icons/ability_world_excavation_trowel.png',
       description:
@@ -46,6 +49,7 @@ export const excavation: SkillLineData = {
     },
     {
       id: AbilityId.KEEN_EYE_DIG_SITES,
+      alternateIds: [140173, 140174],
       name: 'Keen Eye: Dig Sites',
       icon: 'https://eso-hub.com/storage/icons/ability_world_excavation_keen_eye_dig_sites.png',
       description: 'Antiquity Dig Sites will be easier to see when you are 30 meters or closer.',
@@ -65,6 +69,7 @@ export const excavation: SkillLineData = {
     },
     {
       id: AbilityId.HEAVY_SHOVEL,
+      alternateIds: [139906, 139907],
       name: 'Heavy Shovel',
       icon: 'https://eso-hub.com/storage/icons/ability_world_excavation_heavy_shovel.png',
       description:
@@ -75,6 +80,7 @@ export const excavation: SkillLineData = {
     },
     {
       id: AbilityId.KEEN_EYE_TREASURE_CHESTS,
+      alternateIds: [139771, 139772],
       name: 'Keen Eye: Treasure Chests',
       icon: 'https://eso-hub.com/storage/icons/ability_world_excavation_keen_eye_treasure_chests.png',
       description: 'Treasure Chests will be easier to see when you are 30 meters or closer.',

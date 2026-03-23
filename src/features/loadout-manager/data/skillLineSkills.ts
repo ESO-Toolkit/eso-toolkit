@@ -282,55 +282,14 @@ function ingestScribingSkills(
   }
 }
 
-// Lazy-loaded abilities fallback (fetched on demand, not bundled)
-let abilitiesFallback: Map<number, SkillData> | null = null;
-let abilitiesFetchPromise: Promise<void> | null = null;
-
-function fetchAbilitiesFallback(): void {
-  if (abilitiesFallback || abilitiesFetchPromise) return;
-  abilitiesFetchPromise = fetch('/data/abilities.json')
-    .then((res) => res.json())
-    .then((data: Record<string, { id: number; name: string; icon: string }>) => {
-      abilitiesFallback = new Map();
-      for (const [key, ability] of Object.entries(data)) {
-        if (!ability?.id) continue;
-        // Only store entries missing from the curated skill-line cache
-        if (!skillsByIdCache?.has(ability.id)) {
-          abilitiesFallback.set(ability.id, {
-            id: ability.id,
-            name: ability.name,
-            type: 'passive',
-            isPassive: true,
-            icon: ability.icon,
-          });
-        }
-      }
-      skillsLogger.info('Loaded abilities fallback', { count: abilitiesFallback.size });
-    })
-    .catch((err) => {
-      skillsLogger.warn('Failed to load abilities fallback', err);
-    });
-}
-
 /**
- * Get skill by ID. Falls back to a lazily-fetched abilities.json for IDs
- * not in the curated skill-line data (e.g. passive rank variants).
+ * Get skill by ID
  */
 export function getSkillById(id: number): SkillData | undefined {
   if (!activeSkillsCache) {
     initializeCache();
   }
-  const cached = skillsByIdCache?.get(id);
-  if (cached) return cached;
-
-  // Try the lazily-loaded fallback
-  if (abilitiesFallback) {
-    return abilitiesFallback.get(id);
-  }
-
-  // Kick off the fetch if not started yet
-  fetchAbilitiesFallback();
-  return undefined;
+  return skillsByIdCache?.get(id);
 }
 
 /**
@@ -496,22 +455,10 @@ export function getSkillStats(): {
 }
 
 /**
- * Preload the skill data (call this early in app initialization).
- * Also kicks off the abilities.json fallback fetch.
+ * Preload the skill data (call this early in app initialization)
  */
 export function preloadSkillData(): void {
   initializeCache();
-  fetchAbilitiesFallback();
-}
-
-/**
- * Returns a promise that resolves once the abilities fallback data is loaded.
- * Useful for components that need to re-render after the fallback is available.
- */
-export function waitForAbilitiesFallback(): Promise<void> {
-  if (abilitiesFallback) return Promise.resolve();
-  fetchAbilitiesFallback();
-  return abilitiesFetchPromise ?? Promise.resolve();
 }
 
 // ── Skill Line Index (for organized picker UI) ──────────────────────────────

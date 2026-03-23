@@ -128,24 +128,28 @@ export const stormCalling: SkillLineData = {
     // Passive abilities
     {
       id: 23239,
+      alternateIds: [31419, 45188, 90683],
       name: 'Capacitor',
       type: 'passive',
       baseAbilityId: 23239,
     },
     {
       id: 23242,
+      alternateIds: [31421, 45190],
       name: 'Energized',
       type: 'passive',
       baseAbilityId: 23242,
     },
     {
       id: 45583,
+      alternateIds: [31422, 45192],
       name: 'Amplitude',
       type: 'passive',
       baseAbilityId: 45583,
     },
     {
       id: 23252,
+      alternateIds: [31425, 45195],
       name: 'Expert Mage',
       type: 'passive',
       baseAbilityId: 23252,

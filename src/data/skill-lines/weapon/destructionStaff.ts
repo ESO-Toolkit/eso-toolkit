@@ -225,6 +225,10 @@ export const destructionStaffSkillLine: SkillLineData = {
     // Passive abilities
     {
       id: AbilityId.TRI_FOCUS,
+      alternateIds: [
+        30948, 30949, 30951, 30952, 34498, 45500, 45502, 45505, 45506, 45507,
+        69773, 69774, 203988, 204009,
+      ],
       name: 'Tri Focus',
       type: 'passive',
       baseAbilityId: AbilityId.TRI_FOCUS,
@@ -233,6 +237,7 @@ export const destructionStaffSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.PENETRATING_MAGIC,
+      alternateIds: [30957, 45509],
       name: 'Penetrating Magic',
       type: 'passive',
       baseAbilityId: AbilityId.PENETRATING_MAGIC,
@@ -241,6 +246,7 @@ export const destructionStaffSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.ELEMENTAL_FORCE,
+      alternateIds: [30962, 45512],
       name: 'Elemental Force',
       type: 'passive',
       baseAbilityId: AbilityId.ELEMENTAL_FORCE,
@@ -249,6 +255,7 @@ export const destructionStaffSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.ANCIENT_KNOWLEDGE,
+      alternateIds: [30959, 45513, 88743, 88744, 88753, 88754, 149237],
       name: 'Ancient Knowledge',
       type: 'passive',
       baseAbilityId: AbilityId.ANCIENT_KNOWLEDGE,
@@ -257,6 +264,7 @@ export const destructionStaffSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.DESTRUCTION_EXPERT,
+      alternateIds: [30965, 30966, 45514, 146322, 146325],
       name: 'Destruction Expert',
       type: 'passive',
       baseAbilityId: AbilityId.DESTRUCTION_EXPERT,

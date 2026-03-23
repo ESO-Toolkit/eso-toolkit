@@ -13,6 +13,7 @@ export const orc: SkillLineData = {
     { id: AbilityId.BRAWNY, name: 'Brawny', isPassive: true, isUltimate: false, maxRank: 2 },
     {
       id: AbilityId.UNFLINCHING_RAGE,
+      alternateIds: [84668, 84670, 84672, 118196, 118197, 118203, 118204, 118206, 118207],
       name: 'Unflinching Rage',
       isPassive: true,
       isUltimate: false,
@@ -20,6 +21,7 @@ export const orc: SkillLineData = {
     },
     {
       id: AbilityId.SWIFT_WARRIOR,
+      alternateIds: [33304, 45311, 45312],
       name: 'Swift Warrior',
       isPassive: true,
       isUltimate: false,

@@ -11,6 +11,7 @@ export const breton: SkillLineData = {
   skills: [
     {
       id: AbilityId.OPPORTUNIST,
+      alternateIds: [36247, 63099, 98307, 100408],
       name: 'Opportunist',
       isPassive: true,
       isUltimate: false,
@@ -18,6 +19,7 @@ export const breton: SkillLineData = {
     },
     {
       id: AbilityId.GIFT_OF_MAGNUS,
+      alternateIds: [35995, 45259, 45260],
       name: 'Gift of Magnus',
       isPassive: true,
       isUltimate: false,
@@ -25,6 +27,7 @@ export const breton: SkillLineData = {
     },
     {
       id: AbilityId.SPELL_ATTUNEMENT,
+      alternateIds: [36266, 45261, 45262, 118947, 118948, 118949, 121184, 121207, 121208],
       name: 'Spell Attunement',
       isPassive: true,
       isUltimate: false,
@@ -32,6 +35,7 @@ export const breton: SkillLineData = {
     },
     {
       id: AbilityId.MAGICKA_MASTERY,
+      alternateIds: [36303, 45263, 45264],
       name: 'Magicka Mastery',
       isPassive: true,
       isUltimate: false,

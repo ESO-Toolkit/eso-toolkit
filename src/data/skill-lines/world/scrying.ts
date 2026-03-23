@@ -21,6 +21,7 @@ export const scrying: SkillLineData = {
     },
     {
       id: AbilityId.ANTIQUARIAN_INSIGHT,
+      alternateIds: [139773, 139774, 139775, 139776, 141018],
       name: 'Antiquarian Insight',
       icon: 'https://eso-hub.com/storage/icons/ability_world_scrying_002.png',
       maxRank: 10,
@@ -41,6 +42,7 @@ export const scrying: SkillLineData = {
     },
     {
       id: AbilityId.COALESCENCE,
+      alternateIds: [139305, 139306],
       name: 'Coalescence',
       icon: 'https://eso-hub.com/storage/icons/ability_world_scrying_004.png',
       maxRank: 2,
@@ -52,6 +54,7 @@ export const scrying: SkillLineData = {
     },
     {
       id: AbilityId.FUTURE_FOCUS,
+      alternateIds: [139780, 139781],
       name: 'Future Focus',
       icon: 'https://eso-hub.com/storage/icons/ability_world_scrying_005.png',
       maxRank: 4,
@@ -62,6 +65,7 @@ export const scrying: SkillLineData = {
     },
     {
       id: AbilityId.DILATION,
+      alternateIds: [139307, 139308],
       name: 'Dilation',
       icon: 'https://eso-hub.com/storage/icons/ability_world_scrying_006.png',
       maxRank: 2,
@@ -73,6 +77,7 @@ export const scrying: SkillLineData = {
     },
     {
       id: AbilityId.FARSIGHT,
+      alternateIds: [139309, 139321],
       name: 'Farsight',
       icon: 'https://eso-hub.com/storage/icons/ability_world_scrying_007.png',
       maxRank: 2,

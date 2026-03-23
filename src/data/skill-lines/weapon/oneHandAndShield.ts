@@ -169,6 +169,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
     // Passive abilities
     {
       id: AbilityId.FORTRESS,
+      alternateIds: [29420, 38306, 41344, 41346, 45471, 200240],
       name: 'Fortress',
       type: 'passive',
       baseAbilityId: AbilityId.FORTRESS,
@@ -177,6 +178,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.SWORD_AND_BOARD,
+      alternateIds: [29397, 29398, 45452, 45453],
       name: 'Sword and Board',
       type: 'passive',
       baseAbilityId: AbilityId.SWORD_AND_BOARD,
@@ -185,6 +187,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.DEADLY_BASH,
+      alternateIds: [29415, 45469, 147189, 147190, 217092],
       name: 'Deadly Bash',
       type: 'passive',
       baseAbilityId: AbilityId.DEADLY_BASH,
@@ -193,6 +196,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.DEFLECT_BOLTS,
+      alternateIds: [29399, 45472],
       name: 'Deflect Bolts',
       type: 'passive',
       baseAbilityId: AbilityId.DEFLECT_BOLTS,
@@ -201,6 +205,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.BATTLEFIELD_MOBILITY,
+      alternateIds: [29422, 45473],
       name: 'Battlefield Mobility',
       type: 'passive',
       baseAbilityId: AbilityId.BATTLEFIELD_MOBILITY,

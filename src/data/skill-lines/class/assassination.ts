@@ -184,6 +184,10 @@ export const assassination: SkillLineData = {
     },
     {
       id: ClassSkillId.NIGHTBLADE_EXECUTIONER,
+      alternateIds: [
+        6224, 10770, 10771, 10772, 29006, 36630, 36633, 38819, 45048, 45050,
+        101434, 101435, 101436, 101437, 108867, 108868,
+      ],
       name: 'Executioner',
       type: 'passive',
       icon: 'passive_weapon_018',
@@ -193,6 +197,11 @@ export const assassination: SkillLineData = {
     },
     {
       id: ClassSkillId.NIGHTBLADE_HEMORRHAGE,
+      alternateIds: [
+        26038, 36641, 45060, 59611, 61883, 61899, 102091, 105586, 105594, 105595,
+        105596, 108780, 132927, 132929, 132934, 132935, 132936, 140619, 150720, 183807,
+        185316, 185317, 227845, 239196, 239202, 239205,
+      ],
       name: 'Hemorrhage',
       type: 'passive',
       icon: 'passive_weapon_017',
@@ -202,6 +211,7 @@ export const assassination: SkillLineData = {
     },
     {
       id: ClassSkillId.NIGHTBLADE_MASTER_ASSASSIN,
+      alternateIds: [36616, 45038],
       name: 'Master Assassin',
       type: 'passive',
       icon: 'passive_weapon_026',
@@ -211,6 +221,7 @@ export const assassination: SkillLineData = {
     },
     {
       id: ClassSkillId.NIGHTBLADE_PRESSURE_POINTS,
+      alternateIds: [36636, 36640, 45053, 45055, 88655, 88656],
       name: 'Pressure Points',
       type: 'passive',
       icon: 'passive_weapon_015',

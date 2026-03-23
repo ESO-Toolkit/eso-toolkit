@@ -12,6 +12,7 @@ export const nord: SkillLineData = {
     { id: AbilityId.REVELER, name: 'Reveler', isPassive: true, isUltimate: false, maxRank: 2 },
     {
       id: AbilityId.RESIST_FROST,
+      alternateIds: [36627, 45303, 45304, 49181, 49182, 49183],
       name: 'Resist Frost',
       isPassive: true,
       isUltimate: false,

@@ -88,6 +88,10 @@ export const soulMagic: SkillLineData = {
     },
     {
       id: AbilityId.SOUL_SHATTER,
+      alternateIds: [
+        39266, 39267, 45583, 45584, 129688, 130737, 130738, 216794, 216795, 216796,
+        220272, 228839, 228840, 228841,
+      ],
       name: 'Soul Shatter',
       description:
         'WHEN SOUL ABILITY IS SLOTTED When your Health drops below 20% your soul explodes, dealing 1600 Magic Damage to enemies within 8 meters of you. This effect can occur once every 2 minutes and scales off your Max Health.',
@@ -98,6 +102,13 @@ export const soulMagic: SkillLineData = {
     },
     {
       id: AbilityId.SOUL_SUMMONS,
+      alternateIds: [
+        39269, 43752, 45590, 136215, 136216, 136219, 136220, 136221, 136302, 136304,
+        136344, 136346, 136365, 136370, 136371, 136713, 136768, 136769, 136770, 136771,
+        136772, 136773, 136774, 136775, 136776, 136777, 136779, 136780, 136782, 136785,
+        136786, 136787, 136788, 136790, 136791, 136792, 136793, 136794, 136795, 136796,
+        136798, 136799,
+      ],
       name: 'Soul Summons',
       description: 'Allows you to revive once every 1 hour without spending a Soul Gem.',
       icon: 'https://eso-hub.com/storage/icons/ability_soul_magic_soul_summons.png',
@@ -107,6 +118,7 @@ export const soulMagic: SkillLineData = {
     },
     {
       id: AbilityId.SOUL_LOCK,
+      alternateIds: [39263, 39264, 45580, 45582],
       name: 'Soul Lock',
       description: 'Killing an enemy has a 10% chance of automatically filling an empty Soul Gem.',
       icon: 'https://eso-hub.com/storage/icons/ability_soul_magic_soul_lock.png',

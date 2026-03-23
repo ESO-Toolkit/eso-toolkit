@@ -20,6 +20,7 @@ export const thievesGuild: SkillLineData = {
     },
     {
       id: AbilityId.SWIFTLY_FORGOTTEN,
+      alternateIds: [76454, 76455, 76456, 76457, 77331, 77332, 77333],
       name: 'Swiftly Forgotten',
       description:
         'Bounty is decreased by 115 after 3 minutes. Heat is decreased by 64 after 3 seconds.',
@@ -30,6 +31,7 @@ export const thievesGuild: SkillLineData = {
     },
     {
       id: AbilityId.HAGGLING,
+      alternateIds: [76458, 76459, 76460, 76461],
       name: 'Haggling',
       description: 'Stolen items sold at a fence are worth 10% more. Does not apply to Laundering.',
       icon: 'https://eso-hub.com/storage/icons/passive_guild_32.webp',
@@ -59,6 +61,7 @@ export const thievesGuild: SkillLineData = {
     },
     {
       id: AbilityId.VEIL_OF_SHADOWS,
+      alternateIds: [76453, 77329],
       name: 'Veil of Shadows',
       description:
         'Decreases detection range of Witnesses and Guards by 10%. Witnesses and Guards are thus less likely to notice criminal actions, though this has no impact on the range from which Guards will accost you.',

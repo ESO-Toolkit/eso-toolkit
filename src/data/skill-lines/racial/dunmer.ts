@@ -13,6 +13,7 @@ export const dunmer: SkillLineData = {
     { id: AbilityId.DYNAMIC, name: 'Dynamic', isPassive: true, isUltimate: false, maxRank: 2 },
     {
       id: AbilityId.RESIST_FLAME,
+      alternateIds: [36593, 45269, 45270],
       name: 'Resist Flame',
       isPassive: true,
       isUltimate: false,

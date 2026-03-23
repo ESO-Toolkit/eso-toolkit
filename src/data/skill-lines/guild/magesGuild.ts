@@ -157,6 +157,7 @@ export const magesGuild: SkillLineData = {
     },
     {
       id: AbilityId.MAGE_ADEPT,
+      alternateIds: [40436, 45601, 49066, 49067],
       name: 'Mage Adept',
       type: 'passive',
       baseAbilityId: AbilityId.MAGE_ADEPT,
@@ -164,6 +165,7 @@ export const magesGuild: SkillLineData = {
     },
     {
       id: AbilityId.EVERLASTING_MAGIC,
+      alternateIds: [40437, 45602],
       name: 'Everlasting Magic',
       type: 'passive',
       baseAbilityId: AbilityId.EVERLASTING_MAGIC,
@@ -171,6 +173,7 @@ export const magesGuild: SkillLineData = {
     },
     {
       id: AbilityId.MAGICKA_CONTROLLER,
+      alternateIds: [40438, 40439, 45603, 45604],
       name: 'Magicka Controller',
       type: 'passive',
       baseAbilityId: AbilityId.MAGICKA_CONTROLLER,
@@ -179,6 +182,7 @@ export const magesGuild: SkillLineData = {
     },
     {
       id: AbilityId.MIGHT_OF_THE_GUILD,
+      alternateIds: [43561, 45607, 61738, 61739],
       name: 'Might of the Guild',
       type: 'passive',
       baseAbilityId: AbilityId.MIGHT_OF_THE_GUILD,

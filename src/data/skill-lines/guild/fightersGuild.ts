@@ -159,6 +159,7 @@ export const fightersGuild: SkillLineData = {
     },
     {
       id: AbilityId.SLAYER,
+      alternateIds: [35803, 45595, 45596],
       name: 'Slayer',
       type: 'passive',
       baseAbilityId: AbilityId.SLAYER,
@@ -167,6 +168,7 @@ export const fightersGuild: SkillLineData = {
     },
     {
       id: AbilityId.BANISH_THE_WICKED,
+      alternateIds: [35800, 35801, 45597, 45598, 45599, 45600],
       name: 'Banish the Wicked',
       type: 'passive',
       baseAbilityId: AbilityId.BANISH_THE_WICKED,
@@ -175,6 +177,7 @@ export const fightersGuild: SkillLineData = {
     },
     {
       id: AbilityId.SKILLED_TRACKER,
+      alternateIds: [40393, 159880],
       name: 'Skilled Tracker',
       type: 'passive',
       baseAbilityId: AbilityId.SKILLED_TRACKER,

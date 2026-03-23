@@ -139,24 +139,35 @@ export const assassination: SkillLineData = {
     // Passive Abilities
     {
       id: 30957,
+      alternateIds: [36616, 45038],
       name: 'Master Assassin',
       type: 'passive',
       baseAbilityId: 30957,
     },
     {
       id: 30962,
+      alternateIds: [
+        6224, 10770, 10771, 10772, 29006, 36630, 36633, 38819, 45048, 45050,
+        101434, 101435, 101436, 101437, 108867, 108868,
+      ],
       name: 'Executioner',
       type: 'passive',
       baseAbilityId: 30962,
     },
     {
       id: 30963,
+      alternateIds: [36636, 36640, 45053, 45055, 88655, 88656],
       name: 'Pressure Points',
       type: 'passive',
       baseAbilityId: 30963,
     },
     {
       id: 45054,
+      alternateIds: [
+        26038, 36641, 45060, 59611, 61883, 61899, 102091, 105586, 105594, 105595,
+        105596, 108780, 132927, 132929, 132934, 132935, 132936, 140619, 150720, 183807,
+        185316, 185317, 227845, 239196, 239202, 239205,
+      ],
       name: 'Hemorrhage',
       type: 'passive',
       baseAbilityId: 45054,

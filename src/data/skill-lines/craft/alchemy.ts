@@ -11,6 +11,7 @@ export const alchemy: SkillLineData = {
   skills: [
     {
       id: AbilityId.SOLVENT_PROFICIENCY,
+      alternateIds: [45542, 45543, 45547, 45550, 45551, 45552, 49163, 70042, 70043],
       name: 'Solvent Proficiency',
       isPassive: true,
       isUltimate: false,
@@ -18,6 +19,7 @@ export const alchemy: SkillLineData = {
     },
     {
       id: AbilityId.KEEN_EYE_REAGENTS,
+      alternateIds: [47840, 47841, 47842],
       name: 'Keen Eye: Reagents',
       isPassive: true,
       isUltimate: false,
@@ -25,6 +27,7 @@ export const alchemy: SkillLineData = {
     },
     {
       id: AbilityId.MEDICINAL_USE,
+      alternateIds: [45569, 45571, 45573],
       name: 'Medicinal Use',
       isPassive: true,
       isUltimate: false,
@@ -40,6 +43,7 @@ export const alchemy: SkillLineData = {
     },
     {
       id: AbilityId.SNAKEBLOOD,
+      alternateIds: [47831, 47832, 47834],
       name: 'Snakeblood',
       isPassive: true,
       isUltimate: false,

@@ -11,6 +11,10 @@ export const bosmer: SkillLineData = {
   skills: [
     {
       id: AbilityId.ACROBAT,
+      alternateIds: [
+        36008, 126723, 129604, 129605, 129606, 129608, 129610, 129611, 129619, 129620,
+        129649, 129651, 129663, 129665, 129752, 129755,
+      ],
       name: 'Acrobat',
       isPassive: true,
       isUltimate: false,
@@ -32,6 +36,7 @@ export const bosmer: SkillLineData = {
     },
     {
       id: AbilityId.RESIST_AFFLICTION,
+      alternateIds: [36011, 45317, 45319, 49185, 49186, 49188, 150995, 150996, 150997],
       name: 'Resist Affliction',
       isPassive: true,
       isUltimate: false,
