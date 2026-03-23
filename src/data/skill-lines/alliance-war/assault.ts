@@ -6,7 +6,7 @@ export const assault: SkillLineData = {
   name: 'Assault',
   class: 'alliance-war',
   category: 'alliance',
-  icon: 'https://eso-hub.com/storage/icons/ability_ava_003.png',
+  icon: 'ability_ava_003',
   skills: [
     // Ultimate abilities
     {

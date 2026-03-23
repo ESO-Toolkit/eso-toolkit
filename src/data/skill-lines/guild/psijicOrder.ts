@@ -6,7 +6,7 @@ export const psijicOrder: SkillLineData = {
   name: 'Psijic Order',
   class: 'guild',
   category: 'guild',
-  icon: 'https://eso-hub.com/storage/icons/ability_psijic_005.png',
+  icon: 'ability_psijic_005',
   skills: [
     {
       id: AbilityId.UNDO,

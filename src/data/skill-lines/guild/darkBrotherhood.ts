@@ -6,7 +6,7 @@ export const darkBrotherhood: SkillLineData = {
   name: 'Dark Brotherhood',
   class: 'guild',
   category: 'guild',
-  icon: 'https://eso-hub.com/storage/icons/passive_guild_32.webp',
+  icon: 'passive_guild_32.webp',
   skills: [
     {
       id: AbilityId.BLADE_OF_WOE,
@@ -18,7 +18,7 @@ export const darkBrotherhood: SkillLineData = {
       description:
         'Call the weapon of the Dark Brotherhood to your hand and deliver a killing blow to an unsuspecting target. Experience from this target is reduced by 75%. This ability does not work on players or difficult targets.',
       type: 'passive',
-      icon: 'https://eso-hub.com/storage/icons/passive_guild_32.webp',
+      icon: 'achievement_darkbrotherhood_003',
       maxRank: 1,
     },
     {
@@ -28,7 +28,7 @@ export const darkBrotherhood: SkillLineData = {
       description:
         'Bounty and Heat resulting from a witnessed Murder or Assault is reduced by 50%.',
       type: 'passive',
-      icon: 'https://eso-hub.com/storage/icons/passive_guild_32.webp',
+      icon: 'ability_darkbrotherhood_passive_002',
       maxRank: 1,
     },
     {
@@ -38,7 +38,7 @@ export const darkBrotherhood: SkillLineData = {
       description:
         'Grants Major Expedition, increasing your Movement Speed by 30% for 12 seconds after killing an enemy with Blade of Woe.',
       type: 'passive',
-      icon: 'https://eso-hub.com/storage/icons/passive_guild_32.webp',
+      icon: 'ability_darkbrotherhood_passive_004',
       maxRank: 1,
     },
     {
@@ -52,7 +52,7 @@ export const darkBrotherhood: SkillLineData = {
       name: 'Shadow Rider',
       description: 'Aggression radius from hostile monsters is decreased by 50% while mounted.',
       type: 'passive',
-      icon: 'https://eso-hub.com/storage/icons/passive_guild_32.webp',
+      icon: 'ability_darkbrotherhood_passive_005',
       maxRank: 1,
     },
     {
@@ -62,7 +62,7 @@ export const darkBrotherhood: SkillLineData = {
       description:
         '15% chance to shroud you when using the Blade of Woe, shielding you from being witnessed and receiving a Bounty.',
       type: 'passive',
-      icon: 'https://eso-hub.com/storage/icons/passive_guild_32.webp',
+      icon: 'ability_darkbrotherhood_passive_006',
       maxRank: 1,
     },
   ],

@@ -17,7 +17,7 @@ export const heavyArmor: SkillLineData = {
   name: 'Heavy Armor',
   class: 'armor',
   category: 'armor',
-  icon: 'https://eso-hub.com/storage/icons/ability_armor_016.png',
+  icon: 'ability_armor_016',
   skills: [
     {
       id: AbilityId.UNSTOPPABLE,
@@ -48,7 +48,7 @@ export const heavyArmor: SkillLineData = {
       name: 'Heavy Armor Bonuses',
       type: 'passive',
       baseAbilityId: 0,
-      icon: 'https://eso-hub.com/storage/icons/ability_armor_016.png',
+      icon: 'ability_armor_016',
       description:
         'Each piece of Heavy Armor does the following: Reduces damage taken from Martial attacks by 1%, Increases the amount of damage blocked by 1%, Increases damage done with Bash by 30, Reduces your damage taken while immune to crowd control by 1%',
     },
@@ -57,7 +57,7 @@ export const heavyArmor: SkillLineData = {
       name: 'Heavy Armor Penalties',
       type: 'passive',
       baseAbilityId: 0,
-      icon: 'https://eso-hub.com/storage/icons/ability_armor_016.png',
+      icon: 'ability_armor_016',
       description:
         'Each piece of Heavy Armor does the following: Increases damage taken from Magical attacks by 1%, Reduces the Movement Speed bonus of Sprint by 1%, Increases the cost of Roll Dodge by 3%, Increases the size of your detection area while Sneaking by 10%',
     },
