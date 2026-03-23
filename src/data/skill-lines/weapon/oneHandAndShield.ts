@@ -6,7 +6,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
   name: 'One Hand and Shield',
   class: 'Weapon',
   category: 'weapon',
-  icon: '/images/skill-lines/weapon/one-hand-and-shield.png',
+  icon: 'ability_1handed_006',
   skills: [
     // Ultimate abilities
     {

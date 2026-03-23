@@ -15,7 +15,7 @@ export const darkMagic: SkillLineData = {
   name: 'Dark Magic',
   class: 'Sorcerer',
   category: 'class',
-  icon: '/images/skills/sorcerer/dark-magic.png',
+  icon: 'ability_sorcerer_crushing_monsoon',
   skills: [
     // Ultimate: Negate Magic and morphs
     { id: 28341, name: 'Negate Magic', type: 'ultimate', baseAbilityId: 28341 },

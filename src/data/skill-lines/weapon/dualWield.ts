@@ -6,7 +6,7 @@ export const dualWieldSkillLine: SkillLineData = {
   name: 'Dual Wield',
   class: 'Weapon',
   category: 'weapon',
-  icon: '/images/skill-lines/weapon/dual-wield.png',
+  icon: 'ability_mage_065',
   skills: [
     // Ultimate Abilities
     {

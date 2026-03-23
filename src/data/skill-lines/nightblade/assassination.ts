@@ -14,7 +14,7 @@ export const assassination: SkillLineData = {
   name: 'Assassination',
   class: 'Nightblade',
   category: 'class',
-  icon: '/images/skills/nightblade/assassination.png',
+  icon: 'ability_nightblade_005_b',
   skills: [
     // Ultimate Abilities
     {

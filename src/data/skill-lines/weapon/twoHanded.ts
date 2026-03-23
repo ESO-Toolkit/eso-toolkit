@@ -18,7 +18,7 @@ export const twoHandedSkillLine: SkillLineData = {
   name: 'Two Handed',
   class: 'Weapon',
   category: 'weapon',
-  icon: '/images/skill-lines/weapon/two-handed.png',
+  icon: 'ability_2handed_006',
   skills: [
     // Ultimate Abilities
     {

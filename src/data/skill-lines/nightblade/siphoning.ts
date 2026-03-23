@@ -17,7 +17,7 @@ export const siphoning: SkillLineData = {
   name: 'Siphoning',
   class: 'nightblade',
   category: 'class',
-  icon: 'https://assets.eso-hub.com/assets/skill-lines/siphoning.png',
+  icon: 'ability_nightblade_018',
   skills: [
     // Ultimate Abilities
     { id: 25091, name: 'Soul Shred', type: 'ultimate', baseAbilityId: 25091 },

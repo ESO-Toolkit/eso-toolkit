@@ -14,7 +14,7 @@ export const daedricSummoning: SkillLineData = {
   name: 'Daedric Summoning',
   class: 'Sorcerer',
   category: 'class',
-  icon: '/images/skills/sorcerer/daedric-summoning.png',
+  icon: 'ability_sorcerer_storm_atronach',
   skills: [
     // Ultimate: Summon Storm Atronach
     { id: 23634, name: 'Summon Storm Atronach', type: 'ultimate', baseAbilityId: 23634 },

@@ -6,7 +6,7 @@ export const bowSkillLine: SkillLineData = {
   name: 'Bow',
   class: 'Weapon',
   category: 'weapon',
-  icon: '/images/skill-lines/weapon/bow.png',
+  icon: 'ability_bow_006',
   skills: [
     // Ultimate abilities
     {

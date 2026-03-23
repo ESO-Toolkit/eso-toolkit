@@ -17,7 +17,7 @@ export const shadow: SkillLineData = {
   name: 'Shadow',
   class: 'nightblade',
   category: 'class',
-  icon: 'https://assets.eso-hub.com/assets/skill-lines/shadow.png',
+  icon: 'ability_nightblade_004',
   skills: [
     // Ultimate Abilities (3 skills: 1 base + 2 morphs)
     {
