@@ -6,6 +6,7 @@
 
 import scribingDatabaseRaw from '../../../../data/scribing-complete.json';
 import { assault } from '../../../data/skill-lines/alliance-war/assault';
+import { emperor } from '../../../data/skill-lines/alliance-war/emperor';
 import { support } from '../../../data/skill-lines/alliance-war/support';
 import { heavyArmor } from '../../../data/skill-lines/armor/heavyArmor';
 import { lightArmor } from '../../../data/skill-lines/armor/lightArmor';
@@ -22,11 +23,28 @@ import { psijicOrder } from '../../../data/skill-lines/guild/psijicOrder';
 import { thievesGuild } from '../../../data/skill-lines/guild/thievesGuild';
 import { undaunted } from '../../../data/skill-lines/guild/undaunted';
 
-// Import regenerated class skill lines (SkillLineData modules)
+// Import racial skill lines
+import { altmer } from '../../../data/skill-lines/racial/altmer';
+import { argonian } from '../../../data/skill-lines/racial/argonian';
+import { bosmer } from '../../../data/skill-lines/racial/bosmer';
+import { breton } from '../../../data/skill-lines/racial/breton';
+import { dunmer } from '../../../data/skill-lines/racial/dunmer';
+import { imperial } from '../../../data/skill-lines/racial/imperial';
+import { khajiit } from '../../../data/skill-lines/racial/khajiit';
+import { nord } from '../../../data/skill-lines/racial/nord';
+import { orc } from '../../../data/skill-lines/racial/orc';
+import { redguard } from '../../../data/skill-lines/racial/redguard';
 
-// Import alliance war skill lines
+// Import craft skill lines
+import { alchemy } from '../../../data/skill-lines/craft/alchemy';
+import { blacksmithing } from '../../../data/skill-lines/craft/blacksmithing';
+import { clothing } from '../../../data/skill-lines/craft/clothing';
+import { enchanting } from '../../../data/skill-lines/craft/enchanting';
+import { jewelryCrafting } from '../../../data/skill-lines/craft/jewelry-crafting';
+import { provisioning } from '../../../data/skill-lines/craft/provisioning';
+import { woodworking } from '../../../data/skill-lines/craft/woodworking';
 
-// Import regenerated weapon skill lines
+// Import weapon skill lines
 import { bowSkillLine } from '../../../data/skill-lines/weapon/bow';
 import { destructionStaffSkillLine } from '../../../data/skill-lines/weapon/destructionStaff';
 import { dualWieldSkillLine } from '../../../data/skill-lines/weapon/dualWield';
@@ -68,7 +86,7 @@ const WEAPON_SKILL_LINES: SkillLineData[] = [
 
 const ARMOR_SKILL_LINES: SkillLineData[] = [lightArmor, mediumArmor, heavyArmor];
 
-const ALLIANCE_SKILL_LINES: SkillLineData[] = [assault, support];
+const ALLIANCE_SKILL_LINES: SkillLineData[] = [assault, support, emperor];
 
 const WORLD_SKILL_LINES: SkillLineData[] = [
   soulMagic,
@@ -78,6 +96,29 @@ const WORLD_SKILL_LINES: SkillLineData[] = [
   excavation,
   legerdemain,
   mythicAbilities,
+];
+
+const RACIAL_SKILL_LINES: SkillLineData[] = [
+  altmer,
+  argonian,
+  bosmer,
+  breton,
+  dunmer,
+  imperial,
+  khajiit,
+  nord,
+  orc,
+  redguard,
+];
+
+const CRAFT_SKILL_LINES: SkillLineData[] = [
+  alchemy,
+  blacksmithing,
+  clothing,
+  enchanting,
+  jewelryCrafting,
+  provisioning,
+  woodworking,
 ];
 
 const SANITIZED_ICON_MISSING = new Set(['', 'icon_missing']);
@@ -202,7 +243,7 @@ function initializeCache(): void {
     }
   };
 
-  // Process guild, class, weapon, and alliance skill lines (flat SkillLineData structures)
+  // Process all skill lines (flat SkillLineData structures)
   [
     ...GUILD_SKILL_LINES,
     ...CLASS_SKILL_LINES,
@@ -210,6 +251,8 @@ function initializeCache(): void {
     ...ALLIANCE_SKILL_LINES,
     ...WORLD_SKILL_LINES,
     ...ARMOR_SKILL_LINES,
+    ...RACIAL_SKILL_LINES,
+    ...CRAFT_SKILL_LINES,
   ].forEach(ingestSkillLine);
 
   ingestScribingSkills(activeSkills, skillsById, skillsByName);
