@@ -44,20 +44,20 @@ export const heavyArmor: SkillLineData = {
         'Intensify your physical presence to gain Major Resolve, increasing your Physical and Spell Resistance by 5948 for 20 seconds. While this effect persists, each piece of Heavy Armor worn decreases the cost of Break Free by 5%. Also grants you immunity to knockback and disabling effects for 6 seconds, but reduces your Movement Speed by 65% for the duration.',
     },
     {
-      id: 0,
+      id: 150184,
       name: 'Heavy Armor Bonuses',
       type: 'passive',
-      baseAbilityId: 0,
-      icon: 'ability_armor_001',
+      baseAbilityId: 150184,
+      icon: 'passive_armor2_heavy',
       description:
         'Each piece of Heavy Armor does the following: Reduces damage taken from Martial attacks by 1%, Increases the amount of damage blocked by 1%, Increases damage done with Bash by 30, Reduces your damage taken while immune to crowd control by 1%',
     },
     {
-      id: 0,
+      id: 152780,
       name: 'Heavy Armor Penalties',
       type: 'passive',
-      baseAbilityId: 0,
-      icon: 'ability_armor_001',
+      baseAbilityId: 152780,
+      icon: 'passive_armor2_heavy',
       description:
         'Each piece of Heavy Armor does the following: Increases damage taken from Magical attacks by 1%, Reduces the Movement Speed bonus of Sprint by 1%, Increases the cost of Roll Dodge by 3%, Increases the size of your detection area while Sneaking by 10%',
     },

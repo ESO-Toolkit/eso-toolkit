@@ -35,20 +35,20 @@ export const lightArmor: SkillLineData = {
     },
     // Passive Abilities
     {
-      id: 0,
+      id: 150185,
       name: 'Light Armor Bonuses',
       type: 'passive',
-      baseAbilityId: 0,
-      icon: 'ability_armor_003',
+      baseAbilityId: 150185,
+      icon: 'passive_armor2_light',
       description:
         'Each piece of Light Armor does the following: Reduces damage taken from Magical attacks by 1%, Reduces the cost of Roll Dodge by 3%, Reduces the Movement Speed penalty of Sneak by 5%, Reduces the cost of Break Free by 5%, Reduces the cost of Bash by 3%',
     },
     {
-      id: 0,
+      id: 152778,
       name: 'Light Armor Penalties',
       type: 'passive',
-      baseAbilityId: 0,
-      icon: 'ability_armor_003',
+      baseAbilityId: 152778,
+      icon: 'passive_armor2_light',
       description:
         'Each piece of Light Armor does the following: Increases damage taken from Martial attacks by 1%, Increases the cost of Block by 3%, Decreases damage done with Bash by 1%',
     },
