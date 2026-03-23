@@ -40,9 +40,9 @@ export const aedricSpear: SkillLineData = {
     { id: 22183, name: 'Radiant Ward', type: 'active', baseAbilityId: 22180 },
 
     // Passive Abilities
-    { id: 22134, name: 'Piercing Spear', type: 'passive', baseAbilityId: 22134 },
-    { id: 22135, name: 'Spear Wall', type: 'passive', baseAbilityId: 22135 },
-    { id: 22136, name: 'Burning Light', type: 'passive', baseAbilityId: 22136 },
-    { id: 22137, name: 'Balanced Warrior', type: 'passive', baseAbilityId: 22137 },
+    { id: 22134, icon: 'ability_mage_065', name: 'Piercing Spear', type: 'passive', baseAbilityId: 22134 },
+    { id: 22135, icon: 'ability_mage_065', name: 'Spear Wall', type: 'passive', baseAbilityId: 22135 },
+    { id: 22136, icon: 'ability_templar_028', name: 'Burning Light', type: 'passive', baseAbilityId: 22136 },
+    { id: 22137, icon: 'ability_mage_065', name: 'Balanced Warrior', type: 'passive', baseAbilityId: 22137 },
   ],
 };

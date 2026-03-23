@@ -134,6 +134,7 @@ export const shadow: SkillLineData = {
     },
     {
       id: 35441,
+      icon: 'ability_nightblade_001_b',
       name: 'Shadow Image',
       type: 'active',
       baseAbilityId: 33195,
@@ -142,6 +143,7 @@ export const shadow: SkillLineData = {
     // Passive Abilities (4 skills)
     {
       id: 33195,
+      icon: 'ability_nightblade_010',
       alternateIds: [36549, 45103, 69995, 69996, 69997, 69998],
       name: 'Refreshing Shadows',
       type: 'passive',
@@ -149,6 +151,7 @@ export const shadow: SkillLineData = {
     },
     {
       id: 33211,
+      icon: 'ability_nightblade_001',
       alternateIds: [18866, 45071, 88658, 88659, 228663],
       name: 'Shadow Barrier',
       type: 'passive',
@@ -156,6 +159,7 @@ export const shadow: SkillLineData = {
     },
     {
       id: 33231,
+      icon: 'ability_mage_065',
       alternateIds: [36532, 45084, 138925],
       name: 'Dark Vigor',
       type: 'passive',
@@ -163,6 +167,7 @@ export const shadow: SkillLineData = {
     },
     {
       id: 33237,
+      icon: 'ability_mage_065',
       alternateIds: [36552, 45115],
       name: 'Dark Veil',
       type: 'passive',

@@ -48,9 +48,9 @@ export const darkMagic: SkillLineData = {
     { id: 47899, name: 'Daedric Tomb', type: 'active', baseAbilityId: 24828 },
 
     // Passives
-    { id: 31375, name: 'Unholy Knowledge', type: 'passive', baseAbilityId: 31375 },
-    { id: 31380, name: 'Blood Magic', type: 'passive', baseAbilityId: 31380 },
-    { id: 31382, name: 'Persistence', type: 'passive', baseAbilityId: 31382 },
-    { id: 45182, name: 'Exploitation', type: 'passive', baseAbilityId: 45182 },
+    { id: 31375, icon: 'ability_sorcerer_045', name: 'Unholy Knowledge', type: 'passive', baseAbilityId: 31375 },
+    { id: 31380, icon: 'ability_mage_065', name: 'Blood Magic', type: 'passive', baseAbilityId: 31380 },
+    { id: 31382, icon: 'ability_mage_065', name: 'Persistence', type: 'passive', baseAbilityId: 31382 },
+    { id: 45182, icon: 'ability_mage_065', name: 'Exploitation', type: 'passive', baseAbilityId: 45182 },
   ],
 };

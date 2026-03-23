@@ -171,6 +171,7 @@ export const dualWieldSkillLine: SkillLineData = {
     // Passive Abilities
     {
       id: AbilityId.SLAUGHTER,
+      icon: 'ability_weapon_019',
       alternateIds: [18929, 45476, 133965, 197573, 197574, 221112, 221113],
       name: 'Slaughter',
       type: 'passive',
@@ -180,6 +181,7 @@ export const dualWieldSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.DUAL_WIELD_EXPERT,
+      icon: 'ability_weapon_013',
       alternateIds: [30873, 45477],
       name: 'Dual Wield Expert',
       type: 'passive',
@@ -189,6 +191,7 @@ export const dualWieldSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.CONTROLLED_FURY,
+      icon: 'ability_weapon_018',
       alternateIds: [20689, 30872, 45478],
       name: 'Controlled Fury',
       type: 'passive',
@@ -197,6 +200,7 @@ export const dualWieldSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.RUFFIAN,
+      icon: 'ability_weapon_014',
       alternateIds: [21114, 45481, 217354],
       name: 'Ruffian',
       type: 'passive',
@@ -206,6 +210,7 @@ export const dualWieldSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.TWIN_BLADE_AND_BLUNT,
+      icon: 'ability_weapon_016',
       alternateIds: [30893, 30895, 30902, 30912, 45482, 45484, 45485, 45487],
       name: 'Twin Blade and Blunt',
       type: 'passive',

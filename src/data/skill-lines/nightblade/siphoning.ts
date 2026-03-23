@@ -46,9 +46,9 @@ export const siphoning: SkillLineData = {
     { id: 36891, name: 'Sap Essence', type: 'active', baseAbilityId: 33316 },
 
     // Passive Abilities
-    { id: 33316, name: 'Catalyst', type: 'passive', baseAbilityId: 33316 },
-    { id: 33319, name: 'Magicka Flood', type: 'passive', baseAbilityId: 33319 },
-    { id: 33326, name: 'Soul Siphoner', type: 'passive', baseAbilityId: 33326 },
-    { id: 33398, name: 'Transfer', type: 'passive', baseAbilityId: 33398 },
+    { id: 33316, icon: 'ability_nightblade_013', name: 'Catalyst', type: 'passive', baseAbilityId: 33316 },
+    { id: 33319, icon: 'ability_nightblade_003', name: 'Magicka Flood', type: 'passive', baseAbilityId: 33319 },
+    { id: 33326, icon: 'ability_nightblade_006', name: 'Soul Siphoner', type: 'passive', baseAbilityId: 33326 },
+    { id: 33398, icon: 'ability_nightblade_007', name: 'Transfer', type: 'passive', baseAbilityId: 33398 },
   ],
 };

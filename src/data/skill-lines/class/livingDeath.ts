@@ -173,6 +173,7 @@ export const livingDeath: SkillLineData = {
     },
     {
       id: ClassSkillId.NECROMANCER_HEXPROOF,
+      icon: 'ability_necromancer_014_a',
       name: 'Hexproof',
       type: 'active',
       icon: 'ability_necromancer_014_a',
@@ -182,6 +183,7 @@ export const livingDeath: SkillLineData = {
     },
     {
       id: ClassSkillId.NECROMANCER_CORPSE_CONSUMPTION,
+      icon: 'passive_necromancer_011',
       alternateIds: [116284, 116285, 120611, 120612],
       name: 'Corpse Consumption',
       type: 'passive',
@@ -192,6 +194,7 @@ export const livingDeath: SkillLineData = {
     },
     {
       id: ClassSkillId.NECROMANCER_CURATIVE_CURSE,
+      icon: 'passive_necromancer_009',
       alternateIds: [116286, 116287],
       name: 'Curative Curse',
       type: 'passive',
@@ -202,6 +205,7 @@ export const livingDeath: SkillLineData = {
     },
     {
       id: ClassSkillId.NECROMANCER_NEAR_DEATH_EXPERIENCE,
+      icon: 'passive_necromancer_010',
       alternateIds: [116273, 116274, 116275, 116276],
       name: 'Near-Death Experience',
       type: 'passive',
@@ -212,6 +216,7 @@ export const livingDeath: SkillLineData = {
     },
     {
       id: ClassSkillId.NECROMANCER_UNDEAD_CONFEDERATE,
+      icon: 'passive_necromancer_012',
       alternateIds: [116282, 116283, 119279, 119280],
       name: 'Undead Confederate',
       type: 'passive',

@@ -16,6 +16,7 @@ export const excavation: SkillLineData = {
   skills: [
     {
       id: AbilityId.HAND_BRUSH,
+      icon: 'u26_ability_digging_03',
       alternateIds: [139908, 139909],
       name: 'Hand Brush',
       icon: 'u26_ability_digging_03',
@@ -27,6 +28,7 @@ export const excavation: SkillLineData = {
     },
     {
       id: AbilityId.AUGUR,
+      icon: 'u26_ability_digging_04',
       alternateIds: [139904, 139905],
       name: 'Augur',
       icon: 'u26_ability_digging_04',
@@ -38,6 +40,7 @@ export const excavation: SkillLineData = {
     },
     {
       id: AbilityId.TROWEL,
+      icon: 'u26_ability_digging_01',
       alternateIds: [139943, 140093],
       name: 'Trowel',
       icon: 'u26_ability_digging_01',
@@ -49,6 +52,7 @@ export const excavation: SkillLineData = {
     },
     {
       id: AbilityId.KEEN_EYE_DIG_SITES,
+      icon: 'ability_scrying_08a',
       alternateIds: [140173, 140174],
       name: 'Keen Eye: Dig Sites',
       icon: 'ability_scrying_08a',
@@ -59,6 +63,7 @@ export const excavation: SkillLineData = {
     },
     {
       id: AbilityId.EXCAVATORS_RESERVES,
+      icon: 'u26_ability_digging_05',
       name: "Excavator's Reserves",
       icon: 'u26_ability_digging_05',
       description:
@@ -69,6 +74,7 @@ export const excavation: SkillLineData = {
     },
     {
       id: AbilityId.HEAVY_SHOVEL,
+      icon: 'u26_ability_digging_02',
       alternateIds: [139906, 139907],
       name: 'Heavy Shovel',
       icon: 'u26_ability_digging_02',
@@ -80,6 +86,7 @@ export const excavation: SkillLineData = {
     },
     {
       id: AbilityId.KEEN_EYE_TREASURE_CHESTS,
+      icon: 'ability_scrying_08a',
       alternateIds: [139771, 139772],
       name: 'Keen Eye: Treasure Chests',
       icon: 'ability_scrying_08a',

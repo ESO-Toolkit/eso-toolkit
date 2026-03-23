@@ -201,6 +201,7 @@ export const earthenHeart: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_EARTHSHIELD_MANTLE,
+      icon: 'ability_dragonknight_007_b',
       name: 'Earthshield Mantle',
       type: 'active',
       icon: 'ability_dragonknight_007_b',
@@ -210,6 +211,7 @@ export const earthenHeart: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_LANDSLIDE,
+      icon: 'ability_dragonknight_031',
       name: 'Landslide',
       type: 'passive',
       icon: 'ability_weapon_005',
@@ -219,6 +221,7 @@ export const earthenHeart: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_ETERNAL_MOUNTAIN,
+      icon: 'ability_dragonknight_023',
       alternateIds: [29468, 44996],
       name: 'Eternal Mountain',
       type: 'passive',
@@ -228,6 +231,7 @@ export const earthenHeart: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_BLESSING_AT_THE_PEAK,
+      icon: 'ability_dragonknight_024',
       name: 'Blessing at the Peak',
       type: 'passive',
       icon: 'ability_dragonknight_024',
@@ -237,6 +241,7 @@ export const earthenHeart: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_MOUNTAIN_GIANT,
+      icon: 'ability_sorcerer_007',
       name: 'Mountain Giant',
       type: 'passive',
       icon: 'ability_dragonknight_034',

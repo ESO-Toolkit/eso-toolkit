@@ -169,6 +169,7 @@ export const restorationStaff: SkillLineData = {
     // Passive abilities
     {
       id: AbilityId.ESSENCE_DRAIN,
+      icon: 'ability_templar_013',
       alternateIds: [
         30973, 30978, 45517, 45518, 243344, 243345, 243353, 243366, 243388, 243393,
         243394, 243885, 243886, 243887,
@@ -181,6 +182,7 @@ export const restorationStaff: SkillLineData = {
     },
     {
       id: AbilityId.RESTORATION_EXPERT,
+      icon: 'ability_templar_016',
       alternateIds: [30980, 45519],
       name: 'Restoration Expert',
       type: 'passive',
@@ -190,6 +192,7 @@ export const restorationStaff: SkillLineData = {
     },
     {
       id: AbilityId.CYCLE_OF_LIFE,
+      icon: 'ability_weapon_004',
       alternateIds: [30972, 45520, 122827, 122828, 122856],
       name: 'Cycle of Life',
       type: 'passive',
@@ -199,6 +202,7 @@ export const restorationStaff: SkillLineData = {
     },
     {
       id: AbilityId.ABSORB,
+      icon: 'ability_mage_065',
       alternateIds: [
         30869, 30971, 45521, 45522, 106184, 106185, 106186, 106194, 106198, 106199,
         108916, 108917, 108918, 108919, 119468, 140264, 173777, 193572, 193573, 193586,
@@ -219,6 +223,7 @@ export const restorationStaff: SkillLineData = {
     },
     {
       id: AbilityId.RESTORATION_MASTER,
+      icon: 'ability_templar_012',
       alternateIds: [30981, 45524],
       name: 'Restoration Master',
       type: 'passive',

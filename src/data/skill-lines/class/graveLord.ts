@@ -182,6 +182,7 @@ export const graveLord: SkillLineData = {
     },
     {
       id: ClassSkillId.NECROMANCER_DEATH_KNELL,
+      icon: 'passive_necromancer_002',
       alternateIds: [
         116197, 116198, 119134, 119151, 119152, 119154, 222696, 222851, 223040, 223531,
         224408, 224409, 224781, 230706, 230708,
@@ -194,6 +195,7 @@ export const graveLord: SkillLineData = {
     },
     {
       id: ClassSkillId.NECROMANCER_DISMEMBER,
+      icon: 'passive_necromancer_003',
       alternateIds: [116192, 116193, 116194, 116195],
       name: 'Dismember',
       type: 'passive',
@@ -204,6 +206,7 @@ export const graveLord: SkillLineData = {
     },
     {
       id: ClassSkillId.NECROMANCER_RAPID_ROT,
+      icon: 'passive_necromancer_004',
       alternateIds: [116199, 116201],
       name: 'Rapid Rot',
       type: 'passive',
@@ -213,6 +216,7 @@ export const graveLord: SkillLineData = {
     },
     {
       id: ClassSkillId.NECROMANCER_REUSABLE_PARTS,
+      icon: 'passive_necromancer_001',
       alternateIds: [116186, 116187, 116188, 116189],
       name: 'Reusable Parts',
       type: 'passive',

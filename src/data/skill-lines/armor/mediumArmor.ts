@@ -46,6 +46,7 @@ export const mediumArmor: SkillLineData = {
     },
     {
       id: AbilityId.DEXTERITY,
+      icon: 'ability_armor_008',
       alternateIds: [29743, 45563, 45564, 88545, 88546, 88547, 149156, 149160],
       name: 'Dexterity',
       type: 'passive',
@@ -55,6 +56,7 @@ export const mediumArmor: SkillLineData = {
     },
     {
       id: AbilityId.WIND_WALKER,
+      icon: 'ability_armor_011',
       alternateIds: [29687, 45565, 56953, 56959],
       name: 'Wind Walker',
       type: 'passive',
@@ -64,6 +66,7 @@ export const mediumArmor: SkillLineData = {
     },
     {
       id: AbilityId.IMPROVED_SNEAK,
+      icon: 'ability_armor_007',
       alternateIds: [29738, 29739, 45567, 45568, 85528],
       name: 'Improved Sneak',
       type: 'passive',
@@ -73,6 +76,7 @@ export const mediumArmor: SkillLineData = {
     },
     {
       id: AbilityId.AGILITY,
+      icon: 'ability_armor_010',
       alternateIds: [29686, 45572, 149165, 149166],
       name: 'Agility',
       type: 'passive',
@@ -82,6 +86,7 @@ export const mediumArmor: SkillLineData = {
     },
     {
       id: AbilityId.ATHLETICS,
+      icon: 'ability_armor_009',
       alternateIds: [29742, 45574],
       name: 'Athletics',
       type: 'passive',

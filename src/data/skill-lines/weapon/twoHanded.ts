@@ -179,6 +179,7 @@ export const twoHandedSkillLine: SkillLineData = {
     // Passive Abilities
     {
       id: AbilityId.FORCEFUL,
+      icon: 'ability_weapon_027',
       alternateIds: [29387, 30821, 45444, 45445, 61022, 61023],
       name: 'Forceful',
       type: 'passive',
@@ -188,6 +189,7 @@ export const twoHandedSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.HEAVY_WEAPONS,
+      icon: 'passive_dragonknight_026',
       alternateIds: [29375, 29384, 29385, 45430, 45432, 45434],
       name: 'Heavy Weapons',
       type: 'passive',
@@ -197,6 +199,7 @@ export const twoHandedSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.BALANCED_BLADE,
+      icon: 'ability_dragonknight_028',
       alternateIds: [29388, 45443],
       name: 'Balanced Blade',
       type: 'passive',
@@ -206,6 +209,7 @@ export const twoHandedSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.FOLLOW_UP,
+      icon: 'passive_dragonknight_016',
       alternateIds: [29389, 45446, 60860, 60888, 222020],
       name: 'Follow Up',
       type: 'passive',
@@ -215,6 +219,7 @@ export const twoHandedSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.BATTLE_RUSH,
+      icon: 'ability_weapon_021',
       alternateIds: [29391, 29392, 45448, 45450],
       name: 'Battle Rush',
       type: 'passive',

@@ -173,6 +173,7 @@ export const greenBalance: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_NATURE_S_EMBRACE,
+      icon: 'ability_warden_011_b',
       name: "Nature's Embrace",
       type: 'active',
       icon: 'ability_warden_011_b',
@@ -182,6 +183,7 @@ export const greenBalance: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_ACCELERATED_GROWTH,
+      icon: 'passive_warden_008',
       alternateIds: [85882, 85883],
       name: 'Accelerated Growth',
       type: 'passive',
@@ -192,6 +194,7 @@ export const greenBalance: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_EMERALD_MOSS,
+      icon: 'passive_warden_005',
       alternateIds: [85876, 85877],
       name: 'Emerald Moss',
       type: 'passive',
@@ -202,6 +205,7 @@ export const greenBalance: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_MATURATION,
+      icon: 'passive_warden_007',
       alternateIds: [85880, 85881],
       name: 'Maturation',
       type: 'passive',
@@ -212,6 +216,7 @@ export const greenBalance: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_NATURE_S_GIFT,
+      icon: 'passive_warden_006',
       name: "Nature's Gift",
       type: 'passive',
       icon: 'passive_warden_006',

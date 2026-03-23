@@ -47,9 +47,9 @@ export const daedricSummoning: SkillLineData = {
     { id: 24165, name: 'Bound Armaments', type: 'active', baseAbilityId: 24163 },
 
     // Passives
-    { id: 31418, name: 'Rebate', type: 'passive', baseAbilityId: 31418 },
-    { id: 31421, name: 'Power Stone', type: 'passive', baseAbilityId: 31421 },
-    { id: 31425, name: 'Daedric Protection', type: 'passive', baseAbilityId: 31425 },
-    { id: 31429, name: 'Expert Summoner', type: 'passive', baseAbilityId: 31429 },
+    { id: 31418, icon: 'ability_sorcerer_056', name: 'Rebate', type: 'passive', baseAbilityId: 31418 },
+    { id: 31421, icon: 'ability_sorcerer_015', name: 'Power Stone', type: 'passive', baseAbilityId: 31421 },
+    { id: 31425, icon: 'ability_sorcerer_044', name: 'Daedric Protection', type: 'passive', baseAbilityId: 31425 },
+    { id: 31429, icon: 'ability_mage_065', name: 'Expert Summoner', type: 'passive', baseAbilityId: 31429 },
   ],
 };

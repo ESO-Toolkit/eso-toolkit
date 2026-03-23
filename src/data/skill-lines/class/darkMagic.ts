@@ -173,6 +173,7 @@ export const darkMagic: SkillLineData = {
     },
     {
       id: ClassSkillId.SORCERER_DAEDRIC_TOMB,
+      icon: 'ability_sorcerer_daedric_tomb',
       name: 'Daedric Tomb',
       type: 'active',
       icon: 'ability_sorcerer_daedric_tomb',
@@ -182,6 +183,7 @@ export const darkMagic: SkillLineData = {
     },
     {
       id: ClassSkillId.SORCERER_UNHOLY_KNOWLEDGE,
+      icon: 'ability_sorcerer_045',
       alternateIds: [31386, 45176, 97323, 112346, 114898, 114899],
       name: 'Unholy Knowledge',
       type: 'passive',
@@ -192,6 +194,7 @@ export const darkMagic: SkillLineData = {
     },
     {
       id: ClassSkillId.SORCERER_BLOOD_MAGIC,
+      icon: 'ability_sorcerer_026',
       alternateIds: [31383, 31384, 45172, 45173, 129973, 130015, 130017, 183703, 183704],
       name: 'Blood Magic',
       type: 'passive',
@@ -202,6 +205,7 @@ export const darkMagic: SkillLineData = {
     },
     {
       id: ClassSkillId.SORCERER_PERSISTENCE,
+      icon: 'ability_sorcerer_054',
       alternateIds: [31378, 45165, 108858, 108862],
       name: 'Persistence',
       type: 'passive',
@@ -212,6 +216,7 @@ export const darkMagic: SkillLineData = {
     },
     {
       id: ClassSkillId.SORCERER_EXPLOITATION,
+      icon: 'ability_sorcerer_039',
       alternateIds: [31389, 45181],
       name: 'Exploitation',
       type: 'passive',

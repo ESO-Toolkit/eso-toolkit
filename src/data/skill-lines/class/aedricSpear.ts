@@ -173,6 +173,7 @@ export const aedricSpear: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_EXPLOSIVE_CHARGE,
+      icon: 'ability_templar_double_tipped_charge',
       name: 'Explosive Charge',
       type: 'active',
       icon: 'ability_templar_double_tipped_charge',
@@ -182,6 +183,7 @@ export const aedricSpear: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_BALANCED_WARRIOR,
+      icon: 'ability_templar_032',
       alternateIds: [31565, 31566, 44732, 44733],
       name: 'Balanced Warrior',
       type: 'passive',
@@ -191,6 +193,7 @@ export const aedricSpear: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_BURNING_LIGHT,
+      icon: 'ability_templar_028',
       alternateIds: [
         31718, 31720, 44730, 44731, 80153, 80170, 144021, 144022, 144023, 144028,
         144029, 144030,
@@ -204,6 +207,7 @@ export const aedricSpear: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_PIERCING_SPEAR,
+      icon: 'ability_templar_022',
       alternateIds: [31698, 31700, 44046, 44047, 56344, 56384],
       name: 'Piercing Spear',
       type: 'passive',
@@ -214,6 +218,7 @@ export const aedricSpear: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_SPEAR_WALL,
+      icon: 'ability_templar_027',
       alternateIds: [31708, 44721],
       name: 'Spear Wall',
       type: 'passive',

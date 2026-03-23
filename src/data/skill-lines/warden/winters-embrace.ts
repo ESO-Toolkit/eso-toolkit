@@ -43,9 +43,9 @@ export const wintersEmbrace: SkillLineData = {
     { id: 86197, name: 'Frozen Retreat', type: 'active', baseAbilityId: 86187 },
 
     // Passive abilities
-    { id: 85804, name: 'Glacial Presence', type: 'passive', baseAbilityId: 85804 },
-    { id: 85805, name: 'Frozen Armor', type: 'passive', baseAbilityId: 85805 },
-    { id: 85806, name: 'Icy Aura', type: 'passive', baseAbilityId: 85806 },
-    { id: 85807, name: 'Piercing Cold', type: 'passive', baseAbilityId: 85807 },
+    { id: 85804, icon: 'ability_warden_012_a', name: 'Glacial Presence', type: 'passive', baseAbilityId: 85804 },
+    { id: 85805, icon: 'passive_warden_001', name: 'Frozen Armor', type: 'passive', baseAbilityId: 85805 },
+    { id: 85806, icon: 'passive_warden_003', name: 'Icy Aura', type: 'passive', baseAbilityId: 85806 },
+    { id: 85807, icon: 'ability_warden_012_b', name: 'Piercing Cold', type: 'passive', baseAbilityId: 85807 },
   ],
 };

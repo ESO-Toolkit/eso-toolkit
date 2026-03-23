@@ -139,6 +139,7 @@ export const psijicOrder: SkillLineData = {
     },
     {
       id: AbilityId.SEE_THE_UNSEEN,
+      icon: 'ability_psijic_007',
       name: 'See the Unseen',
       description:
         'The insight you have gained from the Psijic Order grants you vision of the spiritual world. You can now interact with rifts all throughout Tamriel.',
@@ -148,6 +149,7 @@ export const psijicOrder: SkillLineData = {
     },
     {
       id: AbilityId.CLAIRVOYANCE,
+      icon: 'ability_psijic_008',
       alternateIds: [
         72694, 76466, 76467, 77444, 77458, 77806, 77809, 77920, 77937, 77938,
         77939, 77940, 77942, 77943, 78002, 78003, 79795, 79796, 82899, 82900,
@@ -162,6 +164,7 @@ export const psijicOrder: SkillLineData = {
     },
     {
       id: AbilityId.SPELL_ORB,
+      icon: 'ability_psijic_009',
       alternateIds: [
         103819, 103820, 103826, 103827, 103828, 103829, 103878, 103879, 103880, 103881,
         103882, 103883,
@@ -175,6 +178,7 @@ export const psijicOrder: SkillLineData = {
     },
     {
       id: AbilityId.CONCENTRATED_BARRIER,
+      icon: 'ability_psijic_010',
       alternateIds: [
         103888, 103923, 103942, 103944, 103949, 103964, 103965, 103966, 103967, 103968,
         104311, 104312, 104313, 104314, 104330, 104331, 104338, 104339, 104340, 104341,
@@ -189,6 +193,7 @@ export const psijicOrder: SkillLineData = {
     },
     {
       id: AbilityId.DELIBERATION,
+      icon: 'ability_psijic_011',
       name: 'Deliberation',
       description:
         'While you are casting or channeling a Psijic Order ability you reduce your damage taken by 30%.',

@@ -63,6 +63,7 @@ export const heavyArmor: SkillLineData = {
     },
     {
       id: AbilityId.RESOLVE,
+      icon: 'ability_dragonknight_020',
       alternateIds: [382, 29825, 45531, 45533, 88549, 88550, 88551, 126535, 138924],
       name: 'Resolve',
       type: 'passive',
@@ -72,6 +73,7 @@ export const heavyArmor: SkillLineData = {
     },
     {
       id: AbilityId.CONSTITUTION,
+      icon: 'ability_armor_014',
       alternateIds: [
         29769, 45526, 58428, 58429, 58430, 58431, 58432, 58503, 88552, 88553,
         200393, 200394, 200395,
@@ -84,6 +86,7 @@ export const heavyArmor: SkillLineData = {
     },
     {
       id: AbilityId.JUGGERNAUT,
+      icon: 'ability_armor_012',
       alternateIds: [4130, 18383, 29804, 45546, 142110],
       name: 'Juggernaut',
       type: 'passive',
@@ -92,6 +95,7 @@ export const heavyArmor: SkillLineData = {
     },
     {
       id: AbilityId.REVITALIZE,
+      icon: 'ability_armor_013',
       alternateIds: [29773, 45528],
       name: 'Revitalize',
       type: 'passive',
@@ -101,6 +105,7 @@ export const heavyArmor: SkillLineData = {
     },
     {
       id: AbilityId.RAPID_MENDING,
+      icon: 'ability_armor_015',
       alternateIds: [29791, 45529, 79994, 79995, 102006, 102007],
       name: 'Rapid Mending',
       type: 'passive',

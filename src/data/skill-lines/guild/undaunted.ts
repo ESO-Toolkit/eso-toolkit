@@ -147,6 +147,7 @@ export const undaunted: SkillLineData = {
     // Passive Abilities
     {
       id: AbilityId.UNDAUNTED_COMMAND,
+      icon: 'ability_templar_003',
       alternateIds: [55584, 55606, 55676, 55677],
       name: 'Undaunted Command',
       description:
@@ -157,6 +158,7 @@ export const undaunted: SkillLineData = {
     },
     {
       id: AbilityId.UNDAUNTED_METTLE,
+      icon: 'ability_armor_014',
       alternateIds: [55366, 55384, 55385, 55386, 55388, 55389],
       name: 'Undaunted Mettle',
       description:

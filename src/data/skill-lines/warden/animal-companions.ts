@@ -43,9 +43,9 @@ export const animalCompanions: SkillLineData = {
     { id: 86070, name: 'Deceptive Predator', type: 'active', baseAbilityId: 86062 },
 
     // Passive abilities
-    { id: 85800, name: 'Bond with Nature', type: 'passive', baseAbilityId: 85800 },
-    { id: 85801, name: 'Savage Beast', type: 'passive', baseAbilityId: 85801 },
-    { id: 85802, name: 'Flourish', type: 'passive', baseAbilityId: 85802 },
-    { id: 85803, name: 'Advanced Species', type: 'passive', baseAbilityId: 85803 },
+    { id: 85800, icon: 'ability_mage_065', name: 'Bond with Nature', type: 'passive', baseAbilityId: 85800 },
+    { id: 85801, icon: 'ability_mage_065', name: 'Savage Beast', type: 'passive', baseAbilityId: 85801 },
+    { id: 85802, icon: 'ability_mage_065', name: 'Flourish', type: 'passive', baseAbilityId: 85802 },
+    { id: 85803, icon: 'ability_mage_065', name: 'Advanced Species', type: 'passive', baseAbilityId: 85803 },
   ],
 };

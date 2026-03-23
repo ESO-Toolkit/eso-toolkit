@@ -175,6 +175,7 @@ export const daedricSummoning: SkillLineData = {
     },
     {
       id: ClassSkillId.SORCERER_BOUND_ARMAMENTS,
+      icon: 'ability_sorcerer_bound_armaments',
       name: 'Bound Armaments',
       type: 'active',
       icon: 'ability_sorcerer_bound_armaments',
@@ -184,6 +185,7 @@ export const daedricSummoning: SkillLineData = {
     },
     {
       id: ClassSkillId.SORCERER_DAEDRIC_PROTECTION,
+      icon: 'ability_sorcerer_022',
       alternateIds: [31417, 45200, 72543, 72544, 118510, 119579],
       name: 'Daedric Protection',
       type: 'passive',
@@ -194,6 +196,7 @@ export const daedricSummoning: SkillLineData = {
     },
     {
       id: ClassSkillId.SORCERER_EXPERT_SUMMONER,
+      icon: 'ability_sorcerer_019',
       alternateIds: [31412, 45199, 215055, 215056, 215059, 215060],
       name: 'Expert Summoner',
       type: 'passive',
@@ -204,6 +207,7 @@ export const daedricSummoning: SkillLineData = {
     },
     {
       id: ClassSkillId.SORCERER_POWER_STONE,
+      icon: 'ability_sorcerer_057',
       alternateIds: [31396, 45196],
       name: 'Power Stone',
       type: 'passive',
@@ -213,6 +217,7 @@ export const daedricSummoning: SkillLineData = {
     },
     {
       id: ClassSkillId.SORCERER_REBATE,
+      icon: 'ability_sorcerer_056',
       alternateIds: [31398, 45198, 64849, 64860, 64861, 143500],
       name: 'Rebate',
       type: 'passive',

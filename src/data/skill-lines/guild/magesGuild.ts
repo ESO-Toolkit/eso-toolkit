@@ -150,6 +150,7 @@ export const magesGuild: SkillLineData = {
     // Passive abilities
     {
       id: AbilityId.PERSUASIVE_WILL,
+      icon: 'ability_weapon_024',
       name: 'Persuasive Will',
       type: 'passive',
       baseAbilityId: AbilityId.PERSUASIVE_WILL,
@@ -157,6 +158,7 @@ export const magesGuild: SkillLineData = {
     },
     {
       id: AbilityId.MAGE_ADEPT,
+      icon: 'ability_sorcerer_045',
       alternateIds: [40436, 45601, 49066, 49067],
       name: 'Mage Adept',
       type: 'passive',
@@ -165,6 +167,7 @@ export const magesGuild: SkillLineData = {
     },
     {
       id: AbilityId.EVERLASTING_MAGIC,
+      icon: 'ability_sorcerer_063',
       alternateIds: [40437, 45602],
       name: 'Everlasting Magic',
       type: 'passive',
@@ -173,6 +176,7 @@ export const magesGuild: SkillLineData = {
     },
     {
       id: AbilityId.MAGICKA_CONTROLLER,
+      icon: 'ability_sorcerer_044',
       alternateIds: [40438, 40439, 45603, 45604],
       name: 'Magicka Controller',
       type: 'passive',
@@ -182,6 +186,7 @@ export const magesGuild: SkillLineData = {
     },
     {
       id: AbilityId.MIGHT_OF_THE_GUILD,
+      icon: 'ability_sorcerer_038',
       alternateIds: [43561, 45607, 61738, 61739],
       name: 'Might of the Guild',
       type: 'passive',

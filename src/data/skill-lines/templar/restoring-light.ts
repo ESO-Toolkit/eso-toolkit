@@ -40,9 +40,9 @@ export const restoringLight: SkillLineData = {
     { id: 22307, name: 'Restoring Focus', type: 'active', baseAbilityId: 22304 },
 
     // Passive Abilities
-    { id: 22314, name: 'Mending', type: 'passive', baseAbilityId: 22314 },
-    { id: 22315, name: 'Sacred Ground', type: 'passive', baseAbilityId: 22315 },
-    { id: 22316, name: 'Light Weaver', type: 'passive', baseAbilityId: 22316 },
-    { id: 22318, name: 'Master Ritualist', type: 'passive', baseAbilityId: 22318 },
+    { id: 22314, icon: 'ability_templar_lingering_ritual', name: 'Mending', type: 'passive', baseAbilityId: 22314 },
+    { id: 22315, icon: 'ability_templar_014', name: 'Sacred Ground', type: 'passive', baseAbilityId: 22315 },
+    { id: 22316, icon: 'ability_templar_012', name: 'Light Weaver', type: 'passive', baseAbilityId: 22316 },
+    { id: 22318, icon: 'ability_templar_lingering_ritual', name: 'Master Ritualist', type: 'passive', baseAbilityId: 22318 },
   ],
 };

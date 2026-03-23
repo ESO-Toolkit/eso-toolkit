@@ -169,6 +169,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
     // Passive abilities
     {
       id: AbilityId.FORTRESS,
+      icon: 'ability_weapon_028',
       alternateIds: [29420, 38306, 41344, 41346, 45471, 200240],
       name: 'Fortress',
       type: 'passive',
@@ -178,6 +179,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.SWORD_AND_BOARD,
+      icon: 'ability_armor_014',
       alternateIds: [29397, 29398, 45452, 45453],
       name: 'Sword and Board',
       type: 'passive',
@@ -187,6 +189,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.DEADLY_BASH,
+      icon: 'ability_dragonknight_034',
       alternateIds: [29415, 45469, 147189, 147190, 217092],
       name: 'Deadly Bash',
       type: 'passive',
@@ -196,6 +199,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.DEFLECT_BOLTS,
+      icon: 'ability_templar_027',
       alternateIds: [29399, 45472],
       name: 'Deflect Bolts',
       type: 'passive',
@@ -205,6 +209,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.BATTLEFIELD_MOBILITY,
+      icon: 'ability_armor_009',
       alternateIds: [29422, 45473],
       name: 'Battlefield Mobility',
       type: 'passive',

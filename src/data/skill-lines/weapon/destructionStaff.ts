@@ -225,6 +225,7 @@ export const destructionStaffSkillLine: SkillLineData = {
     // Passive abilities
     {
       id: AbilityId.TRI_FOCUS,
+      icon: 'ability_weapon_001',
       alternateIds: [
         30948, 30949, 30951, 30952, 34498, 45500, 45502, 45505, 45506, 45507,
         69773, 69774, 203988, 204009,
@@ -237,6 +238,7 @@ export const destructionStaffSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.PENETRATING_MAGIC,
+      icon: 'ability_weapon_008',
       alternateIds: [30957, 45509],
       name: 'Penetrating Magic',
       type: 'passive',
@@ -246,6 +248,7 @@ export const destructionStaffSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.ELEMENTAL_FORCE,
+      icon: 'ability_weapon_005',
       alternateIds: [30962, 45512],
       name: 'Elemental Force',
       type: 'passive',
@@ -255,6 +258,7 @@ export const destructionStaffSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.ANCIENT_KNOWLEDGE,
+      icon: 'ability_weapon_003',
       alternateIds: [30959, 45513, 88743, 88744, 88753, 88754, 149237],
       name: 'Ancient Knowledge',
       type: 'passive',
@@ -264,6 +268,7 @@ export const destructionStaffSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.DESTRUCTION_EXPERT,
+      icon: 'ability_weapon_006',
       alternateIds: [30965, 30966, 45514, 146322, 146325],
       name: 'Destruction Expert',
       type: 'passive',

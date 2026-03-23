@@ -43,9 +43,9 @@ export const greenBalance: SkillLineData = {
     { id: 85627, name: "Nature's Embrace", type: 'active', baseAbilityId: 85619 },
 
     // Passive abilities
-    { id: 85796, name: 'Accelerated Growth', type: 'passive', baseAbilityId: 85796 },
-    { id: 85797, name: "Nature's Gift", type: 'passive', baseAbilityId: 85797 },
-    { id: 85798, name: 'Emerald Moss', type: 'passive', baseAbilityId: 85798 },
-    { id: 85799, name: 'Maturation', type: 'passive', baseAbilityId: 85799 },
+    { id: 85796, icon: 'ability_mage_065', name: 'Accelerated Growth', type: 'passive', baseAbilityId: 85796 },
+    { id: 85797, icon: 'ability_mage_069', name: "Nature's Gift", type: 'passive', baseAbilityId: 85797 },
+    { id: 85798, icon: 'ability_mage_065', name: 'Emerald Moss', type: 'passive', baseAbilityId: 85798 },
+    { id: 85799, icon: 'ability_mage_065', name: 'Maturation', type: 'passive', baseAbilityId: 85799 },
   ],
 };

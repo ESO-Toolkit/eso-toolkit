@@ -141,6 +141,7 @@ export const fightersGuild: SkillLineData = {
     },
     {
       id: 40372,
+      icon: 'ability_fightersguild_004_b',
       name: 'Lightweight Beast Trap',
       type: 'active',
       baseAbilityId: AbilityId.TRAP_BEAST,
@@ -151,6 +152,7 @@ export const fightersGuild: SkillLineData = {
     // Passive abilities
     {
       id: AbilityId.INTIMIDATING_PRESENCE,
+      icon: 'ability_fightersguild_passive_intimidate',
       name: 'Intimidating Presence',
       type: 'passive',
       baseAbilityId: AbilityId.INTIMIDATING_PRESENCE,
@@ -159,6 +161,7 @@ export const fightersGuild: SkillLineData = {
     },
     {
       id: AbilityId.SLAYER,
+      icon: 'ability_dragonknight_025',
       alternateIds: [35803, 45595, 45596],
       name: 'Slayer',
       type: 'passive',
@@ -168,6 +171,7 @@ export const fightersGuild: SkillLineData = {
     },
     {
       id: AbilityId.BANISH_THE_WICKED,
+      icon: 'ability_dragonknight_034',
       alternateIds: [35800, 35801, 45597, 45598, 45599, 45600],
       name: 'Banish the Wicked',
       type: 'passive',
@@ -177,6 +181,7 @@ export const fightersGuild: SkillLineData = {
     },
     {
       id: AbilityId.SKILLED_TRACKER,
+      icon: 'ability_armor_007',
       alternateIds: [40393, 159880],
       name: 'Skilled Tracker',
       type: 'passive',
@@ -186,6 +191,7 @@ export const fightersGuild: SkillLineData = {
     },
     {
       id: AbilityId.BOUNTY_HUNTER,
+      icon: 'ability_armor_011',
       name: 'Bounty Hunter',
       type: 'passive',
       baseAbilityId: AbilityId.BOUNTY_HUNTER,

@@ -40,9 +40,9 @@ export const dawnsWrath: SkillLineData = {
     { id: 63052, name: 'Radiant Oppression', type: 'active', baseAbilityId: 63046 },
 
     // Passive Abilities
-    { id: 21775, name: 'Enduring Rays', type: 'passive', baseAbilityId: 21775 },
-    { id: 21777, name: 'Prism', type: 'passive', baseAbilityId: 21777 },
-    { id: 21779, name: 'Illuminate', type: 'passive', baseAbilityId: 21779 },
-    { id: 21781, name: 'Restoring Spirit', type: 'passive', baseAbilityId: 21781 },
+    { id: 21775, icon: 'ability_mage_065', name: 'Enduring Rays', type: 'passive', baseAbilityId: 21775 },
+    { id: 21777, icon: 'ability_debuff_stun', name: 'Prism', type: 'passive', baseAbilityId: 21777 },
+    { id: 21779, icon: 'ability_mage_065', name: 'Illuminate', type: 'passive', baseAbilityId: 21779 },
+    { id: 21781, icon: 'ability_templar_014', name: 'Restoring Spirit', type: 'passive', baseAbilityId: 21781 },
   ],
 };

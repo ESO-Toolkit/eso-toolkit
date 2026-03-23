@@ -131,6 +131,7 @@ export const assassination: SkillLineData = {
     },
     {
       id: 61927,
+      icon: 'ability_nightblade_005_a',
       name: 'Relentless Focus',
       type: 'active',
       baseAbilityId: 61902,
@@ -139,6 +140,7 @@ export const assassination: SkillLineData = {
     // Passive Abilities
     {
       id: 30957,
+      icon: 'ability_weapon_008',
       alternateIds: [36616, 45038],
       name: 'Master Assassin',
       type: 'passive',
@@ -146,6 +148,7 @@ export const assassination: SkillLineData = {
     },
     {
       id: 30962,
+      icon: 'ability_weapon_005',
       alternateIds: [
         6224, 10770, 10771, 10772, 29006, 36630, 36633, 38819, 45048, 45050,
         101434, 101435, 101436, 101437, 108867, 108868,
@@ -157,12 +160,14 @@ export const assassination: SkillLineData = {
     {
       id: 30963,
       alternateIds: [36636, 36640, 45053, 45055, 88655, 88656],
+      icon: 'passive_weapon_015',
       name: 'Pressure Points',
       type: 'passive',
       baseAbilityId: 30963,
     },
     {
       id: 45054,
+      icon: 'ability_mage_065',
       alternateIds: [
         26038, 36641, 45060, 59611, 61883, 61899, 102091, 105586, 105594, 105595,
         105596, 108780, 132927, 132929, 132934, 132935, 132936, 140619, 150720, 183807,
