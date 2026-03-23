@@ -110,7 +110,10 @@ $isOccupied = ($currentBranch -ne 'main') -and ($currentBranch -ne $newBranch)
 - This avoids displacing the existing work on `$currentBranch`
 
 ```powershell
-$worktreePath = "..\eso-log-aggregator-$($newBranch -replace '/', '-')"
+$worktreeDir = ".claude\worktrees"
+if (-not (Test-Path $worktreeDir)) { New-Item -ItemType Directory -Path $worktreeDir -Force | Out-Null }
+$worktreeName = ($newBranch -replace '/', '-')
+$worktreePath = "$worktreeDir\$worktreeName"
 
 # Verify current worktree is clean before pulling (pull may fail on dirty trees)
 $dirty = git status --short

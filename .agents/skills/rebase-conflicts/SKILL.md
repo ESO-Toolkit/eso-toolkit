@@ -27,11 +27,11 @@ Rebasing replays your branch's commits on top of another branch (usually `main`)
 git worktree list
 ```
 
-If the target branch is already checked out in another worktree (e.g. `D:\code\eso-log-aggregator-635`), **navigate there directly** — do NOT attempt `git checkout` in the current worktree:
+If the target branch is already checked out in another worktree (e.g. `.claude\worktrees\ESO-635-feature-name`), **navigate there directly** — do NOT attempt `git checkout` in the current worktree:
 
 ```powershell
-# Right: go to the worktree where the branch lives
-Set-Location D:\code\eso-log-aggregator-635
+# Right: go to the worktree where the branch lives (check `git worktree list` for the path)
+Set-Location .claude\worktrees\ESO-635-feature-name
 
 # Wrong: git checkout ESO-635/... will fail with "already used by worktree"
 # and forces an unnecessary stash of unrelated in-progress work
