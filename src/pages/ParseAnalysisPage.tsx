@@ -2206,11 +2206,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                     onClick={() => handleSelectFight(fight.id)}
                     onDelete={() => excludeFight(fight.id)}
                     deleteIcon={
-                      <IconButton
-                        size="small"
-                        sx={{ p: 0, ml: -0.25 }}
-                        aria-label="Exclude fight"
-                      >
+                      <IconButton size="small" sx={{ p: 0, ml: -0.25 }} aria-label="Exclude fight">
                         <span style={{ fontSize: 16, lineHeight: 1 }}>&times;</span>
                       </IconButton>
                     }
