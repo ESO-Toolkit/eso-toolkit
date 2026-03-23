@@ -39,6 +39,7 @@ npm run test:smoke:e2e               # Quick E2E check
 | **GraphQL codegen** | Run `npm run codegen` after any GraphQL schema changes |
 | **Code style** | Follow [eslint.config.mjs](eslint.config.mjs) and [.prettierrc](.prettierrc) — tools enforce style |
 | **Dev server ports** | Worktree port pairs 3000-3009 (even=HTTP, odd=HTTPS) — see [.claude-rules.md](.claude-rules.md) |
+| **Worktrees** | Ticket worktrees go in `D:\code\eso-log-aggregator-worktrees\` (persistent, for PRs). Claude Code's `.claude/worktrees/` is for ephemeral agent isolation only — never use it for ticket work. |
 
 ---
 

@@ -19,7 +19,7 @@ if ($LASTEXITCODE -ne 0) { Write-Host "twig not installed — using plain git fa
 
 ## ⚠️ Worktree Awareness
 
-This project uses **git worktrees** — multiple branches checked out simultaneously in separate directories (e.g. `D:\code\eso-log-aggregator-635`). **Always check worktrees before any branch operation**:
+This project uses **git worktrees** — multiple branches checked out simultaneously in separate directories under `D:\code\eso-log-aggregator-worktrees\` (e.g. `D:\code\eso-log-aggregator-worktrees\ESO-635-feature-name`). **Always check worktrees before any branch operation**:
 
 ```powershell
 git worktree list
@@ -87,7 +87,10 @@ Use a worktree when the current working directory already has a different featur
 ```powershell
 $newBranch = "ESO-671/jira-branch-status-action"
 $parentBranch = "main"  # or the stacked parent branch
-$worktreePath = "..\eso-log-aggregator-$($newBranch -replace '/', '-')"
+$worktreeRoot = "..\eso-log-aggregator-worktrees"
+if (-not (Test-Path $worktreeRoot)) { New-Item -ItemType Directory -Path $worktreeRoot -Force | Out-Null }
+$worktreeName = ($newBranch -replace '/', '-')
+$worktreePath = "$worktreeRoot\$worktreeName"
 # Pre-flight: ensure the source worktree is clean before pulling
 $dirty = git status --short
 if ($dirty) {
