@@ -13,15 +13,15 @@ Each worktree has a dedicated port based on its directory name:
 
 | Directory Pattern | HTTP Port | HTTPS Port |
 |-------------------|-----------|------------|
-| `eso-log-aggregator` (main) | 3000 | 3001 |
-| `eso-log-aggregator-ESO-*` (worktree 1) | 3002 | 3003 |
-| `eso-log-aggregator-ESO-*` (worktree 2) | 3004 | 3005 |
-| `eso-log-aggregator-ESO-*` (worktree 3) | 3006 | 3007 |
-| `eso-log-aggregator-ESO-*` (worktree 4) | 3008 | 3009 |
+| main worktree | 3000 | 3001 |
+| `eso-log-aggregator-worktrees\*` (worktree 1) | 3002 | 3003 |
+| `eso-log-aggregator-worktrees\*` (worktree 2) | 3004 | 3005 |
+| `eso-log-aggregator-worktrees\*` (worktree 3) | 3006 | 3007 |
+| `eso-log-aggregator-worktrees\*` (worktree 4) | 3008 | 3009 |
 
 To determine the correct port for the current worktree, use the worktree slot:
 - **Main worktree** (`D:\code\eso-log-aggregator`): port 3000 (default, no `PORT` env var needed)
-- **Other worktrees**: use the next available even port (3002, 3004, 3006, 3008)
+- **Feature worktrees** (under `D:\code\eso-log-aggregator-worktrees\`): use the next available even port (3002, 3004, 3006, 3008)
 
 ### Start dev server (background)
 
@@ -83,7 +83,7 @@ if (-not $devServers) {
 }
 ```
 
-**Key principle**: Always report which worktree a running dev server belongs to. A server on port 3000 started from `D:\code\eso-log-aggregator` is **not** the server for `D:\code\eso-log-aggregator-ESO-647`.
+**Key principle**: Always report which worktree a running dev server belongs to. A server on port 3000 started from the main worktree is **not** the server for a feature worktree under `eso-log-aggregator-worktrees\`.
 
 ### Stop dev server
 Kill the process using the PID found from the above command, or press Ctrl+C if running interactively.
