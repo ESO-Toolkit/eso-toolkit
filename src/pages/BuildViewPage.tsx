@@ -62,16 +62,12 @@ import { decodeBuildFromURL } from '../utils/buildEncoding';
 const SKILL_ICON_URL = 'https://eso-hub.com/storage/icons/';
 
 /**
- * Hook to ensure the skill cache is populated before rendering skill slots.
- * getSkillById uses a lazy async cache — returns undefined until ready.
- * This calls preloadSkillData() and re-renders once the cache is warm.
+ * Ensure the skill cache is populated before rendering skill slots.
+ * The cache initializes synchronously so this is a no-op after the first call.
  */
 function useSkillCacheReady(): boolean {
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    void preloadSkillData().then(() => setReady(true));
-  }, []);
-  return ready;
+  preloadSkillData();
+  return true;
 }
 
 // ─── Display helpers ──────────────────────────────────────────────────────────

@@ -147,7 +147,7 @@ const skillsLogger = new Logger({ contextPrefix: 'SkillLineSkills' });
 /**
  * Initialize the cache by extracting all active/ultimate abilities from skill lines
  */
-async function initializeCache(): Promise<void> {
+function initializeCache(): void {
   if (activeSkillsCache !== null) return;
 
   activeSkillsCache = [];
@@ -283,13 +283,11 @@ function ingestScribingSkills(
 }
 
 /**
- * Get skill by ID (synchronous - waits for cache)
+ * Get skill by ID
  */
 export function getSkillById(id: number): SkillData | undefined {
-  // If cache not ready, try to initialize synchronously (will use cached data if available)
   if (!activeSkillsCache) {
-    initializeCache(); // Fire and forget - will be ready for next call
-    return undefined;
+    initializeCache();
   }
   return skillsByIdCache?.get(id);
 }
@@ -459,8 +457,8 @@ export function getSkillStats(): {
 /**
  * Preload the skill data (call this early in app initialization)
  */
-export function preloadSkillData(): Promise<void> {
-  return initializeCache();
+export function preloadSkillData(): void {
+  initializeCache();
 }
 
 // ── Skill Line Index (for organized picker UI) ──────────────────────────────

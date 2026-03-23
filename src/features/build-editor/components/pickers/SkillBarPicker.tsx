@@ -720,12 +720,7 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
 }) => {
   const isDark = useTheme().palette.mode === 'dark';
   const isUlt = slotIndex === ULTIMATE_SLOT;
-  const [cacheReady, setCacheReady] = useState(() => !!getSkillById(1));
-  useEffect(() => {
-    if (!cacheReady) {
-      void preloadSkillData().then(() => setCacheReady(true));
-    }
-  }, [cacheReady]);
+  preloadSkillData();
   const skill = abilityId ? getSkillById(abilityId) : null;
   const size = isUlt ? ULT_SIZE : TILE_SIZE;
   const label = SLOT_LABELS[slotIndex] ?? String(slotIndex);
