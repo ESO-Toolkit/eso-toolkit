@@ -40,6 +40,7 @@ import {
   getSkillById,
   getSkillLineIndex,
   searchPassives,
+  waitForAbilitiesFallback,
 } from '../../../loadout-manager/data/skillLineSkills';
 import { ESO_CLASSES } from '../../data/esoStaticData';
 import { CLASS_COLOR_MAP } from '../../theme/classColorMap';
@@ -754,6 +755,12 @@ export interface PassivesPickerProps {
 export const PassivesPicker: React.FC<PassivesPickerProps> = ({ passives, onChange }) => {
   const isDark = useTheme().palette.mode === 'dark';
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [, setFallbackReady] = useState(false);
+
+  // Re-render once the abilities fallback is loaded so unresolved IDs can display
+  useEffect(() => {
+    void waitForAbilitiesFallback().then(() => setFallbackReady(true));
+  }, []);
 
   const selectedIds = useMemo(() => new Set(passives), [passives]);
 

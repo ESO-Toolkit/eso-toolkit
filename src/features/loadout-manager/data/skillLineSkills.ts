@@ -4,7 +4,6 @@
  */
 /* eslint-disable import/order */
 
-import abilitiesRaw from '../../../../data/abilities.json';
 import scribingDatabaseRaw from '../../../../data/scribing-complete.json';
 import { assault } from '../../../data/skill-lines/alliance-war/assault';
 import { support } from '../../../data/skill-lines/alliance-war/support';
@@ -41,7 +40,7 @@ import { scrying } from '../../../data/skill-lines/world/scrying';
 import { soulMagic } from '../../../data/skill-lines/world/soul-magic';
 import { vampire } from '../../../data/skill-lines/world/vampire';
 import { werewolf } from '../../../data/skill-lines/world/werewolf';
-import type { Ability, SkillData, SkillLineData } from '../../../data/types/skill-line-types';
+import type { SkillData, SkillLineData } from '../../../data/types/skill-line-types';
 import { Logger } from '@/utils/logger';
 
 // Guild skill lines (flat structure)
@@ -283,11 +282,39 @@ function ingestScribingSkills(
   }
 }
 
-const abilitiesById = abilitiesRaw as Record<string, Ability>;
+// Lazy-loaded abilities fallback (fetched on demand, not bundled)
+let abilitiesFallback: Map<number, SkillData> | null = null;
+let abilitiesFetchPromise: Promise<void> | null = null;
+
+function fetchAbilitiesFallback(): void {
+  if (abilitiesFallback || abilitiesFetchPromise) return;
+  abilitiesFetchPromise = fetch('/data/abilities.json')
+    .then((res) => res.json())
+    .then((data: Record<string, { id: number; name: string; icon: string }>) => {
+      abilitiesFallback = new Map();
+      for (const [key, ability] of Object.entries(data)) {
+        if (!ability?.id) continue;
+        // Only store entries missing from the curated skill-line cache
+        if (!skillsByIdCache?.has(ability.id)) {
+          abilitiesFallback.set(ability.id, {
+            id: ability.id,
+            name: ability.name,
+            type: 'passive',
+            isPassive: true,
+            icon: ability.icon,
+          });
+        }
+      }
+      skillsLogger.info('Loaded abilities fallback', { count: abilitiesFallback.size });
+    })
+    .catch((err) => {
+      skillsLogger.warn('Failed to load abilities fallback', err);
+    });
+}
 
 /**
- * Get skill by ID. Falls back to abilities.json for IDs not in the curated
- * skill-line data (e.g. passive rank variants).
+ * Get skill by ID. Falls back to a lazily-fetched abilities.json for IDs
+ * not in the curated skill-line data (e.g. passive rank variants).
  */
 export function getSkillById(id: number): SkillData | undefined {
   if (!activeSkillsCache) {
@@ -296,20 +323,14 @@ export function getSkillById(id: number): SkillData | undefined {
   const cached = skillsByIdCache?.get(id);
   if (cached) return cached;
 
-  // Fallback: look up in abilities.json for IDs missing from skill-line data
-  const ability = abilitiesById[String(id)];
-  if (!ability) return undefined;
+  // Try the lazily-loaded fallback
+  if (abilitiesFallback) {
+    return abilitiesFallback.get(id);
+  }
 
-  const fallback: SkillData = {
-    id: ability.id,
-    name: ability.name,
-    type: 'passive',
-    isPassive: true,
-    icon: ability.icon,
-  };
-  // Cache so subsequent lookups are instant
-  skillsByIdCache?.set(id, fallback);
-  return fallback;
+  // Kick off the fetch if not started yet
+  fetchAbilitiesFallback();
+  return undefined;
 }
 
 /**
@@ -475,10 +496,22 @@ export function getSkillStats(): {
 }
 
 /**
- * Preload the skill data (call this early in app initialization)
+ * Preload the skill data (call this early in app initialization).
+ * Also kicks off the abilities.json fallback fetch.
  */
 export function preloadSkillData(): void {
   initializeCache();
+  fetchAbilitiesFallback();
+}
+
+/**
+ * Returns a promise that resolves once the abilities fallback data is loaded.
+ * Useful for components that need to re-render after the fallback is available.
+ */
+export function waitForAbilitiesFallback(): Promise<void> {
+  if (abilitiesFallback) return Promise.resolve();
+  fetchAbilitiesFallback();
+  return abilitiesFetchPromise ?? Promise.resolve();
 }
 
 // ── Skill Line Index (for organized picker UI) ──────────────────────────────
