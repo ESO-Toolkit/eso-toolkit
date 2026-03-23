@@ -1,5 +1,5 @@
-import BuildIcon from '@mui/icons-material/Construction';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import BuildIcon from '@mui/icons-material/Construction';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoIcon from '@mui/icons-material/Info';
@@ -23,11 +23,11 @@ import { useSelector } from 'react-redux';
 
 import { getArmorWeightCounts } from '@/utils/armorUtils';
 import { encodeBuildToURL } from '@/utils/buildEncoding';
-import { playerToBuild } from '@/utils/playerToBuild';
 import { toClassKey } from '@/utils/classNameUtils';
 import { abbreviateFood, detectFoodFromAuras, getFoodColor } from '@/utils/foodDetectionUtils';
 import { createGearSetTooltipProps } from '@/utils/gearSetTooltipMapper';
 import { buildVariantSx, getGearChipProps } from '@/utils/playerCardStyleUtils';
+import { playerToBuild } from '@/utils/playerToBuild';
 import {
   abbreviatePotion,
   describePotionType,
@@ -307,7 +307,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       () => player?.combatantInfo?.talents ?? [],
       [player?.combatantInfo?.talents],
     );
-    const gear = player?.combatantInfo?.gear ?? [];
+    const gear = React.useMemo(
+      () => player?.combatantInfo?.gear ?? [],
+      [player?.combatantInfo?.gear],
+    );
     const armorWeights = getArmorWeightCounts(gear);
 
     // State for gear details panel
@@ -572,7 +575,17 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       } finally {
         setExtractLoading(false);
       }
-    }, [player, gear, talents, mundusBuffs, championPoints, classAnalysis, detectedRole, foodAura, potionStreamResult]);
+    }, [
+      player,
+      gear,
+      talents,
+      mundusBuffs,
+      championPoints,
+      classAnalysis,
+      detectedRole,
+      foodAura,
+      potionStreamResult,
+    ]);
 
     const resolvedPlayerName = resolveActorName(player);
     const normalizedDisplayName = resolvedPlayerName.trim();
@@ -1487,7 +1500,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             Gear
                           </Typography>
                           <Box display="flex" alignItems="center" gap={0.75}>
-                            <Tooltip title="Open this player's gear, skills, and CP in the Build Editor" arrow>
+                            <Tooltip
+                              title="Open this player's gear, skills, and CP in the Build Editor"
+                              arrow
+                            >
                               <Box
                                 onClick={handleExtractBuild}
                                 sx={{

@@ -228,7 +228,8 @@ export const GuideSection: React.FC = () => {
             px: 1,
           }}
         >
-          Screenshots{setup.screenshots.length > 0 ? ` (${setup.screenshots.length}/${MAX_SCREENSHOTS})` : ''}
+          Screenshots
+          {setup.screenshots.length > 0 ? ` (${setup.screenshots.length}/${MAX_SCREENSHOTS})` : ''}
         </Typography>
       </Divider>
 

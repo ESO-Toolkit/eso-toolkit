@@ -945,20 +945,17 @@ export const RosterBuilderPage: React.FC = () => {
     }
   };
 
-  const handleMoveDPSSlot = useCallback(
-    (slotIndex: number, direction: 'up' | 'down') => {
-      setRoster((prev) => {
-        const newIndex = direction === 'up' ? slotIndex - 1 : slotIndex + 1;
-        if (newIndex < 0 || newIndex >= prev.dpsSlots.length) return prev;
-        return {
-          ...prev,
-          dpsSlots: arrayMove(prev.dpsSlots, slotIndex, newIndex),
-          updatedAt: new Date().toISOString(),
-        };
-      });
-    },
-    [],
-  );
+  const handleMoveDPSSlot = useCallback((slotIndex: number, direction: 'up' | 'down') => {
+    setRoster((prev) => {
+      const newIndex = direction === 'up' ? slotIndex - 1 : slotIndex + 1;
+      if (newIndex < 0 || newIndex >= prev.dpsSlots.length) return prev;
+      return {
+        ...prev,
+        dpsSlots: arrayMove(prev.dpsSlots, slotIndex, newIndex),
+        updatedAt: new Date().toISOString(),
+      };
+    });
+  }, []);
 
   // Gate URL sync until the initial load has settled so we don't clobber the incoming ?r= param
   const urlSyncReady = React.useRef(false);
@@ -1991,9 +1988,10 @@ export const RosterBuilderPage: React.FC = () => {
                     setMode(next);
                     setRoster((prev) => ({ ...prev, rosterDetailLevel: next }));
                     // Focus the newly selected tab
-                    const sibling = e.key === 'ArrowRight'
-                      ? (e.currentTarget.nextElementSibling as HTMLElement)
-                      : (e.currentTarget.previousElementSibling as HTMLElement);
+                    const sibling =
+                      e.key === 'ArrowRight'
+                        ? (e.currentTarget.nextElementSibling as HTMLElement)
+                        : (e.currentTarget.previousElementSibling as HTMLElement);
                     sibling?.focus();
                   }
                 }}
@@ -2844,13 +2842,9 @@ export const RosterBuilderPage: React.FC = () => {
                           fontSize: '0.8rem',
                           letterSpacing: '0.01em',
                           '& .MuiChip-deleteIcon': {
-                            color: isDarkMode
-                              ? 'rgba(255,255,255,0.3)'
-                              : 'rgba(0,0,0,0.3)',
+                            color: isDarkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
                             '&:hover': {
-                              color: isDarkMode
-                                ? 'rgba(255,255,255,0.6)'
-                                : 'rgba(0,0,0,0.6)',
+                              color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
                             },
                           },
                         }}
@@ -2876,7 +2870,6 @@ export const RosterBuilderPage: React.FC = () => {
 
         {/* Full Mode: Full Roster Details */}
         <Box sx={{ display: mode === 'full' ? 'block' : 'none' }}>
-
           <RosterCardSections
             tanks={roster.tanks}
             healers={roster.healers}

@@ -17,13 +17,7 @@
  */
 
 import { Shield as ShieldIcon } from '@mui/icons-material';
-import {
-  Box,
-  ButtonBase,
-  Chip,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Box, ButtonBase, Chip, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -347,9 +341,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
           }}
         >
           <Stack direction="row" alignItems="center" spacing={0.75}>
-            <ShieldIcon
-              sx={{ fontSize: 16, color: 'var(--be-accent, #38bdf8)', opacity: 0.6 }}
-            />
+            <ShieldIcon sx={{ fontSize: 16, color: 'var(--be-accent, #38bdf8)', opacity: 0.6 }} />
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Stack direction="row" spacing={0.5} alignItems="center">
                 <Typography
@@ -438,7 +430,9 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                   label={group.setName}
                   count={group.items.length}
                   icon={
-                    <ShieldIcon sx={{ fontSize: 16, color: catColor, opacity: 0.75, flexShrink: 0 }} />
+                    <ShieldIcon
+                      sx={{ fontSize: 16, color: catColor, opacity: 0.75, flexShrink: 0 }}
+                    />
                   }
                 >
                   {group.bonuses.length > 0 && <SetBonusPreview bonuses={group.bonuses} />}

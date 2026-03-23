@@ -7,13 +7,7 @@
  */
 
 import { AutoFixHigh as TraitIcon, LocalFireDepartment as EnchantIcon } from '@mui/icons-material';
-import {
-  Box,
-  ButtonBase,
-  Popover,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Box, ButtonBase, Popover, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback } from 'react';
 
@@ -80,9 +74,7 @@ export const TraitEnchantPicker: React.FC<TraitEnchantPickerProps> = ({
             maxWidth: 280,
             maxHeight: 340,
             overflow: 'hidden',
-            background: isDark
-              ? 'rgba(15, 23, 42, 0.95)'
-              : 'rgba(255, 255, 255, 0.97)',
+            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.97)',
             backdropFilter: 'blur(20px)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
             boxShadow: isDark
@@ -173,9 +165,7 @@ export const TraitEnchantPicker: React.FC<TraitEnchantPickerProps> = ({
                     ? `${accentColor}18`
                     : `${accentColor}10`
                   : 'transparent',
-                border: isSelected
-                  ? `1px solid ${accentColor}40`
-                  : '1px solid transparent',
+                border: isSelected ? `1px solid ${accentColor}40` : '1px solid transparent',
                 transition: 'all 0.12s ease',
                 '&:hover': {
                   background: isSelected

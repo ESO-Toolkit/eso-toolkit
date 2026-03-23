@@ -88,7 +88,9 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
       onPublished();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : isEditMode ? 'Failed to update' : 'Failed to publish');
+      setError(
+        err instanceof Error ? err.message : isEditMode ? 'Failed to update' : 'Failed to publish',
+      );
     } finally {
       setLoading(false);
     }
@@ -233,7 +235,7 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
           disabled={loading}
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
-          {loading ? (isEditMode ? 'Updating…' : 'Publishing…') : (isEditMode ? 'Update' : 'Publish')}
+          {loading ? (isEditMode ? 'Updating…' : 'Publishing…') : isEditMode ? 'Update' : 'Publish'}
         </Button>
       </DialogActions>
     </Dialog>

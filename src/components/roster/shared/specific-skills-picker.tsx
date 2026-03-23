@@ -5,18 +5,8 @@
  * with a picker dialog to browse/search all skills. Stores ability IDs (numbers).
  */
 
-import {
-  Add as AddIcon,
-  Close as CloseIcon,
-} from '@mui/icons-material';
-import {
-  Box,
-  ButtonBase,
-  ListSubheader,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
+import { Box, ButtonBase, ListSubheader, Stack, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 

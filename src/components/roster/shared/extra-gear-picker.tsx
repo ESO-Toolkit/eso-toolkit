@@ -7,13 +7,7 @@
  */
 
 import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
-import {
-  Box,
-  ButtonBase,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Box, ButtonBase, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useMemo, useState } from 'react';
 
@@ -130,7 +124,14 @@ const SetTile: React.FC<SetTileProps> = ({ setId, onRemove }) => {
   }, [name, cat]);
 
   return (
-    <Tooltip title={tooltipContent} arrow placement="top" enterDelay={400} enterTouchDelay={0} leaveTouchDelay={3000}>
+    <Tooltip
+      title={tooltipContent}
+      arrow
+      placement="top"
+      enterDelay={400}
+      enterTouchDelay={0}
+      leaveTouchDelay={3000}
+    >
       <Box
         sx={{
           position: 'relative',
@@ -312,62 +313,62 @@ const GearSetPickerDialog: React.FC<GearSetPickerDialogProps> = ({
                         enterTouchDelay={0}
                         leaveTouchDelay={3000}
                       >
-                      <ButtonBase
-                        onClick={() => !isSelected && onSelect(set.id)}
-                        disabled={isSelected}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          py: 0.6,
-                          px: 1,
-                          borderRadius: 1.5,
-                          width: '100%',
-                          textAlign: 'left',
-                          opacity: isSelected ? 0.4 : 1,
-                          transition: 'all 0.12s ease',
-                          '&:hover:not(:disabled)': {
-                            background: isDark ? `${color}15` : `${color}0A`,
-                          },
-                        }}
-                      >
-                        <Box
+                        <ButtonBase
+                          onClick={() => !isSelected && onSelect(set.id)}
+                          disabled={isSelected}
                           sx={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: '50%',
-                            background: color,
-                            flexShrink: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            py: 0.6,
+                            px: 1,
+                            borderRadius: 1.5,
+                            width: '100%',
+                            textAlign: 'left',
                             opacity: isSelected ? 0.4 : 1,
-                          }}
-                        />
-                        <Typography
-                          sx={{
-                            fontSize: 12,
-                            fontWeight: isSelected ? 600 : 400,
-                            fontFamily: 'Space Grotesk, Inter, system-ui',
-                            color: isSelected
-                              ? color
-                              : isDark
-                                ? 'rgba(255,255,255,0.80)'
-                                : 'rgba(0,0,0,0.75)',
+                            transition: 'all 0.12s ease',
+                            '&:hover:not(:disabled)': {
+                              background: isDark ? `${color}15` : `${color}0A`,
+                            },
                           }}
                         >
-                          {set.name}
-                        </Typography>
-                        {isSelected && (
+                          <Box
+                            sx={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: '50%',
+                              background: color,
+                              flexShrink: 0,
+                              opacity: isSelected ? 0.4 : 1,
+                            }}
+                          />
                           <Typography
                             sx={{
-                              fontSize: 10,
-                              fontStyle: 'italic',
-                              color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-                              ml: 'auto',
+                              fontSize: 12,
+                              fontWeight: isSelected ? 600 : 400,
+                              fontFamily: 'Space Grotesk, Inter, system-ui',
+                              color: isSelected
+                                ? color
+                                : isDark
+                                  ? 'rgba(255,255,255,0.80)'
+                                  : 'rgba(0,0,0,0.75)',
                             }}
                           >
-                            added
+                            {set.name}
                           </Typography>
-                        )}
-                      </ButtonBase>
+                          {isSelected && (
+                            <Typography
+                              sx={{
+                                fontSize: 10,
+                                fontStyle: 'italic',
+                                color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                                ml: 'auto',
+                              }}
+                            >
+                              added
+                            </Typography>
+                          )}
+                        </ButtonBase>
                       </Tooltip>
                     );
                   })}

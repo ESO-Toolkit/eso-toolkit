@@ -62,9 +62,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
               fontSize: 12,
               fontWeight: 600,
               fontFamily: 'Space Grotesk, Inter, system-ui',
-              color:
-                labelColor ??
-                (isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)'),
+              color: labelColor ?? (isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)'),
             }}
           >
             {label}

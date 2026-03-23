@@ -152,7 +152,11 @@ function compactGearEnchants(gear: GearConfig): Record<string, string> | undefin
 }
 
 const WEIGHT_ENCODE: Record<string, number> = { light: 0, medium: 1, heavy: 2 };
-const WEIGHT_DECODE: Record<number, 'light' | 'medium' | 'heavy'> = { 0: 'light', 1: 'medium', 2: 'heavy' };
+const WEIGHT_DECODE: Record<number, 'light' | 'medium' | 'heavy'> = {
+  0: 'light',
+  1: 'medium',
+  2: 'heavy',
+};
 
 function compactGearWeights(gear: GearConfig): Record<string, number> | undefined {
   const result: Record<string, number> = {};
@@ -258,7 +262,11 @@ function expandCP(compact?: CompactCP): BuildChampionPoints {
   };
 }
 
-function compactConsumables(consumables: BuildConsumables): { pt?: number[]; fo?: number; fn?: string } {
+function compactConsumables(consumables: BuildConsumables): {
+  pt?: number[];
+  fo?: number;
+  fn?: string;
+} {
   const result: { pt?: number[]; fo?: number; fn?: string } = {};
   const potionIds = consumables.potions.map((p) => p.id).filter((id) => id != null);
   if (potionIds.length > 0) result.pt = potionIds;
@@ -320,9 +328,8 @@ function expandSetup(compact: CompactSetup, index: number): BuildSetup {
           effects: lookup ? [...lookup.effects] : [],
         };
       }),
-      food: compact.fo != null || compact.fn
-        ? { id: compact.fo ?? undefined, name: compact.fn }
-        : {},
+      food:
+        compact.fo != null || compact.fn ? { id: compact.fo ?? undefined, name: compact.fn } : {},
     },
     passives: compact.pa ?? [],
     screenshots: [], // never encoded

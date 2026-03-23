@@ -290,9 +290,7 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
         <motion.div
           layoutId="setup-active-indicator"
           transition={
-            prefersReduced
-              ? { duration: 0 }
-              : { type: 'spring', stiffness: 400, damping: 30 }
+            prefersReduced ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 30 }
           }
           style={{
             position: 'absolute',
@@ -428,7 +426,12 @@ const DragPreview: React.FC<{ setup: BuildSetup; isDark: boolean }> = ({ setup, 
     }}
   >
     <DragIndicatorIcon
-      sx={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.35)', ml: -0.5, mr: -0.25 }}
+      sx={{
+        fontSize: 14,
+        color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.35)',
+        ml: -0.5,
+        mr: -0.25,
+      }}
     />
     <Box
       sx={{
@@ -542,10 +545,7 @@ export const SetupTabBar: React.FC = () => {
   }, []);
 
   // Stable callback refs for SortableSetupTab props
-  const handleSelect = useCallback(
-    (idx: number) => dispatch(setActiveSetupIndex(idx)),
-    [dispatch],
-  );
+  const handleSelect = useCallback((idx: number) => dispatch(setActiveSetupIndex(idx)), [dispatch]);
 
   return (
     <>
@@ -588,11 +588,7 @@ export const SetupTabBar: React.FC = () => {
           onDragCancel={handleDragCancel}
           accessibility={{ screenReaderInstructions }}
         >
-          <Box
-            role="tablist"
-            aria-label="Build setups"
-            sx={{ display: 'contents' }}
-          >
+          <Box role="tablist" aria-label="Build setups" sx={{ display: 'contents' }}>
             <SortableContext items={setupIds} strategy={horizontalListSortingStrategy}>
               {build.setups.map((setup, i) => (
                 <SortableSetupTab

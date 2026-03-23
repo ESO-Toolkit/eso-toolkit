@@ -85,9 +85,7 @@ const SlotRow: React.FC<SlotRowProps> = ({
       isDisabled={Boolean(disabledReason)}
       disabledReason={disabledReason}
       weight={piece?.weight}
-      onWeightChange={
-        onWeightChange ? (w: ArmorWeight) => onWeightChange(def.slot, w) : undefined
-      }
+      onWeightChange={onWeightChange ? (w: ArmorWeight) => onWeightChange(def.slot, w) : undefined}
       trait={piece?.trait}
       onTraitChange={
         onTraitChange ? (t: string | undefined) => onTraitChange(def.slot, t) : undefined
