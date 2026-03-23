@@ -524,6 +524,9 @@ export function getSkillLineIndex(): SkillLineMeta[] {
     ...GUILD_SKILL_LINES,
     ...ALLIANCE_SKILL_LINES,
     ...WORLD_SKILL_LINES,
+    ...ARMOR_SKILL_LINES,
+    ...RACIAL_SKILL_LINES,
+    ...CRAFT_SKILL_LINES,
   ].map((l) => ({
     name: l.name,
     broadCategory: l.category,

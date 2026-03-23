@@ -62,6 +62,8 @@ const PASSIVE_PICKER_TABS = [
   { label: 'Alliance', category: 'alliance' },
   { label: 'World', category: 'world' },
   { label: 'Armor', category: 'armor' },
+  { label: 'Racial', category: 'racial' },
+  { label: 'Craft', category: 'craft' },
 ] as const;
 
 // ── Passive deduplication helper ──────────────────────────────────────────────
