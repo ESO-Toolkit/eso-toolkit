@@ -64,6 +64,10 @@ const SLOT_LABELS: Record<number, string> = {
 
 const ICON_URL = 'https://eso-hub.com/storage/icons/';
 
+/** Resolve an icon value to a full URL, handling both short names and full URLs. */
+const resolveIconUrl = (icon: string): string =>
+  icon.startsWith('http') ? icon : `${ICON_URL}${icon}.png`;
+
 const countFilled = (bar: Record<number, number>): number =>
   ALL_SLOTS.filter((s) => bar[s] !== undefined && bar[s] > 0).length;
 
@@ -148,7 +152,7 @@ const PickerTile: React.FC<PickerTileProps> = ({ skill, onSelect, isMorph }) => 
       >
         {skill.icon ? (
           <img
-            src={`${ICON_URL}${skill.icon}.png`}
+            src={resolveIconUrl(skill.icon)}
             alt={skill.name}
             loading="lazy"
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
@@ -464,7 +468,7 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
                   >
                     {skill.icon ? (
                       <img
-                        src={`${ICON_URL}${skill.icon}.png`}
+                        src={resolveIconUrl(skill.icon)}
                         alt=""
                         style={{
                           width: 32,
@@ -811,7 +815,7 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
         >
           {skill?.icon ? (
             <img
-              src={`${ICON_URL}${skill.icon}.png`}
+              src={resolveIconUrl(skill.icon)}
               alt={skill.name}
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               onError={(e) => {

@@ -61,6 +61,10 @@ import { decodeBuildFromURL } from '../utils/buildEncoding';
 
 const SKILL_ICON_URL = 'https://eso-hub.com/storage/icons/';
 
+/** Resolve an icon value to a full URL, handling both short names and full URLs. */
+const resolveIconUrl = (icon: string): string =>
+  icon.startsWith('http') ? icon : `${SKILL_ICON_URL}${icon}.png`;
+
 /**
  * Ensure the skill cache is populated before rendering skill slots.
  * The cache initializes synchronously so this is a no-op after the first call.
@@ -294,7 +298,7 @@ const SkillSlot: React.FC<{
 }> = ({ slotIndex, abilityId, isUltimate = false }) => {
   const isDark = useTheme().palette.mode === 'dark';
   const skill = abilityId ? getSkillById(abilityId) : null;
-  const iconUrl = skill?.icon ? `${SKILL_ICON_URL}${skill.icon}.png` : null;
+  const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
   const size = isUltimate ? ULT_SIZE : TILE_SIZE;
   const label = SLOT_LABELS[slotIndex] ?? String(slotIndex);
 
@@ -1386,7 +1390,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                 key: string | number,
               ): React.ReactNode => {
                 const skill = getSkillById(passiveId);
-                const iconUrl = skill?.icon ? `${SKILL_ICON_URL}${skill.icon}.png` : null;
+                const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
                 return (
                   <Box
                     key={key}

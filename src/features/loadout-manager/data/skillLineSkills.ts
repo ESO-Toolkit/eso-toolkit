@@ -4,6 +4,7 @@
  */
 /* eslint-disable import/order */
 
+import abilitiesRaw from '../../../../data/abilities.json';
 import scribingDatabaseRaw from '../../../../data/scribing-complete.json';
 import { assault } from '../../../data/skill-lines/alliance-war/assault';
 import { support } from '../../../data/skill-lines/alliance-war/support';
@@ -40,7 +41,7 @@ import { scrying } from '../../../data/skill-lines/world/scrying';
 import { soulMagic } from '../../../data/skill-lines/world/soul-magic';
 import { vampire } from '../../../data/skill-lines/world/vampire';
 import { werewolf } from '../../../data/skill-lines/world/werewolf';
-import type { SkillData, SkillLineData } from '../../../data/types/skill-line-types';
+import type { Ability, SkillData, SkillLineData } from '../../../data/types/skill-line-types';
 import { Logger } from '@/utils/logger';
 
 // Guild skill lines (flat structure)
@@ -282,14 +283,33 @@ function ingestScribingSkills(
   }
 }
 
+const abilitiesById = abilitiesRaw as Record<string, Ability>;
+
 /**
- * Get skill by ID
+ * Get skill by ID. Falls back to abilities.json for IDs not in the curated
+ * skill-line data (e.g. passive rank variants).
  */
 export function getSkillById(id: number): SkillData | undefined {
   if (!activeSkillsCache) {
     initializeCache();
   }
-  return skillsByIdCache?.get(id);
+  const cached = skillsByIdCache?.get(id);
+  if (cached) return cached;
+
+  // Fallback: look up in abilities.json for IDs missing from skill-line data
+  const ability = abilitiesById[String(id)];
+  if (!ability) return undefined;
+
+  const fallback: SkillData = {
+    id: ability.id,
+    name: ability.name,
+    type: 'passive',
+    isPassive: true,
+    icon: ability.icon,
+  };
+  // Cache so subsequent lookups are instant
+  skillsByIdCache?.set(id, fallback);
+  return fallback;
 }
 
 /**

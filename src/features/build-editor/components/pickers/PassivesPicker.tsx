@@ -51,6 +51,10 @@ const TILE_SIZE = 44;
 const MIN_SEARCH = 2;
 const MAX_RESULTS = 100;
 
+/** Resolve an icon value to a full URL, handling both short names and full URLs. */
+const resolveIconUrl = (icon: string): string =>
+  icon.startsWith('http') ? icon : `${ICON_URL}${icon}.png`;
+
 const PASSIVE_PICKER_TABS = [
   { label: 'Class', category: 'class' },
   { label: 'Weapon', category: 'weapon' },
@@ -123,7 +127,7 @@ const PassiveTile: React.FC<PassiveTileProps> = ({ skill, id, onRemove }) => {
       >
         {skill?.icon ? (
           <img
-            src={`${ICON_URL}${skill.icon}.png`}
+            src={resolveIconUrl(skill.icon)}
             alt={skill.name}
             loading="lazy"
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
@@ -266,7 +270,7 @@ const PickerPassiveTile: React.FC<PickerPassiveTileProps> = ({ skill, isSelected
       >
         {skill.icon ? (
           <img
-            src={`${ICON_URL}${skill.icon}.png`}
+            src={resolveIconUrl(skill.icon)}
             alt={skill.name}
             loading="lazy"
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
@@ -570,7 +574,7 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
                     >
                       {skill.icon ? (
                         <img
-                          src={`${ICON_URL}${skill.icon}.png`}
+                          src={resolveIconUrl(skill.icon)}
                           alt=""
                           style={{
                             width: 32,

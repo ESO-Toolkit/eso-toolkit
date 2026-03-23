@@ -45,6 +45,10 @@ const MIN_SEARCH = 2;
 const MAX_RESULTS = 100;
 const ICON_URL = 'https://eso-hub.com/storage/icons/';
 
+/** Resolve an icon value to a full URL, handling both short names and full URLs. */
+const resolveIconUrl = (icon: string): string =>
+  icon.startsWith('http') ? icon : `${ICON_URL}${icon}.png`;
+
 const PICKER_TABS = [
   { label: 'Class', category: 'class' },
   { label: 'Weapon', category: 'weapon' },
@@ -133,7 +137,7 @@ const SkillTile: React.FC<SkillTileProps> = ({ skill, onRemove }) => {
         >
           {skill.icon ? (
             <img
-              src={`${ICON_URL}${skill.icon}.png`}
+              src={resolveIconUrl(skill.icon)}
               alt={skill.name}
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               onError={(e) => {
@@ -283,7 +287,7 @@ const PickerTile: React.FC<PickerTileProps> = ({ skill, onSelect, isMorph, isSel
       >
         {skill.icon ? (
           <img
-            src={`${ICON_URL}${skill.icon}.png`}
+            src={resolveIconUrl(skill.icon)}
             alt={skill.name}
             loading="lazy"
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
@@ -571,7 +575,7 @@ const PickerDialog: React.FC<PickerDialogProps> = ({ open, onClose, onSelect, se
                     >
                       {skill.icon ? (
                         <img
-                          src={`${ICON_URL}${skill.icon}.png`}
+                          src={resolveIconUrl(skill.icon)}
                           alt=""
                           style={{
                             width: 32,

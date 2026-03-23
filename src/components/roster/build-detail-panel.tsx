@@ -20,6 +20,11 @@ import { getChampionPointAbilityName } from '../../types/champion-points';
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const SKILL_ICON_URL = 'https://eso-hub.com/storage/icons/';
+
+/** Resolve an icon value to a full URL, handling both short names and full URLs. */
+const resolveIconUrl = (icon: string): string =>
+  icon.startsWith('http') ? icon : `${SKILL_ICON_URL}${icon}.png`;
+
 const TILE = 36;
 const ULT_TILE = 42;
 const SKILL_SLOTS = [3, 4, 5, 6, 7] as const;
@@ -57,7 +62,7 @@ const SkillTile: React.FC<{
   isDarkMode: boolean;
 }> = ({ abilityId, isUltimate = false, isDarkMode }) => {
   const skill = abilityId ? getSkillById(abilityId) : null;
-  const iconUrl = skill?.icon ? `${SKILL_ICON_URL}${skill.icon}.png` : null;
+  const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
   const size = isUltimate ? ULT_TILE : TILE;
   const accent = isUltimate ? 'rgba(255,179,0,' : 'rgba(56,189,248,';
 
