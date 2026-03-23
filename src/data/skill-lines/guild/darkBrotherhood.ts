@@ -52,7 +52,7 @@ export const darkBrotherhood: SkillLineData = {
       name: 'Shadow Rider',
       description: 'Aggression radius from hostile monsters is decreased by 50% while mounted.',
       type: 'passive',
-      icon: 'ability_darkbrotherhood_passive_005',
+      icon: 'ability_darkbrotherhood_passive_003',
       maxRank: 1,
     },
     {

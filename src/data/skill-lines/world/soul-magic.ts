@@ -111,7 +111,7 @@ export const soulMagic: SkillLineData = {
       ],
       name: 'Soul Summons',
       description: 'Allows you to revive once every 1 hour without spending a Soul Gem.',
-      icon: 'ability_soul_magic_soul_summons',
+      icon: 'ability_sorcerer_047',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,

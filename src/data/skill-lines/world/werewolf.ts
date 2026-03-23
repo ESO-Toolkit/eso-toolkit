@@ -214,7 +214,7 @@ export const werewolf: SkillLineData = {
         245423, 245424, 245425,
       ],
       name: 'Devour',
-      icon: 'ability_werewolf_devour',
+      icon: 'ability_werewolf_007',
       description:
         'Allows you to devour corpses to increase the duration of your Werewolf Transformation and restore your Health. Every second you spend devouring a corpse adds 3 seconds to the duration of your Werewolf Transformation and restores 8% of your Max Health. Each corpse can be devoured for up to 4 seconds.',
       maxRank: 1,

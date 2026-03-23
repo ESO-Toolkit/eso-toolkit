@@ -6,7 +6,7 @@ export const mediumArmor: SkillLineData = {
   name: 'Medium Armor',
   class: 'armor',
   category: 'armor',
-  icon: '/icons/skills/armor/medium_armor.png',
+  icon: 'ability_armor_002',
   skills: [
     // Active Abilities
     {
@@ -40,7 +40,7 @@ export const mediumArmor: SkillLineData = {
       name: 'Medium Armor Bonuses',
       type: 'passive',
       baseAbilityId: 0,
-      icon: '/icons/skills/armor/medium_armor.png',
+      icon: 'ability_armor_002',
       description:
         'Each piece of Medium Armor does the following: Reduces the cost of Sprint by 1%, Reduces the cost of Sneak by 5%, Reduces the cost of Block by 3%, Reduces damage taken from Area of Effect attacks by 2% for 2 seconds after you use Roll Dodge, Increases Movement Speed by 2% while immune to crowd control.',
     },
