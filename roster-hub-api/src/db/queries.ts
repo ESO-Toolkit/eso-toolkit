@@ -896,61 +896,62 @@ export async function getUserProfile(
   db: D1Database,
   username: string,
 ): Promise<UserProfileResponse | null> {
-  // Run all reads in parallel — D1 supports concurrent statements
-  const [profileRow, buildsResult, rostersResult] = await Promise.all([
-    db
-      .prepare('SELECT * FROM user_profiles WHERE author_name = ? COLLATE NOCASE')
-      .bind(username)
-      .first<UserProfileRow>(),
+  // Run all 5 reads in a single parallel batch — counts included upfront to
+  // avoid a second round-trip to D1.
+  const [profileRow, buildsResult, rostersResult, buildCountRow, rosterCountRow] =
+    await Promise.all([
+      db
+        .prepare('SELECT * FROM user_profiles WHERE author_name = ? COLLATE NOCASE')
+        .bind(username)
+        .first<UserProfileRow>(),
 
-    db
-      .prepare(
-        `SELECT b.id, b.author_name, b.title, b.description, b.eso_class, b.role, b.game_mode,
-                b.vote_count, b.created_at, GROUP_CONCAT(DISTINCT bt.tag) AS tags_concat
-         FROM builds b
-         LEFT JOIN build_tags bt ON bt.build_id = b.id
-         WHERE b.author_name = ? COLLATE NOCASE AND b.is_anonymous = 0
-         GROUP BY b.id
-         ORDER BY b.vote_count DESC, b.created_at DESC
-         LIMIT ?`,
-      )
-      .bind(username, PROFILE_PAGE_SIZE)
-      .all<BuildSummaryRow>(),
+      db
+        .prepare(
+          `SELECT b.id, b.author_name, b.title, b.description, b.eso_class, b.role, b.game_mode,
+                  b.vote_count, b.created_at, GROUP_CONCAT(DISTINCT bt.tag) AS tags_concat
+           FROM builds b
+           LEFT JOIN build_tags bt ON bt.build_id = b.id
+           WHERE b.author_name = ? COLLATE NOCASE AND b.is_anonymous = 0
+           GROUP BY b.id
+           ORDER BY b.vote_count DESC, b.created_at DESC
+           LIMIT ?`,
+        )
+        .bind(username, PROFILE_PAGE_SIZE)
+        .all<BuildSummaryRow>(),
 
-    db
-      .prepare(
-        `SELECT r.id, r.author_name, r.title, r.description, r.trial_id,
-                r.vote_count, r.created_at, GROUP_CONCAT(DISTINCT rt.tag) AS tags_concat
-         FROM rosters r
-         LEFT JOIN roster_tags rt ON rt.roster_id = r.id
-         WHERE r.author_name = ? COLLATE NOCASE AND r.is_anonymous = 0
-         GROUP BY r.id
-         ORDER BY r.vote_count DESC, r.created_at DESC
-         LIMIT ?`,
-      )
-      .bind(username, PROFILE_PAGE_SIZE)
-      .all<RosterSummaryRow>(),
-  ]);
+      db
+        .prepare(
+          `SELECT r.id, r.author_name, r.title, r.description, r.trial_id,
+                  r.vote_count, r.created_at, GROUP_CONCAT(DISTINCT rt.tag) AS tags_concat
+           FROM rosters r
+           LEFT JOIN roster_tags rt ON rt.roster_id = r.id
+           WHERE r.author_name = ? COLLATE NOCASE AND r.is_anonymous = 0
+           GROUP BY r.id
+           ORDER BY r.vote_count DESC, r.created_at DESC
+           LIMIT ?`,
+        )
+        .bind(username, PROFILE_PAGE_SIZE)
+        .all<RosterSummaryRow>(),
+
+      db
+        .prepare(
+          'SELECT COUNT(*) AS cnt FROM builds WHERE author_name = ? COLLATE NOCASE AND is_anonymous = 0',
+        )
+        .bind(username)
+        .first<{ cnt: number }>(),
+
+      db
+        .prepare(
+          'SELECT COUNT(*) AS cnt FROM rosters WHERE author_name = ? COLLATE NOCASE AND is_anonymous = 0',
+        )
+        .bind(username)
+        .first<{ cnt: number }>(),
+    ]);
 
   // Unknown user — no bio row and no public content
   if (!profileRow && buildsResult.results.length === 0 && rostersResult.results.length === 0) {
     return null;
   }
-
-  const [buildCountRow, rosterCountRow] = await Promise.all([
-    db
-      .prepare(
-        'SELECT COUNT(*) AS cnt FROM builds WHERE author_name = ? COLLATE NOCASE AND is_anonymous = 0',
-      )
-      .bind(username)
-      .first<{ cnt: number }>(),
-    db
-      .prepare(
-        'SELECT COUNT(*) AS cnt FROM rosters WHERE author_name = ? COLLATE NOCASE AND is_anonymous = 0',
-      )
-      .bind(username)
-      .first<{ cnt: number }>(),
-  ]);
 
   // Prefer the canonical casing from content rows, fall back to the URL slug
   const displayName =

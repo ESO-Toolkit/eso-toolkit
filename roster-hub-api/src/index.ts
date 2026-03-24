@@ -890,13 +890,22 @@ app.delete('/images/:id', async (c) => {
 // User profiles — public pages, no new content storage
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Valid ESO Logs username characters — letters, digits, underscores, hyphens, dots
+const VALID_USERNAME_RE = /^[a-zA-Z0-9_.\-]{1,100}$/;
+
+// Names reserved by the API namespace — prevent /users/me matching the profile route
+const RESERVED_USERNAMES = new Set(['me']);
+
 // ─── GET /users/:username — public profile ────────────────────────────────────
 
 app.get('/users/:username', async (c) => {
   const username = c.req.param('username');
 
-  if (!username || username.length > 100) {
+  if (!VALID_USERNAME_RE.test(username)) {
     return c.json({ error: 'Invalid username' }, 400);
+  }
+  if (RESERVED_USERNAMES.has(username.toLowerCase())) {
+    return c.json({ error: 'User not found' }, 404);
   }
 
   const profile = await getUserProfile(c.env.DB, username);
@@ -912,6 +921,16 @@ app.get('/users/:username', async (c) => {
 app.put('/users/me/bio', async (c) => {
   const user = await validateToken(c.req.header('Authorization'), c.env);
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  // Rate limit: 1 bio update per 60 seconds using the profile row's updated_at
+  const recent = await c.env.DB.prepare(
+    "SELECT 1 FROM user_profiles WHERE author_id = ? AND updated_at > datetime('now', '-60 seconds')",
+  )
+    .bind(user.id)
+    .first();
+  if (recent) {
+    return c.json({ error: 'Rate limit exceeded. Wait 60 seconds between bio updates.' }, 429);
+  }
 
   interface BioBody {
     bio: string;
