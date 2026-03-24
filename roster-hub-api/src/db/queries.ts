@@ -5,11 +5,17 @@
 
 import type { D1Database } from '@cloudflare/workers-types';
 import type {
+  BuildSummary,
   CommentRow,
   CommentWithReplies,
+  ImageReportRow,
+  ImageUploadRow,
   RosterRow,
+  RosterSummary,
   RosterTagRow,
   RosterWithMeta,
+  UserProfileResponse,
+  UserProfileRow,
 } from '../types';
 
 const PAGE_SIZE = 20;
@@ -745,10 +751,7 @@ export async function createTempBuild(
   return row!;
 }
 
-export async function getTempBuild(
-  db: D1Database,
-  id: string,
-): Promise<TempBuildRow | null> {
+export async function getTempBuild(db: D1Database, id: string): Promise<TempBuildRow | null> {
   const row = await db
     .prepare("SELECT * FROM temp_builds WHERE id = ? AND expires_at > datetime('now')")
     .bind(id)
@@ -782,5 +785,223 @@ export async function cleanupExpiredTempBuilds(db: D1Database): Promise<void> {
     .prepare(
       `DELETE FROM temp_build_rate_limits WHERE created_at < datetime('now', '-${TEMP_BUILD_RATE_LIMIT_WINDOW_SEC} seconds')`,
     )
+    .run();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Image uploads — CRUD + rate limiting + reporting
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const IMAGE_UPLOAD_RATE_LIMIT_MAX = 10;
+const IMAGE_UPLOAD_RATE_LIMIT_WINDOW_SEC = 3600; // 1 hour
+
+export async function createImageUpload(
+  db: D1Database,
+  data: {
+    id: string;
+    uploaderId: string;
+    uploaderName: string;
+    url: string;
+    thumbUrl: string;
+    deleteUrl: string;
+  },
+): Promise<ImageUploadRow> {
+  await db
+    .prepare(
+      `INSERT INTO image_uploads (id, uploader_id, uploader_name, url, thumb_url, delete_url)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(data.id, data.uploaderId, data.uploaderName, data.url, data.thumbUrl, data.deleteUrl)
+    .run();
+
+  const row = await db
+    .prepare('SELECT * FROM image_uploads WHERE id = ?')
+    .bind(data.id)
+    .first<ImageUploadRow>();
+
+  return row!;
+}
+
+export async function getImageUpload(db: D1Database, id: string): Promise<ImageUploadRow | null> {
+  const row = await db
+    .prepare('SELECT * FROM image_uploads WHERE id = ?')
+    .bind(id)
+    .first<ImageUploadRow>();
+
+  return row ?? null;
+}
+
+export async function deleteImageUpload(
+  db: D1Database,
+  id: string,
+  userId: string,
+): Promise<{ deleted: boolean; deleteUrl: string | null }> {
+  const row = await db
+    .prepare('SELECT delete_url FROM image_uploads WHERE id = ? AND uploader_id = ?')
+    .bind(id, userId)
+    .first<{ delete_url: string }>();
+
+  if (!row) return { deleted: false, deleteUrl: null };
+
+  await db
+    .prepare('DELETE FROM image_uploads WHERE id = ? AND uploader_id = ?')
+    .bind(id, userId)
+    .run();
+
+  return { deleted: true, deleteUrl: row.delete_url };
+}
+
+export async function createImageReport(
+  db: D1Database,
+  data: { id: string; imageId: string; reporterId: string; reason: string },
+): Promise<ImageReportRow> {
+  await db
+    .prepare(
+      `INSERT INTO image_reports (id, image_id, reporter_id, reason)
+       VALUES (?, ?, ?, ?)`,
+    )
+    .bind(data.id, data.imageId, data.reporterId, data.reason)
+    .run();
+
+  const row = await db
+    .prepare('SELECT * FROM image_reports WHERE id = ?')
+    .bind(data.id)
+    .first<ImageReportRow>();
+
+  return row!;
+}
+
+export async function checkImageUploadRateLimit(db: D1Database, userId: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM image_uploads
+       WHERE uploader_id = ? AND created_at > datetime('now', '-${IMAGE_UPLOAD_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+
+  return (row?.cnt ?? 0) < IMAGE_UPLOAD_RATE_LIMIT_MAX;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// User profiles — zero content storage; aggregates from existing builds/rosters
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PROFILE_PAGE_SIZE = 12;
+
+type BuildSummaryRow = BuildSummary & { tags_concat: string | null; author_name: string };
+type RosterSummaryRow = RosterSummary & { tags_concat: string | null; author_name: string };
+
+export async function getUserProfile(
+  db: D1Database,
+  username: string,
+): Promise<UserProfileResponse | null> {
+  // Run all reads in parallel — D1 supports concurrent statements
+  const [profileRow, buildsResult, rostersResult] = await Promise.all([
+    db
+      .prepare('SELECT * FROM user_profiles WHERE author_name = ? COLLATE NOCASE')
+      .bind(username)
+      .first<UserProfileRow>(),
+
+    db
+      .prepare(
+        `SELECT b.id, b.author_name, b.title, b.description, b.eso_class, b.role, b.game_mode,
+                b.vote_count, b.created_at, GROUP_CONCAT(DISTINCT bt.tag) AS tags_concat
+         FROM builds b
+         LEFT JOIN build_tags bt ON bt.build_id = b.id
+         WHERE b.author_name = ? COLLATE NOCASE AND b.is_anonymous = 0
+         GROUP BY b.id
+         ORDER BY b.vote_count DESC, b.created_at DESC
+         LIMIT ?`,
+      )
+      .bind(username, PROFILE_PAGE_SIZE)
+      .all<BuildSummaryRow>(),
+
+    db
+      .prepare(
+        `SELECT r.id, r.author_name, r.title, r.description, r.trial_id,
+                r.vote_count, r.created_at, GROUP_CONCAT(DISTINCT rt.tag) AS tags_concat
+         FROM rosters r
+         LEFT JOIN roster_tags rt ON rt.roster_id = r.id
+         WHERE r.author_name = ? COLLATE NOCASE AND r.is_anonymous = 0
+         GROUP BY r.id
+         ORDER BY r.vote_count DESC, r.created_at DESC
+         LIMIT ?`,
+      )
+      .bind(username, PROFILE_PAGE_SIZE)
+      .all<RosterSummaryRow>(),
+  ]);
+
+  // Unknown user — no bio row and no public content
+  if (!profileRow && buildsResult.results.length === 0 && rostersResult.results.length === 0) {
+    return null;
+  }
+
+  const [buildCountRow, rosterCountRow] = await Promise.all([
+    db
+      .prepare(
+        'SELECT COUNT(*) AS cnt FROM builds WHERE author_name = ? COLLATE NOCASE AND is_anonymous = 0',
+      )
+      .bind(username)
+      .first<{ cnt: number }>(),
+    db
+      .prepare(
+        'SELECT COUNT(*) AS cnt FROM rosters WHERE author_name = ? COLLATE NOCASE AND is_anonymous = 0',
+      )
+      .bind(username)
+      .first<{ cnt: number }>(),
+  ]);
+
+  // Prefer the canonical casing from content rows, fall back to the URL slug
+  const displayName =
+    buildsResult.results[0]?.author_name ??
+    rostersResult.results[0]?.author_name ??
+    profileRow?.author_name ??
+    username;
+
+  return {
+    username: displayName,
+    bio: profileRow?.bio ?? '',
+    build_count: buildCountRow?.cnt ?? 0,
+    roster_count: rosterCountRow?.cnt ?? 0,
+    builds: buildsResult.results.map((b) => ({
+      id: b.id,
+      title: b.title,
+      description: b.description,
+      eso_class: b.eso_class,
+      role: b.role,
+      game_mode: b.game_mode,
+      vote_count: b.vote_count,
+      tags: b.tags_concat ? b.tags_concat.split(',') : [],
+      created_at: b.created_at,
+    })),
+    rosters: rostersResult.results.map((r) => ({
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      trial_id: r.trial_id,
+      vote_count: r.vote_count,
+      tags: r.tags_concat ? r.tags_concat.split(',') : [],
+      created_at: r.created_at,
+    })),
+  };
+}
+
+export async function upsertUserBio(
+  db: D1Database,
+  authorId: string,
+  authorName: string,
+  bio: string,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO user_profiles (author_id, author_name, bio, updated_at)
+       VALUES (?, ?, ?, datetime('now'))
+       ON CONFLICT (author_id) DO UPDATE SET
+         author_name = excluded.author_name,
+         bio         = excluded.bio,
+         updated_at  = excluded.updated_at`,
+    )
+    .bind(authorId, authorName, bio)
     .run();
 }
