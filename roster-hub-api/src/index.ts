@@ -899,8 +899,10 @@ app.delete('/images/:id', async (c) => {
 // User profiles — public pages, no new content storage
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Valid ESO Logs username characters — letters, digits, underscores, hyphens, dots
-const VALID_USERNAME_RE = /^[a-zA-Z0-9_.\-]{1,100}$/;
+// Valid ESO Logs username characters — letters, digits, underscores, hyphens, dots,
+// apostrophes, and spaces (ESO display names commonly include ' and spaces).
+// All queries are parameterised so special characters carry no injection risk.
+const VALID_USERNAME_RE = /^[a-zA-Z0-9_.\-' ]{1,100}$/;
 
 // Names reserved by the API namespace — prevent /users/me matching the profile route
 const RESERVED_USERNAMES = new Set(['me']);
