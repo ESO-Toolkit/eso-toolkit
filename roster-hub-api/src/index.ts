@@ -240,6 +240,10 @@ app.post('/rosters', async (c) => {
   if (!createAllowed)
     return c.json({ error: 'Rate limit exceeded. You can only publish 5 rosters per hour.' }, 429);
 
+  const createAllowed = await checkRosterCreateRateLimit(c.env.DB, user.id);
+  if (!createAllowed)
+    return c.json({ error: 'Rate limit exceeded. You can only publish 5 rosters per hour.' }, 429);
+
   // Generate a short unique ID (nanoid-style without the dep)
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
     .map((b) => b.toString(36).padStart(2, '0'))
