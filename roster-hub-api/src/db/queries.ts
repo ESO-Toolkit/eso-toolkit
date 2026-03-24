@@ -7,6 +7,8 @@ import type { D1Database } from '@cloudflare/workers-types';
 import type {
   CommentRow,
   CommentWithReplies,
+  ImageReportRow,
+  ImageUploadRow,
   RosterRow,
   RosterTagRow,
   RosterWithMeta,
@@ -765,4 +767,105 @@ export async function cleanupExpiredTempBuilds(db: D1Database): Promise<void> {
       `DELETE FROM temp_build_rate_limits WHERE created_at < datetime('now', '-${TEMP_BUILD_RATE_LIMIT_WINDOW_SEC} seconds')`,
     )
     .run();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Image uploads — CRUD + rate limiting + reporting
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const IMAGE_UPLOAD_RATE_LIMIT_MAX = 10;
+const IMAGE_UPLOAD_RATE_LIMIT_WINDOW_SEC = 3600; // 1 hour
+
+export async function createImageUpload(
+  db: D1Database,
+  data: {
+    id: string;
+    uploaderId: string;
+    uploaderName: string;
+    url: string;
+    thumbUrl: string;
+    deleteUrl: string;
+  },
+): Promise<ImageUploadRow> {
+  await db
+    .prepare(
+      `INSERT INTO image_uploads (id, uploader_id, uploader_name, url, thumb_url, delete_url)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(data.id, data.uploaderId, data.uploaderName, data.url, data.thumbUrl, data.deleteUrl)
+    .run();
+
+  const row = await db
+    .prepare('SELECT * FROM image_uploads WHERE id = ?')
+    .bind(data.id)
+    .first<ImageUploadRow>();
+
+  return row!;
+}
+
+export async function getImageUpload(
+  db: D1Database,
+  id: string,
+): Promise<ImageUploadRow | null> {
+  const row = await db
+    .prepare('SELECT * FROM image_uploads WHERE id = ?')
+    .bind(id)
+    .first<ImageUploadRow>();
+
+  return row ?? null;
+}
+
+export async function deleteImageUpload(
+  db: D1Database,
+  id: string,
+  userId: string,
+): Promise<{ deleted: boolean; deleteUrl: string | null }> {
+  const row = await db
+    .prepare('SELECT delete_url FROM image_uploads WHERE id = ? AND uploader_id = ?')
+    .bind(id, userId)
+    .first<{ delete_url: string }>();
+
+  if (!row) return { deleted: false, deleteUrl: null };
+
+  await db
+    .prepare('DELETE FROM image_uploads WHERE id = ? AND uploader_id = ?')
+    .bind(id, userId)
+    .run();
+
+  return { deleted: true, deleteUrl: row.delete_url };
+}
+
+export async function createImageReport(
+  db: D1Database,
+  data: { id: string; imageId: string; reporterId: string; reason: string },
+): Promise<ImageReportRow> {
+  await db
+    .prepare(
+      `INSERT INTO image_reports (id, image_id, reporter_id, reason)
+       VALUES (?, ?, ?, ?)`,
+    )
+    .bind(data.id, data.imageId, data.reporterId, data.reason)
+    .run();
+
+  const row = await db
+    .prepare('SELECT * FROM image_reports WHERE id = ?')
+    .bind(data.id)
+    .first<ImageReportRow>();
+
+  return row!;
+}
+
+export async function checkImageUploadRateLimit(
+  db: D1Database,
+  userId: string,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM image_uploads
+       WHERE uploader_id = ? AND created_at > datetime('now', '-${IMAGE_UPLOAD_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+
+  return (row?.cnt ?? 0) < IMAGE_UPLOAD_RATE_LIMIT_MAX;
 }

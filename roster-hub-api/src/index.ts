@@ -37,7 +37,13 @@ import {
   checkTempBuildRateLimit,
   recordTempBuildRateLimit,
   cleanupExpiredTempBuilds,
+  createImageUpload,
+  getImageUpload,
+  deleteImageUpload,
+  createImageReport,
+  checkImageUploadRateLimit,
 } from './db/queries';
+import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import type { Env } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -656,6 +662,175 @@ app.get('/temp-builds/:id', async (c) => {
     created_at: row.created_at,
     expires_at: row.expires_at,
   });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Image uploads — AI-moderated image hosting via ImgBB
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── POST /images/upload — upload with AI moderation ─────────────────────────
+
+app.post('/images/upload', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  // Rate limit: 10 uploads per hour
+  const allowed = await checkImageUploadRateLimit(c.env.DB, user.id);
+  if (!allowed)
+    return c.json({ error: 'Rate limit exceeded. You can upload up to 10 images per hour.' }, 429);
+
+  interface UploadBody {
+    image: string; // base64 (raw or data-URL)
+    name?: string;
+  }
+
+  let body: UploadBody;
+  try {
+    body = await c.req.json<UploadBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.image?.trim()) return c.json({ error: 'image is required' }, 400);
+
+  // Strip data-URL prefix if present
+  let base64 = body.image;
+  const commaIdx = base64.indexOf(',');
+  if (commaIdx !== -1 && base64.startsWith('data:')) {
+    base64 = base64.slice(commaIdx + 1);
+  }
+
+  // Decode base64 → bytes
+  let imageBytes: Uint8Array;
+  try {
+    const binaryString = atob(base64);
+    imageBytes = Uint8Array.from(binaryString, (ch) => ch.charCodeAt(0));
+  } catch {
+    return c.json({ error: 'Invalid base64 image data' }, 400);
+  }
+
+  if (imageBytes.byteLength > MAX_IMAGE_BYTES) {
+    return c.json({ error: 'Image must be ≤ 10 MB' }, 400);
+  }
+
+  // ── Workers AI moderation ────────────────────────────────────────────────
+  try {
+    const moderation = await moderateImage(c.env.AI, imageBytes);
+    if (!moderation.safe) {
+      return c.json(
+        {
+          error: 'Image flagged as inappropriate and cannot be uploaded.',
+          label: moderation.blockedLabel,
+        },
+        400,
+      );
+    }
+  } catch (err) {
+    // If AI is unavailable, log but don't block the upload — user reporting
+    // still provides a safety net.  In production you may want to fail closed.
+    console.error('Workers AI moderation failed, allowing upload:', err);
+  }
+
+  // ── Proxy to ImgBB ───────────────────────────────────────────────────────
+  const formData = new FormData();
+  formData.append('key', c.env.IMGBB_API_KEY);
+  formData.append('image', base64);
+  if (body.name) formData.append('name', body.name);
+
+  const imgbbRes = await fetch('https://api.imgbb.com/1/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!imgbbRes.ok) {
+    const errBody = await imgbbRes.text();
+    console.error('ImgBB upload failed:', errBody);
+    return c.json({ error: 'Image host upload failed' }, 502);
+  }
+
+  interface ImgBBResponse {
+    data: {
+      id: string;
+      url: string;
+      thumb: { url: string };
+      delete_url: string;
+    };
+  }
+
+  const imgbb = (await imgbbRes.json()) as ImgBBResponse;
+
+  // ── Store metadata in D1 ─────────────────────────────────────────────────
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
+    .map((b) => b.toString(36).padStart(2, '0'))
+    .join('')
+    .slice(0, 12);
+
+  await createImageUpload(c.env.DB, {
+    id,
+    uploaderId: user.id,
+    uploaderName: user.name,
+    url: imgbb.data.url,
+    thumbUrl: imgbb.data.thumb.url,
+    deleteUrl: imgbb.data.delete_url,
+  });
+
+  return c.json({ id, url: imgbb.data.url, thumb_url: imgbb.data.thumb.url }, 201);
+});
+
+// ─── POST /images/:id/report — flag an image ────────────────────────────────
+
+app.post('/images/:id/report', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const imageId = c.req.param('id');
+  const image = await getImageUpload(c.env.DB, imageId);
+  if (!image) return c.json({ error: 'Image not found' }, 404);
+
+  interface ReportBody {
+    reason: string;
+  }
+
+  let body: ReportBody;
+  try {
+    body = await c.req.json<ReportBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.reason?.trim()) return c.json({ error: 'reason is required' }, 400);
+  if (body.reason.length > 500) return c.json({ error: 'reason must be ≤ 500 characters' }, 400);
+
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
+    .map((b) => b.toString(36).padStart(2, '0'))
+    .join('')
+    .slice(0, 12);
+
+  await createImageReport(c.env.DB, {
+    id,
+    imageId,
+    reporterId: user.id,
+    reason: body.reason.trim(),
+  });
+
+  return c.json({ ok: true }, 201);
+});
+
+// ─── DELETE /images/:id — delete own image ───────────────────────────────────
+
+app.delete('/images/:id', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const result = await deleteImageUpload(c.env.DB, c.req.param('id'), user.id);
+  if (!result.deleted) return c.json({ error: 'Not found or forbidden' }, 404);
+
+  // Best-effort delete from ImgBB (fire-and-forget)
+  if (result.deleteUrl) {
+    fetch(result.deleteUrl).catch(() => {});
+  }
+
+  return c.json({ ok: true });
 });
 
 export default app;

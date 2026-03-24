@@ -1,6 +1,8 @@
 export interface Env {
   DB: D1Database;
+  AI: Ai;
   ALLOWED_ORIGINS: string;
+  IMGBB_API_KEY: string;
 }
 
 export interface RosterRow {
@@ -97,4 +99,24 @@ export interface TempBuildRow {
   build_data: string;
   created_at: string;
   expires_at: string;
+}
+
+// ─── Image upload types ───────────────────────────────────────────────────────
+
+export interface ImageUploadRow {
+  id: string;
+  uploader_id: string;
+  uploader_name: string;
+  url: string;
+  thumb_url: string;
+  delete_url: string;
+  created_at: string;
+}
+
+export interface ImageReportRow {
+  id: string;
+  image_id: string;
+  reporter_id: string;
+  reason: string;
+  created_at: string;
 }
