@@ -3,7 +3,17 @@
  */
 
 import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
-import { Box, Button, Grid, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  IconButton,
+  ImageList,
+  ImageListItem,
+  Stack,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+} from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useSnackbar } from 'notistack';
@@ -25,6 +35,7 @@ export const ScreenshotsSection: React.FC = () => {
   const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
   const setup = build.setups[activeSetupIndex];
   const inputRef = useRef<HTMLInputElement>(null);
+  const isXs = useMediaQuery(theme.breakpoints.only('xs'));
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const files = e.target.files;
@@ -102,10 +113,10 @@ export const ScreenshotsSection: React.FC = () => {
         </Box>
       ) : (
         <>
-          <Grid container spacing={1}>
+          <ImageList variant="masonry" cols={isXs ? 1 : 2} gap={8}>
             <AnimatePresence>
               {setup.screenshots.map((src, i) => (
-                <Grid size={{ xs: 6, sm: 4 }} key={src.slice(0, 48) + i}>
+                <ImageListItem key={src.slice(0, 48) + i}>
                   <motion.div
                     layout={!prefersReduced}
                     initial={prefersReduced ? false : { scale: 0.9, opacity: 0 }}
@@ -139,8 +150,6 @@ export const ScreenshotsSection: React.FC = () => {
                         alt={`Screenshot ${i + 1}`}
                         style={{
                           width: '100%',
-                          aspectRatio: '16/9',
-                          objectFit: 'cover',
                           display: 'block',
                         }}
                       />
@@ -171,10 +180,10 @@ export const ScreenshotsSection: React.FC = () => {
                       </Tooltip>
                     </Box>
                   </motion.div>
-                </Grid>
+                </ImageListItem>
               ))}
             </AnimatePresence>
-          </Grid>
+          </ImageList>
 
           <Button
             startIcon={<AddIcon sx={{ fontSize: 14 }} />}
