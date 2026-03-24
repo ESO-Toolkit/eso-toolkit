@@ -779,9 +779,8 @@ app.post('/images/upload', async (c) => {
       );
     }
   } catch (err) {
-    // If AI is unavailable, log but don't block the upload — user reporting
-    // still provides a safety net.  In production you may want to fail closed.
-    console.error('Workers AI moderation failed, allowing upload:', err);
+    console.error('Workers AI moderation unavailable:', err);
+    return c.json({ error: 'Image moderation service unavailable. Please try again.' }, 503);
   }
 
   // ── Proxy to ImgBB ───────────────────────────────────────────────────────

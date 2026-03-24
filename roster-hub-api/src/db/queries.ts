@@ -435,12 +435,18 @@ export async function listBuilds(
     votedSet = new Set(voteRows.results.map((v) => v.build_id));
   }
 
-  return rows.results.map((row) => ({
-    ...row,
-    is_anonymous: row.is_anonymous ? true : false,
-    tags: row.tags_concat ? row.tags_concat.split(',') : [],
-    user_voted: opts.userId ? votedSet.has(row.id) : undefined,
-  }));
+  return rows.results.map((row) => {
+    const isAnon = row.is_anonymous ? true : false;
+    const isOwner = opts.userId === row.author_id;
+    return {
+      ...row,
+      author_id: isAnon && !isOwner ? '' : row.author_id,
+      author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
+      is_anonymous: isAnon,
+      tags: row.tags_concat ? row.tags_concat.split(',') : [],
+      user_voted: opts.userId ? votedSet.has(row.id) : undefined,
+    };
+  });
 }
 
 export async function getBuildById(
@@ -465,9 +471,13 @@ export async function getBuildById(
     userVoted = vote !== null;
   }
 
+  const isAnon = row.is_anonymous ? true : false;
+  const isOwner = userId === row.author_id;
   return {
     ...row,
-    is_anonymous: row.is_anonymous ? true : false,
+    author_id: isAnon && !isOwner ? '' : row.author_id,
+    author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
+    is_anonymous: isAnon,
     tags: tagRows.results.map((t) => t.tag),
     user_voted: userId ? userVoted : undefined,
   };
@@ -566,40 +576,32 @@ export async function toggleBuildVote(
   buildId: string,
   userId: string,
 ): Promise<{ voted: boolean; voteCount: number }> {
-  const existing = await db
-    .prepare('SELECT 1 FROM build_votes WHERE build_id = ? AND user_id = ?')
+  const insertResult = await db
+    .prepare('INSERT OR IGNORE INTO build_votes (build_id, user_id) VALUES (?, ?)')
     .bind(buildId, userId)
-    .first();
+    .run();
 
-  if (existing) {
+  const voted = (insertResult.meta.changes ?? 0) > 0;
+
+  if (!voted) {
     await db
       .prepare('DELETE FROM build_votes WHERE build_id = ? AND user_id = ?')
       .bind(buildId, userId)
       .run();
-    await db
-      .prepare('UPDATE builds SET vote_count = vote_count - 1 WHERE id = ? AND vote_count > 0')
-      .bind(buildId)
-      .run();
-    const updated = await db
-      .prepare('SELECT vote_count FROM builds WHERE id = ?')
-      .bind(buildId)
-      .first<{ vote_count: number }>();
-    return { voted: false, voteCount: updated?.vote_count ?? 0 };
-  } else {
-    await db
-      .prepare('INSERT INTO build_votes (build_id, user_id) VALUES (?, ?)')
-      .bind(buildId, userId)
-      .run();
-    await db
-      .prepare('UPDATE builds SET vote_count = vote_count + 1 WHERE id = ?')
-      .bind(buildId)
-      .run();
-    const updated = await db
-      .prepare('SELECT vote_count FROM builds WHERE id = ?')
-      .bind(buildId)
-      .first<{ vote_count: number }>();
-    return { voted: true, voteCount: updated?.vote_count ?? 1 };
   }
+
+  const countRow = await db
+    .prepare('SELECT COUNT(*) AS cnt FROM build_votes WHERE build_id = ?')
+    .bind(buildId)
+    .first<{ cnt: number }>();
+  const voteCount = countRow?.cnt ?? 0;
+
+  await db
+    .prepare('UPDATE builds SET vote_count = ? WHERE id = ?')
+    .bind(voteCount, buildId)
+    .run();
+
+  return { voted, voteCount };
 }
 
 // ─── Build Comments ───────────────────────────────────────────────────────────
@@ -775,6 +777,13 @@ export async function recordTempBuildRateLimit(db: D1Database, ip: string): Prom
   await db
     .prepare("INSERT INTO temp_build_rate_limits (ip, created_at) VALUES (?, datetime('now'))")
     .bind(ip)
+    .run();
+  // Prune expired entries on every write so the table stays bounded even if the
+  // scheduled cleanup (cleanupExpiredTempBuilds) is delayed or skipped.
+  await db
+    .prepare(
+      `DELETE FROM temp_build_rate_limits WHERE created_at < datetime('now', '-${TEMP_BUILD_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
     .run();
 }
 
