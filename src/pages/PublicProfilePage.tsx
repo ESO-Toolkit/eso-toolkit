@@ -631,7 +631,6 @@ export const PublicProfilePage: React.FC = () => {
     };
   }, [profile]);
 
-
   const handleSaveBio = useCallback(
     async (bio: string) => {
       if (!accessToken) return;
