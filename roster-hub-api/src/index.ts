@@ -30,6 +30,8 @@ import {
   createBuildComment,
   deleteBuildComment,
   checkBuildCommentRateLimit,
+  checkRosterVoteRateLimit,
+  checkRosterCreateRateLimit,
   checkBuildVoteRateLimit,
   checkBuildCreateRateLimit,
   createTempBuild,
@@ -181,6 +183,10 @@ app.post('/rosters', async (c) => {
     return c.json({ error: 'description must be ≤ 500 characters' }, 400);
   if (roster_data.length > 50_000)
     return c.json({ error: 'roster_data must be ≤ 50 000 characters' }, 400);
+
+  const createAllowed = await checkRosterCreateRateLimit(c.env.DB, user.id);
+  if (!createAllowed)
+    return c.json({ error: 'Rate limit exceeded. You can only publish 5 rosters per hour.' }, 429);
 
   // Generate a short unique ID (nanoid-style without the dep)
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
@@ -389,7 +395,7 @@ app.get('/builds', async (c) => {
   const gameMode = c.req.query('mode') ?? undefined;
   const tag = c.req.query('tag') ?? undefined;
   const sort = c.req.query('sort') === 'recent' ? 'recent' : 'votes';
-  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10));
+  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10) || 1);
 
   const builds = await listBuilds(c.env.DB, {
     esoClass,
@@ -702,8 +708,11 @@ app.post('/temp-builds', async (c) => {
 app.get('/temp-builds/:id', async (c) => {
   const id = c.req.param('id');
 
-  // Lazy cleanup: remove expired builds on read
-  await cleanupExpiredTempBuilds(c.env.DB);
+  // Probabilistic cleanup: run ~1-in-50 reads to keep the table small without
+  // adding a synchronous write to every request.
+  if (Math.random() < 0.02) {
+    void cleanupExpiredTempBuilds(c.env.DB);
+  }
 
   const row = await getTempBuild(c.env.DB, id);
   if (!row) {
@@ -878,7 +887,8 @@ app.delete('/images/:id', async (c) => {
   if (!result.deleted) return c.json({ error: 'Not found or forbidden' }, 404);
 
   // Best-effort delete from ImgBB (fire-and-forget)
-  if (result.deleteUrl) {
+  // Validate the URL is an ImgBB domain before fetching to prevent SSRF
+  if (result.deleteUrl && /^https:\/\/ibb\.co\//.test(result.deleteUrl)) {
     fetch(result.deleteUrl).catch(() => {});
   }
 

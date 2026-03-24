@@ -688,6 +688,17 @@ export async function checkBuildCommentRateLimit(db: D1Database, userId: string)
 const VOTE_RATE_LIMIT_WINDOW_SEC = 3600;
 const VOTE_RATE_LIMIT_MAX = 20;
 
+export async function checkRosterVoteRateLimit(db: D1Database, userId: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM roster_votes
+       WHERE user_id = ? AND created_at > datetime('now', '-${VOTE_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < VOTE_RATE_LIMIT_MAX;
+}
+
 export async function checkBuildVoteRateLimit(db: D1Database, userId: string): Promise<boolean> {
   const row = await db
     .prepare(
@@ -697,6 +708,21 @@ export async function checkBuildVoteRateLimit(db: D1Database, userId: string): P
     .bind(userId)
     .first<{ cnt: number }>();
   return (row?.cnt ?? 0) < VOTE_RATE_LIMIT_MAX;
+}
+
+// Roster create rate limit: 5 creates per hour per user
+const ROSTER_CREATE_RATE_LIMIT_WINDOW_SEC = 3600;
+const ROSTER_CREATE_RATE_LIMIT_MAX = 5;
+
+export async function checkRosterCreateRateLimit(db: D1Database, userId: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM rosters
+       WHERE author_id = ? AND created_at > datetime('now', '-${ROSTER_CREATE_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < ROSTER_CREATE_RATE_LIMIT_MAX;
 }
 
 // Build create rate limit: 5 creates per hour per user
