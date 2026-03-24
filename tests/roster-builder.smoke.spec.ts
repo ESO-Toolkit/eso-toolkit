@@ -37,8 +37,8 @@ test.describe('RosterBuilderPage — load', () => {
     await page.waitForLoadState('networkidle');
     await expect(page.getByRole('heading', { name: 'Roster Builder' })).toBeVisible();
     // Mode tabs
-    await expect(page.getByText('Simple Mode')).toBeVisible();
-    await expect(page.getByText('Advanced Mode')).toBeVisible();
+    await expect(page.getByText('Simple')).toBeVisible();
+    await expect(page.getByText('Full')).toBeVisible();
     // Action buttons
     await expect(page.getByText('Quick Fill')).toBeVisible();
     await expect(
