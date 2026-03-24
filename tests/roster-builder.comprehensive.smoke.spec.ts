@@ -329,8 +329,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
     await page.goto('/roster-builder');
     await page.waitForLoadState('networkidle');
     await expect(page.getByRole('heading', { name: 'Roster Builder' })).toBeVisible();
-    await expect(page.getByText('Simple')).toBeVisible();
-    await expect(page.getByText('Full')).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Simple mode' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Full mode' })).toBeVisible();
   });
 
   test('successfully fills out a complete roster with all features', async ({ page }) => {
