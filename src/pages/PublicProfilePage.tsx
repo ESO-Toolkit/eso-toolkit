@@ -631,6 +631,7 @@ export const PublicProfilePage: React.FC = () => {
     };
   }, [profile]);
 
+
   const handleSaveBio = useCallback(
     async (bio: string) => {
       if (!accessToken) return;
@@ -690,6 +691,7 @@ export const PublicProfilePage: React.FC = () => {
       setDeleteTarget(null);
     }
   }, [deleteTarget, accessToken, enqueueSnackbar]);
+
 
   // ── Loading ───────────────────────────────────────────────────────────────
 
