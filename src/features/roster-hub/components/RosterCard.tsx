@@ -1,4 +1,4 @@
-import { ContentCopy, DeleteOutline } from '@mui/icons-material';
+import { ContentCopy, DeleteOutline, EditOutlined } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -13,6 +13,7 @@ import {
 import { useSnackbar } from 'notistack';
 import React from 'react';
 
+import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
 import type { HubRoster } from '../types/roster-hub.types';
 import { TAG_COLORS } from '../types/roster-hub.types';
 
@@ -23,8 +24,8 @@ interface RosterCardProps {
   isOwner: boolean;
   isLoggedIn: boolean;
   onVote: (id: string) => void;
-  onPreview: (roster: HubRoster) => void;
   onDelete: (id: string) => void;
+  onEdit: (roster: HubRoster) => void;
 }
 
 // Shared trial label map — single source of truth
@@ -98,9 +99,10 @@ function formatDate(iso: string): string {
 }
 
 export const RosterCard: React.FC<RosterCardProps> = React.memo(
-  ({ roster, isOwner, isLoggedIn, onVote, onPreview, onDelete }) => {
+  ({ roster, isOwner, isLoggedIn, onVote, onDelete, onEdit }) => {
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
+    const navigate = useViewTransitionNavigate();
     const isDark = theme.palette.mode === 'dark';
 
     const handleCopyLink = (e: React.MouseEvent): void => {
@@ -164,9 +166,9 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
         {/* Clickable area — opens preview */}
         <CardActionArea
-          onClick={() => onPreview(roster)}
+          onClick={() => navigate(`/rv?r=${encodeURIComponent(roster.roster_data)}`)}
           sx={{ flexGrow: 1, alignItems: 'flex-start' }}
-          aria-label={`Preview ${roster.title}`}
+          aria-label={`View ${roster.title}`}
         >
           <CardContent
             sx={{
@@ -380,6 +382,23 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                 <ContentCopy sx={{ fontSize: 17 }} />
               </IconButton>
             </Tooltip>
+            {isOwner && (
+              <Tooltip title="Edit roster details">
+                <IconButton
+                  size="small"
+                  onClick={() => onEdit(roster)}
+                  aria-label="Edit roster details"
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    color: 'text.disabled',
+                    '&:hover': { color: 'text.secondary' },
+                  }}
+                >
+                  <EditOutlined sx={{ fontSize: 17 }} />
+                </IconButton>
+              </Tooltip>
+            )}
             {isOwner && (
               <Tooltip title="Delete roster">
                 <IconButton

@@ -33,7 +33,7 @@ async function generateFullRoster(page: Page) {
     roster.rosterName = '✓ Complete Raid Team';
 
     // ─── Tanks ───────────────────────────────────────────────────────────
-    roster.tank1 = {
+    roster.tanks[0] = {
       playerName: 'TankA',
       playerNumber: 1,
       roleLabel: 'MT',
@@ -55,7 +55,7 @@ async function generateFullRoster(page: Page) {
       notes: 'Single Bar Build',
     };
 
-    roster.tank2 = {
+    roster.tanks[1] = {
       playerName: 'TankB',
       playerNumber: 2,
       roleLabel: 'OT',
@@ -78,7 +78,7 @@ async function generateFullRoster(page: Page) {
     };
 
     // ─── Healers ──────────────────────────────────────────────────────────
-    roster.healer1 = {
+    roster.healers[0] = {
       playerName: 'HealerA',
       playerNumber: 1,
       roleLabel: 'H1',
@@ -99,7 +99,7 @@ async function generateFullRoster(page: Page) {
       notes: 'Primary Healer',
     };
 
-    roster.healer2 = {
+    roster.healers[1] = {
       playerName: 'HealerB',
       playerNumber: 2,
       roleLabel: 'H2',
@@ -327,9 +327,10 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
   test('renders all roster builder sections', async ({ page }) => {
     await page.goto('/roster-builder');
+    await page.waitForLoadState('networkidle');
     await expect(page.getByRole('heading', { name: 'Roster Builder' })).toBeVisible();
-    await expect(page.getByText('Simple Mode')).toBeVisible();
-    await expect(page.getByText('Advanced Mode')).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Simple mode' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Full mode' })).toBeVisible();
   });
 
   test('successfully fills out a complete roster with all features', async ({ page }) => {
@@ -343,8 +344,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
       const roster = createDefaultRoster();
       roster.rosterName = '✓ Complete Raid Team';
-      roster.tank1.playerName = 'TankA';
-      roster.healer1.playerName = 'HealerA';
+      roster.tanks[0].playerName = 'TankA';
+      roster.healers[0].playerName = 'HealerA';
       roster.dpsSlots[0].playerName = 'DPS1';
 
       // Populate all 8 DPS slots
@@ -358,8 +359,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
       return {
         encoded,
         rosterName: decoded.rosterName,
-        tank1Name: decoded.tank1.playerName,
-        healer1Name: decoded.healer1.playerName,
+        tank1Name: decoded.tanks[0].playerName,
+        healer1Name: decoded.healers[0].playerName,
         dpsCount: decoded.dpsSlots.filter((s) => s.playerName).length,
         firstDpsName: decoded.dpsSlots[0].playerName,
         lastDpsName: decoded.dpsSlots[7].playerName,
@@ -413,10 +414,10 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
     // Verify key data points survived round-trip
     expect(decodedRoster.rosterName).toBe('✓ Complete Raid Team');
-    expect(decodedRoster.tank1.playerName).toBe('TankA');
-    expect(decodedRoster.tank1.roleLabel).toBe('MT');
-    expect(decodedRoster.healer1.playerName).toBe('HealerA');
-    expect(decodedRoster.healer1.roleLabel).toBe('H1');
+    expect(decodedRoster.tanks[0].playerName).toBe('TankA');
+    expect(decodedRoster.tanks[0].roleLabel).toBe('MT');
+    expect(decodedRoster.healers[0].playerName).toBe('HealerA');
+    expect(decodedRoster.healers[0].roleLabel).toBe('H1');
 
     // Verify all 8 DPS slots
     expect(decodedRoster.dpsSlots.length).toBe(8);
@@ -496,13 +497,13 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
       const roster = createDefaultRoster();
       // Configure skill lines
-      roster.tank1.skillLines = {
+      roster.tanks[0].skillLines = {
         line1: 'Draconic Power',
         line2: 'Earthen Heart',
         line3: 'Ardent Flame',
         isFlex: false,
       };
-      roster.healer1.skillLines = {
+      roster.healers[0].skillLines = {
         line1: 'Restoring Light',
         line2: 'Aedric Spear',
         line3: "Dawn's Wrath",
@@ -513,8 +514,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
       const decoded = await decodeRosterFromURL(encoded);
 
       return {
-        tank1SkillLines: decoded.tank1.skillLines,
-        healer1SkillLines: decoded.healer1.skillLines,
+        tank1SkillLines: decoded.tanks[0].skillLines,
+        healer1SkillLines: decoded.healers[0].skillLines,
       };
     });
 
@@ -573,11 +574,11 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
         await import('/src/utils/rosterEncoding.ts');
 
       const roster = createDefaultRoster();
-      roster.tank1 = {
+      roster.tanks[0] = {
         ...defaultTankSetup(),
         ultimate: 'Aggressive Warhorn',
       };
-      roster.healer1 = {
+      roster.healers[0] = {
         ...defaultHealerSetup(),
         ultimate: 'Aggressive Warhorn',
         healerBuff: 'Enlivening Overflow',
@@ -593,10 +594,10 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
       const decoded = await decodeRosterFromURL(encoded);
 
       return {
-        tank1Ultimate: decoded.tank1.ultimate,
-        healer1Ultimate: decoded.healer1.ultimate,
-        healer1Buff: decoded.healer1.healerBuff,
-        healer1CP: decoded.healer1.championPoint,
+        tank1Ultimate: decoded.tanks[0].ultimate,
+        healer1Ultimate: decoded.healers[0].ultimate,
+        healer1Buff: decoded.healers[0].healerBuff,
+        healer1CP: decoded.healers[0].championPoint,
         dps1CP: decoded.dpsSlots[0].championPoint,
       };
     });
@@ -625,7 +626,7 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
         'Slayer Stack 2',
         'Jail Stack',
       ];
-      roster.tank1 = {
+      roster.tanks[0] = {
         ...defaultTankSetup(),
         labels: ['Main', 'Trash Tank'],
         groups: ['Tank Pair'],
@@ -646,8 +647,8 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
       return {
         rosterGroups: decoded.availableGroups,
-        tank1Groups: decoded.tank1.groups,
-        tank1Labels: decoded.tank1.labels,
+        tank1Groups: decoded.tanks[0].groups,
+        tank1Labels: decoded.tanks[0].labels,
         dps1Labels: decoded.dpsSlots[0].labels,
         dps5Groups: decoded.dpsSlots[4].groups,
       };
@@ -672,14 +673,14 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
         await import('/src/utils/rosterEncoding.ts');
 
       const roster = createDefaultRoster();
-      roster.tank1 = {
+      roster.tanks[0] = {
         ...defaultTankSetup(),
         playerName: 'TankA',
         playerNumber: '1',
         roleLabel: 'MT',
         notes: 'TOMB Main Tank (1A)',
       };
-      roster.healer1 = {
+      roster.healers[0] = {
         ...defaultHealerSetup(),
         playerName: 'HealerA',
         playerNumber: '1',
@@ -699,15 +700,15 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
 
       return {
         tank1: {
-          name: decoded.tank1.playerName,
-          number: decoded.tank1.playerNumber,
-          label: decoded.tank1.roleLabel,
-          notes: decoded.tank1.notes,
+          name: decoded.tanks[0].playerName,
+          number: decoded.tanks[0].playerNumber,
+          label: decoded.tanks[0].roleLabel,
+          notes: decoded.tanks[0].notes,
         },
         healer1: {
-          name: decoded.healer1.playerName,
-          number: decoded.healer1.playerNumber,
-          label: decoded.healer1.roleLabel,
+          name: decoded.healers[0].playerName,
+          number: decoded.healers[0].playerNumber,
+          label: decoded.healers[0].roleLabel,
         },
         dps1: {
           name: decoded.dpsSlots[0].playerName,

@@ -3,6 +3,9 @@
  * Defines the structure for raid roster management including roles, gear sets, and assignments
  */
 
+import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
+import type { GearConfig, SkillsConfig } from '../features/loadout-manager/types/loadout.types';
+
 import { KnownSetIDs } from './abilities';
 import type { TrialBuildOverrides } from './trial-encounters';
 
@@ -102,6 +105,30 @@ export interface PlayerGroup {
 }
 
 /**
+ * Roster display detail level
+ */
+export type RosterDetailLevel = 'simple' | 'full';
+
+/**
+ * Reference to a Build Editor build attached to a roster slot.
+ * Stores build.id (not SavedBuild.id) so the reference survives re-saves.
+ * Metadata fields (buildName, esoClass, role) are cached for display
+ * without needing to load the full build.
+ */
+export interface BuildReference {
+  /** build.id from the Build type */
+  buildId?: string;
+  /** Which of the build's setups (0-indexed) to use */
+  setupIndex: number;
+  /** Build name cached for display */
+  buildName?: string;
+  /** ESO class cached for display (e.g. 'dragonknight') */
+  esoClass?: string;
+  /** Combat role cached for display (e.g. 'tank') */
+  role?: string;
+}
+
+/**
  * Tank gear set configuration
  */
 export interface TankGearSet {
@@ -138,7 +165,7 @@ export interface DPSSlot {
   gearSets?: KnownSetIDs[]; // Legacy flat gear set tracking
   skillLines?: SkillLineConfig;
   championPoint?: string | null; // Champion point selection (free text or preset)
-  specificSkills?: string[]; // Specific skills required for this slot
+  specificSkills?: number[]; // Specific skill ability IDs required for this slot
   ultimate?: string | null; // Ultimate ability
   groups?: string[]; // Multiple group memberships (e.g., ["Left Stack", "Portal"])
   /** @deprecated Use groups instead. Kept for backward-compat URL decoding. */
@@ -146,12 +173,25 @@ export interface DPSSlot {
   notes?: string;
   jailDDType?: JailDDType; // If set, this slot is configured as a jail DD
   customDescription?: string; // For 'custom' jail DD type
+  /** Attached build from the Build Editor */
+  buildRef?: BuildReference;
+  /** Food/drink consumable for this slot */
+  food?: { id?: number; name?: string };
+  /** Full skill bars — populated in Full detail mode */
+  skills?: SkillsConfig;
+  /** Champion points — populated in Full detail mode */
+  cpPoints?: BuildChampionPoints;
+  /** Passive ability IDs — populated in Full detail mode */
+  passives?: number[];
+  /** Per-slot equipment — populated in Full detail mode */
+  gear?: GearConfig;
 }
 
 /**
  * Healer configuration
  */
 export interface HealerSetup {
+  slotNumber: number; // 1-based index within the healer array
   playerName?: string;
   positionTag?: string; // Assignment tag — e.g. "portal", "tomb" (shown before position)
   playerNumber?: string; // Position within that tag — e.g. "left", "right", "1"
@@ -166,18 +206,31 @@ export interface HealerSetup {
   skillLines: SkillLineConfig;
   healerBuff: HealerBuff | null;
   championPoint?: HealerChampionPoint | null; // Champion point slotted
-  specificSkills: string[];
+  specificSkills: number[];
   ultimate: string | null; // Allows preset ultimates or custom text
   groups?: string[]; // Multiple group memberships
   /** @deprecated Use groups instead. Kept for backward-compat URL decoding. */
   group?: PlayerGroup;
   notes?: string;
+  /** Attached build from the Build Editor */
+  buildRef?: BuildReference;
+  /** Food/drink consumable for this slot */
+  food?: { id?: number; name?: string };
+  /** Full skill bars — populated in Full detail mode */
+  skills?: SkillsConfig;
+  /** Champion points — populated in Full detail mode */
+  cpPoints?: BuildChampionPoints;
+  /** Passive ability IDs — populated in Full detail mode */
+  passives?: number[];
+  /** Per-slot equipment — populated in Full detail mode */
+  gear?: GearConfig;
 }
 
 /**
  * Tank configuration
  */
 export interface TankSetup {
+  slotNumber: number; // 1-based index within the tank array
   playerName?: string;
   positionTag?: string; // Assignment tag — e.g. "portal", "bridge" (shown before position)
   playerNumber?: string; // Position within that tag — e.g. "left", "right", "1"
@@ -187,12 +240,40 @@ export interface TankSetup {
   gearSets: TankGearSet;
   skillLines: SkillLineConfig;
   ultimate: string | null; // Allows preset ultimates or custom text
-  specificSkills: string[];
+  specificSkills: number[];
   groups?: string[]; // Multiple group memberships (e.g., ["Left Stack", "Portal"])
   /** @deprecated Use groups instead. Kept for backward-compat URL decoding. */
   group?: PlayerGroup;
   notes?: string;
+  /** Attached build from the Build Editor */
+  buildRef?: BuildReference;
+  /** Food/drink consumable for this slot */
+  food?: { id?: number; name?: string };
+  /** Full skill bars — populated in Full detail mode */
+  skills?: SkillsConfig;
+  /** Champion points — populated in Full detail mode */
+  cpPoints?: BuildChampionPoints;
+  /** Passive ability IDs — populated in Full detail mode */
+  passives?: number[];
+  /** Per-slot equipment — populated in Full detail mode */
+  gear?: GearConfig;
 }
+
+/**
+ * Role composition for a trial roster.
+ * tanks + healers + dps must always sum to 12.
+ */
+export interface RoleComposition {
+  tanks: number;
+  healers: number;
+  dps: number;
+}
+
+/** Default ESO trial composition: 2 tanks, 2 healers, 8 DPS */
+export const DEFAULT_COMPOSITION: RoleComposition = { tanks: 2, healers: 2, dps: 8 };
+
+/** Total roster size — ESO trials are always 12 players */
+export const ROSTER_SIZE = 12;
 
 /**
  * Complete roster configuration
@@ -202,15 +283,16 @@ export interface RaidRoster {
   createdAt: string;
   updatedAt: string;
 
-  // 2 Tanks
-  tank1: TankSetup;
-  tank2: TankSetup;
+  /** Role composition — defines how many of each role */
+  composition: RoleComposition;
 
-  // 2 Healers
-  healer1: HealerSetup;
-  healer2: HealerSetup;
+  /** Tank setups (length matches composition.tanks) */
+  tanks: TankSetup[];
 
-  // DPS Slots (1-8) - can be regular DPS or jail DDs with jailDDType set
+  /** Healer setups (length matches composition.healers) */
+  healers: HealerSetup[];
+
+  /** DPS slots (length matches composition.dps) */
   dpsSlots: DPSSlot[];
 
   // Available player groups (for organizing players)
@@ -218,6 +300,9 @@ export interface RaidRoster {
 
   // General notes
   notes?: string;
+
+  // UI preference for how much detail to show per slot
+  rosterDetailLevel?: RosterDetailLevel;
 
   // Per-fight build overrides (optional, advanced feature)
   trialOverrides?: TrialBuildOverrides;
@@ -236,7 +321,8 @@ export const defaultSkillLineConfig = (): SkillLineConfig => ({
 /**
  * Default tank setup
  */
-export const defaultTankSetup = (): TankSetup => ({
+export const defaultTankSetup = (slotNumber = 1): TankSetup => ({
+  slotNumber,
   gearSets: {
     set1: undefined,
     set2: undefined,
@@ -249,7 +335,8 @@ export const defaultTankSetup = (): TankSetup => ({
 /**
  * Default healer setup
  */
-export const defaultHealerSetup = (): HealerSetup => ({
+export const defaultHealerSetup = (slotNumber = 1): HealerSetup => ({
+  slotNumber,
   set1: undefined,
   set2: undefined,
   skillLines: defaultSkillLineConfig(),
@@ -259,26 +346,39 @@ export const defaultHealerSetup = (): HealerSetup => ({
 });
 
 /**
- * Create default DPS slots (1-8)
+ * Create default tank slots for a given count
  */
-export const createDefaultDPSSlots = (): DPSSlot[] => {
-  return Array.from({ length: 8 }, (_, i) => ({
+export const createDefaultTanks = (count: number): TankSetup[] => {
+  return Array.from({ length: count }, (_, i) => defaultTankSetup(i + 1));
+};
+
+/**
+ * Create default healer slots for a given count
+ */
+export const createDefaultHealers = (count: number): HealerSetup[] => {
+  return Array.from({ length: count }, (_, i) => defaultHealerSetup(i + 1));
+};
+
+/**
+ * Create default DPS slots for a given count (default 8)
+ */
+export const createDefaultDPSSlots = (count = 8): DPSSlot[] => {
+  return Array.from({ length: count }, (_, i) => ({
     slotNumber: i + 1,
   }));
 };
 
 /**
- * Default roster
+ * Default roster. Accepts an optional composition to create non-standard layouts.
  */
-export const createDefaultRoster = (): RaidRoster => ({
+export const createDefaultRoster = (comp: RoleComposition = DEFAULT_COMPOSITION): RaidRoster => ({
   rosterName: 'New Roster',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-  tank1: defaultTankSetup(),
-  tank2: defaultTankSetup(),
-  healer1: defaultHealerSetup(),
-  healer2: defaultHealerSetup(),
-  dpsSlots: createDefaultDPSSlots(),
+  composition: { ...comp },
+  tanks: createDefaultTanks(comp.tanks),
+  healers: createDefaultHealers(comp.healers),
+  dpsSlots: createDefaultDPSSlots(comp.dps),
   availableGroups: [],
 });
 

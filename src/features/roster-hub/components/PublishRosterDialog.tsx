@@ -23,6 +23,7 @@ import React from 'react';
 
 import { TRIALS } from '../../loadout-manager/data/trialConfigs';
 import { rosterHubApi } from '../api/roster-hub-api';
+import type { HubRoster } from '../types/roster-hub.types';
 import { PRESET_TAGS, TAG_COLORS } from '../types/roster-hub.types';
 
 interface PublishRosterDialogProps {
@@ -31,6 +32,8 @@ interface PublishRosterDialogProps {
   onClose: () => void;
   onPublished: () => void;
   token: string;
+  /** When provided, the dialog operates in edit mode — updates the existing hub roster. */
+  editingRoster?: HubRoster;
 }
 
 const HUB_TRIALS = TRIALS.filter((t) => t.type === 'trial');
@@ -42,7 +45,9 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   onClose,
   onPublished,
   token,
+  editingRoster,
 }) => {
+  const isEditMode = !!editingRoster;
   const [title, setTitle] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [trialId, setTrialId] = React.useState('');
@@ -76,37 +81,49 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
     setLoading(true);
     setError(null);
     try {
-      await rosterHubApi.create(
-        {
-          title: title.trim(),
-          description: description.trim(),
-          trial_id: trialId,
-          roster_data: rosterData,
-          tags: selectedTags,
-          is_anonymous: isAnonymous,
-        },
-        token,
-      );
+      const payload = {
+        title: title.trim(),
+        description: description.trim(),
+        trial_id: trialId,
+        roster_data: rosterData,
+        tags: selectedTags,
+        is_anonymous: isAnonymous,
+      };
+      if (isEditMode) {
+        await rosterHubApi.update(editingRoster.id, payload, token);
+      } else {
+        await rosterHubApi.create(payload, token);
+      }
       onPublished();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to publish');
+      setError(
+        err instanceof Error ? err.message : isEditMode ? 'Failed to update' : 'Failed to publish',
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // Reset on open
+  // Reset / pre-fill on open
   React.useEffect(() => {
     if (open) {
-      setTitle('');
-      setDescription('');
-      setTrialId('');
-      setSelectedTags([]);
-      setIsAnonymous(false);
+      if (editingRoster) {
+        setTitle(editingRoster.title);
+        setDescription(editingRoster.description ?? '');
+        setTrialId(editingRoster.trial_id ?? '');
+        setSelectedTags(editingRoster.tags ?? []);
+        setIsAnonymous(editingRoster.is_anonymous ?? false);
+      } else {
+        setTitle('');
+        setDescription('');
+        setTrialId('');
+        setSelectedTags([]);
+        setIsAnonymous(false);
+      }
       setError(null);
     }
-  }, [open]);
+  }, [open, editingRoster]);
 
   const atTagLimit = selectedTags.length >= MAX_TAGS;
 
@@ -118,7 +135,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       fullWidth
       disableEscapeKeyDown={loading}
     >
-      <DialogTitle>Publish to Roster Hub</DialogTitle>
+      <DialogTitle>{isEditMode ? 'Edit Published Roster' : 'Publish to Roster Hub'}</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
         <TextField
           label="Title"
@@ -246,7 +263,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           disabled={loading}
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
-          {loading ? 'Publishing…' : 'Publish'}
+          {loading ? (isEditMode ? 'Updating…' : 'Publishing…') : isEditMode ? 'Update' : 'Publish'}
         </Button>
       </DialogActions>
     </Dialog>

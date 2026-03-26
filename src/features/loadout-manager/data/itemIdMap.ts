@@ -11,7 +11,7 @@
 
 import { getRegisteredSlot } from '../utils/wizardWardrobeSlotRegistry';
 
-import { getCollectionItem } from './itemSetCollections';
+import { getCollectionItem, getCollectionItemIdsBySlot } from './itemSetCollections';
 import type { SlotType } from './slotTypes';
 export type { SlotType } from './slotTypes';
 
@@ -141755,10 +141755,10 @@ export const itemIdMap: Record<number, ItemInfo> = {
     type: 'Gear',
   },
   175524: {
-    name: "Harpooner's Wading Kilt Waist",
+    name: "Harpooner's Wading Kilt Legs",
     setName: "Harpooner's Wading Kilt",
     type: 'Gear',
-    slot: 'waist',
+    slot: 'legs',
   },
   175525: { name: 'Gaze of Sithis Head', setName: 'Gaze of Sithis', type: 'Gear', slot: 'head' },
   175527: {
@@ -203226,7 +203226,12 @@ export const itemIdMap: Record<number, ItemInfo> = {
   219645: { name: 'Unflinching Ultimate Gear', setName: 'Unflinching Ultimate', type: 'Gear' },
   219646: { name: 'Unflinching Ultimate Gear', setName: 'Unflinching Ultimate', type: 'Gear' },
   219647: { name: 'Unflinching Ultimate Gear', setName: 'Unflinching Ultimate', type: 'Gear' },
-  223189: { name: "Huntsman's Warmask Gear", setName: "Huntsman's Warmask", type: 'Gear' },
+  223189: {
+    name: "Huntsman's Warmask Head",
+    setName: "Huntsman's Warmask",
+    type: 'Gear',
+    slot: 'head',
+  },
   223227: { name: 'Xanmeer Genesis Gear', setName: 'Xanmeer Genesis', type: 'Gear' },
   223228: { name: 'Xanmeer Genesis Gear', setName: 'Xanmeer Genesis', type: 'Gear' },
   223229: { name: 'Xanmeer Genesis Gear', setName: 'Xanmeer Genesis', type: 'Gear' },
@@ -203555,7 +203560,11 @@ export function getItemInfo(itemId: number): ItemInfo | undefined {
 
   const collectionItem = getCollectionItem(itemId);
   const wardrobeSlot = getRegisteredSlot(itemId);
-  const slot = wardrobeSlot ?? info.slot ?? collectionItem?.slotType;
+  // Collection data (ESO's Item Set Collection API) is more authoritative than
+  // the auto-generated info.slot values, which have known mismatches (e.g. all
+  // hand items tagged as 'weapon'). Wizard's Wardrobe is player-confirmed, so
+  // it stays highest priority.
+  const slot = wardrobeSlot ?? collectionItem?.slotType ?? info.slot;
   const slotLabel = resolveSlotLabel(slot, collectionItem?.weight);
   const updatedName = applySlotLabel(info.name, slotLabel);
 
@@ -203627,13 +203636,37 @@ export function getSetItemsBySlot(setName: string, slot: SlotType): number[] {
 
 export function getItemsBySlot(slot: SlotType): { itemId: number; info: ItemInfo }[] {
   if (!itemsBySlotCache[slot]) {
-    itemsBySlotCache[slot] = Object.entries(itemIdMap)
-      .map(([id, info]) => ({ itemId: parseInt(id, 10), info }))
-      .filter(({ info }) => info.slot === slot)
-      .sort(
-        (a, b) =>
-          a.info.setName.localeCompare(b.info.setName) || a.info.name.localeCompare(b.info.name),
-      );
+    // Merge two item-id sources:
+    //  1. Items with a hardcoded slot in itemIdMap  (~13K total across all slots)
+    //  2. Items from the collection JSON index      (~10K total across all slots)
+    // Using a Set avoids duplicates when an item appears in both.
+    const candidateIds = new Set<number>();
+
+    // Source 1: hardcoded slots — scan only items that already have the slot field
+    for (const [id, info] of Object.entries(itemIdMap)) {
+      if (info.slot === slot) candidateIds.add(parseInt(id, 10));
+    }
+
+    // Source 2: collection-based slots — pre-indexed, O(1) lookup per slot type
+    for (const id of getCollectionItemIdsBySlot(slot)) {
+      candidateIds.add(id);
+    }
+
+    // Enrich and filter — only iterate the small candidate set, not all 119K items
+    const results: { itemId: number; info: ItemInfo }[] = [];
+    for (const itemId of candidateIds) {
+      const enriched = getItemInfo(itemId);
+      if (enriched?.slot === slot) {
+        results.push({ itemId, info: enriched });
+      }
+    }
+
+    results.sort(
+      (a, b) =>
+        a.info.setName.localeCompare(b.info.setName) || a.info.name.localeCompare(b.info.name),
+    );
+
+    itemsBySlotCache[slot] = results;
   }
   return itemsBySlotCache[slot]!;
 }

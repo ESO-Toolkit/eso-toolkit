@@ -34,13 +34,16 @@ test.describe('RosterBuilderPage — load', () => {
 
   test('renders heading and key sections', async ({ page }) => {
     await page.goto('/roster-builder');
+    await page.waitForLoadState('networkidle');
     await expect(page.getByRole('heading', { name: 'Roster Builder' })).toBeVisible();
     // Mode tabs
-    await expect(page.getByText('Simple Mode')).toBeVisible();
-    await expect(page.getByText('Advanced Mode')).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Simple mode' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Full mode' })).toBeVisible();
     // Action buttons
     await expect(page.getByText('Quick Fill')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Import roster from file or log' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Import roster from file or log' }),
+    ).toBeVisible();
   });
 });
 
@@ -163,8 +166,8 @@ test.describe('RosterViewPage — /rv', () => {
       const { createDefaultRoster } = await import('/src/types/roster.ts');
       const roster = createDefaultRoster();
       roster.rosterName = 'View Page Test';
-      roster.tank1 = {
-        ...roster.tank1,
+      roster.tanks[0] = {
+        ...roster.tanks[0],
         playerName: 'TankHero',
         gearSets: { set1: 768 as never, set2: 648 as never }, // LUCENT_ECHOES, PEARLESCENT_WARD
       };

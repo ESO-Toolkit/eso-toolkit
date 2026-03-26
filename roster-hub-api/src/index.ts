@@ -20,7 +20,30 @@ import {
   createComment,
   deleteComment,
   checkCommentRateLimit,
+  listBuilds,
+  getBuildById,
+  createBuild,
+  updateBuild,
+  deleteBuild,
+  toggleBuildVote,
+  listBuildComments,
+  createBuildComment,
+  deleteBuildComment,
+  checkBuildCommentRateLimit,
+  checkBuildVoteRateLimit,
+  checkBuildCreateRateLimit,
+  createTempBuild,
+  getTempBuild,
+  checkTempBuildRateLimit,
+  recordTempBuildRateLimit,
+  cleanupExpiredTempBuilds,
+  createImageUpload,
+  getImageUpload,
+  deleteImageUpload,
+  createImageReport,
+  checkImageUploadRateLimit,
 } from './db/queries';
+import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import type { Env } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -111,8 +134,10 @@ app.post('/rosters', async (c) => {
   if (!trial_id?.trim()) return c.json({ error: 'trial_id is required' }, 400);
   if (!roster_data?.trim()) return c.json({ error: 'roster_data is required' }, 400);
   if (title.length > 100) return c.json({ error: 'title must be ≤ 100 characters' }, 400);
-  if (description.length > 500) return c.json({ error: 'description must be ≤ 500 characters' }, 400);
-  if (roster_data.length > 50_000) return c.json({ error: 'roster_data must be ≤ 50 000 characters' }, 400);
+  if (description.length > 500)
+    return c.json({ error: 'description must be ≤ 500 characters' }, 400);
+  if (roster_data.length > 50_000)
+    return c.json({ error: 'roster_data must be ≤ 50 000 characters' }, 400);
 
   // Generate a short unique ID (nanoid-style without the dep)
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
@@ -164,8 +189,10 @@ app.put('/rosters/:id', async (c) => {
   if (!trial_id?.trim()) return c.json({ error: 'trial_id is required' }, 400);
   if (!roster_data?.trim()) return c.json({ error: 'roster_data is required' }, 400);
   if (title.length > 100) return c.json({ error: 'title must be ≤ 100 characters' }, 400);
-  if (description.length > 500) return c.json({ error: 'description must be ≤ 500 characters' }, 400);
-  if (roster_data.length > 50_000) return c.json({ error: 'roster_data must be ≤ 50 000 characters' }, 400);
+  if (description.length > 500)
+    return c.json({ error: 'description must be ≤ 500 characters' }, 400);
+  if (roster_data.length > 50_000)
+    return c.json({ error: 'roster_data must be ≤ 50 000 characters' }, 400);
 
   const updated = await updateRoster(c.env.DB, c.req.param('id'), user.id, {
     title: title.trim(),
@@ -201,7 +228,9 @@ app.post('/rosters/:id/vote', async (c) => {
   const rosterId = c.req.param('id');
 
   // Ensure roster exists
-  const exists = await c.env.DB.prepare('SELECT id FROM rosters WHERE id = ?').bind(rosterId).first();
+  const exists = await c.env.DB.prepare('SELECT id FROM rosters WHERE id = ?')
+    .bind(rosterId)
+    .first();
   if (!exists) return c.json({ error: 'Not found' }, 404);
 
   const result = await toggleVote(c.env.DB, rosterId, user.id);
@@ -214,7 +243,9 @@ app.get('/rosters/:id/comments', async (c) => {
   const rosterId = c.req.param('id');
 
   // Verify roster exists
-  const exists = await c.env.DB.prepare('SELECT id FROM rosters WHERE id = ?').bind(rosterId).first();
+  const exists = await c.env.DB.prepare('SELECT id FROM rosters WHERE id = ?')
+    .bind(rosterId)
+    .first();
   if (!exists) return c.json({ error: 'Not found' }, 404);
 
   const comments = await listComments(c.env.DB, rosterId);
@@ -230,7 +261,9 @@ app.post('/rosters/:id/comments', async (c) => {
   const rosterId = c.req.param('id');
 
   // Verify roster exists
-  const exists = await c.env.DB.prepare('SELECT id FROM rosters WHERE id = ?').bind(rosterId).first();
+  const exists = await c.env.DB.prepare('SELECT id FROM rosters WHERE id = ?')
+    .bind(rosterId)
+    .first();
   if (!exists) return c.json({ error: 'Roster not found' }, 404);
 
   // Rate limit: 5 comments per minute per user
@@ -289,6 +322,514 @@ app.delete('/rosters/:rosterId/comments/:commentId', async (c) => {
 
   const deleted = await deleteComment(c.env.DB, c.req.param('commentId'), user.id);
   if (!deleted) return c.json({ error: 'Not found or forbidden' }, 404);
+  return c.json({ ok: true });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Build Hub routes — mirror the roster routes with /builds prefix
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── GET /builds — list with filtering & pagination ──────────────────────────
+
+app.get('/builds', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+
+  const esoClass = c.req.query('class') ?? undefined;
+  const role = c.req.query('role') ?? undefined;
+  const gameMode = c.req.query('mode') ?? undefined;
+  const tag = c.req.query('tag') ?? undefined;
+  const sort = c.req.query('sort') === 'recent' ? 'recent' : 'votes';
+  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10));
+
+  const builds = await listBuilds(c.env.DB, {
+    esoClass,
+    role,
+    gameMode,
+    tag,
+    sort,
+    page,
+    userId: user?.id,
+  });
+
+  return c.json({ builds, page, sort });
+});
+
+// ─── GET /builds/:id — single build ──────────────────────────────────────────
+
+app.get('/builds/:id', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const build = await getBuildById(c.env.DB, c.req.param('id'), user?.id);
+
+  if (!build) {
+    return c.json({ error: 'Not found' }, 404);
+  }
+  return c.json({ build });
+});
+
+// ─── POST /builds — publish a build ──────────────────────────────────────────
+
+app.post('/builds', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  interface CreateBuildBody {
+    title: string;
+    description?: string;
+    eso_class: string;
+    role: string;
+    game_mode?: string;
+    build_data: string;
+    tags?: string[];
+    is_anonymous?: boolean;
+  }
+
+  let body: CreateBuildBody;
+  try {
+    body = await c.req.json<CreateBuildBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  const {
+    title,
+    description = '',
+    eso_class,
+    role,
+    game_mode = 'pve',
+    build_data,
+    tags = [],
+    is_anonymous = false,
+  } = body;
+
+  if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
+  if (!eso_class?.trim()) return c.json({ error: 'eso_class is required' }, 400);
+  if (!role?.trim()) return c.json({ error: 'role is required' }, 400);
+  if (!build_data?.trim()) return c.json({ error: 'build_data is required' }, 400);
+  if (title.length > 100) return c.json({ error: 'title must be ≤ 100 characters' }, 400);
+  if (description.length > 500)
+    return c.json({ error: 'description must be ≤ 500 characters' }, 400);
+  if (build_data.length > 50_000)
+    return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
+
+  const createAllowed = await checkBuildCreateRateLimit(c.env.DB, user.id);
+  if (!createAllowed)
+    return c.json({ error: 'Rate limit exceeded. You can only publish 5 builds per hour.' }, 429);
+
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
+    .map((b) => b.toString(36).padStart(2, '0'))
+    .join('')
+    .slice(0, 12);
+
+  await createBuild(c.env.DB, {
+    id,
+    authorId: user.id,
+    authorName: user.name,
+    title: title.trim(),
+    description: description.trim(),
+    esoClass: eso_class.trim(),
+    role: role.trim(),
+    gameMode: game_mode.trim(),
+    buildData: build_data,
+    tags: Array.isArray(tags) ? tags.filter((t) => typeof t === 'string').slice(0, 10) : [],
+    isAnonymous: !!is_anonymous,
+  });
+
+  const build = await getBuildById(c.env.DB, id, user.id);
+  return c.json({ build }, 201);
+});
+
+// ─── PUT /builds/:id — update own build ──────────────────────────────────────
+
+app.put('/builds/:id', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  interface UpdateBuildBody {
+    title: string;
+    description?: string;
+    eso_class: string;
+    role: string;
+    game_mode?: string;
+    build_data: string;
+    tags?: string[];
+    is_anonymous?: boolean;
+  }
+
+  let body: UpdateBuildBody;
+  try {
+    body = await c.req.json<UpdateBuildBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  const {
+    title,
+    description = '',
+    eso_class,
+    role,
+    game_mode = 'pve',
+    build_data,
+    tags = [],
+    is_anonymous = false,
+  } = body;
+
+  if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
+  if (!eso_class?.trim()) return c.json({ error: 'eso_class is required' }, 400);
+  if (!role?.trim()) return c.json({ error: 'role is required' }, 400);
+  if (!build_data?.trim()) return c.json({ error: 'build_data is required' }, 400);
+  if (title.length > 100) return c.json({ error: 'title must be ≤ 100 characters' }, 400);
+  if (description.length > 500)
+    return c.json({ error: 'description must be ≤ 500 characters' }, 400);
+  if (build_data.length > 50_000)
+    return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
+
+  const updated = await updateBuild(c.env.DB, c.req.param('id'), user.id, {
+    title: title.trim(),
+    description: description.trim(),
+    esoClass: eso_class.trim(),
+    role: role.trim(),
+    gameMode: game_mode.trim(),
+    buildData: build_data,
+    tags: Array.isArray(tags) ? tags.filter((t) => typeof t === 'string').slice(0, 10) : [],
+    isAnonymous: !!is_anonymous,
+  });
+
+  if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
+  const build = await getBuildById(c.env.DB, c.req.param('id'), user.id);
+  return c.json({ build });
+});
+
+// ─── DELETE /builds/:id — delete own build ────────────────────────────────────
+
+app.delete('/builds/:id', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const deleted = await deleteBuild(c.env.DB, c.req.param('id'), user.id);
+  if (!deleted) return c.json({ error: 'Not found or forbidden' }, 404);
+  return c.json({ ok: true });
+});
+
+// ─── POST /builds/:id/vote — toggle upvote ────────────────────────────────────
+
+app.post('/builds/:id/vote', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const buildId = c.req.param('id');
+  const exists = await c.env.DB.prepare('SELECT id FROM builds WHERE id = ?').bind(buildId).first();
+  if (!exists) return c.json({ error: 'Not found' }, 404);
+
+  const allowed = await checkBuildVoteRateLimit(c.env.DB, user.id);
+  if (!allowed)
+    return c.json({ error: 'Rate limit exceeded. Too many votes in the last hour.' }, 429);
+
+  const result = await toggleBuildVote(c.env.DB, buildId, user.id);
+  return c.json(result);
+});
+
+// ─── GET /builds/:id/comments ─────────────────────────────────────────────────
+
+app.get('/builds/:id/comments', async (c) => {
+  const buildId = c.req.param('id');
+  const exists = await c.env.DB.prepare('SELECT id FROM builds WHERE id = ?').bind(buildId).first();
+  if (!exists) return c.json({ error: 'Not found' }, 404);
+
+  const comments = await listBuildComments(c.env.DB, buildId);
+  return c.json({ comments });
+});
+
+// ─── POST /builds/:id/comments ────────────────────────────────────────────────
+
+app.post('/builds/:id/comments', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const buildId = c.req.param('id');
+  const exists = await c.env.DB.prepare('SELECT id FROM builds WHERE id = ?').bind(buildId).first();
+  if (!exists) return c.json({ error: 'Build not found' }, 404);
+
+  const allowed = await checkBuildCommentRateLimit(c.env.DB, user.id);
+  if (!allowed) return c.json({ error: 'Rate limit exceeded. Try again in a minute.' }, 429);
+
+  interface CommentBody {
+    body: string;
+    parent_id?: string;
+  }
+
+  let body: CommentBody;
+  try {
+    body = await c.req.json<CommentBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.body?.trim()) return c.json({ error: 'body is required' }, 400);
+  if (body.body.length > 1000) return c.json({ error: 'Comment must be ≤ 1000 characters' }, 400);
+
+  if (body.parent_id) {
+    const parent = await c.env.DB.prepare(
+      'SELECT id, parent_id FROM build_comments WHERE id = ? AND build_id = ?',
+    )
+      .bind(body.parent_id, buildId)
+      .first<{ id: string; parent_id: string | null }>();
+    if (!parent) return c.json({ error: 'Parent comment not found' }, 404);
+    if (parent.parent_id) return c.json({ error: 'Cannot reply to a reply' }, 400);
+  }
+
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
+    .map((b) => b.toString(36).padStart(2, '0'))
+    .join('')
+    .slice(0, 12);
+
+  const comment = await createBuildComment(c.env.DB, {
+    id,
+    buildId,
+    parentId: body.parent_id ?? null,
+    authorId: user.id,
+    authorName: user.name,
+    body: body.body.trim(),
+  });
+
+  return c.json({ comment }, 201);
+});
+
+// ─── DELETE /builds/:buildId/comments/:commentId ──────────────────────────────
+
+app.delete('/builds/:buildId/comments/:commentId', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const deleted = await deleteBuildComment(c.env.DB, c.req.param('commentId'), user.id);
+  if (!deleted) return c.json({ error: 'Not found or forbidden' }, 404);
+  return c.json({ ok: true });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Temp builds — guest-created builds with 5-day expiry, no auth required
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── POST /temp-builds — create a temporary build link ──────────────────────
+
+app.post('/temp-builds', async (c) => {
+  interface TempBuildBody {
+    build_data: string;
+  }
+
+  let body: TempBuildBody;
+  try {
+    body = await c.req.json<TempBuildBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.build_data?.trim()) return c.json({ error: 'build_data is required' }, 400);
+  if (body.build_data.length > 50_000)
+    return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
+
+  // Rate limit by IP (10 per hour)
+  const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For') ?? 'unknown';
+  const allowed = await checkTempBuildRateLimit(c.env.DB, ip);
+  if (!allowed)
+    return c.json({ error: 'Rate limit exceeded. You can create up to 10 temp builds per hour.' }, 429);
+
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
+    .map((b) => b.toString(36).padStart(2, '0'))
+    .join('')
+    .slice(0, 12);
+
+  const row = await createTempBuild(c.env.DB, { id, buildData: body.build_data });
+  await recordTempBuildRateLimit(c.env.DB, ip);
+
+  return c.json({ id: row.id, expires_at: row.expires_at }, 201);
+});
+
+// ─── GET /temp-builds/:id — fetch a temporary build ──────────────────────────
+
+app.get('/temp-builds/:id', async (c) => {
+  const id = c.req.param('id');
+
+  // Lazy cleanup: remove expired builds on read
+  await cleanupExpiredTempBuilds(c.env.DB);
+
+  const row = await getTempBuild(c.env.DB, id);
+  if (!row) {
+    return c.json({ error: 'This build link has expired or does not exist.' }, 410);
+  }
+
+  return c.json({
+    build_data: row.build_data,
+    created_at: row.created_at,
+    expires_at: row.expires_at,
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Image uploads — AI-moderated image hosting via ImgBB
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── POST /images/upload — upload with AI moderation ─────────────────────────
+
+app.post('/images/upload', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  // Rate limit: 10 uploads per hour
+  const allowed = await checkImageUploadRateLimit(c.env.DB, user.id);
+  if (!allowed)
+    return c.json({ error: 'Rate limit exceeded. You can upload up to 10 images per hour.' }, 429);
+
+  interface UploadBody {
+    image: string; // base64 (raw or data-URL)
+    name?: string;
+  }
+
+  let body: UploadBody;
+  try {
+    body = await c.req.json<UploadBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.image?.trim()) return c.json({ error: 'image is required' }, 400);
+
+  // Strip data-URL prefix if present
+  let base64 = body.image;
+  const commaIdx = base64.indexOf(',');
+  if (commaIdx !== -1 && base64.startsWith('data:')) {
+    base64 = base64.slice(commaIdx + 1);
+  }
+
+  // Decode base64 → bytes
+  let imageBytes: Uint8Array;
+  try {
+    const binaryString = atob(base64);
+    imageBytes = Uint8Array.from(binaryString, (ch) => ch.charCodeAt(0));
+  } catch {
+    return c.json({ error: 'Invalid base64 image data' }, 400);
+  }
+
+  if (imageBytes.byteLength > MAX_IMAGE_BYTES) {
+    return c.json({ error: 'Image must be ≤ 10 MB' }, 400);
+  }
+
+  // ── Workers AI moderation ────────────────────────────────────────────────
+  try {
+    const moderation = await moderateImage(c.env.AI, imageBytes);
+    if (!moderation.safe) {
+      return c.json(
+        {
+          error: 'Image flagged as inappropriate and cannot be uploaded.',
+          label: moderation.blockedLabel,
+        },
+        400,
+      );
+    }
+  } catch (err) {
+    // If AI is unavailable, log but don't block the upload — user reporting
+    // still provides a safety net.  In production you may want to fail closed.
+    console.error('Workers AI moderation failed, allowing upload:', err);
+  }
+
+  // ── Proxy to ImgBB ───────────────────────────────────────────────────────
+  const formData = new FormData();
+  formData.append('key', c.env.IMGBB_API_KEY);
+  formData.append('image', base64);
+  if (body.name) formData.append('name', body.name);
+
+  const imgbbRes = await fetch('https://api.imgbb.com/1/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!imgbbRes.ok) {
+    const errBody = await imgbbRes.text();
+    console.error('ImgBB upload failed:', errBody);
+    return c.json({ error: 'Image host upload failed' }, 502);
+  }
+
+  interface ImgBBResponse {
+    data: {
+      id: string;
+      url: string;
+      thumb: { url: string };
+      delete_url: string;
+    };
+  }
+
+  const imgbb = (await imgbbRes.json()) as ImgBBResponse;
+
+  // ── Store metadata in D1 ─────────────────────────────────────────────────
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
+    .map((b) => b.toString(36).padStart(2, '0'))
+    .join('')
+    .slice(0, 12);
+
+  await createImageUpload(c.env.DB, {
+    id,
+    uploaderId: user.id,
+    uploaderName: user.name,
+    url: imgbb.data.url,
+    thumbUrl: imgbb.data.thumb.url,
+    deleteUrl: imgbb.data.delete_url,
+  });
+
+  return c.json({ id, url: imgbb.data.url, thumb_url: imgbb.data.thumb.url }, 201);
+});
+
+// ─── POST /images/:id/report — flag an image ────────────────────────────────
+
+app.post('/images/:id/report', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const imageId = c.req.param('id');
+  const image = await getImageUpload(c.env.DB, imageId);
+  if (!image) return c.json({ error: 'Image not found' }, 404);
+
+  interface ReportBody {
+    reason: string;
+  }
+
+  let body: ReportBody;
+  try {
+    body = await c.req.json<ReportBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.reason?.trim()) return c.json({ error: 'reason is required' }, 400);
+  if (body.reason.length > 500) return c.json({ error: 'reason must be ≤ 500 characters' }, 400);
+
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
+    .map((b) => b.toString(36).padStart(2, '0'))
+    .join('')
+    .slice(0, 12);
+
+  await createImageReport(c.env.DB, {
+    id,
+    imageId,
+    reporterId: user.id,
+    reason: body.reason.trim(),
+  });
+
+  return c.json({ ok: true }, 201);
+});
+
+// ─── DELETE /images/:id — delete own image ───────────────────────────────────
+
+app.delete('/images/:id', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const result = await deleteImageUpload(c.env.DB, c.req.param('id'), user.id);
+  if (!result.deleted) return c.json({ error: 'Not found or forbidden' }, 404);
+
+  // Best-effort delete from ImgBB (fire-and-forget)
+  if (result.deleteUrl) {
+    fetch(result.deleteUrl).catch(() => {});
+  }
+
   return c.json({ ok: true });
 });
 

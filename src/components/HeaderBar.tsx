@@ -24,12 +24,13 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
+import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 
 import { ThemeToggle } from './ThemeToggle';
 
@@ -439,7 +440,7 @@ export const HeaderBar: React.FC = () => {
   const { isLoggedIn, currentUser, userLoading, userError, refetchUser, rebindAccessToken } =
     useAuth();
   const hasRequestedUser = React.useRef(false);
-  const navigate = useNavigate();
+  const navigate = useViewTransitionNavigate();
   const location = useLocation();
   const theme = useTheme();
   const [scrolled, setScrolled] = React.useState(false);
@@ -555,6 +556,11 @@ export const HeaderBar: React.FC = () => {
     setAnchorEl(null);
   };
 
+  const handleViewBuilds = (): void => {
+    navigate('/my-builds');
+    setAnchorEl(null);
+  };
+
   const handleLogoutFromMenu = (): void => {
     handleLogout();
     setAnchorEl(null);
@@ -609,6 +615,12 @@ export const HeaderBar: React.FC = () => {
     setMobileAccountOpen(false);
   }, [navigate]);
 
+  const handleMobileViewBuilds = React.useCallback((): void => {
+    navigate('/my-builds');
+    setMobileOpen(false);
+    setMobileAccountOpen(false);
+  }, [navigate]);
+
   const handleMobileAuthAction = React.useCallback((): void => {
     if (isLoggedIn) {
       handleLogout();
@@ -646,9 +658,24 @@ export const HeaderBar: React.FC = () => {
       path: '/roster-builder',
     },
     {
+      text: 'Build Editor',
+      icon: '🔧',
+      path: '/build-editor',
+    },
+    {
+      text: 'My Builds',
+      icon: '📋',
+      path: '/my-builds',
+    },
+    {
       text: 'Gear Sets',
       icon: '🛡️',
       path: '/gear-sets',
+    },
+    {
+      text: 'Build Hub',
+      icon: '🏗️',
+      path: '/build-hub',
     },
   ];
 
@@ -694,6 +721,14 @@ export const HeaderBar: React.FC = () => {
       colorVariant: 'default' | 'destructive' | 'positive';
     }> = [];
 
+    // My Builds is always accessible (localStorage-backed)
+    items.push({
+      text: 'My builds',
+      icon: <Build sx={{ fontSize: 18 }} />,
+      action: handleMobileViewBuilds,
+      colorVariant: 'default',
+    });
+
     if (isLoggedIn) {
       items.push({
         text: 'My reports',
@@ -722,7 +757,13 @@ export const HeaderBar: React.FC = () => {
       });
     }
     return items;
-  }, [isLoggedIn, handleMobileAuthAction, handleMobileViewReports, handleMobileViewRosters]);
+  }, [
+    isLoggedIn,
+    handleMobileAuthAction,
+    handleMobileViewReports,
+    handleMobileViewRosters,
+    handleMobileViewBuilds,
+  ]);
 
   const navItems = [
     {
@@ -972,6 +1013,7 @@ export const HeaderBar: React.FC = () => {
                 <Tooltip title="Account" arrow placement="bottom">
                   <Button
                     onClick={handleAccountClick}
+                    aria-label={userLabel ? `Account: ${userLabel}` : 'Account'}
                     startIcon={<Person />}
                     sx={{
                       display: { xs: 'none', sm: 'flex' },
@@ -1118,6 +1160,27 @@ export const HeaderBar: React.FC = () => {
             <Build sx={{ fontSize: 20 }} />
           </ListItemIcon>
           My rosters
+        </MenuItem>
+        <MenuItem
+          onClick={handleViewBuilds}
+          sx={{
+            py: 1.5,
+            px: 2,
+            borderRadius: 1,
+            mx: 1,
+            mb: 0.5,
+            '&:hover': {
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.08)'
+                  : 'rgba(59, 130, 246, 0.08)',
+            },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 32 }}>
+            <Build sx={{ fontSize: 20 }} />
+          </ListItemIcon>
+          My builds
         </MenuItem>
         <MenuItem
           onClick={handleLogoutFromMenu}

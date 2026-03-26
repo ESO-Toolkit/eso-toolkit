@@ -1,4 +1,3 @@
-import { Box, Container, Skeleton } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
@@ -161,17 +160,31 @@ const RosterHubPage = React.lazy(() =>
   })),
 );
 
-// Generic page loading skeleton - used for lazy-loaded routes and PersistGate hydration
-const LoadingFallback: React.FC = () => (
-  <Container maxWidth="lg" sx={{ pt: 4, px: 2 }}>
-    <Skeleton variant="text" width="35%" height={52} sx={{ mb: 2, borderRadius: 1 }} />
-    <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 2, mb: 2 }} />
-    <Box sx={{ display: 'flex', gap: 2 }}>
-      <Skeleton variant="rectangular" height={160} sx={{ flex: 1, borderRadius: 2 }} />
-      <Skeleton variant="rectangular" height={160} sx={{ flex: 1, borderRadius: 2 }} />
-    </Box>
-  </Container>
+const BuildEditorPage = React.lazy(() =>
+  import('./pages/BuildEditorPage').then((module) => ({ default: module.BuildEditorPage })),
 );
+
+const BuildViewPage = React.lazy(() =>
+  import('./pages/BuildViewPage').then((module) => ({ default: module.BuildViewPage })),
+);
+
+const MyBuildsPage = React.lazy(() =>
+  import('./pages/MyBuildsPage').then((module) => ({ default: module.MyBuildsPage })),
+);
+
+const TempBuildViewPage = React.lazy(() =>
+  import('./pages/TempBuildViewPage').then((module) => ({ default: module.TempBuildViewPage })),
+);
+
+const BuildHubPage = React.lazy(() =>
+  import('./features/build-hub/components/BuildHubPage').then((module) => ({
+    default: module.BuildHubPage,
+  })),
+);
+
+// Null fallback for lazy-loaded routes — view transitions provide visual
+// feedback during navigation, so a skeleton loader is unnecessary and jarring.
+const LoadingFallback: React.FC = () => null;
 
 // Text Editor specific loading fallback
 const TextEditorLoadingFallback: React.FC = () => <TextEditorSkeleton />;
@@ -545,6 +558,16 @@ const AppRoutes: React.FC = () => {
               }
             />
             <Route
+              path="/build-editor"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <BuildEditorPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
               path="/docs/loadout/food-selector"
               element={
                 <ErrorBoundary>
@@ -603,6 +626,50 @@ const AppRoutes: React.FC = () => {
                     <RosterViewPage />
                   </Suspense>
                 </ErrorBoundary>
+              }
+            />
+            {/* Read-only build share view — accessible via direct link only */}
+            <Route
+              path="/bv"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <BuildViewPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            {/* Temporary build short link — resolves slug and redirects to /bv */}
+            <Route
+              path="/b/:slug"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <TempBuildViewPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/my-builds"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <MyBuildsPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/build-hub"
+              element={
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <BuildHubPage />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
               }
             />
             <Route

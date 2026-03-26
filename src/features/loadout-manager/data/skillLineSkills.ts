@@ -139,6 +139,7 @@ const scribingDatabase = scribingDatabaseRaw as ScribingDatabase;
 
 // Cache for all active skills
 let activeSkillsCache: SkillData[] | null = null;
+let passiveSkillsCache: SkillData[] | null = null;
 let skillsByIdCache: Map<number, SkillData> | null = null;
 let skillsByNameCache: Map<string, SkillData> | null = null;
 const skillsLogger = new Logger({ contextPrefix: 'SkillLineSkills' });
@@ -150,9 +151,11 @@ async function initializeCache(): Promise<void> {
   if (activeSkillsCache !== null) return;
 
   activeSkillsCache = [];
+  passiveSkillsCache = [];
   skillsByIdCache = new Map();
   skillsByNameCache = new Map();
   const activeSkills = activeSkillsCache;
+  const passiveSkills = passiveSkillsCache;
   const skillsById = skillsByIdCache;
   const skillsByName = skillsByNameCache;
 
@@ -163,13 +166,13 @@ async function initializeCache(): Promise<void> {
     for (const skill of skillLineData.skills) {
       const skillType =
         skill.type ?? (skill.isUltimate ? 'ultimate' : skill.isPassive ? 'passive' : 'active');
-      if (skillType !== 'active' && skillType !== 'ultimate') continue;
 
       const baseSkillId = skill.baseSkillId ?? skill.baseAbilityId;
       const skillData: SkillData = {
         id: skill.id,
         name: skill.name,
         type: skillType,
+        isPassive: skillType === 'passive',
         category: skillLineName,
         icon: getSkillIcon(skill),
         isUltimate: skillType === 'ultimate' || Boolean(skill.isUltimate),
@@ -181,7 +184,11 @@ async function initializeCache(): Promise<void> {
           : undefined,
       };
 
-      activeSkills.push(skillData);
+      if (skillType === 'passive') {
+        passiveSkills.push(skillData);
+      } else {
+        activeSkills.push(skillData);
+      }
       skillsById.set(skill.id, skillData);
       skillsByName.set(skill.name.toLowerCase(), skillData);
 
@@ -209,8 +216,10 @@ async function initializeCache(): Promise<void> {
 
   // Sort alphabetically for better UX
   activeSkills.sort((a, b) => a.name.localeCompare(b.name));
+  passiveSkills.sort((a, b) => a.name.localeCompare(b.name));
   skillsLogger.info('Initialized skill line cache', {
-    count: activeSkillsCache.length,
+    active: activeSkillsCache.length,
+    passive: passiveSkillsCache!.length,
   });
 }
 
@@ -286,11 +295,12 @@ export function getSkillById(id: number): SkillData | undefined {
 }
 
 /**
- * Search skills by name (active and ultimate only)
+ * Search skills by name (active, ultimate, and passive).
+ * Callers can filter by `skill.isPassive` to narrow results.
  */
 export function searchSkills(query: string, limit = 50): SkillData[] {
   // If cache not ready, initialize in background
-  if (!activeSkillsCache) {
+  if (!activeSkillsCache || !passiveSkillsCache) {
     initializeCache();
     return [];
   }
@@ -298,11 +308,15 @@ export function searchSkills(query: string, limit = 50): SkillData[] {
   const lowerQuery = query.toLowerCase().trim();
   const results: SkillData[] = [];
 
-  for (const skill of activeSkillsCache) {
-    if (skill.name.toLowerCase().includes(lowerQuery)) {
-      results.push(skill);
-      if (results.length >= limit) break;
+  // Search active/ultimate skills first, then passives
+  for (const pool of [activeSkillsCache, passiveSkillsCache]) {
+    for (const skill of pool) {
+      if (skill.name.toLowerCase().includes(lowerQuery)) {
+        results.push(skill);
+        if (results.length >= limit) break;
+      }
     }
+    if (results.length >= limit) break;
   }
 
   return results;
@@ -373,6 +387,40 @@ export function getSkillsByCategory(category: string): SkillData[] {
 }
 
 /**
+ * Get all passive skills for a given skill line name.
+ */
+export function getPassivesByCategory(lineName: string): SkillData[] {
+  if (!passiveSkillsCache) {
+    initializeCache();
+    return [];
+  }
+
+  return passiveSkillsCache.filter((skill) => skill.category === lineName);
+}
+
+/**
+ * Search passive skills by name.
+ */
+export function searchPassives(query: string, limit = 50): SkillData[] {
+  if (!passiveSkillsCache) {
+    initializeCache();
+    return [];
+  }
+
+  const lowerQuery = query.toLowerCase().trim();
+  const results: SkillData[] = [];
+
+  for (const skill of passiveSkillsCache) {
+    if (skill.name.toLowerCase().includes(lowerQuery)) {
+      results.push(skill);
+      if (results.length >= limit) break;
+    }
+  }
+
+  return results;
+}
+
+/**
  * Get skill by name (case-insensitive exact match)
  */
 export function getSkillByName(name: string): SkillData | undefined {
@@ -413,4 +461,31 @@ export function getSkillStats(): {
  */
 export function preloadSkillData(): Promise<void> {
   return initializeCache();
+}
+
+// ── Skill Line Index (for organized picker UI) ──────────────────────────────
+
+/** Lightweight metadata for a single skill line. */
+export interface SkillLineMeta {
+  /** Skill line display name (e.g. "Ardent Flame", "Destruction Staff") */
+  name: string;
+  /** Broad category: 'class' | 'weapon' | 'guild' | 'alliance' | 'world' */
+  broadCategory: string;
+  /** Owning class or source name (e.g. "Dragonknight", "Weapon") */
+  className: string;
+}
+
+/** Returns metadata for all skill lines, organized for picker UI. */
+export function getSkillLineIndex(): SkillLineMeta[] {
+  return [
+    ...CLASS_SKILL_LINES,
+    ...WEAPON_SKILL_LINES,
+    ...GUILD_SKILL_LINES,
+    ...ALLIANCE_SKILL_LINES,
+    ...WORLD_SKILL_LINES,
+  ].map((l) => ({
+    name: l.name,
+    broadCategory: l.category,
+    className: l.class,
+  }));
 }

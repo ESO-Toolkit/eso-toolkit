@@ -1,6 +1,8 @@
 export interface Env {
   DB: D1Database;
+  AI: Ai;
   ALLOWED_ORIGINS: string;
+  IMGBB_API_KEY: string;
 }
 
 export interface RosterRow {
@@ -45,4 +47,76 @@ export interface CommentWithReplies extends CommentRow {
 export interface AuthUser {
   id: string;
   name: string;
+}
+
+// ─── Build Hub types ──────────────────────────────────────────────────────────
+
+export interface BuildRow {
+  id: string;
+  author_id: string;
+  author_name: string;
+  is_anonymous: number; // SQLite boolean: 0 = false, 1 = true
+  title: string;
+  description: string;
+  eso_class: string;
+  role: string;
+  game_mode: string;
+  build_data: string;
+  vote_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BuildTagRow {
+  build_id: string;
+  tag: string;
+}
+
+export interface BuildWithMeta extends Omit<BuildRow, 'is_anonymous'> {
+  is_anonymous: boolean;
+  tags: string[];
+  user_voted?: boolean;
+}
+
+export interface BuildCommentRow {
+  id: string;
+  build_id: string;
+  parent_id: string | null;
+  author_id: string;
+  author_name: string;
+  body: string;
+  created_at: string;
+}
+
+export interface BuildCommentWithReplies extends BuildCommentRow {
+  replies: BuildCommentRow[];
+}
+
+// ─── Temp builds (guest, expiring) ───────────────────────────────────────────
+
+export interface TempBuildRow {
+  id: string;
+  build_data: string;
+  created_at: string;
+  expires_at: string;
+}
+
+// ─── Image upload types ───────────────────────────────────────────────────────
+
+export interface ImageUploadRow {
+  id: string;
+  uploader_id: string;
+  uploader_name: string;
+  url: string;
+  thumb_url: string;
+  delete_url: string;
+  created_at: string;
+}
+
+export interface ImageReportRow {
+  id: string;
+  image_id: string;
+  reporter_id: string;
+  reason: string;
+  created_at: string;
 }

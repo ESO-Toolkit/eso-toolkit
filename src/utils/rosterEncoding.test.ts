@@ -17,8 +17,12 @@
  * native globals, which are spec-compatible with the browser version.
  */
 
+import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
+import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 import { KnownSetIDs } from '../types/abilities';
 import {
+  type RaidRoster,
+  type BuildReference,
   SupportUltimate,
   HealerBuff,
   HealerChampionPoint,
@@ -29,7 +33,9 @@ import {
 } from '../types/roster';
 
 import {
-  CompactRoster,
+  type CompactRoster,
+  type CompactRosterV2,
+  type CompactRosterV3,
   compactifyRoster,
   expandCompactRoster,
   decodeRosterFromURL,
@@ -47,8 +53,8 @@ function buildFullRoster() {
   roster.rosterName = 'My Test Raid';
   roster.notes = 'Some raid notes';
 
-  roster.tank1 = {
-    ...defaultTankSetup(),
+  roster.tanks[0] = {
+    ...defaultTankSetup(1),
     playerName: 'TankPlayer',
     playerNumber: '1',
     roleLabel: 'MT',
@@ -70,8 +76,8 @@ function buildFullRoster() {
     notes: 'Tank notes',
   };
 
-  roster.tank2 = {
-    ...defaultTankSetup(),
+  roster.tanks[1] = {
+    ...defaultTankSetup(2),
     playerName: 'OTankPlayer',
     gearSets: {
       set1: KnownSetIDs.CLAW_OF_YOLNAHKRIIN,
@@ -80,8 +86,8 @@ function buildFullRoster() {
     ultimate: 'Custom Ultimate String', // Custom (non-enum) ultimate
   };
 
-  roster.healer1 = {
-    ...defaultHealerSetup(),
+  roster.healers[0] = {
+    ...defaultHealerSetup(1),
     playerName: 'HealerOne',
     set1: KnownSetIDs.JORVULDS_GUIDANCE,
     set2: KnownSetIDs.SPELL_POWER_CURE,
@@ -92,8 +98,8 @@ function buildFullRoster() {
     ultimate: SupportUltimate.COLOSSUS,
   };
 
-  roster.healer2 = {
-    ...defaultHealerSetup(),
+  roster.healers[1] = {
+    ...defaultHealerSetup(2),
     playerName: 'HealerTwo',
     set1: KnownSetIDs.ROARING_OPPORTUNIST,
     healerBuff: HealerBuff.FROM_THE_BRINK,
@@ -152,7 +158,7 @@ describe('compactifyRoster / expandCompactRoster', () => {
     it('produces version 2 compact object', () => {
       const roster = createDefaultRoster();
       const compact = compactifyRoster(roster);
-      expect(compact.v).toBe(2);
+      expect(compact.v).toBe(3);
     });
 
     it('omits rosterName when it is "New Roster"', () => {
@@ -199,7 +205,7 @@ describe('compactifyRoster / expandCompactRoster', () => {
       const compact = compactifyRoster(roster);
       const expanded = expandCompactRoster(compact);
 
-      const t1 = expanded.tank1;
+      const t1 = expanded.tanks[0];
       expect(t1.playerName).toBe('TankPlayer');
       expect(t1.playerNumber).toBe('1');
       expect(t1.roleLabel).toBe('MT');
@@ -220,7 +226,7 @@ describe('compactifyRoster / expandCompactRoster', () => {
       const roster = buildFullRoster();
       const compact = compactifyRoster(roster);
       const expanded = expandCompactRoster(compact);
-      expect(expanded.tank2.ultimate).toBe('Custom Ultimate String');
+      expect(expanded.tanks[1].ultimate).toBe('Custom Ultimate String');
     });
   });
 
@@ -229,7 +235,7 @@ describe('compactifyRoster / expandCompactRoster', () => {
       const roster = buildFullRoster();
       const expanded = expandCompactRoster(compactifyRoster(roster));
 
-      const h1 = expanded.healer1;
+      const h1 = expanded.healers[0];
       expect(h1.playerName).toBe('HealerOne');
       expect(h1.set1).toBe(KnownSetIDs.JORVULDS_GUIDANCE);
       expect(h1.set2).toBe(KnownSetIDs.SPELL_POWER_CURE);
@@ -243,14 +249,14 @@ describe('compactifyRoster / expandCompactRoster', () => {
     it('encodes HealerBuff enum as compact integer index', () => {
       const roster = buildFullRoster();
       const compact = compactifyRoster(roster);
-      // h1.hb should be an integer (0 = ENLIVENING_OVERFLOW)
-      expect(typeof compact.h1?.hb).toBe('number');
+      // hs[0].hb should be an integer (0 = ENLIVENING_OVERFLOW)
+      expect(typeof (compact as CompactRosterV3).hs?.[0]?.hb).toBe('number');
     });
 
     it('encodes HealerChampionPoint enum as compact integer index', () => {
       const roster = buildFullRoster();
       const compact = compactifyRoster(roster);
-      expect(typeof compact.h1?.cp).toBe('number');
+      expect(typeof (compact as CompactRosterV3).hs?.[0]?.cp).toBe('number');
     });
   });
 
@@ -356,13 +362,13 @@ describe('compactifyRoster / expandCompactRoster', () => {
       const roster = buildFullRoster();
       const compact = compactifyRoster(roster);
       // "Ardent Flame" is index 0 in CLASS_SKILL_LINES
-      expect(compact.t1?.sl?.l1).toBe(0);
+      expect((compact as CompactRosterV3).ts?.[0]?.sl?.l1).toBe(0);
     });
 
     it('encodes unknown skill lines as raw strings', () => {
       const roster = createDefaultRoster();
-      roster.tank1 = {
-        ...defaultTankSetup(),
+      roster.tanks[0] = {
+        ...defaultTankSetup(1),
         skillLines: {
           line1: 'Custom Line',
           line2: '',
@@ -371,19 +377,19 @@ describe('compactifyRoster / expandCompactRoster', () => {
         },
       };
       const compact = compactifyRoster(roster);
-      expect(compact.t1?.sl?.l1).toBe('Custom Line');
+      expect((compact as CompactRosterV3).ts?.[0]?.sl?.l1).toBe('Custom Line');
     });
 
     it('round-trips all 21 CLASS_SKILL_LINES entries', () => {
       // Every known skill line should survive a round-trip
       CLASS_SKILL_LINES.forEach((line, idx) => {
         const roster = createDefaultRoster();
-        roster.tank1 = {
-          ...defaultTankSetup(),
+        roster.tanks[0] = {
+          ...defaultTankSetup(1),
           skillLines: { line1: line, line2: '', line3: '', isFlex: false },
         };
         const expanded = expandCompactRoster(compactifyRoster(roster));
-        expect(expanded.tank1.skillLines.line1).toBe(line);
+        expect(expanded.tanks[0].skillLines.line1).toBe(line);
       });
     });
   });
@@ -392,26 +398,26 @@ describe('compactifyRoster / expandCompactRoster', () => {
     it('encodes each SupportUltimate variant as an integer', () => {
       Object.values(SupportUltimate).forEach((ult) => {
         const roster = createDefaultRoster();
-        roster.tank1 = { ...defaultTankSetup(), ultimate: ult };
+        roster.tanks[0] = { ...defaultTankSetup(1), ultimate: ult };
         const compact = compactifyRoster(roster);
-        expect(typeof compact.t1?.ul).toBe('number');
+        expect(typeof (compact as CompactRosterV3).ts?.[0]?.ul).toBe('number');
       });
     });
 
     it('round-trips all SupportUltimate values correctly', () => {
       Object.values(SupportUltimate).forEach((ult) => {
         const roster = createDefaultRoster();
-        roster.tank1 = { ...defaultTankSetup(), ultimate: ult };
+        roster.tanks[0] = { ...defaultTankSetup(1), ultimate: ult };
         const expanded = expandCompactRoster(compactifyRoster(roster));
-        expect(expanded.tank1.ultimate).toBe(ult);
+        expect(expanded.tanks[0].ultimate).toBe(ult);
       });
     });
 
     it('round-trips a custom ultimate string', () => {
       const roster = createDefaultRoster();
-      roster.tank1 = { ...defaultTankSetup(), ultimate: 'My Custom Ultimate' };
+      roster.tanks[0] = { ...defaultTankSetup(1), ultimate: 'My Custom Ultimate' };
       const expanded = expandCompactRoster(compactifyRoster(roster));
-      expect(expanded.tank1.ultimate).toBe('My Custom Ultimate');
+      expect(expanded.tanks[0].ultimate).toBe('My Custom Ultimate');
     });
   });
 
@@ -422,6 +428,398 @@ describe('compactifyRoster / expandCompactRoster', () => {
       const expanded = expandCompactRoster(compactifyRoster(roster));
       expect(expanded.availableGroups).toEqual(['Stack 1', 'Stack 2', 'Range']);
     });
+  });
+
+  describe('buildRef round-trip (roster ↔ build editor link)', () => {
+    const buildRef: BuildReference = {
+      buildId: 'build-abc-123',
+      setupIndex: 2,
+      buildName: 'My DK Tank Build',
+      esoClass: 'dragonknight',
+      role: 'tank',
+    };
+
+    it('round-trips buildRef on tank1', () => {
+      const roster = createDefaultRoster();
+      roster.tanks[0] = { ...defaultTankSetup(1), buildRef };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.tanks[0].buildRef).toEqual(buildRef);
+    });
+
+    it('round-trips buildRef on healer1', () => {
+      const roster = createDefaultRoster();
+      roster.healers[0] = { ...defaultHealerSetup(1), buildRef };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.healers[0].buildRef).toEqual(buildRef);
+    });
+
+    it('round-trips buildRef on a DPS slot', () => {
+      const roster = createDefaultRoster();
+      roster.dpsSlots[3] = { slotNumber: 4, playerName: 'Ref DPS', buildRef };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.dpsSlots[3].buildRef).toEqual(buildRef);
+    });
+
+    it('encodes setupIndex=0 correctly (zero is falsy — regression guard)', () => {
+      const roster = createDefaultRoster();
+      roster.tanks[0] = { ...defaultTankSetup(1), buildRef: { ...buildRef, setupIndex: 0 } };
+      const compact = compactifyRoster(roster);
+      expect((compact as CompactRosterV3).ts?.[0]?.br?.si).toBe(0);
+      const expanded = expandCompactRoster(compact);
+      expect(expanded.tanks[0].buildRef?.setupIndex).toBe(0);
+    });
+
+    it('omits buildRef when not set', () => {
+      const roster = createDefaultRoster();
+      const compact = compactifyRoster(roster);
+      expect((compact as CompactRosterV3).ts?.[0]?.br).toBeUndefined();
+      expect((compact as CompactRosterV3).hs?.[0]?.br).toBeUndefined();
+    });
+
+    it('round-trips minimal buildRef (setupIndex only, all optionals absent)', () => {
+      const roster = createDefaultRoster();
+      roster.tanks[0] = { ...defaultTankSetup(1), buildRef: { setupIndex: 1 } };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.tanks[0].buildRef?.setupIndex).toBe(1);
+      expect(expanded.tanks[0].buildRef?.buildId).toBeUndefined();
+      expect(expanded.tanks[0].buildRef?.buildName).toBeUndefined();
+    });
+  });
+
+  describe('groups (multi-group memberships) encoding', () => {
+    it('round-trips a single group on tank1', () => {
+      const roster = createDefaultRoster();
+      roster.tanks[0] = { ...defaultTankSetup(1), groups: ['Left Stack'] };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.tanks[0].groups).toEqual(['Left Stack']);
+    });
+
+    it('round-trips multiple groups on a DPS slot', () => {
+      const roster = createDefaultRoster();
+      roster.dpsSlots[0] = {
+        slotNumber: 1,
+        playerName: 'Multi DPS',
+        groups: ['Left Stack', 'Portal', 'Slayer'],
+      };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.dpsSlots[0].groups).toEqual(['Left Stack', 'Portal', 'Slayer']);
+    });
+
+    it('round-trips multiple groups on healer1', () => {
+      const roster = createDefaultRoster();
+      roster.healers[0] = { ...defaultHealerSetup(1), groups: ['Stack 1', 'Anchor'] };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.healers[0].groups).toEqual(['Stack 1', 'Anchor']);
+    });
+
+    it('encodes groups as grs[] in compact form — not legacy gr', () => {
+      const roster = createDefaultRoster();
+      roster.dpsSlots[0] = { slotNumber: 1, groups: ['Group A', 'Group B'] };
+      const compact = compactifyRoster(roster);
+      const dps1 = compact.dp?.find((d) => d.sn === 1);
+      expect(dps1?.grs).toEqual(['Group A', 'Group B']);
+      expect(dps1?.gr).toBeUndefined();
+    });
+
+    it('migrates legacy single gr to groups[] on decode', () => {
+      const compact = compactifyRoster(createDefaultRoster());
+      compact.dp = [{ sn: 2, gr: { g: 'Legacy Group', n: 1 } }];
+      const expanded = expandCompactRoster(compact);
+      expect(expanded.dpsSlots[1].groups).toEqual(['Legacy Group']);
+    });
+
+    it('returns undefined groups when slot has no groups set', () => {
+      const roster = createDefaultRoster();
+      roster.dpsSlots[0] = { slotNumber: 1, playerName: 'No Group DPS' };
+      const expanded = expandCompactRoster(compactifyRoster(roster));
+      expect(expanded.dpsSlots[0].groups).toBeUndefined();
+    });
+  });
+
+  describe('Full-mode inline data (food / skills / cpPoints / passives)', () => {
+    describe('food round-trip', () => {
+      it('round-trips food with id and name on tank1', () => {
+        const roster = createDefaultRoster();
+        roster.tanks[0] = {
+          ...defaultTankSetup(1),
+          food: { id: 101, name: 'Solitude Salmon-Millet Soup' },
+        };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.tanks[0].food).toEqual({ id: 101, name: 'Solitude Salmon-Millet Soup' });
+      });
+
+      it('round-trips food id-only on a DPS slot', () => {
+        const roster = createDefaultRoster();
+        roster.dpsSlots[2] = { slotNumber: 3, food: { id: 42 } };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.dpsSlots[2].food?.id).toBe(42);
+      });
+
+      it('round-trips food on healer2', () => {
+        const roster = createDefaultRoster();
+        roster.healers[1] = {
+          ...defaultHealerSetup(2),
+          food: { id: 77, name: "Witchmother's Potent Brew" },
+        };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.healers[1].food).toEqual({ id: 77, name: "Witchmother's Potent Brew" });
+      });
+
+      it('omits food when not set', () => {
+        const roster = createDefaultRoster();
+        const compact = compactifyRoster(roster);
+        expect((compact as CompactRosterV3).ts?.[0]?.fo).toBeUndefined();
+        expect((compact as CompactRosterV3).hs?.[0]?.fo).toBeUndefined();
+      });
+    });
+
+    describe('skill bars (SkillsConfig) round-trip', () => {
+      const skills: SkillsConfig = {
+        0: { 3: 123, 4: 456, 5: 789, 6: 111, 7: 222, 8: 333 },
+        1: { 3: 444, 4: 555, 5: 666, 6: 777, 7: 888, 8: 999 },
+      };
+
+      it('round-trips front and back bars on tank1', () => {
+        const roster = createDefaultRoster();
+        roster.tanks[0] = { ...defaultTankSetup(1), skills };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.tanks[0].skills?.[0]).toEqual(skills[0]);
+        expect(expanded.tanks[0].skills?.[1]).toEqual(skills[1]);
+      });
+
+      it('round-trips skill bars on a DPS slot', () => {
+        const roster = createDefaultRoster();
+        roster.dpsSlots[1] = { slotNumber: 2, skills };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.dpsSlots[1].skills?.[0]).toEqual(skills[0]);
+      });
+
+      it('round-trips front-bar-only skills (empty back bar omitted)', () => {
+        const roster = createDefaultRoster();
+        const frontOnly: SkillsConfig = { 0: { 3: 100, 4: 200 }, 1: {} };
+        roster.tanks[0] = { ...defaultTankSetup(1), skills: frontOnly };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.tanks[0].skills?.[0]).toEqual({ 3: 100, 4: 200 });
+      });
+
+      it('omits skills when not set', () => {
+        const roster = createDefaultRoster();
+        const compact = compactifyRoster(roster);
+        expect((compact as CompactRosterV3).ts?.[0]?.sk).toBeUndefined();
+        expect((compact as CompactRosterV3).hs?.[0]?.sk).toBeUndefined();
+      });
+    });
+
+    describe('champion points (cpPoints) round-trip', () => {
+      const cpPoints: BuildChampionPoints = {
+        warfare: {
+          slots: [12345, 67890, null, null],
+          passives: { 'warrior-poet': 50, 'wrathful-strikes': 20 },
+        },
+        fitness: { slots: [11111, null, null, null], passives: {} },
+        craft: { slots: [null, null, null, null], passives: { 'treasure-hunter': 10 } },
+      };
+
+      it('round-trips cpPoints on tank1', () => {
+        const roster = createDefaultRoster();
+        roster.tanks[0] = { ...defaultTankSetup(1), cpPoints };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.tanks[0].cpPoints?.warfare.slots[0]).toBe(12345);
+        expect(expanded.tanks[0].cpPoints?.warfare.slots[1]).toBe(67890);
+        expect(expanded.tanks[0].cpPoints?.warfare.passives['warrior-poet']).toBe(50);
+        expect(expanded.tanks[0].cpPoints?.fitness.slots[0]).toBe(11111);
+      });
+
+      it('round-trips cpPoints on healer1', () => {
+        const roster = createDefaultRoster();
+        roster.healers[0] = { ...defaultHealerSetup(1), cpPoints };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.healers[0].cpPoints?.warfare.slots[0]).toBe(12345);
+      });
+
+      it('round-trips cpPoints on a DPS slot', () => {
+        const roster = createDefaultRoster();
+        roster.dpsSlots[5] = { slotNumber: 6, cpPoints };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.dpsSlots[5].cpPoints?.warfare.slots[0]).toBe(12345);
+        expect(expanded.dpsSlots[5].cpPoints?.craft.passives['treasure-hunter']).toBe(10);
+      });
+
+      it('trims trailing null slots in compact CP tree (reduces URL size)', () => {
+        const roster = createDefaultRoster();
+        roster.tanks[0] = {
+          ...defaultTankSetup(1),
+          cpPoints: {
+            warfare: { slots: [99, null, null, null], passives: {} },
+            fitness: { slots: [null, null, null, null], passives: {} },
+            craft: { slots: [null, null, null, null], passives: {} },
+          },
+        };
+        const compact = compactifyRoster(roster);
+        // Trailing nulls trimmed: [99, null, null, null] → [99]
+        expect((compact as CompactRosterV3).ts?.[0]?.cp2?.w?.s).toEqual([99]);
+        // And re-pads to 4 slots on expand
+        const expanded = expandCompactRoster(compact);
+        expect(expanded.tanks[0].cpPoints?.warfare.slots).toEqual([99, null, null, null]);
+      });
+
+      it('omits cpPoints when all trees are empty', () => {
+        const roster = createDefaultRoster();
+        const compact = compactifyRoster(roster);
+        expect((compact as CompactRosterV3).ts?.[0]?.cp2).toBeUndefined();
+        expect((compact as CompactRosterV3).hs?.[0]?.cp2).toBeUndefined();
+      });
+
+      it('omits zero-value passives in compact form', () => {
+        const roster = createDefaultRoster();
+        roster.tanks[0] = {
+          ...defaultTankSetup(1),
+          cpPoints: {
+            warfare: {
+              slots: [null, null, null, null],
+              passives: { 'warrior-poet': 0, 'wrathful-strikes': 5 },
+            },
+            fitness: { slots: [null, null, null, null], passives: {} },
+            craft: { slots: [null, null, null, null], passives: {} },
+          },
+        };
+        const compact = compactifyRoster(roster);
+        // 'warrior-poet': 0 omitted; 'wrathful-strikes': 5 kept
+        expect((compact as CompactRosterV3).ts?.[0]?.cp2?.w?.p?.['warrior-poet']).toBeUndefined();
+        expect((compact as CompactRosterV3).ts?.[0]?.cp2?.w?.p?.['wrathful-strikes']).toBe(5);
+      });
+    });
+
+    describe('passives (ability IDs) round-trip', () => {
+      it('round-trips passives on tank1', () => {
+        const roster = createDefaultRoster();
+        roster.tanks[0] = { ...defaultTankSetup(1), passives: [40001, 40002, 40003] };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.tanks[0].passives).toEqual([40001, 40002, 40003]);
+      });
+
+      it('round-trips passives on healer1', () => {
+        const roster = createDefaultRoster();
+        roster.healers[0] = { ...defaultHealerSetup(1), passives: [50001] };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.healers[0].passives).toEqual([50001]);
+      });
+
+      it('round-trips passives on a DPS slot', () => {
+        const roster = createDefaultRoster();
+        roster.dpsSlots[7] = { slotNumber: 8, passives: [60001, 60002] };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.dpsSlots[7].passives).toEqual([60001, 60002]);
+      });
+
+      it('omits passives when empty', () => {
+        const roster = createDefaultRoster();
+        const compact = compactifyRoster(roster);
+        expect((compact as CompactRosterV3).ts?.[0]?.pa).toBeUndefined();
+        expect((compact as CompactRosterV3).hs?.[0]?.pa).toBeUndefined();
+      });
+    });
+
+    describe('roleNotes round-trip', () => {
+      it('round-trips roleNotes on a tank slot', () => {
+        const roster = createDefaultRoster();
+        roster.tanks[0] = { ...defaultTankSetup(1), roleNotes: 'TOMB Main Tank, portal duty' };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.tanks[0].roleNotes).toBe('TOMB Main Tank, portal duty');
+      });
+
+      it('round-trips roleNotes on a healer slot', () => {
+        const roster = createDefaultRoster();
+        roster.healers[0] = {
+          ...defaultHealerSetup(1),
+          roleNotes: 'Main healer, shield uptime focus',
+        };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.healers[0].roleNotes).toBe('Main healer, shield uptime focus');
+      });
+
+      it('round-trips roleNotes on a DPS slot', () => {
+        const roster = createDefaultRoster();
+        roster.dpsSlots[0] = { slotNumber: 1, roleNotes: "Portal L, Z'en, Ele sus" };
+        const expanded = expandCompactRoster(compactifyRoster(roster));
+        expect(expanded.dpsSlots[0].roleNotes).toBe("Portal L, Z'en, Ele sus");
+      });
+
+      it('omits roleNotes when not set (no empty-string bloat)', () => {
+        const roster = createDefaultRoster();
+        const compact = compactifyRoster(roster);
+        expect((compact as CompactRosterV3).ts?.[0]?.rn).toBeUndefined();
+        expect((compact as CompactRosterV3).hs?.[0]?.rn).toBeUndefined();
+      });
+    });
+  });
+});
+
+// ============================================================
+// v2 backward compatibility
+// ============================================================
+
+describe('v2 backward compatibility', () => {
+  it('decodes a v2 compact roster with t1/t2/h1/h2 fields', () => {
+    const v2: CompactRosterV2 = {
+      v: 2,
+      n: 'Legacy',
+      t1: { pn: 'Tank1' },
+      t2: { pn: 'Tank2' },
+      h1: { pn: 'Healer1' },
+      h2: { pn: 'Healer2' },
+    };
+    const expanded = expandCompactRoster(v2);
+    expect(expanded.tanks[0].playerName).toBe('Tank1');
+    expect(expanded.tanks[1].playerName).toBe('Tank2');
+    expect(expanded.healers[0].playerName).toBe('Healer1');
+    expect(expanded.healers[1].playerName).toBe('Healer2');
+    expect(expanded.composition).toEqual({ tanks: 2, healers: 2, dps: 8 });
+  });
+});
+
+// ============================================================
+// v3 composition round-trips
+// ============================================================
+
+describe('v3 composition round-trips', () => {
+  it('round-trips a 1/2/9 composition', () => {
+    const roster = createDefaultRoster({ tanks: 1, healers: 2, dps: 9 });
+    expect(roster.tanks).toHaveLength(1);
+    expect(roster.dpsSlots).toHaveLength(9);
+    const expanded = expandCompactRoster(compactifyRoster(roster));
+    expect(expanded.composition).toEqual({ tanks: 1, healers: 2, dps: 9 });
+    expect(expanded.tanks).toHaveLength(1);
+    expect(expanded.dpsSlots).toHaveLength(9);
+  });
+
+  it('round-trips a 3/1/8 composition', () => {
+    const roster = createDefaultRoster({ tanks: 3, healers: 1, dps: 8 });
+    const expanded = expandCompactRoster(compactifyRoster(roster));
+    expect(expanded.composition).toEqual({ tanks: 3, healers: 1, dps: 8 });
+    expect(expanded.tanks).toHaveLength(3);
+    expect(expanded.healers).toHaveLength(1);
+  });
+
+  it('round-trips a 0/0/12 composition', () => {
+    const roster = createDefaultRoster({ tanks: 0, healers: 0, dps: 12 });
+    const expanded = expandCompactRoster(compactifyRoster(roster));
+    expect(expanded.composition).toEqual({ tanks: 0, healers: 0, dps: 12 });
+    expect(expanded.tanks).toHaveLength(0);
+    expect(expanded.healers).toHaveLength(0);
+    expect(expanded.dpsSlots).toHaveLength(12);
+  });
+
+  it('omits co field for default 2/2/8 composition', () => {
+    const roster = createDefaultRoster();
+    const compact = compactifyRoster(roster) as CompactRosterV3;
+    expect(compact.co).toBeUndefined();
+  });
+
+  it('encodes non-default composition as co tuple', () => {
+    const roster = createDefaultRoster({ tanks: 1, healers: 2, dps: 9 });
+    const compact = compactifyRoster(roster) as CompactRosterV3;
+    expect(compact.co).toEqual([1, 2, 9]);
   });
 });
 
@@ -467,7 +865,7 @@ describe('toBase64Url / fromBase64Url', () => {
 
 import { deflateRawSync, inflateRawSync } from 'zlib';
 
-/** Build a v2-format encoded roster string using Node's zlib (test helper only). */
+/** Build a compact-format encoded roster string using Node's zlib (test helper only). */
 function encodeRosterSync(roster: RaidRoster): string {
   const compact = compactifyRoster(roster);
   const json = JSON.stringify(compact);
@@ -475,13 +873,13 @@ function encodeRosterSync(roster: RaidRoster): string {
   return toBase64Url(new Uint8Array(compressed));
 }
 
-/** Decode a v2-format encoded string using Node's zlib (test helper only). */
+/** Decode a v2/v3-format encoded string using Node's zlib (test helper only). */
 function decodeRosterSync(encoded: string): RaidRoster | null {
   try {
     const bytes = fromBase64Url(encoded);
     const json = inflateRawSync(Buffer.from(bytes)).toString('utf-8');
     const parsed = JSON.parse(json) as { v?: number };
-    if (parsed.v === 2) return expandCompactRoster(parsed as CompactRoster);
+    if (parsed.v === 2 || parsed.v === 3) return expandCompactRoster(parsed as CompactRoster);
   } catch {
     // fall through
   }
@@ -525,7 +923,7 @@ describe('deflateString / inflateBytes (Node zlib format compatibility)', () => 
 // The v2 decompression path in the browser is covered by E2E tests.
 // ============================================================
 
-describe('decodeRosterSync (v2 format — Node zlib decode)', () => {
+describe('decodeRosterSync (v2/v3 format — Node zlib decode)', () => {
   it('decodes an empty roster', () => {
     const roster = createDefaultRoster();
     const decoded = decodeRosterSync(encodeRosterSync(roster));
@@ -540,10 +938,10 @@ describe('decodeRosterSync (v2 format — Node zlib decode)', () => {
     expect(decoded).not.toBeNull();
     expect(decoded!.rosterName).toBe('My Test Raid');
     expect(decoded!.notes).toBe('Some raid notes');
-    expect(decoded!.tank1.gearSets.set1).toBe(KnownSetIDs.LUCENT_ECHOES);
-    expect(decoded!.tank1.gearSets.monsterSet).toBe(KnownSetIDs.BARON_ZAUDRUS);
-    expect(decoded!.healer1.set1).toBe(KnownSetIDs.JORVULDS_GUIDANCE);
-    expect(decoded!.healer1.healerBuff).toBe(HealerBuff.ENLIVENING_OVERFLOW);
+    expect(decoded!.tanks[0].gearSets.set1).toBe(KnownSetIDs.LUCENT_ECHOES);
+    expect(decoded!.tanks[0].gearSets.monsterSet).toBe(KnownSetIDs.BARON_ZAUDRUS);
+    expect(decoded!.healers[0].set1).toBe(KnownSetIDs.JORVULDS_GUIDANCE);
+    expect(decoded!.healers[0].healerBuff).toBe(HealerBuff.ENLIVENING_OVERFLOW);
     expect(decoded!.dpsSlots[0].set1).toBe(KnownSetIDs.DEADLY_STRIKE);
     expect(decoded!.dpsSlots[0].set2).toBe(KnownSetIDs.MERCILESS_CHARGE);
     expect(decoded!.dpsSlots[0].monsterSet).toBe(KnownSetIDs.BALORGH);
@@ -580,6 +978,13 @@ describe('decodeRosterSync (v2 format — Node zlib decode)', () => {
 // ============================================================
 
 describe('decodeRosterFromURL (v1 path + error handling)', () => {
+  it('rejects oversized payloads before inflating (decompression bomb guard)', async () => {
+    // Create a payload larger than MAX_ROSTER_COMPRESSED_BYTES (500 KB) encoded as base64url
+    const oversized = new Uint8Array(500 * 1024 + 1);
+    const encoded = toBase64Url(oversized);
+    expect(await decodeRosterFromURL(encoded)).toBeNull();
+  });
+
   it('returns null for a completely invalid string', async () => {
     expect(await decodeRosterFromURL('not-valid-base64-or-json!!!')).toBeNull();
   });

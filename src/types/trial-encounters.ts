@@ -35,14 +35,13 @@ export interface PlayerOverride {
   notes?: string;
 }
 
-/** All overrides for a single encounter (keyed by player identifier) */
+/**
+ * All overrides for a single encounter, keyed by SlotKey (e.g., "tank:0", "healer:1", "dps:3").
+ * DPS slots use SlotKey format like "dps:0" (zero-based index).
+ */
 export interface EncounterOverrides {
-  tank1?: PlayerOverride;
-  tank2?: PlayerOverride;
-  healer1?: PlayerOverride;
-  healer2?: PlayerOverride;
-  /** Sparse array — only slots with overrides are present */
-  dpsSlots?: Array<{ slotNumber: number } & PlayerOverride>;
+  /** Sparse record — only slots with overrides have entries. Keys are SlotKey strings. */
+  slots: Record<string, PlayerOverride>;
 }
 
 /** Per-fight build configuration for a trial */
@@ -68,12 +67,7 @@ export function isOverrideEmpty(override: PlayerOverride | undefined): boolean {
 
 export function encounterHasOverrides(overrides: EncounterOverrides | undefined): boolean {
   if (!overrides) return false;
-  if (overrides.tank1 && !isOverrideEmpty(overrides.tank1)) return true;
-  if (overrides.tank2 && !isOverrideEmpty(overrides.tank2)) return true;
-  if (overrides.healer1 && !isOverrideEmpty(overrides.healer1)) return true;
-  if (overrides.healer2 && !isOverrideEmpty(overrides.healer2)) return true;
-  if (overrides.dpsSlots?.some((s) => !isOverrideEmpty(s))) return true;
-  return false;
+  return Object.values(overrides.slots).some((o) => !isOverrideEmpty(o));
 }
 
 /** Merge a base TankSetup with a sparse override */

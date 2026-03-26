@@ -60,7 +60,7 @@ const slotAliasMap: Record<string, SlotType> = {
   feet: 'feet',
   neck: 'neck',
   ring: 'ring',
-  'ring-backup': 'weapon',
+  'ring-backup': 'ring',
   weapon: 'weapon',
   offhand: 'offhand',
 };
@@ -68,6 +68,8 @@ const slotAliasMap: Record<string, SlotType> = {
 const slotTypeOverrides: Record<number, SlotType> = {
   // Perfected Sul-Xan weapon drops export with an offhand mask even though the slot is a weapon bar item.
   174583: 'weapon',
+  // Harpooner's Wading Kilt is leg armor (UESP confirmed), but collection data exports as waist.
+  175524: 'legs',
 };
 
 const data = collectionsRaw as ItemSetCollectionsFile;
@@ -198,6 +200,27 @@ export function hasCollectionSlot(itemId: number): boolean {
 
 export function getCollectionSize(): number {
   return collectionItems.size;
+}
+
+/**
+ * Pre-built reverse index: slotType → Set of itemIds.
+ * Built once at module load from the 10K collection items, so callers
+ * can look up "all items for slot X" without scanning the full 119K itemIdMap.
+ */
+const collectionItemsBySlotType = new Map<SlotType, Set<number>>();
+collectionItems.forEach((item, itemId) => {
+  if (!item.slotType) return;
+  let bucket = collectionItemsBySlotType.get(item.slotType);
+  if (!bucket) {
+    bucket = new Set<number>();
+    collectionItemsBySlotType.set(item.slotType, bucket);
+  }
+  bucket.add(itemId);
+});
+
+/** Get all collection item IDs that belong to a given slot type. */
+export function getCollectionItemIdsBySlot(slot: SlotType): ReadonlySet<number> {
+  return collectionItemsBySlotType.get(slot) ?? new Set();
 }
 
 export function findCollectionItemBySetAndSlotMask(

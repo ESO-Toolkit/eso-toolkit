@@ -1,4 +1,5 @@
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import BuildIcon from '@mui/icons-material/Construction';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoIcon from '@mui/icons-material/Info';
@@ -17,14 +18,16 @@ import {
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { getArmorWeightCounts } from '@/utils/armorUtils';
+import { encodeBuildToURL } from '@/utils/buildEncoding';
 import { toClassKey } from '@/utils/classNameUtils';
 import { abbreviateFood, detectFoodFromAuras, getFoodColor } from '@/utils/foodDetectionUtils';
 import { createGearSetTooltipProps } from '@/utils/gearSetTooltipMapper';
 import { buildVariantSx, getGearChipProps } from '@/utils/playerCardStyleUtils';
+import { playerToBuild } from '@/utils/playerToBuild';
 import {
   abbreviatePotion,
   describePotionType,
@@ -306,7 +309,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       () => player?.combatantInfo?.talents ?? [],
       [player?.combatantInfo?.talents],
     );
-    const gear = player?.combatantInfo?.gear ?? [];
+    const gear = React.useMemo(
+      () => player?.combatantInfo?.gear ?? [],
+      [player?.combatantInfo?.gear],
+    );
     const armorWeights = getArmorWeightCounts(gear);
 
     // State for gear details panel
@@ -534,6 +540,54 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         tooltip: describePotionType(potionType),
       };
     }, [auras, player.potionUse, potionStreamResult]);
+
+    // --- Extract Build handler ---
+    const [extractLoading, setExtractLoading] = useState(false);
+
+    const handleExtractBuild = useCallback(async () => {
+      setExtractLoading(true);
+      // Open the tab synchronously inside the click handler so popup blockers
+      // don't intercept — the async encodeBuildToURL would break the gesture chain.
+      const tab = window.open('', '_blank');
+      try {
+        const broadRole: string = detectedRole
+          ? toBroadRole(detectedRole.role)
+          : (player.role ?? 'dps');
+
+        const build = playerToBuild({
+          playerName: resolveActorName(player),
+          role: broadRole,
+          gear,
+          talents,
+          mundusBuffs,
+          championPoints,
+          classAnalysis,
+          food: foodAura ? { id: foodAura.id, name: foodAura.name } : undefined,
+          potionType: potionStreamResult?.type,
+        });
+
+        const encoded = await encodeBuildToURL(build);
+        if (tab && encoded) {
+          tab.location.href = `/build-editor?b=${encoded}&from=report`;
+        } else {
+          tab?.close();
+        }
+      } catch {
+        tab?.close();
+      } finally {
+        setExtractLoading(false);
+      }
+    }, [
+      player,
+      gear,
+      talents,
+      mundusBuffs,
+      championPoints,
+      classAnalysis,
+      detectedRole,
+      foodAura,
+      potionStreamResult,
+    ]);
 
     const resolvedPlayerName = resolveActorName(player);
     const normalizedDisplayName = resolvedPlayerName.trim();
@@ -1447,55 +1501,110 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           >
                             Gear
                           </Typography>
-                          <Box
-                            onClick={() => {
-                              setCurrentGearPlayerId(player.id);
-                              setGearDetailsOpen(true);
-                            }}
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 0.25,
-                              px: 0.75,
-                              py: 0.25,
-                              borderRadius: 0.5,
-                              backgroundColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(255, 255, 255, 0.08)'
-                                  : 'rgb(255 255 255 / 15%)',
-                              border: '1px solid',
-                              borderColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(255, 255, 255, 0.12)'
-                                  : 'rgba(0, 0, 0, 0.12)',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              '&:hover': {
+                          <Box display="flex" alignItems="center" gap={0.75}>
+                            <Tooltip
+                              title="Open this player's gear, skills, and CP in the Build Editor"
+                              arrow
+                            >
+                              <Box
+                                onClick={handleExtractBuild}
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.25,
+                                  px: 0.75,
+                                  py: 0.25,
+                                  borderRadius: 0.5,
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(59, 130, 246, 0.12)'
+                                      : 'rgba(59, 130, 246, 0.08)',
+                                  border: '1px solid',
+                                  borderColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(59, 130, 246, 0.25)'
+                                      : 'rgba(59, 130, 246, 0.2)',
+                                  cursor: extractLoading ? 'wait' : 'pointer',
+                                  opacity: extractLoading ? 0.6 : 1,
+                                  transition: 'all 0.2s ease',
+                                  '&:hover': {
+                                    backgroundColor:
+                                      theme.palette.mode === 'dark'
+                                        ? 'rgba(59, 130, 246, 0.2)'
+                                        : 'rgba(59, 130, 246, 0.14)',
+                                    borderColor:
+                                      theme.palette.mode === 'dark'
+                                        ? 'rgba(59, 130, 246, 0.4)'
+                                        : 'rgba(59, 130, 246, 0.35)',
+                                  },
+                                }}
+                              >
+                                <BuildIcon sx={{ fontSize: 12, color: 'primary.main' }} />
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontSize: '0.65rem',
+                                    fontWeight: 500,
+                                    color: 'primary.main',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.3px',
+                                    lineHeight: 1,
+                                  }}
+                                >
+                                  {extractLoading ? 'LOADING…' : 'EXTRACT'}
+                                </Typography>
+                              </Box>
+                            </Tooltip>
+                            <Box
+                              onClick={() => {
+                                setCurrentGearPlayerId(player.id);
+                                setGearDetailsOpen(true);
+                              }}
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.25,
+                                px: 0.75,
+                                py: 0.25,
+                                borderRadius: 0.5,
                                 backgroundColor:
                                   theme.palette.mode === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.12)'
-                                    : 'rgba(0, 0, 0, 0.1)',
+                                    ? 'rgba(255, 255, 255, 0.08)'
+                                    : 'rgb(255 255 255 / 15%)',
+                                border: '1px solid',
                                 borderColor:
                                   theme.palette.mode === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.2)'
-                                    : 'rgba(0, 0, 0, 0.2)',
-                              },
-                            }}
-                          >
-                            <InfoIcon sx={{ fontSize: 12, color: 'text.secondary' }} />
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                fontSize: '0.65rem',
-                                fontWeight: 300,
-                                color: 'text.secondary',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.3px',
-                                lineHeight: 1,
+                                    ? 'rgba(255, 255, 255, 0.12)'
+                                    : 'rgba(0, 0, 0, 0.12)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                '&:hover': {
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(255, 255, 255, 0.12)'
+                                      : 'rgba(0, 0, 0, 0.1)',
+                                  borderColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(255, 255, 255, 0.2)'
+                                      : 'rgba(0, 0, 0, 0.2)',
+                                },
                               }}
                             >
-                              INFO
-                            </Typography>
+                              <InfoIcon sx={{ fontSize: 12, color: 'text.secondary' }} />
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  fontSize: '0.65rem',
+                                  fontWeight: 300,
+                                  color: 'text.secondary',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.3px',
+                                  lineHeight: 1,
+                                }}
+                              >
+                                INFO
+                              </Typography>
+                            </Box>
                           </Box>
                         </Box>
                         <Box

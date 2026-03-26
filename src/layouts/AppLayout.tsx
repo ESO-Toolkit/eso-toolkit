@@ -14,6 +14,8 @@ export const AppLayout: React.FC = () => {
 
   // Check if we're on the landing page (root path)
   const isLandingPage = location.pathname === '/' || location.pathname === '';
+  // Build editor needs a wider container and less vertical padding
+  const isBuildEditor = location.pathname.startsWith('/build-editor');
 
   // Embed mode: strip chrome (header/footer) for iframe previews
   const isEmbed = searchParams.get('embed') === '1';
@@ -52,7 +54,7 @@ export const AppLayout: React.FC = () => {
         >
           <HeaderBar />
           <Container
-            maxWidth="md"
+            maxWidth={isBuildEditor ? 'xl' : 'md'}
             sx={{
               px: { xs: isLandingPage ? 2 : 0, sm: 2 },
               flex: 1,
@@ -60,8 +62,8 @@ export const AppLayout: React.FC = () => {
           >
             <Box
               sx={{
-                pt: { xs: isLandingPage ? 2 : 0, sm: 8 },
-                pb: { xs: isLandingPage ? 2 : 0, sm: 4 },
+                pt: { xs: isLandingPage ? 2 : 0, sm: isBuildEditor ? 2 : 8 },
+                pb: { xs: isLandingPage ? 2 : 0, sm: isBuildEditor ? 2 : 4 },
                 minHeight: 'calc(100vh - 200px)',
               }}
             >

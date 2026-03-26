@@ -20,6 +20,7 @@ import storage from 'redux-persist/lib/storage';
 
 import type { EsoLogsClient } from '@/esologsClient';
 
+import buildEditorReducer from '../features/build-editor/store/buildEditorSlice';
 import loadoutReducer from '../features/loadout-manager/store/loadoutSlice';
 
 import dashboardReducer from './dashboard/dashboardSlice';
@@ -28,6 +29,7 @@ import masterDataReducer from './master_data/masterDataSlice';
 import parseAnalysisReducer from './parse_analysis/parseAnalysisSlice';
 import playerDataReducer from './player_data/playerDataSlice';
 import reportReducer from './report/reportSlice';
+import { savedBuildsReducer } from './saved_builds';
 import { savedRostersReducer } from './saved_rosters';
 import uiReducer, { UIState } from './ui/uiSlice';
 import userReportsReducer from './user_reports';
@@ -35,6 +37,7 @@ import { workerResultsReducer } from './worker_results';
 
 // Root reducer - adding essential slices
 const rootReducer = combineReducers({
+  buildEditor: buildEditorReducer,
   dashboard: dashboardReducer,
   events: eventsReducer,
   loadout: loadoutReducer,
@@ -42,6 +45,7 @@ const rootReducer = combineReducers({
   parseAnalysis: parseAnalysisReducer,
   playerData: playerDataReducer,
   report: reportReducer,
+  savedBuilds: savedBuildsReducer,
   savedRosters: savedRostersReducer,
   ui: uiReducer,
   userReports: userReportsReducer,
@@ -92,7 +96,7 @@ const persistConfig = {
   key: 'root',
   storage,
   transforms: [uiTransform], // Apply transform to exclude report-specific UI state
-  whitelist: ['ui', 'loadout', 'dashboard', 'savedRosters'], // Persist essential data, loadout, and saved rosters
+  whitelist: ['ui', 'loadout', 'dashboard', 'savedRosters', 'savedBuilds'], // Persist essential data, loadout, saved rosters, and saved builds
 };
 
 const persistedReducer = persistReducer<RootState>(persistConfig, rootReducer);
