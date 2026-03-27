@@ -19,8 +19,4 @@ id = "df6065234e9e404fb7b0e57071751907"
 
 [[kv_namespaces]]
 binding = "ROSTERS"
-id = "REPLACE_WITH_ROSTERS_KV_NAMESPACE_ID"
-
-# To create the ROSTERS KV namespace, run:
-#   npx wrangler kv:namespace create ROSTERS
-# Then replace the id above with the returned namespace ID.
+id = "2d4b62745f2c4aaeb6b1975dafc8816f"
