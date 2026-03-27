@@ -23,6 +23,7 @@ import {
   getSkillsByCategory,
   searchSkills,
 } from '@/features/loadout-manager/data/skillLineSkills';
+import { groupSkillsByBase } from '@/utils/groupSkillsByBase';
 import { buildTooltipProps } from '@/utils/skillTooltipMapper';
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -39,30 +40,6 @@ const PICKER_TABS = [
   { key: 'alliance' as const, label: 'Alliance' },
   { key: 'world' as const, label: 'World' },
 ];
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-interface SkillGroup {
-  base: SkillData;
-  morphs: SkillData[];
-}
-
-function groupSkillsByBase(skills: SkillData[]): SkillGroup[] {
-  const map = new Map<number, { base?: SkillData; morphs: SkillData[] }>();
-  for (const skill of skills) {
-    const baseId = skill.baseSkillId ?? skill.baseAbilityId ?? skill.id;
-    if (!map.has(baseId)) map.set(baseId, { morphs: [] });
-    const g = map.get(baseId)!;
-    if (skill.id === baseId) g.base = skill;
-    else g.morphs.push(skill);
-  }
-  const result: SkillGroup[] = [];
-  for (const g of map.values()) {
-    if (g.base) result.push({ base: g.base, morphs: g.morphs });
-    else if (g.morphs.length > 0) result.push({ base: g.morphs[0], morphs: g.morphs.slice(1) });
-  }
-  return result;
-}
 
 // ── Skill Tile (selected skill display) ──────────────────────────────────────
 
@@ -173,6 +150,7 @@ const SkillTile: React.FC<SkillTileProps> = ({ skill, onRemove }) => {
               justifyContent: 'center',
               backgroundColor: 'rgba(0,0,0,0.60)',
               backdropFilter: 'blur(2px)',
+              WebkitBackdropFilter: 'blur(2px)',
               opacity: 0,
               transition: 'opacity 150ms',
               cursor: 'pointer',

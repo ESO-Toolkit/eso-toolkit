@@ -199,6 +199,7 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
                     borderRadius: 2,
                     background: isDark ? 'rgba(18,24,38,0.96)' : 'rgba(255,255,255,0.96)',
                     backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
                     border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
                     boxShadow: isDark
                       ? '0 8px 32px rgba(0,0,0,0.6)'

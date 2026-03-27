@@ -11,6 +11,7 @@ import type {
   SingleCommentResponse,
   SingleRosterResponse,
   SortOrder,
+  UserProfileResponse,
   VoteResponse,
 } from '../types/roster-hub.types';
 
@@ -131,7 +132,7 @@ export const rosterHubApi = {
 
   loadRosterIntoBuilder(roster: HubRoster): void {
     // Navigate to roster builder with the encoded roster data as the ?r= param
-    window.location.href = `${import.meta.env.BASE_URL}roster-builder?r=${roster.roster_data}`;
+    window.location.href = `${import.meta.env.BASE_URL}roster-builder?r=${encodeURIComponent(roster.roster_data)}`;
   },
 
   // ─── Comments ──────────────────────────────────────────────────────────────
@@ -156,6 +157,20 @@ export const rosterHubApi = {
     return request<{ ok: boolean }>(
       `/rosters/${rosterId}/comments/${commentId}`,
       { method: 'DELETE' },
+      token,
+    );
+  },
+
+  // ─── Public profiles ────────────────────────────────────────────────────────
+
+  getUserProfile(username: string): Promise<UserProfileResponse> {
+    return request<UserProfileResponse>(`/users/${encodeURIComponent(username)}`);
+  },
+
+  updateBio(bio: string, token: string): Promise<{ ok: boolean }> {
+    return request<{ ok: boolean }>(
+      '/users/me/bio',
+      { method: 'PUT', body: JSON.stringify({ bio }) },
       token,
     );
   },

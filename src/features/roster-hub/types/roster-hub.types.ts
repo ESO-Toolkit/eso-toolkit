@@ -76,3 +76,40 @@ export interface ListCommentsResponse {
 export interface SingleCommentResponse {
   comment: HubComment;
 }
+
+// ─── Public profiles ──────────────────────────────────────────────────────────
+
+export interface ProfileBuildSummary {
+  id: string;
+  title: string;
+  description: string;
+  eso_class: string;
+  role: string;
+  game_mode: string;
+  vote_count: number;
+  tags: string[];
+  created_at: string;
+}
+
+export interface ProfileRosterSummary {
+  id: string;
+  title: string;
+  description: string;
+  trial_id: string;
+  vote_count: number;
+  tags: string[];
+  created_at: string;
+}
+
+export interface UserProfile {
+  username: string;
+  bio: string;
+  build_count: number;
+  roster_count: number;
+  builds: ProfileBuildSummary[];
+  rosters: ProfileRosterSummary[];
+}
+
+export interface UserProfileResponse {
+  profile: UserProfile;
+}

@@ -14,6 +14,7 @@ import { useSnackbar } from 'notistack';
 import React from 'react';
 
 import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
+import { formatRelativeDate } from '../../../utils/formatRelativeDate';
 import type { HubRoster } from '../types/roster-hub.types';
 import { TAG_COLORS } from '../types/roster-hub.types';
 
@@ -85,18 +86,7 @@ export const TRIAL_ACCENT: Record<string, string> = {
   SS: '#0ea5e9', // sky
 };
 
-function formatDate(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  if (days < 30) return `${Math.floor(days / 7)}w ago`;
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
+const formatDate = formatRelativeDate;
 
 export const RosterCard: React.FC<RosterCardProps> = React.memo(
   ({ roster, isOwner, isLoggedIn, onVote, onDelete, onEdit }) => {
@@ -108,9 +98,10 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
     const handleCopyLink = (e: React.MouseEvent): void => {
       e.stopPropagation();
       const url = `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${roster.roster_data}`;
-      void navigator.clipboard.writeText(url).then(() => {
-        enqueueSnackbar('Link copied to clipboard!', { variant: 'success' });
-      });
+      void navigator.clipboard.writeText(url).then(
+        () => enqueueSnackbar('Link copied to clipboard!', { variant: 'success' }),
+        () => enqueueSnackbar('Failed to copy link', { variant: 'error' }),
+      );
     };
 
     const trialShort = TRIAL_SHORT[roster.trial_id] ?? roster.trial_id;
