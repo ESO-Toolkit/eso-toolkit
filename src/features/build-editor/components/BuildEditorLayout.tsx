@@ -25,7 +25,8 @@ import {
 import { Box, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { motion, useReducedMotion } from 'framer-motion';
-import React, { useCallback, useEffect } from 'react';
+import { useSnackbar } from 'notistack';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { saveBuild } from '@/store/saved_builds';
@@ -54,24 +55,13 @@ import { SetupTabBar } from './SetupTabBar';
 export const BuildEditorLayout: React.FC = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const prefersReduced = useReducedMotion();
   const progress = useSectionProgress();
-  const { isDirty, build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
+  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
 
-  // Warn user before leaving with unsaved changes
-  const handleBeforeUnload = useCallback(
-    (e: BeforeUnloadEvent) => {
-      if (!isDirty) return;
-      e.preventDefault();
-    },
-    [isDirty],
-  );
-
-  useEffect(() => {
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [handleBeforeUnload]);
+  // NOTE: beforeunload handler lives in BuildEditorPage (sets e.returnValue for cross-browser compat).
 
   // Ctrl+S / Cmd+S keyboard shortcut to save
   useEffect(() => {
@@ -84,8 +74,15 @@ export const BuildEditorLayout: React.FC = () => {
             BUILD_EDITOR_STORAGE_KEY,
             JSON.stringify({ build, activeSetupIndex }),
           );
-        } catch {
-          // Silently fail — localStorage might be full
+        } catch (err) {
+          const isQuota =
+            err instanceof DOMException && (err.name === 'QuotaExceededError' || err.code === 22);
+          enqueueSnackbar(
+            isQuota
+              ? 'Browser storage full — build not saved locally. Try publishing to the Hub.'
+              : 'Could not save to browser storage.',
+            { variant: 'warning', preventDuplicate: true },
+          );
         }
         dispatch(saveBuild(build));
         dispatch(markSaved());
@@ -93,7 +90,7 @@ export const BuildEditorLayout: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [build, activeSetupIndex, dispatch]);
+  }, [build, activeSetupIndex, dispatch, enqueueSnackbar]);
 
   return (
     <Box component="main" sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
@@ -119,7 +116,8 @@ export const BuildEditorLayout: React.FC = () => {
             minWidth: 0,
             overflowY: 'auto',
             p: { xs: 1.5, md: 2.5 },
-            pb: isMobile ? 10 : 2.5, // Extra bottom padding for mobile nav bar
+            // Extra bottom padding for mobile nav bar + iOS home indicator
+            pb: isMobile ? `calc(${10 * 8}px + env(safe-area-inset-bottom, 0px))` : 2.5,
           }}
         >
           <motion.div

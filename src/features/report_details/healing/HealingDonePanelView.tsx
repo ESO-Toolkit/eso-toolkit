@@ -479,8 +479,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                       sx={{ width: 32, height: 32, flexShrink: 0 }}
                     />
                   )}
-                  <Typography
-                    component="span"
+                  <Box
                     onClick={onPlayerClick ? () => onPlayerClick(row.id) : undefined}
                     sx={{
                       fontWeight: 500,
@@ -510,7 +509,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                     }}
                   >
                     {row.name}
-                  </Typography>
+                  </Box>
                 </Box>
 
                 {/* Amount with Progress Bar */}

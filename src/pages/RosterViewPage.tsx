@@ -33,16 +33,23 @@ import {
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
-import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
-import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
-import { RaidRoster, TankSetup, HealerSetup, DPSSlot, MONSTER_SETS } from '../types/roster';
+import { BuildDetailPanel } from '../components/roster/build-detail-panel';
+import { preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
+import {
+  RaidRoster,
+  TankSetup,
+  HealerSetup,
+  DPSSlot,
+  MONSTER_SETS,
+  ARENA_WEAPON_SETS,
+} from '../types/roster';
 import {
   TrialBuildOverrides,
   getTrialById,
   encounterHasOverrides,
 } from '../types/trial-encounters';
 import { encodeBuildToURL } from '../utils/buildEncoding';
+import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { dpsSlotToBuild, tankSlotToBuild, healerSlotToBuild } from '../utils/rosterSlotToBuild';
@@ -52,32 +59,108 @@ import { getSetDisplayName } from '../utils/setNameUtils';
 // Local display helpers
 // ============================================================
 
-const formatGearSets = (
-  sets: {
-    set1?: import('../types/abilities').KnownSetIDs;
-    set2?: import('../types/abilities').KnownSetIDs;
-    monsterSet?: import('../types/abilities').KnownSetIDs;
-    additionalSets?: import('../types/abilities').KnownSetIDs[];
-  } | null,
-): string[] => {
-  if (!sets) return [];
-  const five: string[] = [];
-  const monster: string[] = [];
+/** Slot-aware fallback variant when getGearChipProps can't detect set type by name. */
+type SlotHint = 'body' | 'monster' | 'mythic' | 'arena';
 
-  const add = (id: import('../types/abilities').KnownSetIDs | undefined): void => {
-    if (id == null) return;
-    const name = getSetDisplayName(id);
-    if (!name) return;
-    if (MONSTER_SETS.includes(id)) monster.push(name);
-    else five.push(name);
+interface GearSetEntry {
+  name: string;
+  /** Inferred piece count — drives getGearChipProps (same logic as PlayerCard). */
+  count: number;
+  /** Which slot this came from — used as fallback when name-based detection fails. */
+  slotHint: SlotHint;
+}
+
+type GearSetInput = {
+  set1?: import('../types/abilities').KnownSetIDs;
+  set2?: import('../types/abilities').KnownSetIDs;
+  monsterSet?: import('../types/abilities').KnownSetIDs;
+  additionalSets?: import('../types/abilities').KnownSetIDs[];
+} | null;
+
+/** Fallback variant for each slot type (matches PlayerCard color language). */
+const SLOT_HINT_VARIANT: Record<SlotHint, string> = {
+  body: 'green',
+  monster: 'purple',
+  mythic: 'gold',
+  arena: 'blue',
+};
+
+/**
+ * Build a deduplicated list of gear set entries, sorted by count descending
+ * (same order as PlayerCard: 5-piece → 2-piece → 1-piece).
+ *
+ * Each entry carries an inferred piece count so getGearChipProps (the same
+ * function PlayerCard uses) produces identical chip colors. When the name-based
+ * detection in getGearChipProps can't identify the set (returns silver), the
+ * slotHint ensures correct coloring based on which slot the set was placed in.
+ */
+const formatGearSetsWithType = (sets: GearSetInput): GearSetEntry[] => {
+  if (!sets) return [];
+  const seen = new Set<string>();
+  const entries: GearSetEntry[] = [];
+
+  /** Classify a set ID into (count, slotHint) based on curated roster lists. */
+  const classify = (
+    id: import('../types/abilities').KnownSetIDs,
+    defaultCount: number,
+    defaultHint: SlotHint,
+  ): [number, SlotHint] => {
+    if (ARENA_WEAPON_SETS.includes(id)) return [1, 'arena'];
+    if (MONSTER_SETS.includes(id)) return [defaultCount <= 2 ? defaultCount : 1, 'monster'];
+    return [defaultCount, defaultHint];
   };
 
-  add(sets.set1);
-  add(sets.set2);
-  add(sets.monsterSet);
-  sets.additionalSets?.forEach(add);
+  const add = (
+    id: import('../types/abilities').KnownSetIDs | undefined,
+    defaultCount: number,
+    defaultHint: SlotHint,
+  ): void => {
+    if (id == null) return;
+    const name = getSetDisplayName(id);
+    if (!name || seen.has(name)) return;
+    seen.add(name);
+    const [count, slotHint] = classify(id, defaultCount, defaultHint);
+    entries.push({ name, count, slotHint });
+  };
 
-  return [...Array.from(new Set(five)).sort(), ...Array.from(new Set(monster))];
+  // set1/set2 are the 5-piece body set slots (but may hold arena/monster IDs)
+  add(sets.set1, 5, 'body');
+  add(sets.set2, 5, 'body');
+  // monsterSet is the head+shoulders slot
+  add(sets.monsterSet, 2, 'monster');
+  // additionalSets
+  sets.additionalSets?.forEach((id) => add(id, 5, 'body'));
+
+  // Sort by count descending (same as PlayerCard), then alphabetically.
+  return entries.sort((a, b) => {
+    if (a.count !== b.count) return b.count - a.count;
+    return a.name.localeCompare(b.name);
+  });
+};
+
+/** String-only version for text contexts (clipboard copy, etc.). */
+const formatGearSets = (sets: GearSetInput): string[] =>
+  formatGearSetsWithType(sets).map((e) => e.name);
+
+/**
+ * Get chip sx for a gear set entry.
+ * Uses getGearChipProps (PlayerCard logic) first. If name-based detection
+ * returns the default silver, falls back to the slot-aware variant so sets
+ * from known slots always get the correct color.
+ */
+const getSetChipSx = (
+  entry: GearSetEntry,
+  theme: import('@mui/material/styles').Theme,
+): import('@mui/system').SxProps<import('@mui/material/styles').Theme> => {
+  const result = getGearChipProps(entry.name, entry.count, theme);
+  // getGearChipProps returns silver for unrecognised names — detect and override
+  const sx = result.sx as Record<string, unknown> | undefined;
+  const bg = sx?.background as string | undefined;
+  const isSilverFallback = bg?.includes('236, 240, 241') || bg?.includes('100, 116, 139');
+  if (isSilverFallback) {
+    return buildVariantSx(SLOT_HINT_VARIANT[entry.slotHint], theme);
+  }
+  return result.sx ?? {};
 };
 
 const formatSkillLines = (
@@ -94,66 +177,6 @@ const formatSkillLines = (
   return [sl.line1, sl.line2, sl.line3].filter(Boolean).join(' / ');
 };
 
-// ── Compact badge strip for Phase-4 inline build data ────────────────────────
-
-interface BuildDataBadgesProps {
-  food?: { id?: number; name?: string };
-  skills?: SkillsConfig;
-  passives?: number[];
-  cpPoints?: BuildChampionPoints;
-  isDarkMode: boolean;
-}
-
-const BuildDataBadges: React.FC<BuildDataBadgesProps> = ({
-  food,
-  skills,
-  passives,
-  cpPoints,
-  isDarkMode,
-}) => {
-  const foodName =
-    food?.id != null ? (ESO_CONSUMABLE_LOOKUP[food.id]?.name ?? food.name) : food?.name;
-  const skillCount = skills
-    ? Object.keys(skills[0] ?? {}).length + Object.keys(skills[1] ?? {}).length
-    : 0;
-  const passiveCount = passives?.length ?? 0;
-  const hasCp =
-    cpPoints &&
-    (cpPoints.warfare.slots.some((s) => s !== null) ||
-      cpPoints.fitness.slots.some((s) => s !== null) ||
-      cpPoints.craft.slots.some((s) => s !== null));
-
-  if (!foodName && skillCount === 0 && passiveCount === 0 && !hasCp) return null;
-
-  const chipSx = {
-    height: 17,
-    fontSize: '0.6rem',
-    fontWeight: 500,
-    backgroundColor: isDarkMode ? 'rgba(56,189,248,0.08)' : 'rgba(56,189,248,0.06)',
-    color: isDarkMode ? 'rgba(56,189,248,0.85)' : 'rgb(3,105,161)',
-    border: `1px solid ${isDarkMode ? 'rgba(56,189,248,0.18)' : 'rgba(56,189,248,0.2)'}`,
-    '& .MuiChip-label': { px: 0.75 },
-  };
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 0.5,
-        mt: 0.75,
-        pt: 0.75,
-        borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
-      }}
-    >
-      {foodName && <Chip label={`Food: ${foodName}`} size="small" sx={chipSx} />}
-      {skillCount > 0 && <Chip label={`${skillCount} skills`} size="small" sx={chipSx} />}
-      {passiveCount > 0 && <Chip label={`${passiveCount} passives`} size="small" sx={chipSx} />}
-      {hasCp && <Chip label="CP" size="small" sx={chipSx} />}
-    </Box>
-  );
-};
-
 // ============================================================
 // Individual role-card sub-components
 // ============================================================
@@ -167,7 +190,8 @@ interface TankCardProps {
 }
 
 const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDarkMode }) => {
-  const gearSets = formatGearSets(tank.gearSets);
+  const theme = useTheme();
+  const gearSets = formatGearSetsWithType(tank.gearSets);
   const skillLines = formatSkillLines(tank.skillLines);
   const hasContent =
     tank.playerName ||
@@ -204,8 +228,9 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
         backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.7)',
         border: `1px solid ${color}30`,
         backdropFilter: 'blur(12px)',
-        overflow: 'hidden',
-        height: '100%',
+        overflow: 'visible',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {/* Card header */}
@@ -265,9 +290,9 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
             {tank.playerName || 'Unassigned'}
           </Typography>
         </Box>
-        {tank.labels && tank.labels.length > 0 && (
+        {((tank.labels && tank.labels.length > 0) || (tank.groups && tank.groups.length > 0)) && (
           <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            {tank.labels.map((lbl) => (
+            {tank.labels?.map((lbl) => (
               <Chip
                 key={lbl}
                 label={lbl}
@@ -279,6 +304,22 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
                   background: `${color}18`,
                   color,
                   border: `1px solid ${color}30`,
+                  '& .MuiChip-label': { px: 0.75 },
+                }}
+              />
+            ))}
+            {tank.groups?.map((g) => (
+              <Chip
+                key={g}
+                label={g}
+                size="small"
+                sx={{
+                  height: 18,
+                  fontSize: '0.6rem',
+                  fontWeight: 500,
+                  background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                  color: 'text.disabled',
+                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
                   '& .MuiChip-label': { px: 0.75 },
                 }}
               />
@@ -309,7 +350,7 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
       </Box>
 
       {/* Card body */}
-      <Box sx={{ px: 2, py: 1.25 }}>
+      <Box sx={{ px: 2, py: 1.25, flex: 1 }}>
         {!hasContent && (
           <Typography sx={{ fontSize: '0.78rem', color: 'text.disabled', fontStyle: 'italic' }}>
             Empty slot
@@ -331,20 +372,12 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
               Gear
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-              {gearSets.map((set) => (
+              {gearSets.map((entry) => (
                 <Chip
-                  key={set}
-                  label={set}
+                  key={entry.name}
+                  label={entry.name}
                   size="small"
-                  sx={{
-                    height: 20,
-                    fontSize: '0.68rem',
-                    fontWeight: 500,
-                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-                    color: 'text.primary',
-                    border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-                    '& .MuiChip-label': { px: 0.75 },
-                  }}
+                  sx={getSetChipSx(entry, theme)}
                 />
               ))}
             </Box>
@@ -403,12 +436,14 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
             {tank.notes}
           </Typography>
         )}
-        <BuildDataBadges
+        <BuildDetailPanel
           food={tank.food}
           skills={tank.skills}
           passives={tank.passives}
           cpPoints={tank.cpPoints}
+          gear={tank.gear}
           isDarkMode={isDarkMode}
+          color={color}
         />
       </Box>
     </Paper>
@@ -424,7 +459,8 @@ interface HealerCardProps {
 }
 
 const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, isDarkMode }) => {
-  const gearSets = formatGearSets({
+  const theme = useTheme();
+  const gearSets = formatGearSetsWithType({
     set1: healer.set1,
     set2: healer.set2,
     monsterSet: healer.monsterSet,
@@ -435,6 +471,7 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
     healer.playerName ||
     healer.labels?.length ||
     gearSets.length > 0 ||
+    healer.arenaWeapon ||
     skillLines ||
     healer.ultimate ||
     healer.healerBuff ||
@@ -467,8 +504,9 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
         backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.7)',
         border: `1px solid ${color}30`,
         backdropFilter: 'blur(12px)',
-        overflow: 'hidden',
-        height: '100%',
+        overflow: 'visible',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {/* Card header */}
@@ -528,9 +566,10 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
             {healer.playerName || 'Unassigned'}
           </Typography>
         </Box>
-        {healer.labels && healer.labels.length > 0 && (
+        {((healer.labels && healer.labels.length > 0) ||
+          (healer.groups && healer.groups.length > 0)) && (
           <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            {healer.labels.map((lbl) => (
+            {healer.labels?.map((lbl) => (
               <Chip
                 key={lbl}
                 label={lbl}
@@ -542,6 +581,22 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
                   background: `${color}18`,
                   color,
                   border: `1px solid ${color}30`,
+                  '& .MuiChip-label': { px: 0.75 },
+                }}
+              />
+            ))}
+            {healer.groups?.map((g) => (
+              <Chip
+                key={g}
+                label={g}
+                size="small"
+                sx={{
+                  height: 18,
+                  fontSize: '0.6rem',
+                  fontWeight: 500,
+                  background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                  color: 'text.disabled',
+                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
                   '& .MuiChip-label': { px: 0.75 },
                 }}
               />
@@ -572,14 +627,14 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
       </Box>
 
       {/* Card body */}
-      <Box sx={{ px: 2, py: 1.25 }}>
+      <Box sx={{ px: 2, py: 1.25, flex: 1 }}>
         {!hasContent && (
           <Typography sx={{ fontSize: '0.78rem', color: 'text.disabled', fontStyle: 'italic' }}>
             Empty slot
           </Typography>
         )}
 
-        {gearSets.length > 0 && (
+        {(gearSets.length > 0 || healer.arenaWeapon) && (
           <Box sx={{ mb: 1 }}>
             <Typography
               sx={{
@@ -594,22 +649,17 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
               Gear
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-              {gearSets.map((set) => (
+              {gearSets.map((entry) => (
                 <Chip
-                  key={set}
-                  label={set}
+                  key={entry.name}
+                  label={entry.name}
                   size="small"
-                  sx={{
-                    height: 20,
-                    fontSize: '0.68rem',
-                    fontWeight: 500,
-                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-                    color: 'text.primary',
-                    border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-                    '& .MuiChip-label': { px: 0.75 },
-                  }}
+                  sx={getSetChipSx(entry, theme)}
                 />
               ))}
+              {healer.arenaWeapon && (
+                <Chip label={healer.arenaWeapon} size="small" sx={buildVariantSx('blue', theme)} />
+              )}
             </Box>
           </Box>
         )}
@@ -706,12 +756,14 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
             {healer.notes}
           </Typography>
         )}
-        <BuildDataBadges
+        <BuildDetailPanel
           food={healer.food}
           skills={healer.skills}
           passives={healer.passives}
           cpPoints={healer.cpPoints}
+          gear={healer.gear}
           isDarkMode={isDarkMode}
+          color={color}
         />
       </Box>
     </Paper>
@@ -734,19 +786,20 @@ const DPS_JAIL_LABELS: Record<string, string> = {
 };
 
 const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
+  const theme = useTheme();
   const skillLines = formatSkillLines(slot.skillLines);
   // Prefer the new set1/set2/monsterSet/additionalSets fields; fall back to the
   // deprecated gearSets array for rosters encoded before the Phase-1 migration.
   const gearSets =
     slot.set1 != null || slot.set2 != null || slot.monsterSet != null || slot.additionalSets?.length
-      ? formatGearSets({
+      ? formatGearSetsWithType({
           set1: slot.set1,
           set2: slot.set2,
           monsterSet: slot.monsterSet,
           additionalSets: slot.additionalSets,
         })
       : slot.gearSets?.length
-        ? formatGearSets({
+        ? formatGearSetsWithType({
             set1: slot.gearSets[0],
             set2: slot.gearSets[1],
             additionalSets: slot.gearSets.slice(2),
@@ -780,22 +833,26 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
         display: 'flex',
         alignItems: 'flex-start',
         gap: 1.5,
-        py: 1,
+        py: 1.25,
         px: 1.5,
-        borderRadius: '10px',
-        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
-        border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+        borderRadius: '14px',
+        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.7)',
+        border: `1px solid ${isEmpty ? (isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)') : `${color}30`}`,
+        borderLeft: isEmpty ? undefined : `2px solid ${color}40`,
+        backdropFilter: 'blur(12px)',
+        opacity: isEmpty ? 0.6 : 1,
+        transition: 'background-color 0.15s ease, opacity 0.15s ease',
         '&:hover': {
-          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
         },
       }}
     >
       {/* Slot number badge */}
       <Box
         sx={{
-          width: 24,
-          height: 24,
-          borderRadius: '7px',
+          width: 26,
+          height: 26,
+          borderRadius: '8px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -844,13 +901,15 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
           {/* Player name */}
           <Typography
             sx={{
-              fontSize: '0.82rem',
+              fontFamily: '"Space Grotesk", sans-serif',
+              fontSize: '0.88rem',
               fontWeight: slot.playerName ? 600 : 400,
+              letterSpacing: '-0.01em',
               color: slot.playerName ? 'text.primary' : 'text.disabled',
               fontStyle: slot.playerName ? 'normal' : 'italic',
             }}
           >
-            {slot.playerName || (isEmpty ? 'Empty' : '')}
+            {slot.playerName || (isEmpty ? 'Empty slot' : '')}
           </Typography>
 
           {/* Labels */}
@@ -874,9 +933,19 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
           {/* Group(s) — prefer new groups[] array, fall back to deprecated group.groupName */}
           {(slot.groups?.length ? slot.groups : slot.group?.groupName ? [slot.group.groupName] : [])
             .length > 0 && (
-            <Typography sx={{ fontSize: '0.7rem', color: 'text.disabled', ml: 'auto' }}>
-              {(slot.groups?.length ? slot.groups : [slot.group!.groupName]).join(', ')}
-            </Typography>
+            <Chip
+              label={(slot.groups?.length ? slot.groups : [slot.group!.groupName]).join(', ')}
+              size="small"
+              sx={{
+                height: 18,
+                fontSize: '0.6rem',
+                fontWeight: 500,
+                background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                color: 'text.disabled',
+                border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                '& .MuiChip-label': { px: 0.75 },
+              }}
+            />
           )}
           {/* View Build button */}
           {!isEmpty && (
@@ -903,65 +972,58 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
           )}
         </Box>
 
-        {/* Secondary info: skill lines, gear */}
-        {(skillLines || gearSets.length > 0) && (
+        {/* Gear sets — own row with proper spacing like Tank/Healer */}
+        {(gearSets.length > 0 || slot.arenaWeapon) && (
           <Box
-            sx={{ mt: 0.375, display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}
+            sx={{ mt: 0.75, display: 'flex', flexWrap: 'wrap', gap: 0.75, alignItems: 'center' }}
           >
-            {skillLines && (
-              <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                {skillLines}
-              </Typography>
-            )}
-            {slot.championPoint && (
-              <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                CP: {slot.championPoint}
-              </Typography>
-            )}
-            {gearSets.map((set) => (
+            {gearSets.map((entry) => (
               <Chip
-                key={set}
-                label={set}
+                key={entry.name}
+                label={entry.name}
                 size="small"
-                sx={{
-                  height: 17,
-                  fontSize: '0.62rem',
-                  fontWeight: 500,
-                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                  color: 'text.secondary',
-                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
-                  '& .MuiChip-label': { px: 0.625 },
-                }}
+                sx={getSetChipSx(entry, theme)}
               />
             ))}
             {slot.arenaWeapon && (
-              <Chip
-                label={slot.arenaWeapon}
-                size="small"
-                sx={{
-                  height: 17,
-                  fontSize: '0.62rem',
-                  fontWeight: 500,
-                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                  color: 'text.secondary',
-                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
-                  '& .MuiChip-label': { px: 0.625 },
-                }}
-              />
+              <Chip label={slot.arenaWeapon} size="small" sx={buildVariantSx('blue', theme)} />
+            )}
+          </Box>
+        )}
+
+        {/* Secondary info: skill lines, ultimate, CP, notes */}
+        {(skillLines || slot.ultimate || slot.championPoint || slot.notes) && (
+          <Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
+            {skillLines && (
+              <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>
+                {skillLines}
+              </Typography>
+            )}
+            {slot.ultimate && (
+              <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>
+                Ult: {slot.ultimate}
+              </Typography>
+            )}
+            {slot.championPoint && (
+              <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>
+                CP: {slot.championPoint}
+              </Typography>
             )}
             {slot.notes && (
-              <Typography sx={{ fontSize: '0.7rem', color: 'text.disabled', fontStyle: 'italic' }}>
+              <Typography sx={{ fontSize: '0.75rem', color: 'text.disabled', fontStyle: 'italic' }}>
                 {slot.notes}
               </Typography>
             )}
           </Box>
         )}
-        <BuildDataBadges
+        <BuildDetailPanel
           food={slot.food}
           skills={slot.skills}
           passives={slot.passives}
           cpPoints={slot.cpPoints}
+          gear={slot.gear}
           isDarkMode={isDarkMode}
+          color={color}
         />
       </Box>
     </Box>
@@ -981,8 +1043,8 @@ const SectionLabel: React.FC<{
   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
     <Box
       sx={{
-        width: 26,
-        height: 26,
+        width: 28,
+        height: 28,
         borderRadius: '8px',
         display: 'flex',
         alignItems: 'center',
@@ -1247,6 +1309,11 @@ export const RosterViewPage: React.FC = () => {
   const isDarkMode = theme.palette.mode === 'dark';
   const roleColors = isDarkMode ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
 
+  // Preload skill cache so BuildDetailPanel can resolve ability names/icons
+  useEffect(() => {
+    void preloadSkillData();
+  }, []);
+
   const [roster, setRoster] = useState<RaidRoster | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -1493,6 +1560,7 @@ export const RosterViewPage: React.FC = () => {
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
             gap: 1.5,
+            alignItems: 'stretch',
           }}
         >
           {roster.tanks.map((tank, i) => (
@@ -1521,6 +1589,7 @@ export const RosterViewPage: React.FC = () => {
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
             gap: 1.5,
+            alignItems: 'stretch',
           }}
         >
           {roster.healers.map((healer, i) => (
@@ -1544,7 +1613,7 @@ export const RosterViewPage: React.FC = () => {
           color={roleColors.dps}
           isDarkMode={isDarkMode}
         />
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {sortedDPS.map((slot) => (
             <DPSRow
               key={slot.slotNumber}
@@ -1587,9 +1656,10 @@ export const RosterViewPage: React.FC = () => {
             elevation={0}
             sx={{
               p: 2,
-              borderRadius: '12px',
-              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+              borderRadius: '14px',
+              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.7)',
               border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+              backdropFilter: 'blur(12px)',
             }}
           >
             <Typography
@@ -1597,6 +1667,8 @@ export const RosterViewPage: React.FC = () => {
                 fontSize: '0.82rem',
                 color: 'text.secondary',
                 whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
                 lineHeight: 1.6,
               }}
             >

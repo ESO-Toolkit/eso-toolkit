@@ -30,6 +30,8 @@ import {
   createBuildComment,
   deleteBuildComment,
   checkBuildCommentRateLimit,
+  checkRosterVoteRateLimit,
+  checkRosterCreateRateLimit,
   checkBuildVoteRateLimit,
   checkBuildCreateRateLimit,
   createTempBuild,
@@ -42,11 +44,34 @@ import {
   deleteImageUpload,
   createImageReport,
   checkImageUploadRateLimit,
+  getUserProfile,
+  upsertUserBio,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import type { Env } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
+
+// ─── Validation helpers ──────────────────────────────────────────────────────
+
+/** Verify that an encoded payload is valid base64url (no special chars that break URLs). */
+const isValidBase64Url = (s: string): boolean => /^[A-Za-z0-9_-]*=*$/.test(s);
+
+/** Escape HTML entities in user-generated text (defense-in-depth against stored XSS). */
+const escapeHtml = (s: string): string =>
+  s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+
+/** Sanitize and trim a user-provided text field. */
+const sanitize = (s: string): string => escapeHtml(s.trim());
+
+/** Validate a tag: must be non-empty, ≤30 chars, alphanumeric/hyphens/underscores/spaces. */
+const isValidTag = (t: string): boolean =>
+  typeof t === 'string' && t.length > 0 && t.length <= 30 && /^[\w\s-]+$/.test(t);
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
 
@@ -62,16 +87,32 @@ app.use('*', async (c, next) => {
   return corsMiddleware(c, next);
 });
 
-// ─── No-cache headers ─────────────────────────────────────────────────────────
+// ─── Cache headers ─────────────────────────────────────────────────────────────
+// Public profile responses get a short edge-cache TTL; all other endpoints
+// are no-store so React UIs always get fresh data.
 
 app.use('*', async (c, next) => {
   await next();
-  c.res.headers.set('Cache-Control', 'no-store');
+  if (c.req.method === 'GET' && c.req.path.startsWith('/users/')) {
+    // Cache public profiles at the edge for 5 minutes
+    c.res.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=60');
+  } else {
+    c.res.headers.set('Cache-Control', 'no-store');
+  }
 });
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 
-app.get('/health', (c) => c.json({ ok: true }));
+app.get('/health', async (c) => {
+  const result = await c.env.DB.prepare('SELECT 1').run();
+  const sizeBytes = result.meta?.size_after ?? null;
+  return c.json({
+    ok: true,
+    db_size_bytes: sizeBytes,
+    db_size_mb: sizeBytes != null ? +(sizeBytes / 1_048_576).toFixed(2) : null,
+    db_limit_mb: 500,
+  });
+});
 
 // ─── GET /rosters — list with filtering & pagination ─────────────────────────
 
@@ -81,7 +122,7 @@ app.get('/rosters', async (c) => {
   const trial = c.req.query('trial') ?? undefined;
   const tag = c.req.query('tag') ?? undefined;
   const sort = c.req.query('sort') === 'recent' ? 'recent' : 'votes';
-  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10));
+  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10) || 1);
 
   const rosters = await listRosters(c.env.DB, {
     trial,
@@ -138,6 +179,12 @@ app.post('/rosters', async (c) => {
     return c.json({ error: 'description must be ≤ 500 characters' }, 400);
   if (roster_data.length > 50_000)
     return c.json({ error: 'roster_data must be ≤ 50 000 characters' }, 400);
+  if (!isValidBase64Url(roster_data))
+    return c.json({ error: 'roster_data must be valid base64url' }, 400);
+
+  const createAllowed = await checkRosterCreateRateLimit(c.env.DB, user.id);
+  if (!createAllowed)
+    return c.json({ error: 'Rate limit exceeded. You can only publish 5 rosters per hour.' }, 429);
 
   // Generate a short unique ID (nanoid-style without the dep)
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
@@ -148,12 +195,12 @@ app.post('/rosters', async (c) => {
   await createRoster(c.env.DB, {
     id,
     authorId: user.id,
-    authorName: user.name,
-    title: title.trim(),
-    description: description.trim(),
-    trialId: trial_id.trim(),
+    authorName: escapeHtml(user.name),
+    title: sanitize(title),
+    description: sanitize(description),
+    trialId: sanitize(trial_id),
     rosterData: roster_data,
-    tags: Array.isArray(tags) ? tags.filter((t) => typeof t === 'string').slice(0, 10) : [],
+    tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
   });
 
@@ -193,13 +240,15 @@ app.put('/rosters/:id', async (c) => {
     return c.json({ error: 'description must be ≤ 500 characters' }, 400);
   if (roster_data.length > 50_000)
     return c.json({ error: 'roster_data must be ≤ 50 000 characters' }, 400);
+  if (!isValidBase64Url(roster_data))
+    return c.json({ error: 'roster_data must be valid base64url' }, 400);
 
   const updated = await updateRoster(c.env.DB, c.req.param('id'), user.id, {
-    title: title.trim(),
-    description: description.trim(),
-    trialId: trial_id,
+    title: sanitize(title),
+    description: sanitize(description),
+    trialId: sanitize(trial_id),
     rosterData: roster_data,
-    tags: Array.isArray(tags) ? tags.filter((t) => typeof t === 'string').slice(0, 10) : [],
+    tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
   });
 
@@ -226,6 +275,10 @@ app.post('/rosters/:id/vote', async (c) => {
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const rosterId = c.req.param('id');
+
+  const voteAllowed = await checkRosterVoteRateLimit(c.env.DB, user.id);
+  if (!voteAllowed)
+    return c.json({ error: 'Rate limit exceeded. You can only cast 20 votes per hour.' }, 429);
 
   // Ensure roster exists
   const exists = await c.env.DB.prepare('SELECT id FROM rosters WHERE id = ?')
@@ -308,7 +361,7 @@ app.post('/rosters/:id/comments', async (c) => {
     parentId: body.parent_id ?? null,
     authorId: user.id,
     authorName: user.name,
-    body: body.body.trim(),
+    body: escapeHtml(body.body.trim()),
   });
 
   return c.json({ comment }, 201);
@@ -339,7 +392,7 @@ app.get('/builds', async (c) => {
   const gameMode = c.req.query('mode') ?? undefined;
   const tag = c.req.query('tag') ?? undefined;
   const sort = c.req.query('sort') === 'recent' ? 'recent' : 'votes';
-  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10));
+  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10) || 1);
 
   const builds = await listBuilds(c.env.DB, {
     esoClass,
@@ -410,6 +463,8 @@ app.post('/builds', async (c) => {
     return c.json({ error: 'description must be ≤ 500 characters' }, 400);
   if (build_data.length > 50_000)
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
+  if (!isValidBase64Url(build_data))
+    return c.json({ error: 'build_data must be valid base64url' }, 400);
 
   const createAllowed = await checkBuildCreateRateLimit(c.env.DB, user.id);
   if (!createAllowed)
@@ -423,14 +478,14 @@ app.post('/builds', async (c) => {
   await createBuild(c.env.DB, {
     id,
     authorId: user.id,
-    authorName: user.name,
-    title: title.trim(),
-    description: description.trim(),
-    esoClass: eso_class.trim(),
-    role: role.trim(),
-    gameMode: game_mode.trim(),
+    authorName: escapeHtml(user.name),
+    title: sanitize(title),
+    description: sanitize(description),
+    esoClass: sanitize(eso_class),
+    role: sanitize(role),
+    gameMode: sanitize(game_mode),
     buildData: build_data,
-    tags: Array.isArray(tags) ? tags.filter((t) => typeof t === 'string').slice(0, 10) : [],
+    tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
   });
 
@@ -482,15 +537,17 @@ app.put('/builds/:id', async (c) => {
     return c.json({ error: 'description must be ≤ 500 characters' }, 400);
   if (build_data.length > 50_000)
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
+  if (!isValidBase64Url(build_data))
+    return c.json({ error: 'build_data must be valid base64url' }, 400);
 
   const updated = await updateBuild(c.env.DB, c.req.param('id'), user.id, {
-    title: title.trim(),
-    description: description.trim(),
-    esoClass: eso_class.trim(),
-    role: role.trim(),
-    gameMode: game_mode.trim(),
+    title: sanitize(title),
+    description: sanitize(description),
+    esoClass: sanitize(eso_class),
+    role: sanitize(role),
+    gameMode: sanitize(game_mode),
     buildData: build_data,
-    tags: Array.isArray(tags) ? tags.filter((t) => typeof t === 'string').slice(0, 10) : [],
+    tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
   });
 
@@ -588,7 +645,7 @@ app.post('/builds/:id/comments', async (c) => {
     parentId: body.parent_id ?? null,
     authorId: user.id,
     authorName: user.name,
-    body: body.body.trim(),
+    body: escapeHtml(body.body.trim()),
   });
 
   return c.json({ comment }, 201);
@@ -626,12 +683,17 @@ app.post('/temp-builds', async (c) => {
   if (!body.build_data?.trim()) return c.json({ error: 'build_data is required' }, 400);
   if (body.build_data.length > 50_000)
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
+  if (!isValidBase64Url(body.build_data))
+    return c.json({ error: 'build_data must be valid base64url' }, 400);
 
   // Rate limit by IP (10 per hour)
   const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For') ?? 'unknown';
   const allowed = await checkTempBuildRateLimit(c.env.DB, ip);
   if (!allowed)
-    return c.json({ error: 'Rate limit exceeded. You can create up to 10 temp builds per hour.' }, 429);
+    return c.json(
+      { error: 'Rate limit exceeded. You can create up to 10 temp builds per hour.' },
+      429,
+    );
 
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
     .map((b) => b.toString(36).padStart(2, '0'))
@@ -649,8 +711,11 @@ app.post('/temp-builds', async (c) => {
 app.get('/temp-builds/:id', async (c) => {
   const id = c.req.param('id');
 
-  // Lazy cleanup: remove expired builds on read
-  await cleanupExpiredTempBuilds(c.env.DB);
+  // Probabilistic cleanup: run ~1-in-50 reads to keep the table small without
+  // adding a synchronous write to every request.
+  if (Math.random() < 0.02) {
+    void cleanupExpiredTempBuilds(c.env.DB);
+  }
 
   const row = await getTempBuild(c.env.DB, id);
   if (!row) {
@@ -726,9 +791,8 @@ app.post('/images/upload', async (c) => {
       );
     }
   } catch (err) {
-    // If AI is unavailable, log but don't block the upload — user reporting
-    // still provides a safety net.  In production you may want to fail closed.
-    console.error('Workers AI moderation failed, allowing upload:', err);
+    console.error('Workers AI moderation unavailable:', err);
+    return c.json({ error: 'Image moderation service unavailable. Please try again.' }, 503);
   }
 
   // ── Proxy to ImgBB ───────────────────────────────────────────────────────
@@ -826,11 +890,91 @@ app.delete('/images/:id', async (c) => {
   if (!result.deleted) return c.json({ error: 'Not found or forbidden' }, 404);
 
   // Best-effort delete from ImgBB (fire-and-forget)
-  if (result.deleteUrl) {
+  // Validate the URL is an ImgBB domain before fetching to prevent SSRF
+  if (result.deleteUrl && /^https:\/\/ibb\.co\//.test(result.deleteUrl)) {
     fetch(result.deleteUrl).catch(() => {});
   }
 
   return c.json({ ok: true });
 });
 
-export default app;
+// ═══════════════════════════════════════════════════════════════════════════════
+// User profiles — public pages, no new content storage
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Valid ESO Logs username characters — letters, digits, underscores, hyphens, dots,
+// apostrophes, and spaces (ESO display names commonly include ' and spaces).
+// All queries are parameterised so special characters carry no injection risk.
+const VALID_USERNAME_RE = /^[a-zA-Z0-9_.\-' ]{1,100}$/;
+
+// Names reserved by the API namespace — prevent /users/me matching the profile route
+const RESERVED_USERNAMES = new Set(['me']);
+
+// ─── GET /users/:username — public profile ────────────────────────────────────
+
+app.get('/users/:username', async (c) => {
+  const username = c.req.param('username');
+
+  if (!VALID_USERNAME_RE.test(username)) {
+    return c.json({ error: 'Invalid username' }, 400);
+  }
+  if (RESERVED_USERNAMES.has(username.toLowerCase())) {
+    return c.json({ error: 'User not found' }, 404);
+  }
+
+  const profile = await getUserProfile(c.env.DB, username);
+  if (!profile) {
+    return c.json({ error: 'User not found' }, 404);
+  }
+
+  return c.json({ profile });
+});
+
+// ─── PUT /users/me/bio — update own bio ──────────────────────────────────────
+
+app.put('/users/me/bio', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  // Rate limit: 1 bio update per 60 seconds using the profile row's updated_at
+  const recent = await c.env.DB.prepare(
+    "SELECT 1 FROM user_profiles WHERE author_id = ? AND updated_at > datetime('now', '-60 seconds')",
+  )
+    .bind(user.id)
+    .first();
+  if (recent) {
+    return c.json({ error: 'Rate limit exceeded. Wait 60 seconds between bio updates.' }, 429);
+  }
+
+  interface BioBody {
+    bio: string;
+  }
+
+  let body: BioBody;
+  try {
+    body = await c.req.json<BioBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (typeof body.bio !== 'string') return c.json({ error: 'bio must be a string' }, 400);
+  if (body.bio.length > 200) return c.json({ error: 'bio must be ≤ 200 characters' }, 400);
+
+  await upsertUserBio(c.env.DB, user.id, escapeHtml(user.name), sanitize(body.bio));
+  return c.json({ ok: true });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Worker export — fetch (Hono) + scheduled (cron: cleanup + leaderboard sync)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+import { syncLeaderboardRosters } from './leaderboard-sync/sync';
+
+export default {
+  fetch: app.fetch,
+
+  async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
+    await cleanupExpiredTempBuilds(env.DB);
+    await syncLeaderboardRosters(env);
+  },
+};

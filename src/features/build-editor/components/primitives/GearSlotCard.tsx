@@ -151,6 +151,7 @@ interface GearSlotCardProps {
   isDisabled?: boolean;
   disabledReason?: string;
   weight?: ArmorWeight;
+  availableWeights?: ArmorWeight[];
   onWeightChange?: (weight: ArmorWeight) => void;
   trait?: string;
   onTraitChange?: (trait: string | undefined) => void;
@@ -170,6 +171,7 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
   isDisabled = false,
   disabledReason,
   weight,
+  availableWeights,
   onWeightChange,
   trait,
   onTraitChange,
@@ -253,6 +255,19 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
     }
   };
 
+  // Auto-correct persisted weight when it falls outside the set's available weights
+  const showWeight = slotDef.category === 'apparel' && onWeightChange;
+  const weightPool = availableWeights?.length ? availableWeights : WEIGHT_CYCLE;
+  const rawWeight = weight ?? weightPool[weightPool.length - 1];
+  const currentWeight = weightPool.includes(rawWeight) ? rawWeight : weightPool[0];
+  const canCycleWeight = weightPool.length > 1;
+
+  useEffect(() => {
+    if (hasItem && showWeight && rawWeight !== currentWeight) {
+      onWeightChange!(currentWeight);
+    }
+  }, [hasItem, showWeight, rawWeight, currentWeight, onWeightChange]);
+
   // ── Empty slot ──────────────────────────────────────────────────────────
 
   if (!hasItem) {
@@ -331,9 +346,6 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
   }
 
   // ── Filled slot ─────────────────────────────────────────────────────────
-
-  const showWeight = slotDef.category === 'apparel' && onWeightChange;
-  const currentWeight = weight ?? 'heavy';
 
   return (
     <>
@@ -491,14 +503,19 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
             {/* Weight chip — apparel only */}
             {showWeight && (
               <ButtonBase
+                disabled={!canCycleWeight}
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
-                  const idx = WEIGHT_CYCLE.indexOf(currentWeight);
-                  const next = WEIGHT_CYCLE[(idx + 1) % WEIGHT_CYCLE.length];
+                  const idx = weightPool.indexOf(currentWeight);
+                  const next = weightPool[(idx + 1) % weightPool.length];
                   onWeightChange(next);
                 }}
                 onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
-                aria-label={`Weight: ${WEIGHT_FULL_LABELS[currentWeight]} — click to cycle`}
+                aria-label={
+                  canCycleWeight
+                    ? `Weight: ${WEIGHT_FULL_LABELS[currentWeight]} — click to cycle`
+                    : `Weight: ${WEIGHT_FULL_LABELS[currentWeight]} (fixed)`
+                }
                 sx={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -511,6 +528,7 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
                   fontFamily: 'Space Grotesk, Inter, system-ui',
                   lineHeight: 1,
                   color: WEIGHT_COLORS[currentWeight],
+                  opacity: canCycleWeight ? 1 : 0.6,
                   background: isDark
                     ? `${WEIGHT_COLORS[currentWeight]}14`
                     : `${WEIGHT_COLORS[currentWeight]}0C`,
@@ -520,11 +538,14 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
                       : `${WEIGHT_COLORS[currentWeight]}25`
                   }`,
                   transition: 'all 150ms ease',
-                  '&:hover': {
-                    background: isDark
-                      ? `${WEIGHT_COLORS[currentWeight]}28`
-                      : `${WEIGHT_COLORS[currentWeight]}18`,
-                  },
+                  cursor: canCycleWeight ? 'pointer' : 'default',
+                  '&:hover': canCycleWeight
+                    ? {
+                        background: isDark
+                          ? `${WEIGHT_COLORS[currentWeight]}28`
+                          : `${WEIGHT_COLORS[currentWeight]}18`,
+                      }
+                    : {},
                 }}
               >
                 {WEIGHT_FULL_LABELS[currentWeight]}

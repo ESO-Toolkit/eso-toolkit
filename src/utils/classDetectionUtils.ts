@@ -369,3 +369,47 @@ export function analyzePlayerClassFromEvents(
     skillLineMapping,
   );
 }
+
+/**
+ * Detect class and skill lines from talent data alone (no combat events needed).
+ *
+ * Talents contain `guid` values that are ability IDs — we match them directly
+ * against the pre-built ABILITY_ID_TO_SKILL_LINE Map. This is useful for
+ * contexts where only PlayerDetails data is available (e.g., leaderboard
+ * roster import) without full combat event streams.
+ */
+export function detectClassFromTalents(talents: PlayerTalent[]): ClassAnalysisResult {
+  const skillLineCounts: Record<
+    string,
+    { className: string; count: number; skillIds: Set<number> }
+  > = {};
+
+  for (const talent of talents) {
+    const id = talent.guid;
+    if (typeof id !== 'number') continue;
+
+    const meta = ABILITY_ID_TO_SKILL_LINE.get(id);
+    if (!meta) continue;
+
+    const { skillLineName, className } = meta;
+    if (!skillLineCounts[skillLineName]) {
+      skillLineCounts[skillLineName] = { className, count: 0, skillIds: new Set() };
+    }
+    skillLineCounts[skillLineName].count++;
+    skillLineCounts[skillLineName].skillIds.add(id);
+  }
+
+  const skillLines = Object.entries(skillLineCounts)
+    .map(([skillLine, { className, count, skillIds }]) => ({
+      skillLine,
+      className,
+      count,
+      skillIds,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  return {
+    primary: skillLines.length > 0 ? skillLines[0].className : null,
+    skillLines,
+  };
+}

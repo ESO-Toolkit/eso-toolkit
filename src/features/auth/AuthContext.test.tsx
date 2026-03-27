@@ -14,6 +14,15 @@ const mockClearAuthToken = jest.fn();
 const mockSetAnalyticsUserId = jest.fn();
 const mockSetUserProperties = jest.fn();
 
+jest.mock('./auth', () => {
+  const actual = jest.requireActual<typeof import('./auth')>('./auth');
+  return {
+    __esModule: true,
+    ...actual,
+    refreshAccessToken: jest.fn(() => Promise.resolve(null)),
+  };
+});
+
 jest.mock('../../utils/banlist', () => ({
   checkUserBan: jest.fn(),
 }));

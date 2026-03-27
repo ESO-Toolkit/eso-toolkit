@@ -21,6 +21,7 @@ import {
   DragOverlay,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -37,6 +38,7 @@ import {
   Add as AddIcon,
   Close as CloseIcon,
   DragIndicator as DragIndicatorIcon,
+  EditOutlined as EditIcon,
 } from '@mui/icons-material';
 import {
   Box,
@@ -123,6 +125,9 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
   onRenameChange,
   onDeleteRequest,
 }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   return (
     <>
       {isRenaming ? (
@@ -159,7 +164,10 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
         />
       ) : (
         // ── Regular tab button with drag handle ──────────────────────
-        <Tooltip title="Double-click to rename · Drag to reorder" enterDelay={800}>
+        <Tooltip
+          title={isMobile ? 'Drag to reorder' : 'Double-click to rename · Drag to reorder'}
+          enterDelay={800}
+        >
           <ButtonBase
             {...dragAttributes}
             {...dragListeners}
@@ -254,6 +262,34 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
               {setup.name}
             </Typography>
           </ButtonBase>
+        </Tooltip>
+      )}
+
+      {/* Rename button — mobile only. Desktop users double-click the tab label. */}
+      {isMobile && active && !isRenaming && (
+        <Tooltip title="Rename this setup">
+          <IconButton
+            size="small"
+            onClick={() => onStartRename(index)}
+            aria-label={`Rename ${setup.name}`}
+            sx={{
+              width: 20,
+              height: 20,
+              ml: 0.5,
+              background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+              color: 'text.disabled',
+              transition: 'all 0.15s',
+              '&:hover': {
+                color: 'var(--be-accent, #38bdf8)',
+                background: isDark ? 'rgba(56,189,248,0.15)' : 'rgba(56,189,248,0.08)',
+                borderColor: isDark ? 'rgba(56,189,248,0.4)' : 'rgba(56,189,248,0.3)',
+              },
+              p: 0,
+            }}
+          >
+            <EditIcon sx={{ fontSize: 11 }} />
+          </IconButton>
         </Tooltip>
       )}
 
@@ -473,6 +509,9 @@ export const SetupTabBar: React.FC = () => {
   // ── Drag-and-drop ──────────────────────────────────────────────────────────
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    // TouchSensor with a 200ms hold delay prevents accidental drag during
+    // horizontal scroll on touch devices (iOS/Android).
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
@@ -557,13 +596,23 @@ export const SetupTabBar: React.FC = () => {
           px: { xs: 1.5, md: 2.5 },
           py: 1.25,
           borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
-          background: isDark ? 'rgba(8, 14, 26, 0.90)' : 'rgba(248, 250, 252, 0.92)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
+          // Fully opaque on mobile to avoid stacking compositor layers with
+          // the fixed bottom nav rail (both blur layers = GPU pressure on phones).
+          background: isMobile
+            ? isDark
+              ? '#080e1a'
+              : '#f8fafc'
+            : isDark
+              ? 'rgba(8, 14, 26, 0.90)'
+              : 'rgba(248, 250, 252, 0.92)',
+          backdropFilter: isMobile ? 'none' : 'blur(16px)',
+          WebkitBackdropFilter: isMobile ? 'none' : 'blur(16px)',
           overflowX: 'auto',
           scrollbarWidth: 'none',
           '&::-webkit-scrollbar': { display: 'none' },
-          pb: isMobile ? 8 : 1.25,
+          // On mobile the SetupTabBar sits above the fixed bottom nav rail.
+          // Use safe-area-inset-bottom to account for iOS home indicator height.
+          pb: isMobile ? `calc(${8 * 8}px + env(safe-area-inset-bottom, 0px))` : 1.25,
           position: 'relative',
           // Subtle accent gradient bleed from left
           '&::before': {

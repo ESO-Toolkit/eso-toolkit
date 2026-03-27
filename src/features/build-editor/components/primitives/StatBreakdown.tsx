@@ -6,7 +6,7 @@
 import { ExpandMore as ExpandIcon } from '@mui/icons-material';
 import { Box, Collapse, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 
 import type { StatItem, StatResult, StatSource } from '../../engine/stat-types';
 
@@ -50,6 +50,7 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
   const [expanded, setExpanded] = useState(defaultExpanded);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const contentId = useId();
 
   // Group enabled items by source
   const enabledItems = result.items.filter((i) => i.enabled);
@@ -69,6 +70,9 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
     optimal: '#22c55e',
     over: '#ef4444',
   };
+
+  const disabledCount = result.items.filter((i) => !i.enabled).length;
+  const hasEnabledItems = Object.keys(grouped).length > 0;
 
   return (
     <Box>
@@ -90,6 +94,7 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
         }}
         role="button"
         aria-expanded={expanded}
+        aria-controls={contentId}
         tabIndex={0}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -144,6 +149,9 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
       {/* Expandable detail */}
       <Collapse in={expanded} timeout={200}>
         <Box
+          id={contentId}
+          role="region"
+          aria-label={`${label} breakdown`}
           sx={{
             pl: 3,
             pr: 0.5,
@@ -153,6 +161,20 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
             ml: 1,
           }}
         >
+          {!hasEnabledItems && disabledCount === 0 && (
+            <Typography
+              sx={{
+                fontSize: 11,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.22)',
+                fontStyle: 'italic',
+                py: 0.5,
+              }}
+            >
+              No contributors
+            </Typography>
+          )}
+
           {Object.entries(grouped).map(([source, items]) => (
             <Box key={source} sx={{ mb: 0.75 }}>
               <Tooltip
@@ -281,7 +303,7 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
           ))}
 
           {/* Disabled items (collapsed) */}
-          {result.items.length - enabledItems.length > 0 && (
+          {disabledCount > 0 && (
             <Typography
               sx={{
                 fontSize: 9,
@@ -291,7 +313,7 @@ export const StatBreakdown: React.FC<StatBreakdownProps> = ({
                 fontStyle: 'italic',
               }}
             >
-              +{result.items.length - enabledItems.length} inactive sources
+              +{disabledCount} inactive sources
             </Typography>
           )}
         </Box>

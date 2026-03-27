@@ -31,7 +31,6 @@ import {
   Card,
   CardContent,
   Chip,
-  CircularProgress,
   Container,
   Dialog,
   DialogActions,
@@ -41,6 +40,7 @@ import {
   LinearProgress,
   Link,
   Paper,
+  Skeleton,
   Stack,
   Table,
   TableBody,
@@ -2232,26 +2232,53 @@ const ParseAnalysisPageContent: React.FC = () => {
       )}
 
       {state.loading && (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 2.5,
-            my: 4,
-            py: 3,
-          }}
-        >
-          <CircularProgress size={40} />
-          <Stack alignItems="center" spacing={0.5}>
-            <Typography variant="body2" fontWeight={600}>
-              Loading parse data...
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Fetching fight information and analyzing events
-            </Typography>
-          </Stack>
+        <Box sx={{ my: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* Fight info header skeleton */}
+          <Card sx={{ p: 2.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Skeleton variant="circular" width={32} height={32} />
+              <Box sx={{ flex: 1 }}>
+                <Skeleton variant="text" width={180} height={22} />
+                <Skeleton variant="text" width={120} height={14} />
+              </Box>
+              <Skeleton variant="rounded" width={60} height={24} sx={{ borderRadius: '12px' }} />
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              {[80, 90, 70].map((w, i) => (
+                <Skeleton
+                  key={i}
+                  variant="rounded"
+                  width={w}
+                  height={26}
+                  sx={{ borderRadius: '12px' }}
+                />
+              ))}
+            </Box>
+          </Card>
+          {/* Analysis results skeleton */}
+          <Card sx={{ p: 2.5 }}>
+            <Skeleton variant="text" width={160} height={24} sx={{ mb: 2 }} />
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Box
+                key={i}
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  py: 1,
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <Skeleton variant="text" width={`${30 + ((i * 11) % 25)}%`} height={16} />
+                <Box sx={{ flex: 1 }} />
+                <Skeleton variant="text" width={60} height={16} />
+                <Skeleton variant="rounded" width={48} height={20} sx={{ borderRadius: '4px' }} />
+              </Box>
+            ))}
+          </Card>
+          <Typography variant="caption" color="text.secondary" textAlign="center">
+            Analyzing combat events…
+          </Typography>
         </Box>
       )}
 

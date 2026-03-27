@@ -83,6 +83,7 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
       borderRadius: 2,
       background: isDark ? 'rgba(18,24,38,0.96)' : 'rgba(255,255,255,0.96)',
       backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
       border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
       boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.6)' : '0 8px 32px rgba(0,0,0,0.12)',
       '& .MuiMenuItem-root': {
@@ -253,6 +254,7 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
                 background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
                 backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
                 flexShrink: 0,
               }}
             >
@@ -348,6 +350,7 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
                     fontFamily: 'inherit',
                     transition: 'all 0.18s ease',
                     backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
                     ...(active
                       ? {
                           background: isDark

@@ -10,6 +10,7 @@ import {
   IconButton,
   Pagination,
   Paper,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -152,13 +153,50 @@ export const LatestReports: React.FC = () => {
     }
   };
 
-  // Loading state
+  // Loading state — skeleton matching the Card + table layout
   if (state.loading && state.reports.length === 0) {
     return (
       <Container maxWidth="lg" sx={{ py: isDesktop ? 4 : 2 }}>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-          <CircularProgress />
-        </Box>
+        <Card elevation={isDesktop ? 4 : 1} sx={cardSx}>
+          <CardContent sx={cardContentSx}>
+            {/* Header skeleton */}
+            <Box sx={{ ...headerStackSx, mb: 3 }}>
+              <Box>
+                <Skeleton variant="text" width={200} height={isDesktop ? 36 : 30} />
+                <Skeleton variant="text" width={320} height={18} sx={{ mt: 0.5 }} />
+              </Box>
+            </Box>
+            {/* Stats row skeleton */}
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+              <Skeleton variant="text" width={240} height={18} />
+              <Skeleton variant="rounded" width={100} height={28} sx={{ borderRadius: '16px' }} />
+            </Box>
+            {/* Table rows skeleton */}
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Box
+                key={i}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  py: 1.5,
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <Skeleton variant="text" width={`${28 + ((i * 11) % 20)}%`} height={18} />
+                <Skeleton variant="text" width={80} height={18} />
+                <Box sx={{ flex: 1 }} />
+                <Skeleton variant="text" width={60} height={18} />
+                <Skeleton variant="rounded" width={50} height={22} sx={{ borderRadius: '4px' }} />
+              </Box>
+            ))}
+            {/* Pagination skeleton */}
+            <Box display="flex" justifyContent="center" mt={3}>
+              <Skeleton variant="rounded" width={200} height={32} sx={{ borderRadius: '16px' }} />
+            </Box>
+          </CardContent>
+        </Card>
       </Container>
     );
   }

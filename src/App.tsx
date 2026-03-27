@@ -5,6 +5,7 @@ import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { AnalyticsListener } from './components/AnalyticsListener';
+import { BuildEditorSkeleton } from './components/BuildEditorSkeleton';
 import { CookieConsent } from './components/CookieConsent';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HashRouteRedirect } from './components/HashRouteRedirect';
@@ -182,6 +183,10 @@ const BuildHubPage = React.lazy(() =>
   })),
 );
 
+const PublicProfilePage = React.lazy(() =>
+  import('./pages/PublicProfilePage').then((module) => ({ default: module.PublicProfilePage })),
+);
+
 // Null fallback for lazy-loaded routes — view transitions provide visual
 // feedback during navigation, so a skeleton loader is unnecessary and jarring.
 const LoadingFallback: React.FC = () => null;
@@ -200,6 +205,9 @@ const RosterBuilderLoadingFallback: React.FC = () => <RosterBuilderSkeleton />;
 
 // Roster Hub specific loading fallback
 const RosterHubLoadingFallback: React.FC = () => <RosterHubSkeleton />;
+
+// Build Editor specific loading fallback
+const BuildEditorLoadingFallback: React.FC = () => <BuildEditorSkeleton />;
 
 const MainApp: React.FC = () => {
   return (
@@ -561,7 +569,7 @@ const AppRoutes: React.FC = () => {
               path="/build-editor"
               element={
                 <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
+                  <Suspense fallback={<BuildEditorLoadingFallback />}>
                     <BuildEditorPage />
                   </Suspense>
                 </ErrorBoundary>
@@ -718,6 +726,17 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <GearSetsPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            {/* Public player profile — no auth required */}
+            <Route
+              path="/u/:username"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PublicProfilePage />
                   </Suspense>
                 </ErrorBoundary>
               }

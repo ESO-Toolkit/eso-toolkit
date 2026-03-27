@@ -1019,6 +1019,8 @@ export const BuildCompletionHeader: React.FC = () => {
           esoClass={build.esoClass}
           role={build.role}
           gameMode={build.gameMode}
+          buildName={build.name}
+          buildShortDescription={build.shortDescription}
           onClose={() => setPublishOpen(false)}
           onPublished={() => {
             enqueueSnackbar('Build published to the Hub!', { variant: 'success' });
@@ -1041,13 +1043,14 @@ export const BuildCompletionHeader: React.FC = () => {
         onClose={() => setImportOpen(false)}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
         PaperProps={{
           sx: {
             background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            borderRadius: 3,
+            borderRadius: isMobile ? 0 : 3,
           },
         }}
       >
@@ -1121,13 +1124,14 @@ export const BuildCompletionHeader: React.FC = () => {
         onClose={() => setExportOpen(false)}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
         PaperProps={{
           sx: {
             background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            borderRadius: 3,
+            borderRadius: isMobile ? 0 : 3,
           },
         }}
       >
@@ -1218,13 +1222,14 @@ export const BuildCompletionHeader: React.FC = () => {
         onClose={() => setTempLinkDialogOpen(false)}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
         PaperProps={{
           sx: {
             background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            borderRadius: 3,
+            borderRadius: isMobile ? 0 : 3,
           },
         }}
       >

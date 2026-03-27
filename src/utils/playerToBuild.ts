@@ -103,7 +103,7 @@ const LABEL_TO_SKILL_LINE_ID = new Map<string, ClassSkillLineId>(
   CLASS_SKILL_LINES.map((sl) => [sl.label.toLowerCase(), sl.id]),
 );
 
-function resolveClassFromAnalysis(classAnalysis?: ClassAnalysisResult): {
+export function resolveClassFromAnalysis(classAnalysis?: ClassAnalysisResult): {
   esoClass: ESOClass;
   classSkillLines: [ClassSkillLineId | null, ClassSkillLineId | null, ClassSkillLineId | null];
 } {
@@ -170,7 +170,7 @@ function resolveRole(playerRole?: string): CombatRole {
 
 // ─── Gear Conversion ────────────────────────────────────────────────────────
 
-function convertGear(gear: PlayerGear[]): GearConfig {
+export function convertGear(gear: PlayerGear[]): GearConfig {
   const config: GearConfig = {};
 
   for (let slotIdx = 0; slotIdx < gear.length; slotIdx++) {
@@ -197,7 +197,7 @@ function convertGear(gear: PlayerGear[]): GearConfig {
 //   [6-10] = Back bar abilities, [11] = Back bar ultimate
 // SkillsConfig uses slots 3-7 (abilities) and 8 (ultimate) per bar.
 
-function convertSkills(talents: PlayerTalent[]): {
+export function convertSkills(talents: PlayerTalent[]): {
   skills: BuildSetup['skills'];
   passives: number[];
 } {
@@ -236,7 +236,7 @@ function convertSkills(talents: PlayerTalent[]): {
 
 // ─── Champion Points Conversion ─────────────────────────────────────────────
 
-function convertChampionPoints(
+export function convertChampionPoints(
   cpList: Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>,
 ): BuildChampionPoints {
   const cp: BuildChampionPoints = {
@@ -283,7 +283,10 @@ const CONSUMABLE_NAME_INDEX = new Map<string, number>(
   ESO_CONSUMABLES.map((c) => [c.name.toLowerCase(), c.id]),
 );
 
-function resolveFood(foodAura?: { id?: number; name?: string }): { id?: number; name?: string } {
+export function resolveFood(foodAura?: { id?: number; name?: string }): {
+  id?: number;
+  name?: string;
+} {
   if (!foodAura?.name) return {};
 
   // Try exact match first

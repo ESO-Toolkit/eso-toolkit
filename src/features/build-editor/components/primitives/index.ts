@@ -7,6 +7,7 @@ export { SectionCard } from './SectionCard';
 export { GearSlotCard } from './GearSlotCard';
 export { StatGauge } from './StatGauge';
 export { StatBreakdown } from './StatBreakdown';
+export { TraitEnchantPicker } from './TraitEnchantPicker';
 export { PickerDialog } from './PickerDialog';
 export { PickerTab, PickerTabBar } from './PickerTabBar';
 export { CollapsibleSection } from './CollapsibleSection';

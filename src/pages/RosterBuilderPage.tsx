@@ -55,7 +55,7 @@ import { PublishRosterDialog } from '../features/roster-hub/components/PublishRo
 import { GetPlayersForReportQuery } from '../graphql/gql/graphql';
 import { saveRoster, updateRoster } from '../store/saved_rosters';
 import { useAppDispatch } from '../store/useAppDispatch';
-import { KnownAbilities, KnownSetIDs } from '../types/abilities';
+import { KnownSetIDs } from '../types/abilities';
 import {
   RaidRoster,
   TankSetup,
@@ -74,73 +74,20 @@ import {
   defaultTankSetup,
   defaultHealerSetup,
   createDefaultDPSSlots,
-  MONSTER_SETS,
-  ALL_5PIECE_SETS,
   CLASS_SKILL_LINES,
 } from '../types/roster';
 import type { TrialBuildOverrides } from '../types/trial-encounters';
+import {
+  convertLogPlayersToRoster,
+  type LogCombatantInfoEvent,
+  type LogPlayerDetails,
+} from '../utils/logToRoster';
 // roleColors used by RosterCardSections
 import { encodeRosterToURL, decodeRosterFromURL } from '../utils/rosterEncoding';
 import { resizeRoster } from '../utils/rosterResize';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
 import type { SlotKey } from '../utils/slotKey';
 import { parseSlotKey } from '../utils/slotKey';
-
-/**
- * Type definitions for log file import
- */
-interface GearItem {
-  setName?: string;
-  setID?: number; // Set ID from API
-  permanentEnchant?: number; // Mythic items have this set, counts as 2 pieces
-  [key: string]: unknown;
-}
-
-interface TalentItem {
-  name?: string;
-  guid?: number;
-  type?: number;
-  abilityIcon?: string;
-  flags?: number;
-  [key: string]: unknown;
-}
-
-interface CombatantInfo {
-  gear?: GearItem[];
-  talents?: TalentItem[];
-  [key: string]: unknown;
-}
-
-interface PlayerData {
-  name?: string;
-  id?: number;
-  combatantInfo?: CombatantInfo;
-  [key: string]: unknown;
-}
-
-interface PlayerDetails {
-  tanks?: PlayerData[];
-  healers?: PlayerData[];
-  dps?: PlayerData[];
-  [key: string]: unknown;
-}
-
-interface AuraInfo {
-  source: number;
-  ability: number;
-  stacks?: number;
-  icon?: string;
-  name?: string;
-}
-
-interface CombatantInfoEvent {
-  timestamp: number;
-  type: string;
-  sourceID: number;
-  targetID?: number;
-  sourceIsFriendly?: boolean;
-  auras?: AuraInfo[];
-}
 
 /**
  * GraphQL query for fetching player details and combatant info events from a report
@@ -1003,13 +950,17 @@ export const RosterBuilderPage: React.FC = () => {
     if (!urlSyncReady.current) return;
     let cancelled = false;
     const timer = window.setTimeout(() => {
-      void encodeRosterToURL(roster).then((encoded) => {
-        if (cancelled || !encoded) return;
-        const url = new URL(window.location.href);
-        url.search = `?r=${encoded}`;
-        url.hash = '';
-        window.history.replaceState(null, '', url.toString());
-      });
+      void encodeRosterToURL(roster)
+        .then((encoded) => {
+          if (cancelled || !encoded) return;
+          const url = new URL(window.location.href);
+          url.search = `?r=${encoded}`;
+          url.hash = '';
+          window.history.replaceState(null, '', url.toString());
+        })
+        .catch(() => {
+          // Encoding failure is non-critical for URL sync — silently skip
+        });
     }, 400);
     return () => {
       cancelled = true;
@@ -1019,25 +970,26 @@ export const RosterBuilderPage: React.FC = () => {
 
   // Generate shareable read-only link (points to /rv, the dedicated share view)
   const handleCopyLink = useCallback(() => {
-    void encodeRosterToURL(roster).then((encoded) => {
-      if (encoded) {
-        // Derive base path to support subdirectory deployments (e.g. /dev-previews/pr-xxx/)
-        const basePath = window.location.pathname.replace(/\/roster-builder(\/.*)?$/, '');
-        const url = `${window.location.origin}${basePath}/rv?r=${encoded}`;
-        navigator.clipboard
-          .writeText(url)
-          .then(() => {
-            setSnackbar({
-              open: true,
-              message: 'Read-only link copied to clipboard!',
-              severity: 'success',
-            });
-          })
-          .catch(() => {
-            setSnackbar({ open: true, message: 'Failed to copy link', severity: 'error' });
-          });
-      }
-    });
+    void encodeRosterToURL(roster)
+      .then((encoded) => {
+        if (encoded) {
+          // Derive base path to support subdirectory deployments (e.g. /dev-previews/pr-xxx/)
+          const basePath = window.location.pathname.replace(/\/roster-builder(\/.*)?$/, '');
+          const url = `${window.location.origin}${basePath}/rv?r=${encoded}`;
+          navigator.clipboard.writeText(url).then(
+            () =>
+              setSnackbar({
+                open: true,
+                message: 'Read-only link copied to clipboard!',
+                severity: 'success',
+              }),
+            () => setSnackbar({ open: true, message: 'Failed to copy link', severity: 'error' }),
+          );
+        }
+      })
+      .catch(() => {
+        setSnackbar({ open: true, message: 'Failed to encode roster', severity: 'error' });
+      });
   }, [roster]);
 
   // Save roster to My Rosters (Redux/localStorage)
@@ -1281,12 +1233,14 @@ export const RosterBuilderPage: React.FC = () => {
 
       // Extract player details from the response object
       // The playerDetails structure is: { data: { playerDetails: { tanks, healers, dps } } }
-      let details: PlayerDetails | undefined;
+      let details: LogPlayerDetails | undefined;
 
       if (typeof playerDetails === 'string') {
         // If it's a string, parse it as JSON
         try {
-          const parsed = JSON.parse(playerDetails) as { data?: { playerDetails?: PlayerDetails } };
+          const parsed = JSON.parse(playerDetails) as {
+            data?: { playerDetails?: LogPlayerDetails };
+          };
           details = parsed?.data?.playerDetails;
         } catch (error) {
           setSnackbar({
@@ -1301,7 +1255,7 @@ export const RosterBuilderPage: React.FC = () => {
         // If it's already an object, extract the nested data
         const payload = (playerDetails as { data?: unknown }).data;
         if (payload && typeof payload === 'object') {
-          details = (payload as { playerDetails?: PlayerDetails }).playerDetails;
+          details = (payload as { playerDetails?: LogPlayerDetails }).playerDetails;
         }
       }
 
@@ -1315,423 +1269,51 @@ export const RosterBuilderPage: React.FC = () => {
         return;
       }
 
-      const { tanks = [], healers = [], dps = [] } = details;
-
       // Extract combatant info events from the response
-      // Note: TypeScript doesn't know about the events field, so we cast it
       const report = response.reportData?.report as {
         playerDetails?: unknown;
         events?: { data?: string | unknown };
       };
       const eventsData = report?.events?.data;
 
-      // Parse events data - it might be a string or already an object
-      let combatantInfoEvents: CombatantInfoEvent[] = [];
+      let combatantInfoEvents: LogCombatantInfoEvent[] = [];
       if (eventsData) {
         try {
           if (typeof eventsData === 'string') {
             combatantInfoEvents = JSON.parse(eventsData);
           } else if (Array.isArray(eventsData)) {
-            combatantInfoEvents = eventsData as CombatantInfoEvent[];
+            combatantInfoEvents = eventsData as LogCombatantInfoEvent[];
           }
         } catch {
-          // Failed to parse combatant info events - continue without champion point detection from auras
+          // Continue without aura data — simple-mode fields still work
         }
       }
 
-      // Build a map of player ID to champion points detected from auras
-      const playerChampionPoints = new Map<string, Set<number>>();
-      combatantInfoEvents.forEach((event) => {
-        if (!event.auras || event.auras.length === 0) return;
+      // Convert all players into fully-populated roster slots
+      const result = convertLogPlayersToRoster(details, combatantInfoEvents, roster);
 
-        const sourceId = String(event.sourceID);
-        if (!playerChampionPoints.has(sourceId)) {
-          playerChampionPoints.set(sourceId, new Set());
-        }
+      // Update roster with parsed data and auto-switch to full mode
+      setRoster((prev) => ({
+        ...prev,
+        tanks: prev.tanks.map((t, i) =>
+          i < result.tanks.length ? { ...result.tanks[i], slotNumber: i + 1 } : t,
+        ),
+        healers: prev.healers.map((h, i) =>
+          i < result.healers.length ? { ...result.healers[i], slotNumber: i + 1 } : h,
+        ),
+        dpsSlots: result.dpsSlots.length > 0 ? result.dpsSlots : prev.dpsSlots,
+        rosterDetailLevel: 'full',
+        updatedAt: new Date().toISOString(),
+      }));
+      setMode('full');
 
-        event.auras.forEach((aura) => {
-          // Track champion point ability IDs
-          if (
-            aura.ability === KnownAbilities.ENLIVENING_OVERFLOW ||
-            aura.ability === KnownAbilities.FROM_THE_BRINK
-          ) {
-            playerChampionPoints.get(sourceId)?.add(aura.ability);
-          }
-        });
-      });
-
-      // Helper function to categorize gear sets properly
-      const categorizeSets = (
-        gear: GearItem[],
-      ): {
-        fivePieceSets: string[];
-        monsterSets: string[];
-        otherSets: string[];
-      } => {
-        // Helper to normalize set names (remove "Perfected" prefix)
-        const normalizeSetName = (name: string): string => {
-          return name.replace(/^Perfected\s+/i, '');
-        };
-
-        // Helper to check if a name has "Perfected" prefix
-        const isPerfected = (name: string): boolean => {
-          return /^Perfected\s+/i.test(name);
-        };
-
-        // Transform gear items: if setName is missing but setID exists, look up the name
-        const transformedGear = gear.map((item) => {
-          if (!item.setName && item.setID) {
-            // Try to get the display name from the setID
-            const displayName = getSetDisplayName(item.setID as KnownSetIDs);
-            if (displayName) {
-              return { ...item, setName: displayName };
-            }
-          }
-          return item;
-        });
-
-        // First pass: Count pieces and track which version (perfected/non-perfected) we have
-        const rawCountMap = new Map<string, number>();
-        const perfectedVersions = new Map<string, string>(); // normalized name -> actual perfected name
-
-        transformedGear.forEach((item: GearItem) => {
-          if (item.setName) {
-            const pieceCount = item.permanentEnchant ? 2 : 1;
-            rawCountMap.set(item.setName, (rawCountMap.get(item.setName) || 0) + pieceCount);
-
-            // Track perfected versions
-            if (isPerfected(item.setName)) {
-              const normalized = normalizeSetName(item.setName);
-              perfectedVersions.set(normalized, item.setName);
-            }
-          }
-        });
-
-        // Second pass: Consolidate perfected and non-perfected sets
-        const setCountMap = new Map<string, number>();
-        const processedNormalized = new Set<string>();
-
-        rawCountMap.forEach((count, setName) => {
-          const normalized = normalizeSetName(setName);
-
-          // Skip if we've already processed this set (either version)
-          if (processedNormalized.has(normalized)) {
-            return;
-          }
-
-          processedNormalized.add(normalized);
-
-          // Check if there's a perfected version
-          const perfectedName = perfectedVersions.get(normalized);
-
-          // Calculate total count (perfected + non-perfected pieces)
-          let totalCount = 0;
-          if (perfectedName) {
-            totalCount += rawCountMap.get(perfectedName) || 0;
-          }
-          // Add non-perfected count (if it exists)
-          const nonPerfectedCount = rawCountMap.get(normalized) || 0;
-          totalCount += nonPerfectedCount;
-
-          // Always use the non-perfected (normalized) name for consistency
-          setCountMap.set(normalized, totalCount);
-        });
-
-        const fivePieceSets: string[] = [];
-        const monsterSets: string[] = [];
-        const otherSets: string[] = [];
-
-        // Sets to exclude from import (crafted sets, leveling sets, etc.)
-        const excludedSetIds = new Set([
-          KnownSetIDs.ARMOR_OF_THE_TRAINEE, // Crafted leveling set
-          KnownSetIDs.DRUIDS_BRAID, // Crafted set from High Isle
-        ]);
-
-        setCountMap.forEach((count, setName) => {
-          // Try to find the set ID for this set name
-          const setId = findSetIdByName(setName);
-
-          // Skip excluded sets
-          if (setId && excludedSetIds.has(setId)) {
-            return;
-          }
-
-          // Categorize the set based on type and piece count
-          // Monster sets are typically 2-piece or 1-piece and are in our MONSTER_SETS list
-          if (setId && MONSTER_SETS.includes(setId)) {
-            monsterSets.push(setName);
-          } else if (setId && count >= 5 && ALL_5PIECE_SETS.includes(setId)) {
-            // 5-piece sets MUST have 5+ items AND be in our known 5-piece list
-            fivePieceSets.push(setName);
-          } else {
-            // Everything else goes to additional sets
-            otherSets.push(setName);
-          }
-        });
-
-        return { fivePieceSets, monsterSets, otherSets };
-      };
-
-      // Helper function to extract ultimate from talents
-      const extractUltimate = (
-        combatantInfo: CombatantInfo | undefined,
-      ): SupportUltimate | null => {
-        if (!combatantInfo?.talents) return null;
-
-        // Map ability IDs to support ultimates
-        const ultimateIdMap: Record<number, SupportUltimate> = {
-          [KnownAbilities.AGGRESSIVE_HORN]: SupportUltimate.WARHORN,
-          [KnownAbilities.GLACIAL_COLOSSUS]: SupportUltimate.COLOSSUS,
-          [KnownAbilities.REVIVING_BARRIER]: SupportUltimate.BARRIER,
-          [KnownAbilities.REPLENISHING_BARRIER]: SupportUltimate.BARRIER,
-          [KnownAbilities.SUMMON_CHARGED_ATRONACH]: SupportUltimate.ATRONACH,
-        };
-
-        for (const talent of combatantInfo.talents) {
-          if (talent.guid && ultimateIdMap[talent.guid]) {
-            return ultimateIdMap[talent.guid];
-          }
-        }
-
-        return null;
-      };
-
-      // Helper function to deduplicate set IDs by their display names
-      // This prevents having both "Pillager's Profit" (649) and "Perfected Pillager's Profit" (650)
-      const deduplicateSetIds = (setIds: KnownSetIDs[]): KnownSetIDs[] => {
-        const normalizeDisplayName = (name: string): string => {
-          return name.replace(/^Perfected\s+/i, '');
-        };
-
-        const seen = new Set<string>();
-        const result = setIds.filter((id) => {
-          const displayName = getSetDisplayName(id);
-          const normalizedName = normalizeDisplayName(displayName);
-
-          if (seen.has(normalizedName)) {
-            return false;
-          }
-          seen.add(normalizedName);
-          return true;
-        });
-        return result;
-      };
-
-      // Helper function to extract healer champion point from talents or auras
-      const extractHealerChampionPoint = (
-        combatantInfo: CombatantInfo | undefined,
-        playerId: number | undefined,
-      ): HealerChampionPoint | null => {
-        // First, check auras from combatant info events (more reliable)
-        if (playerId !== undefined) {
-          const championPoints = playerChampionPoints.get(String(playerId));
-          if (championPoints) {
-            if (championPoints.has(KnownAbilities.ENLIVENING_OVERFLOW)) {
-              return HealerChampionPoint.ENLIVENING_OVERFLOW;
-            }
-            if (championPoints.has(KnownAbilities.FROM_THE_BRINK)) {
-              return HealerChampionPoint.FROM_THE_BRINK;
-            }
-          }
-        }
-
-        // Fallback to checking talents (less reliable, but worth trying)
-        if (!combatantInfo?.talents) return null;
-
-        // Map ability IDs to champion points
-        const championPointIdMap: Record<number, HealerChampionPoint> = {
-          [KnownAbilities.ENLIVENING_OVERFLOW]: HealerChampionPoint.ENLIVENING_OVERFLOW,
-          [KnownAbilities.FROM_THE_BRINK]: HealerChampionPoint.FROM_THE_BRINK,
-        };
-
-        for (const talent of combatantInfo.talents) {
-          if (talent.guid && championPointIdMap[talent.guid]) {
-            return championPointIdMap[talent.guid];
-          }
-        }
-
-        return null;
-      };
-
-      // Helper function to extract healer buff from talents or auras
-      const extractHealerBuff = (
-        combatantInfo: CombatantInfo | undefined,
-        playerId: number | undefined,
-      ): HealerBuff | null => {
-        // First, check auras from combatant info events (more reliable)
-        if (playerId !== undefined) {
-          const championPoints = playerChampionPoints.get(String(playerId));
-          if (championPoints) {
-            if (championPoints.has(KnownAbilities.ENLIVENING_OVERFLOW)) {
-              return HealerBuff.ENLIVENING_OVERFLOW;
-            }
-            if (championPoints.has(KnownAbilities.FROM_THE_BRINK)) {
-              return HealerBuff.FROM_THE_BRINK;
-            }
-          }
-        }
-
-        // Fallback to checking talents (less reliable, but worth trying)
-        if (!combatantInfo?.talents) return null;
-
-        // Map ability IDs to healer buffs
-        const healerBuffIdMap: Record<number, HealerBuff> = {
-          [KnownAbilities.ENLIVENING_OVERFLOW]: HealerBuff.ENLIVENING_OVERFLOW,
-          [KnownAbilities.FROM_THE_BRINK]: HealerBuff.FROM_THE_BRINK,
-        };
-
-        for (const talent of combatantInfo.talents) {
-          if (talent.guid && healerBuffIdMap[talent.guid]) {
-            return healerBuffIdMap[talent.guid];
-          }
-        }
-
-        return null;
-      };
-
-      // Parse tanks
-      const parsedTanks: TankSetup[] = tanks.map((tank: PlayerData, index: number) => {
-        const gear = tank.combatantInfo?.gear || [];
-        const { fivePieceSets, monsterSets, otherSets } = categorizeSets(gear);
-        const extractedUltimate = extractUltimate(tank.combatantInfo);
-
-        // Get existing ultimate for this tank (if roster already has data)
-        const existingUltimate = roster.tanks[index]?.ultimate ?? null;
-
-        // Only replace ultimate if:
-        // 1. There's no existing ultimate, OR
-        // 2. The existing ultimate is Barrier AND we found a non-Barrier ultimate
-        const shouldReplaceUltimate =
-          !existingUltimate ||
-          (existingUltimate === SupportUltimate.BARRIER &&
-            extractedUltimate &&
-            extractedUltimate !== SupportUltimate.BARRIER);
-
-        const finalUltimate = shouldReplaceUltimate ? extractedUltimate : existingUltimate;
-
-        return {
-          slotNumber: index + 1,
-          playerName: tank.name || `Tank ${index + 1}`,
-          roleLabel: `T${index + 1}`,
-          gearSets: {
-            set1: fivePieceSets[0] ? findSetIdByName(fivePieceSets[0]) : undefined,
-            set2: fivePieceSets[1] ? findSetIdByName(fivePieceSets[1]) : undefined,
-            monsterSet: monsterSets[0] ? findSetIdByName(monsterSets[0]) : undefined,
-            additionalSets: deduplicateSetIds(
-              [...fivePieceSets.slice(2), ...monsterSets.slice(1), ...otherSets]
-                .map((name) => findSetIdByName(name))
-                .filter((id): id is KnownSetIDs => id !== undefined),
-            ),
-          },
-          skillLines: {
-            line1: '',
-            line2: '',
-            line3: '',
-            isFlex: false,
-          },
-          ultimate: finalUltimate,
-          specificSkills: [],
-        };
-      });
-
-      // Parse healers
-      const parsedHealers: HealerSetup[] = healers.map((healer: PlayerData, index: number) => {
-        const gear = healer.combatantInfo?.gear || [];
-        const { fivePieceSets, monsterSets, otherSets } = categorizeSets(gear);
-        const extractedUltimate = extractUltimate(healer.combatantInfo);
-
-        // Get existing ultimate for this healer (if roster already has data)
-        const existingUltimate = roster.healers[index]?.ultimate ?? null;
-
-        // Only replace ultimate if:
-        // 1. There's no existing ultimate, OR
-        // 2. The existing ultimate is Barrier AND we found a non-Barrier ultimate
-        const shouldReplaceUltimate =
-          !existingUltimate ||
-          (existingUltimate === SupportUltimate.BARRIER &&
-            extractedUltimate &&
-            extractedUltimate !== SupportUltimate.BARRIER);
-
-        const finalUltimate = shouldReplaceUltimate ? extractedUltimate : existingUltimate;
-
-        return {
-          slotNumber: index + 1,
-          playerName: healer.name || `Healer ${index + 1}`,
-          roleLabel: `H${index + 1}`,
-          set1: fivePieceSets[0] ? findSetIdByName(fivePieceSets[0]) : undefined,
-          set2: fivePieceSets[1] ? findSetIdByName(fivePieceSets[1]) : undefined,
-          monsterSet: monsterSets[0] ? findSetIdByName(monsterSets[0]) : undefined,
-          additionalSets: deduplicateSetIds(
-            [...fivePieceSets.slice(2), ...monsterSets.slice(1), ...otherSets]
-              .map((name) => findSetIdByName(name))
-              .filter((id): id is KnownSetIDs => id !== undefined),
-          ),
-          skillLines: {
-            line1: '',
-            line2: '',
-            line3: '',
-            isFlex: false,
-          },
-          healerBuff: extractHealerBuff(healer.combatantInfo, healer.id),
-          championPoint: extractHealerChampionPoint(healer.combatantInfo, healer.id),
-          specificSkills: [],
-          ultimate: finalUltimate,
-        };
-      });
-
-      // Parse DPS (up to 8 slots)
-      const parsedDPS: DPSSlot[] = dps.slice(0, 8).map((dpsPlayer: PlayerData, index: number) => {
-        const gear = dpsPlayer.combatantInfo?.gear || [];
-        const { fivePieceSets, monsterSets, otherSets } = categorizeSets(gear);
-
-        return {
-          slotNumber: index + 1,
-          playerName: dpsPlayer.name || '',
-          // Use structured fields so Discord format and addon export read them correctly
-          set1: fivePieceSets[0] ? findSetIdByName(fivePieceSets[0]) : undefined,
-          set2: fivePieceSets[1] ? findSetIdByName(fivePieceSets[1]) : undefined,
-          monsterSet: monsterSets[0] ? findSetIdByName(monsterSets[0]) : undefined,
-          additionalSets: deduplicateSetIds(
-            [...fivePieceSets.slice(2), ...monsterSets.slice(1), ...otherSets]
-              .filter(Boolean)
-              .map((name) => findSetIdByName(name))
-              .filter((id): id is KnownSetIDs => id !== undefined),
-          ),
-          skillLines: {
-            line1: '',
-            line2: '',
-            line3: '',
-            isFlex: false,
-          },
-        };
-      });
-
-      // Update roster with parsed data (tanks, healers, and DPS slots)
-      setRoster((prev) => {
-        const newTanks = prev.tanks.map((t, i) =>
-          i < parsedTanks.length && parsedTanks[i] ? { ...parsedTanks[i], slotNumber: i + 1 } : t,
-        );
-        const newHealers = prev.healers.map((h, i) =>
-          i < parsedHealers.length && parsedHealers[i]
-            ? { ...parsedHealers[i], slotNumber: i + 1 }
-            : h,
-        );
-        return {
-          ...prev,
-          tanks: newTanks,
-          healers: newHealers,
-          dpsSlots: parsedDPS.length > 0 ? parsedDPS : prev.dpsSlots,
-          updatedAt: new Date().toISOString(),
-        };
-      });
-
-      const tankCount = Math.min(parsedTanks.length, roster.tanks.length);
-      const healerCount = Math.min(parsedHealers.length, roster.healers.length);
-      const dpsCount = Math.min(parsedDPS.length, 8);
+      const tankCount = Math.min(result.tanks.length, roster.tanks.length);
+      const healerCount = Math.min(result.healers.length, roster.healers.length);
+      const dpsCount = Math.min(result.dpsSlots.length, 8);
 
       setSnackbar({
         open: true,
-        message: `Successfully imported ${tankCount} tank(s), ${healerCount} healer(s), and ${dpsCount} DPS from ESO Logs!`,
+        message: `Successfully imported ${tankCount} tank(s), ${healerCount} healer(s), and ${dpsCount} DPS from ESO Logs (full mode)!`,
         severity: 'success',
       });
 
@@ -1747,7 +1329,7 @@ export const RosterBuilderPage: React.FC = () => {
     } finally {
       setImportLoading(false);
     }
-  }, [importUrl, client, roster.tanks, roster.healers]);
+  }, [importUrl, client, roster]);
 
   // Quick fill player names from text
   const handleQuickFill = useCallback((): void => {
@@ -2438,10 +2020,18 @@ export const RosterBuilderPage: React.FC = () => {
                     <Tooltip title="Publish to Roster Hub — share with the community" arrow>
                       <ButtonBase
                         onClick={() => {
-                          void encodeRosterToURL(roster).then((encoded) => {
-                            setPublishRosterData(encoded);
-                            setPublishDialogOpen(true);
-                          });
+                          void encodeRosterToURL(roster)
+                            .then((encoded) => {
+                              setPublishRosterData(encoded);
+                              setPublishDialogOpen(true);
+                            })
+                            .catch(() => {
+                              setSnackbar({
+                                open: true,
+                                message: 'Failed to encode roster for publishing',
+                                severity: 'error',
+                              });
+                            });
                         }}
                         sx={{
                           display: 'inline-flex',

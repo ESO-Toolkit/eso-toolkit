@@ -7,12 +7,21 @@
  */
 
 import { Close as CloseIcon, FilterList as FilterListIcon } from '@mui/icons-material';
-import { Box, ButtonBase, ListSubheader, Stack, Tooltip, Typography } from '@mui/material';
+import {
+  Box,
+  ButtonBase,
+  ListSubheader,
+  Stack,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+} from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { LazySkillTooltip } from '../../../../components/LazySkillTooltip';
 import type { SkillData } from '../../../../data/types/skill-line-types';
+import { groupSkillsByBase } from '../../../../utils/groupSkillsByBase';
 import { buildTooltipProps } from '../../../../utils/skillTooltipMapper';
 import {
   getSkillById,
@@ -37,6 +46,8 @@ const MAX_RESULTS = 100;
 
 const TILE_SIZE = 58;
 const ULT_SIZE = 66;
+const TILE_SIZE_MOBILE = 46;
+const ULT_SIZE_MOBILE = 52;
 const PICKER_TILE = 44;
 
 const SLOT_LABELS: Record<number, string> = {
@@ -55,11 +66,6 @@ const countFilled = (bar: Record<number, number>): number =>
 
 // ── Picker Types & Helpers ──────────────────────────────────────────────────
 
-interface SkillGroup {
-  base: SkillData;
-  morphs: SkillData[];
-}
-
 const PICKER_TABS = [
   { key: 'class' as const, label: 'Class' },
   { key: 'weapon' as const, label: 'Weapon' },
@@ -67,23 +73,6 @@ const PICKER_TABS = [
   { key: 'alliance' as const, label: 'Alliance' },
   { key: 'world' as const, label: 'World' },
 ];
-
-function groupSkillsByBase(skills: SkillData[]): SkillGroup[] {
-  const map = new Map<number, { base?: SkillData; morphs: SkillData[] }>();
-  for (const skill of skills) {
-    const baseId = skill.baseSkillId ?? skill.baseAbilityId ?? skill.id;
-    if (!map.has(baseId)) map.set(baseId, { morphs: [] });
-    const g = map.get(baseId)!;
-    if (skill.id === baseId) g.base = skill;
-    else g.morphs.push(skill);
-  }
-  const result: SkillGroup[] = [];
-  for (const g of map.values()) {
-    if (g.base) result.push({ base: g.base, morphs: g.morphs });
-    else if (g.morphs.length > 0) result.push({ base: g.morphs[0], morphs: g.morphs.slice(1) });
-  }
-  return result;
-}
 
 // ── Picker Skill Tile ───────────────────────────────────────────────────────
 
@@ -318,7 +307,7 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
     <PickerDialog
       open={open}
       onClose={handleClose}
-      title={isUltimate ? 'Assign Ultimate' : `Assign Skill \u00b7 Slot ${slotLabel}`}
+      title={isUltimate ? 'Assign Ultimate' : `Assign Skill · Slot ${slotLabel}`}
     >
       <PickerDialog.Search
         value={search}
@@ -556,11 +545,19 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
   onOpenPicker,
   onRemove,
 }) => {
-  const isDark = useTheme().palette.mode === 'dark';
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [imgBroken, setImgBroken] = useState(false);
   const isUlt = slotIndex === ULTIMATE_SLOT;
   const skill = abilityId ? getSkillById(abilityId) : null;
-  const size = isUlt ? ULT_SIZE : TILE_SIZE;
+  const size = isUlt
+    ? isMobile
+      ? ULT_SIZE_MOBILE
+      : ULT_SIZE
+    : isMobile
+      ? TILE_SIZE_MOBILE
+      : TILE_SIZE;
   const label = SLOT_LABELS[slotIndex] ?? String(slotIndex);
 
   const accentA = (a: number): string =>
@@ -581,8 +578,8 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
         alignItems: 'center',
         gap: 0.5,
         flex: isUlt ? undefined : 1,
-        maxWidth: isUlt ? ULT_SIZE : TILE_SIZE + 16,
-        minWidth: isUlt ? ULT_SIZE : TILE_SIZE,
+        maxWidth: isUlt ? size : size + 16,
+        minWidth: isUlt ? size : size,
       }}
     >
       <Tooltip
@@ -708,6 +705,7 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
                 justifyContent: 'center',
                 backgroundColor: 'rgba(0,0,0,0.60)',
                 backdropFilter: 'blur(2px)',
+                WebkitBackdropFilter: 'blur(2px)',
                 opacity: 0,
                 transition: 'opacity 150ms',
                 cursor: 'pointer',
@@ -755,7 +753,9 @@ interface SkillBarProps {
 }
 
 const SkillBarRow: React.FC<SkillBarProps> = ({ label, bar, onOpenPicker, onRemove }) => {
-  const isDark = useTheme().palette.mode === 'dark';
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const filled = countFilled(bar);
 
   return (
@@ -808,9 +808,9 @@ const SkillBarRow: React.FC<SkillBarProps> = ({ label, bar, onOpenPicker, onRemo
           display: 'flex',
           alignItems: 'flex-start',
           justifyContent: 'center',
-          gap: { xs: 0.75, sm: 1.25 },
-          py: 1.5,
-          px: 1.5,
+          gap: isMobile ? 0.5 : 1.25,
+          py: isMobile ? 1 : 1.5,
+          px: isMobile ? 1 : 1.5,
           borderRadius: 3,
           background: isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.012)',
           border: `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
@@ -831,7 +831,7 @@ const SkillBarRow: React.FC<SkillBarProps> = ({ label, bar, onOpenPicker, onRemo
         <Box
           sx={{
             width: 1.5,
-            height: ULT_SIZE * 0.7,
+            height: (isMobile ? ULT_SIZE_MOBILE : ULT_SIZE) * 0.7,
             borderRadius: 1,
             flexShrink: 0,
             alignSelf: 'center',

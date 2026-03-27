@@ -14,6 +14,7 @@ import { useSnackbar } from 'notistack';
 import React from 'react';
 
 import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
+import { formatRelativeDate } from '../../../utils/formatRelativeDate';
 import { VoteButton } from '../../roster-hub/components/VoteButton';
 import type { HubBuild } from '../types/build-hub.types';
 import { BUILD_TAG_COLORS, ROLE_ACCENT } from '../types/build-hub.types';
@@ -45,18 +46,7 @@ const ROLE_LABELS: Record<string, string> = {
   'hybrid-dps': 'Hybrid',
 };
 
-function formatDate(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  if (days < 30) return `${Math.floor(days / 7)}w ago`;
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
+const formatDate = formatRelativeDate;
 
 export const BuildCard: React.FC<BuildCardProps> = React.memo(
   ({ build, isOwner, isLoggedIn, onVote, onDelete, onEdit }) => {
@@ -68,9 +58,10 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
     const handleCopyLink = (e: React.MouseEvent): void => {
       e.stopPropagation();
       const url = `${window.location.origin}${import.meta.env.BASE_URL}bv?b=${encodeURIComponent(build.build_data)}`;
-      void navigator.clipboard.writeText(url).then(() => {
-        enqueueSnackbar('Link copied to clipboard!', { variant: 'success' });
-      });
+      void navigator.clipboard.writeText(url).then(
+        () => enqueueSnackbar('Link copied to clipboard!', { variant: 'success' }),
+        () => enqueueSnackbar('Failed to copy link', { variant: 'error' }),
+      );
     };
 
     const classShort = CLASS_LABELS[build.eso_class] ?? build.eso_class;
@@ -93,6 +84,7 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
             ? `linear-gradient(160deg, ${accentColor}12 0%, rgba(152,131,227,0.07) 45%, rgba(11,18,32,0.6) 100%)`
             : `linear-gradient(160deg, ${accentColor}0c 0%, rgba(152,131,227,0.05) 45%, rgba(255,255,255,0.8) 100%)`,
           backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           border: isDark ? '1px solid rgba(255,255,255,0.09)' : '1px solid rgba(0,0,0,0.09)',
           borderRadius: 3,
           overflow: 'hidden',
@@ -251,6 +243,7 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                         fontSize: '0.72rem',
                         fontWeight: 700,
                         backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
                         background: isDark ? `${tagColor}25` : `${tagColor}18`,
                         border: `1px solid ${tagColor}50`,
                         color: tagColor,
@@ -277,6 +270,7 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                 borderRadius: '8px',
                 background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
                 backdropFilter: 'blur(6px)',
+                WebkitBackdropFilter: 'blur(6px)',
                 border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.05)',
                 overflow: 'hidden',
               }}

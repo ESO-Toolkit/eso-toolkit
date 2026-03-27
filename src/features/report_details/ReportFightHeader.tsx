@@ -1,14 +1,31 @@
+import GroupsIcon from '@mui/icons-material/Groups';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import { Box, Button, ButtonBase, Stack, Tooltip, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  ButtonBase,
+  CircularProgress,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import * as React from 'react';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { FightFragment } from '@/graphql/gql/graphql';
 import { useCurrentFight, useReportData } from '@/hooks';
 import { useSelectedReportAndFight } from '@/ReportFightContext';
+import { selectCombatantInfoEvents } from '@/store/events_data/combatantInfoEventsSelectors';
+import { selectActivePlayersById } from '@/store/player_data/playerDataSelectors';
+import type { PlayerDetailsWithRole } from '@/store/player_data/playerDataSlice';
+import type { RootState } from '@/store/storeWithHistory';
+import { createDefaultRoster } from '@/types/roster';
 import { cleanArray } from '@/utils/cleanArray';
+import { convertLogPlayersToRoster, type LogPlayerDetails } from '@/utils/logToRoster';
+import { encodeRosterToURL } from '@/utils/rosterEncoding';
 
 // Custom hook for fight navigation logic
 export const useFightNavigation = (): {
@@ -227,6 +244,57 @@ export const ReportFightHeader: React.FC = () => {
     }
   }, [fightId, fight, isFightLoading]);
 
+  // ── Create Roster from fight players ──────────────────────────────────────
+  const playersById = useSelector((state: RootState) => selectActivePlayersById(state));
+  const combatantInfoEvents = useSelector((state: RootState) => selectCombatantInfoEvents(state));
+  const [rosterLoading, setRosterLoading] = React.useState(false);
+
+  const hasPlayers = Object.keys(playersById).length > 0;
+
+  const handleCreateRoster = React.useCallback(async () => {
+    if (!hasPlayers) return;
+    setRosterLoading(true);
+    try {
+      // Group flat playersById into role arrays for LogPlayerDetails
+      const tanks: PlayerDetailsWithRole[] = [];
+      const healers: PlayerDetailsWithRole[] = [];
+      const dps: PlayerDetailsWithRole[] = [];
+      for (const player of Object.values(playersById)) {
+        if (player.role === 'tank') tanks.push(player);
+        else if (player.role === 'healer') healers.push(player);
+        else dps.push(player);
+      }
+
+      const details: LogPlayerDetails = { tanks, healers, dps };
+      const defaultRoster = createDefaultRoster();
+
+      // CombatantInfoEvents from Redux use the canonical type which has `ability` on auras;
+      // convertLogPlayersToRoster expects the same shape via LogCombatantInfoEvent
+      const result = convertLogPlayersToRoster(details, combatantInfoEvents, defaultRoster);
+
+      const roster = {
+        ...defaultRoster,
+        rosterName: fight?.name ? `${fight.name} Roster` : 'Imported Roster',
+        tanks: defaultRoster.tanks.map((t, i) =>
+          i < result.tanks.length ? { ...result.tanks[i], slotNumber: i + 1 } : t,
+        ),
+        healers: defaultRoster.healers.map((h, i) =>
+          i < result.healers.length ? { ...result.healers[i], slotNumber: i + 1 } : h,
+        ),
+        dpsSlots: result.dpsSlots.length > 0 ? result.dpsSlots : defaultRoster.dpsSlots,
+        rosterDetailLevel: 'full' as const,
+        updatedAt: new Date().toISOString(),
+      };
+
+      const encoded = await encodeRosterToURL(roster);
+      if (encoded) {
+        navigate(`/roster-builder?r=${encoded}`);
+      }
+    } finally {
+      setRosterLoading(false);
+    }
+  }, [hasPlayers, playersById, combatantInfoEvents, fight, navigate]);
+
   return (
     <React.Fragment>
       <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1 }}>
@@ -274,6 +342,35 @@ export const ReportFightHeader: React.FC = () => {
             ESO Logs
           </Button>
         </Tooltip>
+        {hasPlayers && (
+          <Tooltip title="Create a roster from this fight's players">
+            <Button
+              onClick={handleCreateRoster}
+              disabled={rosterLoading}
+              variant="outlined"
+              size="small"
+              startIcon={
+                rosterLoading ? <CircularProgress size={14} color="inherit" /> : <GroupsIcon />
+              }
+              sx={{
+                textTransform: 'none',
+                fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                padding: { xs: '4px 8px', sm: '6px 12px', md: '6px 16px' },
+                minWidth: { xs: 'auto', sm: 'auto', md: 'auto' },
+                borderColor: isDarkMode ? 'rgba(168, 85, 247, 0.3)' : 'rgba(147, 51, 234, 0.25)',
+                color: isDarkMode ? 'rgba(168, 85, 247, 0.9)' : 'rgba(126, 34, 206, 0.9)',
+                '&:hover': {
+                  borderColor: isDarkMode ? 'rgba(168, 85, 247, 0.5)' : 'rgba(147, 51, 234, 0.4)',
+                  backgroundColor: isDarkMode
+                    ? 'rgba(168, 85, 247, 0.05)'
+                    : 'rgba(147, 51, 234, 0.05)',
+                },
+              }}
+            >
+              Roster
+            </Button>
+          </Tooltip>
+        )}
       </Box>
       <ButtonBase
         onClick={() => {

@@ -220,7 +220,7 @@ export function calculatePenetration(
   }
 
   // CP passive: Piercing
-  const piercingStages = setup.cp.warfare.passives[CP_PIERCING_ID] ?? 0;
+  const piercingStages = setup.cp?.warfare?.passives?.[CP_PIERCING_ID] ?? 0;
   if (piercingStages > 0) {
     items.push({
       name: 'CP: Piercing',
@@ -314,7 +314,7 @@ export function calculateCritDamage(
       source: 'passive',
       enabled: true,
       isPercent: true,
-      autoDetected: false,
+      autoDetected: true,
     });
   }
 
@@ -455,7 +455,7 @@ export function calculateCritChance(
   }
 
   // CP passive: Precision (160 crit rating per stage → %)
-  const precisionStages = setup.cp.warfare.passives[CP_PRECISION_ID] ?? 0;
+  const precisionStages = setup.cp?.warfare?.passives?.[CP_PRECISION_ID] ?? 0;
   if (precisionStages > 0) {
     const rating = precisionStages * CP_PRECISION_PER_STAGE;
     const pct = parseFloat((rating / CRIT_CHANCE_DIVISOR).toFixed(1));

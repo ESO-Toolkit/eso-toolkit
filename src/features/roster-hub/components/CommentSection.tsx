@@ -123,6 +123,7 @@ const SingleComment: React.FC<{
               background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)',
               border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.07)',
               backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
               boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.06)',
               transition: 'all 0.15s ease',
               '&:hover': {

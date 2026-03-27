@@ -18,6 +18,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { getItemInfo } from '../../../loadout-manager/data/itemIdMap';
 import type { ArmorWeight, GearConfig } from '../../../loadout-manager/types/loadout.types';
 import { EQUIP_SLOTS, type EquipSlotDef } from '../../data/esoStaticData';
+import { getAvailableWeights } from '../../data/gearSetRegistry';
 import { GearSlotCard } from '../primitives/GearSlotCard';
 
 import { GearPickerDialog } from './GearPicker';
@@ -76,6 +77,8 @@ const SlotRow: React.FC<SlotRowProps> = ({
   const info = itemId ? getItemInfo(itemId) : null;
   const disabledReason = disabledSlots[def.slot];
 
+  const availableWeights = info?.setName ? getAvailableWeights(info.setName) : undefined;
+
   return (
     <GearSlotCard
       slotDef={def}
@@ -85,6 +88,7 @@ const SlotRow: React.FC<SlotRowProps> = ({
       isDisabled={Boolean(disabledReason)}
       disabledReason={disabledReason}
       weight={piece?.weight}
+      availableWeights={availableWeights}
       onWeightChange={onWeightChange ? (w: ArmorWeight) => onWeightChange(def.slot, w) : undefined}
       trait={piece?.trait}
       onTraitChange={

@@ -15,7 +15,7 @@ import { isDevelopment } from '../../utils/envUtils';
 import { addBreadcrumb, setUserContext } from '../../utils/errorTracking';
 import { Logger, LogLevel } from '../../utils/logger';
 
-import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './auth';
+import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, refreshAccessToken } from './auth';
 import {
   getAccessTokenExpiry,
   getAccessTokenSubject,
@@ -150,6 +150,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     },
     [setAuthToken],
   );
+
+  // Schedule proactive token refresh 60 s before expiry so the session never
+  // silently dies mid-use.  If the refresh fails, tokens are cleared by
+  // refreshAccessToken() itself and the user is logged out cleanly.
+  useEffect(() => {
+    if (!accessToken || !accessTokenExpiry || accessTokenExpired) return;
+
+    const msUntilRefresh = accessTokenExpiry * 1000 - Date.now() - 60_000;
+    const doRefresh = (): void => {
+      void refreshAccessToken()
+        ?.then((newToken) => {
+          if (newToken) updateAccessToken(newToken);
+          else updateAccessToken('');
+        })
+        ?.catch(() => updateAccessToken(''));
+    };
+
+    if (msUntilRefresh <= 0) {
+      // Already within the refresh window — refresh immediately
+      doRefresh();
+      return;
+    }
+
+    const timer = setTimeout(doRefresh, msUntilRefresh);
+
+    return () => clearTimeout(timer);
+  }, [accessToken, accessTokenExpiry, accessTokenExpired, updateAccessToken]);
 
   // Fetch current user data
   const refetchUser = useCallback(async () => {

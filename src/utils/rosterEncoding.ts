@@ -596,7 +596,11 @@ function expandHealer(c?: CompactHealer, slotNumber = 1): HealerSetup {
           : null
         : null,
     championPoint:
-      c?.cp != null ? ((CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint) ?? null) : null,
+      c?.cp != null
+        ? isValidEnumIndex(c.cp, CHAMPION_POINT_LIST.length)
+          ? (CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint)
+          : null
+        : null,
     specificSkills: decodeSpecificSkills(c?.ss),
     ultimate: decodeUltimate(c?.ul),
     groups: expandGroups(c?.grs, c?.gr),
@@ -839,9 +843,18 @@ const DL_LEVELS: RosterDetailLevel[] = ['simple', 'full'];
 /**
  * Expand a v3 compact roster into a full RaidRoster.
  */
+/** Hard caps to prevent DoS via crafted payloads allocating massive arrays. */
+const MAX_TANKS = 4;
+const MAX_HEALERS = 4;
+const MAX_DPS = 24;
+
 function expandCompactRosterV3(c: CompactRosterV3): RaidRoster {
   const comp: RoleComposition = c.co
-    ? { tanks: c.co[0], healers: c.co[1], dps: c.co[2] }
+    ? {
+        tanks: Math.min(Math.max(0, c.co[0] ?? 0), MAX_TANKS),
+        healers: Math.min(Math.max(0, c.co[1] ?? 0), MAX_HEALERS),
+        dps: Math.min(Math.max(0, c.co[2] ?? 0), MAX_DPS),
+      }
     : { ...DEFAULT_COMPOSITION };
 
   // Tanks
@@ -934,25 +947,38 @@ export function toBase64Url(bytes: Uint8Array): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-/** Base64url decode back to byte array */
+/** Base64url decode back to byte array. Throws on invalid input. */
 export function fromBase64Url(str: string): Uint8Array {
   const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
   const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-  const binary = atob(padded);
+  let binary: string;
+  try {
+    binary = atob(padded);
+  } catch {
+    throw new Error(`Invalid base64url input (length=${str.length})`);
+  }
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return bytes;
 }
 
+/** Maximum decompressed output size (5 MB). Prevents decompression bomb attacks. */
+const MAX_DECOMPRESSED_BYTES = 5 * 1024 * 1024;
+
 async function readAllChunks(readable: ReadableStream<Uint8Array>): Promise<Uint8Array> {
   const chunks: Uint8Array[] = [];
   const reader = readable.getReader();
+  let total = 0;
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
+    total += value.length;
+    if (total > MAX_DECOMPRESSED_BYTES) {
+      await reader.cancel();
+      throw new Error(`Decompressed payload exceeds ${MAX_DECOMPRESSED_BYTES} bytes — aborting`);
+    }
     chunks.push(value);
   }
-  const total = chunks.reduce((s, c) => s + c.length, 0);
   const out = new Uint8Array(total);
   let offset = 0;
   for (const chunk of chunks) {

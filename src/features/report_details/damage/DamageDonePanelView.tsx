@@ -511,8 +511,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         sx={{ width: 32, height: 32, flexShrink: 0 }}
                       />
                     )}
-                    <Typography
-                      component="span"
+                    <Box
                       onClick={onPlayerClick ? () => onPlayerClick(row.id) : undefined}
                       sx={{
                         fontWeight: 500,
@@ -540,7 +539,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                       }}
                     >
                       {row.name}
-                    </Typography>
+                    </Box>
                   </Box>
 
                   {/* Progress Bar Row */}
@@ -856,8 +855,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                       />
                     )}
                     <Box sx={{ minWidth: 0, flex: 1 }}>
-                      <Typography
-                        component="span"
+                      <Box
                         onClick={onPlayerClick ? () => onPlayerClick(row.id) : undefined}
                         sx={{
                           fontSize: '0.875rem',
@@ -874,7 +872,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         }}
                       >
                         {row.name}
-                      </Typography>
+                      </Box>
                       <Typography
                         sx={{
                           fontSize: '0.75rem',

@@ -3,6 +3,7 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   Handyman as HandymanIcon,
+  Publish as PublishIcon,
   Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import {
@@ -27,6 +28,8 @@ import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { useAuth } from '../features/auth/AuthContext';
+import { PublishBuildDialog } from '../features/build-hub/components/PublishBuildDialog';
 import type { SavedBuild } from '../store/saved_builds';
 import { deleteSavedBuild, selectSavedBuilds } from '../store/saved_builds';
 import { useAppDispatch } from '../store/useAppDispatch';
@@ -85,6 +88,7 @@ interface BuildCardProps {
   saved: SavedBuild;
   onEdit: (saved: SavedBuild) => void;
   onView: (saved: SavedBuild) => void;
+  onPublish: (saved: SavedBuild) => void;
   onDelete: (saved: SavedBuild) => void;
   isDarkMode: boolean;
 }
@@ -93,6 +97,7 @@ const BuildCardItem: React.FC<BuildCardProps> = ({
   saved,
   onEdit,
   onView,
+  onPublish,
   onDelete,
   isDarkMode,
 }) => {
@@ -172,6 +177,15 @@ const BuildCardItem: React.FC<BuildCardProps> = ({
         >
           View
         </Button>
+        <Button
+          size="small"
+          startIcon={<PublishIcon />}
+          onClick={() => onPublish(saved)}
+          color="primary"
+          sx={{ textTransform: 'none', fontWeight: 500 }}
+        >
+          Publish
+        </Button>
         <Box sx={{ flexGrow: 1 }} />
         <Button
           size="small"
@@ -193,7 +207,12 @@ export const MyBuildsPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const savedBuilds = useSelector(selectSavedBuilds);
+  const { accessToken } = useAuth();
   const [pendingDelete, setPendingDelete] = useState<SavedBuild | null>(null);
+  const [publishTarget, setPublishTarget] = useState<{
+    data: string;
+    saved: SavedBuild;
+  } | null>(null);
 
   const handleEdit = async (saved: SavedBuild): Promise<void> => {
     const encoded = await encodeBuildToURL(saved.build);
@@ -203,6 +222,11 @@ export const MyBuildsPage: React.FC = () => {
   const handleView = async (saved: SavedBuild): Promise<void> => {
     const encoded = await encodeBuildToURL(saved.build);
     navigate(`/bv?b=${encoded}`);
+  };
+
+  const handlePublish = async (saved: SavedBuild): Promise<void> => {
+    const data = await encodeBuildToURL(saved.build);
+    setPublishTarget({ data, saved });
   };
 
   const handleDeleteConfirm = (): void => {
@@ -276,6 +300,7 @@ export const MyBuildsPage: React.FC = () => {
               saved={saved}
               onEdit={handleEdit}
               onView={handleView}
+              onPublish={handlePublish}
               onDelete={setPendingDelete}
               isDarkMode={isDarkMode}
             />
@@ -289,6 +314,19 @@ export const MyBuildsPage: React.FC = () => {
         onConfirm={handleDeleteConfirm}
         onCancel={() => setPendingDelete(null)}
       />
+
+      {publishTarget && (
+        <PublishBuildDialog
+          open={true}
+          buildData={publishTarget.data}
+          esoClass={publishTarget.saved.build.esoClass}
+          role={publishTarget.saved.build.role}
+          gameMode={publishTarget.saved.build.gameMode ?? 'pve'}
+          token={accessToken}
+          onClose={() => setPublishTarget(null)}
+          onPublished={() => setPublishTarget(null)}
+        />
+      )}
     </Container>
   );
 };
