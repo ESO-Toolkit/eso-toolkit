@@ -2245,7 +2245,13 @@ const ParseAnalysisPageContent: React.FC = () => {
             </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
               {[80, 90, 70].map((w, i) => (
-                <Skeleton key={i} variant="rounded" width={w} height={26} sx={{ borderRadius: '12px' }} />
+                <Skeleton
+                  key={i}
+                  variant="rounded"
+                  width={w}
+                  height={26}
+                  sx={{ borderRadius: '12px' }}
+                />
               ))}
             </Box>
           </Card>
@@ -2253,7 +2259,16 @@ const ParseAnalysisPageContent: React.FC = () => {
           <Card sx={{ p: 2.5 }}>
             <Skeleton variant="text" width={160} height={24} sx={{ mb: 2 }} />
             {Array.from({ length: 5 }).map((_, i) => (
-              <Box key={i} sx={{ display: 'flex', gap: 2, py: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+              <Box
+                key={i}
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  py: 1,
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
                 <Skeleton variant="text" width={`${30 + ((i * 11) % 25)}%`} height={16} />
                 <Box sx={{ flex: 1 }} />
                 <Skeleton variant="text" width={60} height={16} />

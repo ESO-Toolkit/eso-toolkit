@@ -7,7 +7,15 @@
  */
 
 import { Close as CloseIcon, FilterList as FilterListIcon } from '@mui/icons-material';
-import { Box, ButtonBase, ListSubheader, Stack, Tooltip, Typography, useMediaQuery } from '@mui/material';
+import {
+  Box,
+  ButtonBase,
+  ListSubheader,
+  Stack,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+} from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -544,8 +552,12 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
   const isUlt = slotIndex === ULTIMATE_SLOT;
   const skill = abilityId ? getSkillById(abilityId) : null;
   const size = isUlt
-    ? isMobile ? ULT_SIZE_MOBILE : ULT_SIZE
-    : isMobile ? TILE_SIZE_MOBILE : TILE_SIZE;
+    ? isMobile
+      ? ULT_SIZE_MOBILE
+      : ULT_SIZE
+    : isMobile
+      ? TILE_SIZE_MOBILE
+      : TILE_SIZE;
   const label = SLOT_LABELS[slotIndex] ?? String(slotIndex);
 
   const accentA = (a: number): string =>

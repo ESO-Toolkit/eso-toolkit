@@ -35,7 +35,11 @@ export async function getClientToken(env: Env): Promise<string> {
 
 // ─── GraphQL helper ──────────────────────────────────────────────────────────
 
-async function gql<T>(token: string, query: string, variables?: Record<string, unknown>): Promise<T> {
+async function gql<T>(
+  token: string,
+  query: string,
+  variables?: Record<string, unknown>,
+): Promise<T> {
   const res = await fetch(ESOLOGS_CLIENT_API, {
     method: 'POST',
     headers: {
@@ -151,7 +155,8 @@ export async function fetchTopRanking(
 
   let parsed: ParsedRankings;
   try {
-    parsed = typeof rawJson === 'string' ? JSON.parse(rawJson) : (rawJson as unknown as ParsedRankings);
+    parsed =
+      typeof rawJson === 'string' ? JSON.parse(rawJson) : (rawJson as unknown as ParsedRankings);
   } catch {
     return null;
   }
@@ -235,7 +240,8 @@ export async function fetchPlayerDetails(
 
     let parsed: { data?: PlayerDetails };
     try {
-      parsed = typeof raw === 'string' ? JSON.parse(raw) : (raw as unknown as { data?: PlayerDetails });
+      parsed =
+        typeof raw === 'string' ? JSON.parse(raw) : (raw as unknown as { data?: PlayerDetails });
     } catch {
       return null;
     }

@@ -71,10 +71,7 @@ const normalize = (name: string): string =>
     .trim();
 
 /** Register sets from a data source, optionally tagging them with an armor weight. */
-function registerSets(
-  sets: Record<string, unknown>,
-  weight?: ArmorWeight,
-): void {
+function registerSets(sets: Record<string, unknown>, weight?: ArmorWeight): void {
   for (const setData of Object.values(sets)) {
     if (!setData || typeof setData !== 'object') continue;
     const d = setData as GearSetData;

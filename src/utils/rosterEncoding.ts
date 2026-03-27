@@ -975,9 +975,7 @@ async function readAllChunks(readable: ReadableStream<Uint8Array>): Promise<Uint
     total += value.length;
     if (total > MAX_DECOMPRESSED_BYTES) {
       await reader.cancel();
-      throw new Error(
-        `Decompressed payload exceeds ${MAX_DECOMPRESSED_BYTES} bytes — aborting`,
-      );
+      throw new Error(`Decompressed payload exceeds ${MAX_DECOMPRESSED_BYTES} bytes — aborting`);
     }
     chunks.push(value);
   }

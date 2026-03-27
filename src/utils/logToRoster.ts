@@ -399,9 +399,12 @@ function resolveUltimate(
 
 // ─── Skill Line Detection ────────────────────────────────────────────────────
 
-function extractSkillLines(
-  combatantInfo: LogCombatantInfo | undefined,
-): { line1: string; line2: string; line3: string; isFlex: boolean } {
+function extractSkillLines(combatantInfo: LogCombatantInfo | undefined): {
+  line1: string;
+  line2: string;
+  line3: string;
+  isFlex: boolean;
+} {
   const empty = { line1: '', line2: '', line3: '', isFlex: false };
   if (!combatantInfo?.talents?.length) return empty;
 

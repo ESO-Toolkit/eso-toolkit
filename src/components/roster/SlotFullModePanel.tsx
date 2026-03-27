@@ -93,7 +93,11 @@ export const SlotFullModePanel: React.FC<SlotFullModePanelProps> = ({
       />
 
       {/* Tab pill strip */}
-      <Box role="tablist" aria-label="Build detail tabs" sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1 }}>
+      <Box
+        role="tablist"
+        aria-label="Build detail tabs"
+        sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1 }}
+      >
         {FULL_TABS.map((tab) => {
           const isActive = activeTab === tab.id;
           return (

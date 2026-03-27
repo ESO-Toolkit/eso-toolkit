@@ -89,7 +89,11 @@ async function syncTrial(
   // Fetch player details
   const players = await fetchPlayerDetails(token, ranking.report.code, ranking.report.fightID);
   if (!players) {
-    return { trial: trialId, status: 'skipped', detail: 'Player details unavailable (private report?)' };
+    return {
+      trial: trialId,
+      status: 'skipped',
+      detail: 'Player details unavailable (private report?)',
+    };
   }
 
   const totalPlayers =

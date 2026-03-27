@@ -653,10 +653,7 @@ export async function toggleBuildVote(
     .first<{ cnt: number }>();
   const voteCount = countRow?.cnt ?? 0;
 
-  await db
-    .prepare('UPDATE builds SET vote_count = ? WHERE id = ?')
-    .bind(voteCount, buildId)
-    .run();
+  await db.prepare('UPDATE builds SET vote_count = ? WHERE id = ?').bind(voteCount, buildId).run();
 
   return { voted, voteCount };
 }

@@ -29,7 +29,6 @@ import { useSnackbar } from 'notistack';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-
 import { saveBuild } from '@/store/saved_builds';
 import type { RootState } from '@/store/storeWithHistory';
 
@@ -77,8 +76,7 @@ export const BuildEditorLayout: React.FC = () => {
           );
         } catch (err) {
           const isQuota =
-            err instanceof DOMException &&
-            (err.name === 'QuotaExceededError' || err.code === 22);
+            err instanceof DOMException && (err.name === 'QuotaExceededError' || err.code === 22);
           enqueueSnackbar(
             isQuota
               ? 'Browser storage full — build not saved locally. Try publishing to the Hub.'
@@ -119,9 +117,7 @@ export const BuildEditorLayout: React.FC = () => {
             overflowY: 'auto',
             p: { xs: 1.5, md: 2.5 },
             // Extra bottom padding for mobile nav bar + iOS home indicator
-            pb: isMobile
-              ? `calc(${10 * 8}px + env(safe-area-inset-bottom, 0px))`
-              : 2.5,
+            pb: isMobile ? `calc(${10 * 8}px + env(safe-area-inset-bottom, 0px))` : 2.5,
           }}
         >
           <motion.div
@@ -266,7 +262,6 @@ export const BuildEditorLayout: React.FC = () => {
               >
                 <SettingsSection />
               </SectionCard>
-
             </Box>
           </motion.div>
         </Box>

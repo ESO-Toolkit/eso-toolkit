@@ -109,10 +109,7 @@ function buildCompactDPS(player: PlayerEntry, index: number): CompactDPS {
 /**
  * Build a CompactRosterV3 from ESO Logs player details and ranking context.
  */
-export function buildCompactRoster(
-  players: PlayerDetails,
-  rosterName: string,
-): CompactRosterV3 {
+export function buildCompactRoster(players: PlayerDetails, rosterName: string): CompactRosterV3 {
   const roster: CompactRosterV3 = { v: 3 };
   if (rosterName) roster.n = rosterName;
 
@@ -174,7 +171,9 @@ export async function encodeRoster(roster: CompactRosterV3): Promise<string> {
   const [, readResult] = await Promise.allSettled([writeAndClose, readAllChunks(cs.readable)]);
 
   if (readResult.status === 'rejected') {
-    throw readResult.reason instanceof Error ? readResult.reason : new Error(String(readResult.reason));
+    throw readResult.reason instanceof Error
+      ? readResult.reason
+      : new Error(String(readResult.reason));
   }
 
   return toBase64Url(readResult.value);

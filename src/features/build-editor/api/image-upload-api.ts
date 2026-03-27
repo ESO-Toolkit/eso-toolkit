@@ -52,11 +52,7 @@ export async function uploadScreenshot(
 }
 
 /** Report an image for inappropriate content. */
-export async function reportImage(
-  imageId: string,
-  reason: string,
-  token: string,
-): Promise<void> {
+export async function reportImage(imageId: string, reason: string, token: string): Promise<void> {
   const res = await fetch(`${BASE_URL}/images/${imageId}/report`, {
     method: 'POST',
     headers: {

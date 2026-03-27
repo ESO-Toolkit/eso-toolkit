@@ -24,8 +24,8 @@ const MONSTER_SET_IDS = new Set([
   // Support mythics (heal/tank)
   691, 576,
   // DPS monster sets (used as 2-piece by DPS)
-  163, 168, 170, 183, 257, 266, 274, 276, 280, 350, 397, 432, 458, 479,
-  534, 620, 666, 687, 738, 577, 578, 633, 634, 627,
+  163, 168, 170, 183, 257, 266, 274, 276, 280, 350, 397, 432, 458, 479, 534, 620, 666, 687, 738,
+  577, 578, 633, 634, 627,
 ]);
 
 /** DPS mythic items — go in the monsterSet slot (override monster sets for DPS) */
@@ -95,10 +95,7 @@ export interface CategorizedGear {
  * - Known arena weapon IDs → arenaWeapon
  * - Everything else → additionalSets
  */
-export function categorizeGear(
-  gear: GearItem[],
-  isDPS: boolean,
-): CategorizedGear {
+export function categorizeGear(gear: GearItem[], isDPS: boolean): CategorizedGear {
   // Count pieces per setID
   const counts = new Map<number, { count: number; name?: string }>();
   for (const item of gear) {

@@ -48,9 +48,7 @@ export const BuildEditorSkeleton: React.FC = () => {
         gridColumn: isMobile ? undefined : gridColumn,
         gridRow: isMobile ? undefined : gridRow,
         background: glassBg,
-        border: primary
-          ? 'none'
-          : `1px solid ${subtle ? subtleBorder : border}`,
+        border: primary ? 'none' : `1px solid ${subtle ? subtleBorder : border}`,
         borderRadius: 3, // 24px — matches GlassPanel
         boxShadow: primary
           ? isDark
@@ -76,8 +74,7 @@ export const BuildEditorSkeleton: React.FC = () => {
             padding: '1px',
             background:
               'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(56, 189, 248, 0.05) 50%, rgba(56, 189, 248, 0.12) 100%)',
-            WebkitMask:
-              'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+            WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
             WebkitMaskComposite: 'xor',
             mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
             maskComposite: 'exclude',
@@ -131,12 +128,7 @@ export const BuildEditorSkeleton: React.FC = () => {
       />
       <Box sx={{ flex: 1 }} />
       {/* Completion dot — 6px circle */}
-      <Skeleton
-        variant="circular"
-        width={6}
-        height={6}
-        sx={{ bgcolor: skLight, flexShrink: 0 }}
-      />
+      <Skeleton variant="circular" width={6} height={6} sx={{ bgcolor: skLight, flexShrink: 0 }} />
     </Box>
   );
 
@@ -236,12 +228,7 @@ export const BuildEditorSkeleton: React.FC = () => {
                     flexShrink: 0,
                   }}
                 />
-                <Skeleton
-                  variant="text"
-                  width={90}
-                  height={10}
-                  sx={{ bgcolor: `${color}18` }}
-                />
+                <Skeleton variant="text" width={90} height={10} sx={{ bgcolor: `${color}18` }} />
                 <Box
                   sx={{
                     flex: 1,
@@ -287,25 +274,16 @@ export const BuildEditorSkeleton: React.FC = () => {
                   width: 6,
                   height: 6,
                   borderRadius: '50%',
-                  background: isDark
-                    ? 'rgba(148,163,184,0.40)'
-                    : 'rgba(148,163,184,0.55)',
+                  background: isDark ? 'rgba(148,163,184,0.40)' : 'rgba(148,163,184,0.55)',
                   flexShrink: 0,
                 }}
               />
-              <Skeleton
-                variant="text"
-                width={75}
-                height={10}
-                sx={{ bgcolor: skLight }}
-              />
+              <Skeleton variant="text" width={75} height={10} sx={{ bgcolor: skLight }} />
               <Box
                 sx={{
                   flex: 1,
                   height: '1px',
-                  background: isDark
-                    ? 'rgba(148,163,184,0.12)'
-                    : 'rgba(148,163,184,0.18)',
+                  background: isDark ? 'rgba(148,163,184,0.12)' : 'rgba(148,163,184,0.18)',
                 }}
               />
             </Box>
@@ -456,18 +434,8 @@ export const BuildEditorSkeleton: React.FC = () => {
     <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Box>
         <Skeleton variant="text" width={105} height={12} sx={labelSx} />
-        <Skeleton
-          variant="text"
-          width="90%"
-          height={12}
-          sx={{ ...labelSx, mt: 0.5 }}
-        />
-        <Skeleton
-          variant="text"
-          width="70%"
-          height={12}
-          sx={{ ...labelSx, mt: 0.25 }}
-        />
+        <Skeleton variant="text" width="90%" height={12} sx={{ ...labelSx, mt: 0.5 }} />
+        <Skeleton variant="text" width="70%" height={12} sx={{ ...labelSx, mt: 0.25 }} />
       </Box>
       {/* 3 slot pickers — each ~48px tall */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -603,12 +571,7 @@ export const BuildEditorSkeleton: React.FC = () => {
     <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
       {['Front Bar', 'Back Bar'].map((label) => (
         <Box key={label}>
-          <Skeleton
-            variant="text"
-            width={55}
-            height={10}
-            sx={{ ...labelSx, mb: 0.75 }}
-          />
+          <Skeleton variant="text" width={55} height={10} sx={{ ...labelSx, mb: 0.75 }} />
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             {/* 5 skill tiles */}
             {Array.from({ length: 5 }).map((_, i) => (
@@ -665,17 +628,8 @@ export const BuildEditorSkeleton: React.FC = () => {
         />
       </Box>
       {/* Food card placeholder */}
-      <Skeleton
-        variant="rounded"
-        height={56}
-        sx={{ borderRadius: '12px', bgcolor: skLight }}
-      />
-      <Skeleton
-        variant="text"
-        width="65%"
-        height={12}
-        sx={labelSx}
-      />
+      <Skeleton variant="rounded" height={56} sx={{ borderRadius: '12px', bgcolor: skLight }} />
+      <Skeleton variant="text" width="65%" height={12} sx={labelSx} />
     </Box>
   );
 
@@ -751,12 +705,7 @@ export const BuildEditorSkeleton: React.FC = () => {
                   transform: 'rotate(45deg)',
                 }}
               />
-              <Skeleton
-                variant="text"
-                width="55%"
-                height={12}
-                sx={{ bgcolor: skLight }}
-              />
+              <Skeleton variant="text" width="55%" height={12} sx={{ bgcolor: skLight }} />
             </Box>
           ))}
         </Box>
@@ -879,12 +828,7 @@ export const BuildEditorSkeleton: React.FC = () => {
               minWidth: 96,
             }}
           >
-            <Skeleton
-              variant="circular"
-              width={80}
-              height={80}
-              sx={{ bgcolor: skLight }}
-            />
+            <Skeleton variant="circular" width={80} height={80} sx={{ bgcolor: skLight }} />
             <Skeleton variant="text" width={65} height={11} sx={labelSx} />
             <Skeleton variant="text" width={50} height={9} sx={labelSx} />
           </Box>
@@ -994,12 +938,7 @@ export const BuildEditorSkeleton: React.FC = () => {
         }}
       >
         <Skeleton variant="text" width={80} height={12} sx={labelSx} />
-        <Skeleton
-          variant="text"
-          width="85%"
-          height={10}
-          sx={{ ...labelSx, mt: 0.5 }}
-        />
+        <Skeleton variant="text" width="85%" height={10} sx={{ ...labelSx, mt: 0.5 }} />
       </Box>
     </Box>
   );
@@ -1017,8 +956,7 @@ export const BuildEditorSkeleton: React.FC = () => {
         py: 1.5,
         borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
         backgroundColor: isDark ? 'rgba(11, 18, 32, 0.88)' : 'rgba(248, 250, 252, 0.92)',
-        backgroundImage:
-          'linear-gradient(135deg, rgba(56, 189, 248, 0.05) 0%, transparent 55%)',
+        backgroundImage: 'linear-gradient(135deg, rgba(56, 189, 248, 0.05) 0%, transparent 55%)',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
         flexWrap: { xs: 'wrap', md: 'nowrap' },
@@ -1065,12 +1003,7 @@ export const BuildEditorSkeleton: React.FC = () => {
           height: 36,
         }}
       >
-        <Skeleton
-          variant="text"
-          width={65}
-          height={14}
-          sx={{ bgcolor: accentFaint, mx: 1.5 }}
-        />
+        <Skeleton variant="text" width={65} height={14} sx={{ bgcolor: accentFaint, mx: 1.5 }} />
         <Box
           sx={{
             width: 42,
@@ -1106,18 +1039,8 @@ export const BuildEditorSkeleton: React.FC = () => {
               overflow: 'hidden',
             }}
           >
-            <Skeleton
-              variant="rectangular"
-              width={34}
-              height={34}
-              sx={{ bgcolor: skLight }}
-            />
-            <Skeleton
-              variant="rectangular"
-              width={34}
-              height={34}
-              sx={{ bgcolor: skLight }}
-            />
+            <Skeleton variant="rectangular" width={34} height={34} sx={{ bgcolor: skLight }} />
+            <Skeleton variant="rectangular" width={34} height={34} sx={{ bgcolor: skLight }} />
           </Box>
         )}
         {/* Save, Share, Publish pills */}
@@ -1131,12 +1054,7 @@ export const BuildEditorSkeleton: React.FC = () => {
           />
         ))}
         {/* More menu */}
-        <Skeleton
-          variant="circular"
-          width={34}
-          height={34}
-          sx={{ bgcolor: skLight }}
-        />
+        <Skeleton variant="circular" width={34} height={34} sx={{ bgcolor: skLight }} />
       </Box>
     </Box>
   );
@@ -1155,10 +1073,10 @@ export const BuildEditorSkeleton: React.FC = () => {
       }}
     >
       {[
-        { label: 45, items: 3 },  // Build
-        { label: 50, items: 3 },  // Loadout
-        { label: 72, items: 3 },  // Progression
-        { label: 48, items: 2 },  // Details
+        { label: 45, items: 3 }, // Build
+        { label: 50, items: 3 }, // Loadout
+        { label: 72, items: 3 }, // Progression
+        { label: 48, items: 2 }, // Details
       ].map((group, gi) => (
         <Box key={gi}>
           {/* Group label — 9px uppercase */}
@@ -1234,12 +1152,7 @@ export const BuildEditorSkeleton: React.FC = () => {
         sx={{ borderRadius: '10px', bgcolor: skLight }}
       />
       {/* Add button */}
-      <Skeleton
-        variant="circular"
-        width={30}
-        height={30}
-        sx={{ bgcolor: skLight }}
-      />
+      <Skeleton variant="circular" width={30} height={30} sx={{ bgcolor: skLight }} />
     </Box>
   );
 
@@ -1275,10 +1188,7 @@ export const BuildEditorSkeleton: React.FC = () => {
         },
       }}
     >
-      <Box
-        component="main"
-        sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}
-      >
+      <Box component="main" sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
         <HeaderSkeleton />
 
         <Box

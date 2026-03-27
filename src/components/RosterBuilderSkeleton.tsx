@@ -160,11 +160,7 @@ export const RosterBuilderSkeleton: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* WIP Disclaimer banner */}
-      <Skeleton
-        variant="rounded"
-        height={48}
-        sx={{ borderRadius: '10px', bgcolor: sk, mb: 3 }}
-      />
+      <Skeleton variant="rounded" height={48} sx={{ borderRadius: '10px', bgcolor: sk, mb: 3 }} />
 
       {/* Roster Hub banner link */}
       <Box
@@ -199,10 +195,7 @@ export const RosterBuilderSkeleton: React.FC = () => {
       </Box>
 
       {/* ═══ Main content Paper ═══ */}
-      <Paper
-        elevation={2}
-        sx={{ p: { xs: 1.5, sm: 2 }, mb: 3 }}
-      >
+      <Paper elevation={2} sx={{ p: { xs: 1.5, sm: 2 }, mb: 3 }}>
         {/* ── Row 1: Title lockup + Mode toggle ── */}
         <Box
           sx={{
@@ -252,9 +245,12 @@ export const RosterBuilderSkeleton: React.FC = () => {
                 sx={{
                   flex: '1 1 auto',
                   borderRadius: '8px',
-                  bgcolor: i === 0
-                    ? (isDark ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.85)')
-                    : 'transparent',
+                  bgcolor:
+                    i === 0
+                      ? isDark
+                        ? 'rgba(255,255,255,0.09)'
+                        : 'rgba(255,255,255,0.85)'
+                      : 'transparent',
                 }}
               />
             ))}
@@ -313,9 +309,7 @@ export const RosterBuilderSkeleton: React.FC = () => {
               px: 2,
               py: 1.25,
               borderRadius: '10px',
-              border: isDark
-                ? '1px solid rgba(251,191,36,0.18)'
-                : '1px solid rgba(161,98,7,0.18)',
+              border: isDark ? '1px solid rgba(251,191,36,0.18)' : '1px solid rgba(161,98,7,0.18)',
               background: isDark
                 ? 'linear-gradient(135deg, rgba(251,191,36,0.06) 0%, rgba(11,18,32,0.25) 100%)'
                 : 'linear-gradient(135deg, rgba(251,191,36,0.05) 0%, rgba(255,255,255,0.4) 100%)',
@@ -333,9 +327,19 @@ export const RosterBuilderSkeleton: React.FC = () => {
             />
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Skeleton variant="text" width={140} height={14} sx={{ bgcolor: skLight }} />
-              <Skeleton variant="text" width="75%" height={11} sx={{ bgcolor: skLight, mt: 0.25 }} />
+              <Skeleton
+                variant="text"
+                width="75%"
+                height={11}
+                sx={{ bgcolor: skLight, mt: 0.25 }}
+              />
             </Box>
-            <Skeleton variant="circular" width={16} height={16} sx={{ bgcolor: skLight, flexShrink: 0 }} />
+            <Skeleton
+              variant="circular"
+              width={16}
+              height={16}
+              sx={{ bgcolor: skLight, flexShrink: 0 }}
+            />
           </Box>
         </Box>
 
@@ -402,7 +406,12 @@ export const RosterBuilderSkeleton: React.FC = () => {
               sx={{ borderRadius: '9px', bgcolor: sk, flexShrink: 0 }}
             />
             <Box>
-              <Skeleton variant="text" width={42} height={10} sx={{ bgcolor: skLight, mb: 0.375 }} />
+              <Skeleton
+                variant="text"
+                width={42}
+                height={10}
+                sx={{ bgcolor: skLight, mb: 0.375 }}
+              />
               <Skeleton variant="text" width={120} height={20} sx={{ bgcolor: sk }} />
             </Box>
           </Box>
@@ -426,9 +435,12 @@ export const RosterBuilderSkeleton: React.FC = () => {
                 sx={{
                   flex: '1 1 auto',
                   borderRadius: '8px',
-                  bgcolor: i === 0
-                    ? (isDark ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.85)')
-                    : 'transparent',
+                  bgcolor:
+                    i === 0
+                      ? isDark
+                        ? 'rgba(255,255,255,0.09)'
+                        : 'rgba(255,255,255,0.85)'
+                      : 'transparent',
                 }}
               />
             ))}

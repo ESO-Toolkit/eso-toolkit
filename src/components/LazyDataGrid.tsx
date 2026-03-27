@@ -11,7 +11,16 @@ const LazyDataGrid = React.lazy(() =>
 const DataGridLoadingFallback: React.FC = () => (
   <Box sx={{ height: 400, p: 2 }}>
     {/* Header row */}
-    <Box sx={{ display: 'flex', gap: 2, mb: 1.5, pb: 1.5, borderBottom: '2px solid', borderColor: 'divider' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 2,
+        mb: 1.5,
+        pb: 1.5,
+        borderBottom: '2px solid',
+        borderColor: 'divider',
+      }}
+    >
       {[60, '25%', '35%', 80, 70].map((w, i) => (
         <Skeleton key={i} variant="text" width={w} height={16} />
       ))}

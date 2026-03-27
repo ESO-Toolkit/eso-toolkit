@@ -599,8 +599,12 @@ export const SetupTabBar: React.FC = () => {
           // Fully opaque on mobile to avoid stacking compositor layers with
           // the fixed bottom nav rail (both blur layers = GPU pressure on phones).
           background: isMobile
-            ? isDark ? '#080e1a' : '#f8fafc'
-            : isDark ? 'rgba(8, 14, 26, 0.90)' : 'rgba(248, 250, 252, 0.92)',
+            ? isDark
+              ? '#080e1a'
+              : '#f8fafc'
+            : isDark
+              ? 'rgba(8, 14, 26, 0.90)'
+              : 'rgba(248, 250, 252, 0.92)',
           backdropFilter: isMobile ? 'none' : 'blur(16px)',
           WebkitBackdropFilter: isMobile ? 'none' : 'blur(16px)',
           overflowX: 'auto',
@@ -608,9 +612,7 @@ export const SetupTabBar: React.FC = () => {
           '&::-webkit-scrollbar': { display: 'none' },
           // On mobile the SetupTabBar sits above the fixed bottom nav rail.
           // Use safe-area-inset-bottom to account for iOS home indicator height.
-          pb: isMobile
-            ? `calc(${8 * 8}px + env(safe-area-inset-bottom, 0px))`
-            : 1.25,
+          pb: isMobile ? `calc(${8 * 8}px + env(safe-area-inset-bottom, 0px))` : 1.25,
           position: 'relative',
           // Subtle accent gradient bleed from left
           '&::before': {

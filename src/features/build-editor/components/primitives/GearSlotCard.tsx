@@ -255,6 +255,19 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
     }
   };
 
+  // Auto-correct persisted weight when it falls outside the set's available weights
+  const showWeight = slotDef.category === 'apparel' && onWeightChange;
+  const weightPool = availableWeights?.length ? availableWeights : WEIGHT_CYCLE;
+  const rawWeight = weight ?? weightPool[weightPool.length - 1];
+  const currentWeight = weightPool.includes(rawWeight) ? rawWeight : weightPool[0];
+  const canCycleWeight = weightPool.length > 1;
+
+  useEffect(() => {
+    if (hasItem && showWeight && rawWeight !== currentWeight) {
+      onWeightChange!(currentWeight);
+    }
+  }, [hasItem, showWeight, rawWeight, currentWeight, onWeightChange]);
+
   // ── Empty slot ──────────────────────────────────────────────────────────
 
   if (!hasItem) {
@@ -333,20 +346,6 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
   }
 
   // ── Filled slot ─────────────────────────────────────────────────────────
-
-  const showWeight = slotDef.category === 'apparel' && onWeightChange;
-  const weightPool = availableWeights?.length ? availableWeights : WEIGHT_CYCLE;
-  const rawWeight = weight ?? weightPool[weightPool.length - 1];
-  // Snap to a valid weight if the current one isn't in the pool (e.g. set changed)
-  const currentWeight = weightPool.includes(rawWeight) ? rawWeight : weightPool[0];
-  const canCycleWeight = weightPool.length > 1;
-
-  // Auto-correct persisted weight when it falls outside the set's available weights
-  useEffect(() => {
-    if (showWeight && rawWeight !== currentWeight) {
-      onWeightChange!(currentWeight);
-    }
-  }, [showWeight, rawWeight, currentWeight, onWeightChange]);
 
   return (
     <>

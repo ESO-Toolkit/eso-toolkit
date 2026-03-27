@@ -49,11 +49,11 @@ import {
   encounterHasOverrides,
 } from '../types/trial-encounters';
 import { encodeBuildToURL } from '../utils/buildEncoding';
+import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { dpsSlotToBuild, tankSlotToBuild, healerSlotToBuild } from '../utils/rosterSlotToBuild';
 import { getSetDisplayName } from '../utils/setNameUtils';
-import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils';
 
 // ============================================================
 // Local display helpers
@@ -148,7 +148,10 @@ const formatGearSets = (sets: GearSetInput): string[] =>
  * returns the default silver, falls back to the slot-aware variant so sets
  * from known slots always get the correct color.
  */
-const getSetChipSx = (entry: GearSetEntry, theme: import('@mui/material/styles').Theme) => {
+const getSetChipSx = (
+  entry: GearSetEntry,
+  theme: import('@mui/material/styles').Theme,
+): Record<string, unknown> => {
   const result = getGearChipProps(entry.name, entry.count, theme);
   // getGearChipProps returns silver for unrecognised names — detect and override
   const sx = result.sx as Record<string, unknown> | undefined;
@@ -563,7 +566,8 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
             {healer.playerName || 'Unassigned'}
           </Typography>
         </Box>
-        {((healer.labels && healer.labels.length > 0) || (healer.groups && healer.groups.length > 0)) && (
+        {((healer.labels && healer.labels.length > 0) ||
+          (healer.groups && healer.groups.length > 0)) && (
           <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             {healer.labels?.map((lbl) => (
               <Chip
@@ -654,11 +658,7 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
                 />
               ))}
               {healer.arenaWeapon && (
-                <Chip
-                  label={healer.arenaWeapon}
-                  size="small"
-                  sx={buildVariantSx('blue', theme)}
-                />
+                <Chip label={healer.arenaWeapon} size="small" sx={buildVariantSx('blue', theme)} />
               )}
             </Box>
           </Box>
@@ -974,7 +974,9 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
 
         {/* Gear sets — own row with proper spacing like Tank/Healer */}
         {(gearSets.length > 0 || slot.arenaWeapon) && (
-          <Box sx={{ mt: 0.75, display: 'flex', flexWrap: 'wrap', gap: 0.75, alignItems: 'center' }}>
+          <Box
+            sx={{ mt: 0.75, display: 'flex', flexWrap: 'wrap', gap: 0.75, alignItems: 'center' }}
+          >
             {gearSets.map((entry) => (
               <Chip
                 key={entry.name}
@@ -984,20 +986,14 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
               />
             ))}
             {slot.arenaWeapon && (
-              <Chip
-                label={slot.arenaWeapon}
-                size="small"
-                sx={buildVariantSx('blue', theme)}
-              />
+              <Chip label={slot.arenaWeapon} size="small" sx={buildVariantSx('blue', theme)} />
             )}
           </Box>
         )}
 
         {/* Secondary info: skill lines, ultimate, CP, notes */}
         {(skillLines || slot.ultimate || slot.championPoint || slot.notes) && (
-          <Box
-            sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}
-          >
+          <Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
             {skillLines && (
               <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>
                 {skillLines}
