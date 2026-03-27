@@ -3,6 +3,10 @@ export interface Env {
   AI: Ai;
   ALLOWED_ORIGINS: string;
   IMGBB_API_KEY: string;
+  /** ESO Logs OAuth client ID — set via `wrangler secret put ESOLOGS_CLIENT_ID` */
+  ESOLOGS_CLIENT_ID: string;
+  /** ESO Logs OAuth client secret — set via `wrangler secret put ESOLOGS_CLIENT_SECRET` */
+  ESOLOGS_CLIENT_SECRET: string;
 }
 
 export interface RosterRow {
@@ -119,4 +123,46 @@ export interface ImageReportRow {
   reporter_id: string;
   reason: string;
   created_at: string;
+}
+
+// ─── User profiles ─────────────────────────────────────────────────────────
+
+export interface UserProfileRow {
+  author_id: string;
+  author_name: string;
+  bio: string;
+  updated_at: string;
+}
+
+/** Lightweight build summary — no build_data blob returned in profile responses */
+export interface BuildSummary {
+  id: string;
+  title: string;
+  description: string;
+  eso_class: string;
+  role: string;
+  game_mode: string;
+  vote_count: number;
+  tags: string[];
+  created_at: string;
+}
+
+/** Lightweight roster summary — no roster_data blob returned in profile responses */
+export interface RosterSummary {
+  id: string;
+  title: string;
+  description: string;
+  trial_id: string;
+  vote_count: number;
+  tags: string[];
+  created_at: string;
+}
+
+export interface UserProfileResponse {
+  username: string;
+  bio: string;
+  build_count: number;
+  roster_count: number;
+  builds: BuildSummary[];
+  rosters: RosterSummary[];
 }

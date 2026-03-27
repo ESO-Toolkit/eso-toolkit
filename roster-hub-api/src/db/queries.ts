@@ -5,13 +5,17 @@
 
 import type { D1Database } from '@cloudflare/workers-types';
 import type {
+  BuildSummary,
   CommentRow,
   CommentWithReplies,
   ImageReportRow,
   ImageUploadRow,
   RosterRow,
+  RosterSummary,
   RosterTagRow,
   RosterWithMeta,
+  UserProfileResponse,
+  UserProfileRow,
 } from '../types';
 
 const PAGE_SIZE = 20;
@@ -75,12 +79,18 @@ export async function listRosters(db: D1Database, opts: ListOptions): Promise<Ro
     votedSet = new Set(voteRows.results.map((v) => v.roster_id));
   }
 
-  return rows.results.map((row) => ({
-    ...row,
-    is_anonymous: row.is_anonymous ? true : false,
-    tags: row.tags_concat ? row.tags_concat.split(',') : [],
-    user_voted: opts.userId ? votedSet.has(row.id) : undefined,
-  }));
+  return rows.results.map((row) => {
+    const isAnon = row.is_anonymous ? true : false;
+    const isOwner = opts.userId === row.author_id;
+    return {
+      ...row,
+      author_id: isAnon && !isOwner ? '' : row.author_id,
+      author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
+      is_anonymous: isAnon,
+      tags: row.tags_concat ? row.tags_concat.split(',') : [],
+      user_voted: opts.userId ? votedSet.has(row.id) : undefined,
+    };
+  });
 }
 
 export async function getRosterById(
@@ -105,9 +115,13 @@ export async function getRosterById(
     userVoted = vote !== null;
   }
 
+  const isAnon = row.is_anonymous ? true : false;
+  const isOwner = userId === row.author_id;
   return {
     ...row,
-    is_anonymous: row.is_anonymous ? true : false,
+    author_id: isAnon && !isOwner ? '' : row.author_id,
+    author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
+    is_anonymous: isAnon,
     tags: tagRows.results.map((t) => t.tag),
     user_voted: userId ? userVoted : undefined,
   };
@@ -199,42 +213,37 @@ export async function toggleVote(
   rosterId: string,
   userId: string,
 ): Promise<{ voted: boolean; voteCount: number }> {
-  const existing = await db
-    .prepare('SELECT 1 FROM roster_votes WHERE roster_id = ? AND user_id = ?')
+  // INSERT OR IGNORE is atomic — concurrent requests cannot both insert the same
+  // UNIQUE (roster_id, user_id) pair, eliminating the read-then-write race.
+  const insertResult = await db
+    .prepare('INSERT OR IGNORE INTO roster_votes (roster_id, user_id) VALUES (?, ?)')
     .bind(rosterId, userId)
-    .first();
+    .run();
 
-  if (existing) {
-    // Remove vote
+  const voted = (insertResult.meta.changes ?? 0) > 0;
+
+  if (!voted) {
+    // Row already existed → this is an un-vote
     await db
       .prepare('DELETE FROM roster_votes WHERE roster_id = ? AND user_id = ?')
       .bind(rosterId, userId)
       .run();
-    await db
-      .prepare('UPDATE rosters SET vote_count = vote_count - 1 WHERE id = ? AND vote_count > 0')
-      .bind(rosterId)
-      .run();
-    const updated = await db
-      .prepare('SELECT vote_count FROM rosters WHERE id = ?')
-      .bind(rosterId)
-      .first<{ vote_count: number }>();
-    return { voted: false, voteCount: updated?.vote_count ?? 0 };
-  } else {
-    // Add vote
-    await db
-      .prepare('INSERT INTO roster_votes (roster_id, user_id) VALUES (?, ?)')
-      .bind(rosterId, userId)
-      .run();
-    await db
-      .prepare('UPDATE rosters SET vote_count = vote_count + 1 WHERE id = ?')
-      .bind(rosterId)
-      .run();
-    const updated = await db
-      .prepare('SELECT vote_count FROM rosters WHERE id = ?')
-      .bind(rosterId)
-      .first<{ vote_count: number }>();
-    return { voted: true, voteCount: updated?.vote_count ?? 1 };
   }
+
+  // Derive the true count from the votes table instead of incrementing/decrementing,
+  // so any prior drift is corrected on the next toggle.
+  const countRow = await db
+    .prepare('SELECT COUNT(*) AS cnt FROM roster_votes WHERE roster_id = ?')
+    .bind(rosterId)
+    .first<{ cnt: number }>();
+  const voteCount = countRow?.cnt ?? 0;
+
+  await db
+    .prepare('UPDATE rosters SET vote_count = ? WHERE id = ?')
+    .bind(voteCount, rosterId)
+    .run();
+
+  return { voted, voteCount };
 }
 
 // ─── Comments ──────────────────────────────────────────────────────────────
@@ -333,6 +342,76 @@ async function insertTags(db: D1Database, rosterId: string, tags: string[]): Pro
   await db.batch(stmts);
 }
 
+// ─── System Roster Upsert (Leaderboard Sync) ────────────────────────────────
+
+/**
+ * Find an existing system-generated roster for a given trial.
+ * System rosters are identified by `author_id` (e.g., 'system:eso-1').
+ */
+export async function findSystemRoster(
+  db: D1Database,
+  authorId: string,
+  trialId: string,
+): Promise<{ id: string } | null> {
+  const row = await db
+    .prepare('SELECT id FROM rosters WHERE author_id = ? AND trial_id = ? LIMIT 1')
+    .bind(authorId, trialId)
+    .first<{ id: string }>();
+  return row ?? null;
+}
+
+/**
+ * Create or update a system-generated roster.
+ * If `existingId` is provided, updates that roster; otherwise creates a new one.
+ */
+export async function upsertSystemRoster(
+  db: D1Database,
+  data: {
+    existingId?: string;
+    newId: string;
+    authorId: string;
+    authorName: string;
+    title: string;
+    description: string;
+    trialId: string;
+    rosterData: string;
+    tags: string[];
+  },
+): Promise<string> {
+  if (data.existingId) {
+    // Update existing
+    await db
+      .prepare(
+        "UPDATE rosters SET title = ?, description = ?, roster_data = ?, updated_at = datetime('now') WHERE id = ? AND author_id = ?",
+      )
+      .bind(data.title, data.description, data.rosterData, data.existingId, data.authorId)
+      .run();
+    return data.existingId;
+  }
+
+  // Create new
+  await db
+    .prepare(
+      'INSERT INTO rosters (id, author_id, author_name, title, description, trial_id, roster_data, is_anonymous) VALUES (?, ?, ?, ?, ?, ?, ?, 0)',
+    )
+    .bind(
+      data.newId,
+      data.authorId,
+      data.authorName,
+      data.title,
+      data.description,
+      data.trialId,
+      data.rosterData,
+    )
+    .run();
+
+  if (data.tags.length > 0) {
+    await insertTags(db, data.newId, data.tags);
+  }
+
+  return data.newId;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Build Hub queries — mirror the roster queries with build_* tables
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -413,12 +492,18 @@ export async function listBuilds(
     votedSet = new Set(voteRows.results.map((v) => v.build_id));
   }
 
-  return rows.results.map((row) => ({
-    ...row,
-    is_anonymous: row.is_anonymous ? true : false,
-    tags: row.tags_concat ? row.tags_concat.split(',') : [],
-    user_voted: opts.userId ? votedSet.has(row.id) : undefined,
-  }));
+  return rows.results.map((row) => {
+    const isAnon = row.is_anonymous ? true : false;
+    const isOwner = opts.userId === row.author_id;
+    return {
+      ...row,
+      author_id: isAnon && !isOwner ? '' : row.author_id,
+      author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
+      is_anonymous: isAnon,
+      tags: row.tags_concat ? row.tags_concat.split(',') : [],
+      user_voted: opts.userId ? votedSet.has(row.id) : undefined,
+    };
+  });
 }
 
 export async function getBuildById(
@@ -443,9 +528,13 @@ export async function getBuildById(
     userVoted = vote !== null;
   }
 
+  const isAnon = row.is_anonymous ? true : false;
+  const isOwner = userId === row.author_id;
   return {
     ...row,
-    is_anonymous: row.is_anonymous ? true : false,
+    author_id: isAnon && !isOwner ? '' : row.author_id,
+    author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
+    is_anonymous: isAnon,
     tags: tagRows.results.map((t) => t.tag),
     user_voted: userId ? userVoted : undefined,
   };
@@ -544,40 +633,32 @@ export async function toggleBuildVote(
   buildId: string,
   userId: string,
 ): Promise<{ voted: boolean; voteCount: number }> {
-  const existing = await db
-    .prepare('SELECT 1 FROM build_votes WHERE build_id = ? AND user_id = ?')
+  const insertResult = await db
+    .prepare('INSERT OR IGNORE INTO build_votes (build_id, user_id) VALUES (?, ?)')
     .bind(buildId, userId)
-    .first();
+    .run();
 
-  if (existing) {
+  const voted = (insertResult.meta.changes ?? 0) > 0;
+
+  if (!voted) {
     await db
       .prepare('DELETE FROM build_votes WHERE build_id = ? AND user_id = ?')
       .bind(buildId, userId)
       .run();
-    await db
-      .prepare('UPDATE builds SET vote_count = vote_count - 1 WHERE id = ? AND vote_count > 0')
-      .bind(buildId)
-      .run();
-    const updated = await db
-      .prepare('SELECT vote_count FROM builds WHERE id = ?')
-      .bind(buildId)
-      .first<{ vote_count: number }>();
-    return { voted: false, voteCount: updated?.vote_count ?? 0 };
-  } else {
-    await db
-      .prepare('INSERT INTO build_votes (build_id, user_id) VALUES (?, ?)')
-      .bind(buildId, userId)
-      .run();
-    await db
-      .prepare('UPDATE builds SET vote_count = vote_count + 1 WHERE id = ?')
-      .bind(buildId)
-      .run();
-    const updated = await db
-      .prepare('SELECT vote_count FROM builds WHERE id = ?')
-      .bind(buildId)
-      .first<{ vote_count: number }>();
-    return { voted: true, voteCount: updated?.vote_count ?? 1 };
   }
+
+  const countRow = await db
+    .prepare('SELECT COUNT(*) AS cnt FROM build_votes WHERE build_id = ?')
+    .bind(buildId)
+    .first<{ cnt: number }>();
+  const voteCount = countRow?.cnt ?? 0;
+
+  await db
+    .prepare('UPDATE builds SET vote_count = ? WHERE id = ?')
+    .bind(voteCount, buildId)
+    .run();
+
+  return { voted, voteCount };
 }
 
 // ─── Build Comments ───────────────────────────────────────────────────────────
@@ -664,6 +745,17 @@ export async function checkBuildCommentRateLimit(db: D1Database, userId: string)
 const VOTE_RATE_LIMIT_WINDOW_SEC = 3600;
 const VOTE_RATE_LIMIT_MAX = 20;
 
+export async function checkRosterVoteRateLimit(db: D1Database, userId: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM roster_votes
+       WHERE user_id = ? AND created_at > datetime('now', '-${VOTE_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < VOTE_RATE_LIMIT_MAX;
+}
+
 export async function checkBuildVoteRateLimit(db: D1Database, userId: string): Promise<boolean> {
   const row = await db
     .prepare(
@@ -673,6 +765,21 @@ export async function checkBuildVoteRateLimit(db: D1Database, userId: string): P
     .bind(userId)
     .first<{ cnt: number }>();
   return (row?.cnt ?? 0) < VOTE_RATE_LIMIT_MAX;
+}
+
+// Roster create rate limit: 5 creates per hour per user
+const ROSTER_CREATE_RATE_LIMIT_WINDOW_SEC = 3600;
+const ROSTER_CREATE_RATE_LIMIT_MAX = 5;
+
+export async function checkRosterCreateRateLimit(db: D1Database, userId: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM rosters
+       WHERE author_id = ? AND created_at > datetime('now', '-${ROSTER_CREATE_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < ROSTER_CREATE_RATE_LIMIT_MAX;
 }
 
 // Build create rate limit: 5 creates per hour per user
@@ -729,10 +836,7 @@ export async function createTempBuild(
   return row!;
 }
 
-export async function getTempBuild(
-  db: D1Database,
-  id: string,
-): Promise<TempBuildRow | null> {
+export async function getTempBuild(db: D1Database, id: string): Promise<TempBuildRow | null> {
   const row = await db
     .prepare("SELECT * FROM temp_builds WHERE id = ? AND expires_at > datetime('now')")
     .bind(id)
@@ -756,6 +860,13 @@ export async function recordTempBuildRateLimit(db: D1Database, ip: string): Prom
   await db
     .prepare("INSERT INTO temp_build_rate_limits (ip, created_at) VALUES (?, datetime('now'))")
     .bind(ip)
+    .run();
+  // Prune expired entries on every write so the table stays bounded even if the
+  // scheduled cleanup (cleanupExpiredTempBuilds) is delayed or skipped.
+  await db
+    .prepare(
+      `DELETE FROM temp_build_rate_limits WHERE created_at < datetime('now', '-${TEMP_BUILD_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
     .run();
 }
 
@@ -803,10 +914,7 @@ export async function createImageUpload(
   return row!;
 }
 
-export async function getImageUpload(
-  db: D1Database,
-  id: string,
-): Promise<ImageUploadRow | null> {
+export async function getImageUpload(db: D1Database, id: string): Promise<ImageUploadRow | null> {
   const row = await db
     .prepare('SELECT * FROM image_uploads WHERE id = ?')
     .bind(id)
@@ -855,10 +963,7 @@ export async function createImageReport(
   return row!;
 }
 
-export async function checkImageUploadRateLimit(
-  db: D1Database,
-  userId: string,
-): Promise<boolean> {
+export async function checkImageUploadRateLimit(db: D1Database, userId: string): Promise<boolean> {
   const row = await db
     .prepare(
       `SELECT COUNT(*) AS cnt FROM image_uploads
@@ -868,4 +973,128 @@ export async function checkImageUploadRateLimit(
     .first<{ cnt: number }>();
 
   return (row?.cnt ?? 0) < IMAGE_UPLOAD_RATE_LIMIT_MAX;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// User profiles — zero content storage; aggregates from existing builds/rosters
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PROFILE_PAGE_SIZE = 12;
+
+type BuildSummaryRow = BuildSummary & { tags_concat: string | null; author_name: string };
+type RosterSummaryRow = RosterSummary & { tags_concat: string | null; author_name: string };
+
+export async function getUserProfile(
+  db: D1Database,
+  username: string,
+): Promise<UserProfileResponse | null> {
+  // Run all 5 reads in a single parallel batch — counts included upfront to
+  // avoid a second round-trip to D1.
+  const [profileRow, buildsResult, rostersResult, buildCountRow, rosterCountRow] =
+    await Promise.all([
+      db
+        .prepare('SELECT * FROM user_profiles WHERE author_name = ? COLLATE NOCASE')
+        .bind(username)
+        .first<UserProfileRow>(),
+
+      db
+        .prepare(
+          `SELECT b.id, b.author_name, b.title, b.description, b.eso_class, b.role, b.game_mode,
+                  b.vote_count, b.created_at, GROUP_CONCAT(DISTINCT bt.tag) AS tags_concat
+           FROM builds b
+           LEFT JOIN build_tags bt ON bt.build_id = b.id
+           WHERE b.author_name = ? COLLATE NOCASE AND b.is_anonymous = 0
+           GROUP BY b.id
+           ORDER BY b.vote_count DESC, b.created_at DESC
+           LIMIT ?`,
+        )
+        .bind(username, PROFILE_PAGE_SIZE)
+        .all<BuildSummaryRow>(),
+
+      db
+        .prepare(
+          `SELECT r.id, r.author_name, r.title, r.description, r.trial_id,
+                  r.vote_count, r.created_at, GROUP_CONCAT(DISTINCT rt.tag) AS tags_concat
+           FROM rosters r
+           LEFT JOIN roster_tags rt ON rt.roster_id = r.id
+           WHERE r.author_name = ? COLLATE NOCASE AND r.is_anonymous = 0
+           GROUP BY r.id
+           ORDER BY r.vote_count DESC, r.created_at DESC
+           LIMIT ?`,
+        )
+        .bind(username, PROFILE_PAGE_SIZE)
+        .all<RosterSummaryRow>(),
+
+      db
+        .prepare(
+          'SELECT COUNT(*) AS cnt FROM builds WHERE author_name = ? COLLATE NOCASE AND is_anonymous = 0',
+        )
+        .bind(username)
+        .first<{ cnt: number }>(),
+
+      db
+        .prepare(
+          'SELECT COUNT(*) AS cnt FROM rosters WHERE author_name = ? COLLATE NOCASE AND is_anonymous = 0',
+        )
+        .bind(username)
+        .first<{ cnt: number }>(),
+    ]);
+
+  // Unknown user — no bio row and no public content
+  if (!profileRow && buildsResult.results.length === 0 && rostersResult.results.length === 0) {
+    return null;
+  }
+
+  // Prefer the canonical casing from content rows, fall back to the URL slug
+  const displayName =
+    buildsResult.results[0]?.author_name ??
+    rostersResult.results[0]?.author_name ??
+    profileRow?.author_name ??
+    username;
+
+  return {
+    username: displayName,
+    bio: profileRow?.bio ?? '',
+    build_count: buildCountRow?.cnt ?? 0,
+    roster_count: rosterCountRow?.cnt ?? 0,
+    builds: buildsResult.results.map((b) => ({
+      id: b.id,
+      title: b.title,
+      description: b.description,
+      eso_class: b.eso_class,
+      role: b.role,
+      game_mode: b.game_mode,
+      vote_count: b.vote_count,
+      tags: b.tags_concat ? b.tags_concat.split(',') : [],
+      created_at: b.created_at,
+    })),
+    rosters: rostersResult.results.map((r) => ({
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      trial_id: r.trial_id,
+      vote_count: r.vote_count,
+      tags: r.tags_concat ? r.tags_concat.split(',') : [],
+      created_at: r.created_at,
+    })),
+  };
+}
+
+export async function upsertUserBio(
+  db: D1Database,
+  authorId: string,
+  authorName: string,
+  bio: string,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO user_profiles (author_id, author_name, bio, updated_at)
+       VALUES (?, ?, ?, datetime('now'))
+       ON CONFLICT (author_id) DO UPDATE SET
+         author_name = excluded.author_name,
+         bio         = excluded.bio,
+         updated_at  = excluded.updated_at`,
+    )
+    .bind(authorId, authorName, bio)
+    .run();
 }

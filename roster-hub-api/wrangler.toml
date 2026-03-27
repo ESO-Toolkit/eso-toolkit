@@ -13,8 +13,14 @@ database_id = "22ff9f6a-ddb4-43bc-a0ef-89881124cfa2"
 [ai]
 binding = "AI"
 
-# IMGBB_API_KEY must be set as a secret:
-#   wrangler secret put IMGBB_API_KEY
+# Secrets (set via `wrangler secret put <NAME>`):
+#   IMGBB_API_KEY            — ImgBB API key for image uploads
+#   ESOLOGS_CLIENT_ID        — ESO Logs OAuth client ID (leaderboard sync)
+#   ESOLOGS_CLIENT_SECRET    — ESO Logs OAuth client secret (leaderboard sync)
+
+# Cleanup expired temp builds daily at 04:00 UTC
+[triggers]
+crons = ["0 4 * * *"]
 
 [vars]
 ALLOWED_ORIGINS = "https://esohelpers.com,https://www.esohelpers.com,https://eso-toolkit.github.io,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:5173"
