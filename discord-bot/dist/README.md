@@ -1,1 +1,0 @@
-This folder contains the built output assets for the worker "eso-toolkit-discord-bot" generated at 2026-03-11T00:41:04.568Z.
