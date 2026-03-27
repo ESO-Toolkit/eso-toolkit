@@ -297,87 +297,21 @@ export const ReportFightHeader: React.FC = () => {
 
   return (
     <React.Fragment>
-      <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1 }}>
-        <Tooltip title="Interactive Fight Replay">
-          <Button
-            onClick={() => navigate(`/report/${reportId}/fight/${fightId}/replay`)}
-            variant="outlined"
-            size="small"
-            startIcon={<PlayArrowIcon />}
-            sx={{
-              textTransform: 'none',
-              fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
-              padding: { xs: '4px 8px', sm: '6px 12px', md: '6px 16px' },
-              minWidth: { xs: 'auto', sm: 'auto', md: 'auto' },
-              borderColor: isDarkMode ? 'rgba(34, 197, 94, 0.3)' : 'rgba(34, 197, 94, 0.25)',
-              color: isDarkMode ? 'rgba(34, 197, 94, 0.9)' : 'rgba(22, 163, 74, 0.9)',
-              '&:hover': {
-                borderColor: isDarkMode ? 'rgba(34, 197, 94, 0.5)' : 'rgba(34, 197, 94, 0.4)',
-                backgroundColor: isDarkMode ? 'rgba(34, 197, 94, 0.05)' : 'rgba(34, 197, 94, 0.05)',
-              },
-            }}
-          >
-            Replay
-          </Button>
-        </Tooltip>
-        <Tooltip title="View full report on ESO Logs">
-          <Button
-            href={`https://www.esologs.com/reports/${reportId}?fight=${fightId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="outlined"
-            size="small"
-            startIcon={<OpenInNewIcon />}
-            sx={{
-              textTransform: 'none',
-              fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
-              padding: { xs: '4px 8px', sm: '6px 12px', md: '6px 16px' },
-              minWidth: { xs: 'auto', sm: 'auto', md: 'auto' },
-              borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(59, 130, 246, 0.25)',
-              '&:hover': {
-                borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.5)' : 'rgba(59, 130, 246, 0.4)',
-              },
-            }}
-          >
-            ESO Logs
-          </Button>
-        </Tooltip>
-        {hasPlayers && (
-          <Tooltip title="Create a roster from this fight's players">
-            <Button
-              onClick={handleCreateRoster}
-              disabled={rosterLoading}
-              variant="outlined"
-              size="small"
-              startIcon={
-                rosterLoading ? <CircularProgress size={14} color="inherit" /> : <GroupsIcon />
-              }
-              sx={{
-                textTransform: 'none',
-                fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
-                padding: { xs: '4px 8px', sm: '6px 12px', md: '6px 16px' },
-                minWidth: { xs: 'auto', sm: 'auto', md: 'auto' },
-                borderColor: isDarkMode ? 'rgba(168, 85, 247, 0.3)' : 'rgba(147, 51, 234, 0.25)',
-                color: isDarkMode ? 'rgba(168, 85, 247, 0.9)' : 'rgba(126, 34, 206, 0.9)',
-                '&:hover': {
-                  borderColor: isDarkMode ? 'rgba(168, 85, 247, 0.5)' : 'rgba(147, 51, 234, 0.4)',
-                  backgroundColor: isDarkMode
-                    ? 'rgba(168, 85, 247, 0.05)'
-                    : 'rgba(147, 51, 234, 0.05)',
-                },
-              }}
-            >
-              Roster
-            </Button>
-          </Tooltip>
-        )}
-      </Box>
-      <ButtonBase
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 1,
+          mb: 1,
+        }}
+      >
+        <ButtonBase
         onClick={() => {
           navigate(`/report/${reportId}`);
         }}
         sx={{
-          mb: 2,
           background: 'none',
           border: 'none',
           padding: 0,
@@ -437,6 +371,88 @@ export const ReportFightHeader: React.FC = () => {
       >
         Back to Fight List
       </ButtonBase>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Tooltip title="Interactive Fight Replay">
+            <Button
+              onClick={() => navigate(`/report/${reportId}/fight/${fightId}/replay`)}
+              variant="outlined"
+              size="small"
+              startIcon={<PlayArrowIcon />}
+              sx={{
+                textTransform: 'none',
+                fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                padding: { xs: '4px 8px', sm: '6px 12px', md: '6px 16px' },
+                minWidth: { xs: 'auto', sm: 'auto', md: 'auto' },
+                borderColor: isDarkMode ? 'rgba(34, 197, 94, 0.3)' : 'rgba(34, 197, 94, 0.25)',
+                color: isDarkMode ? 'rgba(34, 197, 94, 0.9)' : 'rgba(22, 163, 74, 0.9)',
+                '&:hover': {
+                  borderColor: isDarkMode ? 'rgba(34, 197, 94, 0.5)' : 'rgba(34, 197, 94, 0.4)',
+                  backgroundColor: isDarkMode
+                    ? 'rgba(34, 197, 94, 0.05)'
+                    : 'rgba(34, 197, 94, 0.05)',
+                },
+              }}
+            >
+              Replay
+            </Button>
+          </Tooltip>
+          <Tooltip title="View full report on ESO Logs">
+            <Button
+              href={`https://www.esologs.com/reports/${reportId}?fight=${fightId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="outlined"
+              size="small"
+              startIcon={<OpenInNewIcon />}
+              sx={{
+                textTransform: 'none',
+                fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                padding: { xs: '4px 8px', sm: '6px 12px', md: '6px 16px' },
+                minWidth: { xs: 'auto', sm: 'auto', md: 'auto' },
+                borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(59, 130, 246, 0.25)',
+                '&:hover': {
+                  borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.5)' : 'rgba(59, 130, 246, 0.4)',
+                },
+              }}
+            >
+              ESO Logs
+            </Button>
+          </Tooltip>
+          {hasPlayers && (
+            <Tooltip title="Create a roster from this fight's players">
+              <Button
+                onClick={handleCreateRoster}
+                disabled={rosterLoading}
+                variant="outlined"
+                size="small"
+                startIcon={
+                  rosterLoading ? <CircularProgress size={14} color="inherit" /> : <GroupsIcon />
+                }
+                sx={{
+                  textTransform: 'none',
+                  fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                  padding: { xs: '4px 8px', sm: '6px 12px', md: '6px 16px' },
+                  minWidth: { xs: 'auto', sm: 'auto', md: 'auto' },
+                  borderColor: isDarkMode
+                    ? 'rgba(168, 85, 247, 0.3)'
+                    : 'rgba(147, 51, 234, 0.25)',
+                  color: isDarkMode ? 'rgba(168, 85, 247, 0.9)' : 'rgba(126, 34, 206, 0.9)',
+                  '&:hover': {
+                    borderColor: isDarkMode
+                      ? 'rgba(168, 85, 247, 0.5)'
+                      : 'rgba(147, 51, 234, 0.4)',
+                    backgroundColor: isDarkMode
+                      ? 'rgba(168, 85, 247, 0.05)'
+                      : 'rgba(147, 51, 234, 0.05)',
+                  },
+                }}
+              >
+                Roster
+              </Button>
+            </Tooltip>
+          )}
+        </Box>
+      </Box>
 
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 4 }}>
         <Typography
