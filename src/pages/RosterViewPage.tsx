@@ -151,7 +151,7 @@ const formatGearSets = (sets: GearSetInput): string[] =>
 const getSetChipSx = (
   entry: GearSetEntry,
   theme: import('@mui/material/styles').Theme,
-): Record<string, unknown> => {
+): import('@mui/system').SxProps<import('@mui/material/styles').Theme> => {
   const result = getGearChipProps(entry.name, entry.count, theme);
   // getGearChipProps returns silver for unrecognised names — detect and override
   const sx = result.sx as Record<string, unknown> | undefined;
@@ -160,7 +160,7 @@ const getSetChipSx = (
   if (isSilverFallback) {
     return buildVariantSx(SLOT_HINT_VARIANT[entry.slotHint], theme);
   }
-  return result.sx;
+  return result.sx ?? {};
 };
 
 const formatSkillLines = (
