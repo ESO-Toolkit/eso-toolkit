@@ -1,0 +1,53 @@
+/**
+ * Channel name builder from guild templates and roster context.
+ *
+ * Supports tokens: {day-short}, {day-full}, {time}, {tag}, {label}
+ * Discord channel names are lowercased and sanitized (only alphanumeric + hyphens).
+ */
+
+import type { ChannelNameContext } from './types.js';
+
+/**
+ * Build a Discord channel name from a template and context values.
+ *
+ * - Replaces known tokens with their context values (or empty string if absent).
+ * - Sanitizes the result for Discord: lowercase, replace spaces/underscores with hyphens,
+ *   strip non-alphanumeric/non-hyphen characters, collapse multiple hyphens, trim hyphens.
+ * - Returns 'roster' if the result is empty after sanitization.
+ */
+export function buildChannelName(template: string, context: ChannelNameContext): string {
+  let name = template
+    .replace(/\{day-short\}/gi, context.dayShort ?? '')
+    .replace(/\{day-full\}/gi, context.dayFull ?? '')
+    .replace(/\{time\}/gi, context.time ?? '')
+    .replace(/\{tag\}/gi, context.tag ?? '')
+    .replace(/\{label\}/gi, context.label ?? '');
+
+  // Discord channel name rules: lowercase, a-z 0-9 hyphens only
+  name = name
+    .toLowerCase()
+    .replace(/[\s_]+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-{2,}/g, '-')
+    .replace(/^-|-$/g, '');
+
+  return name || 'roster';
+}
+
+/**
+ * Resolve the final channel name for a roster.
+ *
+ * Priority:
+ *   1. channelNameOverride (if provided) → sanitize and use directly.
+ *   2. Guild template + context → buildChannelName().
+ */
+export function resolveChannelName(
+  guildPattern: string,
+  context: ChannelNameContext,
+  channelNameOverride?: string,
+): string {
+  if (channelNameOverride?.trim()) {
+    return buildChannelName('{label}', { label: channelNameOverride });
+  }
+  return buildChannelName(guildPattern, context);
+}

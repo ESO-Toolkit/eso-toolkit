@@ -11,14 +11,16 @@ TICKET_LOGS_CHANNEL_ID = "1480845163277586534"
 PANEL_CHANNEL_ID = "1480845158584025148"
 GITHUB_OWNER = "ESO-Toolkit"
 GITHUB_REPO = "eso-toolkit"
+ROSTER_HUB_API_URL = "https://roster-hub-api.eso-toolkit.workers.dev"
 
 [[kv_namespaces]]
 binding = "TICKETS"
 id = "df6065234e9e404fb7b0e57071751907"
 
-# Uncomment and set preview_id after running:
-#   npx wrangler kv:namespace create TICKETS --preview
-# [[kv_namespaces]]
-# binding = "TICKETS"
-# id = "REPLACE_WITH_KV_NAMESPACE_ID"
-# preview_id = "REPLACE_WITH_KV_PREVIEW_NAMESPACE_ID"
+[[kv_namespaces]]
+binding = "ROSTERS"
+id = "REPLACE_WITH_ROSTERS_KV_NAMESPACE_ID"
+
+# To create the ROSTERS KV namespace, run:
+#   npx wrangler kv:namespace create ROSTERS
+# Then replace the id above with the returned namespace ID.

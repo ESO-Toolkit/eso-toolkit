@@ -3,6 +3,10 @@
  * Dispatches APPLICATION_COMMAND interactions to the correct handler.
  */
 
+import { handleRosterConfig } from '../commands/roster-config.js';
+import { handleRosterLink } from '../commands/roster-link.js';
+import { handleRosterPublish } from '../commands/roster-publish.js';
+import { handleRosterRefresh } from '../commands/roster-refresh.js';
 import { handleTicketAdd } from '../commands/ticket-add.js';
 import { handleTicketClose } from '../commands/ticket-close.js';
 import { handleTicketRemove } from '../commands/ticket-remove.js';
@@ -17,11 +21,25 @@ export async function handleCommand(
 ): Promise<InteractionResponse> {
   const name = interaction.data?.name;
 
-  if (name !== 'ticket') {
-    return unknownCommand(name ?? '');
-  }
+  switch (name) {
+    case 'ticket':
+      return routeTicketCommand(env, interaction, ctx);
 
-  // Find the subcommand
+    case 'roster':
+      return routeRosterCommand(env, interaction, ctx);
+
+    default:
+      return unknownCommand(name ?? '');
+  }
+}
+
+// ── Ticket subcommands ──────────────────────────────────────────────────────
+
+function routeTicketCommand(
+  env: Env,
+  interaction: DiscordInteraction,
+  ctx: ExecutionContext,
+): Promise<InteractionResponse> {
   const subOptions = interaction.data?.options ?? [];
   const sub = subOptions[0];
   const subName = sub?.name;
@@ -34,18 +52,51 @@ export async function handleCommand(
       return handleTicketClose(env, interaction, ctx);
 
     case 'add':
-      // Drill into sub-options for the user option
-      if (!sub) return unknownCommand('ticket add');
+      if (!sub) return Promise.resolve(unknownCommand('ticket add'));
       return handleTicketAdd(env, withSubOptions(interaction, sub));
 
     case 'remove':
-      if (!sub) return unknownCommand('ticket remove');
+      if (!sub) return Promise.resolve(unknownCommand('ticket remove'));
       return handleTicketRemove(env, withSubOptions(interaction, sub));
 
     default:
-      return unknownCommand(`ticket ${subName ?? '(none)'}`);
+      return Promise.resolve(unknownCommand(`ticket ${subName ?? '(none)'}`));
   }
 }
+
+// ── Roster subcommands ──────────────────────────────────────────────────────
+
+function routeRosterCommand(
+  env: Env,
+  interaction: DiscordInteraction,
+  ctx: ExecutionContext,
+): Promise<InteractionResponse> {
+  const subOptions = interaction.data?.options ?? [];
+  const sub = subOptions[0];
+  const subName = sub?.name;
+
+  // Re-map sub-options for the handler
+  const withSub = sub ? withSubOptions(interaction, sub) : interaction;
+
+  switch (subName) {
+    case 'link':
+      return handleRosterLink(env, withSub, ctx);
+
+    case 'publish':
+      return handleRosterPublish(env, withSub, ctx);
+
+    case 'refresh':
+      return handleRosterRefresh(env, withSub, ctx);
+
+    case 'config':
+      return handleRosterConfig(env, withSub, ctx);
+
+    default:
+      return Promise.resolve(unknownCommand(`roster ${subName ?? '(none)'}`));
+  }
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Re-map sub-command options onto the top-level interaction data for cleaner handler code. */
 function withSubOptions(

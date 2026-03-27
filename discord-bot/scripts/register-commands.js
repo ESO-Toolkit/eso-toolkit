@@ -82,6 +82,114 @@ const commands = [
       },
     ],
   },
+  {
+    name: 'roster',
+    description: 'Manage ESO Toolkit roster → Discord integration',
+    default_member_permissions: null,
+    options: [
+      {
+        type: 1, // SUB_COMMAND
+        name: 'link',
+        description: 'Link an ESO Toolkit roster to this server',
+        options: [
+          {
+            type: 3, // STRING
+            name: 'roster',
+            description: 'Roster URL or ID (e.g. https://esohelpers.com/roster-hub/ABC123)',
+            required: true,
+          },
+        ],
+      },
+      {
+        type: 1,
+        name: 'publish',
+        description: 'Publish a roster to a new Discord channel',
+        options: [
+          {
+            type: 3,
+            name: 'roster-id',
+            description: 'ESO Toolkit roster ID',
+            required: true,
+          },
+          {
+            type: 3,
+            name: 'channel-name',
+            description: 'Override channel name (optional)',
+            required: false,
+          },
+          {
+            type: 7, // CHANNEL
+            name: 'category',
+            description: 'Category to create the channel in (optional)',
+            required: false,
+          },
+        ],
+      },
+      {
+        type: 1,
+        name: 'refresh',
+        description: 'Re-sync the roster in this channel from ESO Toolkit',
+      },
+      {
+        type: 2, // SUB_COMMAND_GROUP
+        name: 'config',
+        description: 'Configure roster settings for this server',
+        options: [
+          {
+            type: 1,
+            name: 'set-name-pattern',
+            description: 'Set the channel naming template',
+            options: [
+              {
+                type: 3,
+                name: 'pattern',
+                description: 'Template: {day-short}, {day-full}, {time}, {tag}, {label}',
+                required: true,
+              },
+            ],
+          },
+          {
+            type: 1,
+            name: 'set-default-category',
+            description: 'Set the default category for roster channels',
+            options: [
+              {
+                type: 7, // CHANNEL
+                name: 'category',
+                description: 'Category channel',
+                required: true,
+              },
+            ],
+          },
+          {
+            type: 1,
+            name: 'set-role-pings',
+            description: 'Set Discord roles for sign-up pings',
+            options: [
+              {
+                type: 8, // ROLE
+                name: 'tank-role',
+                description: 'Tank role to ping',
+                required: false,
+              },
+              {
+                type: 8,
+                name: 'healer-role',
+                description: 'Healer role to ping',
+                required: false,
+              },
+              {
+                type: 8,
+                name: 'dd-role',
+                description: 'DD role to ping',
+                required: false,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 async function registerCommands() {

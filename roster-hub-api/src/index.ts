@@ -254,6 +254,10 @@ app.put('/rosters/:id', async (c) => {
 
   if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
   const roster = await getRosterById(c.env.DB, c.req.param('id'), user.id);
+
+  // Notify Discord bot to refresh any linked channels (fire-and-forget)
+  c.executionCtx.waitUntil(notifyDiscordSync(c.env, c.req.param('id')));
+
   return c.json({ roster });
 });
 
@@ -963,6 +967,28 @@ app.put('/users/me/bio', async (c) => {
   await upsertUserBio(c.env.DB, user.id, escapeHtml(user.name), sanitize(body.bio));
   return c.json({ ok: true });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Discord sync webhook — notify discord-bot when a roster changes
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Fire-and-forget notification to the discord-bot Worker to refresh
+ * any Discord channels linked to the given roster. Non-blocking and
+ * failure-safe: if the bot is unavailable the roster save still succeeds.
+ */
+async function notifyDiscordSync(env: Env, rosterId: string): Promise<void> {
+  if (!env.DISCORD_BOT_URL) return;
+  try {
+    await fetch(`${env.DISCORD_BOT_URL}/discord/roster/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rosterId }),
+    });
+  } catch (err) {
+    console.error('[discord-sync] failed to notify:', err);
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Worker export — fetch (Hono) + scheduled (cron: cleanup + leaderboard sync)

@@ -7,6 +7,8 @@ export interface Env {
   ESOLOGS_CLIENT_ID: string;
   /** ESO Logs OAuth client secret — set via `wrangler secret put ESOLOGS_CLIENT_SECRET` */
   ESOLOGS_CLIENT_SECRET: string;
+  /** Discord bot Worker URL for roster sync webhooks (optional) */
+  DISCORD_BOT_URL?: string;
 }
 
 export interface RosterRow {

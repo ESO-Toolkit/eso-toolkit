@@ -53,6 +53,7 @@ export interface Env {
   GITHUB_TOKEN: string;
   ZAI_API_KEY: string;
   TICKETS: KVNamespace;
+  ROSTERS: KVNamespace;
   // Config constants (set in wrangler.toml vars)
   GUILD_ID: string;
   TICKET_CATEGORY_ID: string;
@@ -60,6 +61,7 @@ export interface Env {
   PANEL_CHANNEL_ID: string;
   GITHUB_OWNER: string;
   GITHUB_REPO: string;
+  ROSTER_HUB_API_URL: string;
 }
 
 // Discord Interaction payloads
@@ -285,4 +287,20 @@ export const Colors = {
   PRIORITY_HIGH: 0xe67e22, // orange
   PRIORITY_MEDIUM: 0xf1c40f, // yellow
   PRIORITY_LOW: 0x2ecc71, // green
+  ROSTER_EMBED: 0xc8aa6e, // ESO gold — roster embeds
+} as const;
+
+// ── Roster button/modal IDs ────────────────────────────────────────────────
+
+export const RosterButtonId = {
+  SIGNUP_TANK: 'roster_signup:tank',
+  SIGNUP_HEALER: 'roster_signup:healer',
+  SIGNUP_DD: 'roster_signup:dd',
+  VIEW_BUILDS: 'roster_view_builds',
+  REFRESH: 'roster_refresh',
+  SIGNUP_PREFIX: 'roster_signup:',
+} as const;
+
+export const RosterModalId = {
+  CONFIG_NAME_PATTERN: 'roster_config:name_pattern',
 } as const;

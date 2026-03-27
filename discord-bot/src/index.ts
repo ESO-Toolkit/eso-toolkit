@@ -1,27 +1,35 @@
 /**
  * ESO Toolkit Discord Bot — Cloudflare Worker entry point.
  *
- * Handles Discord HTTP Interactions:
- *   1. Verify Ed25519 signature (required by Discord)
- *   2. Respond to PING
- *   3. Route to command / button / modal handlers
+ * Handles two types of requests:
+ *   1. Discord HTTP Interactions (POST /, with Ed25519 signature)
+ *   2. Internal HTTP API (POST /discord/roster/*, no signature)
  */
 
 import { handleButton } from './handlers/buttons.js';
 import { handleCommand } from './handlers/commands.js';
 import { handleModal } from './handlers/modals.js';
+import { publishRoster, refreshRoster } from './roster/index.js';
+import type { PublishRequest } from './roster/index.js';
 import { InteractionType } from './types.js';
 import type { DiscordInteraction, Env } from './types.js';
 import { verifyDiscordSignature } from './verify.js';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    // Only accept POST requests from Discord
+    const url = new URL(request.url);
+
+    // ── Internal HTTP API routes ──────────────────────────────────────────
+    if (url.pathname.startsWith('/discord/roster/')) {
+      return handleRosterApi(request, url, env, ctx);
+    }
+
+    // ── Discord Interactions (default) ────────────────────────────────────
     if (request.method !== 'POST') {
       return new Response('Method Not Allowed', { status: 405 });
     }
 
-    // ── Signature verification ───────────────────────────────────────────────
+    // Signature verification
     const signature = request.headers.get('x-signature-ed25519');
     const timestamp = request.headers.get('x-signature-timestamp');
 
@@ -42,7 +50,7 @@ export default {
       return new Response('Invalid request signature', { status: 401 });
     }
 
-    // ── Parse interaction ────────────────────────────────────────────────────
+    // Parse interaction
     let interaction: DiscordInteraction;
     try {
       interaction = JSON.parse(body) as DiscordInteraction;
@@ -50,7 +58,7 @@ export default {
       return new Response('Invalid JSON body', { status: 400 });
     }
 
-    // ── Route ────────────────────────────────────────────────────────────────
+    // Route
     try {
       const response = await routeInteraction(env, interaction, ctx);
       return new Response(JSON.stringify(response), {
@@ -58,7 +66,6 @@ export default {
       });
     } catch (err) {
       console.error('[index] unhandled error:', err);
-      // Return a generic ephemeral error so Discord doesn't show a blank interaction
       return new Response(
         JSON.stringify({
           type: 4,
@@ -73,13 +80,14 @@ export default {
   },
 };
 
+// ── Discord Interaction Router ──────────────────────────────────────────────
+
 async function routeInteraction(
   env: Env,
   interaction: DiscordInteraction,
   ctx: ExecutionContext,
 ): Promise<unknown> {
   switch (interaction.type) {
-    // Discord PING — must respond with PONG immediately
     case InteractionType.PING:
       return { type: 1 };
 
@@ -99,4 +107,80 @@ async function routeInteraction(
         data: { content: '❌ Unsupported interaction type.', flags: 64 },
       };
   }
+}
+
+// ── Internal HTTP API for Roster Operations ─────────────────────────────────
+
+async function handleRosterApi(
+  request: Request,
+  url: URL,
+  env: Env,
+  _ctx: ExecutionContext,
+): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Method Not Allowed' }, 405);
+  }
+
+  const path = url.pathname;
+
+  if (path === '/discord/roster/publish') {
+    return handlePublish(request, env);
+  }
+
+  if (path === '/discord/roster/refresh') {
+    return handleRefresh(request, env);
+  }
+
+  return jsonResponse({ error: 'Not Found' }, 404);
+}
+
+async function handlePublish(request: Request, env: Env): Promise<Response> {
+  let body: PublishRequest;
+  try {
+    body = (await request.json()) as PublishRequest;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.guildId || !body.rosterId) {
+    return jsonResponse({ error: 'guildId and rosterId are required' }, 400);
+  }
+
+  const result = await publishRoster(env, body);
+  if (!result.ok) {
+    return jsonResponse({ error: result.error }, 400);
+  }
+
+  return jsonResponse({
+    ok: true,
+    channelId: result.channelId,
+    messageId: result.messageId,
+  });
+}
+
+async function handleRefresh(request: Request, env: Env): Promise<Response> {
+  let body: { rosterId?: string };
+  try {
+    body = (await request.json()) as { rosterId?: string };
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.rosterId) {
+    return jsonResponse({ error: 'rosterId is required' }, 400);
+  }
+
+  const result = await refreshRoster(env, body.rosterId);
+  if (!result.ok) {
+    return jsonResponse({ error: result.error }, 400);
+  }
+
+  return jsonResponse({ ok: true, refreshedCount: result.refreshedCount });
+}
+
+function jsonResponse(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
