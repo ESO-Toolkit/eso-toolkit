@@ -155,6 +155,7 @@ const PassiveTile: React.FC<PassiveTileProps> = ({ skill, id, onRemove }) => {
             justifyContent: 'center',
             backgroundColor: 'rgba(0,0,0,0.60)',
             backdropFilter: 'blur(2px)',
+            WebkitBackdropFilter: 'blur(2px)',
             opacity: 0,
             transition: 'opacity 150ms',
             cursor: 'pointer',

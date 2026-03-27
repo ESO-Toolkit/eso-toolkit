@@ -198,7 +198,7 @@ const PotionPickerDialog: React.FC<PotionPickerDialogProps> = ({
         item.category.toLowerCase().includes(q) ||
         item.effects.some((e) => e.toLowerCase().includes(q)) ||
         item.role.toLowerCase().includes(q),
-    );
+    ).slice(0, 50);
   }, [search, isSearching]);
 
   const handleSelect = useCallback(

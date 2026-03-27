@@ -352,6 +352,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
               </Typography>
               <ButtonBase
                 onClick={() => setShowAllSlots((prev) => !prev)}
+                aria-label={showAllSlots ? 'Show matching slots only' : 'Show all roster slots'}
                 sx={{
                   fontSize: 11,
                   fontFamily: 'Space Grotesk, Inter, system-ui',

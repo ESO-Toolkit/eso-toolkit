@@ -61,6 +61,7 @@ export const ConsumablesSection: React.FC = () => {
                     ? '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)'
                     : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
                   backdropFilter: isActive ? 'blur(6px)' : 'none',
+                  WebkitBackdropFilter: isActive ? 'blur(6px)' : 'none',
                   boxShadow: isActive
                     ? '0 0 10px rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)'
                     : 'none',
