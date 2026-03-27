@@ -814,6 +814,44 @@ export const DPS_MYTHIC_SETS: readonly KnownSetIDs[] = [
 ] as const;
 
 /**
+ * Arena weapon sets for import detection
+ * These are 2-piece sets that come from solo/group arenas
+ * and occupy weapon slots (main-hand / off-hand / backup)
+ */
+export const ARENA_WEAPON_SETS: readonly KnownSetIDs[] = [
+  // Dragonstar Arena
+  KnownSetIDs.THE_MASTERS_BOW,
+  KnownSetIDs.THE_MASTERS_MACE,
+  KnownSetIDs.THE_MASTERS_ICE_STAFF,
+  KnownSetIDs.THE_MASTERS_RESTORATION_STAFF,
+  // Maelstrom Arena
+  KnownSetIDs.MAELSTROMS_BOW,
+  KnownSetIDs.CRUSHING_WALL,
+  KnownSetIDs.PERFECTED_CRUSHING_WALL,
+  KnownSetIDs.MERCILESS_CHARGE,
+  KnownSetIDs.PERFECTED_MERCILESS_CHARGE,
+  KnownSetIDs.PERFECTED_GRAND_REJUVENATION,
+  // Asylum Sanctorium
+  KnownSetIDs.ASYLUM_PERFECTED_DAGGER,
+  KnownSetIDs.ASYLUM_PERFECTED_RESTO,
+  KnownSetIDs.GALENWES_PERFECTED_RESTO,
+  // Blackrose Prison
+  KnownSetIDs.BLACKROSE_BOW,
+  KnownSetIDs.BLACKROSE_DAGGER,
+  KnownSetIDs.BLACKROSE_ICE_STAFF,
+  KnownSetIDs.BLACKROSE_RESTO,
+  KnownSetIDs.BLACKROSE_PERFECTED_BOW,
+  KnownSetIDs.BLACKROSE_PERFECTED_DAGGER,
+  KnownSetIDs.BLACKROSE_PERFECTED_ICE_STAFF,
+  KnownSetIDs.BLACKROSE_PERFECTED_RESTO,
+  // Vateshran Hollows
+  KnownSetIDs.VATESHRAN_GREATSWORD,
+  KnownSetIDs.VATESHRAN_PERFECTED_SWORD,
+  KnownSetIDs.VATESHRAN_PERFECTED_DAGGER,
+  KnownSetIDs.VATESHRAN_PERFECTED_STAFF,
+] as const;
+
+/**
  * DD special role sets
  * Alphabetically sorted
  */
