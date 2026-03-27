@@ -158,21 +158,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!accessToken || !accessTokenExpiry || accessTokenExpired) return;
 
     const msUntilRefresh = accessTokenExpiry * 1000 - Date.now() - 60_000;
+    const doRefresh = (): void => {
+      void refreshAccessToken()
+        ?.then((newToken) => {
+          if (newToken) updateAccessToken(newToken);
+          else updateAccessToken('');
+        })
+        ?.catch(() => updateAccessToken(''));
+    };
+
     if (msUntilRefresh <= 0) {
       // Already within the refresh window — refresh immediately
-      void refreshAccessToken().then((newToken) => {
-        if (newToken) updateAccessToken(newToken);
-        else updateAccessToken('');
-      });
+      doRefresh();
       return;
     }
 
-    const timer = setTimeout(() => {
-      void refreshAccessToken().then((newToken) => {
-        if (newToken) updateAccessToken(newToken);
-        else updateAccessToken('');
-      });
-    }, msUntilRefresh);
+    const timer = setTimeout(doRefresh, msUntilRefresh);
 
     return () => clearTimeout(timer);
   }, [accessToken, accessTokenExpiry, accessTokenExpired, updateAccessToken]);
