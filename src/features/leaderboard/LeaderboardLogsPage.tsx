@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   Chip,
-  CircularProgress,
   Container,
   FormControl,
   IconButton,
@@ -16,6 +15,7 @@ import {
   Paper,
   Select,
   SelectChangeEvent,
+  Skeleton,
   Stack,
   Table,
   TableBody,
@@ -469,9 +469,63 @@ export const LeaderboardLogsPage: React.FC = () => {
   if (isInitialLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-          <CircularProgress />
-        </Box>
+        <Card
+          elevation={4}
+          sx={{
+            background:
+              theme.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(0, 225, 255, 0.04) 100%)'
+                : 'linear-gradient(135deg, rgba(219, 234, 254, 0.6) 0%, rgba(224, 242, 254, 0.35) 100%)',
+          }}
+        >
+          <CardContent>
+            {/* Header skeleton */}
+            <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+              <Skeleton variant="circular" width={24} height={24} />
+              <Box sx={{ flex: 1 }}>
+                <Skeleton variant="text" width={180} height={32} />
+                <Skeleton variant="text" width={320} height={16} />
+              </Box>
+            </Stack>
+            {/* Filter dropdowns skeleton */}
+            <Stack spacing={2} direction={{ xs: 'column', md: 'row' }} sx={{ mb: 3 }}>
+              {[0, 1, 2].map((i) => (
+                <Skeleton
+                  key={i}
+                  variant="rounded"
+                  height={40}
+                  sx={{ flex: 1, borderRadius: '4px' }}
+                />
+              ))}
+            </Stack>
+            {/* Section header + chips skeleton */}
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 3 }}>
+              <Skeleton variant="text" width={200} height={24} />
+              <Skeleton variant="rounded" width={90} height={24} sx={{ borderRadius: '16px' }} />
+              <Skeleton variant="rounded" width={100} height={24} sx={{ borderRadius: '16px' }} />
+            </Stack>
+            {/* Table rows skeleton */}
+            {Array.from({ length: 10 }).map((_, i) => (
+              <Box
+                key={i}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  py: 1.25,
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <Skeleton variant="text" width={28} height={18} />
+                <Skeleton variant="text" width={`${25 + ((i * 13) % 20)}%`} height={18} />
+                <Box sx={{ flex: 1 }} />
+                <Skeleton variant="text" width={70} height={18} />
+                <Skeleton variant="text" width={50} height={18} />
+              </Box>
+            ))}
+          </CardContent>
+        </Card>
       </Container>
     );
   }
@@ -636,8 +690,26 @@ export const LeaderboardLogsPage: React.FC = () => {
 
           <Box sx={{ mt: 3 }}>
             {rankingsLoading && rankingsState.rankings.length === 0 ? (
-              <Box display="flex" justifyContent="center" alignItems="center" py={6}>
-                <CircularProgress />
+              <Box py={2}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Box
+                    key={i}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      py: 1.25,
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Skeleton variant="text" width={28} height={18} />
+                    <Skeleton variant="text" width={`${25 + ((i * 13) % 20)}%`} height={18} />
+                    <Box sx={{ flex: 1 }} />
+                    <Skeleton variant="text" width={70} height={18} />
+                    <Skeleton variant="text" width={50} height={18} />
+                  </Box>
+                ))}
               </Box>
             ) : rankingsState.rankings.length === 0 ? (
               <Alert severity="info">No leaderboard entries found for this selection.</Alert>
