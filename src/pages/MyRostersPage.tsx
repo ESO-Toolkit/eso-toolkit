@@ -3,6 +3,7 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   Groups as GroupsIcon,
+  Publish as PublishIcon,
   Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import {
@@ -23,10 +24,13 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { useSnackbar } from 'notistack';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { useAuth } from '../features/auth/AuthContext';
+import { PublishRosterDialog } from '../features/roster-hub/components/PublishRosterDialog';
 import type { SavedRoster } from '../store/saved_rosters';
 import { deleteRoster, selectSavedRosters } from '../store/saved_rosters';
 import { useAppDispatch } from '../store/useAppDispatch';
@@ -74,11 +78,19 @@ interface RosterCardProps {
   saved: SavedRoster;
   onEdit: (saved: SavedRoster) => void;
   onView: (saved: SavedRoster) => void;
+  onPublish: (saved: SavedRoster) => void;
   onDelete: (saved: SavedRoster) => void;
   isDarkMode: boolean;
 }
 
-const RosterCard: React.FC<RosterCardProps> = ({ saved, onEdit, onView, onDelete, isDarkMode }) => {
+const RosterCard: React.FC<RosterCardProps> = ({
+  saved,
+  onEdit,
+  onView,
+  onPublish,
+  onDelete,
+  isDarkMode,
+}) => {
   const playerCount = countPlayers(saved.roster);
 
   return (
@@ -89,6 +101,7 @@ const RosterCard: React.FC<RosterCardProps> = ({ saved, onEdit, onView, onDelete
         borderRadius: 2,
         background: isDarkMode ? 'rgba(15,23,42,0.6)' : 'rgba(248,250,252,0.8)',
         backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
         transition: 'border-color 0.2s ease',
         '&:hover': {
           borderColor: isDarkMode ? 'rgba(56,189,248,0.3)' : 'rgba(59,130,246,0.25)',
@@ -156,6 +169,15 @@ const RosterCard: React.FC<RosterCardProps> = ({ saved, onEdit, onView, onDelete
         >
           View
         </Button>
+        <Button
+          size="small"
+          startIcon={<PublishIcon />}
+          onClick={() => onPublish(saved)}
+          color="primary"
+          sx={{ textTransform: 'none', fontWeight: 500 }}
+        >
+          Publish
+        </Button>
         <Box sx={{ flexGrow: 1 }} />
         <Button
           size="small"
@@ -176,17 +198,36 @@ export const MyRostersPage: React.FC = () => {
   const isDarkMode = theme.palette.mode === 'dark';
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const savedRosters = useSelector(selectSavedRosters);
+  const { accessToken } = useAuth();
   const [pendingDelete, setPendingDelete] = useState<SavedRoster | null>(null);
+  const [publishTarget, setPublishTarget] = useState<{
+    data: string;
+    saved: SavedRoster;
+  } | null>(null);
 
   const handleEdit = async (saved: SavedRoster): Promise<void> => {
-    const encoded = await encodeRosterToURL(saved.roster);
-    navigate(`/roster-builder?r=${encoded}&id=${saved.id}`);
+    try {
+      const encoded = await encodeRosterToURL(saved.roster);
+      navigate(`/roster-builder?r=${encoded}&id=${saved.id}`);
+    } catch {
+      enqueueSnackbar('Failed to encode roster', { variant: 'error' });
+    }
   };
 
   const handleView = async (saved: SavedRoster): Promise<void> => {
-    const encoded = await encodeRosterToURL(saved.roster);
-    navigate(`/rv?r=${encoded}`);
+    try {
+      const encoded = await encodeRosterToURL(saved.roster);
+      navigate(`/rv?r=${encoded}`);
+    } catch {
+      enqueueSnackbar('Failed to encode roster', { variant: 'error' });
+    }
+  };
+
+  const handlePublish = async (saved: SavedRoster): Promise<void> => {
+    const data = await encodeRosterToURL(saved.roster);
+    setPublishTarget({ data, saved });
   };
 
   const handleDeleteConfirm = (): void => {
@@ -260,6 +301,7 @@ export const MyRostersPage: React.FC = () => {
               saved={saved}
               onEdit={handleEdit}
               onView={handleView}
+              onPublish={handlePublish}
               onDelete={setPendingDelete}
               isDarkMode={isDarkMode}
             />
@@ -273,6 +315,16 @@ export const MyRostersPage: React.FC = () => {
         onConfirm={handleDeleteConfirm}
         onCancel={() => setPendingDelete(null)}
       />
+
+      {publishTarget && (
+        <PublishRosterDialog
+          open={true}
+          rosterData={publishTarget.data}
+          token={accessToken}
+          onClose={() => setPublishTarget(null)}
+          onPublished={() => setPublishTarget(null)}
+        />
+      )}
     </Container>
   );
 };
