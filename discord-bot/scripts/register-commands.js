@@ -100,6 +100,30 @@ const commands = [
           },
         ],
       },
+      {
+        type: 1, // SUB_COMMAND
+        name: 'config',
+        description: 'Set which channel receives roster posts from the web app (Admin only)',
+        options: [
+          {
+            type: 7, // CHANNEL
+            name: 'channel',
+            description: 'The channel where rosters will be posted',
+            required: true,
+          },
+          {
+            type: 8, // ROLE
+            name: 'role',
+            description: 'Role required to post rosters (leave empty = everyone)',
+            required: false,
+          },
+        ],
+      },
+      {
+        type: 1, // SUB_COMMAND
+        name: 'remove',
+        description: 'Disable roster posting for this server (Admin only)',
+      },
     ],
   },
 ];

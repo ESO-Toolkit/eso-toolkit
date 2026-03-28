@@ -7,6 +7,14 @@ export interface Env {
   ESOLOGS_CLIENT_ID: string;
   /** ESO Logs OAuth client secret — set via `wrangler secret put ESOLOGS_CLIENT_SECRET` */
   ESOLOGS_CLIENT_SECRET: string;
+  /** Discord bot token — used to post rosters and check guild membership */
+  DISCORD_BOT_TOKEN?: string;
+  /** Discord OAuth2 client ID — for user "Link Discord" flow */
+  DISCORD_CLIENT_ID?: string;
+  /** Discord OAuth2 client secret — for user "Link Discord" flow */
+  DISCORD_CLIENT_SECRET?: string;
+  /** Shared secret for bot → API internal calls */
+  INTERNAL_API_KEY?: string;
 }
 
 export interface RosterRow {
@@ -133,7 +141,32 @@ export interface UserProfileRow {
   author_id: string;
   author_name: string;
   bio: string;
+  discord_id: string | null;
+  discord_username: string | null;
+  discord_avatar: string | null;
+  discord_linked_at: string | null;
   updated_at: string;
+}
+
+// ─── Discord integration types ──────────────────────────────────────────────
+
+export interface GuildConfigRow {
+  guild_id: string;
+  guild_name: string;
+  guild_icon: string | null;
+  roster_channel_id: string;
+  allowed_role_ids: string; // JSON array
+  configured_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GuildConfigPublic {
+  guild_id: string;
+  guild_name: string;
+  guild_icon: string | null;
+  roster_channel_id: string;
+  allowed_role_ids: string[];
 }
 
 /** Lightweight build summary — no build_data blob returned in profile responses */

@@ -54,9 +54,17 @@ import {
   togglePackVote,
   checkPackCreateRateLimit,
   checkPackVoteRateLimit,
+  upsertGuildConfig,
+  getGuildConfig,
+  deleteGuildConfig,
+  getAllGuildConfigs,
+  linkDiscord,
+  unlinkDiscord,
+  getDiscordLink,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
-import { formatRosterForDiscord, postRosterToDiscordWebhook } from './roster-discord-format';
+import { exchangeCodeForUser, getGuildMember, sendChannelMessage } from './discord-api';
+import { formatRosterForDiscord } from './roster-discord-format';
 import type { Env } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -339,22 +347,6 @@ app.post('/rosters', async (c) => {
   });
 
   const roster = await getRosterById(c.env.DB, id, user.id);
-
-  // Fire-and-forget: post to Discord webhook if configured
-  if (c.env.DISCORD_ROSTER_WEBHOOK_URL) {
-    c.executionCtx.waitUntil(
-      postRosterToDiscordWebhook({
-        webhookUrl: c.env.DISCORD_ROSTER_WEBHOOK_URL,
-        rosterData: roster_data,
-        title: sanitize(title),
-        rosterId: id,
-        trialId: sanitize(trial_id),
-        authorName: user.name,
-        isAnonymous: !!is_anonymous,
-        description: description ? sanitize(description) : undefined,
-      }),
-    );
-  }
 
   return c.json({ roster }, 201);
 });
@@ -1311,6 +1303,230 @@ app.post('/packs/:id/vote', async (c) => {
 
   const result = await togglePackVote(c.env.DB, c.req.param('id'), user.id);
   return c.json(result);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Discord Integration — guild config, OAuth link, server picker, post on publish
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Verify internal bot → API calls using shared secret. */
+function isInternalAuth(c: { req: { header: (name: string) => string | undefined }; env: Env }): boolean {
+  const key = c.env.INTERNAL_API_KEY;
+  if (!key) return false;
+  return c.req.header('X-Internal-Key') === key;
+}
+
+// ─── POST /discord/guild-config — bot stores guild config ───────────────────
+
+app.post('/discord/guild-config', async (c) => {
+  if (!isInternalAuth(c)) return c.json({ error: 'Unauthorized' }, 401);
+
+  interface ConfigBody {
+    guild_id: string;
+    guild_name: string;
+    guild_icon?: string | null;
+    roster_channel_id: string;
+    allowed_role_ids: string[];
+    configured_by: string;
+  }
+
+  let body: ConfigBody;
+  try { body = await c.req.json<ConfigBody>(); } catch { return c.json({ error: 'Invalid JSON' }, 400); }
+
+  if (!body.guild_id || !body.roster_channel_id || !body.configured_by)
+    return c.json({ error: 'Missing required fields' }, 400);
+
+  await upsertGuildConfig(c.env.DB, {
+    guildId: body.guild_id,
+    guildName: body.guild_name,
+    guildIcon: body.guild_icon ?? null,
+    rosterChannelId: body.roster_channel_id,
+    allowedRoleIds: body.allowed_role_ids ?? [],
+    configuredBy: body.configured_by,
+  });
+
+  return c.json({ ok: true });
+});
+
+// ─── DELETE /discord/guild-config/:guildId — bot removes guild config ───────
+
+app.delete('/discord/guild-config/:guildId', async (c) => {
+  if (!isInternalAuth(c)) return c.json({ error: 'Unauthorized' }, 401);
+  await deleteGuildConfig(c.env.DB, c.req.param('guildId'));
+  return c.json({ ok: true });
+});
+
+// ─── POST /discord/link — user links Discord account via OAuth2 ─────────────
+
+app.post('/discord/link', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  if (!c.env.DISCORD_CLIENT_ID || !c.env.DISCORD_CLIENT_SECRET)
+    return c.json({ error: 'Discord OAuth not configured' }, 503);
+
+  interface LinkBody { code: string; redirect_uri: string; }
+  let body: LinkBody;
+  try { body = await c.req.json<LinkBody>(); } catch { return c.json({ error: 'Invalid JSON' }, 400); }
+
+  if (!body.code || !body.redirect_uri)
+    return c.json({ error: 'code and redirect_uri are required' }, 400);
+
+  try {
+    const discordUser = await exchangeCodeForUser(
+      body.code,
+      body.redirect_uri,
+      c.env.DISCORD_CLIENT_ID,
+      c.env.DISCORD_CLIENT_SECRET,
+    );
+
+    await linkDiscord(
+      c.env.DB,
+      user.id,
+      user.name,
+      discordUser.id,
+      discordUser.global_name ?? discordUser.username,
+      discordUser.avatar,
+    );
+
+    return c.json({
+      discord_id: discordUser.id,
+      discord_username: discordUser.global_name ?? discordUser.username,
+      discord_avatar: discordUser.avatar,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error('Discord link failed:', message);
+    return c.json({ error: 'Failed to link Discord account' }, 500);
+  }
+});
+
+// ─── DELETE /discord/link — user unlinks Discord account ────────────────────
+
+app.delete('/discord/link', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+  await unlinkDiscord(c.env.DB, user.id);
+  return c.json({ ok: true });
+});
+
+// ─── GET /discord/link — check if user has Discord linked ───────────────────
+
+app.get('/discord/link', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+  const link = await getDiscordLink(c.env.DB, user.id);
+  return c.json({ linked: !!link, ...link });
+});
+
+// ─── GET /discord/my-servers — servers where user can post rosters ──────────
+
+app.get('/discord/my-servers', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  if (!c.env.DISCORD_BOT_TOKEN)
+    return c.json({ error: 'Discord bot not configured' }, 503);
+
+  const link = await getDiscordLink(c.env.DB, user.id);
+  if (!link) return c.json({ servers: [], linked: false });
+
+  const configs = await getAllGuildConfigs(c.env.DB);
+  if (!configs.length) return c.json({ servers: [], linked: true });
+
+  // Check membership + roles in parallel for all configured guilds
+  const checks = await Promise.allSettled(
+    configs.map(async (config) => {
+      const member = await getGuildMember(
+        c.env.DISCORD_BOT_TOKEN!,
+        config.guild_id,
+        link.discord_id,
+      );
+      if (!member) return null;
+
+      // Check if user has an allowed role (empty = everyone can post)
+      const allowedRoles: string[] = JSON.parse(config.allowed_role_ids);
+      if (allowedRoles.length > 0 && !member.roles.some((r) => allowedRoles.includes(r))) {
+        return null;
+      }
+
+      return {
+        guild_id: config.guild_id,
+        guild_name: config.guild_name,
+        guild_icon: config.guild_icon,
+        roster_channel_id: config.roster_channel_id,
+      };
+    }),
+  );
+
+  const servers = checks
+    .filter((r) => r.status === 'fulfilled' && r.value != null)
+    .map((r) => (r as PromiseFulfilledResult<NonNullable<{ guild_id: string; guild_name: string; guild_icon: string | null; roster_channel_id: string }>>).value);
+
+  return c.json({ servers, linked: true });
+});
+
+// ─── POST /discord/post-roster — post a roster to a guild's channel ─────────
+
+app.post('/discord/post-roster', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  if (!c.env.DISCORD_BOT_TOKEN)
+    return c.json({ error: 'Discord bot not configured' }, 503);
+
+  interface PostBody { roster_id: string; guild_id: string; }
+  let body: PostBody;
+  try { body = await c.req.json<PostBody>(); } catch { return c.json({ error: 'Invalid JSON' }, 400); }
+
+  if (!body.roster_id || !body.guild_id)
+    return c.json({ error: 'roster_id and guild_id are required' }, 400);
+
+  // Verify user has Discord linked
+  const link = await getDiscordLink(c.env.DB, user.id);
+  if (!link) return c.json({ error: 'Discord account not linked' }, 403);
+
+  // Verify guild config exists
+  const config = await getGuildConfig(c.env.DB, body.guild_id);
+  if (!config) return c.json({ error: 'Server not configured for roster posting' }, 404);
+
+  // Verify user is a member with the right role
+  const member = await getGuildMember(c.env.DISCORD_BOT_TOKEN, body.guild_id, link.discord_id);
+  if (!member) return c.json({ error: 'You are not a member of this server' }, 403);
+
+  const allowedRoles: string[] = JSON.parse(config.allowed_role_ids);
+  if (allowedRoles.length > 0 && !member.roles.some((r) => allowedRoles.includes(r))) {
+    return c.json({ error: 'You do not have the required role to post rosters' }, 403);
+  }
+
+  // Fetch the roster
+  const roster = await getRosterById(c.env.DB, body.roster_id, user.id);
+  if (!roster) return c.json({ error: 'Roster not found' }, 404);
+
+  // Format and post
+  try {
+    const result = await formatRosterForDiscord(
+      roster.roster_data,
+      roster.title,
+      roster.id,
+      'https://esohelpers.com',
+    );
+
+    const author = roster.is_anonymous ? 'Anonymous' : roster.author_name;
+    const header = `📋 **New Roster Published** — ${roster.title}\n*by ${author}*${roster.description ? `\n> ${roster.description}` : ''}`;
+
+    await sendChannelMessage(c.env.DISCORD_BOT_TOKEN, config.roster_channel_id, header);
+
+    for (const section of result.sections) {
+      await sendChannelMessage(c.env.DISCORD_BOT_TOKEN, config.roster_channel_id, section);
+    }
+
+    return c.json({ ok: true, channel_id: config.roster_channel_id });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error('Failed to post roster to Discord:', message);
+    return c.json({ error: 'Failed to post to Discord' }, 500);
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

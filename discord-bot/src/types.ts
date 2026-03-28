@@ -61,6 +61,7 @@ export interface Env {
   GITHUB_OWNER: string;
   GITHUB_REPO: string;
   ROSTER_HUB_API_URL: string;
+  INTERNAL_API_KEY: string;
 }
 
 // Discord Interaction payloads

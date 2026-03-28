@@ -37,6 +37,13 @@ import React from 'react';
 
 import { packsApi } from '../../build-hub/api/packs-api';
 import type { Pack, PackAddonEntry, PackIndexItem } from '../../build-hub/api/packs-api';
+import {
+  discordApi,
+  buildDiscordOAuthUrl,
+  getDiscordRedirectUri,
+  DISCORD_CLIENT_ID,
+} from '../../discord/discord-api';
+import type { DiscordServer } from '../../discord/discord-api';
 import { TRIALS } from '../../loadout-manager/data/trialConfigs';
 import { rosterHubApi } from '../api/roster-hub-api';
 import type { HubRoster, RecommendedAddonEntry, RecommendedAddons } from '../types/roster-hub.types';
@@ -93,6 +100,15 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   const [enabledAddons, setEnabledAddons] = React.useState<Set<number>>(new Set());
   const [customAddonName, setCustomAddonName] = React.useState('');
   const [customAddonId, setCustomAddonId] = React.useState('');
+
+  // ── Discord posting state ──
+  const [discordLinked, setDiscordLinked] = React.useState(false);
+  const [discordUsername, setDiscordUsername] = React.useState('');
+  const [discordServers, setDiscordServers] = React.useState<DiscordServer[]>([]);
+  const [discordServersLoading, setDiscordServersLoading] = React.useState(false);
+  const [postToDiscord, setPostToDiscord] = React.useState(false);
+  const [selectedGuildId, setSelectedGuildId] = React.useState('');
+  const discordChecked = React.useRef(false);
 
   const handleTrialChange = (e: SelectChangeEvent): void => {
     setTrialId(e.target.value);
@@ -214,11 +230,24 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         is_anonymous: isAnonymous,
         recommended_addons: buildRecommendedAddons(),
       };
+      let rosterId: string | undefined;
       if (isEditMode) {
         await rosterHubApi.update(editingRoster.id, payload, token);
+        rosterId = editingRoster.id;
       } else {
-        await rosterHubApi.create(payload, token);
+        const result = await rosterHubApi.create(payload, token);
+        rosterId = result.roster?.id;
       }
+
+      // Post to Discord if opted in
+      if (postToDiscord && selectedGuildId && rosterId) {
+        try {
+          await discordApi.postRoster(rosterId, selectedGuildId, token);
+        } catch {
+          // Don't block publish on Discord failure — roster is already saved
+        }
+      }
+
       onPublished();
       onClose();
     } catch (err) {
@@ -270,6 +299,49 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       setError(null);
     }
   }, [open, editingRoster]);
+
+  // Fetch Discord link status + servers when dialog opens
+  React.useEffect(() => {
+    if (!open || discordChecked.current || !DISCORD_CLIENT_ID) return;
+    discordChecked.current = true;
+    setDiscordServersLoading(true);
+
+    discordApi
+      .getMyServers(token)
+      .then((res) => {
+        setDiscordLinked(res.linked);
+        setDiscordServers(res.servers);
+        if (res.servers.length === 1) setSelectedGuildId(res.servers[0].guild_id);
+      })
+      .catch(() => { /* silently fail — Discord is optional */ })
+      .finally(() => setDiscordServersLoading(false));
+
+    discordApi
+      .getLinkStatus(token)
+      .then((res) => {
+        setDiscordLinked(res.linked);
+        if (res.discord_username) setDiscordUsername(res.discord_username);
+      })
+      .catch(() => {});
+  }, [open, token]);
+
+  // Reset Discord state when dialog closes
+  React.useEffect(() => {
+    if (!open) {
+      discordChecked.current = false;
+      setPostToDiscord(false);
+      setSelectedGuildId('');
+    }
+  }, [open]);
+
+  const handleLinkDiscord = (): void => {
+    const redirectUri = getDiscordRedirectUri();
+    const state = crypto.randomUUID();
+    sessionStorage.setItem('discord_oauth_state', state);
+    sessionStorage.setItem('discord_return_to', window.location.pathname);
+    const url = buildDiscordOAuthUrl(redirectUri, state);
+    if (url) window.location.href = url;
+  };
 
   const atTagLimit = selectedTags.length >= MAX_TAGS;
   const activeAddonCount = addonList.filter((a) => enabledAddons.has(a.esouiId)).length;
@@ -647,6 +719,68 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           }
           sx={{ mt: 0.5 }}
         />
+
+        {/* ── Discord posting section ── */}
+        {DISCORD_CLIENT_ID && (
+          <Paper variant="outlined" sx={{ p: 1.5, mt: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="body2" fontWeight={600}>
+                📣 Post to Discord
+              </Typography>
+              {discordLinked && discordServers.length > 0 && (
+                <Switch
+                  checked={postToDiscord}
+                  onChange={(e) => setPostToDiscord(e.target.checked)}
+                  size="small"
+                />
+              )}
+            </Box>
+
+            {discordServersLoading ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                <CircularProgress size={14} />
+                <Typography variant="caption" color="text.secondary">
+                  Checking Discord servers…
+                </Typography>
+              </Box>
+            ) : !discordLinked ? (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                  Link your Discord account to post rosters directly to your server.
+                </Typography>
+                <Button size="small" variant="outlined" onClick={handleLinkDiscord}>
+                  Link Discord
+                </Button>
+              </Box>
+            ) : discordServers.length === 0 ? (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                {discordUsername ? `Linked as ${discordUsername} — ` : ''}
+                No servers have the roster bot configured. Ask a server admin to run{' '}
+                <code>/roster config</code>.
+              </Typography>
+            ) : postToDiscord ? (
+              <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+                <InputLabel>Server</InputLabel>
+                <Select
+                  value={selectedGuildId}
+                  onChange={(e) => setSelectedGuildId(e.target.value)}
+                  label="Server"
+                >
+                  {discordServers.map((s) => (
+                    <MenuItem key={s.guild_id} value={s.guild_id}>
+                      {s.guild_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                {discordUsername ? `Linked as ${discordUsername} · ` : ''}
+                {discordServers.length} server{discordServers.length > 1 ? 's' : ''} available
+              </Typography>
+            )}
+          </Paper>
+        )}
 
         {error && (
           <Alert severity="error" onClose={() => setError(null)}>
