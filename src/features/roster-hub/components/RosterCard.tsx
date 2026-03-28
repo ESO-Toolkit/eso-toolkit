@@ -1,4 +1,4 @@
-import { ContentCopy, DeleteOutline, EditOutlined } from '@mui/icons-material';
+import { ContentCopy, DeleteOutline, EditOutlined, Extension } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -17,6 +17,7 @@ import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavig
 import { formatRelativeDate } from '../../../utils/formatRelativeDate';
 import type { HubRoster } from '../types/roster-hub.types';
 import { TAG_COLORS } from '../types/roster-hub.types';
+import { getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
 
 import { VoteButton } from './VoteButton';
 
@@ -94,6 +95,20 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
     const theme = useTheme();
     const navigate = useViewTransitionNavigate();
     const isDark = theme.palette.mode === 'dark';
+
+    const handleGetAddons = (e: React.MouseEvent): void => {
+      e.stopPropagation();
+      const deepLink = getAddonManagerDeepLink('trial-essentials');
+      window.location.href = deepLink;
+      setTimeout(() => {
+        void navigator.clipboard.writeText(deepLink).then(() => {
+          enqueueSnackbar('Deep link copied — install ESO Addon Manager to use it', {
+            variant: 'info',
+            autoHideDuration: 4000,
+          });
+        });
+      }, 1500);
+    };
 
     const handleCopyLink = (e: React.MouseEvent): void => {
       e.stopPropagation();
@@ -357,7 +372,22 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             onVote={() => onVote(roster.id)}
           />
 
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
+          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+            <Tooltip title="Get recommended addons in ESO Addon Manager">
+              <IconButton
+                size="small"
+                onClick={handleGetAddons}
+                aria-label="Get addons"
+                sx={{
+                  width: 36,
+                  height: 36,
+                  color: 'text.disabled',
+                  '&:hover': { color: '#c4a44a' },
+                }}
+              >
+                <Extension sx={{ fontSize: 17 }} />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Copy share link">
               <IconButton
                 size="small"

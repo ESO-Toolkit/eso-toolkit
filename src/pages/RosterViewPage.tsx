@@ -12,6 +12,7 @@ import {
   Shield as ShieldIcon,
   Favorite as FavoriteIcon,
   AutoAwesome as DPSIcon,
+  Extension as ExtensionIcon,
   OpenInNew as OpenInNewIcon,
   SwapHoriz as PerFightIcon,
 } from '@mui/icons-material';
@@ -53,6 +54,7 @@ import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils'
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { dpsSlotToBuild, tankSlotToBuild, healerSlotToBuild } from '../utils/rosterSlotToBuild';
+import { getAddonManagerDeepLink } from '../features/build-hub/api/packs-api';
 import { getSetDisplayName } from '../utils/setNameUtils';
 
 // ============================================================
@@ -1536,6 +1538,29 @@ export const RosterViewPage: React.FC = () => {
             }}
           >
             Edit Roster
+          </Button>
+          <Button
+            size="small"
+            startIcon={<ExtensionIcon sx={{ fontSize: '0.85rem !important' }} />}
+            onClick={() => {
+              const deepLink = getAddonManagerDeepLink('trial-essentials');
+              window.location.href = deepLink;
+            }}
+            sx={{
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontSize: '0.75rem',
+              fontWeight: 500,
+              color: '#c4a44a',
+              border: '1px solid rgba(196,164,74,0.3)',
+              backgroundColor: 'transparent',
+              '&:hover': {
+                backgroundColor: 'rgba(196,164,74,0.08)',
+                borderColor: 'rgba(196,164,74,0.5)',
+              },
+            }}
+          >
+            Get Addons
           </Button>
         </Box>
       </Box>
