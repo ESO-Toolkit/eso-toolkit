@@ -26,7 +26,7 @@ export async function handleRosterView(
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: '❌ Please provide a roster ID. You can find it in the roster URL: `esohelpers.com/rosters/<id>`',
+        content: '❌ Please provide a roster ID. You can find it in the roster URL: `esotk.com/rosters/<id>`',
         flags: MessageFlags.EPHEMERAL,
       },
     };

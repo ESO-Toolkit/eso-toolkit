@@ -271,7 +271,7 @@ app.get('/rosters/:id/discord', async (c) => {
       roster.roster_data,
       roster.title,
       roster.id,
-      'https://esohelpers.com',
+      'https://esotk.com',
     );
     return c.json(result);
   } catch {
@@ -1509,7 +1509,7 @@ app.post('/discord/post-roster', async (c) => {
       roster.roster_data,
       roster.title,
       roster.id,
-      'https://esohelpers.com',
+      'https://esotk.com',
     );
 
     const author = roster.is_anonymous ? 'Anonymous' : roster.author_name;

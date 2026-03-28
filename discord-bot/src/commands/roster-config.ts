@@ -114,7 +114,7 @@ export async function handleRosterConfig(
   return {
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      content: `✅ Roster posting configured!\n\n📌 **Channel:** <#${channelId}>\n👥 **Who can post:**${rolePart}\n\nUsers can now publish rosters from [ESO Toolkit](https://esohelpers.com) and post them to this server.`,
+      content: `✅ Roster posting configured!\n\n📌 **Channel:** <#${channelId}>\n👥 **Who can post:**${rolePart}\n\nUsers can now publish rosters from [ESO Toolkit](https://esotk.com) and post them to this server.`,
     },
   };
 }

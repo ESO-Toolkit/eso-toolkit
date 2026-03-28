@@ -95,7 +95,7 @@ const commands = [
           {
             type: 3, // STRING
             name: 'id',
-            description: 'Roster ID or URL (from esohelpers.com/rosters/<id>)',
+            description: 'Roster ID or URL (from esotk.com/rosters/<id>)',
             required: true,
           },
         ],
