@@ -51,6 +51,7 @@ import { SetAssignmentManager } from '../components/SetAssignmentManager';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
+import { DiscordPublishDirectDialog } from '../features/roster-hub/components/DiscordPublishDirectDialog';
 import { PublishRosterDialog } from '../features/roster-hub/components/PublishRosterDialog';
 import { GetPlayersForReportQuery } from '../graphql/gql/graphql';
 import { saveRoster, updateRoster } from '../store/saved_rosters';
@@ -741,6 +742,8 @@ export const RosterBuilderPage: React.FC = () => {
   const { isLoggedIn, accessToken } = useAuth();
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [publishRosterData, setPublishRosterData] = useState<string>('');
+  const [discordPublishOpen, setDiscordPublishOpen] = useState(false);
+  const [discordPublishData, setDiscordPublishData] = useState<string>('');
   const dispatch = useAppDispatch();
 
   // Get ESO Logs client context (safe to call - doesn't throw if not logged in)
@@ -1957,6 +1960,53 @@ export const RosterBuilderPage: React.FC = () => {
                     Copy
                   </ButtonBase>
                 </Tooltip>
+                <Box
+                  sx={{
+                    width: '1px',
+                    my: 0.625,
+                    background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                  }}
+                />
+                <Tooltip title="Publish roster as a rich embed to a Discord server" arrow>
+                  <ButtonBase
+                    onClick={() => {
+                      void encodeRosterToURL(roster)
+                        .then((encoded) => {
+                          setDiscordPublishData(encoded);
+                          setDiscordPublishOpen(true);
+                        })
+                        .catch(() => {
+                          setSnackbar({
+                            open: true,
+                            message: 'Failed to encode roster',
+                            severity: 'error',
+                          });
+                        });
+                    }}
+                    sx={{
+                      flex: 1,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 0.5,
+                      px: 1.25,
+                      py: { xs: 1.375, md: 0.875 },
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      color: isDarkMode ? 'rgba(165,180,252,0.95)' : 'rgba(79,70,229,0.9)',
+                      background: isDarkMode ? 'rgba(88,101,242,0.12)' : 'rgba(88,101,242,0.08)',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        color: isDarkMode ? '#c7d2fe' : '#4338ca',
+                        background: isDarkMode
+                          ? 'rgba(88,101,242,0.22)'
+                          : 'rgba(88,101,242,0.14)',
+                      },
+                    }}
+                  >
+                    Publish
+                  </ButtonBase>
+                </Tooltip>
               </Box>
 
               {/* Share / Publish / Save pill */}
@@ -2905,6 +2955,24 @@ export const RosterBuilderPage: React.FC = () => {
             open: true,
             severity: 'success',
             message: 'Roster published to Roster Hub!',
+          });
+        }}
+      />
+
+      {/* Publish to Discord dialog */}
+      <DiscordPublishDirectDialog
+        open={discordPublishOpen}
+        title={roster.rosterName}
+        trialId=""
+        rosterData={discordPublishData}
+        authorName={accessToken ? undefined : undefined}
+        onClose={() => setDiscordPublishOpen(false)}
+        onSuccess={() => {
+          setDiscordPublishOpen(false);
+          setSnackbar({
+            open: true,
+            severity: 'success',
+            message: 'Roster published to Discord!',
           });
         }}
       />

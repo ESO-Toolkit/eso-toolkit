@@ -172,6 +172,86 @@ export async function refreshRoster(env: Env, rosterId: string): Promise<Refresh
   return { ok: result.ok, error: result.error, refreshedCount: result.ok ? 1 : 0 };
 }
 
+// ── Direct Publish (from raw roster data, no Hub ID needed) ─────────────────
+
+export interface DirectPublishRequest {
+  guildId: string;
+  title: string;
+  description?: string | undefined;
+  trial_id: string;
+  roster_data: string;
+  author_name?: string | undefined;
+  channelNameOverride?: string | undefined;
+  categoryId?: string | undefined;
+  ownerUserId?: string | undefined;
+}
+
+/**
+ * Publish a roster directly from raw data (e.g. from the roster builder).
+ * Does not require the roster to exist on the Hub — builds a synthetic
+ * snapshot from the provided fields.
+ */
+export async function publishDirect(env: Env, req: DirectPublishRequest): Promise<PublishResult> {
+  // Build a synthetic snapshot from the raw data
+  const syntheticId = `direct-${Date.now().toString(36)}`;
+  const snapshot: RosterSnapshot = {
+    id: syntheticId,
+    title: req.title,
+    description: req.description ?? '',
+    trial_id: req.trial_id,
+    author_name: req.author_name ?? 'Unknown',
+    roster_data: req.roster_data,
+    tags: [],
+    vote_count: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  let decoded;
+  try {
+    decoded = await decodeRosterData(snapshot.roster_data);
+  } catch (err) {
+    console.error('[publish-direct] decode error:', err);
+    return { ok: false, error: 'Failed to decode roster data.' };
+  }
+
+  const config = (await getGuildConfig(env, req.guildId)) ?? getDefaultGuildConfig(req.guildId);
+  const channelName = resolveChannelName(
+    config.namePattern,
+    { label: req.title },
+    req.channelNameOverride,
+  );
+  const categoryId = req.categoryId ?? config.defaultCategoryId;
+
+  const result = await createNewRosterChannel(
+    env,
+    req.guildId,
+    channelName,
+    categoryId,
+    snapshot,
+    decoded,
+  );
+
+  if (!result.ok) return result;
+
+  // Persist mapping so refresh still works
+  const now = new Date().toISOString();
+  const mapping: RosterMapping = {
+    rosterId: syntheticId,
+    guildId: req.guildId,
+    channelId: result.channelId!,
+    messageId: result.messageId!,
+    categoryId,
+    channelNameOverride: req.channelNameOverride,
+    ownerUserId: req.ownerUserId ?? '',
+    createdAt: now,
+    updatedAt: now,
+  };
+  await upsertMapping(env, mapping);
+
+  return { ok: true, channelId: result.channelId, messageId: result.messageId };
+}
+
 // ── Refresh a single channel for an existing mapping ────────────────────────
 
 interface InternalRefreshResult {

@@ -33,5 +33,5 @@ export { decodeRosterData } from './decoder.js';
 
 export { fetchRosterSnapshot } from './api.js';
 
-export { publishRoster, refreshRoster } from './publish.js';
-export type { PublishRequest, PublishResult, RefreshResult } from './publish.js';
+export { publishRoster, refreshRoster, publishDirect } from './publish.js';
+export type { PublishRequest, PublishResult, RefreshResult, DirectPublishRequest } from './publish.js';

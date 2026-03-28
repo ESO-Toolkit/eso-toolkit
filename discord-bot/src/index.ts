@@ -9,8 +9,8 @@
 import { handleButton } from './handlers/buttons.js';
 import { handleCommand } from './handlers/commands.js';
 import { handleModal } from './handlers/modals.js';
-import { publishRoster, refreshRoster } from './roster/index.js';
-import type { PublishRequest } from './roster/index.js';
+import { publishRoster, refreshRoster, publishDirect } from './roster/index.js';
+import type { PublishRequest, DirectPublishRequest } from './roster/index.js';
 import { InteractionType } from './types.js';
 import type { DiscordInteraction, Env } from './types.js';
 import { verifyDiscordSignature } from './verify.js';
@@ -131,6 +131,10 @@ async function handleRosterApi(
     return handleRefresh(request, env);
   }
 
+  if (path === '/discord/roster/publish-direct') {
+    return handlePublishDirect(request, env);
+  }
+
   return jsonResponse({ error: 'Not Found' }, 404);
 }
 
@@ -176,6 +180,30 @@ async function handleRefresh(request: Request, env: Env): Promise<Response> {
   }
 
   return jsonResponse({ ok: true, refreshedCount: result.refreshedCount });
+}
+
+async function handlePublishDirect(request: Request, env: Env): Promise<Response> {
+  let body: DirectPublishRequest;
+  try {
+    body = (await request.json()) as DirectPublishRequest;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.guildId || !body.title || !body.roster_data || !body.trial_id) {
+    return jsonResponse({ error: 'guildId, title, trial_id, and roster_data are required' }, 400);
+  }
+
+  const result = await publishDirect(env, body);
+  if (!result.ok) {
+    return jsonResponse({ error: result.error }, 400);
+  }
+
+  return jsonResponse({
+    ok: true,
+    channelId: result.channelId,
+    messageId: result.messageId,
+  });
 }
 
 function jsonResponse(data: unknown, status = 200): Response {
