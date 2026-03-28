@@ -1,20 +1,19 @@
 /**
  * /roster config #channel @role — Configure roster posting for this server.
  *
- * Admin-only command. Stores the guild config in the roster-hub-api
- * so users can post rosters to this server from the web app.
+ * Admin-only command. Defers immediately, then stores the guild config
+ * in the roster-hub-api as a background task.
  */
 
-import { isStaff } from '../discord.js';
+import { isStaff, sendFollowup } from '../discord.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
 
 export async function handleRosterConfig(
   env: Env,
   interaction: DiscordInteraction,
-  _ctx: ExecutionContext,
+  ctx: ExecutionContext,
 ): Promise<InteractionResponse> {
-  // Admin check
   if (!isStaff(interaction)) {
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -26,11 +25,8 @@ export async function handleRosterConfig(
   }
 
   const options = interaction.data?.options ?? [];
-  const channelOption = options.find((o) => o.name === 'channel');
-  const roleOption = options.find((o) => o.name === 'role');
-
-  const channelId = channelOption?.value as string | undefined;
-  const roleId = roleOption?.value as string | undefined;
+  const channelId = options.find((o) => o.name === 'channel')?.value as string | undefined;
+  const roleId = options.find((o) => o.name === 'role')?.value as string | undefined;
 
   if (!channelId) {
     return {
@@ -53,9 +49,26 @@ export async function handleRosterConfig(
     };
   }
 
-  // Fetch guild info for the name
+  // Defer immediately so Discord doesn't timeout
+  ctx.waitUntil(doConfig(env, interaction.token, guildId, channelId, roleId, interaction.member?.user?.id));
+
+  return {
+    type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {},
+  };
+}
+
+async function doConfig(
+  env: Env,
+  interactionToken: string,
+  guildId: string,
+  channelId: string,
+  roleId: string | undefined,
+  userId: string | undefined,
+): Promise<void> {
   let guildName = 'Unknown Server';
   let guildIcon: string | null = null;
+
   try {
     const guildRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}`, {
       headers: {
@@ -70,7 +83,6 @@ export async function handleRosterConfig(
     }
   } catch { /* proceed with default name */ }
 
-  // Store config via roster-hub-api
   try {
     const res = await fetch(`${env.ROSTER_HUB_API_URL}/discord/guild-config`, {
       method: 'POST',
@@ -85,44 +97,35 @@ export async function handleRosterConfig(
         guild_icon: guildIcon,
         roster_channel_id: channelId,
         allowed_role_ids: roleId ? [roleId] : [],
-        configured_by: interaction.member?.user?.id ?? 'unknown',
+        configured_by: userId ?? 'unknown',
       }),
     });
 
     if (!res.ok) {
       const text = await res.text();
-      return {
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          content: `❌ Failed to save config: ${text}`,
-          flags: MessageFlags.EPHEMERAL,
-        },
-      };
+      await sendFollowup(env, interactionToken, {
+        content: `❌ Failed to save config: ${text}`,
+      });
+      return;
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    return {
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: `❌ Error saving config: ${message}`,
-        flags: MessageFlags.EPHEMERAL,
-      },
-    };
+    await sendFollowup(env, interactionToken, {
+      content: `❌ Error saving config: ${message}`,
+    });
+    return;
   }
 
   const rolePart = roleId ? ` with role <@&${roleId}>` : ' (all members)';
-  return {
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: {
-      content: `✅ Roster posting configured!\n\n📌 **Channel:** <#${channelId}>\n👥 **Who can post:**${rolePart}\n\nUsers can now publish rosters from [ESO Toolkit](https://esotk.com) and post them to this server.`,
-    },
-  };
+  await sendFollowup(env, interactionToken, {
+    content: `✅ Roster posting configured!\n\n📌 **Channel:** <#${channelId}>\n👥 **Who can post:**${rolePart}\n\nUsers can now publish rosters from [ESO Toolkit](https://esotk.com) and post them to this server.`,
+  });
 }
 
 export async function handleRosterRemove(
   env: Env,
   interaction: DiscordInteraction,
-  _ctx: ExecutionContext,
+  ctx: ExecutionContext,
 ): Promise<InteractionResponse> {
   if (!isStaff(interaction)) {
     return {
@@ -145,6 +148,19 @@ export async function handleRosterRemove(
     };
   }
 
+  ctx.waitUntil(doRemove(env, interaction.token, guildId));
+
+  return {
+    type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {},
+  };
+}
+
+async function doRemove(
+  env: Env,
+  interactionToken: string,
+  guildId: string,
+): Promise<void> {
   try {
     await fetch(`${env.ROSTER_HUB_API_URL}/discord/guild-config/${guildId}`, {
       method: 'DELETE',
@@ -155,10 +171,7 @@ export async function handleRosterRemove(
     });
   } catch { /* ignore */ }
 
-  return {
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: {
-      content: '✅ Roster posting has been disabled for this server.',
-    },
-  };
+  await sendFollowup(env, interactionToken, {
+    content: '✅ Roster posting has been disabled for this server.',
+  });
 }
