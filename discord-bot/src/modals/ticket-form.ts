@@ -230,7 +230,7 @@ export async function handleTicketFormModal(
 
   return {
     type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
-    data: { flags: 64 }, // ephemeral deferred
+    data: { flags: MessageFlags.EPHEMERAL },
   };
 }
 

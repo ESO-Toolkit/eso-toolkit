@@ -51,6 +51,7 @@ export async function handleClaimButton(
     status: 'claimed',
     claimedBy: claimingUser.id,
     claimedByUsername: claimingUser.username,
+    claimedAt: new Date().toISOString(),
   });
 
   if (!updated) {

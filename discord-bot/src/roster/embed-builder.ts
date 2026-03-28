@@ -16,14 +16,26 @@ import type { DecodedRoster, DecodedRosterSlot, RosterSnapshot } from './types.j
 
 const ESO_TOOLKIT_BASE = 'https://esotk.com';
 
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Escape Discord markdown special characters in user-provided text. */
+function escapeMarkdown(text: string): string {
+  return text.replace(/([*_`~|\\[\]])/g, '\\$1');
+}
+
+/** Truncate a string to a max length, appending '…' if truncated. */
+function truncate(text: string, max: number): string {
+  return text.length <= max ? text : text.slice(0, max - 1) + '…';
+}
+
 // ── Slot Formatting ─────────────────────────────────────────────────────────
 
 function formatSlot(slot: DecodedRosterSlot, index: number, rolePrefix: string): string {
-  const name = slot.playerName || `*Open*`;
+  const name = slot.playerName ? escapeMarkdown(slot.playerName) : `*Open*`;
   const label = slot.roleLabel || `${rolePrefix}${index + 1}`;
   const sets = slot.sets?.length ? ` — ${slot.sets.join(', ')}` : '';
   const build = slot.buildRefId
-    ? ` [📋](${ESO_TOOLKIT_BASE}/builds/${slot.buildRefId})`
+    ? ` [📋](${ESO_TOOLKIT_BASE}/builds/${encodeURIComponent(slot.buildRefId)})`
     : '';
   return `**${label}**: ${name}${sets}${build}`;
 }
@@ -85,18 +97,23 @@ export function buildRosterEmbed(
   }
 
   const description = snapshot.description
-    ? `${snapshot.description}\n\n`
+    ? `${truncate(snapshot.description, 3900)}\n\n`
     : '';
 
   const trialLine = snapshot.trial_id ? `**Trial:** ${snapshot.trial_id}\n` : '';
 
+  // Enforce Discord embed field value limit (1024 chars)
+  for (const field of fields) {
+    field.value = truncate(field.value, 1024);
+  }
+
   return {
-    title: `📜 ${snapshot.title}`,
-    description: `${description}${trialLine}**Author:** ${snapshot.author_name}`,
+    title: truncate(`📜 ${snapshot.title}`, 256),
+    description: truncate(`${description}${trialLine}**Author:** ${snapshot.author_name}`, 4096),
     color: Colors.ROSTER_EMBED,
     fields,
     footer: {
-      text: `ESO Toolkit • Roster ID: ${snapshot.id}`,
+      text: truncate(`ESO Toolkit • Roster ID: ${snapshot.id}`, 2048),
     },
     timestamp: snapshot.updated_at,
   };

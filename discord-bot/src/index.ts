@@ -15,7 +15,7 @@ import { handleModal } from './handlers/modals.js';
 import { publishRoster, refreshRoster, publishDirect } from './roster/index.js';
 import type { PublishRequest, DirectPublishRequest } from './roster/index.js';
 import { KV_PREFIX } from './roster/kv.js';
-import { InteractionType } from './types.js';
+import { InteractionType, MessageFlags } from './types.js';
 import type { DiscordInteraction, Env } from './types.js';
 import { verifyDiscordSignature } from './verify.js';
 
@@ -49,18 +49,17 @@ const DEV_REDIRECT_URIS = new Set([
   'http://localhost:5173/eso-toolkit/discord-oauth-redirect',
 ]);
 
+// Pre-computed merged sets for development mode (avoids re-creating per request)
+const ALL_CORS_ORIGINS = new Set([...PROD_CORS_ORIGINS, ...DEV_CORS_ORIGINS]);
+const ALL_REDIRECT_URIS = new Set([...PROD_REDIRECT_URIS, ...DEV_REDIRECT_URIS]);
+
 function getAllowedOrigins(env: Env): Set<string> {
-  if (env.ENVIRONMENT === 'development') {
-    return new Set([...PROD_CORS_ORIGINS, ...DEV_CORS_ORIGINS]);
-  }
-  return PROD_CORS_ORIGINS;
+  return env.ENVIRONMENT === 'development' ? ALL_CORS_ORIGINS : PROD_CORS_ORIGINS;
 }
 
 function isAllowedRedirectUri(uri: string, env: Env): boolean {
-  const allUris = env.ENVIRONMENT === 'development'
-    ? new Set([...PROD_REDIRECT_URIS, ...DEV_REDIRECT_URIS])
-    : PROD_REDIRECT_URIS;
-  if (allUris.has(uri)) return true;
+  const uris = env.ENVIRONMENT === 'development' ? ALL_REDIRECT_URIS : PROD_REDIRECT_URIS;
+  if (uris.has(uri)) return true;
   // Allow dev-preview redirect URIs (dynamic PR number in path)
   if (uri.match(/^https:\/\/eso-toolkit\.github\.io\/dev-previews\/pr-\d+\/discord-oauth-redirect$/)) return true;
   return false;
@@ -132,7 +131,7 @@ export default {
           type: 4,
           data: {
             content: '❌ An internal error occurred. Please try again.',
-            flags: 64,
+            flags: MessageFlags.EPHEMERAL,
           },
         }),
         { headers: { 'Content-Type': 'application/json' } },
@@ -161,7 +160,7 @@ async function routeInteraction(
       console.warn('[index] unknown interaction type:', interaction.type);
       return {
         type: 4,
-        data: { content: '❌ Unsupported interaction type.', flags: 64 },
+        data: { content: '❌ Unsupported interaction type.', flags: MessageFlags.EPHEMERAL },
       };
   }
 }

@@ -89,15 +89,20 @@ async function syncAcknowledgedToGitHub(
 
   // Bug with existing GitHub issue — label + comment
   if (ticket.githubIssueNumber) {
-    await Promise.all([
-      addGitHubIssueLabel(env, ticket.githubIssueNumber, ['acknowledged']),
-      addGitHubIssueComment(
-        env,
-        ticket.githubIssueNumber,
-        `✅ **Acknowledged** by staff member **${staffName}** via Discord ticket #${ticket.id}.`,
-      ),
-    ]);
-    return `\n🔗 Updated [GitHub #${ticket.githubIssueNumber}](${ticket.githubIssueUrl}) with acknowledged label.`;
+    try {
+      await Promise.all([
+        addGitHubIssueLabel(env, ticket.githubIssueNumber, ['acknowledged']),
+        addGitHubIssueComment(
+          env,
+          ticket.githubIssueNumber,
+          `✅ **Acknowledged** by staff member **${staffName}** via Discord ticket #${ticket.id}.`,
+        ),
+      ]);
+      return `\n🔗 Updated [GitHub #${ticket.githubIssueNumber}](${ticket.githubIssueUrl}) with acknowledged label.`;
+    } catch (err) {
+      console.error('[template] failed to sync acknowledged to GitHub:', err);
+      return '\n⚠️ GitHub sync failed — please update the issue manually.';
+    }
   }
 
   // Feature or Feedback — create a GitHub Discussion (not an Issue)

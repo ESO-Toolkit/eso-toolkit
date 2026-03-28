@@ -236,7 +236,9 @@ export interface DirectPublishRequest {
  */
 export async function publishDirect(env: Env, req: DirectPublishRequest): Promise<PublishResult> {
   // Build a synthetic snapshot from the raw data
-  const syntheticId = `direct-${Date.now().toString(36)}`;
+  const rand = crypto.getRandomValues(new Uint8Array(4));
+  const suffix = Array.from(rand).map((b) => b.toString(36)).join('').slice(0, 6);
+  const syntheticId = `direct-${Date.now().toString(36)}-${suffix}`;
   const snapshot: RosterSnapshot = {
     id: syntheticId,
     title: req.title,
@@ -382,6 +384,6 @@ async function createNewRosterChannel(
     return { ok: true, channelId: channel.id, messageId: message.id };
   } catch (err) {
     console.error('[publish] create channel/message failed:', err);
-    return { ok: false, error: `Failed to create Discord channel: ${err}` };
+    return { ok: false, error: 'Failed to create Discord channel. Please try again.' };
   }
 }
