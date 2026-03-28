@@ -63,16 +63,23 @@ export const BuildEditorLayout: React.FC = () => {
 
   // NOTE: beforeunload handler lives in BuildEditorPage (sets e.returnValue for cross-browser compat).
 
-  // Ctrl+S / Cmd+S keyboard shortcut to save
+  // Ctrl+S / Cmd+S keyboard shortcut to save — use refs to avoid re-registering
+  // the keydown listener on every build mutation.
+  const buildRef = React.useRef(build);
+  buildRef.current = build;
+  const activeSetupIndexRef = React.useRef(activeSetupIndex);
+  activeSetupIndexRef.current = activeSetupIndex;
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        if (!build.name.trim()) return;
+        const currentBuild = buildRef.current;
+        if (!currentBuild.name.trim()) return;
         try {
           localStorage.setItem(
             BUILD_EDITOR_STORAGE_KEY,
-            JSON.stringify({ build, activeSetupIndex }),
+            JSON.stringify({ build: currentBuild, activeSetupIndex: activeSetupIndexRef.current }),
           );
         } catch (err) {
           const isQuota =
@@ -84,13 +91,13 @@ export const BuildEditorLayout: React.FC = () => {
             { variant: 'warning', preventDuplicate: true },
           );
         }
-        dispatch(saveBuild(build));
+        dispatch(saveBuild(currentBuild));
         dispatch(markSaved());
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [build, activeSetupIndex, dispatch, enqueueSnackbar]);
+  }, [dispatch, enqueueSnackbar]);
 
   return (
     <Box component="main" sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
