@@ -68,9 +68,7 @@ const LatestReports = React.lazy(() =>
 const OAuthRedirect = React.lazy(() =>
   import('./OAuthRedirect').then((module) => ({ default: module.OAuthRedirect })),
 );
-const DiscordOAuthRedirect = React.lazy(() =>
-  import('./DiscordOAuthRedirect').then((module) => ({ default: module.DiscordOAuthRedirect })),
-);
+import { DiscordOAuthRedirect } from './DiscordOAuthRedirect';
 const Calculator = React.lazy(() =>
   import('./components/Calculator').then((module) => ({ default: module.Calculator })),
 );
@@ -347,9 +345,7 @@ const AppRoutes: React.FC = () => {
             path="/discord-oauth-redirect"
             element={
               <ErrorBoundary>
-                <Suspense fallback={<LoadingFallback />}>
-                  <DiscordOAuthRedirect />
-                </Suspense>
+                <DiscordOAuthRedirect />
               </ErrorBoundary>
             }
           />

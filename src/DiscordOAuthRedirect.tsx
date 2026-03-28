@@ -6,24 +6,21 @@
  * and navigate back to where the user was.
  */
 
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, CircularProgress, Container, Typography } from '@mui/material';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useDiscordAuth } from './features/auth/DiscordAuthContext';
 import { exchangeDiscordCode, getDiscordReturnPath } from './features/auth/discord-auth';
 
 export const DiscordOAuthRedirect: React.FC = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const { setDiscordToken } = useDiscordAuth();
   const [error, setError] = React.useState<string | null>(null);
-  const exchangedRef = React.useRef(false);
+  const [status, setStatus] = React.useState('Connecting to Discord...');
 
   React.useEffect(() => {
-    if (exchangedRef.current) return;
-    exchangedRef.current = true;
-
-    const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
     const oauthError = params.get('error');
 
@@ -37,9 +34,12 @@ export const DiscordOAuthRedirect: React.FC = () => {
       return;
     }
 
-    void exchangeDiscordCode(code)
+    setStatus('Exchanging token...');
+
+    exchangeDiscordCode(code)
       .then((tokenData) => {
         setDiscordToken(tokenData.access_token);
+        setStatus('Success! Redirecting...');
         const returnPath = getDiscordReturnPath();
         navigate(returnPath, { replace: true });
       })
@@ -47,32 +47,47 @@ export const DiscordOAuthRedirect: React.FC = () => {
         console.error('[discord-oauth] token exchange failed:', err);
         setError(err instanceof Error ? err.message : 'Token exchange failed');
       });
-  }, [navigate, setDiscordToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '60vh',
-        gap: 2,
-      }}
-    >
-      {error ? (
-        <>
-          <Typography color="error" variant="h6">
-            Discord Authorization Failed
-          </Typography>
-          <Typography color="text.secondary">{error}</Typography>
-        </>
-      ) : (
-        <>
-          <CircularProgress />
-          <Typography color="text.secondary">Connecting to Discord...</Typography>
-        </>
-      )}
-    </Box>
+    <Container maxWidth="sm">
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '80vh',
+          gap: 2,
+        }}
+      >
+        <Box
+          sx={{
+            p: 4,
+            borderRadius: 3,
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            background: 'rgba(15,20,40,0.75)',
+            border: '1px solid rgba(88,101,242,0.2)',
+            textAlign: 'center',
+          }}
+        >
+          {error ? (
+            <>
+              <Typography color="error" variant="h6" sx={{ mb: 1 }}>
+                Discord Authorization Failed
+              </Typography>
+              <Typography sx={{ color: 'rgba(255,255,255,0.7)' }}>{error}</Typography>
+            </>
+          ) : (
+            <>
+              <CircularProgress sx={{ mb: 2 }} />
+              <Typography sx={{ color: 'rgba(255,255,255,0.85)' }}>{status}</Typography>
+            </>
+          )}
+        </Box>
+      </Box>
+    </Container>
   );
 };
