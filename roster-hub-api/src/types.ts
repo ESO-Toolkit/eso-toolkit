@@ -168,3 +168,30 @@ export interface UserProfileResponse {
   builds: BuildSummary[];
   rosters: RosterSummary[];
 }
+
+// ─── Pack Hub types ───────────────────────────────────────────────────────────
+
+export interface PackRow {
+  id: string;
+  author_id: string;
+  author_name: string;
+  is_anonymous: number; // SQLite boolean: 0 = false, 1 = true
+  title: string;
+  description: string;
+  pack_type: string;
+  addons: string; // JSON array of addon entries
+  vote_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PackTagRow {
+  pack_id: string;
+  tag: string;
+}
+
+export interface PackWithMeta extends Omit<PackRow, 'is_anonymous'> {
+  is_anonymous: boolean;
+  tags: string[];
+  user_voted?: boolean;
+}

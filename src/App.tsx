@@ -183,6 +183,12 @@ const BuildHubPage = React.lazy(() =>
   })),
 );
 
+const PackHubPage = React.lazy(() =>
+  import('./features/pack-hub/components/PackHubPage').then((module) => ({
+    default: module.PackHubPage,
+  })),
+);
+
 const PublicProfilePage = React.lazy(() =>
   import('./pages/PublicProfilePage').then((module) => ({ default: module.PublicProfilePage })),
 );
@@ -678,6 +684,16 @@ const AppRoutes: React.FC = () => {
                     </Suspense>
                   </ErrorBoundary>
                 </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/pack-hub"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PackHubPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
