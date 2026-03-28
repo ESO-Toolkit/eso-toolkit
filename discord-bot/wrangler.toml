@@ -11,7 +11,6 @@ TICKET_LOGS_CHANNEL_ID = "1480845163277586534"
 PANEL_CHANNEL_ID = "1480845158584025148"
 GITHUB_OWNER = "ESO-Toolkit"
 GITHUB_REPO = "eso-toolkit"
-ROSTER_HUB_API_URL = "https://roster-hub-api.eso-toolkit.workers.dev"
 
 [[kv_namespaces]]
 binding = "TICKETS"

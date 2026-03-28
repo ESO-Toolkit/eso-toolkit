@@ -3,8 +3,6 @@
  * Dispatches APPLICATION_COMMAND interactions to the correct handler.
  */
 
-import { handleRosterConfig, handleRosterRemove } from '../commands/roster-config.js';
-import { handleRosterView } from '../commands/roster-view.js';
 import { handleTicketAdd } from '../commands/ticket-add.js';
 import { handleTicketClose } from '../commands/ticket-close.js';
 import { handleTicketRemove } from '../commands/ticket-remove.js';
@@ -18,20 +16,6 @@ export async function handleCommand(
   ctx: ExecutionContext,
 ): Promise<InteractionResponse> {
   const name = interaction.data?.name;
-
-  if (name === 'roster') {
-    const sub = interaction.data?.options?.[0];
-    switch (sub?.name) {
-      case 'view':
-        return handleRosterView(env, withSubOptions(interaction, sub), ctx);
-      case 'config':
-        return handleRosterConfig(env, withSubOptions(interaction, sub), ctx);
-      case 'remove':
-        return handleRosterRemove(env, interaction, ctx);
-      default:
-        return unknownCommand(`roster ${sub?.name ?? '(none)'}`);
-    }
-  }
 
   if (name !== 'ticket') {
     return unknownCommand(name ?? '');
