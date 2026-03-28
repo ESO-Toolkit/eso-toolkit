@@ -251,9 +251,13 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       onPublished();
       onClose();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : isEditMode ? 'Failed to update' : 'Failed to publish',
-      );
+      const msg = err instanceof Error ? err.message : '';
+      // "Failed to fetch" usually means network/CORS — give a better message
+      if (msg === 'Failed to fetch') {
+        setError('Network error — check your connection and try again.');
+      } else {
+        setError(msg || (isEditMode ? 'Failed to update' : 'Failed to publish'));
+      }
     } finally {
       setLoading(false);
     }
@@ -302,27 +306,21 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
 
   // Fetch Discord link status + servers when dialog opens
   React.useEffect(() => {
-    if (!open || discordChecked.current || !DISCORD_CLIENT_ID) return;
+    if (!open || discordChecked.current || !DISCORD_CLIENT_ID || !token) return;
     discordChecked.current = true;
     setDiscordServersLoading(true);
 
-    discordApi
-      .getMyServers(token)
-      .then((res) => {
+    Promise.allSettled([
+      discordApi.getMyServers(token).then((res) => {
         setDiscordLinked(res.linked);
         setDiscordServers(res.servers);
         if (res.servers.length === 1) setSelectedGuildId(res.servers[0].guild_id);
-      })
-      .catch(() => { /* silently fail — Discord is optional */ })
-      .finally(() => setDiscordServersLoading(false));
-
-    discordApi
-      .getLinkStatus(token)
-      .then((res) => {
+      }),
+      discordApi.getLinkStatus(token).then((res) => {
         setDiscordLinked(res.linked);
         if (res.discord_username) setDiscordUsername(res.discord_username);
-      })
-      .catch(() => {});
+      }),
+    ]).finally(() => setDiscordServersLoading(false));
   }, [open, token]);
 
   // Reset Discord state when dialog closes
