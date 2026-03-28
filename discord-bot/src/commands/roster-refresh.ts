@@ -5,8 +5,9 @@
  * Looks up the mapping by the current channel ID.
  */
 
+import { hasRosterPermission } from '../auth.js';
 import { sendFollowup } from '../discord.js';
-import { getMappingByChannelId } from '../roster/kv.js';
+import { getMappingByChannelId, getGuildConfig, getDefaultGuildConfig } from '../roster/kv.js';
 import { refreshRoster } from '../roster/publish.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
@@ -16,6 +17,28 @@ export async function handleRosterRefresh(
   interaction: DiscordInteraction,
   ctx: ExecutionContext,
 ): Promise<InteractionResponse> {
+  const guildId = interaction.guild_id;
+  if (!guildId) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '❌ This command can only be used in a server.',
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
+  const config = (await getGuildConfig(env, guildId)) ?? getDefaultGuildConfig(guildId);
+  if (!hasRosterPermission(interaction, config.allowedRoleIds)) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '❌ You do not have permission to refresh rosters.',
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
   const channelId = interaction.channel_id;
   if (!channelId) {
     return {

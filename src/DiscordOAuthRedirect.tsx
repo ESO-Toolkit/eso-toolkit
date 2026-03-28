@@ -11,7 +11,7 @@ import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useDiscordAuth } from './features/auth/DiscordAuthContext';
-import { exchangeDiscordCode, getDiscordReturnPath } from './features/auth/discord-auth';
+import { exchangeDiscordCode, getDiscordReturnPath, validateOAuthState } from './features/auth/discord-auth';
 
 export const DiscordOAuthRedirect: React.FC = () => {
   const navigate = useNavigate();
@@ -23,9 +23,15 @@ export const DiscordOAuthRedirect: React.FC = () => {
   React.useEffect(() => {
     const code = params.get('code');
     const oauthError = params.get('error');
+    const state = params.get('state');
 
     if (oauthError) {
       setError(`Discord authorization failed: ${params.get('error_description') ?? oauthError}`);
+      return;
+    }
+
+    if (!validateOAuthState(state)) {
+      setError('Invalid OAuth state. This may be a CSRF attack. Please try again.');
       return;
     }
 

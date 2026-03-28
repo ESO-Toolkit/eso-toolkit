@@ -178,7 +178,7 @@ export interface DirectPublishRequest {
   guildId: string;
   title: string;
   description?: string | undefined;
-  trial_id: string;
+  trial_id?: string | undefined;
   roster_data: string;
   author_name?: string | undefined;
   channelNameOverride?: string | undefined;
@@ -198,7 +198,7 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
     id: syntheticId,
     title: req.title,
     description: req.description ?? '',
-    trial_id: req.trial_id,
+    trial_id: req.trial_id ?? '',
     author_name: req.author_name ?? 'Unknown',
     roster_data: req.roster_data,
     tags: [],

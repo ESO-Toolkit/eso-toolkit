@@ -7,6 +7,7 @@ import { handleRosterConfig } from '../commands/roster-config.js';
 import { handleRosterLink } from '../commands/roster-link.js';
 import { handleRosterPublish } from '../commands/roster-publish.js';
 import { handleRosterRefresh } from '../commands/roster-refresh.js';
+import { handleRosterSetup } from '../commands/roster-setup.js';
 import { handleTicketAdd } from '../commands/ticket-add.js';
 import { handleTicketClose } from '../commands/ticket-close.js';
 import { handleTicketRemove } from '../commands/ticket-remove.js';
@@ -90,6 +91,9 @@ function routeRosterCommand(
 
     case 'config':
       return handleRosterConfig(env, withSub, ctx);
+
+    case 'setup':
+      return handleRosterSetup(env, withSub);
 
     default:
       return Promise.resolve(unknownCommand(`roster ${subName ?? '(none)'}`));

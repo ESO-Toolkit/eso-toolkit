@@ -160,6 +160,9 @@ tmp/
 discord-bot/node_modules/
 discord-notify-worker/node_modules/
 
+# Wrangler local secrets (never commit)
+.dev.vars
+
 # Debug and test files in root
 /debug-*.js
 /debug-*.json

@@ -10,7 +10,6 @@ import React from 'react';
 import {
   DISCORD_LS_TOKEN_KEY,
   startDiscordAuth,
-  type DiscordUserGuild,
 } from './discord-auth';
 
 interface DiscordAuthContextType {
@@ -61,5 +60,3 @@ export const useDiscordAuth = (): DiscordAuthContextType => {
   if (!ctx) throw new Error('useDiscordAuth must be used within DiscordAuthProvider');
   return ctx;
 };
-
-export type { DiscordUserGuild };

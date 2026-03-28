@@ -3,10 +3,11 @@
  *
  * Handles three types of requests:
  *   1. Discord HTTP Interactions (POST /, with Ed25519 signature)
- *   2. Internal HTTP API (POST /discord/roster/*, no signature)
+ *   2. Internal HTTP API (POST /discord/roster/*, authenticated)
  *   3. Public API (GET /discord/bot/*, POST /discord/oauth/*, CORS-enabled)
  */
 
+import { verifyHttpCaller, verifyWebhookSecret } from './auth.js';
 import { getBotGuilds } from './discord.js';
 import { handleButton } from './handlers/buttons.js';
 import { handleCommand } from './handlers/commands.js';
@@ -17,11 +18,15 @@ import { InteractionType } from './types.js';
 import type { DiscordInteraction, Env } from './types.js';
 import { verifyDiscordSignature } from './verify.js';
 
-// Allowed origins for CORS (frontend domains)
-const CORS_ORIGINS = new Set([
-  'https://esohelpers.com',
-  'https://www.esohelpers.com',
+// Production-only CORS origins
+const PROD_CORS_ORIGINS = new Set([
+  'https://esotk.com',
+  'https://www.esotk.com',
   'https://eso-toolkit.github.io',
+]);
+
+// Additional origins for development
+const DEV_CORS_ORIGINS = new Set([
   'http://localhost:3000',
   'http://localhost:3001',
   'http://localhost:3002',
@@ -29,26 +34,57 @@ const CORS_ORIGINS = new Set([
   'http://localhost:5173',
 ]);
 
+// Allowed redirect URIs for OAuth token exchange
+const PROD_REDIRECT_URIS = new Set([
+  'https://esotk.com/discord-oauth-redirect',
+  'https://www.esotk.com/discord-oauth-redirect',
+  'https://eso-toolkit.github.io/eso-toolkit/discord-oauth-redirect',
+]);
+
+const DEV_REDIRECT_URIS = new Set([
+  'http://localhost:3000/discord-oauth-redirect',
+  'http://localhost:3000/eso-toolkit/discord-oauth-redirect',
+  'http://localhost:5173/discord-oauth-redirect',
+  'http://localhost:5173/eso-toolkit/discord-oauth-redirect',
+]);
+
+function getAllowedOrigins(env: Env): Set<string> {
+  if (env.ENVIRONMENT === 'development') {
+    return new Set([...PROD_CORS_ORIGINS, ...DEV_CORS_ORIGINS]);
+  }
+  return PROD_CORS_ORIGINS;
+}
+
+function isAllowedRedirectUri(uri: string, env: Env): boolean {
+  const allUris = env.ENVIRONMENT === 'development'
+    ? new Set([...PROD_REDIRECT_URIS, ...DEV_REDIRECT_URIS])
+    : PROD_REDIRECT_URIS;
+  if (allUris.has(uri)) return true;
+  // Allow dev-preview redirect URIs (dynamic PR number in path)
+  if (uri.match(/^https:\/\/eso-toolkit\.github\.io\/dev-previews\/pr-\d+\/discord-oauth-redirect$/)) return true;
+  return false;
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     // ── CORS preflight ───────────────────────────────────────────────────
     if (request.method === 'OPTIONS') {
-      return handleCorsPrelight(request);
+      return handleCorsPreflight(request, env);
     }
 
     // ── Public API routes (CORS-enabled) ─────────────────────────────────
     if (url.pathname === '/discord/bot/guilds') {
-      return withCors(request, await handleBotGuilds(env));
+      return withCors(request, env, await handleBotGuilds(request, env));
     }
     if (url.pathname === '/discord/oauth/token') {
-      return withCors(request, await handleOAuthTokenExchange(request, env));
+      return withCors(request, env, await handleOAuthTokenExchange(request, env));
     }
 
     // ── Roster API routes ────────────────────────────────────────────────
     if (url.pathname.startsWith('/discord/roster/')) {
-      return withCors(request, await handleRosterApi(request, url, env));
+      return withCors(request, env, await handleRosterApi(request, url, env));
     }
 
     // ── Discord Interactions (default) ────────────────────────────────────
@@ -129,17 +165,42 @@ async function routeInteraction(
   }
 }
 
-// ── Public API: Bot Guilds ──────────────────────────────────────────────────
+// ── Public API: Mutual Guilds (authenticated) ──────────────────────────────
 
-async function handleBotGuilds(env: Env): Promise<Response> {
+const DISCORD_API = 'https://discord.com/api/v10';
+
+async function handleBotGuilds(request: Request, env: Env): Promise<Response> {
+  // Require user's Discord Bearer token
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return jsonResponse({ error: 'Authorization required. Provide a Discord Bearer token.' }, 401);
+  }
+  const userToken = authHeader.slice(7);
+
   try {
-    const guilds = await getBotGuilds(env);
+    // Fetch user guilds and bot guilds in parallel
+    const [userGuildsRes, botGuilds] = await Promise.all([
+      fetch(`${DISCORD_API}/users/@me/guilds`, {
+        headers: { Authorization: `Bearer ${userToken}` },
+      }),
+      getBotGuilds(env),
+    ]);
+
+    if (!userGuildsRes.ok) {
+      return jsonResponse({ error: 'Invalid or expired Discord token.' }, 401);
+    }
+
+    const userGuilds = (await userGuildsRes.json()) as { id: string; name: string; icon: string | null }[];
+    const botGuildIds = new Set(botGuilds.map((g) => g.id));
+
+    // Return only mutual guilds (user + bot both members)
+    const mutual = userGuilds.filter((g) => botGuildIds.has(g.id));
     return jsonResponse({
-      guilds: guilds.map((g) => ({ id: g.id, name: g.name, icon: g.icon })),
+      guilds: mutual.map((g) => ({ id: g.id, name: g.name, icon: g.icon })),
     });
   } catch (err) {
     console.error('[bot-guilds] error:', err);
-    return jsonResponse({ error: 'Failed to fetch bot guilds' }, 500);
+    return jsonResponse({ error: 'Failed to fetch guilds' }, 500);
   }
 }
 
@@ -161,6 +222,11 @@ async function handleOAuthTokenExchange(request: Request, env: Env): Promise<Res
     return jsonResponse({ error: 'code and redirect_uri are required' }, 400);
   }
 
+  // Validate redirect_uri against allowlist
+  if (!isAllowedRedirectUri(body.redirect_uri, env)) {
+    return jsonResponse({ error: 'Invalid redirect_uri' }, 400);
+  }
+
   try {
     const params = new URLSearchParams({
       client_id: env.DISCORD_APPLICATION_ID,
@@ -176,10 +242,15 @@ async function handleOAuthTokenExchange(request: Request, env: Env): Promise<Res
       body: params.toString(),
     });
 
-    const data = await res.json();
+    const data = (await res.json()) as Record<string, unknown>;
     if (!res.ok) {
-      console.error('[oauth-token] Discord error:', data);
-      return jsonResponse({ error: 'Token exchange failed' }, 400);
+      console.error('[oauth-token] Discord error:', JSON.stringify(data));
+      const discordError = typeof data.error_description === 'string'
+        ? data.error_description
+        : typeof data.error === 'string'
+          ? data.error
+          : 'Token exchange failed';
+      return jsonResponse({ error: discordError, discord_status: res.status }, 400);
     }
 
     return jsonResponse(data);
@@ -200,34 +271,62 @@ async function handleRosterApi(
     return jsonResponse({ error: 'Method Not Allowed' }, 405);
   }
 
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
   const path = url.pathname;
 
-  if (path === '/discord/roster/publish') {
-    return handlePublish(request, env);
-  }
+  // Refresh endpoint supports both webhook secret (server-to-server) and user auth
   if (path === '/discord/roster/refresh') {
-    return handleRefresh(request, env);
+    return handleRefresh(body, request, env);
+  }
+
+  // Publish endpoints require user authentication
+  const guildId = body.guildId as string | undefined;
+  if (!guildId) {
+    return jsonResponse({ error: 'guildId is required' }, 400);
+  }
+
+  const auth = await verifyHttpCaller(env, guildId, request.headers.get('Authorization'));
+  if (!auth.authorized) {
+    return jsonResponse({ error: auth.error ?? 'Forbidden' }, 403);
+  }
+
+  if (path === '/discord/roster/publish') {
+    return handlePublish(body, env, auth.userId);
   }
   if (path === '/discord/roster/publish-direct') {
-    return handlePublishDirect(request, env);
+    return handlePublishDirect(body, env, auth.userId);
   }
 
   return jsonResponse({ error: 'Not Found' }, 404);
 }
 
-async function handlePublish(request: Request, env: Env): Promise<Response> {
-  let body: PublishRequest;
-  try {
-    body = (await request.json()) as PublishRequest;
-  } catch {
-    return jsonResponse({ error: 'Invalid JSON' }, 400);
-  }
+async function handlePublish(
+  body: Record<string, unknown>,
+  env: Env,
+  ownerUserId?: string | undefined,
+): Promise<Response> {
+  const guildId = body.guildId as string | undefined;
+  const rosterId = body.rosterId as string | undefined;
 
-  if (!body.guildId || !body.rosterId) {
+  if (!guildId || !rosterId) {
     return jsonResponse({ error: 'guildId and rosterId are required' }, 400);
   }
 
-  const result = await publishRoster(env, body);
+  const req: PublishRequest = {
+    guildId,
+    rosterId,
+    categoryId: (body.categoryId as string | undefined) ?? undefined,
+    channelNameOverride: (body.channelNameOverride as string | undefined) ?? undefined,
+    ownerUserId: ownerUserId ?? '',
+  };
+
+  const result = await publishRoster(env, req);
   if (!result.ok) {
     return jsonResponse({ error: result.error }, 400);
   }
@@ -235,19 +334,30 @@ async function handlePublish(request: Request, env: Env): Promise<Response> {
   return jsonResponse({ ok: true, channelId: result.channelId, messageId: result.messageId });
 }
 
-async function handleRefresh(request: Request, env: Env): Promise<Response> {
-  let body: { rosterId?: string };
-  try {
-    body = (await request.json()) as { rosterId?: string };
-  } catch {
-    return jsonResponse({ error: 'Invalid JSON' }, 400);
-  }
-
-  if (!body.rosterId) {
+async function handleRefresh(
+  body: Record<string, unknown>,
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const rosterId = body.rosterId as string | undefined;
+  if (!rosterId) {
     return jsonResponse({ error: 'rosterId is required' }, 400);
   }
 
-  const result = await refreshRoster(env, body.rosterId);
+  // Accept either webhook secret (server-to-server) or user Discord token
+  const authHeader = request.headers.get('Authorization');
+  const isWebhook = verifyWebhookSecret(env, authHeader);
+
+  if (!isWebhook) {
+    // For user-initiated refresh, we need guildId to check permissions
+    const guildId = (body.guildId as string | undefined) ?? env.GUILD_ID;
+    const auth = await verifyHttpCaller(env, guildId, authHeader);
+    if (!auth.authorized) {
+      return jsonResponse({ error: auth.error ?? 'Forbidden' }, 403);
+    }
+  }
+
+  const result = await refreshRoster(env, rosterId);
   if (!result.ok) {
     return jsonResponse({ error: result.error }, 400);
   }
@@ -255,19 +365,32 @@ async function handleRefresh(request: Request, env: Env): Promise<Response> {
   return jsonResponse({ ok: true, refreshedCount: result.refreshedCount });
 }
 
-async function handlePublishDirect(request: Request, env: Env): Promise<Response> {
-  let body: DirectPublishRequest;
-  try {
-    body = (await request.json()) as DirectPublishRequest;
-  } catch {
-    return jsonResponse({ error: 'Invalid JSON' }, 400);
+async function handlePublishDirect(
+  body: Record<string, unknown>,
+  env: Env,
+  ownerUserId?: string | undefined,
+): Promise<Response> {
+  const guildId = body.guildId as string | undefined;
+  const title = body.title as string | undefined;
+  const rosterData = body.roster_data as string | undefined;
+
+  if (!guildId || !title || !rosterData) {
+    return jsonResponse({ error: 'guildId, title, and roster_data are required' }, 400);
   }
 
-  if (!body.guildId || !body.title || !body.roster_data || !body.trial_id) {
-    return jsonResponse({ error: 'guildId, title, trial_id, and roster_data are required' }, 400);
-  }
+  const req: DirectPublishRequest = {
+    guildId,
+    title,
+    description: (body.description as string | undefined) ?? undefined,
+    trial_id: (body.trial_id as string | undefined) ?? undefined,
+    roster_data: rosterData,
+    author_name: (body.author_name as string | undefined) ?? undefined,
+    channelNameOverride: (body.channelNameOverride as string | undefined) ?? undefined,
+    categoryId: (body.categoryId as string | undefined) ?? undefined,
+    ownerUserId: ownerUserId ?? '',
+  };
 
-  const result = await publishDirect(env, body);
+  const result = await publishDirect(env, req);
   if (!result.ok) {
     return jsonResponse({ error: result.error }, 400);
   }
@@ -277,14 +400,14 @@ async function handlePublishDirect(request: Request, env: Env): Promise<Response
 
 // ── CORS helpers ────────────────────────────────────────────────────────────
 
-function getCorsOrigin(request: Request): string | null {
+function getCorsOrigin(request: Request, env: Env): string | null {
   const origin = request.headers.get('Origin');
-  if (origin && CORS_ORIGINS.has(origin)) return origin;
+  if (origin && getAllowedOrigins(env).has(origin)) return origin;
   return null;
 }
 
-function handleCorsPrelight(request: Request): Response {
-  const origin = getCorsOrigin(request);
+function handleCorsPreflight(request: Request, env: Env): Response {
+  const origin = getCorsOrigin(request, env);
   if (!origin) return new Response(null, { status: 204 });
   return new Response(null, {
     status: 204,
@@ -297,8 +420,8 @@ function handleCorsPrelight(request: Request): Response {
   });
 }
 
-function withCors(request: Request, response: Response): Response {
-  const origin = getCorsOrigin(request);
+function withCors(request: Request, env: Env, response: Response): Response {
+  const origin = getCorsOrigin(request, env);
   if (!origin) return response;
   const headers = new Headers(response.headers);
   headers.set('Access-Control-Allow-Origin', origin);

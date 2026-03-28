@@ -5,7 +5,9 @@
  * otherwise creates a new channel and mapping.
  */
 
-import { isStaff, sendFollowup } from '../discord.js';
+import { hasRosterPermission } from '../auth.js';
+import { sendFollowup } from '../discord.js';
+import { getGuildConfig, getDefaultGuildConfig } from '../roster/kv.js';
 import { publishRoster } from '../roster/publish.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
@@ -15,22 +17,23 @@ export async function handleRosterPublish(
   interaction: DiscordInteraction,
   ctx: ExecutionContext,
 ): Promise<InteractionResponse> {
-  if (!isStaff(interaction)) {
-    return {
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: '❌ You need **Manage Channels** permission to publish rosters.',
-        flags: MessageFlags.EPHEMERAL,
-      },
-    };
-  }
-
   const guildId = interaction.guild_id;
   if (!guildId) {
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         content: '❌ This command can only be used in a server.',
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
+  const config = (await getGuildConfig(env, guildId)) ?? getDefaultGuildConfig(guildId);
+  if (!hasRosterPermission(interaction, config.allowedRoleIds)) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '❌ You do not have permission to publish rosters. Ask a server admin to configure allowed roles with `/roster config set-role`.',
         flags: MessageFlags.EPHEMERAL,
       },
     };

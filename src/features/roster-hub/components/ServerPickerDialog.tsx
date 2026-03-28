@@ -29,13 +29,10 @@ import React from 'react';
 import discordIcon from '../../../assets/discord-icon.svg';
 import { useDiscordAuth } from '../../auth/DiscordAuthContext';
 import {
-  getBotGuilds,
   getBotInviteUrl,
-  getDiscordUserGuilds,
+  getMutualGuildsFromApi,
   getGuildIconUrl,
-  getMutualManagedGuilds,
   DiscordAuthExpiredError,
-  type DiscordUserGuild,
 } from '../../auth/discord-auth';
 import type { HubRoster } from '../types/roster-hub.types';
 
@@ -72,7 +69,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
   const isDark = theme.palette.mode === 'dark';
   const { discordToken, isDiscordAuthed, startDiscordLogin, clearDiscordAuth } = useDiscordAuth();
 
-  const [guilds, setGuilds] = React.useState<DiscordUserGuild[] | null>(null);
+  const [guilds, setGuilds] = React.useState<{ id: string; name: string; icon: string | null }[] | null>(null);
   const [selectedGuildId, setSelectedGuildId] = React.useState<string | null>(null);
   const [channelName, setChannelName] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -97,13 +94,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
 
     void (async () => {
       try {
-        const [userGuilds, botGuildList] = await Promise.all([
-          getDiscordUserGuilds(discordToken),
-          getBotGuilds(),
-        ]);
-
-        const botIds = new Set(botGuildList.map((g) => g.id));
-        const mutual = getMutualManagedGuilds(userGuilds, botIds);
+        const mutual = await getMutualGuildsFromApi(discordToken);
         setGuilds(mutual);
       } catch (err) {
         if (err instanceof DiscordAuthExpiredError) {
@@ -150,9 +141,16 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
         };
       }
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (discordToken) {
+        headers['Authorization'] = `Bearer ${discordToken}`;
+      }
+
       const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(body),
       });
 
@@ -271,17 +269,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
             {guilds.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 3 }}>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                  The ESO Toolkit bot isn't in any of your managed servers yet.
+                  The ESO Toolkit bot isn't in any of your servers yet.
                 </Typography>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  href={getBotInviteUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Add Bot to Server
-                </Button>
               </Box>
             ) : (
               <>
@@ -350,6 +339,19 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 />
               </>
             )}
+
+            {/* Always show "Add Bot" link so users can add the bot to more servers */}
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                href={getBotInviteUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {guilds.length === 0 ? 'Add Bot to Server' : 'Add Bot to Another Server'}
+              </Button>
+            </Box>
           </>
         )}
 

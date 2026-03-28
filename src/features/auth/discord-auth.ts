@@ -16,7 +16,7 @@ const SCOPES = 'identify guilds';
 
 // localStorage keys
 export const DISCORD_LS_TOKEN_KEY = 'discord_access_token';
-const DISCORD_LS_RETURN_PATH_KEY = 'discord_oauth_return_path';
+const DISCORD_SS_RETURN_PATH_KEY = 'discord_oauth_return_path';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -42,23 +42,41 @@ function getRedirectUri(): string {
   return `${base.replace(/\/$/, '')}/discord-oauth-redirect`;
 }
 
+// sessionStorage key for OAuth CSRF state
+const DISCORD_SS_STATE_KEY = 'discord_oauth_state';
+
 /**
  * Start the Discord OAuth2 authorization code flow.
  * Stores the return path so we can navigate back after the redirect.
+ * Generates a random state parameter for CSRF protection.
  */
 export function startDiscordAuth(returnPath?: string): void {
   if (returnPath) {
-    localStorage.setItem(DISCORD_LS_RETURN_PATH_KEY, returnPath);
+    sessionStorage.setItem(DISCORD_SS_RETURN_PATH_KEY, returnPath);
   }
+
+  const state = crypto.randomUUID();
+  sessionStorage.setItem(DISCORD_SS_STATE_KEY, state);
 
   const params = new URLSearchParams({
     client_id: DISCORD_CLIENT_ID,
     redirect_uri: getRedirectUri(),
     response_type: 'code',
     scope: SCOPES,
+    state,
   });
 
   window.location.href = `${DISCORD_OAUTH_AUTHORIZE}?${params.toString()}`;
+}
+
+/**
+ * Validate the OAuth state parameter returned by Discord.
+ * Consumes the stored state (one-time use).
+ */
+export function validateOAuthState(stateParam: string | null): boolean {
+  const stored = sessionStorage.getItem(DISCORD_SS_STATE_KEY);
+  sessionStorage.removeItem(DISCORD_SS_STATE_KEY);
+  return !!stored && stored === stateParam;
 }
 
 /**
@@ -87,18 +105,20 @@ export async function exchangeDiscordCode(code: string): Promise<DiscordTokenRes
  * Get the stored return path (page user was on before Discord auth).
  */
 export function getDiscordReturnPath(): string {
-  const path = localStorage.getItem(DISCORD_LS_RETURN_PATH_KEY);
-  localStorage.removeItem(DISCORD_LS_RETURN_PATH_KEY);
+  const path = sessionStorage.getItem(DISCORD_SS_RETURN_PATH_KEY);
+  sessionStorage.removeItem(DISCORD_SS_RETURN_PATH_KEY);
   return path ?? '/';
 }
 
 // ── Discord API calls ───────────────────────────────────────────────────────
 
+
 /**
- * Fetch the guilds the authenticated Discord user is a member of.
+ * Fetch mutual guilds (where both the user and bot are members).
+ * Requires the user's Discord access token for server-side filtering.
  */
-export async function getDiscordUserGuilds(accessToken: string): Promise<DiscordUserGuild[]> {
-  const res = await fetch(`${DISCORD_API_BASE}/users/@me/guilds`, {
+export async function getMutualGuildsFromApi(accessToken: string): Promise<{ id: string; name: string; icon: string | null }[]> {
+  const res = await fetch(`${DISCORD_BOT_API_URL}/discord/bot/guilds`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
@@ -106,20 +126,7 @@ export async function getDiscordUserGuilds(accessToken: string): Promise<Discord
     if (res.status === 401) {
       throw new DiscordAuthExpiredError('Discord token expired');
     }
-    throw new Error(`Failed to fetch guilds: ${res.status}`);
-  }
-
-  return res.json() as Promise<DiscordUserGuild[]>;
-}
-
-/**
- * Fetch the guilds the ESO Toolkit bot is a member of.
- */
-export async function getBotGuilds(): Promise<{ id: string; name: string; icon: string | null }[]> {
-  const res = await fetch(`${DISCORD_BOT_API_URL}/discord/bot/guilds`);
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch bot guilds: ${res.status}`);
+    throw new Error(`Failed to fetch mutual guilds: ${res.status}`);
   }
 
   const data = (await res.json()) as { guilds: { id: string; name: string; icon: string | null }[] };
@@ -128,26 +135,6 @@ export async function getBotGuilds(): Promise<{ id: string; name: string; icon: 
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-const MANAGE_GUILD = 0x20n;
-
-/**
- * Filter user guilds to only those where:
- *   1. The bot is also a member
- *   2. The user has MANAGE_GUILD permission
- */
-export function getMutualManagedGuilds(
-  userGuilds: DiscordUserGuild[],
-  botGuildIds: Set<string>,
-): DiscordUserGuild[] {
-  return userGuilds.filter((g) => {
-    if (!botGuildIds.has(g.id)) return false;
-    try {
-      return (BigInt(g.permissions) & MANAGE_GUILD) === MANAGE_GUILD;
-    } catch {
-      return false;
-    }
-  });
-}
 
 /**
  * Build a Discord guild icon URL.
@@ -161,8 +148,9 @@ export function getGuildIconUrl(guildId: string, iconHash: string | null, size =
  * Build the URL to invite the bot to a server.
  */
 export function getBotInviteUrl(): string {
-  // Permissions: Manage Channels, Send Messages, Embed Links, View Channels
-  const permissions = '19456';
+  // Permissions: Manage Channels (1<<4), View Channel (1<<10), Send Messages (1<<11),
+  // Embed Links (1<<14), Read Message History (1<<16)
+  const permissions = '85008';
   return `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&permissions=${permissions}&scope=bot%20applications.commands`;
 }
 

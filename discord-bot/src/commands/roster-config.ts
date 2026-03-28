@@ -2,12 +2,16 @@
  * /roster config — guild-level configuration subcommands.
  *
  * Subcommands:
- *   set-name-pattern  — Set the channel naming template
+ *   set-role         — Set the allowed role for publishing rosters (replaces existing)
+ *   add-role         — Add an allowed role
+ *   remove-role      — Remove an allowed role
+ *   list             — Show current configuration
+ *   set-name-pattern — Set the channel naming template
  *   set-default-category — Set the default category for new roster channels
- *   set-role-pings — Set Discord role IDs for tank/healer/DD sign-up pings
+ *   set-role-pings   — Set Discord role IDs for tank/healer/DD sign-up pings
  */
 
-import { isStaff } from '../discord.js';
+import { isAdmin } from '../discord.js';
 import { getGuildConfig, getDefaultGuildConfig, upsertGuildConfig } from '../roster/kv.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, DiscordInteractionOption, Env, InteractionResponse } from '../types.js';
@@ -17,11 +21,11 @@ export async function handleRosterConfig(
   interaction: DiscordInteraction,
   _ctx: ExecutionContext,
 ): Promise<InteractionResponse> {
-  if (!isStaff(interaction)) {
+  if (!isAdmin(interaction)) {
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: '❌ You need **Manage Channels** permission to configure roster settings.',
+        content: '❌ You need **Manage Server** permission to configure roster settings.',
         flags: MessageFlags.EPHEMERAL,
       },
     };
@@ -54,6 +58,18 @@ export async function handleRosterConfig(
     case 'set-role-pings':
       return handleSetRolePings(env, guildId, sub.options ?? []);
 
+    case 'set-role':
+      return handleSetRole(env, guildId, sub.options ?? []);
+
+    case 'add-role':
+      return handleAddRole(env, guildId, sub.options ?? []);
+
+    case 'remove-role':
+      return handleRemoveRole(env, guildId, sub.options ?? []);
+
+    case 'list':
+      return showCurrentConfig(env, guildId);
+
     default:
       return showCurrentConfig(env, guildId);
   }
@@ -74,11 +90,16 @@ async function showCurrentConfig(env: Env, guildId: string): Promise<Interaction
         .join('\n') || '*Not set*'
     : '*Not set*';
 
+  const allowedRoles = config.allowedRoleIds?.length
+    ? config.allowedRoleIds.map((id) => `<@&${id}>`).join(', ')
+    : '*Not set — only Manage Server admins can publish*';
+
   return {
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
       content: [
         '**📜 Roster Config**',
+        `**Allowed Roles:** ${allowedRoles}`,
         `**Name Pattern:** \`${config.namePattern}\``,
         `**Default Category:** ${category}`,
         `**Role Pings:**\n${pings}`,
@@ -168,6 +189,121 @@ async function handleSetRolePings(
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
       content: '✅ Role pings updated.',
+      flags: MessageFlags.EPHEMERAL,
+    },
+  };
+}
+
+// ── Allowed Role Management ────────────────────────────────────────────────
+
+async function handleSetRole(
+  env: Env,
+  guildId: string,
+  options: DiscordInteractionOption[],
+): Promise<InteractionResponse> {
+  const roleId = options.find((o) => o.name === 'role')?.value as string | undefined;
+  if (!roleId) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '❌ Please provide a role.',
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
+  const config = (await getGuildConfig(env, guildId)) ?? getDefaultGuildConfig(guildId);
+  config.allowedRoleIds = [roleId];
+  await upsertGuildConfig(env, config);
+
+  return {
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      content: `✅ Allowed role set to <@&${roleId}>. Users with this role can now publish rosters.`,
+      flags: MessageFlags.EPHEMERAL,
+    },
+  };
+}
+
+async function handleAddRole(
+  env: Env,
+  guildId: string,
+  options: DiscordInteractionOption[],
+): Promise<InteractionResponse> {
+  const roleId = options.find((o) => o.name === 'role')?.value as string | undefined;
+  if (!roleId) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '❌ Please provide a role.',
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
+  const config = (await getGuildConfig(env, guildId)) ?? getDefaultGuildConfig(guildId);
+  const existing = config.allowedRoleIds ?? [];
+  if (existing.includes(roleId)) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: `<@&${roleId}> is already an allowed role.`,
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
+  config.allowedRoleIds = [...existing, roleId];
+  await upsertGuildConfig(env, config);
+
+  const roleList = config.allowedRoleIds.map((id) => `<@&${id}>`).join(', ');
+  return {
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      content: `✅ Added <@&${roleId}>. Allowed roles: ${roleList}`,
+      flags: MessageFlags.EPHEMERAL,
+    },
+  };
+}
+
+async function handleRemoveRole(
+  env: Env,
+  guildId: string,
+  options: DiscordInteractionOption[],
+): Promise<InteractionResponse> {
+  const roleId = options.find((o) => o.name === 'role')?.value as string | undefined;
+  if (!roleId) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '❌ Please provide a role.',
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
+  const config = (await getGuildConfig(env, guildId)) ?? getDefaultGuildConfig(guildId);
+  const existing = config.allowedRoleIds ?? [];
+  if (!existing.includes(roleId)) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: `<@&${roleId}> is not in the allowed roles list.`,
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
+  config.allowedRoleIds = existing.filter((id) => id !== roleId);
+  await upsertGuildConfig(env, config);
+
+  const roleList = config.allowedRoleIds.length
+    ? config.allowedRoleIds.map((id) => `<@&${id}>`).join(', ')
+    : '*None — only Manage Server admins can publish*';
+  return {
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      content: `✅ Removed <@&${roleId}>. Allowed roles: ${roleList}`,
       flags: MessageFlags.EPHEMERAL,
     },
   };

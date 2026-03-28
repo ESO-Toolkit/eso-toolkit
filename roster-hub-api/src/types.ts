@@ -9,6 +9,8 @@ export interface Env {
   ESOLOGS_CLIENT_SECRET: string;
   /** Discord bot Worker URL for roster sync webhooks (optional) */
   DISCORD_BOT_URL?: string;
+  /** Shared secret for authenticating webhook calls to the discord bot */
+  DISCORD_WEBHOOK_SECRET?: string;
 }
 
 export interface RosterRow {

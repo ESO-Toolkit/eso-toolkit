@@ -9,6 +9,7 @@ import type {
   DiscordComponent,
   DiscordInteraction,
   DiscordMessage,
+  DiscordUser,
   Env,
 } from './types.js';
 
@@ -240,6 +241,7 @@ export function getBotGuilds(env: Env): Promise<DiscordPartialGuild[]> {
 // Permission bits used throughout the bot
 export const Permission = {
   // Decimal values as bigint for safe bitwise ops
+  MANAGE_GUILD: 1n << 5n,
   MANAGE_CHANNELS: 1n << 4n,
   SEND_MESSAGES: 1n << 11n,
   READ_MESSAGE_HISTORY: 1n << 16n,
@@ -260,4 +262,22 @@ export function isStaff(interaction: DiscordInteraction): boolean {
   const memberPermissions = interaction.member?.permissions;
   if (!memberPermissions) return false;
   return (BigInt(memberPermissions) & Permission.MANAGE_CHANNELS) === Permission.MANAGE_CHANNELS;
+}
+
+/** Returns true if the interaction member has MANAGE_GUILD permission (admin check). */
+export function isAdmin(interaction: DiscordInteraction): boolean {
+  const memberPermissions = interaction.member?.permissions;
+  if (!memberPermissions) return false;
+  return (BigInt(memberPermissions) & Permission.MANAGE_GUILD) === Permission.MANAGE_GUILD;
+}
+
+/**
+ * Fetch a guild member by user ID using the bot token.
+ */
+export function getGuildMember(
+  env: Env,
+  guildId: string,
+  userId: string,
+): Promise<{ user?: DiscordUser; roles: string[]; permissions?: string }> {
+  return discordFetch(env, 'GET', `/guilds/${guildId}/members/${userId}`);
 }

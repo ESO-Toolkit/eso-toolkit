@@ -5,14 +5,15 @@
  * Creates/updates the mapping and optionally publishes to a channel.
  */
 
-import { isStaff } from '../discord.js';
+import { hasRosterPermission } from '../auth.js';
 import { publishRoster } from '../roster/publish.js';
+import { getGuildConfig, getDefaultGuildConfig } from '../roster/kv.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
 
 /** Extract a roster ID from a URL or raw ID string. */
 function parseRosterId(input: string): string | null {
-  // Try URL format: https://esohelpers.com/roster-hub/ABC123
+  // Try URL format: https://esotk.com/roster-hub/ABC123
   const urlMatch = input.match(/\/roster-hub\/([A-Za-z0-9_-]+)/);
   if (urlMatch) return urlMatch[1];
 
@@ -27,22 +28,23 @@ export async function handleRosterLink(
   interaction: DiscordInteraction,
   ctx: ExecutionContext,
 ): Promise<InteractionResponse> {
-  if (!isStaff(interaction)) {
-    return {
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: '❌ You need **Manage Channels** permission to link rosters.',
-        flags: MessageFlags.EPHEMERAL,
-      },
-    };
-  }
-
   const guildId = interaction.guild_id;
   if (!guildId) {
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         content: '❌ This command can only be used in a server.',
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
+  const config = (await getGuildConfig(env, guildId)) ?? getDefaultGuildConfig(guildId);
+  if (!hasRosterPermission(interaction, config.allowedRoleIds)) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '❌ You do not have permission to link rosters. Ask a server admin to configure allowed roles with `/roster config set-role`.',
         flags: MessageFlags.EPHEMERAL,
       },
     };
@@ -64,7 +66,7 @@ export async function handleRosterLink(
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: '❌ Invalid roster URL or ID. Example: `https://esohelpers.com/roster-hub/ABC123` or `ABC123`',
+        content: '❌ Invalid roster URL or ID. Example: `https://esotk.com/roster-hub/ABC123` or `ABC123`',
         flags: MessageFlags.EPHEMERAL,
       },
     };

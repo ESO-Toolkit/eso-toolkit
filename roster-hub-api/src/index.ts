@@ -980,9 +980,15 @@ app.put('/users/me/bio', async (c) => {
 async function notifyDiscordSync(env: Env, rosterId: string): Promise<void> {
   if (!env.DISCORD_BOT_URL) return;
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (env.DISCORD_WEBHOOK_SECRET) {
+      headers['Authorization'] = `Bearer ${env.DISCORD_WEBHOOK_SECRET}`;
+    }
     await fetch(`${env.DISCORD_BOT_URL}/discord/roster/refresh`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ rosterId }),
     });
   } catch (err) {

@@ -95,7 +95,7 @@ const commands = [
           {
             type: 3, // STRING
             name: 'roster',
-            description: 'Roster URL or ID (e.g. https://esohelpers.com/roster-hub/ABC123)',
+            description: 'Roster URL or ID (e.g. https://esotk.com/roster-hub/ABC123)',
             required: true,
           },
         ],
@@ -129,6 +129,11 @@ const commands = [
         type: 1,
         name: 'refresh',
         description: 'Re-sync the roster in this channel from ESO Toolkit',
+      },
+      {
+        type: 1,
+        name: 'setup',
+        description: 'Show getting-started guide for configuring the bot (Admin only)',
       },
       {
         type: 2, // SUB_COMMAND_GROUP
@@ -185,6 +190,50 @@ const commands = [
                 required: false,
               },
             ],
+          },
+          {
+            type: 1,
+            name: 'set-role',
+            description: 'Set the allowed role for publishing rosters (replaces existing)',
+            options: [
+              {
+                type: 8, // ROLE
+                name: 'role',
+                description: 'Role to allow',
+                required: true,
+              },
+            ],
+          },
+          {
+            type: 1,
+            name: 'add-role',
+            description: 'Add an allowed role for publishing rosters',
+            options: [
+              {
+                type: 8,
+                name: 'role',
+                description: 'Role to add',
+                required: true,
+              },
+            ],
+          },
+          {
+            type: 1,
+            name: 'remove-role',
+            description: 'Remove an allowed role for publishing rosters',
+            options: [
+              {
+                type: 8,
+                name: 'role',
+                description: 'Role to remove',
+                required: true,
+              },
+            ],
+          },
+          {
+            type: 1,
+            name: 'list',
+            description: 'Show current roster configuration',
           },
         ],
       },

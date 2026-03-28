@@ -34,6 +34,8 @@ export interface GuildConfig {
     healer?: string | undefined;
     dd?: string | undefined;
   } | undefined;
+  /** Discord role IDs allowed to publish/refresh rosters. Empty = MANAGE_GUILD only. */
+  allowedRoleIds?: string[] | undefined;
 }
 
 // ── Channel Name Context ────────────────────────────────────────────────────

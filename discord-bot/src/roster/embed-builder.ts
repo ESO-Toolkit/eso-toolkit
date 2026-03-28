@@ -14,7 +14,7 @@ import {
 import type { DiscordComponent, DiscordEmbed } from '../types.js';
 import type { DecodedRoster, DecodedRosterSlot, RosterSnapshot } from './types.js';
 
-const ESO_TOOLKIT_BASE = 'https://esohelpers.com';
+const ESO_TOOLKIT_BASE = 'https://esotk.com';
 
 // ── Slot Formatting ─────────────────────────────────────────────────────────
 
