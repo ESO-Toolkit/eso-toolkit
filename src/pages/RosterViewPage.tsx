@@ -35,6 +35,7 @@ import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { BuildDetailPanel } from '../components/roster/build-detail-panel';
+import { getAddonManagerDeepLink } from '../features/build-hub/api/packs-api';
 import { preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
 import {
   RaidRoster,
@@ -54,7 +55,6 @@ import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils'
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { dpsSlotToBuild, tankSlotToBuild, healerSlotToBuild } from '../utils/rosterSlotToBuild';
-import { getAddonManagerDeepLink } from '../features/build-hub/api/packs-api';
 import { getSetDisplayName } from '../utils/setNameUtils';
 
 // ============================================================
@@ -1539,29 +1539,6 @@ export const RosterViewPage: React.FC = () => {
           >
             Edit Roster
           </Button>
-          <Button
-            size="small"
-            startIcon={<ExtensionIcon sx={{ fontSize: '0.85rem !important' }} />}
-            onClick={() => {
-              const deepLink = getAddonManagerDeepLink('trial-essentials');
-              window.location.href = deepLink;
-            }}
-            sx={{
-              borderRadius: '8px',
-              textTransform: 'none',
-              fontSize: '0.75rem',
-              fontWeight: 500,
-              color: '#c4a44a',
-              border: '1px solid rgba(196,164,74,0.3)',
-              backgroundColor: 'transparent',
-              '&:hover': {
-                backgroundColor: 'rgba(196,164,74,0.08)',
-                borderColor: 'rgba(196,164,74,0.5)',
-              },
-            }}
-          >
-            Get Addons
-          </Button>
         </Box>
       </Box>
 
@@ -1702,6 +1679,157 @@ export const RosterViewPage: React.FC = () => {
           </Paper>
         </Box>
       )}
+
+      {/* ── Recommended Addons section ── */}
+      <Box sx={{ mb: 3 }}>
+        <SectionLabel
+          icon={<ExtensionIcon sx={{ fontSize: '0.85rem', color: '#c4a44a' }} />}
+          label="Recommended Addons"
+          color="#c4a44a"
+          isDarkMode={isDarkMode}
+        />
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: '14px',
+            backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.7)',
+            border: `1px solid ${isDarkMode ? 'rgba(196,164,74,0.15)' : 'rgba(196,164,74,0.2)'}`,
+            backdropFilter: 'blur(12px)',
+            overflow: 'hidden',
+          }}
+        >
+          <Box sx={{ p: 2, pb: 1.5 }}>
+            <Typography
+              sx={{
+                fontSize: '0.82rem',
+                color: 'text.secondary',
+                lineHeight: 1.6,
+                mb: 1.5,
+              }}
+            >
+              These addons are essential for trial content. Install them all with one click using the
+              ESO Addon Manager.
+            </Typography>
+          </Box>
+
+          {/* Addon list */}
+          {[
+            { name: "Code's Combat Alerts", id: 1855, note: 'Mechanic alerts for trials & dungeons', required: true },
+            { name: 'RaidNotifier', id: 1355, note: 'Trial-specific warnings & ult sharing', required: true },
+            { name: 'Combat Metrics', id: 1360, note: 'DPS meter & fight analysis', required: true },
+            { name: 'Hodor Reflexes', id: 2311, note: 'Group DPS & ultimate sharing', required: true },
+            { name: 'Action Duration Reminder', id: 1536, note: 'Buff/skill duration timers', required: false },
+            { name: "Wizard's Wardrobe", id: 3170, note: 'Gear & skill setup management', required: false },
+          ].map((addon, i) => (
+            <Box
+              key={addon.id}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                px: 2,
+                py: 1,
+                borderTop: i === 0
+                  ? `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`
+                  : `1px solid ${isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
+              }}
+            >
+              {/* Gold dot for required, gray for optional */}
+              <Box
+                sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  bgcolor: addon.required ? '#c4a44a' : isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+                  flexShrink: 0,
+                }}
+              />
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: isDarkMode ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.8)',
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {addon.name}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '0.72rem',
+                    color: isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {addon.note}
+                </Typography>
+              </Box>
+              {addon.required && (
+                <Chip
+                  label="Required"
+                  size="small"
+                  sx={{
+                    height: 20,
+                    fontSize: '0.62rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.03em',
+                    bgcolor: 'rgba(196,164,74,0.12)',
+                    color: '#c4a44a',
+                    border: '1px solid rgba(196,164,74,0.25)',
+                  }}
+                />
+              )}
+            </Box>
+          ))}
+
+          {/* Install CTA */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              px: 2,
+              py: 1.5,
+              borderTop: `1px solid ${isDarkMode ? 'rgba(196,164,74,0.12)' : 'rgba(196,164,74,0.15)'}`,
+              background: isDarkMode ? 'rgba(196,164,74,0.04)' : 'rgba(196,164,74,0.06)',
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: '0.75rem',
+                color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+              }}
+            >
+              6 addons &middot; Install all at once
+            </Typography>
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<ExtensionIcon sx={{ fontSize: '0.85rem !important' }} />}
+              onClick={() => {
+                const deepLink = getAddonManagerDeepLink('trial-essentials');
+                window.location.href = deepLink;
+              }}
+              sx={{
+                borderRadius: '8px',
+                textTransform: 'none',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                background: 'linear-gradient(135deg, #c4a44a 0%, #d4b45a 100%)',
+                color: '#0b1220',
+                boxShadow: '0 2px 8px rgba(196,164,74,0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #d4b45a 0%, #e4c46a 100%)',
+                  boxShadow: '0 4px 16px rgba(196,164,74,0.4)',
+                },
+              }}
+            >
+              Install with Addon Manager
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
 
       {/* ── Discord copy row ── */}
       <Box sx={{ display: 'flex', justifyContent: 'center', pt: 1 }}>
