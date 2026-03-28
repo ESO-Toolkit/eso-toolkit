@@ -87,7 +87,7 @@ describe('buildRosterActionRows', () => {
     const rows = buildRosterActionRows('test-123');
     const buttons = rows[1].components ?? [];
     const linkButton = buttons.find((b) => b.url);
-    expect(linkButton?.url).toContain('roster-hub/test-123');
+    expect(linkButton?.url).toContain('/rv?id=test-123');
   });
 
   it('encodes roster ID in button custom_ids', () => {

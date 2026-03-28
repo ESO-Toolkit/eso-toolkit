@@ -139,7 +139,7 @@ export function buildRosterActionRows(
           type: ComponentType.BUTTON,
           style: ButtonStyle.LINK,
           label: 'View on ESO Toolkit',
-          url: `${ESO_TOOLKIT_BASE}/roster-hub/${rosterId}`,
+          url: `${ESO_TOOLKIT_BASE}/rv?id=${rosterId}`,
         },
         {
           type: ComponentType.BUTTON,

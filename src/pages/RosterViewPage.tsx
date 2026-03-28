@@ -1,9 +1,9 @@
 /**
  * RosterViewPage — read-only, shareable view of a roster.
  *
- * Accessible only via a direct link: /rv?r=<encoded>
- * The encoded roster is the same compact format used by the RosterBuilderPage
- * so existing share links remain compatible.
+ * Accessible via direct link: /rv?r=<encoded> or /rv?id=<hubRosterId>
+ * The ?r= format uses the same compact encoding as RosterBuilderPage.
+ * The ?id= format fetches roster data from the Roster Hub API by ID.
  */
 
 import {
@@ -51,9 +51,14 @@ import {
 import { encodeBuildToURL } from '../utils/buildEncoding';
 import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
+import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { dpsSlotToBuild, tankSlotToBuild, healerSlotToBuild } from '../utils/rosterSlotToBuild';
 import { getSetDisplayName } from '../utils/setNameUtils';
+
+const DISCORD_BOT_API_URL =
+  (import.meta.env.VITE_DISCORD_BOT_API_URL as string | undefined) ??
+  'https://eso-toolkit-discord-bot.eso-toolkit.workers.dev';
 
 // ============================================================
 // Local display helpers
@@ -1324,36 +1329,58 @@ export const RosterViewPage: React.FC = () => {
     severity: 'success' | 'error';
   }>({ open: false, message: '', severity: 'success' });
 
-  // Decode roster from ?r= on mount
+  // Decode roster from ?r= or fetch by ?id= on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('r') ?? '';
-    setEncodedParam(encoded);
+    const hubId = params.get('id') ?? '';
 
-    if (!encoded) {
+    const onDecoded = (decoded: RaidRoster | null, rosterData: string): void => {
+      if (decoded) {
+        setRoster(decoded);
+        setEncodedParam(rosterData);
+      } else {
+        setNotFound(true);
+      }
+      setLoading(false);
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'roster-preview-ready' }, window.location.origin);
+      }
+    };
+
+    if (encoded) {
+      setEncodedParam(encoded);
+      void decodeRosterFromURL(encoded)
+        .then((decoded) => onDecoded(decoded, encoded))
+        .catch(() => {
+          setNotFound(true);
+          setLoading(false);
+        });
+    } else if (hubId) {
+      // Direct-publish rosters (direct-* IDs) are stored in the bot's KV, not the hub API
+      const fetchRosterData = hubId.startsWith('direct-')
+        ? fetch(
+            `${DISCORD_BOT_API_URL}/discord/roster/${encodeURIComponent(hubId)}/data`,
+          )
+            .then((res) => {
+              if (!res.ok) throw new Error('Not found');
+              return res.json() as Promise<{ roster_data: string }>;
+            })
+            .then((json) => json.roster_data)
+        : rosterHubApi.get(hubId).then((res) => res.roster.roster_data);
+
+      void fetchRosterData
+        .then((data) =>
+          decodeRosterFromURL(data).then((decoded) => onDecoded(decoded, data)),
+        )
+        .catch(() => {
+          setNotFound(true);
+          setLoading(false);
+        });
+    } else {
       setNotFound(true);
       setLoading(false);
-      return;
     }
-
-    void decodeRosterFromURL(encoded)
-      .then((decoded) => {
-        if (decoded) {
-          setRoster(decoded);
-        } else {
-          setNotFound(true);
-        }
-        setLoading(false);
-
-        // Signal to the parent frame (RosterPreviewDialog) that content is ready
-        if (window.parent !== window) {
-          window.parent.postMessage({ type: 'roster-preview-ready' }, window.location.origin);
-        }
-      })
-      .catch(() => {
-        setNotFound(true);
-        setLoading(false);
-      });
   }, []);
 
   // Copy this shareable link to clipboard

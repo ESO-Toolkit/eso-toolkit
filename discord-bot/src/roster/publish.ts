@@ -249,6 +249,9 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
   };
   await upsertMapping(env, mapping);
 
+  // Persist roster data so the "View on ESO Toolkit" link can resolve direct-* IDs
+  await env.ROSTERS.put(`roster-data:${syntheticId}`, req.roster_data);
+
   return { ok: true, channelId: result.channelId, messageId: result.messageId };
 }
 

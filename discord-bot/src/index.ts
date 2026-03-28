@@ -267,6 +267,15 @@ async function handleRosterApi(
   url: URL,
   env: Env,
 ): Promise<Response> {
+  // Public GET: fetch roster data for direct-publish rosters stored in KV
+  const dataMatch = url.pathname.match(/^\/discord\/roster\/([^/]+)\/data$/);
+  if (dataMatch && request.method === 'GET') {
+    const rosterId = dataMatch[1];
+    const rosterData = await env.ROSTERS.get(`roster-data:${rosterId}`);
+    if (!rosterData) return jsonResponse({ error: 'Not found' }, 404);
+    return jsonResponse({ roster_data: rosterData });
+  }
+
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method Not Allowed' }, 405);
   }
