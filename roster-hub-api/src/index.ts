@@ -160,6 +160,7 @@ app.post('/rosters', async (c) => {
     roster_data: string;
     tags?: string[];
     is_anonymous?: boolean;
+    recommended_addons?: { packId?: string; addons: { esouiId: number; name: string; required?: boolean; note?: string }[] } | null;
   }
 
   let body: CreateBody;
@@ -169,7 +170,7 @@ app.post('/rosters', async (c) => {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
 
-  const { title, description = '', trial_id, roster_data, tags = [], is_anonymous = false } = body;
+  const { title, description = '', trial_id, roster_data, tags = [], is_anonymous = false, recommended_addons = null } = body;
 
   if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
   if (!trial_id?.trim()) return c.json({ error: 'trial_id is required' }, 400);
@@ -181,6 +182,14 @@ app.post('/rosters', async (c) => {
     return c.json({ error: 'roster_data must be ≤ 50 000 characters' }, 400);
   if (!isValidBase64Url(roster_data))
     return c.json({ error: 'roster_data must be valid base64url' }, 400);
+
+  // Validate recommended_addons if provided
+  let recommendedAddonsJson: string | null = null;
+  if (recommended_addons && Array.isArray(recommended_addons.addons) && recommended_addons.addons.length > 0) {
+    if (recommended_addons.addons.length > 20)
+      return c.json({ error: 'recommended_addons: max 20 addons' }, 400);
+    recommendedAddonsJson = JSON.stringify(recommended_addons);
+  }
 
   const createAllowed = await checkRosterCreateRateLimit(c.env.DB, user.id);
   if (!createAllowed)
@@ -202,6 +211,7 @@ app.post('/rosters', async (c) => {
     rosterData: roster_data,
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
+    recommendedAddons: recommendedAddonsJson,
   });
 
   const roster = await getRosterById(c.env.DB, id, user.id);
@@ -221,6 +231,7 @@ app.put('/rosters/:id', async (c) => {
     roster_data: string;
     tags?: string[];
     is_anonymous?: boolean;
+    recommended_addons?: { packId?: string; addons: { esouiId: number; name: string; required?: boolean; note?: string }[] } | null;
   }
 
   let body: UpdateBody;
@@ -230,7 +241,7 @@ app.put('/rosters/:id', async (c) => {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
 
-  const { title, description = '', trial_id, roster_data, tags = [], is_anonymous = false } = body;
+  const { title, description = '', trial_id, roster_data, tags = [], is_anonymous = false, recommended_addons = null } = body;
 
   if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
   if (!trial_id?.trim()) return c.json({ error: 'trial_id is required' }, 400);
@@ -243,6 +254,14 @@ app.put('/rosters/:id', async (c) => {
   if (!isValidBase64Url(roster_data))
     return c.json({ error: 'roster_data must be valid base64url' }, 400);
 
+  // Validate recommended_addons if provided
+  let recommendedAddonsJson: string | null = null;
+  if (recommended_addons && Array.isArray(recommended_addons.addons) && recommended_addons.addons.length > 0) {
+    if (recommended_addons.addons.length > 20)
+      return c.json({ error: 'recommended_addons: max 20 addons' }, 400);
+    recommendedAddonsJson = JSON.stringify(recommended_addons);
+  }
+
   const updated = await updateRoster(c.env.DB, c.req.param('id'), user.id, {
     title: sanitize(title),
     description: sanitize(description),
@@ -250,6 +269,7 @@ app.put('/rosters/:id', async (c) => {
     rosterData: roster_data,
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
+    recommendedAddons: recommendedAddonsJson,
   });
 
   if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);

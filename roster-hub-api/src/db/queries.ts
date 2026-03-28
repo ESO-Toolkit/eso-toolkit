@@ -139,11 +139,12 @@ export async function createRoster(
     rosterData: string;
     tags: string[];
     isAnonymous: boolean;
+    recommendedAddons: string | null;
   },
 ): Promise<void> {
   await db
     .prepare(
-      'INSERT INTO rosters (id, author_id, author_name, title, description, trial_id, roster_data, is_anonymous) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO rosters (id, author_id, author_name, title, description, trial_id, roster_data, is_anonymous, recommended_addons) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
     )
     .bind(
       data.id,
@@ -154,6 +155,7 @@ export async function createRoster(
       data.trialId,
       data.rosterData,
       data.isAnonymous ? 1 : 0,
+      data.recommendedAddons,
     )
     .run();
 
@@ -173,11 +175,12 @@ export async function updateRoster(
     rosterData: string;
     tags: string[];
     isAnonymous: boolean;
+    recommendedAddons: string | null;
   },
 ): Promise<boolean> {
   const result = await db
     .prepare(
-      "UPDATE rosters SET title = ?, description = ?, trial_id = ?, roster_data = ?, is_anonymous = ?, updated_at = datetime('now') WHERE id = ? AND author_id = ?",
+      "UPDATE rosters SET title = ?, description = ?, trial_id = ?, roster_data = ?, is_anonymous = ?, recommended_addons = ?, updated_at = datetime('now') WHERE id = ? AND author_id = ?",
     )
     .bind(
       data.title,
@@ -185,6 +188,7 @@ export async function updateRoster(
       data.trialId,
       data.rosterData,
       data.isAnonymous ? 1 : 0,
+      data.recommendedAddons,
       id,
       authorId,
     )

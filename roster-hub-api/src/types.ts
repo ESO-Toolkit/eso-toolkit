@@ -18,6 +18,7 @@ export interface RosterRow {
   description: string;
   trial_id: string;
   roster_data: string;
+  recommended_addons: string | null; // JSON: { packId?, addons[] }
   vote_count: number;
   created_at: string;
   updated_at: string;
@@ -32,6 +33,7 @@ export interface RosterWithMeta extends Omit<RosterRow, 'is_anonymous'> {
   is_anonymous: boolean;
   tags: string[];
   user_voted?: boolean;
+  recommended_addons: string | null;
 }
 
 export interface CommentRow {

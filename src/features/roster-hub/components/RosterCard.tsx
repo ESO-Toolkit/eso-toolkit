@@ -98,7 +98,8 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
     const handleGetAddons = (e: React.MouseEvent): void => {
       e.stopPropagation();
-      const deepLink = getAddonManagerDeepLink('trial-essentials');
+      const packId = roster.recommended_addons?.packId ?? 'trial-essentials';
+      const deepLink = getAddonManagerDeepLink(packId);
       window.location.href = deepLink;
       setTimeout(() => {
         void navigator.clipboard.writeText(deepLink).then(() => {
@@ -172,7 +173,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
         {/* Clickable area — opens preview */}
         <CardActionArea
-          onClick={() => navigate(`/rv?r=${encodeURIComponent(roster.roster_data)}`)}
+          onClick={() => navigate(`/rv?r=${encodeURIComponent(roster.roster_data)}&hubId=${roster.id}`)}
           sx={{ flexGrow: 1, alignItems: 'flex-start' }}
           aria-label={`View ${roster.title}`}
         >
