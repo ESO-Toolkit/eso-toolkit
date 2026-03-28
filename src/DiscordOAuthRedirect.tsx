@@ -31,7 +31,7 @@ export const DiscordOAuthRedirect: React.FC = () => {
     }
 
     if (!validateOAuthState(state)) {
-      setError('Invalid OAuth state. This may be a CSRF attack. Please try again.');
+      setError('Your Discord session expired. Please close this and try connecting again.');
       return;
     }
 
@@ -82,7 +82,7 @@ export const DiscordOAuthRedirect: React.FC = () => {
           {error ? (
             <>
               <Typography color="error" variant="h6" sx={{ mb: 1 }}>
-                Discord Authorization Failed
+                Connection Failed
               </Typography>
               <Typography sx={{ color: 'rgba(255,255,255,0.7)' }}>{error}</Typography>
             </>

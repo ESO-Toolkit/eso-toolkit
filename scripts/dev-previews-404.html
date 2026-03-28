@@ -34,12 +34,15 @@
         // Base path for this PR preview, e.g. /dev-previews/pr-860/
         var base = parts.slice(0, prIndex + 1).join('/') + '/';
 
-        // Full original URL to restore in the SPA (path + query + hash)
+        // Path relative to the PR base — strip the base prefix so the SPA
+        // router (which has its own basename) doesn't double up the path.
+        // e.g. /dev-previews/pr-860/roster-builder?r=… → /roster-builder?r=…
         var full = l.pathname + l.search + l.hash;
+        var relative = '/' + full.substring(base.length);
 
         // Method 1: sessionStorage (no visible flash)
         try {
-          sessionStorage.setItem('redirectPath', full);
+          sessionStorage.setItem('redirectPath', relative);
           l.replace(l.origin + base);
           return;
         } catch (_) {
@@ -47,7 +50,7 @@
         }
 
         // Method 2: ?redirect= query param fallback
-        l.replace(l.origin + base + '?redirect=' + encodeURIComponent(full));
+        l.replace(l.origin + base + '?redirect=' + encodeURIComponent(relative));
       })();
     </script>
   </head>
