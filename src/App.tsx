@@ -253,16 +253,19 @@ const App: React.FC = () => {
     };
   }, []);
 
+  const loggerConfig = React.useMemo(
+    () => ({
+      level: process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.ERROR,
+      enableConsole: true,
+      enableStorage: true,
+      maxStorageEntries: 1000,
+      contextPrefix: 'ESO-Logger',
+    }),
+    [],
+  );
+
   return (
-    <LoggerProvider
-      config={{
-        level: process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.ERROR, // DEBUG in dev, WARN in prod
-        enableConsole: true,
-        enableStorage: true,
-        maxStorageEntries: 1000,
-        contextPrefix: 'ESO-Logger',
-      }}
-    >
+    <LoggerProvider config={loggerConfig}>
       <ReduxProvider store={store}>
         <PersistGate loading={<LoadingFallback />} persistor={persistor}>
           <ReduxThemeProvider>
