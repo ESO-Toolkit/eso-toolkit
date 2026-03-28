@@ -38,7 +38,8 @@ function hydrateRoster(roster: HubRoster): HubRoster {
 }
 
 const BASE_URL =
-  (import.meta.env.VITE_ROSTER_HUB_API_URL as string | undefined) ?? 'http://localhost:8787';
+  (import.meta.env.VITE_ROSTER_HUB_API_URL as string | undefined) ??
+  'https://roster-hub-api.eso-toolkit.workers.dev';
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
