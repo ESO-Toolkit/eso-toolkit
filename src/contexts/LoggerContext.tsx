@@ -26,7 +26,10 @@ export interface LoggerProviderProps {
  */
 const EMPTY_CONFIG: Partial<LoggerConfig> = {};
 
-export const LoggerProvider: React.FC<LoggerProviderProps> = ({ children, config = EMPTY_CONFIG }) => {
+export const LoggerProvider: React.FC<LoggerProviderProps> = ({
+  children,
+  config = EMPTY_CONFIG,
+}) => {
   const logger = React.useMemo(() => new Logger(config), [config]);
 
   React.useEffect(() => {
