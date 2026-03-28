@@ -173,7 +173,9 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
         {/* Clickable area — opens preview */}
         <CardActionArea
-          onClick={() => navigate(`/rv?r=${encodeURIComponent(roster.roster_data)}&hubId=${roster.id}`)}
+          onClick={() =>
+            navigate(`/rv?r=${encodeURIComponent(roster.roster_data)}&hubId=${roster.id}`)
+          }
           sx={{ flexGrow: 1, alignItems: 'flex-start' }}
           aria-label={`View ${roster.title}`}
         >

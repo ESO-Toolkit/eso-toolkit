@@ -3,9 +3,10 @@
  * Separate from the build/roster hub API since packs live on a different worker.
  */
 
-const PACKS_API_URL = (
-  import.meta.env.VITE_PACKS_API_URL || 'http://localhost:8787'
-).replace(/\/+$/, '');
+const PACKS_API_URL = (import.meta.env.VITE_PACKS_API_URL || 'http://localhost:8787').replace(
+  /\/+$/,
+  '',
+);
 
 export interface PackAddonEntry {
   esouiId: number;

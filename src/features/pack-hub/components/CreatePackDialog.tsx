@@ -53,17 +53,9 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
 
-import {
-  type EsouiAddonSearchResult,
-  packHubApi,
-  searchEsouiAddons,
-} from '../api/pack-hub-api';
+import { type EsouiAddonSearchResult, packHubApi, searchEsouiAddons } from '../api/pack-hub-api';
 import type { HubPack, PackAddonEntry } from '../types/pack-hub.types';
-import {
-  PACK_TAG_COLORS,
-  PACK_TYPE_LABELS,
-  PRESET_PACK_TAGS,
-} from '../types/pack-hub.types';
+import { PACK_TAG_COLORS, PACK_TYPE_LABELS, PRESET_PACK_TAGS } from '../types/pack-hub.types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -135,8 +127,9 @@ const SortableAddonRow: React.FC<SortableAddonProps> = ({
   onToggleRequired,
   onRemove,
 }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: addon.esouiId });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: addon.esouiId,
+  });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -412,10 +405,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
       setError(`"${result.title}" is already in this pack.`);
       return;
     }
-    setAddons((prev) => [
-      ...prev,
-      { esouiId: result.id, name: result.title, required: true },
-    ]);
+    setAddons((prev) => [...prev, { esouiId: result.id, name: result.title, required: true }]);
     setSearchQuery('');
     setSearchResults([]);
     setError(null);
@@ -432,13 +422,15 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
     }
     setSearchLoading(true);
     searchTimerRef.current = setTimeout(() => {
-      void searchEsouiAddons(value.trim()).then((results) => {
-        setSearchResults(results);
-        setSearchLoading(false);
-      }).catch(() => {
-        setSearchResults([]);
-        setSearchLoading(false);
-      });
+      void searchEsouiAddons(value.trim())
+        .then((results) => {
+          setSearchResults(results);
+          setSearchLoading(false);
+        })
+        .catch(() => {
+          setSearchResults([]);
+          setSearchLoading(false);
+        });
     }, 400);
   };
 
@@ -633,7 +625,14 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
 
         {/* Tags */}
         <Box>
-          <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', mb: 0.75 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'baseline',
+              justifyContent: 'space-between',
+              mb: 0.75,
+            }}
+          >
             <Typography
               variant="caption"
               sx={{
@@ -663,10 +662,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
               const isDisabled = !isSelected && atTagLimit;
               const accent = PACK_TAG_COLORS[tag] ?? '#888';
               return (
-                <Tooltip
-                  key={tag}
-                  title={isDisabled ? `Remove a tag first (max ${MAX_TAGS})` : ''}
-                >
+                <Tooltip key={tag} title={isDisabled ? `Remove a tag first (max ${MAX_TAGS})` : ''}>
                   <span>
                     <Chip
                       label={tag}
@@ -899,9 +895,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
               loading={searchLoading}
               loadingText="Searching ESOUI…"
               noOptionsText={
-                searchQuery.length < 2
-                  ? 'Type to search ESOUI addons…'
-                  : 'No addons found'
+                searchQuery.length < 2 ? 'Type to search ESOUI addons…' : 'No addons found'
               }
               getOptionDisabled={(opt) => addons.some((a) => a.esouiId === opt.id)}
               isOptionEqualToValue={(opt, val) => opt.id === val.id}
@@ -981,14 +975,9 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
                       startAdornment: (
                         <>
                           {searchLoading ? (
-                            <CircularProgress
-                              size={16}
-                              sx={{ color: accentColor, mr: 0.5 }}
-                            />
+                            <CircularProgress size={16} sx={{ color: accentColor, mr: 0.5 }} />
                           ) : (
-                            <Extension
-                              sx={{ fontSize: 16, color: 'text.disabled', mr: 0.5 }}
-                            />
+                            <Extension sx={{ fontSize: 16, color: 'text.disabled', mr: 0.5 }} />
                           )}
                           {params.InputProps.startAdornment}
                         </>
@@ -1002,9 +991,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
                       bgcolor: isDark ? alpha('#0f172a', 0.6) : '#fff',
                       transition: 'all 0.2s',
                       '& fieldset': {
-                        borderColor: isDark
-                          ? alpha('#c4a44a', 0.15)
-                          : alpha('#000', 0.1),
+                        borderColor: isDark ? alpha('#c4a44a', 0.15) : alpha('#000', 0.1),
                       },
                       '&.Mui-focused fieldset': {
                         borderColor: accentColor,
@@ -1098,7 +1085,8 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
                 width: step === i ? 18 : 7,
                 height: 7,
                 borderRadius: 4,
-                bgcolor: step === i ? accentColor : isDark ? alpha('#fff', 0.12) : alpha('#000', 0.12),
+                bgcolor:
+                  step === i ? accentColor : isDark ? alpha('#fff', 0.12) : alpha('#000', 0.12),
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 boxShadow: step === i ? `0 0 8px ${alpha(accentColor, 0.4)}` : 'none',
               }}
@@ -1272,9 +1260,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
           },
         }}
       >
-        <AnimatePresence mode="wait">
-          {step === 0 ? renderStep0() : renderStep1()}
-        </AnimatePresence>
+        <AnimatePresence mode="wait">{step === 0 ? renderStep0() : renderStep1()}</AnimatePresence>
       </DialogContent>
 
       {/* ── Actions ── */}
@@ -1369,9 +1355,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
               onClick={() => void handlePublish()}
               disabled={loading || !canPublish}
               variant="contained"
-              startIcon={
-                loading ? <CircularProgress size={16} color="inherit" /> : undefined
-              }
+              startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
               sx={{
                 borderRadius: 2,
                 px: 3,

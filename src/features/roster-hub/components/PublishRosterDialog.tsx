@@ -39,7 +39,11 @@ import { packsApi } from '../../build-hub/api/packs-api';
 import type { Pack, PackAddonEntry, PackIndexItem } from '../../build-hub/api/packs-api';
 import { TRIALS } from '../../loadout-manager/data/trialConfigs';
 import { rosterHubApi } from '../api/roster-hub-api';
-import type { HubRoster, RecommendedAddonEntry, RecommendedAddons } from '../types/roster-hub.types';
+import type {
+  HubRoster,
+  RecommendedAddonEntry,
+  RecommendedAddons,
+} from '../types/roster-hub.types';
 import { PRESET_TAGS, TAG_COLORS } from '../types/roster-hub.types';
 
 interface PublishRosterDialogProps {
@@ -244,9 +248,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           setAddonSectionOpen(true);
           setSelectedPackId(editingRoster.recommended_addons.packId ?? null);
           setAddonList(editingRoster.recommended_addons.addons);
-          setEnabledAddons(
-            new Set(editingRoster.recommended_addons.addons.map((a) => a.esouiId)),
-          );
+          setEnabledAddons(new Set(editingRoster.recommended_addons.addons.map((a) => a.esouiId)));
         } else {
           setAddonSectionOpen(false);
           setSelectedPackId(null);

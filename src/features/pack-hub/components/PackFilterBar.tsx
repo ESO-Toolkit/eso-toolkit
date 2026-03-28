@@ -15,11 +15,7 @@ import {
 import React from 'react';
 
 import type { PackHubFilters, SortOrder } from '../types/pack-hub.types';
-import {
-  PACK_TAG_COLORS,
-  PACK_TYPE_OPTIONS,
-  PRESET_PACK_TAGS,
-} from '../types/pack-hub.types';
+import { PACK_TAG_COLORS, PACK_TYPE_OPTIONS, PRESET_PACK_TAGS } from '../types/pack-hub.types';
 
 interface PackFilterBarProps {
   filters: PackHubFilters;

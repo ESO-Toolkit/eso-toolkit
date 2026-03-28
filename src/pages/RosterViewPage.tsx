@@ -38,7 +38,10 @@ import { BuildDetailPanel } from '../components/roster/build-detail-panel';
 import { getAddonManagerDeepLink } from '../features/build-hub/api/packs-api';
 import { preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
 import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
-import type { RecommendedAddonEntry, RecommendedAddons } from '../features/roster-hub/types/roster-hub.types';
+import type {
+  RecommendedAddonEntry,
+  RecommendedAddons,
+} from '../features/roster-hub/types/roster-hub.types';
 import {
   RaidRoster,
   TankSetup,
@@ -1332,8 +1335,18 @@ export const RosterViewPage: React.FC = () => {
 
   // Default addons shown when no hub roster or no custom recommendations
   const DEFAULT_ADDONS: RecommendedAddonEntry[] = [
-    { esouiId: 1855, name: "Code's Combat Alerts", note: 'Mechanic alerts for trials & dungeons', required: true },
-    { esouiId: 1355, name: 'RaidNotifier', note: 'Trial-specific warnings & ult sharing', required: true },
+    {
+      esouiId: 1855,
+      name: "Code's Combat Alerts",
+      note: 'Mechanic alerts for trials & dungeons',
+      required: true,
+    },
+    {
+      esouiId: 1355,
+      name: 'RaidNotifier',
+      note: 'Trial-specific warnings & ult sharing',
+      required: true,
+    },
     { esouiId: 1360, name: 'Combat Metrics', note: 'DPS meter & fight analysis', required: true },
     { esouiId: 2311, name: 'Hodor Reflexes', note: 'Group DPS & ultimate sharing', required: true },
     { esouiId: 1536, name: 'Action Duration Reminder', note: 'Buff/skill duration timers' },

@@ -36,9 +36,7 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
 
-    const tagAccent = pack.tags
-      .map((t) => PACK_TAG_COLORS[t])
-      .find((c): c is string => c != null);
+    const tagAccent = pack.tags.map((t) => PACK_TAG_COLORS[t]).find((c): c is string => c != null);
     const accentColor = tagAccent ?? PACK_TYPE_ACCENT[pack.pack_type] ?? '#c4a44a';
     const typeLabel = PACK_TYPE_LABELS[pack.pack_type] ?? pack.pack_type;
     const displayName = pack.is_anonymous ? 'Anonymous' : pack.author_name || '?';
@@ -261,7 +259,9 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
                     fontWeight: 600,
                     bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                     color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.6)',
-                    border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
+                    border: isDark
+                      ? '1px solid rgba(255,255,255,0.08)'
+                      : '1px solid rgba(0,0,0,0.06)',
                   }}
                 />
               ))}

@@ -33,7 +33,7 @@ function hydrateRoster(roster: HubRoster): HubRoster {
     recommended_addons:
       typeof roster.recommended_addons === 'string'
         ? parseRecommendedAddons(roster.recommended_addons)
-        : roster.recommended_addons ?? null,
+        : (roster.recommended_addons ?? null),
   };
 }
 

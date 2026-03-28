@@ -79,7 +79,15 @@ export const PACK_TYPE_ACCENT: Record<string, string> = {
   'roster-pack': '#22c55e', // green
 };
 
-export const PRESET_PACK_TAGS = ['trial', 'pvp', 'beginner', 'healer', 'tank', 'dps', 'utility'] as const;
+export const PRESET_PACK_TAGS = [
+  'trial',
+  'pvp',
+  'beginner',
+  'healer',
+  'tank',
+  'dps',
+  'utility',
+] as const;
 
 export type PresetPackTag = (typeof PRESET_PACK_TAGS)[number];
 

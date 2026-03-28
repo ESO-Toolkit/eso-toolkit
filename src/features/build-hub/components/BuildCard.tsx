@@ -345,10 +345,7 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
             onVote={() => onVote(build.id)}
           />
           <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-            <GetAddonsButton
-              packId={ROLE_PACK_MAP[build.role] ?? 'trial-essentials'}
-              iconOnly
-            />
+            <GetAddonsButton packId={ROLE_PACK_MAP[build.role] ?? 'trial-essentials'} iconOnly />
             <Tooltip title="Copy share link">
               <IconButton
                 size="small"
