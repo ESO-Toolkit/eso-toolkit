@@ -42,6 +42,7 @@ runs:
       env:
         VITE_BASE_URL: '${{steps.setup.outputs.base_url}}'
         VITE_GA_MEASUREMENT_ID: ${{ inputs.vite_ga_measurement_id }}
+        VITE_DISCORD_CLIENT_ID: '1405421934111490160'
 
     - name: Build Storybook
       shell: bash
