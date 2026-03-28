@@ -27,13 +27,13 @@ import {
 import React from 'react';
 
 import discordIcon from '../../../assets/discord-icon.svg';
-import { useDiscordAuth } from '../../auth/DiscordAuthContext';
 import {
   getBotInviteUrl,
   getMutualGuildsFromApi,
   getGuildIconUrl,
   DiscordAuthExpiredError,
 } from '../../auth/discord-auth';
+import { useDiscordAuth } from '../../auth/DiscordAuthContext';
 import type { HubRoster } from '../types/roster-hub.types';
 
 const DISCORD_BOT_API_URL =
@@ -69,7 +69,9 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
   const isDark = theme.palette.mode === 'dark';
   const { discordToken, isDiscordAuthed, startDiscordLogin, clearDiscordAuth } = useDiscordAuth();
 
-  const [guilds, setGuilds] = React.useState<{ id: string; name: string; icon: string | null }[] | null>(null);
+  const [guilds, setGuilds] = React.useState<
+    { id: string; name: string; icon: string | null }[] | null
+  >(null);
   const [selectedGuildId, setSelectedGuildId] = React.useState<string | null>(null);
   const [channelName, setChannelName] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -183,9 +185,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
             background: isDark
               ? 'linear-gradient(135deg, rgba(20,25,45,0.95) 0%, rgba(15,18,35,0.98) 100%)'
               : 'rgba(255,255,255,0.97)',
-            border: isDark
-              ? '1px solid rgba(88,101,242,0.2)'
-              : '1px solid rgba(88,101,242,0.15)',
+            border: isDark ? '1px solid rgba(88,101,242,0.2)' : '1px solid rgba(88,101,242,0.15)',
           },
         },
       }}
@@ -269,16 +269,12 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
             {guilds.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 3 }}>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                  The ESO Toolkit bot isn't in any of your servers yet.
+                  The ESO Toolkit bot isn&apos;t in any of your servers yet.
                 </Typography>
               </Box>
             ) : (
               <>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 1, fontWeight: 600 }}
-                >
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
                   Select a server:
                 </Typography>
                 <List
@@ -301,9 +297,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                         borderRadius: 1.5,
                         mb: 0.5,
                         '&.Mui-selected': {
-                          background: isDark
-                            ? 'rgba(88,101,242,0.15)'
-                            : 'rgba(88,101,242,0.1)',
+                          background: isDark ? 'rgba(88,101,242,0.15)' : 'rgba(88,101,242,0.1)',
                           border: '1px solid rgba(88,101,242,0.3)',
                         },
                       }}

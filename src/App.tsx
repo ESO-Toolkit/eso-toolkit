@@ -20,11 +20,12 @@ import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
 import { TextEditorSkeleton } from './components/TextEditorSkeleton';
 import { UpdateNotification } from './components/UpdateNotification';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
+import { DiscordOAuthRedirect } from './DiscordOAuthRedirect';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
 import { AuthenticatedRoute } from './features/auth/AuthenticatedRoute';
-import { DiscordAuthProvider } from './features/auth/DiscordAuthContext';
 import { BanRedirect } from './features/auth/BanRedirect';
+import { DiscordAuthProvider } from './features/auth/DiscordAuthContext';
 import { Login } from './features/auth/Login';
 import { ReportFightDetails } from './features/report_details/ReportFightDetails';
 import { UserReports } from './features/user_reports/UserReports';
@@ -37,7 +38,6 @@ import store, { persistor } from './store/storeWithHistory';
 import { initializeAnalytics } from './utils/analytics';
 import { getBaseUrl } from './utils/envUtils';
 import { initializeErrorTracking, addBreadcrumb } from './utils/errorTracking';
-
 // Initialize error tracking before the app starts
 initializeErrorTracking();
 
@@ -68,7 +68,6 @@ const LatestReports = React.lazy(() =>
 const OAuthRedirect = React.lazy(() =>
   import('./OAuthRedirect').then((module) => ({ default: module.OAuthRedirect })),
 );
-import { DiscordOAuthRedirect } from './DiscordOAuthRedirect';
 const Calculator = React.lazy(() =>
   import('./components/Calculator').then((module) => ({ default: module.Calculator })),
 );
@@ -270,22 +269,22 @@ const App: React.FC = () => {
           <ReduxThemeProvider>
             <EsoLogsClientProvider>
               <AuthProvider>
-              <DiscordAuthProvider>
-                <SnackbarProvider
-                  maxSnack={3}
-                  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                  autoHideDuration={4000}
-                  preventDuplicate
-                >
-                  {/* Global cosmic/nebula background — suppressed in embed/iframe mode */}
-                  {!window.location.search.includes('embed=1') && <SiteBackground />}
-                  <AppRoutes />
-                  {/* Update notification for new versions */}
-                  {!window.location.search.includes('embed=1') && <UpdateNotification />}
-                  {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
-                  {!window.location.search.includes('embed=1') && <CookieConsent />}
-                </SnackbarProvider>
-              </DiscordAuthProvider>
+                <DiscordAuthProvider>
+                  <SnackbarProvider
+                    maxSnack={3}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                    autoHideDuration={4000}
+                    preventDuplicate
+                  >
+                    {/* Global cosmic/nebula background — suppressed in embed/iframe mode */}
+                    {!window.location.search.includes('embed=1') && <SiteBackground />}
+                    <AppRoutes />
+                    {/* Update notification for new versions */}
+                    {!window.location.search.includes('embed=1') && <UpdateNotification />}
+                    {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
+                    {!window.location.search.includes('embed=1') && <CookieConsent />}
+                  </SnackbarProvider>
+                </DiscordAuthProvider>
               </AuthProvider>
             </EsoLogsClientProvider>
           </ReduxThemeProvider>

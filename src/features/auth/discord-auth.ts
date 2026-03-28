@@ -55,7 +55,7 @@ export function startDiscordAuth(returnPath?: string): void {
     sessionStorage.setItem(DISCORD_SS_RETURN_PATH_KEY, returnPath);
   }
 
-  const state = crypto.randomUUID();
+  const state = globalThis.crypto.randomUUID();
   sessionStorage.setItem(DISCORD_SS_STATE_KEY, state);
 
   const params = new URLSearchParams({

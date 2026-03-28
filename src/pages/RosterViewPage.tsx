@@ -35,6 +35,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { BuildDetailPanel } from '../components/roster/build-detail-panel';
 import { preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
+import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
 import {
   RaidRoster,
   TankSetup,
@@ -51,7 +52,6 @@ import {
 import { encodeBuildToURL } from '../utils/buildEncoding';
 import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
-import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { dpsSlotToBuild, tankSlotToBuild, healerSlotToBuild } from '../utils/rosterSlotToBuild';
 import { getSetDisplayName } from '../utils/setNameUtils';
@@ -1359,9 +1359,7 @@ export const RosterViewPage: React.FC = () => {
     } else if (hubId) {
       // Direct-publish rosters (direct-* IDs) are stored in the bot's KV, not the hub API
       const fetchRosterData = hubId.startsWith('direct-')
-        ? fetch(
-            `${DISCORD_BOT_API_URL}/discord/roster/${encodeURIComponent(hubId)}/data`,
-          )
+        ? fetch(`${DISCORD_BOT_API_URL}/discord/roster/${encodeURIComponent(hubId)}/data`)
             .then((res) => {
               if (!res.ok) throw new Error('Not found');
               return res.json() as Promise<{ roster_data: string }>;
@@ -1370,9 +1368,7 @@ export const RosterViewPage: React.FC = () => {
         : rosterHubApi.get(hubId).then((res) => res.roster.roster_data);
 
       void fetchRosterData
-        .then((data) =>
-          decodeRosterFromURL(data).then((decoded) => onDecoded(decoded, data)),
-        )
+        .then((data) => decodeRosterFromURL(data).then((decoded) => onDecoded(decoded, data)))
         .catch(() => {
           setNotFound(true);
           setLoading(false);

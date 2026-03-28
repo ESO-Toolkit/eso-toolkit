@@ -10,8 +10,12 @@ import { Box, CircularProgress, Container, Typography } from '@mui/material';
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import {
+  exchangeDiscordCode,
+  getDiscordReturnPath,
+  validateOAuthState,
+} from './features/auth/discord-auth';
 import { useDiscordAuth } from './features/auth/DiscordAuthContext';
-import { exchangeDiscordCode, getDiscordReturnPath, validateOAuthState } from './features/auth/discord-auth';
 
 export const DiscordOAuthRedirect: React.FC = () => {
   const navigate = useNavigate();
@@ -50,6 +54,7 @@ export const DiscordOAuthRedirect: React.FC = () => {
         navigate(returnPath, { replace: true });
       })
       .catch((err) => {
+        // eslint-disable-next-line no-console -- intentional debug logging for OAuth errors
         console.error('[discord-oauth] token exchange failed:', err);
         setError(err instanceof Error ? err.message : 'Token exchange failed');
       });
