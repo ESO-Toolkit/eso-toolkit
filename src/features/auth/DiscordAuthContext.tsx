@@ -7,10 +7,7 @@
 
 import React from 'react';
 
-import {
-  DISCORD_LS_TOKEN_KEY,
-  startDiscordAuth,
-} from './discord-auth';
+import { DISCORD_LS_TOKEN_KEY, startDiscordAuth } from './discord-auth';
 
 interface DiscordAuthContextType {
   discordToken: string | null;

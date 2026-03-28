@@ -2097,9 +2097,7 @@ export const RosterBuilderPage: React.FC = () => {
                       transition: 'all 0.15s ease',
                       '&:hover': {
                         color: isDarkMode ? '#c7d2fe' : '#4338ca',
-                        background: isDarkMode
-                          ? 'rgba(88,101,242,0.18)'
-                          : 'rgba(88,101,242,0.14)',
+                        background: isDarkMode ? 'rgba(88,101,242,0.18)' : 'rgba(88,101,242,0.14)',
                       },
                     }}
                   >

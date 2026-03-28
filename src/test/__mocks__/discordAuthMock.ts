@@ -13,9 +13,7 @@ export function validateOAuthState(_stateParam: string | null): boolean {
   return false;
 }
 
-export async function exchangeDiscordCode(
-  _code: string,
-): Promise<{
+export async function exchangeDiscordCode(_code: string): Promise<{
   access_token: string;
   token_type: string;
   expires_in: number;

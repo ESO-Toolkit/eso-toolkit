@@ -1,9 +1,4 @@
-import {
-  ContentCopy,
-  DeleteOutline,
-  EditOutlined,
-  MoreVert,
-} from '@mui/icons-material';
+import { ContentCopy, DeleteOutline, EditOutlined, MoreVert } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -430,15 +425,9 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                   minWidth: 200,
                   backdropFilter: 'blur(16px)',
                   WebkitBackdropFilter: 'blur(16px)',
-                  background: isDark
-                    ? 'rgba(20,25,40,0.92)'
-                    : 'rgba(255,255,255,0.95)',
-                  border: isDark
-                    ? '1px solid rgba(255,255,255,0.1)'
-                    : '1px solid rgba(0,0,0,0.08)',
-                  boxShadow: isDark
-                    ? '0 8px 32px rgba(0,0,0,0.5)'
-                    : '0 8px 32px rgba(0,0,0,0.12)',
+                  background: isDark ? 'rgba(20,25,40,0.92)' : 'rgba(255,255,255,0.95)',
+                  border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)',
+                  boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.12)',
                 },
               },
             }}
