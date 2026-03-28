@@ -10,6 +10,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
+
 import { discordApi } from './discord-api';
 
 const DiscordCallbackPage: React.FC = () => {
@@ -84,4 +85,4 @@ const DiscordCallbackPage: React.FC = () => {
   );
 };
 
-export default DiscordCallbackPage;
+export { DiscordCallbackPage };

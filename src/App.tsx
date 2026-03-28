@@ -193,10 +193,12 @@ const PublicProfilePage = React.lazy(() =>
   import('./pages/PublicProfilePage').then((module) => ({ default: module.PublicProfilePage })),
 );
 const DiscordCallbackPage = React.lazy(() =>
-  import('./features/discord/DiscordCallbackPage'),
+  import('./features/discord/DiscordCallbackPage').then((m) => ({
+    default: m.DiscordCallbackPage,
+  })),
 );
 const DiscordSetupPage = React.lazy(() =>
-  import('./features/discord/DiscordSetupPage'),
+  import('./features/discord/DiscordSetupPage').then((m) => ({ default: m.DiscordSetupPage })),
 );
 
 // Null fallback for lazy-loaded routes — view transitions provide visual

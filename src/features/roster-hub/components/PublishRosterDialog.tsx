@@ -46,7 +46,11 @@ import {
 import type { DiscordServer } from '../../discord/discord-api';
 import { TRIALS } from '../../loadout-manager/data/trialConfigs';
 import { rosterHubApi } from '../api/roster-hub-api';
-import type { HubRoster, RecommendedAddonEntry, RecommendedAddons } from '../types/roster-hub.types';
+import type {
+  HubRoster,
+  RecommendedAddonEntry,
+  RecommendedAddons,
+} from '../types/roster-hub.types';
 import { PRESET_TAGS, TAG_COLORS } from '../types/roster-hub.types';
 
 interface PublishRosterDialogProps {
@@ -277,9 +281,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           setAddonSectionOpen(true);
           setSelectedPackId(editingRoster.recommended_addons.packId ?? null);
           setAddonList(editingRoster.recommended_addons.addons);
-          setEnabledAddons(
-            new Set(editingRoster.recommended_addons.addons.map((a) => a.esouiId)),
-          );
+          setEnabledAddons(new Set(editingRoster.recommended_addons.addons.map((a) => a.esouiId)));
         } else {
           setAddonSectionOpen(false);
           setSelectedPackId(null);
@@ -334,7 +336,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
 
   const handleLinkDiscord = (): void => {
     const redirectUri = getDiscordRedirectUri();
-    const state = crypto.randomUUID();
+    const state = globalThis.crypto.randomUUID();
     sessionStorage.setItem('discord_oauth_state', state);
     sessionStorage.setItem('discord_return_to', window.location.pathname);
     const url = buildDiscordOAuthUrl(redirectUri, state);
@@ -743,7 +745,11 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
               </Box>
             ) : !discordLinked ? (
               <Box sx={{ mt: 1 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mb: 1 }}
+                >
                   Link your Discord account to post rosters directly to your server.
                 </Typography>
                 <Button size="small" variant="outlined" onClick={handleLinkDiscord}>
@@ -751,7 +757,11 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                 </Button>
               </Box>
             ) : discordServers.length === 0 ? (
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mt: 0.5, display: 'block' }}
+              >
                 {discordUsername ? `Linked as ${discordUsername} — ` : ''}
                 No servers have the roster bot configured. Ask a server admin to run{' '}
                 <code>/roster config</code>.
@@ -772,7 +782,11 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                 </Select>
               </FormControl>
             ) : (
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mt: 0.5, display: 'block' }}
+              >
                 {discordUsername ? `Linked as ${discordUsername} · ` : ''}
                 {discordServers.length} server{discordServers.length > 1 ? 's' : ''} available
               </Typography>

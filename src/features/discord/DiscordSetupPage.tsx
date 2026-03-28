@@ -75,43 +75,42 @@ const DiscordSetupPage: React.FC = () => {
 
     // If we have a code, link Discord account first
     const linkPromise = code
-      ? discordApi
-          .link(code, `${window.location.origin}/discord/setup`, accessToken)
-          .catch(() => { /* ignore — may already be linked */ })
+      ? discordApi.link(code, `${window.location.origin}/discord/setup`, accessToken).catch(() => {
+          /* ignore — may already be linked */
+        })
       : Promise.resolve();
 
     // Then load guild data
-    linkPromise.then(() => loadGuildData(gid));
-  }, [searchParams, accessToken]);
+    const doLoad = async (id: string): Promise<void> => {
+      setLoading(true);
+      try {
+        const [channelsRes, rolesRes, configRes] = await Promise.all([
+          discordApi.getGuildChannels(id, accessToken),
+          discordApi.getGuildRoles(id, accessToken),
+          discordApi.getGuildConfig(id, accessToken),
+        ]);
 
-  const loadGuildData = async (gid: string): Promise<void> => {
-    if (!accessToken) return;
-    setLoading(true);
-    try {
-      const [channelsRes, rolesRes, configRes] = await Promise.all([
-        discordApi.getGuildChannels(gid, accessToken),
-        discordApi.getGuildRoles(gid, accessToken),
-        discordApi.getGuildConfig(gid, accessToken),
-      ]);
+        setChannels(channelsRes.channels);
+        setRoles(rolesRes.roles);
 
-      setChannels(channelsRes.channels);
-      setRoles(rolesRes.roles);
-
-      if (configRes.configured) {
-        setSelectedChannel(configRes.roster_channel_id ?? '');
-        setSelectedRole(configRes.allowed_role_ids?.[0] ?? '');
-        setGuildName(configRes.guild_name ?? '');
+        if (configRes.configured) {
+          setSelectedChannel(configRes.roster_channel_id ?? '');
+          setSelectedRole(configRes.allowed_role_ids?.[0] ?? '');
+          setGuildName(configRes.guild_name ?? '');
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to load server data. Make sure the bot is installed.',
+        );
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to load server data. Make sure the bot is installed.',
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    linkPromise.then(() => doLoad(gid));
+  }, [searchParams, accessToken]);
 
   const handleSave = async (): Promise<void> => {
     if (!guildId || !selectedChannel || !accessToken) return;
@@ -134,7 +133,7 @@ const DiscordSetupPage: React.FC = () => {
   };
 
   const handleAddBot = (): void => {
-    const state = crypto.randomUUID();
+    const state = globalThis.crypto.randomUUID();
     sessionStorage.setItem('discord_oauth_state', state);
     const url = buildBotInstallUrl(state);
     if (url) window.location.href = url;
@@ -162,8 +161,8 @@ const DiscordSetupPage: React.FC = () => {
       {!guildId && !loading && (
         <Paper sx={{ p: 3, mt: 2 }}>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            Add the ESO Toolkit roster bot to your Discord server. Members will be able to
-            publish rosters from the web app directly to your chosen channel.
+            Add the ESO Toolkit roster bot to your Discord server. Members will be able to publish
+            rosters from the web app directly to your chosen channel.
           </Typography>
           <Button variant="contained" size="large" onClick={handleAddBot}>
             Add Bot to Server
@@ -262,4 +261,4 @@ const DiscordSetupPage: React.FC = () => {
   );
 };
 
-export default DiscordSetupPage;
+export { DiscordSetupPage };
