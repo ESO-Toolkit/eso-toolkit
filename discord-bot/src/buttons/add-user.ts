@@ -3,10 +3,16 @@
  * Shows a modal to enter the username/ID to add to the channel.
  */
 
+import { isStaff } from '../discord.js';
 import { ComponentType, InteractionResponseType, ModalId, TextInputStyle } from '../types.js';
-import type { Env, InteractionResponse } from '../types.js';
+import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
+import { ephemeral } from '../utils.js';
 
-export function handleAddUserButton(_env: Env): InteractionResponse {
+export function handleAddUserButton(_env: Env, interaction: DiscordInteraction): InteractionResponse {
+  if (!isStaff(interaction)) {
+    return ephemeral('❌ Only staff can add users to a ticket.');
+  }
+
   return {
     type: InteractionResponseType.MODAL,
     data: {

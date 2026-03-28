@@ -71,10 +71,10 @@ export async function handleButton(
       return handleConfirmCloseButton(env, interaction, ctx);
 
     case ButtonId.ADD_USER:
-      return handleAddUserButton(env);
+      return handleAddUserButton(env, interaction);
 
     case ButtonId.REMOVE_USER:
-      return handleRemoveUserButton(env);
+      return handleRemoveUserButton(env, interaction);
 
     case ButtonId.STAFF_NOTE:
       return handleStaffNoteButton(env, interaction);

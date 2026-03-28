@@ -15,31 +15,55 @@ import type {
 
 const API_BASE = 'https://discord.com/api/v10';
 
+const MAX_RETRIES = 2;
+
 async function discordFetch<T>(
   env: Env,
   method: string,
   path: string,
   body?: unknown,
 ): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
-      'Content-Type': 'application/json',
-      'User-Agent': 'ESO-Toolkit-DiscordBot/1.0',
-    },
-    body: body !== undefined ? JSON.stringify(body) : null,
-  });
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers: {
+        Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'ESO-Toolkit-DiscordBot/1.0',
+      },
+      body: body !== undefined ? JSON.stringify(body) : null,
+    });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Discord API error ${res.status} on ${method} ${path}: ${text}`);
+    // Handle rate limits (429) — wait and retry
+    if (res.status === 429) {
+      const retryAfter = parseFloat(res.headers.get('Retry-After') ?? '1');
+      const waitMs = Math.min(retryAfter * 1000, 5000); // cap at 5s
+      console.warn(`[discord] rate limited on ${method} ${path}, retry after ${retryAfter}s`);
+      if (attempt < MAX_RETRIES) {
+        await new Promise((r) => setTimeout(r, waitMs));
+        continue;
+      }
+    }
+
+    // Retry on 5xx server errors
+    if (res.status >= 500 && attempt < MAX_RETRIES) {
+      console.warn(`[discord] server error ${res.status} on ${method} ${path}, retrying...`);
+      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+      continue;
+    }
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Discord API error ${res.status} on ${method} ${path}: ${text}`);
+    }
+
+    // 204 No Content
+    if (res.status === 204) return undefined as T;
+
+    return res.json() as Promise<T>;
   }
 
-  // 204 No Content
-  if (res.status === 204) return undefined as T;
-
-  return res.json() as Promise<T>;
+  throw new Error(`Discord API failed after ${MAX_RETRIES + 1} attempts on ${method} ${path}`);
 }
 
 // ── Channels ────────────────────────────────────────────────────────────────

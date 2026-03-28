@@ -14,6 +14,7 @@ import {
   TextInputStyle,
 } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
+import { ephemeral, findInputValue } from '../utils.js';
 
 export function handleStaffNoteButton(_env: Env, interaction: DiscordInteraction): InteractionResponse {
   if (!isStaff(interaction)) {
@@ -69,7 +70,7 @@ export async function handleStaffNoteModal(
 
   // Extract note content from modal
   const components = interaction.data?.components ?? [];
-  const noteContent = findInputValue(components as any, 'note_content') ?? '';
+  const noteContent = findInputValue(components as unknown as Parameters<typeof findInputValue>[0], 'note_content') ?? '';
 
   const staffUser = interaction.member?.user ?? interaction.user;
 
@@ -123,21 +124,3 @@ export async function handleStaffNoteModal(
   };
 }
 
-function findInputValue(
-  rows: { type: number; components?: { type: number; custom_id?: string; value?: string }[] }[],
-  customId: string,
-): string | undefined {
-  for (const row of rows) {
-    for (const comp of row.components ?? []) {
-      if (comp.custom_id === customId) return comp.value;
-    }
-  }
-  return undefined;
-}
-
-function ephemeral(content: string): InteractionResponse {
-  return {
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: { content, flags: MessageFlags.EPHEMERAL },
-  };
-}

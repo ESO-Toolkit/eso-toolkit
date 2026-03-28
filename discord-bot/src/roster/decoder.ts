@@ -24,6 +24,9 @@ function fromBase64Url(str: string): Uint8Array {
   return bytes;
 }
 
+/** Maximum decompressed roster payload size (1 MB). Prevents OOM from crafted payloads. */
+const MAX_DECOMPRESSED_SIZE = 1024 * 1024;
+
 async function readAllChunks(readable: ReadableStream<Uint8Array>): Promise<Uint8Array> {
   const chunks: Uint8Array[] = [];
   const reader = readable.getReader();
@@ -32,6 +35,10 @@ async function readAllChunks(readable: ReadableStream<Uint8Array>): Promise<Uint
     const { done, value } = await reader.read();
     if (done) break;
     total += value.length;
+    if (total > MAX_DECOMPRESSED_SIZE) {
+      await reader.cancel();
+      throw new Error(`Decompressed roster data exceeds ${MAX_DECOMPRESSED_SIZE} byte limit`);
+    }
     chunks.push(value);
   }
   const out = new Uint8Array(total);
@@ -158,7 +165,17 @@ export async function decodeRosterData(rosterData: string): Promise<DecodedRoste
   }
 
   const json = new TextDecoder().decode(readResult.value);
-  const compact = JSON.parse(json) as CompactRoster;
+
+  let compact: CompactRoster;
+  try {
+    compact = JSON.parse(json) as CompactRoster;
+  } catch {
+    throw new Error('Failed to parse decompressed roster data as JSON');
+  }
+
+  if (compact.v !== 2 && compact.v !== 3) {
+    throw new Error(`Unsupported roster version: ${compact.v}`);
+  }
 
   const tanks: DecodedRosterSlot[] = [];
   const healers: DecodedRosterSlot[] = [];

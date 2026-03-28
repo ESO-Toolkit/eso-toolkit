@@ -88,9 +88,11 @@ export function buildRosterEmbed(
     ? `${snapshot.description}\n\n`
     : '';
 
+  const trialLine = snapshot.trial_id ? `**Trial:** ${snapshot.trial_id}\n` : '';
+
   return {
     title: `📜 ${snapshot.title}`,
-    description: `${description}**Trial:** ${snapshot.trial_id}\n**Author:** ${snapshot.author_name}`,
+    description: `${description}${trialLine}**Author:** ${snapshot.author_name}`,
     color: Colors.ROSTER_EMBED,
     fields,
     footer: {

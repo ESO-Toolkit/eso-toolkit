@@ -14,6 +14,7 @@ import { handleCommand } from './handlers/commands.js';
 import { handleModal } from './handlers/modals.js';
 import { publishRoster, refreshRoster, publishDirect } from './roster/index.js';
 import type { PublishRequest, DirectPublishRequest } from './roster/index.js';
+import { KV_PREFIX } from './roster/kv.js';
 import { InteractionType } from './types.js';
 import type { DiscordInteraction, Env } from './types.js';
 import { verifyDiscordSignature } from './verify.js';
@@ -272,7 +273,7 @@ async function handleRosterApi(
   if (dataMatch && request.method === 'GET') {
     const rosterId = dataMatch[1];
     if (rosterId.length > 64) return jsonResponse({ error: 'Invalid roster ID' }, 400);
-    const rosterData = await env.ROSTERS.get(`roster-data:${rosterId}`);
+    const rosterData = await env.ROSTERS.get(`${KV_PREFIX.ROSTER_DATA}:${rosterId}`);
     if (!rosterData) return jsonResponse({ error: 'Not found' }, 404);
     return new Response(JSON.stringify({ roster_data: rosterData }), {
       status: 200,

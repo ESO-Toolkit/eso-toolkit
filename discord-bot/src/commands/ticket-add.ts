@@ -4,8 +4,9 @@
 
 import { allow, editChannelPermissions, isStaff, Permission } from '../discord.js';
 import { getTicket } from '../kv.js';
-import { InteractionResponseType, MessageFlags } from '../types.js';
+import { InteractionResponseType } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
+import { ephemeral } from '../utils.js';
 
 export async function handleTicketAdd(
   env: Env,
@@ -63,9 +64,3 @@ export async function handleTicketAdd(
   }
 }
 
-function ephemeral(content: string): InteractionResponse {
-  return {
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: { content, flags: MessageFlags.EPHEMERAL },
-  };
-}

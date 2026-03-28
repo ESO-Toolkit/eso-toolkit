@@ -13,6 +13,7 @@ import {
 import { getTicket, updateTicket } from '../kv.js';
 import { InteractionResponseType, MessageFlags, ResponseTemplates } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
+import { ephemeral } from '../utils.js';
 
 export async function handleTemplateButton(
   env: Env,
@@ -123,9 +124,3 @@ async function syncAcknowledgedToGitHub(
   return '';
 }
 
-function ephemeral(content: string): InteractionResponse {
-  return {
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: { content, flags: MessageFlags.EPHEMERAL },
-  };
-}

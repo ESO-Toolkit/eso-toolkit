@@ -25,6 +25,7 @@ import {
   Colors,
   ComponentType,
   InteractionResponseType,
+  MessageFlags,
   ResponseTemplates,
 } from '../types.js';
 import type {
@@ -36,6 +37,7 @@ import type {
   TicketCategory,
   TicketState,
 } from '../types.js';
+import { findInputValue } from '../utils.js';
 
 // ── Shared embed + button builders ──────────────────────────────────────────
 
@@ -207,8 +209,8 @@ export async function handleTicketFormModal(
 
   // Extract field values from modal components
   const components = interaction.data?.components ?? [];
-  const title = findInputValue(components as any, 'ticket_title') ?? 'Untitled';
-  const description = findInputValue(components as any, 'ticket_description') ?? '(no description)';
+  const title = findInputValue(components as unknown as Parameters<typeof findInputValue>[0], 'ticket_title') ?? 'Untitled';
+  const description = findInputValue(components as unknown as Parameters<typeof findInputValue>[0], 'ticket_description') ?? '(no description)';
 
   const user = interaction.member?.user ?? interaction.user;
   if (!user) {
@@ -216,7 +218,7 @@ export async function handleTicketFormModal(
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         content: 'Unable to identify the user for this interaction. Please try again.',
-        flags: 64, // ephemeral
+        flags: MessageFlags.EPHEMERAL,
       },
     };
   }
@@ -378,18 +380,6 @@ async function buildPermissionOverwrites(
   }
 
   return overwrites;
-}
-
-function findInputValue(
-  rows: { type: number; components?: { type: number; custom_id?: string; value?: string }[] }[],
-  customId: string,
-): string | undefined {
-  for (const row of rows) {
-    for (const comp of row.components ?? []) {
-      if (comp.custom_id === customId) return comp.value;
-    }
-  }
-  return undefined;
 }
 
 function capitalise(s: string): string {

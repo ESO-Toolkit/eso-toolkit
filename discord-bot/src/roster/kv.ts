@@ -10,14 +10,23 @@
 import type { Env } from '../types.js';
 import type { GuildConfig, RosterMapping } from './types.js';
 
+// ── KV Key Prefixes ────────────────────────────────────────────────────────
+
+export const KV_PREFIX = {
+  ROSTER_MAP: 'roster-map',
+  CHANNEL_ROSTER: 'channel-roster',
+  GUILD_CONFIG: 'guild-config',
+  ROSTER_DATA: 'roster-data',
+} as const;
+
 // ── Roster Mapping CRUD ─────────────────────────────────────────────────────
 
 function mappingKey(guildId: string, rosterId: string): string {
-  return `roster-map:${guildId}:${rosterId}`;
+  return `${KV_PREFIX.ROSTER_MAP}:${guildId}:${rosterId}`;
 }
 
 function reverseKey(channelId: string): string {
-  return `channel-roster:${channelId}`;
+  return `${KV_PREFIX.CHANNEL_ROSTER}:${channelId}`;
 }
 
 export async function getMappingByRosterId(
@@ -75,26 +84,64 @@ export async function listMappingsForGuild(
   env: Env,
   guildId: string,
 ): Promise<RosterMapping[]> {
-  const prefix = `roster-map:${guildId}:`;
-  const list = await env.ROSTERS.list({ prefix });
+  return listMappingsByPrefix(env, `${KV_PREFIX.ROSTER_MAP}:${guildId}:`);
+}
+
+// ── Find all mappings for a specific roster across guilds ──────────────────
+
+/**
+ * Find all guild mappings for a given rosterId.
+ * Since KV doesn't support suffix-based queries, we scan the global prefix
+ * and filter by rosterId. This is efficient because roster-map keys contain
+ * the rosterId as the final segment: `roster-map:{guildId}:{rosterId}`.
+ */
+export async function findMappingsForRoster(
+  env: Env,
+  rosterId: string,
+): Promise<RosterMapping[]> {
+  // KV list doesn't support suffix matching, but we can list all roster-map keys
+  // and filter. For most deployments this is a small set (<100 mappings total).
+  return listMappingsByPrefix(env, `${KV_PREFIX.ROSTER_MAP}:`, (key) => key.endsWith(`:${rosterId}`));
+}
+
+// ── Shared listing helper ──────────────────────────────────────────────────
+
+async function listMappingsByPrefix(
+  env: Env,
+  prefix: string,
+  keyFilter?: (key: string) => boolean,
+): Promise<RosterMapping[]> {
   const mappings: RosterMapping[] = [];
-  for (const key of list.keys) {
-    const raw = await env.ROSTERS.get(key.name);
-    if (raw) {
-      try {
-        mappings.push(JSON.parse(raw) as RosterMapping);
-      } catch {
-        // skip corrupt entries
+  let cursor: string | null = null;
+
+  do {
+    const opts: KVNamespaceListOptions = { prefix, limit: 100 };
+    if (cursor) opts.cursor = cursor;
+    const list = await env.ROSTERS.list(opts);
+    const keys = keyFilter ? list.keys.filter((k) => keyFilter(k.name)) : list.keys;
+
+    // Batch-fetch values (avoids N+1 by reading all at once)
+    const values = await Promise.all(keys.map((k) => env.ROSTERS.get(k.name)));
+    for (const raw of values) {
+      if (raw) {
+        try {
+          mappings.push(JSON.parse(raw) as RosterMapping);
+        } catch {
+          // skip corrupt entries
+        }
       }
     }
-  }
+
+    cursor = list.list_complete ? null : (list.cursor ?? null);
+  } while (cursor);
+
   return mappings;
 }
 
 // ── Guild Config CRUD ───────────────────────────────────────────────────────
 
 function guildConfigKey(guildId: string): string {
-  return `guild-config:${guildId}`;
+  return `${KV_PREFIX.GUILD_CONFIG}:${guildId}`;
 }
 
 export async function getGuildConfig(env: Env, guildId: string): Promise<GuildConfig | null> {

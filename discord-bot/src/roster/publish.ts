@@ -17,10 +17,12 @@ import { resolveChannelName } from './channel-name.js';
 import { decodeRosterData } from './decoder.js';
 import { buildRosterEmbed, buildRosterActionRows } from './embed-builder.js';
 import {
+  findMappingsForRoster,
   getMappingByRosterId,
   upsertMapping,
   getGuildConfig,
   getDefaultGuildConfig,
+  KV_PREFIX,
 } from './kv.js';
 import type { RosterMapping, RosterSnapshot } from './types.js';
 
@@ -45,10 +47,14 @@ export interface PublishResult {
 
 export async function publishRoster(env: Env, req: PublishRequest): Promise<PublishResult> {
   // 1. Fetch roster snapshot
-  const snapshot = await fetchRosterSnapshot(env, req.rosterId);
-  if (!snapshot) {
-    return { ok: false, error: 'Roster not found or API unavailable.' };
+  const result = await fetchRosterSnapshot(env, req.rosterId);
+  if (result.status === 'not_found') {
+    return { ok: false, error: 'Roster not found.' };
   }
+  if (result.status === 'error') {
+    return { ok: false, error: 'Roster API unavailable. Please try again later.' };
+  }
+  const snapshot = result.snapshot;
 
   // 2. Decode roster data for embed
   let decoded;
@@ -120,15 +126,16 @@ export interface RefreshResult {
  */
 export async function refreshRoster(env: Env, rosterId: string): Promise<RefreshResult> {
   // Fetch the latest snapshot — hub API for normal IDs, KV for direct-publish
-  let snapshot = await fetchRosterSnapshot(env, rosterId);
+  const fetchResult = await fetchRosterSnapshot(env, rosterId);
+  let snapshot = fetchResult.status === 'ok' ? fetchResult.snapshot : null;
 
   if (!snapshot && rosterId.startsWith('direct-')) {
     // Direct-publish rosters live in KV, not the hub API
-    const kvData = await env.ROSTERS.get(`roster-data:${rosterId}`);
+    const kvData = await env.ROSTERS.get(`${KV_PREFIX.ROSTER_DATA}:${rosterId}`);
     if (kvData) {
-      // Reconstruct a minimal snapshot from the mapping + KV data
-      const guildId = env.GUILD_ID;
-      const mapping = await getMappingByRosterId(env, guildId, rosterId);
+      // Reconstruct a minimal snapshot — find any mapping for this roster
+      const mappings = await findMappingsForRoster(env, rosterId);
+      const mapping = mappings[0] ?? null;
       snapshot = {
         id: rosterId,
         title: mapping?.channelNameOverride ?? 'Direct Roster',
@@ -145,7 +152,10 @@ export async function refreshRoster(env: Env, rosterId: string): Promise<Refresh
   }
 
   if (!snapshot) {
-    return { ok: false, error: 'Roster not found or API unavailable.' };
+    if (fetchResult.status === 'error') {
+      return { ok: false, error: 'Roster API unavailable. Please try again later.' };
+    }
+    return { ok: false, error: 'Roster not found.' };
   }
 
   let decoded;
@@ -156,43 +166,53 @@ export async function refreshRoster(env: Env, rosterId: string): Promise<Refresh
     return { ok: false, error: 'Failed to decode roster data.' };
   }
 
-  // We need to find all guilds that have this roster mapped.
-  // Since KV doesn't support cross-prefix queries efficiently,
-  // we check the guild that the bot is configured for (single-guild for now).
-  const guildId = env.GUILD_ID;
-  const mapping = await getMappingByRosterId(env, guildId, rosterId);
-  if (!mapping) {
+  // Find all guilds that have this roster mapped by scanning KV prefix.
+  // For direct-publish rosters with a known guild, check that guild first.
+  // For hub rosters, scan all roster-map entries matching this rosterId.
+  const mappings = await findMappingsForRoster(env, rosterId);
+  if (mappings.length === 0) {
     return { ok: true, refreshedCount: 0 };
   }
 
-  const config = (await getGuildConfig(env, guildId)) ?? getDefaultGuildConfig(guildId);
-  const channelName = resolveChannelName(
-    config.namePattern,
-    { label: snapshot.title },
-    mapping.channelNameOverride,
-  );
+  let refreshedCount = 0;
+  let lastError: string | undefined;
 
-  const result = await refreshExistingMapping(
-    env,
-    mapping,
-    snapshot,
-    decoded,
-    channelName,
-    mapping.categoryId,
-  );
+  for (const mapping of mappings) {
+    const config = (await getGuildConfig(env, mapping.guildId)) ?? getDefaultGuildConfig(mapping.guildId);
+    const channelName = resolveChannelName(
+      config.namePattern,
+      { label: snapshot.title },
+      mapping.channelNameOverride,
+    );
 
-  if (result.ok) {
-    // Update the mapping's updatedAt
-    const updated: RosterMapping = {
-      ...mapping,
-      messageId: result.messageId ?? mapping.messageId,
-      channelId: result.channelId ?? mapping.channelId,
-      updatedAt: new Date().toISOString(),
-    };
-    await upsertMapping(env, updated);
+    const result = await refreshExistingMapping(
+      env,
+      mapping,
+      snapshot,
+      decoded,
+      channelName,
+      mapping.categoryId,
+    );
+
+    if (result.ok) {
+      const updated: RosterMapping = {
+        ...mapping,
+        messageId: result.messageId ?? mapping.messageId,
+        channelId: result.channelId ?? mapping.channelId,
+        updatedAt: new Date().toISOString(),
+      };
+      await upsertMapping(env, updated);
+      refreshedCount++;
+    } else {
+      lastError = result.error;
+    }
   }
 
-  return { ok: result.ok, error: result.error, refreshedCount: result.ok ? 1 : 0 };
+  return {
+    ok: refreshedCount > 0 || lastError === undefined,
+    error: lastError,
+    refreshedCount,
+  };
 }
 
 // ── Direct Publish (from raw roster data, no Hub ID needed) ─────────────────
@@ -274,7 +294,7 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
 
   // Persist roster data so the "View on ESO Toolkit" link can resolve direct-* IDs
   // 90-day TTL prevents unbounded KV accumulation from direct-publish rosters
-  await env.ROSTERS.put(`roster-data:${syntheticId}`, req.roster_data, {
+  await env.ROSTERS.put(`${KV_PREFIX.ROSTER_DATA}:${syntheticId}`, req.roster_data, {
     expirationTtl: 60 * 60 * 24 * 90,
   });
 

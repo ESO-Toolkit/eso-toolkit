@@ -4,8 +4,9 @@
 
 import { addChannelPermission, isStaff, removeChannelPermission } from '../discord.js';
 import { getTicket } from '../kv.js';
-import { InteractionResponseType, MessageFlags } from '../types.js';
+import { InteractionResponseType } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
+import { ephemeral, findInputValue } from '../utils.js';
 
 export async function handleAddUserModal(
   env: Env,
@@ -27,7 +28,7 @@ export async function handleAddUserModal(
 
   // Extract user input from modal
   const components = interaction.data?.components ?? [];
-  const userInput = findInputValue(components as any, 'user_input')?.trim();
+  const userInput = findInputValue(components as unknown as Parameters<typeof findInputValue>[0], 'user_input')?.trim();
 
   if (!userInput) {
     return ephemeral('Please provide a user ID or mention.');
@@ -84,7 +85,7 @@ export async function handleRemoveUserModal(
 
   // Extract user input from modal
   const components = interaction.data?.components ?? [];
-  const userInput = findInputValue(components as any, 'user_input')?.trim();
+  const userInput = findInputValue(components as unknown as Parameters<typeof findInputValue>[0], 'user_input')?.trim();
 
   if (!userInput) {
     return ephemeral('Please provide a user ID or mention.');
@@ -120,21 +121,3 @@ export async function handleRemoveUserModal(
   };
 }
 
-function findInputValue(
-  rows: { type: number; components?: { type: number; custom_id?: string; value?: string }[] }[],
-  customId: string,
-): string | undefined {
-  for (const row of rows) {
-    for (const comp of row.components ?? []) {
-      if (comp.custom_id === customId) return comp.value;
-    }
-  }
-  return undefined;
-}
-
-function ephemeral(content: string): InteractionResponse {
-  return {
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: { content, flags: MessageFlags.EPHEMERAL },
-  };
-}

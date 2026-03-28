@@ -134,12 +134,14 @@ export function verifyWebhookSecret(
   if (!env.WEBHOOK_SECRET) return false;
   if (!authHeader) return false;
   const expected = `Bearer ${env.WEBHOOK_SECRET}`;
-  if (authHeader.length !== expected.length) return false;
+  // Use constant-time comparison without leaking expected length.
+  // Pad both to the longer length so the XOR loop always runs the same duration.
+  const maxLen = Math.max(authHeader.length, expected.length);
   const enc = new TextEncoder();
-  const a = enc.encode(authHeader);
-  const b = enc.encode(expected);
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
+  const a = enc.encode(authHeader.padEnd(maxLen, '\0'));
+  const b = enc.encode(expected.padEnd(maxLen, '\0'));
+  let result = authHeader.length ^ expected.length; // mismatch if lengths differ
+  for (let i = 0; i < maxLen; i++) {
     result |= a[i] ^ b[i];
   }
   return result === 0;
