@@ -5,13 +5,13 @@
  * and only used when publishing rosters to Discord servers.
  */
 
-const DISCORD_CLIENT_ID = import.meta.env.VITE_DISCORD_CLIENT_ID as string;
-const DISCORD_BOT_API_URL =
+const getDiscordClientId = (): string => import.meta.env.VITE_DISCORD_CLIENT_ID as string;
+
+const getDiscordBotApiUrl = (): string =>
   (import.meta.env.VITE_DISCORD_BOT_API_URL as string | undefined) ??
   'https://eso-toolkit-discord-bot.eso-toolkit.workers.dev';
 
 const DISCORD_OAUTH_AUTHORIZE = 'https://discord.com/oauth2/authorize';
-const DISCORD_API_BASE = 'https://discord.com/api/v10';
 const SCOPES = 'identify guilds';
 
 // localStorage keys
@@ -59,7 +59,7 @@ export function startDiscordAuth(returnPath?: string): void {
   sessionStorage.setItem(DISCORD_SS_STATE_KEY, state);
 
   const params = new URLSearchParams({
-    client_id: DISCORD_CLIENT_ID,
+    client_id: getDiscordClientId(),
     redirect_uri: getRedirectUri(),
     response_type: 'code',
     scope: SCOPES,
@@ -84,7 +84,7 @@ export function validateOAuthState(stateParam: string | null): boolean {
  * Uses the Worker as a proxy to keep the client secret server-side.
  */
 export async function exchangeDiscordCode(code: string): Promise<DiscordTokenResponse> {
-  const res = await fetch(`${DISCORD_BOT_API_URL}/discord/oauth/token`, {
+  const res = await fetch(`${getDiscordBotApiUrl()}/discord/oauth/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -112,13 +112,14 @@ export function getDiscordReturnPath(): string {
 
 // ── Discord API calls ───────────────────────────────────────────────────────
 
-
 /**
  * Fetch mutual guilds (where both the user and bot are members).
  * Requires the user's Discord access token for server-side filtering.
  */
-export async function getMutualGuildsFromApi(accessToken: string): Promise<{ id: string; name: string; icon: string | null }[]> {
-  const res = await fetch(`${DISCORD_BOT_API_URL}/discord/bot/guilds`, {
+export async function getMutualGuildsFromApi(
+  accessToken: string,
+): Promise<{ id: string; name: string; icon: string | null }[]> {
+  const res = await fetch(`${getDiscordBotApiUrl()}/discord/bot/guilds`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
@@ -129,17 +130,22 @@ export async function getMutualGuildsFromApi(accessToken: string): Promise<{ id:
     throw new Error(`Failed to fetch mutual guilds: ${res.status}`);
   }
 
-  const data = (await res.json()) as { guilds: { id: string; name: string; icon: string | null }[] };
+  const data = (await res.json()) as {
+    guilds: { id: string; name: string; icon: string | null }[];
+  };
   return data.guilds;
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-
 /**
  * Build a Discord guild icon URL.
  */
-export function getGuildIconUrl(guildId: string, iconHash: string | null, size = 64): string | null {
+export function getGuildIconUrl(
+  guildId: string,
+  iconHash: string | null,
+  size = 64,
+): string | null {
   if (!iconHash) return null;
   return `https://cdn.discordapp.com/icons/${guildId}/${iconHash}.png?size=${size}`;
 }
@@ -151,7 +157,7 @@ export function getBotInviteUrl(): string {
   // Permissions: Manage Channels (1<<4), View Channel (1<<10), Send Messages (1<<11),
   // Embed Links (1<<14), Read Message History (1<<16)
   const permissions = '85008';
-  return `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&permissions=${permissions}&scope=bot%20applications.commands`;
+  return `https://discord.com/oauth2/authorize?client_id=${getDiscordClientId()}&permissions=${permissions}&scope=bot%20applications.commands`;
 }
 
 // ── Custom error for expired tokens ─────────────────────────────────────────
