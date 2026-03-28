@@ -56,6 +56,7 @@ import {
   checkPackVoteRateLimit,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
+import { formatRosterForDiscord } from './roster-discord-format';
 import type { Env } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -153,6 +154,28 @@ app.get('/rosters/:id', async (c) => {
     return c.json({ error: 'Not found' }, 404);
   }
   return c.json({ roster });
+});
+
+// ─── GET /rosters/:id/discord — Discord-formatted text sections ─────────────
+
+app.get('/rosters/:id/discord', async (c) => {
+  const roster = await getRosterById(c.env.DB, c.req.param('id'));
+
+  if (!roster) {
+    return c.json({ error: 'Not found' }, 404);
+  }
+
+  try {
+    const result = await formatRosterForDiscord(
+      roster.roster_data,
+      roster.title,
+      roster.id,
+      'https://esohelpers.com',
+    );
+    return c.json(result);
+  } catch {
+    return c.json({ error: 'Failed to decode roster data' }, 500);
+  }
 });
 
 // ─── POST /rosters — publish a roster ────────────────────────────────────────

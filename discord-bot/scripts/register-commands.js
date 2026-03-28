@@ -82,6 +82,26 @@ const commands = [
       },
     ],
   },
+  {
+    name: 'roster',
+    description: 'View and share raid rosters from ESO Toolkit',
+    default_member_permissions: null,
+    options: [
+      {
+        type: 1, // SUB_COMMAND
+        name: 'view',
+        description: 'Post a roster as formatted text in this channel',
+        options: [
+          {
+            type: 3, // STRING
+            name: 'id',
+            description: 'Roster ID or URL (from esohelpers.com/rosters/<id>)',
+            required: true,
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 async function registerCommands() {

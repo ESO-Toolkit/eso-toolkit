@@ -1,11 +1,33 @@
 import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   Add,
-  CheckCircle,
+  ArrowBack,
+  ArrowForward,
+  Close,
+  DragIndicator,
   Extension,
   RemoveCircleOutline,
+  VisibilityOff,
 } from '@mui/icons-material';
 import {
   Alert,
+  alpha,
   Box,
   Button,
   Chip,
@@ -14,7 +36,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
+  Fade,
   IconButton,
   MenuItem,
   Select,
@@ -24,7 +46,10 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
+import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
 
 import { packHubApi } from '../api/pack-hub-api';
@@ -35,6 +60,10 @@ import {
   PRESET_PACK_TAGS,
 } from '../types/pack-hub.types';
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 interface CreatePackDialogProps {
   open: boolean;
   token: string;
@@ -43,8 +72,266 @@ interface CreatePackDialogProps {
   editingPack?: HubPack;
 }
 
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
 const MAX_TAGS = 5;
 const PACK_TYPES = ['addon-pack', 'build-pack', 'roster-pack'] as const;
+const STEP_LABELS = ['Pack Details', 'Add-ons'] as const;
+
+// ---------------------------------------------------------------------------
+// Glassmorphic Input sx helper
+// ---------------------------------------------------------------------------
+
+const glassInputSx = (isDark: boolean, accent: string): Record<string, unknown> => ({
+  '& .MuiOutlinedInput-root': {
+    borderRadius: 2,
+    backgroundColor: isDark ? alpha('#0f172a', 0.8) : '#ffffff',
+    backdropFilter: 'blur(6px)',
+    WebkitBackdropFilter: 'blur(6px)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    '& fieldset': {
+      borderColor: isDark ? alpha('#38bdf8', 0.15) : alpha('#0f172a', 0.12),
+      transition: 'border-color 0.3s ease',
+    },
+    '&:hover fieldset': {
+      borderColor: isDark ? alpha('#38bdf8', 0.35) : alpha('#0f172a', 0.25),
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: accent,
+      borderWidth: 2,
+    },
+    '&.Mui-focused': {
+      boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: isDark ? '#94a3b8' : '#64748b',
+    fontWeight: 400,
+    '&.Mui-focused': { color: accent },
+  },
+});
+
+// ---------------------------------------------------------------------------
+// Sortable Addon Row
+// ---------------------------------------------------------------------------
+
+interface SortableAddonProps {
+  addon: PackAddonEntry;
+  isDark: boolean;
+  onToggleRequired: (id: number) => void;
+  onRemove: (id: number) => void;
+}
+
+const SortableAddonRow: React.FC<SortableAddonProps> = ({
+  addon,
+  isDark,
+  onToggleRequired,
+  onRemove,
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: addon.esouiId });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+    position: 'relative' as const,
+  };
+
+  return (
+    <motion.div
+      ref={setNodeRef}
+      style={style}
+      layout
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: 30, height: 0, marginBottom: 0, overflow: 'hidden' }}
+      transition={{ duration: 0.2 }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.75,
+          py: 0.85,
+          px: 1.5,
+          borderRadius: '10px',
+          mb: 0.5,
+          bgcolor: isDragging
+            ? isDark
+              ? alpha('#c4a44a', 0.12)
+              : alpha('#c4a44a', 0.08)
+            : isDark
+              ? alpha('#fff', 0.02)
+              : alpha('#000', 0.02),
+          border: `1px solid ${isDragging ? alpha('#c4a44a', 0.3) : 'transparent'}`,
+          boxShadow: isDragging
+            ? `0 8px 24px ${alpha('#000', 0.3)}, 0 0 0 1px ${alpha('#c4a44a', 0.2)}`
+            : 'none',
+          transition: 'background-color 0.15s, border-color 0.15s, box-shadow 0.2s',
+          '&:hover': {
+            bgcolor: isDark ? alpha('#fff', 0.04) : alpha('#000', 0.04),
+          },
+        }}
+      >
+        {/* Drag handle */}
+        <Box
+          {...attributes}
+          {...listeners}
+          sx={{
+            cursor: isDragging ? 'grabbing' : 'grab',
+            display: 'flex',
+            alignItems: 'center',
+            color: 'text.disabled',
+            opacity: 0.5,
+            transition: 'opacity 0.15s',
+            '&:hover': { opacity: 1, color: '#c4a44a' },
+            flexShrink: 0,
+          }}
+        >
+          <DragIndicator sx={{ fontSize: 16 }} />
+        </Box>
+
+        {/* Status dot */}
+        <Box
+          sx={{
+            width: 7,
+            height: 7,
+            borderRadius: '50%',
+            bgcolor: addon.required ? '#c4a44a' : alpha('#94a3b8', 0.4),
+            boxShadow: addon.required ? `0 0 6px ${alpha('#c4a44a', 0.5)}` : 'none',
+            flexShrink: 0,
+            transition: 'all 0.2s',
+          }}
+        />
+
+        {/* Name + note */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="body2" fontWeight={600} noWrap sx={{ lineHeight: 1.3 }}>
+            {addon.name}
+          </Typography>
+          {addon.note && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              noWrap
+              sx={{ opacity: 0.7, lineHeight: 1.2 }}
+            >
+              {addon.note}
+            </Typography>
+          )}
+        </Box>
+
+        {/* ESOUI ID */}
+        <Typography
+          variant="caption"
+          sx={{
+            flexShrink: 0,
+            fontSize: '0.62rem',
+            fontFamily: 'monospace',
+            color: isDark ? alpha('#38bdf8', 0.5) : alpha('#0f172a', 0.4),
+          }}
+        >
+          #{addon.esouiId}
+        </Typography>
+
+        {/* Required/Optional toggle */}
+        <Tooltip title={addon.required ? 'Mark as optional' : 'Mark as required'}>
+          <Chip
+            label={addon.required ? 'Required' : 'Optional'}
+            size="small"
+            onClick={() => onToggleRequired(addon.esouiId)}
+            sx={{
+              height: 22,
+              fontSize: '0.62rem',
+              fontWeight: 700,
+              letterSpacing: '0.02em',
+              cursor: 'pointer',
+              borderRadius: '6px',
+              transition: 'all 0.15s ease',
+              bgcolor: addon.required ? alpha('#c4a44a', 0.15) : 'transparent',
+              color: addon.required ? '#c4a44a' : 'text.disabled',
+              border: `1px solid ${addon.required ? alpha('#c4a44a', 0.35) : isDark ? alpha('#fff', 0.08) : alpha('#000', 0.1)}`,
+              '&:hover': {
+                bgcolor: addon.required ? alpha('#c4a44a', 0.25) : alpha('#fff', 0.06),
+              },
+            }}
+          />
+        </Tooltip>
+
+        {/* Remove */}
+        <Tooltip title="Remove">
+          <IconButton
+            size="small"
+            onClick={() => onRemove(addon.esouiId)}
+            sx={{
+              p: 0.4,
+              color: 'text.disabled',
+              transition: 'all 0.15s',
+              '&:hover': { color: '#ef4444', bgcolor: alpha('#ef4444', 0.08) },
+            }}
+          >
+            <RemoveCircleOutline sx={{ fontSize: 15 }} />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    </motion.div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Character count progress bar
+// ---------------------------------------------------------------------------
+
+const CharProgress: React.FC<{ current: number; max: number; accent: string }> = ({
+  current,
+  max,
+  accent,
+}) => {
+  const pct = Math.min((current / max) * 100, 100);
+  const isNearLimit = pct > 85;
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+      <Box
+        sx={{
+          flex: 1,
+          height: 2,
+          borderRadius: 1,
+          bgcolor: alpha('#fff', 0.06),
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          sx={{
+            width: `${pct}%`,
+            height: '100%',
+            borderRadius: 1,
+            bgcolor: isNearLimit ? '#f59e0b' : accent,
+            transition: 'width 0.3s ease, background-color 0.3s',
+          }}
+        />
+      </Box>
+      <Typography
+        variant="caption"
+        sx={{
+          fontSize: '0.6rem',
+          fontFamily: 'monospace',
+          color: isNearLimit ? '#f59e0b' : 'text.disabled',
+          minWidth: 38,
+          textAlign: 'right',
+        }}
+      >
+        {current}/{max}
+      </Typography>
+    </Box>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Main Component
+// ---------------------------------------------------------------------------
 
 export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
   open,
@@ -53,7 +340,13 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
   onCreated,
   editingPack,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDark = theme.palette.mode === 'dark';
   const isEditMode = !!editingPack;
+
+  // ── State ──
+  const [step, setStep] = React.useState(0);
   const [title, setTitle] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [packType, setPackType] = React.useState<string>('addon-pack');
@@ -62,12 +355,44 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
   const [addons, setAddons] = React.useState<PackAddonEntry[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [titleTouched, setTitleTouched] = React.useState(false);
 
-  // Custom addon entry fields
+  // Addon input
   const [newAddonName, setNewAddonName] = React.useState('');
   const [newAddonId, setNewAddonId] = React.useState('');
   const [newAddonNote, setNewAddonNote] = React.useState('');
+  const addonNameRef = React.useRef<HTMLInputElement>(null);
 
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  // ── Palette ──
+  const accentColor = '#c4a44a';
+  const accentAlt = '#d4b45a';
+  const accentGradient = `linear-gradient(135deg, ${accentColor} 0%, ${accentAlt} 100%)`;
+
+  // ── Glassmorphism tokens ──
+  const panelBg = isDark
+    ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.78) 0%, rgba(3, 7, 18, 0.88) 100%)'
+    : 'linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.94) 100%)';
+  const panelBorder = isDark
+    ? `1px solid ${alpha('#c4a44a', 0.12)}`
+    : `1px solid ${alpha('#0f172a', 0.08)}`;
+  const panelShadow = isDark
+    ? '0 8px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04)'
+    : '0 4px 24px rgba(15, 23, 42, 0.08)';
+
+  const shimmer = {
+    '@keyframes shimmer': {
+      '0%': { backgroundPosition: '-200% center' },
+      '100%': { backgroundPosition: '200% center' },
+    },
+  };
+
+  // ── Handlers ──
   const handleTagToggle = (tag: string): void => {
     if (selectedTags.includes(tag)) {
       setSelectedTags((prev) => prev.filter((t) => t !== tag));
@@ -81,7 +406,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
     const name = newAddonName.trim();
     if (!name || isNaN(id) || id <= 0) return;
     if (addons.some((a) => a.esouiId === id)) {
-      setError(`Addon with ESOUI ID ${id} already exists in this pack.`);
+      setError(`Addon #${id} is already in this pack.`);
       return;
     }
     setAddons((prev) => [
@@ -92,6 +417,8 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
     setNewAddonId('');
     setNewAddonNote('');
     setError(null);
+    // Re-focus the name input for rapid entry
+    setTimeout(() => addonNameRef.current?.focus(), 50);
   };
 
   const handleRemoveAddon = (esouiId: number): void => {
@@ -104,11 +431,18 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
     );
   };
 
-  const handlePublish = async (): Promise<void> => {
-    if (!title.trim()) {
-      setError('Please enter a title.');
-      return;
+  const handleDragEnd = (event: DragEndEvent): void => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setAddons((prev) => {
+        const oldIdx = prev.findIndex((a) => a.esouiId === active.id);
+        const newIdx = prev.findIndex((a) => a.esouiId === over.id);
+        return arrayMove(prev, oldIdx, newIdx);
+      });
     }
+  };
+
+  const handlePublish = async (): Promise<void> => {
     if (addons.length === 0) {
       setError('Add at least one addon to your pack.');
       return;
@@ -139,7 +473,12 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
     }
   };
 
-  // Reset / pre-fill on open
+  // ── Step validation ──
+  const titleError = titleTouched && !title.trim();
+  const canProceedStep0 = !!title.trim();
+  const canPublish = addons.length > 0;
+
+  // ── Reset / pre-fill on open ──
   React.useEffect(() => {
     if (open) {
       if (editingPack) {
@@ -149,6 +488,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
         setSelectedTags(editingPack.tags ?? []);
         setIsAnonymous(editingPack.is_anonymous ?? false);
         setAddons(editingPack.addons ?? []);
+        setStep(0);
       } else {
         setTitle('');
         setDescription('');
@@ -156,60 +496,92 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
         setSelectedTags([]);
         setIsAnonymous(false);
         setAddons([]);
+        setStep(0);
       }
       setNewAddonName('');
       setNewAddonId('');
       setNewAddonNote('');
       setError(null);
+      setTitleTouched(false);
     }
   }, [open, editingPack]);
 
   const atTagLimit = selectedTags.length >= MAX_TAGS;
+  const requiredCount = addons.filter((a) => a.required).length;
+  const optionalCount = addons.length - requiredCount;
 
-  return (
-    <Dialog
-      open={open}
-      onClose={loading ? undefined : onClose}
-      maxWidth="sm"
-      fullWidth
-      disableEscapeKeyDown={loading}
+  // ── Addon input key handler ──
+  const handleAddonKeyDown = (e: React.KeyboardEvent): void => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddAddon();
+    }
+  };
+
+  // ===========================================================================
+  // Step 0 — Pack Details
+  // ===========================================================================
+
+  const renderStep0 = (): React.ReactElement => (
+    <motion.div
+      key="step-0"
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
     >
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Extension sx={{ fontSize: '1.25rem', color: '#c4a44a' }} />
-        {isEditMode ? 'Edit Pack' : 'Create Addon Pack'}
-      </DialogTitle>
-      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+      <Stack spacing={2.5} sx={{ pt: 1 }}>
         {/* Title */}
-        <TextField
-          label="Pack Name"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          slotProps={{ htmlInput: { maxLength: 100 } }}
-          helperText={`${title.length}/100`}
-          required
-          fullWidth
-          size="small"
-          error={!!error && !title.trim()}
-          placeholder="e.g. Trial Essentials, PvP Toolkit"
-        />
+        <Box>
+          <TextField
+            label="Pack Name"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={() => setTitleTouched(true)}
+            slotProps={{ htmlInput: { maxLength: 100 } }}
+            required
+            fullWidth
+            size="small"
+            autoFocus
+            error={titleError}
+            helperText={titleError ? 'Give your pack a name' : undefined}
+            placeholder="e.g. Trial Essentials, PvP Toolkit"
+            sx={glassInputSx(isDark, accentColor)}
+          />
+          <CharProgress current={title.length} max={100} accent={accentColor} />
+        </Box>
 
         {/* Description */}
-        <TextField
-          label="Description (optional)"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          slotProps={{ htmlInput: { maxLength: 500 } }}
-          helperText={`${description.length}/500`}
-          multiline
-          rows={2}
-          fullWidth
-          size="small"
-          placeholder="What is this pack for? Who should use it?"
-        />
+        <Box>
+          <TextField
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            slotProps={{ htmlInput: { maxLength: 500 } }}
+            multiline
+            rows={3}
+            fullWidth
+            size="small"
+            placeholder="What is this pack for? Who should use it?"
+            sx={glassInputSx(isDark, accentColor)}
+          />
+          <CharProgress current={description.length} max={500} accent={accentColor} />
+        </Box>
 
         {/* Pack type */}
         <Box>
-          <Typography variant="caption" color="text.secondary" gutterBottom display="block">
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              fontSize: '0.65rem',
+              color: 'text.secondary',
+              mb: 0.75,
+              display: 'block',
+            }}
+          >
             Pack Type
           </Typography>
           <Select
@@ -217,6 +589,20 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
             value={packType}
             onChange={(e: SelectChangeEvent) => setPackType(e.target.value)}
             fullWidth
+            sx={{
+              borderRadius: 2,
+              backgroundColor: isDark ? alpha('#0f172a', 0.8) : '#ffffff',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: isDark ? alpha('#38bdf8', 0.15) : alpha('#0f172a', 0.12),
+                transition: 'border-color 0.3s',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: isDark ? alpha('#38bdf8', 0.35) : alpha('#0f172a', 0.25),
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: accentColor,
+              },
+            }}
           >
             {PACK_TYPES.map((t) => (
               <MenuItem key={t} value={t}>
@@ -228,21 +614,40 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
 
         {/* Tags */}
         <Box>
-          <Typography
-            variant="caption"
-            color={atTagLimit ? 'warning.main' : 'text.secondary'}
-            gutterBottom
-            display="block"
-          >
-            Tags ({selectedTags.length}/{MAX_TAGS}){atTagLimit ? ' — limit reached' : ''}
-          </Typography>
-          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mt: 0.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', mb: 0.75 }}>
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                fontSize: '0.65rem',
+                color: 'text.secondary',
+              }}
+            >
+              Tags
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: '0.6rem',
+                color: atTagLimit ? '#f59e0b' : 'text.disabled',
+                transition: 'color 0.2s',
+              }}
+            >
+              {selectedTags.length}/{MAX_TAGS}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.6 }}>
             {PRESET_PACK_TAGS.map((tag) => {
               const isSelected = selectedTags.includes(tag);
               const isDisabled = !isSelected && atTagLimit;
               const accent = PACK_TAG_COLORS[tag] ?? '#888';
               return (
-                <Tooltip key={tag} title={isDisabled ? `Remove a tag first (max ${MAX_TAGS})` : ''}>
+                <Tooltip
+                  key={tag}
+                  title={isDisabled ? `Remove a tag first (max ${MAX_TAGS})` : ''}
+                >
                   <span>
                     <Chip
                       label={tag}
@@ -251,21 +656,30 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
                       variant={isSelected ? 'filled' : 'outlined'}
                       sx={{
                         cursor: isDisabled ? 'not-allowed' : 'pointer',
-                        opacity: isDisabled ? 0.5 : 1,
-                        transition: 'all 0.15s ease',
+                        opacity: isDisabled ? 0.35 : 1,
+                        borderRadius: '8px',
+                        fontWeight: 600,
+                        fontSize: '0.72rem',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        transform: isSelected ? 'scale(1.04)' : 'scale(1)',
                         ...(isSelected
                           ? {
                               bgcolor: accent,
                               color: '#fff',
                               borderColor: accent,
+                              boxShadow: `0 0 10px ${alpha(accent, 0.35)}`,
                               '&:hover': { bgcolor: accent, filter: 'brightness(0.9)' },
                             }
                           : {
-                              borderColor: `${accent}55`,
+                              borderColor: isDark ? alpha(accent, 0.3) : alpha(accent, 0.4),
                               color: accent,
                               '&:hover': isDisabled
                                 ? {}
-                                : { bgcolor: `${accent}18`, borderColor: accent },
+                                : {
+                                    bgcolor: alpha(accent, 0.1),
+                                    borderColor: accent,
+                                    transform: 'scale(1.04)',
+                                  },
                             }),
                       }}
                     />
@@ -273,290 +687,636 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
                 </Tooltip>
               );
             })}
-          </Stack>
+          </Box>
         </Box>
 
-        {/* ── Addon List Builder ── */}
+        {/* Anonymous toggle */}
         <Box
           sx={{
-            border: '1px solid',
-            borderColor: addons.length > 0 ? '#c4a44a55' : 'divider',
-            borderRadius: 2,
-            overflow: 'hidden',
-            transition: 'border-color 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            py: 1.25,
+            px: 1.5,
+            borderRadius: '10px',
+            bgcolor: isDark ? alpha('#fff', 0.02) : alpha('#000', 0.02),
+            border: `1px solid ${isDark ? alpha('#fff', 0.06) : alpha('#000', 0.06)}`,
           }}
         >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              px: 2,
-              py: 1.25,
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'action.hover',
-            }}
-          >
-            <Extension sx={{ fontSize: 18, color: '#c4a44a' }} />
-            <Typography variant="body2" fontWeight={700} sx={{ flex: 1 }}>
-              Addons
-              {addons.length > 0 && (
-                <Chip
-                  label={addons.length}
-                  size="small"
-                  sx={{
-                    ml: 1,
-                    height: 20,
-                    fontSize: '0.7rem',
-                    bgcolor: '#c4a44a22',
-                    color: '#c4a44a',
-                    fontWeight: 700,
-                  }}
-                />
-              )}
+          <VisibilityOff sx={{ fontSize: 18, color: 'text.disabled' }} />
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.3 }}>
+              Publish anonymously
             </Typography>
-            {addons.length === 0 && (
-              <Typography variant="caption" color="error">
-                Required
-              </Typography>
+            <Typography variant="caption" color="text.disabled" sx={{ lineHeight: 1.2 }}>
+              Your name won&apos;t appear on this pack
+            </Typography>
+          </Box>
+          <Switch
+            checked={isAnonymous}
+            onChange={(e) => setIsAnonymous(e.target.checked)}
+            size="small"
+            sx={{
+              '& .MuiSwitch-switchBase.Mui-checked': {
+                color: accentColor,
+                '& + .MuiSwitch-track': {
+                  bgcolor: alpha(accentColor, 0.4),
+                },
+              },
+            }}
+          />
+        </Box>
+      </Stack>
+    </motion.div>
+  );
+
+  // ===========================================================================
+  // Step 1 — Addon List Builder
+  // ===========================================================================
+
+  const renderStep1 = (): React.ReactElement => (
+    <motion.div
+      key="step-1"
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+    >
+      <Stack spacing={2} sx={{ pt: 1 }}>
+        {/* Header bar */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Extension sx={{ fontSize: 18, color: accentColor }} />
+            <Typography variant="body2" fontWeight={700}>
+              Addons
+            </Typography>
+            {addons.length > 0 && (
+              <Chip
+                label={addons.length}
+                size="small"
+                sx={{
+                  height: 22,
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  bgcolor: alpha(accentColor, 0.12),
+                  color: accentColor,
+                  border: `1px solid ${alpha(accentColor, 0.25)}`,
+                }}
+              />
             )}
           </Box>
-
-          {/* Addon list */}
           {addons.length > 0 && (
+            <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.62rem' }}>
+              {requiredCount} required · {optionalCount} optional
+            </Typography>
+          )}
+        </Box>
+
+        {/* Addon list or empty state */}
+        <Box
+          sx={{
+            borderRadius: '12px',
+            border: `1px solid ${addons.length > 0 ? alpha(accentColor, 0.2) : isDark ? alpha('#fff', 0.06) : alpha('#000', 0.06)}`,
+            overflow: 'hidden',
+            transition: 'border-color 0.3s',
+          }}
+        >
+          {addons.length === 0 ? (
+            /* ─── Empty state ─── */
             <Box
               sx={{
-                maxHeight: 260,
+                py: 4,
+                px: 3,
+                textAlign: 'center',
+                bgcolor: isDark ? alpha('#fff', 0.015) : alpha('#000', 0.015),
+              }}
+            >
+              <Box
+                sx={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: '14px',
+                  mx: 'auto',
+                  mb: 1.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${alpha(accentColor, 0.12)} 0%, ${alpha(accentColor, 0.04)} 100%)`,
+                  border: `1px solid ${alpha(accentColor, 0.2)}`,
+                }}
+              >
+                <Extension sx={{ fontSize: 24, color: alpha(accentColor, 0.6) }} />
+              </Box>
+              <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
+                No addons yet
+              </Typography>
+              <Typography variant="caption" color="text.disabled" sx={{ lineHeight: 1.5 }}>
+                Use the form below to add addons to your pack.
+                <br />
+                You can drag to reorder them after adding.
+              </Typography>
+            </Box>
+          ) : (
+            /* ─── Sortable addon list ─── */
+            <Box
+              sx={{
+                maxHeight: 240,
                 overflowY: 'auto',
-                '&::-webkit-scrollbar': { width: 6 },
+                p: 0.5,
+                '&::-webkit-scrollbar': { width: 5 },
                 '&::-webkit-scrollbar-thumb': {
-                  bgcolor: 'rgba(255,255,255,0.15)',
+                  bgcolor: alpha('#fff', 0.12),
                   borderRadius: 3,
                 },
               }}
             >
-              {addons.map((addon, i) => (
-                <Box
-                  key={addon.esouiId}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.75,
-                    py: 0.75,
-                    px: 2,
-                    borderTop: i > 0 ? '1px solid' : 'none',
-                    borderColor: 'divider',
-                    '&:hover': { bgcolor: 'action.hover' },
-                    transition: 'background-color 0.1s',
-                  }}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={addons.map((a) => a.esouiId)}
+                  strategy={verticalListSortingStrategy}
                 >
-                  <Box
-                    sx={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      bgcolor: addon.required ? '#c4a44a' : 'text.disabled',
-                      flexShrink: 0,
-                    }}
-                  />
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant="body2" fontWeight={600} noWrap>
-                      {addon.name}
-                    </Typography>
-                    {addon.note && (
-                      <Typography variant="caption" color="text.secondary" noWrap>
-                        {addon.note}
-                      </Typography>
-                    )}
-                  </Box>
-                  <Typography
-                    variant="caption"
-                    color="text.disabled"
-                    sx={{ flexShrink: 0, fontSize: '0.65rem' }}
-                  >
-                    #{addon.esouiId}
-                  </Typography>
-                  <Tooltip title={addon.required ? 'Mark as optional' : 'Mark as required'}>
-                    <Chip
-                      label={addon.required ? 'Required' : 'Optional'}
-                      size="small"
-                      onClick={() => handleToggleRequired(addon.esouiId)}
-                      sx={{
-                        height: 20,
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        bgcolor: addon.required ? '#c4a44a22' : 'transparent',
-                        color: addon.required ? '#c4a44a' : 'text.secondary',
-                        border: addon.required ? '1px solid #c4a44a55' : '1px solid',
-                        borderColor: addon.required ? '#c4a44a55' : 'divider',
-                        '&:hover': {
-                          bgcolor: addon.required ? '#c4a44a33' : 'action.hover',
-                        },
-                      }}
-                    />
-                  </Tooltip>
-                  <Tooltip title="Remove addon">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleRemoveAddon(addon.esouiId)}
-                      sx={{ p: 0.5, color: 'text.disabled', '&:hover': { color: 'error.main' } }}
-                    >
-                      <RemoveCircleOutline sx={{ fontSize: 16 }} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              ))}
+                  <AnimatePresence initial={false}>
+                    {addons.map((addon) => (
+                      <SortableAddonRow
+                        key={addon.esouiId}
+                        addon={addon}
+                        isDark={isDark}
+                        onToggleRequired={handleToggleRequired}
+                        onRemove={handleRemoveAddon}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </SortableContext>
+              </DndContext>
             </Box>
           )}
 
-          {/* Add addon form */}
+          {/* ─── Add addon form ─── */}
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1,
-              p: 2,
-              borderTop: addons.length > 0 ? '1px solid' : 'none',
-              borderColor: 'divider',
-              bgcolor: 'action.hover',
+              borderTop: `1px solid ${isDark ? alpha('#fff', 0.06) : alpha('#000', 0.06)}`,
+              p: 1.5,
+              bgcolor: isDark ? alpha('#fff', 0.02) : alpha('#000', 0.02),
             }}
           >
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>
-              Add an addon
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+            <Box sx={{ display: 'flex', gap: 0.75, mb: 0.75 }}>
               <TextField
+                inputRef={addonNameRef}
                 size="small"
-                label="Addon Name"
+                placeholder="Addon name"
                 value={newAddonName}
                 onChange={(e) => setNewAddonName(e.target.value)}
-                sx={{ flex: 2 }}
-                placeholder="e.g. RaidNotifier"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddAddon();
-                  }
+                onKeyDown={handleAddonKeyDown}
+                sx={{
+                  flex: 2,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px',
+                    fontSize: '0.82rem',
+                    bgcolor: isDark ? alpha('#0f172a', 0.6) : '#fff',
+                  },
                 }}
               />
               <TextField
                 size="small"
-                label="ESOUI ID"
+                placeholder="ESOUI ID"
                 value={newAddonId}
                 onChange={(e) => setNewAddonId(e.target.value.replace(/\D/g, ''))}
-                sx={{ flex: 1 }}
-                placeholder="e.g. 1355"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddAddon();
-                  }
+                onKeyDown={handleAddonKeyDown}
+                sx={{
+                  flex: 1,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px',
+                    fontSize: '0.82rem',
+                    bgcolor: isDark ? alpha('#0f172a', 0.6) : '#fff',
+                  },
                 }}
               />
             </Box>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+            <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center' }}>
               <TextField
                 size="small"
-                label="Note (optional)"
+                placeholder="Note (optional)"
                 value={newAddonNote}
                 onChange={(e) => setNewAddonNote(e.target.value)}
-                sx={{ flex: 1 }}
-                placeholder="e.g. Trial-specific warnings"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddAddon();
-                  }
+                onKeyDown={handleAddonKeyDown}
+                sx={{
+                  flex: 1,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px',
+                    fontSize: '0.82rem',
+                    bgcolor: isDark ? alpha('#0f172a', 0.6) : '#fff',
+                  },
                 }}
               />
-              <Tooltip title="Add addon to pack">
+              <Tooltip title={!newAddonName.trim() || !newAddonId ? 'Enter addon name & ESOUI ID' : 'Add addon (Enter)'}>
                 <span>
-                  <Button
-                    variant="outlined"
-                    size="small"
+                  <IconButton
                     onClick={handleAddAddon}
                     disabled={!newAddonName.trim() || !newAddonId}
-                    startIcon={<Add sx={{ fontSize: 18 }} />}
+                    size="small"
                     sx={{
-                      borderColor: '#c4a44a55',
-                      color: '#c4a44a',
-                      fontWeight: 700,
-                      '&:hover': { borderColor: '#c4a44a', bgcolor: '#c4a44a15' },
-                      '&.Mui-disabled': { borderColor: 'divider', color: 'text.disabled' },
+                      width: 36,
+                      height: 36,
+                      borderRadius: '10px',
+                      bgcolor: alpha(accentColor, 0.12),
+                      color: accentColor,
+                      border: `1px solid ${alpha(accentColor, 0.25)}`,
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        bgcolor: alpha(accentColor, 0.22),
+                        boxShadow: `0 0 12px ${alpha(accentColor, 0.2)}`,
+                        transform: 'scale(1.05)',
+                      },
+                      '&.Mui-disabled': {
+                        bgcolor: 'transparent',
+                        color: 'text.disabled',
+                        border: `1px solid ${isDark ? alpha('#fff', 0.06) : alpha('#000', 0.08)}`,
+                      },
                     }}
                   >
-                    Add
-                  </Button>
+                    <Add sx={{ fontSize: 20 }} />
+                  </IconButton>
                 </span>
               </Tooltip>
             </Box>
           </Box>
         </Box>
 
-        {/* Anonymous toggle */}
-        <FormControlLabel
-          control={
-            <Switch
-              checked={isAnonymous}
-              onChange={(e) => setIsAnonymous(e.target.checked)}
-              size="small"
-            />
-          }
-          label={
-            <Typography variant="body2" color="text.secondary">
-              Publish anonymously
-            </Typography>
-          }
-          sx={{ mt: 0.5 }}
-        />
-
-        {/* Summary */}
-        {addons.length > 0 && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <CheckCircle sx={{ fontSize: 14, color: '#22c55e' }} />
-            <Typography variant="caption" color="text.secondary">
-              {addons.length} addon{addons.length !== 1 ? 's' : ''} ·{' '}
-              {addons.filter((a) => a.required).length} required ·{' '}
-              {addons.filter((a) => !a.required).length} optional
-            </Typography>
-          </Box>
-        )}
-
+        {/* Error */}
         {error && (
-          <Alert severity="error" onClose={() => setError(null)}>
+          <Alert
+            severity="error"
+            onClose={() => setError(null)}
+            sx={{
+              borderRadius: '10px',
+              bgcolor: isDark ? alpha('#ef4444', 0.1) : alpha('#fef2f2', 0.95),
+              border: `1px solid ${alpha('#ef4444', 0.3)}`,
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+            }}
+          >
             {error}
           </Alert>
         )}
+      </Stack>
+    </motion.div>
+  );
+
+  // ===========================================================================
+  // Stepper dots
+  // ===========================================================================
+
+  const renderStepper = (): React.ReactElement => (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 0.75,
+      }}
+    >
+      {STEP_LABELS.map((label, i) => (
+        <Tooltip key={label} title={label}>
+          <Box
+            onClick={() => {
+              if (i === 0 || canProceedStep0) setStep(i);
+            }}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              cursor: i === 0 || canProceedStep0 ? 'pointer' : 'default',
+              py: 0.5,
+              px: 1,
+              borderRadius: '8px',
+              transition: 'all 0.2s',
+              bgcolor: step === i ? alpha(accentColor, 0.1) : 'transparent',
+              '&:hover': {
+                bgcolor: alpha(accentColor, 0.06),
+              },
+            }}
+          >
+            <Box
+              sx={{
+                width: step === i ? 18 : 7,
+                height: 7,
+                borderRadius: 4,
+                bgcolor: step === i ? accentColor : isDark ? alpha('#fff', 0.12) : alpha('#000', 0.12),
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: step === i ? `0 0 8px ${alpha(accentColor, 0.4)}` : 'none',
+              }}
+            />
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: '0.6rem',
+                fontWeight: step === i ? 700 : 500,
+                color: step === i ? accentColor : 'text.disabled',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                transition: 'all 0.2s',
+              }}
+            >
+              {label}
+            </Typography>
+          </Box>
+        </Tooltip>
+      ))}
+    </Box>
+  );
+
+  // ===========================================================================
+  // Main Render
+  // ===========================================================================
+
+  return (
+    <Dialog
+      open={open}
+      onClose={loading ? undefined : onClose}
+      maxWidth="sm"
+      fullWidth
+      fullScreen={isMobile}
+      disableEscapeKeyDown={loading}
+      TransitionComponent={Fade}
+      transitionDuration={{ enter: 250, exit: 200 }}
+      PaperProps={{
+        sx: {
+          background: panelBg,
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: panelBorder,
+          borderRadius: isMobile ? 0 : '14px',
+          boxShadow: panelShadow,
+          overflow: 'hidden',
+          minHeight: isMobile ? '100dvh' : undefined,
+          maxHeight: isMobile ? '100dvh' : '85vh',
+          // Animated gold shimmer top edge
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '2px',
+            background: accentGradient,
+            zIndex: 1,
+            ...shimmer,
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 3s linear infinite',
+          },
+        },
+      }}
+      slotProps={{
+        backdrop: {
+          sx: {
+            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(15, 23, 42, 0.35)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+          },
+        },
+      }}
+    >
+      {/* ── Title ── */}
+      <DialogTitle
+        sx={{
+          py: 2,
+          px: { xs: 2.5, sm: 3 },
+          borderBottom: panelBorder,
+          background: isDark
+            ? `linear-gradient(135deg, ${alpha(accentColor, 0.05)} 0%, transparent 100%)`
+            : 'transparent',
+        }}
+      >
+        <Stack direction="row" alignItems="center" spacing={2}>
+          {/* Icon badge */}
+          <Box
+            sx={{
+              width: 42,
+              height: 42,
+              borderRadius: '11px',
+              background: `linear-gradient(135deg, ${alpha(accentColor, 0.18)} 0%, ${alpha(accentAlt, 0.1)} 100%)`,
+              border: `1px solid ${alpha(accentColor, 0.25)}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+              flexShrink: 0,
+              '&:hover': {
+                transform: 'scale(1.06)',
+                boxShadow: `0 0 14px ${alpha(accentColor, 0.2)}`,
+              },
+            }}
+          >
+            <Extension sx={{ color: accentColor, fontSize: 20 }} />
+          </Box>
+
+          {/* Title text */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontWeight: 600,
+                fontSize: '1.05rem',
+                background: accentGradient,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                lineHeight: 1.3,
+              }}
+            >
+              {isEditMode ? 'Edit Pack' : 'Create Addon Pack'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ opacity: 0.6 }}>
+              {isEditMode
+                ? 'Update your pack details and addons'
+                : 'Share your curated addon collection'}
+            </Typography>
+          </Box>
+
+          {/* Close X */}
+          <IconButton
+            onClick={onClose}
+            disabled={loading}
+            size="small"
+            aria-label="Close dialog"
+            sx={{
+              color: 'text.secondary',
+              opacity: 0.5,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                opacity: 1,
+                backgroundColor: alpha(accentColor, 0.08),
+              },
+            }}
+          >
+            <Close fontSize="small" />
+          </IconButton>
+        </Stack>
+
+        {/* Stepper */}
+        <Box sx={{ mt: 1.5 }}>{renderStepper()}</Box>
+      </DialogTitle>
+
+      {/* ── Content ── */}
+      <DialogContent
+        sx={{
+          flex: 1,
+          px: { xs: 2.5, sm: 3 },
+          pt: { xs: 2, sm: 2 },
+          pb: { xs: 2, sm: 2.5 },
+          overflowY: 'auto',
+          '&::-webkit-scrollbar': { width: 5 },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: alpha('#fff', 0.1),
+            borderRadius: 3,
+          },
+        }}
+      >
+        <AnimatePresence mode="wait">
+          {step === 0 ? renderStep0() : renderStep1()}
+        </AnimatePresence>
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
-          Cancel
-        </Button>
-        <Button
-          onClick={() => void handlePublish()}
-          variant="contained"
-          disabled={loading}
-          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
-          sx={{
-            background: 'linear-gradient(135deg, #c4a44a 0%, #d4b45a 100%)',
-            color: '#0b1220',
-            fontWeight: 700,
-            '&:hover': {
-              background: 'linear-gradient(135deg, #d4b45a 0%, #e4c46a 100%)',
-            },
-          }}
-        >
-          {loading
-            ? isEditMode
-              ? 'Updating…'
-              : 'Creating…'
-            : isEditMode
-              ? 'Update Pack'
-              : 'Create Pack'}
-        </Button>
+      {/* ── Actions ── */}
+      <DialogActions
+        sx={{
+          px: { xs: 2.5, sm: 3 },
+          py: 1.75,
+          borderTop: panelBorder,
+          background: isDark
+            ? `linear-gradient(180deg, ${alpha('#0f172a', 0.6)} 0%, ${alpha('#0b1220', 0.8)} 100%)`
+            : alpha('#f8fafc', 0.6),
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          gap: 1,
+          justifyContent: 'space-between',
+        }}
+      >
+        {/* Left side — Back button (step 1 only) */}
+        <Box>
+          {step === 1 && (
+            <Button
+              onClick={() => setStep(0)}
+              startIcon={<ArrowBack sx={{ fontSize: 16 }} />}
+              disabled={loading}
+              sx={{
+                borderRadius: 2,
+                px: 2,
+                color: 'text.secondary',
+                fontWeight: 500,
+                textTransform: 'none',
+                transition: 'all 0.2s',
+                '&:hover': { bgcolor: alpha(accentColor, 0.06) },
+              }}
+            >
+              Back
+            </Button>
+          )}
+        </Box>
+
+        {/* Right side — Cancel + Next/Publish */}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            onClick={onClose}
+            disabled={loading}
+            sx={{
+              borderRadius: 2,
+              px: 2.5,
+              color: 'text.secondary',
+              fontWeight: 500,
+              textTransform: 'none',
+              transition: 'all 0.2s',
+              '&:hover': {
+                backgroundColor: alpha('#fff', 0.04),
+              },
+            }}
+          >
+            Cancel
+          </Button>
+
+          {step === 0 ? (
+            <Button
+              onClick={() => setStep(1)}
+              disabled={!canProceedStep0}
+              endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
+              variant="contained"
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                py: 1,
+                background: accentGradient,
+                fontWeight: 600,
+                textTransform: 'none',
+                fontSize: '0.9rem',
+                color: '#0b1220',
+                boxShadow: `0 4px 14px ${alpha(accentColor, 0.25)}`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow: `0 6px 20px ${alpha(accentColor, 0.4)}`,
+                  transform: 'translateY(-1px)',
+                },
+                '&:disabled': {
+                  opacity: 0.5,
+                  background: accentGradient,
+                  color: alpha('#0b1220', 0.6),
+                },
+              }}
+            >
+              Next
+            </Button>
+          ) : (
+            <Button
+              onClick={() => void handlePublish()}
+              disabled={loading || !canPublish}
+              variant="contained"
+              startIcon={
+                loading ? <CircularProgress size={16} color="inherit" /> : undefined
+              }
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                py: 1,
+                background: accentGradient,
+                fontWeight: 600,
+                textTransform: 'none',
+                fontSize: '0.9rem',
+                color: '#0b1220',
+                boxShadow: `0 4px 14px ${alpha(accentColor, 0.25)}`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow: `0 6px 20px ${alpha(accentColor, 0.4)}`,
+                  transform: 'translateY(-1px)',
+                },
+                '&:disabled': {
+                  opacity: 0.5,
+                  background: accentGradient,
+                  color: alpha('#0b1220', 0.6),
+                },
+              }}
+            >
+              {loading
+                ? isEditMode
+                  ? 'Updating…'
+                  : 'Creating…'
+                : isEditMode
+                  ? 'Update Pack'
+                  : 'Create Pack'}
+            </Button>
+          )}
+        </Box>
       </DialogActions>
     </Dialog>
   );

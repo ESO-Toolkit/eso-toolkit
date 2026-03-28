@@ -60,6 +60,7 @@ export interface Env {
   PANEL_CHANNEL_ID: string;
   GITHUB_OWNER: string;
   GITHUB_REPO: string;
+  ROSTER_HUB_API_URL: string;
 }
 
 // Discord Interaction payloads
