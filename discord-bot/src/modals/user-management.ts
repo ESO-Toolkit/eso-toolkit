@@ -51,6 +51,8 @@ export async function handleAddUserModal(
       READ_MESSAGE_HISTORY: true,
       EMBED_LINKS: true,
       ATTACH_FILES: true,
+      ADD_REACTIONS: true,
+      USE_EXTERNAL_EMOJIS: true,
     });
   } catch (err) {
     console.error('[add-user] failed to add permission:', err);

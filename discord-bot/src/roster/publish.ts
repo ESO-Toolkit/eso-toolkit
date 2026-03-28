@@ -7,6 +7,7 @@
 
 import {
   createChannel,
+  deleteChannel,
   sendMessage,
   editMessage,
 } from '../discord.js';
@@ -361,18 +362,24 @@ async function createNewRosterChannel(
   snapshot: RosterSnapshot,
   decoded: Awaited<ReturnType<typeof decodeRosterData>>,
 ): Promise<InternalRefreshResult> {
+  const channelOptions: Parameters<typeof createChannel>[2] = {
+    name: channelName,
+    type: ChannelType.GUILD_TEXT,
+    topic: `ESO Toolkit Roster: ${snapshot.title.replace(/<@[!&]?\d+>|<#\d+>|@everyone|@here/g, '')} (ID: ${snapshot.id})`,
+  };
+  if (categoryId) {
+    channelOptions.parent_id = categoryId;
+  }
+
+  let channel: Awaited<ReturnType<typeof createChannel>>;
   try {
-    const channelOptions: Parameters<typeof createChannel>[2] = {
-      name: channelName,
-      type: ChannelType.GUILD_TEXT,
-      topic: `ESO Toolkit Roster: ${snapshot.title} (ID: ${snapshot.id})`,
-    };
-    if (categoryId) {
-      channelOptions.parent_id = categoryId;
-    }
+    channel = await createChannel(env, guildId, channelOptions);
+  } catch (err) {
+    console.error('[publish] create channel failed:', err);
+    return { ok: false, error: 'Failed to create Discord channel. Please try again.' };
+  }
 
-    const channel = await createChannel(env, guildId, channelOptions);
-
+  try {
     const embed = buildRosterEmbed(snapshot, decoded);
     const components = buildRosterActionRows(snapshot.id);
 
@@ -383,7 +390,12 @@ async function createNewRosterChannel(
 
     return { ok: true, channelId: channel.id, messageId: message.id };
   } catch (err) {
-    console.error('[publish] create channel/message failed:', err);
-    return { ok: false, error: 'Failed to create Discord channel. Please try again.' };
+    console.error('[publish] send message failed, cleaning up orphaned channel:', err);
+    try {
+      await deleteChannel(env, channel.id);
+    } catch (cleanupErr) {
+      console.error('[publish] failed to clean up orphaned channel:', cleanupErr);
+    }
+    return { ok: false, error: 'Failed to post roster embed. Please try again.' };
   }
 }

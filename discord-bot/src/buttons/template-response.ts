@@ -107,22 +107,27 @@ async function syncAcknowledgedToGitHub(
 
   // Feature or Feedback — create a GitHub Discussion (not an Issue)
   if (ticket.category === 'Feature' || ticket.category === 'Feedback') {
-    const discussion = await createGitHubDiscussionOnAcknowledge(
-      env,
-      ticket.id,
-      ticket.category,
-      ticket.title,
-      ticket.description,
-      ticket.username,
-      ticket.userId,
-      staffName,
-    );
-    if (discussion) {
-      await updateTicket(env, channelId, {
-        githubIssueNumber: discussion.number,
-        githubIssueUrl: discussion.html_url,
-      });
-      return `\n💬 Added to GitHub Discussions: [#${discussion.number}](${discussion.html_url}).`;
+    try {
+      const discussion = await createGitHubDiscussionOnAcknowledge(
+        env,
+        ticket.id,
+        ticket.category,
+        ticket.title,
+        ticket.description,
+        ticket.username,
+        ticket.userId,
+        staffName,
+      );
+      if (discussion) {
+        await updateTicket(env, channelId, {
+          githubIssueNumber: discussion.number,
+          githubIssueUrl: discussion.html_url,
+        });
+        return `\n💬 Added to GitHub Discussions: [#${discussion.number}](${discussion.html_url}).`;
+      }
+    } catch (err) {
+      console.error('[template] failed to sync discussion to GitHub:', err);
+      return '\n⚠️ GitHub Discussion sync failed — please create it manually.';
     }
   }
 

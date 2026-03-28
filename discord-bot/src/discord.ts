@@ -36,7 +36,8 @@ async function discordFetch<T>(
 
     // Handle rate limits (429) — wait and retry
     if (res.status === 429) {
-      const retryAfter = parseFloat(res.headers.get('Retry-After') ?? '1');
+      const retryAfterRaw = parseFloat(res.headers.get('Retry-After') ?? '1');
+      const retryAfter = Number.isFinite(retryAfterRaw) ? retryAfterRaw : 1;
       const waitMs = Math.min(retryAfter * 1000, 5000); // cap at 5s
       console.warn(`[discord] rate limited on ${method} ${path}, retry after ${retryAfter}s`);
       if (attempt < MAX_RETRIES) {
@@ -265,6 +266,7 @@ export function getBotGuilds(env: Env): Promise<DiscordPartialGuild[]> {
 // Permission bits used throughout the bot
 export const Permission = {
   // Decimal values as bigint for safe bitwise ops
+  ADMINISTRATOR: 1n << 3n,
   MANAGE_GUILD: 1n << 5n,
   MANAGE_CHANNELS: 1n << 4n,
   SEND_MESSAGES: 1n << 11n,

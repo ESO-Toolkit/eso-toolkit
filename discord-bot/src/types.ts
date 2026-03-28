@@ -209,8 +209,6 @@ export interface TicketState {
   aiPriority?: TicketPriority;
   aiRefinedCategory?: TicketCategory;
   staffNotes?: string; // Internal notes visible only to staff
-  feedbackRating?: 1 | 2 | 3 | 4 | 5; // User satisfaction rating
-  feedbackComment?: string; // Optional feedback comment
   embedMessageId?: string;
   createdAt: string; // ISO timestamp
 }
@@ -238,7 +236,6 @@ export const ButtonId = {
   UNCLAIM: 'ticket_unclaim',
   CLOSE: 'ticket_close',
   CONFIRM_CLOSE: 'ticket_confirm_close',
-  REOPEN: 'ticket_reopen',
   ADD_USER: 'ticket_add_user',
   REMOVE_USER: 'ticket_remove_user',
   STAFF_NOTE: 'ticket_staff_note',

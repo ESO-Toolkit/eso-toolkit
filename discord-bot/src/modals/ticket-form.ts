@@ -298,7 +298,13 @@ async function processTicketCreation(
     ]);
 
     const ai = aiResult.status === 'fulfilled' ? aiResult.value : null;
+    if (aiResult.status === 'rejected') {
+      console.error('[ticket-form] AI classification failed:', aiResult.reason);
+    }
     const github = githubIssue.status === 'fulfilled' ? githubIssue.value : null;
+    if (githubIssue.status === 'rejected') {
+      console.error('[ticket-form] GitHub issue creation failed:', githubIssue.reason);
+    }
 
     // 7. Update KV with AI + GitHub data (only include defined values)
     const aiPatch = {
