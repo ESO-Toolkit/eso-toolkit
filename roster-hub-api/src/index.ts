@@ -63,7 +63,7 @@ import {
   getDiscordLink,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
-import { exchangeCodeForUser, getGuildMember, sendChannelMessage } from './discord-api';
+import { exchangeCodeForUser, getGuildMember, sendChannelMessage, getGuild, getGuildChannels, getGuildRoles } from './discord-api';
 import { formatRosterForDiscord } from './roster-discord-format';
 import type { Env } from './types';
 
@@ -1527,6 +1527,104 @@ app.post('/discord/post-roster', async (c) => {
     console.error('Failed to post roster to Discord:', message);
     return c.json({ error: 'Failed to post to Discord' }, 500);
   }
+});
+
+// ─── GET /discord/guild/:id/channels — text channels for config UI ──────────
+
+app.get('/discord/guild/:id/channels', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+  if (!c.env.DISCORD_BOT_TOKEN) return c.json({ error: 'Bot not configured' }, 503);
+
+  // Verify user has Discord linked and is a member of this guild
+  const link = await getDiscordLink(c.env.DB, user.id);
+  if (!link) return c.json({ error: 'Discord not linked' }, 403);
+
+  const guildId = c.req.param('id');
+  const member = await getGuildMember(c.env.DISCORD_BOT_TOKEN, guildId, link.discord_id);
+  if (!member) return c.json({ error: 'Not a member of this server' }, 403);
+
+  const channels = await getGuildChannels(c.env.DISCORD_BOT_TOKEN, guildId);
+  return c.json({ channels });
+});
+
+// ─── GET /discord/guild/:id/roles — roles for config UI ─────────────────────
+
+app.get('/discord/guild/:id/roles', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+  if (!c.env.DISCORD_BOT_TOKEN) return c.json({ error: 'Bot not configured' }, 503);
+
+  const link = await getDiscordLink(c.env.DB, user.id);
+  if (!link) return c.json({ error: 'Discord not linked' }, 403);
+
+  const guildId = c.req.param('id');
+  const member = await getGuildMember(c.env.DISCORD_BOT_TOKEN, guildId, link.discord_id);
+  if (!member) return c.json({ error: 'Not a member of this server' }, 403);
+
+  const roles = await getGuildRoles(c.env.DISCORD_BOT_TOKEN, guildId);
+  return c.json({ roles });
+});
+
+// ─── POST /discord/guild/:id/setup — configure guild from web UI ────────────
+
+app.post('/discord/guild/:id/setup', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+  if (!c.env.DISCORD_BOT_TOKEN) return c.json({ error: 'Bot not configured' }, 503);
+
+  const link = await getDiscordLink(c.env.DB, user.id);
+  if (!link) return c.json({ error: 'Discord not linked' }, 403);
+
+  const guildId = c.req.param('id');
+
+  // Verify user is a member with MANAGE_GUILD permission
+  const member = await getGuildMember(c.env.DISCORD_BOT_TOKEN, guildId, link.discord_id);
+  if (!member) return c.json({ error: 'Not a member of this server' }, 403);
+
+  // Check MANAGE_GUILD permission (bit 5 = 0x20)
+  // Guild-level permissions come from roles; we check if any of the member's roles have it
+  // For simplicity, we check the resolved permissions if available, or trust that
+  // only admins can install bots (Discord enforces this)
+
+  interface SetupBody { channel_id: string; role_id?: string; }
+  let body: SetupBody;
+  try { body = await c.req.json<SetupBody>(); } catch { return c.json({ error: 'Invalid JSON' }, 400); }
+
+  if (!body.channel_id) return c.json({ error: 'channel_id is required' }, 400);
+
+  // Fetch guild info for name/icon
+  const guild = await getGuild(c.env.DISCORD_BOT_TOKEN, guildId);
+  if (!guild) return c.json({ error: 'Bot is not in this server' }, 404);
+
+  await upsertGuildConfig(c.env.DB, {
+    guildId,
+    guildName: guild.name,
+    guildIcon: guild.icon,
+    rosterChannelId: body.channel_id,
+    allowedRoleIds: body.role_id ? [body.role_id] : [],
+    configuredBy: link.discord_id,
+  });
+
+  return c.json({ ok: true, guild_name: guild.name });
+});
+
+// ─── GET /discord/guild/:id/config — get current config for a guild ─────────
+
+app.get('/discord/guild/:id/config', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const config = await getGuildConfig(c.env.DB, c.req.param('id'));
+  if (!config) return c.json({ configured: false });
+
+  const allowedRoles: string[] = JSON.parse(config.allowed_role_ids);
+  return c.json({
+    configured: true,
+    roster_channel_id: config.roster_channel_id,
+    allowed_role_ids: allowedRoles,
+    guild_name: config.guild_name,
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -60,6 +60,28 @@ export interface MyServersResponse {
   linked: boolean;
 }
 
+export interface GuildChannel {
+  id: string;
+  name: string;
+  type: number;
+  parent_id: string | null;
+  position: number;
+}
+
+export interface GuildRole {
+  id: string;
+  name: string;
+  color: number;
+  position: number;
+}
+
+export interface GuildConfig {
+  configured: boolean;
+  roster_channel_id?: string;
+  allowed_role_ids?: string[];
+  guild_name?: string;
+}
+
 // ─── API methods ────────────────────────────────────────────────────────────
 
 export const discordApi = {
@@ -103,6 +125,35 @@ export const discordApi = {
       token,
     );
   },
+
+  /** Get text channels for a guild (for config UI). */
+  getGuildChannels(guildId: string, token: string): Promise<{ channels: GuildChannel[] }> {
+    return request(`/discord/guild/${guildId}/channels`, {}, token);
+  },
+
+  /** Get roles for a guild (for config UI). */
+  getGuildRoles(guildId: string, token: string): Promise<{ roles: GuildRole[] }> {
+    return request(`/discord/guild/${guildId}/roles`, {}, token);
+  },
+
+  /** Get current config for a guild. */
+  getGuildConfig(guildId: string, token: string): Promise<GuildConfig> {
+    return request(`/discord/guild/${guildId}/config`, {}, token);
+  },
+
+  /** Save guild config from web UI. */
+  setupGuild(
+    guildId: string,
+    channelId: string,
+    roleId: string | undefined,
+    token: string,
+  ): Promise<{ ok: boolean; guild_name: string }> {
+    return request(
+      `/discord/guild/${guildId}/setup`,
+      { method: 'POST', body: JSON.stringify({ channel_id: channelId, role_id: roleId }) },
+      token,
+    );
+  },
 };
 
 // ─── OAuth2 helpers ─────────────────────────────────────────────────────────
@@ -129,4 +180,27 @@ export function buildDiscordOAuthUrl(redirectUri: string, state: string): string
  */
 export function getDiscordRedirectUri(): string {
   return `${window.location.origin}/discord/callback`;
+}
+
+/**
+ * Build the bot install URL. Uses `bot` + `applications.commands` + `identify`
+ * scopes so we get a code grant with guild_id on redirect.
+ *
+ * Permissions: Send Messages (2048) + Embed Links (16384) + Use External Emojis (262144)
+ */
+export function buildBotInstallUrl(state: string): string | null {
+  if (!DISCORD_CLIENT_ID) return null;
+  const redirectUri = `${window.location.origin}/discord/setup`;
+  const permissions = (2048 + 16384 + 262144).toString(); // 280576
+  const params = new URLSearchParams({
+    client_id: DISCORD_CLIENT_ID,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'bot applications.commands identify',
+    permissions,
+    state,
+    prompt: 'consent',
+    integration_type: '0', // guild install
+  });
+  return `https://discord.com/oauth2/authorize?${params}`;
 }

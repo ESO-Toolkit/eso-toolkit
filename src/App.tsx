@@ -195,6 +195,9 @@ const PublicProfilePage = React.lazy(() =>
 const DiscordCallbackPage = React.lazy(() =>
   import('./features/discord/DiscordCallbackPage'),
 );
+const DiscordSetupPage = React.lazy(() =>
+  import('./features/discord/DiscordSetupPage'),
+);
 
 // Null fallback for lazy-loaded routes — view transitions provide visual
 // feedback during navigation, so a skeleton loader is unnecessary and jarring.
@@ -619,6 +622,14 @@ const AppRoutes: React.FC = () => {
               element={
                 <Suspense fallback={<LoadingFallback />}>
                   <DiscordCallbackPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/discord/setup"
+              element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <DiscordSetupPage />
                 </Suspense>
               }
             />

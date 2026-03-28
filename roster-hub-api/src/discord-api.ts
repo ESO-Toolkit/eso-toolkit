@@ -137,3 +137,63 @@ export async function getGuild(
   const data = (await res.json()) as { id: string; name: string; icon: string | null };
   return { id: data.id, name: data.name, icon: data.icon };
 }
+
+// ─── Guild channels & roles ────────────────────────────────────────────────
+
+export interface DiscordChannel {
+  id: string;
+  name: string;
+  type: number; // 0 = text, 2 = voice, 4 = category, etc.
+  parent_id: string | null;
+  position: number;
+}
+
+export interface DiscordRole {
+  id: string;
+  name: string;
+  color: number;
+  position: number;
+  managed: boolean; // true = bot/integration role
+}
+
+/**
+ * Fetch all channels in a guild. Returns text channels only (type 0).
+ */
+export async function getGuildChannels(
+  botToken: string,
+  guildId: string,
+): Promise<DiscordChannel[]> {
+  const res = await fetch(`${DISCORD_API}/guilds/${guildId}/channels`, {
+    headers: {
+      Authorization: `Bot ${botToken}`,
+      'User-Agent': 'ESO-Toolkit-RosterHubAPI/1.0',
+    },
+  });
+  if (!res.ok) return [];
+  const channels = (await res.json()) as DiscordChannel[];
+  // Return only text channels, sorted by position
+  return channels
+    .filter((c) => c.type === 0)
+    .sort((a, b) => a.position - b.position);
+}
+
+/**
+ * Fetch all roles in a guild. Excludes @everyone and managed (bot) roles.
+ */
+export async function getGuildRoles(
+  botToken: string,
+  guildId: string,
+): Promise<DiscordRole[]> {
+  const res = await fetch(`${DISCORD_API}/guilds/${guildId}/roles`, {
+    headers: {
+      Authorization: `Bot ${botToken}`,
+      'User-Agent': 'ESO-Toolkit-RosterHubAPI/1.0',
+    },
+  });
+  if (!res.ok) return [];
+  const roles = (await res.json()) as DiscordRole[];
+  // Exclude @everyone (id === guild_id) and managed/bot roles
+  return roles
+    .filter((r) => r.id !== guildId && !r.managed)
+    .sort((a, b) => b.position - a.position);
+}
