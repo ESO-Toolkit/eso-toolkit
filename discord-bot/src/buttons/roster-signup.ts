@@ -29,7 +29,7 @@ export function handleRosterSignupButton(
   return {
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      content: `${emoji} **${username}** signed up as **${roleName}**!${userId ? ` (<@${userId}>)` : ''}`,
+      content: `${emoji} **${username}** is interested in **${roleName}**!${userId ? ` (<@${userId}>)` : ''}\n-# *A raid lead will confirm your slot.*`,
     },
   };
 }

@@ -18,7 +18,7 @@ export async function handleRosterSetup(
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: '**You need **Manage Server** permission to view setup instructions.',
+        content: '❌ You need **Manage Server** permission to view setup instructions.',
         flags: MessageFlags.EPHEMERAL,
       },
     };

@@ -6,6 +6,7 @@
  */
 
 import { hasRosterPermission } from '../auth.js';
+import { sendFollowup } from '../discord.js';
 import { publishRoster } from '../roster/publish.js';
 import { getGuildConfig, getDefaultGuildConfig } from '../roster/kv.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
@@ -16,6 +17,10 @@ function parseRosterId(input: string): string | null {
   // Try URL format: https://esotk.com/roster-hub/ABC123
   const urlMatch = input.match(/\/roster-hub\/([A-Za-z0-9_-]+)/);
   if (urlMatch) return urlMatch[1];
+
+  // Try new URL format: https://esotk.com/rv?id=ABC123
+  const queryMatch = input.match(/[?&]id=([A-Za-z0-9_-]+)/);
+  if (queryMatch) return queryMatch[1];
 
   // Raw ID: alphanumeric + hyphens/underscores
   if (/^[A-Za-z0-9_-]{3,}$/.test(input)) return input;
@@ -82,7 +87,6 @@ export async function handleRosterLink(
         ownerUserId: userId,
       });
 
-      const { sendFollowup } = await import('../discord.js');
       if (result.ok) {
         await sendFollowup(env, interaction.token, {
           content: `✅ Roster linked and published! Channel: <#${result.channelId}>`,

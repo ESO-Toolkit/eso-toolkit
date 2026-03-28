@@ -6,6 +6,7 @@
  * is available natively in the Workers runtime.
  */
 
+import { getSetName } from './set-names.js';
 import type { DecodedRoster, DecodedRosterSlot } from './types.js';
 
 // ── Base64url → bytes ───────────────────────────────────────────────────────
@@ -97,22 +98,13 @@ interface CompactRoster {
   h2?: CompactHealer;
 }
 
-// ── Set ID → name (placeholder — ideally loaded from game data) ─────────────
-
-function setIdToName(id: number): string {
-  // Return the numeric ID as a string; the frontend has the full mapping
-  // but for Discord we just show the ID. A future enhancement could load
-  // the set name map.
-  return `Set #${id}`;
-}
-
 // ── Decode slot helpers ─────────────────────────────────────────────────────
 
 function decodeTank(t: CompactTank): DecodedRosterSlot {
   const sets: string[] = [];
-  if (t.gs?.s1) sets.push(setIdToName(t.gs.s1));
-  if (t.gs?.s2) sets.push(setIdToName(t.gs.s2));
-  if (t.gs?.ms) sets.push(setIdToName(t.gs.ms));
+  if (t.gs?.s1) sets.push(getSetName(t.gs.s1));
+  if (t.gs?.s2) sets.push(getSetName(t.gs.s2));
+  if (t.gs?.ms) sets.push(getSetName(t.gs.ms));
   return {
     playerName: t.pn,
     roleLabel: t.rl,
@@ -124,9 +116,9 @@ function decodeTank(t: CompactTank): DecodedRosterSlot {
 
 function decodeHealer(h: CompactHealer): DecodedRosterSlot {
   const sets: string[] = [];
-  if (h.s1) sets.push(setIdToName(h.s1));
-  if (h.s2) sets.push(setIdToName(h.s2));
-  if (h.ms) sets.push(setIdToName(h.ms));
+  if (h.s1) sets.push(getSetName(h.s1));
+  if (h.s2) sets.push(getSetName(h.s2));
+  if (h.ms) sets.push(getSetName(h.ms));
   return {
     playerName: h.pn,
     roleLabel: h.rl,
@@ -138,9 +130,9 @@ function decodeHealer(h: CompactHealer): DecodedRosterSlot {
 
 function decodeDPS(d: CompactDPS): DecodedRosterSlot {
   const sets: string[] = [];
-  if (d.s1) sets.push(setIdToName(d.s1));
-  if (d.s2) sets.push(setIdToName(d.s2));
-  if (d.ms) sets.push(setIdToName(d.ms));
+  if (d.s1) sets.push(getSetName(d.s1));
+  if (d.s2) sets.push(getSetName(d.s2));
+  if (d.ms) sets.push(getSetName(d.ms));
   return {
     playerName: d.pn,
     roleLabel: d.rl || `DD${d.sn}`,

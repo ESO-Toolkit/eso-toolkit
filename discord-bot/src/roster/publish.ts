@@ -119,8 +119,31 @@ export interface RefreshResult {
  * Called by the webhook from roster-hub-api and by /roster refresh.
  */
 export async function refreshRoster(env: Env, rosterId: string): Promise<RefreshResult> {
-  // Fetch the latest snapshot
-  const snapshot = await fetchRosterSnapshot(env, rosterId);
+  // Fetch the latest snapshot — hub API for normal IDs, KV for direct-publish
+  let snapshot = await fetchRosterSnapshot(env, rosterId);
+
+  if (!snapshot && rosterId.startsWith('direct-')) {
+    // Direct-publish rosters live in KV, not the hub API
+    const kvData = await env.ROSTERS.get(`roster-data:${rosterId}`);
+    if (kvData) {
+      // Reconstruct a minimal snapshot from the mapping + KV data
+      const guildId = env.GUILD_ID;
+      const mapping = await getMappingByRosterId(env, guildId, rosterId);
+      snapshot = {
+        id: rosterId,
+        title: mapping?.channelNameOverride ?? 'Direct Roster',
+        description: '',
+        trial_id: '',
+        author_name: 'Unknown',
+        roster_data: kvData,
+        tags: [],
+        vote_count: 0,
+        created_at: mapping?.createdAt ?? new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    }
+  }
+
   if (!snapshot) {
     return { ok: false, error: 'Roster not found or API unavailable.' };
   }
@@ -250,7 +273,10 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
   await upsertMapping(env, mapping);
 
   // Persist roster data so the "View on ESO Toolkit" link can resolve direct-* IDs
-  await env.ROSTERS.put(`roster-data:${syntheticId}`, req.roster_data);
+  // 90-day TTL prevents unbounded KV accumulation from direct-publish rosters
+  await env.ROSTERS.put(`roster-data:${syntheticId}`, req.roster_data, {
+    expirationTtl: 60 * 60 * 24 * 90,
+  });
 
   return { ok: true, channelId: result.channelId, messageId: result.messageId };
 }

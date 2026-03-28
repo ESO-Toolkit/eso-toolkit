@@ -41,7 +41,10 @@ export async function getMappingByChannelId(
 ): Promise<RosterMapping | null> {
   const ref = await env.ROSTERS.get(reverseKey(channelId));
   if (!ref) return null;
-  const [guildId, rosterId] = ref.split(':');
+  const idx = ref.indexOf(':');
+  if (idx === -1) return null;
+  const guildId = ref.slice(0, idx);
+  const rosterId = ref.slice(idx + 1);
   if (!guildId || !rosterId) return null;
   return getMappingByRosterId(env, guildId, rosterId);
 }

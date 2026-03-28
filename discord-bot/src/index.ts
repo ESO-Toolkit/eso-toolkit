@@ -271,9 +271,16 @@ async function handleRosterApi(
   const dataMatch = url.pathname.match(/^\/discord\/roster\/([^/]+)\/data$/);
   if (dataMatch && request.method === 'GET') {
     const rosterId = dataMatch[1];
+    if (rosterId.length > 64) return jsonResponse({ error: 'Invalid roster ID' }, 400);
     const rosterData = await env.ROSTERS.get(`roster-data:${rosterId}`);
     if (!rosterData) return jsonResponse({ error: 'Not found' }, 404);
-    return jsonResponse({ roster_data: rosterData });
+    return new Response(JSON.stringify({ roster_data: rosterData }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=300, stale-while-revalidate=60',
+      },
+    });
   }
 
   if (request.method !== 'POST') {
