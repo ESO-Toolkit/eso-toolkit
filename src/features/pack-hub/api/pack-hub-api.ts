@@ -79,6 +79,27 @@ function hydratePack(pack: HubPack): HubPack {
   };
 }
 
+// ─── ESOUI addon search (proxied via the worker) ────────────────────────────
+
+export interface EsouiAddonSearchResult {
+  id: number;
+  title: string;
+  author: string;
+  category: string;
+  downloads: string;
+}
+
+export async function searchEsouiAddons(query: string): Promise<EsouiAddonSearchResult[]> {
+  if (!query || query.trim().length < 2) return [];
+  const params = new URLSearchParams({ q: query.trim() });
+  const data = await request<{ results: EsouiAddonSearchResult[] }>(
+    `/search-addons?${params.toString()}`,
+  );
+  return data.results;
+}
+
+// ─── Pack Hub CRUD ───────────────────────────────────────────────────────────
+
 export const packHubApi = {
   async list(opts: {
     packType?: string;

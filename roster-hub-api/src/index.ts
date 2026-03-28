@@ -56,7 +56,7 @@ import {
   checkPackVoteRateLimit,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
-import { formatRosterForDiscord } from './roster-discord-format';
+import { formatRosterForDiscord, postRosterToDiscordWebhook } from './roster-discord-format';
 import type { Env } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -121,6 +121,99 @@ app.get('/health', async (c) => {
     db_size_mb: sizeBytes != null ? +(sizeBytes / 1_048_576).toFixed(2) : null,
     db_limit_mb: 500,
   });
+});
+
+// ─── GET /search-addons — ESOUI addon search proxy ──────────────────────────
+// Scrapes the ESOUI search page and returns structured results.
+// No auth required — anyone can search.  Rate-limited to prevent abuse.
+
+const ESOUI_SEARCH_URL = 'https://www.esoui.com/downloads/search.php';
+const SEARCH_RATE_LIMIT = 20; // max requests per minute per IP
+const searchRateCounts = new Map<string, { count: number; expires: number }>();
+
+app.get('/search-addons', async (c) => {
+  const q = (c.req.query('q') ?? '').trim();
+  if (!q || q.length < 2) return c.json({ results: [] });
+  if (q.length > 100) return c.json({ error: 'Query too long' }, 400);
+
+  // Simple in-memory rate limit per IP (resets each minute)
+  const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
+  const now = Date.now();
+  const bucket = searchRateCounts.get(ip);
+  if (bucket && bucket.expires > now) {
+    if (bucket.count >= SEARCH_RATE_LIMIT) {
+      return c.json({ error: 'Rate limit exceeded' }, 429);
+    }
+    bucket.count++;
+  } else {
+    searchRateCounts.set(ip, { count: 1, expires: now + 60_000 });
+  }
+
+  try {
+    const params = new URLSearchParams({ search: q, se_search: 'files' });
+    const res = await fetch(`${ESOUI_SEARCH_URL}?${params.toString()}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ESOToolkit/1.0',
+        Accept: 'text/html',
+      },
+    });
+    if (!res.ok) return c.json({ error: 'ESOUI search unavailable' }, 502);
+
+    const html = await res.text();
+
+    // Parse table rows — ESOUI returns search results in <tr> rows with 5+ <td> cells.
+    // Each result row has a link to fileinfo.php?id=XXXX containing the addon ID.
+    interface SearchResult {
+      id: number;
+      title: string;
+      author: string;
+      category: string;
+      downloads: string;
+    }
+
+    const results: SearchResult[] = [];
+    const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+    const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+    const linkRegex = /fileinfo\.php\?id=(\d+)[^"]*"[^>]*>([^<]+)</;
+    const stripTags = (s: string): string => s.replace(/<[^>]+>/g, '').trim();
+
+    let rowMatch: RegExpExecArray | null;
+    while ((rowMatch = rowRegex.exec(html)) !== null) {
+      const rowHtml = rowMatch[1];
+      const cells: string[] = [];
+      let cellMatch: RegExpExecArray | null;
+      while ((cellMatch = cellRegex.exec(rowHtml)) !== null) {
+        cells.push(cellMatch[1]);
+      }
+      if (cells.length < 5) continue;
+
+      // Find the cell containing the fileinfo link
+      let id = 0;
+      let title = '';
+      let titleIdx = -1;
+      for (let i = 0; i < cells.length; i++) {
+        const lm = linkRegex.exec(cells[i]);
+        if (lm) {
+          id = parseInt(lm[1], 10);
+          title = lm[2].trim();
+          titleIdx = i;
+          break;
+        }
+      }
+      if (!id || titleIdx < 0) continue;
+
+      const author = stripTags(cells[titleIdx + 1] ?? '');
+      const category = stripTags(cells[titleIdx + 2] ?? '');
+      const downloads = stripTags(cells[titleIdx + 3] ?? '');
+
+      results.push({ id, title, author, category, downloads });
+    }
+
+    return c.json({ results });
+  } catch (err) {
+    console.error('ESOUI search failed:', err);
+    return c.json({ error: 'Search failed' }, 502);
+  }
 });
 
 // ─── GET /rosters — list with filtering & pagination ─────────────────────────
@@ -246,6 +339,23 @@ app.post('/rosters', async (c) => {
   });
 
   const roster = await getRosterById(c.env.DB, id, user.id);
+
+  // Fire-and-forget: post to Discord webhook if configured
+  if (c.env.DISCORD_ROSTER_WEBHOOK_URL) {
+    c.executionCtx.waitUntil(
+      postRosterToDiscordWebhook({
+        webhookUrl: c.env.DISCORD_ROSTER_WEBHOOK_URL,
+        rosterData: roster_data,
+        title: sanitize(title),
+        rosterId: id,
+        trialId: sanitize(trial_id),
+        authorName: user.name,
+        isAnonymous: !!is_anonymous,
+        description: description ? sanitize(description) : undefined,
+      }),
+    );
+  }
+
   return c.json({ roster }, 201);
 });
 

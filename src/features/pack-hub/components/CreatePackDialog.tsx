@@ -28,6 +28,7 @@ import {
 import {
   Alert,
   alpha,
+  Autocomplete,
   Box,
   Button,
   Chip,
@@ -52,7 +53,11 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
 
-import { packHubApi } from '../api/pack-hub-api';
+import {
+  type EsouiAddonSearchResult,
+  packHubApi,
+  searchEsouiAddons,
+} from '../api/pack-hub-api';
 import type { HubPack, PackAddonEntry } from '../types/pack-hub.types';
 import {
   PACK_TAG_COLORS,
@@ -357,11 +362,11 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
   const [error, setError] = React.useState<string | null>(null);
   const [titleTouched, setTitleTouched] = React.useState(false);
 
-  // Addon input
-  const [newAddonName, setNewAddonName] = React.useState('');
-  const [newAddonId, setNewAddonId] = React.useState('');
-  const [newAddonNote, setNewAddonNote] = React.useState('');
-  const addonNameRef = React.useRef<HTMLInputElement>(null);
+  // Addon search
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchResults, setSearchResults] = React.useState<EsouiAddonSearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = React.useState(false);
+  const searchTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // DnD sensors
   const sensors = useSensors(
@@ -401,24 +406,40 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
     }
   };
 
-  const handleAddAddon = (): void => {
-    const id = parseInt(newAddonId, 10);
-    const name = newAddonName.trim();
-    if (!name || isNaN(id) || id <= 0) return;
-    if (addons.some((a) => a.esouiId === id)) {
-      setError(`Addon #${id} is already in this pack.`);
+  const handleAddFromSearch = (result: EsouiAddonSearchResult | null): void => {
+    if (!result) return;
+    if (addons.some((a) => a.esouiId === result.id)) {
+      setError(`"${result.title}" is already in this pack.`);
       return;
     }
     setAddons((prev) => [
       ...prev,
-      { esouiId: id, name, required: true, note: newAddonNote.trim() || undefined },
+      { esouiId: result.id, name: result.title, required: true },
     ]);
-    setNewAddonName('');
-    setNewAddonId('');
-    setNewAddonNote('');
+    setSearchQuery('');
+    setSearchResults([]);
     setError(null);
-    // Re-focus the name input for rapid entry
-    setTimeout(() => addonNameRef.current?.focus(), 50);
+  };
+
+  // Debounced ESOUI search
+  const handleSearchInput = (_event: unknown, value: string): void => {
+    setSearchQuery(value);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    if (value.trim().length < 2) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    searchTimerRef.current = setTimeout(() => {
+      void searchEsouiAddons(value.trim()).then((results) => {
+        setSearchResults(results);
+        setSearchLoading(false);
+      }).catch(() => {
+        setSearchResults([]);
+        setSearchLoading(false);
+      });
+    }, 400);
   };
 
   const handleRemoveAddon = (esouiId: number): void => {
@@ -498,25 +519,23 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
         setAddons([]);
         setStep(0);
       }
-      setNewAddonName('');
-      setNewAddonId('');
-      setNewAddonNote('');
+      setSearchQuery('');
+      setSearchResults([]);
       setError(null);
       setTitleTouched(false);
     }
   }, [open, editingPack]);
 
+  // Cleanup search timer
+  React.useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, []);
+
   const atTagLimit = selectedTags.length >= MAX_TAGS;
   const requiredCount = addons.filter((a) => a.required).length;
   const optionalCount = addons.length - requiredCount;
-
-  // ── Addon input key handler ──
-  const handleAddonKeyDown = (e: React.KeyboardEvent): void => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddAddon();
-    }
-  };
 
   // ===========================================================================
   // Step 0 — Pack Details
@@ -861,7 +880,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
             </Box>
           )}
 
-          {/* ─── Add addon form ─── */}
+          {/* ─── Addon search autocomplete ─── */}
           <Box
             sx={{
               borderTop: `1px solid ${isDark ? alpha('#fff', 0.06) : alpha('#000', 0.06)}`,
@@ -869,86 +888,154 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
               bgcolor: isDark ? alpha('#fff', 0.02) : alpha('#000', 0.02),
             }}
           >
-            <Box sx={{ display: 'flex', gap: 0.75, mb: 0.75 }}>
-              <TextField
-                inputRef={addonNameRef}
-                size="small"
-                placeholder="Addon name"
-                value={newAddonName}
-                onChange={(e) => setNewAddonName(e.target.value)}
-                onKeyDown={handleAddonKeyDown}
-                sx={{
-                  flex: 2,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px',
-                    fontSize: '0.82rem',
-                    bgcolor: isDark ? alpha('#0f172a', 0.6) : '#fff',
-                  },
-                }}
-              />
-              <TextField
-                size="small"
-                placeholder="ESOUI ID"
-                value={newAddonId}
-                onChange={(e) => setNewAddonId(e.target.value.replace(/\D/g, ''))}
-                onKeyDown={handleAddonKeyDown}
-                sx={{
-                  flex: 1,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px',
-                    fontSize: '0.82rem',
-                    bgcolor: isDark ? alpha('#0f172a', 0.6) : '#fff',
-                  },
-                }}
-              />
-            </Box>
-            <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center' }}>
-              <TextField
-                size="small"
-                placeholder="Note (optional)"
-                value={newAddonNote}
-                onChange={(e) => setNewAddonNote(e.target.value)}
-                onKeyDown={handleAddonKeyDown}
-                sx={{
-                  flex: 1,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px',
-                    fontSize: '0.82rem',
-                    bgcolor: isDark ? alpha('#0f172a', 0.6) : '#fff',
-                  },
-                }}
-              />
-              <Tooltip title={!newAddonName.trim() || !newAddonId ? 'Enter addon name & ESOUI ID' : 'Add addon (Enter)'}>
-                <span>
-                  <IconButton
-                    onClick={handleAddAddon}
-                    disabled={!newAddonName.trim() || !newAddonId}
-                    size="small"
+            <Autocomplete<EsouiAddonSearchResult, false>
+              options={searchResults}
+              getOptionLabel={(opt) => opt.title}
+              filterOptions={(x) => x} // disable client-side filter — server handles it
+              inputValue={searchQuery}
+              onInputChange={handleSearchInput}
+              onChange={(_e, value) => handleAddFromSearch(value)}
+              value={null}
+              loading={searchLoading}
+              loadingText="Searching ESOUI…"
+              noOptionsText={
+                searchQuery.length < 2
+                  ? 'Type to search ESOUI addons…'
+                  : 'No addons found'
+              }
+              getOptionDisabled={(opt) => addons.some((a) => a.esouiId === opt.id)}
+              isOptionEqualToValue={(opt, val) => opt.id === val.id}
+              blurOnSelect
+              clearOnBlur={false}
+              size="small"
+              renderOption={(props, option) => {
+                const alreadyAdded = addons.some((a) => a.esouiId === option.id);
+                return (
+                  <Box
+                    component="li"
+                    {...props}
+                    key={option.id}
                     sx={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: '10px',
-                      bgcolor: alpha(accentColor, 0.12),
-                      color: accentColor,
-                      border: `1px solid ${alpha(accentColor, 0.25)}`,
-                      transition: 'all 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      py: 0.75,
+                      px: 1.5,
+                      opacity: alreadyAdded ? 0.4 : 1,
                       '&:hover': {
-                        bgcolor: alpha(accentColor, 0.22),
-                        boxShadow: `0 0 12px ${alpha(accentColor, 0.2)}`,
-                        transform: 'scale(1.05)',
-                      },
-                      '&.Mui-disabled': {
-                        bgcolor: 'transparent',
-                        color: 'text.disabled',
-                        border: `1px solid ${isDark ? alpha('#fff', 0.06) : alpha('#000', 0.08)}`,
+                        bgcolor: `${alpha(accentColor, 0.08)} !important`,
                       },
                     }}
                   >
-                    <Add sx={{ fontSize: 20 }} />
-                  </IconButton>
-                </span>
-              </Tooltip>
-            </Box>
+                    <Add
+                      sx={{
+                        fontSize: 16,
+                        color: alreadyAdded ? 'text.disabled' : accentColor,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" fontWeight={600} noWrap>
+                        {option.title}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" noWrap>
+                        by {option.author}
+                        {option.category ? ` · ${option.category}` : ''}
+                        {option.downloads ? ` · ${option.downloads} downloads` : ''}
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontSize: '0.58rem',
+                        fontFamily: 'monospace',
+                        color: 'text.disabled',
+                        flexShrink: 0,
+                      }}
+                    >
+                      #{option.id}
+                    </Typography>
+                    {alreadyAdded && (
+                      <Chip
+                        label="Added"
+                        size="small"
+                        sx={{
+                          height: 18,
+                          fontSize: '0.58rem',
+                          fontWeight: 700,
+                          bgcolor: alpha(accentColor, 0.12),
+                          color: accentColor,
+                        }}
+                      />
+                    )}
+                  </Box>
+                );
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Search ESOUI addons…"
+                  slotProps={{
+                    input: {
+                      ...params.InputProps,
+                      startAdornment: (
+                        <>
+                          {searchLoading ? (
+                            <CircularProgress
+                              size={16}
+                              sx={{ color: accentColor, mr: 0.5 }}
+                            />
+                          ) : (
+                            <Extension
+                              sx={{ fontSize: 16, color: 'text.disabled', mr: 0.5 }}
+                            />
+                          )}
+                          {params.InputProps.startAdornment}
+                        </>
+                      ),
+                    },
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '10px',
+                      fontSize: '0.82rem',
+                      bgcolor: isDark ? alpha('#0f172a', 0.6) : '#fff',
+                      transition: 'all 0.2s',
+                      '& fieldset': {
+                        borderColor: isDark
+                          ? alpha('#c4a44a', 0.15)
+                          : alpha('#000', 0.1),
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: accentColor,
+                      },
+                      '&.Mui-focused': {
+                        boxShadow: `0 0 0 3px ${alpha(accentColor, 0.1)}`,
+                      },
+                    },
+                  }}
+                />
+              )}
+              slotProps={{
+                paper: {
+                  sx: {
+                    bgcolor: isDark ? '#0f172a' : '#fff',
+                    border: `1px solid ${isDark ? alpha('#c4a44a', 0.15) : alpha('#000', 0.1)}`,
+                    borderRadius: '10px',
+                    mt: 0.5,
+                    boxShadow: isDark
+                      ? `0 8px 24px ${alpha('#000', 0.5)}`
+                      : '0 4px 16px rgba(0,0,0,0.1)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    '& .MuiAutocomplete-listbox': {
+                      py: 0.5,
+                      maxHeight: 240,
+                    },
+                  },
+                },
+              }}
+            />
           </Box>
         </Box>
 
