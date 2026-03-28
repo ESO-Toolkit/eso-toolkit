@@ -67,6 +67,9 @@ const LatestReports = React.lazy(() =>
 const OAuthRedirect = React.lazy(() =>
   import('./OAuthRedirect').then((module) => ({ default: module.OAuthRedirect })),
 );
+const AppAuth = React.lazy(() =>
+  import('./AppAuth').then((module) => ({ default: module.AppAuth })),
+);
 const Calculator = React.lazy(() =>
   import('./components/Calculator').then((module) => ({ default: module.Calculator })),
 );
@@ -339,6 +342,16 @@ const AppRoutes: React.FC = () => {
               <ErrorBoundary>
                 <Suspense fallback={<LoadingFallback />}>
                   <OAuthRedirect />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/app-auth"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<LoadingFallback />}>
+                  <AppAuth />
                 </Suspense>
               </ErrorBoundary>
             }
