@@ -225,6 +225,18 @@ export function getGuildChannels(env: Env, guildId: string): Promise<DiscordChan
   return discordFetch<DiscordChannel[]>(env, 'GET', `/guilds/${guildId}/channels`);
 }
 
+// ── Bot guilds ──────────────────────────────────────────────────────────────
+
+export interface DiscordPartialGuild {
+  id: string;
+  name: string;
+  icon: string | null;
+}
+
+export function getBotGuilds(env: Env): Promise<DiscordPartialGuild[]> {
+  return discordFetch<DiscordPartialGuild[]>(env, 'GET', '/users/@me/guilds');
+}
+
 // Permission bits used throughout the bot
 export const Permission = {
   // Decimal values as bigint for safe bitwise ops

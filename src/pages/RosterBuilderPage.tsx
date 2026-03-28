@@ -51,8 +51,8 @@ import { SetAssignmentManager } from '../components/SetAssignmentManager';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
-import { DiscordPublishDirectDialog } from '../features/roster-hub/components/DiscordPublishDirectDialog';
 import { PublishRosterDialog } from '../features/roster-hub/components/PublishRosterDialog';
+import { ServerPickerDialog } from '../features/roster-hub/components/ServerPickerDialog';
 import { GetPlayersForReportQuery } from '../graphql/gql/graphql';
 import { saveRoster, updateRoster } from '../store/saved_rosters';
 import { useAppDispatch } from '../store/useAppDispatch';
@@ -2961,12 +2961,11 @@ export const RosterBuilderPage: React.FC = () => {
       />
 
       {/* Publish to Discord dialog */}
-      <DiscordPublishDirectDialog
+      <ServerPickerDialog
         open={discordPublishOpen}
         title={roster.rosterName}
         trialId=""
         rosterData={discordPublishData}
-        authorName={accessToken ? undefined : undefined}
         onClose={() => setDiscordPublishOpen(false)}
         onSuccess={() => {
           setDiscordPublishOpen(false);

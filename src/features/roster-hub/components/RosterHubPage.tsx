@@ -21,11 +21,11 @@ import { useRosterHub } from '../hooks/use-roster-hub';
 import type { HubRoster } from '../types/roster-hub.types';
 
 import { ConfirmDialog } from './ConfirmDialog';
-import { DiscordPublishDialog } from './DiscordPublishDialog';
 import { FilterBar } from './FilterBar';
 import { PublishRosterDialog } from './PublishRosterDialog';
 import { RosterCard } from './RosterCard';
 import { RosterCardSkeleton } from './RosterCardSkeleton';
+import { ServerPickerDialog } from './ServerPickerDialog';
 
 const SKELETON_COUNT = 8;
 
@@ -340,7 +340,7 @@ export const RosterHubPage: React.FC = () => {
       />
 
       {/* Discord publish dialog */}
-      <DiscordPublishDialog
+      <ServerPickerDialog
         open={discordPublishRoster !== null}
         roster={discordPublishRoster}
         onClose={() => setDiscordPublishRoster(null)}

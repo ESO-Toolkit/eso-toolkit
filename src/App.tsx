@@ -23,6 +23,7 @@ import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
 import { AuthenticatedRoute } from './features/auth/AuthenticatedRoute';
+import { DiscordAuthProvider } from './features/auth/DiscordAuthContext';
 import { BanRedirect } from './features/auth/BanRedirect';
 import { Login } from './features/auth/Login';
 import { ReportFightDetails } from './features/report_details/ReportFightDetails';
@@ -66,6 +67,9 @@ const LatestReports = React.lazy(() =>
 );
 const OAuthRedirect = React.lazy(() =>
   import('./OAuthRedirect').then((module) => ({ default: module.OAuthRedirect })),
+);
+const DiscordOAuthRedirect = React.lazy(() =>
+  import('./DiscordOAuthRedirect').then((module) => ({ default: module.DiscordOAuthRedirect })),
 );
 const Calculator = React.lazy(() =>
   import('./components/Calculator').then((module) => ({ default: module.Calculator })),
@@ -268,6 +272,7 @@ const App: React.FC = () => {
           <ReduxThemeProvider>
             <EsoLogsClientProvider>
               <AuthProvider>
+              <DiscordAuthProvider>
                 <SnackbarProvider
                   maxSnack={3}
                   anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
@@ -282,6 +287,7 @@ const App: React.FC = () => {
                   {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
                   {!window.location.search.includes('embed=1') && <CookieConsent />}
                 </SnackbarProvider>
+              </DiscordAuthProvider>
               </AuthProvider>
             </EsoLogsClientProvider>
           </ReduxThemeProvider>
@@ -333,6 +339,16 @@ const AppRoutes: React.FC = () => {
               <ErrorBoundary>
                 <Suspense fallback={<LoadingFallback />}>
                   <OAuthRedirect />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/discord-oauth-redirect"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<LoadingFallback />}>
+                  <DiscordOAuthRedirect />
                 </Suspense>
               </ErrorBoundary>
             }
