@@ -78,8 +78,11 @@ const isValidTag = (t: string): boolean =>
 app.use('*', async (c, next) => {
   const allowedOrigins = c.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
   const origin = c.req.header('Origin') ?? '';
+  const isAllowed =
+    allowedOrigins.includes(origin) ||
+    /^https:\/\/[a-z0-9-]+\.eso-toolkit\.pages\.dev$/.test(origin);
   const corsMiddleware = cors({
-    origin: allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
+    origin: isAllowed ? origin : allowedOrigins[0],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
     maxAge: 86400,
