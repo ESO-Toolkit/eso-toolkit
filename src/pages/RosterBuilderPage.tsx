@@ -1869,7 +1869,7 @@ export const RosterBuilderPage: React.FC = () => {
             {/* Spacer pushes share actions to the right on wider screens */}
             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
 
-            {/* ── Right side: Discord compound + Share/Publish/Save ── */}
+            {/* ── Right side: Copy pill + Publish/Save pill ── */}
             <Box
               sx={{
                 display: 'flex',
@@ -1878,7 +1878,7 @@ export const RosterBuilderPage: React.FC = () => {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
-              {/* Discord compound — Preview | Copy */}
+              {/* Copy pill — Share Link | Discord Copy | Discord Preview */}
               <Box
                 sx={{
                   flex: { xs: 1, md: '0 0 auto' },
@@ -1898,9 +1898,42 @@ export const RosterBuilderPage: React.FC = () => {
                     : '0 1px 4px rgba(0,0,0,0.06)',
                 }}
               >
-                <Tooltip title="Preview Discord format" arrow>
+                <Tooltip title="Copy read-only share link" arrow>
                   <ButtonBase
-                    onClick={() => setPreviewDialog(true)}
+                    onClick={handleCopyLink}
+                    sx={{
+                      flex: 1,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 0.5,
+                      px: 1.25,
+                      py: { xs: 1.375, md: 0.875 },
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                      background: 'transparent',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        color: isDarkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)',
+                        background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                      },
+                    }}
+                  >
+                    <LinkIcon sx={{ fontSize: '0.9rem' }} />
+                    Share
+                  </ButtonBase>
+                </Tooltip>
+                <Box
+                  sx={{
+                    width: '1px',
+                    my: 0.625,
+                    background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                  }}
+                />
+                <Tooltip title="Copy roster formatted for Discord" arrow>
+                  <ButtonBase
+                    onClick={handleCopyDiscordFormat}
                     sx={{
                       flex: 1,
                       display: 'inline-flex',
@@ -1920,42 +1953,10 @@ export const RosterBuilderPage: React.FC = () => {
                       },
                     }}
                   >
-                    <VisibilityIcon sx={{ fontSize: '0.9rem' }} />
-                    Preview
-                  </ButtonBase>
-                </Tooltip>
-                <Box
-                  sx={{
-                    width: '1px',
-                    my: 0.625,
-                    background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                  }}
-                />
-                <Tooltip title="Copy roster for Discord" arrow>
-                  <ButtonBase
-                    onClick={handleCopyDiscordFormat}
-                    sx={{
-                      flex: 1,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 0.5,
-                      px: 1.25,
-                      py: { xs: 1.375, md: 0.875 },
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: isDarkMode ? '#f1f5f9' : '#0f172a',
-                      background: isDarkMode ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.05)',
-                      transition: 'all 0.15s ease',
-                      '&:hover': {
-                        background: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)',
-                      },
-                    }}
-                  >
                     <img
                       src={discordIcon}
                       alt=""
-                      style={{ width: 14, height: 14, opacity: isDarkMode ? 0.85 : 0.7 }}
+                      style={{ width: 14, height: 14, opacity: isDarkMode ? 0.65 : 0.55 }}
                     />
                     Copy
                   </ButtonBase>
@@ -1967,49 +1968,30 @@ export const RosterBuilderPage: React.FC = () => {
                     background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
                   }}
                 />
-                <Tooltip title="Publish roster as a rich embed to a Discord server" arrow>
+                <Tooltip title="Preview Discord format" arrow>
                   <ButtonBase
-                    onClick={() => {
-                      void encodeRosterToURL(roster)
-                        .then((encoded) => {
-                          setDiscordPublishData(encoded);
-                          setDiscordPublishOpen(true);
-                        })
-                        .catch(() => {
-                          setSnackbar({
-                            open: true,
-                            message: 'Failed to encode roster',
-                            severity: 'error',
-                          });
-                        });
-                    }}
+                    onClick={() => setPreviewDialog(true)}
                     sx={{
-                      flex: 1,
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: 0.5,
-                      px: 1.25,
+                      px: 0.875,
                       py: { xs: 1.375, md: 0.875 },
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      color: isDarkMode ? 'rgba(165,180,252,0.95)' : 'rgba(79,70,229,0.9)',
-                      background: isDarkMode ? 'rgba(88,101,242,0.12)' : 'rgba(88,101,242,0.08)',
+                      color: isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)',
+                      background: 'transparent',
                       transition: 'all 0.15s ease',
                       '&:hover': {
-                        color: isDarkMode ? '#c7d2fe' : '#4338ca',
-                        background: isDarkMode
-                          ? 'rgba(88,101,242,0.22)'
-                          : 'rgba(88,101,242,0.14)',
+                        color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.65)',
+                        background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                       },
                     }}
                   >
-                    Publish
+                    <VisibilityIcon sx={{ fontSize: '0.85rem' }} />
                   </ButtonBase>
                 </Tooltip>
               </Box>
 
-              {/* Share / Publish / Save pill */}
+              {/* Publish / Save pill */}
               <Box
                 sx={{
                   flex: { xs: 1, md: '0 0 auto' },
@@ -2029,45 +2011,10 @@ export const RosterBuilderPage: React.FC = () => {
                     : '0 1px 4px rgba(0,0,0,0.07)',
                 }}
               >
-                {/* Share */}
-                <Tooltip title="Copy read-only share link — opens /rv view" arrow>
-                  <ButtonBase
-                    onClick={handleCopyLink}
-                    sx={{
-                      display: 'inline-flex',
-                      flex: 1,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 0.625,
-                      px: 1.375,
-                      py: { xs: 1.375, md: 0.875 },
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                      background: 'transparent',
-                      transition: 'all 0.15s ease',
-                      '&:hover': {
-                        color: isDarkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)',
-                        background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                      },
-                    }}
-                  >
-                    <LinkIcon sx={{ fontSize: '0.9rem' }} />
-                    Share
-                  </ButtonBase>
-                </Tooltip>
-
-                {/* Publish — logged-in only */}
+                {/* Publish to Hub — logged-in only */}
                 {isLoggedIn && (
                   <>
-                    <Box
-                      sx={{
-                        width: '1px',
-                        my: 0,
-                        background: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
-                      }}
-                    />
-                    <Tooltip title="Publish to Roster Hub — share with the community" arrow>
+                    <Tooltip title="Publish to Roster Hub" arrow>
                       <ButtonBase
                         onClick={() => {
                           void encodeRosterToURL(roster)
@@ -2105,11 +2052,65 @@ export const RosterBuilderPage: React.FC = () => {
                         }}
                       >
                         <GroupsIcon sx={{ fontSize: '0.9rem' }} />
-                        Publish
+                        Hub
                       </ButtonBase>
                     </Tooltip>
+                    <Box
+                      sx={{
+                        width: '1px',
+                        my: 0,
+                        background: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                      }}
+                    />
                   </>
                 )}
+
+                {/* Publish to Discord */}
+                <Tooltip title="Publish as rich embed to Discord server" arrow>
+                  <ButtonBase
+                    onClick={() => {
+                      void encodeRosterToURL(roster)
+                        .then((encoded) => {
+                          setDiscordPublishData(encoded);
+                          setDiscordPublishOpen(true);
+                        })
+                        .catch(() => {
+                          setSnackbar({
+                            open: true,
+                            message: 'Failed to encode roster',
+                            severity: 'error',
+                          });
+                        });
+                    }}
+                    sx={{
+                      display: 'inline-flex',
+                      flex: 1,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 0.5,
+                      px: 1.375,
+                      py: { xs: 1.375, md: 0.875 },
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      color: isDarkMode ? 'rgba(165,180,252,0.95)' : 'rgba(79,70,229,0.9)',
+                      background: isDarkMode ? 'rgba(88,101,242,0.1)' : 'rgba(88,101,242,0.07)',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        color: isDarkMode ? '#c7d2fe' : '#4338ca',
+                        background: isDarkMode
+                          ? 'rgba(88,101,242,0.18)'
+                          : 'rgba(88,101,242,0.14)',
+                      },
+                    }}
+                  >
+                    <img
+                      src={discordIcon}
+                      alt=""
+                      style={{ width: 13, height: 13, opacity: isDarkMode ? 0.85 : 0.7 }}
+                    />
+                    Discord
+                  </ButtonBase>
+                </Tooltip>
 
                 <Box
                   sx={{
