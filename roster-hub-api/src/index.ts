@@ -69,6 +69,13 @@ import type { Env } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
 
+// ─── Global error handler ───────────────────────────────────────────────────
+
+app.onError((err, c) => {
+  console.error(`[${c.req.method} ${c.req.path}] Unhandled error:`, err.message, err.stack);
+  return c.json({ error: 'Internal server error', detail: err.message }, 500);
+});
+
 // ─── Validation helpers ──────────────────────────────────────────────────────
 
 /** Verify that an encoded payload is valid base64url (no special chars that break URLs). */
