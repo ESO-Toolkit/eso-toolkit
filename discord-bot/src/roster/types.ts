@@ -40,6 +40,8 @@ export interface GuildConfig {
     | undefined;
   /** Discord role IDs allowed to publish/refresh rosters. Empty = MANAGE_GUILD only. */
   allowedRoleIds?: string[] | undefined;
+  /** IANA timezone for this guild (e.g. "America/New_York"). Defaults to America/New_York. */
+  timezone?: string | undefined;
 }
 
 // ── Channel Name Context ────────────────────────────────────────────────────

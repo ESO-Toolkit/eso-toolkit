@@ -14,6 +14,7 @@ import {
   CheckCircle,
   Group as GroupIcon,
   NotificationsActive,
+  Public as PublicIcon,
   Search as SearchIcon,
   Settings as SettingsIcon,
   Tag as TagIcon,
@@ -92,6 +93,7 @@ interface GuildConfigData {
     healer?: string;
     dd?: string;
   };
+  timezone?: string;
 }
 
 // ── Token chips for channel name pattern ───────────────────────────────────
@@ -104,6 +106,45 @@ const NAME_TOKENS = [
 ] as const;
 
 const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{trial}-{tag}';
+
+const DEFAULT_TIMEZONE = 'America/New_York';
+
+/** Curated IANA timezone list grouped by region. */
+const TIMEZONE_OPTIONS: { label: string; value: string; group: string }[] = [
+  // North America
+  { label: 'Eastern (New York)', value: 'America/New_York', group: 'North America' },
+  { label: 'Central (Chicago)', value: 'America/Chicago', group: 'North America' },
+  { label: 'Mountain (Denver)', value: 'America/Denver', group: 'North America' },
+  { label: 'Pacific (Los Angeles)', value: 'America/Los_Angeles', group: 'North America' },
+  { label: 'Alaska (Anchorage)', value: 'America/Anchorage', group: 'North America' },
+  { label: 'Hawaii (Honolulu)', value: 'Pacific/Honolulu', group: 'North America' },
+  { label: 'Atlantic (Halifax)', value: 'America/Halifax', group: 'North America' },
+  { label: "Newfoundland (St. John's)", value: 'America/St_Johns', group: 'North America' },
+  { label: 'Mexico City', value: 'America/Mexico_City', group: 'North America' },
+  // Europe
+  { label: 'London (GMT/BST)', value: 'Europe/London', group: 'Europe' },
+  { label: 'Central European (Berlin)', value: 'Europe/Berlin', group: 'Europe' },
+  { label: 'Eastern European (Helsinki)', value: 'Europe/Helsinki', group: 'Europe' },
+  { label: 'Moscow', value: 'Europe/Moscow', group: 'Europe' },
+  { label: 'Paris', value: 'Europe/Paris', group: 'Europe' },
+  { label: 'Istanbul', value: 'Europe/Istanbul', group: 'Europe' },
+  // Asia & Oceania
+  { label: 'Tokyo (JST)', value: 'Asia/Tokyo', group: 'Asia & Oceania' },
+  { label: 'Shanghai (CST)', value: 'Asia/Shanghai', group: 'Asia & Oceania' },
+  { label: 'Kolkata (IST)', value: 'Asia/Kolkata', group: 'Asia & Oceania' },
+  { label: 'Dubai (GST)', value: 'Asia/Dubai', group: 'Asia & Oceania' },
+  { label: 'Singapore (SGT)', value: 'Asia/Singapore', group: 'Asia & Oceania' },
+  { label: 'Sydney (AEST)', value: 'Australia/Sydney', group: 'Asia & Oceania' },
+  { label: 'Auckland (NZST)', value: 'Pacific/Auckland', group: 'Asia & Oceania' },
+  // South America
+  { label: 'São Paulo (BRT)', value: 'America/Sao_Paulo', group: 'South America' },
+  { label: 'Buenos Aires (ART)', value: 'America/Argentina/Buenos_Aires', group: 'South America' },
+  // Africa
+  { label: 'Johannesburg (SAST)', value: 'Africa/Johannesburg', group: 'Africa' },
+  { label: 'Cairo (EET)', value: 'Africa/Cairo', group: 'Africa' },
+  // UTC
+  { label: 'UTC', value: 'UTC', group: 'Other' },
+];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -129,15 +170,23 @@ async function apiFetch<T>(path: string, token: string, options: RequestInit = {
 }
 
 /** Resolve a channel name pattern into a preview string. */
-function previewChannelName(pattern: string): string {
+function previewChannelName(pattern: string, tz: string = DEFAULT_TIMEZONE): string {
   const now = new Date();
   const shortDays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-  let h = now.getHours();
+  const dayFmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short' });
+  const dayStr = dayFmt.format(now).toLowerCase();
+  const dayIdx = shortDays.indexOf(dayStr);
+  const hourFmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    hour: 'numeric',
+    hour12: false,
+  });
+  let h = parseInt(hourFmt.format(now), 10);
   const suffix = h >= 12 ? 'pm' : 'am';
   h = h % 12 || 12;
   const time12 = `${h}${suffix}`;
   return pattern
-    .replace(/{day-short}/g, shortDays[now.getDay()])
+    .replace(/{day-short}/g, shortDays[dayIdx >= 0 ? dayIdx : now.getDay()])
     .replace(/{time}/g, time12)
     .replace(/{trial}/g, 'vss')
     .replace(/{tag}/g, 'score-push')
@@ -261,6 +310,7 @@ export const DiscordServerConfigPage: React.FC = () => {
   const [tankPingRole, setTankPingRole] = useState('');
   const [healerPingRole, setHealerPingRole] = useState('');
   const [ddPingRole, setDdPingRole] = useState('');
+  const [timezone, setTimezone] = useState(DEFAULT_TIMEZONE);
 
   // Dirty tracking — snapshot of form values at load time
   const initialFormRef = useRef<string>('');
@@ -275,6 +325,7 @@ export const DiscordServerConfigPage: React.FC = () => {
         tankPingRole,
         healerPingRole,
         ddPingRole,
+        timezone,
       }),
     [
       defaultChannelId,
@@ -284,6 +335,7 @@ export const DiscordServerConfigPage: React.FC = () => {
       tankPingRole,
       healerPingRole,
       ddPingRole,
+      timezone,
     ],
   );
 
@@ -397,6 +449,7 @@ export const DiscordServerConfigPage: React.FC = () => {
         setTankPingRole(cfg.rolePingIds?.tank ?? '');
         setHealerPingRole(cfg.rolePingIds?.healer ?? '');
         setDdPingRole(cfg.rolePingIds?.dd ?? '');
+        setTimezone(cfg.timezone || DEFAULT_TIMEZONE);
 
         // Map allowed role IDs to role objects
         const allowedIds = cfg.allowedRoleIds ?? [];
@@ -415,6 +468,7 @@ export const DiscordServerConfigPage: React.FC = () => {
             tankPingRole: cfg.rolePingIds?.tank ?? '',
             healerPingRole: cfg.rolePingIds?.healer ?? '',
             ddPingRole: cfg.rolePingIds?.dd ?? '',
+            timezone: cfg.timezone || DEFAULT_TIMEZONE,
           });
         }, 0);
       } catch (err) {
@@ -443,6 +497,7 @@ export const DiscordServerConfigPage: React.FC = () => {
           healer: healerPingRole || undefined,
           dd: ddPingRole || undefined,
         },
+        timezone,
       };
 
       await apiFetch(`/discord/guild/${selectedGuild.id}/config`, discordToken, {
@@ -765,7 +820,7 @@ export const DiscordServerConfigPage: React.FC = () => {
 
   // ── Render: Config panel ─────────────────────────────────────────────────
 
-  const channelPreview = !defaultChannelId ? previewChannelName(namePattern) : null;
+  const channelPreview = !defaultChannelId ? previewChannelName(namePattern, timezone) : null;
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
@@ -1074,6 +1129,45 @@ export const DiscordServerConfigPage: React.FC = () => {
                 )}
               </ConfigSection>
             )}
+
+            {/* Server Timezone */}
+            <ConfigSection
+              icon={<PublicIcon sx={{ color: '#5865F2', fontSize: 18 }} />}
+              title="Server Timezone"
+              description="Used for channel name tokens ({day-short}, {time}) and event time display."
+              isDark={isDark}
+            >
+              <Autocomplete
+                options={TIMEZONE_OPTIONS}
+                groupBy={(option) => option.group}
+                getOptionLabel={(option) => option.label}
+                value={TIMEZONE_OPTIONS.find((o) => o.value === timezone) ?? TIMEZONE_OPTIONS[0]}
+                onChange={(_e, newValue) => {
+                  setTimezone(newValue?.value ?? DEFAULT_TIMEZONE);
+                }}
+                isOptionEqualToValue={(option, value) => option.value === value.value}
+                size="small"
+                disableClearable
+                renderInput={(params) => <TextField {...params} placeholder="Select timezone..." />}
+                renderOption={(props, option) => (
+                  <li {...props} key={option.value}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                      <Typography variant="body2">{option.label}</Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+                          fontFamily: 'monospace',
+                          fontSize: '0.65rem',
+                        }}
+                      >
+                        {option.value}
+                      </Typography>
+                    </Box>
+                  </li>
+                )}
+              />
+            </ConfigSection>
 
             {/* Allowed Roles */}
             <ConfigSection

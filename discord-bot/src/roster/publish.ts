@@ -26,10 +26,25 @@ import type { ChannelNameContext, DecodedRoster, RosterMapping, RosterSnapshot }
 
 const SHORT_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
-function formatTime12h(date: Date): string {
-  let h = date.getUTCHours();
-  const suffix = h >= 12 ? 'pm' : 'am';
-  h = h % 12 || 12;
+const DEFAULT_TIMEZONE = 'America/New_York';
+
+/** Get the day-of-week and hour for a Date in a specific IANA timezone. */
+function getDatePartsInTz(date: Date, tz: string): { dayOfWeek: number; hour: number } {
+  const dayFmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short' });
+  const dayStr = dayFmt.format(date).toLowerCase(); // "sun", "mon", etc.
+  const dayOfWeek = SHORT_DAYS.indexOf(dayStr as (typeof SHORT_DAYS)[number]);
+  const hourFmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    hour: 'numeric',
+    hour12: false,
+  });
+  const hour = parseInt(hourFmt.format(date), 10);
+  return { dayOfWeek: dayOfWeek >= 0 ? dayOfWeek : date.getUTCDay(), hour };
+}
+
+function formatTime12h(hour: number): string {
+  const suffix = hour >= 12 ? 'pm' : 'am';
+  const h = hour % 12 || 12;
   return `${h}${suffix}`;
 }
 
@@ -39,18 +54,21 @@ function formatTime12h(date: Date): string {
  * extracted from the compact roster's trialOverrides).
  *
  * If eventTime is provided (ISO 8601), it is used for day/time tokens
- * instead of the current time.
+ * instead of the current time. Times are formatted in the guild's timezone.
  */
 function buildNameContext(
   snapshot: RosterSnapshot,
   decoded: DecodedRoster,
   eventTime?: string,
+  timezone?: string,
 ): ChannelNameContext {
   const ctx: ChannelNameContext = {};
   if (eventTime) {
     const date = new Date(eventTime);
-    ctx.dayShort = SHORT_DAYS[date.getUTCDay()];
-    ctx.time = formatTime12h(date);
+    const tz = timezone || DEFAULT_TIMEZONE;
+    const { dayOfWeek, hour } = getDatePartsInTz(date, tz);
+    ctx.dayShort = SHORT_DAYS[dayOfWeek];
+    ctx.time = formatTime12h(hour);
   }
   const trial = snapshot.trial_id || decoded.trialId;
   if (trial) ctx.trial = trial;
@@ -105,7 +123,7 @@ export async function publishRoster(env: Env, req: PublishRequest): Promise<Publ
   const config = (await getGuildConfig(env, req.guildId)) ?? getDefaultGuildConfig(req.guildId);
   const channelName = resolveChannelName(
     config.namePattern,
-    buildNameContext(snapshot, decoded, req.eventTime),
+    buildNameContext(snapshot, decoded, req.eventTime, config.timezone),
     req.channelNameOverride,
   );
 
@@ -234,7 +252,7 @@ export async function refreshRoster(env: Env, rosterId: string): Promise<Refresh
       (await getGuildConfig(env, mapping.guildId)) ?? getDefaultGuildConfig(mapping.guildId);
     const channelName = resolveChannelName(
       config.namePattern,
-      buildNameContext(snapshot, decoded),
+      buildNameContext(snapshot, decoded, undefined, config.timezone),
       mapping.channelNameOverride,
     );
 
@@ -322,7 +340,7 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
   const config = (await getGuildConfig(env, req.guildId)) ?? getDefaultGuildConfig(req.guildId);
   const channelName = resolveChannelName(
     config.namePattern,
-    buildNameContext(snapshot, decoded, req.eventTime),
+    buildNameContext(snapshot, decoded, req.eventTime, config.timezone),
     req.channelNameOverride,
   );
   const categoryId = req.categoryId ?? config.defaultCategoryId;

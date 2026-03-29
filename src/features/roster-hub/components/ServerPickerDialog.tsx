@@ -10,12 +10,7 @@
  * and first-time setup callout for unconfigured servers.
  */
 
-import {
-  getLocalTimeZone,
-  now as dateNow,
-  toCalendarDateTime,
-  type CalendarDateTime,
-} from '@internationalized/date';
+import { now as dateNow, toCalendarDateTime, type CalendarDateTime } from '@internationalized/date';
 import {
   ArrowBack,
   CheckCircle,
@@ -80,6 +75,7 @@ interface GuildConfigData {
   defaultChannelId?: string;
   defaultCategoryId?: string;
   allowedRoleIds?: string[];
+  timezone?: string;
 }
 
 interface ChannelInfo {
@@ -183,6 +179,9 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
 
   // ── Event date/time ───────────────────────────────────────────────────
   const [eventTime, setEventTime] = React.useState<CalendarDateTime | null>(null);
+
+  // ── Guild timezone (from config, defaults to America/New_York) ────────
+  const [guildTimezone, setGuildTimezone] = React.useState('America/New_York');
 
   // ── Publish state ──────────────────────────────────────────────────────
   const [publishing, setPublishing] = React.useState(false);
@@ -299,6 +298,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
         const cfg = configRes.config;
         setSelectedChannelId(cfg.defaultChannelId ?? '');
         setChannelNameOverride('');
+        setGuildTimezone(cfg.timezone || 'America/New_York');
       } catch {
         // Non-fatal — user can still publish without channel selection
         setChannels([]);
@@ -339,10 +339,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       // Determine channel override or selected channel
       const channelOverride = channelNameOverride.trim() || undefined;
 
-      // Convert CalendarDateTime to ISO string for the API
-      const eventTimeIso = eventTime
-        ? eventTime.toDate(getLocalTimeZone()).toISOString()
-        : undefined;
+      // Convert CalendarDateTime to ISO string using the guild's configured timezone
+      const eventTimeIso = eventTime ? eventTime.toDate(guildTimezone).toISOString() : undefined;
 
       if (roster) {
         endpoint = `${DISCORD_BOT_API_URL}/discord/roster/publish`;
@@ -871,8 +869,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 hourCycle={12}
                 value={eventTime}
                 onChange={setEventTime}
-                minValue={toCalendarDateTime(dateNow(getLocalTimeZone()))}
-                description="Used in channel name and shown as a Discord timestamp in the embed"
+                minValue={toCalendarDateTime(dateNow(guildTimezone))}
+                description={`Times are in the server's timezone (${guildTimezone.replace(/_/g, ' ')})`}
               />
             </Box>
 

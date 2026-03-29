@@ -516,6 +516,7 @@ async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Res
         body.rolePingIds !== null && {
           rolePingIds: body.rolePingIds as GuildConfig['rolePingIds'],
         }),
+      ...(typeof body.timezone === 'string' && { timezone: body.timezone }),
     };
 
     await upsertGuildConfig(env, updated);
