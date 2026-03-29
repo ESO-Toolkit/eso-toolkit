@@ -32,7 +32,7 @@ import {
   useTheme,
 } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
 import {
@@ -120,7 +120,9 @@ async function apiFetch<T>(path: string, token: string, options: RequestInit = {
 export const DiscordServerConfigPage: React.FC = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const fromPublish = searchParams.get('from') === 'publish';
   const { discordToken, isDiscordAuthed, startDiscordLogin, clearDiscordAuth } = useDiscordAuth();
 
   // Guild list state
@@ -478,6 +480,16 @@ export const DiscordServerConfigPage: React.FC = () => {
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
+      {fromPublish && (
+        <Button
+          size="small"
+          startIcon={<ArrowBack sx={{ fontSize: '16px !important' }} />}
+          onClick={() => navigate(-1)}
+          sx={{ mb: 1.5, color: '#5865F2', fontSize: '0.8rem' }}
+        >
+          Back to publishing
+        </Button>
+      )}
       <Paper sx={cardSx}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>

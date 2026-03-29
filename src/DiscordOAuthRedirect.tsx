@@ -6,13 +6,15 @@
  * and navigate back to where the user was.
  */
 
-import { Box, CircularProgress, Container, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Container, Typography } from '@mui/material';
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import discordIcon from './assets/discord-icon.svg';
 import {
   exchangeDiscordCode,
   getDiscordReturnPath,
+  startDiscordAuth,
   validateOAuthState,
 } from './features/auth/discord-auth';
 import { useDiscordAuth } from './features/auth/DiscordAuthContext';
@@ -35,7 +37,7 @@ export const DiscordOAuthRedirect: React.FC = () => {
     }
 
     if (!validateOAuthState(state)) {
-      setError('Your Discord session expired. Please close this and try connecting again.');
+      setError('Your Discord session expired. Please try connecting again.');
       return;
     }
 
@@ -82,18 +84,70 @@ export const DiscordOAuthRedirect: React.FC = () => {
             background: 'rgba(15,20,40,0.75)',
             border: '1px solid rgba(88,101,242,0.2)',
             textAlign: 'center',
+            maxWidth: 400,
+            width: '100%',
           }}
         >
+          {/* Discord icon */}
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              borderRadius: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 2.5,
+              background:
+                'linear-gradient(135deg, rgba(88,101,242,0.2) 0%, rgba(88,101,242,0.08) 100%)',
+              border: '1px solid rgba(88,101,242,0.25)',
+            }}
+          >
+            <img src={discordIcon} alt="" style={{ width: 30, height: 30 }} />
+          </Box>
+
           {error ? (
             <>
-              <Typography color="error" variant="h6" sx={{ mb: 1 }}>
+              <Typography color="error" variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
                 Connection Failed
               </Typography>
-              <Typography sx={{ color: 'rgba(255,255,255,0.7)' }}>{error}</Typography>
+              <Typography sx={{ color: 'rgba(255,255,255,0.7)', mb: 3, fontSize: '0.9rem' }}>
+                {error}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <Button
+                  variant="contained"
+                  onClick={() => startDiscordAuth()}
+                  sx={{
+                    background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #6973F5 0%, #5865F2 100%)',
+                    },
+                    fontWeight: 600,
+                  }}
+                >
+                  Try Again
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate('/', { replace: true })}
+                  sx={{
+                    borderColor: 'rgba(255,255,255,0.2)',
+                    color: 'rgba(255,255,255,0.7)',
+                    '&:hover': {
+                      borderColor: 'rgba(255,255,255,0.4)',
+                      background: 'rgba(255,255,255,0.05)',
+                    },
+                  }}
+                >
+                  Go Home
+                </Button>
+              </Box>
             </>
           ) : (
             <>
-              <CircularProgress sx={{ mb: 2 }} />
+              <CircularProgress sx={{ mb: 2, color: '#5865F2' }} />
               <Typography sx={{ color: 'rgba(255,255,255,0.85)' }}>{status}</Typography>
             </>
           )}

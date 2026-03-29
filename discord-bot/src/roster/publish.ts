@@ -5,12 +5,7 @@
  * Handles channel creation/update, embed posting/editing, and mapping persistence.
  */
 
-import {
-  createChannel,
-  deleteChannel,
-  sendMessage,
-  editMessage,
-} from '../discord.js';
+import { createChannel, deleteChannel, sendMessage, editMessage } from '../discord.js';
 import { ChannelType } from '../types.js';
 import type { Env } from '../types.js';
 import { fetchRosterSnapshot } from './api.js';
@@ -40,6 +35,7 @@ export interface PublishRequest {
 export interface PublishResult {
   ok: boolean;
   channelId?: string | undefined;
+  channelName?: string | undefined;
   messageId?: string | undefined;
   error?: string | undefined;
 }
@@ -83,13 +79,27 @@ export async function publishRoster(env: Env, req: PublishRequest): Promise<Publ
 
   if (existing) {
     // Update existing channel + message
-    const refreshed = await refreshExistingMapping(env, existing, snapshot, decoded, channelName, categoryId);
+    const refreshed = await refreshExistingMapping(
+      env,
+      existing,
+      snapshot,
+      decoded,
+      channelName,
+      categoryId,
+    );
     if (!refreshed.ok) return refreshed;
     channelId = refreshed.channelId!;
     messageId = refreshed.messageId!;
   } else {
     // Create new channel + message
-    const created = await createNewRosterChannel(env, req.guildId, channelName, categoryId, snapshot, decoded);
+    const created = await createNewRosterChannel(
+      env,
+      req.guildId,
+      channelName,
+      categoryId,
+      snapshot,
+      decoded,
+    );
     if (!created.ok) return created;
     channelId = created.channelId!;
     messageId = created.messageId!;
@@ -110,7 +120,7 @@ export async function publishRoster(env: Env, req: PublishRequest): Promise<Publ
   };
   await upsertMapping(env, mapping);
 
-  return { ok: true, channelId, messageId };
+  return { ok: true, channelId, channelName, messageId };
 }
 
 // ── Core Refresh ────────────────────────────────────────────────────────────
@@ -179,7 +189,8 @@ export async function refreshRoster(env: Env, rosterId: string): Promise<Refresh
   let lastError: string | undefined;
 
   for (const mapping of mappings) {
-    const config = (await getGuildConfig(env, mapping.guildId)) ?? getDefaultGuildConfig(mapping.guildId);
+    const config =
+      (await getGuildConfig(env, mapping.guildId)) ?? getDefaultGuildConfig(mapping.guildId);
     const channelName = resolveChannelName(
       config.namePattern,
       { label: snapshot.title },
@@ -238,7 +249,10 @@ export interface DirectPublishRequest {
 export async function publishDirect(env: Env, req: DirectPublishRequest): Promise<PublishResult> {
   // Build a synthetic snapshot from the raw data
   const rand = crypto.getRandomValues(new Uint8Array(4));
-  const suffix = Array.from(rand).map((b) => b.toString(36)).join('').slice(0, 6);
+  const suffix = Array.from(rand)
+    .map((b) => b.toString(36))
+    .join('')
+    .slice(0, 6);
   const syntheticId = `direct-${Date.now().toString(36)}-${suffix}`;
   const snapshot: RosterSnapshot = {
     id: syntheticId,
@@ -301,7 +315,7 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
     expirationTtl: 60 * 60 * 24 * 90,
   });
 
-  return { ok: true, channelId: result.channelId, messageId: result.messageId };
+  return { ok: true, channelId: result.channelId, channelName, messageId: result.messageId };
 }
 
 // ── Refresh a single channel for an existing mapping ────────────────────────

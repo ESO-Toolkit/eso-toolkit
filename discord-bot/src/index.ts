@@ -358,7 +358,12 @@ async function handlePublish(
     return jsonResponse({ error: result.error }, 400);
   }
 
-  return jsonResponse({ ok: true, channelId: result.channelId, messageId: result.messageId });
+  return jsonResponse({
+    ok: true,
+    channelId: result.channelId,
+    channelName: result.channelName,
+    messageId: result.messageId,
+  });
 }
 
 async function handleRefresh(
@@ -422,7 +427,12 @@ async function handlePublishDirect(
     return jsonResponse({ error: result.error }, 400);
   }
 
-  return jsonResponse({ ok: true, channelId: result.channelId, messageId: result.messageId });
+  return jsonResponse({
+    ok: true,
+    channelId: result.channelId,
+    channelName: result.channelName,
+    messageId: result.messageId,
+  });
 }
 
 // ── Guild config API ────────────────────────────────────────────────────────
