@@ -61,9 +61,27 @@ const DISCORD_BOT_API_URL =
   (import.meta.env.VITE_DISCORD_BOT_API_URL as string | undefined) ??
   'https://eso-toolkit-discord-bot.eso-toolkit.workers.dev';
 
-const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{trial}-{tag}';
+const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{tag}-{trainer}';
 
 const SHORT_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+
+/** Trial ID → lowercase abbreviation (mirrors discord-bot/src/roster/channel-name.ts). */
+const TRIAL_ABBREVS: Record<string, string> = {
+  AA: 'aa',
+  HRC: 'hrc',
+  SO: 'so',
+  MOL: 'mol',
+  HOF: 'hof',
+  AS: 'as',
+  CR: 'cr',
+  SS: 'ss',
+  KA: 'ka',
+  RG: 'rg',
+  DSR: 'dsr',
+  SE: 'se',
+  LC: 'lc',
+  OAC: 'oac',
+};
 
 /** Build a channel name preview from pattern + current form values. */
 function buildChannelPreview(
@@ -71,7 +89,8 @@ function buildChannelPreview(
   eventTime: CalendarDateTime | null,
   timezone: string,
   trialId: string,
-  tag: string,
+  tags: string[],
+  trainer: string,
 ): string {
   let dayShort = '';
   let time = '';
@@ -93,11 +112,32 @@ function buildChannelPreview(
     time = `${h}${suffix}`;
   }
 
+  // Determine difficulty from tags
+  const lowerTags = tags.map((t) => t.toLowerCase());
+  const isVet = lowerTags.includes('vet') || lowerTags.includes('veteran');
+  const isNormal = lowerTags.includes('normal');
+  const difficulty = isVet ? 'veteran' : isNormal ? 'normal' : null;
+
+  // Build difficulty-prefixed trial abbreviation (e.g. "vlc", "noac")
+  const abbrev = TRIAL_ABBREVS[trialId.toUpperCase()] ?? trialId.toLowerCase();
+  const trialTag = difficulty ? `${difficulty === 'veteran' ? 'v' : 'n'}${abbrev}` : abbrev;
+
+  // First non-difficulty tag for {tag} token fallback
+  const nonDiffTag =
+    tags.find((t) => !['vet', 'veteran', 'normal'].includes(t.toLowerCase())) ?? '';
+
   const name = pattern
     .replace(/{day-short}/gi, dayShort)
+    .replace(/{day-full}/gi, dayShort)
+    .replace(/{day}/gi, dayShort)
     .replace(/{time}/gi, time)
-    .replace(/{trial}/gi, trialId.toLowerCase())
-    .replace(/{tag}/gi, tag.toLowerCase())
+    .replace(/{trial}/gi, trialTag)
+    .replace(/{tag}/gi, trialTag || nonDiffTag.toLowerCase())
+    .replace(/{trainer}/gi, trainer.toLowerCase())
+    .replace(
+      /{difficulty}/gi,
+      difficulty === 'veteran' ? 'vet' : difficulty === 'normal' ? 'norm' : '',
+    )
     .toLowerCase()
     .replace(/[\s_]+/g, '-')
     .replace(/[^a-z0-9-]/g, '')
@@ -461,6 +501,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       cfg.defaultCategoryId ||
       (cfg.namePattern &&
         cfg.namePattern !== '{label}' &&
+        cfg.namePattern !== '{day-short}-{time}-{tag}-{trainer}' &&
         cfg.namePattern !== '{day-short}-{time}-{trial}-{tag}')
     );
   };
@@ -1050,7 +1091,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     : DEFAULT_NAME_PATTERN;
                 const overrideTrimmed = channelNameOverride.trim();
                 const effectiveTrial = roster ? roster.trial_id : selectedTrialId;
-                const effectiveTag = roster ? (roster.tags[0] ?? '') : (selectedTags[0] ?? '');
+                const effectiveTags = roster ? (roster.tags ?? []) : selectedTags;
+                const effectiveTrainer = roster ? (roster.author_name ?? '') : (authorName ?? '');
                 const preview = overrideTrimmed
                   ? overrideTrimmed
                       .toLowerCase()
@@ -1064,7 +1106,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                       eventTime,
                       guildTimezone,
                       effectiveTrial,
-                      effectiveTag,
+                      effectiveTags,
+                      effectiveTrainer,
                     );
                 return (
                   <Box

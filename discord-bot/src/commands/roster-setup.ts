@@ -41,7 +41,9 @@ export async function handleRosterSetup(
   const hasRoles = config?.allowedRoleIds && config.allowedRoleIds.length > 0;
   const hasCategory = !!config?.defaultCategoryId;
   const hasNamePattern =
-    !!config?.namePattern && config.namePattern !== '{day-short}-{time}-{trial}-{tag}';
+    !!config?.namePattern &&
+    config.namePattern !== '{day-short}-{time}-{tag}-{trainer}' &&
+    config.namePattern !== '{day-short}-{time}-{trial}-{tag}';
   const pings = config?.rolePingIds;
   const hasRolePings = !!(pings?.tank || pings?.healer || pings?.dd);
 
@@ -73,9 +75,9 @@ export async function handleRosterSetup(
     '',
     `${check(hasNamePattern)} **Step 4 — Customize channel names** *(optional)*`,
     'Set a template for auto-generated channel names.',
-    'Tokens: `{day-short}`, `{time}`, `{trial}`, `{tag}`',
+    'Tokens: `{day-short}`, `{time}`, `{tag}`, `{trainer}`, `{difficulty}`',
     '```',
-    '/roster config set-name-pattern {day-short}-{time}-{trial}-{tag}',
+    '/roster config set-name-pattern {day-short}-{time}-{tag}-{trainer}',
     '```',
     '',
     '---',

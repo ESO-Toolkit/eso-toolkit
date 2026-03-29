@@ -145,8 +145,12 @@ export async function getGuildConfig(env: Env, guildId: string): Promise<GuildCo
   if (raw === null) return null;
   try {
     const config = JSON.parse(raw) as GuildConfig;
-    // Migrate legacy {label} pattern to the current default
-    if (!config.namePattern || config.namePattern === '{label}') {
+    // Migrate legacy patterns to the current default
+    if (
+      !config.namePattern ||
+      config.namePattern === '{label}' ||
+      config.namePattern === '{day-short}-{time}-{trial}-{tag}'
+    ) {
       config.namePattern = DEFAULT_NAME_PATTERN;
     }
     return config;
@@ -162,7 +166,7 @@ export async function upsertGuildConfig(env: Env, config: GuildConfig): Promise<
 
 // ── Default Config ──────────────────────────────────────────────────────────
 
-export const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{trial}-{tag}';
+export const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{tag}-{trainer}';
 
 export function getDefaultGuildConfig(guildId: string): GuildConfig {
   return {

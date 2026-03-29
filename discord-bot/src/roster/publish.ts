@@ -79,8 +79,24 @@ function buildNameContext(
   }
   const trial = snapshot.trial_id || decoded.trialId;
   if (trial) ctx.trial = trial;
-  const tag = snapshot.tags[0];
-  if (tag) ctx.tag = tag;
+
+  // Extract difficulty from tags ('vet' → 'veteran', 'normal' → 'normal')
+  const tags = snapshot.tags.map((t) => t.toLowerCase());
+  if (tags.includes('vet') || tags.includes('veteran')) {
+    ctx.difficulty = 'veteran';
+  } else if (tags.includes('normal')) {
+    ctx.difficulty = 'normal';
+  }
+
+  // First non-difficulty tag becomes the {tag} token
+  const nonDifficultyTag = snapshot.tags.find(
+    (t) => !['vet', 'veteran', 'normal'].includes(t.toLowerCase()),
+  );
+  if (nonDifficultyTag) ctx.tag = nonDifficultyTag;
+
+  // Author name as trainer
+  if (snapshot.author_name) ctx.trainer = snapshot.author_name;
+
   return ctx;
 }
 

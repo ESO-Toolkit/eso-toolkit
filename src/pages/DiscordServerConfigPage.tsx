@@ -99,13 +99,15 @@ interface GuildConfigData {
 // ── Token chips for channel name pattern ───────────────────────────────────
 
 const NAME_TOKENS = [
-  { token: '{day-short}', desc: 'Day abbreviation (Sun, Mon, ...)' },
+  { token: '{day-short}', desc: 'Day abbreviation (sun, mon, ...)' },
   { token: '{time}', desc: 'Time (8pm, 10am, ...)' },
-  { token: '{trial}', desc: 'Trial ID (vss, vcr, ...)' },
-  { token: '{tag}', desc: 'First tag on the roster' },
+  { token: '{tag}', desc: 'Difficulty-prefixed trial (vlc, noac, ...)' },
+  { token: '{trainer}', desc: 'Roster author name' },
+  { token: '{trial}', desc: 'Same as {tag}' },
+  { token: '{difficulty}', desc: 'vet or norm' },
 ] as const;
 
-const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{trial}-{tag}';
+const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{tag}-{trainer}';
 
 const DEFAULT_TIMEZONE = 'America/New_York';
 
@@ -186,10 +188,14 @@ function previewChannelName(pattern: string, tz: string = DEFAULT_TIMEZONE): str
   h = h % 12 || 12;
   const time12 = `${h}${suffix}`;
   return pattern
-    .replace(/{day-short}/g, shortDays[dayIdx >= 0 ? dayIdx : now.getDay()])
-    .replace(/{time}/g, time12)
-    .replace(/{trial}/g, 'vss')
-    .replace(/{tag}/g, 'score-push')
+    .replace(/{day-short}/gi, shortDays[dayIdx >= 0 ? dayIdx : now.getDay()])
+    .replace(/{day-full}/gi, shortDays[dayIdx >= 0 ? dayIdx : now.getDay()])
+    .replace(/{day}/gi, shortDays[dayIdx >= 0 ? dayIdx : now.getDay()])
+    .replace(/{time}/gi, time12)
+    .replace(/{trial}/gi, 'vss')
+    .replace(/{tag}/gi, 'vss')
+    .replace(/{trainer}/gi, 'trainer')
+    .replace(/{difficulty}/gi, 'vet')
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, '-')
     .replace(/-+/g, '-')
