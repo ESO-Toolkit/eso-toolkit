@@ -8,11 +8,13 @@
  */
 
 import { verifyHttpCaller, verifyWebhookSecret } from './auth.js';
-import { getBotGuilds } from './discord.js';
+import { getBotGuilds, getGuildChannels, getGuildRoles } from './discord.js';
 import { handleButton } from './handlers/buttons.js';
 import { handleCommand } from './handlers/commands.js';
 import { handleModal } from './handlers/modals.js';
 import { publishRoster, refreshRoster, publishDirect } from './roster/index.js';
+import { getGuildConfig, upsertGuildConfig, getDefaultGuildConfig } from './roster/kv.js';
+import type { GuildConfig } from './roster/types.js';
 import type { PublishRequest, DirectPublishRequest } from './roster/index.js';
 import { KV_PREFIX } from './roster/kv.js';
 import { InteractionType, MessageFlags } from './types.js';
@@ -61,7 +63,10 @@ function isAllowedRedirectUri(uri: string, env: Env): boolean {
   const uris = env.ENVIRONMENT === 'development' ? ALL_REDIRECT_URIS : PROD_REDIRECT_URIS;
   if (uris.has(uri)) return true;
   // Allow dev-preview redirect URIs (dynamic PR number in path)
-  if (uri.match(/^https:\/\/eso-toolkit\.github\.io\/dev-previews\/pr-\d+\/discord-oauth-redirect$/)) return true;
+  if (
+    uri.match(/^https:\/\/eso-toolkit\.github\.io\/dev-previews\/pr-\d+\/discord-oauth-redirect$/)
+  )
+    return true;
   return false;
 }
 
@@ -80,6 +85,11 @@ export default {
     }
     if (url.pathname === '/discord/oauth/token') {
       return withCors(request, env, await handleOAuthTokenExchange(request, env));
+    }
+
+    // ── Guild config API routes (CORS-enabled, admin auth) ────────────
+    if (url.pathname.startsWith('/discord/guild/')) {
+      return withCors(request, env, await handleGuildApi(request, url, env));
     }
 
     // ── Roster API routes ────────────────────────────────────────────────
@@ -190,7 +200,11 @@ async function handleBotGuilds(request: Request, env: Env): Promise<Response> {
       return jsonResponse({ error: 'Invalid or expired Discord token.' }, 401);
     }
 
-    const userGuilds = (await userGuildsRes.json()) as { id: string; name: string; icon: string | null }[];
+    const userGuilds = (await userGuildsRes.json()) as {
+      id: string;
+      name: string;
+      icon: string | null;
+    }[];
     const botGuildIds = new Set(botGuilds.map((g) => g.id));
 
     // Return only mutual guilds (user + bot both members)
@@ -245,11 +259,12 @@ async function handleOAuthTokenExchange(request: Request, env: Env): Promise<Res
     const data = (await res.json()) as Record<string, unknown>;
     if (!res.ok) {
       console.error('[oauth-token] Discord error:', JSON.stringify(data));
-      const discordError = typeof data.error_description === 'string'
-        ? data.error_description
-        : typeof data.error === 'string'
-          ? data.error
-          : 'Token exchange failed';
+      const discordError =
+        typeof data.error_description === 'string'
+          ? data.error_description
+          : typeof data.error === 'string'
+            ? data.error
+            : 'Token exchange failed';
       return jsonResponse({ error: discordError, discord_status: res.status }, 400);
     }
 
@@ -262,11 +277,7 @@ async function handleOAuthTokenExchange(request: Request, env: Env): Promise<Res
 
 // ── Roster API ──────────────────────────────────────────────────────────────
 
-async function handleRosterApi(
-  request: Request,
-  url: URL,
-  env: Env,
-): Promise<Response> {
+async function handleRosterApi(request: Request, url: URL, env: Env): Promise<Response> {
   // Public GET: fetch roster data for direct-publish rosters stored in KV
   const dataMatch = url.pathname.match(/^\/discord\/roster\/([^/]+)\/data$/);
   if (dataMatch && request.method === 'GET') {
@@ -412,6 +423,91 @@ async function handlePublishDirect(
   }
 
   return jsonResponse({ ok: true, channelId: result.channelId, messageId: result.messageId });
+}
+
+// ── Guild config API ────────────────────────────────────────────────────────
+
+function extractGuildId(pathname: string): string | null {
+  // Matches /discord/guild/{guildId}/... — snowflake IDs are numeric
+  const match = pathname.match(/^\/discord\/guild\/(\d+)\//);
+  return match?.[1] ?? null;
+}
+
+async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Response> {
+  const guildId = extractGuildId(url.pathname);
+  if (!guildId) return jsonResponse({ error: 'Invalid guild ID.' }, 400);
+
+  // All guild config routes require admin auth
+  const auth = await verifyHttpCaller(env, guildId, request.headers.get('Authorization'));
+  if (!auth.authorized) {
+    return jsonResponse({ error: auth.error ?? 'Unauthorized.' }, 403);
+  }
+
+  const subpath = url.pathname.slice(`/discord/guild/${guildId}/`.length);
+
+  if (subpath === 'channels' && request.method === 'GET') {
+    const channels = await getGuildChannels(env, guildId);
+    // Return text channels (type 0) and categories (type 4) for grouping
+    const filtered = channels
+      .filter((c) => c.type === 0 || c.type === 4)
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        type: c.type,
+        parent_id: c.parent_id,
+        position: c.position,
+      }))
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+    return jsonResponse({ channels: filtered });
+  }
+
+  if (subpath === 'roles' && request.method === 'GET') {
+    const roles = await getGuildRoles(env, guildId);
+    // Filter out @everyone (id === guildId) and managed/bot roles
+    const filtered = roles
+      .filter(
+        (r) => r.id !== guildId && !('managed' in r && (r as Record<string, unknown>).managed),
+      )
+      .map((r) => ({ id: r.id, name: r.name, color: (r as Record<string, unknown>).color ?? 0 }));
+    return jsonResponse({ roles: filtered });
+  }
+
+  if (subpath === 'config' && request.method === 'GET') {
+    const config = (await getGuildConfig(env, guildId)) ?? getDefaultGuildConfig(guildId);
+    return jsonResponse({ config });
+  }
+
+  if (subpath === 'config' && request.method === 'PUT') {
+    let body: Record<string, unknown>;
+    try {
+      body = (await request.json()) as Record<string, unknown>;
+    } catch {
+      return jsonResponse({ error: 'Invalid JSON body.' }, 400);
+    }
+
+    const existing = (await getGuildConfig(env, guildId)) ?? getDefaultGuildConfig(guildId);
+    const updated = {
+      ...existing,
+      guildId,
+      ...(typeof body.defaultChannelId === 'string' && { defaultChannelId: body.defaultChannelId }),
+      ...(typeof body.defaultCategoryId === 'string' && {
+        defaultCategoryId: body.defaultCategoryId,
+      }),
+      ...(typeof body.namePattern === 'string' && { namePattern: body.namePattern }),
+      ...(Array.isArray(body.allowedRoleIds) && {
+        allowedRoleIds: body.allowedRoleIds as string[],
+      }),
+      ...(typeof body.rolePingIds === 'object' &&
+        body.rolePingIds !== null && {
+          rolePingIds: body.rolePingIds as GuildConfig['rolePingIds'],
+        }),
+    };
+
+    await upsertGuildConfig(env, updated);
+    return jsonResponse({ ok: true, config: updated });
+  }
+
+  return jsonResponse({ error: 'Not found.' }, 404);
 }
 
 // ── CORS helpers ────────────────────────────────────────────────────────────

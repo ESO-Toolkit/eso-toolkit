@@ -7,6 +7,7 @@
  * Replaces the manual guild ID input with proper Discord OAuth2 flow.
  */
 
+import { Settings as SettingsIcon } from '@mui/icons-material';
 import {
   Avatar,
   Box,
@@ -16,15 +17,18 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   List,
   ListItemAvatar,
   ListItemButton,
   ListItemText,
   TextField,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import discordIcon from '../../../assets/discord-icon.svg';
 import {
@@ -67,6 +71,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const navigate = useNavigate();
   const { discordToken, isDiscordAuthed, startDiscordLogin, clearDiscordAuth } = useDiscordAuth();
 
   const [guilds, setGuilds] = React.useState<
@@ -317,6 +322,19 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                           fontWeight: selectedGuildId === guild.id ? 700 : 500,
                         }}
                       />
+                      <Tooltip title="Server settings">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onClose();
+                            navigate(`/discord-server-config?guild=${guild.id}`);
+                          }}
+                          sx={{ color: 'text.disabled', '&:hover': { color: '#5865F2' } }}
+                        >
+                          <SettingsIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                      </Tooltip>
                     </ListItemButton>
                   ))}
                 </List>

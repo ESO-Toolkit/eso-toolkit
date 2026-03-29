@@ -27,13 +27,17 @@ export interface GuildConfig {
   guildId: string;
   /** Channel name template with tokens: {day-short}, {day-full}, {time}, {tag}, {label} */
   namePattern: string;
+  /** Default text channel to post rosters into (if set, skip channel creation) */
+  defaultChannelId?: string | undefined;
   defaultCategoryId?: string | undefined;
   /** Discord role IDs to ping for tank/healer/dd sign-ups */
-  rolePingIds?: {
-    tank?: string | undefined;
-    healer?: string | undefined;
-    dd?: string | undefined;
-  } | undefined;
+  rolePingIds?:
+    | {
+        tank?: string | undefined;
+        healer?: string | undefined;
+        dd?: string | undefined;
+      }
+    | undefined;
   /** Discord role IDs allowed to publish/refresh rosters. Empty = MANAGE_GUILD only. */
   allowedRoleIds?: string[] | undefined;
 }
