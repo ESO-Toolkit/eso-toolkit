@@ -102,23 +102,11 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
     setTrialId(e.target.value);
   };
 
-  const [tagInput, setTagInput] = React.useState('');
-
-  const addTag = (tag: string): void => {
-    const trimmed = tag.trim().toLowerCase();
-    if (!trimmed || selectedTags.includes(trimmed) || selectedTags.length >= MAX_TAGS) return;
-    setSelectedTags((prev) => [...prev, trimmed]);
-  };
-
-  const removeTag = (tag: string): void => {
-    setSelectedTags((prev) => prev.filter((t) => t !== tag));
-  };
-
-  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      addTag(tagInput);
-      setTagInput('');
+  const handleTagToggle = (tag: string): void => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags((prev) => prev.filter((t) => t !== tag));
+    } else if (selectedTags.length < MAX_TAGS) {
+      setSelectedTags((prev) => [...prev, tag]);
     }
   };
 
@@ -254,7 +242,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         setDescription(editingRoster.description ?? '');
         setTrialId(editingRoster.trial_id ?? '');
         setSelectedTags(editingRoster.tags ?? []);
-        setTagInput('');
         setIsAnonymous(editingRoster.is_anonymous ?? false);
         // Restore addon recommendations
         if (editingRoster.recommended_addons) {
@@ -273,7 +260,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         setDescription('');
         setTrialId('');
         setSelectedTags([]);
-        setTagInput('');
         setIsAnonymous(false);
         setAddonSectionOpen(false);
         setSelectedPackId(null);
@@ -342,7 +328,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           </Select>
         </FormControl>
 
-        <Box>
+        <div>
           <Typography
             variant="caption"
             color={atTagLimit ? 'warning.main' : 'text.secondary'}
@@ -351,94 +337,39 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           >
             Tags ({selectedTags.length}/{MAX_TAGS}){atTagLimit ? ' — limit reached' : ''}
           </Typography>
-
-          {/* Selected tags + input container */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              gap: 0.5,
-              p: 1,
-              mt: 0.5,
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 1,
-              bgcolor: 'background.paper',
-              minHeight: 40,
-            }}
-          >
-            {selectedTags.map((tag) => {
-              const accent = TAG_COLORS[tag] ?? undefined;
-              return (
-                <Chip
-                  key={tag}
-                  label={tag}
-                  size="small"
-                  onDelete={() => removeTag(tag)}
-                  sx={{
-                    fontWeight: 600,
-                    ...(accent
-                      ? {
-                          bgcolor: accent,
-                          color: '#fff',
-                          '& .MuiChip-deleteIcon': { color: 'rgba(255,255,255,0.7)' },
-                          '& .MuiChip-deleteIcon:hover': { color: '#fff' },
-                        }
-                      : {}),
-                  }}
-                />
-              );
-            })}
-            {!atTagLimit && (
-              <TextField
-                size="small"
-                variant="standard"
-                placeholder="Add a tag…"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value.replace(/,/g, ''))}
-                onKeyDown={handleTagInputKeyDown}
-                slotProps={{
-                  htmlInput: { maxLength: 30 },
-                  input: { disableUnderline: true, sx: { fontSize: '0.875rem', py: 0.25 } },
-                }}
-                sx={{ flex: 1, minWidth: 80 }}
-              />
-            )}
-          </Box>
-
-          {/* Preset suggestions */}
-          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mt: 1 }}>
+          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mt: 0.5 }}>
             {PRESET_TAGS.map((tag) => {
               const isSelected = selectedTags.includes(tag);
-              const isDisabled = isSelected || atTagLimit;
+              const isDisabled = !isSelected && atTagLimit;
               const accent = TAG_COLORS[tag] ?? '#888';
               return (
-                <Tooltip
-                  key={tag}
-                  title={
-                    isSelected
-                      ? 'Already added'
-                      : isDisabled
-                        ? `Remove a tag first (max ${MAX_TAGS})`
-                        : `Add "${tag}"`
-                  }
-                >
+                <Tooltip key={tag} title={isDisabled ? `Remove a tag first (max ${MAX_TAGS})` : ''}>
                   <span>
                     <Chip
                       label={tag}
                       size="small"
-                      variant="outlined"
-                      onClick={isDisabled ? undefined : () => addTag(tag)}
+                      onClick={isDisabled ? undefined : () => handleTagToggle(tag)}
+                      variant={isSelected ? 'filled' : 'outlined'}
+                      aria-pressed={isSelected}
+                      role="checkbox"
                       sx={{
-                        cursor: isDisabled ? 'default' : 'pointer',
-                        opacity: isDisabled ? 0.4 : 1,
+                        cursor: isDisabled ? 'not-allowed' : 'pointer',
+                        opacity: isDisabled ? 0.5 : 1,
                         transition: 'all 0.15s ease',
-                        borderColor: `${accent}55`,
-                        color: accent,
-                        '&:hover': isDisabled
-                          ? {}
-                          : { bgcolor: `${accent}18`, borderColor: accent },
+                        ...(isSelected
+                          ? {
+                              bgcolor: accent,
+                              color: '#fff',
+                              borderColor: accent,
+                              '&:hover': { bgcolor: accent, filter: 'brightness(0.9)' },
+                            }
+                          : {
+                              borderColor: `${accent}55`,
+                              color: accent,
+                              '&:hover': isDisabled
+                                ? {}
+                                : { bgcolor: `${accent}18`, borderColor: accent },
+                            }),
                       }}
                     />
                   </span>
@@ -446,7 +377,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
               );
             })}
           </Stack>
-        </Box>
+        </div>
 
         {/* ── Addon Recommendations Section ── */}
         <Paper
