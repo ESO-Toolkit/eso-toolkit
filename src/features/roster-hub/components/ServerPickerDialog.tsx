@@ -39,8 +39,16 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import {
+  getLocalTimeZone,
+  now as dateNow,
+  toCalendarDateTime,
+  type CalendarDateTime,
+} from '@internationalized/date';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import { DatePicker } from '../../../components/DatePicker';
 
 import discordIcon from '../../../assets/discord-icon.svg';
 import {
@@ -175,7 +183,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
   const [selectedTags, setSelectedTags] = React.useState<string[]>(tagsProp ?? []);
 
   // ── Event date/time ───────────────────────────────────────────────────
-  const [eventTime, setEventTime] = React.useState('');
+  const [eventTime, setEventTime] = React.useState<CalendarDateTime | null>(null);
 
   // ── Publish state ──────────────────────────────────────────────────────
   const [publishing, setPublishing] = React.useState(false);
@@ -265,7 +273,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       setChannelNameOverride('');
       setSelectedTrialId(trialIdProp ?? '');
       setSelectedTags(tagsProp ?? []);
-      setEventTime('');
+      setEventTime(null);
       return;
     }
     if (isDiscordAuthed) {
@@ -332,8 +340,10 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       // Determine channel override or selected channel
       const channelOverride = channelNameOverride.trim() || undefined;
 
-      // Convert local datetime to ISO string for the API
-      const eventTimeIso = eventTime ? new Date(eventTime).toISOString() : undefined;
+      // Convert CalendarDateTime to ISO string for the API
+      const eventTimeIso = eventTime
+        ? eventTime.toDate(getLocalTimeZone()).toISOString()
+        : undefined;
 
       if (roster) {
         endpoint = `${DISCORD_BOT_API_URL}/discord/roster/publish`;
@@ -856,22 +866,14 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
 
             {/* Event date & time */}
             <Box sx={{ ...sectionSx, mb: 2 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: 700, mb: 1, color: '#5865F2', fontSize: '0.82rem' }}
-              >
-                Event Date & Time
-              </Typography>
-              <TextField
-                type="datetime-local"
+              <DatePicker
+                label="Event Date & Time"
+                granularity="minute"
+                hourCycle={12}
                 value={eventTime}
-                onChange={(e) => setEventTime(e.target.value)}
-                fullWidth
-                size="small"
-                slotProps={{
-                  inputLabel: { shrink: true },
-                }}
-                helperText="Used in channel name and shown as a Discord timestamp in the embed"
+                onChange={setEventTime}
+                minValue={toCalendarDateTime(dateNow(getLocalTimeZone()))}
+                description="Used in channel name and shown as a Discord timestamp in the embed"
               />
             </Box>
 
