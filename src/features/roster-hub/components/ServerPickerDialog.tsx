@@ -223,6 +223,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
   // ── Trial & tag selection (direct-publish only) ────────────────────────
   const [selectedTrialId, setSelectedTrialId] = React.useState(trialIdProp ?? '');
   const [selectedTags, setSelectedTags] = React.useState<string[]>(tagsProp ?? []);
+  const [customTag, setCustomTag] = React.useState('');
 
   // ── Event date/time ───────────────────────────────────────────────────
   const [eventTime, setEventTime] = React.useState<CalendarDateTime | null>(null);
@@ -318,6 +319,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       setChannelNameOverride('');
       setSelectedTrialId(trialIdProp ?? '');
       setSelectedTags(tagsProp ?? []);
+      setCustomTag('');
       setEventTime(null);
       return;
     }
@@ -951,7 +953,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 >
                   Tags
                 </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1 }}>
                   {PRESET_TAGS.map((tag) => {
                     const active = selectedTags.includes(tag);
                     const accent = TAG_COLORS[tag] ?? '#888';
@@ -977,6 +979,64 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     );
                   })}
                 </Box>
+                <TextField
+                  label="Custom tag"
+                  placeholder="e.g. prog, learners"
+                  value={customTag}
+                  onChange={(e) => setCustomTag(e.target.value)}
+                  fullWidth
+                  size="small"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const trimmed = customTag.trim().toLowerCase();
+                      if (trimmed && !selectedTags.includes(trimmed)) {
+                        setSelectedTags((prev) => [...prev, trimmed]);
+                      }
+                      setCustomTag('');
+                    }
+                  }}
+                  InputProps={{
+                    endAdornment: customTag.trim() ? (
+                      <Button
+                        size="small"
+                        sx={{ minWidth: 'auto', px: 1, fontSize: '0.7rem' }}
+                        onClick={() => {
+                          const trimmed = customTag.trim().toLowerCase();
+                          if (trimmed && !selectedTags.includes(trimmed)) {
+                            setSelectedTags((prev) => [...prev, trimmed]);
+                          }
+                          setCustomTag('');
+                        }}
+                      >
+                        Add
+                      </Button>
+                    ) : undefined,
+                  }}
+                />
+                {/* Show custom (non-preset) tags as removable chips */}
+                {selectedTags.filter((t) => !(PRESET_TAGS as readonly string[]).includes(t))
+                  .length > 0 && (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.75 }}>
+                    {selectedTags
+                      .filter((t) => !(PRESET_TAGS as readonly string[]).includes(t))
+                      .map((t) => (
+                        <Chip
+                          key={t}
+                          label={t}
+                          size="small"
+                          onDelete={() => setSelectedTags((prev) => prev.filter((x) => x !== t))}
+                          sx={{
+                            fontWeight: 600,
+                            fontSize: '0.7rem',
+                            bgcolor: 'rgba(255,255,255,0.06)',
+                            color: 'text.secondary',
+                            border: '1px solid rgba(255,255,255,0.12)',
+                          }}
+                        />
+                      ))}
+                  </Box>
+                )}
               </Box>
             )}
 

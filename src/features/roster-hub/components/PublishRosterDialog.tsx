@@ -52,6 +52,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   const [description, setDescription] = React.useState('');
   const [trialId, setTrialId] = React.useState('');
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
+  const [customTag, setCustomTag] = React.useState('');
   const [isAnonymous, setIsAnonymous] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -228,6 +229,65 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
               );
             })}
           </Stack>
+          <TextField
+            label="Custom tag"
+            placeholder="e.g. prog, learners"
+            value={customTag}
+            onChange={(e) => setCustomTag(e.target.value)}
+            fullWidth
+            size="small"
+            disabled={atTagLimit}
+            sx={{ mt: 1 }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const trimmed = customTag.trim().toLowerCase();
+                if (trimmed && !selectedTags.includes(trimmed) && selectedTags.length < MAX_TAGS) {
+                  setSelectedTags((prev) => [...prev, trimmed]);
+                }
+                setCustomTag('');
+              }
+            }}
+            InputProps={{
+              endAdornment:
+                customTag.trim() && !atTagLimit ? (
+                  <Button
+                    size="small"
+                    sx={{ minWidth: 'auto', px: 1, fontSize: '0.7rem' }}
+                    onClick={() => {
+                      const trimmed = customTag.trim().toLowerCase();
+                      if (
+                        trimmed &&
+                        !selectedTags.includes(trimmed) &&
+                        selectedTags.length < MAX_TAGS
+                      ) {
+                        setSelectedTags((prev) => [...prev, trimmed]);
+                      }
+                      setCustomTag('');
+                    }}
+                  >
+                    Add
+                  </Button>
+                ) : undefined,
+            }}
+          />
+          {selectedTags.filter((t) => !(PRESET_TAGS as readonly string[]).includes(t)).length >
+            0 && (
+            <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mt: 0.75 }}>
+              {selectedTags
+                .filter((t) => !(PRESET_TAGS as readonly string[]).includes(t))
+                .map((t) => (
+                  <Chip
+                    key={t}
+                    label={t}
+                    size="small"
+                    onDelete={() => setSelectedTags((prev) => prev.filter((x) => x !== t))}
+                    variant="outlined"
+                    sx={{ fontSize: '0.7rem' }}
+                  />
+                ))}
+            </Stack>
+          )}
         </div>
 
         <FormControlLabel
