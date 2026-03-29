@@ -1,20 +1,50 @@
 /**
- * Decodes roster_data (deflate-raw + base64url) into a simplified
- * DecodedRoster for embed rendering.
+ * Decodes roster_data (deflate-raw + base64url) into a DecodedRoster
+ * with all fields needed for Discord text formatting.
  *
  * This runs server-side in a Cloudflare Worker. DecompressionStream
  * is available natively in the Workers runtime.
  */
 
 import { getSetName } from './set-names.js';
-import type { DecodedRoster, DecodedRosterSlot } from './types.js';
+import type { DecodedRoster, DecodedRosterSlot, DecodedSkillLines } from './types.js';
+
+// ── Lookup tables (mirror the frontend's encoding tables) ───────────────────
+
+const CLASS_SKILL_LINES = [
+  'Ardent Flame', 'Draconic Power', 'Earthen Heart',
+  'Dark Magic', 'Daedric Summoning', 'Storm Calling',
+  'Assassination', 'Shadow', 'Siphoning',
+  'Aedric Spear', "Dawn's Wrath", 'Restoring Light',
+  'Animal Companions', 'Green Balance', "Winter's Embrace",
+  'Grave Lord', 'Bone Tyrant', 'Living Death',
+  'Herald of the Tome', 'Apocryphal Soldier', 'Curative Runeforms',
+] as const;
+
+const ULTIMATE_LIST = [
+  'Aggressive Warhorn',
+  'Glacial Colossus',
+  'Barrier',
+  'Greater Storm Atronach',
+] as const;
+
+const HEALER_BUFF_LIST = ['Enlivening Overflow', 'From the Brink'] as const;
+const CHAMPION_POINT_LIST = ['Enlivening Overflow', 'From the Brink'] as const;
+
+const JAIL_DD_TYPE_LIST = ['banner', 'zenkosh', 'wm', 'wm-mk', 'mk', 'custom'] as const;
+const JAIL_DD_LABELS: Record<string, string> = {
+  banner: 'Banner',
+  zenkosh: 'ZenKosh',
+  wm: 'WM',
+  'wm-mk': 'WM/MK',
+  mk: 'MK',
+  custom: 'Custom',
+};
 
 // ── Base64url → bytes ───────────────────────────────────────────────────────
 
 function fromBase64Url(str: string): Uint8Array {
-  // Restore standard base64
   let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
-  // Add padding
   while (b64.length % 4 !== 0) b64 += '=';
   const binary = atob(b64);
   const bytes = new Uint8Array(binary.length);
@@ -24,7 +54,6 @@ function fromBase64Url(str: string): Uint8Array {
   return bytes;
 }
 
-/** Maximum decompressed roster payload size (1 MB). Prevents OOM from crafted payloads. */
 const MAX_DECOMPRESSED_SIZE = 1024 * 1024;
 
 async function readAllChunks(readable: ReadableStream<Uint8Array>): Promise<Uint8Array> {
@@ -50,107 +79,153 @@ async function readAllChunks(readable: ReadableStream<Uint8Array>): Promise<Uint
   return out;
 }
 
-// ── Compact types (minimal, matching CompactRosterV3 shape) ─────────────────
+// ── Compact types (matching CompactRosterV3 shape) ──────────────────────────
 
-interface CompactBuildRef {
-  bi?: string;
-  bn?: string;
-}
-
-interface CompactGear {
-  s1?: number;
-  s2?: number;
-  ms?: number;
-  a?: number[];
-}
+interface CompactBuildRef { bi?: string; bn?: string; }
+interface CompactGear { s1?: number; s2?: number; ms?: number; a?: number[]; }
+interface CompactSkills { l1?: number | string; l2?: number | string; l3?: number | string; fl?: 1; }
+interface CompactGroup { g?: string; }
 
 interface CompactTank {
-  pn?: string;
-  rl?: string;
-  gs?: CompactGear;
-  br?: CompactBuildRef;
+  pn?: string; rl?: string; pt?: string; pi?: string;
+  lb?: string[]; rn?: string; gs?: CompactGear; sl?: CompactSkills;
+  ul?: number | string; grs?: string[]; gr?: CompactGroup;
+  no?: string; br?: CompactBuildRef;
 }
 
 interface CompactHealer {
-  pn?: string;
-  rl?: string;
-  s1?: number;
-  s2?: number;
-  ms?: number;
-  a?: number[];
-  br?: CompactBuildRef;
+  pn?: string; rl?: string; pt?: string; pi?: string;
+  lb?: string[]; rn?: string;
+  s1?: number; s2?: number; ms?: number; a?: number[];
+  sl?: CompactSkills; hb?: number; cp?: number;
+  ul?: number | string; grs?: string[]; gr?: CompactGroup;
+  no?: string; br?: CompactBuildRef;
 }
 
 interface CompactDPS {
-  sn: number;
-  pn?: string;
-  rl?: string;
-  s1?: number;
-  s2?: number;
-  ms?: number;
-  as?: number[];
-  br?: CompactBuildRef;
+  sn: number; pn?: string; rl?: string; pt?: string; pi?: string;
+  lb?: string[]; rn?: string;
+  s1?: number; s2?: number; ms?: number; as?: number[]; gs?: number[];
+  sl?: CompactSkills;
+  ul?: number | string; grs?: string[]; gr?: CompactGroup;
+  no?: string; jt?: number; cd?: string; br?: CompactBuildRef;
 }
 
-interface CompactTrialOverrides {
-  ti: string; // trialId
-}
+interface CompactTrialOverrides { ti: string; }
 
 interface CompactRoster {
-  v: number;
-  n?: string;
-  ts?: CompactTank[];
-  hs?: CompactHealer[];
-  dp?: CompactDPS[];
+  v: number; n?: string; no?: string;
+  ts?: CompactTank[]; hs?: CompactHealer[]; dp?: CompactDPS[];
   to?: CompactTrialOverrides;
-  // v2 legacy fields
-  t1?: CompactTank;
-  t2?: CompactTank;
-  h1?: CompactHealer;
-  h2?: CompactHealer;
+  t1?: CompactTank; t2?: CompactTank; h1?: CompactHealer; h2?: CompactHealer;
 }
 
-// ── Decode slot helpers ─────────────────────────────────────────────────────
+// ── Decode helpers ──────────────────────────────────────────────────────────
+
+function decodeUltimate(ul?: number | string): string | undefined {
+  if (ul === undefined || ul === null) return undefined;
+  if (typeof ul === 'string') return ul;
+  return ULTIMATE_LIST[ul] ?? undefined;
+}
+
+function decodeSkillLines(sl?: CompactSkills): DecodedSkillLines | undefined {
+  if (!sl) return undefined;
+  const result: DecodedSkillLines = {};
+  if (sl.fl) result.isFlex = true;
+  if (sl.l1 !== undefined) result.line1 = typeof sl.l1 === 'number' ? CLASS_SKILL_LINES[sl.l1] : sl.l1;
+  if (sl.l2 !== undefined) result.line2 = typeof sl.l2 === 'number' ? CLASS_SKILL_LINES[sl.l2] : sl.l2;
+  if (sl.l3 !== undefined) result.line3 = typeof sl.l3 === 'number' ? CLASS_SKILL_LINES[sl.l3] : sl.l3;
+  return (result.isFlex || result.line1 || result.line2 || result.line3) ? result : undefined;
+}
+
+function decodeGroupName(grs?: string[], gr?: CompactGroup): { groups?: string[]; groupName?: string } {
+  if (grs?.length) return { groups: grs };
+  if (gr?.g) return { groupName: gr.g };
+  return {};
+}
+
+function collectSets(ids: (number | undefined)[], additional?: number[]): string[] {
+  const sets: string[] = [];
+  for (const id of ids) {
+    if (id) sets.push(getSetName(id));
+  }
+  if (additional) {
+    for (const id of additional) sets.push(getSetName(id));
+  }
+  return sets.length > 0 ? sets : [];
+}
 
 function decodeTank(t: CompactTank): DecodedRosterSlot {
-  const sets: string[] = [];
-  if (t.gs?.s1) sets.push(getSetName(t.gs.s1));
-  if (t.gs?.s2) sets.push(getSetName(t.gs.s2));
-  if (t.gs?.ms) sets.push(getSetName(t.gs.ms));
+  const grp = decodeGroupName(t.grs, t.gr);
   return {
     playerName: t.pn,
     roleLabel: t.rl,
-    sets: sets.length > 0 ? sets : undefined,
+    sets: collectSets([t.gs?.s1, t.gs?.s2, t.gs?.ms], t.gs?.a) || undefined,
     buildRefName: t.br?.bn,
     buildRefId: t.br?.bi,
+    positionTag: t.pt,
+    playerNumber: t.pi,
+    labels: t.lb,
+    roleNotes: t.rn,
+    ultimate: decodeUltimate(t.ul),
+    skillLines: decodeSkillLines(t.sl),
+    notes: t.no,
+    ...grp,
   };
 }
 
 function decodeHealer(h: CompactHealer): DecodedRosterSlot {
-  const sets: string[] = [];
-  if (h.s1) sets.push(getSetName(h.s1));
-  if (h.s2) sets.push(getSetName(h.s2));
-  if (h.ms) sets.push(getSetName(h.ms));
+  const grp = decodeGroupName(h.grs, h.gr);
   return {
     playerName: h.pn,
     roleLabel: h.rl,
-    sets: sets.length > 0 ? sets : undefined,
+    sets: collectSets([h.s1, h.s2, h.ms], h.a) || undefined,
     buildRefName: h.br?.bn,
     buildRefId: h.br?.bi,
+    positionTag: h.pt,
+    playerNumber: h.pi,
+    labels: h.lb,
+    roleNotes: h.rn,
+    ultimate: decodeUltimate(h.ul),
+    skillLines: decodeSkillLines(h.sl),
+    healerBuff: h.hb !== undefined ? HEALER_BUFF_LIST[h.hb] : undefined,
+    championPoint: h.cp !== undefined ? CHAMPION_POINT_LIST[h.cp] : undefined,
+    notes: h.no,
+    ...grp,
   };
 }
 
 function decodeDPS(d: CompactDPS): DecodedRosterSlot {
-  const sets: string[] = [];
-  if (d.s1) sets.push(getSetName(d.s1));
-  if (d.s2) sets.push(getSetName(d.s2));
-  if (d.ms) sets.push(getSetName(d.ms));
+  const grp = decodeGroupName(d.grs, d.gr);
+  // Prefer structured set fields; fall back to legacy gs array
+  let sets: string[];
+  if (d.s1 != null || d.s2 != null || d.ms != null) {
+    sets = collectSets([d.s1, d.s2, d.ms], d.as);
+  } else if (d.gs?.length) {
+    sets = d.gs.map((id) => getSetName(id)).filter(Boolean);
+  } else {
+    sets = [];
+  }
+
+  const jailType = d.jt !== undefined ? JAIL_DD_TYPE_LIST[d.jt] : undefined;
+
   return {
     playerName: d.pn,
-    roleLabel: d.rl || `DD${d.sn}`,
+    roleLabel: d.rl,
+    slotNumber: d.sn,
     sets: sets.length > 0 ? sets : undefined,
     buildRefName: d.br?.bn,
     buildRefId: d.br?.bi,
+    positionTag: d.pt,
+    playerNumber: d.pi,
+    labels: d.lb,
+    roleNotes: d.rn,
+    ultimate: decodeUltimate(d.ul),
+    skillLines: decodeSkillLines(d.sl),
+    jailDDType: jailType ? (JAIL_DD_LABELS[jailType] ?? jailType) : undefined,
+    customDescription: d.cd,
+    notes: d.no,
+    ...grp,
   };
 }
 
@@ -159,7 +234,6 @@ function decodeDPS(d: CompactDPS): DecodedRosterSlot {
 export async function decodeRosterData(rosterData: string): Promise<DecodedRoster> {
   const bytes = fromBase64Url(rosterData);
 
-  // Decompress deflate-raw
   const ds = new DecompressionStream('deflate-raw');
   const writer = ds.writable.getWriter();
   const writeAndClose = writer
@@ -189,12 +263,10 @@ export async function decodeRosterData(rosterData: string): Promise<DecodedRoste
   const dps: DecodedRosterSlot[] = [];
 
   if (compact.v === 3) {
-    // V3: arrays
     if (compact.ts) tanks.push(...compact.ts.map(decodeTank));
     if (compact.hs) healers.push(...compact.hs.map(decodeHealer));
     if (compact.dp) dps.push(...compact.dp.map(decodeDPS));
   } else {
-    // V2: named fields
     if (compact.t1) tanks.push(decodeTank(compact.t1));
     if (compact.t2) tanks.push(decodeTank(compact.t2));
     if (compact.h1) healers.push(decodeHealer(compact.h1));
@@ -205,6 +277,7 @@ export async function decodeRosterData(rosterData: string): Promise<DecodedRoste
   return {
     name: compact.n,
     trialId: compact.to?.ti || undefined,
+    notes: compact.no,
     tanks,
     healers,
     dps,

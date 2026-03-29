@@ -1,9 +1,9 @@
 /**
  * Builds raw-text Discord messages for a roster post.
  *
- * Mirrors the "Copy to Discord" format from the web app. If the text
- * exceeds Discord's 2000-char limit it is split across multiple messages
- * on line boundaries.
+ * Mirrors the "Copy to Discord" format from the web app's
+ * generateDiscordFormat(). If the text exceeds Discord's 2000-char
+ * limit it is split across multiple messages on line boundaries.
  */
 
 import { ButtonStyle, ComponentType, RosterButtonId } from '../types.js';
@@ -15,32 +15,65 @@ const ESO_TOOLKIT_BASE = 'https://esotk.com';
 /** Discord message character limit. */
 const MAX_MESSAGE_LENGTH = 2000;
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+const SEPARATOR = '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬';
 
-/** Escape Discord markdown special characters in user-provided text. */
-function escapeMarkdown(text: string): string {
-  return text.replace(/([*_`~|\\[\]])/g, '\\$1');
+// ── Helpers (mirror generateDiscordFormat) ──────────────────────────────────
+
+/** Wrap a value in brackets as a header token — returns empty string if falsy. */
+const bracket = (val: string | null | undefined): string => (val ? ` [${val}]` : '');
+
+/** Wrap an array of values as bracket tokens. */
+const bracketed = (vals: string[]): string => vals.map((v) => ` [${v}]`).join('');
+
+/** Derive group arrow from group name: "left" → ⬅️, "right" → ➡️ */
+function groupArrow(slot: DecodedRosterSlot): string {
+  // Check multi-group first, then legacy single group
+  const name = slot.groups?.[0] ?? slot.groupName;
+  if (!name) return '';
+  const lower = name.toLowerCase();
+  if (lower.includes('left')) return '⬅️';
+  if (lower.includes('right')) return '➡️';
+  return '';
 }
 
-// ── Slot Formatting ─────────────────────────────────────────────────────────
+/** Convert playerNumber to a pointing emoji, or return the raw value. */
+function positionEmoji(playerNumber?: string): string {
+  if (!playerNumber) return '';
+  const lower = playerNumber.toLowerCase();
+  if (lower === 'left') return '👈';
+  if (lower === 'right') return '👉';
+  if (lower === 'center') return '👇';
+  return playerNumber;
+}
 
-function formatSlot(slot: DecodedRosterSlot, index: number, rolePrefix: string): string {
-  const label = slot.roleLabel || `${rolePrefix}${index + 1}`;
-  const player = slot.playerName ? ` ${escapeMarkdown(slot.playerName)}` : '';
-  const line = `**${label}**:${player}`;
+/** Format positionTag + playerNumber as bracket tokens. */
+function formatPosition(positionTag?: string, playerNumber?: string): string {
+  if (!positionTag && !playerNumber) return '';
+  const emoji = positionEmoji(playerNumber);
+  const isEmoji = emoji === '👈' || emoji === '👉' || emoji === '👇';
+  if (positionTag && emoji && isEmoji) return ` [${positionTag}] [${emoji}]`;
+  if (positionTag && emoji) return ` [${positionTag} ${emoji}]`;
+  if (positionTag) return ` [${positionTag}]`;
+  if (emoji) return ` [${emoji}]`;
+  return '';
+}
 
-  const sets = slot.sets?.length ? slot.sets.join('/') : '';
-  const build = slot.buildRefId
-    ? `[Build](${ESO_TOOLKIT_BASE}/builds/${encodeURIComponent(slot.buildRefId)})`
-    : '';
+/** Format gear sets as a GEAR: `Set1` `Set2` line. */
+function formatGearLine(sets?: string[]): string {
+  if (!sets?.length) return '';
+  return `GEAR: ${sets.map((s) => `\`${s}\``).join(' ')}`;
+}
 
-  const extras = [sets, build].filter(Boolean).join(' | ');
-  return extras ? `${line}\n${extras}` : line;
+/** Format skill lines as a LINES: `Line1` `Line2` line. */
+function formatSkillLinesLine(sl?: DecodedRosterSlot['skillLines']): string {
+  if (!sl) return '';
+  if (sl.isFlex) return 'LINES: `Flexible`';
+  const parts = [sl.line1, sl.line2, sl.line3].filter(Boolean);
+  if (!parts.length) return '';
+  return `LINES: ${parts.map((l) => `\`${l}\``).join(' ')}`;
 }
 
 // ── Text Builder ────────────────────────────────────────────────────────────
-
-const SEPARATOR = '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬';
 
 export function buildRosterText(
   snapshot: RosterSnapshot,
@@ -49,70 +82,105 @@ export function buildRosterText(
 ): string {
   const lines: string[] = [];
 
-  // Title
   lines.push(`**${snapshot.title}**`);
   lines.push('');
-
-  // Meta line (trial, tags, author)
-  const meta: string[] = [];
-  if (snapshot.trial_id) meta.push(`**Trial:** ${snapshot.trial_id}`);
-  if (snapshot.tags.length > 0) meta.push(`**Tags:** ${snapshot.tags.map((t) => `\`${t}\``).join(' ')}`);
-  meta.push(`**Author:** ${snapshot.author_name}`);
-  lines.push(meta.join(' · '));
 
   // Event time — Discord timestamp renders localized for every viewer
   if (eventTime) {
     const epoch = Math.floor(new Date(eventTime).getTime() / 1000);
     if (!isNaN(epoch)) {
-      lines.push(`**Event:** <t:${epoch}:F> (<t:${epoch}:R>)`);
+      lines.push(`📅 <t:${epoch}:F> (<t:${epoch}:R>)`);
+      lines.push('');
     }
   }
 
-  // Description
-  if (snapshot.description) {
-    lines.push('');
-    lines.push(snapshot.description);
-  }
+  // Tanks — arrow from group name, defaults MT=⬅️ OT=➡️
+  decoded.tanks.forEach((tank, idx) => {
+    const num = idx + 1;
+    const arrow = groupArrow(tank) || (num === 1 ? '⬅️' : '➡️');
+    const label = tank.roleLabel || (num === 1 ? 'MT' : 'OT');
+    const ult = bracket(tank.ultimate);
+    const pos = formatPosition(tank.positionTag, tank.playerNumber);
+    const roleNote = bracket(tank.roleNotes);
+    const labelsPart = tank.labels?.length ? bracketed(tank.labels) : '';
+    const player = tank.playerName ? ` @${tank.playerName}` : '';
 
+    lines.push(`${arrow}🛡️ **${label}**:${ult}${pos}${roleNote}${labelsPart}${player}`);
+
+    const gear = formatGearLine(tank.sets);
+    if (gear) lines.push(gear);
+
+    const sl = formatSkillLinesLine(tank.skillLines);
+    if (sl) lines.push(sl);
+
+    if (tank.notes) lines.push(`*${tank.notes}*`);
+
+    lines.push('');
+  });
+
+  lines.push(SEPARATOR);
   lines.push('');
 
-  // Tanks
-  if (decoded.tanks.length > 0) {
-    lines.push(`🛡️ **Tanks** (${decoded.tanks.length})`);
-    decoded.tanks.forEach((slot, i) => {
-      lines.push(formatSlot(slot, i, 'T'));
-    });
+  // Healers — arrow from group name, defaults H1=⬅️ H2=➡️
+  decoded.healers.forEach((h, index) => {
+    const arrow = groupArrow(h) || (index === 0 ? '⬅️' : '➡️');
+    const label = h.roleLabel || `H${index + 1}`;
+    const pos = formatPosition(h.positionTag, h.playerNumber);
+    const roleNote = bracket(h.roleNotes);
+    const ult = bracket(h.ultimate);
+    const buff = bracket(h.healerBuff);
+    const cp = bracket(h.championPoint);
+    const labelsPart = h.labels?.length ? bracketed(h.labels) : '';
+    const player = h.playerName ? ` @${h.playerName}` : '';
+
+    lines.push(`${arrow}💖 **${label}**:${pos}${roleNote}${ult}${buff}${cp}${labelsPart}${player}`);
+
+    const gear = formatGearLine(h.sets);
+    if (gear) lines.push(gear);
+
+    const sl = formatSkillLinesLine(h.skillLines);
+    if (sl) lines.push(sl);
+
+    if (h.notes) lines.push(`*${h.notes}*`);
+
     lines.push('');
-    lines.push(SEPARATOR);
+  });
+
+  lines.push(SEPARATOR);
+  lines.push('');
+
+  // DPS — arrow from group name, no default arrow if no group
+  const sortedDPS = [...decoded.dps].sort((a, b) => (a.slotNumber ?? 0) - (b.slotNumber ?? 0));
+
+  sortedDPS.forEach((dd) => {
+    const arrow = groupArrow(dd);
+    const slotNum = dd.slotNumber ?? 0;
+    const jailType = dd.jailDDType ? ` [${dd.jailDDType === 'Custom' && dd.customDescription ? dd.customDescription : dd.jailDDType}]` : '';
+    const pos = formatPosition(dd.positionTag, dd.playerNumber);
+    const roleNote = bracket(dd.roleNotes);
+    const labelsPart = dd.labels?.length ? bracketed(dd.labels) : '';
+    const player = dd.playerName ? ` @${dd.playerName}` : '';
+
+    lines.push(`${arrow}⚔️ **#${slotNum}${jailType}**:${pos}${roleNote}${labelsPart}${player}`);
+
+    const gear = formatGearLine(dd.sets);
+    if (gear) lines.push(gear);
+
+    const sl = formatSkillLinesLine(dd.skillLines);
+    if (sl) lines.push(sl);
+
+    if (dd.ultimate) lines.push(`[${dd.ultimate}]`);
+    if (dd.notes) lines.push(`*${dd.notes}*`);
+
+    lines.push('');
+  });
+
+  // General Notes
+  if (decoded.notes) {
+    lines.push('**General Notes:**');
+    lines.push(decoded.notes);
     lines.push('');
   }
-
-  // Healers
-  if (decoded.healers.length > 0) {
-    lines.push(`💚 **Healers** (${decoded.healers.length})`);
-    decoded.healers.forEach((slot, i) => {
-      lines.push(formatSlot(slot, i, 'H'));
-    });
-    lines.push('');
-    lines.push(SEPARATOR);
-    lines.push('');
-  }
-
-  // DPS
-  if (decoded.dps.length > 0) {
-    lines.push(`⚔️ **DPS** (${decoded.dps.length})`);
-    decoded.dps.forEach((slot, i) => {
-      lines.push(formatSlot(slot, i, 'DD'));
-    });
-    lines.push('');
-  }
-
-  // Summary
-  const total = decoded.tanks.length + decoded.healers.length + decoded.dps.length;
-  const filled = [...decoded.tanks, ...decoded.healers, ...decoded.dps].filter(
-    (s) => s.playerName,
-  ).length;
-  lines.push(`📊 **Roster:** ${filled}/${total} filled`);
 
   return lines.join('\n');
 }
@@ -131,13 +199,11 @@ export function splitMessages(text: string): string[] {
   let current = '';
 
   for (const line of lines) {
-    // If adding this line (plus newline) would exceed the limit, flush
     const addition = current.length === 0 ? line : `\n${line}`;
     if (current.length + addition.length > MAX_MESSAGE_LENGTH) {
       if (current.length > 0) {
         chunks.push(current);
       }
-      // If a single line is longer than the limit, truncate it
       current = line.length > MAX_MESSAGE_LENGTH ? line.slice(0, MAX_MESSAGE_LENGTH) : line;
     } else {
       current += addition;

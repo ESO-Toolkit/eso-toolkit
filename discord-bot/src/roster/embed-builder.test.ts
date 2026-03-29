@@ -18,55 +18,112 @@ const mockSnapshot: RosterSnapshot = {
 const mockDecoded: DecodedRoster = {
   name: 'Sunday VLC',
   tanks: [
-    { playerName: 'TankPlayer1', roleLabel: 'T1' },
-    { playerName: 'TankPlayer2', roleLabel: 'T2' },
+    {
+      playerName: 'TankPlayer1',
+      roleLabel: 'MT',
+      sets: ['Turning Tide', 'Claw of Yolnahkriin'],
+      ultimate: 'Aggressive Warhorn',
+      groupName: 'left',
+    },
+    {
+      playerName: 'TankPlayer2',
+      roleLabel: 'OT',
+      sets: ['Saxhleel Champion'],
+      groupName: 'right',
+      positionTag: 'Portal',
+      playerNumber: 'right',
+    },
   ],
   healers: [
-    { playerName: 'HealerPlayer1', roleLabel: 'H1' },
-    { roleLabel: 'H2' },
+    {
+      playerName: 'HealerPlayer1',
+      roleLabel: 'H1',
+      healerBuff: 'Enlivening Overflow',
+      skillLines: { line1: 'Restoring Light', line2: 'Green Balance', isFlex: false },
+    },
+    { roleLabel: 'H2', labels: ['kite'] },
   ],
   dps: [
-    { playerName: 'DPS1', roleLabel: 'DD1', buildRefId: 'build-abc' },
-    { playerName: 'DPS2', roleLabel: 'DD2' },
+    {
+      playerName: 'DPS1',
+      roleLabel: 'DD1',
+      slotNumber: 1,
+      buildRefId: 'build-abc',
+      jailDDType: 'Banner',
+    },
+    {
+      playerName: 'DPS2',
+      slotNumber: 2,
+      sets: ['Pillar of Nirn', 'Deadly Strike'],
+      notes: 'Bring vMA bow',
+    },
   ],
+  notes: 'Be online 10 min early',
 };
 
 describe('buildRosterText', () => {
-  it('includes title and meta info', () => {
+  it('includes title', () => {
     const text = buildRosterText(mockSnapshot, mockDecoded);
     expect(text).toContain('**Sunday VLC Prog**');
-    expect(text).toContain('vlc');
-    expect(text).toContain('TestUser');
   });
 
-  it('includes role sections with separators', () => {
+  it('uses group arrows for tanks', () => {
     const text = buildRosterText(mockSnapshot, mockDecoded);
-    expect(text).toContain('🛡️ **Tanks**');
-    expect(text).toContain('💚 **Healers**');
-    expect(text).toContain('⚔️ **DPS**');
-    expect(text).toContain('TankPlayer1');
+    expect(text).toContain('⬅️🛡️ **MT**:');
+    expect(text).toContain('➡️🛡️ **OT**:');
+  });
+
+  it('formats gear as GEAR: `Set` lines', () => {
+    const text = buildRosterText(mockSnapshot, mockDecoded);
+    expect(text).toContain('GEAR: `Turning Tide` `Claw of Yolnahkriin`');
+  });
+
+  it('formats ultimates in brackets', () => {
+    const text = buildRosterText(mockSnapshot, mockDecoded);
+    expect(text).toContain('[Aggressive Warhorn]');
+  });
+
+  it('formats position tags', () => {
+    const text = buildRosterText(mockSnapshot, mockDecoded);
+    expect(text).toContain('[Portal] [👉]');
+  });
+
+  it('formats healer buffs and skill lines', () => {
+    const text = buildRosterText(mockSnapshot, mockDecoded);
+    expect(text).toContain('[Enlivening Overflow]');
+    expect(text).toContain('LINES: `Restoring Light` `Green Balance`');
+  });
+
+  it('formats labels in brackets', () => {
+    const text = buildRosterText(mockSnapshot, mockDecoded);
+    expect(text).toContain('[kite]');
+  });
+
+  it('formats DPS with slot numbers and jail types', () => {
+    const text = buildRosterText(mockSnapshot, mockDecoded);
+    expect(text).toContain('⚔️ **#1 [Banner]**:');
+  });
+
+  it('formats DPS notes in italics', () => {
+    const text = buildRosterText(mockSnapshot, mockDecoded);
+    expect(text).toContain('*Bring vMA bow*');
+  });
+
+  it('includes general notes', () => {
+    const text = buildRosterText(mockSnapshot, mockDecoded);
+    expect(text).toContain('**General Notes:**');
+    expect(text).toContain('Be online 10 min early');
+  });
+
+  it('uses separators between role sections', () => {
+    const text = buildRosterText(mockSnapshot, mockDecoded);
     expect(text).toContain('▬▬▬▬▬');
   });
 
-  it('shows roster count', () => {
+  it('includes player names with @', () => {
     const text = buildRosterText(mockSnapshot, mockDecoded);
-    expect(text).toContain('5/6 filled');
-  });
-
-  it('shows tags', () => {
-    const text = buildRosterText(mockSnapshot, mockDecoded);
-    expect(text).toContain('`vlc`');
-    expect(text).toContain('`prog`');
-  });
-
-  it('includes build links for slots with buildRefId', () => {
-    const text = buildRosterText(mockSnapshot, mockDecoded);
-    expect(text).toContain('[Build](https://esotk.com/builds/build-abc)');
-  });
-
-  it('includes description', () => {
-    const text = buildRosterText(mockSnapshot, mockDecoded);
-    expect(text).toContain('Weekly progression run');
+    expect(text).toContain('@TankPlayer1');
+    expect(text).toContain('@DPS1');
   });
 });
 
@@ -79,8 +136,8 @@ describe('splitMessages', () => {
 
   it('splits long text on line boundaries', () => {
     const line = 'A'.repeat(100) + '\n';
-    const text = line.repeat(25); // 25 * 101 = 2525 chars
-    const chunks = splitMessages(text.trimEnd());
+    const text = line.repeat(25).trimEnd();
+    const chunks = splitMessages(text);
     expect(chunks.length).toBeGreaterThan(1);
     for (const chunk of chunks) {
       expect(chunk.length).toBeLessThanOrEqual(2000);

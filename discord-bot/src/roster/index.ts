@@ -11,6 +11,7 @@ export type {
   RosterSnapshot,
   DecodedRoster,
   DecodedRosterSlot,
+  DecodedSkillLines,
 } from './types.js';
 
 export {

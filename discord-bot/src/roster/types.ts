@@ -68,7 +68,14 @@ export interface RosterSnapshot {
   updated_at: string;
 }
 
-// ── Decoded roster data (subset of CompactRosterV3 needed for embeds) ──────
+// ── Decoded roster data ────────────────────────────────────────────────────
+
+export interface DecodedSkillLines {
+  line1?: string;
+  line2?: string;
+  line3?: string;
+  isFlex?: boolean;
+}
 
 export interface DecodedRosterSlot {
   playerName?: string | undefined;
@@ -76,6 +83,25 @@ export interface DecodedRosterSlot {
   sets?: string[] | undefined;
   buildRefName?: string | undefined;
   buildRefId?: string | undefined;
+  positionTag?: string | undefined;
+  playerNumber?: string | undefined;
+  labels?: string[] | undefined;
+  roleNotes?: string | undefined;
+  ultimate?: string | undefined;
+  skillLines?: DecodedSkillLines | undefined;
+  groups?: string[] | undefined;
+  groupName?: string | undefined;
+  notes?: string | undefined;
+  /** Healer buff (healers only) */
+  healerBuff?: string | undefined;
+  /** Healer champion point (healers only) */
+  championPoint?: string | undefined;
+  /** DPS slot number (DPS only) */
+  slotNumber?: number | undefined;
+  /** Jail DD type label (DPS only) */
+  jailDDType?: string | undefined;
+  /** Custom jail DD description (DPS only) */
+  customDescription?: string | undefined;
 }
 
 export interface DecodedRoster {
@@ -84,4 +110,5 @@ export interface DecodedRoster {
   tanks: DecodedRosterSlot[];
   healers: DecodedRosterSlot[];
   dps: DecodedRosterSlot[];
+  notes?: string | undefined;
 }
