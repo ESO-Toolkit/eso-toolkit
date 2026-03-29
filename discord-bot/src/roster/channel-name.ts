@@ -1,7 +1,7 @@
 /**
  * Channel name builder from guild templates and roster context.
  *
- * Supports tokens: {day-short}, {time}, {trial}, {tag}, {label}
+ * Supports tokens: {day-short}, {time}, {trial}, {tag}
  * Discord channel names are lowercased and sanitized (only alphanumeric + hyphens).
  */
 
@@ -20,8 +20,7 @@ export function buildChannelName(template: string, context: ChannelNameContext):
     .replace(/\{day-short\}/gi, context.dayShort ?? '')
     .replace(/\{time\}/gi, context.time ?? '')
     .replace(/\{trial\}/gi, context.trial ?? '')
-    .replace(/\{tag\}/gi, context.tag ?? '')
-    .replace(/\{label\}/gi, context.label ?? '');
+    .replace(/\{tag\}/gi, context.tag ?? '');
 
   // Discord channel name rules: lowercase, a-z 0-9 hyphens only
   name = name
@@ -48,7 +47,8 @@ export function resolveChannelName(
   channelNameOverride?: string,
 ): string {
   if (channelNameOverride?.trim()) {
-    return buildChannelName('{label}', { label: channelNameOverride });
+    // Sanitize the override through buildChannelName (pass it as the literal template)
+    return buildChannelName(channelNameOverride, {});
   }
   return buildChannelName(guildPattern, context);
 }

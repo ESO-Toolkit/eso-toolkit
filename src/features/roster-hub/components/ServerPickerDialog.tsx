@@ -50,7 +50,10 @@ import {
   DiscordAuthExpiredError,
 } from '../../auth/discord-auth';
 import { useDiscordAuth } from '../../auth/DiscordAuthContext';
+import { PRESET_TAGS, TAG_COLORS } from '../types/roster-hub.types';
 import type { HubRoster } from '../types/roster-hub.types';
+
+import { TRIAL_LABELS } from './RosterCard';
 
 const DISCORD_BOT_API_URL =
   (import.meta.env.VITE_DISCORD_BOT_API_URL as string | undefined) ??
@@ -102,6 +105,7 @@ interface ServerPickerDialogProps {
   title?: string;
   description?: string;
   trialId?: string;
+  tags?: string[];
   rosterData?: string;
   authorName?: string;
 }
@@ -133,7 +137,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
   roster,
   title,
   description,
-  trialId,
+  trialId: trialIdProp,
+  tags: tagsProp,
   rosterData,
   authorName,
 }) => {
@@ -164,6 +169,10 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
   const [selectedChannelId, setSelectedChannelId] = React.useState('');
   const [channelNameOverride, setChannelNameOverride] = React.useState('');
   const [configLoading, setConfigLoading] = React.useState(false);
+
+  // ── Trial & tag selection (direct-publish only) ────────────────────────
+  const [selectedTrialId, setSelectedTrialId] = React.useState(trialIdProp ?? '');
+  const [selectedTags, setSelectedTags] = React.useState<string[]>(tagsProp ?? []);
 
   // ── Publish state ──────────────────────────────────────────────────────
   const [publishing, setPublishing] = React.useState(false);
@@ -251,6 +260,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       setChannels([]);
       setSelectedChannelId('');
       setChannelNameOverride('');
+      setSelectedTrialId(trialIdProp ?? '');
+      setSelectedTags(tagsProp ?? []);
       return;
     }
     if (isDiscordAuthed) {
@@ -330,7 +341,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
           guildId: selectedGuild.id,
           title: title ?? 'Untitled',
           description: description ?? '',
-          trial_id: trialId ?? '',
+          trial_id: selectedTrialId || undefined,
+          tags: selectedTags.length > 0 ? selectedTags : undefined,
           roster_data: rosterData ?? '',
           author_name: authorName ?? 'Unknown',
           channelNameOverride: channelOverride,
@@ -824,6 +836,65 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     helperText="Custom name for the auto-created channel"
                   />
                 )}
+              </Box>
+            )}
+
+            {/* Trial & tag selection — direct-publish only */}
+            {!roster && (
+              <Box sx={{ mb: 2 }}>
+                {/* Trial selector */}
+                <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
+                  <InputLabel>Trial</InputLabel>
+                  <Select
+                    value={selectedTrialId}
+                    label="Trial"
+                    onChange={(e: SelectChangeEvent) => setSelectedTrialId(e.target.value)}
+                  >
+                    <MenuItem value="">
+                      <em>None</em>
+                    </MenuItem>
+                    {Object.entries(TRIAL_LABELS).map(([id, name]) => (
+                      <MenuItem key={id} value={id}>
+                        {name} ({id})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                {/* Tag chips */}
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mb: 0.5, display: 'block' }}
+                >
+                  Tags
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                  {PRESET_TAGS.map((tag) => {
+                    const active = selectedTags.includes(tag);
+                    const accent = TAG_COLORS[tag] ?? '#888';
+                    return (
+                      <Chip
+                        key={tag}
+                        label={tag}
+                        size="small"
+                        onClick={() =>
+                          setSelectedTags((prev) =>
+                            active ? prev.filter((t) => t !== tag) : [...prev, tag],
+                          )
+                        }
+                        sx={{
+                          fontWeight: 600,
+                          fontSize: '0.7rem',
+                          bgcolor: active ? `${accent}22` : 'transparent',
+                          color: active ? accent : 'text.secondary',
+                          border: `1px solid ${active ? accent : 'rgba(255,255,255,0.12)'}`,
+                          '&:hover': { bgcolor: `${accent}33` },
+                        }}
+                      />
+                    );
+                  })}
+                </Box>
               </Box>
             )}
 

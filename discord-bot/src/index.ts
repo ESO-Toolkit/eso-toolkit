@@ -410,11 +410,14 @@ async function handlePublishDirect(
     return jsonResponse({ error: 'guildId, title, and roster_data are required' }, 400);
   }
 
+  const rawTags = Array.isArray(body.tags) ? (body.tags as string[]).filter(Boolean) : undefined;
+
   const req: DirectPublishRequest = {
     guildId,
     title,
     description: (body.description as string | undefined) ?? undefined,
     trial_id: (body.trial_id as string | undefined) ?? undefined,
+    tags: rawTags,
     roster_data: rosterData,
     author_name: (body.author_name as string | undefined) ?? undefined,
     channelNameOverride: (body.channelNameOverride as string | undefined) ?? undefined,

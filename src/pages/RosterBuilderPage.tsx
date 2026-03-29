@@ -2962,7 +2962,7 @@ export const RosterBuilderPage: React.FC = () => {
       <ServerPickerDialog
         open={discordPublishOpen}
         title={roster.rosterName}
-        trialId=""
+        trialId={roster.trialOverrides?.trialId ?? ''}
         rosterData={discordPublishData}
         onClose={() => setDiscordPublishOpen(false)}
         onSuccess={() => {

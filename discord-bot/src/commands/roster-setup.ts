@@ -73,7 +73,7 @@ export async function handleRosterSetup(
     '',
     `${check(hasNamePattern)} **Step 4 — Customize channel names** *(optional)*`,
     'Set a template for auto-generated channel names.',
-    'Tokens: `{day-short}`, `{time}`, `{trial}`, `{tag}`, `{label}`',
+    'Tokens: `{day-short}`, `{time}`, `{trial}`, `{tag}`',
     '```',
     '/roster config set-name-pattern {day-short}-{time}-{trial}-{tag}',
     '```',

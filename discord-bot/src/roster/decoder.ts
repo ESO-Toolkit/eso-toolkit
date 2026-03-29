@@ -92,12 +92,17 @@ interface CompactDPS {
   br?: CompactBuildRef;
 }
 
+interface CompactTrialOverrides {
+  ti: string; // trialId
+}
+
 interface CompactRoster {
   v: number;
   n?: string;
   ts?: CompactTank[];
   hs?: CompactHealer[];
   dp?: CompactDPS[];
+  to?: CompactTrialOverrides;
   // v2 legacy fields
   t1?: CompactTank;
   t2?: CompactTank;
@@ -157,7 +162,9 @@ export async function decodeRosterData(rosterData: string): Promise<DecodedRoste
   // Decompress deflate-raw
   const ds = new DecompressionStream('deflate-raw');
   const writer = ds.writable.getWriter();
-  const writeAndClose = writer.write(bytes as unknown as Uint8Array<ArrayBuffer>).then(() => writer.close());
+  const writeAndClose = writer
+    .write(bytes as unknown as Uint8Array<ArrayBuffer>)
+    .then(() => writer.close());
   const [, readResult] = await Promise.allSettled([writeAndClose, readAllChunks(ds.readable)]);
 
   if (readResult.status === 'rejected') {
@@ -197,6 +204,7 @@ export async function decodeRosterData(rosterData: string): Promise<DecodedRoste
 
   return {
     name: compact.n,
+    trialId: compact.to?.ti || undefined,
     tanks,
     healers,
     dps,

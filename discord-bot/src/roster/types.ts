@@ -25,7 +25,7 @@ export interface RosterMapping {
 
 export interface GuildConfig {
   guildId: string;
-  /** Channel name template with tokens: {day-short}, {time}, {trial}, {tag}, {label} */
+  /** Channel name template with tokens: {day-short}, {time}, {trial}, {tag} */
   namePattern: string;
   /** Default text channel to post rosters into (if set, skip channel creation) */
   defaultChannelId?: string | undefined;
@@ -49,7 +49,6 @@ export interface ChannelNameContext {
   time?: string;
   trial?: string;
   tag?: string;
-  label?: string;
 }
 
 // ── Roster Snapshot (from roster-hub-api) ───────────────────────────────────
@@ -79,6 +78,7 @@ export interface DecodedRosterSlot {
 
 export interface DecodedRoster {
   name?: string | undefined;
+  trialId?: string | undefined;
   tanks: DecodedRosterSlot[];
   healers: DecodedRosterSlot[];
   dps: DecodedRosterSlot[];

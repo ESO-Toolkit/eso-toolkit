@@ -19,9 +19,7 @@ describe('buildChannelName', () => {
   });
 
   it('sanitizes special characters', () => {
-    const result = buildChannelName('{label}', {
-      label: 'My Roster! (HM)',
-    });
+    const result = buildChannelName('My Roster! (HM)', {});
     expect(result).toBe('my-roster-hm');
   });
 
@@ -49,7 +47,7 @@ describe('buildChannelName', () => {
   });
 
   it('lowercases everything', () => {
-    const result = buildChannelName('{label}', { label: 'Sunday VLC Prog' });
+    const result = buildChannelName('Sunday VLC Prog', {});
     expect(result).toBe('sunday-vlc-prog');
   });
 });
@@ -69,7 +67,11 @@ describe('resolveChannelName', () => {
   });
 
   it('ignores empty override', () => {
-    const result = resolveChannelName('{label}', { label: 'test' }, '  ');
-    expect(result).toBe('test');
+    const result = resolveChannelName(
+      '{day-short}-{trial}',
+      { dayShort: 'tue', trial: 'rg' },
+      '  ',
+    );
+    expect(result).toBe('tue-rg');
   });
 });

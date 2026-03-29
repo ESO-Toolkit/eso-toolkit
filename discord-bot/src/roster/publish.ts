@@ -20,7 +20,7 @@ import {
   getDefaultGuildConfig,
   KV_PREFIX,
 } from './kv.js';
-import type { ChannelNameContext, RosterMapping, RosterSnapshot } from './types.js';
+import type { ChannelNameContext, DecodedRoster, RosterMapping, RosterSnapshot } from './types.js';
 
 // ── Snapshot → Channel Name Context ────────────────────────────────────────
 
@@ -33,14 +33,18 @@ function formatTime12h(date: Date): string {
   return `${h}${suffix}`;
 }
 
-function buildNameContext(snapshot: RosterSnapshot): ChannelNameContext {
+/**
+ * Build channel name context from snapshot + decoded roster data.
+ * Uses snapshot fields first, falls back to decoded data (e.g. trialId
+ * extracted from the compact roster's trialOverrides).
+ */
+function buildNameContext(snapshot: RosterSnapshot, decoded: DecodedRoster): ChannelNameContext {
   const now = new Date();
   return {
     dayShort: SHORT_DAYS[now.getUTCDay()],
     time: formatTime12h(now),
-    trial: snapshot.trial_id || undefined,
+    trial: snapshot.trial_id || decoded.trialId || undefined,
     tag: snapshot.tags[0] || undefined,
-    label: snapshot.title,
   };
 }
 
@@ -88,7 +92,7 @@ export async function publishRoster(env: Env, req: PublishRequest): Promise<Publ
   const config = (await getGuildConfig(env, req.guildId)) ?? getDefaultGuildConfig(req.guildId);
   const channelName = resolveChannelName(
     config.namePattern,
-    buildNameContext(snapshot),
+    buildNameContext(snapshot, decoded),
     req.channelNameOverride,
   );
 
@@ -215,7 +219,7 @@ export async function refreshRoster(env: Env, rosterId: string): Promise<Refresh
       (await getGuildConfig(env, mapping.guildId)) ?? getDefaultGuildConfig(mapping.guildId);
     const channelName = resolveChannelName(
       config.namePattern,
-      buildNameContext(snapshot),
+      buildNameContext(snapshot, decoded),
       mapping.channelNameOverride,
     );
 
@@ -256,6 +260,7 @@ export interface DirectPublishRequest {
   title: string;
   description?: string | undefined;
   trial_id?: string | undefined;
+  tags?: string[] | undefined;
   roster_data: string;
   author_name?: string | undefined;
   channelNameOverride?: string | undefined;
@@ -283,7 +288,7 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
     trial_id: req.trial_id ?? '',
     author_name: req.author_name ?? 'Unknown',
     roster_data: req.roster_data,
-    tags: [],
+    tags: req.tags ?? [],
     vote_count: 0,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -300,7 +305,7 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
   const config = (await getGuildConfig(env, req.guildId)) ?? getDefaultGuildConfig(req.guildId);
   const channelName = resolveChannelName(
     config.namePattern,
-    buildNameContext(snapshot),
+    buildNameContext(snapshot, decoded),
     req.channelNameOverride,
   );
   const categoryId = req.categoryId ?? config.defaultCategoryId;
