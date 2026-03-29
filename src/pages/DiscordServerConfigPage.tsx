@@ -8,7 +8,17 @@
  * - Role pings (tank/healer/DD)
  */
 
-import { ArrowBack, CheckCircle, Settings as SettingsIcon } from '@mui/icons-material';
+import {
+  ArrowBack,
+  AutoAwesome,
+  CheckCircle,
+  Group as GroupIcon,
+  NotificationsActive,
+  Search as SearchIcon,
+  Settings as SettingsIcon,
+  Tag as TagIcon,
+  TextFields,
+} from '@mui/icons-material';
 import {
   Alert,
   Autocomplete,
@@ -17,9 +27,11 @@ import {
   Button,
   Chip,
   CircularProgress,
+  Collapse,
   Container,
+  Fade,
   FormControl,
-  IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Paper,
@@ -31,7 +43,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
@@ -115,6 +127,105 @@ async function apiFetch<T>(path: string, token: string, options: RequestInit = {
   return res.json() as Promise<T>;
 }
 
+/** Resolve a channel name pattern into a preview string. */
+function previewChannelName(pattern: string): string {
+  const now = new Date();
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const shortDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  return pattern
+    .replace(/{label}/g, 'vSS-HM-Roster')
+    .replace(/{day-short}/g, shortDays[now.getDay()])
+    .replace(/{day-full}/g, days[now.getDay()])
+    .replace(
+      /{time}/g,
+      `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+    )
+    .replace(/{tag}/g, 'score-push')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 100);
+}
+
+/** Check whether config has been customized beyond defaults. */
+function isConfigured(cfg: GuildConfigData | null): boolean {
+  if (!cfg) return false;
+  return !!(
+    cfg.defaultChannelId ||
+    cfg.defaultCategoryId ||
+    (cfg.namePattern && cfg.namePattern !== '{label}') ||
+    (cfg.allowedRoleIds && cfg.allowedRoleIds.length > 0) ||
+    cfg.rolePingIds?.tank ||
+    cfg.rolePingIds?.healer ||
+    cfg.rolePingIds?.dd
+  );
+}
+
+// ── Section wrapper ────────────────────────────────────────────────────────
+
+interface ConfigSectionProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+  isDark: boolean;
+  badge?: React.ReactNode;
+}
+
+const ConfigSection: React.FC<ConfigSectionProps> = ({
+  icon,
+  title,
+  description,
+  children,
+  isDark,
+  badge,
+}) => (
+  <Box
+    sx={{
+      background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+      border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+      borderRadius: 2.5,
+      p: 2.5,
+      transition: 'border-color 0.2s ease',
+      '&:hover': {
+        borderColor: isDark ? 'rgba(88,101,242,0.2)' : 'rgba(88,101,242,0.15)',
+      },
+    }}
+  >
+    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 2 }}>
+      <Box
+        sx={{
+          width: 32,
+          height: 32,
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: isDark ? 'rgba(88,101,242,0.12)' : 'rgba(88,101,242,0.08)',
+          border: '1px solid rgba(88,101,242,0.15)',
+          flexShrink: 0,
+          mt: 0.25,
+        }}
+      >
+        {icon}
+      </Box>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#5865F2' }}>
+            {title}
+          </Typography>
+          {badge}
+        </Box>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+          {description}
+        </Typography>
+      </Box>
+    </Box>
+    {children}
+  </Box>
+);
+
 // ── Component ──────────────────────────────────────────────────────────────
 
 export const DiscordServerConfigPage: React.FC = () => {
@@ -127,8 +238,10 @@ export const DiscordServerConfigPage: React.FC = () => {
 
   // Guild list state
   const [guilds, setGuilds] = useState<GuildInfo[] | null>(null);
+  const [guildConfigs, setGuildConfigs] = useState<Record<string, GuildConfigData | null>>({});
   const [guildsLoading, setGuildsLoading] = useState(false);
   const [guildsError, setGuildsError] = useState<string | null>(null);
+  const [guildSearch, setGuildSearch] = useState('');
 
   // Selected guild state
   const [selectedGuild, setSelectedGuild] = useState<GuildInfo | null>(null);
@@ -149,10 +262,40 @@ export const DiscordServerConfigPage: React.FC = () => {
   const [healerPingRole, setHealerPingRole] = useState('');
   const [ddPingRole, setDdPingRole] = useState('');
 
+  // Dirty tracking — snapshot of form values at load time
+  const initialFormRef = useRef<string>('');
+
+  const currentFormSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        defaultChannelId,
+        defaultCategoryId,
+        allowedRoleIds: allowedRoleIds.map((r) => r.id),
+        namePattern,
+        tankPingRole,
+        healerPingRole,
+        ddPingRole,
+      }),
+    [
+      defaultChannelId,
+      defaultCategoryId,
+      allowedRoleIds,
+      namePattern,
+      tankPingRole,
+      healerPingRole,
+      ddPingRole,
+    ],
+  );
+
+  const isDirty = initialFormRef.current !== '' && currentFormSnapshot !== initialFormRef.current;
+
   // Save state
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Sticky save bar
+  const saveBarRef = useRef<HTMLDivElement>(null);
 
   // Glassmorphism styles
   const cardSx = {
@@ -166,14 +309,7 @@ export const DiscordServerConfigPage: React.FC = () => {
     p: 3,
   };
 
-  const sectionSx = {
-    background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-    border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
-    borderRadius: 2,
-    p: 2.5,
-  };
-
-  // Fetch guilds
+  // Fetch guilds + their config status
   const loadGuilds = useCallback(async () => {
     if (!discordToken) return;
     setGuildsLoading(true);
@@ -181,6 +317,26 @@ export const DiscordServerConfigPage: React.FC = () => {
     try {
       const mutual = await getMutualGuildsFromApi(discordToken);
       setGuilds(mutual);
+
+      // Fetch config status for each guild (non-blocking)
+      const configPromises = mutual.map(async (g) => {
+        try {
+          const res = await apiFetch<{ config: GuildConfigData }>(
+            `/discord/guild/${g.id}/config`,
+            discordToken,
+          );
+          return [g.id, res.config] as const;
+        } catch {
+          return [g.id, null] as const;
+        }
+      });
+      const configs = await Promise.all(configPromises);
+      const configMap: Record<string, GuildConfigData | null> = {};
+      for (const [id, cfg] of configs) {
+        configMap[id] = cfg;
+      }
+      setGuildConfigs(configMap);
+
       // Auto-select guild from URL params
       const guildParam = searchParams.get('guild');
       if (guildParam) {
@@ -241,6 +397,19 @@ export const DiscordServerConfigPage: React.FC = () => {
         // Map allowed role IDs to role objects
         const allowedIds = cfg.allowedRoleIds ?? [];
         setAllowedRoleIds(rolesRes.roles.filter((r) => allowedIds.includes(r.id)));
+
+        // Snapshot for dirty tracking (deferred to next tick so state is settled)
+        setTimeout(() => {
+          initialFormRef.current = JSON.stringify({
+            defaultChannelId: cfg.defaultChannelId ?? '',
+            defaultCategoryId: cfg.defaultCategoryId ?? '',
+            allowedRoleIds: cfg.allowedRoleIds ?? [],
+            namePattern: cfg.namePattern || '{label}',
+            tankPingRole: cfg.rolePingIds?.tank ?? '',
+            healerPingRole: cfg.rolePingIds?.healer ?? '',
+            ddPingRole: cfg.rolePingIds?.dd ?? '',
+          });
+        }, 0);
       } catch (err) {
         setConfigError(err instanceof Error ? err.message : 'Failed to load server data');
       } finally {
@@ -275,6 +444,9 @@ export const DiscordServerConfigPage: React.FC = () => {
       });
 
       setSaveSuccess(true);
+
+      // Update dirty snapshot to current values
+      initialFormRef.current = currentFormSnapshot;
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
@@ -289,6 +461,14 @@ export const DiscordServerConfigPage: React.FC = () => {
   // Get text channels grouped by category
   const categories = channels.filter((c) => c.type === 4);
   const textChannels = channels.filter((c) => c.type === 0);
+
+  // Filter guilds by search
+  const filteredGuilds = useMemo(() => {
+    if (!guilds) return null;
+    if (!guildSearch.trim()) return guilds;
+    const q = guildSearch.toLowerCase();
+    return guilds.filter((g) => g.name.toLowerCase().includes(q));
+  }, [guilds, guildSearch]);
 
   // ── Render: Not authenticated ────────────────────────────────────────────
 
@@ -349,11 +529,12 @@ export const DiscordServerConfigPage: React.FC = () => {
     return (
       <Container maxWidth="md" sx={{ py: 6 }}>
         <Paper sx={cardSx}>
+          {/* Header */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
             <Box
               sx={{
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 borderRadius: '12px',
                 display: 'flex',
                 alignItems: 'center',
@@ -363,9 +544,9 @@ export const DiscordServerConfigPage: React.FC = () => {
                 border: '1px solid rgba(88,101,242,0.25)',
               }}
             >
-              <SettingsIcon sx={{ color: '#5865F2', fontSize: 22 }} />
+              <SettingsIcon sx={{ color: '#5865F2', fontSize: 24 }} />
             </Box>
-            <Box>
+            <Box sx={{ flex: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 Server Configuration
               </Typography>
@@ -373,11 +554,28 @@ export const DiscordServerConfigPage: React.FC = () => {
                 Select a server to configure the ESO Toolkit bot
               </Typography>
             </Box>
+            {guilds && guilds.length > 0 && (
+              <Chip
+                label={`${guilds.length} server${guilds.length !== 1 ? 's' : ''}`}
+                size="small"
+                sx={{
+                  bgcolor: isDark ? 'rgba(88,101,242,0.12)' : 'rgba(88,101,242,0.08)',
+                  color: '#5865F2',
+                  fontWeight: 600,
+                  fontSize: '0.75rem',
+                }}
+              />
+            )}
           </Box>
 
           {guildsLoading && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+            <Box
+              sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 6, gap: 2 }}
+            >
               <CircularProgress size={36} sx={{ color: '#5865F2' }} />
+              <Typography variant="body2" color="text.secondary">
+                Loading your servers...
+              </Typography>
             </Box>
           )}
 
@@ -387,9 +585,9 @@ export const DiscordServerConfigPage: React.FC = () => {
             </Alert>
           )}
 
-          {guilds && !guildsLoading && (
+          {filteredGuilds && !guildsLoading && (
             <>
-              {guilds.length === 0 ? (
+              {guilds && guilds.length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <Typography color="text.secondary" sx={{ mb: 2 }}>
                     The ESO Toolkit bot isn&apos;t in any of your servers yet.
@@ -410,51 +608,130 @@ export const DiscordServerConfigPage: React.FC = () => {
                   </Button>
                 </Box>
               ) : (
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
-                    gap: 1.5,
-                  }}
-                >
-                  {guilds.map((guild) => (
-                    <Paper
-                      key={guild.id}
-                      onClick={() => setSelectedGuild(guild)}
-                      sx={{
-                        ...sectionSx,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1.5,
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          borderColor: 'rgba(88,101,242,0.4)',
-                          background: isDark ? 'rgba(88,101,242,0.08)' : 'rgba(88,101,242,0.04)',
-                          transform: 'translateY(-1px)',
-                        },
+                <>
+                  {/* Search bar — only show when 5+ servers */}
+                  {guilds && guilds.length >= 5 && (
+                    <TextField
+                      fullWidth
+                      size="small"
+                      placeholder="Search servers..."
+                      value={guildSearch}
+                      onChange={(e) => setGuildSearch(e.target.value)}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
+                          </InputAdornment>
+                        ),
                       }}
+                      sx={{ mb: 2 }}
+                    />
+                  )}
+
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
+                      gap: 1.5,
+                    }}
+                  >
+                    {filteredGuilds.map((guild) => {
+                      const configured = isConfigured(guildConfigs[guild.id]);
+                      return (
+                        <Paper
+                          key={guild.id}
+                          onClick={() => setSelectedGuild(guild)}
+                          sx={{
+                            background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                            border: isDark
+                              ? '1px solid rgba(255,255,255,0.06)'
+                              : '1px solid rgba(0,0,0,0.06)',
+                            borderRadius: 2.5,
+                            p: 2,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 1.2,
+                            textAlign: 'center',
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              borderColor: 'rgba(88,101,242,0.4)',
+                              background: isDark
+                                ? 'rgba(88,101,242,0.08)'
+                                : 'rgba(88,101,242,0.04)',
+                              transform: 'translateY(-2px)',
+                              boxShadow: '0 4px 20px rgba(88,101,242,0.15)',
+                            },
+                          }}
+                        >
+                          <Avatar
+                            src={getGuildIconUrl(guild.id, guild.icon) ?? undefined}
+                            sx={{
+                              width: 48,
+                              height: 48,
+                              fontSize: '1.2rem',
+                              bgcolor: '#5865F2',
+                            }}
+                          >
+                            {guild.name.charAt(0)}
+                          </Avatar>
+                          <Typography
+                            sx={{ fontWeight: 600, fontSize: '0.9rem', lineHeight: 1.3 }}
+                            noWrap
+                            title={guild.name}
+                          >
+                            {guild.name}
+                          </Typography>
+                          <Chip
+                            label={configured ? 'Configured' : 'Not configured'}
+                            size="small"
+                            icon={
+                              configured ? (
+                                <CheckCircle sx={{ fontSize: '14px !important' }} />
+                              ) : (
+                                <SettingsIcon sx={{ fontSize: '14px !important' }} />
+                              )
+                            }
+                            sx={{
+                              fontSize: '0.7rem',
+                              height: 22,
+                              bgcolor: configured
+                                ? isDark
+                                  ? 'rgba(87,242,135,0.12)'
+                                  : 'rgba(87,242,135,0.15)'
+                                : isDark
+                                  ? 'rgba(255,255,255,0.06)'
+                                  : 'rgba(0,0,0,0.06)',
+                              color: configured
+                                ? '#57F287'
+                                : isDark
+                                  ? 'rgba(255,255,255,0.5)'
+                                  : 'rgba(0,0,0,0.45)',
+                              border: configured
+                                ? '1px solid rgba(87,242,135,0.25)'
+                                : isDark
+                                  ? '1px solid rgba(255,255,255,0.08)'
+                                  : '1px solid rgba(0,0,0,0.08)',
+                              '& .MuiChip-icon': {
+                                color: 'inherit',
+                              },
+                            }}
+                          />
+                        </Paper>
+                      );
+                    })}
+                  </Box>
+
+                  {filteredGuilds.length === 0 && guildSearch && (
+                    <Typography
+                      color="text.secondary"
+                      sx={{ textAlign: 'center', py: 3, fontSize: '0.9rem' }}
                     >
-                      <Avatar
-                        src={getGuildIconUrl(guild.id, guild.icon) ?? undefined}
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          fontSize: '1rem',
-                          bgcolor: '#5865F2',
-                        }}
-                      >
-                        {guild.name.charAt(0)}
-                      </Avatar>
-                      <Box sx={{ minWidth: 0, flex: 1 }}>
-                        <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }} noWrap>
-                          {guild.name}
-                        </Typography>
-                      </Box>
-                      <SettingsIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
-                    </Paper>
-                  ))}
-                </Box>
+                      No servers match &ldquo;{guildSearch}&rdquo;
+                    </Typography>
+                  )}
+                </>
               )}
 
               <Box sx={{ textAlign: 'center', mt: 3 }}>
@@ -478,53 +755,114 @@ export const DiscordServerConfigPage: React.FC = () => {
 
   // ── Render: Config panel ─────────────────────────────────────────────────
 
+  const channelPreview = !defaultChannelId ? previewChannelName(namePattern) : null;
+
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
-      {fromPublish && (
-        <Button
-          size="small"
-          startIcon={<ArrowBack sx={{ fontSize: '16px !important' }} />}
-          onClick={() => navigate(-1)}
-          sx={{ mb: 1.5, color: '#5865F2', fontSize: '0.8rem' }}
-        >
-          Back to publishing
-        </Button>
-      )}
+      {/* Navigation breadcrumb */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+        {fromPublish ? (
+          <Button
+            size="small"
+            startIcon={<ArrowBack sx={{ fontSize: '16px !important' }} />}
+            onClick={() => navigate(-1)}
+            sx={{ color: '#5865F2', fontSize: '0.8rem' }}
+          >
+            Back to publishing
+          </Button>
+        ) : (
+          <Button
+            size="small"
+            startIcon={<ArrowBack sx={{ fontSize: '16px !important' }} />}
+            onClick={() => {
+              setSelectedGuild(null);
+              setConfig(null);
+              setConfigError(null);
+              initialFormRef.current = '';
+            }}
+            sx={{ color: '#5865F2', fontSize: '0.8rem' }}
+          >
+            All servers
+          </Button>
+        )}
+        {isDirty && (
+          <Fade in>
+            <Chip
+              label="Unsaved changes"
+              size="small"
+              sx={{
+                bgcolor: 'rgba(254,215,170,0.15)',
+                color: '#FFA500',
+                border: '1px solid rgba(254,215,170,0.3)',
+                fontWeight: 600,
+                fontSize: '0.7rem',
+                height: 22,
+              }}
+            />
+          </Fade>
+        )}
+      </Box>
+
       <Paper sx={cardSx}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-          <Tooltip title="Back to servers">
-            <IconButton
-              onClick={() => {
-                setSelectedGuild(null);
-                setConfig(null);
-                setConfigError(null);
-              }}
-              size="small"
-              sx={{ color: 'text.secondary' }}
-            >
-              <ArrowBack />
-            </IconButton>
-          </Tooltip>
           <Avatar
             src={getGuildIconUrl(selectedGuild.id, selectedGuild.icon) ?? undefined}
-            sx={{ width: 36, height: 36, bgcolor: '#5865F2' }}
+            sx={{
+              width: 44,
+              height: 44,
+              bgcolor: '#5865F2',
+              fontSize: '1.2rem',
+              border: '2px solid rgba(88,101,242,0.3)',
+            }}
           >
             {selectedGuild.name.charAt(0)}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700 }} noWrap>
+            <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.3 }} noWrap>
               {selectedGuild.name}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Bot Configuration
             </Typography>
           </Box>
+          {config && !configLoading && (
+            <Chip
+              label={isConfigured(config) ? 'Configured' : 'Using defaults'}
+              size="small"
+              sx={{
+                fontSize: '0.7rem',
+                height: 22,
+                bgcolor: isConfigured(config)
+                  ? isDark
+                    ? 'rgba(87,242,135,0.12)'
+                    : 'rgba(87,242,135,0.15)'
+                  : isDark
+                    ? 'rgba(255,255,255,0.06)'
+                    : 'rgba(0,0,0,0.06)',
+                color: isConfigured(config)
+                  ? '#57F287'
+                  : isDark
+                    ? 'rgba(255,255,255,0.5)'
+                    : 'rgba(0,0,0,0.45)',
+                border: isConfigured(config)
+                  ? '1px solid rgba(87,242,135,0.25)'
+                  : isDark
+                    ? '1px solid rgba(255,255,255,0.08)'
+                    : '1px solid rgba(0,0,0,0.08)',
+              }}
+            />
+          )}
         </Box>
 
         {configLoading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+          <Box
+            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 6, gap: 2 }}
+          >
             <CircularProgress size={32} sx={{ color: '#5865F2' }} />
+            <Typography variant="body2" color="text.secondary">
+              Loading server configuration...
+            </Typography>
           </Box>
         )}
 
@@ -536,19 +874,59 @@ export const DiscordServerConfigPage: React.FC = () => {
 
         {config && !configLoading && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            {/* First-time setup banner */}
+            {!isConfigured(config) && (
+              <Collapse in>
+                <Alert
+                  severity="info"
+                  icon={<AutoAwesome sx={{ color: '#5865F2' }} />}
+                  sx={{
+                    mb: 0.5,
+                    bgcolor: isDark ? 'rgba(88,101,242,0.08)' : 'rgba(88,101,242,0.06)',
+                    border: '1px solid rgba(88,101,242,0.15)',
+                    color: isDark ? 'rgba(255,255,255,0.85)' : 'inherit',
+                    '& .MuiAlert-message': { fontSize: '0.85rem' },
+                  }}
+                >
+                  <strong>First-time setup</strong> &mdash; configure where rosters get posted and
+                  who can publish them. Everything here is optional &mdash; the bot works with
+                  defaults too.
+                </Alert>
+              </Collapse>
+            )}
+
             {/* Default Posting Channel */}
-            <Box sx={sectionSx}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5, color: '#5865F2' }}>
-                Default Posting Channel
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', mb: 1.5 }}
-              >
-                Rosters will be posted to this channel. Leave empty to create new channels
-                automatically.
-              </Typography>
+            <ConfigSection
+              icon={<TagIcon sx={{ color: '#5865F2', fontSize: 18 }} />}
+              title="Posting Channel"
+              description="Where rosters get posted. Leave empty to auto-create a channel per roster."
+              isDark={isDark}
+              badge={
+                defaultChannelId ? (
+                  <Chip
+                    label="Fixed channel"
+                    size="small"
+                    sx={{
+                      fontSize: '0.65rem',
+                      height: 18,
+                      bgcolor: 'rgba(88,101,242,0.1)',
+                      color: '#5865F2',
+                    }}
+                  />
+                ) : (
+                  <Chip
+                    label="Auto-create"
+                    size="small"
+                    sx={{
+                      fontSize: '0.65rem',
+                      height: 18,
+                      bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                      color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                    }}
+                  />
+                )
+              }
+            >
               <FormControl fullWidth size="small">
                 <InputLabel>Channel</InputLabel>
                 <Select
@@ -611,20 +989,103 @@ export const DiscordServerConfigPage: React.FC = () => {
                   </Select>
                 </FormControl>
               )}
-            </Box>
+            </ConfigSection>
+
+            {/* Channel Name Pattern */}
+            {!defaultChannelId && (
+              <ConfigSection
+                icon={<TextFields sx={{ color: '#5865F2', fontSize: 18 }} />}
+                title="Channel Name Pattern"
+                description="Template for auto-created channel names. Click tokens to insert them."
+                isDark={isDark}
+              >
+                <TextField
+                  fullWidth
+                  size="small"
+                  value={namePattern}
+                  onChange={(e) => setNamePattern(e.target.value)}
+                  placeholder="{label}"
+                  sx={{ mb: 1 }}
+                />
+                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1.5 }}>
+                  {NAME_TOKENS.map((t) => (
+                    <Tooltip key={t.token} title={t.desc}>
+                      <Chip
+                        label={t.token}
+                        size="small"
+                        onClick={() => insertToken(t.token)}
+                        sx={{
+                          cursor: 'pointer',
+                          fontSize: '0.7rem',
+                          fontFamily: 'monospace',
+                          bgcolor: isDark ? 'rgba(88,101,242,0.12)' : 'rgba(88,101,242,0.08)',
+                          color: '#5865F2',
+                          border: '1px solid rgba(88,101,242,0.2)',
+                          '&:hover': { bgcolor: 'rgba(88,101,242,0.2)' },
+                        }}
+                      />
+                    </Tooltip>
+                  ))}
+                </Box>
+
+                {/* Live preview */}
+                {channelPreview && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      px: 1.5,
+                      py: 1,
+                      borderRadius: 1.5,
+                      bgcolor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.04)',
+                      border: isDark
+                        ? '1px solid rgba(255,255,255,0.06)'
+                        : '1px solid rgba(0,0,0,0.06)',
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}
+                    >
+                      Preview:
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontFamily: 'monospace',
+                        fontWeight: 600,
+                        color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)',
+                      }}
+                    >
+                      #{channelPreview || 'roster'}
+                    </Typography>
+                  </Box>
+                )}
+              </ConfigSection>
+            )}
 
             {/* Allowed Roles */}
-            <Box sx={sectionSx}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5, color: '#5865F2' }}>
-                Allowed Roles
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', mb: 1.5 }}
-              >
-                Members with these roles can publish rosters. Leave empty for admin-only access.
-              </Typography>
+            <ConfigSection
+              icon={<GroupIcon sx={{ color: '#5865F2', fontSize: 18 }} />}
+              title="Allowed Roles"
+              description="Members with these roles can publish rosters via the bot. Leave empty for admin-only."
+              isDark={isDark}
+              badge={
+                allowedRoleIds.length > 0 ? (
+                  <Chip
+                    label={`${allowedRoleIds.length} role${allowedRoleIds.length !== 1 ? 's' : ''}`}
+                    size="small"
+                    sx={{
+                      fontSize: '0.65rem',
+                      height: 18,
+                      bgcolor: 'rgba(88,101,242,0.1)',
+                      color: '#5865F2',
+                    }}
+                  />
+                ) : null
+              }
+            >
               <Autocomplete
                 multiple
                 size="small"
@@ -671,75 +1132,52 @@ export const DiscordServerConfigPage: React.FC = () => {
                 )}
                 renderInput={(params) => <TextField {...params} placeholder="Select roles..." />}
               />
-            </Box>
-
-            {/* Channel Name Pattern */}
-            {!defaultChannelId && (
-              <Box sx={sectionSx}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5, color: '#5865F2' }}>
-                  Channel Name Pattern
-                </Typography>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ display: 'block', mb: 1.5 }}
-                >
-                  Template for auto-created channel names. Click tokens to insert.
-                </Typography>
-                <TextField
-                  fullWidth
-                  size="small"
-                  value={namePattern}
-                  onChange={(e) => setNamePattern(e.target.value)}
-                  placeholder="{label}"
-                  sx={{ mb: 1 }}
-                />
-                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                  {NAME_TOKENS.map((t) => (
-                    <Tooltip key={t.token} title={t.desc}>
-                      <Chip
-                        label={t.token}
-                        size="small"
-                        onClick={() => insertToken(t.token)}
-                        sx={{
-                          cursor: 'pointer',
-                          fontSize: '0.7rem',
-                          fontFamily: 'monospace',
-                          bgcolor: isDark ? 'rgba(88,101,242,0.12)' : 'rgba(88,101,242,0.08)',
-                          color: '#5865F2',
-                          border: '1px solid rgba(88,101,242,0.2)',
-                          '&:hover': { bgcolor: 'rgba(88,101,242,0.2)' },
-                        }}
-                      />
-                    </Tooltip>
-                  ))}
-                </Box>
-              </Box>
-            )}
+            </ConfigSection>
 
             {/* Role Pings */}
-            <Box sx={sectionSx}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5, color: '#5865F2' }}>
-                Role Pings
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', mb: 1.5 }}
-              >
-                Optional roles to @mention in posted rosters for sign-up notifications.
-              </Typography>
+            <ConfigSection
+              icon={<NotificationsActive sx={{ color: '#5865F2', fontSize: 18 }} />}
+              title="Role Pings"
+              description="Optional roles to @mention in posted rosters so members get notified for sign-ups."
+              isDark={isDark}
+              badge={
+                tankPingRole || healerPingRole || ddPingRole ? (
+                  <Chip
+                    label={`${[tankPingRole, healerPingRole, ddPingRole].filter(Boolean).length} active`}
+                    size="small"
+                    sx={{
+                      fontSize: '0.65rem',
+                      height: 18,
+                      bgcolor: 'rgba(88,101,242,0.1)',
+                      color: '#5865F2',
+                    }}
+                  />
+                ) : null
+              }
+            >
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 {[
-                  { label: 'Tank', value: tankPingRole, setter: setTankPingRole },
-                  { label: 'Healer', value: healerPingRole, setter: setHealerPingRole },
-                  { label: 'DD', value: ddPingRole, setter: setDdPingRole },
+                  {
+                    label: 'Tank',
+                    value: tankPingRole,
+                    setter: setTankPingRole,
+                    emoji: '\u{1F6E1}',
+                  },
+                  {
+                    label: 'Healer',
+                    value: healerPingRole,
+                    setter: setHealerPingRole,
+                    emoji: '\u{1F49A}',
+                  },
+                  { label: 'DD', value: ddPingRole, setter: setDdPingRole, emoji: '\u{2694}' },
                 ].map((ping) => (
                   <FormControl key={ping.label} fullWidth size="small">
-                    <InputLabel>{ping.label} Ping Role</InputLabel>
+                    <InputLabel>
+                      {ping.emoji} {ping.label} Ping Role
+                    </InputLabel>
                     <Select
                       value={ping.value}
-                      label={`${ping.label} Ping Role`}
+                      label={`${ping.emoji} ${ping.label} Ping Role`}
                       onChange={(e: SelectChangeEvent) => ping.setter(e.target.value)}
                     >
                       <MenuItem value="">
@@ -765,39 +1203,74 @@ export const DiscordServerConfigPage: React.FC = () => {
                   </FormControl>
                 ))}
               </Box>
-            </Box>
+            </ConfigSection>
 
-            {/* Save */}
+            {/* Save bar */}
             {saveError && (
               <Alert severity="error" onClose={() => setSaveError(null)}>
                 {saveError}
               </Alert>
             )}
 
-            <Button
-              variant="contained"
-              onClick={() => void handleSave()}
-              disabled={saving}
-              startIcon={
-                saving ? (
-                  <CircularProgress size={16} color="inherit" />
-                ) : (
-                  <img
-                    src={discordIcon}
-                    alt=""
-                    style={{ width: 16, height: 16, filter: 'brightness(10)' }}
-                  />
-                )
-              }
+            <Box
+              ref={saveBarRef}
               sx={{
-                background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
-                '&:hover': { background: 'linear-gradient(135deg, #6973F5 0%, #5865F2 100%)' },
-                py: 1.2,
-                fontWeight: 700,
+                position: 'sticky',
+                bottom: -24, // counteract container padding
+                mx: -3,
+                mb: -3,
+                px: 3,
+                py: 2,
+                borderTop: isDark
+                  ? '1px solid rgba(255,255,255,0.08)'
+                  : '1px solid rgba(0,0,0,0.08)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                background: isDark ? 'rgba(15,18,35,0.95)' : 'rgba(255,255,255,0.95)',
+                borderRadius: '0 0 24px 24px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                zIndex: 1,
               }}
             >
-              {saving ? 'Saving...' : 'Save Configuration'}
-            </Button>
+              <Button
+                variant="contained"
+                onClick={() => void handleSave()}
+                disabled={saving || !isDirty}
+                fullWidth
+                startIcon={
+                  saving ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <img
+                      src={discordIcon}
+                      alt=""
+                      style={{ width: 16, height: 16, filter: 'brightness(10)' }}
+                    />
+                  )
+                }
+                sx={{
+                  background: isDirty
+                    ? 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)'
+                    : isDark
+                      ? 'rgba(255,255,255,0.08)'
+                      : 'rgba(0,0,0,0.08)',
+                  color: isDirty ? '#fff' : isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)',
+                  '&:hover': isDirty
+                    ? { background: 'linear-gradient(135deg, #6973F5 0%, #5865F2 100%)' }
+                    : {},
+                  py: 1.2,
+                  fontWeight: 700,
+                  '&.Mui-disabled': {
+                    background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                    color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)',
+                  },
+                }}
+              >
+                {saving ? 'Saving...' : isDirty ? 'Save Configuration' : 'No changes to save'}
+              </Button>
+            </Box>
           </Box>
         )}
       </Paper>
