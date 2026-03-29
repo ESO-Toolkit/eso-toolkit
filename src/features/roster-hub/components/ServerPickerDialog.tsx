@@ -11,6 +11,12 @@
  */
 
 import {
+  getLocalTimeZone,
+  now as dateNow,
+  toCalendarDateTime,
+  type CalendarDateTime,
+} from '@internationalized/date';
+import {
   ArrowBack,
   CheckCircle,
   Launch as LaunchIcon,
@@ -39,18 +45,11 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import {
-  getLocalTimeZone,
-  now as dateNow,
-  toCalendarDateTime,
-  type CalendarDateTime,
-} from '@internationalized/date';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { DatePicker } from '../../../components/DatePicker';
-
 import discordIcon from '../../../assets/discord-icon.svg';
+import { DatePicker } from '../../../components/DatePicker';
 import {
   getBotInviteUrl,
   getMutualGuildsFromApi,

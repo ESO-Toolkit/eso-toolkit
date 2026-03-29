@@ -1,9 +1,5 @@
 'use client';
-import {
-  CalendarMonth as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-} from '@mui/icons-material';
+import { CalendarMonth as CalendarIcon, ChevronLeft, ChevronRight } from '@mui/icons-material';
 import React from 'react';
 import {
   Button as AriaButton,
@@ -36,9 +32,9 @@ export interface DatePickerProps<T extends DateValue> extends AriaDatePickerProp
 export function DatePicker<T extends DateValue>({
   label,
   description,
-  errorMessage,
+  errorMessage: _errorMessage,
   ...props
-}: DatePickerProps<T>) {
+}: DatePickerProps<T>): React.JSX.Element {
   return (
     <AriaDatePicker {...props}>
       {label && <span className="eso-datepicker-label">{label}</span>}
@@ -64,12 +60,8 @@ export function DatePicker<T extends DateValue>({
               </AriaButton>
             </header>
             <CalendarGrid>
-              <CalendarGridHeader>
-                {(day) => <CalendarHeaderCell />}
-              </CalendarGridHeader>
-              <CalendarGridBody>
-                {(date) => <CalendarCell date={date} />}
-              </CalendarGridBody>
+              <CalendarGridHeader>{(_day) => <CalendarHeaderCell />}</CalendarGridHeader>
+              <CalendarGridBody>{(date) => <CalendarCell date={date} />}</CalendarGridBody>
             </CalendarGrid>
           </Calendar>
         </Dialog>
