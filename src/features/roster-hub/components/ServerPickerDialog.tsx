@@ -52,7 +52,7 @@ import {
   DiscordAuthExpiredError,
 } from '../../auth/discord-auth';
 import { useDiscordAuth } from '../../auth/DiscordAuthContext';
-import { PRESET_TAGS, TAG_COLORS } from '../types/roster-hub.types';
+import { TAG_COLORS } from '../types/roster-hub.types';
 import type { HubRoster } from '../types/roster-hub.types';
 
 import { TRIAL_LABELS } from './RosterCard';
@@ -64,6 +64,10 @@ const DISCORD_BOT_API_URL =
 const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{tag}-{trainer}';
 
 const SHORT_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+
+type Difficulty = 'vet' | 'normal';
+const DIFFICULTY_TAGS: Difficulty[] = ['normal', 'vet'];
+const EXTRA_PRESET_TAGS = ['sweaty', 'fun', 'score-push'] as const;
 
 /** Trial ID → lowercase abbreviation (mirrors discord-bot/src/roster/channel-name.ts). */
 const TRIAL_ABBREVS: Record<string, string> = {
@@ -262,8 +266,26 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
 
   // ── Trial & tag selection (direct-publish only) ────────────────────────
   const [selectedTrialId, setSelectedTrialId] = React.useState(trialIdProp ?? '');
-  const [selectedTags, setSelectedTags] = React.useState<string[]>(tagsProp ?? []);
-  const [customTag, setCustomTag] = React.useState('');
+  const [difficulty, setDifficulty] = React.useState<Difficulty | null>(() => {
+    const t = tagsProp ?? [];
+    if (t.includes('vet')) return 'vet';
+    if (t.includes('normal')) return 'normal';
+    return null;
+  });
+  const [hmEnabled, setHmEnabled] = React.useState(() => (tagsProp ?? []).includes('hm'));
+  const [extraTags, setExtraTags] = React.useState<string[]>(() =>
+    (tagsProp ?? []).filter((t) => t !== 'vet' && t !== 'normal' && t !== 'hm'),
+  );
+  const [tagInput, setTagInput] = React.useState('');
+
+  // Compose the final tags array from difficulty + hm + extras
+  const selectedTags = React.useMemo(() => {
+    const tags: string[] = [];
+    if (difficulty) tags.push(difficulty);
+    if (difficulty === 'vet' && hmEnabled) tags.push('hm');
+    tags.push(...extraTags);
+    return tags;
+  }, [difficulty, hmEnabled, extraTags]);
 
   // ── Event date/time ───────────────────────────────────────────────────
   const [eventTime, setEventTime] = React.useState<CalendarDateTime | null>(null);
@@ -358,8 +380,15 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       setSelectedChannelId('');
       setChannelNameOverride('');
       setSelectedTrialId(trialIdProp ?? '');
-      setSelectedTags(tagsProp ?? []);
-      setCustomTag('');
+      {
+        const t = tagsProp ?? [];
+        if (t.includes('vet')) setDifficulty('vet');
+        else if (t.includes('normal')) setDifficulty('normal');
+        else setDifficulty(null);
+        setHmEnabled(t.includes('hm'));
+        setExtraTags(t.filter((x) => x !== 'vet' && x !== 'normal' && x !== 'hm'));
+      }
+      setTagInput('');
       setEventTime(null);
       return;
     }
@@ -986,7 +1015,92 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   </Select>
                 </FormControl>
 
-                {/* Tag chips */}
+                {/* Difficulty toggle */}
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mb: 0.5, display: 'block' }}
+                >
+                  Difficulty
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 0.75, mb: 1.5 }}>
+                  {DIFFICULTY_TAGS.map((d) => {
+                    const isActive = difficulty === d;
+                    const accent = TAG_COLORS[d];
+                    return (
+                      <Box key={d} sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                        <Chip
+                          label={d === 'vet' ? 'Veteran' : 'Normal'}
+                          size="small"
+                          variant={isActive ? 'filled' : 'outlined'}
+                          onClick={() => {
+                            setDifficulty((prev) => (prev === d ? null : d));
+                            if (d !== 'vet') setHmEnabled(false);
+                          }}
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '0.8rem',
+                            px: 0.5,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            ...(isActive
+                              ? {
+                                  bgcolor: accent,
+                                  color: '#fff',
+                                  borderColor: accent,
+                                  '&:hover': { bgcolor: accent, filter: 'brightness(0.85)' },
+                                }
+                              : {
+                                  borderColor: `${accent}55`,
+                                  color: accent,
+                                  '&:hover': { bgcolor: `${accent}18`, borderColor: accent },
+                                }),
+                            ...(d === 'vet' && isActive
+                              ? { borderTopRightRadius: 0, borderBottomRightRadius: 0 }
+                              : {}),
+                          }}
+                        />
+                        {d === 'vet' && isActive && (
+                          <Chip
+                            label="HM"
+                            size="small"
+                            variant={hmEnabled ? 'filled' : 'outlined'}
+                            onClick={() => setHmEnabled((prev) => !prev)}
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                              borderTopLeftRadius: 0,
+                              borderBottomLeftRadius: 0,
+                              ml: '-1px',
+                              transition: 'all 0.15s ease',
+                              ...(hmEnabled
+                                ? {
+                                    bgcolor: TAG_COLORS.hm,
+                                    color: '#fff',
+                                    borderColor: TAG_COLORS.hm,
+                                    '&:hover': {
+                                      bgcolor: TAG_COLORS.hm,
+                                      filter: 'brightness(0.85)',
+                                    },
+                                  }
+                                : {
+                                    borderColor: `${TAG_COLORS.hm}55`,
+                                    color: TAG_COLORS.hm,
+                                    '&:hover': {
+                                      bgcolor: `${TAG_COLORS.hm}18`,
+                                      borderColor: TAG_COLORS.hm,
+                                    },
+                                  }),
+                            }}
+                          />
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Box>
+
+                {/* Tags */}
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -994,90 +1108,111 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 >
                   Tags
                 </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1 }}>
-                  {PRESET_TAGS.map((tag) => {
-                    const active = selectedTags.includes(tag);
+
+                {/* Selected tags + freeform input */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    p: 1,
+                    mb: 1,
+                    border: '1px solid',
+                    borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'divider',
+                    borderRadius: 1,
+                    bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'background.paper',
+                    minHeight: 38,
+                  }}
+                >
+                  {selectedTags.map((tag) => {
+                    const accent = TAG_COLORS[tag] ?? undefined;
+                    return (
+                      <Chip
+                        key={tag}
+                        label={tag}
+                        size="small"
+                        onDelete={() => {
+                          if (tag === 'vet' || tag === 'normal') {
+                            setDifficulty(null);
+                            setHmEnabled(false);
+                          } else if (tag === 'hm') {
+                            setHmEnabled(false);
+                          } else {
+                            setExtraTags((prev) => prev.filter((t) => t !== tag));
+                          }
+                        }}
+                        sx={{
+                          fontWeight: 600,
+                          fontSize: '0.7rem',
+                          ...(accent
+                            ? {
+                                bgcolor: accent,
+                                color: '#fff',
+                                '& .MuiChip-deleteIcon': { color: 'rgba(255,255,255,0.7)' },
+                                '& .MuiChip-deleteIcon:hover': { color: '#fff' },
+                              }
+                            : {
+                                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                              }),
+                        }}
+                      />
+                    );
+                  })}
+                  <TextField
+                    size="small"
+                    variant="standard"
+                    placeholder="Add a tag…"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value.replace(/,/g, ''))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ',') {
+                        e.preventDefault();
+                        const trimmed = tagInput.trim().toLowerCase();
+                        if (trimmed && !selectedTags.includes(trimmed)) {
+                          setExtraTags((prev) => [...prev, trimmed]);
+                        }
+                        setTagInput('');
+                      }
+                    }}
+                    slotProps={{
+                      htmlInput: { maxLength: 30 },
+                      input: { disableUnderline: true, sx: { fontSize: '0.8rem', py: 0.25 } },
+                    }}
+                    sx={{ flex: 1, minWidth: 80 }}
+                  />
+                </Box>
+
+                {/* Extra preset suggestions */}
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {EXTRA_PRESET_TAGS.map((tag) => {
+                    const isSelected = extraTags.includes(tag);
                     const accent = TAG_COLORS[tag] ?? '#888';
                     return (
                       <Chip
                         key={tag}
                         label={tag}
                         size="small"
-                        onClick={() =>
-                          setSelectedTags((prev) =>
-                            active ? prev.filter((t) => t !== tag) : [...prev, tag],
-                          )
+                        variant="outlined"
+                        onClick={
+                          isSelected ? undefined : () => setExtraTags((prev) => [...prev, tag])
                         }
                         sx={{
                           fontWeight: 600,
                           fontSize: '0.7rem',
-                          bgcolor: active ? `${accent}22` : 'transparent',
-                          color: active ? accent : 'text.secondary',
-                          border: `1px solid ${active ? accent : 'rgba(255,255,255,0.12)'}`,
-                          '&:hover': { bgcolor: `${accent}33` },
+                          cursor: isSelected ? 'default' : 'pointer',
+                          opacity: isSelected ? 0.4 : 1,
+                          transition: 'all 0.15s ease',
+                          borderColor: `${accent}55`,
+                          color: accent,
+                          '&:hover': isSelected
+                            ? {}
+                            : { bgcolor: `${accent}18`, borderColor: accent },
                         }}
                       />
                     );
                   })}
                 </Box>
-                <TextField
-                  label="Custom tag"
-                  placeholder="e.g. prog, learners"
-                  value={customTag}
-                  onChange={(e) => setCustomTag(e.target.value)}
-                  fullWidth
-                  size="small"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      const trimmed = customTag.trim().toLowerCase();
-                      if (trimmed && !selectedTags.includes(trimmed)) {
-                        setSelectedTags((prev) => [...prev, trimmed]);
-                      }
-                      setCustomTag('');
-                    }
-                  }}
-                  InputProps={{
-                    endAdornment: customTag.trim() ? (
-                      <Button
-                        size="small"
-                        sx={{ minWidth: 'auto', px: 1, fontSize: '0.7rem' }}
-                        onClick={() => {
-                          const trimmed = customTag.trim().toLowerCase();
-                          if (trimmed && !selectedTags.includes(trimmed)) {
-                            setSelectedTags((prev) => [...prev, trimmed]);
-                          }
-                          setCustomTag('');
-                        }}
-                      >
-                        Add
-                      </Button>
-                    ) : undefined,
-                  }}
-                />
-                {/* Show custom (non-preset) tags as removable chips */}
-                {selectedTags.filter((t) => !(PRESET_TAGS as readonly string[]).includes(t))
-                  .length > 0 && (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.75 }}>
-                    {selectedTags
-                      .filter((t) => !(PRESET_TAGS as readonly string[]).includes(t))
-                      .map((t) => (
-                        <Chip
-                          key={t}
-                          label={t}
-                          size="small"
-                          onDelete={() => setSelectedTags((prev) => prev.filter((x) => x !== t))}
-                          sx={{
-                            fontWeight: 600,
-                            fontSize: '0.7rem',
-                            bgcolor: 'rgba(255,255,255,0.06)',
-                            color: 'text.secondary',
-                            border: '1px solid rgba(255,255,255,0.12)',
-                          }}
-                        />
-                      ))}
-                  </Box>
-                )}
               </Box>
             )}
 
