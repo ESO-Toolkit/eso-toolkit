@@ -1,7 +1,7 @@
 /**
  * Channel name builder from guild templates and roster context.
  *
- * Supports tokens: {day-short}, {day-full}, {time}, {trial}, {tag}, {label}
+ * Supports tokens: {day-short}, {time}, {trial}, {tag}, {label}
  * Discord channel names are lowercased and sanitized (only alphanumeric + hyphens).
  */
 
@@ -18,7 +18,6 @@ import type { ChannelNameContext } from './types.js';
 export function buildChannelName(template: string, context: ChannelNameContext): string {
   let name = template
     .replace(/\{day-short\}/gi, context.dayShort ?? '')
-    .replace(/\{day-full\}/gi, context.dayFull ?? '')
     .replace(/\{time\}/gi, context.time ?? '')
     .replace(/\{trial\}/gi, context.trial ?? '')
     .replace(/\{tag\}/gi, context.tag ?? '')

@@ -25,15 +25,6 @@ import type { ChannelNameContext, RosterMapping, RosterSnapshot } from './types.
 // ── Snapshot → Channel Name Context ────────────────────────────────────────
 
 const SHORT_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
-const FULL_DAYS = [
-  'sunday',
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-] as const;
 
 function formatTime12h(date: Date): string {
   let h = date.getUTCHours();
@@ -46,7 +37,6 @@ function buildNameContext(snapshot: RosterSnapshot): ChannelNameContext {
   const now = new Date();
   return {
     dayShort: SHORT_DAYS[now.getUTCDay()],
-    dayFull: FULL_DAYS[now.getUTCDay()],
     time: formatTime12h(now),
     trial: snapshot.trial_id || undefined,
     tag: snapshot.tags[0] || undefined,

@@ -38,11 +38,6 @@ describe('buildChannelName', () => {
     expect(result).toBe('roster');
   });
 
-  it('handles {day-full} token', () => {
-    const result = buildChannelName('{day-full}', { dayFull: 'wednesday' });
-    expect(result).toBe('wednesday');
-  });
-
   it('handles {trial} token', () => {
     const result = buildChannelName('{day-short}-{time}-{trial}-{tag}', {
       dayShort: 'sun',

@@ -123,7 +123,7 @@ async function handleSetNamePattern(
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         content:
-          '❌ Please provide a pattern. Tokens: `{day-short}`, `{day-full}`, `{time}`, `{trial}`, `{tag}`, `{label}`',
+          '❌ Please provide a pattern. Tokens: `{day-short}`, `{time}`, `{trial}`, `{tag}`, `{label}`',
         flags: MessageFlags.EPHEMERAL,
       },
     };

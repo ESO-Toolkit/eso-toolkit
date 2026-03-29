@@ -98,7 +98,6 @@ interface GuildConfigData {
 
 const NAME_TOKENS = [
   { token: '{day-short}', desc: 'Day abbreviation (Sun, Mon, ...)' },
-  { token: '{day-full}', desc: 'Full day name (Sunday, ...)' },
   { token: '{time}', desc: 'Time (8pm, 10am, ...)' },
   { token: '{trial}', desc: 'Trial ID (vss, vcr, ...)' },
   { token: '{tag}', desc: 'First tag on the roster' },
@@ -131,7 +130,6 @@ async function apiFetch<T>(path: string, token: string, options: RequestInit = {
 /** Resolve a channel name pattern into a preview string. */
 function previewChannelName(pattern: string): string {
   const now = new Date();
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const shortDays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   let h = now.getHours();
   const suffix = h >= 12 ? 'pm' : 'am';
@@ -139,7 +137,6 @@ function previewChannelName(pattern: string): string {
   const time12 = `${h}${suffix}`;
   return pattern
     .replace(/{day-short}/g, shortDays[now.getDay()])
-    .replace(/{day-full}/g, days[now.getDay()])
     .replace(/{time}/g, time12)
     .replace(/{trial}/g, 'vss')
     .replace(/{tag}/g, 'score-push')
@@ -458,7 +455,10 @@ export const DiscordServerConfigPage: React.FC = () => {
   };
 
   const insertToken = (token: string): void => {
-    setNamePattern((prev) => prev + token);
+    setNamePattern((prev) => {
+      if (!prev || prev.endsWith('-')) return prev + token;
+      return prev + '-' + token;
+    });
   };
 
   // Get text channels grouped by category
