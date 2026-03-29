@@ -61,6 +61,53 @@ const DISCORD_BOT_API_URL =
   (import.meta.env.VITE_DISCORD_BOT_API_URL as string | undefined) ??
   'https://eso-toolkit-discord-bot.eso-toolkit.workers.dev';
 
+const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{trial}-{tag}';
+
+const SHORT_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+
+/** Build a channel name preview from pattern + current form values. */
+function buildChannelPreview(
+  pattern: string,
+  eventTime: CalendarDateTime | null,
+  timezone: string,
+  trialId: string,
+  tag: string,
+): string {
+  let dayShort = '';
+  let time = '';
+
+  if (eventTime) {
+    const date = eventTime.toDate(timezone);
+    const dayFmt = new Intl.DateTimeFormat('en-US', { timeZone: timezone, weekday: 'short' });
+    const dayStr = dayFmt.format(date).toLowerCase();
+    const dayIdx = SHORT_DAYS.indexOf(dayStr as (typeof SHORT_DAYS)[number]);
+    dayShort = SHORT_DAYS[dayIdx >= 0 ? dayIdx : date.getDay()];
+    const hourFmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: 'numeric',
+      hour12: false,
+    });
+    let h = parseInt(hourFmt.format(date), 10);
+    const suffix = h >= 12 ? 'pm' : 'am';
+    h = h % 12 || 12;
+    time = `${h}${suffix}`;
+  }
+
+  const name = pattern
+    .replace(/{day-short}/gi, dayShort)
+    .replace(/{time}/gi, time)
+    .replace(/{trial}/gi, trialId.toLowerCase())
+    .replace(/{tag}/gi, tag.toLowerCase())
+    .toLowerCase()
+    .replace(/[\s_]+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-{2,}/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 100);
+
+  return name || 'roster';
+}
+
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface GuildInfo {
@@ -848,14 +895,14 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 {/* Channel name override — only for auto-create */}
                 {!selectedChannelId && (
                   <TextField
-                    label="Channel name"
-                    placeholder="Leave blank to use roster title"
+                    label="Channel name override"
+                    placeholder="Leave blank to use name pattern"
                     value={channelNameOverride}
                     onChange={(e) => setChannelNameOverride(e.target.value)}
                     fullWidth
                     size="small"
                     sx={{ mt: 1.5 }}
-                    helperText="Custom name for the auto-created channel"
+                    helperText="Override the auto-generated channel name"
                   />
                 )}
               </Box>
@@ -932,6 +979,61 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 </Box>
               </Box>
             )}
+
+            {/* Channel name preview */}
+            {!selectedChannelId &&
+              (() => {
+                const guildCfg = selectedGuild ? guildConfigs[selectedGuild.id] : null;
+                const pattern =
+                  guildCfg?.namePattern && guildCfg.namePattern !== '{label}'
+                    ? guildCfg.namePattern
+                    : DEFAULT_NAME_PATTERN;
+                const overrideTrimmed = channelNameOverride.trim();
+                const effectiveTrial = roster ? roster.trial_id : selectedTrialId;
+                const effectiveTag = roster ? (roster.tags[0] ?? '') : (selectedTags[0] ?? '');
+                const preview = overrideTrimmed
+                  ? overrideTrimmed
+                      .toLowerCase()
+                      .replace(/[\s_]+/g, '-')
+                      .replace(/[^a-z0-9-]/g, '')
+                      .replace(/-{2,}/g, '-')
+                      .replace(/^-|-$/g, '')
+                      .slice(0, 100) || 'roster'
+                  : buildChannelPreview(
+                      pattern,
+                      eventTime,
+                      guildTimezone,
+                      effectiveTrial,
+                      effectiveTag,
+                    );
+                return (
+                  <Box
+                    sx={{
+                      mb: 2,
+                      px: 1.5,
+                      py: 1,
+                      borderRadius: 1,
+                      bgcolor: isDark ? 'rgba(88,101,242,0.08)' : 'rgba(88,101,242,0.06)',
+                      border: '1px solid',
+                      borderColor: isDark ? 'rgba(88,101,242,0.2)' : 'rgba(88,101,242,0.15)',
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: 'block', mb: 0.25 }}
+                    >
+                      Channel name preview
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: 'monospace', fontWeight: 600, color: 'primary.main' }}
+                    >
+                      # {preview}
+                    </Typography>
+                  </Box>
+                );
+              })()}
 
             {/* Advanced settings link */}
             <Box sx={{ textAlign: 'center', mb: 1 }}>

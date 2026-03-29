@@ -144,7 +144,12 @@ export async function getGuildConfig(env: Env, guildId: string): Promise<GuildCo
   const raw = await env.ROSTERS.get(guildConfigKey(guildId));
   if (raw === null) return null;
   try {
-    return JSON.parse(raw) as GuildConfig;
+    const config = JSON.parse(raw) as GuildConfig;
+    // Migrate legacy {label} pattern to the current default
+    if (!config.namePattern || config.namePattern === '{label}') {
+      config.namePattern = DEFAULT_NAME_PATTERN;
+    }
+    return config;
   } catch {
     console.error(`[roster-kv] failed to parse guild config for ${guildId}`);
     return null;
