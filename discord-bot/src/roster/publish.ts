@@ -69,13 +69,13 @@ function buildNameContext(
   timezone?: string,
 ): ChannelNameContext {
   const ctx: ChannelNameContext = {};
-  if (eventTime) {
-    const date = new Date(eventTime);
-    const tz = timezone || DEFAULT_TIMEZONE;
-    const { dayOfWeek, hour } = getDatePartsInTz(date, tz);
-    ctx.dayShort = SHORT_DAYS[dayOfWeek];
-    ctx.time = formatTime12h(hour);
-  }
+  // Use eventTime if provided, otherwise fall back to current time
+  // so day/time tokens are always populated in channel names
+  const date = eventTime ? new Date(eventTime) : new Date();
+  const tz = timezone || DEFAULT_TIMEZONE;
+  const { dayOfWeek, hour } = getDatePartsInTz(date, tz);
+  ctx.dayShort = SHORT_DAYS[dayOfWeek];
+  ctx.time = formatTime12h(hour);
   const trial = snapshot.trial_id || decoded.trialId;
   if (trial) ctx.trial = trial;
   const tag = snapshot.tags[0];
