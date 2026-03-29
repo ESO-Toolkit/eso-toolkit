@@ -46,11 +46,15 @@ export interface GuildConfig {
 
 // ── Channel Name Context ────────────────────────────────────────────────────
 
+export type Difficulty = 'veteran' | 'normal';
+
 export interface ChannelNameContext {
   dayShort?: string;
   time?: string;
   trial?: string;
   tag?: string;
+  trainer?: string;
+  difficulty?: Difficulty;
 }
 
 // ── Roster Snapshot (from roster-hub-api) ───────────────────────────────────
