@@ -440,7 +440,12 @@ export const DiscordServerConfigPage: React.FC = () => {
         // Populate form from config
         const cfg = configRes.config;
         setDefaultChannelId(cfg.defaultChannelId ?? '');
-        setDefaultCategoryId(cfg.defaultCategoryId ?? '');
+        // Auto-detect "Open Runs" category if none is configured
+        const detectedCategory =
+          cfg.defaultCategoryId ||
+          channelsRes.channels.find((c) => c.type === 4 && /open\s*runs/i.test(c.name))?.id ||
+          '';
+        setDefaultCategoryId(detectedCategory);
         setNamePattern(
           !cfg.namePattern || cfg.namePattern === '{label}'
             ? DEFAULT_NAME_PATTERN
@@ -459,7 +464,7 @@ export const DiscordServerConfigPage: React.FC = () => {
         setTimeout(() => {
           initialFormRef.current = JSON.stringify({
             defaultChannelId: cfg.defaultChannelId ?? '',
-            defaultCategoryId: cfg.defaultCategoryId ?? '',
+            defaultCategoryId: detectedCategory,
             allowedRoleIds: cfg.allowedRoleIds ?? [],
             namePattern:
               !cfg.namePattern || cfg.namePattern === '{label}'

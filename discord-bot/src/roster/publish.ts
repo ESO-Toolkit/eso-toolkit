@@ -5,7 +5,13 @@
  * Handles channel creation/update, embed posting/editing, and mapping persistence.
  */
 
-import { createChannel, deleteChannel, sendMessage, editMessage } from '../discord.js';
+import {
+  createChannel,
+  deleteChannel,
+  sendMessage,
+  editMessage,
+  getGuildChannels,
+} from '../discord.js';
 import { ChannelType } from '../types.js';
 import type { Env } from '../types.js';
 import { fetchRosterSnapshot } from './api.js';
@@ -77,6 +83,26 @@ function buildNameContext(
   return ctx;
 }
 
+// ── Auto-detect "Open Runs" category ──────────────────────────────────────
+
+const OPEN_RUNS_RE = /open\s*runs/i;
+
+/**
+ * If no category is configured, scan the guild's channels for a category
+ * whose name contains "open runs" (case-insensitive) and return its ID.
+ */
+async function detectOpenRunsCategory(env: Env, guildId: string): Promise<string | undefined> {
+  try {
+    const channels = await getGuildChannels(env, guildId);
+    // type 4 = GUILD_CATEGORY
+    const match = channels.find((c) => c.type === 4 && OPEN_RUNS_RE.test(c.name));
+    return match?.id;
+  } catch (err) {
+    console.warn('[publish] failed to auto-detect category:', err);
+    return undefined;
+  }
+}
+
 // ── Publish Request/Response ────────────────────────────────────────────────
 
 export interface PublishRequest {
@@ -129,7 +155,8 @@ export async function publishRoster(env: Env, req: PublishRequest): Promise<Publ
 
   // 4. Check for existing mapping
   const existing = await getMappingByRosterId(env, req.guildId, req.rosterId);
-  const categoryId = req.categoryId ?? config.defaultCategoryId;
+  const categoryId =
+    req.categoryId ?? config.defaultCategoryId ?? (await detectOpenRunsCategory(env, req.guildId));
 
   let channelId: string;
   let messageId: string;
@@ -343,7 +370,8 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
     buildNameContext(snapshot, decoded, req.eventTime, config.timezone),
     req.channelNameOverride,
   );
-  const categoryId = req.categoryId ?? config.defaultCategoryId;
+  const categoryId =
+    req.categoryId ?? config.defaultCategoryId ?? (await detectOpenRunsCategory(env, req.guildId));
 
   const result = await createNewRosterChannel(
     env,
