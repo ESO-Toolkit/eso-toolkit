@@ -453,7 +453,9 @@ export const DiscordServerConfigPage: React.FC = () => {
           '';
         setDefaultCategoryId(detectedCategory);
         setNamePattern(
-          !cfg.namePattern || cfg.namePattern === '{label}'
+          !cfg.namePattern ||
+            cfg.namePattern === '{label}' ||
+            cfg.namePattern === '{day-short}-{time}-{trial}-{tag}'
             ? DEFAULT_NAME_PATTERN
             : cfg.namePattern,
         );
@@ -473,7 +475,9 @@ export const DiscordServerConfigPage: React.FC = () => {
             defaultCategoryId: detectedCategory,
             allowedRoleIds: cfg.allowedRoleIds ?? [],
             namePattern:
-              !cfg.namePattern || cfg.namePattern === '{label}'
+              !cfg.namePattern ||
+              cfg.namePattern === '{label}' ||
+              cfg.namePattern === '{day-short}-{time}-{trial}-{tag}'
                 ? DEFAULT_NAME_PATTERN
                 : cfg.namePattern,
             tankPingRole: cfg.rolePingIds?.tank ?? '',

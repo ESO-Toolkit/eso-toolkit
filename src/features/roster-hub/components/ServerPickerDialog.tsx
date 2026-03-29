@@ -1085,10 +1085,12 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
             {!selectedChannelId &&
               (() => {
                 const guildCfg = selectedGuild ? guildConfigs[selectedGuild.id] : null;
-                const pattern =
-                  guildCfg?.namePattern && guildCfg.namePattern !== '{label}'
-                    ? guildCfg.namePattern
-                    : DEFAULT_NAME_PATTERN;
+                const rawPattern = guildCfg?.namePattern;
+                const isLegacy =
+                  !rawPattern ||
+                  rawPattern === '{label}' ||
+                  rawPattern === '{day-short}-{time}-{trial}-{tag}';
+                const pattern = isLegacy ? DEFAULT_NAME_PATTERN : rawPattern;
                 const overrideTrimmed = channelNameOverride.trim();
                 const effectiveTrial = roster ? roster.trial_id : selectedTrialId;
                 const effectiveTags = roster ? (roster.tags ?? []) : selectedTags;

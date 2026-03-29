@@ -107,19 +107,19 @@ export function buildChannelName(template: string, context: ChannelNameContext):
   // Build the trial/tag value — apply difficulty prefix when both are available
   const trialValue = resolveTrialValue(context);
 
-  // When difficulty is set, both {trial} and {tag} resolve to the prefixed
-  // abbreviation (e.g. "vlc"). Without difficulty, {trial} uses the raw
-  // trial value and {tag} uses the raw tag value (backwards compat).
-  const trialToken = trialValue || context.trial || '';
-  const tagToken = trialValue || context.tag || '';
+  // {tag} and {trial} both resolve to the difficulty-prefixed abbreviation
+  // (e.g. "vlc") when difficulty + trial are set. Otherwise fall back to raw values.
+  const prefixed = trialValue || '';
+  const tagToken = prefixed || context.tag || '';
+  const trialToken = prefixed || context.trial || '';
 
   let name = template
     .replace(/\{day-short\}/gi, context.dayShort ? normaliseDay(context.dayShort) : '')
     .replace(/\{day-full\}/gi, context.dayShort ? sanitise(context.dayShort) : '')
     .replace(/\{day\}/gi, context.dayShort ? normaliseDay(context.dayShort) : '')
     .replace(/\{time\}/gi, context.time ?? '')
-    .replace(/\{trial\}/gi, trialToken)
     .replace(/\{tag\}/gi, tagToken)
+    .replace(/\{trial\}/gi, trialToken)
     .replace(/\{trainer\}/gi, context.trainer ?? '')
     .replace(/\{difficulty\}/gi, context.difficulty === 'veteran' ? 'vet' : context.difficulty === 'normal' ? 'norm' : '');
 
