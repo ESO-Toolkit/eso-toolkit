@@ -1,5 +1,6 @@
 import {
   Alert,
+  Box,
   Button,
   Chip,
   CircularProgress,
@@ -52,7 +53,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   const [description, setDescription] = React.useState('');
   const [trialId, setTrialId] = React.useState('');
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
-  const [customTag, setCustomTag] = React.useState('');
+  const [tagInput, setTagInput] = React.useState('');
   const [isAnonymous, setIsAnonymous] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -61,13 +62,22 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
     setTrialId(e.target.value);
   };
 
-  const handleTagToggle = (tag: string): void => {
-    if (selectedTags.includes(tag)) {
-      setSelectedTags((prev) => prev.filter((t) => t !== tag));
-    } else if (selectedTags.length < MAX_TAGS) {
-      setSelectedTags((prev) => [...prev, tag]);
+  const addTag = (tag: string): void => {
+    const trimmed = tag.trim().toLowerCase();
+    if (!trimmed || selectedTags.includes(trimmed) || selectedTags.length >= MAX_TAGS) return;
+    setSelectedTags((prev) => [...prev, trimmed]);
+  };
+
+  const removeTag = (tag: string): void => {
+    setSelectedTags((prev) => prev.filter((t) => t !== tag));
+  };
+
+  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag(tagInput);
+      setTagInput('');
     }
-    // silently ignore when at limit — tooltip will communicate the constraint
   };
 
   const handlePublish = async (): Promise<void> => {
@@ -114,12 +124,14 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         setDescription(editingRoster.description ?? '');
         setTrialId(editingRoster.trial_id ?? '');
         setSelectedTags(editingRoster.tags ?? []);
+        setTagInput('');
         setIsAnonymous(editingRoster.is_anonymous ?? false);
       } else {
         setTitle('');
         setDescription('');
         setTrialId('');
         setSelectedTags([]);
+        setTagInput('');
         setIsAnonymous(false);
       }
       setError(null);
@@ -180,7 +192,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           </Select>
         </FormControl>
 
-        <div>
+        <Box>
           <Typography
             variant="caption"
             color={atTagLimit ? 'warning.main' : 'text.secondary'}
@@ -189,39 +201,94 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           >
             Tags ({selectedTags.length}/{MAX_TAGS}){atTagLimit ? ' — limit reached' : ''}
           </Typography>
-          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mt: 0.5 }}>
+
+          {/* Selected tags + input container */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: 0.5,
+              p: 1,
+              mt: 0.5,
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 1,
+              bgcolor: 'background.paper',
+              minHeight: 40,
+            }}
+          >
+            {selectedTags.map((tag) => {
+              const accent = TAG_COLORS[tag] ?? undefined;
+              return (
+                <Chip
+                  key={tag}
+                  label={tag}
+                  size="small"
+                  onDelete={() => removeTag(tag)}
+                  sx={{
+                    fontWeight: 600,
+                    ...(accent
+                      ? {
+                          bgcolor: accent,
+                          color: '#fff',
+                          '& .MuiChip-deleteIcon': { color: 'rgba(255,255,255,0.7)' },
+                          '& .MuiChip-deleteIcon:hover': { color: '#fff' },
+                        }
+                      : {}),
+                  }}
+                />
+              );
+            })}
+            {!atTagLimit && (
+              <TextField
+                size="small"
+                variant="standard"
+                placeholder="Add a tag…"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value.replace(/,/g, ''))}
+                onKeyDown={handleTagInputKeyDown}
+                slotProps={{
+                  htmlInput: { maxLength: 30 },
+                  input: { disableUnderline: true, sx: { fontSize: '0.875rem', py: 0.25 } },
+                }}
+                sx={{ flex: 1, minWidth: 80 }}
+              />
+            )}
+          </Box>
+
+          {/* Preset suggestions */}
+          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mt: 1 }}>
             {PRESET_TAGS.map((tag) => {
               const isSelected = selectedTags.includes(tag);
-              const isDisabled = !isSelected && atTagLimit;
+              const isDisabled = isSelected || atTagLimit;
               const accent = TAG_COLORS[tag] ?? '#888';
               return (
-                <Tooltip key={tag} title={isDisabled ? `Remove a tag first (max ${MAX_TAGS})` : ''}>
+                <Tooltip
+                  key={tag}
+                  title={
+                    isSelected
+                      ? 'Already added'
+                      : isDisabled
+                        ? `Remove a tag first (max ${MAX_TAGS})`
+                        : `Add "${tag}"`
+                  }
+                >
                   <span>
                     <Chip
                       label={tag}
                       size="small"
-                      onClick={isDisabled ? undefined : () => handleTagToggle(tag)}
-                      variant={isSelected ? 'filled' : 'outlined'}
-                      aria-pressed={isSelected}
-                      role="checkbox"
+                      variant="outlined"
+                      onClick={isDisabled ? undefined : () => addTag(tag)}
                       sx={{
-                        cursor: isDisabled ? 'not-allowed' : 'pointer',
-                        opacity: isDisabled ? 0.5 : 1,
+                        cursor: isDisabled ? 'default' : 'pointer',
+                        opacity: isDisabled ? 0.4 : 1,
                         transition: 'all 0.15s ease',
-                        ...(isSelected
-                          ? {
-                              bgcolor: accent,
-                              color: '#fff',
-                              borderColor: accent,
-                              '&:hover': { bgcolor: accent, filter: 'brightness(0.9)' },
-                            }
-                          : {
-                              borderColor: `${accent}55`,
-                              color: accent,
-                              '&:hover': isDisabled
-                                ? {}
-                                : { bgcolor: `${accent}18`, borderColor: accent },
-                            }),
+                        borderColor: `${accent}55`,
+                        color: accent,
+                        '&:hover': isDisabled
+                          ? {}
+                          : { bgcolor: `${accent}18`, borderColor: accent },
                       }}
                     />
                   </span>
@@ -229,66 +296,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
               );
             })}
           </Stack>
-          <TextField
-            label="Custom tag"
-            placeholder="e.g. prog, learners"
-            value={customTag}
-            onChange={(e) => setCustomTag(e.target.value)}
-            fullWidth
-            size="small"
-            disabled={atTagLimit}
-            sx={{ mt: 1 }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                const trimmed = customTag.trim().toLowerCase();
-                if (trimmed && !selectedTags.includes(trimmed) && selectedTags.length < MAX_TAGS) {
-                  setSelectedTags((prev) => [...prev, trimmed]);
-                }
-                setCustomTag('');
-              }
-            }}
-            InputProps={{
-              endAdornment:
-                customTag.trim() && !atTagLimit ? (
-                  <Button
-                    size="small"
-                    sx={{ minWidth: 'auto', px: 1, fontSize: '0.7rem' }}
-                    onClick={() => {
-                      const trimmed = customTag.trim().toLowerCase();
-                      if (
-                        trimmed &&
-                        !selectedTags.includes(trimmed) &&
-                        selectedTags.length < MAX_TAGS
-                      ) {
-                        setSelectedTags((prev) => [...prev, trimmed]);
-                      }
-                      setCustomTag('');
-                    }}
-                  >
-                    Add
-                  </Button>
-                ) : undefined,
-            }}
-          />
-          {selectedTags.filter((t) => !(PRESET_TAGS as readonly string[]).includes(t)).length >
-            0 && (
-            <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mt: 0.75 }}>
-              {selectedTags
-                .filter((t) => !(PRESET_TAGS as readonly string[]).includes(t))
-                .map((t) => (
-                  <Chip
-                    key={t}
-                    label={t}
-                    size="small"
-                    onDelete={() => setSelectedTags((prev) => prev.filter((x) => x !== t))}
-                    variant="outlined"
-                    sx={{ fontSize: '0.7rem' }}
-                  />
-                ))}
-            </Stack>
-          )}
-        </div>
+        </Box>
 
         <FormControlLabel
           control={
