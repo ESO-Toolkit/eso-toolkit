@@ -351,6 +351,7 @@ async function handlePublish(
     categoryId: (body.categoryId as string | undefined) ?? undefined,
     channelNameOverride: (body.channelNameOverride as string | undefined) ?? undefined,
     ownerUserId: ownerUserId ?? '',
+    eventTime: (body.event_time as string | undefined) ?? undefined,
   };
 
   const result = await publishRoster(env, req);
@@ -423,6 +424,7 @@ async function handlePublishDirect(
     channelNameOverride: (body.channelNameOverride as string | undefined) ?? undefined,
     categoryId: (body.categoryId as string | undefined) ?? undefined,
     ownerUserId: ownerUserId ?? '',
+    eventTime: (body.event_time as string | undefined) ?? undefined,
   };
 
   const result = await publishDirect(env, req);

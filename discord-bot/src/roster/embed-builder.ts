@@ -5,12 +5,7 @@
  * and buttons for sign-ups and viewing builds.
  */
 
-import {
-  ButtonStyle,
-  Colors,
-  ComponentType,
-  RosterButtonId,
-} from '../types.js';
+import { ButtonStyle, Colors, ComponentType, RosterButtonId } from '../types.js';
 import type { DiscordComponent, DiscordEmbed } from '../types.js';
 import type { DecodedRoster, DecodedRosterSlot, RosterSnapshot } from './types.js';
 
@@ -56,6 +51,7 @@ function formatRoleSection(
 export function buildRosterEmbed(
   snapshot: RosterSnapshot,
   decoded: DecodedRoster,
+  eventTime?: string,
 ): DiscordEmbed {
   const fields: { name: string; value: string; inline?: boolean }[] = [];
 
@@ -96,9 +92,19 @@ export function buildRosterEmbed(
     });
   }
 
-  const description = snapshot.description
-    ? `${truncate(snapshot.description, 3900)}\n\n`
-    : '';
+  // Discord timestamp — renders as a localized date/time for every viewer
+  if (eventTime) {
+    const epoch = Math.floor(new Date(eventTime).getTime() / 1000);
+    if (!isNaN(epoch)) {
+      fields.push({
+        name: '📅 Event Time',
+        value: `<t:${epoch}:F> (<t:${epoch}:R>)`,
+        inline: false,
+      });
+    }
+  }
+
+  const description = snapshot.description ? `${truncate(snapshot.description, 3900)}\n\n` : '';
 
   const trialLine = snapshot.trial_id ? `**Trial:** ${snapshot.trial_id}\n` : '';
 
@@ -121,9 +127,7 @@ export function buildRosterEmbed(
 
 // ── Action Rows ─────────────────────────────────────────────────────────────
 
-export function buildRosterActionRows(
-  rosterId: string,
-): DiscordComponent[] {
+export function buildRosterActionRows(rosterId: string): DiscordComponent[] {
   return [
     {
       type: ComponentType.ACTION_ROW,

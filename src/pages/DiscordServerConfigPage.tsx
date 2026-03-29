@@ -389,7 +389,11 @@ export const DiscordServerConfigPage: React.FC = () => {
         const cfg = configRes.config;
         setDefaultChannelId(cfg.defaultChannelId ?? '');
         setDefaultCategoryId(cfg.defaultCategoryId ?? '');
-        setNamePattern(cfg.namePattern || DEFAULT_NAME_PATTERN);
+        setNamePattern(
+          !cfg.namePattern || cfg.namePattern === '{label}'
+            ? DEFAULT_NAME_PATTERN
+            : cfg.namePattern,
+        );
         setTankPingRole(cfg.rolePingIds?.tank ?? '');
         setHealerPingRole(cfg.rolePingIds?.healer ?? '');
         setDdPingRole(cfg.rolePingIds?.dd ?? '');
@@ -404,7 +408,10 @@ export const DiscordServerConfigPage: React.FC = () => {
             defaultChannelId: cfg.defaultChannelId ?? '',
             defaultCategoryId: cfg.defaultCategoryId ?? '',
             allowedRoleIds: cfg.allowedRoleIds ?? [],
-            namePattern: cfg.namePattern || DEFAULT_NAME_PATTERN,
+            namePattern:
+              !cfg.namePattern || cfg.namePattern === '{label}'
+                ? DEFAULT_NAME_PATTERN
+                : cfg.namePattern,
             tankPingRole: cfg.rolePingIds?.tank ?? '',
             healerPingRole: cfg.rolePingIds?.healer ?? '',
             ddPingRole: cfg.rolePingIds?.dd ?? '',

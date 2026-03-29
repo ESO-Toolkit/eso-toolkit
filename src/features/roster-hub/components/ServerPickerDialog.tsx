@@ -174,6 +174,9 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
   const [selectedTrialId, setSelectedTrialId] = React.useState(trialIdProp ?? '');
   const [selectedTags, setSelectedTags] = React.useState<string[]>(tagsProp ?? []);
 
+  // ── Event date/time ───────────────────────────────────────────────────
+  const [eventTime, setEventTime] = React.useState('');
+
   // ── Publish state ──────────────────────────────────────────────────────
   const [publishing, setPublishing] = React.useState(false);
 
@@ -262,6 +265,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       setChannelNameOverride('');
       setSelectedTrialId(trialIdProp ?? '');
       setSelectedTags(tagsProp ?? []);
+      setEventTime('');
       return;
     }
     if (isDiscordAuthed) {
@@ -328,12 +332,16 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       // Determine channel override or selected channel
       const channelOverride = channelNameOverride.trim() || undefined;
 
+      // Convert local datetime to ISO string for the API
+      const eventTimeIso = eventTime ? new Date(eventTime).toISOString() : undefined;
+
       if (roster) {
         endpoint = `${DISCORD_BOT_API_URL}/discord/roster/publish`;
         body = {
           guildId: selectedGuild.id,
           rosterId: roster.id,
           channelNameOverride: channelOverride,
+          event_time: eventTimeIso,
         };
       } else {
         endpoint = `${DISCORD_BOT_API_URL}/discord/roster/publish-direct`;
@@ -346,6 +354,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
           roster_data: rosterData ?? '',
           author_name: authorName ?? 'Unknown',
           channelNameOverride: channelOverride,
+          event_time: eventTimeIso,
         };
       }
 
@@ -391,7 +400,13 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
     const cfg = guildConfigs[guildId];
     if (!cfg) return false;
     // A guild is "configured" if it has a default channel or non-default name pattern
-    return !!(cfg.defaultChannelId || cfg.defaultCategoryId || cfg.namePattern !== '{label}');
+    return !!(
+      cfg.defaultChannelId ||
+      cfg.defaultCategoryId ||
+      (cfg.namePattern &&
+        cfg.namePattern !== '{label}' &&
+        cfg.namePattern !== '{day-short}-{time}-{trial}-{tag}')
+    );
   };
 
   // ── Channel grouping ──────────────────────────────────────────────────
@@ -838,6 +853,27 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 )}
               </Box>
             )}
+
+            {/* Event date & time */}
+            <Box sx={{ ...sectionSx, mb: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 700, mb: 1, color: '#5865F2', fontSize: '0.82rem' }}
+              >
+                Event Date & Time
+              </Typography>
+              <TextField
+                type="datetime-local"
+                value={eventTime}
+                onChange={(e) => setEventTime(e.target.value)}
+                fullWidth
+                size="small"
+                slotProps={{
+                  inputLabel: { shrink: true },
+                }}
+                helperText="Used in channel name and shown as a Discord timestamp in the embed"
+              />
+            </Box>
 
             {/* Trial & tag selection — direct-publish only */}
             {!roster && (

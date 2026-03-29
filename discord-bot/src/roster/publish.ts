@@ -37,15 +37,26 @@ function formatTime12h(date: Date): string {
  * Build channel name context from snapshot + decoded roster data.
  * Uses snapshot fields first, falls back to decoded data (e.g. trialId
  * extracted from the compact roster's trialOverrides).
+ *
+ * If eventTime is provided (ISO 8601), it is used for day/time tokens
+ * instead of the current time.
  */
-function buildNameContext(snapshot: RosterSnapshot, decoded: DecodedRoster): ChannelNameContext {
-  const now = new Date();
-  return {
-    dayShort: SHORT_DAYS[now.getUTCDay()],
-    time: formatTime12h(now),
-    trial: snapshot.trial_id || decoded.trialId || undefined,
-    tag: snapshot.tags[0] || undefined,
-  };
+function buildNameContext(
+  snapshot: RosterSnapshot,
+  decoded: DecodedRoster,
+  eventTime?: string,
+): ChannelNameContext {
+  const ctx: ChannelNameContext = {};
+  if (eventTime) {
+    const date = new Date(eventTime);
+    ctx.dayShort = SHORT_DAYS[date.getUTCDay()];
+    ctx.time = formatTime12h(date);
+  }
+  const trial = snapshot.trial_id || decoded.trialId;
+  if (trial) ctx.trial = trial;
+  const tag = snapshot.tags[0];
+  if (tag) ctx.tag = tag;
+  return ctx;
 }
 
 // ── Publish Request/Response ────────────────────────────────────────────────
@@ -56,6 +67,8 @@ export interface PublishRequest {
   categoryId?: string | undefined;
   channelNameOverride?: string | undefined;
   ownerUserId?: string | undefined;
+  /** ISO 8601 event date/time — used for channel name tokens and Discord timestamp in embed */
+  eventTime?: string | undefined;
 }
 
 export interface PublishResult {
@@ -92,7 +105,7 @@ export async function publishRoster(env: Env, req: PublishRequest): Promise<Publ
   const config = (await getGuildConfig(env, req.guildId)) ?? getDefaultGuildConfig(req.guildId);
   const channelName = resolveChannelName(
     config.namePattern,
-    buildNameContext(snapshot, decoded),
+    buildNameContext(snapshot, decoded, req.eventTime),
     req.channelNameOverride,
   );
 
@@ -112,6 +125,7 @@ export async function publishRoster(env: Env, req: PublishRequest): Promise<Publ
       decoded,
       channelName,
       categoryId,
+      req.eventTime,
     );
     if (!refreshed.ok) return refreshed;
     channelId = refreshed.channelId!;
@@ -125,6 +139,7 @@ export async function publishRoster(env: Env, req: PublishRequest): Promise<Publ
       categoryId,
       snapshot,
       decoded,
+      req.eventTime,
     );
     if (!created.ok) return created;
     channelId = created.channelId!;
@@ -266,6 +281,8 @@ export interface DirectPublishRequest {
   channelNameOverride?: string | undefined;
   categoryId?: string | undefined;
   ownerUserId?: string | undefined;
+  /** ISO 8601 event date/time — used for channel name tokens and Discord timestamp in embed */
+  eventTime?: string | undefined;
 }
 
 /**
@@ -305,7 +322,7 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
   const config = (await getGuildConfig(env, req.guildId)) ?? getDefaultGuildConfig(req.guildId);
   const channelName = resolveChannelName(
     config.namePattern,
-    buildNameContext(snapshot, decoded),
+    buildNameContext(snapshot, decoded, req.eventTime),
     req.channelNameOverride,
   );
   const categoryId = req.categoryId ?? config.defaultCategoryId;
@@ -317,6 +334,7 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
     categoryId,
     snapshot,
     decoded,
+    req.eventTime,
   );
 
   if (!result.ok) return result;
@@ -361,8 +379,9 @@ async function refreshExistingMapping(
   decoded: Awaited<ReturnType<typeof decodeRosterData>>,
   channelName: string,
   categoryId?: string,
+  eventTime?: string,
 ): Promise<InternalRefreshResult> {
-  const embed = buildRosterEmbed(snapshot, decoded);
+  const embed = buildRosterEmbed(snapshot, decoded, eventTime);
   const components = buildRosterActionRows(snapshot.id);
 
   try {
@@ -385,6 +404,7 @@ async function refreshExistingMapping(
       categoryId,
       snapshot,
       decoded,
+      eventTime,
     );
     return result;
   } catch (err) {
@@ -402,6 +422,7 @@ async function createNewRosterChannel(
   categoryId: string | undefined,
   snapshot: RosterSnapshot,
   decoded: Awaited<ReturnType<typeof decodeRosterData>>,
+  eventTime?: string,
 ): Promise<InternalRefreshResult> {
   const channelOptions: Parameters<typeof createChannel>[2] = {
     name: channelName,
@@ -421,7 +442,7 @@ async function createNewRosterChannel(
   }
 
   try {
-    const embed = buildRosterEmbed(snapshot, decoded);
+    const embed = buildRosterEmbed(snapshot, decoded, eventTime);
     const components = buildRosterActionRows(snapshot.id);
 
     const message = await sendMessage(env, channel.id, {
