@@ -25,7 +25,7 @@ import React from 'react';
 import { TRIALS } from '../../loadout-manager/data/trialConfigs';
 import { rosterHubApi } from '../api/roster-hub-api';
 import type { HubRoster } from '../types/roster-hub.types';
-import { PRESET_TAGS, TAG_COLORS } from '../types/roster-hub.types';
+import { TAG_COLORS } from '../types/roster-hub.types';
 
 interface PublishRosterDialogProps {
   open: boolean;
@@ -40,6 +40,10 @@ interface PublishRosterDialogProps {
 const HUB_TRIALS = TRIALS.filter((t) => t.type === 'trial');
 const MAX_TAGS = 5;
 
+type Difficulty = 'vet' | 'normal';
+const DIFFICULTY_TAGS: Difficulty[] = ['normal', 'vet'];
+const EXTRA_PRESET_TAGS = ['sweaty', 'fun', 'score-push'] as const;
+
 export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   open,
   rosterData,
@@ -52,24 +56,50 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   const [title, setTitle] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [trialId, setTrialId] = React.useState('');
-  const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
+  const [difficulty, setDifficulty] = React.useState<Difficulty | null>(null);
+  const [hmEnabled, setHmEnabled] = React.useState(false);
+  const [extraTags, setExtraTags] = React.useState<string[]>([]);
   const [tagInput, setTagInput] = React.useState('');
   const [isAnonymous, setIsAnonymous] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Compose the final tags array from difficulty + hm + extras
+  const selectedTags = React.useMemo(() => {
+    const tags: string[] = [];
+    if (difficulty) tags.push(difficulty);
+    if (difficulty === 'vet' && hmEnabled) tags.push('hm');
+    tags.push(...extraTags);
+    return tags;
+  }, [difficulty, hmEnabled, extraTags]);
+
   const handleTrialChange = (e: SelectChangeEvent): void => {
     setTrialId(e.target.value);
+  };
+
+  const handleDifficultyChange = (d: Difficulty): void => {
+    setDifficulty((prev) => (prev === d ? null : d));
+    if (d !== 'vet') setHmEnabled(false);
   };
 
   const addTag = (tag: string): void => {
     const trimmed = tag.trim().toLowerCase();
     if (!trimmed || selectedTags.includes(trimmed) || selectedTags.length >= MAX_TAGS) return;
-    setSelectedTags((prev) => [...prev, trimmed]);
+    setExtraTags((prev) => [...prev, trimmed]);
   };
 
   const removeTag = (tag: string): void => {
-    setSelectedTags((prev) => prev.filter((t) => t !== tag));
+    // Handle removing difficulty/hm via the chip × button
+    if (tag === 'vet' || tag === 'normal') {
+      setDifficulty(null);
+      setHmEnabled(false);
+      return;
+    }
+    if (tag === 'hm') {
+      setHmEnabled(false);
+      return;
+    }
+    setExtraTags((prev) => prev.filter((t) => t !== tag));
   };
 
   const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -123,14 +153,22 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         setTitle(editingRoster.title);
         setDescription(editingRoster.description ?? '');
         setTrialId(editingRoster.trial_id ?? '');
-        setSelectedTags(editingRoster.tags ?? []);
+        // Hydrate difficulty/hm/extras from flat tags array
+        const tags = editingRoster.tags ?? [];
+        if (tags.includes('vet')) setDifficulty('vet');
+        else if (tags.includes('normal')) setDifficulty('normal');
+        else setDifficulty(null);
+        setHmEnabled(tags.includes('hm'));
+        setExtraTags(tags.filter((t) => t !== 'vet' && t !== 'normal' && t !== 'hm'));
         setTagInput('');
         setIsAnonymous(editingRoster.is_anonymous ?? false);
       } else {
         setTitle('');
         setDescription('');
         setTrialId('');
-        setSelectedTags([]);
+        setDifficulty(null);
+        setHmEnabled(false);
+        setExtraTags([]);
         setTagInput('');
         setIsAnonymous(false);
       }
@@ -202,7 +240,84 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
             Tags ({selectedTags.length}/{MAX_TAGS}){atTagLimit ? ' — limit reached' : ''}
           </Typography>
 
-          {/* Selected tags + input container */}
+          {/* Difficulty toggle group */}
+          <Stack direction="row" spacing={0.75} sx={{ mt: 0.5 }}>
+            {DIFFICULTY_TAGS.map((d) => {
+              const isActive = difficulty === d;
+              const accent = TAG_COLORS[d];
+              return (
+                <Box key={d} sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                  <Chip
+                    label={d === 'vet' ? 'Veteran' : 'Normal'}
+                    size="small"
+                    variant={isActive ? 'filled' : 'outlined'}
+                    onClick={() => handleDifficultyChange(d)}
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      px: 0.5,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      ...(isActive
+                        ? {
+                            bgcolor: accent,
+                            color: '#fff',
+                            borderColor: accent,
+                            '&:hover': { bgcolor: accent, filter: 'brightness(0.85)' },
+                          }
+                        : {
+                            borderColor: `${accent}55`,
+                            color: accent,
+                            '&:hover': { bgcolor: `${accent}18`, borderColor: accent },
+                          }),
+                      // Round right corners only when HM chip is not adjacent
+                      ...(d === 'vet' && isActive
+                        ? { borderTopRightRadius: 0, borderBottomRightRadius: 0 }
+                        : {}),
+                    }}
+                  />
+                  {/* HM chip attached to Vet */}
+                  {d === 'vet' && isActive && (
+                    <Chip
+                      label="HM"
+                      size="small"
+                      variant={hmEnabled ? 'filled' : 'outlined'}
+                      onClick={() => setHmEnabled((prev) => !prev)}
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        borderTopLeftRadius: 0,
+                        borderBottomLeftRadius: 0,
+                        ml: '-1px',
+                        transition: 'all 0.15s ease',
+                        ...(hmEnabled
+                          ? {
+                              bgcolor: TAG_COLORS.hm,
+                              color: '#fff',
+                              borderColor: TAG_COLORS.hm,
+                              '&:hover': {
+                                bgcolor: TAG_COLORS.hm,
+                                filter: 'brightness(0.85)',
+                              },
+                            }
+                          : {
+                              borderColor: `${TAG_COLORS.hm}55`,
+                              color: TAG_COLORS.hm,
+                              '&:hover': {
+                                bgcolor: `${TAG_COLORS.hm}18`,
+                                borderColor: TAG_COLORS.hm,
+                              },
+                            }),
+                      }}
+                    />
+                  )}
+                </Box>
+              );
+            })}
+          </Stack>
+
+          {/* Selected tags + freeform input */}
           <Box
             sx={{
               display: 'flex',
@@ -210,7 +325,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
               alignItems: 'center',
               gap: 0.5,
               p: 1,
-              mt: 0.5,
+              mt: 1,
               border: '1px solid',
               borderColor: 'divider',
               borderRadius: 1,
@@ -257,10 +372,10 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
             )}
           </Box>
 
-          {/* Preset suggestions */}
+          {/* Extra preset suggestions */}
           <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mt: 1 }}>
-            {PRESET_TAGS.map((tag) => {
-              const isSelected = selectedTags.includes(tag);
+            {EXTRA_PRESET_TAGS.map((tag) => {
+              const isSelected = extraTags.includes(tag);
               const isDisabled = isSelected || atTagLimit;
               const accent = TAG_COLORS[tag] ?? '#888';
               return (
