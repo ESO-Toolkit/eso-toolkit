@@ -27,7 +27,7 @@ export {
 
 export { buildChannelName, resolveChannelName } from './channel-name.js';
 
-export { buildRosterEmbed, buildRosterActionRows } from './embed-builder.js';
+export { buildRosterText, splitMessages, buildRosterActionRows } from './embed-builder.js';
 
 export { decodeRosterData } from './decoder.js';
 

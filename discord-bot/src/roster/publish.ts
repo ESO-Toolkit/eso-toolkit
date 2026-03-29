@@ -8,16 +8,17 @@
 import {
   createChannel,
   deleteChannel,
+  deleteMessage,
   sendMessage,
   editMessage,
   getGuildChannels,
 } from '../discord.js';
 import { ChannelType } from '../types.js';
-import type { Env } from '../types.js';
+import type { DiscordComponent, Env } from '../types.js';
 import { fetchRosterSnapshot } from './api.js';
 import { resolveChannelName } from './channel-name.js';
 import { decodeRosterData } from './decoder.js';
-import { buildRosterEmbed, buildRosterActionRows } from './embed-builder.js';
+import { buildRosterText, splitMessages, buildRosterActionRows } from './embed-builder.js';
 import {
   findMappingsForRoster,
   getMappingByRosterId,
@@ -427,21 +428,44 @@ async function refreshExistingMapping(
   categoryId?: string,
   eventTime?: string,
 ): Promise<InternalRefreshResult> {
-  const embed = buildRosterEmbed(snapshot, decoded, eventTime);
+  const text = buildRosterText(snapshot, decoded, eventTime);
+  const chunks = splitMessages(text);
   const components = buildRosterActionRows(snapshot.id);
+  const oldMessageIds = mapping.messageId.split(',');
 
-  try {
-    // Try to edit the existing message
-    await editMessage(env, mapping.channelId, mapping.messageId, {
-      embeds: [embed],
-      components,
-    });
-    return { ok: true, channelId: mapping.channelId, messageId: mapping.messageId };
-  } catch (err) {
-    console.warn('[refresh] edit failed, recreating:', err);
+  // If chunk count matches, try editing in-place
+  if (chunks.length === oldMessageIds.length) {
+    try {
+      for (let i = 0; i < chunks.length; i++) {
+        const isLast = i === chunks.length - 1;
+        await editMessage(env, mapping.channelId, oldMessageIds[i], {
+          content: chunks[i],
+          ...(isLast ? { components } : {}),
+        });
+      }
+      return { ok: true, channelId: mapping.channelId, messageId: mapping.messageId };
+    } catch (err) {
+      console.warn('[refresh] edit failed, will delete and re-post:', err);
+    }
   }
 
-  // Channel or message was deleted — recreate
+  // Delete old messages, then re-post fresh
+  for (const id of oldMessageIds) {
+    try {
+      await deleteMessage(env, mapping.channelId, id);
+    } catch {
+      // Message may already be deleted — ignore
+    }
+  }
+
+  try {
+    const messageIds = await sendRosterMessages(env, mapping.channelId, chunks, components);
+    return { ok: true, channelId: mapping.channelId, messageId: messageIds };
+  } catch (err) {
+    console.warn('[refresh] re-post to existing channel failed, recreating:', err);
+  }
+
+  // Channel was deleted — recreate
   try {
     const result = await createNewRosterChannel(
       env,
@@ -459,7 +483,31 @@ async function refreshExistingMapping(
   }
 }
 
-// ── Create a new channel + post embed ───────────────────────────────────────
+// ── Send roster as raw text messages ────────────────────────────────────────
+
+/**
+ * Send roster text as one or more messages. Action rows go on the last message.
+ * Returns comma-separated message IDs for storage in the mapping.
+ */
+async function sendRosterMessages(
+  env: Env,
+  channelId: string,
+  chunks: string[],
+  components: DiscordComponent[],
+): Promise<string> {
+  const ids: string[] = [];
+  for (let i = 0; i < chunks.length; i++) {
+    const isLast = i === chunks.length - 1;
+    const msg = await sendMessage(env, channelId, {
+      content: chunks[i],
+      ...(isLast ? { components } : {}),
+    });
+    ids.push(msg.id);
+  }
+  return ids.join(',');
+}
+
+// ── Create a new channel + post roster ──────────────────────────────────────
 
 async function createNewRosterChannel(
   env: Env,
@@ -488,15 +536,12 @@ async function createNewRosterChannel(
   }
 
   try {
-    const embed = buildRosterEmbed(snapshot, decoded, eventTime);
+    const text = buildRosterText(snapshot, decoded, eventTime);
+    const chunks = splitMessages(text);
     const components = buildRosterActionRows(snapshot.id);
+    const messageIds = await sendRosterMessages(env, channel.id, chunks, components);
 
-    const message = await sendMessage(env, channel.id, {
-      embeds: [embed],
-      components,
-    });
-
-    return { ok: true, channelId: channel.id, messageId: message.id };
+    return { ok: true, channelId: channel.id, messageId: messageIds };
   } catch (err) {
     console.error('[publish] send message failed, cleaning up orphaned channel:', err);
     try {
@@ -504,6 +549,6 @@ async function createNewRosterChannel(
     } catch (cleanupErr) {
       console.error('[publish] failed to clean up orphaned channel:', cleanupErr);
     }
-    return { ok: false, error: 'Failed to post roster embed. Please try again.' };
+    return { ok: false, error: 'Failed to post roster message. Please try again.' };
   }
 }

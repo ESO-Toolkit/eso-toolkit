@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildRosterEmbed, buildRosterActionRows } from './embed-builder';
+import { buildRosterText, splitMessages, buildRosterActionRows } from './embed-builder';
 import type { DecodedRoster, RosterSnapshot } from './types';
 
 const mockSnapshot: RosterSnapshot = {
@@ -31,40 +31,68 @@ const mockDecoded: DecodedRoster = {
   ],
 };
 
-describe('buildRosterEmbed', () => {
-  it('creates an embed with title and description', () => {
-    const embed = buildRosterEmbed(mockSnapshot, mockDecoded);
-    expect(embed.title).toContain('Sunday VLC Prog');
-    expect(embed.description).toContain('Weekly progression run');
-    expect(embed.description).toContain('vlc');
-    expect(embed.description).toContain('TestUser');
+describe('buildRosterText', () => {
+  it('includes title and meta info', () => {
+    const text = buildRosterText(mockSnapshot, mockDecoded);
+    expect(text).toContain('**Sunday VLC Prog**');
+    expect(text).toContain('vlc');
+    expect(text).toContain('TestUser');
   });
 
-  it('includes role sections', () => {
-    const embed = buildRosterEmbed(mockSnapshot, mockDecoded);
-    const allValues = embed.fields?.map((f) => f.value).join('\n') ?? '';
-    expect(allValues).toContain('Tanks');
-    expect(allValues).toContain('Healers');
-    expect(allValues).toContain('DPS');
-    expect(allValues).toContain('TankPlayer1');
+  it('includes role sections with separators', () => {
+    const text = buildRosterText(mockSnapshot, mockDecoded);
+    expect(text).toContain('🛡️ **Tanks**');
+    expect(text).toContain('💚 **Healers**');
+    expect(text).toContain('⚔️ **DPS**');
+    expect(text).toContain('TankPlayer1');
+    expect(text).toContain('▬▬▬▬▬');
   });
 
   it('shows roster count', () => {
-    const embed = buildRosterEmbed(mockSnapshot, mockDecoded);
-    const rosterField = embed.fields?.find((f) => f.name.includes('Roster'));
-    expect(rosterField?.value).toContain('5/6 filled');
+    const text = buildRosterText(mockSnapshot, mockDecoded);
+    expect(text).toContain('5/6 filled');
   });
 
   it('shows tags', () => {
-    const embed = buildRosterEmbed(mockSnapshot, mockDecoded);
-    const tagField = embed.fields?.find((f) => f.name.includes('Tags'));
-    expect(tagField?.value).toContain('vlc');
-    expect(tagField?.value).toContain('prog');
+    const text = buildRosterText(mockSnapshot, mockDecoded);
+    expect(text).toContain('`vlc`');
+    expect(text).toContain('`prog`');
   });
 
-  it('uses the correct color', () => {
-    const embed = buildRosterEmbed(mockSnapshot, mockDecoded);
-    expect(embed.color).toBe(0xc8aa6e);
+  it('includes build links for slots with buildRefId', () => {
+    const text = buildRosterText(mockSnapshot, mockDecoded);
+    expect(text).toContain('[Build](https://esotk.com/builds/build-abc)');
+  });
+
+  it('includes description', () => {
+    const text = buildRosterText(mockSnapshot, mockDecoded);
+    expect(text).toContain('Weekly progression run');
+  });
+});
+
+describe('splitMessages', () => {
+  it('returns single chunk for short text', () => {
+    const chunks = splitMessages('Hello world');
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0]).toBe('Hello world');
+  });
+
+  it('splits long text on line boundaries', () => {
+    const line = 'A'.repeat(100) + '\n';
+    const text = line.repeat(25); // 25 * 101 = 2525 chars
+    const chunks = splitMessages(text.trimEnd());
+    expect(chunks.length).toBeGreaterThan(1);
+    for (const chunk of chunks) {
+      expect(chunk.length).toBeLessThanOrEqual(2000);
+    }
+  });
+
+  it('preserves all content after splitting', () => {
+    const lines = Array.from({ length: 30 }, (_, i) => `Line ${i}: ${'x'.repeat(80)}`);
+    const text = lines.join('\n');
+    const chunks = splitMessages(text);
+    const rejoined = chunks.join('\n');
+    expect(rejoined).toBe(text);
   });
 });
 

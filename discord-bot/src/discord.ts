@@ -197,6 +197,14 @@ export function getMessages(
   );
 }
 
+export function deleteMessage(
+  env: Env,
+  channelId: string,
+  messageId: string,
+): Promise<void> {
+  return discordFetch<void>(env, 'DELETE', `/channels/${channelId}/messages/${messageId}`);
+}
+
 // ── Interaction followups ────────────────────────────────────────────────────
 
 export interface FollowupOptions {

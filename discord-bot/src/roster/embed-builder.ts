@@ -1,15 +1,19 @@
 /**
- * Builds the Discord embed and action rows for a roster message.
+ * Builds raw-text Discord messages for a roster post.
  *
- * The embed is ESO-specific: shows trial, date/time, roles, build links,
- * and buttons for sign-ups and viewing builds.
+ * Mirrors the "Copy to Discord" format from the web app. If the text
+ * exceeds Discord's 2000-char limit it is split across multiple messages
+ * on line boundaries.
  */
 
-import { ButtonStyle, Colors, ComponentType, RosterButtonId } from '../types.js';
-import type { DiscordComponent, DiscordEmbed } from '../types.js';
+import { ButtonStyle, ComponentType, RosterButtonId } from '../types.js';
+import type { DiscordComponent } from '../types.js';
 import type { DecodedRoster, DecodedRosterSlot, RosterSnapshot } from './types.js';
 
 const ESO_TOOLKIT_BASE = 'https://esotk.com';
+
+/** Discord message character limit. */
+const MAX_MESSAGE_LENGTH = 2000;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -18,59 +22,89 @@ function escapeMarkdown(text: string): string {
   return text.replace(/([*_`~|\\[\]])/g, '\\$1');
 }
 
-/** Truncate a string to a max length, appending '…' if truncated. */
-function truncate(text: string, max: number): string {
-  return text.length <= max ? text : text.slice(0, max - 1) + '…';
-}
-
 // ── Slot Formatting ─────────────────────────────────────────────────────────
 
 function formatSlot(slot: DecodedRosterSlot, index: number, rolePrefix: string): string {
-  const name = slot.playerName ? escapeMarkdown(slot.playerName) : `*Open*`;
   const label = slot.roleLabel || `${rolePrefix}${index + 1}`;
-  const sets = slot.sets?.length ? ` — ${slot.sets.join(', ')}` : '';
+  const player = slot.playerName ? ` ${escapeMarkdown(slot.playerName)}` : '';
+  const line = `**${label}**:${player}`;
+
+  const sets = slot.sets?.length ? slot.sets.join('/') : '';
   const build = slot.buildRefId
-    ? ` [📋](${ESO_TOOLKIT_BASE}/builds/${encodeURIComponent(slot.buildRefId)})`
+    ? `[Build](${ESO_TOOLKIT_BASE}/builds/${encodeURIComponent(slot.buildRefId)})`
     : '';
-  return `**${label}**: ${name}${sets}${build}`;
+
+  const extras = [sets, build].filter(Boolean).join(' | ');
+  return extras ? `${line}\n${extras}` : line;
 }
 
-function formatRoleSection(
-  slots: DecodedRosterSlot[],
-  emoji: string,
-  title: string,
-  rolePrefix: string,
-): string {
-  if (slots.length === 0) return '';
-  const lines = slots.map((s, i) => formatSlot(s, i, rolePrefix));
-  return `${emoji} **${title}** (${slots.length})\n${lines.join('\n')}`;
-}
+// ── Text Builder ────────────────────────────────────────────────────────────
 
-// ── Embed Builder ───────────────────────────────────────────────────────────
+const SEPARATOR = '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬';
 
-export function buildRosterEmbed(
+export function buildRosterText(
   snapshot: RosterSnapshot,
   decoded: DecodedRoster,
   eventTime?: string,
-): DiscordEmbed {
-  const fields: { name: string; value: string; inline?: boolean }[] = [];
+): string {
+  const lines: string[] = [];
+
+  // Title
+  lines.push(`**${snapshot.title}**`);
+  lines.push('');
+
+  // Meta line (trial, tags, author)
+  const meta: string[] = [];
+  if (snapshot.trial_id) meta.push(`**Trial:** ${snapshot.trial_id}`);
+  if (snapshot.tags.length > 0) meta.push(`**Tags:** ${snapshot.tags.map((t) => `\`${t}\``).join(' ')}`);
+  meta.push(`**Author:** ${snapshot.author_name}`);
+  lines.push(meta.join(' · '));
+
+  // Event time — Discord timestamp renders localized for every viewer
+  if (eventTime) {
+    const epoch = Math.floor(new Date(eventTime).getTime() / 1000);
+    if (!isNaN(epoch)) {
+      lines.push(`**Event:** <t:${epoch}:F> (<t:${epoch}:R>)`);
+    }
+  }
+
+  // Description
+  if (snapshot.description) {
+    lines.push('');
+    lines.push(snapshot.description);
+  }
+
+  lines.push('');
 
   // Tanks
-  const tanksSection = formatRoleSection(decoded.tanks, '🛡️', 'Tanks', 'T');
-  if (tanksSection) {
-    fields.push({ name: '\u200B', value: tanksSection });
+  if (decoded.tanks.length > 0) {
+    lines.push(`🛡️ **Tanks** (${decoded.tanks.length})`);
+    decoded.tanks.forEach((slot, i) => {
+      lines.push(formatSlot(slot, i, 'T'));
+    });
+    lines.push('');
+    lines.push(SEPARATOR);
+    lines.push('');
   }
 
   // Healers
-  const healersSection = formatRoleSection(decoded.healers, '💚', 'Healers', 'H');
-  if (healersSection) {
-    fields.push({ name: '\u200B', value: healersSection });
+  if (decoded.healers.length > 0) {
+    lines.push(`💚 **Healers** (${decoded.healers.length})`);
+    decoded.healers.forEach((slot, i) => {
+      lines.push(formatSlot(slot, i, 'H'));
+    });
+    lines.push('');
+    lines.push(SEPARATOR);
+    lines.push('');
   }
 
   // DPS
-  const dpsSection = formatRoleSection(decoded.dps, '⚔️', 'DPS', 'DD');
-  if (dpsSection) {
-    fields.push({ name: '\u200B', value: dpsSection });
+  if (decoded.dps.length > 0) {
+    lines.push(`⚔️ **DPS** (${decoded.dps.length})`);
+    decoded.dps.forEach((slot, i) => {
+      lines.push(formatSlot(slot, i, 'DD'));
+    });
+    lines.push('');
   }
 
   // Summary
@@ -78,51 +112,43 @@ export function buildRosterEmbed(
   const filled = [...decoded.tanks, ...decoded.healers, ...decoded.dps].filter(
     (s) => s.playerName,
   ).length;
-  fields.push({
-    name: '📊 Roster',
-    value: `${filled}/${total} filled`,
-    inline: true,
-  });
+  lines.push(`📊 **Roster:** ${filled}/${total} filled`);
 
-  if (snapshot.tags.length > 0) {
-    fields.push({
-      name: '🏷️ Tags',
-      value: snapshot.tags.map((t) => `\`${t}\``).join(' '),
-      inline: true,
-    });
-  }
+  return lines.join('\n');
+}
 
-  // Discord timestamp — renders as a localized date/time for every viewer
-  if (eventTime) {
-    const epoch = Math.floor(new Date(eventTime).getTime() / 1000);
-    if (!isNaN(epoch)) {
-      fields.push({
-        name: '📅 Event Time',
-        value: `<t:${epoch}:F> (<t:${epoch}:R>)`,
-        inline: false,
-      });
+// ── Message Splitter ────────────────────────────────────────────────────────
+
+/**
+ * Split text into chunks that each fit within Discord's 2000-char limit.
+ * Splits on line boundaries so no line is broken mid-way.
+ */
+export function splitMessages(text: string): string[] {
+  if (text.length <= MAX_MESSAGE_LENGTH) return [text];
+
+  const lines = text.split('\n');
+  const chunks: string[] = [];
+  let current = '';
+
+  for (const line of lines) {
+    // If adding this line (plus newline) would exceed the limit, flush
+    const addition = current.length === 0 ? line : `\n${line}`;
+    if (current.length + addition.length > MAX_MESSAGE_LENGTH) {
+      if (current.length > 0) {
+        chunks.push(current);
+      }
+      // If a single line is longer than the limit, truncate it
+      current = line.length > MAX_MESSAGE_LENGTH ? line.slice(0, MAX_MESSAGE_LENGTH) : line;
+    } else {
+      current += addition;
     }
   }
 
-  const description = snapshot.description ? `${truncate(snapshot.description, 3900)}\n\n` : '';
-
-  const trialLine = snapshot.trial_id ? `**Trial:** ${snapshot.trial_id}\n` : '';
-
-  // Enforce Discord embed field value limit (1024 chars)
-  for (const field of fields) {
-    field.value = truncate(field.value, 1024);
+  if (current.length > 0) {
+    chunks.push(current);
   }
 
-  return {
-    title: truncate(`📜 ${snapshot.title}`, 256),
-    description: truncate(`${description}${trialLine}**Author:** ${snapshot.author_name}`, 4096),
-    color: Colors.ROSTER_EMBED,
-    fields,
-    footer: {
-      text: truncate(`ESO Toolkit • Roster ID: ${snapshot.id}`, 2048),
-    },
-    timestamp: snapshot.updated_at,
-  };
+  return chunks;
 }
 
 // ── Action Rows ─────────────────────────────────────────────────────────────
