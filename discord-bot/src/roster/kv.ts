@@ -80,10 +80,7 @@ export async function deleteMappingForRoster(
 
 // ── All Mappings for a Guild (list by prefix) ───────────────────────────────
 
-export async function listMappingsForGuild(
-  env: Env,
-  guildId: string,
-): Promise<RosterMapping[]> {
+export async function listMappingsForGuild(env: Env, guildId: string): Promise<RosterMapping[]> {
   return listMappingsByPrefix(env, `${KV_PREFIX.ROSTER_MAP}:${guildId}:`);
 }
 
@@ -95,13 +92,12 @@ export async function listMappingsForGuild(
  * and filter by rosterId. This is efficient because roster-map keys contain
  * the rosterId as the final segment: `roster-map:{guildId}:{rosterId}`.
  */
-export async function findMappingsForRoster(
-  env: Env,
-  rosterId: string,
-): Promise<RosterMapping[]> {
+export async function findMappingsForRoster(env: Env, rosterId: string): Promise<RosterMapping[]> {
   // KV list doesn't support suffix matching, but we can list all roster-map keys
   // and filter. For most deployments this is a small set (<100 mappings total).
-  return listMappingsByPrefix(env, `${KV_PREFIX.ROSTER_MAP}:`, (key) => key.endsWith(`:${rosterId}`));
+  return listMappingsByPrefix(env, `${KV_PREFIX.ROSTER_MAP}:`, (key) =>
+    key.endsWith(`:${rosterId}`),
+  );
 }
 
 // ── Shared listing helper ──────────────────────────────────────────────────
@@ -161,7 +157,7 @@ export async function upsertGuildConfig(env: Env, config: GuildConfig): Promise<
 
 // ── Default Config ──────────────────────────────────────────────────────────
 
-export const DEFAULT_NAME_PATTERN = '{label}';
+export const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{trial}-{tag}';
 
 export function getDefaultGuildConfig(guildId: string): GuildConfig {
   return {

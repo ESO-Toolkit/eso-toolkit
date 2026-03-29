@@ -14,7 +14,12 @@
 import { isAdmin } from '../discord.js';
 import { getGuildConfig, getDefaultGuildConfig, upsertGuildConfig } from '../roster/kv.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
-import type { DiscordInteraction, DiscordInteractionOption, Env, InteractionResponse } from '../types.js';
+import type {
+  DiscordInteraction,
+  DiscordInteractionOption,
+  Env,
+  InteractionResponse,
+} from '../types.js';
 
 export async function handleRosterConfig(
   env: Env,
@@ -77,9 +82,7 @@ export async function handleRosterConfig(
 
 async function showCurrentConfig(env: Env, guildId: string): Promise<InteractionResponse> {
   const config = (await getGuildConfig(env, guildId)) ?? getDefaultGuildConfig(guildId);
-  const category = config.defaultCategoryId
-    ? `<#${config.defaultCategoryId}>`
-    : '*Not set*';
+  const category = config.defaultCategoryId ? `<#${config.defaultCategoryId}>` : '*Not set*';
   const pings = config.rolePingIds
     ? [
         config.rolePingIds.tank ? `Tank: <@&${config.rolePingIds.tank}>` : null,
@@ -119,7 +122,8 @@ async function handleSetNamePattern(
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: '❌ Please provide a pattern. Tokens: `{day-short}`, `{day-full}`, `{time}`, `{tag}`, `{label}`',
+        content:
+          '❌ Please provide a pattern. Tokens: `{day-short}`, `{day-full}`, `{time}`, `{trial}`, `{tag}`, `{label}`',
         flags: MessageFlags.EPHEMERAL,
       },
     };

@@ -20,7 +20,39 @@ import {
   getDefaultGuildConfig,
   KV_PREFIX,
 } from './kv.js';
-import type { RosterMapping, RosterSnapshot } from './types.js';
+import type { ChannelNameContext, RosterMapping, RosterSnapshot } from './types.js';
+
+// ── Snapshot → Channel Name Context ────────────────────────────────────────
+
+const SHORT_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+const FULL_DAYS = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+] as const;
+
+function formatTime12h(date: Date): string {
+  let h = date.getUTCHours();
+  const suffix = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return `${h}${suffix}`;
+}
+
+function buildNameContext(snapshot: RosterSnapshot): ChannelNameContext {
+  const now = new Date();
+  return {
+    dayShort: SHORT_DAYS[now.getUTCDay()],
+    dayFull: FULL_DAYS[now.getUTCDay()],
+    time: formatTime12h(now),
+    trial: snapshot.trial_id || undefined,
+    tag: snapshot.tags[0] || undefined,
+    label: snapshot.title,
+  };
+}
 
 // ── Publish Request/Response ────────────────────────────────────────────────
 
@@ -66,7 +98,7 @@ export async function publishRoster(env: Env, req: PublishRequest): Promise<Publ
   const config = (await getGuildConfig(env, req.guildId)) ?? getDefaultGuildConfig(req.guildId);
   const channelName = resolveChannelName(
     config.namePattern,
-    { label: snapshot.title },
+    buildNameContext(snapshot),
     req.channelNameOverride,
   );
 
@@ -193,7 +225,7 @@ export async function refreshRoster(env: Env, rosterId: string): Promise<Refresh
       (await getGuildConfig(env, mapping.guildId)) ?? getDefaultGuildConfig(mapping.guildId);
     const channelName = resolveChannelName(
       config.namePattern,
-      { label: snapshot.title },
+      buildNameContext(snapshot),
       mapping.channelNameOverride,
     );
 
@@ -278,7 +310,7 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
   const config = (await getGuildConfig(env, req.guildId)) ?? getDefaultGuildConfig(req.guildId);
   const channelName = resolveChannelName(
     config.namePattern,
-    { label: req.title },
+    buildNameContext(snapshot),
     req.channelNameOverride,
   );
   const categoryId = req.categoryId ?? config.defaultCategoryId;

@@ -40,11 +40,12 @@ export async function handleRosterSetup(
   // Check what's configured
   const hasRoles = config?.allowedRoleIds && config.allowedRoleIds.length > 0;
   const hasCategory = !!config?.defaultCategoryId;
-  const hasNamePattern = !!config?.namePattern && config.namePattern !== '{label}';
+  const hasNamePattern =
+    !!config?.namePattern && config.namePattern !== '{day-short}-{time}-{trial}-{tag}';
   const pings = config?.rolePingIds;
   const hasRolePings = !!(pings?.tank || pings?.healer || pings?.dd);
 
-  const check = (done: boolean | undefined) => done ? '\u2705' : '\u2B1C';
+  const check = (done: boolean | undefined) => (done ? '\u2705' : '\u2B1C');
 
   const lines = [
     '# ESO Toolkit Bot Setup',
@@ -72,9 +73,9 @@ export async function handleRosterSetup(
     '',
     `${check(hasNamePattern)} **Step 4 — Customize channel names** *(optional)*`,
     'Set a template for auto-generated channel names.',
-    'Tokens: `{day-short}`, `{day-full}`, `{time}`, `{tag}`, `{label}`',
+    'Tokens: `{day-short}`, `{day-full}`, `{time}`, `{trial}`, `{tag}`, `{label}`',
     '```',
-    '/roster config set-name-pattern {day-short}-{label}',
+    '/roster config set-name-pattern {day-short}-{time}-{trial}-{tag}',
     '```',
     '',
     '---',

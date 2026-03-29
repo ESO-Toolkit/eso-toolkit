@@ -97,11 +97,12 @@ interface GuildConfigData {
 // ── Token chips for channel name pattern ───────────────────────────────────
 
 const NAME_TOKENS = [
-  { token: '{label}', desc: 'Roster title' },
-  { token: '{day-short}', desc: 'Day abbreviation (Mon, Tue, ...)' },
-  { token: '{day-full}', desc: 'Full day name (Monday, ...)' },
-  { token: '{time}', desc: 'Time (HH:MM)' },
+  { token: '{day-short}', desc: 'Day abbreviation (Sun, Mon, ...)' },
+  { token: '{day-full}', desc: 'Full day name (Sunday, ...)' },
+  { token: '{time}', desc: 'Time (8pm, 10am, ...)' },
+  { token: '{trial}', desc: 'Trial ID (vss, vcr, ...)' },
   { token: '{tag}', desc: 'First tag on the roster' },
+  { token: '{label}', desc: 'Roster title' },
 ] as const;
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -130,17 +131,19 @@ async function apiFetch<T>(path: string, token: string, options: RequestInit = {
 /** Resolve a channel name pattern into a preview string. */
 function previewChannelName(pattern: string): string {
   const now = new Date();
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const shortDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const shortDays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  let h = now.getHours();
+  const suffix = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  const time12 = `${h}${suffix}`;
   return pattern
-    .replace(/{label}/g, 'vSS-HM-Roster')
     .replace(/{day-short}/g, shortDays[now.getDay()])
     .replace(/{day-full}/g, days[now.getDay()])
-    .replace(
-      /{time}/g,
-      `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
-    )
+    .replace(/{time}/g, time12)
+    .replace(/{trial}/g, 'vss')
     .replace(/{tag}/g, 'score-push')
+    .replace(/{label}/g, 'vss-hm-roster')
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, '-')
     .replace(/-+/g, '-')
@@ -154,7 +157,7 @@ function isConfigured(cfg: GuildConfigData | null): boolean {
   return !!(
     cfg.defaultChannelId ||
     cfg.defaultCategoryId ||
-    (cfg.namePattern && cfg.namePattern !== '{label}') ||
+    (cfg.namePattern && cfg.namePattern !== '{day-short}-{time}-{trial}-{tag}') ||
     (cfg.allowedRoleIds && cfg.allowedRoleIds.length > 0) ||
     cfg.rolePingIds?.tank ||
     cfg.rolePingIds?.healer ||
@@ -257,7 +260,7 @@ export const DiscordServerConfigPage: React.FC = () => {
   const [defaultChannelId, setDefaultChannelId] = useState('');
   const [defaultCategoryId, setDefaultCategoryId] = useState('');
   const [allowedRoleIds, setAllowedRoleIds] = useState<RoleInfo[]>([]);
-  const [namePattern, setNamePattern] = useState('{label}');
+  const [namePattern, setNamePattern] = useState('{day-short}-{time}-{trial}-{tag}');
   const [tankPingRole, setTankPingRole] = useState('');
   const [healerPingRole, setHealerPingRole] = useState('');
   const [ddPingRole, setDdPingRole] = useState('');
@@ -389,7 +392,7 @@ export const DiscordServerConfigPage: React.FC = () => {
         const cfg = configRes.config;
         setDefaultChannelId(cfg.defaultChannelId ?? '');
         setDefaultCategoryId(cfg.defaultCategoryId ?? '');
-        setNamePattern(cfg.namePattern || '{label}');
+        setNamePattern(cfg.namePattern || '{day-short}-{time}-{trial}-{tag}');
         setTankPingRole(cfg.rolePingIds?.tank ?? '');
         setHealerPingRole(cfg.rolePingIds?.healer ?? '');
         setDdPingRole(cfg.rolePingIds?.dd ?? '');
@@ -404,7 +407,7 @@ export const DiscordServerConfigPage: React.FC = () => {
             defaultChannelId: cfg.defaultChannelId ?? '',
             defaultCategoryId: cfg.defaultCategoryId ?? '',
             allowedRoleIds: cfg.allowedRoleIds ?? [],
-            namePattern: cfg.namePattern || '{label}',
+            namePattern: cfg.namePattern || '{day-short}-{time}-{trial}-{tag}',
             tankPingRole: cfg.rolePingIds?.tank ?? '',
             healerPingRole: cfg.rolePingIds?.healer ?? '',
             ddPingRole: cfg.rolePingIds?.dd ?? '',
@@ -1004,7 +1007,7 @@ export const DiscordServerConfigPage: React.FC = () => {
                   size="small"
                   value={namePattern}
                   onChange={(e) => setNamePattern(e.target.value)}
-                  placeholder="{label}"
+                  placeholder="{day-short}-{time}-{trial}-{tag}"
                   sx={{ mb: 1 }}
                 />
                 <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1.5 }}>

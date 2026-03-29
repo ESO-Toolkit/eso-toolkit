@@ -25,7 +25,7 @@ export interface RosterMapping {
 
 export interface GuildConfig {
   guildId: string;
-  /** Channel name template with tokens: {day-short}, {day-full}, {time}, {tag}, {label} */
+  /** Channel name template with tokens: {day-short}, {day-full}, {time}, {trial}, {tag}, {label} */
   namePattern: string;
   /** Default text channel to post rosters into (if set, skip channel creation) */
   defaultChannelId?: string | undefined;
@@ -48,6 +48,7 @@ export interface ChannelNameContext {
   dayShort?: string;
   dayFull?: string;
   time?: string;
+  trial?: string;
   tag?: string;
   label?: string;
 }

@@ -43,6 +43,16 @@ describe('buildChannelName', () => {
     expect(result).toBe('wednesday');
   });
 
+  it('handles {trial} token', () => {
+    const result = buildChannelName('{day-short}-{time}-{trial}-{tag}', {
+      dayShort: 'sun',
+      time: '8pm',
+      trial: 'voc',
+      tag: 'trainer',
+    });
+    expect(result).toBe('sun-8pm-voc-trainer');
+  });
+
   it('lowercases everything', () => {
     const result = buildChannelName('{label}', { label: 'Sunday VLC Prog' });
     expect(result).toBe('sunday-vlc-prog');
