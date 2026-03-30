@@ -309,27 +309,16 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
   const displayTitle = roster?.title ?? title ?? 'Untitled Roster';
   const displayDesc = roster?.description ?? description;
 
-  // ── Accent & glassmorphism tokens (matching BugReportDialog) ─────────
-  const accentColor = '#5865F2'; // Discord blurple
-  const accentColorAlt = '#4752C4';
-  const accentGradient = `linear-gradient(135deg, ${accentColor} 0%, ${accentColorAlt} 100%)`;
+  // ── Site panel tokens (matching /my-reports container style) ─────────
+  const accent = '#5865F2'; // Discord blurple
 
   const panelBg = isDark
-    ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.75) 0%, rgba(3, 7, 18, 0.85) 100%)'
-    : 'linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(248, 250, 252, 0.92) 100%)';
-  const panelBorder = isDark
-    ? `1px solid ${alpha(accentColor, 0.12)}`
-    : `1px solid ${alpha('#0f172a', 0.08)}`;
+    ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.66) 0%, rgba(3, 7, 18, 0.66) 100%)'
+    : 'linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.92) 100%)';
+  const panelBorder = isDark ? '1px solid rgb(31, 41, 55)' : '1px solid rgba(0, 0, 0, 0.08)';
   const panelShadow = isDark
-    ? '0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-    : '0 4px 24px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04)';
-
-  const shimmer = {
-    '@keyframes shimmer': {
-      '0%': { backgroundPosition: '-200% center' },
-      '100%': { backgroundPosition: '200% center' },
-    },
-  };
+    ? '0 8px 30px rgba(0, 0, 0, 0.25)'
+    : '0 4px 24px rgba(15, 23, 42, 0.08)';
 
   const sectionSx = {
     background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.018)',
@@ -338,27 +327,23 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
     p: 1.5,
   };
 
-  const glassInputSx = {
+  const inputSx = {
     '& .MuiOutlinedInput-root': {
       fontSize: 13,
       borderRadius: '10px',
-      backgroundColor: isDark ? alpha('#0f172a', 0.8) : '#ffffff',
-      backdropFilter: 'blur(6px)',
-      WebkitBackdropFilter: 'blur(6px)',
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      transition: 'border-color 0.2s ease',
       '& fieldset': {
-        borderColor: isDark ? alpha(accentColor, 0.2) : alpha('#0f172a', 0.12),
-        transition: 'border-color 0.3s ease',
+        borderColor: isDark ? 'rgb(31, 41, 55)' : 'rgba(0, 0, 0, 0.12)',
       },
       '&:hover fieldset': {
-        borderColor: isDark ? alpha(accentColor, 0.4) : alpha('#0f172a', 0.25),
+        borderColor: isDark ? 'rgba(148, 163, 184, 0.4)' : 'rgba(0, 0, 0, 0.25)',
       },
       '&.Mui-focused fieldset': {
-        borderColor: accentColor,
+        borderColor: accent,
         borderWidth: 2,
       },
       '&.Mui-focused': {
-        boxShadow: `0 0 0 3px ${alpha(accentColor, 0.15)}`,
+        boxShadow: `0 0 0 3px ${alpha(accent, 0.15)}`,
       },
     },
     '& .MuiInputLabel-root': { fontSize: 13 },
@@ -602,49 +587,22 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       PaperProps={{
         sx: {
           background: panelBg,
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
           border: panelBorder,
           borderRadius: '14px',
           boxShadow: panelShadow,
           overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '2px',
-            background: accentGradient,
-            zIndex: 1,
-            ...shimmer,
-            backgroundSize: '200% 100%',
-            animation: 'shimmer 3s linear infinite',
-          },
-        },
-      }}
-      slotProps={{
-        backdrop: {
-          sx: {
-            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(15, 23, 42, 0.35)',
-            backdropFilter: 'blur(6px)',
-            WebkitBackdropFilter: 'blur(6px)',
-          },
         },
       }}
     >
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <DialogTitle
         sx={{
-          py: 2.5,
+          py: 2,
           px: { xs: 2.5, sm: 3 },
           borderBottom: panelBorder,
-          background: isDark
-            ? `linear-gradient(135deg, ${alpha(accentColor, 0.06)} 0%, transparent 100%)`
-            : 'transparent',
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={2}>
+        <Stack direction="row" alignItems="center" spacing={1.5}>
           {step === 'configure' && (
             <IconButton
               onClick={handleBack}
@@ -656,44 +614,29 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
           )}
           <Box
             sx={{
-              width: 44,
-              height: 44,
-              borderRadius: '12px',
+              width: 36,
+              height: 36,
+              borderRadius: '10px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: `linear-gradient(135deg, ${alpha(accentColor, 0.18)} 0%, ${alpha(accentColorAlt, 0.1)} 100%)`,
-              border: `1px solid ${alpha(accentColor, 0.25)}`,
+              background: isDark ? alpha(accent, 0.12) : alpha(accent, 0.08),
+              border: `1px solid ${isDark ? alpha(accent, 0.2) : alpha(accent, 0.15)}`,
               flexShrink: 0,
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-              '&:hover': {
-                transform: 'scale(1.06)',
-                boxShadow: `0 0 16px ${alpha(accentColor, 0.2)}`,
-              },
             }}
           >
             {step === 'success' ? (
-              <CheckCircle sx={{ color: '#57F287', fontSize: 22 }} />
+              <CheckCircle sx={{ color: '#57F287', fontSize: 20 }} />
             ) : (
-              <img src={discordIcon} alt="" style={{ width: 22, height: 22 }} />
+              <img src={discordIcon} alt="" style={{ width: 20, height: 20 }} />
             )}
           </Box>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                fontSize: '1.1rem',
-                letterSpacing: '-0.01em',
-                lineHeight: 1.3,
-              }}
-            >
+            <Typography sx={{ fontWeight: 700, fontSize: '1rem', lineHeight: 1.3 }}>
               {step === 'success' ? 'Published!' : 'Publish to Discord'}
             </Typography>
             {step === 'select' && (
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.72rem' }}>
                 Select a server to post your roster
               </Typography>
             )}
@@ -1053,7 +996,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   Post to Channel
                 </Typography>
 
-                <FormControl fullWidth size="small" sx={glassInputSx}>
+                <FormControl fullWidth size="small" sx={inputSx}>
                   <InputLabel>Channel</InputLabel>
                   <Select
                     value={selectedChannelId}
@@ -1104,7 +1047,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     onChange={(e) => setChannelNameOverride(e.target.value)}
                     fullWidth
                     size="small"
-                    sx={{ mt: 1.25, ...glassInputSx }}
+                    sx={{ mt: 1.25, ...inputSx }}
                     helperText="Override the auto-generated channel name"
                   />
                 )}
@@ -1143,7 +1086,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 </Typography>
 
                 {/* Trial selector */}
-                <FormControl fullWidth size="small" sx={{ mb: 1.25, ...glassInputSx }}>
+                <FormControl fullWidth size="small" sx={{ mb: 1.25, ...inputSx }}>
                   <InputLabel>Trial</InputLabel>
                   <Select
                     value={selectedTrialId}
@@ -1574,13 +1517,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       <DialogActions
         sx={{
           px: { xs: 2.5, sm: 3 },
-          py: 2,
+          py: 1.5,
           borderTop: panelBorder,
-          background: isDark
-            ? `linear-gradient(180deg, ${alpha('#0f172a', 0.6)} 0%, ${alpha('#0b1220', 0.8)} 100%)`
-            : alpha('#f8fafc', 0.6),
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
           gap: 1.5,
         }}
       >
@@ -1630,13 +1568,11 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 fontWeight: 600,
                 fontSize: '0.82rem',
                 px: 2.5,
-                background: accentGradient,
-                boxShadow: `0 4px 16px ${alpha(accentColor, 0.3)}`,
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                background: `linear-gradient(135deg, ${accent} 0%, #4752C4 100%)`,
+                boxShadow: `0 4px 12px ${alpha(accent, 0.2)}`,
                 '&:hover': {
-                  background: `linear-gradient(135deg, ${alpha(accentColor, 0.9)} 0%, ${alpha(accentColorAlt, 0.9)} 100%)`,
-                  boxShadow: `0 6px 24px ${alpha(accentColor, 0.4)}`,
-                  transform: 'translateY(-1px)',
+                  background: 'linear-gradient(135deg, #6973F5 0%, #5865F2 100%)',
+                  boxShadow: `0 6px 16px ${alpha(accent, 0.3)}`,
                 },
                 '&.Mui-disabled': {
                   background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
@@ -1655,13 +1591,11 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
             sx={{
               borderRadius: '10px',
               fontSize: '0.82rem',
-              borderColor: alpha(accentColor, 0.25),
-              color: accentColor,
-              backdropFilter: 'blur(6px)',
-              WebkitBackdropFilter: 'blur(6px)',
+              borderColor: alpha(accent, 0.25),
+              color: accent,
               '&:hover': {
-                borderColor: accentColor,
-                background: alpha(accentColor, 0.06),
+                borderColor: accent,
+                background: alpha(accent, 0.06),
               },
             }}
           >
