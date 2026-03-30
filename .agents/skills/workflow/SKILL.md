@@ -96,18 +96,19 @@ Examples of valid names:
 - Default is `main` unless the user says otherwise.
 - Set `$parentBranch` to the correct value now — it's needed for both the checkout and the twig dependency.
 
-### 3b — Use a worktree if the current worktree is occupied
+### 3b — Always create a new worktree (default)
 
-**Always** check whether the current worktree already has a different feature branch checked out:
+**Always create a new worktree** unless the user explicitly requests in-place checkout. This keeps the main worktree on `main` and available for parallel work.
 
 ```powershell
 $currentBranch = git rev-parse --abbrev-ref HEAD
-$isOccupied = ($currentBranch -ne 'main') -and ($currentBranch -ne $newBranch)
+# Default: always use a worktree. Only skip if the user explicitly asked for in-place checkout.
+$useWorktree = $true
+# No worktree needed if we're already on the correct branch
+if ($currentBranch -eq $newBranch) { $useWorktree = $false }
 ```
 
-**If the current worktree is occupied** (`$isOccupied -eq $true`):
-- Create a **new worktree** for the new branch instead of switching in-place
-- This avoids displacing the existing work on `$currentBranch`
+**If `$useWorktree` is `$true`** (the default):
 
 ```powershell
 $worktreeRoot = "..\eso-log-aggregator-worktrees"
@@ -139,10 +140,11 @@ if ($LASTEXITCODE -ne 0) {
 - Use the next available port pair for the dev server (see CLAUDE.md — Worktree Port Allocation)
 - Proceed to Step 4
 
-**If the current worktree is `main` or the target branch** (not occupied):
+**If the user explicitly requested in-place checkout** (and `$useWorktree` was set to `$false`):
 - Use the standard in-place checkout (Step 3c below)
+- This should be rare — only when the user says something like "just checkout here" or "use this worktree"
 
-### 3c — Create the branch in-place (only when worktree is not occupied)
+### 3c — Create the branch in-place (only when user explicitly requests it)
 
 ```powershell
 $parentBranch = "main"  # or the feature branch name if stacking
