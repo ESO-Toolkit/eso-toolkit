@@ -791,14 +791,8 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             background: 'transparent !important',
             backgroundColor: 'transparent !important',
           },
-          '.MuiDialog-root.glass-dialog > .MuiDialog-container > .MuiDialog-paper.MuiDialog-paper':
-            {
-              background: 'unset !important',
-              backgroundColor: 'unset !important',
-              border: 'unset !important',
-              borderRadius: 'unset !important',
-              boxShadow: 'unset !important',
-            },
+          // Note: MuiPaper component styleOverrides (no !important) are
+          // overridden by slotProps.paper.sx in glass-dialog components.
           // Force MenuItem text colors globally with highest specificity
           '.MuiMenuItem-root': {
             color: `${darkMode ? '#e5e7eb' : '#1e293b'} !important`,
