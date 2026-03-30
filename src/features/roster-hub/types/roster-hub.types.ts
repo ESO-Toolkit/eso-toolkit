@@ -44,7 +44,7 @@ export interface RosterHubFilters {
   search: string; // '' = no text filter (client-side)
 }
 
-export const PRESET_TAGS = ['normal', 'vet', 'hm', 'sweaty', 'fun', 'score-push'] as const;
+export const PRESET_TAGS = ['normal', 'vet', 'hm', 'trainer', 'score-push', 'farm'] as const;
 
 export type PresetTag = (typeof PRESET_TAGS)[number];
 
@@ -53,9 +53,9 @@ export const TAG_COLORS: Record<string, string> = {
   normal: '#22c55e', // green
   vet: '#f97316', // orange
   hm: '#ef4444', // red
-  sweaty: '#ec4899', // pink
-  fun: '#a855f7', // purple
+  trainer: '#60a5fa', // sky blue
   'score-push': '#eab308', // gold
+  farm: '#14b8a6', // teal
 };
 
 // ─── Comments ──────────────────────────────────────────────────────────────

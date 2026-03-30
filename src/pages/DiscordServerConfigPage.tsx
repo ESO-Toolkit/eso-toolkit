@@ -238,13 +238,31 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
 }) => (
   <Box
     sx={{
+      position: 'relative',
       background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
       border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
       borderRadius: 2.5,
       p: 2.5,
-      transition: 'border-color 0.2s ease',
+      transition: 'all 0.25s ease',
+      overflow: 'hidden',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        width: 3,
+        height: 0,
+        borderRadius: '0 3px 3px 0',
+        background: 'linear-gradient(180deg, #5865F2 0%, #4752C4 100%)',
+        transition: 'height 0.25s ease',
+      },
       '&:hover': {
-        borderColor: isDark ? 'rgba(88,101,242,0.2)' : 'rgba(88,101,242,0.15)',
+        borderColor: isDark ? 'rgba(88,101,242,0.25)' : 'rgba(88,101,242,0.2)',
+        background: isDark ? 'rgba(88,101,242,0.04)' : 'rgba(88,101,242,0.02)',
+        '&::before': {
+          height: '60%',
+        },
       },
     }}
   >
@@ -540,7 +558,7 @@ export const DiscordServerConfigPage: React.FC = () => {
 
   // Get text channels grouped by category
   const categories = channels.filter((c) => c.type === 4);
-  const textChannels = channels.filter((c) => c.type === 0);
+  // textChannels removed — category-based auto-create is the primary flow
 
   // Filter guilds by search
   const filteredGuilds = useMemo(() => {
@@ -835,7 +853,7 @@ export const DiscordServerConfigPage: React.FC = () => {
 
   // ── Render: Config panel ─────────────────────────────────────────────────
 
-  const channelPreview = !defaultChannelId ? previewChannelName(namePattern, timezone) : null;
+  const channelPreview = previewChannelName(namePattern, timezone);
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
@@ -975,105 +993,82 @@ export const DiscordServerConfigPage: React.FC = () => {
               </Collapse>
             )}
 
-            {/* Default Posting Channel */}
+            {/* Default Category */}
             <ConfigSection
               icon={<TagIcon sx={{ color: '#5865F2', fontSize: 18 }} />}
-              title="Posting Channel"
-              description="Where rosters get posted. Leave empty to auto-create a channel per roster."
+              title="Roster Category"
+              description="New channels are auto-created inside this category when rosters are published."
               isDark={isDark}
               badge={
-                defaultChannelId ? (
-                  <Chip
-                    label="Fixed channel"
-                    size="small"
-                    sx={{
-                      fontSize: '0.65rem',
-                      height: 18,
-                      bgcolor: 'rgba(88,101,242,0.1)',
-                      color: '#5865F2',
-                    }}
-                  />
-                ) : (
-                  <Chip
-                    label="Auto-create"
-                    size="small"
-                    sx={{
-                      fontSize: '0.65rem',
-                      height: 18,
-                      bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-                      color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-                    }}
-                  />
-                )
+                <Chip
+                  label="Auto-create"
+                  size="small"
+                  sx={{
+                    fontSize: '0.65rem',
+                    height: 18,
+                    background: isDark
+                      ? 'linear-gradient(135deg, rgba(88,101,242,0.15), rgba(88,101,242,0.08))'
+                      : 'rgba(88,101,242,0.08)',
+                    color: '#5865F2',
+                    border: '1px solid rgba(88,101,242,0.15)',
+                  }}
+                />
               }
             >
               <FormControl fullWidth size="small">
-                <InputLabel>Channel</InputLabel>
+                <InputLabel>Category</InputLabel>
                 <Select
-                  value={defaultChannelId}
-                  label="Channel"
-                  onChange={(e: SelectChangeEvent) => setDefaultChannelId(e.target.value)}
+                  value={defaultCategoryId}
+                  label="Category"
+                  onChange={(e: SelectChangeEvent) => setDefaultCategoryId(e.target.value)}
                 >
                   <MenuItem value="">
-                    <em>Auto-create channels</em>
+                    <em>No category (server root)</em>
                   </MenuItem>
-                  {categories.length > 0
-                    ? categories.map((cat) => [
-                        <MenuItem
-                          key={`cat-${cat.id}`}
-                          disabled
-                          sx={{
-                            fontWeight: 700,
-                            fontSize: '0.75rem',
-                            textTransform: 'uppercase',
-                            color: 'text.secondary',
-                            opacity: '0.7 !important',
-                            mt: 0.5,
-                          }}
-                        >
-                          {cat.name}
-                        </MenuItem>,
-                        ...textChannels
-                          .filter((ch) => ch.parent_id === cat.id)
-                          .map((ch) => (
-                            <MenuItem key={ch.id} value={ch.id} sx={{ pl: 3 }}>
-                              # {ch.name}
-                            </MenuItem>
-                          )),
-                      ])
-                    : textChannels.map((ch) => (
-                        <MenuItem key={ch.id} value={ch.id}>
-                          # {ch.name}
-                        </MenuItem>
-                      ))}
+                  {categories.map((cat) => {
+                    const isOpenRuns = /open\s*runs/i.test(cat.name);
+                    return (
+                      <MenuItem key={cat.id} value={cat.id}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                          <span>{cat.name}</span>
+                          {isOpenRuns && (
+                            <Chip
+                              label="Detected"
+                              size="small"
+                              sx={{
+                                height: 18,
+                                fontSize: '0.6rem',
+                                fontWeight: 700,
+                                ml: 'auto',
+                                background: 'linear-gradient(135deg, rgba(34,197,94,0.25), rgba(34,197,94,0.1))',
+                                border: '1px solid rgba(34,197,94,0.3)',
+                                color: '#22c55e',
+                                '& .MuiChip-label': { px: 0.75 },
+                              }}
+                            />
+                          )}
+                        </Box>
+                      </MenuItem>
+                    );
+                  })}
                 </Select>
               </FormControl>
 
-              {/* Default category for auto-created channels */}
-              {!defaultChannelId && (
-                <FormControl fullWidth size="small" sx={{ mt: 1.5 }}>
-                  <InputLabel>Category for new channels</InputLabel>
-                  <Select
-                    value={defaultCategoryId}
-                    label="Category for new channels"
-                    onChange={(e: SelectChangeEvent) => setDefaultCategoryId(e.target.value)}
-                  >
-                    <MenuItem value="">
-                      <em>No category</em>
-                    </MenuItem>
-                    {categories.map((cat) => (
-                      <MenuItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              )}
+              <Typography
+                variant="caption"
+                sx={{
+                  display: 'block',
+                  mt: 1,
+                  color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+                  fontSize: '0.68rem',
+                }}
+              >
+                The bot creates a new channel per roster inside this category. If none is set, it auto-detects a category named &ldquo;Open Runs&rdquo;.
+              </Typography>
             </ConfigSection>
 
             {/* Channel Name Pattern */}
-            {!defaultChannelId && (
-              <ConfigSection
+            <ConfigSection
                 icon={<TextFields sx={{ color: '#5865F2', fontSize: 18 }} />}
                 title="Channel Name Pattern"
                 description="Template for auto-created channel names. Click tokens to insert them."
@@ -1112,38 +1107,42 @@ export const DiscordServerConfigPage: React.FC = () => {
                 {channelPreview && (
                   <Box
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
                       px: 1.5,
                       py: 1,
-                      borderRadius: 1.5,
-                      bgcolor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.04)',
+                      borderRadius: '8px',
+                      bgcolor: isDark ? 'rgba(88,101,242,0.06)' : 'rgba(88,101,242,0.04)',
                       border: isDark
-                        ? '1px solid rgba(255,255,255,0.06)'
-                        : '1px solid rgba(0,0,0,0.06)',
+                        ? '1px solid rgba(88,101,242,0.15)'
+                        : '1px solid rgba(88,101,242,0.1)',
                     }}
                   >
                     <Typography
                       variant="caption"
-                      sx={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}
+                      sx={{
+                        display: 'block',
+                        mb: 0.25,
+                        fontSize: '0.6rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                      }}
                     >
-                      Preview:
+                      Channel name preview
                     </Typography>
                     <Typography
-                      variant="caption"
+                      variant="body2"
                       sx={{
                         fontFamily: 'monospace',
                         fontWeight: 600,
-                        color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)',
+                        fontSize: '0.85rem',
+                        color: isDark ? '#bcc5f0' : '#4752C4',
                       }}
                     >
-                      #{channelPreview || 'roster'}
+                      # {channelPreview || 'roster'}
                     </Typography>
                   </Box>
                 )}
               </ConfigSection>
-            )}
 
             {/* Server Timezone */}
             <ConfigSection

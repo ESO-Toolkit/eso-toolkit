@@ -1,4 +1,4 @@
-import { PublishRounded } from '@mui/icons-material';
+import { Add as AddIcon, PublishRounded } from '@mui/icons-material';
 import {
   Alert,
   alpha,
@@ -45,7 +45,7 @@ const MAX_TAGS = 5;
 
 type Difficulty = 'vet' | 'normal';
 const DIFFICULTY_TAGS: Difficulty[] = ['normal', 'vet'];
-const EXTRA_PRESET_TAGS = ['sweaty', 'fun', 'score-push'] as const;
+const EXTRA_PRESET_TAGS = ['trainer', 'score-push', 'farm'] as const;
 
 export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   open,
@@ -65,6 +65,8 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   const [hmEnabled, setHmEnabled] = React.useState(false);
   const [extraTags, setExtraTags] = React.useState<string[]>([]);
   const [tagInput, setTagInput] = React.useState('');
+  const [addingCustom, setAddingCustom] = React.useState(false);
+  const customInputRef = React.useRef<HTMLInputElement>(null);
   const [isAnonymous, setIsAnonymous] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -186,10 +188,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   // ── Panel tokens (matching PlayerCardModal info modal) ──────────────
   const accent = '#38bdf8';
 
-  const panelBorder = isDark
-    ? '1px solid rgba(255, 255, 255, 0.15)'
-    : '1px solid rgba(0, 0, 0, 0.08)';
-
   const inputSx = {
     '& .MuiOutlinedInput-root': {
       fontSize: 13,
@@ -220,16 +218,18 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       maxWidth="sm"
       fullWidth
       disableEscapeKeyDown={loading}
+      className="glass-dialog"
       PaperProps={{
         sx: {
           background: isDark
-            ? 'linear-gradient(135deg, rgba(15,23,42,0.97), rgba(30,41,59,0.97))'
+            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
             : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '24px',
-          border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(0, 0, 0, 0.08)',
+          backgroundColor: 'transparent',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '20px',
+          border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
           boxShadow: isDark
-            ? '0 8px 32px rgba(0,0,0,0.37), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2)'
+            ? '0 8px 30px rgba(0,0,0,0.25)'
             : '0 4px 12px rgba(15,23,42,0.06)',
           maxHeight: '90vh',
         },
@@ -239,7 +239,9 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         sx={{
           py: 2,
           px: { xs: 2.5, sm: 3 },
-          borderBottom: panelBorder,
+          borderBottom: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+          background: 'transparent',
+          color: isDark ? '#e5e7eb' : '#1e293b',
         }}
       >
         <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -276,7 +278,10 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           flexDirection: 'column',
           gap: 2,
           px: { xs: 2.5, sm: 3 },
-          py: 2.5,
+          '&&': { pt: 3 },
+          pb: 2.5,
+          background: 'transparent',
+          color: isDark ? '#e5e7eb' : '#1e293b',
         }}
       >
         <TextField
@@ -347,195 +352,306 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
             Tags ({selectedTags.length}/{MAX_TAGS}){atTagLimit ? ' — limit reached' : ''}
           </Typography>
 
-          {/* Difficulty toggle group */}
-          <Stack direction="row" spacing={0.75}>
-            {DIFFICULTY_TAGS.map((d) => {
-              const isActive = difficulty === d;
-              const accent = TAG_COLORS[d];
-              return (
-                <Box key={d} sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-                  <Chip
-                    label={d === 'vet' ? 'Veteran' : 'Normal'}
-                    size="small"
-                    variant={isActive ? 'filled' : 'outlined'}
-                    onClick={() => handleDifficultyChange(d)}
+          {/* ── Unified chip flow: difficulty toggle → presets → selected → +custom ── */}
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, alignItems: 'center' }}>
+            {/* ── Segmented difficulty toggle ── */}
+            {(() => {
+              const cNorm = TAG_COLORS.normal;
+              const cVet = TAG_COLORS.vet;
+              const cHm = TAG_COLORS.hm;
+              const segBtn = (
+                label: string,
+                isActive: boolean,
+                color: string,
+                onClick: () => void,
+                pos: 'left' | 'mid' | 'right' | 'solo',
+              ) => {
+                const radiusMap = {
+                  left: '20px 0 0 20px',
+                  mid: '0',
+                  right: '0 20px 20px 0',
+                  solo: '20px',
+                };
+                return (
+                  <Box
+                    key={label}
+                    onClick={onClick}
                     sx={{
-                      fontWeight: 700,
-                      fontSize: '0.75rem',
-                      height: 28,
+                      px: 1.5,
+                      py: 0.5,
                       cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                      ...(isActive
-                        ? {
-                            bgcolor: accent,
-                            color: '#fff',
-                            borderColor: accent,
-                            boxShadow: `0 0 12px ${accent}40`,
-                            '&:hover': { bgcolor: accent, filter: 'brightness(0.85)' },
-                          }
-                        : {
-                            borderColor: `${accent}44`,
-                            color: accent,
-                            backdropFilter: 'blur(6px)',
-                            '&:hover': { bgcolor: `${accent}15`, borderColor: `${accent}88` },
-                          }),
-                      ...(d === 'vet' && isActive
-                        ? { borderTopRightRadius: 0, borderBottomRightRadius: 0 }
-                        : {}),
+                      fontWeight: 700,
+                      fontSize: '0.72rem',
+                      letterSpacing: '0.03em',
+                      textTransform: 'uppercase',
+                      borderRadius: radiusMap[pos],
+                      position: 'relative',
+                      zIndex: isActive ? 2 : 1,
+                      userSelect: 'none',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      color: isActive ? color : isDark ? `${color}90` : `${color}80`,
+                      background: isActive
+                        ? `linear-gradient(135deg, ${color}35 0%, ${color}20 50%, ${color}10 100%)`
+                        : 'transparent',
+                      boxShadow: isActive
+                        ? isDark
+                          ? `0 0 16px ${color}25, inset 0 1px 0 rgba(255,255,255,0.1)`
+                          : `0 0 8px ${color}18`
+                        : 'none',
+                      textShadow: isActive && isDark ? `0 0 12px ${color}50` : 'none',
+                      '&:hover': {
+                        color,
+                        background: isActive
+                          ? `linear-gradient(135deg, ${color}40 0%, ${color}25 50%, ${color}14 100%)`
+                          : `linear-gradient(135deg, ${color}18 0%, ${color}0a 100%)`,
+                        ...(isActive
+                          ? {
+                              boxShadow: isDark
+                                ? `0 0 20px ${color}35, inset 0 1px 0 rgba(255,255,255,0.15)`
+                                : `0 0 12px ${color}25`,
+                            }
+                          : {}),
+                      },
+                    }}
+                  >
+                    {label}
+                  </Box>
+                );
+              };
+              const showHm = difficulty === 'vet';
+              return (
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    height: 30,
+                    borderRadius: '20px',
+                    border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
+                    background: isDark
+                      ? 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)'
+                      : 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)',
+                    backdropFilter: 'blur(8px)',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: isDark
+                      ? '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
+                      : '0 1px 4px rgba(0,0,0,0.06)',
+                  }}
+                >
+                  {segBtn('Normal', difficulty === 'normal', cNorm, () => handleDifficultyChange('normal'), 'left')}
+                  {/* Divider line */}
+                  <Box
+                    sx={{
+                      width: '1px',
+                      height: 16,
+                      background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                      flexShrink: 0,
                     }}
                   />
-                  {d === 'vet' && isActive && (
-                    <Chip
-                      label="HM"
-                      size="small"
-                      variant={hmEnabled ? 'filled' : 'outlined'}
-                      onClick={() => setHmEnabled((prev) => !prev)}
-                      sx={{
-                        fontWeight: 700,
-                        fontSize: '0.7rem',
-                        height: 28,
-                        cursor: 'pointer',
-                        borderTopLeftRadius: 0,
-                        borderBottomLeftRadius: 0,
-                        ml: '-1px',
-                        transition: 'all 0.15s ease',
-                        ...(hmEnabled
-                          ? {
-                              bgcolor: TAG_COLORS.hm,
-                              color: '#fff',
-                              borderColor: TAG_COLORS.hm,
-                              boxShadow: `0 0 12px ${TAG_COLORS.hm}40`,
-                              '&:hover': { bgcolor: TAG_COLORS.hm, filter: 'brightness(0.85)' },
-                            }
-                          : {
-                              borderColor: `${TAG_COLORS.hm}44`,
-                              color: TAG_COLORS.hm,
-                              '&:hover': {
-                                bgcolor: `${TAG_COLORS.hm}15`,
-                                borderColor: `${TAG_COLORS.hm}88`,
-                              },
-                            }),
-                      }}
-                    />
+                  {segBtn('Veteran', difficulty === 'vet', cVet, () => handleDifficultyChange('vet'), showHm ? 'mid' : 'right')}
+                  {showHm && (
+                    <>
+                      <Box
+                        sx={{
+                          width: '1px',
+                          height: 16,
+                          background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                          flexShrink: 0,
+                        }}
+                      />
+                      {segBtn('HM', hmEnabled, cHm, () => setHmEnabled((prev) => !prev), 'right')}
+                    </>
                   )}
                 </Box>
               );
-            })}
-          </Stack>
+            })()}
 
-          {/* Selected tags + freeform input */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              gap: 0.5,
-              p: 0.75,
-              mt: 1,
-              borderRadius: '8px',
-              border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)',
-              bgcolor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
-              minHeight: 36,
-              transition: 'border-color 0.2s ease',
-              '&:focus-within': {
-                borderColor: isDark ? 'rgba(56,189,248,0.4)' : 'rgba(56,189,248,0.5)',
-              },
-            }}
-          >
-            {selectedTags.map((tag) => {
-              const accent = TAG_COLORS[tag] ?? undefined;
+            {/* Divider dot */}
+            <Box
+              sx={{
+                width: 3,
+                height: 3,
+                borderRadius: '50%',
+                bgcolor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+              }}
+            />
+
+            {/* Preset tag suggestions (not yet selected) */}
+            {EXTRA_PRESET_TAGS.filter((tag) => !extraTags.includes(tag)).map((tag) => {
+              const isDisabled = atTagLimit;
+              const c = TAG_COLORS[tag] ?? '#888';
               return (
                 <Chip
                   key={tag}
                   label={tag}
                   size="small"
-                  onDelete={() => removeTag(tag)}
+                  onClick={isDisabled ? undefined : () => addTag(tag)}
                   sx={{
                     fontWeight: 600,
-                    fontSize: '0.7rem',
-                    height: 24,
-                    ...(accent
-                      ? {
-                          bgcolor: `${accent}cc`,
-                          color: '#fff',
-                          boxShadow: `0 0 8px ${accent}30`,
-                          '& .MuiChip-deleteIcon': { color: 'rgba(255,255,255,0.65)' },
-                          '& .MuiChip-deleteIcon:hover': { color: '#fff' },
-                        }
+                    fontSize: '0.68rem',
+                    height: 26,
+                    borderRadius: '28px',
+                    cursor: isDisabled ? 'default' : 'pointer',
+                    opacity: isDisabled ? 0.3 : 1,
+                    transition: 'all 0.3s ease',
+                    background: isDark
+                      ? `linear-gradient(135deg, ${c}12 0%, ${c}08 100%)`
+                      : `linear-gradient(135deg, ${c}0a 0%, ${c}05 100%)`,
+                    border: `1px solid ${c}30`,
+                    color: c,
+                    backdropFilter: 'blur(6px)',
+                    '& .MuiChip-label': { opacity: 0.7 },
+                    '&:hover': isDisabled
+                      ? {}
                       : {
-                          bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-                        }),
+                          background: isDark
+                            ? `linear-gradient(135deg, ${c}28 0%, ${c}18 100%)`
+                            : `linear-gradient(135deg, ${c}1a 0%, ${c}0d 100%)`,
+                          borderColor: `${c}55`,
+                          boxShadow: `0 2px 8px ${c}1a`,
+                          transform: 'translateY(-1px)',
+                          '& .MuiChip-label': { opacity: 1 },
+                        },
                   }}
                 />
               );
             })}
-            {!atTagLimit && (
-              <TextField
-                size="small"
-                variant="standard"
-                placeholder="Add a tag…"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value.replace(/,/g, ''))}
-                onKeyDown={handleTagInputKeyDown}
-                slotProps={{
-                  htmlInput: { maxLength: 30 },
-                  input: {
-                    disableUnderline: true,
-                    sx: {
-                      fontSize: '0.8rem',
-                      py: 0.25,
-                      color: isDark ? 'rgba(255,255,255,0.7)' : undefined,
+
+            {/* "+ Custom" chip / inline input */}
+            {!atTagLimit &&
+              (addingCustom ? (
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    height: 26,
+                    borderRadius: '28px',
+                    border: isDark
+                      ? '1px solid rgba(56, 189, 248, 0.4)'
+                      : '1px solid rgba(56, 189, 248, 0.5)',
+                    background: isDark
+                      ? 'linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(56,189,248,0.06) 100%)'
+                      : 'linear-gradient(135deg, rgba(56,189,248,0.08) 0%, rgba(56,189,248,0.03) 100%)',
+                    boxShadow: isDark
+                      ? '0 0 12px rgba(56,189,248,0.15)'
+                      : '0 0 8px rgba(56,189,248,0.1)',
+                    px: 1.25,
+                    gap: 0.5,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <AddIcon sx={{ fontSize: 14, color: accent, opacity: 0.6 }} />
+                  <input
+                    ref={customInputRef}
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value.replace(/,/g, ''))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ',') {
+                        e.preventDefault();
+                        addTag(tagInput);
+                        setTagInput('');
+                      } else if (e.key === 'Escape') {
+                        setTagInput('');
+                        setAddingCustom(false);
+                      }
+                    }}
+                    onBlur={() => {
+                      if (tagInput.trim()) {
+                        addTag(tagInput);
+                      }
+                      setTagInput('');
+                      setAddingCustom(false);
+                    }}
+                    placeholder="type & enter"
+                    maxLength={30}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      color: isDark ? '#e5e7eb' : '#1e293b',
+                      fontSize: '0.72rem',
+                      fontWeight: 500,
+                      width: 90,
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                </Box>
+              ) : (
+                <Chip
+                  icon={<AddIcon sx={{ fontSize: 15 }} />}
+                  label="Custom"
+                  size="small"
+                  onClick={() => {
+                    setAddingCustom(true);
+                    setTimeout(() => customInputRef.current?.focus(), 0);
+                  }}
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: '0.68rem',
+                    height: 26,
+                    borderRadius: '28px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    background: isDark
+                      ? 'linear-gradient(135deg, rgba(56,189,248,0.10) 0%, rgba(56,189,248,0.05) 100%)'
+                      : 'linear-gradient(135deg, rgba(56,189,248,0.06) 0%, rgba(56,189,248,0.02) 100%)',
+                    border: isDark
+                      ? '1px dashed rgba(56,189,248,0.3)'
+                      : '1px dashed rgba(56,189,248,0.35)',
+                    color: isDark ? 'rgba(56,189,248,0.7)' : 'rgba(56,189,248,0.8)',
+                    '& .MuiChip-icon': {
+                      color: isDark ? 'rgba(56,189,248,0.5)' : 'rgba(56,189,248,0.6)',
                     },
-                  },
-                }}
-                sx={{ flex: 1, minWidth: 80 }}
-              />
-            )}
+                    '&:hover': {
+                      background: isDark
+                        ? 'linear-gradient(135deg, rgba(56,189,248,0.20) 0%, rgba(56,189,248,0.10) 100%)'
+                        : 'linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(56,189,248,0.06) 100%)',
+                      borderColor: isDark ? 'rgba(56,189,248,0.5)' : 'rgba(56,189,248,0.6)',
+                      color: accent,
+                      boxShadow: '0 2px 8px rgba(56,189,248,0.15)',
+                      transform: 'translateY(-1px)',
+                      '& .MuiChip-icon': { color: accent },
+                    },
+                  }}
+                />
+              ))}
           </Box>
 
-          {/* Extra preset suggestions */}
-          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mt: 0.75 }}>
-            {EXTRA_PRESET_TAGS.map((tag) => {
-              const isSelected = extraTags.includes(tag);
-              const isDisabled = isSelected || atTagLimit;
-              const accent = TAG_COLORS[tag] ?? '#888';
-              return (
-                <Tooltip
-                  key={tag}
-                  title={
-                    isSelected
-                      ? 'Already added'
-                      : isDisabled
-                        ? `Remove a tag first (max ${MAX_TAGS})`
-                        : `Add "${tag}"`
-                  }
-                >
-                  <span>
-                    <Chip
-                      label={tag}
-                      size="small"
-                      variant="outlined"
-                      onClick={isDisabled ? undefined : () => addTag(tag)}
-                      sx={{
-                        fontWeight: 600,
-                        fontSize: '0.65rem',
-                        height: 22,
-                        cursor: isDisabled ? 'default' : 'pointer',
-                        opacity: isDisabled ? 0.35 : 1,
-                        transition: 'all 0.15s ease',
-                        borderColor: `${accent}44`,
-                        color: accent,
-                        backdropFilter: 'blur(4px)',
-                        '&:hover': isDisabled
-                          ? {}
-                          : { bgcolor: `${accent}15`, borderColor: `${accent}88` },
-                      }}
-                    />
-                  </span>
-                </Tooltip>
-              );
-            })}
-          </Stack>
+          {/* ── Selected tags (removable) ── */}
+          {selectedTags.length > 0 && (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
+              {selectedTags.map((tag) => {
+                const c = TAG_COLORS[tag] ?? (isDark ? '#94a3b8' : '#64748b');
+                return (
+                  <Chip
+                    key={tag}
+                    label={tag}
+                    size="small"
+                    onDelete={() => removeTag(tag)}
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: '0.7rem',
+                      height: 26,
+                      borderRadius: '28px',
+                      background: `linear-gradient(135deg, ${c}40 0%, ${c}26 50%, ${c}14 100%)`,
+                      border: `1px solid ${c}4d`,
+                      color: c,
+                      boxShadow: isDark
+                        ? `0 2px 8px ${c}25, inset 0 1px 0 rgba(255,255,255,0.1)`
+                        : `0 1px 4px ${c}20`,
+                      '& .MuiChip-label': {
+                        textShadow: isDark ? `0 0 8px ${c}40` : 'none',
+                      },
+                      '& .MuiChip-deleteIcon': {
+                        color: `${c}80`,
+                        '&:hover': { color: c },
+                      },
+                    }}
+                  />
+                );
+              })}
+            </Box>
+          )}
         </Box>
 
         <FormControlLabel
@@ -574,7 +690,9 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         sx={{
           px: { xs: 2.5, sm: 3 },
           py: 1.5,
-          borderTop: panelBorder,
+          borderTop: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+          background: 'transparent',
+          color: isDark ? '#e5e7eb' : '#1e293b',
           gap: 1.5,
         }}
       >

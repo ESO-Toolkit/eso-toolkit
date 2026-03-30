@@ -12,6 +12,7 @@
 
 import { now as dateNow, toCalendarDateTime, type CalendarDateTime } from '@internationalized/date';
 import {
+  Add as AddIcon,
   ArrowBack,
   CheckCircle,
   Launch as LaunchIcon,
@@ -64,12 +65,13 @@ const DISCORD_BOT_API_URL =
   'https://eso-toolkit-discord-bot.eso-toolkit.workers.dev';
 
 const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{tag}-{trainer}';
+const MAX_TAGS = 5;
 
 const SHORT_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
 type Difficulty = 'vet' | 'normal';
 const DIFFICULTY_TAGS: Difficulty[] = ['normal', 'vet'];
-const EXTRA_PRESET_TAGS = ['sweaty', 'fun', 'score-push'] as const;
+const EXTRA_PRESET_TAGS = ['trainer', 'score-push', 'farm'] as const;
 
 /** Trial ID → lowercase abbreviation (mirrors discord-bot/src/roster/channel-name.ts). */
 const TRIAL_ABBREVS: Record<string, string> = {
@@ -260,9 +262,9 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
   const [previousGuildIds, setPreviousGuildIds] = React.useState<Set<string>>(new Set());
   const [newGuildIds, setNewGuildIds] = React.useState<Set<string>>(new Set());
 
-  // ── Channel config (step 2) ────────────────────────────────────────────
+  // ── Category & channel config (step 2) ──────────────────────────────────
   const [channels, setChannels] = React.useState<ChannelInfo[]>([]);
-  const [selectedChannelId, setSelectedChannelId] = React.useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = React.useState('');
   const [channelNameOverride, setChannelNameOverride] = React.useState('');
   const [configLoading, setConfigLoading] = React.useState(false);
 
@@ -279,6 +281,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
     (tagsProp ?? []).filter((t) => t !== 'vet' && t !== 'normal' && t !== 'hm'),
   );
   const [tagInput, setTagInput] = React.useState('');
+  const [addingCustom, setAddingCustom] = React.useState(false);
+  const customInputRef = React.useRef<HTMLInputElement>(null);
 
   // Compose the final tags array from difficulty + hm + extras
   const selectedTags = React.useMemo(() => {
@@ -312,13 +316,9 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
   // ── Panel tokens (matching PlayerCardModal info modal) ──────────────
   const accent = '#5865F2'; // Discord blurple
 
-  const panelBorder = isDark
-    ? '1px solid rgba(255, 255, 255, 0.15)'
-    : '1px solid rgba(0, 0, 0, 0.08)';
-
   const sectionSx = {
     background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.018)',
-    border: panelBorder,
+    border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
     borderRadius: '10px',
     p: 1.5,
   };
@@ -408,7 +408,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       setNewGuildIds(new Set());
       setPublishResult(null);
       setChannels([]);
-      setSelectedChannelId('');
+      setSelectedCategoryId('');
       setChannelNameOverride('');
       setSelectedTrialId(trialIdProp ?? '');
       {
@@ -443,15 +443,19 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
         ]);
         setChannels(channelsRes.channels);
 
-        // Pre-select default channel from config
+        // Pre-select category: config default → auto-detect "Open Runs" → none
         const cfg = configRes.config;
-        setSelectedChannelId(cfg.defaultChannelId ?? '');
+        const detectedCategory =
+          cfg.defaultCategoryId ||
+          channelsRes.channels.find((c) => c.type === 4 && /open\s*runs/i.test(c.name))?.id ||
+          '';
+        setSelectedCategoryId(detectedCategory);
         setChannelNameOverride('');
         setGuildTimezone(cfg.timezone || 'America/New_York');
       } catch {
-        // Non-fatal — user can still publish without channel selection
+        // Non-fatal — user can still publish without category selection
         setChannels([]);
-        setSelectedChannelId('');
+        setSelectedCategoryId('');
       } finally {
         setConfigLoading(false);
       }
@@ -469,7 +473,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
     setStep('select');
     setSelectedGuild(null);
     setChannels([]);
-    setSelectedChannelId('');
+    setSelectedCategoryId('');
     setChannelNameOverride('');
     setError(null);
   };
@@ -491,11 +495,14 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       // Convert CalendarDateTime to ISO string using the guild's configured timezone
       const eventTimeIso = eventTime ? eventTime.toDate(guildTimezone).toISOString() : undefined;
 
+      const categoryOverride = selectedCategoryId || undefined;
+
       if (roster) {
         endpoint = `${DISCORD_BOT_API_URL}/discord/roster/publish`;
         body = {
           guildId: selectedGuild.id,
           rosterId: roster.id,
+          categoryId: categoryOverride,
           channelNameOverride: channelOverride,
           event_time: eventTimeIso,
         };
@@ -509,13 +516,11 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
           tags: selectedTags.length > 0 ? selectedTags : undefined,
           roster_data: rosterData ?? '',
           author_name: authorName ?? 'Unknown',
+          categoryId: categoryOverride,
           channelNameOverride: channelOverride,
           event_time: eventTimeIso,
         };
       }
-
-      // If a specific existing channel is selected (not auto-create), include categoryId
-      // The default channel selection is handled by server config
 
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -566,9 +571,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
     );
   };
 
-  // ── Channel grouping ──────────────────────────────────────────────────
+  // ── Category list ─────────────────────────────────────────────────────
   const categories = channels.filter((c) => c.type === 4);
-  const textChannels = channels.filter((c) => c.type === 0);
 
   const isCloseable = !publishing && step !== 'success';
 
@@ -580,16 +584,18 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       onClose={isCloseable ? onClose : undefined}
       maxWidth="sm"
       fullWidth
+      className="glass-dialog"
       PaperProps={{
         sx: {
           background: isDark
-            ? 'linear-gradient(135deg, rgba(15,23,42,0.97), rgba(30,41,59,0.97))'
+            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
             : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '24px',
-          border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(0, 0, 0, 0.08)',
+          backgroundColor: 'transparent',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '20px',
+          border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
           boxShadow: isDark
-            ? '0 8px 32px rgba(0,0,0,0.37), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2)'
+            ? '0 8px 30px rgba(0,0,0,0.25)'
             : '0 4px 12px rgba(15,23,42,0.06)',
           maxHeight: '90vh',
         },
@@ -600,7 +606,9 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
         sx={{
           py: 2,
           px: { xs: 2.5, sm: 3 },
-          borderBottom: panelBorder,
+          borderBottom: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+          background: 'transparent',
+          color: isDark ? '#e5e7eb' : '#1e293b',
         }}
       >
         <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -655,7 +663,15 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
         </Stack>
       </DialogTitle>
 
-      <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, py: 2.5 }}>
+      <DialogContent
+        sx={{
+          px: { xs: 2.5, sm: 3 },
+          '&&': { pt: 3 },
+          pb: 2.5,
+          background: 'transparent',
+          color: isDark ? '#e5e7eb' : '#1e293b',
+        }}
+      >
         {/* ── Roster Preview (steps 1 & 2) ────────────────────────────── */}
         {step !== 'success' && (
           <Box
@@ -954,7 +970,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   color="text.secondary"
                   sx={{ display: 'block', mt: 0.5 }}
                 >
-                  Choose a channel below, or{' '}
+                  Pick the category where roster channels should be created, or{' '}
                   <Box
                     component="span"
                     onClick={() => {
@@ -975,7 +991,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
               </Box>
             )}
 
-            {/* Channel selection */}
+            {/* Category selection */}
             {configLoading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
                 <CircularProgress size={24} sx={{ color: '#5865F2' }} />
@@ -991,74 +1007,94 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     letterSpacing: '0.06em',
                     color: '#5865F2',
                     display: 'block',
+                    mb: 0.5,
+                  }}
+                >
+                  Category
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
+                    fontSize: '0.68rem',
+                    display: 'block',
                     mb: 1,
                   }}
                 >
-                  Post to Channel
+                  A new channel will be created inside this category
                 </Typography>
 
                 <FormControl fullWidth size="small" sx={inputSx}>
-                  <InputLabel>Channel</InputLabel>
+                  <InputLabel>Category</InputLabel>
                   <Select
-                    value={selectedChannelId}
-                    label="Channel"
-                    onChange={(e: SelectChangeEvent) => setSelectedChannelId(e.target.value)}
+                    value={selectedCategoryId}
+                    label="Category"
+                    onChange={(e: SelectChangeEvent) => setSelectedCategoryId(e.target.value)}
                   >
                     <MenuItem value="">
-                      <em>Auto-create new channel</em>
+                      <em>No category (server root)</em>
                     </MenuItem>
-                    {categories.length > 0
-                      ? categories.map((cat) => [
-                          <MenuItem
-                            key={`cat-${cat.id}`}
-                            disabled
-                            sx={{
-                              fontWeight: 700,
-                              fontSize: '0.72rem',
-                              textTransform: 'uppercase',
-                              color: 'text.secondary',
-                              opacity: '0.7 !important',
-                              mt: 0.5,
-                            }}
-                          >
-                            {cat.name}
-                          </MenuItem>,
-                          ...textChannels
-                            .filter((ch) => ch.parent_id === cat.id)
-                            .map((ch) => (
-                              <MenuItem key={ch.id} value={ch.id} sx={{ pl: 3 }}>
-                                # {ch.name}
-                              </MenuItem>
-                            )),
-                        ])
-                      : textChannels.map((ch) => (
-                          <MenuItem key={ch.id} value={ch.id}>
-                            # {ch.name}
-                          </MenuItem>
-                        ))}
+                    {categories.map((cat) => {
+                      const isOpenRuns = /open\s*runs/i.test(cat.name);
+                      return (
+                        <MenuItem key={cat.id} value={cat.id}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                            <span>{cat.name}</span>
+                            {isOpenRuns && (
+                              <Chip
+                                label="Detected"
+                                size="small"
+                                sx={{
+                                  height: 18,
+                                  fontSize: '0.6rem',
+                                  fontWeight: 700,
+                                  ml: 'auto',
+                                  background: 'linear-gradient(135deg, rgba(34,197,94,0.25), rgba(34,197,94,0.1))',
+                                  border: '1px solid rgba(34,197,94,0.3)',
+                                  color: '#22c55e',
+                                  '& .MuiChip-label': { px: 0.75 },
+                                }}
+                              />
+                            )}
+                          </Box>
+                        </MenuItem>
+                      );
+                    })}
                   </Select>
                 </FormControl>
 
-                {/* Channel name override — only for auto-create */}
-                {!selectedChannelId && (
-                  <TextField
-                    label="Channel name override"
-                    placeholder="Leave blank to use name pattern"
-                    value={channelNameOverride}
-                    onChange={(e) => setChannelNameOverride(e.target.value)}
-                    fullWidth
-                    size="small"
-                    sx={{ mt: 1.25, ...inputSx }}
-                    helperText="Override the auto-generated channel name"
-                  />
-                )}
+                {/* Custom channel name */}
+                <TextField
+                  label="Custom channel name"
+                  placeholder="Leave blank for auto-generated name"
+                  value={channelNameOverride}
+                  onChange={(e) => setChannelNameOverride(e.target.value)}
+                  fullWidth
+                  size="small"
+                  sx={{ mt: 1.25, ...inputSx }}
+                  helperText="Optional — overrides the server's name pattern for this roster"
+                />
               </Box>
             )}
 
             {/* Event date & time */}
             <Box sx={{ ...sectionSx, mb: 1.5 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '0.7rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  color: '#5865F2',
+                  display: 'block',
+                  mb: 1,
+                }}
+              >
+                Event Time
+              </Typography>
               <DatePicker
-                label="Event Date & Time"
+                label="Date & Time"
                 granularity="minute"
                 hourCycle={12}
                 value={eventTime}
@@ -1105,213 +1141,209 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   </Select>
                 </FormControl>
 
-                {/* Difficulty toggle */}
-                <Box sx={{ display: 'flex', gap: 0.75, mb: 1.25 }}>
-                  {DIFFICULTY_TAGS.map((d) => {
-                    const isActive = difficulty === d;
-                    const accent = TAG_COLORS[d];
-                    return (
-                      <Box key={d} sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-                        <Chip
-                          label={d === 'vet' ? 'Veteran' : 'Normal'}
-                          size="small"
-                          variant={isActive ? 'filled' : 'outlined'}
-                          onClick={() => {
-                            setDifficulty((prev) => (prev === d ? null : d));
-                            if (d !== 'vet') setHmEnabled(false);
-                          }}
+                {/* ── Unified chip flow: difficulty toggle → presets → +custom ── */}
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, alignItems: 'center', mb: selectedTags.length > 0 ? 0 : undefined }}>
+                  {/* ── Segmented difficulty toggle ── */}
+                  {(() => {
+                    const cNorm = TAG_COLORS.normal;
+                    const cVet = TAG_COLORS.vet;
+                    const cHm = TAG_COLORS.hm;
+                    const segBtn = (
+                      label: string,
+                      isActive: boolean,
+                      color: string,
+                      onClick: () => void,
+                      pos: 'left' | 'mid' | 'right' | 'solo',
+                    ) => {
+                      const radiusMap = {
+                        left: '20px 0 0 20px',
+                        mid: '0',
+                        right: '0 20px 20px 0',
+                        solo: '20px',
+                      };
+                      return (
+                        <Box
+                          key={label}
+                          onClick={onClick}
                           sx={{
-                            fontWeight: 700,
-                            fontSize: '0.75rem',
-                            height: 28,
+                            px: 1.5,
+                            py: 0.5,
                             cursor: 'pointer',
-                            transition: 'all 0.15s ease',
-                            ...(isActive
-                              ? {
-                                  bgcolor: accent,
-                                  color: '#fff',
-                                  borderColor: accent,
-                                  boxShadow: `0 0 12px ${accent}40`,
-                                  '&:hover': { bgcolor: accent, filter: 'brightness(0.85)' },
-                                }
-                              : {
-                                  borderColor: `${accent}44`,
-                                  color: accent,
-                                  backdropFilter: 'blur(6px)',
-                                  '&:hover': { bgcolor: `${accent}15`, borderColor: `${accent}88` },
-                                }),
-                            ...(d === 'vet' && isActive
-                              ? { borderTopRightRadius: 0, borderBottomRightRadius: 0 }
-                              : {}),
-                          }}
-                        />
-                        {d === 'vet' && isActive && (
-                          <Chip
-                            label="HM"
-                            size="small"
-                            variant={hmEnabled ? 'filled' : 'outlined'}
-                            onClick={() => setHmEnabled((prev) => !prev)}
-                            sx={{
-                              fontWeight: 700,
-                              fontSize: '0.7rem',
-                              height: 28,
-                              cursor: 'pointer',
-                              borderTopLeftRadius: 0,
-                              borderBottomLeftRadius: 0,
-                              ml: '-1px',
-                              transition: 'all 0.15s ease',
-                              ...(hmEnabled
+                            fontWeight: 700,
+                            fontSize: '0.72rem',
+                            letterSpacing: '0.03em',
+                            textTransform: 'uppercase',
+                            borderRadius: radiusMap[pos],
+                            position: 'relative',
+                            zIndex: isActive ? 2 : 1,
+                            userSelect: 'none',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            color: isActive ? color : isDark ? `${color}90` : `${color}80`,
+                            background: isActive
+                              ? `linear-gradient(135deg, ${color}35 0%, ${color}20 50%, ${color}10 100%)`
+                              : 'transparent',
+                            boxShadow: isActive
+                              ? isDark
+                                ? `0 0 16px ${color}25, inset 0 1px 0 rgba(255,255,255,0.1)`
+                                : `0 0 8px ${color}18`
+                              : 'none',
+                            textShadow: isActive && isDark ? `0 0 12px ${color}50` : 'none',
+                            '&:hover': {
+                              color,
+                              background: isActive
+                                ? `linear-gradient(135deg, ${color}40 0%, ${color}25 50%, ${color}14 100%)`
+                                : `linear-gradient(135deg, ${color}18 0%, ${color}0a 100%)`,
+                              ...(isActive
                                 ? {
-                                    bgcolor: TAG_COLORS.hm,
-                                    color: '#fff',
-                                    borderColor: TAG_COLORS.hm,
-                                    boxShadow: `0 0 12px ${TAG_COLORS.hm}40`,
-                                    '&:hover': {
-                                      bgcolor: TAG_COLORS.hm,
-                                      filter: 'brightness(0.85)',
-                                    },
+                                    boxShadow: isDark
+                                      ? `0 0 20px ${color}35, inset 0 1px 0 rgba(255,255,255,0.15)`
+                                      : `0 0 12px ${color}25`,
                                   }
-                                : {
-                                    borderColor: `${TAG_COLORS.hm}44`,
-                                    color: TAG_COLORS.hm,
-                                    '&:hover': {
-                                      bgcolor: `${TAG_COLORS.hm}15`,
-                                      borderColor: `${TAG_COLORS.hm}88`,
-                                    },
-                                  }),
-                            }}
-                          />
+                                : {}),
+                            },
+                          }}
+                        >
+                          {label}
+                        </Box>
+                      );
+                    };
+                    const showHm = difficulty === 'vet';
+                    return (
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          height: 30,
+                          borderRadius: '20px',
+                          border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
+                          background: isDark
+                            ? 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)'
+                            : 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)',
+                          backdropFilter: 'blur(8px)',
+                          overflow: 'hidden',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          boxShadow: isDark
+                            ? '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
+                            : '0 1px 4px rgba(0,0,0,0.06)',
+                        }}
+                      >
+                        {segBtn('Normal', difficulty === 'normal', cNorm, () => { setDifficulty((prev) => (prev === 'normal' ? null : 'normal')); setHmEnabled(false); }, 'left')}
+                        <Box sx={{ width: '1px', height: 16, background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', flexShrink: 0 }} />
+                        {segBtn('Veteran', difficulty === 'vet', cVet, () => { setDifficulty((prev) => (prev === 'vet' ? null : 'vet')); if (difficulty === 'vet') setHmEnabled(false); }, showHm ? 'mid' : 'right')}
+                        {showHm && (
+                          <>
+                            <Box sx={{ width: '1px', height: 16, background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', flexShrink: 0 }} />
+                            {segBtn('HM', hmEnabled, cHm, () => setHmEnabled((prev) => !prev), 'right')}
+                          </>
                         )}
                       </Box>
                     );
-                  })}
-                </Box>
+                  })()}
 
-                {/* Selected tags + freeform input */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                    gap: 0.5,
-                    p: 0.75,
-                    mb: 0.75,
-                    borderRadius: '8px',
-                    border: isDark
-                      ? '1px solid rgba(255,255,255,0.08)'
-                      : '1px solid rgba(0,0,0,0.08)',
-                    bgcolor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
-                    minHeight: 36,
-                    transition: 'border-color 0.2s ease',
-                    '&:focus-within': {
-                      borderColor: isDark ? 'rgba(88,101,242,0.4)' : 'rgba(88,101,242,0.5)',
-                    },
-                  }}
-                >
-                  {selectedTags.map((tag) => {
-                    const accent = TAG_COLORS[tag] ?? undefined;
+                  {/* Divider dot */}
+                  <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)' }} />
+
+                  {/* Preset suggestions (not yet selected) */}
+                  {EXTRA_PRESET_TAGS.filter((tag) => !extraTags.includes(tag)).map((tag) => {
+                    const isDisabled = selectedTags.length >= MAX_TAGS;
+                    const c = TAG_COLORS[tag] ?? '#888';
                     return (
-                      <Chip
-                        key={tag}
-                        label={tag}
-                        size="small"
-                        onDelete={() => {
-                          if (tag === 'vet' || tag === 'normal') {
-                            setDifficulty(null);
-                            setHmEnabled(false);
-                          } else if (tag === 'hm') {
-                            setHmEnabled(false);
-                          } else {
-                            setExtraTags((prev) => prev.filter((t) => t !== tag));
-                          }
-                        }}
+                      <Chip key={tag} label={tag} size="small"
+                        onClick={isDisabled ? undefined : () => setExtraTags((prev) => [...prev, tag])}
                         sx={{
-                          fontWeight: 600,
-                          fontSize: '0.7rem',
-                          height: 24,
-                          ...(accent
-                            ? {
-                                bgcolor: `${accent}cc`,
-                                color: '#fff',
-                                boxShadow: `0 0 8px ${accent}30`,
-                                '& .MuiChip-deleteIcon': { color: 'rgba(255,255,255,0.65)' },
-                                '& .MuiChip-deleteIcon:hover': { color: '#fff' },
-                              }
-                            : {
-                                bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-                              }),
+                          fontWeight: 600, fontSize: '0.68rem', height: 26, borderRadius: '28px',
+                          cursor: isDisabled ? 'default' : 'pointer', opacity: isDisabled ? 0.3 : 1,
+                          transition: 'all 0.3s ease',
+                          background: isDark ? `linear-gradient(135deg, ${c}12 0%, ${c}08 100%)` : `linear-gradient(135deg, ${c}0a 0%, ${c}05 100%)`,
+                          border: `1px solid ${c}30`, color: c, backdropFilter: 'blur(6px)',
+                          '& .MuiChip-label': { opacity: 0.7 },
+                          '&:hover': isDisabled ? {} : { background: isDark ? `linear-gradient(135deg, ${c}28 0%, ${c}18 100%)` : `linear-gradient(135deg, ${c}1a 0%, ${c}0d 100%)`, borderColor: `${c}55`, boxShadow: `0 2px 8px ${c}1a`, transform: 'translateY(-1px)', '& .MuiChip-label': { opacity: 1 } },
                         }}
                       />
                     );
                   })}
-                  <TextField
-                    size="small"
-                    variant="standard"
-                    placeholder="Add a tag…"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value.replace(/,/g, ''))}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ',') {
-                        e.preventDefault();
-                        const trimmed = tagInput.trim().toLowerCase();
-                        if (trimmed && !selectedTags.includes(trimmed)) {
-                          setExtraTags((prev) => [...prev, trimmed]);
-                        }
-                        setTagInput('');
-                      }
-                    }}
-                    slotProps={{
-                      htmlInput: { maxLength: 30 },
-                      input: {
-                        disableUnderline: true,
-                        sx: {
-                          fontSize: '0.78rem',
-                          py: 0.25,
-                          color: isDark ? 'rgba(255,255,255,0.7)' : undefined,
-                        },
-                      },
-                    }}
-                    sx={{ flex: 1, minWidth: 80 }}
-                  />
-                </Box>
 
-                {/* Extra preset suggestions */}
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {EXTRA_PRESET_TAGS.map((tag) => {
-                    const isSelected = extraTags.includes(tag);
-                    const accent = TAG_COLORS[tag] ?? '#888';
-                    return (
-                      <Chip
-                        key={tag}
-                        label={tag}
-                        size="small"
-                        variant="outlined"
-                        onClick={
-                          isSelected ? undefined : () => setExtraTags((prev) => [...prev, tag])
-                        }
+                  {/* "+ Custom" chip / inline input */}
+                  {selectedTags.length < MAX_TAGS &&
+                    (addingCustom ? (
+                      <Box sx={{
+                        display: 'inline-flex', alignItems: 'center', height: 26, borderRadius: '28px',
+                        border: isDark ? '1px solid rgba(88,101,242,0.4)' : '1px solid rgba(88,101,242,0.5)',
+                        background: isDark ? 'linear-gradient(135deg, rgba(88,101,242,0.12) 0%, rgba(88,101,242,0.06) 100%)' : 'linear-gradient(135deg, rgba(88,101,242,0.08) 0%, rgba(88,101,242,0.03) 100%)',
+                        boxShadow: isDark ? '0 0 12px rgba(88,101,242,0.15)' : '0 0 8px rgba(88,101,242,0.1)',
+                        px: 1.25, gap: 0.5, transition: 'all 0.2s ease',
+                      }}>
+                        <AddIcon sx={{ fontSize: 14, color: accent, opacity: 0.6 }} />
+                        <input ref={customInputRef} value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value.replace(/,/g, ''))}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ',') {
+                              e.preventDefault();
+                              const trimmed = tagInput.trim().toLowerCase();
+                              if (trimmed && !selectedTags.includes(trimmed)) setExtraTags((prev) => [...prev, trimmed]);
+                              setTagInput('');
+                            } else if (e.key === 'Escape') { setTagInput(''); setAddingCustom(false); }
+                          }}
+                          onBlur={() => {
+                            const trimmed = tagInput.trim().toLowerCase();
+                            if (trimmed && !selectedTags.includes(trimmed)) setExtraTags((prev) => [...prev, trimmed]);
+                            setTagInput(''); setAddingCustom(false);
+                          }}
+                          placeholder="type & enter" maxLength={30}
+                          style={{ background: 'transparent', border: 'none', outline: 'none', color: isDark ? '#e5e7eb' : '#1e293b', fontSize: '0.72rem', fontWeight: 500, width: 90, fontFamily: 'inherit' }}
+                        />
+                      </Box>
+                    ) : (
+                      <Chip icon={<AddIcon sx={{ fontSize: 15 }} />} label="Custom" size="small"
+                        onClick={() => { setAddingCustom(true); setTimeout(() => customInputRef.current?.focus(), 0); }}
                         sx={{
-                          fontWeight: 600,
-                          fontSize: '0.65rem',
-                          height: 22,
-                          cursor: isSelected ? 'default' : 'pointer',
-                          opacity: isSelected ? 0.35 : 1,
-                          transition: 'all 0.15s ease',
-                          borderColor: `${accent}44`,
-                          color: accent,
-                          backdropFilter: 'blur(4px)',
-                          '&:hover': isSelected
-                            ? {}
-                            : { bgcolor: `${accent}15`, borderColor: `${accent}88` },
+                          fontWeight: 600, fontSize: '0.68rem', height: 26, borderRadius: '28px',
+                          cursor: 'pointer', transition: 'all 0.3s ease',
+                          background: isDark ? 'linear-gradient(135deg, rgba(88,101,242,0.10) 0%, rgba(88,101,242,0.05) 100%)' : 'linear-gradient(135deg, rgba(88,101,242,0.06) 0%, rgba(88,101,242,0.02) 100%)',
+                          border: isDark ? '1px dashed rgba(88,101,242,0.3)' : '1px dashed rgba(88,101,242,0.35)',
+                          color: isDark ? 'rgba(88,101,242,0.7)' : 'rgba(88,101,242,0.8)',
+                          '& .MuiChip-icon': { color: isDark ? 'rgba(88,101,242,0.5)' : 'rgba(88,101,242,0.6)' },
+                          '&:hover': {
+                            background: isDark ? 'linear-gradient(135deg, rgba(88,101,242,0.20) 0%, rgba(88,101,242,0.10) 100%)' : 'linear-gradient(135deg, rgba(88,101,242,0.12) 0%, rgba(88,101,242,0.06) 100%)',
+                            borderColor: isDark ? 'rgba(88,101,242,0.5)' : 'rgba(88,101,242,0.6)',
+                            color: accent, boxShadow: '0 2px 8px rgba(88,101,242,0.15)', transform: 'translateY(-1px)',
+                            '& .MuiChip-icon': { color: accent },
+                          },
                         }}
                       />
-                    );
-                  })}
+                    ))}
                 </Box>
+
+                {/* ── Selected tags (removable) ── */}
+                {selectedTags.length > 0 && (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
+                    {selectedTags.map((tag) => {
+                      const c = TAG_COLORS[tag] ?? (isDark ? '#94a3b8' : '#64748b');
+                      return (
+                        <Chip key={tag} label={tag} size="small"
+                          onDelete={() => {
+                            if (tag === 'vet' || tag === 'normal') { setDifficulty(null); setHmEnabled(false); }
+                            else if (tag === 'hm') { setHmEnabled(false); }
+                            else { setExtraTags((prev) => prev.filter((t) => t !== tag)); }
+                          }}
+                          sx={{
+                            fontWeight: 600, fontSize: '0.7rem', height: 26, borderRadius: '28px',
+                            background: `linear-gradient(135deg, ${c}40 0%, ${c}26 50%, ${c}14 100%)`,
+                            border: `1px solid ${c}4d`, color: c,
+                            boxShadow: isDark ? `0 2px 8px ${c}25, inset 0 1px 0 rgba(255,255,255,0.1)` : `0 1px 4px ${c}20`,
+                            '& .MuiChip-label': { textShadow: isDark ? `0 0 8px ${c}40` : 'none' },
+                            '& .MuiChip-deleteIcon': { color: `${c}80`, '&:hover': { color: c } },
+                          }}
+                        />
+                      );
+                    })}
+                  </Box>
+                )}
               </Box>
             )}
 
             {/* Channel name preview */}
-            {!selectedChannelId &&
+            {
               (() => {
                 const guildCfg = selectedGuild ? guildConfigs[selectedGuild.id] : null;
                 const rawPattern = guildCfg?.namePattern;
@@ -1499,7 +1531,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     },
                   }}
                 >
-                  Set Up Server Defaults
+                  Configure Server Defaults
                 </Button>
               )}
             </Box>
@@ -1508,9 +1540,20 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
 
         {/* ── Error display ─────────────────────────────────────────── */}
         {error && (
-          <Typography color="error" variant="body2" sx={{ mt: 2 }}>
-            {error}
-          </Typography>
+          <Box
+            sx={{
+              mt: 2,
+              px: 1.5,
+              py: 1,
+              borderRadius: '10px',
+              bgcolor: isDark ? 'rgba(239,68,68,0.08)' : 'rgba(239,68,68,0.06)',
+              border: '1px solid rgba(239,68,68,0.2)',
+            }}
+          >
+            <Typography variant="body2" sx={{ color: '#ef4444', fontSize: '0.82rem' }}>
+              {error}
+            </Typography>
+          </Box>
         )}
       </DialogContent>
 
@@ -1519,7 +1562,9 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
         sx={{
           px: { xs: 2.5, sm: 3 },
           py: 1.5,
-          borderTop: panelBorder,
+          borderTop: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+          background: 'transparent',
+          color: isDark ? '#e5e7eb' : '#1e293b',
           gap: 1.5,
         }}
       >
