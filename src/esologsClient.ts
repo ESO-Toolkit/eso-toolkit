@@ -33,6 +33,9 @@ const logger = new Logger({
 });
 
 export class EsoLogsClient {
+  /** Guards against infinite token-refresh loops in the error link. */
+  private isRefreshingToken = false;
+
   private static readonly CACHE = new InMemoryCache({
     typePolicies: {
       Query: {
@@ -135,7 +138,18 @@ export class EsoLogsClient {
       }
 
       if (hasAuthError) {
+        // Guard: if we already refreshed for a previous auth error and the
+        // retried request still fails with an auth error, stop retrying to
+        // avoid an infinite refresh→retry→401→refresh loop.
+        if (this.isRefreshingToken) {
+          logger.error('Token refresh already attempted — aborting to prevent infinite loop');
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          return;
+        }
+
         logger.warn('Authentication error detected - attempting to refresh token');
+        this.isRefreshingToken = true;
 
         // Create a new observable that will retry the request after refreshing the token
         return new Observable((observer) => {
@@ -172,6 +186,9 @@ export class EsoLogsClient {
             .catch((err) => {
               logger.error('Error during token refresh', err);
               observer.error(err);
+            })
+            .finally(() => {
+              this.isRefreshingToken = false;
             });
         });
       }
