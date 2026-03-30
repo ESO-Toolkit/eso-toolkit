@@ -1,28 +1,25 @@
 {
-  "mcpServers": {
-    "playwright": {
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"]
-    },
-    "chrome-devtools": {
-      "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest"]
-    },
+  "servers": {
     "eso-logs-github": {
+      "type": "stdio",
       "command": "node",
       "args": ["--import", "tsx", "tools/mcp/github-server/src/index.ts"],
       "env": {
-        "GH_TOKEN": "${GH_TOKEN:-}"
+        "GH_TOKEN": "${GH_TOKEN}",
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
       }
     },
     "eso-logs-ci": {
+      "type": "stdio",
       "command": "node",
       "args": ["--import", "tsx", "tools/mcp/ci-server/src/index.ts"],
       "env": {
-        "GH_TOKEN": "${GH_TOKEN:-}"
+        "GH_TOKEN": "${GH_TOKEN}",
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
       }
     },
     "eso-logs-worktree": {
+      "type": "stdio",
       "command": "node",
       "args": ["--import", "tsx", "tools/mcp/worktree-server/src/index.ts"]
     }

@@ -25,7 +25,25 @@
       "Bash(mv:*)",
       "Bash(cp:*)",
       "Bash(python scripts/lint-skills.py:*)",
-      "Bash(node scripts/:*)"
+      "Bash(node scripts/:*)",
+      "mcp__eso-logs-github__github_list_prs",
+      "mcp__eso-logs-github__github_view_pr",
+      "mcp__eso-logs-github__github_create_pr",
+      "mcp__eso-logs-github__github_get_review_threads",
+      "mcp__eso-logs-github__github_resolve_thread",
+      "mcp__eso-logs-github__github_get_repo_info",
+      "mcp__eso-logs-ci__ci_list_runs",
+      "mcp__eso-logs-ci__ci_view_run",
+      "mcp__eso-logs-ci__ci_get_logs",
+      "mcp__eso-logs-ci__ci_search_logs",
+      "mcp__eso-logs-ci__ci_rerun",
+      "mcp__eso-logs-worktree__worktree_list",
+      "mcp__eso-logs-worktree__worktree_create",
+      "mcp__eso-logs-worktree__worktree_run",
+      "mcp__eso-logs-worktree__worktree_guard",
+      "mcp__eso-logs-worktree__worktree_push",
+      "mcp__eso-logs-worktree__worktree_status",
+      "mcp__eso-logs-worktree__worktree_diff"
     ],
     "deny": []
   }
