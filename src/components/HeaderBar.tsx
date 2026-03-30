@@ -526,7 +526,7 @@ export const HeaderBar: React.FC = () => {
       navigate(`/u/${currentUser.name}`);
     }
     setMobileAccountOpen(!mobileAccountOpen);
-  };
+  }, [currentUser?.name, navigate, mobileAccountOpen]);
 
   const handleAccountClick = (event: React.MouseEvent<HTMLElement>): void => {
     setAnchorEl(event.currentTarget);
@@ -1031,36 +1031,24 @@ export const HeaderBar: React.FC = () => {
                       '&:hover': {
                         bgcolor:
                           theme.palette.mode === 'dark'
-                            ? 'rgba(59,130,246,0.12)'
-                            : 'rgba(59,130,246,0.16)',
-                        textTransform: 'none',
-                        '&:hover': {
-                          bgcolor:
-                            theme.palette.mode === 'dark'
-                              ? 'rgba(59,130,246,0.2)'
-                              : 'rgba(59,130,246,0.24)',
-                        },
+                            ? 'rgba(59,130,246,0.2)'
+                            : 'rgba(59,130,246,0.24)',
+                      },
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 600,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: 600,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {userLabel || 'Profile'}
-                      </Typography>
-                    </Button>
-                  </Tooltip>
-                  <Tooltip title="Log out" arrow placement="bottom">
-                    <AuthIconButton onClick={handleLogout} aria-label="Log out">
-                      <Logout />
-                    </AuthIconButton>
-                  </Tooltip>
-                </>
+                      {userLabel || 'Account'}
+                    </Typography>
+                  </Button>
+                </Tooltip>
               ) : (
                 <Tooltip title="Log in" arrow placement="bottom">
                   <AuthIconButton onClick={handleLogin} aria-label="Log in">

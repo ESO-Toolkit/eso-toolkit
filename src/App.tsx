@@ -186,36 +186,6 @@ const BuildHubPage = React.lazy(() =>
   })),
 );
 
-// Generic page loading skeleton - used for lazy-loaded routes and PersistGate hydration
-const LoadingFallback: React.FC = () => (
-  <Container maxWidth="lg" sx={{ pt: 4, px: 2 }}>
-    <Skeleton variant="text" width="35%" height={52} sx={{ mb: 2, borderRadius: 1 }} />
-    <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 2, mb: 2 }} />
-    <Box sx={{ display: 'flex', gap: 2 }}>
-      <Skeleton variant="rectangular" height={160} sx={{ flex: 1, borderRadius: 2 }} />
-      <Skeleton variant="rectangular" height={160} sx={{ flex: 1, borderRadius: 2 }} />
-    </Box>
-  </Container>
-);
-
-const BuildViewPage = React.lazy(() =>
-  import('./pages/BuildViewPage').then((module) => ({ default: module.BuildViewPage })),
-);
-
-const MyBuildsPage = React.lazy(() =>
-  import('./pages/MyBuildsPage').then((module) => ({ default: module.MyBuildsPage })),
-);
-
-const TempBuildViewPage = React.lazy(() =>
-  import('./pages/TempBuildViewPage').then((module) => ({ default: module.TempBuildViewPage })),
-);
-
-const BuildHubPage = React.lazy(() =>
-  import('./features/build-hub/components/BuildHubPage').then((module) => ({
-    default: module.BuildHubPage,
-  })),
-);
-
 const PackHubPage = React.lazy(() =>
   import('./features/pack-hub/components/PackHubPage').then((module) => ({
     default: module.PackHubPage,

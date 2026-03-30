@@ -2619,7 +2619,6 @@ export const RosterBuilderPage: React.FC = () => {
             sensors={sensors}
             handleDPSDragEnd={handleDPSDragEnd}
           />
-        </Box>
 
           {/* Per-Fight Builds */}
           <Box sx={{ my: 2 }}>
