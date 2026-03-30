@@ -277,8 +277,7 @@ const masterDataSlice = createSlice({
           return;
         }
         entry.status = 'failed';
-        entry.error =
-          (action.payload as string) || action.error.message || 'Failed to fetch master data';
+        entry.error = action.payload ?? action.error.message ?? 'Failed to fetch master data';
         entry.currentRequest = null;
         touchAccessOrder(state, key);
       });

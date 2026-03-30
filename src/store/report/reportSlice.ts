@@ -414,8 +414,7 @@ const reportSlice = createSlice({
         }
 
         entry.status = 'failed';
-        entry.error =
-          (action.payload as string) || action.error.message || 'Failed to fetch report data';
+        entry.error = action.payload ?? action.error.message ?? 'Failed to fetch report data';
         entry.currentRequest = null;
         touchAccessOrder(state, cacheKey);
         if (!state.activeContext.reportId) {
