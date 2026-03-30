@@ -307,12 +307,36 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
   const displayTitle = roster?.title ?? title ?? 'Untitled Roster';
   const displayDesc = roster?.description ?? description;
 
-  // ── Glassmorphism styles ───────────────────────────────────────────────
+  // ── Glass tokens ────────────────────────────────────────────────────────
   const sectionSx = {
-    background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+    background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.018)',
     border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
-    borderRadius: 2,
-    p: 2,
+    borderRadius: '10px',
+    p: 1.5,
+  };
+
+  const glassInputSx = {
+    '& .MuiOutlinedInput-root': {
+      fontSize: 13,
+      background: isDark ? 'rgba(0, 0, 0, 0.22)' : 'rgba(0, 0, 0, 0.04)',
+      borderRadius: '10px',
+      transition: 'background 0.2s ease, border-color 0.2s ease',
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.10)',
+      },
+      '&:hover': {
+        background: isDark ? 'rgba(0, 0, 0, 0.28)' : 'rgba(0, 0, 0, 0.06)',
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.18)',
+        },
+      },
+      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+        borderColor: 'rgba(88,101,242,0.5)',
+        borderWidth: 1,
+      },
+    },
+    '& .MuiInputLabel-root': { fontSize: 13 },
+    '& .MuiFormHelperText-root': { fontSize: 11, opacity: 0.6 },
   };
 
   // ── Fetch guilds ───────────────────────────────────────────────────────
@@ -550,15 +574,35 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       maxWidth="sm"
       fullWidth
       slotProps={{
+        backdrop: {
+          sx: { background: isDark ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.28)' },
+        },
         paper: {
           sx: {
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
+            borderRadius: '16px',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
             background: isDark
-              ? 'linear-gradient(135deg, rgba(20,25,45,0.95) 0%, rgba(15,18,35,0.98) 100%)'
+              ? 'linear-gradient(135deg, rgba(12, 12, 22, 0.96) 0%, rgba(15, 13, 28, 0.98) 100%)'
               : 'rgba(255,255,255,0.97)',
-            border: isDark ? '1px solid rgba(88,101,242,0.2)' : '1px solid rgba(88,101,242,0.15)',
+            border: isDark
+              ? '1px solid rgba(88,101,242,0.15)'
+              : '1px solid rgba(88,101,242,0.1)',
+            boxShadow: isDark
+              ? '0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03) inset'
+              : '0 24px 64px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset',
             overflow: 'hidden',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: '10%',
+              right: '10%',
+              height: '1px',
+              background: isDark
+                ? 'linear-gradient(90deg, transparent, rgba(88,101,242,0.45), transparent)'
+                : 'linear-gradient(90deg, transparent, rgba(88,101,242,0.2), transparent)',
+            },
           },
         },
       }}
@@ -613,15 +657,23 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
           <Box
             sx={{
               mb: 2,
-              p: 1.5,
-              borderRadius: 2,
-              background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
-              border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+              p: 1.25,
+              borderRadius: '10px',
+              background: isDark ? 'rgba(88,101,242,0.06)' : 'rgba(88,101,242,0.04)',
+              border: isDark
+                ? '1px solid rgba(88,101,242,0.12)'
+                : '1px solid rgba(88,101,242,0.08)',
             }}
           >
-            <Typography sx={{ fontWeight: 700, fontSize: '0.9rem' }}>{displayTitle}</Typography>
+            <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', letterSpacing: '-0.01em' }}>
+              {displayTitle}
+            </Typography>
             {displayDesc && (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.25, fontSize: '0.78rem', opacity: 0.7 }}
+              >
                 {displayDesc}
               </Typography>
             )}
@@ -641,13 +693,19 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 <img
                   src={discordIcon}
                   alt=""
-                  style={{ width: 18, height: 18, filter: 'brightness(10)' }}
+                  style={{ width: 16, height: 16, filter: 'brightness(10)' }}
                 />
               }
               sx={{
+                borderRadius: '10px',
+                fontWeight: 600,
+                fontSize: '0.85rem',
+                px: 3,
                 background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
+                boxShadow: '0 4px 16px rgba(88,101,242,0.3)',
                 '&:hover': {
                   background: 'linear-gradient(135deg, #6973F5 0%, #5865F2 100%)',
+                  boxShadow: '0 6px 20px rgba(88,101,242,0.4)',
                 },
               }}
             >
@@ -686,14 +744,15 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: '1fr',
-                  gap: 0.75,
-                  maxHeight: 280,
+                  gap: 0.5,
+                  maxHeight: 260,
                   overflow: 'auto',
-                  borderRadius: 2,
+                  borderRadius: '10px',
                   border: isDark
-                    ? '1px solid rgba(255,255,255,0.08)'
-                    : '1px solid rgba(0,0,0,0.08)',
-                  p: 0.75,
+                    ? '1px solid rgba(255,255,255,0.06)'
+                    : '1px solid rgba(0,0,0,0.06)',
+                  background: isDark ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.02)',
+                  p: 0.5,
                 }}
               >
                 {guilds.map((guild) => {
@@ -707,20 +766,26 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 1.5,
-                        p: 1.25,
-                        borderRadius: 1.5,
+                        gap: 1.25,
+                        p: 1,
+                        borderRadius: '8px',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
-                        border: isNew ? '1px solid rgba(87,242,135,0.3)' : '1px solid transparent',
+                        border: isNew
+                          ? '1px solid rgba(87,242,135,0.25)'
+                          : '1px solid transparent',
                         background: isNew
                           ? isDark
-                            ? 'rgba(87,242,135,0.06)'
-                            : 'rgba(87,242,135,0.04)'
+                            ? 'rgba(87,242,135,0.05)'
+                            : 'rgba(87,242,135,0.03)'
                           : 'transparent',
                         '&:hover': {
-                          background: isDark ? 'rgba(88,101,242,0.12)' : 'rgba(88,101,242,0.06)',
-                          borderColor: 'rgba(88,101,242,0.3)',
+                          background: isDark
+                            ? 'rgba(88,101,242,0.1)'
+                            : 'rgba(88,101,242,0.05)',
+                          borderColor: isDark
+                            ? 'rgba(88,101,242,0.25)'
+                            : 'rgba(88,101,242,0.2)',
                         },
                       }}
                     >
@@ -816,9 +881,11 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 rel="noopener noreferrer"
                 onClick={() => setInviteClicked(true)}
                 sx={{
-                  borderColor: 'rgba(88,101,242,0.3)',
+                  borderRadius: '10px',
+                  fontSize: '0.78rem',
+                  borderColor: 'rgba(88,101,242,0.25)',
                   color: '#5865F2',
-                  '&:hover': { borderColor: '#5865F2', background: 'rgba(88,101,242,0.08)' },
+                  '&:hover': { borderColor: '#5865F2', background: 'rgba(88,101,242,0.06)' },
                 }}
               >
                 {guilds && guilds.length === 0 ? 'Add Bot to Server' : 'Add Bot to Another Server'}
@@ -831,15 +898,17 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   startIcon={<RefreshIcon sx={{ fontSize: '16px !important' }} />}
                   onClick={() => void loadGuilds(true)}
                   sx={{
-                    borderColor: 'rgba(87,242,135,0.3)',
+                    borderRadius: '10px',
+                    fontSize: '0.78rem',
+                    borderColor: 'rgba(87,242,135,0.25)',
                     color: '#57F287',
                     '&:hover': {
                       borderColor: '#57F287',
-                      background: 'rgba(87,242,135,0.08)',
+                      background: 'rgba(87,242,135,0.06)',
                     },
                     animation: 'pulse 2s infinite',
                     '@keyframes pulse': {
-                      '0%, 100%': { boxShadow: '0 0 0 0 rgba(87,242,135,0.3)' },
+                      '0%, 100%': { boxShadow: '0 0 0 0 rgba(87,242,135,0.25)' },
                       '50%': { boxShadow: '0 0 0 4px rgba(87,242,135,0)' },
                     },
                   }}
@@ -914,15 +983,23 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 <CircularProgress size={24} sx={{ color: '#5865F2' }} />
               </Box>
             ) : (
-              <Box sx={{ ...sectionSx, mb: 2 }}>
+              <Box sx={{ ...sectionSx, mb: 1.5 }}>
                 <Typography
-                  variant="subtitle2"
-                  sx={{ fontWeight: 700, mb: 1, color: '#5865F2', fontSize: '0.82rem' }}
+                  variant="caption"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: '0.7rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    color: '#5865F2',
+                    display: 'block',
+                    mb: 1,
+                  }}
                 >
                   Post to Channel
                 </Typography>
 
-                <FormControl fullWidth size="small">
+                <FormControl fullWidth size="small" sx={glassInputSx}>
                   <InputLabel>Channel</InputLabel>
                   <Select
                     value={selectedChannelId}
@@ -973,7 +1050,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     onChange={(e) => setChannelNameOverride(e.target.value)}
                     fullWidth
                     size="small"
-                    sx={{ mt: 1.5 }}
+                    sx={{ mt: 1.25, ...glassInputSx }}
                     helperText="Override the auto-generated channel name"
                   />
                 )}
@@ -981,7 +1058,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
             )}
 
             {/* Event date & time */}
-            <Box sx={{ ...sectionSx, mb: 2 }}>
+            <Box sx={{ ...sectionSx, mb: 1.5 }}>
               <DatePicker
                 label="Event Date & Time"
                 granularity="minute"
@@ -995,9 +1072,24 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
 
             {/* Trial & tag selection — direct-publish only */}
             {!roster && (
-              <Box sx={{ mb: 2 }}>
+              <Box sx={{ ...sectionSx, mb: 1.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: '0.7rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    color: '#5865F2',
+                    display: 'block',
+                    mb: 1,
+                  }}
+                >
+                  Trial & Tags
+                </Typography>
+
                 {/* Trial selector */}
-                <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
+                <FormControl fullWidth size="small" sx={{ mb: 1.25, ...glassInputSx }}>
                   <InputLabel>Trial</InputLabel>
                   <Select
                     value={selectedTrialId}
@@ -1016,14 +1108,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 </FormControl>
 
                 {/* Difficulty toggle */}
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ mb: 0.5, display: 'block' }}
-                >
-                  Difficulty
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 0.75, mb: 1.5 }}>
+                <Box sx={{ display: 'flex', gap: 0.75, mb: 1.25 }}>
                   {DIFFICULTY_TAGS.map((d) => {
                     const isActive = difficulty === d;
                     const accent = TAG_COLORS[d];
@@ -1039,8 +1124,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                           }}
                           sx={{
                             fontWeight: 700,
-                            fontSize: '0.8rem',
-                            px: 0.5,
+                            fontSize: '0.75rem',
+                            height: 28,
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
                             ...(isActive
@@ -1048,12 +1133,14 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                                   bgcolor: accent,
                                   color: '#fff',
                                   borderColor: accent,
+                                  boxShadow: `0 0 12px ${accent}40`,
                                   '&:hover': { bgcolor: accent, filter: 'brightness(0.85)' },
                                 }
                               : {
-                                  borderColor: `${accent}55`,
+                                  borderColor: `${accent}44`,
                                   color: accent,
-                                  '&:hover': { bgcolor: `${accent}18`, borderColor: accent },
+                                  backdropFilter: 'blur(6px)',
+                                  '&:hover': { bgcolor: `${accent}15`, borderColor: `${accent}88` },
                                 }),
                             ...(d === 'vet' && isActive
                               ? { borderTopRightRadius: 0, borderBottomRightRadius: 0 }
@@ -1068,7 +1155,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                             onClick={() => setHmEnabled((prev) => !prev)}
                             sx={{
                               fontWeight: 700,
-                              fontSize: '0.75rem',
+                              fontSize: '0.7rem',
+                              height: 28,
                               cursor: 'pointer',
                               borderTopLeftRadius: 0,
                               borderBottomLeftRadius: 0,
@@ -1079,18 +1167,13 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                                     bgcolor: TAG_COLORS.hm,
                                     color: '#fff',
                                     borderColor: TAG_COLORS.hm,
-                                    '&:hover': {
-                                      bgcolor: TAG_COLORS.hm,
-                                      filter: 'brightness(0.85)',
-                                    },
+                                    boxShadow: `0 0 12px ${TAG_COLORS.hm}40`,
+                                    '&:hover': { bgcolor: TAG_COLORS.hm, filter: 'brightness(0.85)' },
                                   }
                                 : {
-                                    borderColor: `${TAG_COLORS.hm}55`,
+                                    borderColor: `${TAG_COLORS.hm}44`,
                                     color: TAG_COLORS.hm,
-                                    '&:hover': {
-                                      bgcolor: `${TAG_COLORS.hm}18`,
-                                      borderColor: TAG_COLORS.hm,
-                                    },
+                                    '&:hover': { bgcolor: `${TAG_COLORS.hm}15`, borderColor: `${TAG_COLORS.hm}88` },
                                   }),
                             }}
                           />
@@ -1100,15 +1183,6 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   })}
                 </Box>
 
-                {/* Tags */}
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ mb: 0.5, display: 'block' }}
-                >
-                  Tags
-                </Typography>
-
                 {/* Selected tags + freeform input */}
                 <Box
                   sx={{
@@ -1116,13 +1190,20 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     flexWrap: 'wrap',
                     alignItems: 'center',
                     gap: 0.5,
-                    p: 1,
-                    mb: 1,
-                    border: '1px solid',
-                    borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'divider',
-                    borderRadius: 1,
-                    bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'background.paper',
-                    minHeight: 38,
+                    p: 0.75,
+                    mb: 0.75,
+                    borderRadius: '8px',
+                    border: isDark
+                      ? '1px solid rgba(255,255,255,0.08)'
+                      : '1px solid rgba(0,0,0,0.08)',
+                    bgcolor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
+                    minHeight: 36,
+                    transition: 'border-color 0.2s ease',
+                    '&:focus-within': {
+                      borderColor: isDark
+                        ? 'rgba(88,101,242,0.4)'
+                        : 'rgba(88,101,242,0.5)',
+                    },
                   }}
                 >
                   {selectedTags.map((tag) => {
@@ -1145,15 +1226,17 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                         sx={{
                           fontWeight: 600,
                           fontSize: '0.7rem',
+                          height: 24,
                           ...(accent
                             ? {
-                                bgcolor: accent,
+                                bgcolor: `${accent}cc`,
                                 color: '#fff',
-                                '& .MuiChip-deleteIcon': { color: 'rgba(255,255,255,0.7)' },
+                                boxShadow: `0 0 8px ${accent}30`,
+                                '& .MuiChip-deleteIcon': { color: 'rgba(255,255,255,0.65)' },
                                 '& .MuiChip-deleteIcon:hover': { color: '#fff' },
                               }
                             : {
-                                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                                bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
                               }),
                         }}
                       />
@@ -1177,7 +1260,14 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     }}
                     slotProps={{
                       htmlInput: { maxLength: 30 },
-                      input: { disableUnderline: true, sx: { fontSize: '0.8rem', py: 0.25 } },
+                      input: {
+                        disableUnderline: true,
+                        sx: {
+                          fontSize: '0.78rem',
+                          py: 0.25,
+                          color: isDark ? 'rgba(255,255,255,0.7)' : undefined,
+                        },
+                      },
                     }}
                     sx={{ flex: 1, minWidth: 80 }}
                   />
@@ -1199,15 +1289,17 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                         }
                         sx={{
                           fontWeight: 600,
-                          fontSize: '0.7rem',
+                          fontSize: '0.65rem',
+                          height: 22,
                           cursor: isSelected ? 'default' : 'pointer',
-                          opacity: isSelected ? 0.4 : 1,
+                          opacity: isSelected ? 0.35 : 1,
                           transition: 'all 0.15s ease',
-                          borderColor: `${accent}55`,
+                          borderColor: `${accent}44`,
                           color: accent,
+                          backdropFilter: 'blur(4px)',
                           '&:hover': isSelected
                             ? {}
-                            : { bgcolor: `${accent}18`, borderColor: accent },
+                            : { bgcolor: `${accent}15`, borderColor: `${accent}88` },
                         }}
                       />
                     );
@@ -1249,25 +1341,37 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 return (
                   <Box
                     sx={{
-                      mb: 2,
-                      px: 1.5,
-                      py: 1,
-                      borderRadius: 1,
-                      bgcolor: isDark ? 'rgba(88,101,242,0.08)' : 'rgba(88,101,242,0.06)',
-                      border: '1px solid',
-                      borderColor: isDark ? 'rgba(88,101,242,0.2)' : 'rgba(88,101,242,0.15)',
+                      mb: 1.5,
+                      px: 1.25,
+                      py: 0.75,
+                      borderRadius: '8px',
+                      bgcolor: isDark ? 'rgba(88,101,242,0.06)' : 'rgba(88,101,242,0.04)',
+                      border: isDark
+                        ? '1px solid rgba(88,101,242,0.15)'
+                        : '1px solid rgba(88,101,242,0.1)',
                     }}
                   >
                     <Typography
                       variant="caption"
-                      color="text.secondary"
-                      sx={{ display: 'block', mb: 0.25 }}
+                      sx={{
+                        display: 'block',
+                        mb: 0.25,
+                        fontSize: '0.65rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        opacity: 0.6,
+                      }}
                     >
                       Channel name preview
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ fontFamily: 'monospace', fontWeight: 600, color: 'primary.main' }}
+                      sx={{
+                        fontFamily: 'monospace',
+                        fontWeight: 600,
+                        fontSize: '0.82rem',
+                        color: '#5865F2',
+                      }}
                     >
                       # {preview}
                     </Typography>
@@ -1357,11 +1461,16 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 sx={{
+                  borderRadius: '10px',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  px: 3,
                   background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
+                  boxShadow: '0 4px 16px rgba(88,101,242,0.3)',
                   '&:hover': {
                     background: 'linear-gradient(135deg, #6973F5 0%, #5865F2 100%)',
+                    boxShadow: '0 6px 20px rgba(88,101,242,0.4)',
                   },
-                  fontWeight: 600,
                 }}
               >
                 Open in Discord
@@ -1378,12 +1487,13 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     navigate(`/discord-server-config?guild=${publishResult.guildId}`);
                   }}
                   sx={{
-                    borderColor: 'rgba(88,101,242,0.3)',
+                    borderRadius: '10px',
+                    borderColor: 'rgba(88,101,242,0.2)',
                     color: '#5865F2',
-                    fontSize: '0.8rem',
+                    fontSize: '0.78rem',
                     '&:hover': {
                       borderColor: '#5865F2',
-                      background: 'rgba(88,101,242,0.08)',
+                      background: 'rgba(88,101,242,0.06)',
                     },
                   }}
                 >
@@ -1403,12 +1513,42 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       </DialogContent>
 
       {/* ── Actions ──────────────────────────────────────────────────── */}
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        {step === 'select' && <Button onClick={onClose}>Cancel</Button>}
+      <DialogActions
+        sx={{
+          px: 2.5,
+          pb: 2,
+          pt: 1.5,
+          background: isDark
+            ? 'linear-gradient(135deg, rgba(12,12,22,0.5) 0%, rgba(15,13,28,0.5) 100%)'
+            : 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(248,250,252,0.4) 100%)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        }}
+      >
+        {step === 'select' && (
+          <Button
+            onClick={onClose}
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.82rem',
+              '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' },
+            }}
+          >
+            Cancel
+          </Button>
+        )}
 
         {step === 'configure' && (
           <>
-            <Button onClick={handleBack} disabled={publishing}>
+            <Button
+              onClick={handleBack}
+              disabled={publishing}
+              sx={{
+                color: 'text.secondary',
+                fontSize: '0.82rem',
+                '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' },
+              }}
+            >
               Back
             </Button>
             <Button
@@ -1417,19 +1557,28 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
               disabled={publishing}
               startIcon={
                 publishing ? (
-                  <CircularProgress size={16} color="inherit" />
+                  <CircularProgress size={14} color="inherit" />
                 ) : (
                   <img
                     src={discordIcon}
                     alt=""
-                    style={{ width: 16, height: 16, filter: 'brightness(10)' }}
+                    style={{ width: 15, height: 15, filter: 'brightness(10)' }}
                   />
                 )
               }
               sx={{
+                borderRadius: '10px',
+                fontWeight: 600,
+                fontSize: '0.82rem',
+                px: 2.5,
                 background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
+                boxShadow: '0 4px 16px rgba(88,101,242,0.3)',
                 '&:hover': {
                   background: 'linear-gradient(135deg, #6973F5 0%, #5865F2 100%)',
+                  boxShadow: '0 6px 20px rgba(88,101,242,0.4)',
+                },
+                '&.Mui-disabled': {
+                  background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
                 },
               }}
             >
@@ -1443,9 +1592,14 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
             onClick={handleDone}
             variant="outlined"
             sx={{
-              borderColor: 'rgba(88,101,242,0.3)',
+              borderRadius: '10px',
+              fontSize: '0.82rem',
+              borderColor: 'rgba(88,101,242,0.25)',
               color: '#5865F2',
-              '&:hover': { borderColor: '#5865F2', background: 'rgba(88,101,242,0.08)' },
+              '&:hover': {
+                borderColor: '#5865F2',
+                background: 'rgba(88,101,242,0.06)',
+              },
             }}
           >
             Done

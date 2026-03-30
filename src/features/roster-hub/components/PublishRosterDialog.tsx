@@ -19,6 +19,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useTheme,
 } from '@mui/material';
 import React from 'react';
 
@@ -52,6 +53,8 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   token,
   editingRoster,
 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const isEditMode = !!editingRoster;
   const [title, setTitle] = React.useState('');
   const [description, setDescription] = React.useState('');
@@ -178,6 +181,31 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
 
   const atTagLimit = selectedTags.length >= MAX_TAGS;
 
+  // ── Glass tokens ────────────────────────────────────────────────────────
+  const glassInputSx = {
+    '& .MuiOutlinedInput-root': {
+      fontSize: 13,
+      background: isDark ? 'rgba(0, 0, 0, 0.22)' : 'rgba(0, 0, 0, 0.04)',
+      borderRadius: '10px',
+      transition: 'background 0.2s ease, border-color 0.2s ease',
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.10)',
+      },
+      '&:hover': {
+        background: isDark ? 'rgba(0, 0, 0, 0.28)' : 'rgba(0, 0, 0, 0.06)',
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.18)',
+        },
+      },
+      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+        borderColor: isDark ? 'rgba(56, 189, 248, 0.5)' : 'rgba(56, 189, 248, 0.6)',
+        borderWidth: 1,
+      },
+    },
+    '& .MuiInputLabel-root': { fontSize: 13 },
+    '& .MuiFormHelperText-root': { fontSize: 11, opacity: 0.6 },
+  };
+
   return (
     <Dialog
       open={open}
@@ -185,9 +213,52 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       maxWidth="sm"
       fullWidth
       disableEscapeKeyDown={loading}
+      slotProps={{
+        backdrop: {
+          sx: { background: isDark ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.28)' },
+        },
+        paper: {
+          sx: {
+            borderRadius: '16px',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(12, 12, 22, 0.96) 0%, rgba(18, 14, 30, 0.98) 100%)'
+              : 'rgba(255, 255, 255, 0.97)',
+            border: isDark
+              ? '1px solid rgba(255,255,255,0.07)'
+              : '1px solid rgba(0,0,0,0.07)',
+            boxShadow: isDark
+              ? '0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03) inset'
+              : '0 24px 64px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset',
+            overflow: 'hidden',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: '10%',
+              right: '10%',
+              height: '1px',
+              background: isDark
+                ? 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.35), transparent)'
+                : 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.18), transparent)',
+            },
+          },
+        },
+      }}
     >
-      <DialogTitle>{isEditMode ? 'Edit Published Roster' : 'Publish to Roster Hub'}</DialogTitle>
-      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+      <DialogTitle
+        sx={{
+          pb: 0.5,
+          fontWeight: 700,
+          fontSize: '1.1rem',
+          letterSpacing: '-0.01em',
+        }}
+      >
+        {isEditMode ? 'Edit Published Roster' : 'Publish to Roster Hub'}
+      </DialogTitle>
+
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.75, pt: '12px !important' }}>
         <TextField
           label="Title"
           value={title}
@@ -200,6 +271,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           error={!!error && !title.trim()}
           aria-required="true"
           aria-invalid={!!error && !title.trim()}
+          sx={glassInputSx}
         />
 
         <TextField
@@ -209,12 +281,13 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           slotProps={{ htmlInput: { maxLength: 500 } }}
           helperText={`${description.length}/500`}
           multiline
-          rows={3}
+          rows={2}
           fullWidth
           size="small"
+          sx={glassInputSx}
         />
 
-        <FormControl size="small" required fullWidth error={!!error && !trialId}>
+        <FormControl size="small" required fullWidth error={!!error && !trialId} sx={glassInputSx}>
           <InputLabel id="publish-trial-label">Trial</InputLabel>
           <Select
             labelId="publish-trial-label"
@@ -230,18 +303,34 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           </Select>
         </FormControl>
 
-        <Box>
+        {/* ── Tags Section ──────────────────────────────────────────────── */}
+        <Box
+          sx={{
+            p: 1.5,
+            borderRadius: '10px',
+            background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+            border: isDark
+              ? '1px solid rgba(255,255,255,0.05)'
+              : '1px solid rgba(0,0,0,0.05)',
+          }}
+        >
           <Typography
             variant="caption"
-            color={atTagLimit ? 'warning.main' : 'text.secondary'}
-            gutterBottom
-            display="block"
+            sx={{
+              fontWeight: 600,
+              fontSize: '0.7rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              color: atTagLimit ? 'warning.main' : 'text.secondary',
+              display: 'block',
+              mb: 1,
+            }}
           >
             Tags ({selectedTags.length}/{MAX_TAGS}){atTagLimit ? ' — limit reached' : ''}
           </Typography>
 
           {/* Difficulty toggle group */}
-          <Stack direction="row" spacing={0.75} sx={{ mt: 0.5 }}>
+          <Stack direction="row" spacing={0.75}>
             {DIFFICULTY_TAGS.map((d) => {
               const isActive = difficulty === d;
               const accent = TAG_COLORS[d];
@@ -254,8 +343,8 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                     onClick={() => handleDifficultyChange(d)}
                     sx={{
                       fontWeight: 700,
-                      fontSize: '0.8rem',
-                      px: 0.5,
+                      fontSize: '0.75rem',
+                      height: 28,
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                       ...(isActive
@@ -263,20 +352,20 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                             bgcolor: accent,
                             color: '#fff',
                             borderColor: accent,
+                            boxShadow: `0 0 12px ${accent}40`,
                             '&:hover': { bgcolor: accent, filter: 'brightness(0.85)' },
                           }
                         : {
-                            borderColor: `${accent}55`,
+                            borderColor: `${accent}44`,
                             color: accent,
-                            '&:hover': { bgcolor: `${accent}18`, borderColor: accent },
+                            backdropFilter: 'blur(6px)',
+                            '&:hover': { bgcolor: `${accent}15`, borderColor: `${accent}88` },
                           }),
-                      // Round right corners only when HM chip is not adjacent
                       ...(d === 'vet' && isActive
                         ? { borderTopRightRadius: 0, borderBottomRightRadius: 0 }
                         : {}),
                     }}
                   />
-                  {/* HM chip attached to Vet */}
                   {d === 'vet' && isActive && (
                     <Chip
                       label="HM"
@@ -285,7 +374,8 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                       onClick={() => setHmEnabled((prev) => !prev)}
                       sx={{
                         fontWeight: 700,
-                        fontSize: '0.75rem',
+                        fontSize: '0.7rem',
+                        height: 28,
                         cursor: 'pointer',
                         borderTopLeftRadius: 0,
                         borderBottomLeftRadius: 0,
@@ -296,18 +386,13 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                               bgcolor: TAG_COLORS.hm,
                               color: '#fff',
                               borderColor: TAG_COLORS.hm,
-                              '&:hover': {
-                                bgcolor: TAG_COLORS.hm,
-                                filter: 'brightness(0.85)',
-                              },
+                              boxShadow: `0 0 12px ${TAG_COLORS.hm}40`,
+                              '&:hover': { bgcolor: TAG_COLORS.hm, filter: 'brightness(0.85)' },
                             }
                           : {
-                              borderColor: `${TAG_COLORS.hm}55`,
+                              borderColor: `${TAG_COLORS.hm}44`,
                               color: TAG_COLORS.hm,
-                              '&:hover': {
-                                bgcolor: `${TAG_COLORS.hm}18`,
-                                borderColor: TAG_COLORS.hm,
-                              },
+                              '&:hover': { bgcolor: `${TAG_COLORS.hm}15`, borderColor: `${TAG_COLORS.hm}88` },
                             }),
                       }}
                     />
@@ -324,13 +409,18 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
               flexWrap: 'wrap',
               alignItems: 'center',
               gap: 0.5,
-              p: 1,
+              p: 0.75,
               mt: 1,
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 1,
-              bgcolor: 'background.paper',
-              minHeight: 40,
+              borderRadius: '8px',
+              border: isDark
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.08)',
+              bgcolor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
+              minHeight: 36,
+              transition: 'border-color 0.2s ease',
+              '&:focus-within': {
+                borderColor: isDark ? 'rgba(56,189,248,0.4)' : 'rgba(56,189,248,0.5)',
+              },
             }}
           >
             {selectedTags.map((tag) => {
@@ -343,14 +433,19 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                   onDelete={() => removeTag(tag)}
                   sx={{
                     fontWeight: 600,
+                    fontSize: '0.7rem',
+                    height: 24,
                     ...(accent
                       ? {
-                          bgcolor: accent,
+                          bgcolor: `${accent}cc`,
                           color: '#fff',
-                          '& .MuiChip-deleteIcon': { color: 'rgba(255,255,255,0.7)' },
+                          boxShadow: `0 0 8px ${accent}30`,
+                          '& .MuiChip-deleteIcon': { color: 'rgba(255,255,255,0.65)' },
                           '& .MuiChip-deleteIcon:hover': { color: '#fff' },
                         }
-                      : {}),
+                      : {
+                          bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                        }),
                   }}
                 />
               );
@@ -365,7 +460,14 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                 onKeyDown={handleTagInputKeyDown}
                 slotProps={{
                   htmlInput: { maxLength: 30 },
-                  input: { disableUnderline: true, sx: { fontSize: '0.875rem', py: 0.25 } },
+                  input: {
+                    disableUnderline: true,
+                    sx: {
+                      fontSize: '0.8rem',
+                      py: 0.25,
+                      color: isDark ? 'rgba(255,255,255,0.7)' : undefined,
+                    },
+                  },
                 }}
                 sx={{ flex: 1, minWidth: 80 }}
               />
@@ -373,7 +475,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           </Box>
 
           {/* Extra preset suggestions */}
-          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mt: 1 }}>
+          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mt: 0.75 }}>
             {EXTRA_PRESET_TAGS.map((tag) => {
               const isSelected = extraTags.includes(tag);
               const isDisabled = isSelected || atTagLimit;
@@ -396,14 +498,18 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                       variant="outlined"
                       onClick={isDisabled ? undefined : () => addTag(tag)}
                       sx={{
+                        fontWeight: 600,
+                        fontSize: '0.65rem',
+                        height: 22,
                         cursor: isDisabled ? 'default' : 'pointer',
-                        opacity: isDisabled ? 0.4 : 1,
+                        opacity: isDisabled ? 0.35 : 1,
                         transition: 'all 0.15s ease',
-                        borderColor: `${accent}55`,
+                        borderColor: `${accent}44`,
                         color: accent,
+                        backdropFilter: 'blur(4px)',
                         '&:hover': isDisabled
                           ? {}
-                          : { bgcolor: `${accent}18`, borderColor: accent },
+                          : { bgcolor: `${accent}15`, borderColor: `${accent}88` },
                       }}
                     />
                   </span>
@@ -422,29 +528,74 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
             />
           }
           label={
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
               Publish anonymously
             </Typography>
           }
-          sx={{ mt: 0.5 }}
+          sx={{ mt: -0.5, ml: 0.5 }}
         />
 
         {error && (
-          <Alert severity="error" onClose={() => setError(null)}>
+          <Alert
+            severity="error"
+            onClose={() => setError(null)}
+            sx={{
+              borderRadius: '10px',
+              bgcolor: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.06)',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              '& .MuiAlert-icon': { color: '#ef4444' },
+            }}
+          >
             {error}
           </Alert>
         )}
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
+      <DialogActions
+        sx={{
+          px: 2.5,
+          pb: 2,
+          pt: 1.5,
+          background: isDark
+            ? 'linear-gradient(135deg, rgba(12,12,22,0.5) 0%, rgba(18,14,30,0.5) 100%)'
+            : 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(248,250,252,0.4) 100%)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        }}
+      >
+        <Button
+          onClick={onClose}
+          disabled={loading}
+          sx={{
+            color: 'text.secondary',
+            fontSize: '0.82rem',
+            '&:hover': {
+              bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+            },
+          }}
+        >
           Cancel
         </Button>
         <Button
           onClick={() => void handlePublish()}
           variant="contained"
           disabled={loading}
-          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+          startIcon={loading ? <CircularProgress size={14} color="inherit" /> : undefined}
+          sx={{
+            borderRadius: '10px',
+            fontWeight: 600,
+            fontSize: '0.82rem',
+            px: 2.5,
+            background: 'linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)',
+            boxShadow: '0 4px 16px rgba(56, 189, 248, 0.25)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #5cc8f9 0%, #3b82f6 100%)',
+              boxShadow: '0 6px 20px rgba(56, 189, 248, 0.35)',
+            },
+            '&.Mui-disabled': {
+              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+            },
+          }}
         >
           {loading ? (isEditMode ? 'Updating…' : 'Publishing…') : isEditMode ? 'Update' : 'Publish'}
         </Button>
