@@ -313,7 +313,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
   const accent = '#5865F2'; // Discord blurple
 
   const panelBorder = isDark
-    ? '1px solid rgba(255, 255, 255, 0.08)'
+    ? '1px solid rgba(255, 255, 255, 0.15)'
     : '1px solid rgba(0, 0, 0, 0.08)';
 
   const sectionSx = {
@@ -580,15 +580,17 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       onClose={isCloseable ? onClose : undefined}
       maxWidth="sm"
       fullWidth
-      className="glass-dialog"
       PaperProps={{
         sx: {
           background: isDark
             ? 'linear-gradient(135deg, rgba(15,23,42,0.97), rgba(30,41,59,0.97))'
             : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-          backdropFilter: 'blur(20px)',
-          borderRadius: 3,
-          border: panelBorder,
+          backdropFilter: 'blur(10px)',
+          borderRadius: '24px',
+          border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: isDark
+            ? '0 8px 32px rgba(0,0,0,0.37), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2)'
+            : '0 4px 12px rgba(15,23,42,0.06)',
           maxHeight: '90vh',
         },
       }}
