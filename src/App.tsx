@@ -67,6 +67,9 @@ const LatestReports = React.lazy(() =>
 const OAuthRedirect = React.lazy(() =>
   import('./OAuthRedirect').then((module) => ({ default: module.OAuthRedirect })),
 );
+const AppAuth = React.lazy(() =>
+  import('./AppAuth').then((module) => ({ default: module.AppAuth })),
+);
 const Calculator = React.lazy(() =>
   import('./components/Calculator').then((module) => ({ default: module.Calculator })),
 );
@@ -180,6 +183,12 @@ const TempBuildViewPage = React.lazy(() =>
 const BuildHubPage = React.lazy(() =>
   import('./features/build-hub/components/BuildHubPage').then((module) => ({
     default: module.BuildHubPage,
+  })),
+);
+
+const PackHubPage = React.lazy(() =>
+  import('./features/pack-hub/components/PackHubPage').then((module) => ({
+    default: module.PackHubPage,
   })),
 );
 
@@ -336,6 +345,16 @@ const AppRoutes: React.FC = () => {
               <ErrorBoundary>
                 <Suspense fallback={<LoadingFallback />}>
                   <OAuthRedirect />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/app-auth"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<LoadingFallback />}>
+                  <AppAuth />
                 </Suspense>
               </ErrorBoundary>
             }
@@ -681,6 +700,16 @@ const AppRoutes: React.FC = () => {
                     </Suspense>
                   </ErrorBoundary>
                 </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/pack-hub"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PackHubPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route

@@ -3,6 +3,20 @@
  * Mirrors the D1 data model from roster-hub-api.
  */
 
+/** A single addon recommendation entry. */
+export interface RecommendedAddonEntry {
+  esouiId: number;
+  name: string;
+  required?: boolean;
+  note?: string;
+}
+
+/** Addon recommendations attached to a published roster. */
+export interface RecommendedAddons {
+  packId?: string;
+  addons: RecommendedAddonEntry[];
+}
+
 export interface HubRoster {
   id: string;
   author_id: string;
@@ -12,6 +26,7 @@ export interface HubRoster {
   description: string;
   trial_id: string;
   roster_data: string; // compact encoded roster (same as ?r= URL param)
+  recommended_addons: RecommendedAddons | null;
   vote_count: number;
   created_at: string;
   updated_at: string;

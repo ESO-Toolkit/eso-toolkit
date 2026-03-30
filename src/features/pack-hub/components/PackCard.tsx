@@ -1,10 +1,10 @@
-import { ContentCopy, DeleteOutline, EditOutlined } from '@mui/icons-material';
+import { ContentCopy, DeleteOutline, EditOutlined, Extension } from '@mui/icons-material';
 import {
   Box,
   Card,
-  CardActionArea,
   CardActions,
   CardContent,
+  Chip,
   IconButton,
   Tooltip,
   Typography,
@@ -13,76 +13,57 @@ import {
 import { useSnackbar } from 'notistack';
 import React from 'react';
 
-import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
 import { formatRelativeDate } from '../../../utils/formatRelativeDate';
+import { getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
 import { VoteButton } from '../../roster-hub/components/VoteButton';
-import type { HubBuild } from '../types/build-hub.types';
-import { BUILD_TAG_COLORS, ROLE_ACCENT } from '../types/build-hub.types';
+import type { HubPack } from '../types/pack-hub.types';
+import { PACK_TAG_COLORS, PACK_TYPE_ACCENT, PACK_TYPE_LABELS } from '../types/pack-hub.types';
 
-import { GetAddonsButton } from './GetAddonsButton';
-
-interface BuildCardProps {
-  build: HubBuild;
+interface PackCardProps {
+  pack: HubPack;
   isOwner: boolean;
   isLoggedIn: boolean;
   onVote: (id: string) => void;
   onDelete: (id: string) => void;
-  onEdit: (build: HubBuild) => void;
+  onEdit: (pack: HubPack) => void;
 }
-
-const CLASS_LABELS: Record<string, string> = {
-  dragonknight: 'DK',
-  sorcerer: 'Sorc',
-  nightblade: 'NB',
-  templar: 'Templar',
-  warden: 'Warden',
-  necromancer: 'Necro',
-  arcanist: 'Arcanist',
-};
-
-const ROLE_LABELS: Record<string, string> = {
-  tank: 'Tank',
-  healer: 'Healer',
-  'magicka-dps': 'Mag DPS',
-  'stamina-dps': 'Stam DPS',
-  'hybrid-dps': 'Hybrid',
-};
 
 const formatDate = formatRelativeDate;
 
-/** Suggest a pack based on the build's role. */
-const ROLE_PACK_MAP: Record<string, string> = {
-  healer: 'healer-toolkit',
-  tank: 'trial-essentials',
-  'magicka-dps': 'dps-starter',
-  'stamina-dps': 'dps-starter',
-  'hybrid-dps': 'dps-starter',
-};
-
-export const BuildCard: React.FC<BuildCardProps> = React.memo(
-  ({ build, isOwner, isLoggedIn, onVote, onDelete, onEdit }) => {
+export const PackCard: React.FC<PackCardProps> = React.memo(
+  ({ pack, isOwner, isLoggedIn, onVote, onDelete, onEdit }) => {
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
-    const navigate = useViewTransitionNavigate();
     const isDark = theme.palette.mode === 'dark';
+
+    const tagAccent = pack.tags.map((t) => PACK_TAG_COLORS[t]).find((c): c is string => c != null);
+    const accentColor = tagAccent ?? PACK_TYPE_ACCENT[pack.pack_type] ?? '#c4a44a';
+    const typeLabel = PACK_TYPE_LABELS[pack.pack_type] ?? pack.pack_type;
+    const displayName = pack.is_anonymous ? 'Anonymous' : pack.author_name || '?';
+    const addonCount = pack.addons.length;
 
     const handleCopyLink = (e: React.MouseEvent): void => {
       e.stopPropagation();
-      const url = `${window.location.origin}${import.meta.env.BASE_URL}bv?b=${encodeURIComponent(build.build_data)}`;
-      void navigator.clipboard.writeText(url).then(
-        () => enqueueSnackbar('Link copied to clipboard!', { variant: 'success' }),
+      const deepLink = getAddonManagerDeepLink(pack.id);
+      void navigator.clipboard.writeText(deepLink).then(
+        () => enqueueSnackbar('Deep link copied to clipboard!', { variant: 'success' }),
         () => enqueueSnackbar('Failed to copy link', { variant: 'error' }),
       );
     };
 
-    const classShort = CLASS_LABELS[build.eso_class] ?? build.eso_class;
-    const roleLabel = ROLE_LABELS[build.role] ?? build.role;
-    const tagAccent = build.tags
-      .map((t) => BUILD_TAG_COLORS[t])
-      .find((c): c is string => c != null);
-    const accentColor = tagAccent ?? ROLE_ACCENT[build.role] ?? '#3b82f6';
-
-    const displayName = build.is_anonymous ? 'Anonymous' : build.author_name || '?';
+    const handleInstall = (e: React.MouseEvent): void => {
+      e.stopPropagation();
+      const deepLink = getAddonManagerDeepLink(pack.id);
+      window.location.href = deepLink;
+      setTimeout(() => {
+        void navigator.clipboard.writeText(deepLink).then(() => {
+          enqueueSnackbar('Deep link copied — install ESO Addon Manager to use it', {
+            variant: 'info',
+            autoHideDuration: 4000,
+          });
+        });
+      }, 1500);
+    };
 
     return (
       <Card
@@ -127,11 +108,7 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
           aria-hidden="true"
         />
 
-        <CardActionArea
-          onClick={() => navigate(`/bv?b=${encodeURIComponent(build.build_data)}`)}
-          sx={{ flexGrow: 1, alignItems: 'flex-start' }}
-          aria-label={`View ${build.title}`}
-        >
+        <Box sx={{ flexGrow: 1, alignItems: 'flex-start' }}>
           <CardContent
             sx={{
               display: 'flex',
@@ -142,9 +119,9 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
               pb: '20px !important',
             }}
           >
-            {/* Class + Role badges */}
-            <Box sx={{ display: 'flex', gap: 0.75, mb: 1.75 }}>
-              <Tooltip title={build.eso_class}>
+            {/* Type badge + addon count */}
+            <Box sx={{ display: 'flex', gap: 0.75, mb: 1.75, alignItems: 'center' }}>
+              <Tooltip title={typeLabel}>
                 <Box
                   component="span"
                   sx={{
@@ -167,7 +144,7 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                       textTransform: 'uppercase',
                     }}
                   >
-                    {classShort}
+                    {typeLabel}
                   </Typography>
                 </Box>
               </Tooltip>
@@ -192,7 +169,7 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                     textTransform: 'uppercase',
                   }}
                 >
-                  {roleLabel}
+                  {addonCount} addon{addonCount !== 1 ? 's' : ''}
                 </Typography>
               </Box>
             </Box>
@@ -214,11 +191,11 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                 letterSpacing: '-0.01em',
               }}
             >
-              {build.title}
+              {pack.title}
             </Typography>
 
             {/* Description */}
-            {build.description && (
+            {pack.description && (
               <Typography
                 variant="body2"
                 color="text.secondary"
@@ -233,15 +210,15 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                   opacity: 0.75,
                 }}
               >
-                {build.description}
+                {pack.description}
               </Typography>
             )}
 
             {/* Tags */}
-            {build.tags.length > 0 && (
+            {pack.tags.length > 0 && (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.75 }}>
-                {build.tags.map((tag) => {
-                  const tagColor = BUILD_TAG_COLORS[tag] ?? '#94a3b8';
+                {pack.tags.map((tag) => {
+                  const tagColor = PACK_TAG_COLORS[tag] ?? '#94a3b8';
                   return (
                     <Box
                       key={tag}
@@ -268,6 +245,41 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                 })}
               </Box>
             )}
+
+            {/* Addon preview — first 4 addons */}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1.5 }}>
+              {pack.addons.slice(0, 4).map((addon) => (
+                <Chip
+                  key={addon.esouiId}
+                  label={addon.name}
+                  size="small"
+                  sx={{
+                    height: 22,
+                    fontSize: '0.68rem',
+                    fontWeight: 600,
+                    bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                    color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.6)',
+                    border: isDark
+                      ? '1px solid rgba(255,255,255,0.08)'
+                      : '1px solid rgba(0,0,0,0.06)',
+                  }}
+                />
+              ))}
+              {pack.addons.length > 4 && (
+                <Chip
+                  label={`+${pack.addons.length - 4} more`}
+                  size="small"
+                  sx={{
+                    height: 22,
+                    fontSize: '0.68rem',
+                    fontWeight: 600,
+                    bgcolor: isDark ? `${accentColor}15` : `${accentColor}10`,
+                    color: accentColor,
+                    border: `1px solid ${accentColor}30`,
+                  }}
+                />
+              )}
+            </Box>
 
             {/* Spacer */}
             <Box sx={{ flexGrow: 1, minHeight: 12 }} />
@@ -316,15 +328,12 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                     color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.4)',
                   }}
                 >
-                  {formatDate(build.created_at)}
-                  {build.updated_at &&
-                    build.updated_at !== build.created_at &&
-                    ` · updated ${formatDate(build.updated_at)}`}
+                  {formatDate(pack.created_at)}
                 </Typography>
               </Box>
             </Box>
           </CardContent>
-        </CardActionArea>
+        </Box>
 
         {/* Actions */}
         <CardActions
@@ -336,21 +345,34 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
-          onClick={(e) => e.stopPropagation()}
         >
           <VoteButton
-            voteCount={build.vote_count}
-            voted={build.user_voted ?? false}
+            voteCount={pack.vote_count}
+            voted={pack.user_voted ?? false}
             disabled={!isLoggedIn}
-            onVote={() => onVote(build.id)}
+            onVote={() => onVote(pack.id)}
           />
           <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-            <GetAddonsButton packId={ROLE_PACK_MAP[build.role] ?? 'trial-essentials'} iconOnly />
-            <Tooltip title="Copy share link">
+            <Tooltip title="Install with ESO Addon Manager">
+              <IconButton
+                size="small"
+                onClick={handleInstall}
+                aria-label="Install pack"
+                sx={{
+                  width: 36,
+                  height: 36,
+                  color: 'text.disabled',
+                  '&:hover': { color: '#c4a44a' },
+                }}
+              >
+                <Extension sx={{ fontSize: 17 }} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Copy deep link">
               <IconButton
                 size="small"
                 onClick={handleCopyLink}
-                aria-label="Copy share link"
+                aria-label="Copy deep link"
                 sx={{
                   width: 36,
                   height: 36,
@@ -362,11 +384,11 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
               </IconButton>
             </Tooltip>
             {isOwner && (
-              <Tooltip title="Edit build details">
+              <Tooltip title="Edit pack">
                 <IconButton
                   size="small"
-                  onClick={() => onEdit(build)}
-                  aria-label="Edit build details"
+                  onClick={() => onEdit(pack)}
+                  aria-label="Edit pack"
                   sx={{
                     width: 36,
                     height: 36,
@@ -379,12 +401,12 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
               </Tooltip>
             )}
             {isOwner && (
-              <Tooltip title="Delete build">
+              <Tooltip title="Delete pack">
                 <IconButton
                   size="small"
                   color="error"
-                  onClick={() => onDelete(build.id)}
-                  aria-label="Delete build"
+                  onClick={() => onDelete(pack.id)}
+                  aria-label="Delete pack"
                   sx={{ width: 36, height: 36 }}
                 >
                   <DeleteOutline sx={{ fontSize: 17 }} />
@@ -398,4 +420,4 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
   },
 );
 
-BuildCard.displayName = 'BuildCard';
+PackCard.displayName = 'PackCard';

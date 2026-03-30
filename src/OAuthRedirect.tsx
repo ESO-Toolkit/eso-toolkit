@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { APP_AUTH_PORT_KEY } from './AppAuth';
 import {
   getPkceCodeVerifier,
   CLIENT_ID,
@@ -64,6 +65,24 @@ export const OAuthRedirect: React.FC = () => {
         });
         if (!response.ok) throw new Error('Token exchange failed');
         const data = await response.json();
+
+        // Check if this is a desktop app auth flow
+        const appPort = sessionStorage.getItem(APP_AUTH_PORT_KEY);
+        if (appPort) {
+          sessionStorage.removeItem(APP_AUTH_PORT_KEY);
+          // Send tokens to the desktop app's localhost server
+          const tokenPayload = btoa(
+            JSON.stringify({
+              access_token: data.access_token,
+              refresh_token: data.refresh_token || null,
+              expires_in: data.expires_in || 3600,
+            }),
+          );
+          window.location.href = `http://localhost:${appPort}/callback?tokens=${encodeURIComponent(tokenPayload)}`;
+          return;
+        }
+
+        // Normal web auth flow
         localStorage.setItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token);
         // Store refresh token if provided
         if (data.refresh_token) {

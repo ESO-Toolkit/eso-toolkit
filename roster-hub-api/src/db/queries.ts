@@ -10,6 +10,9 @@ import type {
   CommentWithReplies,
   ImageReportRow,
   ImageUploadRow,
+  PackRow,
+  PackTagRow,
+  PackWithMeta,
   RosterRow,
   RosterSummary,
   RosterTagRow,
@@ -139,11 +142,12 @@ export async function createRoster(
     rosterData: string;
     tags: string[];
     isAnonymous: boolean;
+    recommendedAddons: string | null;
   },
 ): Promise<void> {
   await db
     .prepare(
-      'INSERT INTO rosters (id, author_id, author_name, title, description, trial_id, roster_data, is_anonymous) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO rosters (id, author_id, author_name, title, description, trial_id, roster_data, is_anonymous, recommended_addons) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
     )
     .bind(
       data.id,
@@ -154,6 +158,7 @@ export async function createRoster(
       data.trialId,
       data.rosterData,
       data.isAnonymous ? 1 : 0,
+      data.recommendedAddons,
     )
     .run();
 
@@ -173,11 +178,12 @@ export async function updateRoster(
     rosterData: string;
     tags: string[];
     isAnonymous: boolean;
+    recommendedAddons: string | null;
   },
 ): Promise<boolean> {
   const result = await db
     .prepare(
-      "UPDATE rosters SET title = ?, description = ?, trial_id = ?, roster_data = ?, is_anonymous = ?, updated_at = datetime('now') WHERE id = ? AND author_id = ?",
+      "UPDATE rosters SET title = ?, description = ?, trial_id = ?, roster_data = ?, is_anonymous = ?, recommended_addons = ?, updated_at = datetime('now') WHERE id = ? AND author_id = ?",
     )
     .bind(
       data.title,
@@ -185,6 +191,7 @@ export async function updateRoster(
       data.trialId,
       data.rosterData,
       data.isAnonymous ? 1 : 0,
+      data.recommendedAddons,
       id,
       authorId,
     )
@@ -1094,4 +1101,258 @@ export async function upsertUserBio(
     )
     .bind(authorId, authorName, bio)
     .run();
+}
+
+// ─── Pack Hub queries ─────────────────────────────────────────────────────────
+
+export interface ListPacksOptions {
+  packType?: string;
+  tag?: string;
+  sort: 'votes' | 'recent';
+  page: number;
+  userId?: string;
+}
+
+export async function listPacks(db: D1Database, opts: ListPacksOptions): Promise<PackWithMeta[]> {
+  const offset = (opts.page - 1) * PAGE_SIZE;
+  const orderBy =
+    opts.sort === 'votes' ? 'p.vote_count DESC, p.created_at DESC' : 'p.created_at DESC';
+
+  const conditions: string[] = [];
+  const bindings: (string | number)[] = [];
+
+  if (opts.packType) {
+    conditions.push('p.pack_type = ?');
+    bindings.push(opts.packType);
+  }
+  if (opts.tag) {
+    conditions.push(
+      'EXISTS (SELECT 1 FROM pack_tags pt WHERE pt.pack_id = p.id AND pt.tag = ?)',
+    );
+    bindings.push(opts.tag);
+  }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const sql = `
+    SELECT p.*, GROUP_CONCAT(DISTINCT pt.tag) AS tags_concat
+    FROM packs p
+    LEFT JOIN pack_tags pt ON pt.pack_id = p.id
+    ${where}
+    GROUP BY p.id
+    ORDER BY ${orderBy}
+    LIMIT ${PAGE_SIZE} OFFSET ${offset}
+  `;
+
+  const rows = await db
+    .prepare(sql)
+    .bind(...bindings)
+    .all<PackRow & { tags_concat: string | null }>();
+
+  let votedSet = new Set<string>();
+  if (opts.userId && rows.results.length > 0) {
+    const ids = rows.results.map((r) => r.id);
+    const placeholders = ids.map(() => '?').join(',');
+    const voteRows = await db
+      .prepare(
+        `SELECT pack_id FROM pack_votes WHERE user_id = ? AND pack_id IN (${placeholders})`,
+      )
+      .bind(opts.userId, ...ids)
+      .all<{ pack_id: string }>();
+    votedSet = new Set(voteRows.results.map((v) => v.pack_id));
+  }
+
+  return rows.results.map((row) => {
+    const isAnon = row.is_anonymous ? true : false;
+    const isOwner = opts.userId === row.author_id;
+    return {
+      ...row,
+      author_id: isAnon && !isOwner ? '' : row.author_id,
+      author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
+      is_anonymous: isAnon,
+      tags: row.tags_concat ? row.tags_concat.split(',') : [],
+      user_voted: opts.userId ? votedSet.has(row.id) : undefined,
+    };
+  });
+}
+
+export async function getPackById(
+  db: D1Database,
+  id: string,
+  userId?: string,
+): Promise<PackWithMeta | null> {
+  const row = await db.prepare('SELECT * FROM packs WHERE id = ?').bind(id).first<PackRow>();
+  if (!row) return null;
+
+  const tagRows = await db
+    .prepare('SELECT tag FROM pack_tags WHERE pack_id = ?')
+    .bind(id)
+    .all<PackTagRow>();
+
+  let userVoted = false;
+  if (userId) {
+    const vote = await db
+      .prepare('SELECT 1 FROM pack_votes WHERE pack_id = ? AND user_id = ?')
+      .bind(id, userId)
+      .first();
+    userVoted = vote !== null;
+  }
+
+  const isAnon = row.is_anonymous ? true : false;
+  const isOwner = userId === row.author_id;
+  return {
+    ...row,
+    author_id: isAnon && !isOwner ? '' : row.author_id,
+    author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
+    is_anonymous: isAnon,
+    tags: tagRows.results.map((t) => t.tag),
+    user_voted: userId ? userVoted : undefined,
+  };
+}
+
+async function insertPackTags(db: D1Database, packId: string, tags: string[]): Promise<void> {
+  for (const tag of tags) {
+    await db
+      .prepare('INSERT OR IGNORE INTO pack_tags (pack_id, tag) VALUES (?, ?)')
+      .bind(packId, tag)
+      .run();
+  }
+}
+
+export async function createPack(
+  db: D1Database,
+  data: {
+    id: string;
+    authorId: string;
+    authorName: string;
+    title: string;
+    description: string;
+    packType: string;
+    addons: string; // JSON array
+    tags: string[];
+    isAnonymous: boolean;
+  },
+): Promise<void> {
+  await db
+    .prepare(
+      'INSERT INTO packs (id, author_id, author_name, title, description, pack_type, addons, is_anonymous) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    )
+    .bind(
+      data.id,
+      data.authorId,
+      data.authorName,
+      data.title,
+      data.description,
+      data.packType,
+      data.addons,
+      data.isAnonymous ? 1 : 0,
+    )
+    .run();
+
+  if (data.tags.length > 0) {
+    await insertPackTags(db, data.id, data.tags);
+  }
+}
+
+export async function updatePack(
+  db: D1Database,
+  id: string,
+  authorId: string,
+  data: {
+    title: string;
+    description: string;
+    packType: string;
+    addons: string;
+    tags: string[];
+    isAnonymous: boolean;
+  },
+): Promise<boolean> {
+  const result = await db
+    .prepare(
+      "UPDATE packs SET title = ?, description = ?, pack_type = ?, addons = ?, is_anonymous = ?, updated_at = datetime('now') WHERE id = ? AND author_id = ?",
+    )
+    .bind(
+      data.title,
+      data.description,
+      data.packType,
+      data.addons,
+      data.isAnonymous ? 1 : 0,
+      id,
+      authorId,
+    )
+    .run();
+
+  if (!result.meta.changes || result.meta.changes === 0) return false;
+
+  await db.prepare('DELETE FROM pack_tags WHERE pack_id = ?').bind(id).run();
+  if (data.tags.length > 0) {
+    await insertPackTags(db, id, data.tags);
+  }
+  return true;
+}
+
+export async function deletePack(db: D1Database, id: string, authorId: string): Promise<boolean> {
+  const result = await db
+    .prepare('DELETE FROM packs WHERE id = ? AND author_id = ?')
+    .bind(id, authorId)
+    .run();
+  return (result.meta.changes ?? 0) > 0;
+}
+
+export async function togglePackVote(
+  db: D1Database,
+  packId: string,
+  userId: string,
+): Promise<{ voted: boolean; voteCount: number }> {
+  const existing = await db
+    .prepare('SELECT 1 FROM pack_votes WHERE pack_id = ? AND user_id = ?')
+    .bind(packId, userId)
+    .first();
+
+  if (existing) {
+    await db
+      .prepare('DELETE FROM pack_votes WHERE pack_id = ? AND user_id = ?')
+      .bind(packId, userId)
+      .run();
+    await db
+      .prepare('UPDATE packs SET vote_count = MAX(0, vote_count - 1) WHERE id = ?')
+      .bind(packId)
+      .run();
+  } else {
+    await db
+      .prepare("INSERT INTO pack_votes (pack_id, user_id, created_at) VALUES (?, ?, datetime('now'))")
+      .bind(packId, userId)
+      .run();
+    await db
+      .prepare('UPDATE packs SET vote_count = vote_count + 1 WHERE id = ?')
+      .bind(packId)
+      .run();
+  }
+
+  const pack = await db
+    .prepare('SELECT vote_count FROM packs WHERE id = ?')
+    .bind(packId)
+    .first<{ vote_count: number }>();
+
+  return { voted: !existing, voteCount: pack?.vote_count ?? 0 };
+}
+
+export async function checkPackCreateRateLimit(db: D1Database, userId: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      "SELECT COUNT(*) AS cnt FROM packs WHERE author_id = ? AND created_at > datetime('now', '-1 hour')",
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < 10;
+}
+
+export async function checkPackVoteRateLimit(db: D1Database, userId: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      "SELECT COUNT(*) AS cnt FROM pack_votes WHERE user_id = ? AND created_at > datetime('now', '-1 hour')",
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < 30;
 }

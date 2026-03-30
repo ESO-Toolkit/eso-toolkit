@@ -1,4 +1,4 @@
-import { ContentCopy, DeleteOutline, EditOutlined } from '@mui/icons-material';
+import { ContentCopy, DeleteOutline, EditOutlined, Extension } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -15,6 +15,7 @@ import React from 'react';
 
 import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
 import { formatRelativeDate } from '../../../utils/formatRelativeDate';
+import { getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
 import type { HubRoster } from '../types/roster-hub.types';
 import { TAG_COLORS } from '../types/roster-hub.types';
 
@@ -95,6 +96,21 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
     const navigate = useViewTransitionNavigate();
     const isDark = theme.palette.mode === 'dark';
 
+    const handleGetAddons = (e: React.MouseEvent): void => {
+      e.stopPropagation();
+      const packId = roster.recommended_addons?.packId ?? 'trial-essentials';
+      const deepLink = getAddonManagerDeepLink(packId);
+      window.location.href = deepLink;
+      setTimeout(() => {
+        void navigator.clipboard.writeText(deepLink).then(() => {
+          enqueueSnackbar('Deep link copied — install ESO Addon Manager to use it', {
+            variant: 'info',
+            autoHideDuration: 4000,
+          });
+        });
+      }, 1500);
+    };
+
     const handleCopyLink = (e: React.MouseEvent): void => {
       e.stopPropagation();
       const url = `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${roster.roster_data}`;
@@ -157,7 +173,9 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
         {/* Clickable area — opens preview */}
         <CardActionArea
-          onClick={() => navigate(`/rv?r=${encodeURIComponent(roster.roster_data)}`)}
+          onClick={() =>
+            navigate(`/rv?r=${encodeURIComponent(roster.roster_data)}&hubId=${roster.id}`)
+          }
           sx={{ flexGrow: 1, alignItems: 'flex-start' }}
           aria-label={`View ${roster.title}`}
         >
@@ -357,7 +375,22 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             onVote={() => onVote(roster.id)}
           />
 
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
+          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+            <Tooltip title="Get recommended addons in ESO Addon Manager">
+              <IconButton
+                size="small"
+                onClick={handleGetAddons}
+                aria-label="Get addons"
+                sx={{
+                  width: 36,
+                  height: 36,
+                  color: 'text.disabled',
+                  '&:hover': { color: '#c4a44a' },
+                }}
+              >
+                <Extension sx={{ fontSize: 17 }} />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Copy share link">
               <IconButton
                 size="small"

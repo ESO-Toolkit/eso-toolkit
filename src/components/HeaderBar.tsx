@@ -642,6 +642,11 @@ export const HeaderBar: React.FC = () => {
       icon: '🏗️',
       path: '/build-hub',
     },
+    {
+      text: 'Pack Hub',
+      icon: '🧩',
+      path: '/pack-hub',
+    },
   ];
 
   return (
