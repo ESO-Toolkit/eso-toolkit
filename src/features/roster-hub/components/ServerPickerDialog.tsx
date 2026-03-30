@@ -599,7 +599,6 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       onClose={isCloseable ? onClose : undefined}
       maxWidth="sm"
       fullWidth
-      className="glass-dialog"
       PaperProps={{
         sx: {
           background: panelBg,

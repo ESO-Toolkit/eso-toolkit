@@ -239,7 +239,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       maxWidth="sm"
       fullWidth
       disableEscapeKeyDown={loading}
-      className="glass-dialog"
       PaperProps={{
         sx: {
           background: panelBg,
