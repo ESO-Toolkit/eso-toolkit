@@ -1,5 +1,7 @@
+import { PublishRounded } from '@mui/icons-material';
 import {
   Alert,
+  alpha,
   Box,
   Button,
   Chip,
@@ -181,25 +183,49 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
 
   const atTagLimit = selectedTags.length >= MAX_TAGS;
 
-  // ── Glass tokens ────────────────────────────────────────────────────────
+  // ── Accent & glassmorphism tokens (matching BugReportDialog) ─────────
+  const accentColor = '#38bdf8';
+  const accentColorAlt = '#2563eb';
+  const accentGradient = `linear-gradient(135deg, ${accentColor} 0%, ${accentColorAlt} 100%)`;
+
+  const panelBg = isDark
+    ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.75) 0%, rgba(3, 7, 18, 0.85) 100%)'
+    : 'linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(248, 250, 252, 0.92) 100%)';
+  const panelBorder = isDark
+    ? `1px solid ${alpha(accentColor, 0.12)}`
+    : `1px solid ${alpha('#0f172a', 0.08)}`;
+  const panelShadow = isDark
+    ? '0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+    : '0 4px 24px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04)';
+
+  const shimmer = {
+    '@keyframes shimmer': {
+      '0%': { backgroundPosition: '-200% center' },
+      '100%': { backgroundPosition: '200% center' },
+    },
+  };
+
   const glassInputSx = {
     '& .MuiOutlinedInput-root': {
       fontSize: 13,
-      background: isDark ? 'rgba(0, 0, 0, 0.22)' : 'rgba(0, 0, 0, 0.04)',
       borderRadius: '10px',
-      transition: 'background 0.2s ease, border-color 0.2s ease',
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.10)',
+      backgroundColor: isDark ? alpha('#0f172a', 0.8) : '#ffffff',
+      backdropFilter: 'blur(6px)',
+      WebkitBackdropFilter: 'blur(6px)',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      '& fieldset': {
+        borderColor: isDark ? alpha(accentColor, 0.2) : alpha('#0f172a', 0.12),
+        transition: 'border-color 0.3s ease',
       },
-      '&:hover': {
-        background: isDark ? 'rgba(0, 0, 0, 0.28)' : 'rgba(0, 0, 0, 0.06)',
-        '& .MuiOutlinedInput-notchedOutline': {
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.18)',
-        },
+      '&:hover fieldset': {
+        borderColor: isDark ? alpha(accentColor, 0.4) : alpha('#0f172a', 0.25),
       },
-      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-        borderColor: isDark ? 'rgba(56, 189, 248, 0.5)' : 'rgba(56, 189, 248, 0.6)',
-        borderWidth: 1,
+      '&.Mui-focused fieldset': {
+        borderColor: accentColor,
+        borderWidth: 2,
+      },
+      '&.Mui-focused': {
+        boxShadow: `0 0 0 3px ${alpha(accentColor, 0.15)}`,
       },
     },
     '& .MuiInputLabel-root': { fontSize: 13 },
@@ -214,51 +240,101 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       fullWidth
       disableEscapeKeyDown={loading}
       className="glass-dialog"
+      PaperProps={{
+        sx: {
+          background: panelBg,
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: panelBorder,
+          borderRadius: '14px',
+          boxShadow: panelShadow,
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '2px',
+            background: accentGradient,
+            zIndex: 1,
+            ...shimmer,
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 3s linear infinite',
+          },
+        },
+      }}
       slotProps={{
         backdrop: {
-          sx: { background: isDark ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.28)' },
-        },
-        paper: {
           sx: {
-            borderRadius: '16px',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-            background: isDark
-              ? 'linear-gradient(135deg, rgba(12, 12, 22, 0.96) 0%, rgba(18, 14, 30, 0.98) 100%)'
-              : 'rgba(255, 255, 255, 0.97)',
-            border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(0,0,0,0.07)',
-            boxShadow: isDark
-              ? '0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03) inset'
-              : '0 24px 64px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset',
-            overflow: 'hidden',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: '10%',
-              right: '10%',
-              height: '1px',
-              background: isDark
-                ? 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.35), transparent)'
-                : 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.18), transparent)',
-            },
+            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(15, 23, 42, 0.35)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
           },
         },
       }}
     >
       <DialogTitle
         sx={{
-          pb: 0.5,
-          fontWeight: 700,
-          fontSize: '1.1rem',
-          letterSpacing: '-0.01em',
+          py: 2.5,
+          px: { xs: 2.5, sm: 3 },
+          borderBottom: panelBorder,
+          background: isDark
+            ? `linear-gradient(135deg, ${alpha(accentColor, 0.06)} 0%, transparent 100%)`
+            : 'transparent',
         }}
       >
-        {isEditMode ? 'Edit Published Roster' : 'Publish to Roster Hub'}
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Box
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: '12px',
+              background: `linear-gradient(135deg, ${alpha(accentColor, 0.18)} 0%, ${alpha(accentColorAlt, 0.1)} 100%)`,
+              border: `1px solid ${alpha(accentColor, 0.25)}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.06)',
+                boxShadow: `0 0 16px ${alpha(accentColor, 0.2)}`,
+              },
+            }}
+          >
+            <PublishRounded sx={{ fontSize: 22, color: accentColor }} />
+          </Box>
+          <Box>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                letterSpacing: '-0.01em',
+                lineHeight: 1.3,
+              }}
+            >
+              {isEditMode ? 'Edit Published Roster' : 'Publish to Roster Hub'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+              {isEditMode
+                ? 'Update your roster details below'
+                : 'Share your roster with the community'}
+            </Typography>
+          </Box>
+        </Stack>
       </DialogTitle>
 
       <DialogContent
-        sx={{ display: 'flex', flexDirection: 'column', gap: 1.75, pt: '12px !important' }}
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          px: { xs: 2.5, sm: 3 },
+          py: 2.5,
+        }}
       >
         <TextField
           label="Title"
@@ -540,10 +616,13 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
             severity="error"
             onClose={() => setError(null)}
             sx={{
-              borderRadius: '10px',
-              bgcolor: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.06)',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              '& .MuiAlert-icon': { color: '#ef4444' },
+              borderRadius: 2,
+              backgroundColor: isDark ? alpha('#78350f', 0.25) : alpha('#fff7ed', 0.95),
+              border: `1px solid ${isDark ? alpha('#fb923c', 0.35) : alpha('#fb923c', 0.45)}`,
+              color: isDark ? '#fdba74' : '#9a3412',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              '& .MuiAlert-icon': { color: isDark ? '#fb923c' : '#ea580c' },
             }}
           >
             {error}
@@ -553,14 +632,15 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
 
       <DialogActions
         sx={{
-          px: 2.5,
-          pb: 2,
-          pt: 1.5,
+          px: { xs: 2.5, sm: 3 },
+          py: 2,
+          borderTop: panelBorder,
           background: isDark
-            ? 'linear-gradient(135deg, rgba(12,12,22,0.5) 0%, rgba(18,14,30,0.5) 100%)'
-            : 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(248,250,252,0.4) 100%)',
+            ? `linear-gradient(180deg, ${alpha('#0f172a', 0.6)} 0%, ${alpha('#0b1220', 0.8)} 100%)`
+            : alpha('#f8fafc', 0.6),
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
+          gap: 1.5,
         }}
       >
         <Button
@@ -586,11 +666,13 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
             fontWeight: 600,
             fontSize: '0.82rem',
             px: 2.5,
-            background: 'linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)',
-            boxShadow: '0 4px 16px rgba(56, 189, 248, 0.25)',
+            background: accentGradient,
+            boxShadow: `0 4px 16px ${alpha(accentColor, 0.25)}`,
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             '&:hover': {
-              background: 'linear-gradient(135deg, #5cc8f9 0%, #3b82f6 100%)',
-              boxShadow: '0 6px 20px rgba(56, 189, 248, 0.35)',
+              background: `linear-gradient(135deg, ${alpha(accentColor, 0.9)} 0%, ${alpha(accentColorAlt, 0.9)} 100%)`,
+              boxShadow: `0 6px 24px ${alpha(accentColor, 0.4)}`,
+              transform: 'translateY(-1px)',
             },
             '&.Mui-disabled': {
               background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
