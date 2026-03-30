@@ -328,25 +328,30 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           MuiDialogActions: {
             styleOverrides: {
               root: {
-                background: darkMode
-                  ? `linear-gradient(135deg, ${tokens.bg} 0%, ${tokens.panel2} 100%) !important`
-                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%) !important',
-                backdropFilter: 'blur(10px) !important',
-                WebkitBackdropFilter: 'blur(10px) !important',
-                borderTop: darkMode
-                  ? '1px solid rgba(56, 189, 248, 0.1) !important'
-                  : '1px solid rgba(15, 23, 42, 0.08) !important',
+                // Only apply to non-glass dialogs; glass dialogs own their styles via sx.
+                '.MuiDialog-root:not(.glass-dialog) &': {
+                  background: darkMode
+                    ? `linear-gradient(135deg, ${tokens.bg} 0%, ${tokens.panel2} 100%) !important`
+                    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%) !important',
+                  backdropFilter: 'blur(10px) !important',
+                  WebkitBackdropFilter: 'blur(10px) !important',
+                  borderTop: darkMode
+                    ? '1px solid rgba(56, 189, 248, 0.1) !important'
+                    : '1px solid rgba(15, 23, 42, 0.08) !important',
+                },
               },
             },
           },
           MuiDialogContent: {
             styleOverrides: {
               root: {
-                background: darkMode
-                  ? `linear-gradient(135deg, ${tokens.bg} 0%, ${tokens.panel2} 100%) !important`
-                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%) !important',
-                backdropFilter: 'blur(10px) !important',
-                WebkitBackdropFilter: 'blur(10px) !important',
+                '.MuiDialog-root:not(.glass-dialog) &': {
+                  background: darkMode
+                    ? `linear-gradient(135deg, ${tokens.bg} 0%, ${tokens.panel2} 100%) !important`
+                    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%) !important',
+                  backdropFilter: 'blur(10px) !important',
+                  WebkitBackdropFilter: 'blur(10px) !important',
+                },
               },
             },
           },
@@ -771,26 +776,9 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               backgroundColor: 'transparent !important',
             },
           },
-          // Glass dialog opt-out: reset MuiDialogContent/Actions/Title
-          // component-level styleOverrides so glass-dialog can own its styles.
-          // Triple-class specificity to beat MUI component styleOverrides.
-          '.MuiDialog-root.glass-dialog .MuiDialogContent-root.MuiDialogContent-root': {
-            background: 'transparent !important',
-            backgroundColor: 'transparent !important',
-            backdropFilter: 'none !important',
-            WebkitBackdropFilter: 'none !important',
-          },
-          '.MuiDialog-root.glass-dialog .MuiDialogActions-root.MuiDialogActions-root': {
-            background: 'none !important',
-            backgroundColor: 'transparent !important',
-            backdropFilter: 'none !important',
-            WebkitBackdropFilter: 'none !important',
-            borderTop: 'none !important',
-          },
-          '.MuiDialog-root.glass-dialog .MuiDialogTitle-root.MuiDialogTitle-root': {
-            background: 'transparent !important',
-            backgroundColor: 'transparent !important',
-          },
+          // Glass dialog opt-out: component-level styleOverrides are scoped
+          // with `.MuiDialog-root:not(.glass-dialog) &` so glass dialogs
+          // fully own their styles via sx props — no reset rules needed.
           // Note: MuiPaper component styleOverrides (no !important) are
           // overridden by slotProps.paper.sx in glass-dialog components.
           // Force MenuItem text colors globally with highest specificity
