@@ -46,6 +46,14 @@ import {
   checkImageUploadRateLimit,
   getUserProfile,
   upsertUserBio,
+  listPacks,
+  getPackById,
+  createPack,
+  updatePack,
+  deletePack,
+  togglePackVote,
+  checkPackCreateRateLimit,
+  checkPackVoteRateLimit,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import type { Env } from './types';
@@ -163,6 +171,7 @@ app.post('/rosters', async (c) => {
     roster_data: string;
     tags?: string[];
     is_anonymous?: boolean;
+    recommended_addons?: { packId?: string; addons: { esouiId: number; name: string; required?: boolean; note?: string }[] } | null;
   }
 
   let body: CreateBody;
@@ -172,7 +181,7 @@ app.post('/rosters', async (c) => {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
 
-  const { title, description = '', trial_id, roster_data, tags = [], is_anonymous = false } = body;
+  const { title, description = '', trial_id, roster_data, tags = [], is_anonymous = false, recommended_addons = null } = body;
 
   if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
   if (!trial_id?.trim()) return c.json({ error: 'trial_id is required' }, 400);
@@ -184,6 +193,14 @@ app.post('/rosters', async (c) => {
     return c.json({ error: 'roster_data must be ≤ 50 000 characters' }, 400);
   if (!isValidBase64Url(roster_data))
     return c.json({ error: 'roster_data must be valid base64url' }, 400);
+
+  // Validate recommended_addons if provided
+  let recommendedAddonsJson: string | null = null;
+  if (recommended_addons && Array.isArray(recommended_addons.addons) && recommended_addons.addons.length > 0) {
+    if (recommended_addons.addons.length > 20)
+      return c.json({ error: 'recommended_addons: max 20 addons' }, 400);
+    recommendedAddonsJson = JSON.stringify(recommended_addons);
+  }
 
   const createAllowed = await checkRosterCreateRateLimit(c.env.DB, user.id);
   if (!createAllowed)
@@ -205,6 +222,7 @@ app.post('/rosters', async (c) => {
     rosterData: roster_data,
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
+    recommendedAddons: recommendedAddonsJson,
   });
 
   const roster = await getRosterById(c.env.DB, id, user.id);
@@ -224,6 +242,7 @@ app.put('/rosters/:id', async (c) => {
     roster_data: string;
     tags?: string[];
     is_anonymous?: boolean;
+    recommended_addons?: { packId?: string; addons: { esouiId: number; name: string; required?: boolean; note?: string }[] } | null;
   }
 
   let body: UpdateBody;
@@ -233,7 +252,7 @@ app.put('/rosters/:id', async (c) => {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
 
-  const { title, description = '', trial_id, roster_data, tags = [], is_anonymous = false } = body;
+  const { title, description = '', trial_id, roster_data, tags = [], is_anonymous = false, recommended_addons = null } = body;
 
   if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
   if (!trial_id?.trim()) return c.json({ error: 'trial_id is required' }, 400);
@@ -246,6 +265,14 @@ app.put('/rosters/:id', async (c) => {
   if (!isValidBase64Url(roster_data))
     return c.json({ error: 'roster_data must be valid base64url' }, 400);
 
+  // Validate recommended_addons if provided
+  let recommendedAddonsJson: string | null = null;
+  if (recommended_addons && Array.isArray(recommended_addons.addons) && recommended_addons.addons.length > 0) {
+    if (recommended_addons.addons.length > 20)
+      return c.json({ error: 'recommended_addons: max 20 addons' }, 400);
+    recommendedAddonsJson = JSON.stringify(recommended_addons);
+  }
+
   const updated = await updateRoster(c.env.DB, c.req.param('id'), user.id, {
     title: sanitize(title),
     description: sanitize(description),
@@ -253,6 +280,7 @@ app.put('/rosters/:id', async (c) => {
     rosterData: roster_data,
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
+    recommendedAddons: recommendedAddonsJson,
   });
 
   if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
@@ -969,6 +997,194 @@ app.put('/users/me/bio', async (c) => {
 
   await upsertUserBio(c.env.DB, user.id, escapeHtml(user.name), sanitize(body.bio));
   return c.json({ ok: true });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Pack Hub endpoints
+// ═════════════════════════════════════════════════════════════════════════════
+
+const VALID_PACK_TYPES = ['addon-pack', 'build-pack', 'roster-pack'];
+
+// ─── GET /packs — list with filtering & pagination ──────────────────────────
+
+app.get('/packs', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+
+  const packType = c.req.query('type') ?? undefined;
+  const tag = c.req.query('tag') ?? undefined;
+  const sort = c.req.query('sort') === 'recent' ? 'recent' : 'votes';
+  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10) || 1);
+
+  const packs = await listPacks(c.env.DB, {
+    packType,
+    tag,
+    sort,
+    page,
+    userId: user?.id,
+  });
+
+  return c.json({ packs, page, sort });
+});
+
+// ─── GET /packs/:id — single pack ──────────────────────────────────────────
+
+app.get('/packs/:id', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  const pack = await getPackById(c.env.DB, c.req.param('id'), user?.id);
+
+  if (!pack) return c.json({ error: 'Not found' }, 404);
+  return c.json({ pack });
+});
+
+// ─── POST /packs — create a pack ───────────────────────────────────────────
+
+app.post('/packs', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  interface CreatePackBody {
+    title: string;
+    description?: string;
+    pack_type?: string;
+    addons: { esouiId: number; name: string; required?: boolean; note?: string }[];
+    tags?: string[];
+    is_anonymous?: boolean;
+  }
+
+  let body: CreatePackBody;
+  try {
+    body = await c.req.json<CreatePackBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  const {
+    title,
+    description = '',
+    pack_type = 'addon-pack',
+    addons,
+    tags = [],
+    is_anonymous = false,
+  } = body;
+
+  if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
+  if (title.length > 100) return c.json({ error: 'title must be ≤ 100 characters' }, 400);
+  if (description.length > 500)
+    return c.json({ error: 'description must be ≤ 500 characters' }, 400);
+  if (!VALID_PACK_TYPES.includes(pack_type))
+    return c.json({ error: `pack_type must be one of: ${VALID_PACK_TYPES.join(', ')}` }, 400);
+  if (!Array.isArray(addons) || addons.length === 0)
+    return c.json({ error: 'At least one addon is required' }, 400);
+  if (addons.length > 30)
+    return c.json({ error: 'Maximum 30 addons per pack' }, 400);
+
+  const createAllowed = await checkPackCreateRateLimit(c.env.DB, user.id);
+  if (!createAllowed)
+    return c.json({ error: 'Rate limit exceeded. You can only create 10 packs per hour.' }, 429);
+
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
+    .map((b) => b.toString(36).padStart(2, '0'))
+    .join('')
+    .slice(0, 12);
+
+  await createPack(c.env.DB, {
+    id,
+    authorId: user.id,
+    authorName: escapeHtml(user.name),
+    title: sanitize(title),
+    description: sanitize(description),
+    packType: sanitize(pack_type),
+    addons: JSON.stringify(addons),
+    tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
+    isAnonymous: !!is_anonymous,
+  });
+
+  const pack = await getPackById(c.env.DB, id, user.id);
+  return c.json({ pack }, 201);
+});
+
+// ─── PUT /packs/:id — update own pack ──────────────────────────────────────
+
+app.put('/packs/:id', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  interface UpdatePackBody {
+    title: string;
+    description?: string;
+    pack_type?: string;
+    addons: { esouiId: number; name: string; required?: boolean; note?: string }[];
+    tags?: string[];
+    is_anonymous?: boolean;
+  }
+
+  let body: UpdatePackBody;
+  try {
+    body = await c.req.json<UpdatePackBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  const {
+    title,
+    description = '',
+    pack_type = 'addon-pack',
+    addons,
+    tags = [],
+    is_anonymous = false,
+  } = body;
+
+  if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
+  if (title.length > 100) return c.json({ error: 'title must be ≤ 100 characters' }, 400);
+  if (description.length > 500)
+    return c.json({ error: 'description must be ≤ 500 characters' }, 400);
+  if (!VALID_PACK_TYPES.includes(pack_type))
+    return c.json({ error: `pack_type must be one of: ${VALID_PACK_TYPES.join(', ')}` }, 400);
+  if (!Array.isArray(addons) || addons.length === 0)
+    return c.json({ error: 'At least one addon is required' }, 400);
+  if (addons.length > 30)
+    return c.json({ error: 'Maximum 30 addons per pack' }, 400);
+
+  const updated = await updatePack(c.env.DB, c.req.param('id'), user.id, {
+    title: sanitize(title),
+    description: sanitize(description),
+    packType: sanitize(pack_type),
+    addons: JSON.stringify(addons),
+    tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
+    isAnonymous: !!is_anonymous,
+  });
+
+  if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
+  const pack = await getPackById(c.env.DB, c.req.param('id'), user.id);
+  return c.json({ pack });
+});
+
+// ─── DELETE /packs/:id — delete own pack ────────────────────────────────────
+
+app.delete('/packs/:id', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const deleted = await deletePack(c.env.DB, c.req.param('id'), user.id);
+  if (!deleted) return c.json({ error: 'Not found or forbidden' }, 404);
+  return c.json({ ok: true });
+});
+
+// ─── POST /packs/:id/vote — toggle upvote ──────────────────────────────────
+
+app.post('/packs/:id/vote', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const pack = await getPackById(c.env.DB, c.req.param('id'));
+  if (!pack) return c.json({ error: 'Not found' }, 404);
+
+  const voteAllowed = await checkPackVoteRateLimit(c.env.DB, user.id);
+  if (!voteAllowed)
+    return c.json({ error: 'Rate limit exceeded. Max 30 votes per hour.' }, 429);
+
+  const result = await togglePackVote(c.env.DB, c.req.param('id'), user.id);
+  return c.json(result);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -19,6 +19,8 @@ import { VoteButton } from '../../roster-hub/components/VoteButton';
 import type { HubBuild } from '../types/build-hub.types';
 import { BUILD_TAG_COLORS, ROLE_ACCENT } from '../types/build-hub.types';
 
+import { GetAddonsButton } from './GetAddonsButton';
+
 interface BuildCardProps {
   build: HubBuild;
   isOwner: boolean;
@@ -47,6 +49,15 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const formatDate = formatRelativeDate;
+
+/** Suggest a pack based on the build's role. */
+const ROLE_PACK_MAP: Record<string, string> = {
+  healer: 'healer-toolkit',
+  tank: 'trial-essentials',
+  'magicka-dps': 'dps-starter',
+  'stamina-dps': 'dps-starter',
+  'hybrid-dps': 'dps-starter',
+};
 
 export const BuildCard: React.FC<BuildCardProps> = React.memo(
   ({ build, isOwner, isLoggedIn, onVote, onDelete, onEdit }) => {
@@ -333,7 +344,8 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
             disabled={!isLoggedIn}
             onVote={() => onVote(build.id)}
           />
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
+          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+            <GetAddonsButton packId={ROLE_PACK_MAP[build.role] ?? 'trial-essentials'} iconOnly />
             <Tooltip title="Copy share link">
               <IconButton
                 size="small"

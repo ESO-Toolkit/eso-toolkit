@@ -8,12 +8,34 @@ import type {
   HubRoster,
   ListCommentsResponse,
   ListRostersResponse,
+  RecommendedAddons,
   SingleCommentResponse,
   SingleRosterResponse,
   SortOrder,
   UserProfileResponse,
   VoteResponse,
 } from '../types/roster-hub.types';
+
+/** Parse the recommended_addons JSON string from the API into a typed object. */
+function parseRecommendedAddons(raw: string | null | undefined): RecommendedAddons | null {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as RecommendedAddons;
+  } catch {
+    return null;
+  }
+}
+
+/** Hydrate recommended_addons on a roster response (D1 stores it as a JSON string). */
+function hydrateRoster(roster: HubRoster): HubRoster {
+  return {
+    ...roster,
+    recommended_addons:
+      typeof roster.recommended_addons === 'string'
+        ? parseRecommendedAddons(roster.recommended_addons)
+        : (roster.recommended_addons ?? null),
+  };
+}
 
 const BASE_URL =
   (import.meta.env.VITE_ROSTER_HUB_API_URL as string | undefined) ??
@@ -66,7 +88,7 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
 }
 
 export const rosterHubApi = {
-  list(opts: {
+  async list(opts: {
     trial?: string;
     tag?: string;
     sort?: SortOrder;
@@ -79,11 +101,13 @@ export const rosterHubApi = {
     if (opts.sort) params.set('sort', opts.sort);
     if (opts.page) params.set('page', String(opts.page));
     const qs = params.toString() ? `?${params.toString()}` : '';
-    return request<ListRostersResponse>(`/rosters${qs}`, {}, opts.token);
+    const data = await request<ListRostersResponse>(`/rosters${qs}`, {}, opts.token);
+    return { ...data, rosters: data.rosters.map(hydrateRoster) };
   },
 
-  get(id: string, token?: string): Promise<SingleRosterResponse> {
-    return request<SingleRosterResponse>(`/rosters/${id}`, {}, token);
+  async get(id: string, token?: string): Promise<SingleRosterResponse> {
+    const data = await request<SingleRosterResponse>(`/rosters/${id}`, {}, token);
+    return { roster: hydrateRoster(data.roster) };
   },
 
   create(
@@ -94,6 +118,7 @@ export const rosterHubApi = {
       roster_data: string;
       tags: string[];
       is_anonymous?: boolean;
+      recommended_addons?: RecommendedAddons | null;
     },
     token: string,
   ): Promise<SingleRosterResponse> {
@@ -113,6 +138,7 @@ export const rosterHubApi = {
       roster_data: string;
       tags: string[];
       is_anonymous?: boolean;
+      recommended_addons?: RecommendedAddons | null;
     },
     token: string,
   ): Promise<SingleRosterResponse> {

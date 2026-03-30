@@ -68,6 +68,9 @@ const LatestReports = React.lazy(() =>
 const OAuthRedirect = React.lazy(() =>
   import('./OAuthRedirect').then((module) => ({ default: module.OAuthRedirect })),
 );
+const AppAuth = React.lazy(() =>
+  import('./AppAuth').then((module) => ({ default: module.AppAuth })),
+);
 const Calculator = React.lazy(() =>
   import('./components/Calculator').then((module) => ({ default: module.Calculator })),
 );
@@ -190,6 +193,12 @@ const BuildHubPage = React.lazy(() =>
   })),
 );
 
+const PackHubPage = React.lazy(() =>
+  import('./features/pack-hub/components/PackHubPage').then((module) => ({
+    default: module.PackHubPage,
+  })),
+);
+
 const PublicProfilePage = React.lazy(() =>
   import('./pages/PublicProfilePage').then((module) => ({ default: module.PublicProfilePage })),
 );
@@ -260,16 +269,19 @@ const App: React.FC = () => {
     };
   }, []);
 
+  const loggerConfig = React.useMemo(
+    () => ({
+      level: process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.ERROR,
+      enableConsole: true,
+      enableStorage: true,
+      maxStorageEntries: 1000,
+      contextPrefix: 'ESO-Logger',
+    }),
+    [],
+  );
+
   return (
-    <LoggerProvider
-      config={{
-        level: process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.ERROR, // DEBUG in dev, WARN in prod
-        enableConsole: true,
-        enableStorage: true,
-        maxStorageEntries: 1000,
-        contextPrefix: 'ESO-Logger',
-      }}
-    >
+    <LoggerProvider config={loggerConfig}>
       <ReduxProvider store={store}>
         <PersistGate loading={<LoadingFallback />} persistor={persistor}>
           <ReduxThemeProvider>
@@ -351,6 +363,16 @@ const AppRoutes: React.FC = () => {
             element={
               <ErrorBoundary>
                 <DiscordOAuthRedirect />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/app-auth"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<LoadingFallback />}>
+                  <AppAuth />
+                </Suspense>
               </ErrorBoundary>
             }
           />
@@ -695,6 +717,16 @@ const AppRoutes: React.FC = () => {
                     </Suspense>
                   </ErrorBoundary>
                 </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/pack-hub"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PackHubPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route

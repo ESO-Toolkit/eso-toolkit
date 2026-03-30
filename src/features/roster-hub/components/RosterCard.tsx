@@ -1,4 +1,4 @@
-import { ContentCopy, DeleteOutline, EditOutlined, MoreVert } from '@mui/icons-material';
+import { ContentCopy, DeleteOutline, EditOutlined, Extension, MoreVert } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -21,6 +21,7 @@ import React from 'react';
 import discordIcon from '../../../assets/discord-icon.svg';
 import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
 import { formatRelativeDate } from '../../../utils/formatRelativeDate';
+import { getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
 import type { HubRoster } from '../types/roster-hub.types';
 import { TAG_COLORS } from '../types/roster-hub.types';
 
@@ -105,6 +106,21 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
     // ── Overflow menu state ─────────────────────────────────────────────────
     const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
     const menuOpen = Boolean(menuAnchor);
+
+    const handleGetAddons = (e: React.MouseEvent): void => {
+      e.stopPropagation();
+      const packId = roster.recommended_addons?.packId ?? 'trial-essentials';
+      const deepLink = getAddonManagerDeepLink(packId);
+      window.location.href = deepLink;
+      setTimeout(() => {
+        void navigator.clipboard.writeText(deepLink).then(() => {
+          enqueueSnackbar('Deep link copied — install ESO Addon Manager to use it', {
+            variant: 'info',
+            autoHideDuration: 4000,
+          });
+        });
+      }, 1500);
+    };
 
     const handleMenuOpen = (e: React.MouseEvent<HTMLElement>): void => {
       e.stopPropagation();
@@ -192,7 +208,9 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
         {/* Clickable area — opens preview */}
         <CardActionArea
-          onClick={() => navigate(`/rv?r=${encodeURIComponent(roster.roster_data)}`)}
+          onClick={() =>
+            navigate(`/rv?r=${encodeURIComponent(roster.roster_data)}&hubId=${roster.id}`)
+          }
           sx={{ flexGrow: 1, alignItems: 'flex-start' }}
           aria-label={`View ${roster.title}`}
         >
@@ -392,24 +410,42 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             onVote={() => onVote(roster.id)}
           />
 
-          <Tooltip title="More actions">
-            <IconButton
-              size="small"
-              onClick={handleMenuOpen}
-              aria-label="More actions"
-              aria-controls={menuOpen ? 'roster-card-menu' : undefined}
-              aria-haspopup="true"
-              aria-expanded={menuOpen ? 'true' : undefined}
-              sx={{
-                width: 36,
-                height: 36,
-                color: 'text.disabled',
-                '&:hover': { color: 'text.secondary' },
-              }}
-            >
-              <MoreVert sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
+          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+            <Tooltip title="Get recommended addons in ESO Addon Manager">
+              <IconButton
+                size="small"
+                onClick={handleGetAddons}
+                aria-label="Get addons"
+                sx={{
+                  width: 36,
+                  height: 36,
+                  color: 'text.disabled',
+                  '&:hover': { color: '#c4a44a' },
+                }}
+              >
+                <Extension sx={{ fontSize: 17 }} />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="More actions">
+              <IconButton
+                size="small"
+                onClick={handleMenuOpen}
+                aria-label="More actions"
+                aria-controls={menuOpen ? 'roster-card-menu' : undefined}
+                aria-haspopup="true"
+                aria-expanded={menuOpen ? 'true' : undefined}
+                sx={{
+                  width: 36,
+                  height: 36,
+                  color: 'text.disabled',
+                  '&:hover': { color: 'text.secondary' },
+                }}
+              >
+                <MoreVert sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
 
           <Menu
             id="roster-card-menu"
