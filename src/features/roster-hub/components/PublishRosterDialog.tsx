@@ -225,9 +225,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
             background: isDark
               ? 'linear-gradient(135deg, rgba(12, 12, 22, 0.96) 0%, rgba(18, 14, 30, 0.98) 100%)'
               : 'rgba(255, 255, 255, 0.97)',
-            border: isDark
-              ? '1px solid rgba(255,255,255,0.07)'
-              : '1px solid rgba(0,0,0,0.07)',
+            border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(0,0,0,0.07)',
             boxShadow: isDark
               ? '0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03) inset'
               : '0 24px 64px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset',
@@ -258,7 +256,9 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         {isEditMode ? 'Edit Published Roster' : 'Publish to Roster Hub'}
       </DialogTitle>
 
-      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.75, pt: '12px !important' }}>
+      <DialogContent
+        sx={{ display: 'flex', flexDirection: 'column', gap: 1.75, pt: '12px !important' }}
+      >
         <TextField
           label="Title"
           value={title}
@@ -309,9 +309,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
             p: 1.5,
             borderRadius: '10px',
             background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
-            border: isDark
-              ? '1px solid rgba(255,255,255,0.05)'
-              : '1px solid rgba(0,0,0,0.05)',
+            border: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)',
           }}
         >
           <Typography
@@ -392,7 +390,10 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                           : {
                               borderColor: `${TAG_COLORS.hm}44`,
                               color: TAG_COLORS.hm,
-                              '&:hover': { bgcolor: `${TAG_COLORS.hm}15`, borderColor: `${TAG_COLORS.hm}88` },
+                              '&:hover': {
+                                bgcolor: `${TAG_COLORS.hm}15`,
+                                borderColor: `${TAG_COLORS.hm}88`,
+                              },
                             }),
                       }}
                     />
@@ -412,9 +413,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
               p: 0.75,
               mt: 1,
               borderRadius: '8px',
-              border: isDark
-                ? '1px solid rgba(255,255,255,0.08)'
-                : '1px solid rgba(0,0,0,0.08)',
+              border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)',
               bgcolor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
               minHeight: 36,
               transition: 'border-color 0.2s ease',

@@ -585,9 +585,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
             background: isDark
               ? 'linear-gradient(135deg, rgba(12, 12, 22, 0.96) 0%, rgba(15, 13, 28, 0.98) 100%)'
               : 'rgba(255,255,255,0.97)',
-            border: isDark
-              ? '1px solid rgba(88,101,242,0.15)'
-              : '1px solid rgba(88,101,242,0.1)',
+            border: isDark ? '1px solid rgba(88,101,242,0.15)' : '1px solid rgba(88,101,242,0.1)',
             boxShadow: isDark
               ? '0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03) inset'
               : '0 24px 64px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset',
@@ -771,21 +769,15 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                         borderRadius: '8px',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
-                        border: isNew
-                          ? '1px solid rgba(87,242,135,0.25)'
-                          : '1px solid transparent',
+                        border: isNew ? '1px solid rgba(87,242,135,0.25)' : '1px solid transparent',
                         background: isNew
                           ? isDark
                             ? 'rgba(87,242,135,0.05)'
                             : 'rgba(87,242,135,0.03)'
                           : 'transparent',
                         '&:hover': {
-                          background: isDark
-                            ? 'rgba(88,101,242,0.1)'
-                            : 'rgba(88,101,242,0.05)',
-                          borderColor: isDark
-                            ? 'rgba(88,101,242,0.25)'
-                            : 'rgba(88,101,242,0.2)',
+                          background: isDark ? 'rgba(88,101,242,0.1)' : 'rgba(88,101,242,0.05)',
+                          borderColor: isDark ? 'rgba(88,101,242,0.25)' : 'rgba(88,101,242,0.2)',
                         },
                       }}
                     >
@@ -1168,12 +1160,18 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                                     color: '#fff',
                                     borderColor: TAG_COLORS.hm,
                                     boxShadow: `0 0 12px ${TAG_COLORS.hm}40`,
-                                    '&:hover': { bgcolor: TAG_COLORS.hm, filter: 'brightness(0.85)' },
+                                    '&:hover': {
+                                      bgcolor: TAG_COLORS.hm,
+                                      filter: 'brightness(0.85)',
+                                    },
                                   }
                                 : {
                                     borderColor: `${TAG_COLORS.hm}44`,
                                     color: TAG_COLORS.hm,
-                                    '&:hover': { bgcolor: `${TAG_COLORS.hm}15`, borderColor: `${TAG_COLORS.hm}88` },
+                                    '&:hover': {
+                                      bgcolor: `${TAG_COLORS.hm}15`,
+                                      borderColor: `${TAG_COLORS.hm}88`,
+                                    },
                                   }),
                             }}
                           />
@@ -1200,9 +1198,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     minHeight: 36,
                     transition: 'border-color 0.2s ease',
                     '&:focus-within': {
-                      borderColor: isDark
-                        ? 'rgba(88,101,242,0.4)'
-                        : 'rgba(88,101,242,0.5)',
+                      borderColor: isDark ? 'rgba(88,101,242,0.4)' : 'rgba(88,101,242,0.5)',
                     },
                   }}
                 >
