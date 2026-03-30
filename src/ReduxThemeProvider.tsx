@@ -771,6 +771,32 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               backgroundColor: 'transparent !important',
             },
           },
+          // Glass dialog opt-out: reset MuiDialogContent/Actions/Title
+          // component-level styleOverrides so glass-dialog can own its styles
+          '.glass-dialog .MuiDialogContent-root': {
+            background: 'transparent !important',
+            backgroundColor: 'transparent !important',
+            backdropFilter: 'none !important',
+            WebkitBackdropFilter: 'none !important',
+          },
+          '.glass-dialog .MuiDialogActions-root': {
+            background: 'none !important',
+            backgroundColor: 'transparent !important',
+            backdropFilter: 'none !important',
+            WebkitBackdropFilter: 'none !important',
+            borderTop: 'none !important',
+          },
+          '.glass-dialog .MuiDialogTitle-root': {
+            background: 'transparent !important',
+            backgroundColor: 'transparent !important',
+          },
+          '.glass-dialog > .MuiDialog-container > .MuiDialog-paper': {
+            background: 'unset !important',
+            backgroundColor: 'unset !important',
+            border: 'unset !important',
+            borderRadius: 'unset !important',
+            boxShadow: 'unset !important',
+          },
           // Force MenuItem text colors globally with highest specificity
           '.MuiMenuItem-root': {
             color: `${darkMode ? '#e5e7eb' : '#1e293b'} !important`,
