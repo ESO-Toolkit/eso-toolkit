@@ -295,8 +295,7 @@ const playerDataSlice = createSlice({
           return;
         }
         entry.status = 'failed';
-        entry.error =
-          (action.payload as string) || action.error.message || 'Failed to fetch player data';
+        entry.error = action.payload ?? action.error.message ?? 'Failed to fetch player data';
         entry.currentRequest = null;
         touchAccessOrder(state, key);
       });

@@ -52,14 +52,6 @@ const uiSlice = createSlice({
     setSelectedTargetIds: (state, action: PayloadAction<number[]>) => {
       state.selectedTargetIds = action.payload;
     },
-    // Compatibility action for components that set a single target ID
-    setSelectedTargetId: (state, action: PayloadAction<number | null>) => {
-      if (action.payload === null) {
-        state.selectedTargetIds = [];
-      } else {
-        state.selectedTargetIds = [action.payload];
-      }
-    },
     setShowExperimentalTabs: (state, action: PayloadAction<boolean>) => {
       state.showExperimentalTabs = action.payload;
     },
