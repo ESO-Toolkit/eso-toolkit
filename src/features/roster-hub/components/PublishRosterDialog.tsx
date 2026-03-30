@@ -183,16 +183,12 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
 
   const atTagLimit = selectedTags.length >= MAX_TAGS;
 
-  // ── Site panel tokens (matching /my-reports container style) ─────────
+  // ── Panel tokens (matching PlayerCardModal info modal) ──────────────
   const accent = '#38bdf8';
 
-  const panelBg = isDark
-    ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.66) 0%, rgba(3, 7, 18, 0.66) 100%)'
-    : 'linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.92) 100%)';
-  const panelBorder = isDark ? '1px solid rgb(31, 41, 55)' : '1px solid rgba(0, 0, 0, 0.08)';
-  const panelShadow = isDark
-    ? '0 8px 30px rgba(0, 0, 0, 0.25)'
-    : '0 4px 24px rgba(15, 23, 42, 0.08)';
+  const panelBorder = isDark
+    ? '1px solid rgba(255, 255, 255, 0.08)'
+    : '1px solid rgba(0, 0, 0, 0.08)';
 
   const inputSx = {
     '& .MuiOutlinedInput-root': {
@@ -224,13 +220,16 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       maxWidth="sm"
       fullWidth
       disableEscapeKeyDown={loading}
+      className="glass-dialog"
       PaperProps={{
         sx: {
-          background: panelBg,
+          background: isDark
+            ? 'linear-gradient(135deg, rgba(15,23,42,0.97), rgba(30,41,59,0.97))'
+            : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
+          backdropFilter: 'blur(20px)',
+          borderRadius: 3,
           border: panelBorder,
-          borderRadius: '14px',
-          boxShadow: panelShadow,
-          overflow: 'hidden',
+          maxHeight: '90vh',
         },
       }}
     >
