@@ -213,6 +213,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       maxWidth="sm"
       fullWidth
       disableEscapeKeyDown={loading}
+      className="glass-dialog"
       slotProps={{
         backdrop: {
           sx: { background: isDark ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.28)' },

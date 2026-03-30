@@ -470,15 +470,15 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 : 'rgba(15, 23, 42, 0.25) rgba(188, 217, 255, 0.2)',
             },
           },
-          '.MuiDialog-root .MuiDialog-paper': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiDialog-paper': {
             backgroundColor: `${darkMode ? tokens.bg : '#ffffff'} !important`,
             color: `${darkMode ? tokens.text : '#000000'} !important`,
           },
-          '.MuiDialog-root .MuiDialogTitle-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiDialogTitle-root': {
             backgroundColor: `${darkMode ? tokens.bg : '#ffffff'} !important`,
             color: `${darkMode ? tokens.text : '#000000'} !important`,
           },
-          '.MuiDialog-root .MuiDialogContent-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiDialogContent-root': {
             backgroundColor: `${darkMode ? tokens.bg : '#ffffff'} !important`,
             color: `${darkMode ? tokens.text : '#000000'} !important`,
             background: `${darkMode ? `linear-gradient(135deg, ${tokens.bg} 0%, ${tokens.panel2} 100%)` : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)'} !important`,
@@ -496,12 +496,12 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             color: '#ffffff !important',
             textShadow: '1px 1px 0 rgba(0, 0, 0, 0.89)',
           },
-          '.MuiDialog-root .MuiDialogActions-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiDialogActions-root': {
             backgroundColor: `${darkMode ? tokens.bg : '#ffffff'} !important`,
             color: `${darkMode ? tokens.text : '#000000'} !important`,
             background: `${darkMode ? `linear-gradient(135deg, ${tokens.bg} 0%, ${tokens.panel2} 100%)` : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%)'} !important`,
           },
-          '.MuiDialog-root .MuiOutlinedInput-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiOutlinedInput-root': {
             backgroundColor: `${darkMode ? tokens.panel : '#ffffff'} !important`,
             color: `${darkMode ? tokens.text : '#000000'} !important`,
             '&:hover': {
@@ -520,24 +520,24 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               borderColor: `${darkMode ? 'rgba(56, 189, 248, 0.8)' : 'rgba(25, 118, 210, 0.9)'} !important`,
             },
           },
-          '.MuiDialog-root .MuiOutlinedInput-input': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiOutlinedInput-input': {
             backgroundColor: 'transparent !important',
             color: `${darkMode ? tokens.text : '#000000'} !important`,
           },
-          '.MuiDialog-root .MuiInputBase-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiInputBase-root': {
             backgroundColor: `${darkMode ? tokens.panel : '#ffffff'} !important`,
             color: `${darkMode ? tokens.text : '#000000'} !important`,
             '&:hover': {
               backgroundColor: `${darkMode ? tokens.panel2 : '#f5f5f5'} !important`,
             },
           },
-          '.MuiDialog-root .MuiInputLabel-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiInputLabel-root': {
             color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
             '&.Mui-focused': {
               color: `${darkMode ? '#ffffff' : '#000000'} !important`,
             },
           },
-          '.MuiDialog-root .MuiSelect-select': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiSelect-select': {
             backgroundColor: `${darkMode ? tokens.panel : '#ffffff'} !important`,
             color: `${darkMode ? tokens.text : '#000000'} !important`,
             '&:hover': {
@@ -642,19 +642,19 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             opacity: '1 !important',
           },
           // Fix stepper/tab navigation
-          '.MuiDialog-root .MuiStepper-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiStepper-root': {
             backgroundColor: `${darkMode ? tokens.bg : '#ffffff'} !important`,
           },
-          '.MuiDialog-root .MuiStep-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiStep-root': {
             backgroundColor: `${darkMode ? tokens.bg : '#ffffff'} !important`,
           },
-          '.MuiDialog-root .MuiStepLabel-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiStepLabel-root': {
             color: `${darkMode ? tokens.text : '#000000'} !important`,
           },
-          '.MuiDialog-root .MuiStepIcon-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiStepIcon-root': {
             color: `${darkMode ? tokens.accent : '#1976d2'} !important`,
           },
-          '.MuiDialog-root .MuiStepLabel-label': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiStepLabel-label': {
             color: `${darkMode ? tokens.text : '#000000'} !important`,
             '&.Mui-active': {
               color: `${darkMode ? tokens.accent : '#1976d2'} !important`,
@@ -664,29 +664,29 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             },
           },
           // Fix form containers and boxes (but exclude gear details table)
-          '.MuiDialog-root .MuiBox-root:not(.gear-details-table)': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiBox-root:not(.gear-details-table)': {
             backgroundColor: 'transparent !important',
             color: `${darkMode ? tokens.text : '#000000'} !important`,
           },
-          '.MuiDialog-root .MuiContainer-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiContainer-root': {
             backgroundColor: `${darkMode ? tokens.bg : '#ffffff'} !important`,
             color: `${darkMode ? tokens.text : '#000000'} !important`,
           },
-          '.MuiDialog-root .MuiGrid-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiGrid-root': {
             backgroundColor: `${darkMode ? tokens.bg : '#ffffff'} !important`,
             color: `${darkMode ? tokens.text : '#000000'} !important`,
           },
           // Fix any remaining backgrounds
-          '.MuiDialog-root .MuiCard-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiCard-root': {
             backgroundColor: `${darkMode ? tokens.panel : '#ffffff'} !important`,
             color: `${darkMode ? tokens.text : '#000000'} !important`,
           },
-          '.MuiDialog-root .MuiCardContent-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiCardContent-root': {
             backgroundColor: `${darkMode ? tokens.panel : '#ffffff'} !important`,
             color: `${darkMode ? tokens.text : '#000000'} !important`,
           },
           // Fix TextField components specifically
-          '.MuiDialog-root .MuiTextField-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiTextField-root': {
             backgroundColor: 'transparent !important',
             '& .MuiOutlinedInput-root': {
               backgroundColor: `${darkMode ? tokens.panel : '#ffffff'} !important`,
@@ -724,32 +724,33 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             },
           },
           // Fix form controls and wrappers
-          '.MuiDialog-root .MuiFormControl-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiFormControl-root': {
             backgroundColor: 'transparent !important',
             color: `${darkMode ? tokens.text : '#000000'} !important`,
             '& .MuiOutlinedInput-root:hover': {
               backgroundColor: `${darkMode ? '#1a2332' : '#f5f5f5'} !important`,
             },
           },
-          '.MuiDialog-root .MuiFormLabel-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiFormLabel-root': {
             color: `${darkMode ? tokens.accent : '#1976d2'} !important`,
           },
-          '.MuiDialog-root .MuiFormHelperText-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiFormHelperText-root': {
             color: `${darkMode ? tokens.muted : '#666666'} !important`,
           },
           // Fix Stack and layout containers
-          '.MuiDialog-root .MuiStack-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiStack-root': {
             backgroundColor: 'transparent !important',
           },
-          '.MuiDialog-root .MuiTypography-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiTypography-root': {
             color: `${darkMode ? tokens.text : '#000000'} !important`,
           },
           // Fix TextField hover with maximum specificity
-          '.MuiDialog-root .MuiFormControl-root.MuiTextField-root .MuiOutlinedInput-root:hover': {
-            backgroundColor: `${darkMode ? '#1a2332' : '#f5f5f5'} !important`,
-          },
+          '.MuiDialog-root:not(.glass-dialog) .MuiFormControl-root.MuiTextField-root .MuiOutlinedInput-root:hover':
+            {
+              backgroundColor: `${darkMode ? '#1a2332' : '#f5f5f5'} !important`,
+            },
           // Fix button text colors
-          '.MuiDialog-root .MuiButton-root': {
+          '.MuiDialog-root:not(.glass-dialog) .MuiButton-root': {
             color: `${darkMode ? tokens.text : '#000000'} !important`,
             '&.MuiButton-contained': {
               color: `${darkMode ? '#ffffff' : '#ffffff'} !important`,
@@ -765,7 +766,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             },
           },
           // Fix any div containers inside dialogs
-          '.MuiDialog-root div': {
+          '.MuiDialog-root:not(.glass-dialog) div': {
             '&:not([class*="Mui"])': {
               backgroundColor: 'transparent !important',
             },

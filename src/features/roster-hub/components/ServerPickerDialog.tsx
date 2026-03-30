@@ -573,6 +573,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       onClose={isCloseable ? onClose : undefined}
       maxWidth="sm"
       fullWidth
+      className="glass-dialog"
       slotProps={{
         backdrop: {
           sx: { background: isDark ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.28)' },
