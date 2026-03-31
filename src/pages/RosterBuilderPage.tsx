@@ -40,8 +40,8 @@ import {
   Tooltip,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useState, useCallback, useMemo, useRef, useTransition } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useCallback, useEffect, useMemo, useRef, useTransition } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
 import { PerFightBuilds } from '../components/PerFightBuilds';
@@ -745,6 +745,16 @@ export const RosterBuilderPage: React.FC = () => {
   const [discordPublishOpen, setDiscordPublishOpen] = useState(false);
   const [discordPublishData, setDiscordPublishData] = useState<string>('');
   const dispatch = useAppDispatch();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Auto-open Discord modal when returning from OAuth redirect (?discord=1)
+  useEffect(() => {
+    if (searchParams.get('discord') === '1') {
+      setDiscordPublishOpen(true);
+      searchParams.delete('discord');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Get ESO Logs client context (safe to call - doesn't throw if not logged in)
   const { client: esoLogsClient, isReady, isLoggedIn: clientLoggedIn } = useEsoLogsClientContext();

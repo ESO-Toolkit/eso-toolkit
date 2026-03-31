@@ -708,7 +708,11 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
             </Typography>
             <Button
               variant="contained"
-              onClick={() => startDiscordLogin()}
+              onClick={() => {
+                // Include ?discord=1 so the page re-opens this modal after OAuth redirect
+                const returnPath = `${window.location.pathname}?discord=1`;
+                startDiscordLogin(returnPath);
+              }}
               startIcon={
                 <img
                   src={discordIcon}
