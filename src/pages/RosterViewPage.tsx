@@ -1336,6 +1336,10 @@ export const RosterViewPage: React.FC = () => {
   }>({ open: false, message: '', severity: 'success' });
   const [recommendedAddons, setRecommendedAddons] = useState<RecommendedAddons | null>(null);
   const [addonsLoading, setAddonsLoading] = useState(false);
+  const deepLinkTimerRef = React.useRef<ReturnType<typeof setTimeout>>();
+
+  // Clean up deep-link fallback timer on unmount
+  useEffect(() => () => clearTimeout(deepLinkTimerRef.current), []);
 
   // Default addons shown when no hub roster or no custom recommendations
   const DEFAULT_ADDONS: RecommendedAddonEntry[] = [
@@ -1890,7 +1894,8 @@ export const RosterViewPage: React.FC = () => {
                         window.location.href = deepLink;
                         // Fallback: if Kalpa is not installed, the browser silently fails.
                         // After a delay, copy the deep link to clipboard as a fallback.
-                        setTimeout(() => {
+                        clearTimeout(deepLinkTimerRef.current);
+                        deepLinkTimerRef.current = setTimeout(() => {
                           void navigator.clipboard.writeText(deepLink).then(
                             () => {
                               setSnackbar({

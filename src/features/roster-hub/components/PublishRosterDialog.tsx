@@ -397,6 +397,17 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   // Reset / pre-fill on open
   React.useEffect(() => {
     if (open) {
+      // Always reset Create New tab state on open (shared between both paths)
+      setAddonTab(0);
+      setSelectedPack(null);
+      setCustomAddonName('');
+      setCustomAddonId('');
+      setNewPackTitle('');
+      setNewPackDescription('');
+      setNewPackAddons([]);
+      setNewPackError(null);
+      setAddonSearchQuery('');
+      setAddonSearchResults([]);
       if (editingRoster) {
         setTitle(editingRoster.title);
         setDescription(editingRoster.description ?? '');
@@ -432,19 +443,9 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         setTagInput('');
         setIsAnonymous(false);
         setAddonSectionOpen(false);
-        setAddonTab(0);
         setSelectedPackId(null);
-        setSelectedPack(null);
         setAddonList([]);
         setEnabledAddons(new Set());
-        setCustomAddonName('');
-        setCustomAddonId('');
-        setNewPackTitle('');
-        setNewPackDescription('');
-        setNewPackAddons([]);
-        setNewPackError(null);
-        setAddonSearchQuery('');
-        setAddonSearchResults([]);
       }
       setError(null);
     }
