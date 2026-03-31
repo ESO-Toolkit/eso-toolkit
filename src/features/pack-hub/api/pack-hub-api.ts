@@ -123,20 +123,22 @@ export const packHubApi = {
     return { pack: hydratePack(data.pack) };
   },
 
-  create(data: PublishPackPayload, token: string): Promise<SinglePackResponse> {
-    return request<SinglePackResponse>(
+  async create(data: PublishPackPayload, token: string): Promise<SinglePackResponse> {
+    const res = await request<SinglePackResponse>(
       '/packs',
       { method: 'POST', body: JSON.stringify(data) },
       token,
     );
+    return { pack: hydratePack(res.pack) };
   },
 
-  update(id: string, data: PublishPackPayload, token: string): Promise<SinglePackResponse> {
-    return request<SinglePackResponse>(
+  async update(id: string, data: PublishPackPayload, token: string): Promise<SinglePackResponse> {
+    const res = await request<SinglePackResponse>(
       `/packs/${id}`,
       { method: 'PUT', body: JSON.stringify(data) },
       token,
     );
+    return { pack: hydratePack(res.pack) };
   },
 
   delete(id: string, token: string): Promise<{ ok: boolean }> {

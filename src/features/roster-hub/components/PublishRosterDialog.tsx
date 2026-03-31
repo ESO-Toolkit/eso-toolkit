@@ -194,21 +194,29 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       setEnabledAddons(new Set());
       return;
     }
+    let cancelled = false;
     setPackDetailLoading(true);
     packsApi
       .get(selectedPackId)
       .then((pack) => {
+        if (cancelled) return;
         setSelectedPack(pack);
         const addons = pack.addons.map(packAddonToRecommended);
         setAddonList(addons);
         setEnabledAddons(new Set(addons.map((a) => a.esouiId)));
       })
       .catch(() => {
+        if (cancelled) return;
         setSelectedPack(null);
         setAddonList([]);
         setEnabledAddons(new Set());
       })
-      .finally(() => setPackDetailLoading(false));
+      .finally(() => {
+        if (!cancelled) setPackDetailLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [selectedPackId]);
 
   const handleToggleAddon = (esouiId: number): void => {
@@ -256,14 +264,24 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       setAddonSearchLoading(false);
       return;
     }
+    let cancelled = false;
     setAddonSearchLoading(true);
     const timer = setTimeout(() => {
       searchEsouiAddons(addonSearchQuery.trim())
-        .then(setAddonSearchResults)
-        .catch(() => setAddonSearchResults([]))
-        .finally(() => setAddonSearchLoading(false));
+        .then((results) => {
+          if (!cancelled) setAddonSearchResults(results);
+        })
+        .catch(() => {
+          if (!cancelled) setAddonSearchResults([]);
+        })
+        .finally(() => {
+          if (!cancelled) setAddonSearchLoading(false);
+        });
     }, 300);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      cancelled = true;
+    };
   }, [addonSearchQuery]);
 
   const handleAddSearchedAddon = (result: EsouiAddonSearchResult): void => {

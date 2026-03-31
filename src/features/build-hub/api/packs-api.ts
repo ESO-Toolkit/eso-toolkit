@@ -116,5 +116,5 @@ export const packsApi = {
  * Usage: `kalpa://install-pack/trial-essentials`
  */
 export function getAddonManagerDeepLink(packId: string): string {
-  return `kalpa://install-pack/${packId}`;
+  return `kalpa://install-pack/${encodeURIComponent(packId)}`;
 }

@@ -1891,13 +1891,18 @@ export const RosterViewPage: React.FC = () => {
                         // Fallback: if Kalpa is not installed, the browser silently fails.
                         // After a delay, copy the deep link to clipboard as a fallback.
                         setTimeout(() => {
-                          void navigator.clipboard.writeText(deepLink).then(() => {
-                            setSnackbar({
-                              open: true,
-                              message: 'Deep link copied — install Kalpa to use it',
-                              severity: 'info',
-                            });
-                          });
+                          void navigator.clipboard.writeText(deepLink).then(
+                            () => {
+                              setSnackbar({
+                                open: true,
+                                message: 'Deep link copied — install Kalpa to use it',
+                                severity: 'info',
+                              });
+                            },
+                            () => {
+                              /* clipboard denied — silently ignore */
+                            },
+                          );
                         }, 1500);
                       }}
                       sx={{
