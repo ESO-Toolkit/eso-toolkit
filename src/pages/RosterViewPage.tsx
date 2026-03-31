@@ -1332,7 +1332,7 @@ export const RosterViewPage: React.FC = () => {
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: 'success' | 'error';
+    severity: 'success' | 'error' | 'info';
   }>({ open: false, message: '', severity: 'success' });
   const [recommendedAddons, setRecommendedAddons] = useState<RecommendedAddons | null>(null);
   const [addonsLoading, setAddonsLoading] = useState(false);
@@ -1878,7 +1878,7 @@ export const RosterViewPage: React.FC = () => {
                     }}
                   >
                     {addons.length} addon{addons.length !== 1 ? 's' : ''} &middot;{' '}
-                    {packId ? 'Install all at once' : `Pack ID: ${packId ?? 'none'}`}
+                    Install all at once
                   </Typography>
                   {packId ? (
                     <Button
@@ -1888,6 +1888,17 @@ export const RosterViewPage: React.FC = () => {
                       onClick={() => {
                         const deepLink = getAddonManagerDeepLink(packId);
                         window.location.href = deepLink;
+                        // Fallback: if Kalpa is not installed, the browser silently fails.
+                        // After a delay, copy the deep link to clipboard as a fallback.
+                        setTimeout(() => {
+                          void navigator.clipboard.writeText(deepLink).then(() => {
+                            setSnackbar({
+                              open: true,
+                              message: 'Deep link copied — install Kalpa to use it',
+                              severity: 'info',
+                            });
+                          });
+                        }, 1500);
                       }}
                       sx={{
                         borderRadius: '8px',
