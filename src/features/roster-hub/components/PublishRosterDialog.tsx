@@ -394,9 +394,18 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
     }
   };
 
+  // Track the editingRoster ID to avoid re-running the reset effect when
+  // the parent passes a new object reference with the same roster.
+  const prevEditingIdRef = React.useRef<string | null>(null);
+
   // Reset / pre-fill on open
   React.useEffect(() => {
     if (open) {
+      // Skip re-initialization if already open with the same roster
+      const editId = editingRoster?.id ?? null;
+      if (prevEditingIdRef.current === editId && editId !== null) return;
+      prevEditingIdRef.current = editId;
+
       // Always reset Create New tab state on open (shared between both paths)
       setAddonTab(0);
       setSelectedPack(null);
@@ -448,6 +457,10 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         setEnabledAddons(new Set());
       }
       setError(null);
+      setLoading(false);
+    } else {
+      // Dialog closed — reset the tracking ref so next open re-initializes
+      prevEditingIdRef.current = null;
     }
   }, [open, editingRoster]);
 
@@ -642,7 +655,16 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                 return (
                   <Box
                     key={label}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isActive}
                     onClick={onClick}
+                    onKeyDown={(e: React.KeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onClick();
+                      }
+                    }}
                     sx={{
                       px: 1.5,
                       py: 0.5,
@@ -946,7 +968,17 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           }}
         >
           <Box
+            role="button"
+            tabIndex={0}
+            aria-expanded={addonSectionOpen}
+            aria-label="Toggle addon recommendations"
             onClick={() => setAddonSectionOpen((prev) => !prev)}
+            onKeyDown={(e: React.KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setAddonSectionOpen((prev) => !prev);
+              }
+            }}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -1142,6 +1174,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                             <Tooltip title="Remove addon">
                               <IconButton
                                 size="small"
+                                aria-label="Remove addon"
                                 onClick={() => handleRemoveAddon(addon.esouiId)}
                                 sx={{ p: 0.5, color: 'text.disabled' }}
                               >
@@ -1177,6 +1210,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                     <span>
                       <IconButton
                         size="small"
+                        aria-label="Add custom addon"
                         onClick={handleAddCustomAddon}
                         disabled={!customAddonName.trim() || !customAddonId}
                         sx={{
@@ -1344,6 +1378,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                         <Tooltip title="Remove">
                           <IconButton
                             size="small"
+                            aria-label="Remove addon"
                             onClick={() => handleRemoveNewPackAddon(addon.esouiId)}
                             sx={{ p: 0.5, color: 'text.disabled' }}
                           >
@@ -1377,6 +1412,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                     <span>
                       <IconButton
                         size="small"
+                        aria-label="Add addon manually"
                         onClick={() => {
                           const id = parseInt(customAddonId, 10);
                           const name = customAddonName.trim();

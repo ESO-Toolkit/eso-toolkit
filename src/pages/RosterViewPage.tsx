@@ -1363,11 +1363,13 @@ export const RosterViewPage: React.FC = () => {
 
   // Decode roster from ?r= or fetch by ?id= on mount
   useEffect(() => {
+    let cancelled = false;
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('r') ?? '';
     const hubId = params.get('id') ?? '';
 
     const onDecoded = (decoded: RaidRoster | null, rosterData: string): void => {
+      if (cancelled) return;
       if (decoded) {
         setRoster(decoded);
         setEncodedParam(rosterData);
@@ -1387,6 +1389,7 @@ export const RosterViewPage: React.FC = () => {
       rosterHubApi
         .get(hubIdParam)
         .then(({ roster: hubRoster }) => {
+          if (cancelled) return;
           if (hubRoster.recommended_addons) {
             setRecommendedAddons(hubRoster.recommended_addons);
           }
@@ -1394,7 +1397,9 @@ export const RosterViewPage: React.FC = () => {
         .catch(() => {
           // Silently fall back to defaults
         })
-        .finally(() => setAddonsLoading(false));
+        .finally(() => {
+          if (!cancelled) setAddonsLoading(false);
+        });
     }
 
     if (encoded) {
@@ -1402,6 +1407,7 @@ export const RosterViewPage: React.FC = () => {
       void decodeRosterFromURL(encoded)
         .then((decoded) => onDecoded(decoded, encoded))
         .catch(() => {
+          if (cancelled) return;
           setNotFound(true);
           setLoading(false);
         });
@@ -1419,6 +1425,7 @@ export const RosterViewPage: React.FC = () => {
       void fetchRosterData
         .then((data) => decodeRosterFromURL(data).then((decoded) => onDecoded(decoded, data)))
         .catch(() => {
+          if (cancelled) return;
           setNotFound(true);
           setLoading(false);
         });
@@ -1426,6 +1433,10 @@ export const RosterViewPage: React.FC = () => {
       setNotFound(true);
       setLoading(false);
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Copy this shareable link to clipboard
@@ -1992,9 +2003,14 @@ export const RosterViewPage: React.FC = () => {
 // Discord text builder (mirrors generateDiscordFormat in RosterBuilderPage)
 // ============================================================
 
+/** Escape Discord markdown special characters in user-supplied text. */
+function escapeDiscordMd(text: string): string {
+  return text.replace(/([*_~`|\\])/g, '\\$1');
+}
+
 function buildDiscordText(roster: RaidRoster): string {
   const lines: string[] = [];
-  lines.push(`**${roster.rosterName}**`, '');
+  lines.push(`**${escapeDiscordMd(roster.rosterName)}**`, '');
 
   const fmtUlt = (u: string | null): string => (u ? ` [${u}]` : '');
   const fmtSkillLines = (

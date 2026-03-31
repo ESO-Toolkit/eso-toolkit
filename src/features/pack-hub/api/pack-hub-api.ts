@@ -1,6 +1,9 @@
 /**
- * Pack Hub API client.
- * Shares the same roster-hub-api Worker backend — packs are just another resource.
+ * Pack Hub API client — talks to the roster-hub-api Worker (VITE_ROSTER_HUB_API_URL).
+ *
+ * NOTE: This is separate from packs-api.ts (build-hub) which talks to the
+ * eso-packs-worker (VITE_PACKS_API_URL). Both expose /packs endpoints but
+ * serve different data stores. This one is used by roster-hub and pack-hub features.
  */
 
 import type {
