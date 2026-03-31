@@ -122,18 +122,23 @@ export function buildChannelName(template: string, context: ChannelNameContext):
   const prefixed = trialValue || '';
   const trialToken = prefixed || context.trial || context.tag || '';
 
-  let name = template
-    .replace(/\{day-short\}/gi, context.dayShort ? normaliseDay(context.dayShort) : '')
-    .replace(/\{day-full\}/gi, context.dayShort ? sanitise(context.dayShort) : '')
-    .replace(/\{day\}/gi, context.dayShort ? normaliseDay(context.dayShort) : '')
-    .replace(/\{time\}/gi, context.time ?? '')
-    .replace(/\{trial\}/gi, trialToken)
-    .replace(/\{tag\}/gi, trialToken) // legacy alias for {trial}
-    .replace(/\{trainer\}/gi, '') // legacy — no longer used
-    .replace(
-      /\{difficulty\}/gi,
-      context.difficulty === 'veteran' ? 'vet' : context.difficulty === 'normal' ? 'norm' : '',
-    );
+  // Append non-difficulty extra tags (e.g. hm, score-push) after the template
+  const tagSuffix =
+    context.extraTags && context.extraTags.length > 0 ? `-${context.extraTags.join('-')}` : '';
+
+  let name =
+    template
+      .replace(/\{day-short\}/gi, context.dayShort ? normaliseDay(context.dayShort) : '')
+      .replace(/\{day-full\}/gi, context.dayShort ? sanitise(context.dayShort) : '')
+      .replace(/\{day\}/gi, context.dayShort ? normaliseDay(context.dayShort) : '')
+      .replace(/\{time\}/gi, context.time ?? '')
+      .replace(/\{trial\}/gi, trialToken)
+      .replace(/\{tag\}/gi, trialToken) // legacy alias for {trial}
+      .replace(/\{trainer\}/gi, '') // legacy — no longer used
+      .replace(
+        /\{difficulty\}/gi,
+        context.difficulty === 'veteran' ? 'vet' : context.difficulty === 'normal' ? 'norm' : '',
+      ) + tagSuffix;
 
   // Discord channel name rules: lowercase, a-z 0-9 hyphens only
   name = name

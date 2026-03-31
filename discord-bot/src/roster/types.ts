@@ -55,6 +55,8 @@ export interface ChannelNameContext {
   /** @deprecated Alias for `trial`. Kept for legacy stored patterns using {tag}. */
   tag?: string;
   difficulty?: Difficulty;
+  /** Non-difficulty tags to append after the channel name (e.g. hm, score-push). */
+  extraTags?: string[];
 }
 
 // ── Roster Snapshot (from roster-hub-api) ───────────────────────────────────

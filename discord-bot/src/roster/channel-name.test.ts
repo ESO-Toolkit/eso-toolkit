@@ -69,6 +69,39 @@ describe('buildChannelName', () => {
     const result = buildChannelName('Sunday VLC Prog', {});
     expect(result).toBe('sunday-vlc-prog');
   });
+
+  it('appends extra tags after the channel name', () => {
+    const result = buildChannelName('{day-short}-{time}-{trial}', {
+      dayShort: 'sun',
+      time: '9pm',
+      trial: 'SS',
+      difficulty: 'veteran',
+      extraTags: ['hm'],
+    });
+    expect(result).toBe('sun-9pm-vss-hm');
+  });
+
+  it('appends multiple extra tags', () => {
+    const result = buildChannelName('{day-short}-{time}-{trial}', {
+      dayShort: 'mon',
+      time: '8pm',
+      trial: 'LC',
+      difficulty: 'veteran',
+      extraTags: ['hm', 'score-push'],
+    });
+    expect(result).toBe('mon-8pm-vlc-hm-score-push');
+  });
+
+  it('handles empty extraTags array', () => {
+    const result = buildChannelName('{day-short}-{time}-{trial}', {
+      dayShort: 'sun',
+      time: '9pm',
+      trial: 'SS',
+      difficulty: 'veteran',
+      extraTags: [],
+    });
+    expect(result).toBe('sun-9pm-vss');
+  });
 });
 
 // ── buildChannelName (with difficulty prefix) ────────────────────────────────

@@ -196,7 +196,7 @@ function previewChannelName(pattern: string, tz: string = DEFAULT_TIMEZONE): str
   const suffix = h >= 12 ? 'pm' : 'am';
   h = h % 12 || 12;
   const time12 = `${h}${suffix}`;
-  return pattern
+  const resolved = pattern
     .replace(/{day-short}/gi, shortDays[dayIdx >= 0 ? dayIdx : now.getDay()])
     .replace(/{day-full}/gi, shortDays[dayIdx >= 0 ? dayIdx : now.getDay()])
     .replace(/{day}/gi, shortDays[dayIdx >= 0 ? dayIdx : now.getDay()])
@@ -204,7 +204,10 @@ function previewChannelName(pattern: string, tz: string = DEFAULT_TIMEZONE): str
     .replace(/{trial}/gi, 'vss')
     .replace(/{tag}/gi, 'vss') // legacy alias
     .replace(/{trainer}/gi, '') // legacy — no longer used
-    .replace(/{difficulty}/gi, 'vet') // legacy
+    .replace(/{difficulty}/gi, 'vet'); // legacy
+
+  // Append a sample tag so the preview shows the full format (e.g. sun-9pm-vss-hm)
+  return (resolved + '-hm')
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, '-')
     .replace(/-+/g, '-')

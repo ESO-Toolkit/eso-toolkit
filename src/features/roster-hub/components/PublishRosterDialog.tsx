@@ -1,5 +1,6 @@
-import { Add as AddIcon, PublishRounded } from '@mui/icons-material';
 import {
+  Add as AddIcon,
+  PublishRounded,
   Add,
   CheckCircle,
   ExpandLess,
@@ -47,7 +48,7 @@ import type {
   RecommendedAddonEntry,
   RecommendedAddons,
 } from '../types/roster-hub.types';
-import { PRESET_TAGS, TAG_COLORS } from '../types/roster-hub.types';
+import { TAG_COLORS } from '../types/roster-hub.types';
 
 interface PublishRosterDialogProps {
   open: boolean;
@@ -63,7 +64,6 @@ const HUB_TRIALS = TRIALS.filter((t) => t.type === 'trial');
 const MAX_TAGS = 5;
 
 type Difficulty = 'vet' | 'normal';
-const DIFFICULTY_TAGS: Difficulty[] = ['normal', 'vet'];
 const EXTRA_PRESET_TAGS = ['score-push', 'farm'] as const;
 
 /** Convert a pack addon entry to the roster recommendation format. */
@@ -148,14 +148,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       return;
     }
     setExtraTags((prev) => prev.filter((t) => t !== tag));
-  };
-
-  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      addTag(tagInput);
-      setTagInput('');
-    }
   };
 
   // Fetch pack list when addon section is first opened

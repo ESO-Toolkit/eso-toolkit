@@ -88,11 +88,15 @@ function buildNameContext(
     ctx.difficulty = 'normal';
   }
 
-  // Legacy: first non-difficulty tag populates {tag} for old stored patterns
-  const nonDifficultyTag = snapshot.tags.find(
+  // Non-difficulty tags get appended to the channel name (e.g. hm, score-push)
+  const extraTags = snapshot.tags.filter(
     (t) => !['vet', 'veteran', 'normal'].includes(t.toLowerCase()),
   );
-  if (nonDifficultyTag) ctx.tag = nonDifficultyTag;
+  if (extraTags.length > 0) {
+    ctx.extraTags = extraTags;
+    // Legacy: first extra tag also populates {tag} for old stored patterns
+    ctx.tag = extraTags[0];
+  }
 
   return ctx;
 }

@@ -70,7 +70,6 @@ const MAX_TAGS = 5;
 const SHORT_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
 type Difficulty = 'vet' | 'normal';
-const DIFFICULTY_TAGS: Difficulty[] = ['normal', 'vet'];
 const EXTRA_PRESET_TAGS = ['score-push', 'farm'] as const;
 
 /** Trial ID → lowercase abbreviation (mirrors discord-bot/src/roster/channel-name.ts). */
@@ -131,15 +130,22 @@ function buildChannelPreview(ctx: {
   const abbrev = TRIAL_ABBREVS[ctx.trialId.toUpperCase()] ?? ctx.trialId.toLowerCase();
   const trialToken = diff && ctx.trialId ? `${diff === 'veteran' ? 'v' : 'n'}${abbrev}` : abbrev;
 
-  const name = ctx.pattern
-    .replace(/{day-short}/gi, dayShort)
-    .replace(/{day-full}/gi, dayShort)
-    .replace(/{day}/gi, dayShort)
-    .replace(/{time}/gi, time)
-    .replace(/{trial}/gi, trialToken)
-    .replace(/{tag}/gi, trialToken) // legacy alias
-    .replace(/{trainer}/gi, '') // legacy — no longer used
-    .replace(/{difficulty}/gi, diff === 'veteran' ? 'vet' : diff === 'normal' ? 'norm' : '')
+  // Append non-difficulty tags (hm, score-push, farm, custom) after the template
+  const appendTags = ctx.tags.filter((t) => t !== 'vet' && t !== 'normal');
+  const suffix = appendTags.length > 0 ? `-${appendTags.join('-')}` : '';
+
+  const name = (
+    ctx.pattern
+      .replace(/{day-short}/gi, dayShort)
+      .replace(/{day-full}/gi, dayShort)
+      .replace(/{day}/gi, dayShort)
+      .replace(/{time}/gi, time)
+      .replace(/{trial}/gi, trialToken)
+      .replace(/{tag}/gi, trialToken) // legacy alias
+      .replace(/{trainer}/gi, '') // legacy — no longer used
+      .replace(/{difficulty}/gi, diff === 'veteran' ? 'vet' : diff === 'normal' ? 'norm' : '') +
+    suffix
+  )
     .toLowerCase()
     .replace(/[\s_]+/g, '-')
     .replace(/[^a-z0-9-]/g, '')
