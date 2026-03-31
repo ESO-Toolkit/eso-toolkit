@@ -31,6 +31,8 @@ import {
   type SelectChangeEvent,
   Stack,
   Switch,
+  Tab,
+  Tabs,
   TextField,
   Tooltip,
   Typography,
@@ -41,6 +43,11 @@ import React from 'react';
 import { packsApi } from '../../build-hub/api/packs-api';
 import type { Pack, PackAddonEntry, PackIndexItem } from '../../build-hub/api/packs-api';
 import { TRIALS } from '../../loadout-manager/data/trialConfigs';
+import {
+  type EsouiAddonSearchResult,
+  packHubApi,
+  searchEsouiAddons,
+} from '../../pack-hub/api/pack-hub-api';
 import { rosterHubApi } from '../api/roster-hub-api';
 import type {
   HubRoster,
@@ -110,6 +117,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
 
   // ── Addon recommendation state ──
   const [addonSectionOpen, setAddonSectionOpen] = React.useState(false);
+  const [addonTab, setAddonTab] = React.useState<0 | 1>(0); // 0 = Browse, 1 = Create New
   const [packs, setPacks] = React.useState<PackIndexItem[]>([]);
   const [packsLoading, setPacksLoading] = React.useState(false);
   const [selectedPackId, setSelectedPackId] = React.useState<string | null>(null);
@@ -119,6 +127,16 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   const [enabledAddons, setEnabledAddons] = React.useState<Set<number>>(new Set());
   const [customAddonName, setCustomAddonName] = React.useState('');
   const [customAddonId, setCustomAddonId] = React.useState('');
+
+  // ── Create New pack state ──
+  const [newPackTitle, setNewPackTitle] = React.useState('');
+  const [newPackDescription, setNewPackDescription] = React.useState('');
+  const [newPackAddons, setNewPackAddons] = React.useState<RecommendedAddonEntry[]>([]);
+  const [newPackCreating, setNewPackCreating] = React.useState(false);
+  const [newPackError, setNewPackError] = React.useState<string | null>(null);
+  const [addonSearchQuery, setAddonSearchQuery] = React.useState('');
+  const [addonSearchResults, setAddonSearchResults] = React.useState<EsouiAddonSearchResult[]>([]);
+  const [addonSearchLoading, setAddonSearchLoading] = React.useState(false);
 
   const handleTrialChange = (e: SelectChangeEvent): void => {
     setTrialId(e.target.value);
@@ -232,6 +250,82 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
     );
   };
 
+  // ── ESOUI addon search (debounced) ──
+  React.useEffect(() => {
+    if (addonSearchQuery.trim().length < 2) {
+      setAddonSearchResults([]);
+      return;
+    }
+    setAddonSearchLoading(true);
+    const timer = setTimeout(() => {
+      searchEsouiAddons(addonSearchQuery.trim())
+        .then(setAddonSearchResults)
+        .catch(() => setAddonSearchResults([]))
+        .finally(() => setAddonSearchLoading(false));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [addonSearchQuery]);
+
+  const handleAddSearchedAddon = (result: EsouiAddonSearchResult): void => {
+    if (newPackAddons.some((a) => a.esouiId === result.id)) return;
+    setNewPackAddons((prev) => [...prev, { esouiId: result.id, name: result.title, required: false }]);
+    setAddonSearchQuery('');
+    setAddonSearchResults([]);
+  };
+
+  const handleRemoveNewPackAddon = (esouiId: number): void => {
+    setNewPackAddons((prev) => prev.filter((a) => a.esouiId !== esouiId));
+  };
+
+  const handleToggleNewPackRequired = (esouiId: number): void => {
+    setNewPackAddons((prev) =>
+      prev.map((a) => (a.esouiId === esouiId ? { ...a, required: !a.required } : a)),
+    );
+  };
+
+  const handleCreatePack = async (): Promise<void> => {
+    if (!newPackTitle.trim()) {
+      setNewPackError('Please enter a pack title.');
+      return;
+    }
+    if (newPackAddons.length === 0) {
+      setNewPackError('Add at least one addon.');
+      return;
+    }
+    setNewPackCreating(true);
+    setNewPackError(null);
+    try {
+      const { pack } = await packHubApi.create(
+        {
+          title: newPackTitle.trim(),
+          description: newPackDescription.trim(),
+          pack_type: 'roster-pack',
+          addons: newPackAddons.map((a) => ({
+            esouiId: a.esouiId,
+            name: a.name,
+            required: a.required,
+          })),
+        },
+        token,
+      );
+      // Auto-select the newly created pack
+      setAddonList(newPackAddons);
+      setEnabledAddons(new Set(newPackAddons.map((a) => a.esouiId)));
+      setSelectedPackId(pack.id);
+      // Reset create form and switch to Browse tab
+      setNewPackTitle('');
+      setNewPackDescription('');
+      setNewPackAddons([]);
+      setAddonTab(0);
+      // Refresh the pack list so the new pack appears
+      setPacks([]);
+    } catch (err) {
+      setNewPackError(err instanceof Error ? err.message : 'Failed to create pack');
+    } finally {
+      setNewPackCreating(false);
+    }
+  };
+
   /** Build the recommended_addons payload. */
   const buildRecommendedAddons = (): RecommendedAddons | null => {
     const active = addonList.filter((a) => enabledAddons.has(a.esouiId));
@@ -317,12 +411,19 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         setTagInput('');
         setIsAnonymous(false);
         setAddonSectionOpen(false);
+        setAddonTab(0);
         setSelectedPackId(null);
         setSelectedPack(null);
         setAddonList([]);
         setEnabledAddons(new Set());
         setCustomAddonName('');
         setCustomAddonId('');
+        setNewPackTitle('');
+        setNewPackDescription('');
+        setNewPackAddons([]);
+        setNewPackError(null);
+        setAddonSearchQuery('');
+        setAddonSearchResults([]);
       }
       setError(null);
     }
@@ -875,68 +976,318 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           </Box>
 
           <Collapse in={addonSectionOpen}>
-            <Box sx={{ px: 2, pb: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              <Typography variant="caption" color="text.secondary">
-                Recommend addons that viewers should install for this roster. Pick a curated pack or
-                customize individual addons.
-              </Typography>
+            <Tabs
+              value={addonTab}
+              onChange={(_e: React.SyntheticEvent, v: number) => setAddonTab(v as 0 | 1)}
+              variant="fullWidth"
+              sx={{
+                minHeight: 36,
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+                '& .MuiTab-root': { minHeight: 36, fontSize: '0.78rem', textTransform: 'none' },
+                '& .Mui-selected': { color: '#c4a44a' },
+                '& .MuiTabs-indicator': { bgcolor: '#c4a44a' },
+              }}
+            >
+              <Tab label="Browse Packs" />
+              <Tab label="Create New" />
+            </Tabs>
 
-              {/* Pack selector */}
-              <Autocomplete
-                size="small"
-                options={packs}
-                loading={packsLoading}
-                value={packs.find((p) => p.id === selectedPackId) ?? null}
-                getOptionLabel={(p) => p.name}
-                renderOption={(props, p) => (
-                  <li {...props} key={p.id}>
-                    <Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        {p.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {p.addonCount} addons · {p.description.slice(0, 60)}
-                        {p.description.length > 60 ? '…' : ''}
-                      </Typography>
-                    </Box>
-                  </li>
+            {/* ── Browse tab ── */}
+            {addonTab === 0 && (
+              <Box sx={{ px: 2, pb: 2, pt: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Pick a curated pack or customize individual addons.
+                </Typography>
+
+                {/* Pack selector */}
+                <Autocomplete
+                  size="small"
+                  options={packs}
+                  loading={packsLoading}
+                  value={packs.find((p) => p.id === selectedPackId) ?? null}
+                  getOptionLabel={(p) => p.name}
+                  renderOption={(props, p) => (
+                    <li {...props} key={p.id}>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {p.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {p.addonCount} addons · {p.description.slice(0, 60)}
+                          {p.description.length > 60 ? '…' : ''}
+                        </Typography>
+                      </Box>
+                    </li>
+                  )}
+                  onChange={(_e, value) => setSelectedPackId(value?.id ?? null)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Start from a curated pack"
+                      placeholder="Search packs…"
+                    />
+                  )}
+                  noOptionsText={packsLoading ? 'Loading packs…' : 'No packs available'}
+                />
+
+                {packDetailLoading && (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
+                    <CircularProgress size={20} sx={{ color: '#c4a44a' }} />
+                  </Box>
                 )}
-                onChange={(_e, value) => setSelectedPackId(value?.id ?? null)}
-                renderInput={(params) => (
+
+                {/* Addon list with toggles */}
+                {addonList.length > 0 && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 0.5,
+                      maxHeight: 240,
+                      overflowY: 'auto',
+                      '&::-webkit-scrollbar': { width: 6 },
+                      '&::-webkit-scrollbar-thumb': {
+                        bgcolor: 'rgba(255,255,255,0.15)',
+                        borderRadius: 3,
+                      },
+                    }}
+                  >
+                    {addonList.map((addon) => {
+                      const isEnabled = enabledAddons.has(addon.esouiId);
+                      return (
+                        <Box
+                          key={addon.esouiId}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                            py: 0.5,
+                            px: 1,
+                            borderRadius: 1,
+                            bgcolor: isEnabled ? '#c4a44a0a' : 'transparent',
+                            borderLeft: isEnabled ? '3px solid #c4a44a' : '3px solid transparent',
+                            transition: 'all 0.15s',
+                            '&:hover': { bgcolor: 'action.hover' },
+                          }}
+                        >
+                          <Checkbox
+                            checked={isEnabled}
+                            onChange={() => handleToggleAddon(addon.esouiId)}
+                            size="small"
+                            sx={{
+                              p: 0.5,
+                              color: '#c4a44a55',
+                              '&.Mui-checked': { color: '#c4a44a' },
+                            }}
+                          />
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              noWrap
+                              sx={{ opacity: isEnabled ? 1 : 0.5 }}
+                            >
+                              {addon.name}
+                            </Typography>
+                            {addon.note && (
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                noWrap
+                                sx={{ opacity: isEnabled ? 0.7 : 0.4 }}
+                              >
+                                {addon.note}
+                              </Typography>
+                            )}
+                          </Box>
+                          <Tooltip title={addon.required ? 'Mark as optional' : 'Mark as required'}>
+                            <Chip
+                              label={addon.required ? 'Required' : 'Optional'}
+                              size="small"
+                              onClick={() => handleToggleRequired(addon.esouiId)}
+                              sx={{
+                                height: 20,
+                                fontSize: '0.65rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                bgcolor: addon.required ? '#c4a44a22' : 'transparent',
+                                color: addon.required ? '#c4a44a' : 'text.secondary',
+                                border: addon.required ? '1px solid #c4a44a55' : '1px solid',
+                                borderColor: addon.required ? '#c4a44a55' : 'divider',
+                                '&:hover': {
+                                  bgcolor: addon.required ? '#c4a44a33' : 'action.hover',
+                                },
+                              }}
+                            />
+                          </Tooltip>
+                          {/* Only allow removing addons that were manually added (not from a pack) */}
+                          {selectedPack &&
+                          selectedPack.addons.some((pa) => pa.esouiId === addon.esouiId) ? null : (
+                            <Tooltip title="Remove addon">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleRemoveAddon(addon.esouiId)}
+                                sx={{ p: 0.5, color: 'text.disabled' }}
+                              >
+                                <RemoveCircleOutline sx={{ fontSize: 16 }} />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                )}
+
+                {/* Add custom addon */}
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
                   <TextField
-                    {...params}
-                    label="Start from a curated pack"
-                    placeholder="Search packs…"
+                    size="small"
+                    label="Addon name"
+                    value={customAddonName}
+                    onChange={(e) => setCustomAddonName(e.target.value)}
+                    sx={{ flex: 2 }}
+                    placeholder="e.g. RaidNotifier"
                   />
-                )}
-                noOptionsText={packsLoading ? 'Loading packs…' : 'No packs available'}
-              />
-
-              {packDetailLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
-                  <CircularProgress size={20} sx={{ color: '#c4a44a' }} />
+                  <TextField
+                    size="small"
+                    label="ESOUI ID"
+                    value={customAddonId}
+                    onChange={(e) => setCustomAddonId(e.target.value.replace(/\D/g, ''))}
+                    sx={{ flex: 1 }}
+                    placeholder="e.g. 1355"
+                  />
+                  <Tooltip title="Add custom addon">
+                    <span>
+                      <IconButton
+                        size="small"
+                        onClick={handleAddCustomAddon}
+                        disabled={!customAddonName.trim() || !customAddonId}
+                        sx={{
+                          bgcolor: '#c4a44a22',
+                          color: '#c4a44a',
+                          '&:hover': { bgcolor: '#c4a44a33' },
+                          '&.Mui-disabled': { color: 'text.disabled', bgcolor: 'transparent' },
+                        }}
+                      >
+                        <Add sx={{ fontSize: 20 }} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
                 </Box>
-              )}
 
-              {/* Addon list with toggles */}
-              {addonList.length > 0 && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 0.5,
-                    maxHeight: 240,
-                    overflowY: 'auto',
-                    '&::-webkit-scrollbar': { width: 6 },
-                    '&::-webkit-scrollbar-thumb': {
-                      bgcolor: 'rgba(255,255,255,0.15)',
-                      borderRadius: 3,
-                    },
-                  }}
-                >
-                  {addonList.map((addon) => {
-                    const isEnabled = enabledAddons.has(addon.esouiId);
+                {activeAddonCount > 0 && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.5 }}>
+                    <CheckCircle sx={{ fontSize: 14, color: '#22c55e' }} />
+                    <Typography variant="caption" color="text.secondary">
+                      {activeAddonCount} addon{activeAddonCount !== 1 ? 's' : ''} will be recommended
+                      to viewers
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            )}
+
+            {/* ── Create New tab ── */}
+            {addonTab === 1 && (
+              <Box sx={{ px: 2, pb: 2, pt: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Create a reusable addon pack that others can use too.
+                </Typography>
+
+                <TextField
+                  size="small"
+                  label="Pack Title"
+                  value={newPackTitle}
+                  onChange={(e) => setNewPackTitle(e.target.value)}
+                  slotProps={{ htmlInput: { maxLength: 100 } }}
+                  helperText={`${newPackTitle.length}/100`}
+                  required
+                  fullWidth
+                />
+
+                <TextField
+                  size="small"
+                  label="Description (optional)"
+                  value={newPackDescription}
+                  onChange={(e) => setNewPackDescription(e.target.value)}
+                  slotProps={{ htmlInput: { maxLength: 500 } }}
+                  multiline
+                  rows={2}
+                  fullWidth
+                />
+
+                {/* ESOUI addon search */}
+                <Autocomplete
+                  size="small"
+                  freeSolo
+                  options={addonSearchResults}
+                  loading={addonSearchLoading}
+                  inputValue={addonSearchQuery}
+                  onInputChange={(_e, value) => setAddonSearchQuery(value)}
+                  getOptionLabel={(o) => (typeof o === 'string' ? o : o.title)}
+                  filterOptions={(x) => x}
+                  renderOption={(props, o) => {
+                    if (typeof o === 'string') return null;
+                    const alreadyAdded = newPackAddons.some((a) => a.esouiId === o.id);
                     return (
+                      <li
+                        {...props}
+                        key={o.id}
+                        onClick={alreadyAdded ? undefined : () => handleAddSearchedAddon(o)}
+                        style={{ opacity: alreadyAdded ? 0.4 : 1 }}
+                      >
+                        <Box>
+                          <Typography variant="body2" fontWeight={600}>
+                            {o.title}
+                            {alreadyAdded && (
+                              <Chip label="Added" size="small" sx={{ ml: 1, height: 18, fontSize: '0.6rem' }} />
+                            )}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            by {o.author} · {o.category} · {o.downloads} downloads
+                          </Typography>
+                        </Box>
+                      </li>
+                    );
+                  }}
+                  onChange={(_e, value) => {
+                    if (value && typeof value !== 'string') handleAddSearchedAddon(value);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Search ESOUI addons"
+                      placeholder="Type addon name…"
+                    />
+                  )}
+                  noOptionsText={
+                    addonSearchQuery.length < 2
+                      ? 'Type at least 2 characters'
+                      : addonSearchLoading
+                        ? 'Searching…'
+                        : 'No results'
+                  }
+                />
+
+                {/* New pack addon list */}
+                {newPackAddons.length > 0 && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 0.5,
+                      maxHeight: 200,
+                      overflowY: 'auto',
+                      '&::-webkit-scrollbar': { width: 6 },
+                      '&::-webkit-scrollbar-thumb': {
+                        bgcolor: 'rgba(255,255,255,0.15)',
+                        borderRadius: 3,
+                      },
+                    }}
+                  >
+                    {newPackAddons.map((addon) => (
                       <Box
                         key={addon.esouiId}
                         sx={{
@@ -946,47 +1297,21 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                           py: 0.5,
                           px: 1,
                           borderRadius: 1,
-                          bgcolor: isEnabled ? '#c4a44a0a' : 'transparent',
-                          borderLeft: isEnabled ? '3px solid #c4a44a' : '3px solid transparent',
-                          transition: 'all 0.15s',
+                          bgcolor: '#c4a44a0a',
+                          borderLeft: '3px solid #c4a44a',
                           '&:hover': { bgcolor: 'action.hover' },
                         }}
                       >
-                        <Checkbox
-                          checked={isEnabled}
-                          onChange={() => handleToggleAddon(addon.esouiId)}
-                          size="small"
-                          sx={{
-                            p: 0.5,
-                            color: '#c4a44a55',
-                            '&.Mui-checked': { color: '#c4a44a' },
-                          }}
-                        />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="body2"
-                            fontWeight={600}
-                            noWrap
-                            sx={{ opacity: isEnabled ? 1 : 0.5 }}
-                          >
+                          <Typography variant="body2" fontWeight={600} noWrap>
                             {addon.name}
                           </Typography>
-                          {addon.note && (
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              noWrap
-                              sx={{ opacity: isEnabled ? 0.7 : 0.4 }}
-                            >
-                              {addon.note}
-                            </Typography>
-                          )}
                         </Box>
                         <Tooltip title={addon.required ? 'Mark as optional' : 'Mark as required'}>
                           <Chip
                             label={addon.required ? 'Required' : 'Optional'}
                             size="small"
-                            onClick={() => handleToggleRequired(addon.esouiId)}
+                            onClick={() => handleToggleNewPackRequired(addon.esouiId)}
                             sx={{
                               height: 20,
                               fontSize: '0.65rem',
@@ -1002,79 +1327,93 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                             }}
                           />
                         </Tooltip>
-                        {/* Only allow removing addons that were manually added (not from a pack) */}
-                        {selectedPack &&
-                        selectedPack.addons.some((pa) => pa.esouiId === addon.esouiId) ? null : (
-                          <Tooltip title="Remove addon">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleRemoveAddon(addon.esouiId)}
-                              sx={{ p: 0.5, color: 'text.disabled' }}
-                            >
-                              <RemoveCircleOutline sx={{ fontSize: 16 }} />
-                            </IconButton>
-                          </Tooltip>
-                        )}
+                        <Tooltip title="Remove">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleRemoveNewPackAddon(addon.esouiId)}
+                            sx={{ p: 0.5, color: 'text.disabled' }}
+                          >
+                            <RemoveCircleOutline sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        </Tooltip>
                       </Box>
-                    );
-                  })}
+                    ))}
+                  </Box>
+                )}
+
+                {/* Manual addon entry (fallback for addons not on ESOUI search) */}
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+                  <TextField
+                    size="small"
+                    label="Addon name"
+                    value={customAddonName}
+                    onChange={(e) => setCustomAddonName(e.target.value)}
+                    sx={{ flex: 2 }}
+                    placeholder="e.g. RaidNotifier"
+                  />
+                  <TextField
+                    size="small"
+                    label="ESOUI ID"
+                    value={customAddonId}
+                    onChange={(e) => setCustomAddonId(e.target.value.replace(/\D/g, ''))}
+                    sx={{ flex: 1 }}
+                    placeholder="e.g. 1355"
+                  />
+                  <Tooltip title="Add addon manually">
+                    <span>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          const id = parseInt(customAddonId, 10);
+                          const name = customAddonName.trim();
+                          if (!name || isNaN(id) || id <= 0) return;
+                          if (newPackAddons.some((a) => a.esouiId === id)) return;
+                          setNewPackAddons((prev) => [...prev, { esouiId: id, name, required: false }]);
+                          setCustomAddonName('');
+                          setCustomAddonId('');
+                        }}
+                        disabled={!customAddonName.trim() || !customAddonId}
+                        sx={{
+                          bgcolor: '#c4a44a22',
+                          color: '#c4a44a',
+                          '&:hover': { bgcolor: '#c4a44a33' },
+                          '&.Mui-disabled': { color: 'text.disabled', bgcolor: 'transparent' },
+                        }}
+                      >
+                        <Add sx={{ fontSize: 20 }} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
                 </Box>
-              )}
 
-              {/* Add custom addon */}
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
-                <TextField
-                  size="small"
-                  label="Addon name"
-                  value={customAddonName}
-                  onChange={(e) => setCustomAddonName(e.target.value)}
-                  sx={{ flex: 2 }}
-                  placeholder="e.g. RaidNotifier"
-                />
-                <TextField
-                  size="small"
-                  label="ESOUI ID"
-                  value={customAddonId}
-                  onChange={(e) => setCustomAddonId(e.target.value.replace(/\D/g, ''))}
-                  sx={{ flex: 1 }}
-                  placeholder="e.g. 1355"
-                />
-                <Tooltip title="Add custom addon">
-                  <span>
-                    <IconButton
-                      size="small"
-                      onClick={handleAddCustomAddon}
-                      disabled={!customAddonName.trim() || !customAddonId}
-                      sx={{
-                        bgcolor: '#c4a44a22',
-                        color: '#c4a44a',
-                        '&:hover': { bgcolor: '#c4a44a33' },
-                        '&.Mui-disabled': { color: 'text.disabled', bgcolor: 'transparent' },
-                      }}
-                    >
-                      <Add sx={{ fontSize: 20 }} />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              </Box>
+                {newPackError && (
+                  <Alert severity="error" onClose={() => setNewPackError(null)}>
+                    {newPackError}
+                  </Alert>
+                )}
 
-              {activeAddonCount > 0 && (
-                <Box
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => void handleCreatePack()}
+                  disabled={newPackCreating || !newPackTitle.trim() || newPackAddons.length === 0}
+                  startIcon={
+                    newPackCreating ? <CircularProgress size={16} color="inherit" /> : <Extension />
+                  }
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.75,
-                    mt: 0.5,
+                    alignSelf: 'flex-end',
+                    background: 'linear-gradient(135deg, #c4a44a 0%, #d4b45a 100%)',
+                    color: '#0b1220',
+                    fontWeight: 700,
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #d4b45a 0%, #e4c46a 100%)',
+                    },
                   }}
                 >
-                  <CheckCircle sx={{ fontSize: 14, color: '#22c55e' }} />
-                  <Typography variant="caption" color="text.secondary">
-                    {activeAddonCount} addon{activeAddonCount !== 1 ? 's' : ''} will be recommended
-                    to viewers
-                  </Typography>
-                </Box>
-              )}
-            </Box>
+                  {newPackCreating ? 'Creating…' : `Create Pack (${newPackAddons.length} addons)`}
+                </Button>
+              </Box>
+            )}
           </Collapse>
         </Paper>
 

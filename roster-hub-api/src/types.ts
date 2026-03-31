@@ -13,6 +13,23 @@ export interface Env {
   DISCORD_WEBHOOK_SECRET?: string;
 }
 
+// ─── Addon recommendation types (shared between rosters & packs) ─────────────
+
+export interface RecommendedAddonEntry {
+  esouiId: number;
+  name: string;
+  required?: boolean;
+  note?: string;
+}
+
+export interface RecommendedAddons {
+  packId?: string;
+  packTitle?: string;
+  addons: RecommendedAddonEntry[];
+}
+
+// ─── ROSTERS ─────────────────────────────────────────────────────────
+
 export interface RosterRow {
   id: string;
   author_id: string;
