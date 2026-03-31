@@ -64,7 +64,7 @@ const MAX_TAGS = 5;
 
 type Difficulty = 'vet' | 'normal';
 const DIFFICULTY_TAGS: Difficulty[] = ['normal', 'vet'];
-const EXTRA_PRESET_TAGS = ['trainer', 'score-push', 'farm'] as const;
+const EXTRA_PRESET_TAGS = ['score-push', 'farm'] as const;
 
 /** Convert a pack addon entry to the roster recommendation format. */
 function packAddonToRecommended(addon: PackAddonEntry): RecommendedAddonEntry {

@@ -59,18 +59,21 @@ export interface RosterHubFilters {
   search: string; // '' = no text filter (client-side)
 }
 
-export const PRESET_TAGS = ['normal', 'vet', 'hm', 'trainer', 'score-push', 'farm'] as const;
+export const PRESET_TAGS = ['beginner', 'score-push', 'farm', '#1'] as const;
 
 export type PresetTag = (typeof PRESET_TAGS)[number];
 
 // Accent colors for preset tag chips — consistent across filter bar, cards, and publish dialog
 export const TAG_COLORS: Record<string, string> = {
-  normal: '#22c55e', // green
-  vet: '#f97316', // orange
-  hm: '#ef4444', // red
-  trainer: '#60a5fa', // sky blue
-  'score-push': '#eab308', // gold
+  beginner: '#22c55e', // green
+  'score-push': '#ef4444', // red
   farm: '#14b8a6', // teal
+  '#1': '#eab308', // gold
+  // Legacy colors for existing data
+  normal: '#22c55e',
+  vet: '#f97316',
+  hm: '#ef4444',
+  trainer: '#60a5fa',
 };
 
 // ─── Comments ──────────────────────────────────────────────────────────────

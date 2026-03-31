@@ -101,13 +101,10 @@ interface GuildConfigData {
 const NAME_TOKENS = [
   { token: '{day-short}', desc: 'Day abbreviation (sun, mon, ...)' },
   { token: '{time}', desc: 'Time (8pm, 10am, ...)' },
-  { token: '{tag}', desc: 'Difficulty-prefixed trial (vlc, noac, ...)' },
-  { token: '{trainer}', desc: 'Roster author name' },
-  { token: '{trial}', desc: 'Same as {tag}' },
-  { token: '{difficulty}', desc: 'vet or norm' },
+  { token: '{trial}', desc: 'Difficulty-prefixed trial (vlc, nhrc, ...)' },
 ] as const;
 
-const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{tag}-{trainer}';
+const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{trial}';
 
 const DEFAULT_TIMEZONE = 'America/New_York';
 
@@ -171,6 +168,18 @@ async function apiFetch<T>(path: string, token: string, options: RequestInit = {
   return res.json() as Promise<T>;
 }
 
+/** Migrate legacy name patterns to the current default or apply token renames. */
+function migrateNamePattern(raw: string | undefined): string {
+  const LEGACY_DEFAULTS = [
+    '{label}',
+    '{day-short}-{time}-{trial}-{tag}',
+    '{day-short}-{time}-{tag}-{trainer}',
+  ];
+  if (!raw || LEGACY_DEFAULTS.includes(raw)) return DEFAULT_NAME_PATTERN;
+  // Token-level migration for custom patterns
+  return raw.replace(/\{tag\}/g, '{trial}').replace(/\{trainer\}/g, '');
+}
+
 /** Resolve a channel name pattern into a preview string. */
 function previewChannelName(pattern: string, tz: string = DEFAULT_TIMEZONE): string {
   const now = new Date();
@@ -193,9 +202,9 @@ function previewChannelName(pattern: string, tz: string = DEFAULT_TIMEZONE): str
     .replace(/{day}/gi, shortDays[dayIdx >= 0 ? dayIdx : now.getDay()])
     .replace(/{time}/gi, time12)
     .replace(/{trial}/gi, 'vss')
-    .replace(/{tag}/gi, 'vss')
-    .replace(/{trainer}/gi, 'trainer')
-    .replace(/{difficulty}/gi, 'vet')
+    .replace(/{tag}/gi, 'vss') // legacy alias
+    .replace(/{trainer}/gi, '') // legacy — no longer used
+    .replace(/{difficulty}/gi, 'vet') // legacy
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, '-')
     .replace(/-+/g, '-')
@@ -470,13 +479,7 @@ export const DiscordServerConfigPage: React.FC = () => {
           channelsRes.channels.find((c) => c.type === 4 && /open\s*runs/i.test(c.name))?.id ||
           '';
         setDefaultCategoryId(detectedCategory);
-        setNamePattern(
-          !cfg.namePattern ||
-            cfg.namePattern === '{label}' ||
-            cfg.namePattern === '{day-short}-{time}-{trial}-{tag}'
-            ? DEFAULT_NAME_PATTERN
-            : cfg.namePattern,
-        );
+        setNamePattern(migrateNamePattern(cfg.namePattern));
         setTankPingRole(cfg.rolePingIds?.tank ?? '');
         setHealerPingRole(cfg.rolePingIds?.healer ?? '');
         setDdPingRole(cfg.rolePingIds?.dd ?? '');
@@ -492,12 +495,7 @@ export const DiscordServerConfigPage: React.FC = () => {
             defaultChannelId: cfg.defaultChannelId ?? '',
             defaultCategoryId: detectedCategory,
             allowedRoleIds: cfg.allowedRoleIds ?? [],
-            namePattern:
-              !cfg.namePattern ||
-              cfg.namePattern === '{label}' ||
-              cfg.namePattern === '{day-short}-{time}-{trial}-{tag}'
-                ? DEFAULT_NAME_PATTERN
-                : cfg.namePattern,
+            namePattern: migrateNamePattern(cfg.namePattern),
             tankPingRole: cfg.rolePingIds?.tank ?? '',
             healerPingRole: cfg.rolePingIds?.healer ?? '',
             ddPingRole: cfg.rolePingIds?.dd ?? '',

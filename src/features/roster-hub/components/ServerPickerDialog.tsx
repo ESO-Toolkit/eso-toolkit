@@ -64,14 +64,14 @@ const DISCORD_BOT_API_URL =
   (import.meta.env.VITE_DISCORD_BOT_API_URL as string | undefined) ??
   'https://eso-toolkit-discord-bot.eso-toolkit.workers.dev';
 
-const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{tag}-{trainer}';
+const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{trial}';
 const MAX_TAGS = 5;
 
 const SHORT_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
 type Difficulty = 'vet' | 'normal';
 const DIFFICULTY_TAGS: Difficulty[] = ['normal', 'vet'];
-const EXTRA_PRESET_TAGS = ['trainer', 'score-push', 'farm'] as const;
+const EXTRA_PRESET_TAGS = ['score-push', 'farm'] as const;
 
 /** Trial ID → lowercase abbreviation (mirrors discord-bot/src/roster/channel-name.ts). */
 const TRIAL_ABBREVS: Record<string, string> = {
@@ -103,7 +103,6 @@ function buildChannelPreview(ctx: {
   trialId: string;
   difficulty: 'vet' | 'normal' | null;
   tags: string[];
-  trainer: string;
 }): string {
   let dayShort = '';
   let time = '';
@@ -130,23 +129,16 @@ function buildChannelPreview(ctx: {
 
   // Build difficulty-prefixed trial abbreviation (mirrors buildTrialTag in backend)
   const abbrev = TRIAL_ABBREVS[ctx.trialId.toUpperCase()] ?? ctx.trialId.toLowerCase();
-  const prefixed = diff && ctx.trialId ? `${diff === 'veteran' ? 'v' : 'n'}${abbrev}` : '';
-
-  // {tag} and {trial} both resolve to the prefixed abbreviation when available,
-  // otherwise fall back to first non-difficulty tag or raw trial
-  const firstTag =
-    ctx.tags.find((t) => !['vet', 'veteran', 'normal', 'hm'].includes(t.toLowerCase())) ?? '';
-  const tagToken = prefixed || firstTag.toLowerCase();
-  const trialToken = prefixed || abbrev;
+  const trialToken = diff && ctx.trialId ? `${diff === 'veteran' ? 'v' : 'n'}${abbrev}` : abbrev;
 
   const name = ctx.pattern
     .replace(/{day-short}/gi, dayShort)
     .replace(/{day-full}/gi, dayShort)
     .replace(/{day}/gi, dayShort)
     .replace(/{time}/gi, time)
-    .replace(/{tag}/gi, tagToken)
     .replace(/{trial}/gi, trialToken)
-    .replace(/{trainer}/gi, ctx.trainer.toLowerCase())
+    .replace(/{tag}/gi, trialToken) // legacy alias
+    .replace(/{trainer}/gi, '') // legacy — no longer used
     .replace(/{difficulty}/gi, diff === 'veteran' ? 'vet' : diff === 'normal' ? 'norm' : '')
     .toLowerCase()
     .replace(/[\s_]+/g, '-')
@@ -568,6 +560,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       cfg.defaultCategoryId ||
       (cfg.namePattern &&
         cfg.namePattern !== '{label}' &&
+        cfg.namePattern !== '{day-short}-{time}-{trial}' &&
         cfg.namePattern !== '{day-short}-{time}-{tag}-{trainer}' &&
         cfg.namePattern !== '{day-short}-{time}-{trial}-{tag}')
     );
@@ -1383,7 +1376,6 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 const overrideTrimmed = channelNameOverride.trim();
                 const effectiveTrial = roster ? roster.trial_id : selectedTrialId;
                 const effectiveTags = roster ? (roster.tags ?? []) : selectedTags;
-                const effectiveTrainer = roster ? (roster.author_name ?? '') : (authorName ?? '');
                 // Resolve difficulty: use form state for direct-publish, extract from tags for hub rosters
                 const effectiveDifficulty: 'vet' | 'normal' | null = roster
                   ? (roster.tags ?? []).includes('vet')
@@ -1407,7 +1399,6 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                       trialId: effectiveTrial,
                       difficulty: effectiveDifficulty,
                       tags: effectiveTags,
-                      trainer: effectiveTrainer,
                     });
                 return (
                   <Box

@@ -88,14 +88,11 @@ function buildNameContext(
     ctx.difficulty = 'normal';
   }
 
-  // First non-difficulty tag becomes the {tag} token
+  // Legacy: first non-difficulty tag populates {tag} for old stored patterns
   const nonDifficultyTag = snapshot.tags.find(
     (t) => !['vet', 'veteran', 'normal'].includes(t.toLowerCase()),
   );
   if (nonDifficultyTag) ctx.tag = nonDifficultyTag;
-
-  // Author name as trainer
-  if (snapshot.author_name) ctx.trainer = snapshot.author_name;
 
   return ctx;
 }

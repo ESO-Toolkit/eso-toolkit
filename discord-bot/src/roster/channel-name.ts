@@ -1,8 +1,10 @@
 /**
  * Channel name builder from guild templates and roster context.
  *
- * Supports tokens: {day-short}, {day}, {day-full}, {time}, {trial}, {tag},
- * {trainer}, {difficulty}
+ * Supported tokens: {day-short}, {day}, {day-full}, {time}, {trial}
+ *
+ * Legacy tokens still resolved for backwards compat: {tag} (alias for
+ * {trial}), {trainer} (ignored — no-op), {difficulty} (vet/norm).
  *
  * Discord channel names are lowercased and sanitized (only alphanumeric +
  * hyphens). Trial tags use the ESO community convention: v = veteran,
@@ -94,33 +96,30 @@ export function buildTrialTag(trialId: string, difficulty: Difficulty): string {
  * - Returns 'roster' if the result is empty after sanitization.
  *
  * @example
- * buildChannelName('{day-short}-{time}-{tag}-{trainer}', {
+ * buildChannelName('{day-short}-{time}-{trial}', {
  *   dayShort: 'sun',
  *   time: '9pm',
  *   trial: 'LC',
  *   difficulty: 'veteran',
- *   trainer: 'trainer',
  * });
- * // → "sun-9pm-vlc-trainer"
+ * // → "sun-9pm-vlc"
  */
 export function buildChannelName(template: string, context: ChannelNameContext): string {
   // Build the trial/tag value — apply difficulty prefix when both are available
   const trialValue = resolveTrialValue(context);
 
-  // {tag} and {trial} both resolve to the difficulty-prefixed abbreviation
-  // (e.g. "vlc") when difficulty + trial are set. Otherwise fall back to raw values.
+  // {trial} is the canonical token. {tag} is kept as a legacy alias.
   const prefixed = trialValue || '';
-  const tagToken = prefixed || context.tag || '';
-  const trialToken = prefixed || context.trial || '';
+  const trialToken = prefixed || context.trial || context.tag || '';
 
   let name = template
     .replace(/\{day-short\}/gi, context.dayShort ? normaliseDay(context.dayShort) : '')
     .replace(/\{day-full\}/gi, context.dayShort ? sanitise(context.dayShort) : '')
     .replace(/\{day\}/gi, context.dayShort ? normaliseDay(context.dayShort) : '')
     .replace(/\{time\}/gi, context.time ?? '')
-    .replace(/\{tag\}/gi, tagToken)
     .replace(/\{trial\}/gi, trialToken)
-    .replace(/\{trainer\}/gi, context.trainer ?? '')
+    .replace(/\{tag\}/gi, trialToken) // legacy alias for {trial}
+    .replace(/\{trainer\}/gi, '') // legacy — no longer used
     .replace(/\{difficulty\}/gi, context.difficulty === 'veteran' ? 'vet' : context.difficulty === 'normal' ? 'norm' : '');
 
   // Discord channel name rules: lowercase, a-z 0-9 hyphens only
@@ -176,7 +175,8 @@ export interface ParsedChannelName {
   difficulty: Difficulty | null;
   trialAbbrev: string | null;
   trialId: string | null;
-  trainer: string | null;
+  /** Any remaining unconsumed segments after day/time/trial extraction. */
+  remainder: string | null;
 }
 
 /** All known trial abbreviations sorted longest-first for greedy matching. */
@@ -187,13 +187,13 @@ const KNOWN_ABBREVS = Object.values(TRIAL_ABBREVS).sort(
 /**
  * Attempt to parse a channel name back into its structured components.
  *
- * Handles the standard format: {day}-{time}-{v|n}{trial}-{trainer}
- * and partial matches (e.g. missing trainer, missing difficulty).
+ * Handles the standard format: {day}-{time}-{v|n}{trial}
+ * and partial matches (e.g. missing time, missing difficulty).
  *
  * @example
- * parseChannelName('sun-9pm-vlc-trainer');
+ * parseChannelName('sun-9pm-vlc');
  * // → { day: 'sun', time: '9pm', difficulty: 'veteran',
- * //     trialAbbrev: 'lc', trialId: 'LC', trainer: 'trainer' }
+ * //     trialAbbrev: 'lc', trialId: 'LC', remainder: null }
  */
 export function parseChannelName(name: string): ParsedChannelName {
   const parts = name.toLowerCase().split('-');
@@ -203,7 +203,7 @@ export function parseChannelName(name: string): ParsedChannelName {
     difficulty: null,
     trialAbbrev: null,
     trialId: null,
-    trainer: null,
+    remainder: null,
   };
 
   const consumed = new Set<number>();
@@ -248,10 +248,10 @@ export function parseChannelName(name: string): ParsedChannelName {
     }
   }
 
-  // 4. Everything remaining after consumed segments is the trainer
+  // 4. Everything remaining after consumed segments
   const remaining = parts.filter((_, i) => !consumed.has(i));
   if (remaining.length > 0) {
-    result.trainer = remaining.join('-');
+    result.remainder = remaining.join('-');
   }
 
   return result;

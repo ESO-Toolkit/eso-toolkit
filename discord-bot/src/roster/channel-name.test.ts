@@ -13,16 +13,16 @@ import {
 
 describe('buildChannelName', () => {
   it('replaces all tokens', () => {
-    const result = buildChannelName('{day-short}-{time}-{tag}', {
+    const result = buildChannelName('{day-short}-{time}-{trial}', {
       dayShort: 'sun',
       time: '9pm',
-      tag: 'vlc',
+      trial: 'vlc',
     });
     expect(result).toBe('sun-9pm-vlc');
   });
 
   it('handles missing tokens gracefully', () => {
-    const result = buildChannelName('{day-short}-{time}-{tag}', {
+    const result = buildChannelName('{day-short}-{time}-{trial}', {
       dayShort: 'mon',
     });
     expect(result).toBe('mon');
@@ -34,9 +34,8 @@ describe('buildChannelName', () => {
   });
 
   it('collapses multiple hyphens', () => {
-    const result = buildChannelName('{day-short}--{tag}', {
+    const result = buildChannelName('{day-short}--{trial}', {
       dayShort: 'wed',
-      tag: '',
     });
     expect(result).toBe('wed');
   });
@@ -46,14 +45,24 @@ describe('buildChannelName', () => {
     expect(result).toBe('roster');
   });
 
-  it('handles {trial} token', () => {
-    const result = buildChannelName('{day-short}-{time}-{trial}-{tag}', {
+  it('resolves legacy {tag} token as alias for {trial}', () => {
+    const result = buildChannelName('{day-short}-{time}-{tag}', {
       dayShort: 'sun',
       time: '8pm',
-      trial: 'voc',
-      tag: 'trainer',
+      trial: 'SS',
+      difficulty: 'veteran',
     });
-    expect(result).toBe('sun-8pm-voc-trainer');
+    expect(result).toBe('sun-8pm-vss');
+  });
+
+  it('resolves legacy {trainer} token as empty string', () => {
+    const result = buildChannelName('{day-short}-{time}-{trial}-{trainer}', {
+      dayShort: 'sun',
+      time: '9pm',
+      trial: 'LC',
+      difficulty: 'veteran',
+    });
+    expect(result).toBe('sun-9pm-vlc');
   });
 
   it('lowercases everything', () => {
@@ -65,62 +74,37 @@ describe('buildChannelName', () => {
 // ── buildChannelName (with difficulty prefix) ────────────────────────────────
 
 describe('buildChannelName with difficulty', () => {
-  it('builds the standard format: day-time-vtrial-trainer', () => {
-    const result = buildChannelName('{day-short}-{time}-{tag}-{trainer}', {
+  it('builds the standard format: day-time-vtrial', () => {
+    const result = buildChannelName('{day-short}-{time}-{trial}', {
       dayShort: 'sunday',
       time: '9pm',
       difficulty: 'veteran',
       trial: 'LC',
-      trainer: 'trainer',
     });
-    expect(result).toBe('sun-9pm-vlc-trainer');
+    expect(result).toBe('sun-9pm-vlc');
   });
 
   it('handles veteran HRC on Monday', () => {
-    const result = buildChannelName('{day-short}-{time}-{tag}-{trainer}', {
+    const result = buildChannelName('{day-short}-{time}-{trial}', {
       dayShort: 'monday',
       time: '1pm',
       difficulty: 'veteran',
       trial: 'HRC',
-      trainer: 'darkelf',
     });
-    expect(result).toBe('mon-1pm-vhrc-darkelf');
+    expect(result).toBe('mon-1pm-vhrc');
   });
 
   it('handles normal mode with n prefix', () => {
-    const result = buildChannelName('{day-short}-{time}-{tag}-{trainer}', {
+    const result = buildChannelName('{day-short}-{time}-{trial}', {
       dayShort: 'friday',
       time: '8pm',
       difficulty: 'normal',
       trial: 'LC',
-      trainer: 'newbie-lead',
     });
-    expect(result).toBe('fri-8pm-nlc-newbie-lead');
+    expect(result).toBe('fri-8pm-nlc');
   });
 
-  it('sanitises special characters from trainer names', () => {
-    const result = buildChannelName('{day-short}-{time}-{tag}-{trainer}', {
-      dayShort: 'sat',
-      time: '10am',
-      difficulty: 'veteran',
-      trial: 'KA',
-      trainer: 'Cool Guy!@#$',
-    });
-    expect(result).toBe('sat-10am-vka-cool-guy');
-  });
-
-  it('handles spaces in trainer name by converting to hyphens', () => {
-    const result = buildChannelName('{day-short}-{time}-{tag}-{trainer}', {
-      dayShort: 'wed',
-      time: '7pm',
-      difficulty: 'veteran',
-      trial: 'DSR',
-      trainer: 'some trainer',
-    });
-    expect(result).toBe('wed-7pm-vdsr-some-trainer');
-  });
-
-  it('supports {difficulty} token', () => {
+  it('supports {difficulty} token for legacy patterns', () => {
     const result = buildChannelName('{difficulty}-{trial}', {
       difficulty: 'veteran',
       trial: 'LC',
@@ -129,7 +113,7 @@ describe('buildChannelName with difficulty', () => {
   });
 
   it('supports {day-full} token', () => {
-    const result = buildChannelName('{day-full}-{tag}', {
+    const result = buildChannelName('{day-full}-{trial}', {
       dayShort: 'sunday',
       difficulty: 'veteran',
       trial: 'LC',
@@ -139,14 +123,13 @@ describe('buildChannelName with difficulty', () => {
 
   it('covers all known trials in veteran mode', () => {
     for (const trialId of Object.keys(TRIAL_ABBREVS)) {
-      const result = buildChannelName('{day-short}-{time}-{tag}-{trainer}', {
+      const result = buildChannelName('{day-short}-{time}-{trial}', {
         dayShort: 'sun',
         time: '9pm',
         difficulty: 'veteran',
         trial: trialId,
-        trainer: 'test',
       });
-      expect(result).toMatch(/^sun-9pm-v[a-z]+-test$/);
+      expect(result).toMatch(/^sun-9pm-v[a-z]+$/);
     }
   });
 });
@@ -224,7 +207,19 @@ describe('resolveChannelName', () => {
 // ── parseChannelName ──────────────────────────────────────────────────────────
 
 describe('parseChannelName', () => {
-  it('parses the standard format: day-time-vtrial-trainer', () => {
+  it('parses the standard format: day-time-vtrial', () => {
+    const result = parseChannelName('sun-9pm-vlc');
+    expect(result).toEqual({
+      day: 'sun',
+      time: '9pm',
+      difficulty: 'veteran',
+      trialAbbrev: 'lc',
+      trialId: 'LC',
+      remainder: null,
+    });
+  });
+
+  it('parses with extra segments as remainder', () => {
     const result = parseChannelName('sun-9pm-vlc-trainer');
     expect(result).toEqual({
       day: 'sun',
@@ -232,7 +227,7 @@ describe('parseChannelName', () => {
       difficulty: 'veteran',
       trialAbbrev: 'lc',
       trialId: 'LC',
-      trainer: 'trainer',
+      remainder: 'trainer',
     });
   });
 
@@ -243,26 +238,26 @@ describe('parseChannelName', () => {
     expect(result.trialId).toBe('LC');
   });
 
-  it('parses multi-word trainer names', () => {
+  it('parses multi-word remainder', () => {
     const result = parseChannelName('mon-1pm-vhrc-some-dude');
-    expect(result.trainer).toBe('some-dude');
+    expect(result.remainder).toBe('some-dude');
   });
 
-  it('handles channels without trainer', () => {
+  it('handles channels without extra segments', () => {
     const result = parseChannelName('sun-9pm-vlc');
     expect(result.day).toBe('sun');
     expect(result.time).toBe('9pm');
     expect(result.difficulty).toBe('veteran');
     expect(result.trialAbbrev).toBe('lc');
-    expect(result.trainer).toBeNull();
+    expect(result.remainder).toBeNull();
   });
 
   it('handles channels without time', () => {
-    const result = parseChannelName('sun-vlc-trainer');
+    const result = parseChannelName('sun-vlc-prog');
     expect(result.day).toBe('sun');
     expect(result.time).toBeNull();
     expect(result.difficulty).toBe('veteran');
-    expect(result.trainer).toBe('trainer');
+    expect(result.remainder).toBe('prog');
   });
 
   it('returns nulls for unparseable names', () => {
@@ -274,7 +269,7 @@ describe('parseChannelName', () => {
 
   it('parses all known trial abbreviations in veteran mode', () => {
     for (const [id, abbrev] of Object.entries(TRIAL_ABBREVS)) {
-      const name = `sun-9pm-v${abbrev}-lead`;
+      const name = `sun-9pm-v${abbrev}`;
       const result = parseChannelName(name);
       expect(result.trialId).toBe(id);
       expect(result.difficulty).toBe('veteran');
@@ -282,12 +277,11 @@ describe('parseChannelName', () => {
   });
 
   it('round-trips through buildChannelName → parseChannelName', () => {
-    const name = buildChannelName('{day-short}-{time}-{tag}-{trainer}', {
+    const name = buildChannelName('{day-short}-{time}-{trial}', {
       dayShort: 'thursday',
       time: '10pm',
       difficulty: 'veteran',
       trial: 'DSR',
-      trainer: 'captain',
     });
     const parsed = parseChannelName(name);
 
@@ -295,6 +289,6 @@ describe('parseChannelName', () => {
     expect(parsed.time).toBe('10pm');
     expect(parsed.difficulty).toBe('veteran');
     expect(parsed.trialId).toBe('DSR');
-    expect(parsed.trainer).toBe('captain');
+    expect(parsed.remainder).toBeNull();
   });
 });
