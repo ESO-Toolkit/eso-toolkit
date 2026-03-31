@@ -92,25 +92,30 @@ const TRIAL_ABBREVS: Record<string, string> = {
 };
 
 /** Build a channel name preview from pattern + current form values. */
-function buildChannelPreview(
-  pattern: string,
-  eventTime: CalendarDateTime | null,
-  timezone: string,
-  trialId: string,
-  tags: string[],
-  trainer: string,
-): string {
+/**
+ * Preview the channel name using the same logic as the discord-bot backend
+ * (discord-bot/src/roster/channel-name.ts → buildChannelName).
+ */
+function buildChannelPreview(ctx: {
+  pattern: string;
+  eventTime: CalendarDateTime | null;
+  timezone: string;
+  trialId: string;
+  difficulty: 'vet' | 'normal' | null;
+  tags: string[];
+  trainer: string;
+}): string {
   let dayShort = '';
   let time = '';
 
-  if (eventTime) {
-    const date = eventTime.toDate(timezone);
-    const dayFmt = new Intl.DateTimeFormat('en-US', { timeZone: timezone, weekday: 'short' });
+  if (ctx.eventTime) {
+    const date = ctx.eventTime.toDate(ctx.timezone);
+    const dayFmt = new Intl.DateTimeFormat('en-US', { timeZone: ctx.timezone, weekday: 'short' });
     const dayStr = dayFmt.format(date).toLowerCase();
     const dayIdx = SHORT_DAYS.indexOf(dayStr as (typeof SHORT_DAYS)[number]);
     dayShort = SHORT_DAYS[dayIdx >= 0 ? dayIdx : date.getDay()];
     const hourFmt = new Intl.DateTimeFormat('en-US', {
-      timeZone: timezone,
+      timeZone: ctx.timezone,
       hour: 'numeric',
       hour12: false,
     });
@@ -120,32 +125,29 @@ function buildChannelPreview(
     time = `${h}${suffix}`;
   }
 
-  // Determine difficulty from tags
-  const lowerTags = tags.map((t) => t.toLowerCase());
-  const isVet = lowerTags.includes('vet') || lowerTags.includes('veteran');
-  const isNormal = lowerTags.includes('normal');
-  const difficulty = isVet ? 'veteran' : isNormal ? 'normal' : null;
+  // Map difficulty to backend's Difficulty type
+  const diff = ctx.difficulty === 'vet' ? 'veteran' : ctx.difficulty === 'normal' ? 'normal' : null;
 
-  // Build difficulty-prefixed trial abbreviation (e.g. "vlc", "noac")
-  const abbrev = TRIAL_ABBREVS[trialId.toUpperCase()] ?? trialId.toLowerCase();
-  const trialTag = difficulty ? `${difficulty === 'veteran' ? 'v' : 'n'}${abbrev}` : abbrev;
+  // Build difficulty-prefixed trial abbreviation (mirrors buildTrialTag in backend)
+  const abbrev = TRIAL_ABBREVS[ctx.trialId.toUpperCase()] ?? ctx.trialId.toLowerCase();
+  const prefixed = diff && ctx.trialId ? `${diff === 'veteran' ? 'v' : 'n'}${abbrev}` : '';
 
-  // First non-difficulty tag for {tag} token fallback
-  const nonDiffTag =
-    tags.find((t) => !['vet', 'veteran', 'normal'].includes(t.toLowerCase())) ?? '';
+  // {tag} and {trial} both resolve to the prefixed abbreviation when available,
+  // otherwise fall back to first non-difficulty tag or raw trial
+  const firstTag =
+    ctx.tags.find((t) => !['vet', 'veteran', 'normal', 'hm'].includes(t.toLowerCase())) ?? '';
+  const tagToken = prefixed || firstTag.toLowerCase();
+  const trialToken = prefixed || abbrev;
 
-  const name = pattern
+  const name = ctx.pattern
     .replace(/{day-short}/gi, dayShort)
     .replace(/{day-full}/gi, dayShort)
     .replace(/{day}/gi, dayShort)
     .replace(/{time}/gi, time)
-    .replace(/{trial}/gi, trialTag)
-    .replace(/{tag}/gi, trialTag || nonDiffTag.toLowerCase())
-    .replace(/{trainer}/gi, trainer.toLowerCase())
-    .replace(
-      /{difficulty}/gi,
-      difficulty === 'veteran' ? 'vet' : difficulty === 'normal' ? 'norm' : '',
-    )
+    .replace(/{tag}/gi, tagToken)
+    .replace(/{trial}/gi, trialToken)
+    .replace(/{trainer}/gi, ctx.trainer.toLowerCase())
+    .replace(/{difficulty}/gi, diff === 'veteran' ? 'vet' : diff === 'normal' ? 'norm' : '')
     .toLowerCase()
     .replace(/[\s_]+/g, '-')
     .replace(/[^a-z0-9-]/g, '')
@@ -1382,6 +1384,14 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 const effectiveTrial = roster ? roster.trial_id : selectedTrialId;
                 const effectiveTags = roster ? (roster.tags ?? []) : selectedTags;
                 const effectiveTrainer = roster ? (roster.author_name ?? '') : (authorName ?? '');
+                // Resolve difficulty: use form state for direct-publish, extract from tags for hub rosters
+                const effectiveDifficulty: 'vet' | 'normal' | null = roster
+                  ? (roster.tags ?? []).includes('vet')
+                    ? 'vet'
+                    : (roster.tags ?? []).includes('normal')
+                      ? 'normal'
+                      : null
+                  : difficulty;
                 const preview = overrideTrimmed
                   ? overrideTrimmed
                       .toLowerCase()
@@ -1390,14 +1400,15 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                       .replace(/-{2,}/g, '-')
                       .replace(/^-|-$/g, '')
                       .slice(0, 100) || 'roster'
-                  : buildChannelPreview(
+                  : buildChannelPreview({
                       pattern,
                       eventTime,
-                      guildTimezone,
-                      effectiveTrial,
-                      effectiveTags,
-                      effectiveTrainer,
-                    );
+                      timezone: guildTimezone,
+                      trialId: effectiveTrial,
+                      difficulty: effectiveDifficulty,
+                      tags: effectiveTags,
+                      trainer: effectiveTrainer,
+                    });
                 return (
                   <Box
                     sx={{
