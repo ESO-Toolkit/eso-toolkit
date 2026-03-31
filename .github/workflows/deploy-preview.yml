@@ -30,7 +30,7 @@ jobs:
           NODE_OPTIONS: '--max-old-space-size=8192'
           VITE_BASE_URL: '/dev-previews/pr-${{ github.event.pull_request.number }}/'
           VITE_ROSTER_HUB_API_URL: 'https://roster-hub-api.eso-toolkit.workers.dev'
-          VITE_DISCORD_CLIENT_ID: '1405421934111490160'
+          VITE_DISCORD_CLIENT_ID: ${{ vars.VITE_DISCORD_CLIENT_ID }}
 
       - name: Generate GitHub App token
         id: app-token

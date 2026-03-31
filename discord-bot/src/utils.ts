@@ -13,11 +13,14 @@ export function ephemeral(content: string): InteractionResponse {
   };
 }
 
+/** A row of modal components as passed to findInputValue. */
+export type ModalComponentRow = {
+  type: number;
+  components?: { type: number; custom_id?: string; value?: string }[];
+};
+
 /** Extract a text input value from modal interaction components by custom_id. */
-export function findInputValue(
-  rows: { type: number; components?: { type: number; custom_id?: string; value?: string }[] }[],
-  customId: string,
-): string | undefined {
+export function findInputValue(rows: ModalComponentRow[], customId: string): string | undefined {
   for (const row of rows) {
     for (const comp of row.components ?? []) {
       if (comp.custom_id === customId) return comp.value;

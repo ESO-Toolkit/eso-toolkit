@@ -179,6 +179,20 @@ async function routeInteraction(
 
 const DISCORD_API = 'https://discord.com/api/v10';
 
+// Module-level cache for bot guilds (changes rarely, avoids hammering Discord API)
+let botGuildsCache: { data: Awaited<ReturnType<typeof getBotGuilds>>; expiresAt: number } | null =
+  null;
+const BOT_GUILDS_TTL_MS = 60_000; // 1 minute
+
+async function getCachedBotGuilds(env: Env): ReturnType<typeof getBotGuilds> {
+  if (botGuildsCache && Date.now() < botGuildsCache.expiresAt) {
+    return botGuildsCache.data;
+  }
+  const data = await getBotGuilds(env);
+  botGuildsCache = { data, expiresAt: Date.now() + BOT_GUILDS_TTL_MS };
+  return data;
+}
+
 async function handleBotGuilds(request: Request, env: Env): Promise<Response> {
   // Require user's Discord Bearer token
   const authHeader = request.headers.get('Authorization');
@@ -193,7 +207,7 @@ async function handleBotGuilds(request: Request, env: Env): Promise<Response> {
       fetch(`${DISCORD_API}/users/@me/guilds`, {
         headers: { Authorization: `Bearer ${userToken}` },
       }),
-      getBotGuilds(env),
+      getCachedBotGuilds(env),
     ]);
 
     if (!userGuildsRes.ok) {
@@ -379,11 +393,14 @@ async function handleRefresh(
 
   // Accept either webhook secret (server-to-server) or user Discord token
   const authHeader = request.headers.get('Authorization');
-  const isWebhook = verifyWebhookSecret(env, authHeader);
+  const isWebhook = await verifyWebhookSecret(env, authHeader);
 
   if (!isWebhook) {
-    // For user-initiated refresh, we need guildId to check permissions
-    const guildId = (body.guildId as string | undefined) ?? env.GUILD_ID;
+    // For user-initiated refresh, require an explicit guildId
+    const guildId = body.guildId as string | undefined;
+    if (!guildId) {
+      return jsonResponse({ error: 'guildId is required for user-initiated refresh' }, 400);
+    }
     const auth = await verifyHttpCaller(env, guildId, authHeader);
     if (!auth.authorized) {
       return jsonResponse({ error: auth.error ?? 'Forbidden' }, 403);
@@ -409,6 +426,10 @@ async function handlePublishDirect(
 
   if (!guildId || !title || !rosterData) {
     return jsonResponse({ error: 'guildId, title, and roster_data are required' }, 400);
+  }
+
+  if (rosterData.length > 500_000) {
+    return jsonResponse({ error: 'roster_data exceeds maximum allowed size' }, 400);
   }
 
   const rawTags = Array.isArray(body.tags) ? (body.tags as string[]).filter(Boolean) : undefined;

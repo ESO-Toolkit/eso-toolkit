@@ -1,9 +1,11 @@
 /**
- * Roster sign-up button handler.
+ * Roster sign-up button handler (v0 stub).
  *
  * When a user clicks Tank/Healer/DD on a roster embed, this handler
- * posts a visible message indicating their interest. A future iteration
- * can update the roster data via the API.
+ * posts a visible chat message indicating their interest. It does NOT
+ * persist a sign-up or update the roster data — a future iteration will
+ * write back to the API. Until then, a raid lead must manually confirm
+ * slots.
  */
 
 import { InteractionResponseType } from '../types.js';

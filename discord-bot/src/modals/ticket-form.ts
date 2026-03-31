@@ -37,7 +37,7 @@ import type {
   TicketCategory,
   TicketState,
 } from '../types.js';
-import { findInputValue } from '../utils.js';
+import { findInputValue, type ModalComponentRow } from '../utils.js';
 
 // ── Shared embed + button builders ──────────────────────────────────────────
 
@@ -203,14 +203,15 @@ export async function handleTicketFormModal(
   const customId = interaction.data?.custom_id ?? '';
   const categoryRaw = customId.split(':')[1] as TicketCategory | undefined;
   const category: TicketCategory =
-    categoryRaw && ['Bug', 'Feature', 'Feedback'].includes(categoryRaw)
-      ? categoryRaw
-      : 'Feedback';
+    categoryRaw && ['Bug', 'Feature', 'Feedback'].includes(categoryRaw) ? categoryRaw : 'Feedback';
 
   // Extract field values from modal components
   const components = interaction.data?.components ?? [];
-  const title = findInputValue(components as unknown as Parameters<typeof findInputValue>[0], 'ticket_title') ?? 'Untitled';
-  const description = findInputValue(components as unknown as Parameters<typeof findInputValue>[0], 'ticket_description') ?? '(no description)';
+  const title =
+    findInputValue(components as unknown as ModalComponentRow[], 'ticket_title') ?? 'Untitled';
+  const description =
+    findInputValue(components as unknown as ModalComponentRow[], 'ticket_description') ??
+    '(no description)';
 
   const user = interaction.member?.user ?? interaction.user;
   if (!user) {
@@ -224,9 +225,7 @@ export async function handleTicketFormModal(
   }
 
   // Immediately defer — channel creation + AI + GitHub all take >3s
-  ctx.waitUntil(
-    processTicketCreation(env, interaction, user, category, title, description),
-  );
+  ctx.waitUntil(processTicketCreation(env, interaction, user, category, title, description));
 
   return {
     type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
@@ -333,7 +332,8 @@ async function processTicketCreation(
     console.error('[ticket-form] processTicketCreation error:', err);
     try {
       await editFollowup(env, interaction.token, '@original', {
-        content: '❌ Something went wrong creating your ticket. Please try again or contact a staff member.',
+        content:
+          '❌ Something went wrong creating your ticket. Please try again or contact a staff member.',
       });
     } catch (followupErr) {
       console.error('[ticket-form] failed to send error followup:', followupErr);
@@ -352,9 +352,7 @@ async function processTicketCreation(
 async function buildPermissionOverwrites(
   env: Env,
   userId: string,
-): Promise<
-  { id: string; type: 0 | 1; allow?: string; deny?: string }[]
-> {
+): Promise<{ id: string; type: 0 | 1; allow?: string; deny?: string }[]> {
   const memberPerms = allow(
     Permission.VIEW_CHANNEL,
     Permission.SEND_MESSAGES,

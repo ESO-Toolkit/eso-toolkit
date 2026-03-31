@@ -6,7 +6,7 @@
  */
 
 import { isAdmin } from '../discord.js';
-import { getGuildConfig } from '../roster/kv.js';
+import { getGuildConfig, DEFAULT_NAME_PATTERN } from '../roster/kv.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
 
@@ -40,11 +40,7 @@ export async function handleRosterSetup(
   // Check what's configured
   const hasRoles = config?.allowedRoleIds && config.allowedRoleIds.length > 0;
   const hasCategory = !!config?.defaultCategoryId;
-  const hasNamePattern =
-    !!config?.namePattern &&
-    config.namePattern !== '{day-short}-{time}-{trial}' &&
-    config.namePattern !== '{day-short}-{time}-{tag}-{trainer}' &&
-    config.namePattern !== '{day-short}-{time}-{trial}-{tag}';
+  const hasNamePattern = !!config?.namePattern && config.namePattern !== DEFAULT_NAME_PATTERN;
   const pings = config?.rolePingIds;
   const hasRolePings = !!(pings?.tank || pings?.healer || pings?.dd);
 
@@ -76,7 +72,7 @@ export async function handleRosterSetup(
     '',
     `${check(hasNamePattern)} **Step 4 — Customize channel names** *(optional)*`,
     'Set a template for auto-generated channel names.',
-    'Tokens: `{day-short}`, `{time}`, `{trial}`',
+    'Tokens: `{day-short}`, `{day}`, `{time}`, `{trial}`, `{difficulty}`',
     '```',
     '/roster config set-name-pattern {day-short}-{time}-{trial}',
     '```',
