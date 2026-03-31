@@ -56,7 +56,7 @@ import {
   checkPackVoteRateLimit,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
-import type { Env } from './types';
+import type { Env, RecommendedAddonEntry, RecommendedAddons } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -171,7 +171,7 @@ app.post('/rosters', async (c) => {
     roster_data: string;
     tags?: string[];
     is_anonymous?: boolean;
-    recommended_addons?: { packId?: string; addons: { esouiId: number; name: string; required?: boolean; note?: string }[] } | null;
+    recommended_addons?: RecommendedAddons | null;
   }
 
   let body: CreateBody;
@@ -242,7 +242,7 @@ app.put('/rosters/:id', async (c) => {
     roster_data: string;
     tags?: string[];
     is_anonymous?: boolean;
-    recommended_addons?: { packId?: string; addons: { esouiId: number; name: string; required?: boolean; note?: string }[] } | null;
+    recommended_addons?: RecommendedAddons | null;
   }
 
   let body: UpdateBody;
@@ -1046,7 +1046,7 @@ app.post('/packs', async (c) => {
     title: string;
     description?: string;
     pack_type?: string;
-    addons: { esouiId: number; name: string; required?: boolean; note?: string }[];
+    addons: RecommendedAddonEntry[];
     tags?: string[];
     is_anonymous?: boolean;
   }
@@ -1113,7 +1113,7 @@ app.put('/packs/:id', async (c) => {
     title: string;
     description?: string;
     pack_type?: string;
-    addons: { esouiId: number; name: string; required?: boolean; note?: string }[];
+    addons: RecommendedAddonEntry[];
     tags?: string[];
     is_anonymous?: boolean;
   }

@@ -110,11 +110,11 @@ export const packsApi = {
 };
 
 /**
- * Generate a deep link URL that opens the ESO Addon Manager
- * and navigates directly to a specific pack.
+ * Generate a deep link URL that opens Kalpa (ESO Addon Manager)
+ * and installs a specific pack.
  *
- * Usage: `eso-addon-manager://pack/trial-essentials`
+ * Usage: `kalpa://install-pack/trial-essentials`
  */
 export function getAddonManagerDeepLink(packId: string): string {
-  return `eso-addon-manager://pack/${packId}`;
+  return `kalpa://install-pack/${packId}`;
 }

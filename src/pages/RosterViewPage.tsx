@@ -1749,8 +1749,8 @@ export const RosterViewPage: React.FC = () => {
       {/* ── Recommended Addons section ── */}
       {(() => {
         const addons = recommendedAddons?.addons ?? DEFAULT_ADDONS;
-        const packId = recommendedAddons?.packId ?? 'trial-essentials';
         const isCustom = !!recommendedAddons;
+        const packId = recommendedAddons?.packId ?? (isCustom ? undefined : 'trial-essentials');
         return (
           <Box sx={{ mb: 3 }}>
             <SectionLabel
@@ -1781,8 +1781,8 @@ export const RosterViewPage: React.FC = () => {
                   {addonsLoading
                     ? 'Loading addon recommendations…'
                     : isCustom
-                      ? 'The roster creator recommends these addons. Install them all with one click using the ESO Addon Manager.'
-                      : 'These addons are essential for trial content. Install them all with one click using the ESO Addon Manager.'}
+                      ? 'The roster creator recommends these addons. Install them all with one click using Kalpa.'
+                      : 'These addons are essential for trial content. Install them all with one click using Kalpa.'}
                 </Typography>
               </Box>
 
@@ -1877,33 +1877,47 @@ export const RosterViewPage: React.FC = () => {
                       color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
                     }}
                   >
-                    {addons.length} addon{addons.length !== 1 ? 's' : ''} &middot; Install all at
-                    once
+                    {addons.length} addon{addons.length !== 1 ? 's' : ''} &middot;{' '}
+                    {packId ? 'Install all at once' : `Pack ID: ${packId ?? 'none'}`}
                   </Typography>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    startIcon={<ExtensionIcon sx={{ fontSize: '0.85rem !important' }} />}
-                    onClick={() => {
-                      const deepLink = getAddonManagerDeepLink(packId);
-                      window.location.href = deepLink;
-                    }}
-                    sx={{
-                      borderRadius: '8px',
-                      textTransform: 'none',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      background: 'linear-gradient(135deg, #c4a44a 0%, #d4b45a 100%)',
-                      color: '#0b1220',
-                      boxShadow: '0 2px 8px rgba(196,164,74,0.3)',
-                      '&:hover': {
-                        background: 'linear-gradient(135deg, #d4b45a 0%, #e4c46a 100%)',
-                        boxShadow: '0 4px 16px rgba(196,164,74,0.4)',
-                      },
-                    }}
-                  >
-                    Install with Addon Manager
-                  </Button>
+                  {packId ? (
+                    <Button
+                      size="small"
+                      variant="contained"
+                      startIcon={<ExtensionIcon sx={{ fontSize: '0.85rem !important' }} />}
+                      onClick={() => {
+                        const deepLink = getAddonManagerDeepLink(packId);
+                        window.location.href = deepLink;
+                      }}
+                      sx={{
+                        borderRadius: '8px',
+                        textTransform: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        background: 'linear-gradient(135deg, #c4a44a 0%, #d4b45a 100%)',
+                        color: '#0b1220',
+                        boxShadow: '0 2px 8px rgba(196,164,74,0.3)',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #d4b45a 0%, #e4c46a 100%)',
+                          boxShadow: '0 4px 16px rgba(196,164,74,0.4)',
+                        },
+                      }}
+                    >
+                      Open in Kalpa
+                    </Button>
+                  ) : (
+                    <Tooltip title="No pack ID — copy the addon list manually">
+                      <Typography
+                        sx={{
+                          fontSize: '0.72rem',
+                          color: isDarkMode ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                          fontStyle: 'italic',
+                        }}
+                      >
+                        No linked pack
+                      </Typography>
+                    </Tooltip>
+                  )}
                 </Box>
               )}
             </Paper>
