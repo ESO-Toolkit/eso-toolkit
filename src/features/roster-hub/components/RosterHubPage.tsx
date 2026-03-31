@@ -25,6 +25,7 @@ import { FilterBar } from './FilterBar';
 import { PublishRosterDialog } from './PublishRosterDialog';
 import { RosterCard } from './RosterCard';
 import { RosterCardSkeleton } from './RosterCardSkeleton';
+import { RosterPreviewDialog } from './RosterPreviewDialog';
 
 const SKELETON_COUNT = 8;
 
@@ -37,6 +38,7 @@ export const RosterHubPage: React.FC = () => {
   const { filteredRosters, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote } =
     useRosterHub(token);
 
+  const [previewRoster, setPreviewRoster] = React.useState<HubRoster | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [editRoster, setEditRoster] = React.useState<HubRoster | null>(null);
@@ -279,6 +281,7 @@ export const RosterHubPage: React.FC = () => {
                     isOwner={isLoggedIn && roster.author_id === currentUserId}
                     isLoggedIn={isLoggedIn}
                     onVote={handleVote}
+                    onPreview={setPreviewRoster}
                     onDelete={setDeleteTarget}
                     onEdit={setEditRoster}
                   />
