@@ -199,21 +199,29 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       setEnabledAddons(new Set());
       return;
     }
+    let cancelled = false;
     setPackDetailLoading(true);
     packsApi
       .get(selectedPackId)
       .then((pack) => {
+        if (cancelled) return;
         setSelectedPack(pack);
         const addons = pack.addons.map(packAddonToRecommended);
         setAddonList(addons);
         setEnabledAddons(new Set(addons.map((a) => a.esouiId)));
       })
       .catch(() => {
+        if (cancelled) return;
         setSelectedPack(null);
         setAddonList([]);
         setEnabledAddons(new Set());
       })
-      .finally(() => setPackDetailLoading(false));
+      .finally(() => {
+        if (!cancelled) setPackDetailLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [selectedPackId]);
 
   const handleToggleAddon = (esouiId: number): void => {
@@ -261,14 +269,24 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       setAddonSearchLoading(false);
       return;
     }
+    let cancelled = false;
     setAddonSearchLoading(true);
     const timer = setTimeout(() => {
       searchEsouiAddons(addonSearchQuery.trim())
-        .then(setAddonSearchResults)
-        .catch(() => setAddonSearchResults([]))
-        .finally(() => setAddonSearchLoading(false));
+        .then((results) => {
+          if (!cancelled) setAddonSearchResults(results);
+        })
+        .catch(() => {
+          if (!cancelled) setAddonSearchResults([]);
+        })
+        .finally(() => {
+          if (!cancelled) setAddonSearchLoading(false);
+        });
     }, 300);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      cancelled = true;
+    };
   }, [addonSearchQuery]);
 
   const handleAddSearchedAddon = (result: EsouiAddonSearchResult): void => {
@@ -321,6 +339,8 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       setNewPackTitle('');
       setNewPackDescription('');
       setNewPackAddons([]);
+      setCustomAddonName('');
+      setCustomAddonId('');
       setAddonTab(0);
       // Refresh the pack list so the new pack appears
       loadPacks();
@@ -379,9 +399,29 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
     }
   };
 
+  // Track the editingRoster ID to avoid re-running the reset effect when
+  // the parent passes a new object reference with the same roster.
+  const prevEditingIdRef = React.useRef<string | null>(null);
+
   // Reset / pre-fill on open
   React.useEffect(() => {
     if (open) {
+      // Skip re-initialization if already open with the same roster
+      const editId = editingRoster?.id ?? null;
+      if (prevEditingIdRef.current === editId && editId !== null) return;
+      prevEditingIdRef.current = editId;
+
+      // Always reset Create New tab state on open (shared between both paths)
+      setAddonTab(0);
+      setSelectedPack(null);
+      setCustomAddonName('');
+      setCustomAddonId('');
+      setNewPackTitle('');
+      setNewPackDescription('');
+      setNewPackAddons([]);
+      setNewPackError(null);
+      setAddonSearchQuery('');
+      setAddonSearchResults([]);
       if (editingRoster) {
         setTitle(editingRoster.title);
         setDescription(editingRoster.description ?? '');
@@ -417,21 +457,15 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         setTagInput('');
         setIsAnonymous(false);
         setAddonSectionOpen(false);
-        setAddonTab(0);
         setSelectedPackId(null);
-        setSelectedPack(null);
         setAddonList([]);
         setEnabledAddons(new Set());
-        setCustomAddonName('');
-        setCustomAddonId('');
-        setNewPackTitle('');
-        setNewPackDescription('');
-        setNewPackAddons([]);
-        setNewPackError(null);
-        setAddonSearchQuery('');
-        setAddonSearchResults([]);
       }
       setError(null);
+      setLoading(false);
+    } else {
+      // Dialog closed — reset the tracking ref so next open re-initializes
+      prevEditingIdRef.current = null;
     }
   }, [open, editingRoster]);
 
@@ -626,11 +660,11 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                 return (
                   <Box
                     key={label}
-                    role="radio"
-                    aria-checked={isActive}
+                    role="button"
                     tabIndex={0}
+                    aria-pressed={isActive}
                     onClick={onClick}
-                    onKeyDown={(e) => {
+                    onKeyDown={(e: React.KeyboardEvent) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         onClick();
@@ -941,7 +975,17 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           }}
         >
           <Box
+            role="button"
+            tabIndex={0}
+            aria-expanded={addonSectionOpen}
+            aria-label="Toggle addon recommendations"
             onClick={() => setAddonSectionOpen((prev) => !prev)}
+            onKeyDown={(e: React.KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setAddonSectionOpen((prev) => !prev);
+              }
+            }}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -1137,6 +1181,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                             <Tooltip title="Remove addon">
                               <IconButton
                                 size="small"
+                                aria-label="Remove addon"
                                 onClick={() => handleRemoveAddon(addon.esouiId)}
                                 sx={{ p: 0.5, color: 'text.disabled' }}
                               >
@@ -1172,6 +1217,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                     <span>
                       <IconButton
                         size="small"
+                        aria-label="Add custom addon"
                         onClick={handleAddCustomAddon}
                         disabled={!customAddonName.trim() || !customAddonId}
                         sx={{
@@ -1339,6 +1385,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                         <Tooltip title="Remove">
                           <IconButton
                             size="small"
+                            aria-label="Remove addon"
                             onClick={() => handleRemoveNewPackAddon(addon.esouiId)}
                             sx={{ p: 0.5, color: 'text.disabled' }}
                           >
@@ -1372,6 +1419,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                     <span>
                       <IconButton
                         size="small"
+                        aria-label="Add addon manually"
                         onClick={() => {
                           const id = parseInt(customAddonId, 10);
                           const name = customAddonName.trim();

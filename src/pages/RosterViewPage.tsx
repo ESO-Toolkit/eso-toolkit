@@ -1333,6 +1333,10 @@ export const RosterViewPage: React.FC = () => {
   }>({ open: false, message: '', severity: 'success' });
   const [recommendedAddons, setRecommendedAddons] = useState<RecommendedAddons | null>(null);
   const [addonsLoading, setAddonsLoading] = useState(false);
+  const deepLinkTimerRef = React.useRef<ReturnType<typeof setTimeout>>();
+
+  // Clean up deep-link fallback timer on unmount
+  useEffect(() => () => clearTimeout(deepLinkTimerRef.current), []);
 
   // Default addons shown when no hub roster or no custom recommendations
   const DEFAULT_ADDONS: RecommendedAddonEntry[] = [
@@ -1356,11 +1360,13 @@ export const RosterViewPage: React.FC = () => {
 
   // Decode roster from ?r= or fetch by ?id= on mount
   useEffect(() => {
+    let cancelled = false;
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('r') ?? '';
     const hubId = params.get('id') ?? '';
 
     const onDecoded = (decoded: RaidRoster | null, rosterData: string): void => {
+      if (cancelled) return;
       if (decoded) {
         setRoster(decoded);
         setEncodedParam(rosterData);
@@ -1380,6 +1386,7 @@ export const RosterViewPage: React.FC = () => {
       rosterHubApi
         .get(hubIdParam)
         .then(({ roster: hubRoster }) => {
+          if (cancelled) return;
           if (hubRoster.recommended_addons) {
             setRecommendedAddons(hubRoster.recommended_addons);
           }
@@ -1387,7 +1394,9 @@ export const RosterViewPage: React.FC = () => {
         .catch(() => {
           // Silently fall back to defaults
         })
-        .finally(() => setAddonsLoading(false));
+        .finally(() => {
+          if (!cancelled) setAddonsLoading(false);
+        });
     }
 
     if (encoded) {
@@ -1395,6 +1404,7 @@ export const RosterViewPage: React.FC = () => {
       void decodeRosterFromURL(encoded)
         .then((decoded) => onDecoded(decoded, encoded))
         .catch(() => {
+          if (cancelled) return;
           setNotFound(true);
           setLoading(false);
         });
@@ -1412,6 +1422,7 @@ export const RosterViewPage: React.FC = () => {
       void fetchRosterData
         .then((data) => decodeRosterFromURL(data).then((decoded) => onDecoded(decoded, data)))
         .catch(() => {
+          if (cancelled) return;
           setNotFound(true);
           setLoading(false);
         });
@@ -1419,6 +1430,10 @@ export const RosterViewPage: React.FC = () => {
       setNotFound(true);
       setLoading(false);
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Copy this shareable link to clipboard
@@ -1887,14 +1902,20 @@ export const RosterViewPage: React.FC = () => {
                         window.location.href = deepLink;
                         // Fallback: if Kalpa is not installed, the browser silently fails.
                         // After a delay, copy the deep link to clipboard as a fallback.
-                        setTimeout(() => {
-                          void navigator.clipboard.writeText(deepLink).then(() => {
-                            setSnackbar({
-                              open: true,
-                              message: 'Deep link copied — install Kalpa to use it',
-                              severity: 'info',
-                            });
-                          });
+                        clearTimeout(deepLinkTimerRef.current);
+                        deepLinkTimerRef.current = setTimeout(() => {
+                          void navigator.clipboard.writeText(deepLink).then(
+                            () => {
+                              setSnackbar({
+                                open: true,
+                                message: 'Deep link copied — install Kalpa to use it',
+                                severity: 'info',
+                              });
+                            },
+                            () => {
+                              /* clipboard denied — silently ignore */
+                            },
+                          );
                         }, 1500);
                       }}
                       sx={{
@@ -1979,9 +2000,14 @@ export const RosterViewPage: React.FC = () => {
 // Discord text builder (mirrors generateDiscordFormat in RosterBuilderPage)
 // ============================================================
 
+/** Escape Discord markdown special characters in user-supplied text. */
+function escapeDiscordMd(text: string): string {
+  return text.replace(/([*_~`|\\])/g, '\\$1');
+}
+
 function buildDiscordText(roster: RaidRoster): string {
   const lines: string[] = [];
-  lines.push(`**${roster.rosterName}**`, '');
+  lines.push(`**${escapeDiscordMd(roster.rosterName)}**`, '');
 
   const fmtUlt = (u: string | null): string => (u ? ` [${u}]` : '');
   const fmtSkillLines = (

@@ -77,6 +77,20 @@ const escapeHtml = (s: string): string =>
 /** Sanitize and trim a user-provided text field. */
 const sanitize = (s: string): string => escapeHtml(s.trim());
 
+/** Validate and sanitize an addon entry. Returns null if invalid. */
+const sanitizeAddonEntry = (a: unknown): RecommendedAddonEntry | null => {
+  if (!a || typeof a !== 'object') return null;
+  const entry = a as Record<string, unknown>;
+  if (typeof entry.esouiId !== 'number' || !Number.isInteger(entry.esouiId) || entry.esouiId <= 0) return null;
+  if (typeof entry.name !== 'string' || !entry.name.trim() || entry.name.length > 200) return null;
+  return {
+    esouiId: entry.esouiId,
+    name: sanitize(entry.name),
+    required: typeof entry.required === 'boolean' ? entry.required : undefined,
+    note: typeof entry.note === 'string' ? sanitize(entry.note.slice(0, 500)) : undefined,
+  };
+};
+
 /** Validate a tag: must be non-empty, ≤30 chars, alphanumeric/hyphens/underscores/spaces. */
 const isValidTag = (t: string): boolean =>
   typeof t === 'string' && t.length > 0 && t.length <= 30 && /^[\w\s-]+$/.test(t);
@@ -199,7 +213,16 @@ app.post('/rosters', async (c) => {
   if (recommended_addons && Array.isArray(recommended_addons.addons) && recommended_addons.addons.length > 0) {
     if (recommended_addons.addons.length > 20)
       return c.json({ error: 'recommended_addons: max 20 addons' }, 400);
-    recommendedAddonsJson = JSON.stringify(recommended_addons);
+    const sanitizedAddons = recommended_addons.addons
+      .map(sanitizeAddonEntry)
+      .filter(Boolean) as RecommendedAddonEntry[];
+    if (sanitizedAddons.length > 0) {
+      recommendedAddonsJson = JSON.stringify({
+        packId: typeof recommended_addons.packId === 'string' ? sanitize(recommended_addons.packId) : undefined,
+        packTitle: typeof recommended_addons.packTitle === 'string' ? sanitize(recommended_addons.packTitle) : undefined,
+        addons: sanitizedAddons,
+      });
+    }
   }
 
   const createAllowed = await checkRosterCreateRateLimit(c.env.DB, user.id);
@@ -270,7 +293,16 @@ app.put('/rosters/:id', async (c) => {
   if (recommended_addons && Array.isArray(recommended_addons.addons) && recommended_addons.addons.length > 0) {
     if (recommended_addons.addons.length > 20)
       return c.json({ error: 'recommended_addons: max 20 addons' }, 400);
-    recommendedAddonsJson = JSON.stringify(recommended_addons);
+    const sanitizedAddons = recommended_addons.addons
+      .map(sanitizeAddonEntry)
+      .filter(Boolean) as RecommendedAddonEntry[];
+    if (sanitizedAddons.length > 0) {
+      recommendedAddonsJson = JSON.stringify({
+        packId: typeof recommended_addons.packId === 'string' ? sanitize(recommended_addons.packId) : undefined,
+        packTitle: typeof recommended_addons.packTitle === 'string' ? sanitize(recommended_addons.packTitle) : undefined,
+        addons: sanitizedAddons,
+      });
+    }
   }
 
   const updated = await updateRoster(c.env.DB, c.req.param('id'), user.id, {
@@ -1078,6 +1110,10 @@ app.post('/packs', async (c) => {
   if (addons.length > 30)
     return c.json({ error: 'Maximum 30 addons per pack' }, 400);
 
+  const sanitizedAddons = addons.map(sanitizeAddonEntry).filter(Boolean) as RecommendedAddonEntry[];
+  if (sanitizedAddons.length === 0)
+    return c.json({ error: 'No valid addon entries provided' }, 400);
+
   const createAllowed = await checkPackCreateRateLimit(c.env.DB, user.id);
   if (!createAllowed)
     return c.json({ error: 'Rate limit exceeded. You can only create 10 packs per hour.' }, 429);
@@ -1094,7 +1130,7 @@ app.post('/packs', async (c) => {
     title: sanitize(title),
     description: sanitize(description),
     packType: sanitize(pack_type),
-    addons: JSON.stringify(addons),
+    addons: JSON.stringify(sanitizedAddons),
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
   });
@@ -1145,11 +1181,15 @@ app.put('/packs/:id', async (c) => {
   if (addons.length > 30)
     return c.json({ error: 'Maximum 30 addons per pack' }, 400);
 
+  const sanitizedAddons = addons.map(sanitizeAddonEntry).filter(Boolean) as RecommendedAddonEntry[];
+  if (sanitizedAddons.length === 0)
+    return c.json({ error: 'No valid addon entries provided' }, 400);
+
   const updated = await updatePack(c.env.DB, c.req.param('id'), user.id, {
     title: sanitize(title),
     description: sanitize(description),
     packType: sanitize(pack_type),
-    addons: JSON.stringify(addons),
+    addons: JSON.stringify(sanitizedAddons),
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
   });

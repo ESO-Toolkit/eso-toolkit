@@ -36,12 +36,17 @@ export const GetAddonsButton: React.FC<GetAddonsButtonProps> = ({
 
     // After a short delay, copy link as fallback (if app didn't intercept)
     setTimeout(() => {
-      void navigator.clipboard.writeText(deepLink).then(() => {
-        enqueueSnackbar('Deep link copied — install Kalpa to use it', {
-          variant: 'info',
-          autoHideDuration: 4000,
-        });
-      });
+      void navigator.clipboard.writeText(deepLink).then(
+        () => {
+          enqueueSnackbar('Deep link copied — install Kalpa to use it', {
+            variant: 'info',
+            autoHideDuration: 4000,
+          });
+        },
+        () => {
+          /* clipboard denied — silently ignore */
+        },
+      );
     }, 1500);
   };
 
